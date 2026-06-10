@@ -103,5 +103,9 @@
   "clubAdmin.statsConflictsLabel": "Conflictos",
   "clubAdmin.statsNoConflicts": "Todo correcto",
   "clubAdmin.scheduleLoadFailed": "No se pudo cargar el horario. Actualiza o inténtalo de nuevo.",
-  "clubAdmin.clubsLoadFailed": "No se pudieron cargar los clubes. Inténtalo de nuevo."
+  "clubAdmin.clubsLoadFailed": "No se pudieron cargar los clubes. Inténtalo de nuevo.",
+  "clubAdmin.booktimeUnmappedCourts_one": "{{count}} pista BookTime sin mapear",
+  "clubAdmin.booktimeUnmappedCourts_other": "{{count}} pistas BookTime sin mapear",
+  "clubAdmin.booktimeUnmappedImportHint": "Configura IDs externos en Todas las pistas o pide al administrador de la plataforma que importe pistas.",
+  "clubAdmin.booktimeManageCourtsLink": "Gestionar pistas"
 }

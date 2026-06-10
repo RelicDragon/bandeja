@@ -4,7 +4,7 @@ Companion specs: [PLAN_CLUB_BOOKING_UX.md](./PLAN_CLUB_BOOKING_UX.md), [PLAN_CLU
 
 Decompilation reference (Padel City): `../Decomp/PadelCity/FINDINGS.md`, `api.json`, `simulator/`.
 
-Verified against codebase 2026-06.
+Verified against codebase 2026-06. Grill session decisions folded in 2026-06.
 
 ---
 
@@ -15,140 +15,256 @@ Rebuild external club booking around **BookTime SaaS** (`api.booktime.rs`) for m
 | Layer | Responsibility |
 |-------|----------------|
 | **Frontend** | Phone/OTP, token refresh, slot fetch, price, create/cancel booking — direct to BookTime |
-| **Backend** | Encrypt/store per-user club tokens; store **last busy-slot snapshot**; hand out **scout tokens** — **no BookTime proxy** for booking |
-| **Club record** | Per-club **integration config** in DB (type + provider settings); court `externalCourtId` mapping |
+| **Backend** | Encrypt/store tokens; **busy snapshots**; scout pool; **merge externals in `getBookedCourts`** |
+| **Club record** | `integrationType` + `integrationConfig` per club; `Court.externalCourtId` mapping |
 
-**Do not** flood clubs from our backend: all BookTime HTTP from the browser (except token/snapshot persistence).
+**Player BookTime traffic:** browser → `api.booktime.rs` (no booking proxy).
 
-**No feature flags.** Integration is on wherever platform admin sets it on the club row in DB.
+**Exceptions (server → BookTime):** platform admin **Import courts** only (`GET /public/company/{id}`).
+
+**No feature flags.** Integration is on wherever platform admin sets `integrationType` on the club row.
 
 ---
 
 ## Product goals
 
 1. User sees **all their BookTime bookings** in one place (per connected club).
-2. User sees **correct reserved slots** on the grid (merged with app games).
-3. User can **book a slot** via BookTime API when connected to that club.
-4. User **without** a club account: sees availability via scout token + public API; **Connect account** CTA to book.
-5. Slot cache refreshes on club open, **max once per 5 minutes**; **force full re-fetch** after a successful booking.
+2. User sees **correct reserved slots** on create-game + club admin grids (merged with app games).
+3. User can **book** when connected to that club.
+4. User **without** club account: availability via scout token + public ranges; **Connect** to book.
+5. Snapshot refresh on club/date open, **max once per 5 minutes**; **force refresh** after book/cancel.
 
-Coexistence with game-centric model: booking is additive. After BookTime book → offer **Create game at this time** (pre-filled club/court/time). See [PLAN_CLUB_BOOKING_UX.md](./PLAN_CLUB_BOOKING_UX.md) for grid semantics (red = external busy).
+After BookTime book → **Create game here** (pre-filled; optional soft link). See [PLAN_CLUB_BOOKING_UX.md](./PLAN_CLUB_BOOKING_UX.md) for grid colors.
 
 ---
 
 ## Per-club integration config (DB)
 
-Replace legacy `integrationScriptName` / CRS scripts with explicit provider config on `Club`.
+Replace legacy `integrationScriptName` / CRS scripts.
 
 | Field | Purpose |
 |-------|---------|
-| `integrationType` | `null` = no external booking; `BOOKTIME` = BookTime; future: other providers |
-| `integrationConfig` | JSON per type — e.g. BookTime: `{ "companyId": "uuid", "serviceIds": { "indoor": "...", "outdoor": "..." } }` |
+| `integrationType` | `null` = none; `BOOKTIME` = BookTime; future providers |
+| `integrationConfig` | Provider JSON — BookTime: `{ "companyId", "termsUrl?", "privacyUrl?", "serviceIds?" }` |
 
 **Rules:**
 
-- Booking UI, connect flow, snapshots, and My bookings run **only** when `integrationType` is set for that club.
-- No env feature flags; no city-wide toggle.
-- Non-BookTime providers are **out of scope v1** — schema leaves room for later types in `integrationType` + `integrationConfig`.
-- `Court.externalCourtId` maps provider resource id → internal court (BookTime `bookingResourceId`).
+- Booking UI, snapshots, connect, My bookings **only** when `integrationType` is set.
+- Non-BookTime providers: later via same fields.
+- `Court.externalCourtId` = BookTime `bookingResourceId`.
 
-**Novi Sad rollout:** platform admin sets `integrationType: BOOKTIME` + `companyId` per club. Padel City example `companyId`: `d4130d78-a7e8-499d-90f0-92773ccc2f9c`.
-
----
-
-## CORS (pre-requisite)
-
-BookTime must allow browser origins for direct frontend calls. Verify manually (curl / browser devtools) before P1.
-
-If auth CORS fails on web: Capacitor native shell or targeted proxy for token refresh only (last resort).
-
-**Frontend client (started):** `Frontend/src/integrations/booktime/client.ts`, `config.ts`.
+**P0 migration (single cutover):** add `integrationType`; migrate CRS club → `BOOKTIME` + `companyId`; **drop** `integrationScriptName`, `integrationScriptDateIndependent`, script loader, `crs.js` in same release.
 
 ---
 
-## Legacy removal (phase 0)
+## Platform admin (v1)
 
-Replace server-side script integration (one club: CRS).
+Extend `Admin/` club edit:
 
-| Remove / replace | Notes |
-|------------------|-------|
-| `Backend/scripts/club-integrations/NoviSad/crs.js` | Only live legacy script |
-| `ClubIntegrationService` script loader + in-memory cache | `Backend/src/services/clubIntegration/clubIntegration.service.ts` |
-| `Club.integrationScriptName`, `integrationScriptDateIndependent` | → `integrationType` + `integrationConfig` |
-| External branch in `bookedCourts.service.ts` | Occupancy from **snapshot API** |
-| Club admin “integration active” from script name | → provider type + last sync time |
-
-**Keep:** `Court.externalCourtId`, existing `integrationConfig` column (repurpose).
-
----
-
-## BookTime API (Padel City reference)
-
-Base: `https://api.booktime.rs`  
-Public prefix: `/public` when unauthenticated.  
-`companyId` injected in JSON bodies.
-
-| Concern | Endpoint |
+| Control | Behavior |
 |---------|----------|
-| Company + courts | `GET /public/company/{companyId}` |
-| Available ranges (public) | `POST /public/booking-resources/get-available-slots` |
-| Day bookings | `POST /booking-resources/get-for-day` — **auth required** |
-| Login / OTP / signup | `/users/login`, `confirm-login`, `signup`, `confirm-signup` |
-| Refresh | `POST /users/refresh-token` |
-| Price / create / cancel | `get-price`, `POST /booking`, `PATCH /booking/cancel` |
-| Lists | `get-upcoming`, `get-previous` |
+| Integration type | Dropdown: none / BookTime |
+| `companyId` | Required when BookTime |
+| **Import courts** | Server `GET /public/company/{companyId}` → match/create courts, set `externalCourtId` |
+| Court list | Manual override of `externalCourtId` per court |
 
-Slot step 60 min; durations 60 or 120 min; 14 bookable days; 12h cancel window.
+Padel City `companyId`: `d4130d78-a7e8-499d-90f0-92773ccc2f9c`.
 
-Client slot expansion: `Decomp/PadelCity/simulator/js/app.js` `parseSlots`.
+---
+
+## Occupancy pipeline (create-game + admin schedule)
+
+**Decision:** backend merge — extend `bookedCourts.service.ts` to read `ClubBooktimeBusySnapshot` and emit `clubBooked` rows (same `GET /games/booked-courts` contract as CRS today).
+
+```mermaid
+sequenceDiagram
+  participant FE as Frontend
+  participant BE as Backend
+  participant BT as BookTime
+
+  FE->>BE: GET booked-courts
+  alt snapshot missing or stale
+    FE->>BE: GET snapshot
+    FE->>BT: get-for-day (user or scout token)
+    FE->>BE: PUT snapshot (atomic replace)
+    FE->>BE: GET booked-courts
+  end
+  BE-->>FE: games + holds + external busy
+```
+
+- `useBookedCourts` unchanged — no client-side snapshot merge for grid.
+- Club admin schedule uses same external rows.
+- **Cold start:** `isLoadingExternalSlots: true` while opener refreshes; auto-fetch BookTime + PUT when snapshot missing/stale; refetch grid after PUT. Banner: “Updating club availability…” / “No sync yet today”.
 
 ---
 
 ## Snapshot contract
 
-### What we store
+### Content
 
-**Busy slots only** — not a full free grid.
+**Busy slots only.** Each refresh **atomically replaces** all courts for `(clubId, date)`. Freed slots omitted on next fetch.
 
-Each refresh **replaces the entire snapshot** for that club + date (all courts). Slots that became free are omitted on the next fetch, so we do not retain stale busy cells.
+### Storage
 
-### Granularity
+Per-court DB rows (`clubId`, `courtId`, `date`, `busySlots`, `fetchedAt`), but **written in one transaction**:
 
-**Per club + per calendar day + per court** (internal `courtId`).
+```http
+PUT /clubs/:clubId/booktime/snapshot
+{
+  "date": "2026-06-10",
+  "fetchedAt": "ISO",
+  "force": false,
+  "courts": [
+    { "courtId": "cuid", "externalCourtId": "uuid", "busySlots": [{ "startTime", "endTime" }] },
+    { "courtId": null, "externalCourtId": "uuid", "externalCourtName": "…", "busySlots": [...] }
+  ]
+}
+```
 
-Normalized busy slot shape (aligns with legacy `ExternalCourtSlot`):
+Backend: delete all rows for `(clubId, date)` → bulk insert. Empty `busySlots: []` = court free.
+
+### Busy slot shape
 
 ```ts
 {
-  courtId: string;           // internal Court.id
-  externalCourtId: string;   // BookTime bookingResourceId
-  startTime: string;         // ISO in club timezone
+  courtId: string | null;      // null if BookTime court unmapped
+  externalCourtId: string;
+  externalCourtName?: string;
+  startTime: string;           // ISO, club TZ
   endTime: string;
 }
 ```
 
-No multi-day prefetch in v1 — one date at a time when user views that day.
+**Unmapped courts:** store with `courtId: null`. Admin schedule shows external/unassigned lane; create-game **per-court** view ignores null `courtId`. Admin warning: “N BookTime courts not mapped” → import.
 
-### How busy list is built (frontend on refresh)
+### Build (frontend refresh)
 
-1. `POST /booking-resources/get-for-day` with **user token** if connected, else **scout token** from backend pool.
-2. Map response → busy intervals per `externalCourtId` → internal `courtId` via `Court.externalCourtId`.
-3. Optionally cross-check with public `get-available-slots` for display (free ranges) in availability sheet only; **create-game red cells** use stored **busy snapshot** only.
-4. `PUT` full replacement to backend for `(clubId, date)`.
+1. `get-for-day` with user token (connected) or scout token.
+2. Map `bookingResourceId` → internal court via `externalCourtId`.
+3. PUT atomic snapshot.
+4. Availability sheet free slots: separate logic (below).
 
-### 5-minute rule
+### Write policy
 
-On club detail / availability sheet / create-game for a date:
+| Rule | Detail |
+|------|--------|
+| Who may PUT | Any authenticated PadelPulse user for BOOKTIME clubs |
+| Scout refreshes | **Count** — unconnected users can refresh via scout token |
+| Server dedupe | Reject PUT if snapshot `fetchedAt` &lt; 5 min ago unless `force: true` |
+| Per-user limit | Max 1 PUT / user / club / date / 5 min |
+| Force | After successful book or cancel |
+
+No cron.
+
+---
+
+## Availability sheet (free slots)
+
+**Decision:** public ranges − snapshot busy; confirm-time re-check.
+
+1. `get-available-slots` (public) → `parseSlots` for duration.
+2. Subtract intervals overlapping snapshot busy for that court.
+3. Not connected: same grid; book tap → Connect.
+4. **On confirm:** if snapshot &gt; 1 min old, optional fresh `get-for-day`; `get-price` + `POST /booking`; slot taken → force snapshot refresh + toast.
+
+Create-game red cells use **snapshot only** (via `getBookedCourts`), not live public ranges.
+
+---
+
+## Scout token pool
+
+For `get-for-day` when user has no club token:
+
+1. `GET /clubs/:id/booktime/scout-token`
+2. Pool: `UserClubBooktimeAuth` where `scoutOptIn` (default **on**), token valid.
+3. **Never** return requester’s own token.
+4. Skip tokens with 401 in last 24h (`scoutInvalidAt` or flag); max 3 retries.
+5. Remove from pool on disconnect or opt-out.
+6. Empty pool → degraded: stale snapshot + banner; sheet uses public ranges only for free display.
+
+---
+
+## Token lifecycle
 
 ```
-GET snapshot(clubId, date)
-if missing OR age > 5 min OR user just booked:
-  full re-fetch from BookTime → PUT replace entire snapshot
-else:
-  use cached busy list
+1. OTP success → frontend PUT tokens to backend (encrypted at rest)
+2. Frontend: access + refresh in memory + sessionStorage for tab
+3. GET .../auth → { connected, phoneNumber, externalUserId, scoutOptIn } — NO secrets
+4. Missing sessionStorage but backend has row → POST .../booktime/session-token → hydrate memory
+5. BookTime 401 → refresh-token; fail → reconnect OTP
+6. Disconnect → DELETE backend auth; optional BookTime logout
 ```
 
-No cron. No incremental merge.
+Never log tokens. Rate-limit `session-token`.
+
+---
+
+## Connect / signup UX
+
+| Topic | Decision |
+|-------|----------|
+| Phone | **Prefill** profile phone if present; user may use any number (BookTime account is per club) |
+| Store | `UserClubBooktimeAuth.phoneNumber` = verified at connect |
+| Terms | Line under OTP: “By continuing you agree to …” + links; after confirm-login/signup call `accept-custom-terms` once; non-blocking on failure |
+| New user | Signup form → OTP (same as simulator) |
+
+---
+
+## Game ↔ BookTime link
+
+**Soft link v1** — no auto-sync on cancel either side.
+
+```prisma
+// Game (new columns)
+externalBookingId       String?
+externalBookingProvider ClubIntegrationType?
+@@index([externalBookingId])
+```
+
+- Set when user creates game from **Create game here** (or explicit link).
+- Auto `hasBookedCourt: true` when created from booking.
+- Cancel BookTime booking: if linked game exists → success banner **“Your game is still on the calendar”** + Open game; do not auto-cancel game.
+- Orphan link if user cancels BookTime elsewhere → game details may show “Court may no longer be reserved”.
+
+---
+
+## My bookings — information architecture
+
+| Surface | Content |
+|---------|---------|
+| **Profile → Connected clubs & bookings** | Full list: connect/disconnect, scout opt-in, upcoming + past, cancel, create game |
+| **My tab** | **E:** if user’s city has ≥1 BOOKTIME club and not connected → connect banner; if connected → up to **3** upcoming cards + “See all”; live `get-upcoming` on tab focus |
+| **Club detail** | Connect chip, availability sheet, last sync |
+| **City gate** | Unconnected banner on My tab **only** when `user.cityId` has clubs with `integrationType` set |
+
+No new bottom tab.
+
+---
+
+## Cancel booking
+
+- Confirm modal with club cancel policy (`allowedHoursToCancel` from config/company).
+- Frontend `PATCH /booking/cancel` with user token.
+- Success → force snapshot refresh; remove from list.
+- Linked game (Q above) → non-blocking warn banner.
+
+---
+
+## BookTime API (Padel City reference)
+
+Base: `https://api.booktime.rs` · Public: `/public/*` · `companyId` in JSON bodies.
+
+| Concern | Endpoint |
+|---------|----------|
+| Company + courts | `GET /public/company/{companyId}` |
+| Available ranges | `POST /public/booking-resources/get-available-slots` |
+| Day bookings | `POST /booking-resources/get-for-day` (auth) |
+| Auth | login, confirm-login, signup, confirm-signup, send-code, refresh-token |
+| Book | get-price, POST /booking, PATCH cancel |
+| Lists | get-upcoming, get-previous |
+| Terms | PATCH /users/accept-custom-terms |
+
+Slot step 60 min; durations 60/120; 14 bookable days; 12h cancel window.
 
 ---
 
@@ -157,109 +273,83 @@ No cron. No incremental merge.
 ```mermaid
 flowchart TB
   subgraph player [Player app]
-    MB[My bookings]
-    CC[Connected clubs]
-    CD[Club detail]
-    CG[Create game grid]
+    MT[My tab cards]
+    SET[Connected clubs settings]
+    CG[Create game]
     AV[Availability sheet]
   end
-
   BT[api.booktime.rs]
   BE[PadelPulse backend]
 
   AV --> BT
-  MB --> BT
-  AV -->|snapshot PUT GET| BE
-  CG -->|busy snapshot GET| BE
-  CC -->|token PUT GET DELETE| BE
+  SET --> BT
+  MT --> BT
+  AV -->|PUT snapshot| BE
+  CG -->|GET booked-courts| BE
+  SET -->|token PUT session-token| BE
 ```
-
-### Connection states (per club with BOOKTIME integration)
-
-| State | UI | Busy slots source | Book? |
-|-------|-----|-------------------|-------|
-| Connected | Green chip + phone | User token → `get-for-day` on refresh | Yes |
-| Not connected | Amber + Connect | Scout token → `get-for-day` on refresh | No — CTA on slot tap |
-| Token expired | Reconnect | Last snapshot until refresh | No until reconnect |
-| Scout degraded | “Availability approximate” | Stale snapshot or empty | View only |
-
-### Scout token pool
-
-For users without a club account (and for `get-for-day` when unauthenticated):
-
-1. `GET /clubs/:id/booktime/scout-token` → random pooled token
-2. Frontend uses for **`get-for-day` only** — never booking
-3. On 401 → next token (max 3)
-4. Opt-in when connected: “Help others see availability” (default on)
-
-`get-for-day` is **auth-only** on BookTime; without user token we always use a scout token, not public API.
 
 ---
 
-## Slot merge (create-game grid)
+## Slot merge (`getBookedCourts`)
 
-For each 30-min cell:
+Per 30-min cell:
 
 | Source | Result |
 |--------|--------|
-| Admin hold | Hard block (existing) |
-| Snapshot busy interval on that court/time | Red `clubBooked` |
-| App game | Yellow / red per `hasBookedCourt` (existing) |
-| Otherwise | Free |
+| Admin hold | Hard block |
+| Snapshot busy (mapped court) | Red `clubBooked` |
+| Snapshot busy (`courtId: null`) | Admin unassigned lane only |
+| App game | Yellow/red per `hasBookedCourt` |
+| Else | Free |
 
-Expand each busy interval (typically 60 or 120 min) across all overlapping 30-min grid cells.
-
----
-
-## Token lifecycle
-
-```
-1. After OTP: frontend PUT tokens to backend (encrypted)
-2. On session start: GET auth status; load tokens into memory for BookTime calls
-3. 401 from BookTime → POST refresh-token with stored refreshToken
-4. Refresh fails → reconnect OTP sheet
-5. Disconnect: DELETE backend auth; optional BookTime logout from frontend
-```
-
-Never return raw tokens from `GET .../auth`. Never log tokens.
+Expand 60/120 min busy across overlapping 30-min cells.
 
 ---
 
-## Backend (minimal)
+## Backend
 
 ### Prisma (target)
 
 ```prisma
 enum ClubIntegrationType {
   BOOKTIME
-  // future providers
 }
 
-// Club
-integrationType    ClubIntegrationType?
-integrationConfig  Json?   // BOOKTIME: { companyId, serviceIds?, ... }
+model Club {
+  integrationType   ClubIntegrationType?
+  integrationConfig Json?
+  // DROP: integrationScriptName, integrationScriptDateIndependent
+}
+
+model Game {
+  externalBookingId       String?
+  externalBookingProvider ClubIntegrationType?
+  @@index([externalBookingId])
+}
 
 model UserClubBooktimeAuth {
-  id             String   @id @default(cuid())
-  userId         String
-  clubId         String
-  externalUserId String
-  phoneNumber    String?
-  accessToken    String   // encrypted
-  refreshToken   String   // encrypted
-  expiresAt      DateTime?
-  scoutOptIn     Boolean  @default(true)
-  updatedAt      DateTime @updatedAt
+  id              String    @id @default(cuid())
+  userId          String
+  clubId          String
+  externalUserId  String
+  phoneNumber     String?
+  accessToken     String    // encrypted
+  refreshToken    String    // encrypted
+  expiresAt       DateTime?
+  scoutOptIn      Boolean   @default(true)
+  scoutInvalidAt  DateTime?
+  updatedAt       DateTime  @updatedAt
   @@unique([userId, clubId])
 }
 
 model ClubBooktimeBusySnapshot {
-  id        String   @id @default(cuid())
-  clubId    String
-  courtId   String
-  date      String   // yyyy-MM-dd club TZ
-  busySlots Json     // [{ startTime, endTime, externalCourtId? }]
-  fetchedAt DateTime
+  id         String   @id @default(cuid())
+  clubId     String
+  courtId    String?  // null = unmapped external
+  date       String
+  busySlots  Json
+  fetchedAt  DateTime
   @@unique([clubId, courtId, date])
 }
 ```
@@ -268,15 +358,17 @@ model ClubBooktimeBusySnapshot {
 
 | Method | Path | Purpose |
 |--------|------|---------|
-| GET | `/clubs/:clubId/booktime/auth` | Connected? phone? (no secrets) |
+| GET | `/clubs/:clubId/booktime/auth` | Status, no secrets |
 | PUT | `/clubs/:clubId/booktime/auth` | Store tokens after OTP |
+| POST | `/clubs/:clubId/booktime/session-token` | Hydrate frontend session |
 | DELETE | `/clubs/:clubId/booktime/auth` | Disconnect |
-| GET | `/clubs/:clubId/booktime/snapshot?date=` | All courts’ busy slots + `fetchedAt` |
-| PUT | `/clubs/:clubId/booktime/snapshot` | Full replace for `date` (array of per-court rows) |
-| GET | `/clubs/:clubId/booktime/scout-token` | Scout bearer for `get-for-day` |
-| GET | `/booktime/my-clubs` | User’s connected BookTime clubs |
+| GET | `/clubs/:clubId/booktime/snapshot?date=` | Aggregated busy + `fetchedAt` |
+| PUT | `/clubs/:clubId/booktime/snapshot` | Atomic replace (see body above) |
+| GET | `/clubs/:clubId/booktime/scout-token` | Scout bearer |
+| GET | `/booktime/my-clubs` | Connected clubs metadata |
+| POST | `/admin/clubs/:id/booktime/import-courts` | Admin import (server → BookTime public) |
 
-Only clubs with `integrationType = BOOKTIME` expose these routes.
+`getBookedCourts`: when `integrationType = BOOKTIME`, merge snapshot rows for date range.
 
 ---
 
@@ -284,39 +376,15 @@ Only clubs with `integrationType = BOOKTIME` expose these routes.
 
 | Module | Role |
 |--------|------|
-| `integrations/booktime/client.ts` | BookTime HTTP |
-| `integrations/booktime/slots.ts` | `parseSlots`, busy merge, grid overlap |
-| `integrations/booktime/session.ts` | Memory token + refresh |
-| `components/booktime/ConnectClubSheet.tsx` | Phone → OTP → signup |
-| `components/booktime/AvailabilitySheet.tsx` | Date, duration, courts, book |
-| `components/booktime/MyBookingsSection.tsx` | Aggregated upcoming/past |
+| `integrations/booktime/client.ts` | HTTP |
+| `integrations/booktime/slots.ts` | parseSlots, subtract busy, grid overlap |
+| `integrations/booktime/session.ts` | memory + sessionStorage + session-token |
+| `components/booktime/ConnectClubSheet.tsx` | phone prefill, OTP, signup, terms |
+| `components/booktime/AvailabilitySheet.tsx` | B+D slot grid |
+| `components/booktime/MyTabBookingsSection.tsx` | city-gated banner + 3 cards |
+| `pages/settings/ConnectedClubsBookingsPage.tsx` | full list |
 
-Wire snapshot into `useBookedCourts` / `GameStartSection`.
-
-Show booking entry points **only** when `club.integrationType === 'BOOKTIME'`.
-
----
-
-## UX surfaces
-
-### My bookings
-
-- Parallel `get-upcoming` / `get-previous` per connected BookTime club
-- Cancel, **Create game here**
-- Clubs without integration: no BookTime row
-
-### Club detail
-
-- No integration → no book CTA (unchanged today)
-- BOOKTIME → Connect / availability sheet / last updated
-
-### Availability sheet
-
-Simulator UX: date strip, duration, courts, slots, confirm + price. Not connected → Connect on book tap.
-
-### Create-game grid
-
-Red from busy snapshot. Optional **Book court now** when connected.
+Trigger snapshot refresh from create-game / club detail / availability when stale (frontend); grid reads backend only.
 
 ---
 
@@ -324,12 +392,12 @@ Red from busy snapshot. Optional **Book court now** when connected.
 
 | Phase | Scope | Status |
 |-------|--------|--------|
-| **P0** | Remove CRS + script integration; `integrationType` / `integrationConfig`; remove My-tab test panel | Pending |
-| **P1** | Busy snapshot API; create-game red from snapshot; availability view | Pending |
-| **P2** | Connect sheet; token storage; scout pool | Pending |
-| **P3** | Book + cancel + force snapshot refresh | Pending |
-| **P4** | My bookings aggregate; create-game bridge | Pending |
-| **P5** | i18n; club admin sync status; UI_TEST_PLAN rows | Pending |
+| **P0** | `integrationType`; drop CRS/script fields; admin import courts; `getBookedCourts` snapshot merge | Pending |
+| **P1** | Snapshot API + write policy; cold-start loading; availability sheet (B+D) | Pending |
+| **P2** | Connect sheet; token storage; session-token; scout pool | Pending |
+| **P3** | Book + cancel (B) + terms (C) + force refresh | Pending |
+| **P4** | Settings bookings page + My tab section; Game link columns; create-game bridge | Pending |
+| **P5** | i18n; club admin sync/unmapped warnings; UI_TEST_PLAN | Pending |
 
 ---
 
@@ -337,14 +405,26 @@ Red from busy snapshot. Optional **Book court now** when connected.
 
 | # | Topic | Decision |
 |---|-------|----------|
-| 1 | Snapshot content | **Busy slots only**; each refresh **full replace** so freed slots disappear |
-| 2 | Snapshot granularity | **Per club + day + court**; no multi-day prefetch |
-| 3 | `get-for-day` | **Auth only**; unauthenticated → **scout token** (random from pool) |
-| 4 | Feature flags | **None** — integration enabled only where set in DB on club |
-| 5 | CORS test panel | **Removed** — do not ship on My tab |
-| 6 | Non-BookTime clubs | **Later** — `integrationType` + `integrationConfig` per club for future providers |
-| 7 | BookTime traffic | Frontend direct; backend tokens + snapshot only |
-| 8 | Standalone booking | My bookings + book sheet; bridge to create-game |
+| 1 | Grid external source | **Backend** merge in `getBookedCourts` |
+| 2 | Snapshot content | Busy only; **atomic full replace** per club+date |
+| 3 | Snapshot PUT | **Single transaction**; body with `courts[]` |
+| 4 | Snapshot writes | Any auth user; **scout OK**; server 5-min dedupe + per-user limit |
+| 5 | `get-for-day` | Auth only; else **scout token** |
+| 6 | Token persistence | **Hybrid:** sessionStorage + `POST session-token` |
+| 7 | Game link | **Columns** `externalBookingId` + provider; no cancel sync v1 |
+| 8 | My bookings IA | **Settings full list** + **My tab** (3 cards); city-gated connect banner |
+| 9 | Availability free slots | **Public ranges − snapshot busy**; confirm re-check (**B+D**) |
+| 10 | Phone | **Prefill** profile; any number allowed |
+| 11 | Cold start | **Loading** + auto refresh (**D**) |
+| 12 | Scout pool | Opt-in default on; **never self**; skip 401 tokens 24h |
+| 13 | Unmapped courts | **`courtId: null`** in snapshot; admin only on grid |
+| 14 | Cancel booking | BookTime cancel + **linked game warning** |
+| 15 | Terms | **Implicit copy** + auto `accept-custom-terms` |
+| 16 | Admin config | **Type + companyId + import courts** (server public GET only) |
+| 17 | Schema migration | **Single cutover** — drop script columns same release |
+| 18 | Feature flags | **None** — DB `integrationType` only |
+| 19 | Non-BookTime | Later via `integrationType` |
+| 20 | CORS test panel | **Removed** |
 
 ---
 
@@ -353,17 +433,18 @@ Red from busy snapshot. Optional **Book court now** when connected.
 | Area | Path |
 |------|------|
 | BookTime client | `Frontend/src/integrations/booktime/client.ts` |
-| Simulator reference | `Decomp/PadelCity/simulator/` |
-| Legacy slot type | `Backend/src/services/clubIntegration/types.ts` `ExternalCourtSlot` |
-| Legacy to remove | `Backend/scripts/club-integrations/NoviSad/crs.js`, `clubIntegration.service.ts` |
-| Occupancy | `bookedCourts.service.ts`, `useBookedCourts.ts`, `GameStartSection.tsx` |
+| Occupancy | `Backend/src/services/game/bookedCourts.service.ts` |
+| Grid hook | `Frontend/src/hooks/useBookedCourts.ts` |
+| Legacy remove | `clubIntegration.service.ts`, `NoviSad/crs.js` |
+| Admin club admin external | `clubAdminSchedule.service.ts`, `ClubSchedulePage` |
 
 ---
 
 ## Non-goals (v1)
 
 - Payments in PadelPulse
-- Non-BookTime provider implementations
-- Server-side BookTime proxy for all requests
+- Non-BookTime providers
+- Player BookTime proxy (except admin import)
 - Firebase social login to BookTime
-- Env-based feature flags
+- Auto cancel/sync between Game and BookTime booking
+- Env feature flags

@@ -981,6 +981,10 @@ async function viewCenterCourts(centerId) {
     document.getElementById('courtsView').style.display = 'block';
     document.getElementById('courtsClubTitle').textContent = center.name;
     document.getElementById('courtsClubLocation').textContent = `${center.address}, ${center.city.name}`;
+    const importBtn = document.getElementById('importBooktimeCourtsBtn');
+    if (importBtn) {
+        importBtn.style.display = center.integrationType === 'BOOKTIME' ? 'inline-block' : 'none';
+    }
     loadCourtsForCenter(center.id);
 }
 
@@ -1004,7 +1008,7 @@ async function loadCourtsForCenter(centerId) {
 function renderCourtsTable(courts) {
     const tbody = document.getElementById('courtsTableBody');
     if (courts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No courts found. Add a court to get started.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No courts found. Add a court to get started.</td></tr>';
         return;
     }
     tbody.innerHTML = courts.map(court => `
@@ -1018,6 +1022,7 @@ function renderCourtsTable(courts) {
             </td>
             <td>${escapeHtml(court.surfaceType) || '-'}</td>
             <td>${court.pricePerHour ? '$' + court.pricePerHour : '-'}</td>
+            <td><code style="font-size: 0.8rem;">${escapeHtml(court.externalCourtId) || '—'}</code></td>
             <td>
                 <span class="badge ${court.isActive ? 'badge-success' : 'badge-danger'}">
                     ${court.isActive ? 'Active' : 'Inactive'}
@@ -1031,6 +1036,26 @@ function renderCourtsTable(courts) {
             </td>
         </tr>
     `).join('');
+}
+
+async function importBooktimeCourtsForCenter() {
+    if (!currentCenter?.id) {
+        alert('No club selected');
+        return;
+    }
+    if (!confirm('Import courts from BookTime? Existing courts will be matched by external ID or name.')) return;
+    try {
+        const response = await apiRequest(`/admin/clubs/${currentCenter.id}/booktime/import-courts`, {
+            method: 'POST',
+        });
+        if (response.success) {
+            const summary = response.data;
+            toast(`Imported: ${summary.created} created, ${summary.updated} updated`, 'success');
+            loadCourtsForCenter(currentCenter.id);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
 }
 
 let eventSource = null;

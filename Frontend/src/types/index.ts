@@ -328,6 +328,13 @@ export interface Club {
   amenities?: Record<string, any>;
   isBar?: boolean;
   isForPlaying?: boolean;
+  integrationType?: 'BOOKTIME' | null;
+  integrationConfig?: {
+    companyId?: string;
+    termsUrl?: string;
+    privacyUrl?: string;
+    serviceIds?: string[];
+  } | null;
   sports?: Sport[];
   courts?: Court[];
   city?: City;
@@ -478,6 +485,8 @@ export interface Game {
   resultsByAnyone?: boolean;
   allowDirectJoin: boolean;
   hasBookedCourt?: boolean;
+  externalBookingId?: string | null;
+  externalBookingProvider?: 'BOOKTIME' | null;
   afterGameGoToBar?: boolean;
   hasFixedTeams?: boolean;
   allowUserInMultipleTeams?: boolean;

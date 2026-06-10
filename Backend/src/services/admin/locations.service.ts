@@ -1,4 +1,4 @@
-import { Prisma, Sport } from '@prisma/client';
+import { Prisma, Sport, ClubIntegrationType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { ImageProcessor } from '../../utils/imageProcessor';
@@ -19,6 +19,7 @@ import { refreshCityFromClubs, refreshAllCitiesFromClubs } from '../../utils/upd
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 import { normalizeWebCameraUrl } from '../../utils/normalizeWebCameraUrl';
 import { CityGroupService } from '../chat/cityGroup.service';
+import { buildIntegrationConfigPayload } from '../../shared/clubIntegration';
 
 export class AdminLocationsService {
   private static async deleteStoredClubAvatar(club: {
@@ -304,6 +305,8 @@ export class AdminLocationsService {
     avatar?: string | null;
     originalAvatar?: string | null;
     sports?: Sport[];
+    integrationType?: ClubIntegrationType | null;
+    integrationConfig?: Record<string, unknown> | null;
   }) {
     const {
       name,
@@ -325,6 +328,8 @@ export class AdminLocationsService {
       avatar,
       originalAvatar,
       sports: sportsRaw,
+      integrationType,
+      integrationConfig,
     } = data;
 
     const oldClub = await prisma.club.findUnique({
@@ -364,6 +369,26 @@ export class AdminLocationsService {
       ...(isForPlaying !== undefined && { isForPlaying }),
       ...(sports !== undefined && { sports }),
     };
+
+    if (integrationType !== undefined || integrationConfig !== undefined) {
+      const resolvedType =
+        integrationType === undefined
+          ? (await prisma.club.findUnique({ where: { id: centerId }, select: { integrationType: true } }))
+              ?.integrationType ?? null
+          : integrationType;
+      const configInput =
+        integrationConfig !== undefined
+          ? integrationConfig
+          : (
+              await prisma.club.findUnique({
+                where: { id: centerId },
+                select: { integrationConfig: true },
+              })
+            )?.integrationConfig;
+      const integrationPayload = buildIntegrationConfigPayload(resolvedType, configInput);
+      dataPayload.integrationType = integrationPayload.integrationType;
+      dataPayload.integrationConfig = integrationPayload.integrationConfig as unknown as Prisma.InputJsonValue;
+    }
 
     if (photos !== undefined) {
       const prev = parseClubPhotosJson(oldClub.photos);
@@ -465,6 +490,7 @@ export class AdminLocationsService {
     isActive?: boolean;
     sport?: Sport | null;
     webCameraUrl?: string | null;
+    externalCourtId?: string | null;
   }) {
     const {
       name,
@@ -476,6 +502,7 @@ export class AdminLocationsService {
       isActive,
       sport,
       webCameraUrl,
+      externalCourtId,
     } = data;
 
     const club = await prisma.club.findUnique({
@@ -500,6 +527,7 @@ export class AdminLocationsService {
         isActive: isActive !== undefined ? isActive : true,
         sport: courtSport,
         webCameraUrl: normalizeWebCameraUrl(webCameraUrl) ?? null,
+        externalCourtId: externalCourtId?.trim() || null,
       },
       include: {
         club: {
@@ -529,6 +557,7 @@ export class AdminLocationsService {
     isActive?: boolean;
     sport?: Sport | null;
     webCameraUrl?: string | null;
+    externalCourtId?: string | null;
   }) {
     const {
       name,
@@ -540,6 +569,7 @@ export class AdminLocationsService {
       isActive,
       sport,
       webCameraUrl,
+      externalCourtId,
     } = data;
 
     const existing = await prisma.court.findUnique({
@@ -576,6 +606,7 @@ export class AdminLocationsService {
         isActive,
         ...(courtSport !== undefined && { sport: courtSport }),
         ...(webCameraUrl !== undefined && { webCameraUrl: normalizeWebCameraUrl(webCameraUrl) ?? null }),
+        ...(externalCourtId !== undefined && { externalCourtId: externalCourtId?.trim() || null }),
       },
       include: {
         club: {

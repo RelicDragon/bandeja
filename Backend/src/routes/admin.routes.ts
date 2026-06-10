@@ -56,6 +56,7 @@ import {
   getClubAdmins,
   assignClubAdmin,
   removeClubAdmin,
+  importBooktimeCourts,
   getReplicatePhotoModel,
   setReplicatePhotoModel,
 } from '../controllers/admin.controller';
@@ -118,6 +119,8 @@ router.post(
   assignClubAdmin
 );
 router.delete('/clubs/:clubId/admins/:userId', requireAdmin, removeClubAdmin);
+
+router.post('/clubs/:clubId/booktime/import-courts', requireAdmin, importBooktimeCourts);
 
 router.get('/courts', requireAdmin, getAllCourts);
 router.post('/courts', requireAdmin, createCourt);

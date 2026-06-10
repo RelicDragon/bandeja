@@ -325,26 +325,43 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
           ref={messageRef}
           className={`group flex justify-center mb-4 relative transition-all duration-300 ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
         >
-          <SystemMessageBlock
-            displayContent={displayContent}
-            showAcceptDecline={showAcceptDecline}
-            onAccept={() => {
-              if (respondingToRequest) return;
-              setRespondingToRequest(true);
-              onChatRequestRespond!(currentMessage.id, true);
-              setRespondingToRequest(false);
-            }}
-            onDecline={() => {
-              if (respondingToRequest) return;
-              setRespondingToRequest(true);
-              onChatRequestRespond!(currentMessage.id, false);
-              setRespondingToRequest(false);
-            }}
-            respondingToRequest={respondingToRequest}
-            createdAt={currentMessage.createdAt}
-            formatMessageTime={formatMessageTime}
-            t={t}
-          />
+          <div className="relative">
+            <SystemMessageBlock
+              displayContent={displayContent}
+              showAcceptDecline={showAcceptDecline}
+              onAccept={() => {
+                if (respondingToRequest) return;
+                setRespondingToRequest(true);
+                onChatRequestRespond!(currentMessage.id, true);
+                setRespondingToRequest(false);
+              }}
+              onDecline={() => {
+                if (respondingToRequest) return;
+                setRespondingToRequest(true);
+                onChatRequestRespond!(currentMessage.id, false);
+                setRespondingToRequest(false);
+              }}
+              respondingToRequest={respondingToRequest}
+              createdAt={currentMessage.createdAt}
+              formatMessageTime={formatMessageTime}
+              t={t}
+            />
+            {!isOffline && (
+              <div className="pointer-events-none absolute left-full top-1/2 z-10 flex -translate-y-1/2 items-center pl-2">
+                <div className="pointer-events-auto">
+                  <MessageItemReactionStrip
+                    isOwnMessage={false}
+                    isChannel={false}
+                    activeEmoji={getCurrentUserReaction()}
+                    reactionCounts={getReactionCounts()}
+                    pending={isReactionPending()}
+                    onQuickReaction={handleQuickReaction}
+                    suppressOpenReactionMotion={suppressOpenReactionMotion}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       ) : (
         <div

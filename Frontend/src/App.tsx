@@ -9,6 +9,11 @@ const Register = lazy(() => import('./pages/Register').then(module => ({ default
 const SessionsPage = lazy(() =>
   import('./pages/SessionsPage').then((module) => ({ default: module.SessionsPage }))
 );
+const ConnectedClubsBookingsPage = lazy(() =>
+  import('./pages/settings/ConnectedClubsBookingsPage').then((module) => ({
+    default: module.ConnectedClubsBookingsPage,
+  }))
+);
 const SelectCity = lazy(() => import('./pages/SelectCity').then(module => ({ default: module.SelectCity })));
 const MainPage = lazy(() => import('./pages/MainPage').then(module => ({ default: module.MainPage })));
 const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(module => ({ default: module.CreateGameWrapper })));
@@ -501,6 +506,16 @@ function AppContent() {
             <ProtectedRoute>
               <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
                 <SessionsPage />
+              </Suspense>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/connected-clubs"
+          element={
+            <ProtectedRoute>
+              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <ConnectedClubsBookingsPage />
               </Suspense>
             </ProtectedRoute>
           }

@@ -14,6 +14,7 @@ import { CancelGameSheet, CancelPreviewParams } from '@/components/clubAdmin/Can
 import { ClubAdminCoachMark } from '@/components/clubAdmin/ClubAdminCoachMark';
 import { ScheduleDatePicker } from '@/components/clubAdmin/ScheduleDatePicker';
 import { ScheduleLegend } from '@/components/clubAdmin/ScheduleLegend';
+import { BooktimeScheduleStatus } from '@/components/clubAdmin/BooktimeScheduleStatus';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { useClubAdminSchedule } from '@/hooks/useClubAdminSchedule';
 import { useClubAdminForbidden } from '@/hooks/useClubAdminForbidden';
@@ -40,6 +41,7 @@ export function ClubSchedulePage() {
     openingTime?: string | null;
     closingTime?: string | null;
     defaultSlotMinutes?: number | null;
+    integrationType?: string | null;
     courts: Court[];
   } | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<ScheduleSlot | null>(null);
@@ -70,6 +72,7 @@ export function ClubSchedulePage() {
         openingTime: c.openingTime,
         closingTime: c.closingTime,
         defaultSlotMinutes: (c as { defaultSlotMinutes?: number | null }).defaultSlotMinutes,
+        integrationType: c.integrationType ?? null,
         courts: c.courts || [],
       });
     }
@@ -94,6 +97,7 @@ export function ClubSchedulePage() {
           openingTime: c.openingTime,
           closingTime: c.closingTime,
           defaultSlotMinutes: (c as { defaultSlotMinutes?: number | null }).defaultSlotMinutes,
+          integrationType: c.integrationType ?? null,
           courts: c.courts || [],
         })
       )
@@ -165,13 +169,26 @@ export function ClubSchedulePage() {
           {t('clubAdmin.scheduleLoadFailed')}
         </p>
       )}
-      {data?.externalSlotsFailed && (
-        <p className="mb-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
-          {t('clubAdmin.integrationDown')}
-        </p>
-      )}
-      {data?.isLoadingExternalSlots && (
-        <p className="mb-2 text-xs text-muted-foreground">{t('clubAdmin.updatingAvailability')}</p>
+      {club?.integrationType === 'BOOKTIME' ? (
+        <BooktimeScheduleStatus
+          clubId={clubId}
+          isLoadingExternalSlots={!!data?.isLoadingExternalSlots}
+          externalSlotsFailed={data?.externalSlotsFailed}
+          snapshotFetchedAt={data?.snapshotFetchedAt}
+          hasSnapshotForDate={data?.hasSnapshotForDate}
+          unmappedExternalCourtCount={data?.unmappedExternalCourtCount}
+        />
+      ) : (
+        <>
+          {data?.externalSlotsFailed && (
+            <p className="mb-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+              {t('clubAdmin.integrationDown')}
+            </p>
+          )}
+          {data?.isLoadingExternalSlots && (
+            <p className="mb-2 text-xs text-muted-foreground">{t('clubAdmin.updatingAvailability')}</p>
+          )}
+        </>
       )}
       {data?.conflicts && data.conflicts.length > 0 && (
         <p className="mb-2 text-xs text-amber-600">{t('clubAdmin.conflicts', { count: data.conflicts.length })}</p>

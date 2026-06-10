@@ -5,10 +5,7 @@ export const isValidImage = (file: File): boolean => {
   return file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024;
 };
 
-export const isValidVideo = (file: File): boolean => {
-  if (!file.type.startsWith('video/')) return false;
-  return file.size <= 200 * 1024 * 1024;
-};
+export { isValidVideo } from '@/utils/videoFileUtils';
 
 export const draftLoadingCache = new Map<string, Promise<ChatDraft | null>>();
 

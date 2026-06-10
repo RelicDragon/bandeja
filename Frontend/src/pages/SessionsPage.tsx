@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
-import { ArrowLeft, Loader2, LogOut, Monitor } from 'lucide-react';
+import { Loader2, LogOut, Monitor } from 'lucide-react';
 import { authApi } from '@/api';
-import { Button, Card, ConfirmationModal } from '@/components';
+import { Button, Card, ConfirmationModal, SubPageHeader } from '@/components';
+import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { getCurrentSessionIdSync } from '@/services/refreshTokenPersistence';
 import { useAuthStore } from '@/store/authStore';
 import { formatRelativeTime } from '@/utils/dateFormat';
@@ -27,6 +28,10 @@ function sessionPlatformLabel(platform: string, t: TFunction): string {
 export function SessionsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  useBackButtonHandler(() => {
+    navigate('/profile');
+    return true;
+  });
   const storeLogout = useAuthStore((s) => s.logout);
   const [sessions, setSessions] = useState<AuthSessionRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -85,20 +90,11 @@ export function SessionsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-safe">
-      <header className="safe-area-top sticky top-0 z-10 flex items-center gap-3 border-b border-gray-200 dark:border-gray-800 bg-white/90 dark:bg-gray-900/90 backdrop-blur px-4 py-3">
-        <button
-          type="button"
-          onClick={() => navigate('/profile')}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800"
-          aria-label={t('common.back')}
-        >
-          <ArrowLeft size={22} />
-        </button>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-          {t('profile.sessionsPageTitle')}
-        </h1>
-      </header>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-safe">
+      <SubPageHeader
+        title={t('profile.sessionsPageTitle')}
+        onBack={() => navigate('/profile')}
+      />
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
         <Card className="p-4">

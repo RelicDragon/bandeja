@@ -1,4 +1,5 @@
 export * from './Button';
+export * from './SubPageHeader';
 export * from './Input';
 export * from './Card';
 export * from './Loading';

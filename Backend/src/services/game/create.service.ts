@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { EntityType } from '@prisma/client';
+import { ClubIntegrationType, EntityType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
@@ -210,6 +210,20 @@ export class GameCreateService {
         ? data.affectsRating
         : true;
 
+    const externalBookingId =
+      typeof data.externalBookingId === 'string' && data.externalBookingId.trim()
+        ? data.externalBookingId.trim()
+        : null;
+    let externalBookingProvider: ClubIntegrationType | null = null;
+    if (externalBookingId) {
+      const provider = data.externalBookingProvider;
+      if (provider !== ClubIntegrationType.BOOKTIME) {
+        throw new ApiError(400, 'externalBookingProvider must be BOOKTIME when externalBookingId is set');
+      }
+      externalBookingProvider = ClubIntegrationType.BOOKTIME;
+    }
+    const hasBookedCourtCreate = externalBookingId ? true : Boolean(data.hasBookedCourt);
+
     const createdGame = await prisma.game.create({
       data: {
         entityType: entityType,
@@ -234,7 +248,9 @@ export class GameCreateService {
         anyoneCanInvite: data.anyoneCanInvite || false,
         resultsByAnyone: entityType === EntityType.TOURNAMENT ? false : (data.resultsByAnyone || false),
         allowDirectJoin: data.allowDirectJoin || false,
-        hasBookedCourt: data.hasBookedCourt || false,
+        hasBookedCourt: hasBookedCourtCreate,
+        externalBookingId,
+        externalBookingProvider,
         afterGameGoToBar: data.afterGameGoToBar || false,
         hasFixedTeams: (formatNorm.hasFixedTeams as boolean | undefined) ?? hasFixedTeams,
         allowUserInMultipleTeams:

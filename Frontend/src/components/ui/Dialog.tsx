@@ -99,21 +99,17 @@ const DialogContent = React.forwardRef<
 });
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
-const DIALOG_HEADER_CLASS =
-  'flex items-center justify-between gap-4 p-6 pb-4 border-b border-gray-200/80 dark:border-gray-700/80 flex-shrink-0';
 const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={className ? `${DIALOG_HEADER_CLASS} ${className}` : DIALOG_HEADER_CLASS} {...props} />
+  <div className={className ? `dialog-header ${className}` : 'dialog-header'} {...props} />
 );
 DialogHeader.displayName = 'DialogHeader';
 
-const DIALOG_FOOTER_CLASS =
-  'flex flex-row justify-end gap-2 p-6 pt-4 border-t border-gray-200/80 dark:border-gray-700/80 flex-shrink-0';
 const DialogFooter = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={className ? `${DIALOG_FOOTER_CLASS} ${className}` : DIALOG_FOOTER_CLASS} {...props} />
+  <div className={className ? `dialog-footer ${className}` : 'dialog-footer'} {...props} />
 );
 DialogFooter.displayName = 'DialogFooter';
 
-const DIALOG_TITLE_CLASS = 'overlay-title';
+const DIALOG_TITLE_CLASS = 'overlay-title pr-10';
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>

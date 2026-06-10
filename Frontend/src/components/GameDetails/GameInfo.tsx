@@ -20,6 +20,7 @@ import type { EditGameInfoTabId } from './EditGameInfoModal';
 import { isCapacitor } from '@/utils/capacitor';
 import { addToNativeCalendar } from '@/utils/calendar';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
+import { BooktimeOrphanBookingNotice } from '@/components/booktime/BooktimeOrphanBookingNotice';
 import { Share } from '@capacitor/share';
 import {
   Calendar,
@@ -939,6 +940,7 @@ export const GameInfo = ({
                     }
                   </p>
                 )}
+                <BooktimeOrphanBookingNotice game={game} isOwner={isOwner} />
                 <CourtLocationLinks
                   club={game.court?.club || game.club}
                   court={game.court && game.court.id ? game.court : undefined}

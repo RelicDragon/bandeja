@@ -103,5 +103,11 @@
   "clubAdmin.statsConflictsLabel": "Konflikty",
   "clubAdmin.statsNoConflicts": "Vše v pořádku",
   "clubAdmin.scheduleLoadFailed": "Nepodařilo se načíst rozvrh. Obnovte stránku nebo to zkuste znovu.",
-  "clubAdmin.clubsLoadFailed": "Nepodařilo se načíst kluby. Zkuste to znovu."
+  "clubAdmin.clubsLoadFailed": "Nepodařilo se načíst kluby. Zkuste to znovu.",
+  "clubAdmin.booktimeUnmappedCourts_one": "{{count}} kurt BookTime není mapován",
+  "clubAdmin.booktimeUnmappedCourts_few": "{{count}} kurty BookTime nejsou mapovány",
+  "clubAdmin.booktimeUnmappedCourts_many": "{{count}} kurtů BookTime není mapováno",
+  "clubAdmin.booktimeUnmappedCourts_other": "{{count}} kurtů BookTime není mapováno",
+  "clubAdmin.booktimeUnmappedImportHint": "Nastavte externí ID na stránce Všechny kurty nebo požádejte administrátora platformy o import kurtů.",
+  "clubAdmin.booktimeManageCourtsLink": "Spravovat kurty"
 }

@@ -1,0 +1,10 @@
+---
+description: No eslint-disable comments; no unused variables
+alwaysApply: true
+---
+
+# ESLint standards
+
+- Never add `eslint-disable-next-line`, `eslint-disable-line`, or block `eslint-disable` comments.
+- Fix the underlying lint issue instead (rename, remove, use the value, refactor, or adjust types).
+- Never leave unused variables, imports, or parameters. Remove them or use them; prefix with `_` only when the name is required by a signature and truly unused.

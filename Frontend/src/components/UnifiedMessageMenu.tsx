@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,7 @@ import { Keyboard } from '@capacitor/keyboard';
 import { ChatMessage, chatApi } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
-import { formatFullDateTime, getUserDisplayName } from '@/utils/messageMenuUtils';
+import { computeMessageMenuTop, formatFullDateTime, getUserDisplayName } from '@/utils/messageMenuUtils';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { EmojiQuickStrip, type ReactionEmojiPickSource } from '@/components/reactions/EmojiQuickStrip';
 import {
@@ -87,12 +87,12 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const mainMenuRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
   const [showDetails, setShowDetails] = useState(false);
-  const [menuHeight, setMenuHeight] = useState<number>(0);
-  const [detailsHeight, setDetailsHeight] = useState<number>(0);
-  const [isInitialRender, setIsInitialRender] = useState(true);
+  const [menuHeight, setMenuHeight] = useState(0);
+  const [detailsHeight, setDetailsHeight] = useState(0);
   const [isTranslating, setIsTranslating] = useState(false);
   const [detailsUsersLoading, setDetailsUsersLoading] = useState(false);
   const duplicateRef = useRef<HTMLDivElement>(null);
+  const duplicateElRef = useRef<HTMLElement | null>(null);
   const openTimeRef = useRef(0);
 
   const closeMenu = useCallback(() => {
@@ -172,40 +172,24 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     };
   }, [closeMenu]);
 
-  // Measure heights for smooth transitions
-  useEffect(() => {
-    const measureHeights = () => {
-      if (mainMenuRef.current) {
-        const height = mainMenuRef.current.scrollHeight;
-        if (height > 0) {
-          setMenuHeight(height);
-        }
-      }
-      if (detailsRef.current) {
-        const height = detailsRef.current.scrollHeight + 10;
-        if (height > 10) {
-          setDetailsHeight(height);
-        }
-      }
-    };
+  useLayoutEffect(() => {
+    let nextMenuHeight = 0;
+    let nextDetailsHeight = 0;
 
-    // Measure heights after component mounts and when content changes
-    measureHeights();
-    
-    // Re-measure when showDetails changes with multiple attempts to ensure proper measurement
-    const timeoutId1 = setTimeout(() => {
-      measureHeights();
-      setIsInitialRender(false);
-    }, 0);
-    const timeoutId2 = setTimeout(measureHeights, 10);
-    const timeoutId3 = setTimeout(measureHeights, 50);
-    
-    return () => {
-      clearTimeout(timeoutId1);
-      clearTimeout(timeoutId2);
-      clearTimeout(timeoutId3);
-    };
-  }, [showDetails, message.readReceipts, message.reactions, messageElementRef, detailsUsersLoading]);
+    if (mainMenuRef.current) {
+      nextMenuHeight = mainMenuRef.current.scrollHeight;
+    }
+    if (detailsRef.current) {
+      nextDetailsHeight = detailsRef.current.scrollHeight + 10;
+    }
+
+    if (nextMenuHeight > 0) {
+      setMenuHeight((prev) => (prev === nextMenuHeight ? prev : nextMenuHeight));
+    }
+    if (nextDetailsHeight > 10) {
+      setDetailsHeight((prev) => (prev === nextDetailsHeight ? prev : nextDetailsHeight));
+    }
+  }, [showDetails, message.readReceipts, message.reactions, detailsUsersLoading]);
 
   const handleReply = () => {
     onReply(message);
@@ -413,55 +397,29 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     }
   };
 
-  // Calculate center position for menu - ensure it's centered and within bounds
-  const effectiveMenuHeight = showDetails ? (detailsHeight || 200) : (menuHeight || 150);
-  
-  // Center the menu vertically on screen
-  const menuCenterTop = (window.innerHeight - effectiveMenuHeight) / 2;
-  
-  // Position menu with bounds checking (min 20px from top, min 20px from bottom)
-  const menuTop = Math.max(20, Math.min(menuCenterTop, window.innerHeight - effectiveMenuHeight - 20));
-  
-  // Position message: sticked to top of menu + gap (message bottom = menuTop - gap)
+  const effectiveMenuHeight = showDetails ? (detailsHeight || menuHeight || 200) : (menuHeight || 200);
   const messageGap = 5;
-  // Message top will be calculated dynamically based on its actual height
-  // We'll position it so its bottom edge is at menuTop - gap
+  const menuTop = computeMessageMenuTop(window.innerHeight, effectiveMenuHeight);
+  const messageBottomPosition = menuTop - messageGap;
 
-  // Create and mount duplicate message element
-  useEffect(() => {
-    if (!messageElementRef.current || !duplicateRef.current) return;
-    
+  useLayoutEffect(() => {
     const originalElement = messageElementRef.current;
+    const duplicateHost = duplicateRef.current;
+    if (!originalElement || !duplicateHost) return;
+
     const duplicate = originalElement.cloneNode(true) as HTMLElement;
-    
-    // Calculate message position: bottom edge should be at menuTop - gap
-    // We'll position from bottom to make this simpler
-    const messageBottomPosition = menuTop - messageGap;
-    
-    // Get the actual width of the original message element
     const originalWidth = originalElement.offsetWidth || originalElement.getBoundingClientRect().width;
-    
-    // Style the duplicate for the overlay
+
     duplicate.style.position = 'fixed';
-    duplicate.style.bottom = `${window.innerHeight - messageBottomPosition}px`;
     duplicate.style.left = '50%';
-    duplicate.style.transform = 'translateX(0%) scale(0.5)';
+    duplicate.style.transform = 'translateX(-50%) scale(1)';
     duplicate.style.zIndex = '9999';
     duplicate.style.width = `${originalWidth}px`;
     duplicate.style.maxWidth = 'none';
-    // Constrain height only to prevent overlap with menu - let it overflow upward if needed
-    duplicate.style.maxHeight = `${messageBottomPosition}px`;
     duplicate.style.overflow = 'hidden';
-    duplicate.style.transition = 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-    duplicate.style.opacity = '0';
-    
-    // Trigger the bounce animation after a brief delay
-    setTimeout(() => {
-      duplicate.style.transform = 'translateX(-50%) scale(1)';
-      duplicate.style.opacity = '1';
-    }, 10);
-    
-    // Find and truncate the message content
+    duplicate.style.opacity = '1';
+    duplicate.style.pointerEvents = 'none';
+
     const messageContent = duplicate.querySelector('p');
     if (messageContent) {
       messageContent.style.display = '-webkit-box';
@@ -470,38 +428,28 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       messageContent.style.overflow = 'hidden';
       messageContent.style.textOverflow = 'ellipsis';
     }
-    
-    // Clear existing content and append the duplicate
-    const duplicateElement = duplicateRef.current;
-    duplicateElement.innerHTML = '';
-    duplicateElement.appendChild(duplicate);
-    
-    return () => {
-      if (duplicateElement) {
-        duplicateElement.innerHTML = '';
-      }
-    };
-  }, [messageElementRef, menuTop, messageGap]);
 
-  // Trigger bounce animation for the menu
-  useEffect(() => {
-    if (isInitialRender && menuRef.current) {
-      const timeoutId = setTimeout(() => {
-        if (menuRef.current) {
-          menuRef.current.style.transform = 'translateX(-50%) scale(1)';
-          menuRef.current.style.opacity = '1';
-        }
-      }, 10);
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [isInitialRender]);
+    duplicateHost.innerHTML = '';
+    duplicateHost.appendChild(duplicate);
+    duplicateElRef.current = duplicate;
+
+    return () => {
+      duplicateElRef.current = null;
+      duplicateHost.innerHTML = '';
+    };
+  }, [messageElementRef]);
+
+  useLayoutEffect(() => {
+    const duplicate = duplicateElRef.current;
+    if (!duplicate) return;
+    duplicate.style.bottom = `${window.innerHeight - messageBottomPosition}px`;
+    duplicate.style.maxHeight = `${messageBottomPosition}px`;
+  }, [messageBottomPosition]);
 
   const content = (
     <>
-      <div 
-        className="fixed inset-0 bg-black/30 backdrop-blur-md z-[9998] pointer-events-auto transition-opacity duration-150"
-        style={{ opacity: isInitialRender ? 0 : 1 }}
+      <div
+        className="fixed inset-0 bg-black/30 backdrop-blur-md z-[9998] pointer-events-auto"
         onClick={handleBackdropClick}
       />
 
@@ -514,22 +462,19 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
         style={{
           left: '50%',
           top: `${menuTop}px`,
-          transform: isInitialRender ? 'translateX(-50%) scale(0.8)' : 'translateX(-50%)',
+          transform: 'translateX(-50%)',
           maxHeight: `${window.innerHeight - 40}px`,
-          height: effectiveMenuHeight,
+          height: menuHeight > 0 ? effectiveMenuHeight : undefined,
           paddingTop: '2px',
           paddingBottom: '5px',
-          opacity: isInitialRender ? '0' : '1',
-          transition: isInitialRender ? 'all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55)' : 'all 0.15s ease-in-out',
+          transition: showDetails ? 'height 0.15s ease-in-out' : undefined,
         }}
       >
       <div className="relative flex">
         {/* Main Menu */}
         <div 
           ref={mainMenuRef}
-          className={`w-full ${
-            isInitialRender ? '' : 'transition-transform duration-150 ease-in-out'
-          } ${showDetails ? '-translate-x-full' : 'translate-x-0'}`}
+          className={`w-full transition-transform duration-150 ease-in-out ${showDetails ? '-translate-x-full' : 'translate-x-0'}`}
         >
           {/* Reactions Section */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
@@ -671,9 +616,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
         {/* Details View */}
         <div 
           ref={detailsRef}
-          className={`absolute top-0 left-0 w-full ${
-            isInitialRender ? '' : 'transition-transform duration-150 ease-in-out'
-          } ${showDetails ? 'translate-x-0' : 'translate-x-full'}`}
+          className={`absolute top-0 left-0 w-full transition-transform duration-150 ease-in-out ${showDetails ? 'translate-x-0' : 'translate-x-full'}`}
         >
           {/* Back Button */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">

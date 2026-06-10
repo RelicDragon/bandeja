@@ -308,6 +308,7 @@
                             <p id="courtsClubLocation"></p>
                         </div>
                         <button class="btn-primary" onclick="createCourtForCenter()">+ Add Court</button>
+                        <button type="button" class="btn-secondary" id="importBooktimeCourtsBtn" style="display: none;" onclick="importBooktimeCourtsForCenter()">Import from BookTime</button>
                     </div>
                     <div class="table-container">
                         <table id="courtsTable">
@@ -318,6 +319,7 @@
                                     <th>Indoor/Outdoor</th>
                                     <th>Surface Type</th>
                                     <th>Price/Hour</th>
+                                    <th>External ID</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -1015,6 +1017,17 @@
                         <button type="button" class="btn-secondary" onclick="assignClubAdminForCenter()">Assign</button>
                     </div>
                 </div>
+                <div id="centerIntegrationSection" class="form-group" style="display: none;">
+                    <label for="centerIntegrationType">Integration</label>
+                    <select id="centerIntegrationType" name="centerIntegrationType" onchange="toggleCenterIntegrationFields()">
+                        <option value="">None</option>
+                        <option value="BOOKTIME">BookTime</option>
+                    </select>
+                    <div id="centerBooktimeFields" style="display: none; margin-top: 12px;">
+                        <label for="centerBooktimeCompanyId">BookTime company ID *</label>
+                        <input type="text" id="centerBooktimeCompanyId" placeholder="UUID" autocomplete="off" />
+                    </div>
+                </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('centerModal')">Cancel</button>
                     <button type="submit" class="btn-primary">Save</button>
@@ -1060,6 +1073,10 @@
                 <div class="form-group-checkbox">
                     <input type="checkbox" id="courtIsActive" checked>
                     <label for="courtIsActive">Active</label>
+                </div>
+                <div class="form-group">
+                    <label for="courtExternalCourtId">External court ID (BookTime)</label>
+                    <input type="text" id="courtExternalCourtId" placeholder="BookTime bookingResourceId" autocomplete="off">
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('courtModal')">Cancel</button>

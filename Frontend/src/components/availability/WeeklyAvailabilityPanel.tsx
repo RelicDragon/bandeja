@@ -16,6 +16,7 @@ import {
   effectiveSlotMask,
   setRollingSlot,
   copyWeekMaskToOtherRollingSlots,
+  resetRollingDocToDefault,
   weekRangeLabel,
   addDaysToYmd,
   isRollingDocDefault,
@@ -108,7 +109,10 @@ export function WeeklyAvailabilityPanel({
     initial: currentSlotInitial,
     onCommit: useCallback(
       async (mask: WeeklyAvailability | null) => {
-        const next = setRollingSlot(rollingDoc, selectedSlot, mask);
+        const next =
+          mask === null
+            ? resetRollingDocToDefault(rollingDoc)
+            : setRollingSlot(rollingDoc, selectedSlot, mask);
         setRollingDoc(next);
         await onChange(next);
       },

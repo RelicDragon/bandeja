@@ -37,6 +37,7 @@ import userTeamRoutes from './userTeam.routes';
 import clubAdminRoutes from './clubAdmin.routes';
 import storyRoutes from './story.routes';
 import adRoutes from './ad.routes';
+import booktimeRoutes from './booktime.routes';
 import { buildHealthPayload } from '../utils/healthInfo';
 
 const router = Router();
@@ -83,6 +84,7 @@ router.use('/user-teams', userTeamRoutes);
 router.use('/club-admin', clubAdminRoutes);
 router.use('/stories', storyRoutes);
 router.use('/ads', adRoutes);
+router.use('/booktime', booktimeRoutes);
 
 export default router;
 

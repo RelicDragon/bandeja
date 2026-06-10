@@ -1,18 +1,4 @@
-import {
-  BOOKTIME_API_URL,
-  BOOKTIME_TEST_STORAGE_KEYS,
-  PADEL_CITY_COMPANY_ID,
-} from './config';
-
-export type BooktimeRequestLog = {
-  method: string;
-  path: string;
-  ok: boolean;
-  status: number;
-  cors: 'ok' | 'blocked' | 'unknown';
-  message: string;
-  at: string;
-};
+import { BOOKTIME_API_URL } from './config';
 
 export type BooktimeUser = {
   uuid: string;
@@ -22,13 +8,39 @@ export type BooktimeUser = {
   email?: string;
 };
 
+export type BooktimeCompanyResource = {
+  uuid?: string;
+  bookingResourceId?: string;
+  name?: string;
+  serviceUuid?: string;
+};
+
 export type BooktimeCompany = {
   name?: string;
   currency?: string;
   timeInterval?: number;
   bookableDays?: number;
   bookingDurations?: number[];
-  bookingResources?: Array<{ uuid: string; name: string }>;
+  allowedHoursToCancel?: number;
+  bookingResources?: BooktimeCompanyResource[];
+};
+
+export type BooktimeBookingRecord = {
+  uuid: string;
+  bookingStart: string;
+  bookingEnd: string;
+  bookingResource?: { uuid?: string; name?: string };
+  status?: string;
+};
+
+export type BooktimeBookingsPage = {
+  bookings: BooktimeBookingRecord[];
+  totalCount?: number;
+};
+
+export type BooktimePriceQuote = {
+  price?: number;
+  currency?: string;
 };
 
 export type BooktimeCourtSlots = {
@@ -37,73 +49,79 @@ export type BooktimeCourtSlots = {
   availableSlots: string[];
 };
 
-function corsFromError(err: unknown): BooktimeRequestLog['cors'] {
-  if (err instanceof TypeError && /fetch|network|cors/i.test(err.message)) {
-    return 'blocked';
-  }
-  return 'unknown';
-}
+export type BooktimeDayBooking = {
+  bookingStart?: string;
+  bookingEnd?: string;
+  startTime?: string;
+  endTime?: string;
+};
+
+export type BooktimeDayResource = {
+  uuid?: string;
+  bookingResourceId?: string;
+  name?: string;
+  bookings?: BooktimeDayBooking[];
+  busySlots?: BooktimeDayBooking[];
+};
+
+export type BooktimeSessionPayload = {
+  accessToken: string;
+  refreshToken: string;
+  user?: BooktimeUser;
+};
+
+export type BooktimeClientOptions = {
+  companyId: string;
+  accessToken?: string | null;
+  refreshToken?: string | null;
+  onTokensUpdated?: (tokens: { accessToken: string; refreshToken: string }) => void;
+  onSessionExpired?: () => void;
+};
 
 function formatPhone(countryCode: string, phoneNumber: string): string {
   const local = phoneNumber.replace(/\D/g, '').replace(/^0+/, '');
   return countryCode + local;
 }
 
-function readStoredUser(): BooktimeUser | null {
-  const raw = sessionStorage.getItem(BOOKTIME_TEST_STORAGE_KEYS.user);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as BooktimeUser;
-  } catch {
-    return null;
-  }
-}
-
 export class BooktimeClient {
   private accessToken: string | null;
+  private refreshToken: string | null;
   private companyId: string;
+  private onTokensUpdated?: (tokens: { accessToken: string; refreshToken: string }) => void;
+  private onSessionExpired?: () => void;
+  private refreshInFlight: Promise<boolean> | null = null;
 
-  constructor(companyId = PADEL_CITY_COMPANY_ID) {
-    this.companyId = companyId;
-    this.accessToken = sessionStorage.getItem(BOOKTIME_TEST_STORAGE_KEYS.accessToken);
+  constructor(options: BooktimeClientOptions) {
+    this.companyId = options.companyId;
+    this.accessToken = options.accessToken ?? null;
+    this.refreshToken = options.refreshToken ?? null;
+    this.onTokensUpdated = options.onTokensUpdated;
+    this.onSessionExpired = options.onSessionExpired;
   }
 
   get isAuthenticated(): boolean {
     return !!this.accessToken;
   }
 
-  getUser(): BooktimeUser | null {
-    return readStoredUser();
+  getTokens(): { accessToken: string | null; refreshToken: string | null } {
+    return { accessToken: this.accessToken, refreshToken: this.refreshToken };
+  }
+
+  applyTokens(accessToken: string, refreshToken: string): void {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken;
+    this.onTokensUpdated?.({ accessToken, refreshToken });
   }
 
   clearSession(): void {
     this.accessToken = null;
-    sessionStorage.removeItem(BOOKTIME_TEST_STORAGE_KEYS.accessToken);
-    sessionStorage.removeItem(BOOKTIME_TEST_STORAGE_KEYS.refreshToken);
-    sessionStorage.removeItem(BOOKTIME_TEST_STORAGE_KEYS.user);
+    this.refreshToken = null;
   }
 
-  private storeSession(data: {
-    accessToken?: string;
-    refreshToken?: string;
-    user?: BooktimeUser;
-  }): void {
-    if (data.accessToken) {
-      this.accessToken = data.accessToken;
-      sessionStorage.setItem(BOOKTIME_TEST_STORAGE_KEYS.accessToken, data.accessToken);
-    }
-    if (data.refreshToken) {
-      sessionStorage.setItem(BOOKTIME_TEST_STORAGE_KEYS.refreshToken, data.refreshToken);
-    }
-    if (data.user) {
-      sessionStorage.setItem(BOOKTIME_TEST_STORAGE_KEYS.user, JSON.stringify(data.user));
-    }
-  }
-
-  async request<T>(
+  private async requestOnce<T>(
     path: string,
     options: { method?: string; body?: Record<string, unknown>; auth?: boolean } = {}
-  ): Promise<{ data: T; log: BooktimeRequestLog }> {
+  ): Promise<T> {
     const method = options.method ?? 'GET';
     const auth = options.auth ?? false;
     const url =
@@ -118,57 +136,78 @@ export class BooktimeClient {
 
     const payload = options.body ? { ...options.body, companyId: this.companyId } : undefined;
 
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: payload ? JSON.stringify(payload) : undefined,
+    });
+
+    const text = await res.text();
+    let data: unknown;
     try {
-      const res = await fetch(url, {
-        method,
-        headers,
-        body: payload ? JSON.stringify(payload) : undefined,
-      });
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = text;
+    }
 
-      const text = await res.text();
-      let data: unknown;
+    const errBody = data as { errorCode?: string; message?: string; error?: string } | null;
+    const message =
+      (typeof errBody?.message === 'string' && errBody.message) ||
+      (typeof errBody?.error === 'string' && errBody.error) ||
+      (typeof errBody?.errorCode === 'string' && errBody.errorCode) ||
+      res.statusText;
+
+    if (!res.ok) {
+      throw Object.assign(new Error(message), { status: res.status, data });
+    }
+
+    return data as T;
+  }
+
+  private async refreshAccessToken(): Promise<boolean> {
+    if (!this.refreshToken) return false;
+    if (this.refreshInFlight) return this.refreshInFlight;
+
+    this.refreshInFlight = (async () => {
       try {
-        data = text ? JSON.parse(text) : null;
+        const data = await this.requestOnce<{
+          accessToken?: string;
+          refreshToken?: string;
+        }>('/users/refresh-token', {
+          method: 'PUT',
+          body: { refreshToken: this.refreshToken! },
+        });
+        if (!data.accessToken) return false;
+        this.applyTokens(data.accessToken, data.refreshToken ?? this.refreshToken!);
+        return true;
       } catch {
-        data = text;
+        return false;
+      } finally {
+        this.refreshInFlight = null;
       }
+    })();
 
-      const errBody = data as { errorCode?: string; message?: string; error?: string } | null;
-      const message =
-        (typeof errBody?.message === 'string' && errBody.message) ||
-        (typeof errBody?.error === 'string' && errBody.error) ||
-        (typeof errBody?.errorCode === 'string' && errBody.errorCode) ||
-        res.statusText;
+    return this.refreshInFlight;
+  }
 
-      const log: BooktimeRequestLog = {
-        method,
-        path,
-        ok: res.ok,
-        status: res.status,
-        cors: 'ok',
-        message: res.ok ? 'OK' : message,
-        at: new Date().toISOString(),
-      };
-
-      if (!res.ok) {
-        throw Object.assign(new Error(message), { log, data });
-      }
-
-      return { data: data as T, log };
+  async request<T>(
+    path: string,
+    options: { method?: string; body?: Record<string, unknown>; auth?: boolean } = {}
+  ): Promise<T> {
+    const auth = options.auth ?? false;
+    try {
+      return await this.requestOnce<T>(path, options);
     } catch (err) {
-      if (err && typeof err === 'object' && 'log' in err) {
-        throw err;
+      const status = err && typeof err === 'object' && 'status' in err ? Number((err as { status: number }).status) : 0;
+      if (auth && status === 401) {
+        const refreshed = await this.refreshAccessToken();
+        if (refreshed) {
+          return this.requestOnce<T>(path, options);
+        }
+        this.clearSession();
+        this.onSessionExpired?.();
       }
-      const log: BooktimeRequestLog = {
-        method,
-        path,
-        ok: false,
-        status: 0,
-        cors: corsFromError(err),
-        message: err instanceof Error ? err.message : 'Request failed',
-        at: new Date().toISOString(),
-      };
-      throw Object.assign(new Error(log.message), { log });
+      throw err;
     }
   }
 
@@ -178,7 +217,7 @@ export class BooktimeClient {
 
   async startPhoneLogin(countryCode: string, phoneNumber: string) {
     const phone = formatPhone(countryCode, phoneNumber);
-    const { data, log } = await this.request<{ isUserExists?: boolean }>('/users/login', {
+    const data = await this.request<{ isUserExists?: boolean }>('/users/login', {
       method: 'POST',
       body: { phoneNumber: phone },
     });
@@ -187,7 +226,6 @@ export class BooktimeClient {
       countryCode,
       localNumber: phoneNumber.replace(/\D/g, '').replace(/^0+/, ''),
       isUserExists: !!data.isUserExists,
-      log,
     };
   }
 
@@ -198,18 +236,14 @@ export class BooktimeClient {
     });
   }
 
-  async confirmLogin(phoneNumber: string, code: string, language = 'sr') {
-    const { data, log } = await this.request<{
-      accessToken?: string;
-      refreshToken?: string;
-      user?: BooktimeUser;
-    }>('/users/confirm-login', {
+  async confirmLogin(phoneNumber: string, code: string, language = 'sr'): Promise<BooktimeSessionPayload> {
+    const data = await this.request<BooktimeSessionPayload & { user?: BooktimeUser }>('/users/confirm-login', {
       method: 'POST',
       body: { phoneNumber, code, language },
     });
-    if (!data.accessToken) throw new Error('No access token in response');
-    this.storeSession(data);
-    return { ...data, log };
+    if (!data.accessToken || !data.refreshToken) throw new Error('Incomplete login response');
+    this.applyTokens(data.accessToken, data.refreshToken);
+    return data;
   }
 
   async signUp(params: {
@@ -233,18 +267,22 @@ export class BooktimeClient {
     });
   }
 
-  async confirmSignUp(phoneNumber: string, code: string, language = 'sr') {
-    const { data, log } = await this.request<{
-      accessToken?: string;
-      refreshToken?: string;
-      user?: BooktimeUser;
-    }>('/users/confirm-signup', {
+  async confirmSignUp(phoneNumber: string, code: string, language = 'sr'): Promise<BooktimeSessionPayload> {
+    const data = await this.request<BooktimeSessionPayload & { user?: BooktimeUser }>('/users/confirm-signup', {
       method: 'PUT',
       body: { phoneNumber, code, language },
     });
-    if (!data.accessToken) throw new Error('No access token in response');
-    this.storeSession(data);
-    return { ...data, log };
+    if (!data.accessToken || !data.refreshToken) throw new Error('Incomplete signup response');
+    this.applyTokens(data.accessToken, data.refreshToken);
+    return data;
+  }
+
+  async acceptCustomTerms(): Promise<void> {
+    try {
+      await this.request('/users/accept-custom-terms', { method: 'PATCH', auth: true });
+    } catch {
+      /* non-blocking per plan */
+    }
   }
 
   async getCompany() {
@@ -265,11 +303,64 @@ export class BooktimeClient {
     });
   }
 
-  async getUpcomingBookings() {
-    return this.request<unknown[]>('/booking/get-upcoming', {
+  async getForDay(date: Date) {
+    return this.request<BooktimeDayResource[]>('/booking-resources/get-for-day', {
       method: 'POST',
       auth: true,
-      body: { index: 0, size: 5 },
+      body: { date: this.formatDate(date) },
+    });
+  }
+
+  async getPrice(params: { bookingStart: string; bookingEnd: string; serviceUuid: string }) {
+    return this.request<BooktimePriceQuote>('/booking/get-price', {
+      method: 'POST',
+      auth: true,
+      body: params,
+    });
+  }
+
+  async createBooking(params: {
+    bookingStart: string;
+    bookingEnd: string;
+    userId: string;
+    bookingResourceId: string;
+    serviceId: string;
+    description?: string;
+  }) {
+    return this.request<BooktimeBookingRecord>('/booking', {
+      method: 'POST',
+      auth: true,
+      body: {
+        bookingStart: params.bookingStart,
+        bookingEnd: params.bookingEnd,
+        userId: params.userId,
+        bookingResourceId: params.bookingResourceId,
+        serviceId: params.serviceId,
+        description: params.description ?? '',
+      },
+    });
+  }
+
+  async cancelBooking(bookingId: string) {
+    return this.request<void>(`/booking/cancel?bookingId=${encodeURIComponent(bookingId)}`, {
+      method: 'PATCH',
+      auth: true,
+    });
+  }
+
+  async getUpcomingBookings(index = 0, size = 20) {
+    return this.request<BooktimeBookingsPage>('/booking/get-upcoming', {
+      method: 'POST',
+      auth: true,
+      body: { index, size },
+    });
+  }
+
+  async getPreviousBookings(index = 0, size = 20) {
+    return this.request<BooktimeBookingsPage>('/booking/get-previous', {
+      method: 'POST',
+      auth: true,
+      body: { index, size },
     });
   }
 }

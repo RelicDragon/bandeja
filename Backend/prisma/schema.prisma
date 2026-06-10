@@ -163,6 +163,7 @@ model User {
   refreshSessions         UserRefreshSession[]
   clubAdmins              ClubAdmin[]
   courtSlotHoldsCreated   CourtSlotHold[]
+  booktimeClubAuths       UserClubBooktimeAuth[]
   sportProfiles           UserSportProfile[]
   gamePhotosUploaded      GamePhoto[]          @relation("GamePhotoUploader")
   stories                 UserStory[]          @relation("UserStoryOwner")
@@ -277,8 +278,7 @@ model Club {
   isActive             Boolean            @default(true)
   isBar                Boolean            @default(false)
   isForPlaying         Boolean            @default(true)
-  integrationScriptName String?
-  integrationScriptDateIndependent Boolean? @default(false)
+  integrationType      ClubIntegrationType?
   integrationConfig    Json?
   ptMeta               Json?    @map("pt_meta")
   courtsNumber         Int                @default(0)
@@ -299,11 +299,53 @@ model Club {
   clubAdmins           ClubAdmin[]
   courtSlotHolds       CourtSlotHold[]
   adSponsors           AdSponsor[]
+  booktimeAuths        UserClubBooktimeAuth[]
+  booktimeBusySnapshots ClubBooktimeBusySnapshot[]
 
   @@index([cityId])
   @@index([isActive])
-  @@index([integrationScriptName])
+  @@index([integrationType])
   @@index([normalizedName])
+}
+
+enum ClubIntegrationType {
+  BOOKTIME
+}
+
+model UserClubBooktimeAuth {
+  id             String    @id @default(cuid())
+  userId         String
+  clubId         String
+  externalUserId String
+  phoneNumber    String?
+  accessToken    String
+  refreshToken   String
+  expiresAt      DateTime?
+  scoutOptIn     Boolean   @default(true)
+  scoutInvalidAt DateTime?
+  updatedAt      DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, clubId])
+  @@index([clubId, scoutOptIn])
+}
+
+model ClubBooktimeBusySnapshot {
+  id                String   @id @default(cuid())
+  clubId            String
+  courtId           String?
+  externalCourtId   String?
+  externalCourtName String?
+  date              String
+  busySlots         Json
+  fetchedAt         DateTime
+  club              Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  court             Court?   @relation(fields: [courtId], references: [id], onDelete: SetNull)
+
+  @@unique([clubId, courtId, date])
+  @@index([clubId, date])
 }
 
 model UserSportProfile {
@@ -347,6 +389,7 @@ model Court {
   gameCourts     GameCourt[]
   matches        Match[]
   courtSlotHolds CourtSlotHold[]
+  booktimeBusySnapshots ClubBooktimeBusySnapshot[]
 
   @@index([clubId])
   @@index([isActive])
@@ -468,6 +511,8 @@ model Game {
   priceTotal             Float?
   priceType              PriceType           @default(NOT_KNOWN)
   priceCurrency          PriceCurrency?
+  externalBookingId      String?
+  externalBookingProvider ClubIntegrationType?
   metadata               Json?
   lastMessagePreview     String?             @db.VarChar(500)
   createdAt              DateTime            @default(now())
@@ -516,6 +561,7 @@ model Game {
   @@index([endTime])
   @@index([timeIsSet, courtId])
   @@index([mainPhotoId])
+  @@index([externalBookingId])
 }
 
 model GamePhoto {

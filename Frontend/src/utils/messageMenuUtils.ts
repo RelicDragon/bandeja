@@ -54,3 +54,12 @@ export const getUserInitials = (user: { firstName?: string; lastName?: string })
   return (first + last).toUpperCase() || 'U';
 };
 
+export function computeMessageMenuTop(
+  windowHeight: number,
+  effectiveMenuHeight: number,
+  padding = 20
+): number {
+  const menuCenterTop = (windowHeight - effectiveMenuHeight) / 2;
+  return Math.max(padding, Math.min(menuCenterTop, windowHeight - effectiveMenuHeight - padding));
+}
+

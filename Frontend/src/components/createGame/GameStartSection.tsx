@@ -7,6 +7,7 @@ import { CalendarComponent } from '@/components/Calendar';
 import { EntityType, Club } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
 import { useBookedCourts } from '@/hooks/useBookedCourts';
+import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 
 interface GameStartSectionProps {
   selectedDate: Date;
@@ -62,7 +63,7 @@ export const GameStartSection = ({
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
   
-  const { isSlotBooked, getBookedSlotInfo, getOverlappingBookings, areAllSlotsUnconfirmed, hasExternallyBookedSlot, isSlotHardBlocked, refetch } = useBookedCourts({
+  const { isSlotBooked, getBookedSlotInfo, getOverlappingBookings, areAllSlotsUnconfirmed, hasExternallyBookedSlot, isSlotHardBlocked, isLoadingExternalSlots, snapshotBanner, refetch } = useBookedCourts({
     clubId: selectedClub || null,
     selectedDate,
     selectedCourt: selectedCourt || null,
@@ -182,6 +183,9 @@ export const GameStartSection = ({
           </div>
         ) : (
           <>
+            {entityType !== 'BAR' && club?.integrationType === 'BOOKTIME' ? (
+              <BooktimeAvailabilityBanner loading={isLoadingExternalSlots} banner={snapshotBanner} />
+            ) : null}
             {entityType !== 'BAR' && (club?.policyText || club?.cancellationNoticeHours) && (
               <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
                 {club.cancellationNoticeHours != null && club.cancellationNoticeHours > 0 && (

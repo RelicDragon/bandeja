@@ -93,7 +93,7 @@ export interface ClubAdminClubListItem {
   city: { id: string; name: string; timezone: string };
   courtsCount: number;
   bookingsToday: number;
-  integrationScriptName: string | null;
+  integrationType: string | null;
 }
 
 export interface ClubAdminClubsListResponse {

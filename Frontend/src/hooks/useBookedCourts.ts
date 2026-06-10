@@ -1,13 +1,19 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { gamesApi } from '@/api';
 import { Club, BookedCourtSlot } from '@/types';
 import { getClubTimezone, createDateFromClubTime } from './useGameTimeDuration';
+import {
+  useBooktimeSnapshotRefresh,
+  type BooktimeSnapshotBanner,
+} from './useBooktimeSnapshotRefresh';
+import { useAuthStore } from '@/store/authStore';
 
 interface UseBookedCourtsProps {
   clubId: string | null;
   selectedDate: Date;
   selectedCourt: string | null;
   club?: Club;
+  snapshotRefreshEnabled?: boolean;
 }
 
 interface BookedSlotInfo {
@@ -24,10 +30,23 @@ export const useBookedCourts = ({
   selectedDate,
   selectedCourt,
   club,
+  snapshotRefreshEnabled = true,
 }: UseBookedCourtsProps) => {
   const [bookedCourts, setBookedCourts] = useState<BookedCourtSlot[]>([]);
   const [loading, setLoading] = useState(false);
   const [isLoadingExternalSlots, setIsLoadingExternalSlots] = useState(false);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const refreshAttemptedRef = useRef<string | null>(null);
+
+  const isBooktimeClub = club?.integrationType === 'BOOKTIME';
+  const refreshEnabled =
+    snapshotRefreshEnabled && isAuthenticated && isBooktimeClub && !!clubId && !!club;
+
+  const {
+    refreshSnapshot,
+    isRefreshingSnapshot,
+    snapshotBanner,
+  } = useBooktimeSnapshotRefresh(refreshEnabled ? club : undefined, selectedDate, refreshEnabled);
 
   const startOfDay = useMemo(() => {
     if (!clubId || !selectedDate) return null;
@@ -46,6 +65,7 @@ export const useBookedCourts = ({
   const fetchBookedCourts = useCallback(async () => {
     if (!clubId || !startOfDay || !endOfDay) {
       setBookedCourts([]);
+      setIsLoadingExternalSlots(false);
       return;
     }
 
@@ -58,7 +78,26 @@ export const useBookedCourts = ({
         courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
       });
       setBookedCourts(response.data || []);
-      setIsLoadingExternalSlots(response.isLoadingExternalSlots || false);
+      const externalLoading = response.isLoadingExternalSlots || false;
+      setIsLoadingExternalSlots(externalLoading);
+
+      if (externalLoading && refreshEnabled) {
+        const attemptKey = `${clubId}:${selectedDate.toISOString()}`;
+        if (refreshAttemptedRef.current !== attemptKey) {
+          refreshAttemptedRef.current = attemptKey;
+          const refreshed = await refreshSnapshot();
+          if (refreshed) {
+            const retry = await gamesApi.getBookedCourts({
+              clubId,
+              startDate: startOfDay,
+              endDate: endOfDay,
+              courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
+            });
+            setBookedCourts(retry.data || []);
+            setIsLoadingExternalSlots(retry.isLoadingExternalSlots || false);
+          }
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch booked courts:', error);
       setBookedCourts([]);
@@ -66,10 +105,11 @@ export const useBookedCourts = ({
     } finally {
       setLoading(false);
     }
-  }, [clubId, startOfDay, endOfDay, selectedCourt]);
+  }, [clubId, startOfDay, endOfDay, selectedCourt, refreshEnabled, refreshSnapshot, selectedDate]);
 
   useEffect(() => {
-    fetchBookedCourts();
+    refreshAttemptedRef.current = null;
+    void fetchBookedCourts();
   }, [fetchBookedCourts]);
 
   const bookedSlots = useMemo(() => {
@@ -173,6 +213,8 @@ export const useBookedCourts = ({
     return slots.some((slot) => slot.clubBooked || slot.holdBlocked);
   };
 
+  const externalSlotsLoading = isLoadingExternalSlots || isRefreshingSnapshot;
+
   return {
     bookedSlots,
     isSlotBooked,
@@ -182,10 +224,14 @@ export const useBookedCourts = ({
     hasExternallyBookedSlot,
     isSlotHardBlocked,
     loading,
-    isLoadingExternalSlots,
+    isLoadingExternalSlots: externalSlotsLoading,
+    snapshotBanner,
+    refreshSnapshot,
     refetch: fetchBookedCourts,
   };
 };
+
+export type { BooktimeSnapshotBanner };
 
 const formatTimeInClubTimezone = (date: Date, club?: Club): string => {
   const clubTimezone = getClubTimezone(club);
@@ -197,4 +243,3 @@ const formatTimeInClubTimezone = (date: Date, club?: Club): string => {
   });
   return formatter.format(date);
 };
-

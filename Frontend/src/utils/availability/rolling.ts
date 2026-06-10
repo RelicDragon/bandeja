@@ -158,6 +158,13 @@ export function setRollingSlot(
   return { ...doc, weeks };
 }
 
+/** Clear baseline and all slot overrides — entire doc is 24/7 default. */
+export function resetRollingDocToDefault(
+  doc: RollingWeeklyAvailabilityV2
+): RollingWeeklyAvailabilityV2 {
+  return { ...doc, baseline: null, weeks: [null, null, null] };
+}
+
 /** Apply the same weekly mask to every rolling slot except the source (source unchanged). */
 export function copyWeekMaskToOtherRollingSlots(
   doc: RollingWeeklyAvailabilityV2,

@@ -1393,6 +1393,20 @@ export const ProfileContent = () => {
 
         <Card>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            {t('club.booktime.connectedClubsCardTitle')}
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">{t('club.booktime.connectedClubsCardHint')}</p>
+          <Button
+            variant="primary"
+            onClick={() => navigate('/profile/connected-clubs')}
+            className="w-full rounded-xl"
+          >
+            {t('club.booktime.connectedClubsCardCta')}
+          </Button>
+        </Card>
+
+        <Card>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             {t('profile.sessionsTitle')}
           </h2>
           <div className="flex items-center gap-2 mb-4">

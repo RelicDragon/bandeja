@@ -263,6 +263,9 @@ Frontend/e2e/
 | H-33 | Subtab survives refresh | On past-games subtab → reload | Still on past-games |
 | H-34 | Restore calendar after create | Create game from calendar | Returns to calendar + game date selected |
 | H-35 | Invite friend to app | `InviteFriendToBandejaButton` | Share sheet / copy invite link |
+| H-37 | BookTime connect banner (My tab) | User in city with BOOKTIME club, not connected | Connect banner on My tab → settings page |
+| H-38 | BookTime upcoming cards (My tab) | Connected user with upcoming bookings | Up to 3 cards + "See all" |
+| H-39 | BookTime tab focus refresh | Switch away from My tab and back | Upcoming bookings refetched from BookTime |
 
 ---
 
@@ -356,6 +359,25 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | C-13 | Club selection | Pick club | Courts load |
+| C-13a | BookTime connect banner | Open club detail for BOOKTIME club, not connected | Connect banner shown |
+| C-13b | BookTime OTP connect | Phone + OTP (existing account) | Connected chip; GET auth has no tokens |
+| C-13c | BookTime connect hidden | BOOKTIME club already connected | No connect banner |
+| C-13d | BookTime cold-start refresh | Open create-game or club detail for BOOKTIME club with stale/missing snapshot | "Updating club availability…" then grid shows external busy |
+| C-13e | BookTime no sync banner | Unconnected user, empty scout pool, no snapshot today | "No sync yet today" or scout-pool degraded banner |
+| C-13f | BookTime availability sheet | Open BOOKTIME club detail with mapped courts | Free slot grid per court; 60/120 min toggle |
+| C-13g | BookTime slot connect gate | Tap slot while not connected to BookTime | ConnectClubSheet opens |
+| C-13h | BookTime last sync | After snapshot refresh on club detail | "Last synced …" shown on availability section |
+| C-13i | BookTime unmapped courts hidden | Club has unmapped BookTime courts | Only mapped courts appear in availability sheet |
+| C-13j | BookTime book with price | Connected user taps free slot → confirm | Price shown; booking succeeds; success modal with "Create game here" |
+| C-13k | BookTime slot taken | Confirm book while slot becomes busy | Toast "That slot was just taken"; grid refreshes |
+| C-13l | BookTime cancel booking | Connected user → upcoming list → cancel | Policy confirm modal; booking removed; snapshot refreshes |
+| C-13m | BookTime create game CTA | After book success tap "Create game here" | Create-game opens with club/court/time pre-filled |
+| C-13n | BookTime create game soft link | Create game from booking with externalBookingId | Game saved with `hasBookedCourt: true` and external link |
+| C-13o | BookTime cancel linked game warn | Cancel booking that has linked game | Success + non-blocking "Your game is still on the calendar" + Open game |
+| C-13p | BookTime orphan link notice | Game with external link but booking cancelled elsewhere | Game details shows "Court may no longer be reserved" |
+| C-13q | BookTime signup connect | ConnectClubSheet → new user signup + OTP | Account created; connected chip shown |
+| C-13r | BookTime create-game grid refresh | Open create-game for BOOKTIME club with stale snapshot | Banner then red external cells after snapshot PUT |
+| C-13s | BookTime scout pool degraded | Unconnected user, empty scout pool | "Live availability unavailable" banner on create-game/club detail |
 | C-14 | Court not booked | Select "not booked" | Allowed |
 | C-15 | Court booked | Pick court | Overlap warning if conflict |
 | C-16 | Mark court booked modal | Confirm booking | Court marked |
@@ -563,7 +585,7 @@ Frontend/e2e/
 | CH-20 | Reply to message | Reply action | Threaded reply |
 | CH-21 | Edit message | Edit own message | Updated content |
 | CH-22 | Delete message | Delete own | Removed/hidden |
-| CH-23 | Reaction | Add reaction | Reaction bar |
+| CH-23 | Reaction | Add reaction on user or system message (e.g. join/leave) | Reaction strip visible; emoji persists |
 | CH-24 | Pin message | Pin (if permitted) | Pinned bar shows |
 | CH-25 | Unpin message | Unpin | Bar updates |
 | CH-26 | Forward message | Forward to another chat | Appears in target |
@@ -613,6 +635,7 @@ Frontend/e2e/
 | CH-60 | Channel with market filter | `/channel-chat/:id?filter=market` | Market filter active |
 | CH-61 | Group settings page | Navigate to group settings | Member/admin actions |
 | CH-62 | Kick from group settings | Admin kicks member | Member removed |
+| CH-63 | Bug chat video attach (iOS) | `@mobile` Capacitor iOS → bug thread → attach gallery MOV | Video accepted; compress toast; message sends |
 
 ---
 
@@ -696,6 +719,7 @@ Frontend/e2e/
 | PR-13 | Bio | 128 char limit | Save |
 | PR-14 | Gender set once | Change gender | Rules enforced |
 | PR-15 | Weekly availability | Toggle schedule grid | Saved |
+| PR-61 | Availability reset 24/7 | Set evening-only schedule → "Reset to 24/7", or clear then weekdays+weekends | Stays 24/7; does not revert to evening |
 | PR-16 | Availability visibility | Public/private toggle | Saved |
 | PR-17 | Profile sports section | Enable/disable sports | Primary sport updated |
 | PR-18 | Sport levels display | Per-sport levels | Badges update |
@@ -741,6 +765,11 @@ Frontend/e2e/
 | PR-53 | Share user profile | Share button | `ShareModal` with profile URL |
 | PR-54 | Display preferences | 12h/24h, date format toggles | Affects game time display app-wide |
 | PR-55 | Competitive vs social badge | User with both levels | Correct badge for sport context |
+| PR-56 | Connected clubs settings entry | Profile → Connected clubs & bookings | Navigates to `/profile/connected-clubs` |
+| PR-57 | Connected clubs page | Connect/disconnect, scout opt-in, upcoming/past | Full bookings list per club |
+| PR-58 | Scout opt-in toggle | Toggle off on connected club | PATCH scout-opt-in; pool eligibility updates |
+| PR-59 | BookTime disconnect | Connected clubs page → Disconnect | Toast "BookTime disconnected"; club shows connect CTA |
+| PR-60 | BookTime cancel from settings | Settings page upcoming → cancel booking | Same policy modal + snapshot refresh as club detail |
 
 ---
 
@@ -797,6 +826,11 @@ Frontend/e2e/
 | CA-09 | Settings page | Club settings | Updates persist |
 | CA-10 | View as player | Preview modal | Player perspective |
 | CA-11 | Coach marks | First visit | Hints shown once |
+| CA-12 | BookTime sync status banner | BOOKTIME club schedule, snapshot stale/missing | "Updating club availability…" or "No sync yet today" or "Last synced …" |
+| CA-13 | BookTime unmapped courts warning | Club with unmapped BookTime snapshot courts | Amber banner with count + link to All courts |
+| CA-14 | BookTime unassigned lane | Schedule date with `courtId: null` snapshot busy | "Unassigned" column shows external busy slots |
+| CA-15 | BookTime external on grid | Mapped BookTime busy in snapshot | Red external slots on matching court columns |
+| CA-16 | BookTime integration down | Snapshot load failure | "Club system unavailable" banner; app games/blocks still shown |
 
 ---
 
@@ -886,6 +920,14 @@ Frontend/e2e/
 | X-38 | Photos permission denied | Upload avatar → `PermissionModal` |
 | X-39 | Camera permission | Story/game photo capture |
 | X-40 | Geolocation permission | City/map features |
+
+### 18.9 BookTime platform admin (`Admin/`)
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| X-41 | BookTime integration type | Platform admin → edit club → Integration type BookTime + companyId | Saved; player app shows BookTime surfaces for club |
+| X-42 | BookTime import courts | BOOKTIME club → Import courts | Courts matched/created; `externalCourtId` set; schedule grid shows mapped externals |
+| X-43 | BookTime manual external ID | Platform admin court list → set externalCourtId | Snapshot maps busy to internal court column |
 
 ---
 

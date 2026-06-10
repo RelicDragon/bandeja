@@ -1,10 +1,13 @@
 import { Capacitor } from '@capacitor/core';
 import { Filesystem } from '@capacitor/filesystem';
 import { isCapacitor } from './capacitor';
+import { withNormalizedVideoMime } from './videoFileUtils';
 
 export type VideoPickResult = { file: File };
 
 const VIDEO_MIME = /^video\//i;
+const CAPACITOR_PICK_POLL_MS = 100;
+const CAPACITOR_PICK_MAX_ATTEMPTS = 150;
 
 async function blobFromCapacitorPath(path: string, webPath?: string): Promise<Blob> {
   if (webPath) {
@@ -67,7 +70,6 @@ export function pickVideo(): Promise<VideoPickResult | null> {
 
     const detachWindowListeners = () => {
       window.removeEventListener('focus', onFocus);
-      window.removeEventListener('blur', onBlur);
     };
 
     const finish = (file: File | null) => {
@@ -87,28 +89,25 @@ export function pickVideo(): Promise<VideoPickResult | null> {
       stopWebCancelTimer();
       try {
         if (raw.size > 0 || !isCapacitor()) {
-          finish(raw);
+          finish(withNormalizedVideoMime(raw));
           return;
         }
         const anyFile = raw as File & { path?: string; webPath?: string };
-        if (anyFile.path) {
-          const blob = await blobFromCapacitorPath(anyFile.path, anyFile.webPath);
-          finish(fileFromBlob(blob, raw.name || 'video.mp4'));
+        if (anyFile.path || anyFile.webPath) {
+          const blob = await blobFromCapacitorPath(anyFile.path ?? anyFile.webPath!, anyFile.webPath);
+          finish(withNormalizedVideoMime(fileFromBlob(blob, raw.name || 'video.mp4')));
           return;
         }
-        finish(raw);
+        finish(withNormalizedVideoMime(raw));
       } catch (e) {
         console.error('[pickVideo] failed to read file', e);
         finish(null);
       }
     };
 
-    const startCapacitorCancelPoll = () => {
-      if (resolved) return;
-      stopCapacitorPoll();
+    const startCapacitorPickPoll = () => {
+      if (resolved || pollId != null) return;
       let attempts = 0;
-      const maxAttempts = 50;
-      const intervalMs = 100;
       pollId = window.setInterval(() => {
         if (resolved) {
           stopCapacitorPoll();
@@ -120,11 +119,11 @@ export function pickVideo(): Promise<VideoPickResult | null> {
           return;
         }
         attempts++;
-        if (attempts >= maxAttempts) {
+        if (attempts >= CAPACITOR_PICK_MAX_ATTEMPTS) {
           stopCapacitorPoll();
           finish(null);
         }
-      }, intervalMs);
+      }, CAPACITOR_PICK_POLL_MS);
     };
 
     const scheduleWebPickerCancel = () => {
@@ -141,14 +140,10 @@ export function pickVideo(): Promise<VideoPickResult | null> {
     const onFocus = () => {
       if (resolved) return;
       if (isCapacitor()) {
-        startCapacitorCancelPoll();
+        startCapacitorPickPoll();
       } else {
         scheduleWebPickerCancel();
       }
-    };
-
-    const onBlur = () => {
-      if (isCapacitor()) stopCapacitorPoll();
     };
 
     input.onchange = async () => {
@@ -161,7 +156,6 @@ export function pickVideo(): Promise<VideoPickResult | null> {
     };
 
     window.addEventListener('focus', onFocus);
-    window.addEventListener('blur', onBlur);
     document.body.appendChild(input);
     setTimeout(() => input.click(), 0);
   });

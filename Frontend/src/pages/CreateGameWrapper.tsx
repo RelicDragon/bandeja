@@ -6,6 +6,34 @@ import type { CreateFlowIntent, CreateTemplateId } from '@/sport/createFlow';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
+function initialGameDataFromSearch(search: string): Partial<Game> | undefined {
+  const params = new URLSearchParams(search);
+  const clubId = params.get('clubId');
+  if (!clubId) return undefined;
+  const data: Partial<Game> = { clubId };
+  const courtId = params.get('courtId');
+  if (courtId) data.courtId = courtId;
+  const startTime = params.get('startTime');
+  const endTime = params.get('endTime');
+  if (startTime) data.startTime = startTime;
+  if (endTime) data.endTime = endTime;
+  const hasBookedCourt = params.get('hasBookedCourt');
+  if (hasBookedCourt === '1' || hasBookedCourt === 'true') {
+    data.hasBookedCourt = true;
+  }
+  const externalBookingId = params.get('externalBookingId');
+  if (externalBookingId) {
+    data.externalBookingId = externalBookingId;
+    data.externalBookingProvider = 'BOOKTIME';
+    data.hasBookedCourt = true;
+  }
+  const externalBookingProvider = params.get('externalBookingProvider');
+  if (externalBookingProvider === 'BOOKTIME') {
+    data.externalBookingProvider = 'BOOKTIME';
+  }
+  return data;
+}
+
 export const CreateGameWrapper = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -15,8 +43,12 @@ export const CreateGameWrapper = () => {
     createIntent?: CreateFlowIntent;
     selectedTemplateId?: CreateTemplateId;
   };
-  const entityType = state?.entityType;
-  const initialGameData = state?.initialGameData;
+  const queryInitialGameData = initialGameDataFromSearch(location.search);
+  const entityType =
+    state?.entityType ??
+    (new URLSearchParams(location.search).get('entityType') as EntityType | null) ??
+    (queryInitialGameData ? 'GAME' : undefined);
+  const initialGameData = { ...queryInitialGameData, ...state?.initialGameData };
   const initialCreateIntent = state?.createIntent;
   const initialTemplateId = state?.selectedTemplateId;
   const { setBottomTabsVisible } = useShellNavStore();

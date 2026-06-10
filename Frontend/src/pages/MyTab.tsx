@@ -10,6 +10,7 @@ import {
   UserTeamsHomeSection,
   YourLeaguesHomeSection,
 } from '@/components/home';
+import { MyTabBookingsSection } from '@/components/booktime/MyTabBookingsSection';
 import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
 import { StoriesRail } from '@/components/stories/StoriesRail';
 import { AdSlot } from '@/components/sponsorSlots';
@@ -385,6 +386,7 @@ export const MyTab = () => {
         {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
+        {user && <MyTabBookingsSection />}
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <InvitesSection
             invites={invites}
@@ -474,6 +476,7 @@ export const MyTab = () => {
         {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
+        {user && <MyTabBookingsSection />}
         <div
           className={`transition-all duration-500 ease-in-out overflow-hidden ${
             !loading

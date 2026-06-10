@@ -203,6 +203,7 @@ async function createCenterModal() {
     document.getElementById('centerForm').dataset.mode = 'create';
     document.getElementById('centerForm').dataset.centerId = '';
     document.getElementById('centerMediaSection').style.display = 'none';
+    document.getElementById('centerIntegrationSection').style.display = 'none';
     const adminsSec = document.getElementById('centerAdminsSection');
     if (adminsSec) adminsSec.style.display = 'none';
     const pr = document.getElementById('centerAvatarPreview');
@@ -255,7 +256,41 @@ async function editCenterModal(center) {
     renderEditingClubPhotos(center.id);
     await loadCityOptions(center.cityId);
     document.getElementById('centerAdminsSection').style.display = 'block';
+    document.getElementById('centerIntegrationSection').style.display = 'block';
+    const integrationType = center.integrationType || '';
+    document.getElementById('centerIntegrationType').value = integrationType;
+    const config = center.integrationConfig && typeof center.integrationConfig === 'object'
+        ? center.integrationConfig
+        : {};
+    document.getElementById('centerBooktimeCompanyId').value = config.companyId || '';
+    toggleCenterIntegrationFields();
     await loadClubAdminsForCenter(center.id);
+}
+
+function toggleCenterIntegrationFields() {
+    const type = document.getElementById('centerIntegrationType')?.value || '';
+    const booktimeFields = document.getElementById('centerBooktimeFields');
+    if (booktimeFields) {
+        booktimeFields.style.display = type === 'BOOKTIME' ? 'block' : 'none';
+    }
+}
+
+function readCenterIntegrationPayload() {
+    const type = document.getElementById('centerIntegrationType')?.value || '';
+    if (!type) {
+        return { integrationType: null, integrationConfig: null };
+    }
+    if (type === 'BOOKTIME') {
+        const companyId = document.getElementById('centerBooktimeCompanyId')?.value?.trim() || '';
+        if (!companyId) {
+            throw new Error('BookTime company ID is required');
+        }
+        return {
+            integrationType: 'BOOKTIME',
+            integrationConfig: { companyId },
+        };
+    }
+    throw new Error('Unsupported integration type');
 }
 
 let editingClubPhotos = [];
@@ -380,9 +415,10 @@ async function handleCenterSubmit(e) {
                 body: JSON.stringify(data),
             });
         } else {
+            const integrationPayload = readCenterIntegrationPayload();
             await apiRequest(`/admin/clubs/${centerId}`, {
                 method: 'PUT',
-                body: JSON.stringify(data),
+                body: JSON.stringify({ ...data, ...integrationPayload }),
             });
         }
         closeModal('centerModal');
@@ -416,6 +452,7 @@ function createCourtForCenter() {
     document.getElementById('courtForm').dataset.mode = 'create';
     document.getElementById('courtForm').dataset.courtId = '';
     document.getElementById('courtClubId').value = currentCenter.id;
+    document.getElementById('courtExternalCourtId').value = '';
     document.getElementById('courtCenterName').textContent = `${currentCenter.name} - ${currentCenter.city.name}`;
 }
 
@@ -430,6 +467,7 @@ function editCourtModal(court) {
     document.getElementById('courtSurfaceType').value = court.surfaceType || '';
     document.getElementById('courtPricePerHour').value = court.pricePerHour || '';
     document.getElementById('courtIsActive').checked = court.isActive;
+    document.getElementById('courtExternalCourtId').value = court.externalCourtId || '';
     document.getElementById('courtForm').dataset.mode = 'edit';
     document.getElementById('courtForm').dataset.courtId = court.id;
 }
@@ -451,6 +489,7 @@ async function handleCourtSubmit(e) {
         surfaceType: document.getElementById('courtSurfaceType').value || null,
         pricePerHour: priceValue ? parseFloat(priceValue) : null,
         isActive: document.getElementById('courtIsActive').checked,
+        externalCourtId: optionalTrimToNull(document.getElementById('courtExternalCourtId').value),
     };
 
     try {

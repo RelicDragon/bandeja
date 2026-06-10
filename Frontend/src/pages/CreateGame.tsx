@@ -129,6 +129,7 @@ export const CreateGame = ({
   const [participants, setParticipants] = useState<Array<string | null>>([user?.id || null]);
   const [anyoneCanInvite, setAnyoneCanInvite] = useState<boolean>(initialGameData?.anyoneCanInvite ?? false);
   const [hasBookedCourt, setHasBookedCourt] = useState<boolean>(initialGameData?.hasBookedCourt ?? false);
+  const [externalBookingId] = useState<string | null>(initialGameData?.externalBookingId ?? null);
   const [isPublic, setIsPublic] = useState<boolean>(initialGameData?.isPublic ?? true);
   const [isRatingGame, setIsRatingGame] = useState<boolean>(initialGameData?.affectsRating ?? true);
   const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(initialGameData?.resultsByAnyone ?? false);
@@ -760,7 +761,9 @@ export const CreateGame = ({
         isPublic,
         anyoneCanInvite,
         allowDirectJoin,
-        hasBookedCourt: hasBookedCourt,
+        hasBookedCourt: externalBookingId ? true : hasBookedCourt,
+        externalBookingId: externalBookingId ?? undefined,
+        externalBookingProvider: externalBookingId ? 'BOOKTIME' : undefined,
         afterGameGoToBar: afterGameGoToBar,
         name: gameName || undefined,
         description: comments,

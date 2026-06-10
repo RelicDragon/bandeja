@@ -1,16 +1,21 @@
-import { ParticipantRole, Prisma } from '@prisma/client';
+import { ClubIntegrationType, ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
-import { ClubIntegrationService } from '../clubIntegration/clubIntegration.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import {
+  countUnmappedExternalCourts,
+  getSnapshotDateMeta,
+  loadMergedBusySlots,
+} from '../../shared/booktimeBusySnapshot';
+import { UNASSIGNED_COURT_KEY } from '../../shared/clubScheduleConstants';
 import { ScheduleConflict, ScheduleSlot } from './clubAdmin.types';
+
+export { UNASSIGNED_COURT_KEY };
 
 const ACTIVE_GAME_STATUSES = ['ANNOUNCED', 'STARTED'] as const;
 
 function overlaps(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
   return aStart < bEnd && bStart < aEnd;
 }
-
-export const UNASSIGNED_COURT_KEY = '__unassigned__';
 
 export function scheduleSlotCourtKey(slot: ScheduleSlot): string | null {
   if (slot.type === 'game') return slot.courtId ?? UNASSIGNED_COURT_KEY;
@@ -63,6 +68,9 @@ export class ClubAdminScheduleService {
     conflicts: ScheduleConflict[];
     isLoadingExternalSlots: boolean;
     externalSlotsFailed: boolean;
+    snapshotFetchedAt: string | null;
+    hasSnapshotForDate: boolean;
+    unmappedExternalCourtCount: number;
   }> {
     const dayStart = new Date(dateStr);
     if (Number.isNaN(dayStart.getTime())) {
@@ -86,7 +94,12 @@ export class ClubAdminScheduleService {
       ];
     }
 
-    const [games, holds, club] = await Promise.all([
+    const club = await prisma.club.findUnique({
+      where: { id: clubId },
+      select: { integrationType: true },
+    });
+
+    const [games, holds] = await Promise.all([
       prisma.game.findMany({
         where: gameWhere,
         include: {
@@ -109,10 +122,6 @@ export class ClubAdminScheduleService {
           startTime: { lt: dayEnd },
           endTime: { gt: dayStart },
         },
-      }),
-      prisma.club.findUnique({
-        where: { id: clubId },
-        select: { integrationScriptName: true },
       }),
     ]);
 
@@ -173,29 +182,40 @@ export class ClubAdminScheduleService {
 
     let isLoadingExternalSlots = false;
     let externalSlotsFailed = false;
-    if (club?.integrationScriptName) {
+    let snapshotFetchedAt: string | null = null;
+    let hasSnapshotForDate = false;
+    let unmappedExternalCourtCount = 0;
+
+    if (club?.integrationType === ClubIntegrationType.BOOKTIME) {
       try {
-        const { slots: externalRaw, isLoading } = await ClubIntegrationService.getExternalSlots(
-          clubId,
-          dayStart,
-          dayEnd,
-          1
-        );
-        isLoadingExternalSlots = isLoading;
-        const mapped = await ClubIntegrationService.mapExternalSlotsToCourts(clubId, externalRaw);
-        for (const slot of mapped) {
-          if (!slot.internalCourtId || !slot.isBooked) continue;
-          if (courtId && slot.internalCourtId !== courtId) continue;
+        const [merged, dateMeta, unmappedCount] = await Promise.all([
+          loadMergedBusySlots({
+            clubId,
+            rangeStart: dayStart,
+            rangeEnd: dayEnd,
+            filterCourtId: courtId,
+            includeUnmapped: !courtId,
+          }),
+          getSnapshotDateMeta(clubId, dateStr),
+          countUnmappedExternalCourts(clubId),
+        ]);
+        isLoadingExternalSlots = merged.isLoading;
+        snapshotFetchedAt = dateMeta.snapshotFetchedAt?.toISOString() ?? null;
+        hasSnapshotForDate = dateMeta.hasSnapshotForDate;
+        unmappedExternalCourtCount = unmappedCount;
+
+        for (const slot of merged.slots) {
+          if (courtId && slot.courtId !== courtId) continue;
           slots.push({
             type: 'external',
-            courtId: slot.internalCourtId,
-            courtName: slot.internalCourtName || slot.externalCourtName,
+            courtId: slot.courtId!,
+            courtName: slot.courtName,
             startTime: slot.startTime,
             endTime: slot.endTime,
           });
         }
       } catch (err) {
-        console.error('Club admin schedule external slots error', err);
+        console.error('Club admin schedule BookTime snapshot error', err);
         externalSlotsFailed = true;
       }
     }
@@ -206,6 +226,9 @@ export class ClubAdminScheduleService {
       conflicts: detectScheduleConflicts(slots),
       isLoadingExternalSlots,
       externalSlotsFailed,
+      snapshotFetchedAt,
+      hasSnapshotForDate,
+      unmappedExternalCourtCount,
     };
   }
 }

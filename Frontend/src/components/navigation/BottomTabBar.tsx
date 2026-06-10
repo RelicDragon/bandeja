@@ -7,11 +7,10 @@ import { useBottomTabUnreadBadges } from '@/hooks/useUnreadBridge';
 import { useDesktop } from '@/hooks/useDesktop';
 import { memo, useMemo, useRef } from 'react';
 import { useAuthStore } from '@/store/authStore';
-import { isChatShellPlace, isMarketplaceShellPlace, parseLocation } from '@/utils/urlSchema';
+import { isChatShellPlace, parseLocation } from '@/utils/urlSchema';
+import { resolveBottomTabActiveId, type BottomTabId } from '@/utils/bottomTabActiveId';
 import { hasEnabledSports } from '@/utils/profileSports';
 import { ClubAdminFab } from '@/components/clubAdmin/ClubAdminFab';
-
-type BottomTabId = 'my' | 'find' | 'chats' | 'marketplace' | 'leaderboard';
 
 interface BottomTabBarProps {
   containerPosition?: boolean;
@@ -35,15 +34,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
     () => parseLocation(location.pathname, location.search),
     [location.pathname, location.search]
   );
-  const activeTabId: BottomTabId = (() => {
-    const { place } = parsed;
-    if (place === 'home') return 'my';
-    if (place === 'find') return 'find';
-    if (isChatShellPlace(place)) return 'chats';
-    if (isMarketplaceShellPlace(place)) return 'marketplace';
-    if (place === 'leaderboard') return 'leaderboard';
-    return 'my';
-  })();
+  const activeTabId = resolveBottomTabActiveId(parsed.place);
   const effectivePage = tabOverride ?? activeTabId;
   const findViewMode = (parsed.place === 'find' && parsed.params.view as string) || 'calendar';
   
@@ -93,7 +84,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
 
 
   const handleTabClick = (tab: BottomTabId, path: string) => {
-    if (effectivePage === tab) {
+    if (effectivePage !== null && effectivePage === tab) {
       if (tabOverride && previousPath) {
         const [pathname, search] = previousPath.includes('?') ? [previousPath.split('?')[0], previousPath.split('?')[1] ?? ''] : [previousPath, ''];
         navigate({ pathname, search: search ? `?${search}` : '' }, { replace: true });
@@ -107,22 +98,33 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
     navigate(path, { replace: true });
   };
 
+  const shellPositionClass =
+    containerPosition && shouldAnimateToLeft
+      ? 'absolute bottom-0 left-0 right-0 z-50'
+      : 'fixed bottom-0 left-0 right-0 z-50';
+
   return (
     <motion.div
-      layoutId={isDesktop ? "bottom-tab-bar" : undefined}
-      className={containerPosition && shouldAnimateToLeft ? "absolute bottom-0 left-0 right-0 z-50" : "fixed bottom-0 left-0 right-0 z-50"}
+      layoutRoot
+      layoutScroll={false}
+      layoutId={isDesktop ? 'bottom-tab-bar' : undefined}
+      className={`${shellPositionClass} transform-gpu backface-hidden`}
       style={{ paddingBottom: `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))` }}
-      initial={animateEntry ? { y: '100%' } : undefined}
+      initial={animateEntry ? { y: '100%' } : false}
       animate={animateEntry ? { y: 0 } : undefined}
-      transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : { type: 'spring', stiffness: 300, damping: 30 }}
+      transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : undefined}
     >
       <ClubAdminFab />
       <div className="flex justify-center">
-        <div className="relative w-fit max-w-[calc(100vw-2rem)] bg-white/30 dark:bg-gray-900/30 backdrop-blur-2xl border border-gray-300/60 dark:border-gray-600/60 shadow-[0_-12px_48px_rgba(0,0,0,0.22),0_-4px_24px_rgba(0,0,0,0.14),-20px_0_40px_rgba(0,0,0,0.18),20px_0_40px_rgba(0,0,0,0.18)] dark:shadow-[0_0_12px_rgba(218,165,32,0.26),0_0_24px_rgba(255,215,0,0.07),0_-6px_20px_rgba(0,0,0,0.14)] rounded-2xl">
-          <div className="px-1 relative flex items-center justify-center h-16 overflow-visible">
+        <div className="relative w-fit max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-300/60 shadow-[0_-12px_48px_rgba(0,0,0,0.22),0_-4px_24px_rgba(0,0,0,0.14),-20px_0_40px_rgba(0,0,0,0.18),20px_0_40px_rgba(0,0,0,0.18)] dark:border-gray-600/60 dark:shadow-[0_0_12px_rgba(218,165,32,0.26),0_0_24px_rgba(255,215,0,0.07),0_-6px_20px_rgba(0,0,0,0.14)] [contain:paint]">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-2xl bg-white/30 backdrop-blur-2xl transform-gpu backface-hidden dark:bg-gray-900/30"
+          />
+          <div className="relative px-1 flex items-center justify-center h-16 overflow-visible">
           {tabs.map((tab, index) => {
             const Icon = tab.icon;
-            const isActive = effectivePage === tab.id;
+            const isActive = effectivePage !== null && effectivePage === tab.id;
             const currentDay = new Date().getDate();
             const isCalendarTab = tab.id === 'find';
             
@@ -211,6 +213,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                   <motion.div
                     className="absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10"
                     layoutId="activeTab"
+                    layoutScroll={false}
                     initial={false}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />

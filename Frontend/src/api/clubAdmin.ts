@@ -13,7 +13,7 @@ export interface ClubAdminClubListItem {
   city: { id: string; name: string; timezone: string };
   courtsCount: number;
   bookingsToday: number;
-  integrationScriptName: string | null;
+  integrationType: string | null;
 }
 
 export type ScheduleSlot =
@@ -65,6 +65,9 @@ export interface ClubAdminScheduleResponse {
   conflicts: Array<{ courtId: string; startTime: string; endTime: string; kinds: string[] }>;
   isLoadingExternalSlots: boolean;
   externalSlotsFailed?: boolean;
+  snapshotFetchedAt?: string | null;
+  hasSnapshotForDate?: boolean;
+  unmappedExternalCourtCount?: number;
 }
 
 export interface CourtSlotHold {

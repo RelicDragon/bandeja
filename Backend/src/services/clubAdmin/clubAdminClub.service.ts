@@ -88,7 +88,7 @@ export class ClubAdminClubService {
         city: c.city,
         courtsCount: c._count.courts,
         bookingsToday: countByClub.get(c.id) ?? 0,
-        integrationScriptName: c.integrationScriptName,
+        integrationType: c.integrationType,
       })),
       hasMore: safeOffset + clubs.length < total,
       total,
@@ -107,7 +107,7 @@ export class ClubAdminClubService {
     if (!club) throw new ApiError(404, 'Club not found');
     return {
       ...club,
-      integrationActive: !!club.integrationScriptName,
+      integrationActive: club.integrationType != null,
     };
   }
 

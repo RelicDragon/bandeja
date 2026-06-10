@@ -1,7 +1,7 @@
-import { Prisma } from '@prisma/client';
+import { ClubIntegrationType, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { ClubIntegrationService } from '../clubIntegration/clubIntegration.service';
+import { loadMergedBusySlots } from '../../shared/booktimeBusySnapshot';
 
 export interface BookedCourtSlot {
   courtId: string | null;
@@ -144,55 +144,39 @@ export class BookedCourtsService {
     let isLoadingExternalSlots = false;
 
     if (startDate && endDate) {
-      try {
-        const club = await prisma.club.findUnique({
-          where: { id: clubId },
-          select: {
-            id: true,
-            integrationScriptName: true,
-            integrationScriptDateIndependent: true,
-          },
-        });
+      const club = await prisma.club.findUnique({
+        where: { id: clubId },
+        select: { integrationType: true },
+      });
 
-        if (club?.integrationScriptName) {
-          const start = new Date(startDate);
-          const end = new Date(endDate);
-          const duration = 1;
+      if (club?.integrationType === ClubIntegrationType.BOOKTIME) {
+        try {
+          const rangeStart = new Date(startDate);
+          const rangeEnd = new Date(endDate);
+          rangeEnd.setHours(23, 59, 59, 999);
 
-          const { slots: externalRawSlots, isLoading } =
-            await ClubIntegrationService.getExternalSlots(clubId, start, end, duration);
-
+          const { slots: busySlots, isLoading } = await loadMergedBusySlots({
+            clubId,
+            rangeStart,
+            rangeEnd,
+            filterCourtId: courtId,
+            includeUnmapped: false,
+          });
           isLoadingExternalSlots = isLoading;
 
-          const mappedSlots =
-            await ClubIntegrationService.mapExternalSlotsToCourts(
-              clubId,
-              externalRawSlots
-            );
-
-          externalSlots = mappedSlots
-            .filter(
-              (slot) =>
-                slot.internalCourtId !== null &&
-                slot.isBooked === true &&
-                (!courtId || slot.internalCourtId === courtId)
-            )
-            .map((slot) => ({
-              courtId: slot.internalCourtId,
-              courtName: slot.internalCourtName || slot.externalCourtName,
-              startTime: slot.startTime,
-              endTime: slot.endTime,
-              hasBookedCourt: slot.isBooked,
-              clubBooked: true,
-              isFree: false,
-              slotKind: 'external' as const,
-            }));
+          externalSlots = busySlots.map((slot) => ({
+            courtId: slot.courtId,
+            courtName: slot.courtName,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            hasBookedCourt: true,
+            clubBooked: true,
+            isFree: false,
+            slotKind: 'external' as const,
+          }));
+        } catch (error) {
+          console.error(`Error loading BookTime snapshot for club ${clubId}:`, error);
         }
-      } catch (error) {
-        console.error(
-          `Error checking external slots for club ${clubId}:`,
-          error
-        );
       }
     }
 

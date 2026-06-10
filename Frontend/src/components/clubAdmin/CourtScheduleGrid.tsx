@@ -35,7 +35,13 @@ function slotAt(
   const endMin = startMin + stepMinutes;
   return slots.find((s) => {
     if (courtId === UNASSIGNED_COURT_ID) {
-      if (s.type !== 'game' || s.courtId !== null) return false;
+      if (s.type === 'game' && s.courtId === null) {
+        // unassigned in-app games
+      } else if (s.type === 'external' && s.courtId === UNASSIGNED_COURT_ID) {
+        // unmapped BookTime courts
+      } else {
+        return false;
+      }
     } else if (s.type === 'game' && s.courtId === null) {
       return false;
     } else if (s.courtId !== courtId) {
@@ -67,7 +73,11 @@ export function CourtScheduleGrid({
   );
 
   const activeCourts = courts.filter((c) => c.isActive !== false);
-  const hasUnassigned = slots.some((s) => s.type === 'game' && s.courtId === null);
+  const hasUnassigned = slots.some(
+    (s) =>
+      (s.type === 'game' && s.courtId === null) ||
+      (s.type === 'external' && s.courtId === UNASSIGNED_COURT_ID)
+  );
 
   const columns = useMemo(() => {
     const cols: Array<{ id: string; name: string; isActive: boolean }> = activeCourts.map((c) => ({

@@ -1,6 +1,6 @@
-import { lazy, Suspense, useMemo } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock, ExternalLink, Globe, Mail, MapPin, Phone } from 'lucide-react';
+import { Clock, ExternalLink, Globe, Link2, Loader2, Mail, MapPin, Phone } from 'lucide-react';
 import type { Club } from '@/types';
 import { ClubAvatar } from '@/components/ClubAvatar';
 import { openExternalUrl } from '@/utils/openExternalUrl';
@@ -11,6 +11,18 @@ import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { getClubMapsSearchUrl } from '@/utils/clubMapsUrl';
 import { websiteDisplayHost } from '@/utils/websiteHostname';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
+import { useAuthStore } from '@/store/authStore';
+import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
+import { useBooktimeReconnectPrompt } from '@/hooks/useBooktimeReconnectPrompt';
+import {
+  ConnectClubSheet,
+  type BooktimeIntegrationConfig,
+} from '@/components/booktime/ConnectClubSheet';
+import { hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
+import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
+import { AvailabilitySheet } from '@/components/booktime/AvailabilitySheet';
+import { BooktimeUpcomingBookings } from '@/components/booktime/BooktimeUpcomingBookings';
 
 const ClubMiniMap = lazy(async () => {
   const m = await import('@/components/ClubMiniMap');
@@ -21,7 +33,20 @@ type ClubDetailPanelProps = {
   club: Club;
   onOpenFullscreenPhoto: (url: string) => void;
   onClubRefresh?: () => Promise<void>;
+  snapshotDate?: Date;
 };
+
+function parseBooktimeConfig(raw: unknown): BooktimeIntegrationConfig | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const companyId = (raw as Record<string, unknown>).companyId;
+  if (typeof companyId !== 'string' || !companyId.trim()) return null;
+  const config: BooktimeIntegrationConfig = { companyId: companyId.trim() };
+  const termsUrl = (raw as Record<string, unknown>).termsUrl;
+  const privacyUrl = (raw as Record<string, unknown>).privacyUrl;
+  if (typeof termsUrl === 'string' && termsUrl.trim()) config.termsUrl = termsUrl.trim();
+  if (typeof privacyUrl === 'string' && privacyUrl.trim()) config.privacyUrl = privacyUrl.trim();
+  return config;
+}
 
 function amenityEntries(amenities: Record<string, unknown> | undefined | null): { key: string; label: string }[] {
   if (!amenities || typeof amenities !== 'object') return [];
@@ -33,9 +58,50 @@ function amenityEntries(amenities: Record<string, unknown> | undefined | null): 
   return out;
 }
 
-export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh }: ClubDetailPanelProps) {
+export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, snapshotDate }: ClubDetailPanelProps) {
   const { t } = useTranslation();
   const { translateCity, translateCountry } = useTranslatedGeo();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isBooktimeClub = club.integrationType === 'BOOKTIME';
+  const booktimeConfig = useMemo(
+    () => (isBooktimeClub ? parseBooktimeConfig(club.integrationConfig) : null),
+    [club.integrationConfig, isBooktimeClub]
+  );
+  const { status: booktimeAuth, loading: booktimeAuthLoading, refresh: refreshBooktimeAuth } = useBooktimeClubAuth(
+    club.id,
+    isAuthenticated && isBooktimeClub
+  );
+  const { reconnectRequired, clearReconnectRequired } = useBooktimeReconnectPrompt(
+    club.id,
+    isAuthenticated && isBooktimeClub
+  );
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [availabilityDate, setAvailabilityDate] = useState(() => snapshotDate ?? new Date());
+  const [bookingsRefreshKey, setBookingsRefreshKey] = useState(0);
+  const scheduleDate = useMemo(
+    () => (snapshotDate != null ? snapshotDate : availabilityDate),
+    [availabilityDate, snapshotDate]
+  );
+  const {
+    refreshSnapshot,
+    isRefreshingSnapshot,
+    snapshotBanner,
+    lastFetchedAt,
+  } = useBooktimeSnapshotRefresh(
+    club,
+    scheduleDate,
+    isAuthenticated && isBooktimeClub
+  );
+
+  useEffect(() => {
+    if (snapshotDate) setAvailabilityDate(snapshotDate);
+  }, [snapshotDate]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isBooktimeClub) return;
+    void refreshSnapshot();
+  }, [isAuthenticated, isBooktimeClub, refreshSnapshot, scheduleDate]);
+
   const photos = useMemo(() => normalizeClubPhotos(club.carouselPhotos ?? club.photos), [club.carouselPhotos, club.photos]);
   const courts = useMemo(
     () => [...(club.courts ?? [])].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
@@ -65,6 +131,27 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh }: 
   const amenities = amenityEntries(club.amenities as Record<string, unknown> | null | undefined);
   const hasLocationBody = !!(club.address?.trim() || cityLine || mapsUrl || hasCoords);
   const contactBlock = !!(telHref || website || email);
+  const showBooktimeConnect =
+    isBooktimeClub &&
+    isAuthenticated &&
+    booktimeConfig &&
+    !booktimeAuthLoading &&
+    (!booktimeAuth?.connected || reconnectRequired);
+
+  useEffect(() => {
+    if (reconnectRequired && booktimeConfig) {
+      setConnectOpen(true);
+    }
+  }, [reconnectRequired, booktimeConfig]);
+
+  const handleConnected = async () => {
+    clearReconnectRequired();
+    if (booktimeConfig) {
+      await hydrateBooktimeSession(club.id, booktimeConfig.companyId);
+    }
+    await refreshBooktimeAuth();
+    await onClubRefresh?.();
+  };
 
   return (
     <div className="space-y-4 text-gray-900 dark:text-white">
@@ -75,6 +162,78 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh }: 
           fallbackLetterClassName="text-4xl sm:text-5xl font-bold"
         />
       </div>
+
+      {showBooktimeConnect ? (
+        <div className="rounded-xl border border-primary-200 dark:border-primary-800/60 bg-primary-50/80 dark:bg-primary-950/30 p-3">
+          <div className="flex items-start gap-3">
+            <Link2 size={18} className="text-primary-600 dark:text-primary-400 shrink-0 mt-0.5" aria-hidden />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{t('club.booktime.connectBannerTitle')}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{t('club.booktime.connectBannerHint')}</p>
+              <button
+                type="button"
+                onClick={() => setConnectOpen(true)}
+                className="mt-2 inline-flex items-center rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
+              >
+                {t('club.booktime.connectCta')}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {isBooktimeClub && isAuthenticated ? (
+        <BooktimeAvailabilityBanner loading={isRefreshingSnapshot} banner={snapshotBanner} />
+      ) : null}
+
+      {isBooktimeClub && booktimeConfig && isAuthenticated ? (
+        <AvailabilitySheet
+          club={club}
+          companyId={booktimeConfig.companyId}
+          selectedDate={scheduleDate}
+          onDateChange={setAvailabilityDate}
+          lastFetchedAt={lastFetchedAt}
+          connected={!!booktimeAuth?.connected}
+          onConnectRequest={() => setConnectOpen(true)}
+          onRefreshSnapshot={refreshSnapshot}
+          onBooked={() => setBookingsRefreshKey((k) => k + 1)}
+          enabled
+        />
+      ) : null}
+
+      {isBooktimeClub && booktimeConfig && isAuthenticated && booktimeAuth?.connected ? (
+        <BooktimeUpcomingBookings
+          club={club}
+          companyId={booktimeConfig.companyId}
+          connected
+          enabled
+          onRefreshSnapshot={refreshSnapshot}
+          refreshKey={bookingsRefreshKey}
+        />
+      ) : null}
+
+      {isBooktimeClub && booktimeAuth?.connected ? (
+        <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-950/20 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
+          {t('club.booktime.connectedAs', { phone: booktimeAuth.phoneNumber ?? '—' })}
+        </div>
+      ) : null}
+
+      {booktimeAuthLoading && isBooktimeClub && isAuthenticated ? (
+        <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <Loader2 size={16} className="animate-spin" />
+          {t('common.loading')}
+        </div>
+      ) : null}
+
+      {booktimeConfig ? (
+        <ConnectClubSheet
+          club={club}
+          integrationConfig={booktimeConfig}
+          open={connectOpen}
+          onOpenChange={setConnectOpen}
+          onConnected={handleConnected}
+        />
+      ) : null}
 
       {contactBlock ? (
         <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/40 p-3 space-y-2">

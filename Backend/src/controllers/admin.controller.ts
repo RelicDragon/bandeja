@@ -16,6 +16,7 @@ import { AdminAppVersionService } from '../services/admin/appVersion.service';
 import { AdminMarketCategoryService } from '../services/admin/marketCategory.service';
 import { AdminMassNotificationService } from '../services/admin/massNotification.service';
 import { ClubAdminAssignmentService } from '../services/admin/clubAdminAssignment.service';
+import { BooktimeImportCourtsService } from '../services/admin/booktimeImportCourts.service';
 import { AdminTranslationQueueStatsService } from '../services/admin/translationQueueStats.service';
 import { AdminGameResultsArtifactQueueStatsService } from '../services/admin/gameResultsArtifactQueueStats.service';
 import { ReplicatePhotoModelSettingService } from '../services/replicate/replicatePhotoModelSetting.service';
@@ -324,6 +325,8 @@ export const updateClub = asyncHandler(async (req: AuthRequest, res: Response) =
     avatar,
     originalAvatar,
     sports,
+    integrationType,
+    integrationConfig,
   } = req.body;
 
   const center = await AdminLocationsService.updateClub(centerId, {
@@ -346,6 +349,8 @@ export const updateClub = asyncHandler(async (req: AuthRequest, res: Response) =
     avatar,
     originalAvatar,
     sports,
+    integrationType,
+    integrationConfig,
   });
 
   res.json({
@@ -386,6 +391,7 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
     pricePerHour,
     isActive,
     webCameraUrl,
+    externalCourtId,
   } = req.body;
 
   const court = await AdminLocationsService.createCourt({
@@ -397,6 +403,7 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
     pricePerHour,
     isActive,
     webCameraUrl,
+    externalCourtId,
   });
 
   res.status(201).json({
@@ -416,6 +423,7 @@ export const updateCourt = asyncHandler(async (req: AuthRequest, res: Response) 
     pricePerHour,
     isActive,
     webCameraUrl,
+    externalCourtId,
   } = req.body;
 
   const court = await AdminLocationsService.updateCourt(courtId, {
@@ -427,12 +435,18 @@ export const updateCourt = asyncHandler(async (req: AuthRequest, res: Response) 
     pricePerHour,
     isActive,
     webCameraUrl,
+    externalCourtId,
   });
 
   res.json({
     success: true,
     data: court,
   });
+});
+
+export const importBooktimeCourts = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const data = await BooktimeImportCourtsService.importCourts(req.params.clubId);
+  res.json({ success: true, data });
 });
 
 export const deleteCourt = asyncHandler(async (req: AuthRequest, res: Response) => {
