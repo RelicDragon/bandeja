@@ -130,7 +130,7 @@ export function useBooktimeSnapshotRefresh(
             setBanner(null);
             return false;
           }
-          console.error('BookTime snapshot refresh failed:', err);
+          console.error('Club booking snapshot refresh failed:', err);
           setBanner(lastFetchedAt ? 'scoutPoolEmpty' : 'noSyncToday');
           return false;
         } finally {

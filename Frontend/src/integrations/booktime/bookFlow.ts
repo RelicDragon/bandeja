@@ -68,7 +68,7 @@ export function resolveServiceUuid(
         )
       : [];
   if (configIds.length === 1) return configIds[0]!;
-  throw new Error('BookTime service not configured for this court');
+  throw new Error('Online booking not configured for this court');
 }
 
 export function buildBookingIsoRange(
@@ -164,7 +164,7 @@ export async function confirmBooktimeBooking(
   }
 
   const externalUserId = getBooktimeExternalUserId(club.id);
-  if (!externalUserId) throw new Error('BookTime session expired');
+  if (!externalUserId) throw new Error('Club booking session expired');
 
   const company = await loadBooktimeCompany(client, companyId);
   const serviceUuid = resolveServiceUuid(company, pending.externalCourtId, club.integrationConfig);

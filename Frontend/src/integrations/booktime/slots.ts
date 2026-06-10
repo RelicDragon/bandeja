@@ -1,11 +1,13 @@
 import type { Club } from '@/types';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 
+import { BOOKTIME_FALLBACK_DURATIONS_MINUTES } from './durations';
+
 export const BOOKTIME_SNAPSHOT_FRESH_MS = 5 * 60 * 1000;
 export const BOOKTIME_CONFIRM_RECHECK_MS = 60 * 1000;
 export const BOOKTIME_SLOT_STEP_MINUTES = 60;
-export const BOOKTIME_BOOKING_DURATIONS = [60, 120] as const;
-export type BooktimeBookingDuration = (typeof BOOKTIME_BOOKING_DURATIONS)[number];
+export const BOOKTIME_BOOKING_DURATIONS = BOOKTIME_FALLBACK_DURATIONS_MINUTES;
+export type BooktimeBookingDuration = number;
 
 export type BooktimeBusyInterval = {
   startTime: string;

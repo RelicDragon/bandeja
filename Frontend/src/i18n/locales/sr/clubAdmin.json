@@ -104,9 +104,9 @@
   "clubAdmin.statsNoConflicts": "Sve u redu",
   "clubAdmin.scheduleLoadFailed": "Raspored nije učitan. Osvežite ili pokušajte ponovo.",
   "clubAdmin.clubsLoadFailed": "Klubovi nisu učitani. Pokušajte ponovo.",
-  "clubAdmin.booktimeUnmappedCourts_one": "{{count}} BookTime teren nije mapiran",
-  "clubAdmin.booktimeUnmappedCourts_few": "{{count}} BookTime terena nisu mapirana",
-  "clubAdmin.booktimeUnmappedCourts_other": "{{count}} BookTime terena nije mapirano",
+  "clubAdmin.booktimeUnmappedCourts_one": "{{count}} eksterni teren nije mapiran",
+  "clubAdmin.booktimeUnmappedCourts_few": "{{count}} eksterna terena nisu mapirana",
+  "clubAdmin.booktimeUnmappedCourts_other": "{{count}} eksternih terena nije mapirano",
   "clubAdmin.booktimeUnmappedImportHint": "Postavi spoljne ID-jeve na stranici Svi tereni ili zamoli platform admina da uveze terene.",
   "clubAdmin.booktimeManageCourtsLink": "Upravljaj terenima"
 }

@@ -107,8 +107,8 @@
   "clubAdmin.noReservations": "No upcoming reservations.",
   "clubAdmin.reservationsLoadFailed": "Could not load reservations. Try again.",
   "clubAdmin.clubsLoadFailed": "Could not load clubs. Try again.",
-  "clubAdmin.booktimeUnmappedCourts_one": "{{count}} BookTime court not mapped",
-  "clubAdmin.booktimeUnmappedCourts_other": "{{count}} BookTime courts not mapped",
+  "clubAdmin.booktimeUnmappedCourts_one": "{{count}} external court not mapped",
+  "clubAdmin.booktimeUnmappedCourts_other": "{{count}} external courts not mapped",
   "clubAdmin.booktimeUnmappedImportHint": "Set external IDs on All courts or ask platform admin to import courts.",
   "clubAdmin.booktimeManageCourtsLink": "Manage courts"
 }

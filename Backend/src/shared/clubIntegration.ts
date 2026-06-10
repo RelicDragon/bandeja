@@ -35,7 +35,7 @@ export function assertBooktimeIntegrationConfig(
   }
   const config = parseBooktimeIntegrationConfig(integrationConfig);
   if (!config) {
-    throw new ApiError(400, 'companyId is required for BookTime integration');
+    throw new ApiError(400, 'companyId is required for online booking integration');
   }
   return config;
 }

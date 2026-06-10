@@ -9,7 +9,6 @@ import {
   type GameFormatTeamsBinding,
 } from '@/components/gameFormat';
 import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
-import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { CreateGameIntentPicker } from '@/components/createGame/CreateGameIntentPicker';
 import { useGameFormat } from '@/hooks/useGameFormat';
 import { useGameFormatTemplateFlow } from '@/hooks/useGameFormatTemplateFlow';
@@ -247,8 +246,6 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
     setIsWizardOpen(true);
   };
 
-  const fixedTeamsPanel = <FixedTeamsManagement embedded game={game} onGameUpdate={onGameUpdate} />;
-
   const summaryPlayersPerMatch =
     game.entityType === 'GAME' || game.entityType === 'LEAGUE' ? playersPerMatchOf(game) : undefined;
 
@@ -281,9 +278,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
         game.resultsByAnyone && canEdit ? t('gameFormat.resultsByAnyoneEditHint') : undefined
       }
       teams={teamsForCard}
-      fixedTeamsPanel={embedded ? undefined : fixedTeamsPanel}
-      fixedTeamsPanelOpen={embedded ? undefined : hasFixedTeams}
-      showFixedTeamsToggle={!embedded}
+      showFixedTeamsToggle={false}
       suppressAllowMultiToggle={suppressAllowMultiToggle}
     />
   );

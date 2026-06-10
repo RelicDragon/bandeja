@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import { clubsApi } from '@/api/clubs';
@@ -9,6 +9,9 @@ import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { Club } from '@/types';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
+import { useAuthStore } from '@/store/authStore';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { bookingMatchesClubCourts, formatBooktimeBookingWhen, resolveCourtForBooking } from './booktimeBookingUtils';
 
 type Props = {
   club: BooktimeMyClubRow;
@@ -17,10 +20,13 @@ type Props = {
 
 export function ClubBookingsBlock({ club, onChanged }: Props) {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const [upcoming, setUpcoming] = useState<BooktimeBookingRecord[]>([]);
   const [past, setPast] = useState<BooktimeBookingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [clubEntity, setClubEntity] = useState<Club | null>(null);
+  const clubTimezone = clubEntity?.city?.timezone ?? null;
   const allowedHoursToCancel = useBooktimeCancelPolicy(club, club.connected);
   const { refreshSnapshot } = useBooktimeSnapshotRefresh(
     clubEntity ?? undefined,
@@ -54,11 +60,7 @@ export function ClubBookingsBlock({ club, onChanged }: Props) {
         client.getUpcomingBookings(0, 30),
         client.getPreviousBookings(0, 20),
       ]);
-      const filter = (b: BooktimeBookingRecord) => {
-        const ext = b.bookingResource?.uuid;
-        if (!ext) return true;
-        return club.courts.some((c) => c.externalCourtId === ext);
-      };
+      const filter = (b: BooktimeBookingRecord) => bookingMatchesClubCourts(b, club.courts);
       setUpcoming((upRes.bookings ?? []).filter(filter));
       setPast((prevRes.bookings ?? []).filter(filter));
     } catch (err) {
@@ -91,6 +93,7 @@ export function ClubBookingsBlock({ club, onChanged }: Props) {
                 club={club}
                 allowedHoursToCancel={allowedHoursToCancel}
                 onRefreshSnapshot={refreshSnapshot}
+                clubTimezone={clubTimezone}
                 onCanceled={() => {
                   onChanged();
                   void loadBookings();
@@ -113,9 +116,11 @@ export function ClubBookingsBlock({ club, onChanged }: Props) {
                 className="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-600 dark:text-gray-300"
               >
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {booking.bookingResource?.name ?? t('club.booktime.unknownCourt')}
+                  {resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt')).courtName}
                 </span>
-                <span className="block text-xs text-gray-500 mt-0.5">{booking.bookingStart}</span>
+                <span className="block text-xs text-gray-500 mt-0.5">
+                  {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings, t })}
+                </span>
               </li>
             ))}
           </ul>

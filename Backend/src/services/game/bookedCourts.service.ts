@@ -175,7 +175,7 @@ export class BookedCourtsService {
             slotKind: 'external' as const,
           }));
         } catch (error) {
-          console.error(`Error loading BookTime snapshot for club ${clubId}:`, error);
+          console.error(`Error loading club booking snapshot for club ${clubId}:`, error);
         }
       }
     }

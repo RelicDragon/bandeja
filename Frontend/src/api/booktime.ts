@@ -133,14 +133,6 @@ export const booktimeApi = {
     return response.data;
   },
 
-  patchScoutOptIn: async (clubId: string, scoutOptIn: boolean) => {
-    const response = await api.patch<ApiResponse<{ scoutOptIn: boolean }>>(
-      `/booktime/clubs/${clubId}/scout-opt-in`,
-      { scoutOptIn }
-    );
-    return response.data;
-  },
-
   getLinkedGame: async (externalBookingId: string) => {
     const response = await api.get<ApiResponse<BooktimeLinkedGame | null>>(
       `/booktime/linked-game/${encodeURIComponent(externalBookingId)}`

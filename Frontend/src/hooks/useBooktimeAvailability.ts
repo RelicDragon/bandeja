@@ -2,8 +2,12 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { booktimeApi } from '@/api/booktime';
 import type { Club, Court } from '@/types';
 import { BooktimeClient } from '@/integrations/booktime/client';
+import { loadBooktimeCompany } from '@/integrations/booktime/bookFlow';
 import {
-  BOOKTIME_BOOKING_DURATIONS,
+  pickClosestDurationOption,
+  resolveBooktimeDurationsMinutes,
+} from '@/integrations/booktime/durations';
+import {
   type BooktimeBookingDuration,
   computeFreeSlotsForCourt,
   formatClubDateKey,
@@ -42,6 +46,9 @@ export function useBooktimeAvailability(
   enabled: boolean
 ) {
   const [durationMinutes, setDurationMinutes] = useState<BooktimeBookingDuration>(60);
+  const [durations, setDurations] = useState<BooktimeBookingDuration[]>(() =>
+    resolveBooktimeDurationsMinutes(null)
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [publicSlotsByExternalId, setPublicSlotsByExternalId] = useState<Map<string, string[]>>(new Map());
@@ -57,10 +64,16 @@ export function useBooktimeAvailability(
     setLoading(true);
     setError(null);
     try {
-      const [snapshotRes, slotsRes] = await Promise.all([
+      const client = new BooktimeClient({ companyId });
+      const [snapshotRes, slotsRes, company] = await Promise.all([
         booktimeApi.getSnapshot(club.id, dateKey),
-        new BooktimeClient({ companyId }).getAvailableSlots(selectedDate),
+        client.getAvailableSlots(selectedDate),
+        loadBooktimeCompany(client, companyId),
       ]);
+
+      const resolvedDurations = resolveBooktimeDurationsMinutes(company);
+      setDurations(resolvedDurations);
+      setDurationMinutes((current) => pickClosestDurationOption(current, resolvedDurations));
 
       const busyMap = new Map<string, Array<{ startTime: string; endTime: string }>>();
       for (const row of snapshotRes.data?.courts ?? []) {
@@ -78,7 +91,7 @@ export function useBooktimeAvailability(
       }
       setPublicSlotsByExternalId(publicMap);
     } catch (err) {
-      console.error('BookTime availability load failed:', err);
+      console.error('Club booking availability load failed:', err);
       setError('loadFailed');
       setPublicSlotsByExternalId(new Map());
       setBusyByCourtId(new Map());
@@ -115,7 +128,7 @@ export function useBooktimeAvailability(
   return {
     durationMinutes,
     setDurationMinutes,
-    durations: BOOKTIME_BOOKING_DURATIONS,
+    durations,
     loading,
     error,
     courtRows,

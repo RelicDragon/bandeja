@@ -10,16 +10,6 @@ export const getMyBooktimeClubs = asyncHandler(async (req: AuthRequest, res: Res
   res.json({ success: true, data });
 });
 
-export const patchScoutOptIn = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { clubId } = req.params;
-  const scoutOptIn = req.body?.scoutOptIn;
-  if (typeof scoutOptIn !== 'boolean') {
-    throw new ApiError(400, 'scoutOptIn must be a boolean');
-  }
-  const data = await booktimeMyClubsService.updateScoutOptIn(req.userId!, clubId, scoutOptIn);
-  res.json({ success: true, data });
-});
-
 export const getLinkedGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const externalBookingId = req.params.externalBookingId;
   if (typeof externalBookingId !== 'string' || !externalBookingId.trim()) {

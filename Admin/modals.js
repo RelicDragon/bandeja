@@ -283,7 +283,7 @@ function readCenterIntegrationPayload() {
     if (type === 'BOOKTIME') {
         const companyId = document.getElementById('centerBooktimeCompanyId')?.value?.trim() || '';
         if (!companyId) {
-            throw new Error('BookTime company ID is required');
+            throw new Error('Booking provider company ID is required');
         }
         return {
             integrationType: 'BOOKTIME',

@@ -38,7 +38,7 @@ function slotAt(
       if (s.type === 'game' && s.courtId === null) {
         // unassigned in-app games
       } else if (s.type === 'external' && s.courtId === UNASSIGNED_COURT_ID) {
-        // unmapped BookTime courts
+        // unmapped external booking courts
       } else {
         return false;
       }

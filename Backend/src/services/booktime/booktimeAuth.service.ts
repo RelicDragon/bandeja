@@ -37,7 +37,7 @@ async function assertBooktimeClub(clubId: string) {
   });
   if (!club) throw new ApiError(404, 'Club not found');
   if (club.integrationType !== ClubIntegrationType.BOOKTIME) {
-    throw new ApiError(400, 'Club is not configured for BookTime');
+    throw new ApiError(400, 'Club is not configured for online booking');
   }
   assertBooktimeIntegrationConfig(club.integrationType, club.integrationConfig);
   return club;

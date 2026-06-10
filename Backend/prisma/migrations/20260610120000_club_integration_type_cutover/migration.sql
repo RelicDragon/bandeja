@@ -4,7 +4,7 @@ CREATE TYPE "ClubIntegrationType" AS ENUM ('BOOKTIME');
 -- AlterTable: add integrationType before dropping legacy columns
 ALTER TABLE "Club" ADD COLUMN "integrationType" "ClubIntegrationType";
 
--- Migrate existing CRS script clubs to BookTime (Padel City Centar, Novi Sad)
+-- Migrate existing CRS script clubs to online booking (Padel City Centar, Novi Sad)
 UPDATE "Club"
 SET
   "integrationType" = 'BOOKTIME',

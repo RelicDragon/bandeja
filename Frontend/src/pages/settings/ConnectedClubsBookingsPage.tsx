@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
-import { booktimeApi, type BooktimeMyClubRow } from '@/api/booktime';
+import type { BooktimeMyClubRow } from '@/api/booktime';
 import { clubsApi } from '@/api/clubs';
 import { Card, SubPageHeader } from '@/components';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
@@ -23,7 +23,6 @@ export function ConnectedClubsBookingsPage() {
   const { data, loading, reload } = useBooktimeMyClubs(true);
   const [connectClub, setConnectClub] = useState<BooktimeMyClubRow | null>(null);
   const [connectClubEntity, setConnectClubEntity] = useState<Club | null>(null);
-  const [scoutBusyId, setScoutBusyId] = useState<string | null>(null);
   const [disconnectBusyId, setDisconnectBusyId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -35,18 +34,6 @@ export function ConnectedClubsBookingsPage() {
       if (res.data) setConnectClubEntity(res.data);
     });
   }, [connectClub]);
-
-  const handleScoutToggle = async (club: BooktimeMyClubRow, next: boolean) => {
-    setScoutBusyId(club.clubId);
-    try {
-      await booktimeApi.patchScoutOptIn(club.clubId, next);
-      await reload();
-    } catch {
-      toast.error(t('errors.generic'));
-    } finally {
-      setScoutBusyId(null);
-    }
-  };
 
   const handleDisconnect = async (clubId: string) => {
     setDisconnectBusyId(clubId);
@@ -90,10 +77,8 @@ export function ConnectedClubsBookingsPage() {
                 <ConnectedClubCard
                   club={club}
                   disconnectBusy={disconnectBusyId === club.clubId}
-                  scoutBusy={scoutBusyId === club.clubId}
                   onConnect={() => setConnectClub(club)}
                   onDisconnect={() => void handleDisconnect(club.clubId)}
-                  onScoutToggle={(next) => void handleScoutToggle(club, next)}
                   onBookingsChanged={() => void reload()}
                 />
               </li>

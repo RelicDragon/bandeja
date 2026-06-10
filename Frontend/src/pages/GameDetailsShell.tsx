@@ -31,7 +31,9 @@ import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsLis
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
 import { DeclineInviteModal } from '@/components/DeclineInviteModal';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
+import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { GameFormatSection } from '@/components/GameDetails/GameFormatSection';
+import { fixedTeamsManagementVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
 import { LeagueSeasonPointsSection } from '@/components/GameDetails/LeagueSeasonPointsSection';
 import { FaqTab } from '@/components/GameDetails/FaqTab';
 import { FaqEdit } from '@/components/GameDetails/FaqEdit';
@@ -1495,6 +1497,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               onGameUpdate={setGame}
               suppressAllowMultiToggle={isEditMode && canViewSettings}
             />
+          )}
+
+          {fixedTeamsManagementVisible(game, user) && (
+            <FixedTeamsManagement game={game} onGameUpdate={setGame} />
           )}
 
           {user && game.entityType === 'LEAGUE_SEASON' && (

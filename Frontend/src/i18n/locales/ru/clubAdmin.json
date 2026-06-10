@@ -104,10 +104,10 @@
   "clubAdmin.statsNoConflicts": "Всё в порядке",
   "clubAdmin.scheduleLoadFailed": "Не удалось загрузить расписание. Обновите страницу или попробуйте снова.",
   "clubAdmin.clubsLoadFailed": "Не удалось загрузить клубы. Попробуйте снова.",
-  "clubAdmin.booktimeUnmappedCourts_one": "{{count}} корт BookTime не сопоставлен",
-  "clubAdmin.booktimeUnmappedCourts_few": "{{count}} корта BookTime не сопоставлены",
-  "clubAdmin.booktimeUnmappedCourts_many": "{{count}} кортов BookTime не сопоставлены",
-  "clubAdmin.booktimeUnmappedCourts_other": "{{count}} кортов BookTime не сопоставлены",
+  "clubAdmin.booktimeUnmappedCourts_one": "{{count}} внешний корт не сопоставлен",
+  "clubAdmin.booktimeUnmappedCourts_few": "{{count}} внешних корта не сопоставлены",
+  "clubAdmin.booktimeUnmappedCourts_many": "{{count}} внешних кортов не сопоставлены",
+  "clubAdmin.booktimeUnmappedCourts_other": "{{count}} внешних кортов не сопоставлены",
   "clubAdmin.booktimeUnmappedImportHint": "Укажите внешние ID на странице «Все корты» или попросите администратора платформы импортировать корты.",
   "clubAdmin.booktimeManageCourtsLink": "Управление кортами"
 }

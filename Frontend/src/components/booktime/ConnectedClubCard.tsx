@@ -1,26 +1,22 @@
 import { useTranslation } from 'react-i18next';
 import { Check, Loader2 } from 'lucide-react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
-import { ClubAvatar, ToggleSwitch } from '@/components';
+import { ClubAvatar } from '@/components';
 import { ClubBookingsBlock } from './ClubBookingsBlock';
 
 type Props = {
   club: BooktimeMyClubRow;
   disconnectBusy: boolean;
-  scoutBusy: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
-  onScoutToggle: (next: boolean) => void;
   onBookingsChanged: () => void;
 };
 
 export function ConnectedClubCard({
   club,
   disconnectBusy,
-  scoutBusy,
   onConnect,
   onDisconnect,
-  onScoutToggle,
   onBookingsChanged,
 }: Props) {
   const { t } = useTranslation();
@@ -45,7 +41,7 @@ export function ConnectedClubCard({
             {club.connected ? (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-200">
                 <Check size={12} strokeWidth={2.5} aria-hidden />
-                BookTime
+                {t('club.booktime.connectedBadge')}
               </span>
             ) : null}
           </div>
@@ -78,13 +74,6 @@ export function ConnectedClubCard({
           )}
         </div>
       </div>
-
-      {club.connected ? (
-        <label className="flex items-center justify-between gap-3 border-t border-gray-100 px-4 py-3 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-300">
-          <span>{t('club.booktime.scoutOptInLabel')}</span>
-          <ToggleSwitch checked={club.scoutOptIn} disabled={scoutBusy} onChange={onScoutToggle} />
-        </label>
-      ) : null}
 
       {club.connected ? <ClubBookingsBlock club={club} onChanged={onBookingsChanged} /> : null}
     </article>

@@ -8,6 +8,8 @@ import { EntityType, Club } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
 import { useBookedCourts } from '@/hooks/useBookedCourts';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
+import { useClubIntegrationDurations } from '@/hooks/useClubIntegrationDurations';
+import { pickClosestDurationOption } from '@/integrations/booktime/durations';
 
 interface GameStartSectionProps {
   selectedDate: Date;
@@ -62,7 +64,14 @@ export const GameStartSection = ({
   compact = false,
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
-  
+  const { durationOptions } = useClubIntegrationDurations(club, entityType);
+
+  useEffect(() => {
+    if (entityType === 'BAR' || durationOptions.length === 0) return;
+    const next = pickClosestDurationOption(duration, durationOptions);
+    if (next !== duration) onDurationChange(next);
+  }, [duration, durationOptions, entityType, onDurationChange]);
+
   const { isSlotBooked, getBookedSlotInfo, getOverlappingBookings, areAllSlotsUnconfirmed, hasExternallyBookedSlot, isSlotHardBlocked, isLoadingExternalSlots, snapshotBanner, refetch } = useBookedCourts({
     clubId: selectedClub || null,
     selectedDate,
@@ -241,7 +250,7 @@ export const GameStartSection = ({
                   {t('createGame.duration')}
                 </label>
                 <div className="grid grid-cols-3 gap-2">
-                  {(entityType === 'TOURNAMENT' ? [1, 1.5, 2, 3, 4, 6] : [1, 1.5, 2]).map((dur) => (
+                  {durationOptions.map((dur) => (
                     <button
                       key={dur}
                       onClick={() => onDurationChange(dur)}

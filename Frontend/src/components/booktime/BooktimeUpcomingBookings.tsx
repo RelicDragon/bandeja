@@ -78,6 +78,7 @@ export function BooktimeUpcomingBookings({
               club={clubRow}
               allowedHoursToCancel={allowedHoursToCancel}
               onRefreshSnapshot={onRefreshSnapshot}
+              clubTimezone={club.city?.timezone}
               onCanceled={() => {
                 removeBooking(booking.uuid);
                 void reload();

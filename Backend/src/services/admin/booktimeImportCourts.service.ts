@@ -34,12 +34,12 @@ export class BooktimeImportCourtsService {
     });
     if (!club) throw new ApiError(404, 'Club not found');
     if (club.integrationType !== 'BOOKTIME') {
-      throw new ApiError(400, 'Club integration type must be BookTime');
+      throw new ApiError(400, 'Club integration type must be online booking');
     }
 
     const config = parseBooktimeIntegrationConfig(club.integrationConfig);
     if (!config?.companyId) {
-      throw new ApiError(400, 'BookTime companyId is not configured');
+      throw new ApiError(400, 'Booking provider companyId is not configured');
     }
 
     const res = await fetch(`${BOOKTIME_API_URL}/public/company/${config.companyId}`, {
@@ -47,13 +47,13 @@ export class BooktimeImportCourtsService {
     });
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      throw new ApiError(502, `BookTime company fetch failed (${res.status})${text ? `: ${text.slice(0, 200)}` : ''}`);
+      throw new ApiError(502, `Booking provider company fetch failed (${res.status})${text ? `: ${text.slice(0, 200)}` : ''}`);
     }
 
     const payload = (await res.json()) as BooktimeCompanyResponse;
     const resources = payload.bookingResources ?? [];
     if (resources.length === 0) {
-      throw new ApiError(502, 'BookTime returned no booking resources');
+      throw new ApiError(502, 'Booking provider returned no booking resources');
     }
 
     const defaultSport = club.sports[0] ?? Sport.PADEL;

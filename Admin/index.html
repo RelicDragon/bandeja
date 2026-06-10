@@ -308,7 +308,7 @@
                             <p id="courtsClubLocation"></p>
                         </div>
                         <button class="btn-primary" onclick="createCourtForCenter()">+ Add Court</button>
-                        <button type="button" class="btn-secondary" id="importBooktimeCourtsBtn" style="display: none;" onclick="importBooktimeCourtsForCenter()">Import from BookTime</button>
+                        <button type="button" class="btn-secondary" id="importBooktimeCourtsBtn" style="display: none;" onclick="importBooktimeCourtsForCenter()">Import booking courts</button>
                     </div>
                     <div class="table-container">
                         <table id="courtsTable">
@@ -1021,10 +1021,10 @@
                     <label for="centerIntegrationType">Integration</label>
                     <select id="centerIntegrationType" name="centerIntegrationType" onchange="toggleCenterIntegrationFields()">
                         <option value="">None</option>
-                        <option value="BOOKTIME">BookTime</option>
+                        <option value="BOOKTIME">Online booking</option>
                     </select>
                     <div id="centerBooktimeFields" style="display: none; margin-top: 12px;">
-                        <label for="centerBooktimeCompanyId">BookTime company ID *</label>
+                        <label for="centerBooktimeCompanyId">Booking provider company ID *</label>
                         <input type="text" id="centerBooktimeCompanyId" placeholder="UUID" autocomplete="off" />
                     </div>
                 </div>
@@ -1075,8 +1075,8 @@
                     <label for="courtIsActive">Active</label>
                 </div>
                 <div class="form-group">
-                    <label for="courtExternalCourtId">External court ID (BookTime)</label>
-                    <input type="text" id="courtExternalCourtId" placeholder="BookTime bookingResourceId" autocomplete="off">
+                    <label for="courtExternalCourtId">External court ID</label>
+                    <input type="text" id="courtExternalCourtId" placeholder="External bookingResourceId" autocomplete="off">
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('courtModal')">Cancel</button>

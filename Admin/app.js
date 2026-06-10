@@ -1043,7 +1043,7 @@ async function importBooktimeCourtsForCenter() {
         alert('No club selected');
         return;
     }
-    if (!confirm('Import courts from BookTime? Existing courts will be matched by external ID or name.')) return;
+    if (!confirm('Import courts from the club booking system? Existing courts will be matched by external ID or name.')) return;
     try {
         const response = await apiRequest(`/admin/clubs/${currentCenter.id}/booktime/import-courts`, {
             method: 'POST',

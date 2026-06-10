@@ -49,7 +49,7 @@ export const postBooktimeSessionToken = asyncHandler(async (req: AuthRequest, re
   const { clubId } = req.params;
   const tokens = await booktimeAuthService.getBooktimeSessionTokens(req.userId!, clubId);
   if (!tokens) {
-    throw new ApiError(404, 'BookTime connection not found');
+    throw new ApiError(404, 'Club booking connection not found');
   }
   res.json({
     success: true,

@@ -29,7 +29,8 @@ export type BooktimeBookingRecord = {
   uuid: string;
   bookingStart: string;
   bookingEnd: string;
-  bookingResource?: { uuid?: string; name?: string };
+  bookingResourceId?: string;
+  bookingResource?: { uuid?: string; bookingResourceId?: string; name?: string };
   status?: string;
 };
 

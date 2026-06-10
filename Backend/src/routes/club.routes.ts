@@ -8,7 +8,6 @@ import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 import * as clubController from '../controllers/club.controller';
 import * as clubReviewController from '../controllers/clubReview.controller';
 import * as booktimeAuthController from '../controllers/booktimeAuth.controller';
-import * as booktimeMyClubsController from '../controllers/booktimeMyClubs.controller';
 import * as booktimeSnapshotController from '../controllers/booktimeSnapshot.controller';
 
 const router = Router();
@@ -45,12 +44,6 @@ router.post(
   booktimeAuthController.postBooktimeSessionToken
 );
 router.delete('/:clubId/booktime/auth', authenticate, booktimeAuthController.deleteBooktimeAuth);
-router.patch(
-  '/:clubId/booktime/auth/scout-opt-in',
-  authenticate,
-  validate([body('scoutOptIn').isBoolean().withMessage('scoutOptIn must be a boolean')]),
-  booktimeMyClubsController.patchScoutOptIn
-);
 
 router.get('/:clubId/booktime/scout-token', authenticate, booktimeAuthController.getBooktimeScoutToken);
 router.post(

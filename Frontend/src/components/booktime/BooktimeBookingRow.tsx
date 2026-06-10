@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -13,6 +13,8 @@ import {
   cancelBooktimeBooking,
 } from '@/integrations/booktime/bookFlow';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { useAuthStore } from '@/store/authStore';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import {
   buildCreateGameSearchParams,
   formatBooktimeBookingWhen,
@@ -28,6 +30,7 @@ type Props = {
   onCreateGame?: () => void;
   onRefreshSnapshot?: (options?: { force?: boolean }) => Promise<boolean>;
   compact?: boolean;
+  clubTimezone?: string | null;
 };
 
 export function BooktimeBookingRow({
@@ -39,8 +42,11 @@ export function BooktimeBookingRow({
   onCreateGame,
   onRefreshSnapshot,
   compact = false,
+  clubTimezone,
 }: Props) {
   const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const navigate = useNavigate();
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
@@ -85,7 +91,7 @@ export function BooktimeBookingRow({
       }
       onCanceled?.();
     } catch (err) {
-      console.error('BookTime cancel failed:', err);
+      console.error('Club booking cancel failed:', err);
       toast.error(t('club.booktime.cancelFailed'));
     } finally {
       setCancelBusy(false);
@@ -119,7 +125,7 @@ export function BooktimeBookingRow({
           ) : null}
           <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{courtInfo.courtName}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {formatBooktimeBookingWhen(booking, { id: club.clubId })}
+            {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings, t })}
           </p>
         </div>
         {!cancelDoneBanner ? (

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { bookingMatchesClubCourts } from '@/components/booktime/booktimeBookingUtils';
 
 export type AggregatedBooktimeBooking = BooktimeBookingRecord & {
   clubId: string;
@@ -9,12 +10,6 @@ export type AggregatedBooktimeBooking = BooktimeBookingRecord & {
   companyId: string;
   courts: BooktimeMyClubRow['courts'];
 };
-
-function bookingMatchesClub(booking: BooktimeBookingRecord, courts: BooktimeMyClubRow['courts']): boolean {
-  const externalId = booking.bookingResource?.uuid;
-  if (!externalId) return true;
-  return courts.some((c) => c.externalCourtId === externalId);
-}
 
 export function useBooktimeAllUpcoming(
   clubs: BooktimeMyClubRow[],
@@ -45,7 +40,7 @@ export function useBooktimeAllUpcoming(
           if (!client.isAuthenticated) continue;
           const res = await client.getUpcomingBookings(0, 20);
           for (const booking of res.bookings ?? []) {
-            if (!bookingMatchesClub(booking, club.courts)) continue;
+            if (!bookingMatchesClubCourts(booking, club.courts)) continue;
             all.push({
               ...booking,
               clubId: club.clubId,
@@ -55,7 +50,7 @@ export function useBooktimeAllUpcoming(
             });
           }
         } catch (err) {
-          console.error('BookTime upcoming failed for club', club.clubId, err);
+          console.error('Club booking upcoming failed for club', club.clubId, err);
         }
       }
       all.sort((a, b) => new Date(a.bookingStart).getTime() - new Date(b.bookingStart).getTime());

@@ -215,7 +215,7 @@ export class ClubAdminScheduleService {
           });
         }
       } catch (err) {
-        console.error('Club admin schedule BookTime snapshot error', err);
+        console.error('Club admin schedule booking snapshot error', err);
         externalSlotsFailed = true;
       }
     }

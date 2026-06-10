@@ -1,5 +1,4 @@
 import { ClubIntegrationType } from '@prisma/client';
-import { ApiError } from '../../utils/ApiError';
 import prisma from '../../config/database';
 import { parseBooktimeIntegrationConfig } from '../../shared/clubIntegration';
 
@@ -105,17 +104,3 @@ export async function getMyBooktimeClubs(userId: string): Promise<BooktimeMyClub
   };
 }
 
-export async function updateScoutOptIn(
-  userId: string,
-  clubId: string,
-  scoutOptIn: boolean
-): Promise<{ scoutOptIn: boolean }> {
-  const updated = await prisma.userClubBooktimeAuth.updateMany({
-    where: { userId, clubId },
-    data: { scoutOptIn },
-  });
-  if (updated.count === 0) {
-    throw new ApiError(404, 'BookTime connection not found');
-  }
-  return { scoutOptIn };
-}
