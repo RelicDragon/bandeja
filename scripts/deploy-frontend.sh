@@ -44,6 +44,9 @@ rsync -a \
 
 rsync -a "$CONTRACT/" "$WORKDIR/packages/chat-contract/"
 
+cd "$WORKDIR/packages/chat-contract"
+npm ci
+
 cd "$WORKDIR/Frontend"
 npm ci
 if [[ -f "$REPO_ROOT/Frontend/build-env.sh" ]]; then

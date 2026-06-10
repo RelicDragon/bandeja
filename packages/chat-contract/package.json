@@ -8,7 +8,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "npx -p typescript@6.0.3 tsc",
     "test": "npm run build && node --test test/parity.test.mjs"
   },
   "license": "ISC",
