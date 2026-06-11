@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -7,12 +7,12 @@ import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeLinkedGame } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { booktimeApi } from '@/api/booktime';
 import {
   canCancelByPolicy,
   cancelBooktimeBooking,
 } from '@/integrations/booktime/bookFlow';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { useBooktimeLinkedGame } from '@/hooks/useBooktimeLinkedGame';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
@@ -21,6 +21,8 @@ import {
   formatBooktimeBookingWhen,
   resolveCourtForBooking,
 } from './booktimeBookingUtils';
+import { BooktimeLinkedGameLink } from './BooktimeLinkedGameLink';
+import { BooktimeLinkGameButton } from './BooktimeLinkGameModal';
 
 type Props = {
   booking: BooktimeBookingRecord;
@@ -51,22 +53,10 @@ export function BooktimeBookingRow({
   const navigate = useNavigate();
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
-  const [linkedGame, setLinkedGame] = useState<BooktimeLinkedGame | null>(null);
+  const { linkedGame, reload: reloadLinkedGame } = useBooktimeLinkedGame(booking.uuid);
   const [cancelDoneBanner, setCancelDoneBanner] = useState<BooktimeLinkedGame | null>(null);
   const courtInfo = resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt'));
   const cancellable = canCancelByPolicy(booking.bookingStart, allowedHoursToCancel);
-
-  useEffect(() => {
-    if (!cancelOpen) return;
-    void (async () => {
-      try {
-        const res = await booktimeApi.getLinkedGame(booking.uuid);
-        setLinkedGame(res.data ?? null);
-      } catch {
-        setLinkedGame(null);
-      }
-    })();
-  }, [cancelOpen, booking.uuid]);
 
   const openCreateGame = () => {
     onCreateGame?.();
@@ -133,16 +123,27 @@ export function BooktimeBookingRow({
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings, t })}
           </p>
+          {linkedGame ? <BooktimeLinkedGameLink game={linkedGame} /> : null}
         </div>
         {!cancelDoneBanner ? (
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={openCreateGame}
-              className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              {t('club.booktime.createGameHere')}
-            </button>
+            {!linkedGame ? (
+              <>
+                <BooktimeLinkGameButton
+                  booking={booking}
+                  club={club}
+                  compact={compact}
+                  onLinked={() => void reloadLinkedGame()}
+                />
+                <button
+                  type="button"
+                  onClick={openCreateGame}
+                  className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                >
+                  {t('club.booktime.createGameHere')}
+                </button>
+              </>
+            ) : null}
             {cancellable ? (
               <button
                 type="button"

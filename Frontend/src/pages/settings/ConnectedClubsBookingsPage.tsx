@@ -1,17 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import { clubsApi } from '@/api/clubs';
-import { Card, SubPageHeader } from '@/components';
+import { SubPageHeader } from '@/components';
+import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { ConnectClubSheet } from '@/components/booktime/ConnectClubSheet';
-import { ConnectedClubCard } from '@/components/booktime/ConnectedClubCard';
+import { ConnectedClubsBookingsTab } from '@/components/booktime/ConnectedClubsBookingsTab';
+import { ConnectedClubsIntegrationsTab } from '@/components/booktime/ConnectedClubsIntegrationsTab';
 import { useBooktimeMyClubs } from '@/hooks/useBooktimeMyClubs';
 import type { Club } from '@/types';
 import { disconnectBooktimeClub } from '@/integrations/booktime/session';
+
+type PageTab = 'bookings' | 'integrations';
 
 export function ConnectedClubsBookingsPage() {
   const { t } = useTranslation();
@@ -21,9 +25,19 @@ export function ConnectedClubsBookingsPage() {
     return true;
   });
   const { data, loading, reload } = useBooktimeMyClubs(true);
+  const [activeTab, setActiveTab] = useState<PageTab>('bookings');
+  const [bookingsRefreshKey, setBookingsRefreshKey] = useState(0);
   const [connectClub, setConnectClub] = useState<BooktimeMyClubRow | null>(null);
   const [connectClubEntity, setConnectClubEntity] = useState<Club | null>(null);
   const [disconnectBusyId, setDisconnectBusyId] = useState<string | null>(null);
+
+  const tabs = useMemo<SegmentedSwitchTab[]>(
+    () => [
+      { id: 'bookings', label: t('club.booktime.tabBookings') },
+      { id: 'integrations', label: t('club.booktime.tabIntegrations') },
+    ],
+    [t]
+  );
 
   useEffect(() => {
     if (!connectClub) {
@@ -40,6 +54,7 @@ export function ConnectedClubsBookingsPage() {
     try {
       await disconnectBooktimeClub(clubId);
       await reload();
+      setBookingsRefreshKey((k) => k + 1);
       toast.success(t('club.booktime.disconnected'));
     } catch {
       toast.error(t('errors.generic'));
@@ -58,32 +73,34 @@ export function ConnectedClubsBookingsPage() {
       />
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
-        <Card className="p-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">{t('club.booktime.connectedClubsCardHint')}</p>
-        </Card>
+        <div className="flex justify-center">
+          <SegmentedSwitch
+            tabs={tabs}
+            activeId={activeTab}
+            onChange={(id) => setActiveTab(id as PageTab)}
+            showOnlyActiveTabText={false}
+            layoutId="connectedClubsPageTab"
+            ariaLabel={t('club.booktime.connectedClubsPageTitle')}
+          />
+        </div>
 
         {loading && !data ? (
           <div className="flex justify-center py-12">
             <Loader2 className="animate-spin text-primary-600" size={32} />
           </div>
-        ) : clubs.length === 0 ? (
-          <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
-            {t('club.booktime.noBooktimeClubsInCity')}
-          </p>
+        ) : activeTab === 'bookings' ? (
+          <ConnectedClubsBookingsTab
+            clubs={clubs}
+            refreshKey={bookingsRefreshKey}
+            onBookingsChanged={() => setBookingsRefreshKey((k) => k + 1)}
+          />
         ) : (
-          <ul className="space-y-4">
-            {clubs.map((club) => (
-              <li key={club.clubId}>
-                <ConnectedClubCard
-                  club={club}
-                  disconnectBusy={disconnectBusyId === club.clubId}
-                  onConnect={() => setConnectClub(club)}
-                  onDisconnect={() => void handleDisconnect(club.clubId)}
-                  onBookingsChanged={() => void reload()}
-                />
-              </li>
-            ))}
-          </ul>
+          <ConnectedClubsIntegrationsTab
+            clubs={clubs}
+            disconnectBusyId={disconnectBusyId}
+            onConnect={setConnectClub}
+            onDisconnect={(clubId) => void handleDisconnect(clubId)}
+          />
         )}
       </div>
 
@@ -100,6 +117,7 @@ export function ConnectedClubsBookingsPage() {
           onConnected={() => {
             setConnectClub(null);
             void reload();
+            setBookingsRefreshKey((k) => k + 1);
           }}
         />
       ) : null}

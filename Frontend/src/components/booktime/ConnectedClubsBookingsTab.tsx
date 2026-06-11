@@ -1,0 +1,89 @@
+import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { BooktimeMyClubRow } from '@/api/booktime';
+import { useAuthStore } from '@/store/authStore';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { useBooktimeAllPast } from '@/hooks/useBooktimeAllPast';
+import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
+import { BooktimeBookingRow } from './BooktimeBookingRow';
+import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
+import { BooktimePastBookingsSection } from './BooktimePastBookingsSection';
+import { useBooktimeCancelPolicy } from './useBooktimeCancelPolicy';
+
+type Props = {
+  clubs: BooktimeMyClubRow[];
+  refreshKey: number;
+  onBookingsChanged: () => void;
+};
+
+export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged }: Props) {
+  const { t } = useTranslation();
+  const user = useAuthStore((s) => s.user);
+  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
+  const [localRefreshKey, setLocalRefreshKey] = useState(0);
+  const combinedRefreshKey = refreshKey + localRefreshKey;
+  const connectedClubs = useMemo(() => clubs.filter((c) => c.connected && c.companyId), [clubs]);
+  const { bookings: upcoming, loading: upcomingLoading, removeBooking } = useBooktimeAllUpcoming(
+    clubs,
+    true,
+    combinedRefreshKey
+  );
+  const { bookings: past, loading: pastLoading } = useBooktimeAllPast(clubs, true, combinedRefreshKey);
+  const firstConnected = connectedClubs[0] ?? null;
+  const allowedHoursToCancel = useBooktimeCancelPolicy(firstConnected, !!firstConnected);
+  const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
+
+  const handleCanceled = (bookingId: string) => {
+    removeBooking(bookingId);
+    setLocalRefreshKey((k) => k + 1);
+    onBookingsChanged();
+  };
+
+  if (connectedClubs.length === 0) {
+    return (
+      <p className="text-center text-sm text-gray-500 dark:text-gray-400 py-8">
+        {t('club.booktime.noUpcomingAny')}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-3 space-y-3">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+          {t('club.booktime.myTabUpcomingTitle')}
+        </h3>
+        {upcomingLoading ? (
+          <BooktimeBookingsLoading />
+        ) : upcoming.length === 0 ? (
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>
+        ) : (
+          <ul className="space-y-2">
+            {upcoming.map((booking) => {
+              const club = clubById.get(booking.clubId);
+              if (!club) return null;
+              return (
+                <BooktimeBookingRow
+                  key={`${booking.clubId}-${booking.uuid}`}
+                  booking={booking}
+                  club={club}
+                  showClubName
+                  allowedHoursToCancel={allowedHoursToCancel}
+                  onCanceled={() => handleCanceled(booking.uuid)}
+                />
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      <BooktimePastBookingsSection
+        past={past}
+        loading={pastLoading}
+        clubs={clubs}
+        displaySettings={displaySettings}
+        showClubName
+      />
+    </div>
+  );
+}

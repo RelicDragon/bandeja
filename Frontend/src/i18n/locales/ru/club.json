@@ -102,6 +102,20 @@
       "cancelFailed": "Не удалось отменить бронирование. Попробуйте снова.",
       "linkedGameStillOnCalendar": "Ваша игра всё ещё в календаре",
       "openLinkedGame": "Открыть игру",
+      "linkedGameLabel": "Связанная игра",
+      "linkedGameUntitled": "Игра без названия",
+      "linkGame": "Привязать к игре",
+      "linkGameShort": "Привязать",
+      "linkGameTitle": "Привязать к игре",
+      "linkGameHint": "Выберите игру для этой брони ({{when}}).",
+      "linkGameRecommended": "Рекомендуется",
+      "linkGameEmpty": "Нет объявленных игр для привязки.",
+      "linkGameLoadFailed": "Не удалось загрузить ваши игры.",
+      "linkGameSuccess": "Игра привязана к бронированию",
+      "linkGameFailed": "Не удалось привязать. Попробуйте снова.",
+      "linkGameRescheduleTitle": "Изменить время игры?",
+      "linkGameRescheduleBody": "У игры другое время. Привязка перенесёт её на {{when}} и уведомит участников.",
+      "linkGameRescheduleConfirm": "Обновить и привязать",
       "orphanBookingNotice": "Корт, возможно, больше не зарезервирован",
       "connectedClubsPageTitle": "Подключённые клубы и бронирования",
       "connectedClubsCardTitle": "Бронирования клубов",
@@ -118,7 +132,9 @@
       "myTabConnectCta": "Подключить клубы",
       "myTabUpcomingTitle": "Предстоящие бронирования кортов",
       "seeAllBookings": "Показать все",
-      "noUpcomingAny": "Нет предстоящих бронирований в подключённых клубах."
+      "noUpcomingAny": "Нет предстоящих бронирований в подключённых клубах.",
+      "tabBookings": "Бронирования",
+      "tabIntegrations": "Интеграции"
     }
   }
 }

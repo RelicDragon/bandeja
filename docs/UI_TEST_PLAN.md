@@ -770,8 +770,9 @@ Frontend/e2e/
 | PR-54 | Display preferences | 12h/24h, date format toggles | Affects game time display app-wide |
 | PR-55 | Competitive vs social badge | User with both levels | Correct badge for sport context |
 | PR-56 | Connected clubs settings entry | Profile → Connected clubs & bookings | Navigates to `/profile/connected-clubs` |
-| PR-57 | Connected clubs page | Connect/disconnect, upcoming/past | Full bookings list per club; no scout opt-out toggle |
-| PR-58 | Past bookings collapse | Connected clubs → expand connected club with past bookings | Past section collapsed by default; tap header animates expand/collapse; count badge when items exist |
+| PR-57 | Connected clubs page tabs | Profile → Connected clubs & bookings | Segmented switch Bookings/Integrations centered; Bookings default |
+| PR-57a | Bookings tab | Bookings tab with connected clubs | All upcoming across clubs with club name; linked game chip opens game; Link to game dialog lists announced games with recommended match |
+| PR-57b | Integrations tab | Integrations tab | Club list with connect/disconnect state; hint card |
 | PR-59 | Club account disconnect | Connected clubs page → Disconnect | Toast "Club account disconnected"; club shows connect CTA |
 | PR-60 | Club booking cancel from settings | Settings page upcoming → cancel booking | Same policy modal + snapshot refresh as club detail |
 

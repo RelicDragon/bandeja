@@ -100,6 +100,20 @@
       "cancelFailed": "Could not cancel booking. Try again.",
       "linkedGameStillOnCalendar": "Your game is still on the calendar",
       "openLinkedGame": "Open game",
+      "linkedGameLabel": "Linked game",
+      "linkedGameUntitled": "Untitled game",
+      "linkGame": "Link to game",
+      "linkGameShort": "Link game",
+      "linkGameTitle": "Link to a game",
+      "linkGameHint": "Choose a game to link with this booking ({{when}}).",
+      "linkGameRecommended": "Recommended",
+      "linkGameEmpty": "No announced games available to link.",
+      "linkGameLoadFailed": "Could not load your games.",
+      "linkGameSuccess": "Game linked to booking",
+      "linkGameFailed": "Could not link game. Try again.",
+      "linkGameRescheduleTitle": "Update game time?",
+      "linkGameRescheduleBody": "This game has a different time. Linking will move it to {{when}} and notify participants.",
+      "linkGameRescheduleConfirm": "Update & link",
       "orphanBookingNotice": "Court may no longer be reserved",
       "connectedClubsPageTitle": "Connected clubs & bookings",
       "connectedClubsCardTitle": "Club bookings",
@@ -116,7 +130,9 @@
       "myTabConnectCta": "Connect clubs",
       "myTabUpcomingTitle": "Upcoming court bookings",
       "seeAllBookings": "See all",
-      "noUpcomingAny": "No upcoming bookings across your connected clubs."
+      "noUpcomingAny": "No upcoming bookings across your connected clubs.",
+      "tabBookings": "Bookings",
+      "tabIntegrations": "Integrations"
     }
   }
 }

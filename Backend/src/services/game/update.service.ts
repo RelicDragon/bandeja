@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { EntityType, ParticipantRole, Prisma, Sport } from '@prisma/client';
+import { EntityType, ParticipantRole, Prisma, Sport, ClubIntegrationType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
@@ -79,6 +79,8 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'leagueGroupId',
   'timeIsSet',
   'finishedDate',
+  'externalBookingId',
+  'externalBookingProvider',
   'priceTotal',
   'priceType',
   'priceCurrency',
@@ -516,6 +518,30 @@ export class GameUpdateService {
 
     if (data.mainPhotoId !== undefined || data.photosCount !== undefined) {
       throw new ApiError(400, 'Game photos must be managed via /games/:gameId/photos endpoints');
+    }
+
+    if (data.externalBookingId !== undefined || data.externalBookingProvider !== undefined) {
+      const bookingId =
+        typeof data.externalBookingId === 'string' ? data.externalBookingId.trim() : '';
+      if (bookingId) {
+        const provider = data.externalBookingProvider;
+        if (provider !== ClubIntegrationType.BOOKTIME) {
+          throw new ApiError(400, 'externalBookingProvider must be BOOKTIME when externalBookingId is set');
+        }
+        const conflict = await prisma.game.findFirst({
+          where: { externalBookingId: bookingId, NOT: { id } },
+          select: { id: true },
+        });
+        if (conflict) {
+          throw new ApiError(400, 'This court booking is already linked to another game');
+        }
+        updateData.externalBookingId = bookingId;
+        updateData.externalBookingProvider = ClubIntegrationType.BOOKTIME;
+        updateData.hasBookedCourt = true;
+      } else if (data.externalBookingId === null || data.externalBookingId === '') {
+        updateData.externalBookingId = null;
+        updateData.externalBookingProvider = null;
+      }
     }
 
     delete updateData.resultsRoundGenV2;

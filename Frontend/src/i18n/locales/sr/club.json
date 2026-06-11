@@ -102,6 +102,20 @@
       "cancelFailed": "Otkazivanje nije uspelo. Pokušaj ponovo.",
       "linkedGameStillOnCalendar": "Tvoj meč je i dalje u kalendaru",
       "openLinkedGame": "Otvori meč",
+      "linkedGameLabel": "Povezan meč",
+      "linkedGameUntitled": "Meč bez naziva",
+      "linkGame": "Poveži sa mečem",
+      "linkGameShort": "Poveži",
+      "linkGameTitle": "Poveži sa mečem",
+      "linkGameHint": "Izaberi meč za ovu rezervaciju ({{when}}).",
+      "linkGameRecommended": "Preporučeno",
+      "linkGameEmpty": "Nema najavljenih mečeva za povezivanje.",
+      "linkGameLoadFailed": "Učitavanje mečeva nije uspelo.",
+      "linkGameSuccess": "Meč povezan sa rezervacijom",
+      "linkGameFailed": "Povezivanje nije uspelo. Pokušaj ponovo.",
+      "linkGameRescheduleTitle": "Promeniti vreme meča?",
+      "linkGameRescheduleBody": "Meč ima drugo vreme. Povezivanje će ga pomeriti na {{when}} i obavestiti učesnike.",
+      "linkGameRescheduleConfirm": "Ažuriraj i poveži",
       "orphanBookingNotice": "Teren možda više nije rezervisan",
       "connectedClubsPageTitle": "Povezani klubovi i rezervacije",
       "connectedClubsCardTitle": "Rezervacije klubova",
@@ -118,7 +132,9 @@
       "myTabConnectCta": "Poveži klubove",
       "myTabUpcomingTitle": "Predstojeće rezervacije terena",
       "seeAllBookings": "Vidi sve",
-      "noUpcomingAny": "Nema predstojećih rezervacija u povezanim klubovima."
+      "noUpcomingAny": "Nema predstojećih rezervacija u povezanim klubovima.",
+      "tabBookings": "Rezervacije",
+      "tabIntegrations": "Integracije"
     }
   }
 }

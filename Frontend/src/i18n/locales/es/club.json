@@ -100,6 +100,20 @@
       "cancelFailed": "No se pudo cancelar la reserva. Inténtalo de nuevo.",
       "linkedGameStillOnCalendar": "Tu partido sigue en el calendario",
       "openLinkedGame": "Abrir partido",
+      "linkedGameLabel": "Partido vinculado",
+      "linkedGameUntitled": "Partido sin título",
+      "linkGame": "Vincular a partido",
+      "linkGameShort": "Vincular",
+      "linkGameTitle": "Vincular a un partido",
+      "linkGameHint": "Elige un partido para esta reserva ({{when}}).",
+      "linkGameRecommended": "Recomendado",
+      "linkGameEmpty": "No hay partidos anunciados para vincular.",
+      "linkGameLoadFailed": "No se pudieron cargar tus partidos.",
+      "linkGameSuccess": "Partido vinculado a la reserva",
+      "linkGameFailed": "No se pudo vincular. Inténtalo de nuevo.",
+      "linkGameRescheduleTitle": "¿Actualizar hora del partido?",
+      "linkGameRescheduleBody": "Este partido tiene otra hora. Vincularlo lo moverá a {{when}} y avisará a los participantes.",
+      "linkGameRescheduleConfirm": "Actualizar y vincular",
       "orphanBookingNotice": "Es posible que la pista ya no esté reservada",
       "connectedClubsPageTitle": "Clubs conectados y reservas",
       "connectedClubsCardTitle": "Reservas de clubs",
@@ -116,7 +130,9 @@
       "myTabConnectCta": "Conectar clubs",
       "myTabUpcomingTitle": "Próximas reservas de pista",
       "seeAllBookings": "Ver todo",
-      "noUpcomingAny": "No hay reservas próximas en tus clubs conectados."
+      "noUpcomingAny": "No hay reservas próximas en tus clubs conectados.",
+      "tabBookings": "Reservas",
+      "tabIntegrations": "Integraciones"
     }
   }
 }

@@ -102,6 +102,20 @@
       "cancelFailed": "Rezervaci se nepodařilo zrušit. Zkuste to znovu.",
       "linkedGameStillOnCalendar": "Váš zápas je stále v kalendáři",
       "openLinkedGame": "Otevřít zápas",
+      "linkedGameLabel": "Propojený zápas",
+      "linkedGameUntitled": "Zápas bez názvu",
+      "linkGame": "Propojit se zápasem",
+      "linkGameShort": "Propojit",
+      "linkGameTitle": "Propojit se zápasem",
+      "linkGameHint": "Vyberte zápas pro tuto rezervaci ({{when}}).",
+      "linkGameRecommended": "Doporučeno",
+      "linkGameEmpty": "Žádné oznámené zápasy k propojení.",
+      "linkGameLoadFailed": "Nepodařilo se načíst vaše zápasy.",
+      "linkGameSuccess": "Zápas propojen s rezervací",
+      "linkGameFailed": "Propojení se nezdařilo. Zkuste to znovu.",
+      "linkGameRescheduleTitle": "Změnit čas zápasu?",
+      "linkGameRescheduleBody": "Zápas má jiný čas. Propojení ho přesune na {{when}} a upozorní účastníky.",
+      "linkGameRescheduleConfirm": "Aktualizovat a propojit",
       "orphanBookingNotice": "Kurt možná už není rezervován",
       "connectedClubsPageTitle": "Propojené kluby a rezervace",
       "connectedClubsCardTitle": "Rezervace klubů",
@@ -118,7 +132,9 @@
       "myTabConnectCta": "Propojit kluby",
       "myTabUpcomingTitle": "Nadcházející rezervace kurtů",
       "seeAllBookings": "Zobrazit vše",
-      "noUpcomingAny": "Žádné nadcházející rezervace v propojených klubech."
+      "noUpcomingAny": "Žádné nadcházející rezervace v propojených klubech.",
+      "tabBookings": "Rezervace",
+      "tabIntegrations": "Integrace"
     }
   }
 }

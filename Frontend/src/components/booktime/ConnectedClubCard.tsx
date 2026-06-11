@@ -2,14 +2,11 @@ import { useTranslation } from 'react-i18next';
 import { Check, Loader2 } from 'lucide-react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import { ClubAvatar } from '@/components';
-import { ClubBookingsBlock } from './ClubBookingsBlock';
-
 type Props = {
   club: BooktimeMyClubRow;
   disconnectBusy: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
-  onBookingsChanged: () => void;
 };
 
 export function ConnectedClubCard({
@@ -17,7 +14,6 @@ export function ConnectedClubCard({
   disconnectBusy,
   onConnect,
   onDisconnect,
-  onBookingsChanged,
 }: Props) {
   const { t } = useTranslation();
 
@@ -74,8 +70,6 @@ export function ConnectedClubCard({
           )}
         </div>
       </div>
-
-      {club.connected ? <ClubBookingsBlock club={club} onChanged={onBookingsChanged} /> : null}
     </article>
   );
 }
