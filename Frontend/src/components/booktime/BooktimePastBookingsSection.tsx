@@ -2,27 +2,27 @@ import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BooktimeMyClubRow } from '@/api/booktime';
-import type { AggregatedBooktimeBooking } from '@/hooks/useBooktimeAllUpcoming';
+import { useBooktimeAllPast } from '@/hooks/useBooktimeAllPast';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
+import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
 import { BooktimePastBookingRow } from './BooktimePastBookingRow';
 
 type Props = {
-  past: AggregatedBooktimeBooking[];
-  loading: boolean;
   clubs: BooktimeMyClubRow[];
   displaySettings: ResolvedDisplaySettings;
+  refreshKey?: number;
   showClubName?: boolean;
 };
 
 export function BooktimePastBookingsSection({
-  past,
-  loading,
   clubs,
   displaySettings,
+  refreshKey = 0,
   showClubName = false,
 }: Props) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const { bookings: past, loading } = useBooktimeAllPast(clubs, expanded, refreshKey);
   const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
 
   return (
@@ -54,7 +54,9 @@ export function BooktimePastBookingsSection({
       >
         <div className="min-h-0 overflow-hidden">
           <div className="pt-3">
-            {loading ? null : past.length === 0 ? (
+            {loading ? (
+              <BooktimeBookingsLoading />
+            ) : past.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noPast')}</p>
             ) : (
               <ul className="space-y-2">

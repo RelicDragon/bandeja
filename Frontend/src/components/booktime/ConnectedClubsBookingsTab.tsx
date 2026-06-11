@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { useBooktimeAllPast } from '@/hooks/useBooktimeAllPast';
 import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
 import { BooktimeBookingRow } from './BooktimeBookingRow';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
@@ -28,7 +27,6 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged
     true,
     combinedRefreshKey
   );
-  const { bookings: past, loading: pastLoading } = useBooktimeAllPast(clubs, true, combinedRefreshKey);
   const firstConnected = connectedClubs[0] ?? null;
   const allowedHoursToCancel = useBooktimeCancelPolicy(firstConnected, !!firstConnected);
   const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
@@ -78,10 +76,9 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged
       </section>
 
       <BooktimePastBookingsSection
-        past={past}
-        loading={pastLoading}
         clubs={clubs}
         displaySettings={displaySettings}
+        refreshKey={combinedRefreshKey}
         showClubName
       />
     </div>

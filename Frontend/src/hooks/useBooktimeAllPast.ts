@@ -19,8 +19,7 @@ export function useBooktimeAllPast(
 
   const reload = useCallback(async () => {
     if (!enabled || connectedClubs.length === 0) {
-      setBookings((prev) => (prev.length === 0 ? prev : []));
-      setLoading((prev) => (prev ? false : prev));
+      setLoading(false);
       return;
     }
     setLoading(true);
