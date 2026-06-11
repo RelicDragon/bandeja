@@ -27,6 +27,10 @@ export function getScoreEntryExampleList(rules: ScoringRules, kind: SetKind): st
     const lo = tot - hi;
     return `${tot}:0, ${hi}:${lo}, ${half}:${tot - half}`;
   }
+  if (kind === 'POINTS' && (rules.winBy >= 2 && rules.totalPointsPerSet > 0)) {
+    const t = rules.totalPointsPerSet;
+    return `${t}:${t - 2}, ${t + 1}:${t - 1}, 0:${t}`;
+  }
   if (kind === 'CUSTOM') return null;
   if (kind === 'TIMED') return null;
   return null;

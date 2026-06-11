@@ -482,6 +482,7 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | GD-28 | Enter set results | Results tab → enter scores | Saved locally + server |
+| GD-84 | Rally match set score (TT Bo3×11) | Table tennis game with Bo3×11 template → enter set score 11:4 | Accepted and saved (first-to-11 per set, not americano total-11 budget) |
 | GD-29 | Conflict resolution | Conflicting entries | Conflict modal |
 | GD-30 | Submit results | Finalize results | Status updates |
 | GD-31 | Recalculate results | Owner recalc | Standings update |

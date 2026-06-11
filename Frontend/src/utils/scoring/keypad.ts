@@ -1,7 +1,14 @@
+import { bwfGameScoreCap, isBwfStrictValidation } from '@shared/strictValidation';
 import type { SetResult } from '@/types/gameResults';
 import type { ScoringRules, SetKind } from './rulebook';
 import { getSetKind } from './setKind';
-import { isClassicRules, isClassicTimedRelaxedGameScores, isPointsRules } from './rulebook';
+import {
+  isClassicRules,
+  isClassicTimedRelaxedGameScores,
+  isPointsRules,
+  isRallyGameRules,
+  isRallyPointsRules,
+} from './rulebook';
 
 export interface KeypadOptions {
   values: number[];
@@ -20,6 +27,16 @@ const classicRegularValues = (rules: ScoringRules): number[] => {
 
 const range = (max: number): number[] => Array.from({ length: Math.max(0, max + 1) }, (_, i) => i);
 
+const rallyKeypadMax = (rules: ScoringRules): number => {
+  if (isBwfStrictValidation(rules.strictValidation)) {
+    return bwfGameScoreCap(rules.totalPointsPerSet);
+  }
+  if (rules.strictValidation === 'PICKLEBALL_RALLY_11') {
+    return 13;
+  }
+  return rules.totalPointsPerSet + Math.max(rules.winBy * 2, 5);
+};
+
 export const getKeypadOptions = (
   rules: ScoringRules,
   setIndex: number,
@@ -28,7 +45,12 @@ export const getKeypadOptions = (
 ): KeypadOptions => {
   const kind = getSetKind(setIndex, sets, rules, { teamA: 0, teamB: 0, isTieBreak: isTieBreakFlag });
 
-  if (kind === 'POINTS' || (isPointsRules(rules) && kind !== 'SUPER_TIEBREAK' && kind !== 'TIEBREAK_GAME')) {
+  if (isRallyGameRules(rules) || isRallyPointsRules(rules)) {
+    const max = rallyKeypadMax(rules);
+    return { values: range(max), mode: 'FREE', max, kind: 'POINTS' };
+  }
+
+  if (isPointsRules(rules) && kind !== 'SUPER_TIEBREAK' && kind !== 'TIEBREAK_GAME') {
     const total = rules.totalPointsPerSet;
     return {
       values: range(total),

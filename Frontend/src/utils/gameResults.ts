@@ -1,5 +1,7 @@
 import { Game, User } from '@/types';
 import { GroupChannel } from '@/api/chat';
+import { getRules, isPointsRules, isRallyGameRules, isRallyPointsRules } from '@/utils/scoring/rulebook';
+import { isLegalSetScore } from '@/utils/scoring/validateSet';
 
 /**
  * Checks if a user is admin or owner of a game (including parent game)
@@ -276,8 +278,18 @@ export const validateSetScores = (
     }
   }
 
+  const rules = getRules(game);
+
+  if (isRallyGameRules(rules) || isRallyPointsRules(rules)) {
+    const result = isLegalSetScore(teamAScore, teamBScore, rules, 0, []);
+    if (!result.ok) {
+      return 'Invalid set score for this format';
+    }
+    return null;
+  }
+
   const maxTotalPointsPerSet = game?.maxTotalPointsPerSet;
-  if (maxTotalPointsPerSet && maxTotalPointsPerSet > 0) {
+  if (maxTotalPointsPerSet && maxTotalPointsPerSet > 0 && isPointsRules(rules)) {
     if (teamAScore + teamBScore > maxTotalPointsPerSet) {
       return `Total score cannot exceed ${maxTotalPointsPerSet}`;
     }
