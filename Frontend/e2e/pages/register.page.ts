@@ -65,7 +65,9 @@ export class RegisterPage {
   }
 
   async selectPrimarySport(label: RegExp) {
-    await this.openDropdownNearLabel(/main sport/i);
+    const sportSection = this.page.locator('form > div').filter({ hasText: /main sport/i });
+    await sportSection.getByRole('button').first().scrollIntoViewIfNeeded();
+    await sportSection.getByRole('button').first().click();
     await this.pickDropdownOption(label);
   }
 
