@@ -32,13 +32,16 @@ export const useMyGames = (
   const invites = data?.invites ?? [];
 
   const setInvites = useCallback(
-    (newInvites: Invite[]) => {
+    (newInvites: Invite[] | ((prev: Invite[]) => Invite[])) => {
       if (!userId) return;
       queryClient.setQueryData<MyGamesData>(
         queryKeys.games.my(userId),
         (old) => {
-          if (!old) return { games: [], invites: newInvites };
-          return { ...old, invites: newInvites };
+          const prevInvites = old?.invites ?? [];
+          const nextInvites =
+            typeof newInvites === 'function' ? newInvites(prevInvites) : newInvites;
+          if (!old) return { games: [], invites: nextInvites };
+          return { ...old, invites: nextInvites };
         },
       );
     },
