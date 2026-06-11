@@ -13,7 +13,7 @@ test.describe('profile tabs @auth', () => {
     await profile.switchTab('statistics');
     await expect(page).toHaveURL(/\/profile/);
     await expect(
-      page.locator('.animate-spin').first().or(page.locator('[class*="LevelHistory"], canvas, svg').first()),
+      page.locator('.inline-block.animate-spin, [class*="LevelHistory"], canvas').first(),
     ).toBeVisible({ timeout: 25_000 });
   });
 

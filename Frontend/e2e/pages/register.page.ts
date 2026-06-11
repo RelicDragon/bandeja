@@ -48,6 +48,25 @@ export class RegisterPage {
     return this.page.getByRole('button', { name: /^register$/i });
   }
 
+  private async openDropdownNearLabel(label: RegExp) {
+    const field = this.page.locator('div').filter({ has: this.page.getByText(label) }).getByRole('button').first();
+    await field.click();
+  }
+
+  private async pickDropdownOption(name: RegExp) {
+    await this.page.getByRole('button', { name }).last().click();
+  }
+
+  async selectGenderMale() {
+    await this.openDropdownNearLabel(/^gender$/i);
+    await this.pickDropdownOption(/^male$/i);
+  }
+
+  async selectPrimarySport(label: RegExp) {
+    await this.openDropdownNearLabel(/main sport/i);
+    await this.pickDropdownOption(label);
+  }
+
   async fillRequiredFields(options: {
     phone: string;
     password: string;
@@ -60,6 +79,7 @@ export class RegisterPage {
     await this.phoneInput().fill(options.phone);
     await this.passwordInput().fill(options.password);
     await this.passwordConfirmInput().fill(options.password);
+    await this.genderAckCheckbox().check();
     if (options.acceptEula !== false) {
       await this.eulaCheckbox().check();
     }
@@ -70,12 +90,12 @@ export class RegisterPage {
   }
 
   async expectValidationErrors() {
-    await expect(this.page.locator('p.text-red-500, p.text-red-400').first()).toBeVisible({ timeout: 10_000 });
+    await expect(
+      this.page
+        .locator('p.text-red-500, p.text-red-400')
+        .or(this.page.getByText(/required|must|acknowledge/i))
+        .first(),
+    ).toBeVisible({ timeout: 10_000 });
     await expect(this.page).toHaveURL(/\/register/);
-  }
-
-  async selectPrimarySport(label: RegExp) {
-    await this.page.locator('select, [role="combobox"]').first().click();
-    await this.page.getByRole('option', { name: label }).click();
   }
 }

@@ -11,7 +11,8 @@ test.describe('auth register', () => {
     await register.goto();
     await register.fillRequiredFields({ phone, password });
     await register.submit();
-    await new ShellPage(page).expectAuthenticatedHome();
+    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30_000 });
+    await new ShellPage(page).waitForShellReady();
   });
 
   test('A-11 validation errors', async ({ page }) => {
@@ -57,7 +58,7 @@ test.describe('auth register', () => {
     await register.passwordConfirmInput().fill('E2eTest1!');
     await register.eulaCheckbox().check();
     await register.submit();
-    await expect(page.getByText(/acknowledge|gender/i)).toBeVisible();
+    await expect(page.getByText(/acknowledge the gender preference/i)).toBeVisible();
   });
 
   test('A-15 primary sport selection', async ({ page }) => {
@@ -65,12 +66,10 @@ test.describe('auth register', () => {
     const register = new RegisterPage(page);
     await register.goto();
     await register.fillRequiredFields({ phone, password: 'E2eTest1!' });
-    await page.locator('select').first().selectOption({ label: /tennis/i }).catch(async () => {
-      await page.getByRole('combobox').first().click();
-      await page.getByRole('option', { name: /tennis/i }).click();
-    });
+    await register.selectPrimarySport(/tennis/i);
     await register.submit();
-    await new ShellPage(page).expectAuthenticatedHome();
+    await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30_000 });
+    await new ShellPage(page).waitForShellReady();
   });
 
   test('A-16 optional email invalid', async ({ page }) => {

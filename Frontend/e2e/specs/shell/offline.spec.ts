@@ -6,17 +6,20 @@ import { findPublicGameId } from '../../fixtures/games.fixture';
 
 test.describe('shell offline', () => {
   test('G-06 offline gate @auth', async ({ page, context }) => {
-    await new ShellPage(page).expectAuthenticatedHome();
+    const shell = new ShellPage(page);
+    await shell.expectAuthenticatedHome();
+    await shell.clickBottomTab('find');
     await context.setOffline(true);
-    await page.goto('/find');
     await new OfflinePage(page).expectOfflineGate();
   });
 
   test('G-07 offline exempt login', async ({ page, context }) => {
-    await context.setOffline(true);
     await page.goto('/login');
+    const signInEntry = page.getByRole('button', { name: /phone sign-in|telegram/i }).first();
+    await expect(signInEntry).toBeVisible();
+    await context.setOffline(true);
     await new OfflinePage(page).expectNoOfflineGate();
-    await expect(page.getByRole('button', { name: /phone sign-in|telegram/i })).toBeVisible();
+    await expect(signInEntry).toBeVisible();
   });
 
   test('G-07 offline exempt game details @auth', async ({ page, context }) => {
@@ -33,15 +36,17 @@ test.describe('shell offline', () => {
       return;
     }
 
-    await context.setOffline(true);
     await page.goto(`/games/${gameId}`);
+    await page.waitForURL(new RegExp(`/games/${gameId}`), { timeout: 20_000 });
+    await context.setOffline(true);
     await new OfflinePage(page).expectNoOfflineGate();
   });
 
   test('G-07 offline exempt user profile @auth', async ({ page, context }) => {
     const { userAId } = await getE2eUserIds();
-    await context.setOffline(true);
     await page.goto(`/user-profile/${userAId}`);
+    await page.waitForURL(new RegExp(`/user-profile/${userAId}`), { timeout: 20_000 });
+    await context.setOffline(true);
     await new OfflinePage(page).expectNoOfflineGate();
   });
 });

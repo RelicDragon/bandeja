@@ -8,8 +8,20 @@ export class SessionsPage {
     await this.page.waitForURL(/\/profile\/sessions/, { timeout: 20_000 });
   }
 
+  pageTitle() {
+    return this.page.getByRole('heading', { name: /devices.*sessions|sessions/i });
+  }
+
   currentSessionBadge() {
     return this.page.getByText(/current device|this device|current session/i);
+  }
+
+  currentDeviceBadge() {
+    return this.currentSessionBadge();
+  }
+
+  sessionCards() {
+    return this.page.locator('ul li').filter({ has: this.page.getByRole('button', { name: /^revoke$/i }) });
   }
 
   revokeButtons() {

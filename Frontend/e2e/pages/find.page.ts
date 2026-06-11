@@ -95,7 +95,10 @@ export class FindPage {
   }
 
   async waitForShell() {
-    await this.page.getByRole('button', { name: /^chats$/i }).waitFor({ state: 'visible', timeout: 30_000 });
+    await this.page
+      .getByRole('button', { name: /^my$|^find$|^chats$|^market$|^top$/i })
+      .first()
+      .waitFor({ state: 'visible', timeout: 30_000 });
   }
 
   async waitForAvailableGamesLoaded() {

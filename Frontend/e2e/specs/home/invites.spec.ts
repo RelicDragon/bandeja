@@ -23,7 +23,9 @@ test.describe('home invites @two-user @auth', () => {
       const home = new HomePage(pageB);
       await home.goto();
       await home.expectInviteSectionVisible();
-      await expect(pageB.getByText(label)).toBeVisible({ timeout: 20_000 });
+      await expect(pageB.getByRole('heading', { name: label }).or(pageB.getByText(label).first())).toBeVisible({
+        timeout: 20_000,
+      });
     } finally {
       await cleanup();
     }

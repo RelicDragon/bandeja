@@ -4,7 +4,7 @@ import { e2eApiHeaders } from '../test-user';
 const apiURL = () => process.env.E2E_API_URL ?? 'http://localhost:3000/api';
 
 export function generateE2ePhone(): string {
-  const suffix = `${Date.now()}`.slice(-9);
+  const suffix = `${Date.now()}`.slice(-7);
   return `+7900${suffix}`;
 }
 

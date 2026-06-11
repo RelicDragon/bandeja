@@ -106,6 +106,10 @@ export default defineConfig({
       url: 'http://localhost:3001',
       reuseExistingServer: !process.env.CI,
       timeout: 180_000,
+      env: {
+        ...process.env,
+        VITE_DISABLE_RQ_DEVTOOLS: '1',
+      },
     },
   ],
 });

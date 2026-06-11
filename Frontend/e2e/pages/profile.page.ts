@@ -37,7 +37,7 @@ export class ProfilePage {
   }
 
   personalInfoHeading(): Locator {
-    return this.page.getByRole('heading', { name: /^personal info$/i });
+    return this.page.getByRole('heading', { name: /personal information/i });
   }
 
   firstNameInput(): Locator {
@@ -60,6 +60,10 @@ export class ProfilePage {
     return this.page.getByRole('heading', { name: /^appearance$/i });
   }
 
+  appearanceSection(): Locator {
+    return this.page.getByText(/^appearance$/i);
+  }
+
   themeField(): Locator {
     return this.page.getByText(/^theme$/i).locator('..').locator('[role="button"], button').first();
   }
@@ -69,8 +73,11 @@ export class ProfilePage {
   }
 
   showOnlineStatusToggle(): Locator {
-    return this.page.getByText(/^show online status$/i).locator('..').locator('button[role="switch"], input[type="checkbox"]').first()
-      .or(this.page.locator('label').filter({ hasText: /^show online status$/i }).locator('..').locator('button').last());
+    return this.page
+      .getByText(/show my online status/i)
+      .locator('..')
+      .locator('button[role="switch"], input[type="checkbox"]')
+      .first();
   }
 
   controlNotificationsButton(): Locator {
@@ -85,10 +92,30 @@ export class ProfilePage {
     return this.page.getByRole('button', { name: /change city/i });
   }
 
+  languageSelect(): Locator {
+    return this.page.getByLabel(/language/i);
+  }
+
+  themeSelect(): Locator {
+    return this.page.locator('select').filter({ has: this.page.locator('option') }).last();
+  }
+
   async openSelectNearLabel(label: RegExp, optionLabel: RegExp) {
     const field = this.page.getByText(label).locator('..').locator('button').first();
     await field.click();
     await this.page.getByRole('button', { name: optionLabel }).last().click();
+  }
+
+  async changeLanguage(code: 'ru' | 'es') {
+    await this.appearanceSection().scrollIntoViewIfNeeded();
+    const select = this.page.locator('select').filter({ hasText: /english|russian|spanish/i }).first();
+    await select.selectOption(code);
+  }
+
+  async toggleTheme(mode: 'dark' | 'light') {
+    await this.appearanceSection().scrollIntoViewIfNeeded();
+    const select = this.page.locator('select').filter({ hasText: /dark|light|system/i }).first();
+    await select.selectOption(mode);
   }
 
   async logout() {
@@ -102,45 +129,5 @@ export class ProfilePage {
     await expect(this.page).toHaveURL(/\/login/);
     const token = await this.page.evaluate(() => localStorage.getItem('token'));
     expect(token).toBeNull();
-  }
-
-  async gotoGeneralTab() {
-    await this.goto();
-  }
-
-  personalInfoHeading() {
-    return this.page.getByRole('heading', { name: /personal info|profile settings|general/i });
-  }
-
-  firstNameInput() {
-    return this.page.getByLabel(/^first name$/i);
-  }
-
-  avatarImage() {
-    return this.page.locator('img.rounded-full').first();
-  }
-
-  languageSelect() {
-    return this.page.getByLabel(/language/i);
-  }
-
-  themeSelect() {
-    return this.page.locator('select').filter({ has: this.page.locator('option') }).last();
-  }
-
-  appearanceSection() {
-    return this.page.getByText(/^appearance$/i);
-  }
-
-  async changeLanguage(code: 'ru' | 'es') {
-    await this.appearanceSection().scrollIntoViewIfNeeded();
-    const select = this.page.locator('select').filter({ hasText: /english|russian|spanish/i }).first();
-    await select.selectOption(code);
-  }
-
-  async toggleTheme(mode: 'dark' | 'light') {
-    await this.appearanceSection().scrollIntoViewIfNeeded();
-    const select = this.page.locator('select').filter({ hasText: /dark|light|system/i }).first();
-    await select.selectOption(mode);
   }
 }

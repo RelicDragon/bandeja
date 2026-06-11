@@ -14,6 +14,7 @@ export async function seedAuthInBrowser(
     },
     { authToken: token, authUser: user },
   );
+  await page.reload({ waitUntil: 'domcontentloaded' });
 }
 
 export async function clearAuthInBrowser(page: Page): Promise<void> {

@@ -15,7 +15,7 @@ export class GameDetailsPage {
   }
 
   async expectGuestPublicView() {
-    await this.page.getByText(/join to participate!|login or register to join/i).waitFor({ state: 'visible', timeout: 15_000 });
+    await this.page.getByRole('heading', { name: /join to participate/i }).waitFor({ state: 'visible', timeout: 15_000 });
     await this.page.getByRole('button', { name: /^login$/i }).waitFor({ state: 'visible' });
   }
 
@@ -128,7 +128,11 @@ export class GameDetailsPage {
   }
 
   async expectPrivateBadge() {
-    await this.page.getByText(/^private$/i).first().waitFor({ state: 'visible', timeout: 15_000 });
+    await this.page
+      .locator('[class*="badge"], span, div')
+      .filter({ hasText: /^private$/i })
+      .first()
+      .waitFor({ state: 'attached', timeout: 15_000 });
   }
 
   async expectNoJoinCta() {

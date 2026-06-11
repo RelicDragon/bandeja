@@ -32,7 +32,7 @@ test.describe('marketplace browse @auth', () => {
       await marketplace.gotoMyListings();
       await marketplace.waitForListLoaded();
       await expect(marketplace.myListingsLabel()).toBeVisible();
-      await expect(page.getByText(title)).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(title).first()).toBeVisible({ timeout: 20_000 });
     } finally {
       await withdrawMarketListingViaApi(token, listing.id);
     }
@@ -89,7 +89,7 @@ test.describe('marketplace browse @auth', () => {
     try {
       const marketplace = new MarketplacePage(page);
       await marketplace.gotoItemDeepLink(listing.id);
-      await expect(page.getByText(title)).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20_000 });
       await expect(page).toHaveURL(new RegExp(`item=${listing.id}|/marketplace/${listing.id}`));
     } finally {
       await withdrawMarketListingViaApi(token, listing.id);
@@ -110,7 +110,7 @@ test.describe('marketplace browse @auth', () => {
       const marketplace = new MarketplacePage(page);
       await marketplace.gotoList(`item=${listing.id}`);
       await marketplace.waitForListLoaded();
-      await expect(page.getByText(title)).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20_000 });
       await expect(marketplace.drawerCloseButton()).toBeVisible();
     } finally {
       await withdrawMarketListingViaApi(token, listing.id);
@@ -127,7 +127,7 @@ test.describe('marketplace item transactions @auth', () => {
     try {
       const marketplace = new MarketplacePage(page);
       await marketplace.gotoItemDeepLink(listing.id);
-      await page.getByText(title).waitFor({ state: 'visible', timeout: 20_000 });
+      await page.getByRole('heading', { name: title }).waitFor({ state: 'visible', timeout: 20_000 });
       await marketplace.viewBidsButton().click();
       await expect(page.getByRole('heading', { name: /bids|bid history/i })).toBeVisible({ timeout: 15_000 });
     } finally {

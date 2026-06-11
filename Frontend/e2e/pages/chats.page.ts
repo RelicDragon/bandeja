@@ -229,7 +229,7 @@ export class ChatsPage {
       (res) => res.request().method() === 'POST' && /\/messages/.test(res.url()),
       { timeout: 30_000 },
     );
-    await this.page.getByRole('button', { name: /^create poll$/i }).click();
+    await this.page.getByRole('dialog').getByRole('button', { name: /^create poll$/i }).click();
     await pollResponse.catch(() => undefined);
   }
 

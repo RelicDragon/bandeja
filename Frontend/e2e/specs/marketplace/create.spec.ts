@@ -20,7 +20,7 @@ test.describe('marketplace create @auth', () => {
     await marketplace.fillPrice('25');
     await marketplace.submitCreate();
     await expect(page).toHaveURL(/\/marketplace\//, { timeout: 20_000 });
-    await expect(page.getByText(title)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20_000 });
 
     const match = page.url().match(/\/marketplace\/([^/?#]+)/);
     const itemId = match?.[1];
@@ -40,7 +40,7 @@ test.describe('marketplace create @auth', () => {
     await marketplace.fillPrice('10');
     await marketplace.selectAuctionDurationDays(3);
     await marketplace.submitCreate();
-    await expect(page.getByText(title)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20_000 });
 
     const match = page.url().match(/\/marketplace\/([^/?#]+)/);
     const itemId = match?.[1];
@@ -58,7 +58,7 @@ test.describe('marketplace create @auth', () => {
     await marketplace.selectFirstCategoryIfNeeded();
     await marketplace.selectTradeType(/^free$/i);
     await marketplace.submitCreate();
-    await expect(page.getByText(title)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByRole('heading', { name: title })).toBeVisible({ timeout: 20_000 });
     await expect(page.getByText(/^free$/i).first()).toBeVisible();
 
     const match = page.url().match(/\/marketplace\/([^/?#]+)/);

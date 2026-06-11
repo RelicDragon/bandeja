@@ -21,8 +21,19 @@ const TAB_PATHS: Record<ShellTab, string> = {
 export class ShellPage {
   constructor(private readonly page: Page) {}
 
+  bottomTabButtons() {
+    return this.page.getByRole('button', {
+      name: new RegExp(
+        `^(${Object.values(TAB_LABELS)
+          .map((label) => label.source.replace(/^\^|\$$/g, ''))
+          .join('|')})$`,
+        'i',
+      ),
+    });
+  }
+
   async waitForShellReady() {
-    await this.page.getByRole('button', { name: TAB_LABELS.chats }).waitFor({ state: 'visible', timeout: 45_000 });
+    await this.bottomTabButtons().first().waitFor({ state: 'visible', timeout: 45_000 });
   }
 
   async waitForChatsHeader() {

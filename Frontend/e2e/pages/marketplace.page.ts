@@ -198,9 +198,13 @@ export class MarketplacePage {
     await this.gotoItemDeepLink(itemId);
   }
 
+  itemTitleHeading(title: string) {
+    return this.page.getByRole('heading', { name: title });
+  }
+
   async waitForItemLoaded(title?: string) {
     if (title) {
-      await this.page.getByText(title).waitFor({ state: 'visible', timeout: 20_000 });
+      await this.itemTitleHeading(title).waitFor({ state: 'visible', timeout: 20_000 });
     }
     await this.page
       .waitForResponse((res) => res.url().includes('/market-items') && res.ok(), { timeout: 30_000 })

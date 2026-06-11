@@ -131,7 +131,7 @@ test.describe('two-user marketplace @two-user @auth', () => {
 
       const marketplace = new MarketplacePage(pageA);
       await pageA.goto(`/marketplace/${itemId}`);
-      await pageA.getByText(title).waitFor({ state: 'visible', timeout: 20_000 });
+      await pageA.getByRole('heading', { name: title }).waitFor({ state: 'visible', timeout: 20_000 });
       await marketplace.placeBidInModal('15');
       await expect(pageA.getByText(/bid placed|15[,.]00/i).first()).toBeVisible({ timeout: 20_000 });
     } finally {
@@ -153,7 +153,7 @@ test.describe('two-user marketplace @two-user @auth', () => {
 
       const marketplace = new MarketplacePage(pageA);
       await pageA.goto(`/marketplace/${itemId}`);
-      await pageA.getByText(title).waitFor({ state: 'visible', timeout: 20_000 });
+      await pageA.getByRole('heading', { name: title }).waitFor({ state: 'visible', timeout: 20_000 });
       await marketplace.placeBidButton().click();
       await marketplace.bidAmountInput().fill('5');
       await marketplace.bidSubmitButton().click();
@@ -176,9 +176,9 @@ test.describe('two-user marketplace @two-user @auth', () => {
       registerTeardown(() => withdrawMarketListingViaApi(sessions.tokenB, itemId));
 
       await pageA.goto(`/marketplace/${itemId}`);
-      await pageA.getByText(title).waitFor({ state: 'visible', timeout: 20_000 });
+      await pageA.getByRole('heading', { name: title }).waitFor({ state: 'visible', timeout: 20_000 });
       await pageB.goto(`/marketplace/${itemId}`);
-      await pageB.getByText(title).waitFor({ state: 'visible', timeout: 20_000 });
+      await pageB.getByRole('heading', { name: title }).waitFor({ state: 'visible', timeout: 20_000 });
 
       await placeBidViaApi(sessions.tokenA, itemId, 1_500);
 

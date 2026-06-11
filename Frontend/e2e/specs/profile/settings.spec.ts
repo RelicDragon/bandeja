@@ -50,8 +50,8 @@ test.describe('profile settings @auth', () => {
   test('PR-23 Online status toggle visible', async ({ page }) => {
     const profile = new ProfilePage(page);
     await profile.gotoGeneralTab();
-    await page.getByText(/^show online status$/i).scrollIntoViewIfNeeded();
-    await expect(page.getByText(/^show online status$/i)).toBeVisible();
+    await page.getByText(/show my online status/i).scrollIntoViewIfNeeded();
+    await expect(page.getByText(/show my online status/i)).toBeVisible();
   });
 
   test('PR-24 Notification settings modal opens', async ({ page }) => {

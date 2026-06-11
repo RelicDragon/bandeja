@@ -57,6 +57,7 @@ async function writeStorageState(
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(`${baseURL}/login`);
+  await page.goto(`${baseURL}/login`);
   await page.evaluate(
     ({ authToken, authUser }) => {
       localStorage.setItem('token', authToken);
@@ -64,6 +65,8 @@ async function writeStorageState(
     },
     { authToken: token, authUser: user },
   );
+  await page.goto(`${baseURL}/`);
+  await page.waitForLoadState('domcontentloaded');
   await context.storageState({ path: outPath });
   await browser.close();
 }

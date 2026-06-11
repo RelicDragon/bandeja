@@ -12,7 +12,9 @@ export function QueryProvider({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}
+      {import.meta.env.DEV && import.meta.env.VITE_DISABLE_RQ_DEVTOOLS !== '1' ? (
+        <ReactQueryDevtools initialIsOpen={false} />
+      ) : null}
     </QueryClientProvider>
   );
 }
