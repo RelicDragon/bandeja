@@ -27,6 +27,8 @@ import {
   type SegmentedSwitchTab,
 } from '@/components';
 import { GameCancelled } from '@/components/GameDetails/GameCancelled';
+import { GameDetailsSkeleton } from '@/components/GameDetails/GameDetailsSkeleton';
+import { GameActionCard } from '@/components/GameDetails/GameActionCard';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
@@ -1244,12 +1246,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   if (loading && !game) {
     return (
       <AnimatedPresencePanel panelKey="game-details-loading">
-        <div className="flex items-center justify-center min-h-[calc(100vh-60px)]">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
-          </div>
-        </div>
+        <GameDetailsSkeleton />
       </AnimatedPresencePanel>
     );
   }
@@ -1384,13 +1381,15 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             <button
               type="button"
               onClick={() => navigate(`/games/${game.parentId}`)}
-              className="mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-left text-gray-900 dark:text-white transition hover:bg-gray-50 dark:hover:bg-gray-700 active:opacity-90"
+              className="group mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-left text-gray-900 dark:text-white shadow-xs transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-950/30 hover:shadow-md active:scale-[0.99]"
             >
-              <span className="flex items-center gap-2 font-normal">
-                <Trophy className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
+              <span className="flex items-center gap-3 font-normal">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500 dark:bg-blue-950/40 dark:text-blue-400 transition-transform duration-200 group-hover:scale-105">
+                  <Trophy className="h-5 w-5" />
+                </span>
                 {t('gameDetails.openLeagueSeason')}
               </span>
-              <ChevronRight className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
+              <ChevronRight className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
             </button>
           )}
 
@@ -1567,127 +1566,69 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             </Card>
           )}
 
-          {user && isParticipant && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && game.resultsStatus !== 'FINAL' && !isGuest && !hasPendingInvite && !isInJoinQueue && (
-            <Card>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <LogOut size={18} className="text-gray-500 dark:text-gray-400" />
-                    <h2 className="section-title">
-                      {t(getLeaveGameText(game?.entityType || 'GAME'))}
-                    </h2>
-                  </div>
-                  {!isUserOwner ? (
-                    <>
-                      {isUserPlaying ? (
-                        <button
-                          onClick={() => setShowLeaveConfirmation(true)}
-                          disabled={isLeaving}
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {t('common.leave')}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleLeaveChat}
-                          disabled={isLeaving}
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {t('gameDetails.leaveChat')}
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {isUserPlaying ? (
-                        <button
-                          onClick={handleLeaveGame}
-                          disabled={isLeaving}
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {t('gameDetails.dontPlayInGame')}
-                        </button>
-                      ) : game.status !== 'ARCHIVED' && !isFull && (
-                        <button
-                          onClick={handleAddToGame}
-                          disabled={isLeaving}
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {t('games.playInGame')}
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-                {!isUserOwner && !isUserPlaying && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-pre-line">
-                    {game && t(getNotPlayingHintText(game.entityType))}
-                  </p>
-                )}
-                {isUserOwner && !isUserPlaying && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 whitespace-pre-line">
-                    {game && t(getOwnerCannotLeaveText(game.entityType))}
-                  </p>
-                )}
-              </div>
-            </Card>
-          )}
+          {user && isParticipant && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && game.resultsStatus !== 'FINAL' && !isGuest && !hasPendingInvite && !isInJoinQueue && (() => {
+            const leaveAction = !isUserOwner
+              ? isUserPlaying
+                ? { tone: 'danger' as const, buttonLabel: t('common.leave'), onClick: () => setShowLeaveConfirmation(true), hint: undefined }
+                : { tone: 'danger' as const, buttonLabel: t('gameDetails.leaveChat'), onClick: handleLeaveChat, hint: t(getNotPlayingHintText(game.entityType)) }
+              : isUserPlaying
+                ? { tone: 'danger' as const, buttonLabel: t('gameDetails.dontPlayInGame'), onClick: handleLeaveGame, hint: undefined }
+                : {
+                    tone: 'success' as const,
+                    buttonLabel: game.status !== 'ARCHIVED' && !isFull ? t('games.playInGame') : undefined,
+                    onClick: game.status !== 'ARCHIVED' && !isFull ? handleAddToGame : undefined,
+                    hint: t(getOwnerCannotLeaveText(game.entityType)),
+                  };
+            return (
+              <GameActionCard
+                icon={LogOut}
+                title={t(getLeaveGameText(game?.entityType || 'GAME'))}
+                tone={leaveAction.tone}
+                buttonLabel={leaveAction.buttonLabel}
+                onClick={leaveAction.onClick}
+                disabled={isLeaving}
+                hint={leaveAction.hint}
+              />
+            );
+          })()}
 
           {user && canEdit && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && (
-            <Card>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Copy size={18} className="text-gray-500 dark:text-gray-400" />
-                  <h2 className="section-title">
-                    {t(getDuplicateGameText(game?.entityType || 'GAME'))}
-                  </h2>
-                </div>
-                <button
-                  onClick={() => {
-                    const doDuplicate = () => {
-                    const gameData = buildDuplicateGameInitialData(game);
+            <GameActionCard
+              icon={Copy}
+              title={t(getDuplicateGameText(game?.entityType || 'GAME'))}
+              tone="primary"
+              buttonLabel={t('gameDetails.duplicate')}
+              onClick={() => {
+                const doDuplicate = () => {
+                  const gameData = buildDuplicateGameInitialData(game);
 
-                    navigate('/create-game', {
-                      state: {
-                        entityType: game.entityType,
-                        initialGameData: gameData,
-                      },
-                      replace: true,
-                    });
-                    };
-                    const authUser = useAuthStore.getState().user;
-                    if (authUser && authUser.nameIsSet !== true) {
-                      runWithProfileName(doDuplicate);
-                      return;
-                    }
-                    doDuplicate();
-                  }}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
-                >
-                  {t('gameDetails.duplicate')}
-                </button>
-              </div>
-            </Card>
+                  navigate('/create-game', {
+                    state: {
+                      entityType: game.entityType,
+                      initialGameData: gameData,
+                    },
+                    replace: true,
+                  });
+                };
+                const authUser = useAuthStore.getState().user;
+                if (authUser && authUser.nameIsSet !== true) {
+                  runWithProfileName(doDuplicate);
+                  return;
+                }
+                doDuplicate();
+              }}
+            />
           )}
 
           {user && canDeleteGame() && (
-            <Card>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Trash2 size={18} className="text-gray-500 dark:text-gray-400" />
-                  <h2 className="section-title">
-                    {t(getDeleteGameText(game?.entityType || 'GAME'))}
-                  </h2>
-                </div>
-                <button
-                  onClick={() => setShowDeleteConfirmation(true)}
-                  disabled={isDeleting}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {t('common.delete')}
-                </button>
-              </div>
-            </Card>
+            <GameActionCard
+              icon={Trash2}
+              title={t(getDeleteGameText(game?.entityType || 'GAME'))}
+              tone="danger"
+              buttonLabel={t('common.delete')}
+              onClick={() => setShowDeleteConfirmation(true)}
+              disabled={isDeleting}
+            />
           )}
         </>
       );

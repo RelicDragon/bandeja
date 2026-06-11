@@ -21,6 +21,7 @@ export * from './DateSelector';
 export * from './DateSelectorWithCount';
 export * from './Calendar';
 export * from './MonthCalendar';
+export * from './SelectedDateHeading';
 export * from './PlayerCardBottomSheet';
 export * from './PlayerCardModalManager';
 export * from './PlayerCardModalProvider';

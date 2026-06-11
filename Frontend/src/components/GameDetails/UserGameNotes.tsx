@@ -126,8 +126,10 @@ export const UserGameNotes = ({ gameId, initialContent }: UserGameNotesProps) =>
   return (
     <Card>
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <StickyNote size={18} className="text-gray-500 dark:text-gray-400" />
+        <div className="flex items-center gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-500 dark:bg-amber-950/40 dark:text-amber-400">
+            <StickyNote size={18} />
+          </span>
           <h2 className="section-title">
             {t('userGameNotes.title')}
           </h2>
@@ -146,7 +148,7 @@ export const UserGameNotes = ({ gameId, initialContent }: UserGameNotesProps) =>
           onChange={handleContentChange}
           placeholder={t('userGameNotes.placeholder')}
           rows={3}
-          className="w-full min-h-[4.5rem] px-4 py-3 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
+          className="w-full min-h-[4.5rem] px-4 py-3 overflow-y-auto bg-gray-50/50 dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-xl transition-all duration-200 focus:bg-white dark:focus:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
           maxLength={5000}
         />
       </div>

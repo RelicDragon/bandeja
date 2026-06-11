@@ -20,8 +20,11 @@ export const PublicGamePrompt = ({ variant = 'game' }: PublicGamePromptProps) =>
         <LanguageSelector />
         <ThemeSelector />
       </div>
-      <Card className="p-6 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-800/20 border-primary-200 dark:border-primary-800">
+      <Card className="p-6 bg-gradient-to-br from-primary-50 via-sky-50 to-primary-100 dark:from-primary-900/25 dark:via-sky-900/15 dark:to-primary-800/25 border-primary-200 dark:border-primary-800 shadow-md shadow-primary-500/5">
         <div className="text-center space-y-4">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-600 text-white shadow-lg shadow-primary-600/30">
+            <LogIn size={22} />
+          </div>
           <h3 className="section-title">
             {isProfile
               ? t('playerProfile.publicPromptTitle', { defaultValue: 'Sign in to see more' })
@@ -36,7 +39,7 @@ export const PublicGamePrompt = ({ variant = 'game' }: PublicGamePromptProps) =>
             onClick={() => navigate('/login')}
             variant="primary"
             size="md"
-            className="flex items-center gap-2 mx-auto"
+            className="flex items-center gap-2 mx-auto rounded-xl shadow-md shadow-primary-600/25 hover:shadow-lg hover:shadow-primary-600/35 transition-all duration-200"
           >
             <LogIn size={18} />
             {t('auth.login', { defaultValue: 'Login' })}

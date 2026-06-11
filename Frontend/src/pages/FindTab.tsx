@@ -15,9 +15,11 @@ import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
 import { findSportFilterToApiParam, getViewerPrimarySport } from '@/utils/findSportFilter';
 import type { Sport } from '@/types';
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek } from 'date-fns';
+import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, parse, startOfDay } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation as useI18nTranslation } from 'react-i18next';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { unionDateRangeWithDay } from '@/utils/calendarSelectedDayFilter';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
@@ -55,6 +57,7 @@ export const FindTab = () => {
   const user = useAuthStore((state) => state.user);
   const isDesktop = useDesktop();
   const findViewMode = useShellNavStore((s) => s.findViewMode);
+  const findSelectedDay = useShellNavStore((s) => s.findSelectedDay);
   const setFindHeaderActions = useShellNavStore((s) => s.setFindHeaderActions);
 
   const { i18n } = useI18nTranslation();
@@ -65,10 +68,28 @@ export const FindTab = () => {
     const now = new Date();
     const monthStart = startOfMonth(now);
     const monthEnd = endOfMonth(now);
-    const start = startOfWeek(monthStart, { locale });
-    const end = endOfWeek(monthEnd, { locale });
+    const start = startOfWeek(monthStart, { locale, weekStartsOn: resolveDisplaySettings(null).weekStart });
+    const end = endOfWeek(monthEnd, { locale, weekStartsOn: resolveDisplaySettings(null).weekStart });
     return { startDate: start, endDate: end };
   });
+
+  const selectedCalendarDay = useMemo(() => {
+    if (findSelectedDay) {
+      const parsed = parse(findSelectedDay, 'yyyy-MM-dd', new Date());
+      if (!isNaN(parsed.getTime())) {
+        return startOfDay(parsed);
+      }
+    }
+    return startOfDay(new Date());
+  }, [findSelectedDay]);
+
+  const queryDateRange = useMemo(() => {
+    const { startDate, endDate } = dateRange;
+    if (!startDate || !endDate) {
+      return dateRange;
+    }
+    return unionDateRangeWithDay(startDate, endDate, selectedCalendarDay);
+  }, [dateRange, selectedCalendarDay]);
 
   const { filters, updateFilter, updateFilters } = useGameFilters();
   const findSportApiParam = useMemo(
@@ -82,8 +103,8 @@ export const FindTab = () => {
     refetch: refetchAvailableGames,
   } = useAvailableGames(
     user,
-    dateRange.startDate,
-    dateRange.endDate,
+    queryDateRange.startDate,
+    queryDateRange.endDate,
     true,
     findSportApiParam,
     filters.showPrivateGames,

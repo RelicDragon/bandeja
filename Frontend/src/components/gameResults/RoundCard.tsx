@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronDown, ChevronRight, Trash2, Plus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ChevronDown, Trash2, Plus } from 'lucide-react';
 import { Round } from '@/types/gameResults';
 import { BasicUser, Court, Game } from '@/types';
 import { MatchCard } from './MatchCard';
@@ -43,22 +44,28 @@ interface RoundCardProps {
 
 const ROUND_HEADER_TONE: Record<
   RoundResultsHeaderTone,
-  { bg: string; hover: string; borderIdle: string }
+  { bg: string; hover: string; borderIdle: string; badge: string; dot: string | null }
 > = {
   neutral: {
     bg: 'bg-white dark:bg-gray-800',
     hover: 'hover:bg-gray-50/80 dark:hover:bg-gray-800',
     borderIdle: 'border-b border-gray-200 dark:border-gray-700',
+    badge: 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
+    dot: null,
   },
   in_progress: {
     bg: 'bg-amber-50/90 dark:bg-amber-950/35',
     hover: 'hover:bg-amber-100/90 dark:hover:bg-amber-950/45',
     borderIdle: 'border-b border-amber-200/80 dark:border-amber-800/60',
+    badge: 'bg-amber-200/70 text-amber-800 dark:bg-amber-800/50 dark:text-amber-200',
+    dot: 'bg-amber-500',
   },
   complete: {
     bg: 'bg-emerald-50/85 dark:bg-emerald-950/30',
     hover: 'hover:bg-emerald-100/80 dark:hover:bg-emerald-950/40',
     borderIdle: 'border-b border-emerald-200/80 dark:border-emerald-800/50',
+    badge: 'bg-emerald-200/70 text-emerald-800 dark:bg-emerald-800/50 dark:text-emerald-200',
+    dot: 'bg-emerald-500',
   },
 };
 
@@ -202,15 +209,18 @@ export const RoundCard = ({
 
       {editingMatchId && canEditResults && (
         <div className="flex justify-center mt-4">
-          <button
+          <motion.button
             onClick={(e) => {
               e.stopPropagation();
               onAddMatch();
             }}
-            className="w-12 h-12 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center transition-colors shadow-lg"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+            className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-green-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40"
           >
             <Plus size={20} />
-          </button>
+          </motion.button>
         </div>
       )}
     </div>
@@ -240,42 +250,66 @@ export const RoundCard = ({
   const toneStyle = ROUND_HEADER_TONE[headerTone];
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white shadow-sm transition-colors dark:border-gray-700 dark:bg-gray-800">
+    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
       <div
-        className={`flex cursor-pointer items-center justify-between rounded-t-lg transition-colors ${toneStyle.bg} ${
+        className={`flex cursor-pointer items-center justify-between px-2 py-1.5 transition-colors ${toneStyle.bg} ${
           isExpanded ? 'border-b border-gray-200 dark:border-gray-600' : toneStyle.borderIdle
         } ${toneStyle.hover}`}
         onClick={onToggleExpand}
       >
-        <div className="flex items-center gap-1">
-          {isExpanded ? (
-            <ChevronDown size={16} className="text-gray-600 dark:text-gray-400" />
-          ) : (
-            <ChevronRight size={16} className="text-gray-600 dark:text-gray-400" />
-          )}
+        <div className="flex items-center gap-2">
+          <motion.span
+            animate={{ rotate: isExpanded ? 0 : -90 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 24 }}
+            className="flex text-gray-500 dark:text-gray-400"
+          >
+            <ChevronDown size={16} />
+          </motion.span>
+          <span
+            className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold ${toneStyle.badge}`}
+          >
+            {roundIndex + 1}
+          </span>
           <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
             {roundName}
           </h3>
+          {toneStyle.dot && (
+            <span className="relative flex h-2 w-2">
+              {headerTone === 'in_progress' && (
+                <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${toneStyle.dot}`} />
+              )}
+              <span className={`relative inline-flex h-2 w-2 rounded-full ${toneStyle.dot}`} />
+            </span>
+          )}
         </div>
 
         {showDeleteButton && (
-          <button
+          <motion.button
             onClick={(e) => {
               e.stopPropagation();
               setShowDeleteConfirmation(true);
             }}
-            className="w-8 h-8 rounded-full border-2 border-red-500 hover:border-red-600 bg-white dark:bg-gray-800 text-red-500 hover:text-red-600 flex items-center justify-center transition-colors shadow-lg"
+            whileTap={{ scale: 0.9 }}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-red-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40"
           >
             <Trash2 size={16} />
-          </button>
+          </motion.button>
         )}
       </div>
 
-      {isExpanded && (
-        <div className="border-t border-gray-200 dark:border-gray-700">
-          {matchesContent}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'tween', duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+            className="overflow-hidden"
+          >
+            {matchesContent}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {showDeleteConfirmation && (
         <ConfirmationModal

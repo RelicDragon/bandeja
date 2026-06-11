@@ -120,7 +120,7 @@ export const GameParticipants = ({
         <div className="ml-auto shrink-0 flex items-center gap-2">
           <button
             onClick={toggleViewMode}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 active:scale-90"
             title={viewMode === 'carousel' ? t('games.listView', { defaultValue: 'List view' }) : t('games.carouselView', { defaultValue: 'Carousel view' })}
           >
             {viewMode === 'carousel' ? (
@@ -151,7 +151,7 @@ export const GameParticipants = ({
       </div>
       <div className="space-y-4">
         {!isUnauthorized && myInvites.length > 0 && (
-          <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50/70 dark:from-blue-900/25 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl shadow-sm shadow-blue-500/5">
             {myInvites.map((invite) => (
               <div key={invite.id} className="space-y-3">
                 <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -190,7 +190,7 @@ export const GameParticipants = ({
           </div>
         )}
         {!isUnauthorized && isGuest && game.status !== 'FINISHED' && game.status !== 'ARCHIVED' && (
-          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <div className="p-4 bg-gradient-to-br from-yellow-50 to-amber-50/70 dark:from-yellow-900/25 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl shadow-sm shadow-yellow-500/5">
             <p className="text-sm text-gray-700 dark:text-gray-300">
               {game.allowDirectJoin && (hasUnoccupiedSlots || game.entityType === 'BAR')
                 ? t('games.chatParticipantHintJoinGame', { defaultValue: 'You are a chat participant. Join the game below.' })
@@ -227,7 +227,7 @@ export const GameParticipants = ({
           </Button>
         )}
         {!isUnauthorized && isInJoinQueue && (
-          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <div className="p-4 bg-gradient-to-br from-yellow-50 to-amber-50/70 dark:from-yellow-900/25 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl shadow-sm shadow-yellow-500/5">
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
               {isOwner
                 ? t('games.inQueueOwnerHint', { defaultValue: 'You are the owner. To play in your game, accept yourself from the join queue list below.' })
@@ -320,7 +320,7 @@ export const GameParticipants = ({
                         {carousel1Participants.map((participant) => (
                           <div
                             key={participant.userId}
-                            className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                            className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-xl transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/70"
                           >
                             <PlayerAvatar
                               player={participant.user}
@@ -347,7 +347,7 @@ export const GameParticipants = ({
                         {carousel1EmptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                           <button
                             onClick={() => onShowPlayerList('MALE')}
-                            className="w-full p-2 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
+                            className="w-full p-2 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-800/30 hover:border-primary-500 dark:hover:border-primary-500 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
                           >
                             <UserPlus size={18} className="text-primary-600 dark:text-primary-400" />
                             <span className="text-sm text-primary-600 dark:text-primary-400">
@@ -365,7 +365,7 @@ export const GameParticipants = ({
                         {carousel2Participants.map((participant) => (
                           <div
                             key={participant.userId}
-                            className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                            className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-xl transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/70"
                           >
                             <PlayerAvatar
                               player={participant.user}
@@ -392,7 +392,7 @@ export const GameParticipants = ({
                         {carousel2EmptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                           <button
                             onClick={() => onShowPlayerList('FEMALE')}
-                            className="w-full p-2 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
+                            className="w-full p-2 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-800/30 hover:border-primary-500 dark:hover:border-primary-500 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
                           >
                             <UserPlus size={18} className="text-primary-600 dark:text-primary-400" />
                             <span className="text-sm text-primary-600 dark:text-primary-400">
@@ -409,7 +409,7 @@ export const GameParticipants = ({
                     {playingParticipants.map((participant) => (
                       <div
                         key={participant.userId}
-                        className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                        className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-xl transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/70"
                       >
                         <PlayerAvatar
                           player={participant.user}
@@ -436,7 +436,7 @@ export const GameParticipants = ({
                     {emptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                       <button
                         onClick={() => onShowPlayerList()}
-                        className="w-full p-2 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors flex items-center justify-center gap-2"
+                        className="w-full p-2 border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 rounded-xl hover:bg-primary-100 dark:hover:bg-primary-800/30 hover:border-primary-500 dark:hover:border-primary-500 transition-all duration-200 active:scale-[0.98] flex items-center justify-center gap-2"
                       >
                         <UserPlus size={18} className="text-primary-600 dark:text-primary-400" />
                         <span className="text-sm text-primary-600 dark:text-primary-400">
@@ -539,7 +539,7 @@ export const GameParticipants = ({
               {computedJoinQueues.map((queue) => (
                 <div
                   key={queue.id}
-                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg"
+                  className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-xl transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/70"
                 >
                   <div className="flex-shrink-0">
                     <PlayerAvatar 
@@ -561,14 +561,14 @@ export const GameParticipants = ({
                     <div className="flex gap-2">
                       <button
                         onClick={() => onAcceptJoinQueue(queue.userId)}
-                        className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-all duration-200 hover:scale-110 active:scale-90"
                         title={t('invites.accept', { defaultValue: 'Accept' })}
                       >
                         <CheckCircle size={18} className="text-green-600 dark:text-green-400" />
                       </button>
                       <button
                         onClick={() => onDeclineJoinQueue(queue.userId)}
-                        className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                        className="p-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 hover:scale-110 active:scale-90"
                         title={t('invites.decline', { defaultValue: 'Decline' })}
                       >
                         <XCircle size={18} className="text-red-600 dark:text-red-400" />

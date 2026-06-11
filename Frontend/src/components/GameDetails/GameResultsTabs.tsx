@@ -1,4 +1,7 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Trophy, BarChart3, ClipboardList } from 'lucide-react';
+import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { TabType } from '@/hooks/useGameResultsTabs';
 
 interface GameResultsTabsProps {
@@ -11,66 +14,35 @@ export const GameResultsTabs = ({ activeTab, onTabChange, resultsStatus }: GameR
   const { t } = useTranslation();
   const isFinal = resultsStatus === 'FINAL';
 
-  if (!isFinal) {
-    return (
-      <div className="flex justify-center space-x-1 py-2">
-        <button
-          onClick={() => onTabChange('scores')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-            activeTab === 'scores'
-              ? 'bg-blue-500 text-white'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-          }`}
-        >
-          {t('gameResults.scores')}
-        </button>
-        <button
-          onClick={() => onTabChange('stats')}
-          className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-            activeTab === 'stats'
-              ? 'bg-blue-500 text-white'
-              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-          }`}
-        >
-          {t('gameResults.stats') || 'Stats'}
-        </button>
-      </div>
-    );
-  }
+  const tabs = useMemo<SegmentedSwitchTab[]>(() => {
+    const scores: SegmentedSwitchTab = {
+      id: 'scores',
+      label: t('gameResults.scores'),
+      icon: ClipboardList,
+    };
+    const stats: SegmentedSwitchTab = {
+      id: 'stats',
+      label: t('gameResults.stats') || 'Stats',
+      icon: BarChart3,
+    };
+    if (!isFinal) return [scores, stats];
+    return [
+      { id: 'results', label: t('gameResults.results'), icon: Trophy },
+      stats,
+      scores,
+    ];
+  }, [isFinal, t]);
 
   return (
-    <div className="flex justify-center space-x-1 py-2">
-      <button
-        onClick={() => onTabChange('results')}
-        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-          activeTab === 'results'
-            ? 'bg-blue-500 text-white'
-            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-        }`}
-      >
-        {t('gameResults.results')}
-      </button>
-      <button
-        onClick={() => onTabChange('stats')}
-        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-          activeTab === 'stats'
-            ? 'bg-blue-500 text-white'
-            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-        }`}
-      >
-        {t('gameResults.stats') || 'Stats'}
-      </button>
-      <button
-        onClick={() => onTabChange('scores')}
-        className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-          activeTab === 'scores'
-            ? 'bg-blue-500 text-white'
-            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
-        }`}
-      >
-        {t('gameResults.scores')}
-      </button>
+    <div className="flex justify-center py-2">
+      <SegmentedSwitch
+        tabs={tabs}
+        activeId={activeTab}
+        onChange={(id) => onTabChange(id as TabType)}
+        showOnlyActiveTabText={false}
+        layoutId="game-results-tabs"
+        ariaLabel={t('gameResults.results')}
+      />
     </div>
   );
 };
-

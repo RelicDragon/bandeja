@@ -210,6 +210,8 @@ Frontend/e2e/
 |----|------|-------|----------|
 | H-01 | Calendar view | Open My tab | Calendar + games render |
 | H-02 | Calendar date select | Pick date on calendar | Games for that day |
+| H-41 | Selected date heading | Pick date on My tab calendar | Long localized date (e.g. "Thursday, 11 June") with Today/Tomorrow badge shown below calendar; updates on re-select, localized per language |
+| H-40 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game badge | Selected day highlights; that day's games in list (not upcoming sections) |
 | H-03 | Empty my games | User with no games | Empty state |
 | H-04 | Stories rail visible | Logged in home | Stories bubbles render |
 | H-05 | Sport questionnaire prompt | Incomplete questionnaire | Prompt shown, links to flow |
@@ -282,6 +284,8 @@ Frontend/e2e/
 | F-04 | Month calendar expand | Open month picker | Range changes |
 | F-05 | Go to today | Header action | Jumps to current date |
 | F-06 | Desktop calendar split | `@desktop` | Split layout |
+| F-37 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game count badge | Games for that day appear in list |
+| F-38 | Selected date heading | Select date on Find calendar (mobile + `@desktop` split) | Long localized date with Today/Tomorrow badge below calendar; updates when another date selected |
 
 ### 7.2 Category filters (chips)
 
@@ -437,6 +441,8 @@ Frontend/e2e/
 | GD-79 | Time period clock icon | Open game with `timeIsSet` and start/end times (e.g. 18:00–20:00) | Clock icon shows golden period arc with primary-colored outline matching the displayed time range |
 | GD-80 | Sport tag placement | Open game details | Sport and match-format tags appear in main app header between Back and Chat |
 | GD-81 | Compact game details back | Narrow viewport; game with sport + format tags and Chat visible | Back shows arrow only (no label) so tags and Chat fit on one row |
+| GD-82 | Game info collapse handle | Open game details; tap chevron strip at bottom edge of info card | Card collapses to compact summary with smooth height animation; chevron rotates |
+| GD-83 | Collapsed info tap-to-expand | Collapse info card; tap anywhere on the collapsed summary | Card expands; detail rows animate in with stagger; action buttons reappear |
 
 ### 9.2 Participation
 

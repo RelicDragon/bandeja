@@ -52,13 +52,14 @@ import {
   canEnterResults,
   isPresetResultsRoster,
 } from '@/utils/gameResultsHelpers';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GameResultsTabs } from './GameResultsTabs';
 import { OfflineBanner } from './OfflineBanner';
 import { GameResultsModals } from './GameResultsModals';
 import { GameWorkoutSummaryCard } from './GameWorkoutSummaryCard';
 import { TelegramSummaryModal } from './TelegramSummaryModal';
 import { ConfirmationModal } from '@/components';
-import { Edit } from 'lucide-react';
+import { Edit, Plus, Sparkles, RotateCcw, CheckCircle2, Send } from 'lucide-react';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import {
@@ -86,6 +87,31 @@ interface GameResultsEntryEmbeddedProps {
   onGameUpdate: (game: Game) => void;
   onRoundAdded?: (round: Round) => void;
 }
+
+const TAB_CONTENT_MOTION = {
+  initial: { opacity: 0, y: 10 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -10 },
+  transition: { type: 'tween' as const, duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const },
+};
+
+const ResultsLoadingState = ({ label }: { label: string }) => (
+  <div className="flex items-center justify-center min-h-[200px]">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="text-center"
+    >
+      <div className="relative inline-flex h-14 w-14 items-center justify-center">
+        <span className="absolute inset-0 animate-ping rounded-full bg-primary-400/20" />
+        <span className="absolute inset-0 rounded-full border-2 border-primary-200 dark:border-primary-900" />
+        <span className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-primary-500" />
+        <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary-500" />
+      </div>
+      <p className="mt-4 text-sm font-medium text-gray-500 dark:text-gray-400">{label}</p>
+    </motion.div>
+  </div>
+);
 
 export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: GameResultsEntryEmbeddedProps) => {
   const { t } = useTranslation();
@@ -1075,36 +1101,17 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   }, [canShowTableView, setGameDetailsCanShowTableView]);
 
   if (canInitialize === null) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
-        </div>
-      </div>
-    );
+    return <ResultsLoadingState label={t('app.loading')} />;
   }
 
   if ((engineLoading || !engine.initialized) && canInitialize && modal?.type !== 'syncConflict' && user) {
-    return (
-      <div className="flex items-center justify-center min-h-[200px]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
-        </div>
-      </div>
-    );
+    return <ResultsLoadingState label={t('app.loading')} />;
   }
 
   if (!canInitialize && modal?.type === 'syncConflict') {
     return (
       <>
-        <div className="flex items-center justify-center min-h-[200px]">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">{t('app.loading')}</p>
-          </div>
-        </div>
+        <ResultsLoadingState label={t('app.loading')} />
         <GameResultsModals
           modal={modal}
           rounds={rounds}
@@ -1142,14 +1149,15 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     <>
       {bracketReturnTarget ? (
         <div className="mb-4 flex justify-center">
-          <button
+          <motion.button
             type="button"
             onClick={() => navigate(buildGameBracketReturnPath(bracketReturnTarget))}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-900 transition hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-100 dark:hover:bg-indigo-950/60"
+            whileTap={{ scale: 0.97 }}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-900 shadow-sm transition hover:bg-indigo-100 hover:shadow-md dark:border-indigo-800 dark:bg-indigo-950/40 dark:text-indigo-100 dark:hover:bg-indigo-950/60"
           >
             <Trophy className="h-4 w-4 shrink-0" aria-hidden />
             {t('gameDetails.returnToBracket')}
-          </button>
+          </motion.button>
         </div>
       ) : null}
       <div className="w-full [&>div]:px-0 [&>div]:py-4">
@@ -1176,19 +1184,25 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       )}
 
       {showSentToTelegramHint && (
-        <div className="mb-6 flex flex-col items-center gap-3">
-          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 flex flex-col items-center gap-3"
+        >
+          <p className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 text-center">
+            <Send size={14} className="shrink-0 text-sky-500" aria-hidden />
             {t('gameResults.resultsAlreadySentToTelegram') || 'Results already sent to Telegram'}
           </p>
-          <button
+          <motion.button
             type="button"
             onClick={() => setShowResendTelegramConfirm(true)}
             disabled={isResettingTelegram}
-            className="px-4 sm:px-6 py-3 rounded-xl text-white font-semibold text-sm sm:text-base bg-red-600 hover:bg-red-700 active:bg-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-w-[200px]"
+            whileTap={isResettingTelegram ? undefined : { scale: 0.97 }}
+            className="min-w-[200px] rounded-xl bg-gradient-to-r from-red-500 to-rose-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-red-500/25 transition-all hover:from-red-600 hover:to-rose-700 hover:shadow-lg hover:shadow-red-500/30 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:text-base"
           >
             {isResettingTelegram ? t('common.loading') : (t('gameResults.resendResultsToTelegram') || 'Resend to Telegram')}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
 
       <ConfirmationModal
@@ -1225,6 +1239,17 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       )}
 
       <div>
+        <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={
+            currentGame?.resultsStatus === 'FINAL' && activeTab === 'results'
+              ? 'results'
+              : currentGame && currentGame.resultsStatus !== 'NONE' && activeTab === 'stats'
+                ? 'stats'
+                : 'scores'
+          }
+          {...TAB_CONTENT_MOTION}
+        >
         {currentGame?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
           <div className="w-full">
             <GameResultsShareCard game={currentGame} />
@@ -1263,16 +1288,18 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
               )}
               {showCreateAllCombinationsButton && (
                 <div className="flex justify-center pb-2">
-                  <button
+                  <motion.button
                     type="button"
                     onClick={() => void handleCreateAllCombinations()}
                     disabled={isCreatingAllCombinations}
-                    className="px-4 py-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 text-white font-medium transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    whileTap={isCreatingAllCombinations ? undefined : { scale: 0.97 }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-4 py-2.5 font-medium text-white shadow-lg shadow-indigo-500/25 transition-all hover:from-indigo-600 hover:to-violet-700 hover:shadow-xl hover:shadow-indigo-500/30 disabled:cursor-not-allowed disabled:opacity-50"
                   >
+                    <Sparkles size={16} className="shrink-0" aria-hidden />
                     {isCreatingAllCombinations
                       ? t('common.loading')
                       : t('gameResults.createAllCombinations')}
-                  </button>
+                  </motion.button>
                 </div>
               )}
               {displayRounds.map((round) => (
@@ -1340,7 +1367,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
               
               {canEdit && isEditingResults && !isSendingToTelegram && (
                 <div className="flex justify-center">
-                  <button
+                  <motion.button
                     onClick={async () => {
                       await initializeRoundsIfNeeded();
                       await engine.addRound();
@@ -1348,11 +1375,12 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
                       const newRound = rounds.length > 0 ? rounds[rounds.length - 1] : undefined;
                       if (newRound && shouldShowRoundAddedModal(newRound)) onRoundAdded?.(newRound);
                     }}
-                    className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white font-medium transition-colors shadow-lg flex items-center gap-2"
+                    whileTap={{ scale: 0.97 }}
+                    className="group inline-flex items-center gap-2 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/50 px-5 py-2.5 font-medium text-blue-600 transition-all hover:border-blue-400 hover:bg-blue-100/70 hover:text-blue-700 dark:border-blue-700 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:border-blue-600 dark:hover:bg-blue-950/50 dark:hover:text-blue-200"
                   >
-                    <span>+</span>
+                    <Plus size={18} className="shrink-0 transition-transform duration-300 group-hover:rotate-90" aria-hidden />
                     {t('gameResults.addRound')}
-                  </button>
+                  </motion.button>
                 </div>
               )}
 
@@ -1381,6 +1409,8 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
             </div>
           </div>
         )}
+        </motion.div>
+        </AnimatePresence>
 
         <GameResultsModals
           modal={modal}
@@ -1412,45 +1442,59 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
       {showFinishButton && !serverProblem && (
         <div className="flex justify-center pt-2">
-          <button
+          <motion.button
             onClick={() => openModal({ type: 'finish' })}
             disabled={loading.saving || isSendingToTelegram}
-            className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-green-500 hover:bg-green-600 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            whileTap={loading.saving || isSendingToTelegram ? undefined : { scale: 0.97 }}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-emerald-500/30 transition-all hover:from-emerald-600 hover:to-green-700 hover:shadow-xl hover:shadow-emerald-500/40 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading.saving ? t('common.loading') : getFinishText(currentGame, t)}
-          </button>
-        </div>
-      )}
-      {showEditButton && (
-        <div className="flex justify-center pt-2">
-          <button
-            onClick={() => openModal({ type: 'edit' })}
-            disabled={loading.editing || isSendingToTelegram}
-            className="px-8 py-3 text-base rounded-lg font-medium transition-colors bg-blue-500 hover:bg-blue-600 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {loading.editing ? (
+            {loading.saving ? (
               <>
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                <div className="h-5 w-5 flex-shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 <span>{t('common.loading')}</span>
               </>
             ) : (
               <>
-                <Edit size={18} className="flex-shrink-0" />
+                <CheckCircle2 size={20} className="flex-shrink-0" aria-hidden />
+                <span>{getFinishText(currentGame, t)}</span>
+              </>
+            )}
+          </motion.button>
+        </div>
+      )}
+      {showEditButton && (
+        <div className="flex justify-center pt-2">
+          <motion.button
+            onClick={() => openModal({ type: 'edit' })}
+            disabled={loading.editing || isSendingToTelegram}
+            whileTap={loading.editing || isSendingToTelegram ? undefined : { scale: 0.97 }}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-sky-600 px-8 py-3 text-base font-semibold text-white shadow-lg shadow-blue-500/30 transition-all hover:from-blue-600 hover:to-sky-700 hover:shadow-xl hover:shadow-blue-500/40 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading.editing ? (
+              <>
+                <div className="h-5 w-5 flex-shrink-0 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                <span>{t('common.loading')}</span>
+              </>
+            ) : (
+              <>
+                <Edit size={18} className="flex-shrink-0" aria-hidden />
                 <span>{t('gameResults.editResults')}</span>
               </>
             )}
-          </button>
+          </motion.button>
         </div>
       )}
       {canEdit && isResultsEntryMode && isEditingResults && (
         <div className="flex justify-center gap-2 pt-2">
-          <button
+          <motion.button
             onClick={() => openModal({ type: 'restart' })}
             disabled={loading.restarting || isSendingToTelegram}
-            className="px-4 py-2 text-sm rounded-lg font-medium transition-colors bg-red-500 hover:bg-red-600 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            whileTap={loading.restarting || isSendingToTelegram ? undefined : { scale: 0.97 }}
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-950/40 dark:hover:text-red-400"
           >
+            <RotateCcw size={15} className="shrink-0" aria-hidden />
             {loading.restarting ? t('common.loading') : getRestartText(currentGame, t)}
-          </button>
+          </motion.button>
         </div>
       )}
 

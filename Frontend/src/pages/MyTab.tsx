@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { format, parse, startOfDay } from 'date-fns';
+import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
 import {
   InvitesSection,
   MyGamesSection,
@@ -19,7 +20,7 @@ import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { isHomeHeroAdBlocked } from '@/utils/adHomeHeroVisibility';
 import { getUserPrimarySport } from '@/utils/profileSports';
-import { Button, MainTabFooter, MonthCalendar } from '@/components';
+import { Button, MainTabFooter, MonthCalendar, SelectedDateHeading } from '@/components';
 import { gamesApi } from '@/api';
 import { useTotalUnreadForMarkAllBanner, useGameUnreadCountsForIds } from '@/hooks/useUnreadBridge';
 import { useUnreadStore } from '@/store/unreadStore';
@@ -209,16 +210,9 @@ export const MyTab = () => {
   const calendarMergedUnreadCounts = gameUnreadForSort;
   const myGamesForSelectedDate = useMemo(() => {
     if (!myGamesSelectedDate) return [];
-    const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
-    const source = calendarMergedGames;
-    const counts = calendarMergedUnreadCounts;
     return sortMyGamesByStatusAndDateTime(
-      source.filter((g) => {
-        if (g.timeIsSet === false) return false;
-        const gameStr = format(startOfDay(new Date(g.startTime)), 'yyyy-MM-dd');
-        return gameStr === selectedStr;
-      }),
-      counts
+      filterGamesForCalendarDay(calendarMergedGames, myGamesSelectedDate),
+      calendarMergedUnreadCounts,
     );
   }, [myGamesSelectedDate, calendarMergedGames, calendarMergedUnreadCounts]);
 
@@ -380,7 +374,7 @@ export const MyTab = () => {
           skeletonStates={skeletonAnimation.skeletonStates}
           gamesUnreadCounts={calendarMergedUnreadCounts}
           onNoteSaved={() => refetchMyGames()}
-          upcomingGames={upcomingGamesForCalendar}
+          upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
           onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
         />
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${markAllBannerUnread > 0 ? 'max-h-[100px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
@@ -418,6 +412,7 @@ export const MyTab = () => {
                     availableGames={calendarMergedGames}
                     onDateRangeChange={handleCalendarDateRangeChange}
                   />
+                  <SelectedDateHeading date={myGamesSelectedDate} />
                 </div>
               </div>
             }
@@ -478,6 +473,7 @@ export const MyTab = () => {
                   onDateRangeChange={handleCalendarDateRangeChange}
                 />
               )}
+              {hasUpcomingGames && <SelectedDateHeading date={myGamesSelectedDate} />}
               <MyGamesSection
                 games={myGamesForSelectedDate}
                 user={user}
@@ -486,7 +482,7 @@ export const MyTab = () => {
                 skeletonStates={skeletonAnimation.skeletonStates}
                 gamesUnreadCounts={calendarMergedUnreadCounts}
                 onNoteSaved={() => refetchMyGames()}
-                upcomingGames={upcomingGamesForCalendar}
+                upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
                 onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
               />
             </>

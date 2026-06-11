@@ -16,6 +16,11 @@ import { getDisplayLevelForSport } from '@/utils/profileSports';
 import { parseGameSport } from '@/utils/gameSport';
 import { useUnreadStore } from '@/store/unreadStore';
 import { gameUnreadCountsMap } from '@/utils/unreadCountsFromStore';
+import {
+  passesFindNoRatingFilter,
+  passesFindTierFilter,
+  type FindTierFilter,
+} from '@/utils/findDiscovery';
 
 type DisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
 
@@ -56,6 +61,9 @@ export interface MonthCalendarProps {
   panelFilters?: AvailableGamePanelFilterState;
   showPrivateGames?: boolean;
   isAdmin?: boolean;
+  findDiscoveryEnabled?: boolean;
+  filterTier?: FindTierFilter;
+  filterNoRating?: boolean;
 }
 
 const localeMap = {
@@ -81,6 +89,9 @@ export const MonthCalendar = ({
   panelFilters = DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
   showPrivateGames = false,
   isAdmin = false,
+  findDiscoveryEnabled = false,
+  filterTier,
+  filterNoRating = false,
 }: MonthCalendarProps) => {
   const { user } = useAuthStore();
   const { i18n } = useTranslation();
@@ -127,6 +138,11 @@ export const MonthCalendar = ({
       if (game.timeIsSet === false) return;
 
       if (!passesAvailableGamePanelFilters(game, panelFilters)) return;
+
+      if (findDiscoveryEnabled) {
+        if (!passesFindTierFilter(game, filterTier)) return;
+        if (!passesFindNoRatingFilter(game, filterNoRating)) return;
+      }
 
       const organizer = game.entityType === 'TRAINING'
         ? (game.trainerId ? game.participants?.find((p: any) => p.userId === game.trainerId) : null) || game.participants?.find((p: any) => p.role === 'OWNER')
@@ -210,7 +226,7 @@ export const MonthCalendar = ({
     });
 
     return dataMap;
-  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user, panelFilters, showPrivateGames, isAdmin, gamesUnreadCounts]);
+  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user, panelFilters, showPrivateGames, isAdmin, gamesUnreadCounts, findDiscoveryEnabled, filterTier, filterNoRating]);
 
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;
@@ -235,10 +251,14 @@ export const MonthCalendar = ({
   };
 
   const handleDateClick = (day: Date) => {
+    const crossesMonth = !isSameMonth(day, currentMonth);
+    if (crossesMonth) {
+      isNavigatingRef.current = true;
+    }
+
     onDateSelect(day);
 
-    if (!isSameMonth(day, currentMonth)) {
-      isNavigatingRef.current = true;
+    if (crossesMonth) {
       const newMonth = startOfMonth(day);
       setSlideDirection(newMonth > currentMonth ? 1 : -1);
       setIsSliding(true);
@@ -360,10 +380,10 @@ export const MonthCalendar = ({
               onClick={() => handleDateClick(day)}
               className={`
                 relative w-full p-2 rounded-lg text-sm flex flex-col items-center justify-center gap-0.5
-                ${!isCurrentMonth
-                  ? `text-gray-300 dark:text-gray-600 cursor-not-allowed ${hasGames ? 'border border-gray-300/50 dark:border-gray-600/50' : ''}`
-                  : isSelected
+                ${isSelected
                   ? 'bg-primary-500 text-white font-semibold scale-[1.1] z-10'
+                  : !isCurrentMonth
+                  ? `text-gray-400 dark:text-gray-500 ${hasGames ? 'border border-gray-300/50 dark:border-gray-600/50 hover:bg-gray-100 dark:hover:bg-gray-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'}`
                   : isTodayDate
                   ? `bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold border ${
                       hasGames

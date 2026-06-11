@@ -42,7 +42,9 @@ export function GameCancelled({ name, cancelledAt, cancelledByUser, levelSport }
     <SportLevelProvider sport={resolvedSport}>
     <div className="flex items-center justify-center min-h-[calc(100vh-60px)] p-4">
       <Card className="text-center py-12 max-w-md">
-        <XCircle className="mx-auto h-14 w-14 text-amber-500 dark:text-amber-400" aria-hidden />
+        <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-950/40 shadow-inner" aria-hidden>
+          <XCircle className="h-12 w-12 text-amber-500 dark:text-amber-400" />
+        </div>
         <h2 className="mt-4 text-lg font-medium text-gray-900 dark:text-gray-100">
           {t('gameDetails.gameCancelledTitle')}
         </h2>
@@ -70,7 +72,7 @@ export function GameCancelled({ name, cancelledAt, cancelledByUser, levelSport }
         <button
           type="button"
           onClick={() => navigate('/')}
-          className="mt-6 px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
+          className="mt-6 px-5 py-2.5 rounded-xl bg-primary-600 text-white shadow-md shadow-primary-600/25 hover:bg-primary-700 hover:shadow-lg hover:shadow-primary-600/35 active:scale-95 transition-all duration-200 dark:bg-primary-500 dark:hover:bg-primary-600"
         >
           {t('gameDetails.gameCancelledGoHome')}
         </button>

@@ -10,6 +10,7 @@ import { useHeaderStore } from '@/store/headerStore';
 import { format, parse, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MonthCalendar } from '@/components/MonthCalendar';
+import { SelectedDateHeading } from '@/components/SelectedDateHeading';
 import { TrainersList } from './TrainersList';
 import { GenderPromptBanner } from './GenderPromptBanner';
 import { CityPromptBanner } from './CityPromptBanner';
@@ -36,6 +37,7 @@ import {
   passesFindNoRatingFilter,
   passesFindTierFilter,
 } from '@/utils/findDiscovery';
+import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
@@ -511,17 +513,7 @@ export const AvailableGamesSection = ({
 
   const getFilteredGames = () => {
     if (findViewMode === 'calendar') {
-      return availableGames.filter((game) => {
-        const gameDate = startOfDay(new Date(game.startTime));
-        const selectedDateStr = format(startOfDay(selectedDate), 'yyyy-MM-dd');
-        const gameDateStr = format(gameDate, 'yyyy-MM-dd');
-
-        if (gameDateStr !== selectedDateStr) {
-          return false;
-        }
-
-        return applyCommonFilters(game);
-      });
+      return filterGamesForCalendarDay(availableGames, selectedDate).filter(applyCommonFilters);
     } else {
       const { start, end } = getListDateRange();
       return availableGames.filter((game) => {
@@ -747,7 +739,11 @@ export const AvailableGamesSection = ({
                   panelFilters={panelFilterState}
                   showPrivateGames={showPrivateGamesVal}
                   isAdmin={isAdmin}
+                  findDiscoveryEnabled={findDiscoveryEnabled}
+                  filterTier={filterTierVal}
+                  filterNoRating={filterNoRatingVal}
                 />
+                <SelectedDateHeading date={selectedDate} />
               </div>
             </div>
           }
@@ -796,8 +792,12 @@ export const AvailableGamesSection = ({
             panelFilters={panelFilterState}
             showPrivateGames={showPrivateGamesVal}
             isAdmin={isAdmin}
+            findDiscoveryEnabled={findDiscoveryEnabled}
+            filterTier={filterTierVal}
+            filterNoRating={filterNoRatingVal}
           />
-          
+          <SelectedDateHeading date={selectedDate} />
+
           {filteredGames.length === 0 ? (
             <EmptyStateCard icon={SearchX} title={emptyMessage} />
           ) : (

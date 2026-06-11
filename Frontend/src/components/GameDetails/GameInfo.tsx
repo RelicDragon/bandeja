@@ -22,7 +22,11 @@ import { addToNativeCalendar } from '@/utils/calendar';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { BooktimeOrphanBookingNotice } from '@/components/booktime/BooktimeOrphanBookingNotice';
+import { InfoIconChip } from './InfoIconChip';
 import { Share } from '@capacitor/share';
+import { motion, AnimatePresence } from 'framer-motion';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { AnimatedChildrenStagger } from '@/components/motion/AnimatedChildrenStagger';
 import {
   Calendar,
   MapPin,
@@ -34,12 +38,11 @@ import {
   Ban,
   Users,
   ExternalLink,
-  Award,
   Lock,
   Swords,
   Trophy,
   Dumbbell,
-  ChevronRight,
+  ChevronDown,
   Banknote,
   CalendarPlus,
   Plane,
@@ -137,8 +140,7 @@ export const GameInfo = ({
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showAddToCalendarModal, setShowAddToCalendarModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(collapsedByDefault);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const [contentHeight, setContentHeight] = useState(0);
+  const reduceMotion = usePrefersReducedMotion();
   const prevResultsStatusRef = useRef(game.resultsStatus);
 
   useEffect(() => {
@@ -331,9 +333,7 @@ export const GameInfo = ({
     const leagueSubtitleClass = isCollapsed
       ? 'text-purple-600 dark:text-purple-400'
       : 'text-base font-semibold text-purple-600 dark:text-purple-400 mb-2';
-    const groupClass = isCollapsed
-      ? 'px-2 py-0.5 text-xs font-medium rounded text-white'
-      : 'px-2 py-0.5 text-xs font-medium rounded text-white';
+    const groupClass = 'px-2 py-0.5 text-xs font-medium rounded-full text-white';
     const groupContainerClass = isCollapsed
       ? 'mt-1 flex items-center gap-2 flex-wrap'
       : 'text-sm font-medium mb-2 flex items-center gap-2 flex-wrap';
@@ -412,7 +412,7 @@ export const GameInfo = ({
       <div className={`flex items-center ${gapClass} ${mbClass} ${prClass} flex-wrap`}>
         <GameStatusIcon status={game.status} className={!isCollapsed ? 'p-1' : ''} />
         {!game.isPublic && (
-          <span className={`${tagPadding} ${tagText} font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1`}>
+          <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1`}>
             <Lock size={iconSize} />
             <span className="hidden sm:inline">{t('games.private')}</span>
           </span>
@@ -436,13 +436,13 @@ export const GameInfo = ({
           </div>
         )}
         {isOwner && (
-          <span className={`${tagPadding} ${tagText} font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1`}>
+          <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 flex items-center gap-1`}>
             <Crown size={iconSize} className={isCollapsed ? 'hidden' : ''} />
             {isCollapsed ? t('games.owner') : t('games.organizerFull')}
           </span>
         )}
         {game.entityType !== 'GAME' && (
-          <span className={`${tagPadding} ${tagText} font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1`}>
+          <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1`}>
             {game.entityType === 'TOURNAMENT' && <Swords size={iconSize} />}
             {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={iconSize} />}
             {game.entityType === 'TRAINING' && <Dumbbell size={iconSize} />}
@@ -453,7 +453,7 @@ export const GameInfo = ({
         {game.entityType !== 'TRAINING' && game.gameType !== 'CLASSIC' && (
           <button
             onClick={() => !isCollapsed && canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
-            className={`${tagPadding} ${tagText} font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 ${
+            className={`${tagPadding} ${tagText} font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 ${
               !isCollapsed && canEdit && canShowEdit ? 'hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer transition-colors' : ''
             } ${isCollapsed ? 'hidden' : ''}`}
           >
@@ -461,19 +461,18 @@ export const GameInfo = ({
           </button>
         )}
         {isGuest && (
-          <span className={`${tagPadding} ${tagText} font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400`}>
+          <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400`}>
             {t('chat.guest')}
           </span>
         )}
         {!game.affectsRating && (
-          <span className={`${tagPadding} ${tagText} font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1`}>
-            <Award size={iconSize} className={isCollapsed ? '' : 'hidden'} />
+          <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1`}>
             <Ban size={iconSize} />
-            <span className="hidden sm:inline">{t('games.noRating')}</span>
+            {t('games.noRating')}
           </span>
         )}
         {game.hasFixedTeams && (
-          <span className={`${tagPadding} ${tagText} font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1`}>
+          <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1`}>
             <div className="flex items-center">
               <Users size={iconSize} />
               <Users size={iconSize} />
@@ -671,118 +670,116 @@ export const GameInfo = ({
     );
   };
 
-  useEffect(() => {
-    const element = contentRef.current;
-    if (!element) return;
-    const updateHeight = () => {
-      setContentHeight(element.scrollHeight);
-    };
-    updateHeight();
-    const resizeObserver = new ResizeObserver(updateHeight);
-    resizeObserver.observe(element);
-    return () => resizeObserver.disconnect();
-  }, [game]);
+  const expandTransition = reduceMotion
+    ? { duration: 0 }
+    : { duration: 0.32, ease: [0.21, 0.47, 0.32, 0.98] as const };
 
   return (
-    <Card className={`relative transition-all duration-300 ease-in-out ${isCollapsed ? '-translate-y-0 z-[5] -mb-2' : 'translate-y-0 z-auto mb-2 min-h-[200px]'} ${getEntityGradient()}`}>
+    <Card className={`relative transition-all duration-300 ease-in-out ${isCollapsed ? 'z-[5] -mb-2' : 'z-auto mb-2 min-h-[200px]'} ${getEntityGradient()}`}>
       <div className="absolute right-4 z-20">
-        <div className="relative flex flex-col items-end gap-2">
-          <div className={`flex flex-col gap-2 transition-all duration-300 ease-in-out ${
-            isCollapsed 
-              ? 'translate-x-8 opacity-0 pointer-events-none max-h-0 overflow-hidden' 
-              : 'translate-x-0 opacity-100 pointer-events-auto max-h-32'
-          }`}>
-            {canEdit && canShowEdit && onOpenEditGameInfo && (
-              <button
-                onClick={() => onOpenEditGameInfo()}
-                className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
-                title={t('common.edit')}
-              >
-                <Edit3 size={24} className="text-white" />
-              </button>
-            )}
+        <div className={`flex flex-col items-end gap-2 transition-all duration-300 ease-in-out ${
+          isCollapsed
+            ? 'translate-x-8 opacity-0 pointer-events-none max-h-0 overflow-hidden'
+            : 'translate-x-0 opacity-100 pointer-events-auto max-h-60'
+        }`}>
+          {canEdit && canShowEdit && onOpenEditGameInfo && (
             <button
-              onClick={handleShare}
-              className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
-              title={t('gameDetails.shareGame')}
+              onClick={() => onOpenEditGameInfo()}
+              className="p-2 rounded-xl bg-primary-600/90 backdrop-blur-sm hover:bg-primary-600 shadow-lg shadow-primary-600/25 hover:shadow-primary-600/40 hover:scale-105 active:scale-95 transition-all duration-200"
+              title={t('common.edit')}
             >
-              <ExternalLink size={24} className="text-white" />
+              <Edit3 size={24} className="text-white" />
             </button>
-            {game.timeIsSet === true && calendarEvent && (
-              <button
-                onClick={async () => {
-                  if (isCapacitor()) {
-                    try {
-                      await addToNativeCalendar(calendarEvent);
-                      //toast.success(t('gameDetails.calendarEventAdded'));
-                    } catch (error) {
-                      toast.error(t('gameDetails.calendarError'));
-                      console.error('Failed to add event to calendar:', error);
-                    }
-                  } else {
-                    setShowAddToCalendarModal(true);
-                  }
-                }}
-                className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
-                title={t('gameDetails.addToCalendar')}
-              >
-                <CalendarPlus size={24} className="text-white" />
-              </button>
-            )}
-            <button
-              onClick={handleNavigate}
-              className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110"
-              title={t('gameDetails.navigateToClub')}
-            >
-              <MapPin size={24} className="text-white" />
-            </button>
-          </div>
+          )}
           <button
-            onClick={() => setIsCollapsed(prev => !prev)}
-            className={`p-2 mt-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 ease-in-out ${
-              isCollapsed ? 'absolute' : 'relative'
-            }`}
-            title={isCollapsed ? t('common.expand') : t('common.collapse')}
+            onClick={handleShare}
+            className="p-2 rounded-xl bg-primary-600/90 backdrop-blur-sm hover:bg-primary-600 shadow-lg shadow-primary-600/25 hover:shadow-primary-600/40 hover:scale-105 active:scale-95 transition-all duration-200"
+            title={t('gameDetails.shareGame')}
           >
-            <div className={`transition-transform duration-300 ${isCollapsed ? 'rotate-0' : 'rotate-90'}`}>
-              <ChevronRight size={24} className="text-gray-600 dark:text-gray-300" />
-            </div>
+            <ExternalLink size={24} className="text-white" />
+          </button>
+          {game.timeIsSet === true && calendarEvent && (
+            <button
+              onClick={async () => {
+                if (isCapacitor()) {
+                  try {
+                    await addToNativeCalendar(calendarEvent);
+                  } catch (error) {
+                    toast.error(t('gameDetails.calendarError'));
+                    console.error('Failed to add event to calendar:', error);
+                  }
+                } else {
+                  setShowAddToCalendarModal(true);
+                }
+              }}
+              className="p-2 rounded-xl bg-primary-600/90 backdrop-blur-sm hover:bg-primary-600 shadow-lg shadow-primary-600/25 hover:shadow-primary-600/40 hover:scale-105 active:scale-95 transition-all duration-200"
+              title={t('gameDetails.addToCalendar')}
+            >
+              <CalendarPlus size={24} className="text-white" />
+            </button>
+          )}
+          <button
+            onClick={handleNavigate}
+            className="p-2 rounded-xl bg-primary-600/90 backdrop-blur-sm hover:bg-primary-600 shadow-lg shadow-primary-600/25 hover:shadow-primary-600/40 hover:scale-105 active:scale-95 transition-all duration-200"
+            title={t('gameDetails.navigateToClub')}
+          >
+            <MapPin size={24} className="text-white" />
           </button>
         </div>
       </div>
       {game.entityType !== 'GAME' && (
-        <div className="absolute bottom-2 right-2 z-0 pointer-events-none">
+        <div className="absolute bottom-8 right-2 z-0 pointer-events-none">
           {getEntityIcon()}
         </div>
       )}
-      {isCollapsed && (
-        <div className="mb-3 relative z-10">
-          {isDifferentCity && game.city?.name && (
-            <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
-              <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
-              <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{translateCity(game.city.id, game.city.name, game.city.country)}</span>
+      <AnimatePresence initial={false}>
+        {isCollapsed && (
+          <motion.div
+            key="collapsed-summary"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={expandTransition}
+            className="overflow-hidden"
+          >
+            <div
+              onClick={() => setIsCollapsed(false)}
+              className="cursor-pointer"
+              title={t('common.expand')}
+            >
+              <div className="mb-3 relative z-10">
+                {isDifferentCity && game.city?.name && (
+                  <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
+                    <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
+                    <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300 whitespace-nowrap drop-shadow-[0_0_1px_rgba(234,179,8,0.6)]">{translateCity(game.city.id, game.city.name, game.city.country)}</span>
+                  </div>
+                )}
+                {renderName()}
+                {renderTags()}
+              </div>
+              <div className={`text-xs text-gray-600 dark:text-gray-400 relative z-10 ${game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : 'flex items-center gap-4'}`}>
+                {renderCollapsedSummary()}
+              </div>
             </div>
-          )}
-          {renderName()}
-          {renderTags()}
-        </div>
-      )}
-      {isCollapsed && (
-        <div className={`text-xs text-gray-600 dark:text-gray-400 animate-in slide-in-from-top-2 duration-300 relative z-10 -mb-1 ${game.entityType === 'TRAINING' ? 'flex gap-4' : (game.entityType === 'LEAGUE' ? game.parent?.leagueSeason?.game?.avatar : game.avatar) ? 'flex gap-4' : 'flex items-center gap-4'}`}>
-          {renderCollapsedSummary()}
-        </div>
-      )}
-      <div
-        ref={contentRef}
-        className="transition-[max-height,opacity] duration-300 ease-in-out overflow-hidden"
-        style={{ maxHeight: isCollapsed ? 0 : contentHeight || undefined, opacity: isCollapsed ? 0 : 1 }}
-      >
-        {!isCollapsed && game.avatar && (
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence initial={false}>
+        {!isCollapsed && (
+          <motion.div
+            key="expanded-content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={expandTransition}
+            className="overflow-hidden"
+          >
+        {game.avatar && (
           <div className="mb-4 flex justify-center">
             <div className="relative">
               <button
                 onClick={() => setShowFullscreenAvatar(true)}
-                className="relative transition-all duration-200 hover:opacity-90 cursor-pointer"
+                className="relative transition-transform duration-300 ease-out hover:scale-[1.03] active:scale-[0.98] cursor-pointer"
               >
                 <GameAvatar avatar={game.avatar} extralarge={true} alt={game.name || t('gameDetails.gameAvatar')} />
               </button>
@@ -802,10 +799,12 @@ export const GameInfo = ({
           </div>
         </div>
 
-        <div className="space-y-3 mb-0">
+        <AnimatedChildrenStagger contentKey={`game-info-${game.id}`} className="space-y-3 mb-0">
           {game.timeIsSet === false ? (
             <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-              <Calendar size={20} className="text-primary-600 dark:text-primary-400" />
+              <InfoIconChip>
+                <Calendar size={18} />
+              </InfoIconChip>
               {canEdit && canShowEdit && !isEditMode ? (
                 <button
                   onClick={() => onOpenEditGameInfo?.('when')}
@@ -821,7 +820,9 @@ export const GameInfo = ({
             <div className="@container">
               <div className="flex flex-col @[320px]:flex-row @[320px]:items-center gap-3 @[320px]:gap-0 w-fit max-w-full text-sm text-gray-700 dark:text-gray-300">
                 <div className="flex items-center gap-3 w-fit shrink-0">
-                  {renderCalendarIcon(20, 'text-primary-600 dark:text-primary-400 shrink-0')}
+                  <InfoIconChip>
+                    {renderCalendarIcon(18, 'text-primary-600 dark:text-primary-400')}
+                  </InfoIconChip>
                   <div className="whitespace-nowrap">
                     {canEdit && canShowEdit && !isEditMode ? (
                       <button
@@ -840,13 +841,15 @@ export const GameInfo = ({
                   </div>
                 </div>
                 <div className="flex items-center gap-3 w-fit shrink-0 @[320px]:border-l @[320px]:border-gray-200 @[320px]:dark:border-gray-600 @[320px]:pl-4 @[320px]:ml-1">
-                  <TimePeriodClockIcon
-                    startTime={game.startTime}
-                    endTime={game.entityType !== 'BAR' ? game.endTime : undefined}
-                    timezone={clubTz ?? undefined}
-                    size={20}
-                    className="text-primary-600 dark:text-primary-400 shrink-0"
-                  />
+                  <InfoIconChip>
+                    <TimePeriodClockIcon
+                      startTime={game.startTime}
+                      endTime={game.entityType !== 'BAR' ? game.endTime : undefined}
+                      timezone={clubTz ?? undefined}
+                      size={18}
+                      className="text-primary-600 dark:text-primary-400"
+                    />
+                  </InfoIconChip>
                   <div>
                     {canEdit && canShowEdit && !isEditMode ? (
                       <button
@@ -866,7 +869,9 @@ export const GameInfo = ({
             </div>
           ) : (
             <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-              {renderCalendarIcon(20, 'text-primary-600 dark:text-primary-400')}
+              <InfoIconChip>
+                {renderCalendarIcon(18, 'text-primary-600 dark:text-primary-400')}
+              </InfoIconChip>
               <div className="flex-1">
                 {canEdit && canShowEdit && !isEditMode ? (
                   <button
@@ -887,15 +892,19 @@ export const GameInfo = ({
           )}
           {(game.entityType === 'BAR' ? timeDisplay.hintText : timeRangeDisplay.hintText) && (
             <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300 opacity-75">
-              <Plane size={20} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
+              <InfoIconChip>
+                <Plane size={18} />
+              </InfoIconChip>
               <span className="text-xs text-gray-600 dark:text-gray-400">
                 {game.entityType === 'BAR' ? timeDisplay.hintText : timeRangeDisplay.hintText}
               </span>
             </div>
           )}
           {(game.court?.club || game.club) && (
-            <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-              <MapPin size={20} className="text-primary-600 dark:text-primary-400" />
+            <div className="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
+              <InfoIconChip>
+                <MapPin size={18} />
+              </InfoIconChip>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
                   {canEdit && canShowEdit && !isEditMode ? (
@@ -910,15 +919,15 @@ export const GameInfo = ({
                   )}
                   <button
                     onClick={onToggleFavorite}
-                    className="p-2 pb-0 pt-0 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="group p-2 pb-0 pt-0 rounded-lg transition-transform duration-200 hover:scale-110 active:scale-90"
                     title={game.isClubFavorite ? t('favorites.removeFromFavorites') : t('favorites.addToFavorites')}
                   >
                     <Star
                       size={20}
-                      className={game.isClubFavorite
-                        ? 'text-yellow-500 fill-yellow-500'
-                        : 'text-gray-400 hover:text-yellow-500'
-                      }
+                      className={`transition-colors duration-200 ${game.isClubFavorite
+                        ? 'text-yellow-500 fill-yellow-500 drop-shadow-[0_0_4px_rgba(234,179,8,0.5)]'
+                        : 'text-gray-400 group-hover:text-yellow-500'
+                      }`}
                     />
                   </button>
                 </div>
@@ -966,7 +975,9 @@ export const GameInfo = ({
           )}
           {!isOwner && owner && !(game.entityType === 'TRAINING' && game.trainerId === game.participants?.find(p => p.role === 'OWNER')?.userId) && (
             <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-              <Crown size={20} className="text-primary-600 dark:text-primary-400" />
+              <InfoIconChip>
+                <Crown size={18} />
+              </InfoIconChip>
               <PlayerAvatar
                 player={owner}
                 extrasmall={true}
@@ -979,7 +990,9 @@ export const GameInfo = ({
           )}
           {game.entityType === 'TRAINING' && (
             <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-              <Dumbbell size={20} className="text-primary-600 dark:text-primary-400 flex-shrink-0" />
+              <InfoIconChip>
+                <Dumbbell size={18} />
+              </InfoIconChip>
               {(() => {
                 const trainer = game.trainerId ? game.participants?.find(p => p.userId === game.trainerId) : null;
                 if (trainer) {
@@ -1072,7 +1085,9 @@ export const GameInfo = ({
           {/* Game Price */}
           {((game.priceType && game.priceType !== 'NOT_KNOWN') || (canEdit && canShowEdit)) && (
             <div className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-              <Banknote size={20} className="text-primary-600 dark:text-primary-400" />
+              <InfoIconChip>
+                <Banknote size={18} />
+              </InfoIconChip>
               <div className="flex-1">
                 {canEdit && canShowEdit ? (
                   <button
@@ -1101,7 +1116,9 @@ export const GameInfo = ({
           {/* Game Description/Comments */}
           {game.description && game.description.trim() !== '' && (
             <div className="flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
-              <MessageCircle size={20} className="text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
+              <InfoIconChip>
+                <MessageCircle size={18} />
+              </InfoIconChip>
               <button
                 onClick={() => canEdit && canShowEdit && onOpenEditGameInfo?.('general')}
                 className={`text-xs text-gray-600 dark:text-gray-400 text-left whitespace-pre-line ${
@@ -1112,8 +1129,23 @@ export const GameInfo = ({
               </button>
             </div>
           )}
-        </div>
-      </div>
+        </AnimatedChildrenStagger>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <button
+        onClick={() => setIsCollapsed(prev => !prev)}
+        className="group relative z-10 -mx-2 -mb-2 mt-2 flex w-[calc(100%+1rem)] items-center justify-center rounded-b-xl border-t border-gray-100 py-1 text-gray-400 transition-colors duration-200 hover:bg-gray-50/80 hover:text-gray-600 dark:border-gray-800 dark:hover:bg-gray-800/50 dark:hover:text-gray-300"
+        title={isCollapsed ? t('common.expand') : t('common.collapse')}
+      >
+        <motion.span
+          animate={{ rotate: isCollapsed ? 0 : 180 }}
+          transition={expandTransition}
+          className="transition-transform duration-200 group-active:scale-90"
+        >
+          <ChevronDown size={18} />
+        </motion.span>
+      </button>
       <ShareModal
         isOpen={showShareModal}
         onClose={() => setShowShareModal(false)}
