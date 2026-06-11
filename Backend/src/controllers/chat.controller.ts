@@ -27,6 +27,7 @@ import { MessageSearchService } from '../services/chat/messageSearch.service';
 import { PinnedMessageService } from '../services/chat/pinnedMessage.service';
 import prisma from '../config/database';
 import { ChatSyncEventService } from '../services/chat/chatSyncEvent.service';
+import { ChatSyncAccessService } from '../services/chat/chatSyncAccess.service';
 import { ChatMutationIdempotencyService } from '../services/chat/chatMutationIdempotency.service';
 import { hashChatMutationPayload } from '../utils/chatClientMutationId';
 import { ChatListRowPreviewService } from '../services/chat/chatListRowPreview.service';
@@ -1599,9 +1600,7 @@ export const postChatSyncBatchHead = asyncHandler(async (req: AuthRequest, res: 
     }
     normalized.push({ contextType: raw.contextType as ChatContextType, contextId: raw.contextId });
   }
-  for (const it of normalized) {
-    await assertChatSyncAccess(it.contextType, it.contextId, userId);
-  }
+  await ChatSyncAccessService.assertBatchAccess(normalized, userId);
   const heads = await ChatSyncEventService.getHeadsForContexts(normalized);
   res.json({ success: true, data: heads });
 });
