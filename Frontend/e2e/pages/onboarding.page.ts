@@ -16,15 +16,15 @@ export class OnboardingPage {
   }
 
   primarySportModal() {
-    return this.page.getByText(/choose your sport|primary sport|select sport/i);
+    return this.page.getByRole('dialog').filter({ hasText: /your sports|main sport/i });
   }
 
   genderPromptBanner() {
-    return this.page.getByText(/set your gender|set gender/i);
+    return this.page.getByText(/set your gender/i);
   }
 
   cityPromptBanner() {
-    return this.page.getByText(/confirm your city|is this your city|city correct/i);
+    return this.page.getByText(/is your city/i);
   }
 
   welcomePromptBanner() {

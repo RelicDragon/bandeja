@@ -13,7 +13,7 @@ export class SessionsPage {
   }
 
   currentSessionBadge() {
-    return this.page.getByText(/current device|this device|current session/i);
+    return this.page.getByText(/this device/i);
   }
 
   currentDeviceBadge() {
