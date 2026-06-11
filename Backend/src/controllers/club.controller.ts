@@ -125,7 +125,7 @@ export const getClubsByCity = asyncHandler(async (req: Request, res: Response) =
   });
 });
 
-export const getClubById = asyncHandler(async (req: Request, res: Response) => {
+export const getClubById = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
   const { id } = req.params;
 
   const club = await prisma.club.findUnique({
@@ -217,7 +217,7 @@ export const createClub = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const updateClub = asyncHandler(async (req: Request, res: Response) => {
+export const updateClub = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
   const { id } = req.params;
   const updateData = { ...req.body };
   for (const key of PUBLIC_CLUB_UPDATE_FORBIDDEN) {

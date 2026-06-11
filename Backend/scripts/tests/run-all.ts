@@ -622,26 +622,55 @@ const suites: Suite[] = [
   },
 ];
 
-function main() {
-  console.log(`Running ${suites.length} automated test suites from ${backendRoot}\n`);
+function parseSuiteIndexArg(prefix: string): number | null {
+  const arg = process.argv.find((a) => a.startsWith(`${prefix}=`));
+  if (!arg) return null;
+  const n = Number.parseInt(arg.slice(prefix.length + 1), 10);
+  return Number.isFinite(n) && n >= 1 && n <= suites.length ? n - 1 : null;
+}
 
-  for (let i = 0; i < suites.length; i++) {
-    const s = suites[i];
-    console.log(`--- [${i + 1}/${suites.length}] ${s.label} ---`);
-    const r = spawnSync(s.command, s.args, {
-      cwd: backendRoot,
-      stdio: 'inherit',
-      env: { ...process.env, ...s.env },
-    });
-    const code = r.status ?? 1;
+function runSuite(i: number): number {
+  const s = suites[i];
+  console.log(`--- [${i + 1}/${suites.length}] ${s.label} ---`);
+  const r = spawnSync(s.command, s.args, {
+    cwd: backendRoot,
+    stdio: 'inherit',
+    env: { ...process.env, ...s.env },
+  });
+  return r.status ?? 1;
+}
+
+function main() {
+  const onlyIdx = parseSuiteIndexArg('--only');
+  const fromIdx = parseSuiteIndexArg('--from') ?? 0;
+  const start = onlyIdx ?? fromIdx;
+  const end = onlyIdx != null ? onlyIdx : suites.length - 1;
+
+  if (start > end || start < 0 || end >= suites.length) {
+    console.error(`Invalid range: suites are numbered 1–${suites.length}`);
+    process.exit(1);
+  }
+
+  const count = end - start + 1;
+  console.log(`Running ${count} automated test suite(s) from ${backendRoot}\n`);
+
+  for (let i = start; i <= end; i++) {
+    const code = runSuite(i);
     if (code !== 0) {
-      console.error(`\nStopped: "${s.label}" exited with ${code}`);
+      console.error(`\nStopped: "${suites[i].label}" exited with ${code}`);
+      console.error(`Resume with: npm run test:automated -- --from=${i + 1}`);
       process.exit(code);
     }
     console.log('');
   }
 
-  console.log('All automated test suites passed.');
+  if (onlyIdx != null) {
+    console.log(`Suite ${onlyIdx + 1} passed: ${suites[onlyIdx].label}`);
+  } else if (end === suites.length - 1) {
+    console.log('All automated test suites passed.');
+  } else {
+    console.log(`Suites ${start + 1}–${end + 1} passed.`);
+  }
 }
 
 main();

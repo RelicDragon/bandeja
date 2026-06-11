@@ -11,13 +11,12 @@ import {
   mapJwtError,
 } from './authToken';
 
-export interface AuthRequest extends Request {
+export type AuthRequest = Request & {
   userId?: string;
   user?: any;
-  params: any;
-  body: any;
-  query: any;
-}
+  /** Route params coerced to single strings (Express 5 types them as string | string[]). */
+  params: Record<string, string>;
+};
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {

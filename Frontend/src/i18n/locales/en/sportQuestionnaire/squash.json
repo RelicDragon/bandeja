@@ -18,5 +18,10 @@
   "q4a": "I'm still learning scoring, lets, and how to start and replay rallies.",
   "q4b": "I know basic rules but mostly react without a clear game plan.",
   "q4c": "I understand scoring, interference basics, and common match tactics.",
-  "q4d": "I'm comfortable with match format, lets/strokes judgment, and in-match adjustments."
+  "q4d": "I'm comfortable with match format, lets/strokes judgment, and in-match adjustments.",
+  "q5": "How effective are you with volleys, drops, and controlling the front of the court?",
+  "q5a": "I stay at the back and rarely take the ball early at the front.",
+  "q5b": "I come forward sometimes but struggle with volleys and drops.",
+  "q5c": "I volley and drop when chances appear and can finish some points.",
+  "q5d": "I take the ball early, control the front court, and finish with volleys and drops."
 }

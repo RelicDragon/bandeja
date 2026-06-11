@@ -22,8 +22,13 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Handle CORS preflight (incl. file:// Admin where Origin is the literal string "null")
-app.options('*', (req, res) => {
+// Handle CORS preflight for all paths (incl. file:// Admin where Origin is "null").
+// Express 5 / path-to-regexp v8 rejects bare `*`; method middleware preserves behavior.
+app.use((req, res, next) => {
+  if (req.method !== 'OPTIONS') {
+    next();
+    return;
+  }
   reflectCorsOrigin(req, res);
   if (!res.getHeader('Access-Control-Allow-Origin')) {
     res.setHeader('Access-Control-Allow-Origin', '*');

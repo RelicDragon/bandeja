@@ -48,10 +48,11 @@ function testPickleballValidation(): void {
       sport: 'PICKLEBALL',
       maxParticipants: 8,
       playersPerMatch: 4,
-      gameType: 'CLASSIC',
+      gameType: 'AMERICANO',
+      matchGenerationType: 'RANDOM',
       scoringPreset: 'POINTS_21',
     }) === Sport.PICKLEBALL,
-    'pickleball 8 roster doubles match',
+    'pickleball 8 roster doubles americano',
   );
   assert(
     validateGameForSport({

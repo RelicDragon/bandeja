@@ -58,7 +58,7 @@ function testPerSportMatchAndSocialValidation(): void {
       config.presetMeta.find((m) => m.defaultFor === 'match') ?? config.presetMeta.find((m) => m.tier === 'match');
     assert.ok(defaultMatchMeta, `default match preset exists for ${sport}`);
     assert.ok(
-      config.allowedScoringPresets.includes(defaultMatchMeta!.preset),
+      config.allowedScoringPresets.includes(defaultMatchMeta!.preset as (typeof config.allowedScoringPresets)[number]),
       `default match preset allowed for ${sport}`,
     );
 
@@ -97,7 +97,7 @@ function testPerSportMatchAndSocialValidation(): void {
     if (!socialAllowed) continue;
 
     assert.ok(
-      config.allowedScoringPresets.includes(socialMeta.preset),
+      config.allowedScoringPresets.includes(socialMeta.preset as (typeof config.allowedScoringPresets)[number]),
       `default social preset allowed for ${sport}`,
     );
 
@@ -119,7 +119,7 @@ function testPresetMetaConsistency(): void {
     const config = getSportConfig(sport);
     for (const presetMeta of config.presetMeta) {
       assert.ok(
-        config.allowedScoringPresets.includes(presetMeta.preset),
+        config.allowedScoringPresets.includes(presetMeta.preset as (typeof config.allowedScoringPresets)[number]),
         `${sport} presetMeta ${presetMeta.preset} is in allowedScoringPresets`,
       );
     }

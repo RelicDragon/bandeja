@@ -323,8 +323,19 @@ export class GameDetailsPage {
     await row.locator('button').last().click();
   }
 
-  async declinePendingInvite() {
+  async declinePendingInvite(note?: string) {
     await this.page.getByRole('button', { name: /^decline$/i }).click();
+    const dialog = this.page.getByRole('dialog').filter({ hasText: /decline invite/i });
+    await dialog.waitFor({ state: 'visible', timeout: 10_000 });
+    if (note) {
+      await dialog.locator('textarea').fill(note);
+    }
+    const declineResponse = this.page.waitForResponse(
+      (res) => res.url().includes('/invites/') && res.url().includes('/decline') && res.ok(),
+      { timeout: 30_000 },
+    );
+    await dialog.getByRole('button', { name: /^decline$/i }).click();
+    await declineResponse;
   }
 
   async expectPendingInvitesCount(count: number) {

@@ -728,6 +728,7 @@ Frontend/e2e/
 | PR-16 | Availability visibility | Public/private toggle | Saved |
 | PR-17 | Profile sports section | Enable/disable sports | Primary sport updated |
 | PR-18 | Sport levels display | Per-sport levels | Badges update |
+| PR-62 | Table tennis / squash questionnaire | Profile → add sport → Take questionnaire → answer all 5 questions | Completes without validation error; sport level assigned |
 | PR-19 | Change city | City modal | City updated |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |

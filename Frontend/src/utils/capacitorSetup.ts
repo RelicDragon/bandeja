@@ -4,15 +4,17 @@ import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
 import { setupCapacitorNetwork } from './capacitorNetwork';
 import pushNotificationService from '@/services/pushNotificationService';
+import {
+  computeKeyboardInsetPx,
+  isInsideKeyboardManagedSurface,
+  shouldShiftDialogForKeyboard,
+} from './keyboardLayout';
 
 let lastPluginKeyboardInsetPx = 0;
 let currentFocusedInput: HTMLElement | null = null;
 let scrollFocusedInputTimer: ReturnType<typeof setTimeout> | null = null;
 
-const MAX_KEYBOARD_INSET_RATIO = 0.92;
 const SCROLL_FOCUSED_INPUT_MS = 120;
-/** Dialogs reposition only above this inset (avoids breaking centering when inset is 0). */
-const KEYBOARD_DIALOG_SHIFT_THRESHOLD_PX = 80;
 
 const isInsideChatComposerFooter = (el: HTMLElement | null) =>
   !!el?.closest('[data-cap-chat-composer], .chat-container footer');
@@ -25,9 +27,10 @@ const resetAppRootScrollIfChatInput = () => {
 };
 
 const syncKeyboardDialogShiftClass = (effectiveInsetPx: number) => {
-  const shouldShift =
-    document.body.classList.contains('keyboard-visible') &&
-    effectiveInsetPx >= KEYBOARD_DIALOG_SHIFT_THRESHOLD_PX;
+  const shouldShift = shouldShiftDialogForKeyboard(
+    effectiveInsetPx,
+    document.body.classList.contains('keyboard-visible'),
+  );
   document.body.classList.toggle('keyboard-dialog-shift', shouldShift);
 };
 
@@ -54,14 +57,14 @@ export const syncKeyboardLayoutFromViewport = () => {
   if (typeof document === 'undefined' || !document.documentElement) return;
 
   const innerH = window.innerHeight || 0;
-  const maxInset = innerH > 0 ? Math.round(innerH * MAX_KEYBOARD_INSET_RATIO) : 10_000;
-
   const vv = window.visualViewport;
-  const derived = vv
-    ? Math.max(0, Math.round(innerH - vv.height - vv.offsetTop))
-    : 0;
-  const raw = Math.max(derived, lastPluginKeyboardInsetPx);
-  const effective = Math.min(raw, maxInset);
+  const effective = computeKeyboardInsetPx({
+    innerHeight: innerH,
+    vvHeight: vv?.height ?? null,
+    vvOffsetTop: vv?.offsetTop ?? null,
+    pluginInsetPx: lastPluginKeyboardInsetPx,
+    preferPluginInset: isAndroid(),
+  });
 
   document.documentElement.style.setProperty('--keyboard-height', `${effective}px`);
   applyVisualViewportCssVars();
@@ -133,7 +136,7 @@ const prefersReducedMotion = () =>
 
 const scrollInputIntoViewIfAble = (el: HTMLElement | null) => {
   if (!el) return;
-  if (isInsideChatComposerFooter(el)) return;
+  if (isInsideKeyboardManagedSurface(el)) return;
   el.scrollIntoView({
     behavior: prefersReducedMotion() ? 'auto' : 'smooth',
     block: 'nearest',
@@ -390,8 +393,12 @@ export const setupBrowserKeyboardDetection = () => {
 
       if (document.body.classList.contains('keyboard-visible')) {
         const innerH = window.innerHeight || 0;
-        const maxInset = innerH > 0 ? Math.round(innerH * MAX_KEYBOARD_INSET_RATIO) : 10_000;
-        const approx = Math.min(Math.max(0, heightDifference), maxInset);
+        const approx = computeKeyboardInsetPx({
+          innerHeight: innerH,
+          vvHeight: innerH - heightDifference,
+          vvOffsetTop: 0,
+          pluginInsetPx: 0,
+        });
         document.documentElement.style.setProperty('--keyboard-height', `${approx}px`);
       } else {
         document.documentElement.style.setProperty('--keyboard-height', '0px');

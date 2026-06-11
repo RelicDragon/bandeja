@@ -28,7 +28,7 @@ export const getAllCities = asyncHandler(async (req: Request, res: Response) => 
   });
 });
 
-export const getCityById = asyncHandler(async (req: Request, res: Response) => {
+export const getCityById = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
   const { id } = req.params;
 
   const city = await prisma.city.findUnique({

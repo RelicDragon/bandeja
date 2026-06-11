@@ -9,8 +9,8 @@ const PADEL_QUESTIONS = ['q1', 'q2', 'q3', 'q4', 'q5'] as const;
 const TENNIS_QUESTIONS = ['q1', 'q2', 'q3', 'q4', 'q5'] as const;
 const PICKLEBALL_QUESTIONS = ['q1', 'q2', 'q3', 'q4', 'q5'] as const;
 const BADMINTON_QUESTIONS = ['q1', 'q2', 'q3', 'q4', 'q5'] as const;
-const TABLE_TENNIS_QUESTIONS = ['q1', 'q2', 'q3', 'q4'] as const;
-const SQUASH_QUESTIONS = ['q1', 'q2', 'q3', 'q4'] as const;
+const TABLE_TENNIS_QUESTIONS = ['q1', 'q2', 'q3', 'q4', 'q5'] as const;
+const SQUASH_QUESTIONS = ['q1', 'q2', 'q3', 'q4', 'q5'] as const;
 
 export const SPORT_QUESTIONNAIRE_REGISTRY: Partial<Record<Sport, SportQuestionnaireConfig>> = {
   PADEL: { id: 'padel-v1', questionKeys: PADEL_QUESTIONS },

@@ -42,7 +42,7 @@ export const registerToken = asyncHandler(async (req: Request, res: Response) =>
   });
 });
 
-export const removeToken = asyncHandler(async (req: Request, res: Response) => {
+export const removeToken = asyncHandler(async (req: Request<{ token: string }>, res: Response) => {
   const userId = (req as any).user.id;
   const { token } = req.params;
 

@@ -40,9 +40,9 @@ function testRegistry(): void {
   assert(BADMINTON_QUESTIONNAIRE_V1.id === 'badminton-v1', 'badminton-v1');
   assert(BADMINTON_QUESTIONNAIRE_V1.minQuestions === 5, 'badminton 5q');
   assert(TABLE_TENNIS_QUESTIONNAIRE_V1.id === 'table-tennis-v1', 'table-tennis-v1');
-  assert(TABLE_TENNIS_QUESTIONNAIRE_V1.minQuestions === 4, 'table tennis 4q');
+  assert(TABLE_TENNIS_QUESTIONNAIRE_V1.minQuestions === 5, 'table tennis 5q');
   assert(SQUASH_QUESTIONNAIRE_V1.id === 'squash-v1', 'squash-v1');
-  assert(SQUASH_QUESTIONNAIRE_V1.minQuestions === 4, 'squash 4q');
+  assert(SQUASH_QUESTIONNAIRE_V1.minQuestions === 5, 'squash 5q');
 
   for (const sport of Q4_SPORTS) {
     assert(getSportConfig(sport).questionnaire != null, `${sport} registry questionnaire`);
@@ -50,8 +50,8 @@ function testRegistry(): void {
 
   assert(scoreToLevel(5) === 1.0 && scoreToLevel(20) === 3.5, '5q band');
   assert(scoreToLevelFourQuestions(4) === 1.0 && scoreToLevelFourQuestions(16) === 3.5, '4q band');
-  assert(TABLE_TENNIS_QUESTIONNAIRE_V1.scoreToLevel(12) === 3.0, '4q all-C → 3.0');
-  assert(SQUASH_QUESTIONNAIRE_V1.scoreToLevel(16) === 3.5, '4q all-D → 3.5');
+  assert(TABLE_TENNIS_QUESTIONNAIRE_V1.scoreToLevel(15) === 3.0, '5q all-C → 3.0');
+  assert(SQUASH_QUESTIONNAIRE_V1.scoreToLevel(20) === 3.5, '5q all-D → 3.5');
   console.log('ok: Q4 registry + scoring');
 }
 

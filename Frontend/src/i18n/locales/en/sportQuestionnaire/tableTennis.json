@@ -18,5 +18,10 @@
   "q4a": "I'm still learning scoring, lets, and how games and matches are won.",
   "q4b": "I know basic rules but rarely play full matches with a plan.",
   "q4c": "I understand game scoring, service order, and common match tactics.",
-  "q4d": "I'm comfortable playing full matches and adjusting tactics point by point."
+  "q4d": "I'm comfortable playing full matches and adjusting tactics point by point.",
+  "q5": "How comfortable are you with loop shots, spin, and attacking to win points?",
+  "q5a": "I mostly keep the ball on the table and rarely try to attack.",
+  "q5b": "I attack easy balls but do not generate much spin or placement.",
+  "q5c": "I mix loops, drives, and blocks and can finish some points.",
+  "q5d": "I attack with varied spin and placement and actively build winning points."
 }

@@ -1195,26 +1195,27 @@ body.capacitor-android.keyboard-visible footer {
   scroll-margin-bottom: 24px;
 }
 
-/* Centered Radix dialogs: anchor below safe-area when keyboard has real inset.
+/* Centered Radix dialogs: sit just above keyboard when inset is real.
    keyboard-dialog-shift is set in capacitorSetup only when --keyboard-height >= 80px.
    Do not tie this to keyboard-visible alone — that breaks vertical centering (top 50% + no translateY). */
 body.capacitor-ios.keyboard-dialog-shift .dialog-content-animate,
 body.capacitor-android.keyboard-dialog-shift .dialog-content-animate,
 body.capacitor-ios.keyboard-dialog-shift .cap-keyboard-aware-dialog,
 body.capacitor-android.keyboard-dialog-shift .cap-keyboard-aware-dialog {
-  top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+  top: auto !important;
+  bottom: calc(var(--keyboard-height, 0px) + max(8px, env(safe-area-inset-bottom, 0px))) !important;
   translate: -50% 0 !important;
   max-height: min(
-    calc(100vh - var(--keyboard-height, 0px) - 40px),
+    calc(100vh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px),
     calc(var(--vv-height, 100vh) - env(safe-area-inset-top, 0px) - 32px)
   ) !important;
   max-height: min(
-    calc(100dvh - var(--keyboard-height, 0px) - 40px),
+    calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px),
     calc(var(--vv-height, 100dvh) - env(safe-area-inset-top, 0px) - 32px)
   ) !important;
   overflow-y: auto !important;
   transition:
-    top 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
     translate 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }

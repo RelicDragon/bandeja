@@ -175,17 +175,15 @@ export const GameParticipants = ({
                     <CheckCircle size={16} />
                     {t('invites.accept')}
                   </Button>
-                  {!isOwner && (
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => onDeclineInvite(invite.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5"
-                    >
-                      <XCircle size={16} />
-                      {t('invites.decline')}
-                    </Button>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => onDeclineInvite(invite.id)}
+                    className="flex-1 flex items-center justify-center gap-1.5"
+                  >
+                    <XCircle size={16} />
+                    {t('invites.decline')}
+                  </Button>
                 </div>
               </div>
             ))}

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Trash2, LogOut, Copy, HelpCircle, ChevronRight, Trophy, LayoutDashboard, CalendarDays, LayoutGrid } from 'lucide-react';
 import { usePullToRefresh } from '@/hooks/usePullToRefresh';
+import { useDeclineInvite } from '@/hooks/useDeclineInvite';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
@@ -29,7 +30,6 @@ import { GameCancelled } from '@/components/GameDetails/GameCancelled';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
-import { DeclineInviteModal } from '@/components/DeclineInviteModal';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
 import { FixedTeamsManagement } from '@/components/GameDetails/FixedTeamsManagement';
 import { GameFormatSection } from '@/components/GameDetails/GameFormatSection';
@@ -56,6 +56,7 @@ import { faqApi } from '@/api/faq';
 import { useAuthStore } from '@/store/authStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
+import { useHeaderStore } from '@/store/headerStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam } from '@/types';
 import { parseGameSport } from '@/utils/gameSport';
@@ -124,8 +125,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [game, setGame] = useState<Game | null>(null);
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
   const [gameInvites, setGameInvites] = useState<Invite[]>([]);
-  const [declineInviteId, setDeclineInviteId] = useState<string | null>(null);
-  const [isDecliningInvite, setIsDecliningInvite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showPlayerList, setShowPlayerList] = useState(false);
   const [playerListMode, setPlayerListMode] = useState<'players' | 'trainer'>('players');
@@ -612,38 +611,20 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     }
   };
 
-  const handleDeclineInvite = (inviteId: string) => {
-    const authUser = useAuthStore.getState().user;
-    if (authUser && authUser.nameIsSet !== true) {
-      runWithProfileName(() => void handleDeclineInvite(inviteId));
-      return;
-    }
-    setDeclineInviteId(inviteId);
-  };
-
-  const confirmDeclineInvite = async (message?: string) => {
-    if (!declineInviteId) return;
-    setIsDecliningInvite(true);
-    try {
-      await invitesApi.decline(
-        declineInviteId,
-        message !== undefined ? { message } : undefined
-      );
-      setMyInvites(myInvites.filter((inv) => inv.id !== declineInviteId));
+  const { handleDeclineInvite, declineInviteModal } = useDeclineInvite({
+    onDeclined: async (inviteId) => {
+      setMyInvites((prev) => prev.filter((inv) => inv.id !== inviteId));
+      const { setPendingInvites } = useHeaderStore.getState();
+      const currentCount = useHeaderStore.getState().pendingInvites;
+      setPendingInvites(Math.max(0, currentCount - 1));
       if (id) {
         const response = await gamesApi.getById(id);
         setGame(response.data);
         const gameInvitesResponse = await invitesApi.getGameInvites(id);
         setGameInvites(gameInvitesResponse.data);
       }
-      setDeclineInviteId(null);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    } finally {
-      setIsDecliningInvite(false);
-    }
-  };
+    },
+  });
 
   const handleCancelInvite = async (inviteId: string) => {
     const authUser = useAuthStore.getState().user;
@@ -1773,6 +1754,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         <div className="hidden" aria-hidden="true">
           <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
         </div>
+        {declineInviteModal}
       </>
       </AnimatedPresencePanel>
       </SportLevelProvider>
@@ -1985,12 +1967,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       </div>
       </div>
 
-      <DeclineInviteModal
-        isOpen={declineInviteId !== null}
-        onClose={() => setDeclineInviteId(null)}
-        onDecline={confirmDeclineInvite}
-        isLoading={isDecliningInvite}
-      />
+      {declineInviteModal}
     </>
     </SportLevelProvider>
   );

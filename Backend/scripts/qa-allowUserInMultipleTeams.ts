@@ -5,7 +5,6 @@ import {
   EntityType,
   LeagueParticipantType,
   ParticipantRole,
-  PrismaClient,
   UserTeamMemberStatus,
   type PrismaClient as PrismaClientType,
 } from '@prisma/client';
@@ -384,13 +383,10 @@ async function main() {
     ]);
     const gt1 = await prisma.gameTeam.findFirst({ where: { gameId: gDup.id, teamNumber: 1 } });
     let dupDb = false;
-    const prismaQuiet = new PrismaClient({ log: [] });
     try {
-      await prismaQuiet.gameTeamPlayer.create({ data: { gameTeamId: gt1!.id, userId: u1 } });
+      await prisma.gameTeamPlayer.create({ data: { gameTeamId: gt1!.id, userId: u1 } });
     } catch (e: unknown) {
       dupDb = typeof e === 'object' && e !== null && (e as { code?: string }).code === 'P2002';
-    } finally {
-      await prismaQuiet.$disconnect();
     }
     if (!dupDb) throw new Error('expected P2002 duplicate (gameTeamId, userId)');
     console.log('ok: GameTeamPlayer unique (same team, same user)');

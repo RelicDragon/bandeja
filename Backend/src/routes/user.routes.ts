@@ -4,6 +4,9 @@ import { body, query } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
+import { getQuestionnaireForSport } from '../sport/questionnaires';
+import { validateAnswers } from '../sport/questionnaires/scoring';
+import { resolveSport } from '../sport/sportRegistry';
 import * as userController from '../controllers/user.controller';
 import { MAX_BASIC_USERS_IDS_PER_REQUEST } from '../services/user/basicUsersForMessage.service';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
@@ -119,16 +122,13 @@ router.post(
 const sportQuestionnaireAnswersValidator = body('answers')
   .isArray()
   .withMessage('answers must be an array')
-  .custom((val: unknown) => {
-    if (!Array.isArray(val) || val.length !== 5) {
-      throw new Error('Exactly 5 answers required');
+  .custom((val: unknown, { req }) => {
+    const sport = resolveSport((req as AuthRequest).params.sport);
+    const config = getQuestionnaireForSport(sport);
+    if (!config) {
+      throw new Error('No questionnaire available for this sport');
     }
-    const valid = ['A', 'B', 'C', 'D'];
-    for (let i = 0; i < val.length; i++) {
-      if (typeof val[i] !== 'string' || !valid.includes(val[i] as string)) {
-        throw new Error(`Answer ${i + 1} must be A, B, C, or D`);
-      }
-    }
+    validateAnswers(val, config.minQuestions);
     return true;
   });
 

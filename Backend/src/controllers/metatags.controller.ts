@@ -119,7 +119,7 @@ const generateGameMetaTags = (game: any): string => {
 </html>`;
 };
 
-export const getGameMetaTags = async (req: Request, res: Response) => {
+export const getGameMetaTags = async (req: Request<{ gameId: string }>, res: Response) => {
   try {
     const { gameId } = req.params;
     

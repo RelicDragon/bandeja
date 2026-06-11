@@ -18,5 +18,10 @@
   "q4a": "Još učim bodovanje, letove i kako se dobijaju gemovi i mečevi.",
   "q4b": "Znam osnovna pravila, ali retko igram cele mečeve sa planom.",
   "q4c": "Razumem bodovanje gemova, red servisa i uobičajenu taktiku.",
-  "q4d": "Pouzdano igram cele mečeve i prilagođavam taktiku po poenu."
+  "q4d": "Pouzdano igram cele mečeve i prilagođavam taktiku po poenu.",
+  "q5": "Koliko vam je prijatno sa loop udarcima, rotacijom i napadom za osvajanje poena?",
+  "q5a": "Uglavnom držim lopticu na stolu i retko napadam.",
+  "q5b": "Napadam lake loptice, ali bez mnogo rotacije ili postavljanja.",
+  "q5c": "Mešam loopove, drive i blokove i mogu da završim neke poene.",
+  "q5d": "Napadam sa različitom rotacijom i postavljanjem i svesno gradim pobedničke poene."
 }
