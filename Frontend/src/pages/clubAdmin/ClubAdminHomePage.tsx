@@ -81,7 +81,7 @@ export function ClubAdminHomePage() {
 
         {todaySummary?.externalSlotsFailed && (
           <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
             <p className="text-sm text-amber-800 dark:text-amber-300">{t('clubAdmin.integrationDown')}</p>
           </div>
         )}
@@ -135,7 +135,7 @@ export function ClubAdminHomePage() {
         <div className="flex items-center justify-center pt-2">
           <button
             type="button"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 transition-colors hover:text-primary-700"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary-600 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
             onClick={() => setViewAsPlayerOpen(true)}
           >
             <Eye className="h-3.5 w-3.5" />

@@ -15,7 +15,7 @@ BookTime ships one white-label Capacitor app per club (`rs.booktime.*`). Each em
 | Elite Padel | yes | yes |
 | Royal Padel Club | yes | yes |
 | KSC (ex.CRS) | yes | yes |
-| Padel Balon | — | no app found |
+| Padel Arena (ex. Padel Balon) | — | no app found (phone / Instagram) |
 | Stribor, Arena Pub, Bunker Karaoke, Dve Kule | — | not BookTime |
 
 ---

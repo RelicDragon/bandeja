@@ -44,7 +44,7 @@ export function slotClassName(kind: SlotVisualKind, selected = false): string {
     case 'hold':
       return base + 'border-violet-500 bg-violet-100 dark:bg-violet-900/40 bg-stripes';
     case 'inactive':
-      return base + 'border-gray-300 bg-gray-200 opacity-50';
+      return base + 'border-gray-300 bg-gray-200 opacity-50 dark:border-gray-600 dark:bg-gray-700';
     case 'unassigned':
       return base + 'border-orange-400 bg-orange-100 dark:bg-orange-900/40';
     default:

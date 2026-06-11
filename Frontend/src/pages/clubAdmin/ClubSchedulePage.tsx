@@ -181,7 +181,7 @@ export function ClubSchedulePage() {
       ) : (
         <>
           {data?.externalSlotsFailed && (
-            <p className="mb-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700">
+            <p className="mb-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
               {t('clubAdmin.integrationDown')}
             </p>
           )}
@@ -191,12 +191,12 @@ export function ClubSchedulePage() {
         </>
       )}
       {data?.conflicts && data.conflicts.length > 0 && (
-        <p className="mb-2 text-xs text-amber-600">{t('clubAdmin.conflicts', { count: data.conflicts.length })}</p>
+        <p className="mb-2 text-xs text-amber-600 dark:text-amber-400">{t('clubAdmin.conflicts', { count: data.conflicts.length })}</p>
       )}
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
         <div className="min-w-0 flex-1">
           {loading ? (
-            <p>{t('common.loading')}</p>
+            <p className="text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
           ) : (
             <ClubAdminCoachMark
               show={coachMarks.schedule && !coachMarks.tapSlot}

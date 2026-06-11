@@ -1,7 +1,40 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+@theme {
+  --color-background: var(--ui-background);
+  --color-foreground: var(--ui-foreground);
+  --color-border: var(--ui-border);
+  --color-muted: var(--ui-muted);
+  --color-muted-foreground: var(--ui-muted-foreground);
+  --color-destructive: var(--ui-destructive);
+}
+
+:root {
+  --ui-background: #f9fafb;
+  --ui-foreground: #111827;
+  --ui-border: #e5e7eb;
+  --ui-muted: #f3f4f6;
+  --ui-muted-foreground: #6b7280;
+  --ui-destructive: #dc2626;
+}
+
+html.dark {
+  --ui-background: #030712;
+  --ui-foreground: #f9fafb;
+  --ui-border: #374151;
+  --ui-muted: #1f2937;
+  --ui-muted-foreground: #9ca3af;
+  --ui-destructive: #ef4444;
+}
+
 @layer components {
+  .btn-primary {
+    @apply rounded-lg bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply rounded-lg bg-gray-200 px-4 py-2 font-medium text-gray-900 transition-colors hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600;
+  }
   .page-title {
     @apply text-lg font-semibold text-gray-900 dark:text-white;
   }

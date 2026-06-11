@@ -42,7 +42,7 @@ export function SlotDetailPanel({
 
   return (
     <>
-      <h2 className="text-lg font-semibold">{title}</h2>
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
       {readOnly && (
         <p className="mt-2 text-xs text-muted-foreground">{t('clubAdmin.pastSlotViewOnly')}</p>
       )}
@@ -59,7 +59,7 @@ export function SlotDetailPanel({
               {slot.host.firstName} {slot.host.lastName} · {slot.participantCount}{' '}
               {t('clubAdmin.participants')}
             </p>
-            <p className="text-sm">
+            <p className="text-sm text-foreground">
               {slot.hasBookedCourt ? t('clubAdmin.confirmed') : t('clubAdmin.planned')}
             </p>
             <button
@@ -93,7 +93,7 @@ export function SlotDetailPanel({
 
         {slot?.type === 'hold' && (
           <>
-            <p className="text-sm">{slot.label}</p>
+            <p className="text-sm text-foreground">{slot.label}</p>
             {slot.note && <p className="text-sm text-muted-foreground">{slot.note}</p>}
             {!readOnly && onEditHold && (
               <button type="button" className="btn-secondary w-full" onClick={onEditHold}>

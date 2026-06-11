@@ -42,7 +42,7 @@ export function EditHoldSheet({ open, hold, onClose, onSubmit }: EditHoldSheetPr
         className="w-full max-w-md rounded-2xl border border-border bg-background p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold">{t('clubAdmin.editHold')}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('clubAdmin.editHold')}</h2>
         <div className="mt-3 space-y-3">
           <select
             className="w-full rounded-lg border border-border bg-background px-3 py-2"

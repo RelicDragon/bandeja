@@ -13,7 +13,7 @@ export function ClubAdminCourtRow({ court, onEdit }: ClubAdminCourtRowProps) {
   return (
     <div className="flex items-center gap-2 rounded-xl border border-border bg-white p-3 dark:bg-gray-900">
       <div className="min-w-0 flex-1">
-        <p className="font-medium truncate">{court.name}</p>
+        <p className="truncate font-medium text-foreground">{court.name}</p>
         <p className="text-xs text-muted-foreground">
           {court.isActive === false ? t('clubAdmin.inactive') : t('clubAdmin.active')}
           {court.isIndoor ? ` · ${t('clubAdmin.indoor')}` : ''}

@@ -60,7 +60,7 @@ export function CancelGameSheet({ open, onClose, mode, previewParams, onSubmit }
   return (
     <div className="fixed inset-0 z-[75] flex items-end bg-black/45 p-3" onClick={onClose}>
       <div className="w-full max-w-md rounded-2xl border border-border bg-background p-4" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-lg font-semibold text-foreground">
           {mode === 'cancel' ? t('clubAdmin.cancelGame') : t('clubAdmin.clearCourt')}
         </h2>
         <div className="mt-3 space-y-3">

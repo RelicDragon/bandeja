@@ -44,7 +44,7 @@ export function MyClubsPage() {
       {(total > 5 || query.trim().length > 0) && (
         <input
           type="search"
-          className="mb-3 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+          className="mb-3 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
           placeholder={t('clubAdmin.searchClubs')}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -78,7 +78,7 @@ export function MyClubsPage() {
                     {c.bookingsToday > 0 && ` · ${t('clubAdmin.bookingsToday', { count: c.bookingsToday })}`}
                   </p>
                   {open !== null && (
-                    <p className={`text-xs ${open ? 'text-green-600' : 'text-gray-500 dark:text-gray-400'}`}>
+                    <p className={`text-xs ${open ? 'text-green-600 dark:text-green-400' : 'text-gray-500 dark:text-gray-400'}`}>
                       {open ? t('clubAdmin.openNow') : t('clubAdmin.closedNow')}
                     </p>
                   )}

@@ -16,7 +16,7 @@ export function ClubAdminTodayStats({ slots, conflicts }: ClubAdminTodayStatsPro
           <CalendarCheck className="h-4 w-4" />
           <span className="text-xs font-medium uppercase tracking-wide">{t('clubAdmin.schedule')}</span>
         </div>
-        <p className="mt-2 text-3xl font-bold tabular-nums">{slots}</p>
+        <p className="mt-2 text-3xl font-bold tabular-nums text-foreground">{slots}</p>
         <p className="mt-0.5 text-xs text-muted-foreground">{t('clubAdmin.statsScheduledToday')}</p>
       </div>
       <div
@@ -34,7 +34,7 @@ export function ClubAdminTodayStats({ slots, conflicts }: ClubAdminTodayStatsPro
         </div>
         <p
           className={`mt-2 text-3xl font-bold tabular-nums ${
-            conflicts > 0 ? 'text-amber-700 dark:text-amber-400' : ''
+            conflicts > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'
           }`}
         >
           {conflicts}

@@ -144,14 +144,14 @@ export function ClubSettingsPage() {
       <span className="text-muted-foreground">{label}</span>
       {multiline ? (
         <textarea
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
           value={(club[key] as string) ?? ''}
           onChange={(e) => setClub({ ...club, [key]: e.target.value })}
           rows={3}
         />
       ) : (
         <input
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
           value={(club[key] as string) ?? ''}
           onChange={(e) => setClub({ ...club, [key]: e.target.value })}
         />
@@ -227,7 +227,7 @@ export function ClubSettingsPage() {
             <input
               type="file"
               accept="image/*"
-              className="mt-2 text-sm"
+              className="mt-2 text-sm text-foreground"
               disabled={uploadingPhoto}
               onChange={(e) => void onPhotoPick(e.target.files?.[0] ?? null)}
             />
@@ -236,7 +236,7 @@ export function ClubSettingsPage() {
           <label className="block text-sm">
             <span className="text-muted-foreground">{t('clubAdmin.policyText')}</span>
             <textarea
-              className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+              className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
               value={club.policyText ?? ''}
               onChange={(e) => setClub({ ...club, policyText: e.target.value })}
               rows={3}
@@ -250,7 +250,7 @@ export function ClubSettingsPage() {
                 type="number"
                 min={15}
                 step={15}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
                 value={club.defaultSlotMinutes ?? ''}
                 onChange={(e) =>
                   setClub({
@@ -265,7 +265,7 @@ export function ClubSettingsPage() {
               <input
                 type="number"
                 min={0}
-                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2"
+                className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground"
                 value={club.cancellationNoticeHours ?? ''}
                 onChange={(e) =>
                   setClub({
@@ -289,7 +289,9 @@ export function ClubSettingsPage() {
                     key={sport}
                     type="button"
                     className={`rounded-full border px-3 py-1 text-xs ${
-                      enabled ? 'border-primary bg-primary/10 text-primary' : 'border-border'
+                      enabled
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border text-foreground'
                     }`}
                     onClick={() => toggleClubSport(sport)}
                   >
@@ -308,7 +310,9 @@ export function ClubSettingsPage() {
                   key={key}
                   type="button"
                   className={`rounded-full border px-3 py-1 text-xs ${
-                    amenities[key] ? 'border-primary bg-primary/10 text-primary' : 'border-border'
+                    amenities[key]
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-foreground'
                   }`}
                   onClick={() => toggleAmenity(key)}
                 >

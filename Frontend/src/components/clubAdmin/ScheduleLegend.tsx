@@ -38,7 +38,7 @@ export function ScheduleLegend({ className }: { className?: string }) {
     <div className={`rounded-lg border border-border bg-muted/30 ${className ?? ''}`}>
       <button
         type="button"
-        className="flex w-full items-center justify-between px-3 py-2 text-sm font-medium"
+        className="flex w-full items-center justify-between px-3 py-2 text-sm font-medium text-foreground"
         onClick={toggle}
       >
         {t('clubAdmin.legend.title')}
@@ -49,7 +49,7 @@ export function ScheduleLegend({ className }: { className?: string }) {
           {LEGEND_ITEMS.map((kind) => (
             <div key={kind} className="flex items-center gap-1.5 text-xs">
               <span className={`inline-block h-4 w-6 ${slotClassName(kind)}`} />
-              <span>{t(LABEL_KEYS[kind])}</span>
+              <span className="text-foreground">{t(LABEL_KEYS[kind])}</span>
             </div>
           ))}
         </div>

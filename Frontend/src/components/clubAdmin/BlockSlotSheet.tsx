@@ -52,14 +52,18 @@ export function BlockSlotSheet({ open, onClose, courtId, date, startTime, club, 
         className="w-full max-w-md rounded-2xl border border-border bg-background p-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-lg font-semibold">{t('clubAdmin.blockThirdParty')}</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t('clubAdmin.blockThirdParty')}</h2>
         <div className="mt-3 space-y-3">
           <div className="flex gap-2">
             {[1, 1.5, 2].map((d) => (
               <button
                 key={d}
                 type="button"
-                className={`flex-1 rounded-lg border px-2 py-2 text-sm ${durationHours === d ? 'border-primary bg-primary/10' : ''}`}
+                className={`flex-1 rounded-lg border px-2 py-2 text-sm text-foreground ${
+                  durationHours === d
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:bg-muted'
+                }`}
                 onClick={() => setDurationHours(d)}
               >
                 {d}h

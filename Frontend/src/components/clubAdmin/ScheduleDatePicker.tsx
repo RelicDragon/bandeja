@@ -62,7 +62,7 @@ export function ScheduleDatePicker({ date, onDateChange }: ScheduleDatePickerPro
       </button>
       <button
         type="button"
-        className="relative flex-1 rounded-lg border border-border bg-background px-3 py-2 text-center text-sm font-medium"
+        className="relative flex-1 rounded-lg border border-border bg-background px-3 py-2 text-center text-sm font-medium text-foreground"
         onClick={openPicker}
       >
         {displayLabel}
