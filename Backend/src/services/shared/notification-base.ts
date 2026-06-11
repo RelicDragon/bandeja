@@ -1,3 +1,4 @@
+import { convertMentionsToPlaintext } from '../../utils/parseMentions';
 import { formatDateInTimezone, getDateLabelInTimezone, getShortDayOfWeek, getUserTimezoneFromCityId } from '../user-timezone.service';
 import { formatDuration, escapeMarkdown } from '../telegram/utils';
 import { t } from '../../utils/translations';
@@ -342,7 +343,7 @@ export function formatChatNotificationMessageBody(message: {
     const ss = totalSec % 60;
     return `🎬 Video (${mm}:${ss.toString().padStart(2, '0')})`;
   }
-  if (message.content?.trim()) return message.content;
+  if (message.content?.trim()) return convertMentionsToPlaintext(message.content);
   if (message.mediaUrls && message.mediaUrls.length > 0) return '[Media]';
   return '';
 }

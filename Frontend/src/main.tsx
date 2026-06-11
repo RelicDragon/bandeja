@@ -9,8 +9,11 @@ import { initChatLocalDbLifecycle } from './services/chat/chatLocalDbLifecycle';
 import { initChatBackgroundSyncClient } from './services/chat/chatBackgroundSync';
 import { installMarkReadFlushFailureResync } from './services/chat/chatMarkReadResync';
 import { installUnreadThreadIndexSync } from './services/chat/unreadThreadIndexSync';
+import { installChunkLoadRecovery } from './utils/chunkLoadRecovery';
 
 const CACHE_VERSION = 'v1';
+
+installChunkLoadRecovery();
 
 initChatSyncMetricsSession();
 initChatLocalDbLifecycle();

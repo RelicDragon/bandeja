@@ -1,5 +1,6 @@
 import { Component, ReactNode } from 'react';
 import { withTranslation, WithTranslation } from 'react-i18next';
+import { isChunkLoadError, recoverFromChunkLoadError } from '@/utils/chunkLoadRecovery';
 
 interface Props extends WithTranslation {
   children: ReactNode;
@@ -27,6 +28,11 @@ class NavigationErrorBoundaryBase extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('[NavigationErrorBoundary] Caught error:', error, errorInfo);
+
+    if (isChunkLoadError(error)) {
+      void recoverFromChunkLoadError();
+      return;
+    }
     
     if (this.state.retryCount >= this.MAX_RETRIES) {
       console.error('[NavigationErrorBoundary] Max retries reached, performing hard reload');

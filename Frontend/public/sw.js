@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v868';
+const CACHE_VERSION = 'v870';
 const CACHE_NAME = `bandeja-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `bandeja-runtime-${CACHE_VERSION}`;
 
@@ -7,8 +7,6 @@ const CHAT_OFFLINE_FLUSH_REQUEST = 'CHAT_OFFLINE_FLUSH_REQUEST';
 const CHAT_OFFLINE_FLUSH_ACK = 'CHAT_OFFLINE_FLUSH_ACK';
 
 const urlsToCache = [
-  '/',
-  '/index.html',
   '/bandeja2-white-tr.png',
   '/manifest.json',
 ];
@@ -108,64 +106,99 @@ async function runChatOfflineBackgroundSync() {
   await probeReachableOrigin();
 }
 
+function isNavigationRequest(request, pathname) {
+  return (
+    request.mode === 'navigate' ||
+    request.destination === 'document' ||
+    pathname === '/' ||
+    pathname === '/index.html'
+  );
+}
+
+function isHashedBuildAsset(pathname) {
+  return pathname.startsWith('/assets/') && /\.(js|css)$/.test(pathname);
+}
+
+function isStaticMedia(pathname) {
+  return /\.(svg|png|jpg|jpeg|gif|webp|woff2?|ttf|eot|ico|lottie)$/.test(pathname);
+}
+
+async function putInCache(request, response, cacheName = CACHE_NAME) {
+  if (!response || response.status !== 200 || response.type !== 'basic') return;
+  const clone = response.clone();
+  const cache = await caches.open(cacheName);
+  await cache.put(request, clone);
+}
+
+async function networkFirst(request, { offlineDocumentFallback = false } = {}) {
+  try {
+    const response = await fetch(request);
+    await putInCache(request, response);
+    return response;
+  } catch {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    if (offlineDocumentFallback) {
+      const shell = await caches.match('/index.html');
+      if (shell) return shell;
+    }
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  await putInCache(request, response);
+  return response;
+}
+
+async function staleWhileRevalidate(request) {
+  const cached = await caches.match(request);
+  const networkPromise = fetch(request)
+    .then(async (response) => {
+      await putInCache(request, response);
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    void networkPromise;
+    return cached;
+  }
+
+  const response = await networkPromise;
+  if (response) return response;
+  return new Response('Offline', { status: 503 });
+}
+
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
-  
+
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     return;
   }
 
   const requestUrl = new URL(event.request.url);
   const pathname = requestUrl.pathname;
-  
-  const shouldCache = 
-    pathname.endsWith('.svg') ||
-    pathname.endsWith('.png') ||
-    pathname.endsWith('.jpg') ||
-    pathname.endsWith('.jpeg') ||
-    pathname.endsWith('.gif') ||
-    pathname.endsWith('.webp') ||
-    pathname.endsWith('.css') ||
-    pathname.endsWith('.js') ||
-    pathname === '/' ||
-    pathname === '/index.html' ||
-    pathname === '/manifest.json' ||
-    pathname.startsWith('/games/');
 
-  if (pathname.startsWith('/api/')) {
+  if (pathname.startsWith('/api/') || pathname === '/sw.js') {
     return;
   }
 
-  if (!shouldCache) {
-    return fetch(event.request);
+  if (isNavigationRequest(event.request, pathname)) {
+    event.respondWith(networkFirst(event.request, { offlineDocumentFallback: true }));
+    return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request).then((response) => {
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
-          
-          if (requestUrl.protocol === 'http:' || requestUrl.protocol === 'https:') {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          
-          return response;
-        });
-      })
-      .catch(() => {
-        if (event.request.destination === 'document') {
-          return caches.match('/index.html');
-        }
-        return new Response('Offline', { status: 503 });
-      })
-  );
+  if (isHashedBuildAsset(pathname)) {
+    event.respondWith(cacheFirst(event.request));
+    return;
+  }
+
+  if (isStaticMedia(pathname) || pathname === '/manifest.json') {
+    event.respondWith(staleWhileRevalidate(event.request));
+    return;
+  }
 });
