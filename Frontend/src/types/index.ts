@@ -234,6 +234,7 @@ export interface User extends BasicUser {
   primarySportIsSet?: boolean;
   cityIsSet?: boolean;
   welcomeScreenPassed?: boolean;
+  booktimeConnectHintDismissed?: boolean;
   sportsEnabled?: Sport[];
   lastCreatedSport?: Sport | null;
   sportsPlayed?: Partial<Record<Sport, number>>;

@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { queryOptions, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query';
 import { gamesApi } from '@/api';
 import type { Game } from '@/types';
 import { buildAvailableGamesFilterHash, queryKeys } from '../queryKeys';
@@ -57,6 +57,7 @@ export function availableGamesQueryOptions(
       return sortGames(response.data || []);
     },
     staleTime: GAMES_LIST_STALE_TIME,
+    placeholderData: keepPreviousData,
     enabled: isEnabled,
   });
 }

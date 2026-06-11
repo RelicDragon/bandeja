@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 import { Card, Button } from '@/components';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
 import { AnnouncedFireIcon } from '@/components/AnnouncedFireIcon';
-import { PlayerAvatar } from '@/components/PlayerAvatar';
-import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
+import { GameCardTrainerBadge } from '@/components/gameCard/GameCardTrainerBadge';
+import { GameCardInfoRows } from '@/components/gameCard/GameCardInfoRows';
 import { Game } from '@/types';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { getGameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
@@ -22,7 +22,6 @@ import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { DiscoveryBadgePills } from '@/components/multisport/DiscoveryBadgePills';
-import { GameCardConfirmedCourtBadge } from '@/components/GameCardConfirmedCourtBadge';
 import { gameHasConfirmedClubBooking } from '@/utils/gameHasConfirmedClubBooking';
 
 import { useAuthStore } from '@/store/authStore';
@@ -30,7 +29,7 @@ import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { GameCardReactions } from '@/components/GameCardReactions';
-import { Calendar, MapPin, Users, MessageCircle, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star, Plane, Bookmark } from 'lucide-react';
+import { Users, MessageCircle, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star, Plane, Bookmark } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -169,6 +168,11 @@ export const GameCard = ({
   const timeDisplay = getTimeDisplay('time');
   const timeRangeDisplay = getTimeDisplay('timeRange');
   const showConfirmedCourtBadge = gameHasConfirmedClubBooking(game);
+  const infoHintText = timeDisplay.hintText || timeRangeDisplay.hintText;
+  const trainerParticipant =
+    game.entityType === 'TRAINING' && game.trainerId
+      ? participants.find((p) => p.userId === game.trainerId) ?? null
+      : null;
 
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -234,6 +238,10 @@ export const GameCard = ({
     }
   };
 
+  const infoDateText =
+    getDateLabelResolved(game.startTime) +
+    (shouldShowTiming ? ` ${timeRangeDisplay.primaryText}` : '');
+
   const titleEntityInlineIcon =
     bookmarkInTitleRow && isNonGameEntity ? (
       game.entityType === 'TOURNAMENT' ? (
@@ -286,11 +294,14 @@ export const GameCard = ({
     <SportLevelProvider sport={gameSport}>
     <>
     <Card
-      className={`hover:shadow-md hover:scale-[1.02] 
-        active:scale-[1.05] transition-all duration-300 ease-in-out 
+      className={`group hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01]
+        active:scale-[0.99] transition-all duration-300 ease-out will-change-transform
         cursor-pointer relative pb-0 overflow-visible ${getGameCardEntityGradientClasses(game.entityType)}`}
       onClick={handleCardClick}
     >
+      <span className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-xl" aria-hidden>
+        <span className="absolute inset-y-0 left-0 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 dark:via-white/[0.06] to-transparent -translate-x-[150%] group-hover:translate-x-[350%] transition-transform duration-700 ease-out" />
+      </span>
       <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-1">
         <GameCardReactions
           entityType={game.entityType}
@@ -304,13 +315,16 @@ export const GameCard = ({
           <button
             type="button"
             onClick={handleChatClick}
-            className="pl-1.5 pt-1 pr-2 pb-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+            className="pl-1.5 pt-1 pr-2 pb-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110 active:scale-95 transition-all duration-200 relative"
           >
             <MessageCircle size={20} className="text-gray-600 dark:text-gray-400" />
             {displayUnread > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                {displayUnread > 99 ? '99+' : displayUnread}
-              </span>
+              <>
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-red-500 opacity-40 animate-ping [animation-duration:2s]" aria-hidden />
+                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_6px_rgba(239,68,68,0.5)]">
+                  {displayUnread > 99 ? '99+' : displayUnread}
+                </span>
+              </>
             )}
           </button>
         )}
@@ -367,7 +381,7 @@ export const GameCard = ({
                         <div className="mt-1 flex items-center gap-2 flex-wrap">
                           {game.leagueGroup?.name && (
                             <span
-                              className="px-2 py-0.5 text-xs font-medium rounded text-white"
+                              className="px-2 py-0.5 text-xs font-medium rounded-full text-white"
                               style={{ backgroundColor: game.leagueGroup.color || '#6b7280' }}
                             >
                               {game.leagueGroup.name}
@@ -419,14 +433,14 @@ export const GameCard = ({
                 e.stopPropagation();
                 navigate(`/games/${game.id}/chat`);
               }}
-              className="px-3 py-1.5 text-sm font-semibold rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1.5 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+              className="px-3 py-1.5 text-sm font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1.5 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
               <Camera size={16} />
               {game.photosCount}
             </button>
           )}
           {!game.isPublic && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
               <Lock size={12} />
               <span className="hidden sm:inline">{t('games.private')}</span>
             </span>
@@ -450,42 +464,42 @@ export const GameCard = ({
             </div>
           )}
           {myParticipationBadge === 'owner' && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
               {t('games.owner')}
             </span>
           )}
           {myParticipationBadge === 'admin' && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400">
               {t('games.admin')}
             </span>
           )}
           {myParticipationBadge === 'guest' && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
               {t('games.statusGuest')}
             </span>
           )}
           {myParticipationBadge === 'invited' && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
               {t('games.statusInvited')}
             </span>
           )}
           {myParticipationBadge === 'in_queue' && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400">
               {t('games.statusInQueue')}
             </span>
           )}
           {myParticipationBadge === 'playing' && (
-            <span className="px-2 py-1 text-xs font-medium rounded whitespace-nowrap bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
               {t('games.badgePlaying', { defaultValue: 'Playing' })}
             </span>
           )}
           {myParticipationBadge === 'non_playing' && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
               {t('games.statusNonPlaying')}
             </span>
           )}
           {game.entityType !== 'GAME' && !bookmarkInTitleRow && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
               {game.entityType === 'TOURNAMENT' && <Swords size={12} />}
               {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={12} />}
               {game.entityType === 'TRAINING' && <Dumbbell size={12} />}
@@ -494,14 +508,14 @@ export const GameCard = ({
             </span>
           )}
           {!game.affectsRating && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
               <Award size={12} />
               <Ban size={12} />
               <span className="hidden sm:inline">{t('games.noRating')}</span>
             </span>
           )}
           {game.hasFixedTeams && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
               <div className="flex items-center">
                 <Users size={12} />
                 <Users size={12} />
@@ -510,7 +524,7 @@ export const GameCard = ({
             </span>
           )}
           {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && game.resultsStatus === 'FINAL' && (
-            <span className="px-2 py-1 text-xs font-medium rounded bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
               <Award size={12} />
               {t('games.resultsAvailable')}
             </span>
@@ -561,180 +575,40 @@ export const GameCard = ({
       <div ref={expandedContentRef} className="relative z-10">
         {mainPhotoUrl ? (
           <div className="flex gap-4 mb-2 items-center">
-            {game.entityType === 'TRAINING' && (() => {
-              const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
-              return trainer ? (
-                <div className="flex-shrink-0 flex flex-col items-center gap-0.5 p-2 border-2 border-green-300 dark:border-green-700 rounded-lg bg-green-50/30 dark:bg-green-900/10">
-                  <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
-                  <PlayerAvatar player={trainer.user} extrasmall={true} showName={true} />
-                  <TrainerRatingBadge trainer={trainer.user} size="sm" showReviewCount={false} />
-                </div>
-              ) : null;
-            })()}
+            {trainerParticipant && <GameCardTrainerBadge trainer={trainerParticipant} />}
             <div className="flex-shrink-0">
-              <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700">
+              <div className="w-24 h-24 rounded-xl overflow-hidden ring-2 ring-gray-200 dark:ring-gray-700 shadow-sm transition-shadow duration-300 group-hover:shadow-md">
                 <img
                   src={mainPhotoUrl}
                   alt="Main photo"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
                   loading="lazy"
                 />
               </div>
             </div>
             {game.entityType !== 'LEAGUE_SEASON' && (
-            <div className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400 justify-center min-h-0">
-              <div className="flex items-center gap-2">
-                <Calendar size={16} />
-                {game.timeIsSet === false ? (
-                  <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
-                ) : (
-                  <span className="inline-flex flex-wrap items-center gap-1.5">
-                    <span>
-                      {getDateLabelResolved(game.startTime)}
-                      {shouldShowTiming && ` ${timeRangeDisplay.primaryText}`}
-                    </span>
-                    {showConfirmedCourtBadge ? <GameCardConfirmedCourtBadge /> : null}
-                  </span>
-                )}
-              </div>
-              {(timeDisplay.hintText || timeRangeDisplay.hintText) && (
-                <div className="flex items-center gap-1.5 opacity-75">
-                  <Plane size={16} className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{timeDisplay.hintText || timeRangeDisplay.hintText}</span>
-                </div>
-              )}
-              {(game.court?.club || game.club) && (
-                <div className="flex items-center gap-2">
-                  <MapPin size={16} />
-                  <span>
-                    {game.court?.club?.name || game.club?.name}
-                    {game.court?.name && ` • ${game.court.name}`}
-                  </span>
-                  {game.entityType === 'BAR' && (
-                    <>
-                      <span className="text-gray-400 dark:text-gray-500">•</span>
-                      <Users size={16} />
-                      <span>{participants.filter(p => p.status === 'PLAYING').length}</span>
-                    </>
-                  )}
-                </div>
-              )}
-              {game.entityType !== 'BAR' && (
-                <>
-                  <div className="flex items-center gap-2">
-                    <Users size={16} />
-                    <span>
-                      {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
-                    </span>
-                    {!game.trainerId && typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && (
-                      <>
-                        <span className="text-gray-400 dark:text-gray-500">•</span>
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                          {t('games.level')}:
-                        </span>
-                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                          {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                  {game.trainerId && typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                        {t('games.level')}:
-                      </span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
-                      </span>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+              <GameCardInfoRows
+                game={game}
+                participants={participants}
+                dateText={infoDateText}
+                hintText={infoHintText}
+                showConfirmedCourtBadge={showConfirmedCourtBadge}
+                className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400 justify-center min-h-0"
+              />
             )}
           </div>
         ) : (
           <div className={`text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' ? 'flex gap-4 -mt-1 items-center' : ''}`}>
-            {game.entityType === 'TRAINING' && (() => {
-              const trainer = game.trainerId ? participants.find(p => p.userId === game.trainerId) : null;
-              return trainer ? (
-                <div className="flex-shrink-0 flex flex-col items-center gap-0.5 p-2 border-2 border-green-300 dark:border-green-700 rounded-lg bg-green-50/30 dark:bg-green-900/10">
-                  <span className="text-[10px] font-medium text-green-600 dark:text-green-400">{t('playerCard.isTrainer')}</span>
-                  <PlayerAvatar player={trainer.user} extrasmall={true} showName={true} />
-                  <TrainerRatingBadge trainer={trainer.user} size="sm" showReviewCount={false} />
-                </div>
-              ) : null;
-            })()}
+            {trainerParticipant && <GameCardTrainerBadge trainer={trainerParticipant} />}
             {game.entityType !== 'LEAGUE_SEASON' && (
-            <div className="space-y-2 flex-1">
-            <div className="flex items-center gap-2">
-              <Calendar size={16} />
-              {game.timeIsSet === false ? (
-                <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
-              ) : (
-                <span className="inline-flex flex-wrap items-center gap-1.5">
-                  <span>
-                    {getDateLabelResolved(game.startTime)}
-                    {shouldShowTiming && ` ${timeRangeDisplay.primaryText}`}
-                  </span>
-                  {showConfirmedCourtBadge ? <GameCardConfirmedCourtBadge /> : null}
-                </span>
-              )}
-            </div>
-            {(timeDisplay.hintText || timeRangeDisplay.hintText) && (
-              <div className="flex items-center gap-1.5 opacity-75">
-                <Plane size={16} className="text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                <span className="text-xs text-gray-500 dark:text-gray-400">{timeDisplay.hintText || timeRangeDisplay.hintText}</span>
-              </div>
-            )}
-            {(game.court?.club || game.club) && (
-              <div className="flex items-center gap-2">
-                <MapPin size={16} />
-                <span>
-                  {game.court?.club?.name || game.club?.name}
-                  {game.court?.name && ` • ${game.court.name}`}
-                </span>
-                {game.entityType === 'BAR' && (
-                  <>
-                    <span className="text-gray-400 dark:text-gray-500">•</span>
-                    <Users size={16} />
-                    <span>{participants.filter(p => p.status === 'PLAYING').length}</span>
-                  </>
-                )}
-              </div>
-            )}
-            {game.entityType !== 'BAR' && (
-              <>
-                <div className="flex items-center gap-2">
-                  <Users size={16} />
-                  <span>
-                    {`${participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
-                  </span>
-                  {!game.trainerId && typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && (
-                    <>
-                      <span className="text-gray-400 dark:text-gray-500">•</span>
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                        {t('games.level')}:
-                      </span>
-                      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                        {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
-                      </span>
-                    </>
-                  )}
-                </div>
-                {game.trainerId && typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                      {t('games.level')}:
-                    </span>
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-                      {game.minLevel.toFixed(1)}-{game.maxLevel.toFixed(1)}
-                    </span>
-                  </div>
-                )}
-              </>
-            )}
-            </div>
+              <GameCardInfoRows
+                game={game}
+                participants={participants}
+                dateText={infoDateText}
+                hintText={infoHintText}
+                showConfirmedCourtBadge={showConfirmedCourtBadge}
+                className="space-y-2 flex-1"
+              />
             )}
           </div>
         )}
@@ -762,7 +636,7 @@ export const GameCard = ({
                   setJoinAction('game');
                   setShowJoinConfirm(true);
                 }}
-                className="w-full"
+                className="w-full bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-md shadow-primary-500/25 hover:shadow-lg hover:shadow-primary-500/35 transition-all duration-300"
                 size="sm"
               >
                 {t('createGame.addMeToGame')}
@@ -774,7 +648,7 @@ export const GameCard = ({
                   setJoinAction('queue');
                   setShowJoinConfirm(true);
                 }}
-                className="w-full"
+                className="w-full bg-gradient-to-r from-sky-500 to-primary-600 hover:from-sky-600 hover:to-primary-700 shadow-md shadow-primary-500/25 hover:shadow-lg hover:shadow-primary-500/35 transition-all duration-300"
                 size="sm"
               >
                 {t('games.joinTheQueue')}

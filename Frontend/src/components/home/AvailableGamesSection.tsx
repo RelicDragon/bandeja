@@ -2,9 +2,9 @@ import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Card, GameCard, Button } from '@/components';
+import { GameCard } from '@/components';
 import { Game } from '@/types';
-import { Filter, ChevronLeft, ChevronRight, Bell, Dumbbell, Swords, Trophy, Users, RotateCcw, Grid3X3, Star } from 'lucide-react';
+import { Filter, ChevronRight, RotateCcw, Grid3X3, Star, SearchX } from 'lucide-react';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { format, parse, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
@@ -16,6 +16,12 @@ import { CityPromptBanner } from './CityPromptBanner';
 import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { FiltersPanel } from './FiltersPanel';
+import { AnimatedGameList } from './AnimatedGameList';
+import { EmptyStateCard } from './EmptyStateCard';
+import { GamesLoadingSkeleton } from './GameCardSkeleton';
+import { EntityFilterChips } from './EntityFilterChips';
+import { WeekRangeNavigator } from './WeekRangeNavigator';
+import { SubscriptionsNudgeButton } from './SubscriptionsNudgeButton';
 import { passesAvailableGamePanelFilters } from '@/utils/availableGamePanelFilters';
 import { parseGameSport } from '@/utils/gameSport';
 import { getViewerPrimarySport, resolveFindLevelFilterSport } from '@/utils/findSportFilter';
@@ -674,55 +680,42 @@ export const AvailableGamesSection = ({
           </motion.div>
         )}
       </AnimatePresence>
-      <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
-        <button
-          onClick={() => handleEntityFilterClick('game')}
-          className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-            gameFilterVal
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          <Users size={18} className={gameFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={gameFilterVal ? 'currentColor' : 'none'} />
-          <span className="text-sm font-medium">{t('games.entityTypes.GAME', { defaultValue: 'Games' })}</span>
-        </button>
-        <button
-          onClick={() => handleEntityFilterClick('tournament')}
-          className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-            tournamentFilterVal
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          <Swords size={18} className={tournamentFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={tournamentFilterVal ? 'currentColor' : 'none'} />
-          <span className="text-sm font-medium">{t('games.entityTypes.TOURNAMENT', { defaultValue: 'Tournament' })}</span>
-        </button>
-      </div>
-      <div className="flex items-center gap-2 mb-3 max-w-md mx-auto">
-        <button
-          onClick={() => handleEntityFilterClick('training')}
-          className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-            trainingFilterVal
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          <Dumbbell size={18} className={trainingFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={trainingFilterVal ? 'currentColor' : 'none'} />
-          <span className="text-sm font-medium">{t('games.training', { defaultValue: 'Training' })}</span>
-        </button>
-        <button
-          onClick={() => handleEntityFilterClick('leagues')}
-          className={`flex-1 flex items-center justify-center gap-2 p-3 rounded-lg transition-colors ${
-            leaguesFilterVal
-              ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
-              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-          }`}
-        >
-          <Trophy size={18} className={leaguesFilterVal ? 'text-primary-600 dark:text-primary-400' : 'text-gray-600 dark:text-gray-400'} fill={leaguesFilterVal ? 'currentColor' : 'none'} />
-          <span className="text-sm font-medium">{t('games.entityTypes.LEAGUE', { defaultValue: 'Leagues' })}</span>
-        </button>
-      </div>
+      <EntityFilterChips
+        gameActive={gameFilterVal}
+        tournamentActive={tournamentFilterVal}
+        trainingActive={trainingFilterVal}
+        leaguesActive={leaguesFilterVal}
+        onToggle={handleEntityFilterClick}
+      />
     </div>
+  );
+
+  const emptyMessage = gameFilterVal
+    ? t('games.noGamesFound', { defaultValue: 'No games found' })
+    : trainingFilterVal
+      ? t('games.noTrainingFound', { defaultValue: 'No training found' })
+      : tournamentFilterVal
+        ? t('games.noTournamentFound', { defaultValue: 'No tournament found' })
+        : leaguesFilterVal
+          ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' })
+          : t('games.noGamesFound');
+
+  const gamesList = (
+    <AnimatedGameList
+      items={filteredGames}
+      getKey={(game) => game.id}
+      renderItem={(game) => (
+        <GameCard
+          game={game}
+          user={user}
+          showJoinButton={true}
+          onJoin={onJoin}
+          onNoteSaved={onNoteSaved}
+          findFilterSport={findFilterSport}
+          showDiscoveryFormatBadge={showDiscoveryFormatBadge}
+        />
+      )}
+    />
   );
 
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
@@ -762,51 +755,13 @@ export const AvailableGamesSection = ({
             <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
               <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
                 {loading && availableGames.length === 0 ? (
-                  <Card className="flex items-center justify-center py-12">
-                    <div className="text-center">
-                      <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 dark:border-primary-400" />
-                      <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{t('common.loading', { defaultValue: 'Loading...' })}</p>
-                    </div>
-                  </Card>
+                  <GamesLoadingSkeleton />
                 ) : filteredGames.length === 0 ? (
-                  <Card className="text-center py-12">
-                    <p className="text-gray-600 dark:text-gray-400">
-                      {gameFilterVal ? t('games.noGamesFound', { defaultValue: 'No games found' }) : trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
-                    </p>
-                  </Card>
+                  <EmptyStateCard icon={SearchX} title={emptyMessage} />
                 ) : (
-                  <div className="space-y-4 pb-8">
-                    {filteredGames.map((game) => (
-                      <GameCard
-                        key={game.id}
-                        game={game}
-                        user={user}
-                        showJoinButton={true}
-                        onJoin={onJoin}
-                        onNoteSaved={onNoteSaved}
-                        findFilterSport={findFilterSport}
-                        showDiscoveryFormatBadge={showDiscoveryFormatBadge}
-                      />
-                    ))}
-                  </div>
+                  gamesList
                 )}
-                <div className="mt-6 flex justify-center">
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={handleSubscriptionsClick}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="relative inline-flex items-center justify-center w-4 h-4">
-                      <Bell className="w-4 h-4 animate-bell-pulse relative z-10" />
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-1"></div>
-                        <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-2"></div>
-                      </div>
-                    </div>
-                    {t('gameSubscriptions.wantToBeNotified', { defaultValue: 'Want to be notified when new games are created?' })}
-                  </Button>
-                </div>
+                <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />
               </div>
             </div>
           }
@@ -823,12 +778,7 @@ export const AvailableGamesSection = ({
       <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
 
       {loading && availableGames.length === 0 ? (
-        <Card className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600 dark:border-primary-400" />
-            <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{t('common.loading', { defaultValue: 'Loading...' })}</p>
-          </div>
-        </Card>
+        <GamesLoadingSkeleton />
       ) : findViewMode === 'calendar' ? (
         <>
           <MonthCalendar
@@ -849,90 +799,28 @@ export const AvailableGamesSection = ({
           />
           
           {filteredGames.length === 0 ? (
-            <Card className="text-center py-12">
-              <p className="text-gray-600 dark:text-gray-400">
-                {gameFilterVal ? t('games.noGamesFound', { defaultValue: 'No games found' }) : trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
-              </p>
-            </Card>
+            <EmptyStateCard icon={SearchX} title={emptyMessage} />
           ) : (
-            <div className="space-y-4 pb-8">
-              {filteredGames.map((game) => (
-                <GameCard
-                  key={game.id}
-                  game={game}
-                  user={user}
-                  showJoinButton={true}
-                  onJoin={onJoin}
-                  onNoteSaved={onNoteSaved}
-                  findFilterSport={findFilterSport}
-                  showDiscoveryFormatBadge={showDiscoveryFormatBadge}
-                />
-              ))}
-            </div>
+            gamesList
           )}
         </>
       ) : (
         <>
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <button
-              onClick={() => handleListNavigation('left')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <ChevronLeft size={20} className="text-gray-600 dark:text-gray-400" />
-            </button>
-            <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              {format(getListDateRange().start, 'dd.MM.yyyy')} - {format(getListDateRange().end, 'dd.MM.yyyy')}
-            </div>
-            <button
-              onClick={() => handleListNavigation('right')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-            >
-              <ChevronRight size={20} className="text-gray-600 dark:text-gray-400" />
-            </button>
-          </div>
-          
+          <WeekRangeNavigator
+            start={getListDateRange().start}
+            end={getListDateRange().end}
+            onNavigate={handleListNavigation}
+          />
+
           {filteredGames.length === 0 ? (
-            <Card className="text-center py-12">
-              <p className="text-gray-600 dark:text-gray-400">
-                {gameFilterVal ? t('games.noGamesFound', { defaultValue: 'No games found' }) : trainingFilterVal ? t('games.noTrainingFound', { defaultValue: 'No training found' }) : tournamentFilterVal ? t('games.noTournamentFound', { defaultValue: 'No tournament found' }) : leaguesFilterVal ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' }) : t('games.noGamesFound')}
-              </p>
-            </Card>
+            <EmptyStateCard icon={SearchX} title={emptyMessage} />
           ) : (
-            <div className="space-y-4 pb-8">
-              {filteredGames.map((game) => (
-                <GameCard
-                  key={game.id}
-                  game={game}
-                  user={user}
-                  showJoinButton={true}
-                  onJoin={onJoin}
-                  onNoteSaved={onNoteSaved}
-                  findFilterSport={findFilterSport}
-                  showDiscoveryFormatBadge={showDiscoveryFormatBadge}
-                />
-              ))}
-            </div>
+            gamesList
           )}
         </>
       )}
-      
-      <div className="mt-6 flex justify-center">
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handleSubscriptionsClick}
-          className="flex items-center gap-2"
-        >
-          <div className="relative inline-flex items-center justify-center w-4 h-4">
-            <Bell className="w-4 h-4 animate-bell-pulse relative z-10" />
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-1"></div>
-              <div className="absolute w-8 h-8 rounded-full border-2 border-current opacity-0 animate-ring-2"></div>
-            </div>
-          </div>
-          {t('gameSubscriptions.wantToBeNotified', { defaultValue: 'Want to be notified when new games are created?' })}
-        </Button>
-      </div>
+
+      <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />
     </div>
     </SportLevelProvider>
   );

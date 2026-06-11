@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { format, startOfDay } from 'date-fns';
 import { AlertTriangle, Calendar, Check, ChevronDown, MapPin, MessageCircle, Users, Plane } from 'lucide-react';
 import { Card, GameCard } from '@/components';
+import { AnimatedGameList } from '@/components/home/AnimatedGameList';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -143,21 +144,19 @@ export const UpcomingGamesList = ({
       <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2 px-1">
         {group.label}
       </p>
-      <div className="space-y-4">
-        {group.games.map((game) => (
-          <div
-            key={game.id}
-            className="transition-all duration-500 ease-in-out animate-in slide-in-from-top-4"
-          >
-            <GameCard
-              game={game}
-              user={viewerUser}
-              unreadCount={gamesUnreadCounts[game.id] || 0}
-              onNoteSaved={onNoteSaved}
-            />
-          </div>
-        ))}
-      </div>
+      <AnimatedGameList
+        items={group.games}
+        getKey={(game) => game.id}
+        renderItem={(game) => (
+          <GameCard
+            game={game}
+            user={viewerUser}
+            unreadCount={gamesUnreadCounts[game.id] || 0}
+            onNoteSaved={onNoteSaved}
+          />
+        )}
+        className="space-y-4"
+      />
     </div>
   );
 

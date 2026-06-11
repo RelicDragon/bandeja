@@ -264,6 +264,7 @@ Frontend/e2e/
 | H-34 | Restore calendar after create | Create game from calendar | Returns to calendar + game date selected |
 | H-35 | Invite friend to app | `InviteFriendToBandejaButton` | Share sheet / copy invite link |
 | H-37 | Club booking connect banner (My tab) | User in city with BOOKTIME club, not connected | Connect banner on My tab → settings page |
+| H-40 | Club booking connect banner dismiss | User sees connect banner on My tab | Close (×) hides banner; does not reappear for same user |
 | H-38 | Club booking upcoming cards (My tab) | Connected user with upcoming bookings | Up to 3 cards + "See all" |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 

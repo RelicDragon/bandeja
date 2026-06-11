@@ -5,6 +5,7 @@ import * as booktimeMyClubsController from '../controllers/booktimeMyClubs.contr
 const router = Router();
 
 router.get('/my-clubs', authenticate, booktimeMyClubsController.getMyBooktimeClubs);
+router.post('/connect-hint/dismiss', authenticate, booktimeMyClubsController.dismissConnectHint);
 router.get('/linked-game/:externalBookingId', authenticate, booktimeMyClubsController.getLinkedGame);
 
 export default router;

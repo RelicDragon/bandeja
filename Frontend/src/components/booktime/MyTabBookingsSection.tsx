@@ -5,6 +5,7 @@ import { useBooktimeMyClubs } from '@/hooks/useBooktimeMyClubs';
 import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
 import { BooktimeBookingRow } from './BooktimeBookingRow';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
+import { MyTabConnectBanner } from './MyTabConnectBanner';
 import { useBooktimeCancelPolicy } from './useBooktimeCancelPolicy';
 import { useShellNavStore } from '@/store/shellNavStore';
 
@@ -31,19 +32,7 @@ export function MyTabBookingsSection() {
     myClubs.cityBooktimeClubCount > 0 && myClubs.connectedCount === 0;
 
   if (showConnectBanner) {
-    return (
-      <section className="mb-3 rounded-xl border border-primary-200 dark:border-primary-800 bg-primary-50/80 dark:bg-primary-950/30 p-3">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white">{t('club.booktime.myTabConnectTitle')}</p>
-        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{t('club.booktime.myTabConnectHint')}</p>
-        <button
-          type="button"
-          onClick={() => navigate('/profile/connected-clubs')}
-          className="mt-2 text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
-        >
-          {t('club.booktime.myTabConnectCta')}
-        </button>
-      </section>
-    );
+    return <MyTabConnectBanner />;
   }
 
   if (myClubs.connectedCount === 0) return null;

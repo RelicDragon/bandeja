@@ -68,6 +68,7 @@ const survivorSelect = {
   nameIsSet: true,
   cityIsSet: true,
   welcomeScreenPassed: true,
+  booktimeConnectHintDismissed: true,
   approvedLevel: true,
   approvedById: true,
   approvedWhen: true,
@@ -390,6 +391,8 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
     nameIsSet: nameResolved.nameIsSet,
     cityIsSet: survivor.cityIsSet || source.cityIsSet,
     welcomeScreenPassed: survivor.welcomeScreenPassed || source.welcomeScreenPassed,
+    booktimeConnectHintDismissed:
+      survivor.booktimeConnectHintDismissed || source.booktimeConnectHintDismissed,
     approvedLevel: survivor.approvedLevel || source.approvedLevel,
     approvedWhen:
       survivor.approvedWhen && source.approvedWhen

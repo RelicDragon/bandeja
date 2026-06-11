@@ -1,5 +1,5 @@
 import api from './axios';
-import { ApiResponse } from '@/types';
+import { ApiResponse, User } from '@/types';
 
 export type BooktimeAuthStatus = {
   connected: boolean;
@@ -135,6 +135,11 @@ export const booktimeApi = {
 
   getMyClubs: async () => {
     const response = await api.get<ApiResponse<BooktimeMyClubsPayload>>('/booktime/my-clubs');
+    return response.data;
+  },
+
+  dismissConnectHint: async () => {
+    const response = await api.post<ApiResponse<User>>('/booktime/connect-hint/dismiss');
     return response.data;
   },
 

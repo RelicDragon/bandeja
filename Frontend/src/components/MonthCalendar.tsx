@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
@@ -84,6 +85,8 @@ export const MonthCalendar = ({
   const { user } = useAuthStore();
   const { i18n } = useTranslation();
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
+  const [slideDirection, setSlideDirection] = useState(0);
+  const [isSliding, setIsSliding] = useState(false);
   const isNavigatingRef = useRef(false);
   const calendarRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +105,8 @@ export const MonthCalendar = ({
     if (!isNavigatingRef.current && selectedDate) {
       const newMonth = startOfMonth(selectedDate);
       if (!isSameMonth(newMonth, currentMonth)) {
+        setSlideDirection(newMonth > currentMonth ? 1 : -1);
+        setIsSliding(true);
         setCurrentMonth(newMonth);
       }
     }
@@ -210,6 +215,8 @@ export const MonthCalendar = ({
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;
     const newMonth = subMonths(currentMonth, 1);
+    setSlideDirection(-1);
+    setIsSliding(true);
     setCurrentMonth(newMonth);
     if (onMonthChange) {
       onMonthChange(getMonth(newMonth) + 1, getYear(newMonth));
@@ -219,6 +226,8 @@ export const MonthCalendar = ({
   const handleNextMonth = () => {
     isNavigatingRef.current = true;
     const newMonth = addMonths(currentMonth, 1);
+    setSlideDirection(1);
+    setIsSliding(true);
     setCurrentMonth(newMonth);
     if (onMonthChange) {
       onMonthChange(getMonth(newMonth) + 1, getYear(newMonth));
@@ -231,6 +240,8 @@ export const MonthCalendar = ({
     if (!isSameMonth(day, currentMonth)) {
       isNavigatingRef.current = true;
       const newMonth = startOfMonth(day);
+      setSlideDirection(newMonth > currentMonth ? 1 : -1);
+      setIsSliding(true);
       setCurrentMonth(newMonth);
       if (onMonthChange) {
         onMonthChange(getMonth(newMonth) + 1, getYear(newMonth));
@@ -284,9 +295,20 @@ export const MonthCalendar = ({
         >
           <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white capitalize">
-          {format(currentMonth, 'LLLL yyyy', { locale })}
-        </h3>
+        <div className="relative overflow-hidden text-center">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.h3
+              key={format(currentMonth, 'yyyy-MM')}
+              initial={{ x: slideDirection * 32, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: slideDirection * -32, opacity: 0 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+              className="text-lg font-semibold text-gray-900 dark:text-white capitalize"
+            >
+              {format(currentMonth, 'LLLL yyyy', { locale })}
+            </motion.h3>
+          </AnimatePresence>
+        </div>
         <button
           onClick={handleNextMonth}
           className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -306,7 +328,17 @@ export const MonthCalendar = ({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      <div className={`relative -m-2 ${isSliding ? 'overflow-hidden' : 'overflow-visible'}`}>
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={format(currentMonth, 'yyyy-MM')}
+            initial={{ x: slideDirection * 56, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: slideDirection * -56, opacity: 0 }}
+            transition={{ duration: 0.24, ease: 'easeOut' }}
+            onAnimationComplete={() => setIsSliding(false)}
+            className="grid grid-cols-7 gap-1 p-2"
+          >
         {calendarDays.map((day, index) => {
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isSelected = selectedDate != null && isSameDay(day, selectedDate);
@@ -411,6 +443,8 @@ export const MonthCalendar = ({
             </button>
           );
         })}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

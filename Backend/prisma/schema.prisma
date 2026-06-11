@@ -67,6 +67,7 @@ model User {
   primarySportIsSet          Boolean              @default(false)
   cityIsSet                  Boolean              @default(false)
   welcomeScreenPassed        Boolean              @default(false)
+  booktimeConnectHintDismissed Boolean            @default(false)
   approvedLevel               Boolean              @default(false)
   approvedById                String?
   approvedWhen                DateTime?

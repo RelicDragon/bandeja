@@ -244,6 +244,7 @@ export const PROFILE_SELECT_FIELDS = {
   primarySportIsSet: true,
   cityIsSet: true,
   welcomeScreenPassed: true,
+  booktimeConnectHintDismissed: true,
   isAdmin: true,
   canCreateTournament: true,
   maxParticipantsInGame: true,

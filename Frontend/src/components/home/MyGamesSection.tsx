@@ -1,7 +1,10 @@
 import { useTranslation } from 'react-i18next';
-import { Check, Search } from 'lucide-react';
-import { Button, Card, GameCard, Divider } from '@/components';
+import { Check, Search, CalendarX2 } from 'lucide-react';
+import { Button, GameCard, Divider } from '@/components';
 import { UpcomingGamesList } from '@/components/home/UpcomingGamesList';
+import { AnimatedGameList } from '@/components/home/AnimatedGameList';
+import { EmptyStateCard } from '@/components/home/EmptyStateCard';
+import { GameCardSkeleton } from '@/components/home/GameCardSkeleton';
 import { Game } from '@/types';
 
 interface MyGamesSectionProps {
@@ -38,23 +41,18 @@ export const MyGamesSection = ({
             if (state === 'hidden') return null;
 
             return (
-              <Card
+              <div
                 key={skeletonIndex}
-                className={`animate-pulse transition-all duration-300 ${
-                  state === 'fading-in'
-                    ? 'opacity-0 transform translate-y-2'
-                    : state === 'visible'
-                      ? 'opacity-100 transform translate-y-0'
-                      : state === 'fading-out'
-                        ? 'opacity-0 transform -translate-y-2'
-                        : 'opacity-0 transform translate-y-2'
+                className={`transition-all duration-300 ${
+                  state === 'visible'
+                    ? 'opacity-100 transform translate-y-0'
+                    : state === 'fading-out'
+                      ? 'opacity-0 transform -translate-y-2'
+                      : 'opacity-0 transform translate-y-2'
                 }`}
               >
-                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-3 w-1/3"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-1/2"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-2/3"></div>
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-              </Card>
+                <GameCardSkeleton />
+              </div>
             );
           })}
         </div>
@@ -82,20 +80,23 @@ export const MyGamesSection = ({
     if (games.length === 0) {
       return (
         <div className="pb-8">
-          <Card className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400 mb-4">{t('home.noGames')}</p>
-            {onSwitchToSearch && (
-              <Button
-                variant="primary"
-                size="md"
-                onClick={onSwitchToSearch}
-                className="inline-flex items-center gap-2 animate-pulse"
-              >
-                <Search className="w-5 h-5" />
-                {t('home.findGames', { defaultValue: 'Find games' })}
-              </Button>
-            )}
-          </Card>
+          <EmptyStateCard
+            icon={CalendarX2}
+            title={t('home.noGames')}
+            action={
+              onSwitchToSearch && (
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={onSwitchToSearch}
+                  className="inline-flex items-center gap-2"
+                >
+                  <Search className="w-5 h-5" />
+                  {t('home.findGames', { defaultValue: 'Find games' })}
+                </Button>
+              )
+            }
+          />
         </div>
       );
     }
@@ -118,40 +119,41 @@ export const MyGamesSection = ({
     });
 
   const renderGame = (game: Game) => (
-    <div
-      key={game.id}
-      className="transition-all duration-500 ease-in-out animate-in slide-in-from-top-4"
-    >
-      <GameCard
-        game={game}
-        user={user}
-        unreadCount={gamesUnreadCounts[game.id] || 0}
-        onNoteSaved={onNoteSaved}
-      />
-    </div>
+    <GameCard
+      game={game}
+      user={user}
+      unreadCount={gamesUnreadCounts[game.id] || 0}
+      onNoteSaved={onNoteSaved}
+    />
   );
 
   return (
-    <div>
-      <div>
-        <div className="space-y-4 pb-8">
-          {announcedOrStartedGames.map((game) => renderGame(game))}
+    <div className="space-y-4 pb-8">
+      <AnimatedGameList
+        items={announcedOrStartedGames}
+        getKey={(game) => game.id}
+        renderItem={renderGame}
+        className="space-y-4"
+      />
 
-          {announcedOrStartedGames.length > 0 && finishedGames.length > 0 && (
-            <div>
-              <Divider className="-mt-4" />
-              <div className="flex justify-center -mt-9">
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center gap-1.5">
-                  <Check className="w-3 h-3" />
-                  {t('home.finishedToday', { defaultValue: 'Finished' })}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {finishedGames.map((game) => renderGame(game))}
+      {announcedOrStartedGames.length > 0 && finishedGames.length > 0 && (
+        <div>
+          <Divider />
+          <div className="flex justify-center -mt-9">
+            <p className="text-xs text-gray-500 dark:text-gray-400 text-center px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 flex items-center gap-1.5">
+              <Check className="w-3 h-3" />
+              {t('home.finishedToday', { defaultValue: 'Finished' })}
+            </p>
+          </div>
         </div>
-      </div>
+      )}
+
+      <AnimatedGameList
+        items={finishedGames}
+        getKey={(game) => game.id}
+        renderItem={renderGame}
+        className="space-y-4"
+      />
     </div>
   );
 };
