@@ -22,6 +22,7 @@ export function booktimeRowToClub(row: BooktimeMyClubRow): Club {
       clubId: row.clubId,
       isIndoor: false,
       externalCourtId: c.externalCourtId ?? undefined,
+      integrationCourtName: c.integrationCourtName ?? undefined,
     })),
   };
 }
@@ -51,6 +52,7 @@ type BooktimeCourtRef = {
   id: string;
   name: string;
   externalCourtId?: string | null;
+  integrationCourtName?: string | null;
 };
 
 export function bookingResourceExternalId(booking: BooktimeBookingRecord): string | null {
@@ -83,13 +85,21 @@ export function resolveCourtForBooking(
   booking: BooktimeBookingRecord,
   club: BooktimeMyClubRow,
   unknownCourtLabel: string
-): { courtId?: string; externalCourtId?: string; courtName: string } {
+): {
+  courtId?: string;
+  externalCourtId?: string;
+  courtName: string;
+  integrationCourtName: string | null;
+} {
   const externalId = bookingResourceExternalId(booking);
   const court = findCourtByExternalId(externalId, club.courts);
+  const integrationCourtName =
+    court?.integrationCourtName ?? booking.bookingResource?.name ?? null;
   return {
     courtId: court?.id,
     externalCourtId: externalId ?? undefined,
     courtName: court?.name ?? booking.bookingResource?.name ?? unknownCourtLabel,
+    integrationCourtName,
   };
 }
 

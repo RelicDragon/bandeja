@@ -7,6 +7,7 @@ import { openExternalUrl } from '@/utils/openExternalUrl';
 import { getTelUrl } from '@/utils/telUrl';
 import { normalizeClubPhotos } from '@/utils/clubPhotos';
 import { ClubReviewsSection } from '@/components/ClubReviewsSection';
+import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { getClubMapsSearchUrl } from '@/utils/clubMapsUrl';
 import { websiteDisplayHost } from '@/utils/websiteHostname';
@@ -320,7 +321,12 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
                 key={court.id}
                 className="rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm flex flex-wrap items-baseline justify-between gap-2"
               >
-                <span className="font-medium text-gray-900 dark:text-white">{court.name}</span>
+                <CourtDisplayName
+                  name={court.name}
+                  integrationName={court.integrationCourtName}
+                  primaryClassName="font-medium text-gray-900 dark:text-white"
+                  secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400"
+                />
                 <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-2">
                   <span>
                     {court.isIndoor ? t('club.indoor') : t('club.outdoor')}

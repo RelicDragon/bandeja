@@ -351,6 +351,7 @@ export interface Court {
   surfaceType?: string;
   pricePerHour?: number;
   externalCourtId?: string;
+  integrationCourtName?: string | null;
   webCameraUrl?: string | null;
   club?: Club;
 }
@@ -358,6 +359,7 @@ export interface Court {
 export interface BookedCourtSlot {
   courtId: string | null;
   courtName: string | null;
+  integrationCourtName?: string | null;
   startTime: string;
   endTime: string;
   hasBookedCourt: boolean;

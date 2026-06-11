@@ -7,6 +7,7 @@ import { CalendarComponent } from '@/components/Calendar';
 import { EntityType, Club } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
 import { useBookedCourts } from '@/hooks/useBookedCourts';
+import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { useClubIntegrationDurations } from '@/hooks/useClubIntegrationDurations';
 import { pickClosestDurationOption } from '@/integrations/booktime/durations';
@@ -109,6 +110,7 @@ export const GameStartSection = ({
 
     const grouped: Array<{
       courtName: string | null;
+      integrationCourtName: string | null;
       startTime: string;
       endTime: string;
       hasBookedCourt: boolean;
@@ -121,6 +123,7 @@ export const GameStartSection = ({
       if (
         lastGroup &&
         lastGroup.courtName === slot.courtName &&
+        lastGroup.integrationCourtName === slot.integrationCourtName &&
         lastGroup.hasBookedCourt === slot.hasBookedCourt &&
         lastGroup.clubBooked === slot.clubBooked
       ) {
@@ -139,6 +142,7 @@ export const GameStartSection = ({
         } else {
           grouped.push({
             courtName: slot.courtName,
+            integrationCourtName: slot.integrationCourtName,
             startTime: slot.startTime,
             endTime: slot.endTime,
             hasBookedCourt: slot.hasBookedCourt,
@@ -148,6 +152,7 @@ export const GameStartSection = ({
       } else {
         grouped.push({
           courtName: slot.courtName,
+          integrationCourtName: slot.integrationCourtName,
           startTime: slot.startTime,
           endTime: slot.endTime,
           hasBookedCourt: slot.hasBookedCourt,
@@ -363,16 +368,23 @@ export const GameStartSection = ({
                       })()}
                     </p>
                     <div className="space-y-1">
-                      {groupedBookedSlots.map((info, idx) => {
-                        const courtDisplay = info.clubBooked && club?.name
-                          ? `${club.name} • ${info.courtName || t('createGame.bookedWithoutCourt')}`
-                          : info.courtName || t('createGame.bookedWithoutCourt');
-                        return (
-                          <p key={idx} className={`text-xs ${itemTextColor}`}>
-                            {`${courtDisplay} • ${info.startTime} - ${info.endTime}${!info.hasBookedCourt ? ` (${t('createGame.notConfirmed')})` : ''}`}
-                          </p>
-                        );
-                      })}
+                      {groupedBookedSlots.map((info, idx) => (
+                        <div key={idx} className={`text-xs ${itemTextColor} flex flex-wrap items-baseline gap-x-1 gap-y-0.5`}>
+                          {info.clubBooked && club?.name ? (
+                            <span>{club.name} •</span>
+                          ) : null}
+                          <CourtDisplayName
+                            name={info.courtName || t('createGame.bookedWithoutCourt')}
+                            integrationName={info.integrationCourtName}
+                            primaryClassName=""
+                            secondaryClassName="text-[10px] opacity-75"
+                            className="inline"
+                          />
+                          <span>
+                            {`• ${info.startTime} - ${info.endTime}${!info.hasBookedCourt ? ` (${t('createGame.notConfirmed')})` : ''}`}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );

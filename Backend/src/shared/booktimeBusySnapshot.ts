@@ -157,6 +157,7 @@ export async function countUnmappedExternalCourts(clubId: string): Promise<numbe
 export type MergedBusySlot = {
   courtId: string | null;
   courtName: string | null;
+  integrationCourtName: string | null;
   startTime: string;
   endTime: string;
 };
@@ -178,7 +179,7 @@ export async function loadMergedBusySlots(options: {
       date: { in: dates.length > 0 ? dates : ['__none__'] },
     },
     include: {
-      court: { select: { id: true, name: true } },
+      court: { select: { id: true, name: true, integrationCourtName: true } },
     },
   });
 
@@ -193,8 +194,9 @@ export async function loadMergedBusySlots(options: {
 
     const courtId =
       row.courtId == null ? UNASSIGNED_COURT_KEY : row.courtId;
-    const courtName =
-      row.court?.name ?? row.externalCourtName ?? null;
+    const courtName = row.court?.name ?? row.externalCourtName ?? null;
+    const integrationCourtName =
+      row.court?.integrationCourtName ?? row.externalCourtName ?? null;
 
     for (const busy of parseBusySlots(row.busySlots)) {
       const start = new Date(busy.startTime);
@@ -203,6 +205,7 @@ export async function loadMergedBusySlots(options: {
       slots.push({
         courtId,
         courtName,
+        integrationCourtName,
         startTime: busy.startTime,
         endTime: busy.endTime,
       });

@@ -15,6 +15,7 @@ import {
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { CourtDisplayName } from '@/components/CourtDisplayName';
 import {
   buildCreateGameSearchParams,
   formatBooktimeBookingWhen,
@@ -123,7 +124,12 @@ export function BooktimeBookingRow({
           {showClubName ? (
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{club.clubName}</p>
           ) : null}
-          <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{courtInfo.courtName}</p>
+          <CourtDisplayName
+            name={courtInfo.courtName}
+            integrationName={courtInfo.integrationCourtName}
+            primaryClassName="text-sm font-medium text-gray-900 dark:text-white truncate"
+            secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400 truncate"
+          />
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings, t })}
           </p>

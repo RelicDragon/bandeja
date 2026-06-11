@@ -19,6 +19,7 @@ import { resolveUserCurrency } from '@/utils/currency';
 import type { EditGameInfoTabId } from './EditGameInfoModal';
 import { isCapacitor } from '@/utils/capacitor';
 import { addToNativeCalendar } from '@/utils/calendar';
+import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { BooktimeOrphanBookingNotice } from '@/components/booktime/BooktimeOrphanBookingNotice';
 import { Share } from '@capacitor/share';
@@ -922,9 +923,12 @@ export const GameInfo = ({
                   </button>
                 </div>
                 {game.court && !(game.entityType === 'BAR' && courts.length === 1) && (
-                  <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {game.court.name}
-                  </p>
+                  <CourtDisplayName
+                    name={game.court.name}
+                    integrationName={game.court.integrationCourtName}
+                    primaryClassName="text-xs text-gray-600 dark:text-gray-400"
+                    secondaryClassName="text-[10px] text-gray-500 dark:text-gray-500"
+                  />
                 )}
                 {!game.court && game.club && (
                   <p className="text-xs text-gray-600 dark:text-gray-400">

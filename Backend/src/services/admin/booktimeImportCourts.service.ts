@@ -80,10 +80,15 @@ export class BooktimeImportCourtsService {
 
       const byExternal = courtsByExternalId.get(externalCourtId);
       if (byExternal) {
-        if (!byExternal.externalCourtId) {
+        const needsLink = !byExternal.externalCourtId;
+        const needsIntegrationName = byExternal.integrationCourtName !== resourceName;
+        if (needsLink || needsIntegrationName) {
           await prisma.court.update({
             where: { id: byExternal.id },
-            data: { externalCourtId },
+            data: {
+              ...(needsLink ? { externalCourtId } : {}),
+              integrationCourtName: resourceName,
+            },
           });
           updated += 1;
         } else {
@@ -96,7 +101,7 @@ export class BooktimeImportCourtsService {
       if (byName) {
         await prisma.court.update({
           where: { id: byName.id },
-          data: { externalCourtId },
+          data: { externalCourtId, integrationCourtName: resourceName },
         });
         courtsByExternalId.set(externalCourtId, { ...byName, externalCourtId });
         updated += 1;
@@ -108,6 +113,7 @@ export class BooktimeImportCourtsService {
           clubId,
           name: resourceName,
           externalCourtId,
+          integrationCourtName: resourceName,
           sport: defaultSport,
           isActive: true,
         },

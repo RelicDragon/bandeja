@@ -379,7 +379,8 @@ model Court {
   isIndoor       Boolean     @default(false)
   surfaceType    String?
   pricePerHour   Float?
-  externalCourtId String?
+  externalCourtId       String?
+  integrationCourtName  String?
   webCameraUrl   String?
   isActive       Boolean     @default(true)
   createdAt      DateTime    @default(now())

@@ -2,6 +2,7 @@ import { MapPin } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ToggleSwitch } from '../ToggleSwitch';
 import { ClubModal, CourtModal, ClubAvatar } from '@/components';
+import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import type { Club, Court, EntityType, Sport } from '@/types';
 
@@ -111,10 +112,19 @@ export const LocationSection = ({
                     onClick={onOpenCourtModal}
                     className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors"
                   >
-                    {selectedCourt === 'notBooked'
-                      ? t('createGame.notBookedYet')
-                      : courts.find(c => c.id === selectedCourt)?.name
-                    }
+                    {selectedCourt === 'notBooked' ? (
+                      t('createGame.notBookedYet')
+                    ) : (() => {
+                      const court = courts.find((c) => c.id === selectedCourt);
+                      return court ? (
+                        <CourtDisplayName
+                          name={court.name}
+                          integrationName={court.integrationCourtName}
+                          primaryClassName=""
+                          secondaryClassName="text-xs text-gray-500 dark:text-gray-400"
+                        />
+                      ) : null;
+                    })()}
                   </button>
                 </div>
               )}

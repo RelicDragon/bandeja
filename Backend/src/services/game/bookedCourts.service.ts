@@ -6,6 +6,7 @@ import { loadMergedBusySlots } from '../../shared/booktimeBusySnapshot';
 export interface BookedCourtSlot {
   courtId: string | null;
   courtName: string | null;
+  integrationCourtName: string | null;
   startTime: string;
   endTime: string;
   hasBookedCourt: boolean;
@@ -90,6 +91,7 @@ export class BookedCourtsService {
           select: {
             id: true,
             name: true,
+            integrationCourtName: true,
           },
         },
       },
@@ -101,6 +103,7 @@ export class BookedCourtsService {
     const bookedSlots: BookedCourtSlot[] = games.map((game) => ({
       courtId: game.court?.id || null,
       courtName: game.court?.name || null,
+      integrationCourtName: game.court?.integrationCourtName || null,
       startTime: game.startTime.toISOString(),
       endTime: game.endTime.toISOString(),
       hasBookedCourt: game.hasBookedCourt,
@@ -125,11 +128,12 @@ export class BookedCourtsService {
       }
       const holds = await prisma.courtSlotHold.findMany({
         where: holdWhere,
-        include: { court: { select: { id: true, name: true } } },
+        include: { court: { select: { id: true, name: true, integrationCourtName: true } } },
       });
       holdSlots = holds.map((hold) => ({
         courtId: hold.court.id,
         courtName: hold.court.name,
+        integrationCourtName: hold.court.integrationCourtName,
         startTime: hold.startTime.toISOString(),
         endTime: hold.endTime.toISOString(),
         hasBookedCourt: true,
@@ -167,6 +171,7 @@ export class BookedCourtsService {
           externalSlots = busySlots.map((slot) => ({
             courtId: slot.courtId,
             courtName: slot.courtName,
+            integrationCourtName: slot.integrationCourtName,
             startTime: slot.startTime,
             endTime: slot.endTime,
             hasBookedCourt: true,

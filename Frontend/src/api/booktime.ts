@@ -40,7 +40,12 @@ export type BooktimeMyClubRow = {
   connected: boolean;
   phoneNumber: string | null;
   scoutOptIn: boolean;
-  courts: Array<{ id: string; name: string; externalCourtId: string | null }>;
+  courts: Array<{
+    id: string;
+    name: string;
+    externalCourtId: string | null;
+    integrationCourtName?: string | null;
+  }>;
 };
 
 export type BooktimeMyClubsPayload = {

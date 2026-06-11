@@ -10,7 +10,12 @@ export type BooktimeMyClubRow = {
   connected: boolean;
   phoneNumber: string | null;
   scoutOptIn: boolean;
-  courts: Array<{ id: string; name: string; externalCourtId: string | null }>;
+  courts: Array<{
+    id: string;
+    name: string;
+    externalCourtId: string | null;
+    integrationCourtName: string | null;
+  }>;
 };
 
 export type BooktimeMyClubsPayload = {
@@ -45,7 +50,7 @@ export async function getMyBooktimeClubs(userId: string): Promise<BooktimeMyClub
           integrationConfig: true,
           courts: {
             where: { isActive: true },
-            select: { id: true, name: true, externalCourtId: true },
+            select: { id: true, name: true, externalCourtId: true, integrationCourtName: true },
             orderBy: { name: 'asc' },
           },
         },
@@ -72,7 +77,7 @@ export async function getMyBooktimeClubs(userId: string): Promise<BooktimeMyClub
             integrationConfig: true,
             courts: {
               where: { isActive: true },
-              select: { id: true, name: true, externalCourtId: true },
+              select: { id: true, name: true, externalCourtId: true, integrationCourtName: true },
               orderBy: { name: 'asc' },
             },
           },

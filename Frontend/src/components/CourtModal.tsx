@@ -3,6 +3,7 @@ import { Home } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { parseSport } from '@shared/sport';
 import { Court, EntityType, type Sport } from '@/types';
+import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { getSportConfig } from '@/sport/sportRegistry';
@@ -164,7 +165,12 @@ export const CourtModal = ({
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="font-medium flex items-center gap-1.5">
-                        {court.name}
+                        <CourtDisplayName
+                          name={court.name}
+                          integrationName={court.integrationCourtName}
+                          primaryClassName="font-medium"
+                          secondaryClassName={`text-xs mt-0.5 ${selectedId === court.id ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'}`}
+                        />
                         {court.isIndoor && (
                           <span title="Indoor court">
                             <Home

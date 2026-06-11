@@ -18,6 +18,7 @@ interface UseBookedCourtsProps {
 
 interface BookedSlotInfo {
   courtName: string | null;
+  integrationCourtName: string | null;
   startTime: string;
   endTime: string;
   hasBookedCourt: boolean;
@@ -138,6 +139,7 @@ export const useBookedCourts = ({
         }
         slotsMap.get(timeStr)!.push({
           courtName: booking.courtName,
+          integrationCourtName: booking.integrationCourtName ?? null,
           startTime: startTimeStr,
           endTime: endTimeStr,
           hasBookedCourt: booking.hasBookedCourt,
@@ -183,6 +185,7 @@ export const useBookedCourts = ({
       if (bookingStartMinutes < endMinutes && bookingEndMinutes > startMinutes) {
         overlapping.push({
           courtName: booking.courtName,
+          integrationCourtName: booking.integrationCourtName ?? null,
           startTime: bookingStartTimeStr,
           endTime: bookingEndTimeStr,
           hasBookedCourt: booking.hasBookedCourt,

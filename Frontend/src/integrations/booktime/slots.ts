@@ -253,14 +253,14 @@ export function mapGetForDayToSnapshotCourts(
   );
   const grouped = new Map<string, BooktimeSnapshotCourtPayload>();
 
-  const ensure = (externalCourtId: string, externalCourtName: string | null) => {
+  const ensure = (externalCourtId: string, integrationCourtName: string | null) => {
     const existing = grouped.get(externalCourtId);
     if (existing) return existing;
     const mapped = courtsByExternal.get(externalCourtId);
     const entry: BooktimeSnapshotCourtPayload = {
       courtId: mapped?.id ?? null,
       externalCourtId,
-      externalCourtName: mapped?.name ?? externalCourtName,
+      externalCourtName: integrationCourtName,
       busySlots: [],
     };
     grouped.set(externalCourtId, entry);

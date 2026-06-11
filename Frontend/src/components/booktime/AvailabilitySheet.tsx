@@ -17,6 +17,7 @@ import {
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
+import { CourtDisplayName } from '@/components/CourtDisplayName';
 
 type AvailabilitySheetProps = {
   club: Club;
@@ -272,7 +273,14 @@ export function AvailabilitySheet({
         <div className="space-y-4">
           {courtRows.map((row) => (
             <div key={row.court.id}>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-300 mb-2">{row.court.name}</p>
+              <div className="mb-2">
+                <CourtDisplayName
+                  name={row.court.name}
+                  integrationName={row.court.integrationCourtName}
+                  primaryClassName="text-xs font-medium text-gray-600 dark:text-gray-300"
+                  secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400"
+                />
+              </div>
               {row.freeSlots.length === 0 ? (
                 <p className="text-xs text-gray-500 dark:text-gray-400">{t('club.booktime.noFreeSlots')}</p>
               ) : (
