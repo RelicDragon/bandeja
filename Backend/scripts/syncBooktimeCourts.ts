@@ -74,8 +74,8 @@ async function fetchCompanyResources(companyId: string): Promise<BooktimeResourc
   return payload.bookingResources ?? [];
 }
 
-async function hasIntegrationCourtNameColumn(prisma: PrismaClient): Promise<boolean> {
-  const rows = await prisma.$queryRaw<Array<{ column_name: string }>>`
+async function hasIntegrationCourtNameColumn(client: PrismaClient): Promise<boolean> {
+  const rows = await client.$queryRaw<Array<{ column_name: string }>>`
     SELECT column_name
     FROM information_schema.columns
     WHERE table_schema = 'padelpulse'
@@ -83,6 +83,44 @@ async function hasIntegrationCourtNameColumn(prisma: PrismaClient): Promise<bool
       AND column_name = 'integrationCourtName'
   `;
   return rows.length > 0;
+}
+
+async function updateCourtMapping(
+  client: PrismaClient,
+  courtId: string,
+  externalCourtId: string,
+  integrationCourtName: string | null,
+  supportsIntegrationCourtName: boolean
+): Promise<void> {
+  if (supportsIntegrationCourtName) {
+    await client.court.update({
+      where: { id: courtId },
+      data: {
+        externalCourtId,
+        ...(integrationCourtName ? { integrationCourtName } : {}),
+      },
+    });
+    return;
+  }
+
+  await client.$executeRaw`
+    UPDATE padelpulse."Court"
+    SET "externalCourtId" = ${externalCourtId}, "updatedAt" = NOW()
+    WHERE id = ${courtId}
+  `;
+}
+
+async function updateIntegrationCourtName(
+  client: PrismaClient,
+  courtId: string,
+  integrationCourtName: string,
+  supportsIntegrationCourtName: boolean
+): Promise<void> {
+  if (!supportsIntegrationCourtName) return;
+  await client.court.update({
+    where: { id: courtId },
+    data: { integrationCourtName },
+  });
 }
 
 async function syncClub(
@@ -132,9 +170,14 @@ async function syncClub(
       clubName.includes('KSC') || unmappedGenericCourts.length >= 6
         ? resources
         : dedupeResourcesByName(resources);
-    const sortedResources = [...pool]
-      .filter((r) => resourceExternalId(r) && typeof r.name === 'string' && r.name.trim())
-      .sort((a, b) => courtSortKey(a.name ?? '') - courtSortKey(b.name ?? ''));
+    const filteredResources = pool.filter(
+      (r) => resourceExternalId(r) && typeof r.name === 'string' && r.name.trim()
+    );
+    const sortedResources = clubName.includes('KSC')
+      ? filteredResources
+      : [...filteredResources].sort(
+          (a, b) => courtSortKey(a.name ?? '') - courtSortKey(b.name ?? '')
+        );
 
     if (sortedResources.length >= unmappedGenericCourts.length) {
       for (let i = 0; i < unmappedGenericCourts.length; i += 1) {
@@ -142,13 +185,13 @@ async function syncClub(
         const resource = sortedResources[i];
         const externalCourtId = resourceExternalId(resource)!;
         const integrationCourtName = resource.name!.trim();
-        await prisma.court.update({
-          where: { id: court.id },
-          data: {
-            externalCourtId,
-            ...(supportsIntegrationCourtName ? { integrationCourtName } : {}),
-          },
-        });
+        await updateCourtMapping(
+          prisma,
+          court.id,
+          externalCourtId,
+          integrationCourtName,
+          supportsIntegrationCourtName
+        );
         courtsByExternalId.set(externalCourtId, { ...court, externalCourtId });
         positionalUpdated += 1;
       }
@@ -169,10 +212,7 @@ async function syncClub(
         ? (byExternal as { integrationCourtName?: string | null }).integrationCourtName
         : null;
       if (supportsIntegrationCourtName && currentIntegrationName !== resourceName) {
-        await prisma.court.update({
-          where: { id: byExternal.id },
-          data: { integrationCourtName: resourceName },
-        });
+        await updateIntegrationCourtName(prisma, byExternal.id, resourceName, supportsIntegrationCourtName);
         nameUpdated += 1;
       } else {
         skipped += 1;
@@ -182,13 +222,13 @@ async function syncClub(
 
     const byName = courtsByName.get(normalizeName(resourceName));
     if (byName && !isMappedExternalId(byName.externalCourtId)) {
-      await prisma.court.update({
-        where: { id: byName.id },
-        data: {
-          externalCourtId,
-          ...(supportsIntegrationCourtName ? { integrationCourtName: resourceName } : {}),
-        },
-      });
+      await updateCourtMapping(
+        prisma,
+        byName.id,
+        externalCourtId,
+        resourceName,
+        supportsIntegrationCourtName
+      );
       courtsByExternalId.set(externalCourtId, { ...byName, externalCourtId });
       nameUpdated += 1;
       continue;
