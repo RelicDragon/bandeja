@@ -22,6 +22,8 @@ import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { DiscoveryBadgePills } from '@/components/multisport/DiscoveryBadgePills';
+import { GameCardConfirmedCourtBadge } from '@/components/GameCardConfirmedCourtBadge';
+import { gameHasConfirmedClubBooking } from '@/utils/gameHasConfirmedClubBooking';
 
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -166,6 +168,7 @@ export const GameCard = ({
     });
   const timeDisplay = getTimeDisplay('time');
   const timeRangeDisplay = getTimeDisplay('timeRange');
+  const showConfirmedCourtBadge = gameHasConfirmedClubBooking(game);
 
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -585,13 +588,12 @@ export const GameCard = ({
                 {game.timeIsSet === false ? (
                   <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
                 ) : (
-                  <span>
-                    {getDateLabelResolved(game.startTime)}
-                    {shouldShowTiming && (
-                      <>
-                        {` ${timeRangeDisplay.primaryText}`}
-                      </>
-                    )}
+                  <span className="inline-flex flex-wrap items-center gap-1.5">
+                    <span>
+                      {getDateLabelResolved(game.startTime)}
+                      {shouldShowTiming && ` ${timeRangeDisplay.primaryText}`}
+                    </span>
+                    {showConfirmedCourtBadge ? <GameCardConfirmedCourtBadge /> : null}
                   </span>
                 )}
               </div>
@@ -670,13 +672,12 @@ export const GameCard = ({
               {game.timeIsSet === false ? (
                 <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
               ) : (
-                <span>
-                  {getDateLabelResolved(game.startTime)}
-                  {shouldShowTiming && (
-                    <>
-                      {` ${timeRangeDisplay.primaryText}`}
-                    </>
-                  )}
+                <span className="inline-flex flex-wrap items-center gap-1.5">
+                  <span>
+                    {getDateLabelResolved(game.startTime)}
+                    {shouldShowTiming && ` ${timeRangeDisplay.primaryText}`}
+                  </span>
+                  {showConfirmedCourtBadge ? <GameCardConfirmedCourtBadge /> : null}
                 </span>
               )}
             </div>

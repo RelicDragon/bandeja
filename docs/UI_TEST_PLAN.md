@@ -325,6 +325,7 @@ Frontend/e2e/
 | F-33 | Gender-restricted game card | MEN/WOMEN/MIX game | Gender badge on card |
 | F-34 | Join blocked wrong gender | User gender incompatible | Error toast / join blocked |
 | F-35 | Level out of range | User level outside game range | Join blocked or warning |
+| F-36 | Confirmed court badge on card | Game with `timeIsSet`, `hasBookedCourt`, club + court | Blue “Booked” pill after time on game card |
 
 ---
 
