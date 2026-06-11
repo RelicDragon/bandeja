@@ -771,6 +771,7 @@ Frontend/e2e/
 | PR-55 | Competitive vs social badge | User with both levels | Correct badge for sport context |
 | PR-56 | Connected clubs settings entry | Profile → Connected clubs & bookings | Navigates to `/profile/connected-clubs` |
 | PR-57 | Connected clubs page | Connect/disconnect, upcoming/past | Full bookings list per club; no scout opt-out toggle |
+| PR-58 | Past bookings collapse | Connected clubs → expand connected club with past bookings | Past section collapsed by default; tap header animates expand/collapse; count badge when items exist |
 | PR-59 | Club account disconnect | Connected clubs page → Disconnect | Toast "Club account disconnected"; club shows connect CTA |
 | PR-60 | Club booking cancel from settings | Settings page upcoming → cancel booking | Same policy modal + snapshot refresh as club detail |
 

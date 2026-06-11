@@ -11,8 +11,8 @@ import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/bookti
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { CourtDisplayName } from '@/components/CourtDisplayName';
-import { bookingMatchesClubCourts, formatBooktimeBookingWhen, resolveCourtForBooking } from './booktimeBookingUtils';
+import { BooktimePastBookingsSection } from './BooktimePastBookingsSection';
+import { bookingMatchesClubCourts } from './booktimeBookingUtils';
 
 type Props = {
   club: BooktimeMyClubRow;
@@ -105,34 +105,13 @@ export function ClubBookingsBlock({ club, onChanged }: Props) {
         )}
       </section>
 
-      <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-3 space-y-3">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('club.booktime.pastTitle')}</h3>
-        {loading ? null : past.length === 0 ? (
-          <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noPast')}</p>
-        ) : (
-          <ul className="space-y-2">
-            {past.map((booking) => {
-              const courtInfo = resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt'));
-              return (
-              <li
-                key={booking.uuid}
-                className="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-600 dark:text-gray-300"
-              >
-                <CourtDisplayName
-                  name={courtInfo.courtName}
-                  integrationName={courtInfo.integrationCourtName}
-                  primaryClassName="font-medium text-gray-900 dark:text-white"
-                  secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400"
-                />
-                <span className="block text-xs text-gray-500 mt-0.5">
-                  {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings, t })}
-                </span>
-              </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+      <BooktimePastBookingsSection
+        past={past}
+        loading={loading}
+        club={club}
+        clubTimezone={clubTimezone}
+        displaySettings={displaySettings}
+      />
     </div>
   );
 }
