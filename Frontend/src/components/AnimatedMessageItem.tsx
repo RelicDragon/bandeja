@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, memo } from 'react';
 import { ChatMessage } from '@/api/chat';
 import { MessageItem } from './MessageItem';
 import { messageRowPropsEqual } from './MessageItem/messageRowPropsEqual';
+import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 import {
   closeMessageListContextMenu,
   openMessageListContextMenu,
@@ -50,6 +51,7 @@ interface AnimatedMessageItemProps {
   onUnpin?: (messageId: string) => void;
   showReply?: boolean;
   onForwardMessage?: (message: ChatMessage) => void;
+  groupPosition?: MessageGroupPosition;
 }
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(function AnimatedMessageItem({
@@ -76,6 +78,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
   onUnpin,
   showReply = true,
   onForwardMessage,
+  groupPosition = 'single',
 }) {
   const { skipStaggerOnOpen, suppressOpenReactionMotion } = useLayoutSettlingForRow();
   const contextMenuState = useRowContextMenuState(message.id);
@@ -108,8 +111,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
 
   return (
     <div
-      className={`transition-opacity duration-500 ease-out ${
-        isVisible ? 'opacity-100' : 'opacity-0'
+      className={`transition-[opacity,transform] duration-300 ease-out will-change-[opacity,transform] motion-reduce:transition-none motion-reduce:transform-none ${
+        isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-[0.98]'
       }`}
     >
       <MessageItem
@@ -139,6 +142,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
         onForwardMessage={onForwardMessage}
         suppressOpenReactionMotion={suppressOpenReactionMotion}
         loadMediaEager={loadMediaEager}
+        groupPosition={groupPosition}
       />
     </div>
   );
@@ -151,6 +155,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
       loadMediaEager: prev.loadMediaEager ?? false,
       showReply: prev.showReply ?? true,
       isChannel: prev.isChannel ?? false,
+      groupPosition: prev.groupPosition ?? 'single',
     },
     {
       message: next.message,
@@ -159,5 +164,6 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
       loadMediaEager: next.loadMediaEager ?? false,
       showReply: next.showReply ?? true,
       isChannel: next.isChannel ?? false,
+      groupPosition: next.groupPosition ?? 'single',
     }
   ));

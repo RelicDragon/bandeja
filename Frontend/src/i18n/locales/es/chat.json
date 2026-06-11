@@ -216,6 +216,8 @@
     "sendFailed": "Error al enviar el mensaje",
     "editMessageDeleted": "El mensaje fue eliminado",
     "failedToSend": "Error al enviar",
+    "queuedOffline": "En cola — se enviará al conectarse",
+    "queuedWhileOffline": "En cola — se sincronizará cuando vuelvas a estar en línea",
     "resend": "Reenviar",
     "missingContextId": "Falta el contexto del chat",
     "photoPickFailed": "Error al seleccionar fotos",

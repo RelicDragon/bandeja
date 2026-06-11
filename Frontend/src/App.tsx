@@ -363,14 +363,21 @@ function AppContent() {
   const liveBoardShellTheme = parseLiveBoardTheme(liveViewSearch.get('theme'));
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
-  
+  // Chat threads work offline from the local cache (Dexie) with a queued outbox.
+  const isChatPage =
+    /^\/(user-chat|group-chat|channel-chat)\/[^/]+$/.test(location.pathname) ||
+    /^\/games\/[^/]+\/chat$/.test(location.pathname) ||
+    /^\/bugs\/[^/]+$/.test(location.pathname) ||
+    location.pathname === '/chats';
+
   if (
     !isOnline &&
     !isGameDetailsPage &&
     !isGameLiveMatchPage &&
     !isLeagueFixtureTableFullscreenPage &&
     !isUserProfilePage &&
-    !isAuthPage
+    !isAuthPage &&
+    !isChatPage
   ) {
     return <NoInternetScreen />;
   }

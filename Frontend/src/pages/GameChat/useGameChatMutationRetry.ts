@@ -5,6 +5,8 @@ import {
   CHAT_MUTATION_FLUSH_DONE_EVENT,
   CHAT_MUTATION_FLUSH_FAILED_EVENT,
 } from '@/services/chat/chatMutationEvents';
+import { CHAT_OUTBOX_FAILED_EVENT } from '@/services/chat/chatOutboxEvents';
+import { countFailedOutboxForContext } from '@/services/chat/offlineIntent/outboxAdapter';
 import { flushAllChatOfflineQueues } from '@/services/chat/chatUnifiedOfflineFlush';
 import { useNetworkStore } from '@/utils/networkStatus';
 
@@ -17,8 +19,11 @@ export function useGameChatMutationRetry(contextType: ChatContextType, contextId
       setFailedCount(0);
       return;
     }
-    const n = await countFailedMutationsForContext(contextType, contextId);
-    setFailedCount(n);
+    const [mutations, sends] = await Promise.all([
+      countFailedMutationsForContext(contextType, contextId),
+      countFailedOutboxForContext(contextType, contextId),
+    ]);
+    setFailedCount(mutations + sends);
   }, [contextType, contextId]);
 
   useEffect(() => {
@@ -32,9 +37,11 @@ export function useGameChatMutationRetry(contextType: ChatContextType, contextId
     };
     const onDone = () => void refresh();
     window.addEventListener(CHAT_MUTATION_FLUSH_FAILED_EVENT, onFail);
+    window.addEventListener(CHAT_OUTBOX_FAILED_EVENT, onFail);
     window.addEventListener(CHAT_MUTATION_FLUSH_DONE_EVENT, onDone);
     return () => {
       window.removeEventListener(CHAT_MUTATION_FLUSH_FAILED_EVENT, onFail);
+      window.removeEventListener(CHAT_OUTBOX_FAILED_EVENT, onFail);
       window.removeEventListener(CHAT_MUTATION_FLUSH_DONE_EVENT, onDone);
     };
   }, [contextType, contextId, refresh]);

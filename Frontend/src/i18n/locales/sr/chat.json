@@ -222,6 +222,8 @@
     "sendFailed": "Nije uspelo slanje poruke",
     "editMessageDeleted": "Poruka je obrisana",
     "failedToSend": "Nije uspelo slanje",
+    "queuedOffline": "Na čekanju — biće poslato kada budete na mreži",
+    "queuedWhileOffline": "Na čekanju — sinhronizovaće se kada budete na mreži",
     "resend": "Pošalji ponovo",
     "missingContextId": "Nedostaje kontekst ćaskanja",
     "photoPickFailed": "Nije uspelo odabiranje fotografija",

@@ -216,6 +216,8 @@
     "sendFailed": "Failed to send message",
     "editMessageDeleted": "Message was deleted",
     "failedToSend": "Failed to send",
+    "queuedOffline": "Queued — will send when online",
+    "queuedWhileOffline": "Queued — will sync when you’re back online",
     "sending": "Sending…",
     "sendingSlow": "Taking longer than usual…",
     "resend": "Resend",

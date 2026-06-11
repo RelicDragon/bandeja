@@ -1,13 +1,14 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Clock } from 'lucide-react';
 import { DoubleTickIcon } from '../DoubleTickIcon';
 import { TFunction } from 'i18next';
 import type { ChatMessage } from '@/api/chat';
+import { useNetworkStore } from '@/utils/networkStatus';
 
 const statusTransition = { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const };
 
-type StatusKey = 'sending' | 'failed' | 'read' | 'delivered' | 'sent';
+type StatusKey = 'sending' | 'queued' | 'failed' | 'read' | 'delivered' | 'sent';
 
 interface MessageSendStatusIconProps {
   isSending: boolean;
@@ -29,10 +30,11 @@ function resolveStatusKey(
   isSending: boolean,
   isFailed: boolean,
   tickRead: boolean,
-  tickDelivered: boolean
+  tickDelivered: boolean,
+  isNetworkOnline: boolean
 ): StatusKey {
   if (isSending) return 'sending';
-  if (isFailed) return 'failed';
+  if (isFailed) return isNetworkOnline ? 'failed' : 'queued';
   if (tickRead) return 'read';
   if (tickDelivered) return 'delivered';
   return 'sent';
@@ -53,7 +55,8 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
   iconStyle,
   t,
 }) => {
-  const statusKey = resolveStatusKey(isSending, isFailed, tickRead, tickDelivered);
+  const isNetworkOnline = useNetworkStore((s) => s.isOnline);
+  const statusKey = resolveStatusKey(isSending, isFailed, tickRead, tickDelivered, isNetworkOnline);
 
   return (
     <span className="relative inline-flex h-[14px] w-[14px] shrink-0 items-center" style={iconStyle}>
@@ -81,7 +84,7 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
             </span>
           )}
 
-          {statusKey === 'failed' && (
+          {(statusKey === 'failed' || statusKey === 'queued') && (
             <span className="relative inline-flex items-center">
               <button
                 type="button"
@@ -90,9 +93,17 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
                   setShowFailedMenu((v) => !v);
                 }}
                 className="p-0.5 rounded hover:bg-white/20"
-                title={t('chat.failedToSend', { defaultValue: 'Failed to send' })}
+                title={
+                  statusKey === 'queued'
+                    ? t('chat.queuedOffline', { defaultValue: 'Queued — will send when online' })
+                    : t('chat.failedToSend', { defaultValue: 'Failed to send' })
+                }
               >
-                <AlertCircle size={14} className="text-red-200" />
+                {statusKey === 'queued' ? (
+                  <Clock size={14} className="text-amber-200" />
+                ) : (
+                  <AlertCircle size={14} className="text-red-200" />
+                )}
               </button>
               {showFailedMenu && optimisticId && (onResendQueued || onRemoveFromQueue) && (
                 <div className="absolute right-0 bottom-full mb-1 flex flex-col gap-0.5 rounded-lg bg-gray-800 dark:bg-gray-700 py-1 shadow-lg z-50 min-w-[100px]">

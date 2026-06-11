@@ -35,7 +35,7 @@ import {
 } from '@/services/chat/chatSendCoordinator';
 import { recordChatSendMetric } from '@/services/chat/chatSendMetrics';
 import { createMessageWithSocketAck } from '@/services/chat/chatSendMessageCreate';
-import { dispatchChatOutboxSuccess } from '@/services/chat/chatOutboxEvents';
+import { CHAT_OUTBOX_FAILED_EVENT, dispatchChatOutboxSuccess } from '@/services/chat/chatOutboxEvents';
 import { resumeOrFailSupersededChatSend as resumeSupersededOutboxSend } from '@/services/chat/chatOutboxSendResume';
 import { useVideoUploadProgressStore } from '@/store/videoUploadProgressStore';
 function completeChatSendSuccess(
@@ -97,6 +97,11 @@ async function failSendAttempt(
     reason,
   });
   onFailed(tempId);
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(CHAT_OUTBOX_FAILED_EVENT, { detail: { tempId, contextType, contextId } })
+    );
+  }
   sealChatSendAttempt(tempId);
 }
 

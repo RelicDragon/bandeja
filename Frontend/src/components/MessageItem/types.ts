@@ -1,4 +1,5 @@
 import { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
+import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 
 export interface ContextMenuState {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export interface MessageItemProps {
   onForwardMessage?: (message: ChatMessage) => void;
   suppressOpenReactionMotion?: boolean;
   loadMediaEager?: boolean;
+  groupPosition?: MessageGroupPosition;
 }
 
 export type ParsedContentPart =

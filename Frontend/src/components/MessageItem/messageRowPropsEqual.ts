@@ -1,5 +1,6 @@
 import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
+import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 
 function reactionsEqual(a: ChatMessage['reactions'], b: ChatMessage['reactions']): boolean {
   if (a === b) return true;
@@ -38,6 +39,7 @@ export interface MessageRowMemoProps {
   loadMediaEager: boolean;
   showReply: boolean;
   isChannel: boolean;
+  groupPosition: MessageGroupPosition;
 }
 
 export function messageRowPropsEqual(prev: MessageRowMemoProps, next: MessageRowMemoProps): boolean {
@@ -47,5 +49,6 @@ export function messageRowPropsEqual(prev: MessageRowMemoProps, next: MessageRow
   if (prev.loadMediaEager !== next.loadMediaEager) return false;
   if (prev.showReply !== next.showReply) return false;
   if (prev.isChannel !== next.isChannel) return false;
+  if (prev.groupPosition !== next.groupPosition) return false;
   return true;
 }

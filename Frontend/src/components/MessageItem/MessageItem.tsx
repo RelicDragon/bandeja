@@ -56,6 +56,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   onForwardMessage,
   suppressOpenReactionMotion = false,
   loadMediaEager = false,
+  groupPosition = 'single',
 }) {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -76,6 +77,8 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
 
   const isOwnMessage = currentMessage.senderId === user?.id;
   const isSystemMessage = !currentMessage.senderId;
+  const isFirstInGroup = groupPosition === 'single' || groupPosition === 'first';
+  const isLastInGroup = groupPosition === 'single' || groupPosition === 'last';
   const sendState = getMessageSendState(currentMessage as ChatMessageWithStatus);
   const { isSending, isFailed, isOffline, optimisticId } = sendState;
   const isSendingSlow = useOptimisticSendSlowHint(isSending, currentMessage.createdAt);
@@ -366,41 +369,45 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       ) : (
         <div
           ref={messageRef}
-          className={`group flex select-none ${isChannel ? 'justify-start' : isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 relative transition-all duration-300 ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
+          className={`group flex select-none ${isChannel ? 'justify-start' : isOwnMessage ? 'justify-end' : 'justify-start'} ${isLastInGroup ? 'mb-3.5' : hasReplies() ? 'mb-3' : 'mb-1'} relative transition-all duration-300 ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
         >
           <div
             className={`flex ${isChannel ? 'w-full max-w-full' : currentMessage.poll ? 'w-[85%] min-w-[85%] flex-shrink-0' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : isOwnMessage ? 'flex-row-reverse' : 'flex-row'} overflow-visible`}
           >
             {!isChannel && !isOwnMessage && (
-              <div className="flex-shrink-0 mr-3 self-center">
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    setShowPlayerCard(true);
-                  }}
-                  className="rounded-full p-0 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer overflow-hidden"
-                  aria-label={getSenderName()}
-                >
-                  <PlayerAvatar
-                    player={currentMessage.sender}
-                    inlineFace
-                    inlineFaceSize="md"
-                    asDiv
-                    subscribePresence={false}
-                    showName={false}
-                    fullHideName
-                  />
-                </button>
+              <div className="flex-shrink-0 mr-3 self-end pb-0.5">
+                {isLastInGroup ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowPlayerCard(true);
+                    }}
+                    className="rounded-full p-0 flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer overflow-hidden"
+                    aria-label={getSenderName()}
+                  >
+                    <PlayerAvatar
+                      player={currentMessage.sender}
+                      inlineFace
+                      inlineFaceSize="md"
+                      asDiv
+                      subscribePresence={false}
+                      showName={false}
+                      fullHideName
+                    />
+                  </button>
+                ) : (
+                  <div className="w-8" aria-hidden />
+                )}
               </div>
             )}
 
             <div
               className={`flex flex-col ${isChannel ? 'items-start flex-1' : isOwnMessage ? 'items-end' : 'items-start'} ${currentMessage.poll ? 'flex-1 min-w-0' : ''} overflow-visible`}
             >
-              {!isChannel && !isOwnMessage && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 px-2">{getSenderName()}</span>
+              {!isChannel && !isOwnMessage && isFirstInGroup && (
+                <span className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5 px-2">{getSenderName()}</span>
               )}
 
               <div className={`relative overflow-visible ${currentMessage.poll ? 'w-full' : ''}`}>
@@ -420,6 +427,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                       message={currentMessage}
                       isOwnMessage={isOwnMessage}
                       isChannel={isChannel}
+                      groupPosition={groupPosition}
                       parsedContent={parsedContent}
                       translationContent={translationContent}
                       displayContent={displayContent}
@@ -570,6 +578,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       loadMediaEager: prev.loadMediaEager ?? false,
       showReply: prev.showReply ?? true,
       isChannel: prev.isChannel ?? false,
+      groupPosition: prev.groupPosition ?? 'single',
     },
     {
       message: next.message,
@@ -578,6 +587,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       loadMediaEager: next.loadMediaEager ?? false,
       showReply: next.showReply ?? true,
       isChannel: next.isChannel ?? false,
+      groupPosition: next.groupPosition ?? 'single',
     }
   );
 })

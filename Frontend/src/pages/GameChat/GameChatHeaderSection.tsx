@@ -1,7 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { CloudOff, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
+import { useNetworkStore } from '@/utils/networkStatus';
 import { GameChatHeader } from './GameChatHeader';
 import { useThreadChrome } from './useThreadView';
 
@@ -10,6 +12,7 @@ export const GameChatHeaderSection: React.FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
+  const isNetworkOnline = useNetworkStore((s) => s.isOnline);
   const chrome = useThreadChrome();
   const {
     id,
@@ -128,13 +131,24 @@ export const GameChatHeaderSection: React.FC = () => {
       />
 
       {!showLoadingHeader && failedMutationCount > 0 && (
-        <button
-          type="button"
-          onClick={() => retryMutations()}
-          className="w-full text-center text-sm py-2 px-3 bg-amber-100 dark:bg-amber-900/40 text-amber-900 dark:text-amber-100 border-b border-amber-200 dark:border-amber-800"
-        >
-          {t('chat.mutationsSyncFailed', { defaultValue: 'Some actions did not sync. Tap to retry.' })}
-        </button>
+        isNetworkOnline ? (
+          <button
+            type="button"
+            onClick={() => retryMutations()}
+            className="flex w-full items-center justify-center gap-1.5 border-b border-amber-200 bg-amber-100 px-3 py-2 text-center text-sm text-amber-900 transition-colors hover:bg-amber-200/70 dark:border-amber-800 dark:bg-amber-900/40 dark:text-amber-100 dark:hover:bg-amber-900/60"
+          >
+            <RefreshCw size={14} aria-hidden />
+            {t('chat.mutationsSyncFailed', { defaultValue: 'Some actions did not sync. Tap to retry.' })}
+          </button>
+        ) : (
+          <div
+            role="status"
+            className="flex w-full items-center justify-center gap-1.5 border-b border-gray-200 bg-gray-100 px-3 py-2 text-center text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300"
+          >
+            <CloudOff size={14} aria-hidden />
+            {t('chat.queuedWhileOffline', { defaultValue: 'Queued — will sync when you’re back online' })}
+          </div>
+        )
       )}
     </>
   );

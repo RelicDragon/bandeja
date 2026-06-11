@@ -216,6 +216,8 @@
     "sendFailed": "Nepodařilo se odeslat zprávu",
     "editMessageDeleted": "Zpráva byla smazána",
     "failedToSend": "Nepodařilo se odeslat",
+    "queuedOffline": "Ve frontě — odešle se po připojení",
+    "queuedWhileOffline": "Ve frontě — synchronizuje se po připojení k internetu",
     "resend": "Znovu odeslat",
     "missingContextId": "Chybí kontext chatu",
     "photoPickFailed": "Nepodařilo se vybrat fotky",

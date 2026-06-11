@@ -12,11 +12,13 @@ import { ParsedContentPart } from './types';
 import { Pencil } from 'lucide-react';
 import { MessageSendStatusIcon } from './MessageSendStatusIcon';
 import { TFunction } from 'i18next';
+import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 
 interface MessageBubbleProps {
   message: ChatMessage;
   isOwnMessage: boolean;
   isChannel: boolean;
+  groupPosition?: MessageGroupPosition;
   parsedContent: ParsedContentPart[] | null;
   translationContent: ParsedContentPart[] | null;
   displayContent: string;
@@ -53,6 +55,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
   isOwnMessage,
   isChannel,
+  groupPosition = 'single',
   parsedContent,
   translationContent,
   displayContent,
@@ -111,7 +114,25 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           : isVoice && showTextBlock
             ? 'pt-1 pb-2'
             : 'py-2';
-  const bubbleClass = `${hasMediaOrVoice ? '' : 'px-4'} ${paddingClass} rounded-2xl shadow-sm relative min-w-[120px] ${isVoice ? 'overflow-visible' : hasMedia ? 'overflow-hidden' : 'overflow-visible'} ${message.poll ? 'flex-1 min-w-0' : ''} ${isChannel || message.poll ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200' : isOwnMessage ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white' : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200'}`;
+  const useGroupedCorners = !isChannel && !message.poll;
+  const groupedCornerClass = !useGroupedCorners
+    ? ''
+    : isOwnMessage
+      ? groupPosition === 'first'
+        ? 'rounded-br-md'
+        : groupPosition === 'middle'
+          ? 'rounded-tr-md rounded-br-md'
+          : groupPosition === 'last'
+            ? 'rounded-tr-md'
+            : ''
+      : groupPosition === 'first'
+        ? 'rounded-bl-md'
+        : groupPosition === 'middle'
+          ? 'rounded-tl-md rounded-bl-md'
+          : groupPosition === 'last'
+            ? 'rounded-tl-md'
+            : '';
+  const bubbleClass = `${hasMediaOrVoice ? '' : 'px-4'} ${paddingClass} rounded-2xl ${groupedCornerClass} shadow-sm relative min-w-[120px] ${isVoice ? 'overflow-visible' : hasMedia ? 'overflow-hidden' : 'overflow-visible'} ${message.poll ? 'flex-1 min-w-0' : ''} ${isChannel || message.poll ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200' : isOwnMessage ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-900/10 dark:from-blue-600 dark:to-blue-700' : 'bg-white dark:bg-gray-700 border border-gray-200/80 dark:border-gray-600/60 text-gray-800 dark:text-gray-200'}`;
   const timeRowClass = `${hasMediaOnly ? 'absolute bottom-1 right-2' : 'flex justify-end mt-0.5'} ${hasMediaAndContent ? 'px-4' : ''} ${isVoice ? 'px-3' : ''} ${isChannel ? 'text-gray-400 dark:text-gray-500' : isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500'} ${hasMediaOnly ? 'drop-shadow-[0_0_3px_rgba(0,0,0,1)] drop-shadow-[0_0_6px_rgba(0,0,0,0.9)] drop-shadow-[0_1px_1px_rgba(0,0,0,1)]' : ''}`;
   const timeSpanStyle = hasMediaOnly ? { textShadow: '0 0 2px #000, 0 0 4px #000, 1px 1px 2px #000, -1px -1px 2px #000, 0 1px 2px #000, 1px 0 2px #000, -1px 0 2px #000, 0 -1px 2px #000' } : undefined;
 

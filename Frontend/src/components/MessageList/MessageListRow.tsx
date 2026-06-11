@@ -4,6 +4,7 @@ import type { ChatMessage } from '@/api/chat';
 import { AnimatedMessageItem } from '@/components/AnimatedMessageItem';
 import { ChatDateSeparator } from '@/components/chat/ChatDateSeparator';
 import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
+import { getMessageGroupPosition } from '@/utils/chatMessageGrouping';
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
 import type { MessageListProps } from './types';
 
@@ -72,6 +73,7 @@ export const MessageListRow = memo(function MessageListRow({
   if (!message) return null;
 
   const dateSeparatorLabel = getChatDateSeparatorLabel(messages, row.index);
+  const groupPosition = getMessageGroupPosition(messages, row.index);
 
   return (
     <div
@@ -90,6 +92,7 @@ export const MessageListRow = memo(function MessageListRow({
         message={message}
         staggerKey={getMessageRowKey(message)}
         loadMediaEager={eagerMediaMessageIds.has(message.id)}
+        groupPosition={groupPosition}
         onAddReaction={handlers.onAddReaction}
         onRemoveReaction={handlers.onRemoveReaction}
         onDeleteMessage={handlers.onDeleteMessage}
