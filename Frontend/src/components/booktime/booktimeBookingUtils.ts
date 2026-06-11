@@ -3,8 +3,8 @@ import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 import {
+  formatGameDateInTimezone,
   formatGameTimeInTimezone,
-  getDateLabelInClubTz,
   getUserTimezone,
 } from '@/utils/gameTimeDisplay';
 
@@ -40,9 +40,7 @@ export function formatBooktimeBookingWhen(
   const end = new Date(booking.bookingEnd);
   if (Number.isNaN(start.getTime())) return booking.bookingStart;
 
-  const dateLabel = getDateLabelInClubTz(start, timezone, options.displaySettings, options.t, {
-    compactWeekday: true,
-  });
+  const dateLabel = formatGameDateInTimezone(start, timezone, options.displaySettings, 'long');
   const startTime = formatGameTimeInTimezone(start, timezone, options.displaySettings);
   const endTime = formatGameTimeInTimezone(end, timezone, options.displaySettings);
   return `${dateLabel} · ${startTime} – ${endTime}`;

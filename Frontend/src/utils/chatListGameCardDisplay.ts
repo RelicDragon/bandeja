@@ -96,7 +96,7 @@ export function getGameChatListDateTimeBlock(
 
   const clubTz = getClubTimezone(game);
   const dateLabel = clubTz
-    ? getDateLabelInClubTz(game.startTime, clubTz, displaySettings, t, { compactWeekday: true })
+    ? getDateLabelInClubTz(game.startTime, clubTz, displaySettings, t)
     : '';
   const timeLabel = getGameTimeDisplay({
     game,
