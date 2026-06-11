@@ -54,7 +54,9 @@ export class RegisterPage {
   }
 
   private async pickDropdownOption(name: RegExp) {
-    await this.page.getByRole('button', { name }).last().click();
+    const dropdown = this.page.locator('[data-select-dropdown]');
+    await dropdown.waitFor({ state: 'visible', timeout: 5_000 });
+    await dropdown.getByRole('button', { name }).click();
   }
 
   async selectGenderMale() {

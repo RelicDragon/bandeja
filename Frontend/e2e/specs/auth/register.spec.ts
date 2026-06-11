@@ -66,7 +66,7 @@ test.describe('auth register', () => {
     const register = new RegisterPage(page);
     await register.goto();
     await register.fillRequiredFields({ phone, password: 'E2eTest1!' });
-    await register.selectPrimarySport(/tennis/i);
+    await register.selectPrimarySport(/^tennis$/i);
     await register.submit();
     await page.waitForURL((url) => url.pathname === '/' || url.pathname === '', { timeout: 30_000 });
     await new ShellPage(page).waitForShellReady();

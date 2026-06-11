@@ -32,8 +32,20 @@ export class ShellPage {
     });
   }
 
+  async dismissBlockingDialogs() {
+    const sportsDialog = this.page.getByRole('dialog').filter({ hasText: /your sports/i });
+    if (await sportsDialog.isVisible({ timeout: 5_000 }).catch(() => false)) {
+      await sportsDialog.getByRole('button', { name: /^confirm$/i }).click();
+      await sportsDialog.waitFor({ state: 'hidden', timeout: 15_000 });
+    }
+  }
+
   async waitForShellReady() {
-    await this.bottomTabButtons().first().waitFor({ state: 'visible', timeout: 45_000 });
+    await this.dismissBlockingDialogs();
+    await this.page
+      .getByRole('button', { name: /\b(find|chats|market|my)\b/i })
+      .first()
+      .waitFor({ state: 'visible', timeout: 45_000 });
   }
 
   async waitForChatsHeader() {
