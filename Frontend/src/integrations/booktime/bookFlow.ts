@@ -89,7 +89,6 @@ export function buildBookingIsoRange(
 
 export async function isSlotStillFree(
   client: BooktimeClient,
-  _club: Club,
   pending: BooktimePendingBooking,
   selectedDate: Date
 ): Promise<boolean> {
@@ -130,7 +129,7 @@ export async function confirmBooktimeBooking(
     await ctx.refreshSnapshot();
   }
 
-  const stillFree = await isSlotStillFree(client, club, pending, selectedDate);
+  const stillFree = await isSlotStillFree(client, pending, selectedDate);
   if (!stillFree) {
     await ctx.refreshSnapshot({ force: true });
     throw new BooktimeSlotTakenError();
