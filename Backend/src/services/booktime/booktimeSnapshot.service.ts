@@ -8,7 +8,7 @@ import {
   parseBusySlots,
   parseDateParam,
 } from '../../shared/booktimeBusySnapshot';
-import { resolveSnapshotCourtIds as applySnapshotCourtIds } from '../../shared/booktimeSnapshotCourtResolve';
+import { prepareSnapshotCourtsForStorage } from '../../shared/booktimeSnapshotCourtResolve';
 import { assertSnapshotPutRateLimit } from './booktimeSnapshot.rateLimit';
 
 export type BooktimeSnapshotResponse = {
@@ -83,7 +83,7 @@ async function resolveSnapshotCourtIds(
     },
   });
 
-  return applySnapshotCourtIds(courts, dbCourts);
+  return prepareSnapshotCourtsForStorage(courts, dbCourts);
 }
 
 export async function getBooktimeSnapshot(

@@ -1,4 +1,4 @@
-import type { BooktimeSnapshotCourtInput } from './booktimeBusySnapshot';
+import type { BooktimeBusySlot, BooktimeSnapshotCourtInput } from './booktimeBusySnapshot';
 
 export type SnapshotCourtLookupRow = {
   id: string;
@@ -7,51 +7,93 @@ export type SnapshotCourtLookupRow = {
   integrationCourtName: string | null;
 };
 
-function normalizeCourtName(name: string | null | undefined): string | null {
-  const normalized = name?.trim().toLocaleLowerCase();
-  return normalized ? normalized : null;
-}
-
-export function buildSnapshotCourtLookupMaps(dbCourts: SnapshotCourtLookupRow[]): {
-  byExternal: Map<string, string>;
-  byName: Map<string, string>;
-} {
+export function buildSnapshotCourtLookupByExternalId(
+  dbCourts: SnapshotCourtLookupRow[]
+): Map<string, string> {
   const byExternal = new Map<string, string>();
-  const byName = new Map<string, string>();
   for (const court of dbCourts) {
     const externalId = court.externalCourtId?.trim();
     if (externalId) {
       byExternal.set(externalId, court.id);
     }
-    for (const label of [court.integrationCourtName, court.name]) {
-      const key = normalizeCourtName(label);
-      if (key && !byName.has(key)) {
-        byName.set(key, court.id);
-      }
-    }
   }
-  return { byExternal, byName };
+  return byExternal;
 }
 
 export function resolveSnapshotCourtIds(
   courts: BooktimeSnapshotCourtInput[],
   dbCourts: SnapshotCourtLookupRow[]
 ): BooktimeSnapshotCourtInput[] {
-  const { byExternal, byName } = buildSnapshotCourtLookupMaps(dbCourts);
+  const byExternal = buildSnapshotCourtLookupByExternalId(dbCourts);
 
   return courts.map((court) => {
     const fromExternal = byExternal.get(court.externalCourtId);
-    if (fromExternal) {
-      return { ...court, courtId: fromExternal };
-    }
-
-    if (court.externalCourtName) {
-      const fromName = byName.get(normalizeCourtName(court.externalCourtName) ?? '');
-      if (fromName) {
-        return { ...court, courtId: fromName };
-      }
-    }
-
-    return court;
+    return {
+      ...court,
+      courtId: fromExternal ?? null,
+    };
   });
+}
+
+function dedupeBusySlots(slots: BooktimeBusySlot[]): BooktimeBusySlot[] {
+  const seen = new Set<string>();
+  const out: BooktimeBusySlot[] = [];
+  for (const slot of slots) {
+    const key = `${slot.startTime}|${slot.endTime}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(slot);
+  }
+  return out;
+}
+
+export function mergeSnapshotCourtsForStorage(
+  courts: BooktimeSnapshotCourtInput[],
+  dbCourts: SnapshotCourtLookupRow[] = []
+): BooktimeSnapshotCourtInput[] {
+  const canonicalExternalByCourtId = new Map<string, string>();
+  const courtById = new Map<string, SnapshotCourtLookupRow>();
+  for (const court of dbCourts) {
+    courtById.set(court.id, court);
+    const externalId = court.externalCourtId?.trim();
+    if (externalId) {
+      canonicalExternalByCourtId.set(court.id, externalId);
+    }
+  }
+
+  const byKey = new Map<string, BooktimeSnapshotCourtInput>();
+  for (const court of courts) {
+    const key =
+      court.courtId == null
+        ? `unmapped:${court.externalCourtId}`
+        : `court:${court.courtId}`;
+
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, { ...court, busySlots: [...court.busySlots] });
+      continue;
+    }
+
+    existing.busySlots = dedupeBusySlots([...existing.busySlots, ...court.busySlots]);
+  }
+
+  return [...byKey.values()].map((court) => {
+    if (court.courtId == null) return court;
+
+    const dbCourt = courtById.get(court.courtId);
+    const canonicalExternal = canonicalExternalByCourtId.get(court.courtId);
+    return {
+      ...court,
+      externalCourtId: canonicalExternal ?? court.externalCourtId,
+      externalCourtName:
+        dbCourt?.integrationCourtName ?? dbCourt?.name ?? court.externalCourtName,
+    };
+  });
+}
+
+export function prepareSnapshotCourtsForStorage(
+  courts: BooktimeSnapshotCourtInput[],
+  dbCourts: SnapshotCourtLookupRow[]
+): BooktimeSnapshotCourtInput[] {
+  return mergeSnapshotCourtsForStorage(resolveSnapshotCourtIds(courts, dbCourts), dbCourts);
 }
