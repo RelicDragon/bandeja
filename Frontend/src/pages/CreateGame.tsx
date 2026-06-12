@@ -16,6 +16,7 @@ import { useGameFormat } from '@/hooks/useGameFormat';
 import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
 import { resolveUserCurrency } from '@/utils/currency';
 import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
+import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
@@ -273,6 +274,38 @@ export const CreateGame = ({
     initialDate: storedInitialDate,
     showPastTimes: false,
   });
+
+  const selectedClubData = useMemo(
+    () => clubs.find((c) => c.id === selectedClub),
+    [clubs, selectedClub]
+  );
+  const booktimeTimeOptions = useBooktimeTimeOptions({
+    club: selectedClubData,
+    courts,
+    selectedDate,
+    durationHours: duration,
+    selectedCourtId: selectedCourt === 'notBooked' ? null : selectedCourt,
+    showPastTimes,
+    enabled: entityType !== 'BAR' && selectedClubData?.integrationType === 'BOOKTIME',
+  });
+  const resolvedGenerateTimeOptions = booktimeTimeOptions.active
+    ? booktimeTimeOptions.generateTimeOptions
+    : generateTimeOptions;
+  const resolvedGenerateTimeOptionsForDate = booktimeTimeOptions.active
+    ? booktimeTimeOptions.generateTimeOptionsForDate
+    : generateTimeOptionsForDate;
+  const resolvedCanAccommodateDuration = booktimeTimeOptions.active
+    ? booktimeTimeOptions.canAccommodateDuration
+    : canAccommodateDuration;
+  const resolvedGetAdjustedStartTime = booktimeTimeOptions.active
+    ? booktimeTimeOptions.getAdjustedStartTime
+    : getAdjustedStartTime;
+  const resolvedGetTimeSlotsForDuration = booktimeTimeOptions.active
+    ? booktimeTimeOptions.getTimeSlotsForDuration
+    : getTimeSlotsForDuration;
+  const resolvedIsSlotHighlighted = booktimeTimeOptions.active
+    ? (time: string) => booktimeTimeOptions.isSlotHighlighted(time, selectedTime, duration)
+    : isSlotHighlighted;
   const openFormatWizard = useCallback(() => {
     notifyFormatWizardOpen();
     setIsFormatWizardOpen(true);
@@ -406,13 +439,13 @@ export const CreateGame = ({
           setHasBookedCourt(false);
         }
         
-        const initialDateTimeSlots = generateTimeOptionsForDate(storedInitialDate);
+        const initialDateTimeSlots = resolvedGenerateTimeOptionsForDate(storedInitialDate);
         if (initialDateTimeSlots.length > 0) {
           setSelectedDate(storedInitialDate);
         } else {
           const tomorrow = new Date(storedInitialDate);
           tomorrow.setDate(tomorrow.getDate() + 1);
-          const tomorrowTimeSlots = generateTimeOptionsForDate(tomorrow);
+          const tomorrowTimeSlots = resolvedGenerateTimeOptionsForDate(tomorrow);
           setSelectedDate(tomorrowTimeSlots.length > 0 ? tomorrow : storedInitialDate);
         }
       } catch (error) {
@@ -420,7 +453,7 @@ export const CreateGame = ({
       }
     };
     fetchCourts();
-  }, [selectedClub, generateTimeOptionsForDate, storedInitialDate, setSelectedDate, initialGameData]);
+  }, [selectedClub, resolvedGenerateTimeOptionsForDate, storedInitialDate, setSelectedDate, initialGameData]);
 
   useEffect(() => {
     if (selectedCourt === 'notBooked') {
@@ -1120,12 +1153,12 @@ export const CreateGame = ({
               selectedClub={selectedClub}
               selectedCourt={selectedCourt}
               club={clubs.find(c => c.id === selectedClub)}
-              generateTimeOptions={generateTimeOptions}
-              generateTimeOptionsForDate={generateTimeOptionsForDate}
-              canAccommodateDuration={canAccommodateDuration}
-              getAdjustedStartTime={getAdjustedStartTime}
-              getTimeSlotsForDuration={getTimeSlotsForDuration}
-              isSlotHighlighted={isSlotHighlighted}
+              generateTimeOptions={resolvedGenerateTimeOptions}
+              generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
+              canAccommodateDuration={resolvedCanAccommodateDuration}
+              getAdjustedStartTime={resolvedGetAdjustedStartTime}
+              getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
+              isSlotHighlighted={resolvedIsSlotHighlighted}
               getDurationLabel={getDurationLabel}
               onDateSelect={(date) => {
                 setSelectedDate(date);

@@ -295,6 +295,12 @@ export type BooktimeAvailableCourtRow = {
   availableSlots: string[];
 };
 
+function minutesToTimeLabel(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${pad2(h)}:${pad2(m)}`;
+}
+
 function parseAvailableSlotRange(range: string): MinutesRange | null {
   const [startLabel, endLabel] = range.split('-');
   if (!startLabel || !endLabel) return null;
@@ -360,6 +366,19 @@ export function deriveBusyFromAvailableSlots(
   }
 
   return busy;
+}
+
+export function unionAvailableSlotRanges(rows: Array<{ availableSlots?: string[] }>): string[] {
+  const parsed: MinutesRange[] = [];
+  for (const row of rows) {
+    for (const range of row.availableSlots ?? []) {
+      const p = parseAvailableSlotRange(range);
+      if (p) parsed.push(p);
+    }
+  }
+  return mergeMinuteRanges(parsed).map(
+    (range) => `${minutesToTimeLabel(range.start)}-${minutesToTimeLabel(range.end)}`
+  );
 }
 
 export function slotFitsAvailableRanges(
