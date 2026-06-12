@@ -107,9 +107,12 @@ export const useBookedCourts = ({
   }, [clubId, startOfDay, endOfDay, selectedCourt, refreshEnabled, refreshSnapshot, selectedDate]);
 
   useEffect(() => {
-    refreshAttemptedRef.current = null;
     void fetchBookedCourts();
   }, [fetchBookedCourts]);
+
+  useEffect(() => {
+    refreshAttemptedRef.current = null;
+  }, [clubId, selectedDate, selectedCourt]);
 
   const bookedSlots = useMemo(() => {
     const slotsMap = new Map<string, BookedSlotInfo[]>();

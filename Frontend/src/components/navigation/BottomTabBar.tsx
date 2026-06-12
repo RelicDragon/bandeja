@@ -102,24 +102,17 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
     containerPosition && shouldAnimateToLeft
       ? 'absolute bottom-0 left-0 right-0 z-50'
       : 'fixed bottom-0 left-0 right-0 z-50';
+  const shellPaddingBottom = `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))`;
+  const useMotionShell = animateEntry || isDesktop;
 
-  return (
-    <motion.div
-      layoutRoot
-      layoutScroll={false}
-      layoutId={isDesktop ? 'bottom-tab-bar' : undefined}
-      className={`${shellPositionClass} transform-gpu backface-hidden`}
-      style={{ paddingBottom: `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))` }}
-      initial={animateEntry ? { y: '100%' } : false}
-      animate={animateEntry ? { y: 0 } : undefined}
-      transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : undefined}
-    >
+  const tabBarBody = (
+    <>
       <ClubAdminFab />
       <div className="flex justify-center">
-        <div className="relative w-fit max-w-[calc(100vw-2rem)] rounded-2xl border border-gray-300/60 shadow-[0_-12px_48px_rgba(0,0,0,0.22),0_-4px_24px_rgba(0,0,0,0.14),-20px_0_40px_rgba(0,0,0,0.18),20px_0_40px_rgba(0,0,0,0.18)] dark:border-gray-600/60 dark:shadow-[0_0_12px_rgba(218,165,32,0.26),0_0_24px_rgba(255,215,0,0.07),0_-6px_20px_rgba(0,0,0,0.14)] [contain:paint]">
+        <div className="relative w-fit max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-gray-300/60 shadow-[0_-12px_48px_rgba(0,0,0,0.22),0_-4px_24px_rgba(0,0,0,0.14),-20px_0_40px_rgba(0,0,0,0.18),20px_0_40px_rgba(0,0,0,0.18)] dark:border-gray-600/60 dark:shadow-[0_0_12px_rgba(218,165,32,0.26),0_0_24px_rgba(255,215,0,0.07),0_-6px_20px_rgba(0,0,0,0.14)]">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-2xl bg-white/30 backdrop-blur-2xl transform-gpu backface-hidden dark:bg-gray-900/30"
+            className="pointer-events-none absolute inset-0 rounded-2xl bg-white/30 backdrop-blur-2xl dark:bg-gray-900/30"
           />
           <div className="relative px-1 flex items-center justify-center h-16 overflow-visible">
           {tabs.map((tab, index) => {
@@ -209,7 +202,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                   </AnimatePresence>
                 </div>
 
-                {isActive && (
+                {isActive && useMotionShell ? (
                   <motion.div
                     className="absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10"
                     layoutId="activeTab"
@@ -217,14 +210,42 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                     initial={false}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                   />
-                )}
+                ) : isActive ? (
+                  <div className="absolute inset-[5%] rounded-2xl bg-primary-500/10 dark:bg-primary-400/10" />
+                ) : null}
               </motion.button>
             );
           })}
           </div>
         </div>
       </div>
-    </motion.div>
+    </>
+  );
+
+  if (useMotionShell) {
+    return (
+      <motion.div
+        layoutRoot={isDesktop}
+        layoutScroll={false}
+        layoutId={isDesktop ? 'bottom-tab-bar' : undefined}
+        className={`${shellPositionClass} transform-gpu`}
+        style={{ paddingBottom: shellPaddingBottom }}
+        initial={animateEntry ? { y: '100%' } : false}
+        animate={animateEntry ? { y: 0 } : undefined}
+        transition={animateEntry ? { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] } : undefined}
+      >
+        {tabBarBody}
+      </motion.div>
+    );
+  }
+
+  return (
+    <div
+      className={shellPositionClass}
+      style={{ paddingBottom: shellPaddingBottom }}
+    >
+      {tabBarBody}
+    </div>
   );
 };
 

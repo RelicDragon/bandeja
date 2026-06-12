@@ -242,6 +242,23 @@ export function parseGetForDayResponse(raw: unknown): BooktimeForDayResource[] {
   return [];
 }
 
+function normalizeCourtName(name: string | null | undefined): string | null {
+  const normalized = name?.trim().toLocaleLowerCase();
+  return normalized ? normalized : null;
+}
+
+function buildCourtNameMap(club: Club): Map<string, NonNullable<Club['courts']>[number]> {
+  const courtsByName = new Map<string, NonNullable<Club['courts']>[number]>();
+  for (const court of club.courts ?? []) {
+    const names = [court.integrationCourtName, court.name];
+    for (const name of names) {
+      const key = normalizeCourtName(name);
+      if (key && !courtsByName.has(key)) courtsByName.set(key, court);
+    }
+  }
+  return courtsByName;
+}
+
 export function mapGetForDayToSnapshotCourts(
   club: Club,
   resources: BooktimeForDayResource[]
@@ -251,12 +268,15 @@ export function mapGetForDayToSnapshotCourts(
       .filter((c) => c.externalCourtId)
       .map((c) => [c.externalCourtId!, c])
   );
+  const courtsByName = buildCourtNameMap(club);
   const grouped = new Map<string, BooktimeSnapshotCourtPayload>();
 
   const ensure = (externalCourtId: string, integrationCourtName: string | null) => {
     const existing = grouped.get(externalCourtId);
     if (existing) return existing;
-    const mapped = courtsByExternal.get(externalCourtId);
+    const mapped =
+      courtsByExternal.get(externalCourtId) ??
+      (integrationCourtName ? courtsByName.get(normalizeCourtName(integrationCourtName) ?? '') : undefined);
     const entry: BooktimeSnapshotCourtPayload = {
       courtId: mapped?.id ?? null,
       externalCourtId,
@@ -384,12 +404,15 @@ export function mapAvailableSlotsToSnapshotCourts(
       .filter((c) => c.externalCourtId)
       .map((c) => [c.externalCourtId!, c])
   );
+  const courtsByName = buildCourtNameMap(club);
   const grouped = new Map<string, BooktimeSnapshotCourtPayload>();
 
   const ensure = (externalCourtId: string, integrationCourtName: string | null) => {
     const existing = grouped.get(externalCourtId);
     if (existing) return existing;
-    const mapped = courtsByExternal.get(externalCourtId);
+    const mapped =
+      courtsByExternal.get(externalCourtId) ??
+      (integrationCourtName ? courtsByName.get(normalizeCourtName(integrationCourtName) ?? '') : undefined);
     const entry: BooktimeSnapshotCourtPayload = {
       courtId: mapped?.id ?? null,
       externalCourtId,

@@ -70,11 +70,9 @@ export class BookedCourtsService {
       }
       
       if (endDate) {
-        const endDateObj = new Date(endDate);
-        endDateObj.setHours(23, 59, 59, 999);
         dateConditions.push({
           startTime: {
-            lte: endDateObj,
+            lte: new Date(endDate),
           },
         });
       }
@@ -122,9 +120,7 @@ export class BookedCourtsService {
         holdWhere.endTime = { gte: new Date(startDate) };
       }
       if (endDate) {
-        const endDateObj = new Date(endDate);
-        endDateObj.setHours(23, 59, 59, 999);
-        holdWhere.startTime = { lte: endDateObj };
+        holdWhere.startTime = { lte: new Date(endDate) };
       }
       const holds = await prisma.courtSlotHold.findMany({
         where: holdWhere,
@@ -157,7 +153,6 @@ export class BookedCourtsService {
         try {
           const rangeStart = new Date(startDate);
           const rangeEnd = new Date(endDate);
-          rangeEnd.setHours(23, 59, 59, 999);
 
           const { slots: busySlots, isLoading } = await loadMergedBusySlots({
             clubId,

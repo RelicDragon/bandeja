@@ -57,12 +57,14 @@ export function useBooktimeSnapshotRefresh(
 
       const run = (async () => {
         const dateKey = formatClubDateKey(selectedDate, club);
+        let fetchedAtBeforeRefresh: string | null = null;
         setIsRefreshing(true);
         setBanner('updating');
 
         try {
           const snapshotRes = await booktimeApi.getSnapshot(club.id, dateKey);
           const existingFetchedAt = snapshotRes.data?.fetchedAt ?? null;
+          fetchedAtBeforeRefresh = existingFetchedAt;
           setLastFetchedAt(existingFetchedAt);
 
           if (!options.force && existingFetchedAt && !isSnapshotStale(existingFetchedAt)) {
@@ -88,7 +90,7 @@ export function useBooktimeSnapshotRefresh(
             return false;
           }
           console.error('Club booking snapshot refresh failed:', err);
-          setBanner(lastFetchedAt ? 'scoutPoolEmpty' : 'noSyncToday');
+          setBanner(fetchedAtBeforeRefresh ? 'scoutPoolEmpty' : 'noSyncToday');
           return false;
         } finally {
           setIsRefreshing(false);
@@ -99,7 +101,7 @@ export function useBooktimeSnapshotRefresh(
       inFlightRef.current = run;
       return run;
     },
-    [club, enabled, lastFetchedAt, selectedDate]
+    [club, enabled, selectedDate]
   );
 
   return {
