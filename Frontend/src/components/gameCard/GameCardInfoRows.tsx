@@ -9,6 +9,7 @@ interface GameCardInfoRowsProps {
   dateText: string;
   hintText?: string | null;
   showConfirmedCourtBadge: boolean;
+  linkedExternalBooking?: boolean;
   className?: string;
 }
 
@@ -38,6 +39,7 @@ export const GameCardInfoRows = ({
   dateText,
   hintText,
   showConfirmedCourtBadge,
+  linkedExternalBooking = false,
   className = '',
 }: GameCardInfoRowsProps) => {
   const { t } = useTranslation();
@@ -59,7 +61,9 @@ export const GameCardInfoRows = ({
         ) : (
           <span className="inline-flex flex-wrap items-center gap-1.5">
             <span>{dateText}</span>
-            {showConfirmedCourtBadge ? <GameCardConfirmedCourtBadge /> : null}
+            {showConfirmedCourtBadge ? (
+              <GameCardConfirmedCourtBadge linkedExternalBooking={linkedExternalBooking} />
+            ) : null}
           </span>
         )}
       </div>

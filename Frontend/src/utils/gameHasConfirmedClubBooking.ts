@@ -6,3 +6,8 @@ export function gameHasConfirmedClubBooking(game: Game): boolean {
   const hasClub = Boolean(game.clubId || game.club || game.court?.club);
   return hasCourt && hasClub;
 }
+
+export function gameHasLinkedExternalBooking(game: Game): boolean {
+  if (!gameHasConfirmedClubBooking(game)) return false;
+  return Boolean(game.externalBookingId?.trim());
+}

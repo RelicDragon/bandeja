@@ -22,7 +22,10 @@ import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { DiscoveryBadgePills } from '@/components/multisport/DiscoveryBadgePills';
-import { gameHasConfirmedClubBooking } from '@/utils/gameHasConfirmedClubBooking';
+import {
+  gameHasConfirmedClubBooking,
+  gameHasLinkedExternalBooking,
+} from '@/utils/gameHasConfirmedClubBooking';
 
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -168,6 +171,7 @@ export const GameCard = ({
   const timeDisplay = getTimeDisplay('time');
   const timeRangeDisplay = getTimeDisplay('timeRange');
   const showConfirmedCourtBadge = gameHasConfirmedClubBooking(game);
+  const linkedExternalBooking = gameHasLinkedExternalBooking(game);
   const infoHintText = timeDisplay.hintText || timeRangeDisplay.hintText;
   const trainerParticipant =
     game.entityType === 'TRAINING' && game.trainerId
@@ -593,6 +597,7 @@ export const GameCard = ({
                 dateText={infoDateText}
                 hintText={infoHintText}
                 showConfirmedCourtBadge={showConfirmedCourtBadge}
+                linkedExternalBooking={linkedExternalBooking}
                 className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400 justify-center min-h-0"
               />
             )}
@@ -607,6 +612,7 @@ export const GameCard = ({
                 dateText={infoDateText}
                 hintText={infoHintText}
                 showConfirmedCourtBadge={showConfirmedCourtBadge}
+                linkedExternalBooking={linkedExternalBooking}
                 className="space-y-2 flex-1"
               />
             )}
