@@ -164,6 +164,70 @@ function PhotoStoryKonvaCanvasInner({
     if (selectedNodeId) handleTransformEnd(target, false, selectedNodeId);
   }, [handleTransformEnd, mediaSelected, selectedNodeId]);
 
+  const snapKonvaToClamped = useCallback(
+    (
+      target: Konva.Node,
+      next: Transform2D,
+      position: { x: number; y: number },
+      raw: Transform2D
+    ) => {
+      const needsSnap =
+        Math.abs(position.x - raw.x) > 0.5 ||
+        Math.abs(position.y - raw.y) > 0.5 ||
+        Math.abs(next.scale - raw.scale) > 0.001 ||
+        Math.abs(next.rotation - raw.rotation) > 0.1;
+      if (!needsSnap) return;
+      target.position(position);
+      target.scaleX(next.scale);
+      target.scaleY(next.scale);
+      target.rotation(next.rotation);
+    },
+    []
+  );
+
+  /** Live-commit transformer state so the compositor preview tracks the gesture (WYSIWYG). */
+  const handleTransformerLive = useCallback(() => {
+    const target = transformerRef.current?.nodes()[0];
+    if (!target) return;
+    const raw = {
+      x: target.x(),
+      y: target.y(),
+      scale: target.scaleX(),
+      rotation: target.rotation(),
+    };
+    if (mediaSelected && target === mediaRef.current) {
+      const base = computeCoverScale(mediaW, mediaH);
+      const next = clampMediaTransform(
+        {
+          x: raw.x - STORY_CANVAS_WIDTH / 2,
+          y: raw.y - STORY_CANVAS_HEIGHT / 2,
+          scale: raw.scale,
+          rotation: raw.rotation,
+        },
+        base
+      );
+      onMediaTransformChange(next);
+      snapKonvaToClamped(
+        target,
+        next,
+        { x: STORY_CANVAS_WIDTH / 2 + next.x, y: STORY_CANVAS_HEIGHT / 2 + next.y },
+        raw
+      );
+    } else if (selectedNodeId) {
+      const next = clampLayerTransform(raw);
+      onLayerTransformChange(selectedNodeId, next);
+      snapKonvaToClamped(target, next, { x: next.x, y: next.y }, raw);
+    }
+  }, [
+    mediaH,
+    mediaSelected,
+    mediaW,
+    onLayerTransformChange,
+    onMediaTransformChange,
+    selectedNodeId,
+    snapKonvaToClamped,
+  ]);
+
   const applyTransformerChrome = useCallback(() => {
     const tr = transformerRef.current;
     if (!tr) return;
@@ -253,6 +317,7 @@ function PhotoStoryKonvaCanvasInner({
                   onSelect={() => onSelectNode(node.id, 'layer')}
                   onGestureStart={onGestureStart}
                   onGestureEnd={onGestureEnd}
+                  onDragMove={(x, y) => onLayerTransformChange(node.id, { x, y })}
                   onDragEnd={(x, y) => onLayerTransformChange(node.id, { x, y })}
                 />
               );
@@ -275,6 +340,7 @@ function PhotoStoryKonvaCanvasInner({
                   onSelect={() => onSelectNode(node.id, 'layer')}
                   onGestureStart={onGestureStart}
                   onGestureEnd={onGestureEnd}
+                  onDragMove={(x, y) => onLayerTransformChange(node.id, { x, y })}
                   onDragEnd={(x, y) => onLayerTransformChange(node.id, { x, y })}
                 />
               );
@@ -298,7 +364,10 @@ function PhotoStoryKonvaCanvasInner({
               return newBox;
             }}
           onTransformStart={onGestureStart}
-          onTransform={applyTransformerChrome}
+          onTransform={() => {
+            applyTransformerChrome();
+            handleTransformerLive();
+          }}
           onTransformEnd={handleTransformerEnd}
           />
         </Layer>

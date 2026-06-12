@@ -1146,6 +1146,8 @@ model ChatMessage {
   /// Sync log seq last written onto this ChatMessage row (create, edit, delete, delivery state). Side tables (reactions, etc.) do not bump this; idempotent create replays use this as syncSeq, not head.
   serverSyncSeq    Int?
   replyToId       String?
+  /// Instagram-style story reply context: { sourceType, sourceId, ownerUserId, thumbnailUrl?, mediaUrl?, mediaType? }
+  storyReply      Json?
   replyTo         ChatMessage?         @relation("MessageReply", fields: [replyToId], references: [id])
   replies         ChatMessage[]        @relation("MessageReply")
   sender          User?                @relation(fields: [senderId], references: [id], onDelete: Cascade)

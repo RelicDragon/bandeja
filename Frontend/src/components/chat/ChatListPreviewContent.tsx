@@ -64,6 +64,16 @@ export function ChatListPreviewContent({ preview, t }: Props) {
     return <ChatListVideoRow t={t} durationLabel={dur || undefined} />;
   }
 
+  if (preview.startsWith('[TYPE:STORY_REPLY]')) {
+    const text = preview.slice('[TYPE:STORY_REPLY]'.length);
+    const label = t('chat.storyReply.toYourStory', { defaultValue: 'Replied to your story' });
+    return (
+      <span>
+        {text && text !== '…' ? `${label}: ${text}` : label}
+      </span>
+    );
+  }
+
   if (preview.startsWith('[TYPE:POLL]')) {
     const question = preview.substring(11);
     return (

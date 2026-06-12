@@ -37,7 +37,7 @@ export function EditHoldSheet({ open, hold, onClose, onSubmit }: EditHoldSheetPr
   };
 
   return (
-    <div className="fixed inset-0 z-[75] flex items-end bg-black/45 p-3" onClick={onClose}>
+    <div className="cap-keyboard-aware-overlay fixed inset-0 z-[75] flex items-end bg-black/45 p-3" onClick={onClose}>
       <div
         className="w-full max-w-md rounded-2xl border border-border bg-background p-4"
         onClick={(e) => e.stopPropagation()}

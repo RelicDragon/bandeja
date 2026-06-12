@@ -1,5 +1,10 @@
 {
   "chat": {
+    "storyReply": {
+      "toYourStory": "Odpověď na váš příběh",
+      "youToTheirStory": "Odpověděli jste na příběh",
+      "toTheirStory": "Odpověď na příběh"
+    },
     "noMessages": "Zatím žádné zprávy",
     "offlineBanner": "Bez připojení — zobrazují se uložené zprávy",
     "mutationsSyncFailed": "Některé akce se nesynchronizovaly. Klepněte pro opakování.",

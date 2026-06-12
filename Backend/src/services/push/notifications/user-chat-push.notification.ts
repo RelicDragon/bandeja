@@ -4,10 +4,11 @@ export async function createUserChatPushNotification(
   message: any,
   userChat: any,
   sender: any,
-  _recipient: any
+  recipient: any
 ): Promise<NotificationPayload | null> {
   const senderName = formatUserName(sender);
-  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
+  const lang = (recipient?.language ?? 'en').split('-')[0].toLowerCase();
+  const messageContent = formatChatNotificationMessageBody(message, lang) || '[Media]';
 
   return {
     type: NotificationType.USER_CHAT,

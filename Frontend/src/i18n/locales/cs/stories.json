@@ -127,6 +127,9 @@
       "dmPlaceholder": "Napsat zprávu…",
       "sendDm": "Odeslat zprávu",
       "dmFailed": "Zprávu se nepodařilo odeslat",
+      "storyUnavailable": "Příběh už není k dispozici",
+      "storyExpired": "Tento příběh už není k dispozici",
+      "storyForbidden": "Na tento příběh nemůžete odpovědět",
       "share": "Sdílet",
       "shareTitle": "Sdílet profil"
     },

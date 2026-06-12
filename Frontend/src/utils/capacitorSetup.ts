@@ -7,10 +7,15 @@ import pushNotificationService from '@/services/pushNotificationService';
 import {
   computeKeyboardInsetPx,
   isInsideKeyboardManagedSurface,
-  shouldShiftDialogForKeyboard,
 } from './keyboardLayout';
+import { getKeyboardState, publishKeyboardState } from './keyboardState';
+import {
+  releaseKeyboardScrollAssist,
+  scrollElementAboveKeyboard,
+} from './keyboardScrollAssist';
 
 let lastPluginKeyboardInsetPx = 0;
+let nativeKeyboardVisible = false;
 let currentFocusedInput: HTMLElement | null = null;
 let scrollFocusedInputTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -26,23 +31,15 @@ const resetAppRootScrollIfChatInput = () => {
   window.scrollTo(0, 0);
 };
 
-const syncKeyboardDialogShiftClass = (effectiveInsetPx: number) => {
-  const shouldShift = shouldShiftDialogForKeyboard(
-    effectiveInsetPx,
-    document.body.classList.contains('keyboard-visible'),
-  );
-  document.body.classList.toggle('keyboard-dialog-shift', shouldShift);
-};
-
 const resetKeyboardLayoutUi = () => {
   if (scrollFocusedInputTimer) {
     clearTimeout(scrollFocusedInputTimer);
     scrollFocusedInputTimer = null;
   }
-  document.body.classList.remove('keyboard-visible');
-  document.body.classList.remove('keyboard-dialog-shift');
+  nativeKeyboardVisible = false;
   lastPluginKeyboardInsetPx = 0;
   currentFocusedInput = null;
+  releaseKeyboardScrollAssist();
   syncKeyboardLayoutFromViewport();
 };
 
@@ -58,17 +55,18 @@ export const syncKeyboardLayoutFromViewport = () => {
 
   const innerH = window.innerHeight || 0;
   const vv = window.visualViewport;
-  const effective = computeKeyboardInsetPx({
-    innerHeight: innerH,
-    vvHeight: vv?.height ?? null,
-    vvOffsetTop: vv?.offsetTop ?? null,
-    pluginInsetPx: lastPluginKeyboardInsetPx,
-    preferPluginInset: isAndroid(),
-  });
+  const effective = nativeKeyboardVisible
+    ? computeKeyboardInsetPx({
+        innerHeight: innerH,
+        vvHeight: vv?.height ?? null,
+        vvOffsetTop: vv?.offsetTop ?? null,
+        pluginInsetPx: lastPluginKeyboardInsetPx,
+        preferPluginInset: isAndroid(),
+      })
+    : 0;
 
-  document.documentElement.style.setProperty('--keyboard-height', `${effective}px`);
   applyVisualViewportCssVars();
-  syncKeyboardDialogShiftClass(effective);
+  publishKeyboardState({ visible: nativeKeyboardVisible, insetPx: effective });
 };
 
 const isEditableFocusTarget = (el: HTMLElement) => {
@@ -135,13 +133,19 @@ const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 const scrollInputIntoViewIfAble = (el: HTMLElement | null) => {
-  if (!el) return;
-  if (isInsideKeyboardManagedSurface(el)) return;
-  el.scrollIntoView({
-    behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-    block: 'nearest',
-    inline: 'nearest',
-  });
+  if (!el || !el.isConnected) return;
+  const smooth = !prefersReducedMotion();
+  if (isInsideChatComposerFooter(el)) return;
+  if (isInsideKeyboardManagedSurface(el)) {
+    // Surface already lifted above the keyboard; local scroll is enough.
+    el.scrollIntoView({
+      behavior: smooth ? 'smooth' : 'auto',
+      block: 'nearest',
+      inline: 'nearest',
+    });
+    return;
+  }
+  scrollElementAboveKeyboard(el, getKeyboardState().insetPx, smooth);
 };
 
 const scheduleScrollFocusedInput = () => {
@@ -248,7 +252,7 @@ export const setupCapacitor = async () => {
     });
 
     Keyboard.addListener('keyboardWillShow', (info) => {
-      document.body.classList.add('keyboard-visible');
+      nativeKeyboardVisible = true;
       if (info && typeof info.keyboardHeight === 'number' && info.keyboardHeight >= 0) {
         lastPluginKeyboardInsetPx = info.keyboardHeight;
       }
@@ -261,7 +265,7 @@ export const setupCapacitor = async () => {
     });
 
     Keyboard.addListener('keyboardDidShow', (info) => {
-      document.body.classList.add('keyboard-visible');
+      nativeKeyboardVisible = true;
       if (info && typeof info.keyboardHeight === 'number' && info.keyboardHeight >= 0) {
         lastPluginKeyboardInsetPx = info.keyboardHeight;
       }
@@ -287,7 +291,7 @@ export const setupCapacitor = async () => {
       const target = e.target as HTMLElement;
       if (!isEditableFocusTarget(target)) return;
       currentFocusedInput = target;
-      if (document.body.classList.contains('keyboard-visible')) {
+      if (getKeyboardState().visible) {
         requestAnimationFrame(() => resetAppRootScrollIfChatInput());
         scheduleScrollFocusedInput();
       }
@@ -338,19 +342,15 @@ export const setupBrowserKeyboardDetection = () => {
       const viewport = window.visualViewport!;
       const heightDifference = initialViewportHeight - viewport.height;
 
-      if (heightDifference > KEYBOARD_THRESHOLD && !isKeyboardVisible) {
-        isKeyboardVisible = true;
-        document.body.classList.add('keyboard-visible');
-      } else if (heightDifference <= KEYBOARD_THRESHOLD && isKeyboardVisible) {
-        isKeyboardVisible = false;
-        document.body.classList.remove('keyboard-visible');
-      }
+      isKeyboardVisible = heightDifference > KEYBOARD_THRESHOLD;
+      nativeKeyboardVisible = isKeyboardVisible;
 
-      if (document.body.classList.contains('keyboard-visible')) {
+      if (isKeyboardVisible) {
         syncKeyboardLayoutFromViewport();
       } else {
-        document.documentElement.style.setProperty('--keyboard-height', '0px');
         applyVisualViewportCssVars();
+        releaseKeyboardScrollAssist();
+        publishKeyboardState({ visible: false, insetPx: 0 });
       }
     };
 
@@ -383,15 +383,9 @@ export const setupBrowserKeyboardDetection = () => {
       const currentHeight = window.innerHeight;
       const heightDifference = initialViewportHeight - currentHeight;
 
-      if (heightDifference > KEYBOARD_THRESHOLD && !isKeyboardVisible) {
-        isKeyboardVisible = true;
-        document.body.classList.add('keyboard-visible');
-      } else if (heightDifference <= KEYBOARD_THRESHOLD && isKeyboardVisible) {
-        isKeyboardVisible = false;
-        document.body.classList.remove('keyboard-visible');
-      }
+      isKeyboardVisible = heightDifference > KEYBOARD_THRESHOLD;
 
-      if (document.body.classList.contains('keyboard-visible')) {
+      if (isKeyboardVisible) {
         const innerH = window.innerHeight || 0;
         const approx = computeKeyboardInsetPx({
           innerHeight: innerH,
@@ -399,9 +393,10 @@ export const setupBrowserKeyboardDetection = () => {
           vvOffsetTop: 0,
           pluginInsetPx: 0,
         });
-        document.documentElement.style.setProperty('--keyboard-height', `${approx}px`);
+        publishKeyboardState({ visible: true, insetPx: approx });
       } else {
-        document.documentElement.style.setProperty('--keyboard-height', '0px');
+        releaseKeyboardScrollAssist();
+        publishKeyboardState({ visible: false, insetPx: 0 });
       }
     };
 

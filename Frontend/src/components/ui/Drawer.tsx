@@ -11,7 +11,15 @@ interface DrawerProps {
 }
 
 const Drawer = ({ open, onOpenChange, children, direction = 'bottom', dismissible = true }: DrawerProps) => (
-  <VaulDrawer.Root open={open} onOpenChange={onOpenChange} direction={direction} dismissible={dismissible}>
+  /* repositionInputs off: the app lifts surfaces itself via --keyboard-height
+     (Capacitor Keyboard resize "none"); Vaul's built-in handling fights it. */
+  <VaulDrawer.Root
+    open={open}
+    onOpenChange={onOpenChange}
+    direction={direction}
+    dismissible={dismissible}
+    repositionInputs={false}
+  >
     {children}
   </VaulDrawer.Root>
 );
@@ -56,7 +64,7 @@ const DrawerContent = React.forwardRef<
     <DrawerOverlay />
     <VaulDrawer.Content
       ref={ref}
-      className={`fixed bottom-0 left-0 right-0 z-50 mt-24 flex max-h-[75vh] min-h-0 flex-col rounded-t-3xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-800 dark:text-white max-w-[428px] mx-auto ${className ?? ''}`}
+      className={`cap-keyboard-aware-sheet fixed bottom-0 left-0 right-0 z-50 mt-24 flex max-h-[75vh] min-h-0 flex-col rounded-t-3xl border border-gray-200 bg-white text-gray-900 dark:border-gray-800 dark:bg-gray-800 dark:text-white max-w-[428px] mx-auto ${className ?? ''}`}
       aria-labelledby={ariaLabelledBy ?? undefined}
       aria-describedby={ariaDescribedBy ?? undefined}
       {...props}

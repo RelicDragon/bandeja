@@ -12,14 +12,12 @@ type StoryCommentComposerProps = {
   replyTo: StoryCommentDto | null;
   onCancelReply: () => void;
   onSubmit: (body: string) => Promise<void>;
-  bottomInset: number;
 };
 
 export function StoryCommentComposer({
   replyTo,
   onCancelReply,
   onSubmit,
-  bottomInset,
 }: StoryCommentComposerProps) {
   const { t } = useTranslation();
   const [text, setText] = useState('');
@@ -54,7 +52,7 @@ export function StoryCommentComposer({
   return (
     <div
       className="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 pt-2"
-      style={{ paddingBottom: `max(0.75rem, env(safe-area-inset-bottom, 0px), ${bottomInset}px)` }}
+      style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0px))' }}
     >
       {replyTo ? (
         <div className="mb-2 flex items-center justify-between rounded-lg bg-gray-100 dark:bg-gray-800 px-3 py-2 text-xs">

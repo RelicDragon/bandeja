@@ -7,6 +7,7 @@ import { Sport } from '@prisma/client';
 import { resolveSport } from '../../sport/sportRegistry';
 import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
 import { appendTelegramGameScheduleExtras } from './notificationSport';
+import { formatStoryReplyNotificationBody, hasStoryReplyPayload } from '../chat/storyReplySanitize';
 
 export interface GameInfo {
   id: string;
@@ -324,13 +325,21 @@ export async function formatNewGameText(
   return text.trim();
 }
 
-export function formatChatNotificationMessageBody(message: {
-  content?: string | null;
-  messageType?: string;
-  mediaUrls?: string[];
-  audioDurationMs?: number | null;
-  videoDurationMs?: number | null;
-}): string {
+export function formatChatNotificationMessageBody(
+  message: {
+    content?: string | null;
+    messageType?: string;
+    mediaUrls?: string[];
+    audioDurationMs?: number | null;
+    videoDurationMs?: number | null;
+    storyReply?: unknown;
+  },
+  lang = 'en'
+): string {
+  if (hasStoryReplyPayload(message.storyReply)) {
+    return formatStoryReplyNotificationBody(message.content, lang);
+  }
+
   if (message.messageType === 'VOICE' && message.audioDurationMs != null) {
     const totalSec = Math.floor(message.audioDurationMs / 1000);
     const mm = Math.floor(totalSec / 60);

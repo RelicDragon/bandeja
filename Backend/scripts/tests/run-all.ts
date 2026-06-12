@@ -591,6 +591,16 @@ const suites: Suite[] = [
     },
   },
   {
+    label: 'story dm reply',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'story-dm-reply.ts'),
+    ],
+  },
+  {
     label: 'invite decline message',
     command: process.execPath,
     args: [

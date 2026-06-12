@@ -253,6 +253,18 @@ Frontend/e2e/
 | H-25 | Video story publish | Pick video → publish | Appears in rail |
 | H-26 | Story engagement | Like / comment (if enabled) | Count updates |
 | H-27 | Report story comment | Report flow | Modal submits |
+| H-42 | Story DM reply lands in user chat | Open another user's story → type DM text → send → open user chat with owner | Message in DM thread shows story thumbnail card + "Replied to your story"/"You replied to their story" label above the bubble |
+| H-43 | Story quick-reaction emoji reply | Open another user's story → focus DM input → tap one of the six quick emojis | Emoji sent to DM with same story-reply card; flyout animation plays in viewer |
+| H-44 | Story reply card without media | Reply to GAME_CREATED/GAME_RESULT story without photo | DM shows story-reply label with placeholder thumbnail; tap does nothing harmful |
+| H-45 | Story editor live drag WYSIWYG | Photo editor → add text/sticker → drag it (mouse and touch) | Layer follows the pointer live on the visible preview, no jump on release |
+| H-46 | Story editor live resize/rotate WYSIWYG | Select layer or photo → drag transformer corner / rotate handle | Preview scales/rotates live; final state matches preview during gesture |
+| H-47 | Story text edit wrap parity | Type long text (incl. one very long unbroken word) in text overlay → commit | Line breaks in edit overlay identical to committed canvas text; long word breaks instead of overflowing |
+| H-48 | Published story matches editor preview | Add text + sticker + adjust filter → move/scale them → publish → view own story | Viewer shows pixel-equivalent composition (positions, sizes, styles, filters) to the editor preview |
+| H-49 | Story layer drag clamp | Drag text/sticker hard toward screen edge | Layer stops at canvas padding; preview and hit target stay aligned |
+| H-50 | Story layer max scale clamp | Scale sticker/text past max via corner handle | Preview and handle stop at max scale without overshoot jump on release |
+| H-51 | Rotated story text edit | Add text → rotate → double-tap to edit | Edit overlay keeps rotation while typing; committed text unchanged |
+| H-52 | Story text edit canvas preview | Type in text overlay (classic/neon/outline/gradient/blackBox) | Visible glyphs match canvas/export renderer, not CSS approximation |
+| H-53 | Story photo rotate snap live | Select photo → rotate with handle near 0°/90° | Rotation snaps live in preview, not only on release |
 
 ### 6.5 Home subtabs & URL
 
@@ -960,6 +972,20 @@ Frontend/e2e/
 | X-41 | Online booking integration type | Platform admin → edit club → Integration type online booking + companyId | Saved; player app shows club booking surfaces for club |
 | X-42 | Import booking courts | BOOKTIME club → Import courts | Courts matched/created; `externalCourtId` set; schedule grid shows mapped externals |
 | X-43 | Manual external court ID | Platform admin court list → set externalCourtId | Snapshot maps busy to internal court column |
+
+### 18.10 Software keyboard (Capacitor iOS/Android, `@manual`)
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| X-44 | Chat composer above keyboard | Open game chat → focus composer | Composer sits on top of keyboard; message list stays scrolled to latest; no double gap |
+| X-45 | Centered dialog shift | Open any `ui/Dialog` with input (e.g. game note, city search) → focus input | Dialog re-anchors just above keyboard; content scrolls inside dialog; nothing hidden |
+| X-46 | Bottom drawer lift | Open Vaul drawer with input (story comments, market item) → focus input | Whole drawer lifts above keyboard; composer visible while typing |
+| X-47 | Poll creation keyboard | Game chat → attach → poll → focus question/options | Poll dialog shifts above keyboard; all fields reachable |
+| X-48 | Club admin sheets keyboard | Schedule → cancel game / block slot / edit hold → focus reason/note | Sheet pushed above keyboard; submit button visible |
+| X-49 | Full-page form input visibility | Create game → focus a bottom field (e.g. comment) | Page scrolls so focused field sits above keyboard with gap |
+| X-50 | Story caption & text edit | Photo story editor → caption drawer / text style panel → focus | Caption drawer and style panel ride above keyboard |
+| X-51 | Story DM bar keyboard (Android) | Story viewer → focus DM input on Android | DM bar lifts by plugin keyboard height (not stuck under keyboard) |
+| X-52 | Keyboard dismiss restores layout | Any of above → dismiss keyboard | Surfaces return to resting position; no leftover bottom padding or shifted dialogs |
 
 ---
 

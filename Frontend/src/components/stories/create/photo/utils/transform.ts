@@ -73,6 +73,20 @@ export function clampLayerTransform(transform: Transform2D): Transform2D {
   };
 }
 
+/** Clamp layer drag; snap Konva target when position hits canvas padding. */
+export function commitLayerDrag(
+  transform: Transform2D,
+  dragX: number,
+  dragY: number,
+  konvaTarget?: { position: (p: { x: number; y: number }) => void }
+): Transform2D {
+  const next = clampLayerTransform({ ...transform, x: dragX, y: dragY });
+  if (konvaTarget && (next.x !== dragX || next.y !== dragY)) {
+    konvaTarget.position({ x: next.x, y: next.y });
+  }
+  return next;
+}
+
 export function clampMediaPan(x: number, y: number): { x: number; y: number } {
   return {
     x: Math.max(-MEDIA_PAN_LIMIT, Math.min(MEDIA_PAN_LIMIT, x)),

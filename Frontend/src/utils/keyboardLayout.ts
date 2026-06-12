@@ -33,9 +33,11 @@ export function shouldShiftDialogForKeyboard(
   return keyboardVisible && effectiveInsetPx >= thresholdPx;
 }
 
+/* Surfaces that lift themselves above the keyboard (CSS shift on
+   --keyboard-height); inputs inside only need a local nearest-scroll. */
 export function isInsideKeyboardManagedSurface(el: HTMLElement | null): boolean {
   if (!el) return false;
   return !!el.closest(
-    '[data-cap-chat-composer], .chat-container footer, [role="dialog"], .cap-keyboard-aware-dialog',
+    '[data-cap-chat-composer], .chat-container footer, .cap-keyboard-aware-dialog, .cap-keyboard-aware-sheet, .cap-keyboard-aware-overlay, .cap-keyboard-aware-bottom-panel, .cap-fullscreen-dialog-body, .fullscreen-dialog-root',
   );
 }

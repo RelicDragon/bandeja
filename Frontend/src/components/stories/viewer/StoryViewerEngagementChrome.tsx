@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
 import { parseStorySegmentKey, type StorySegment } from '@/api/stories';
 import type { StorySegmentEngagement } from '@/api/storyEngagement';
-import { featureFlags } from '@/config/featureFlags';
 import { useStorySegmentEngagement } from '@/hooks/useStorySegmentEngagement';
 import { useAuthStore } from '@/store/authStore';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
@@ -18,6 +17,7 @@ import { StoryViewerBottomBar } from './StoryViewerBottomBar';
 import { StoryViewerEngagementBar } from './StoryViewerEngagementBar';
 import { StoryDmSendFlyout } from './StoryDmSendFlyout';
 import { useStoryDmSend } from './useStoryDmSend';
+import { buildStoryReplyInfo } from './storyReplyInfo';
 import {
   setStoryViewerEngagementPaused,
   resetStoryViewerEngagementPaused,
@@ -52,7 +52,6 @@ export function StoryViewerEngagementChrome({
   const { t } = useTranslation();
   const currentUserId = useAuthStore((s) => s.user?.id);
   const isOwnStory = currentUserId === ownerUserId;
-  const enabled = featureFlags.stories;
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [captionExpanded, setCaptionExpanded] = useState(false);
   const [ownerSheetOpen, setOwnerSheetOpen] = useState(false);
@@ -67,11 +66,12 @@ export function StoryViewerEngagementChrome({
   const { engagement, toggleLike, setCommentCount, setViewerHasCommented } = useStorySegmentEngagement({
     segmentKey: segment.key,
     ownerUserId,
-    enabled,
+    enabled: true,
     initialEngagement,
   });
 
-  const { sendDm } = useStoryDmSend(ownerUserId);
+  const storyReply = useMemo(() => buildStoryReplyInfo(segment, ownerUserId), [segment, ownerUserId]);
+  const { sendDm } = useStoryDmSend(ownerUserId, storyReply);
 
   const handleCaptionExpanded = useCallback((expanded: boolean) => {
     setCaptionExpanded(expanded);
@@ -155,8 +155,6 @@ export function StoryViewerEngagementChrome({
     onRegisterDoubleTapLike?.(() => void toggleLike());
   }, [onRegisterDoubleTapLike, toggleLike, isOwnStory]);
 
-  if (!enabled) return null;
-
   return (
     <>
       <StoryViewerDoubleTapHeart burst={doubleTapBurst} />
@@ -213,6 +211,7 @@ export function StoryViewerEngagementChrome({
         onOpenChange={setCommentsOpen}
         segmentKey={segment.key}
         ownerUserId={ownerUserId}
+        commentCount={engagement.commentCount}
         onCommentCountChange={setCommentCount}
         onViewerHasCommentedChange={setViewerHasCommented}
       />

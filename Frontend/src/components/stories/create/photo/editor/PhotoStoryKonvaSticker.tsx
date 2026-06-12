@@ -3,6 +3,7 @@ import { Group, Image as KonvaImage, Rect } from 'react-konva';
 import type Konva from 'konva';
 import type { StickerNode } from '../types';
 import { renderStickerBitmap } from '../utils/renderStickerBitmap';
+import { commitLayerDrag } from '../utils/transform';
 
 const MIN_HIT_PX = 56;
 
@@ -15,6 +16,7 @@ type PhotoStoryKonvaStickerProps = {
   onSelect: () => void;
   onGestureStart: () => void;
   onGestureEnd: () => void;
+  onDragMove: (x: number, y: number) => void;
   onDragEnd: (x: number, y: number) => void;
 };
 
@@ -27,6 +29,7 @@ export function PhotoStoryKonvaSticker({
   onSelect,
   onGestureStart,
   onGestureEnd,
+  onDragMove,
   onDragEnd,
 }: PhotoStoryKonvaStickerProps) {
   const bitmap = useMemo(() => renderStickerBitmap(node.emoji), [node.emoji]);
@@ -53,8 +56,13 @@ export function PhotoStoryKonvaSticker({
       listening={gesturesEnabled}
       draggable={gesturesEnabled && isSelected}
       onDragStart={() => onGestureStart()}
+      onDragMove={(e) => {
+        const next = commitLayerDrag(node.transform, e.target.x(), e.target.y(), e.target);
+        onDragMove(next.x, next.y);
+      }}
       onDragEnd={(e) => {
-        onDragEnd(e.target.x(), e.target.y());
+        const next = commitLayerDrag(node.transform, e.target.x(), e.target.y(), e.target);
+        onDragEnd(next.x, next.y);
         onGestureEnd();
       }}
     >

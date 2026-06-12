@@ -3,10 +3,13 @@ import { useTranslation } from 'react-i18next';
 import type { TextNode } from '../types';
 import { computeTextEditGeometry, textEditTransform } from '../utils/textEditGeometry';
 import {
+  textEditLayoutClassName,
   textEditPresetClassName,
   textEditPresetStyle,
+  textEditTransparentLayoutStyle,
   textPresetStyle,
 } from '../utils/textDisplayStyles';
+import { PhotoStoryTextEditBitmap } from './PhotoStoryTextEditBitmap';
 import { PhotoStoryTextSheet } from './PhotoStoryTextSheet';
 
 const ANIM_MS = 340;
@@ -54,17 +57,22 @@ export function PhotoStoryTextEditOverlay({
 
   const styleNode = useMemo(() => ({ ...node, text: draft }), [node, draft]);
 
-  const editClassName = textEditPresetClassName(styleNode.style.id, styleNode.style.align);
-  const editStyle = useMemo(
+  const flyClassName = textEditPresetClassName(styleNode.style.id, styleNode.style.align);
+  const flyStyle = useMemo(
     () => ({
       ...textPresetStyle(editFontSize),
       ...textEditPresetStyle(styleNode.style.id, editFontSize),
     }),
     [editFontSize, styleNode.style.id]
   );
+  const editingClassName = textEditLayoutClassName(styleNode.style.align);
+  const editingStyle = useMemo(
+    () => textEditTransparentLayoutStyle(editFontSize),
+    [editFontSize]
+  );
 
   const flyTransform = atCenter
-    ? textEditTransform(geo.centerX, geo.centerY, 0, 1)
+    ? textEditTransform(geo.centerX, geo.centerY, geo.rotation, 1)
     : textEditTransform(geo.originX, geo.originY, geo.rotation, 1);
 
   useLayoutEffect(() => {
@@ -170,18 +178,28 @@ export function PhotoStoryTextEditOverlay({
         }}
         onTransitionEnd={handleFlyTransitionEnd}
       >
-        <div
-          ref={editorRef}
-          role="textbox"
-          contentEditable
-          suppressContentEditableWarning
-          spellCheck={editing}
-          tabIndex={-1}
-          className={`min-w-[3rem] max-w-[min(88vw,360px)] empty:before:content-[attr(data-placeholder)] empty:before:text-white/40 ${editClassName}`}
-          style={{
-            ...editStyle,
-            userSelect: editing ? 'text' : 'none',
-          }}
+        <div className="relative inline-block min-w-[3rem]">
+          {editing ? (
+            <PhotoStoryTextEditBitmap
+              text={draft}
+              style={styleNode.style}
+              displayFontSizePx={editFontSize}
+            />
+          ) : null}
+          <div
+            ref={editorRef}
+            role="textbox"
+            contentEditable
+            suppressContentEditableWarning
+            spellCheck={editing}
+            tabIndex={-1}
+            className={`relative z-10 min-w-[3rem] empty:before:content-[attr(data-placeholder)] empty:before:text-white/40 ${
+              editing ? editingClassName : flyClassName
+            }`}
+            style={{
+              ...(editing ? editingStyle : flyStyle),
+              userSelect: editing ? 'text' : 'none',
+            }}
           onBeforeInput={blockInput}
           onKeyDown={blockInput}
           onPaste={blockInput}
@@ -193,11 +211,12 @@ export function PhotoStoryTextEditOverlay({
             if (editing) finish(true);
           }}
           data-placeholder={t('stories.overlayPlaceholder')}
-        />
+          />
+        </div>
       </div>
 
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 z-[61] bg-gradient-to-t from-black/90 via-black/55 to-transparent pt-14 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform ease-out"
+        className="cap-keyboard-aware-bottom-panel pointer-events-none absolute inset-x-0 bottom-0 z-[61] bg-gradient-to-t from-black/90 via-black/55 to-transparent pt-14 pb-[max(0.75rem,env(safe-area-inset-bottom))] transition-transform ease-out"
         style={{
           transform: atCenter ? 'translateY(0)' : 'translateY(100%)',
           transitionDuration: `${ANIM_MS}ms`,

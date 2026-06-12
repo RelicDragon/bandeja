@@ -4,7 +4,6 @@ import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { useStoriesPlayback } from '@/hooks/useStoriesPlayback';
 import { storyViewEntryFromSegment, useStoriesStore } from '@/store/storiesStore';
 import type { StoryBubble } from '@/api/stories';
-import { featureFlags } from '@/config/featureFlags';
 import { lightHaptic } from '@/utils/lightHaptic';
 import { preloadStorySegmentMedia } from '@/utils/storySegmentMediaPreload';
 import { storySegmentSlideVersion } from './storyPlayback';
@@ -128,8 +127,6 @@ export function StoriesViewer({
   const handleMarkViewed = useCallback(() => {
     markCurrentSegmentViewed();
   }, [markCurrentSegmentViewed]);
-
-  const engagementEnabled = featureFlags.stories;
 
   const handleDoubleTap = useCallback(
     (x: number, y: number) => {
@@ -314,14 +311,10 @@ export function StoriesViewer({
           onLongPressStart={() => playback.setPaused(true)}
           onLongPressEnd={() => playback.setPaused(false)}
           onSwipeDown={handleClose}
-          onSwipeUp={
-            engagementEnabled
-              ? () => {
-                  lightHaptic();
-                  storyViewerEngagementActions.openComments();
-                }
-              : undefined
-          }
+          onSwipeUp={() => {
+            lightHaptic();
+            storyViewerEngagementActions.openComments();
+          }}
           onSwipeLeft={() => {
             if (bubbleIndex < bubbles.length - 1) {
               lightHaptic();
@@ -342,7 +335,7 @@ export function StoriesViewer({
               onBubbleChange?.(prev);
             }
           }}
-          onDoubleTap={engagementEnabled ? handleDoubleTap : undefined}
+          onDoubleTap={handleDoubleTap}
         >
           <div className="absolute inset-0 overflow-hidden">{slide}</div>
         </StoriesGestureLayer>
@@ -354,7 +347,7 @@ export function StoriesViewer({
           />
           <StoriesViewerHeader user={bubble.user} createdAt={segment?.createdAt} onClose={handleClose} />
         </div>
-        {segment && engagementEnabled ? (
+        {segment ? (
           <StoryViewerEngagementChrome
             key={segment.key}
             segment={segment}

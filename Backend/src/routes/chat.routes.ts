@@ -195,6 +195,7 @@ router.post(
     body('mediaUrls').optional().isArray().withMessage('Media URLs must be an array'),
     body('thumbnailUrls').optional().isArray().withMessage('Thumbnail URLs must be an array'),
     body('replyToId').optional().isString().withMessage('Reply to ID must be a string'),
+    body('storyReply').optional().isObject().withMessage('Story reply must be an object'),
     body('mentionIds').optional().isArray().withMessage('Mention IDs must be an array'),
     body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type')
   ]),

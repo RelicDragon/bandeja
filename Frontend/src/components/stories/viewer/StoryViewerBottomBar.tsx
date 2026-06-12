@@ -3,13 +3,14 @@ import {
   useCallback,
   useRef,
   useState,
+  type FocusEvent,
   type KeyboardEvent,
   type PointerEvent,
   type ReactNode,
 } from 'react';
 import { Heart, MessageCircle, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useVisualViewportInset } from '@/components/stories/create/hooks/useVisualViewportInset';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 import { lightHaptic } from '@/utils/lightHaptic';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { recordStoryDmReactionUse } from './storyDmQuickReactions';
@@ -68,12 +69,22 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
   const { t } = useTranslation();
   const [dmText, setDmText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-  const keyboardInset = useVisualViewportInset(dmFocused);
+  const barRef = useRef<HTMLDivElement>(null);
+  const keyboardInset = useKeyboardInset();
 
   const blurDm = useCallback(() => {
     inputRef.current?.blur();
     onDmFocusedChange(false);
   }, [onDmFocusedChange]);
+
+  const handleDmBlur = useCallback(
+    (e: FocusEvent<HTMLInputElement>) => {
+      const related = e.relatedTarget as Node | null;
+      if (related && barRef.current?.contains(related)) return;
+      onDmFocusedChange(false);
+    },
+    [onDmFocusedChange]
+  );
 
   const submitDm = useCallback(
     async (text: string) => {
@@ -119,7 +130,7 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
   );
 
   const bottomPad = dmFocused
-    ? `max(0.5rem, ${keyboardInset.bottom}px)`
+    ? `max(0.5rem, ${keyboardInset.insetPx}px)`
     : 'max(0.5rem, env(safe-area-inset-bottom, 0px))';
 
   return (
@@ -141,7 +152,7 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
         data-story-interactive
       >
         {captionAbove ? <div className="px-3 pb-1.5 pt-2">{captionAbove}</div> : null}
-        <div className="flex items-center gap-2 px-3 py-2.5">
+        <div ref={barRef} className="flex items-center gap-2 px-3 py-2.5">
           <input
             ref={inputRef}
             type="text"
@@ -149,7 +160,7 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
             maxLength={500}
             placeholder={t('stories.viewer.dmPlaceholder')}
             onFocus={() => onDmFocusedChange(true)}
-            onBlur={() => onDmFocusedChange(false)}
+            onBlur={handleDmBlur}
             onChange={(e) => setDmText(e.target.value)}
             onKeyDown={handleDmKeyDown}
             onClick={(e) => e.stopPropagation()}
@@ -229,7 +240,10 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
                 void submitDm(dmText);
                 blurAfterClick(e.currentTarget);
               }}
-              onPointerDown={barButtonPointerDown}
+              onPointerDown={(e) => {
+                barButtonPointerDown(e);
+                e.preventDefault();
+              }}
             >
               <Send size={22} className="text-white" strokeWidth={2} />
             </button>

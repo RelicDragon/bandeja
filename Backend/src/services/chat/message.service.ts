@@ -39,6 +39,8 @@ import {
   MIN_VIDEO_DURATION_MS,
 } from '../../constants/chatVideo';
 import { getChatNotifier } from './chatNotifier';
+import { hasStoryReplyPayload } from './storyReplySanitize';
+import { validateStoryReplyForUserChatMessage } from './storyReplyValidate.service';
 
 const VOICE_MESSAGE_MAX_MS = 30 * 60 * 1000;
 
@@ -540,6 +542,7 @@ export class MessageService {
     mediaUrls: string[];
     thumbnailUrls?: string[];
     replyToId?: string;
+    storyReply?: unknown;
     chatType: ChatType;
     mentionIds?: string[];
     messageType?: MessageType;
@@ -604,6 +607,10 @@ export class MessageService {
       });
     }
 
+    if (replyToId && hasStoryReplyPayload(data.storyReply)) {
+      throw new ApiError(400, 'Cannot combine message reply with story reply');
+    }
+
     if (replyToId) {
       const replyToMessage = await prisma.chatMessage.findFirst({
         where: {
@@ -618,6 +625,15 @@ export class MessageService {
         throw new ApiError(404, 'Reply message not found');
       }
     }
+
+    if (hasStoryReplyPayload(data.storyReply) && chatContextType !== 'USER') {
+      throw new ApiError(400, 'Story reply is only allowed in user chats');
+    }
+
+    const storyReply =
+      chatContextType === 'USER' && hasStoryReplyPayload(data.storyReply)
+        ? await validateStoryReplyForUserChatMessage(data.storyReply, senderId, userChat!)
+        : null;
 
     const resolvedMessageType = resolveOutgoingChatMessageType({
       poll,
@@ -747,6 +763,7 @@ export class MessageService {
           mediaUrls,
           thumbnailUrls,
           replyToId,
+          storyReply: storyReply ?? undefined,
           chatType,
           mentionIds: mentionIds || [],
           state: MessageState.SENT,
@@ -938,6 +955,7 @@ export class MessageService {
     mediaUrls: string[];
     thumbnailUrls?: string[];
     replyToId?: string;
+    storyReply?: unknown;
     chatType: ChatType;
     mentionIds?: string[];
     messageType?: MessageType;

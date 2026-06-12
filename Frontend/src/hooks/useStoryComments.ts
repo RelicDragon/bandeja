@@ -502,23 +502,30 @@ export function useStoryComments({
       });
       lightHaptic();
 
+      const applyLikePatch = (patch: Partial<StoryCommentDto>) => {
+        setComments((prev) => patchCommentInList(prev, commentId, patch));
+        setExpandedReplies((s) => {
+          const next = { ...s };
+          for (const key of Object.keys(next)) {
+            next[key] = patchCommentInList(next[key]!, commentId, patch);
+          }
+          return next;
+        });
+      };
+
       try {
         const res = await storyEngagementApi.toggleCommentLike(commentId);
-        setComments((prev) =>
-          patchCommentInList(prev, commentId, {
-            viewerHasLiked: res.liked,
-            likeCount: res.likeCount,
-            segmentOwnerHasLiked: res.segmentOwnerHasLiked,
-          })
-        );
+        applyLikePatch({
+          viewerHasLiked: res.liked,
+          likeCount: res.likeCount,
+          segmentOwnerHasLiked: res.segmentOwnerHasLiked,
+        });
       } catch (err) {
-        setComments((prev) =>
-          patchCommentInList(prev, commentId, {
-            viewerHasLiked: prevLiked,
-            likeCount: prevCount,
-            segmentOwnerHasLiked: prevOwnerLiked,
-          })
-        );
+        applyLikePatch({
+          viewerHasLiked: prevLiked,
+          likeCount: prevCount,
+          segmentOwnerHasLiked: prevOwnerLiked,
+        });
         if (isOfflineError(err)) toast.error(t('stories.viewer.offline'));
       }
     },

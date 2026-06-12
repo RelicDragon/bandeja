@@ -1,7 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Drawer, DrawerContent } from '@/components/ui/Drawer';
-import { useVisualViewportInset } from '@/components/stories/create/hooks/useVisualViewportInset';
 import { useStoryComments } from '@/hooks/useStoryComments';
 import { useAuthStore } from '@/store/authStore';
 import type { StoryCommentDto } from '@/api/storyEngagement';
@@ -16,6 +15,7 @@ type StoryCommentsSheetProps = {
   onOpenChange: (open: boolean) => void;
   segmentKey: string;
   ownerUserId: string;
+  commentCount: number;
   onCommentCountChange: (count: number) => void;
   onViewerHasCommentedChange?: (commented: boolean) => void;
   onPrependComment?: (comment: StoryCommentDto, commentCount: number) => void;
@@ -26,12 +26,12 @@ export function StoryCommentsSheet({
   onOpenChange,
   segmentKey,
   ownerUserId,
+  commentCount,
   onCommentCountChange,
   onViewerHasCommentedChange,
 }: StoryCommentsSheetProps) {
   const { t } = useTranslation();
   const currentUserId = useAuthStore((s) => s.user?.id);
-  const keyboardInset = useVisualViewportInset(open);
   const [reportTarget, setReportTarget] = useState<StoryCommentDto | null>(null);
 
   const commentsState = useStoryComments({
@@ -72,8 +72,6 @@ export function StoryCommentsSheet({
     [deleteComment, discardPendingComment, t]
   );
 
-  const totalCount = comments.length;
-
   return (
     <>
       <Drawer open={open} onOpenChange={onOpenChange}>
@@ -85,7 +83,7 @@ export function StoryCommentsSheet({
           <div className="shrink-0 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
             <h2 id="story-comments-title" className="text-center text-base font-semibold">
               {t('stories.viewer.commentsTitle')}
-              {totalCount > 0 ? ` · ${formatStoryEngagementCount(totalCount)}` : ''}
+              {commentCount > 0 ? ` · ${formatStoryEngagementCount(commentCount)}` : ''}
             </h2>
           </div>
 
@@ -140,7 +138,6 @@ export function StoryCommentsSheet({
             replyTo={replyTo}
             onCancelReply={() => setReplyTo(null)}
             onSubmit={submitComment}
-            bottomInset={keyboardInset.bottom}
           />
         </DrawerContent>
       </Drawer>

@@ -108,4 +108,13 @@ describe('publishStoryPhotoDocument', () => {
     expect(payload).not.toHaveProperty('overlayStyle');
     expect('overlayStyle' in payload).toBe(false);
   });
+
+  it('passes uploaded dimensions through for viewer aspect parity', async () => {
+    await publishStoryPhotoDocument(makeDocument());
+
+    const payload = createItem.mock.calls[0]![0] as CreateStoryItemPayload;
+    expect(payload.width).toBe(1080);
+    expect(payload.height).toBe(1920);
+    expect(prepareDocumentForExport).toHaveBeenCalledBefore(drawScene);
+  });
 });

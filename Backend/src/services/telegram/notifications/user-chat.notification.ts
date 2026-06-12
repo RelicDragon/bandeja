@@ -17,10 +17,10 @@ export async function sendUserChatNotification(
   userChat: any,
   sender: any
 ) {
-  const senderName = formatUserName(sender);
-  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
-
   const recipient = userChat.user1Id === sender.id ? userChat.user2 : userChat.user1;
+  const senderName = formatUserName(sender);
+  const lang = (recipient?.language ?? 'en').split('-')[0].toLowerCase();
+  const messageContent = formatChatNotificationMessageBody(message, lang) || '[Media]';
 
   if (!recipient || recipient.id === sender.id) return;
   const allowed = await NotificationPreferenceService.doesUserAllow(recipient.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_DIRECT_MESSAGES);

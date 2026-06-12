@@ -29,6 +29,12 @@ export function parseMessagePreview(preview: string | null | undefined, t: TFunc
             : t('chat.videoMessage', 'Video');
     }
 
+    if (preview.startsWith('[TYPE:STORY_REPLY]')) {
+        const text = preview.slice('[TYPE:STORY_REPLY]'.length);
+        const label = t('chat.storyReply.toYourStory', { defaultValue: 'Replied to your story' });
+        return text && text !== '…' ? `${label}: ${text}` : label;
+    }
+
     if (preview.startsWith('[TYPE:POLL]')) {
         const question = preview.substring(11);
         return `${t('chat.poll.poll')}: ${question}`;

@@ -2,6 +2,22 @@ import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
 import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 
+function storyReplyEqual(
+  a: ChatMessage['storyReply'],
+  b: ChatMessage['storyReply']
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return a === b;
+  return (
+    a.sourceType === b.sourceType &&
+    a.sourceId === b.sourceId &&
+    a.ownerUserId === b.ownerUserId &&
+    a.thumbnailUrl === b.thumbnailUrl &&
+    a.mediaUrl === b.mediaUrl &&
+    a.mediaType === b.mediaType
+  );
+}
+
 function reactionsEqual(a: ChatMessage['reactions'], b: ChatMessage['reactions']): boolean {
   if (a === b) return true;
   if (a.length !== b.length) return false;
@@ -21,6 +37,7 @@ function messageContentEqual(a: ChatMessage, b: ChatMessage): boolean {
   if (a.messageType !== b.messageType) return false;
   if (!reactionsEqual(a.reactions, b.reactions)) return false;
   if (a.replyToId !== b.replyToId) return false;
+  if (!storyReplyEqual(a.storyReply, b.storyReply)) return false;
   if (a.poll !== b.poll) return false;
   const aStatus = (a as ChatMessageWithStatus)._status;
   const bStatus = (b as ChatMessageWithStatus)._status;

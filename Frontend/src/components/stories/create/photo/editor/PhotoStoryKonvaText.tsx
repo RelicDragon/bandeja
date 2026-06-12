@@ -3,6 +3,7 @@ import { Group, Image as KonvaImage, Rect } from 'react-konva';
 import type Konva from 'konva';
 import type { TextNode } from '../types';
 import { renderTextNodeBitmap } from '../utils/renderTextNodeBitmap';
+import { commitLayerDrag } from '../utils/transform';
 
 const MIN_HIT_PX = 48;
 
@@ -17,6 +18,7 @@ type PhotoStoryKonvaTextProps = {
   onSelect: () => void;
   onGestureStart: () => void;
   onGestureEnd: () => void;
+  onDragMove: (x: number, y: number) => void;
   onDragEnd: (x: number, y: number) => void;
 };
 
@@ -30,6 +32,7 @@ export function PhotoStoryKonvaText({
   onSelect,
   onGestureStart,
   onGestureEnd,
+  onDragMove,
   onDragEnd,
 }: PhotoStoryKonvaTextProps) {
   const bitmap = useMemo(
@@ -61,8 +64,13 @@ export function PhotoStoryKonvaText({
       listening={interactive}
       draggable={interactive && isSelected}
       onDragStart={() => onGestureStart()}
+      onDragMove={(e) => {
+        const next = commitLayerDrag(node.transform, e.target.x(), e.target.y(), e.target);
+        onDragMove(next.x, next.y);
+      }}
       onDragEnd={(e) => {
-        onDragEnd(e.target.x(), e.target.y());
+        const next = commitLayerDrag(node.transform, e.target.x(), e.target.y(), e.target);
+        onDragEnd(next.x, next.y);
         onGestureEnd();
       }}
     >

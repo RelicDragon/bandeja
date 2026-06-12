@@ -126,6 +126,9 @@
       "dmPlaceholder": "Enviar mensaje…",
       "sendDm": "Enviar mensaje",
       "dmFailed": "No se pudo enviar el mensaje",
+      "storyUnavailable": "La historia ya no está disponible",
+      "storyExpired": "Esta historia ya no está disponible",
+      "storyForbidden": "No puedes responder a esta historia",
       "share": "Compartir",
       "shareTitle": "Compartir perfil"
     },

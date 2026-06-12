@@ -1,5 +1,23 @@
 import { PHOTO_TEXT_FONT_PX, PHOTO_TEXT_MAX_WIDTH_PX } from '../constants';
 import type { TextAlignment, TextNode, TextStylePresetId } from '../types';
+import {
+  TEXT_BLACK_BOX_BG,
+  TEXT_BLACK_BOX_PAD_X_RATIO,
+  TEXT_BLACK_BOX_PAD_Y_RATIO,
+  TEXT_BLACK_BOX_RADIUS_RATIO,
+  TEXT_CLASSIC_FILL,
+  TEXT_CLASSIC_SHADOW_BLUR_RATIO,
+  TEXT_CLASSIC_SHADOW_COLOR,
+  TEXT_CLASSIC_SHADOW_OFFSET_Y_RATIO,
+  TEXT_GRADIENT_STOPS,
+  TEXT_NEON_FILL,
+  TEXT_NEON_SHADOW_BLUR_RATIO,
+  TEXT_NEON_SHADOW_COLOR,
+  TEXT_OUTLINE_FILL,
+  TEXT_OUTLINE_STROKE_COLOR,
+  canvasFont,
+  outlineStrokeWidthPx,
+} from './textStyleMetrics';
 
 export { PHOTO_TEXT_FONT_PX as TEXT_FONT_PX };
 
@@ -18,6 +36,53 @@ function canvasTextLineHeight(fontSize: number): number {
   return fontSize * 1.25;
 }
 
+type IntlSegmenter = new (
+  loc?: string,
+  opts?: { granularity?: string }
+) => { segment: (s: string) => Iterable<{ segment: string }> };
+
+function splitGraphemesFallback(word: string): string[] {
+  const out: string[] = [];
+  for (let i = 0; i < word.length; ) {
+    const code = word.charCodeAt(i);
+    if (code >= 0xd800 && code <= 0xdbff && i + 1 < word.length) {
+      const next = word.charCodeAt(i + 1);
+      if (next >= 0xdc00 && next <= 0xdfff) {
+        out.push(word.slice(i, i + 2));
+        i += 2;
+        continue;
+      }
+    }
+    out.push(word[i]!);
+    i += 1;
+  }
+  return out;
+}
+
+function splitGraphemes(word: string): string[] {
+  const Segmenter = (Intl as unknown as { Segmenter?: IntlSegmenter }).Segmenter;
+  if (typeof Segmenter === 'function') {
+    return Array.from(new Segmenter(undefined, { granularity: 'grapheme' }).segment(word), (s) => s.segment);
+  }
+  return splitGraphemesFallback(word);
+}
+
+/** Greedy grapheme fill — same break points as CSS `overflow-wrap: break-word` in the edit overlay. */
+function breakLongWord(ctx: TextMeasureCtx, word: string, maxWidth: number): string[] {
+  const chunks: string[] = [];
+  let current = '';
+  for (const grapheme of splitGraphemes(word)) {
+    const candidate = current + grapheme;
+    if (!current || ctx.measureText(candidate).width <= maxWidth) current = candidate;
+    else {
+      chunks.push(current);
+      current = grapheme;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks;
+}
+
 function wrapParagraph(ctx: TextMeasureCtx, paragraph: string, maxWidth: number): CanvasTextLine[] {
   if (!paragraph) return [{ text: '', width: 0 }];
   const words = paragraph.split(/\s+/);
@@ -25,10 +90,22 @@ function wrapParagraph(ctx: TextMeasureCtx, paragraph: string, maxWidth: number)
   let current = '';
   for (const word of words) {
     const candidate = current ? `${current} ${word}` : word;
-    if (ctx.measureText(candidate).width <= maxWidth || !current) current = candidate;
-    else {
+    if (ctx.measureText(candidate).width <= maxWidth) {
+      current = candidate;
+      continue;
+    }
+    if (current) {
       lines.push({ text: current, width: ctx.measureText(current).width });
+      current = '';
+    }
+    if (ctx.measureText(word).width <= maxWidth) {
       current = word;
+      continue;
+    }
+    const chunks = breakLongWord(ctx, word, maxWidth);
+    current = chunks.pop() ?? '';
+    for (const chunk of chunks) {
+      lines.push({ text: chunk, width: ctx.measureText(chunk).width });
     }
   }
   if (current) lines.push({ text: current, width: ctx.measureText(current).width });
@@ -46,7 +123,7 @@ export function measureTextNodeLayout(
     const lineHeight = PHOTO_TEXT_FONT_PX * 1.25;
     return { lines: [{ text: '', width: 0 }], width: 0, height: lineHeight, lineHeight };
   }
-  ctx.font = `bold ${PHOTO_TEXT_FONT_PX}px system-ui, -apple-system, sans-serif`;
+  ctx.font = canvasFont(PHOTO_TEXT_FONT_PX);
   return layoutCanvasText(ctx, displayText, PHOTO_TEXT_FONT_PX, maxWidth);
 }
 
@@ -57,16 +134,16 @@ export function textNodeLocalBounds(
   fontSize = PHOTO_TEXT_FONT_PX
 ): { width: number; height: number } {
   if (presetId === 'blackBox') {
-    const padX = fontSize * 0.45;
-    const padY = fontSize * 0.35;
+    const padX = fontSize * TEXT_BLACK_BOX_PAD_X_RATIO;
+    const padY = fontSize * TEXT_BLACK_BOX_PAD_Y_RATIO;
     return { width: layout.width + padX * 2, height: layout.height + padY * 2 };
   }
   if (presetId === 'neon') {
-    const pad = Math.ceil(fontSize * 0.35) + 6;
+    const pad = Math.ceil(fontSize * TEXT_NEON_SHADOW_BLUR_RATIO) + 6;
     return { width: layout.width + pad * 2, height: layout.height + pad * 2 };
   }
   if (presetId === 'outline') {
-    const stroke = Math.max(2, fontSize * 0.04);
+    const stroke = outlineStrokeWidthPx(fontSize);
     const pad = stroke + 4;
     return { width: layout.width + pad * 2, height: layout.height + pad * 2 };
   }
@@ -101,25 +178,25 @@ export function applyCanvasTextStyle(
   fontSize: number,
   align: TextAlignment
 ): void {
-  ctx.font = `bold ${fontSize}px system-ui, -apple-system, sans-serif`;
+  ctx.font = canvasFont(fontSize);
   ctx.textAlign = align;
   ctx.textBaseline = 'middle';
   switch (presetId) {
     case 'outline':
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
-      ctx.lineWidth = Math.max(2, fontSize * 0.04);
+      ctx.fillStyle = TEXT_OUTLINE_FILL;
+      ctx.strokeStyle = TEXT_OUTLINE_STROKE_COLOR;
+      ctx.lineWidth = outlineStrokeWidthPx(fontSize);
       break;
     case 'neon':
-      ctx.fillStyle = '#67e8f9';
-      ctx.shadowColor = 'rgba(34,211,238,0.95)';
-      ctx.shadowBlur = fontSize * 0.35;
+      ctx.fillStyle = TEXT_NEON_FILL;
+      ctx.shadowColor = TEXT_NEON_SHADOW_COLOR;
+      ctx.shadowBlur = fontSize * TEXT_NEON_SHADOW_BLUR_RATIO;
       break;
     default:
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = 'rgba(0,0,0,0.55)';
-      ctx.shadowBlur = fontSize * 0.15;
-      ctx.shadowOffsetY = fontSize * 0.06;
+      ctx.fillStyle = TEXT_CLASSIC_FILL;
+      ctx.shadowColor = TEXT_CLASSIC_SHADOW_COLOR;
+      ctx.shadowBlur = fontSize * TEXT_CLASSIC_SHADOW_BLUR_RATIO;
+      ctx.shadowOffsetY = fontSize * TEXT_CLASSIC_SHADOW_OFFSET_Y_RATIO;
       break;
   }
 }
@@ -142,9 +219,9 @@ function drawTextLine(
   if (presetId === 'gradient') {
     const halfW = Math.max(metrics.width / 2, fontSize);
     const grad = ctx.createLinearGradient(drawX - halfW, y, drawX + halfW, y);
-    grad.addColorStop(0, '#ec4899');
-    grad.addColorStop(0.5, '#a855f7');
-    grad.addColorStop(1, '#38bdf8');
+    grad.addColorStop(0, TEXT_GRADIENT_STOPS[0]);
+    grad.addColorStop(0.5, TEXT_GRADIENT_STOPS[1]);
+    grad.addColorStop(1, TEXT_GRADIENT_STOPS[2]);
     ctx.fillStyle = grad;
     ctx.fillText(line, drawX, y);
   } else if (presetId === 'outline') {
@@ -173,13 +250,13 @@ export function drawTextNode(ctx: CanvasRenderingContext2D, node: TextNode): voi
   const startY = -layout.height / 2 + layout.lineHeight / 2;
 
   if (style.id === 'blackBox' && layout.lines.some((l) => l.text)) {
-    const padX = fontSize * 0.45;
-    const padY = fontSize * 0.35;
+    const padX = fontSize * TEXT_BLACK_BOX_PAD_X_RATIO;
+    const padY = fontSize * TEXT_BLACK_BOX_PAD_Y_RATIO;
     const boxW = layout.width + padX * 2;
     const boxH = layout.height + padY * 2;
-    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    ctx.fillStyle = TEXT_BLACK_BOX_BG;
     ctx.beginPath();
-    ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, 12);
+    ctx.roundRect(-boxW / 2, -boxH / 2, boxW, boxH, fontSize * TEXT_BLACK_BOX_RADIUS_RATIO);
     ctx.fill();
   }
 

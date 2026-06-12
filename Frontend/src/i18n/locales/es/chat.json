@@ -1,5 +1,10 @@
 {
   "chat": {
+    "storyReply": {
+      "toYourStory": "Respondió a tu historia",
+      "youToTheirStory": "Respondiste a su historia",
+      "toTheirStory": "Respondió a una historia"
+    },
     "noMessages": "Aún no hay mensajes",
     "offlineBanner": "Sin conexión — mostrando mensajes guardados",
     "mutationsSyncFailed": "Algunas acciones no se sincronizaron. Toca para reintentar.",

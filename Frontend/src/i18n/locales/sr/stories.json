@@ -127,6 +127,9 @@
       "dmPlaceholder": "Pošalji poruku…",
       "sendDm": "Pošalji poruku",
       "dmFailed": "Poruka nije poslata",
+      "storyUnavailable": "Priča više nije dostupna",
+      "storyExpired": "Ova priča više nije dostupna",
+      "storyForbidden": "Ne možete odgovoriti na ovu priču",
       "share": "Podeli",
       "shareTitle": "Podeli profil"
     },

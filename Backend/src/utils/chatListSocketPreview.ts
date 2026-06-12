@@ -1,5 +1,6 @@
 import { ChatContextType, ChatType } from '@prisma/client';
 import { extractPreviewFromMessage } from '../services/chat/lastMessagePreview.service';
+import { hasStoryReplyPayload } from '../services/chat/storyReplySanitize';
 
 function pick<T extends Record<string, unknown>>(obj: T, keys: (keyof T)[]): Record<string, unknown> {
   const out: Record<string, unknown> = {};
@@ -38,16 +39,18 @@ export function lastMessageForUnreadListSocket(message: unknown): Record<string,
 
   const content = m.content ?? null;
   const mediaUrls = Array.isArray(m.mediaUrls) ? m.mediaUrls : [];
+  const previewInput = {
+    content: typeof content === 'string' ? content : null,
+    mediaUrls: mediaUrls as string[],
+    pollId: (m.pollId as string | null) ?? null,
+    messageType: m.messageType as string | undefined,
+    audioDurationMs: (m.audioDurationMs as number | null) ?? null,
+    videoDurationMs: (m.videoDurationMs as number | null) ?? null,
+    storyReply: m.storyReply,
+  };
   const preview =
-    ct === ChatContextType.GAME
-      ? extractPreviewFromMessage({
-          content: typeof content === 'string' ? content : null,
-          mediaUrls: mediaUrls as string[],
-          pollId: (m.pollId as string | null) ?? null,
-          messageType: m.messageType as string | undefined,
-          audioDurationMs: (m.audioDurationMs as number | null) ?? null,
-          videoDurationMs: (m.videoDurationMs as number | null) ?? null,
-        })
+    ct === ChatContextType.GAME || hasStoryReplyPayload(m.storyReply)
+      ? extractPreviewFromMessage(previewInput)
       : null;
 
   return {

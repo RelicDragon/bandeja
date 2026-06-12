@@ -9,6 +9,7 @@ import type {
 import { normalizeChatType } from '@/utils/chatType';
 import { withChatSyncRetry, withMessageCreateRetry } from '@/services/chat/chatHttpRetry';
 import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
+import type { StorySourceType } from './stories';
 
 export type { ChatType };
 export type {
@@ -107,6 +108,15 @@ function singleFlight<K, T>(map: Map<K, Promise<T>>, key: K, fn: () => Promise<T
   return promise;
 }
 
+export interface StoryReplyInfo {
+  sourceType: StorySourceType;
+  sourceId: string;
+  ownerUserId: string;
+  thumbnailUrl?: string;
+  mediaUrl?: string;
+  mediaType?: 'IMAGE' | 'VIDEO';
+}
+
 export interface ChatMessage {
   id: string;
   chatContextType: ChatContextType;
@@ -129,6 +139,7 @@ export interface ChatMessage {
   editedAt?: string | null;
   deletedAt?: string | null;
   replyToId?: string;
+  storyReply?: StoryReplyInfo | null;
   replyTo?: {
     id: string;
     content: string;
@@ -236,6 +247,7 @@ export interface CreateMessageRequest {
   mediaUrls?: string[];
   thumbnailUrls?: string[];
   replyToId?: string;
+  storyReply?: StoryReplyInfo;
   chatType?: ChatType;
   mentionIds?: string[];
   messageType?: MessageType;

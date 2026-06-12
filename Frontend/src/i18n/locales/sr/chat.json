@@ -1,5 +1,10 @@
 {
   "chat": {
+    "storyReply": {
+      "toYourStory": "Odgovor na vašu priču",
+      "youToTheirStory": "Odgovorili ste na priču",
+      "toTheirStory": "Odgovor na priču"
+    },
     "noMessages": "Još nema poruka",
     "offlineBanner": "Nema veze — prikazujem sačuvane poruke",
     "mutationsSyncFailed": "Neke radnje nisu sinhronizovane. Dodirnite za ponovni pokušaj.",

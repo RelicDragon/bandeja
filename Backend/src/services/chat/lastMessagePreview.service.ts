@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
 import { ChatContextType, ChatType } from '@prisma/client';
+import { formatStoryReplyPreview, hasStoryReplyPayload } from './storyReplySanitize';
 
 const MAX_PREVIEW_LENGTH = 200;
 
@@ -10,6 +11,7 @@ interface MessageForPreview {
   messageType?: string;
   audioDurationMs?: number | null;
   videoDurationMs?: number | null;
+  storyReply?: unknown;
 }
 
 function formatVoicePreviewLabel(ms: number): string {
@@ -20,6 +22,10 @@ function formatVoicePreviewLabel(ms: number): string {
 }
 
 export function extractPreviewFromMessage(message: MessageForPreview): string {
+  if (hasStoryReplyPayload(message.storyReply)) {
+    return formatStoryReplyPreview(message.content);
+  }
+
   if (message.messageType === 'VOICE' && message.audioDurationMs != null) {
     return `[TYPE:VOICE]${formatVoicePreviewLabel(message.audioDurationMs)}`;
   }
@@ -82,6 +88,7 @@ export async function updateLastMessagePreview(
       messageType: true,
       audioDurationMs: true,
       videoDurationMs: true,
+      storyReply: true,
       senderId: true,
     },
   });

@@ -129,6 +129,9 @@
       "dmPlaceholder": "Send message…",
       "sendDm": "Send message",
       "dmFailed": "Could not send message",
+      "storyUnavailable": "Story is no longer available",
+      "storyExpired": "This story is no longer available",
+      "storyForbidden": "You cannot reply to this story",
       "share": "Share",
       "shareTitle": "Share profile"
     }

@@ -6,6 +6,8 @@ import { ChatMessage, ChatMessageWithStatus, chatApi } from '@/api/chat';
 import { useAuthStore } from '@/store/authStore';
 import { UnifiedMessageMenu } from '../UnifiedMessageMenu';
 import { ReplyPreview } from '../ReplyPreview';
+import { StoryReplyPreview } from './StoryReplyPreview';
+import { parseStoryReplyInfo } from '@/api/parseStoryReplyInfo';
 import { PlayerCardBottomSheet } from '../PlayerCardBottomSheet';
 import { formatSystemMessageForDisplay, SystemMessageType } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from '../FullscreenImageViewer';
@@ -83,6 +85,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const { isSending, isFailed, isOffline, optimisticId } = sendState;
   const isSendingSlow = useOptimisticSendSlowHint(isSending, currentMessage.createdAt);
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === currentMessage.id;
+  const storyReply = parseStoryReplyInfo(currentMessage.storyReply);
 
   const displaySettings = user ? resolveDisplaySettings(user) : null;
   const formatMessageTime = useCallback(
@@ -416,6 +419,17 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                     replyTo={currentMessage.replyTo}
                     onScrollToMessage={onScrollToMessage}
                     className="-mb-1"
+                  />
+                )}
+
+                {storyReply && !currentMessage.replyTo && (
+                  <StoryReplyPreview
+                    storyReply={storyReply}
+                    currentUserId={user?.id}
+                    isOwnMessage={isOwnMessage}
+                    onImageClick={handleImageClick}
+                    onVideoOpen={handleVideoOpen}
+                    className={`mb-1 flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}
                   />
                 )}
 

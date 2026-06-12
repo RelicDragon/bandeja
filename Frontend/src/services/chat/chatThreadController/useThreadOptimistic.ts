@@ -10,6 +10,7 @@ import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, cancelSend, resend } from '@/services/chatSendService';
 import { normalizeChatType } from '@/utils/chatType';
 import { parseSystemMessage } from '@/utils/systemMessages';
+import { STORY_DM_SENT_EVENT } from '@/services/chat/storyDmApply';
 import { usePlayersStore } from '@/store/playersStore';
 import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
 import { reconcileOptimisticMessages } from '@/services/chat/optimisticReconcile';
@@ -394,15 +395,32 @@ export function useThreadOptimistic({
         return next;
       });
     };
+    const onStoryDmSent = (ev: Event) => {
+      const d = (
+        ev as CustomEvent<{ message?: ChatMessage; contextType?: string; contextId?: string }>
+      ).detail;
+      if (!d?.message || d.contextType !== contextType || d.contextId !== id) return;
+      handleNewMessage(d.message);
+    };
     window.addEventListener(CHAT_OUTBOX_SUCCESS_EVENT, onSuccess);
     window.addEventListener(CHAT_OUTBOX_FAILED_EVENT, onFail);
     window.addEventListener(CHAT_OUTBOX_REMOVED_EVENT, onRemoved);
+    window.addEventListener(STORY_DM_SENT_EVENT, onStoryDmSent);
     return () => {
       window.removeEventListener(CHAT_OUTBOX_SUCCESS_EVENT, onSuccess);
       window.removeEventListener(CHAT_OUTBOX_FAILED_EVENT, onFail);
       window.removeEventListener(CHAT_OUTBOX_REMOVED_EVENT, onRemoved);
+      window.removeEventListener(STORY_DM_SENT_EVENT, onStoryDmSent);
     };
-  }, [contextType, id, handleReplaceOptimisticWithServerMessage, handleMarkFailed, setMessages, messagesRef]);
+  }, [
+    contextType,
+    id,
+    handleNewMessage,
+    handleReplaceOptimisticWithServerMessage,
+    handleMarkFailed,
+    setMessages,
+    messagesRef,
+  ]);
 
   return {
     handleAddOptimisticMessage,
