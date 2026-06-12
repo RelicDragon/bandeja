@@ -88,15 +88,11 @@ export const GameSettings = ({
     isTraining ? 'createGame.gameNamePlaceholderTraining' :
     'createGame.gameNamePlaceholder'
   );
-  const commentsLabel = t(
-    isLeagueSeason ? 'createGame.commentsLeague' :
-    isTraining ? 'createGame.commentsTraining' :
-    'createGame.comments'
-  );
-  const commentsPlaceholder = t(
-    isLeagueSeason ? 'createGame.commentsPlaceholderLeague' :
-    isTraining ? 'createGame.commentsPlaceholderTraining' :
-    'createGame.commentsPlaceholder'
+  const descriptionLabel = t('createGame.description');
+  const descriptionPlaceholder = t(
+    isLeagueSeason ? 'createGame.descriptionPlaceholderLeague' :
+    isTraining ? 'createGame.descriptionPlaceholderTraining' :
+    'createGame.descriptionPlaceholder'
   );
 
   if (!canEdit) {
@@ -447,13 +443,13 @@ export const GameSettings = ({
         {(isEditMode || isClosingEditMode) && (
           <div className={`${(isEditMode || isClosingEditMode) && (!game?.description || game.description.trim() === '') ? (isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in') : ''}`}>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-              {commentsLabel}
+              {descriptionLabel}
             </label>
             {(isEditMode || isClosingEditMode) ? (
               <textarea
                 value={editFormData.description}
                 onChange={(e) => onFormDataChange({description: e.target.value})}
-                placeholder={commentsPlaceholder}
+                placeholder={descriptionPlaceholder}
                 className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
                 rows={3}
               />

@@ -169,7 +169,7 @@ export const CourtModal = ({
                           name={court.name}
                           integrationName={court.integrationCourtName}
                           primaryClassName="font-medium"
-                          secondaryClassName={`text-xs mt-0.5 ${selectedId === court.id ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'}`}
+                          secondaryClassName={`text-xs ${selectedId === court.id ? 'text-white/70' : 'text-gray-500 dark:text-gray-400'}`}
                         />
                         {court.isIndoor && (
                           <span title="Indoor court">

@@ -11,13 +11,11 @@ interface WhenTabProps {
   selectedDate: Date;
   selectedTime: string;
   duration: number;
-  showPastTimes: boolean;
   showDatePicker: boolean;
   onDateChange: (date: Date) => void;
   onTimeChange: (time: string) => void;
   onDurationChange: (duration: number) => void;
   onShowDatePickerChange: (show: boolean) => void;
-  onShowPastTimesChange: (show: boolean) => void;
   generateTimeOptions: () => string[];
   generateTimeOptionsForDate: (date: Date) => string[];
   canAccommodateDuration: (time: string, duration: number) => boolean;
@@ -36,13 +34,11 @@ export const WhenTab = ({
   selectedDate,
   selectedTime,
   duration,
-  showPastTimes,
   showDatePicker,
   onDateChange,
   onTimeChange,
   onDurationChange,
   onShowDatePickerChange,
-  onShowPastTimesChange,
   generateTimeOptions,
   generateTimeOptionsForDate,
   canAccommodateDuration,
@@ -70,7 +66,6 @@ export const WhenTab = ({
         selectedDate={selectedDate}
         selectedTime={selectedTime}
         duration={duration}
-        showPastTimes={showPastTimes}
         showDatePicker={showDatePicker}
         selectedClub={clubId}
         club={clubs.find((c) => c.id === clubId)}
@@ -83,7 +78,6 @@ export const WhenTab = ({
         getDurationLabel={getDurationLabel}
         onDateSelect={onDateChange}
         onCalendarClick={() => onShowDatePickerChange(true)}
-        onToggleShowPastTimes={onShowPastTimesChange}
         onCloseDatePicker={() => onShowDatePickerChange(false)}
         onTimeSelect={onTimeChange}
         onDurationChange={onDurationChange}

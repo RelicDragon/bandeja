@@ -5,6 +5,7 @@ import { ClubModal } from '@/components/ClubModal';
 import { ClubAvatar } from '@/components/ClubAvatar';
 import { CourtModal } from '@/components/CourtModal';
 import { ToggleSwitch } from '@/components';
+import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 
 export interface WhereTabState {
   clubId: string;
@@ -25,6 +26,16 @@ export const WhereTab = ({ game, clubs, courts, state, onChange, isLoadingCourts
   const { t } = useTranslation();
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
+  const club = clubs.find((c) => c.id === state.clubId);
+  const court =
+    state.courtId && state.courtId !== 'notBooked'
+      ? courts.find((c) => c.id === state.courtId)
+      : game?.entityType === 'BAR' && courts.length === 1
+        ? courts[0]
+        : undefined;
+  const showHasBookedSwitch =
+    Boolean(state.courtId && state.courtId !== 'notBooked') &&
+    !courtHasActiveBookingIntegration(club, court);
 
   return (
     <div className="space-y-4">
@@ -73,7 +84,7 @@ export const WhereTab = ({ game, clubs, courts, state, onChange, isLoadingCourts
         </div>
       )}
 
-      {state.courtId && state.courtId !== 'notBooked' && (
+      {showHasBookedSwitch && (
         <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
             {game?.entityType === 'BAR' ? t('createGame.hasBookedHall') : t('createGame.hasBookedCourt')}

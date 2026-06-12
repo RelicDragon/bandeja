@@ -18,10 +18,10 @@ export function CourtDisplayName({
   const parts = resolveCourtNameParts(name, integrationName);
 
   return (
-    <span className={className}>
+    <span className={`inline-flex flex-wrap items-baseline gap-x-1.5 ${className}`.trim()}>
       <span className={primaryClassName}>{parts.name}</span>
       {parts.integrationName ? (
-        <span className={`block ${secondaryClassName}`}>{parts.integrationName}</span>
+        <span className={secondaryClassName}>{parts.integrationName}</span>
       ) : null}
     </span>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { gamesApi } from '@/api';
 import { Club, BookedCourtSlot } from '@/types';
 import { getClubTimezone, createDateFromClubTime } from './useGameTimeDuration';
@@ -37,7 +37,6 @@ export const useBookedCourts = ({
   const [loading, setLoading] = useState(false);
   const [isLoadingExternalSlots, setIsLoadingExternalSlots] = useState(false);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const refreshAttemptedRef = useRef<string | null>(null);
 
   const isBooktimeClub = club?.integrationType === 'BOOKTIME';
   const refreshEnabled =
@@ -47,6 +46,7 @@ export const useBookedCourts = ({
     refreshSnapshot,
     isRefreshingSnapshot,
     snapshotBanner,
+    liveApiLoading,
   } = useBooktimeSnapshotRefresh(refreshEnabled ? club : undefined, selectedDate, refreshEnabled);
 
   const startOfDay = useMemo(() => {
@@ -82,20 +82,16 @@ export const useBookedCourts = ({
       const externalLoading = response.isLoadingExternalSlots || false;
       setIsLoadingExternalSlots(externalLoading);
 
-      if (externalLoading && refreshEnabled) {
-        const attemptKey = `${clubId}:${selectedDate.toISOString()}`;
-        if (refreshAttemptedRef.current !== attemptKey) {
-          refreshAttemptedRef.current = attemptKey;
-          await refreshSnapshot({ force: true });
-          const retry = await gamesApi.getBookedCourts({
-            clubId,
-            startDate: startOfDay,
-            endDate: endOfDay,
-            courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
-          });
-          setBookedCourts(retry.data || []);
-          setIsLoadingExternalSlots(retry.isLoadingExternalSlots || false);
-        }
+      if (externalLoading && refreshEnabled && !liveApiLoading) {
+        await refreshSnapshot({ force: true });
+        const retry = await gamesApi.getBookedCourts({
+          clubId,
+          startDate: startOfDay,
+          endDate: endOfDay,
+          courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
+        });
+        setBookedCourts(retry.data || []);
+        setIsLoadingExternalSlots(retry.isLoadingExternalSlots || false);
       }
     } catch (error) {
       console.error('Failed to fetch booked courts:', error);
@@ -104,15 +100,19 @@ export const useBookedCourts = ({
     } finally {
       setLoading(false);
     }
-  }, [clubId, startOfDay, endOfDay, selectedCourt, refreshEnabled, refreshSnapshot, selectedDate]);
+  }, [
+    clubId,
+    startOfDay,
+    endOfDay,
+    selectedCourt,
+    refreshEnabled,
+    refreshSnapshot,
+    liveApiLoading,
+  ]);
 
   useEffect(() => {
     void fetchBookedCourts();
   }, [fetchBookedCourts]);
-
-  useEffect(() => {
-    refreshAttemptedRef.current = null;
-  }, [clubId, selectedDate, selectedCourt]);
 
   const bookedSlots = useMemo(() => {
     const slotsMap = new Map<string, BookedSlotInfo[]>();
@@ -217,7 +217,8 @@ export const useBookedCourts = ({
     return slots.some((slot) => slot.clubBooked || slot.holdBlocked);
   };
 
-  const externalSlotsLoading = isLoadingExternalSlots || isRefreshingSnapshot;
+  const externalSlotsLoading =
+    isRefreshingSnapshot || loading || (isLoadingExternalSlots && liveApiLoading);
 
   return {
     bookedSlots,

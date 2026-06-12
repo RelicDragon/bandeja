@@ -93,7 +93,6 @@ export const EditGameInfoModal = ({
       ? (new Date(game.endTime).getTime() - new Date(game.startTime).getTime()) / (1000 * 60 * 60)
       : 2
   );
-  const [whenShowPastTimes, setWhenShowPastTimes] = useState(false);
   const [whenShowDatePicker, setWhenShowDatePicker] = useState(false);
   const [disableWhenAutoAdjust, setDisableWhenAutoAdjust] = useState(true);
   const [modalCourts, setModalCourts] = useState<Court[]>(courts);
@@ -124,8 +123,6 @@ export const EditGameInfoModal = ({
     setSelectedTime: setHookTime,
     duration: hookDuration,
     setDuration: setHookDuration,
-    showPastTimes: hookShowPastTimes,
-    setShowPastTimes: setHookShowPastTimes,
     generateTimeOptions,
     generateTimeOptionsForDate,
     canAccommodateDuration,
@@ -136,7 +133,6 @@ export const EditGameInfoModal = ({
     clubs,
     selectedClub: where.clubId,
     initialDate: whenInitialValues.initialDate,
-    showPastTimes: false,
     disableAutoAdjust: disableWhenAutoAdjust,
   });
 
@@ -177,9 +173,8 @@ export const EditGameInfoModal = ({
       setWhenSelectedDate(hookDate);
       setWhenSelectedTime(hookTime);
       setWhenDuration(hookDuration);
-      setWhenShowPastTimes(hookShowPastTimes);
     }
-  }, [disableWhenAutoAdjust, hookDate, hookTime, hookDuration, hookShowPastTimes]);
+  }, [disableWhenAutoAdjust, hookDate, hookTime, hookDuration]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -412,7 +407,6 @@ export const EditGameInfoModal = ({
               selectedDate={whenSelectedDate}
               selectedTime={whenSelectedTime}
               duration={whenDuration}
-              showPastTimes={whenShowPastTimes}
               showDatePicker={whenShowDatePicker}
               onDateChange={(d) => {
                 setWhenSelectedDate(d);
@@ -427,10 +421,6 @@ export const EditGameInfoModal = ({
                 setHookDuration(d);
               }}
               onShowDatePickerChange={setWhenShowDatePicker}
-              onShowPastTimesChange={(v) => {
-                setWhenShowPastTimes(v);
-                setHookShowPastTimes(v);
-              }}
               generateTimeOptions={generateTimeOptions}
               generateTimeOptionsForDate={generateTimeOptionsForDate}
               canAccommodateDuration={canAccommodateDuration}

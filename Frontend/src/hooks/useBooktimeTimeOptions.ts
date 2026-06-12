@@ -4,6 +4,7 @@ import type { Club, Court } from '@/types';
 import { BooktimeClient } from '@/integrations/booktime/client';
 import { computeFreeSlotsForCourt, formatClubDateKey } from '@/integrations/booktime/slots';
 import { clubLocalDateString, clubLocalNowMinutes } from '@/utils/clubAdmin/scheduleTime';
+import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 
 type OptionsCache = Map<string, string[]>;
 
@@ -34,7 +35,6 @@ type UseBooktimeTimeOptionsParams = {
   selectedDate: Date;
   durationHours: number;
   selectedCourtId: string | null;
-  showPastTimes: boolean;
   enabled: boolean;
 };
 
@@ -44,18 +44,18 @@ export function useBooktimeTimeOptions({
   selectedDate,
   durationHours,
   selectedCourtId,
-  showPastTimes,
   enabled,
 }: UseBooktimeTimeOptionsParams) {
   const [cache, setCache] = useState<OptionsCache>(new Map());
   const [loading, setLoading] = useState(false);
+  const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(club?.id, enabled);
 
   const durationMinutes = Math.round(durationHours * 60);
   const companyId = club ? booktimeCompanyId(club) : null;
 
   const loadDate = useCallback(
     async (date: Date) => {
-      if (!enabled || !club || !companyId) return;
+      if (!enabled || !liveApiEnabled || !club || !companyId) return;
       const dateKey = formatClubDateKey(date, club);
       setLoading(true);
       try {
@@ -108,7 +108,7 @@ export function useBooktimeTimeOptions({
           }
           raw = [...freeStarts].sort((a, b) => parseMinutes(a) - parseMinutes(b));
         }
-        const options = showPastTimes ? raw : filterPastSlots(raw, dateKey, club);
+        const options = filterPastSlots(raw, dateKey, club);
 
         setCache((prev) => {
           const next = new Map(prev);
@@ -126,7 +126,7 @@ export function useBooktimeTimeOptions({
         setLoading(false);
       }
     },
-    [club, companyId, courts, durationMinutes, enabled, selectedCourtId, showPastTimes]
+    [club, companyId, courts, durationMinutes, enabled, liveApiEnabled, selectedCourtId]
   );
 
   useEffect(() => {
@@ -209,7 +209,7 @@ export function useBooktimeTimeOptions({
     []
   );
 
-  const active = enabled && !!club && !!companyId;
+  const active = enabled && liveApiEnabled && !!club && !!companyId;
 
   return useMemo(
     () => ({

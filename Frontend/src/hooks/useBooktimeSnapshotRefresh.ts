@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { booktimeApi } from '@/api/booktime';
 import type { Club } from '@/types';
 import { BooktimeClient } from '@/integrations/booktime/client';
+import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import {
   formatClubDateKey,
   isSnapshotStale,
@@ -46,6 +47,10 @@ export function useBooktimeSnapshotRefresh(
   const [banner, setBanner] = useState<BooktimeSnapshotBanner>(null);
   const [lastFetchedAt, setLastFetchedAt] = useState<string | null>(null);
   const inFlightRef = useRef<Promise<boolean> | null>(null);
+  const { apiEnabled: liveApiEnabled, loading: liveApiLoading } = useBooktimeLiveApiEnabled(
+    club?.id,
+    enabled
+  );
 
   const refreshSnapshot = useCallback(
     async (options: RefreshOptions = {}): Promise<boolean> => {
@@ -70,6 +75,11 @@ export function useBooktimeSnapshotRefresh(
           if (!options.force && existingFetchedAt && !isSnapshotStale(existingFetchedAt)) {
             setBanner(null);
             return true;
+          }
+
+          if (!liveApiEnabled) {
+            setBanner(existingFetchedAt ? 'scoutPoolEmpty' : 'noSyncToday');
+            return false;
           }
 
           const courts = await fetchDaySnapshotCourts(club, companyId, selectedDate, dateKey);
@@ -101,7 +111,7 @@ export function useBooktimeSnapshotRefresh(
       inFlightRef.current = run;
       return run;
     },
-    [club, enabled, selectedDate]
+    [club, enabled, liveApiEnabled, selectedDate]
   );
 
   return {
@@ -109,5 +119,7 @@ export function useBooktimeSnapshotRefresh(
     isRefreshingSnapshot: isRefreshing,
     snapshotBanner: banner,
     lastFetchedAt,
+    liveApiEnabled,
+    liveApiLoading,
   };
 }

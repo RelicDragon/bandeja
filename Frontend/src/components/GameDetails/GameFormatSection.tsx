@@ -309,6 +309,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
           readOnly={!canEdit}
           formatSection={templateFlow.isCustom ? renderFormatCard(true) : undefined}
           genderSection={genderSection}
+          genderTeams={teamsForCard?.genderTeams}
           onOpenFormatWizard={handleOpenWizard}
           formatWizardCustomizeLabel={templateFlow.formatWizardCustomizeLabel}
         />

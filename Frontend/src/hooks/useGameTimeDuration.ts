@@ -6,7 +6,6 @@ interface UseGameTimeDurationProps {
   clubs: Club[];
   selectedClub: string;
   initialDate?: Date;
-  showPastTimes?: boolean;
   disableAutoAdjust?: boolean;
 }
 
@@ -153,7 +152,6 @@ export const useGameTimeDuration = ({
   clubs,
   selectedClub,
   initialDate,
-  showPastTimes: initialShowPastTimes = false,
   disableAutoAdjust = false,
 }: UseGameTimeDurationProps) => {
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
@@ -161,7 +159,6 @@ export const useGameTimeDuration = ({
   });
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [duration, setDuration] = useState<number>(2);
-  const [showPastTimes, setShowPastTimes] = useState<boolean>(initialShowPastTimes);
 
   const generateTimeOptionsForDate = useCallback((date: Date) => {
     const times = [];
@@ -192,7 +189,7 @@ export const useGameTimeDuration = ({
       for (let minute = 0; minute < 60; minute += step) {
         const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
         
-        if (isToday && !showPastTimes) {
+        if (isToday) {
           const nowTime = nowInClubTz.hour * 60 + nowInClubTz.minute;
           const slotTime = hour * 60 + minute;
           
@@ -205,7 +202,7 @@ export const useGameTimeDuration = ({
       }
     }
     return times;
-  }, [clubs, selectedClub, showPastTimes]);
+  }, [clubs, selectedClub]);
 
   const generateTimeOptions = useCallback(() => {
     return generateTimeOptionsForDate(selectedDate);
@@ -284,8 +281,6 @@ export const useGameTimeDuration = ({
     setSelectedTime,
     duration,
     setDuration,
-    showPastTimes,
-    setShowPastTimes,
     generateTimeOptions,
     generateTimeOptionsForDate,
     canAccommodateDuration,

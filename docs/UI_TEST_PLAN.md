@@ -359,6 +359,9 @@ Frontend/e2e/
 | C-12 | Rating vs social game | Toggle affects rating | Flag persisted on create |
 | C-40 | Non-default match format | Padel → singles (1v1) or tennis → doubles (2v2) in participants setup | Format card summary shows Singles/Doubles; expanded details show Teams format row with 1v1/2v2 hint |
 | C-41 | Padel singles templates | Create padel game → participants 1v1 → open format templates | Match tab: Best-of-3 (Official) + Single set; Social tab: Singles Americano (24 pts) when roster ≥4 |
+| C-42 | What game collapsed | Create GAME with template picker → default load | “What game” section collapsed; only selected template card visible; gender + rating badges stay in section header row; setup-format button and inline pickers hidden |
+| C-44 | What game collapse scroll | Expand section → tap collapse chevron | Section scrolls to top; header stays visible |
+| C-43 | What game expand/collapse | Tap chevron or collapsed card | All template cards animate open; collapse hides non-selected; selected card stays on top |
 
 ### 8.3 Core fields
 
@@ -368,7 +371,7 @@ Frontend/e2e/
 | C-13a | Club booking connect banner | Open club detail for BOOKTIME club, not connected | Connect banner shown |
 | C-13b | Club booking OTP connect | Phone + OTP (existing account) | Connected chip; GET auth has no tokens |
 | C-13c | Club booking connect hidden | BOOKTIME club already connected | No connect banner |
-| C-13d | Club booking cold-start refresh | Open create-game or club detail for BOOKTIME club with stale/missing snapshot | "Updating club availability…" then grid shows external busy |
+| C-13d | Club booking cold-start refresh | Open create-game or club detail for BOOKTIME club with stale/missing snapshot | Brief "Updating club availability…" while snapshot refresh runs; banner hides after booked-courts returns (warning banner if live refresh unavailable) |
 | C-13e | Club booking no sync banner | Unconnected user, empty scout pool, no snapshot today | "No sync yet today" or scout-pool degraded banner |
 | C-13f | Club booking availability sheet | Open BOOKTIME club detail with mapped courts | Free slot grid per court; duration toggle matches club API `bookingDurations` |
 | C-13t | Integrated club duration options | Create GAME or TOURNAMENT at BOOKTIME club | Duration buttons match club API (e.g. 1h/2h only); tournament extras (3h/4h/6h) hidden when unsupported |
@@ -385,8 +388,11 @@ Frontend/e2e/
 | C-13q | Club booking signup connect | ConnectClubSheet → new user signup + OTP | Account created; connected chip shown |
 | C-13r | Club booking create-game grid refresh | Open create-game for BOOKTIME club with stale snapshot | Banner then red external cells after snapshot PUT |
 | C-13s | Club booking scout pool degraded | Unconnected user, empty scout pool | "Live availability unavailable" banner on create-game/club detail |
-| C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller secondary line shows BookTime integration name |
+| C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
+| C-13w | Create-game scheduling layout | Open create-game, pick club | Location shows club + call/site links; Game start card order is date → duration → court → time grid |
+| C-13x | Integrated court hides booked toggle | Create GAME at BOOKTIME club, pick mapped court | "I have booked court" switch hidden; unmapped court or non-integrated club still shows it |
+| C-13x | Create-game availability banner clears | Open create-game for BOOKTIME club on localhost/stale snapshot; wait for booked-courts | Spinner does not persist after time grid renders; 10s polling does not re-show infinite spinner |
 | C-14 | Court not booked | Select "not booked" | Allowed |
 | C-15 | Court booked | Pick court | Overlap warning if conflict |
 | C-16 | Mark court booked modal | Confirm booking | Court marked |
@@ -394,7 +400,7 @@ Frontend/e2e/
 | C-18 | Level range slider | Adjust range | Min ≤ max |
 | C-19 | Max participants | Change count | Roster options update |
 | C-20 | Fixed teams toggle | Enable for doubles | Team setup shown |
-| C-21 | Game name & comments | Fill text | Saved on submit |
+| C-21 | Game name & description | Fill name and description in one section | Saved on submit |
 | C-22 | Price section | Set price type/currency/total | Saved correctly |
 | C-23 | Avatar upload | Upload game image | Preview shown |
 | C-24 | Invite players | Open player list → select | Invites sent on create |
@@ -402,6 +408,9 @@ Frontend/e2e/
 | C-26 | Multiple courts | Enable multi-court | Court count selector |
 | C-27 | Submit create | Complete valid form | Game created → details page |
 | C-28 | Validation errors | Submit incomplete | Errors shown, no create |
+| C-29 | Floating summary bar | Fill club/time/etc., scroll down past those sections | Animated chip bar appears under header summarizing scrolled-out values (sport, roster, format, club, date·time·duration·court, participants/level, name, price) |
+| C-30 | Summary chip scroll-back | Tap a chip in the summary bar | Page smooth-scrolls back to that section; chip disappears once section is visible |
+| C-31 | Summary bar empty values | Scroll past sections with nothing entered (no name, price not known) | No chip shown for empty sections; bar hidden when no chips |
 
 ### 8.4 Create league (`/create-league`)
 

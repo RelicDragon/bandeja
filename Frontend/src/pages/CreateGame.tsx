@@ -1,8 +1,9 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, createRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameSection, CommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, MultipleCourtsSelector, AvatarUpload, PriceSection, CreateGameIntentPicker } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, MultipleCourtsSelector, AvatarUpload, PriceSection, CreateGameIntentPicker } from '@/components';
+import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { usePlayersStore } from '@/store/playersStore';
@@ -20,6 +21,7 @@ import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
+import { syncRosterOnSportChange, syncPlayersPerMatchOnRosterChange } from '@/utils/matchFormat';
 import { gameLeagueRosterOptions, maxSlotsForUserGameOrLeague, maxSlotsForUserTournament } from '@/utils/userMaxParticipantsInGame';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { MarkCourtBookedModal } from '@/components/createGame/MarkCourtBookedModal';
@@ -29,12 +31,13 @@ import toast from 'react-hot-toast';
 import { getSportConfig } from '@/sport/sportRegistry';
 import {
   getDisplayLevelForSport,
+  hasMultipleSportsEnabled,
   listCreateFlowSports,
   resolveCreateGameDefaultSport,
 } from '@/utils/profileSports';
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
-import { syncPlayersPerMatchOnRosterChange, syncRosterOnSportChange } from '@/utils/matchFormat';
+import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
 import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsFields';
 import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
@@ -45,6 +48,9 @@ import { SOCIAL_LEVEL_BAND, type CreateFlowIntent, type CreateTemplateId } from 
 import type { CreateTemplateParticipantContext } from '@/sport/createTemplateParticipantFit';
 import { useGameFormatTemplateFlow } from '@/hooks/useGameFormatTemplateFlow';
 import { showGameFormatTemplatePicker } from '@/utils/gameFormat/showGameFormatTemplatePicker';
+import { CreateGameSummaryBar } from '@/components/createGame/summaryHeader/CreateGameSummaryBar';
+import { useScrolledPastSections } from '@/components/createGame/summaryHeader/useScrolledPastSections';
+import { useCreateGameSummaryChips } from '@/components/createGame/summaryHeader/useCreateGameSummaryChips';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -260,8 +266,6 @@ export const CreateGame = ({
     setSelectedTime,
     duration,
     setDuration,
-    showPastTimes,
-    setShowPastTimes,
     generateTimeOptions,
     generateTimeOptionsForDate,
     canAccommodateDuration,
@@ -272,7 +276,6 @@ export const CreateGame = ({
     clubs,
     selectedClub,
     initialDate: storedInitialDate,
-    showPastTimes: false,
   });
 
   const selectedClubData = useMemo(
@@ -285,7 +288,6 @@ export const CreateGame = ({
     selectedDate,
     durationHours: duration,
     selectedCourtId: selectedCourt === 'notBooked' ? null : selectedCourt,
-    showPastTimes,
     enabled: entityType !== 'BAR' && selectedClubData?.integrationType === 'BOOKTIME',
   });
   const resolvedGenerateTimeOptions = booktimeTimeOptions.active
@@ -393,6 +395,21 @@ export const CreateGame = ({
   const clubSectionRef = useRef<HTMLDivElement>(null);
   const timeSectionRef = useRef<HTMLDivElement>(null);
   const durationSectionRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const summarySectionRefs = useMemo(
+    () => ({
+      sport: createRef<HTMLDivElement>(),
+      setup: createRef<HTMLDivElement>(),
+      format: createRef<HTMLDivElement>(),
+      location: clubSectionRef,
+      time: timeSectionRef,
+      participants: createRef<HTMLDivElement>(),
+      settings: createRef<HTMLDivElement>(),
+      name: createRef<HTMLDivElement>(),
+      price: createRef<HTMLDivElement>(),
+    }),
+    [],
+  );
   const [softOverlapOpen, setSoftOverlapOpen] = useState(false);
   const [markCourtOpen, setMarkCourtOpen] = useState(false);
   const [pendingGameId, setPendingGameId] = useState<string | null>(null);
@@ -458,8 +475,14 @@ export const CreateGame = ({
   useEffect(() => {
     if (selectedCourt === 'notBooked') {
       setHasBookedCourt(false);
+      return;
     }
-  }, [selectedCourt]);
+    const club = clubs.find((c) => c.id === selectedClub);
+    const court = courts.find((c) => c.id === selectedCourt);
+    if (courtHasActiveBookingIntegration(club, court)) {
+      setHasBookedCourt(false);
+    }
+  }, [selectedCourt, selectedClub, clubs, courts]);
 
   useEffect(() => {
     if (selectedCourt === 'notBooked') return;
@@ -686,15 +709,58 @@ export const CreateGame = ({
     }
   }, [pendingAvatarFiles]);
 
-  const getDurationLabel = (dur: number) => {
-    if (dur === Math.floor(dur)) {
-      return t('createGame.hours', { count: dur });
-    } else {
-      const hours = Math.floor(dur);
-      const minutes = (dur % 1) * 60;
-      return t('createGame.hoursMinutes', { hours, minutes });
-    }
-  };
+  const getDurationLabel = useCallback(
+    (dur: number) => {
+      if (dur === Math.floor(dur)) {
+        return t('createGame.hours', { count: dur });
+      } else {
+        const hours = Math.floor(dur);
+        const minutes = (dur % 1) * 60;
+        return t('createGame.hoursMinutes', { hours, minutes });
+      }
+    },
+    [t],
+  );
+
+  const scrolledPastSections = useScrolledPastSections(scrollContainerRef, summarySectionRefs);
+  const summaryChips = useCreateGameSummaryChips({
+    past: scrolledPastSections,
+    entityType,
+    showSportChip: showSportSelector && hasMultipleSportsEnabled(user),
+    selectedSport,
+    maxParticipants,
+    playersPerMatch,
+    hasFixedTeams,
+    genderTeams,
+    showTemplatePicker,
+    activeTemplateId: templateFlow.activeTemplateId,
+    isCustomFormat: templateFlow.isCustom,
+    clubs,
+    selectedClub,
+    courts,
+    selectedCourt,
+    selectedDate,
+    selectedTime,
+    duration,
+    getDurationLabel,
+    playerLevelRange,
+    isPublic,
+    isRatingGame,
+    gameName,
+    priceType,
+    priceTotal,
+    priceCurrency,
+    defaultCurrency: user?.defaultCurrency as PriceCurrency | undefined,
+  });
+  const handleSummaryChipClick = useCallback(
+    (key: string) => {
+      summarySectionRefs[key as keyof typeof summarySectionRefs]?.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    },
+    [summarySectionRefs],
+  );
 
   const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
@@ -878,10 +944,14 @@ export const CreateGame = ({
       }
 
       const created = gameResponse.data;
+      const createClub = clubs.find((c) => c.id === selectedClub);
+      const createCourt =
+        selectedCourt !== 'notBooked' ? courts.find((c) => c.id === selectedCourt) : undefined;
       if (
         entityType !== 'BAR' &&
         selectedCourt !== 'notBooked' &&
         !hasBookedCourt &&
+        !courtHasActiveBookingIntegration(createClub, createCourt) &&
         created.id
       ) {
         setPendingGameId(created.id);
@@ -980,7 +1050,9 @@ export const CreateGame = ({
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <CreateGameHeader onBack={() => handleBack(navigate)} entityType={entityType} />
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 relative overflow-hidden">
+        <CreateGameSummaryBar chips={summaryChips} onChipClick={handleSummaryChipClick} />
+        <div ref={scrollContainerRef} className="h-full overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-6">
         <div className="flex justify-center">
           <AvatarUpload
@@ -993,15 +1065,18 @@ export const CreateGame = ({
         </div>
 
         {showSportSelector && (
-          <CreateFlowSportSelector
-            sports={enabledSports}
-            value={selectedSport}
-            onChange={handleSportChange}
-            showLabel={false}
-            defaultSport={userDefaultSport}
-          />
+          <div ref={summarySectionRefs.sport}>
+            <CreateFlowSportSelector
+              sports={enabledSports}
+              value={selectedSport}
+              onChange={handleSportChange}
+              showLabel={false}
+              defaultSport={userDefaultSport}
+            />
+          </div>
         )}
 
+        <div ref={summarySectionRefs.setup}>
         <ParticipantsSetupSection
           entityType={entityType}
           user={user}
@@ -1023,9 +1098,12 @@ export const CreateGame = ({
           }}
           onMaxParticipantsChange={handleMaxParticipantsChange}
         />
+        </div>
 
         {entityType !== 'BAR' && entityType !== 'TRAINING' && showTemplatePicker ? (
+          <div ref={summarySectionRefs.format}>
           <CreateGameIntentPicker
+            collapsible
             sport={selectedSport}
             allowedScoringPresets={allowedScoringPresets}
             participantContext={templateParticipantContext}
@@ -1084,15 +1162,18 @@ export const CreateGame = ({
                 />
               ) : undefined
             }
+            genderTeams={genderTeams}
             onOpenFormatWizard={openFormatWizard}
             formatWizardCustomizeLabel={templateFlow.formatWizardCustomizeLabel}
           />
+          </div>
         ) : null}
 
         {entityType !== 'BAR' &&
         entityType !== 'TRAINING' &&
         !showTemplatePicker &&
         templateFlow.showFormatSection ? (
+          <div ref={summarySectionRefs.format}>
           <GameFormatCard
             entityType={entityType}
             format={gameFormat}
@@ -1115,6 +1196,7 @@ export const CreateGame = ({
             }}
             questionnaireBanner={<CreateGameQuestionnaireBanner sport={selectedSport} />}
           />
+          </div>
         ) : null}
 
         <div ref={clubSectionRef}>
@@ -1139,6 +1221,7 @@ export const CreateGame = ({
             onCloseCourtModal={() => setIsCourtModalOpen(false)}
             preferredSport={selectedSport}
             onSportTabChange={handleCourtSportTab}
+            hideCourts
           />
         </div>
 
@@ -1148,7 +1231,6 @@ export const CreateGame = ({
               selectedDate={selectedDate}
               selectedTime={selectedTime}
               duration={duration}
-              showPastTimes={showPastTimes}
               showDatePicker={showDatePicker}
               selectedClub={selectedClub}
               selectedCourt={selectedCourt}
@@ -1164,16 +1246,33 @@ export const CreateGame = ({
                 setSelectedDate(date);
               }}
               onCalendarClick={() => setShowDatePicker(true)}
-              onToggleShowPastTimes={setShowPastTimes}
               onCloseDatePicker={() => setShowDatePicker(false)}
               onTimeSelect={setSelectedTime}
               onDurationChange={setDuration}
               entityType={entityType}
               dateInputRef={dateInputRef}
+              courtSection={
+                <CreateGameCourtSection
+                  clubs={clubs}
+                  courts={courts}
+                  selectedClub={selectedClub}
+                  selectedCourt={selectedCourt}
+                  hasBookedCourt={hasBookedCourt}
+                  isCourtModalOpen={isCourtModalOpen}
+                  entityType={entityType}
+                  onSelectCourt={setSelectedCourt}
+                  onToggleHasBookedCourt={setHasBookedCourt}
+                  onOpenCourtModal={() => setIsCourtModalOpen(true)}
+                  onCloseCourtModal={() => setIsCourtModalOpen(false)}
+                  preferredSport={selectedSport}
+                  onSportTabChange={handleCourtSportTab}
+                />
+              }
             />
           </div>
         </div>
 
+        <div ref={summarySectionRefs.participants}>
         <ParticipantsSection
           participants={participants}
           maxParticipants={maxParticipants}
@@ -1210,7 +1309,9 @@ export const CreateGame = ({
           playerLevelRange={playerLevelRange}
           onPlayerLevelRangeChange={setPlayerLevelRange}
         />
+        </div>
 
+        <div ref={summarySectionRefs.settings}>
         <GameSettingsSection
           isPublic={isPublic}
           isRatingGame={isRatingGame}
@@ -1227,6 +1328,7 @@ export const CreateGame = ({
           onAfterGameGoToBarChange={setAfterGameGoToBar}
           hideRatingGame={showTemplatePicker}
         />
+        </div>
 
         {maxParticipants > 4 && entityType !== 'BAR' && (
           <MultipleCourtsSelector
@@ -1238,18 +1340,17 @@ export const CreateGame = ({
           />
         )}
 
-        <GameNameSection
+        <div ref={summarySectionRefs.name}>
+        <GameNameCommentsSection
           name={gameName}
-          onNameChange={setGameName}
-          entityType={entityType}
-        />
-
-        <CommentsSection
           comments={comments}
+          onNameChange={setGameName}
           onCommentsChange={setComments}
           entityType={entityType}
         />
+        </div>
 
+        <div ref={summarySectionRefs.price}>
         <PriceSection
           priceTotal={priceTotal}
           priceType={priceType}
@@ -1259,6 +1360,7 @@ export const CreateGame = ({
           onPriceTypeChange={setPriceType}
           onPriceCurrencyChange={setPriceCurrency}
         />
+        </div>
 
         <Button
           onClick={handleCreateGame}
@@ -1279,6 +1381,7 @@ export const CreateGame = ({
             </>
           )}
         </Button>
+        </div>
         </div>
       </div>
 

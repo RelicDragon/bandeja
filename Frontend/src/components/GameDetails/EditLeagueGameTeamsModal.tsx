@@ -15,6 +15,7 @@ import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 
 interface EditLeagueGameTeamsModalProps {
   isOpen: boolean;
@@ -76,8 +77,6 @@ export const EditLeagueGameTeamsModal = ({
     setSelectedTime,
     duration,
     setDuration,
-    showPastTimes,
-    setShowPastTimes,
     generateTimeOptions,
     generateTimeOptionsForDate,
     canAccommodateDuration,
@@ -88,9 +87,15 @@ export const EditLeagueGameTeamsModal = ({
     clubs,
     selectedClub: selectedClubId,
     initialDate: game.startTime ? new Date(game.startTime) : undefined,
-    showPastTimes: false,
     disableAutoAdjust: true,
   });
+
+  const showHasBookedCourtSwitch = useMemo(() => {
+    if (!selectedCourtId || selectedCourtId === 'notBooked') return false;
+    const club = clubs.find((c) => c.id === selectedClubId);
+    const court = courts.find((c) => c.id === selectedCourtId);
+    return !courtHasActiveBookingIntegration(club, court);
+  }, [clubs, courts, selectedClubId, selectedCourtId]);
 
   const fetchStandings = useCallback(async () => {
     try {
@@ -788,7 +793,7 @@ export const EditLeagueGameTeamsModal = ({
                     )}
 
                     {/* Booked Court Switch */}
-                    {selectedCourtId && selectedCourtId !== 'notBooked' && (
+                    {showHasBookedCourtSwitch && (
                       <div className="flex items-center justify-between py-2">
                         <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           {t('createGame.hasBookedCourt')}
@@ -836,7 +841,6 @@ export const EditLeagueGameTeamsModal = ({
                     selectedDate={selectedDate}
                     selectedTime={selectedTime}
                     duration={duration}
-                    showPastTimes={showPastTimes}
                     showDatePicker={showDatePicker}
                     selectedClub={selectedClubId}
                     club={clubs.find(c => c.id === selectedClubId)}
@@ -852,7 +856,6 @@ export const EditLeagueGameTeamsModal = ({
                       setTimeManuallySelected(true);
                     }}
                     onCalendarClick={() => setShowDatePicker(true)}
-                    onToggleShowPastTimes={setShowPastTimes}
                     onCloseDatePicker={() => setShowDatePicker(false)}
                     onTimeSelect={(time) => {
                       setSelectedTime(time);

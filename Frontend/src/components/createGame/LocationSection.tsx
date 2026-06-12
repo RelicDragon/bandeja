@@ -4,6 +4,7 @@ import { ToggleSwitch } from '../ToggleSwitch';
 import { ClubModal, CourtModal, ClubAvatar } from '@/components';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
+import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import type { Club, Court, EntityType, Sport } from '@/types';
 
 interface LocationSectionProps {
@@ -24,6 +25,7 @@ interface LocationSectionProps {
   onCloseCourtModal: () => void;
   preferredSport?: Sport | null;
   onSportTabChange?: (sport: Sport) => void;
+  hideCourts?: boolean;
 }
 
 export const LocationSection = ({
@@ -44,8 +46,19 @@ export const LocationSection = ({
   onCloseCourtModal,
   preferredSport,
   onSportTabChange,
+  hideCourts = false,
 }: LocationSectionProps) => {
   const { t } = useTranslation();
+  const club = clubs.find((c) => c.id === selectedClub);
+  const court =
+    selectedCourt !== 'notBooked'
+      ? courts.find((c) => c.id === selectedCourt)
+      : entityType === 'BAR' && courts.length === 1
+        ? courts[0]
+        : undefined;
+  const showHasBookedSwitch =
+    (selectedCourt !== 'notBooked' || (entityType === 'BAR' && courts.length === 1)) &&
+    !courtHasActiveBookingIntegration(club, court);
 
   return (
     <>
@@ -56,7 +69,7 @@ export const LocationSection = ({
         selectedId={selectedClub}
         onSelect={onSelectClub}
       />
-      {!(entityType === 'BAR' && courts.length === 1) && (
+      {!hideCourts && !(entityType === 'BAR' && courts.length === 1) && (
         <CourtModal
           isOpen={isCourtModalOpen}
           onClose={onCloseCourtModal}
@@ -101,7 +114,7 @@ export const LocationSection = ({
               )}
             </button>
           </div>
-          {selectedClub && (
+          {selectedClub && !hideCourts && (
             <>
               {!(entityType === 'BAR' && courts.length === 1) && (
                 <div>
@@ -128,7 +141,7 @@ export const LocationSection = ({
                   </button>
                 </div>
               )}
-              {(selectedCourt !== 'notBooked' || (entityType === 'BAR' && courts.length === 1)) && (
+              {showHasBookedSwitch && (
                 <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
                   <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
                     {entityType === 'BAR' ? t('createGame.hasBookedHall') : t('createGame.hasBookedCourt')}
@@ -138,17 +151,19 @@ export const LocationSection = ({
                   </div>
                 </div>
               )}
-              <CourtLocationLinks
-                club={clubs.find((c) => c.id === selectedClub)}
-                court={
-                  selectedCourt !== 'notBooked'
-                    ? courts.find((c) => c.id === selectedCourt)
-                    : undefined
-                }
-                className="flex flex-wrap items-center gap-x-4 gap-y-1"
-                linkClassName="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline"
-              />
             </>
+          )}
+          {selectedClub && (
+            <CourtLocationLinks
+              club={clubs.find((c) => c.id === selectedClub)}
+              court={
+                selectedCourt !== 'notBooked'
+                  ? courts.find((c) => c.id === selectedCourt)
+                  : undefined
+              }
+              className="flex flex-wrap items-center gap-x-4 gap-y-1"
+              linkClassName="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+            />
           )}
         </div>
       </div>

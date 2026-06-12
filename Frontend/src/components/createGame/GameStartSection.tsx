@@ -1,8 +1,8 @@
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, RefObject } from 'react';
+import { useEffect, useMemo, RefObject, type ReactNode } from 'react';
 import { addDays, format } from 'date-fns';
-import { DateSelector, ToggleSwitch } from '@/components';
+import { DateSelector } from '@/components';
 import { CalendarComponent } from '@/components/Calendar';
 import { EntityType, Club } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
@@ -16,7 +16,6 @@ interface GameStartSectionProps {
   selectedDate: Date;
   selectedTime: string;
   duration: number;
-  showPastTimes: boolean;
   showDatePicker: boolean;
   selectedClub: string;
   selectedCourt?: string | null;
@@ -30,20 +29,19 @@ interface GameStartSectionProps {
   getDurationLabel: (dur: number) => string;
   onDateSelect: (date: Date) => void;
   onCalendarClick: () => void;
-  onToggleShowPastTimes: (checked: boolean) => void;
   onCloseDatePicker: () => void;
   onTimeSelect: (time: string) => void;
   onDurationChange: (duration: number) => void;
   entityType: EntityType;
   dateInputRef: RefObject<HTMLInputElement | null>;
   compact?: boolean;
+  courtSection?: ReactNode;
 }
 
 export const GameStartSection = ({
   selectedDate,
   selectedTime,
   duration,
-  showPastTimes,
   showDatePicker,
   selectedClub,
   selectedCourt,
@@ -56,13 +54,13 @@ export const GameStartSection = ({
   getDurationLabel,
   onDateSelect,
   onCalendarClick,
-  onToggleShowPastTimes,
   onCloseDatePicker,
   onTimeSelect,
   onDurationChange,
   entityType,
   dateInputRef,
   compact = false,
+  courtSection,
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
   const { durationOptions } = useClubIntegrationDurations(club, entityType);
@@ -165,7 +163,7 @@ export const GameStartSection = ({
   }, [bookedSlotInfo]);
 
   // Check if selected date is within the fixed date range (same logic as DateSelector)
-  const startDate = !showPastTimes && generateTimeOptionsForDate(new Date()).length === 0 ? addDays(new Date(), 1) : new Date();
+  const startDate = generateTimeOptionsForDate(new Date()).length === 0 ? addDays(new Date(), 1) : new Date();
   const fixedDates = Array.from({ length: 8 }, (_, i) => addDays(startDate, i));
   const isSelectedDateInFixedRange = fixedDates.some(date =>
     format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd')
@@ -226,7 +224,7 @@ export const GameStartSection = ({
                 onDateSelect={onDateSelect}
                 onCalendarClick={onCalendarClick}
                 showCalendarAsSelected={showDatePicker || !isSelectedDateInFixedRange}
-                hideTodayIfNoSlots={!showPastTimes}
+                hideTodayIfNoSlots={true}
                 hasTimeSlotsForToday={generateTimeOptionsForDate(new Date()).length > 0}
                 hideCurrentDateIndicator={true}
               />
@@ -244,7 +242,7 @@ export const GameStartSection = ({
                       onDateSelect(date);
                       onCloseDatePicker();
                     }}
-                    minDate={showPastTimes ? undefined : startDate}
+                    minDate={startDate}
                   />
                 </div>
               </div>
@@ -271,14 +269,7 @@ export const GameStartSection = ({
                 </div>
               </div>
             )}
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {t('createGame.showPastTimes')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch checked={showPastTimes} onChange={onToggleShowPastTimes} />
-              </div>
-            </div>
+            {courtSection}
             <div>
               <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
                 {t('createGame.selectTime')}

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { booktimeApi } from '@/api/booktime';
 import type { Club, Court } from '@/types';
 import { BooktimeClient } from '@/integrations/booktime/client';
+import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { loadBooktimeCompany } from '@/integrations/booktime/bookFlow';
 import {
   pickClosestDurationOption,
@@ -55,12 +56,13 @@ export function useBooktimeAvailability(
   const [busyByCourtId, setBusyByCourtId] = useState<Map<string, Array<{ startTime: string; endTime: string }>>>(
     new Map()
   );
+  const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(club.id, enabled);
 
   const dateKey = useMemo(() => formatClubDateKey(selectedDate, club), [selectedDate, club]);
   const courts = useMemo(() => mappedCourts(club), [club]);
 
   const load = useCallback(async () => {
-    if (!enabled || club.integrationType !== 'BOOKTIME') return;
+    if (!enabled || !liveApiEnabled || club.integrationType !== 'BOOKTIME') return;
     setLoading(true);
     setError(null);
     try {
@@ -98,7 +100,7 @@ export function useBooktimeAvailability(
     } finally {
       setLoading(false);
     }
-  }, [club.id, club.integrationType, companyId, dateKey, enabled, selectedDate]);
+  }, [club.id, club.integrationType, companyId, dateKey, enabled, liveApiEnabled, selectedDate]);
 
   useEffect(() => {
     void load();

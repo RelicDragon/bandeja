@@ -51,9 +51,6 @@ export const PriceSection = ({
       </div>
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-            {t('createGame.priceType')}
-          </label>
           <Select
             options={[
               { value: 'NOT_KNOWN', label: t('createGame.priceTypeNotKnown') },
