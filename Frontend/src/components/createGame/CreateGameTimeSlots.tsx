@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EntityType, Club } from '@/types';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
+import { SelectedTimeSummary } from '@/components/createGame/SelectedTimeSummary';
 
 interface BookedSlotInfo {
   courtName: string | null;
@@ -30,6 +31,7 @@ interface CreateGameTimeSlotsProps {
   isSlotHighlighted: (time: string) => boolean;
   onTimeSelect: (time: string) => void;
   bookedSlotInfo: BookedSlotInfo[] | null;
+  getDurationLabel: (dur: number) => string;
 }
 
 function parseTime(timeStr: string): number {
@@ -101,6 +103,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
   isSlotHighlighted,
   onTimeSelect,
   bookedSlotInfo,
+  getDurationLabel,
 }: CreateGameTimeSlotsProps) {
   const { t } = useTranslation();
 
@@ -181,6 +184,14 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
           })}
         </div>
       )}
+      {!slotsLoading ? (
+        <SelectedTimeSummary
+          selectedTime={selectedTime}
+          duration={duration}
+          durationLabel={entityType !== 'BAR' && duration ? getDurationLabel(duration) : undefined}
+          entityType={entityType}
+        />
+      ) : null}
       {!hideOccupancyOverlay && groupedBookedSlots.length > 0 ? (
         (() => {
           const hasExternalBooking = groupedBookedSlots.some((info) => info.clubBooked);
@@ -197,17 +208,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
           return (
             <div className={`mt-2 px-3 py-2 ${bgColor} border rounded-lg`}>
               <p className={`text-xs font-medium ${textColor} mb-1`}>
-                {entityType !== 'BAR' && duration && selectedTime
-                  ? (() => {
-                      const [startHour, startMinute] = selectedTime.split(':').map(Number);
-                      const totalMinutes = duration * 60;
-                      const endMinutes = startMinute + totalMinutes;
-                      const endHour = startHour + Math.floor(endMinutes / 60);
-                      const finalMinute = endMinutes % 60;
-                      const endTime = `${endHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
-                      return `${t('createGame.timeSlot')} • ${selectedTime} - ${endTime}:`;
-                    })()
-                  : `${t('createGame.timeSlot')} • ${selectedTime}:`}
+                {t('createGame.overlapSoftTitle')}
               </p>
               <div className="space-y-1">
                 {groupedBookedSlots.map((info, idx) => (

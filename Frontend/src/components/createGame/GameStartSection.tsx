@@ -277,6 +277,7 @@ export const GameStartSection = ({
         isSlotHighlighted={isSlotHighlighted}
         onTimeSelect={onTimeSelect}
         bookedSlotInfo={bookedSlotInfo}
+        getDurationLabel={getDurationLabel}
       />
     </>
   );

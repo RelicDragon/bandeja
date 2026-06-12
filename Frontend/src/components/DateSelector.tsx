@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format, addDays, isToday, isTomorrow } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
@@ -45,17 +45,33 @@ export const DateSelector = ({
 }: DateSelectorProps) => {
   const { t, i18n } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  
+  const [isAtLeft, setIsAtLeft] = useState(true);
+
   const locale = useMemo(() => localeMap[i18n.language as keyof typeof localeMap] || enGB, [i18n.language]);
   const dateFormat = useMemo(() => dateFormatMap[i18n.language] || 'MM/dd/yyyy', [i18n.language]);
-  
+
+  const updateScrollEdges = () => {
+    if (scrollContainerRef.current) {
+      setIsAtLeft(scrollContainerRef.current.scrollLeft <= 10);
+    }
+  };
+
   useEffect(() => {
     if (!scrollContainerRef.current) return;
     const selected = scrollContainerRef.current.querySelector('[data-selected="true"]') as HTMLElement;
     if (selected) {
       selected.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
     }
+    updateScrollEdges();
   }, [selectedDate]);
+
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    container.addEventListener('scroll', updateScrollEdges);
+    updateScrollEdges();
+    return () => container.removeEventListener('scroll', updateScrollEdges);
+  }, []);
 
   const startDate = hideTodayIfNoSlots && !hasTimeSlotsForToday ? addDays(new Date(), 1) : new Date();
   const fixedDates =
@@ -99,14 +115,16 @@ export const DateSelector = ({
 
   return (
     <div className="relative flex items-center">
-      <button
-        onClick={handlePrevious}
-        className="absolute left-0 z-10 p-2 rounded-full bg-white dark:bg-gray-900 shadow-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-      >
-        <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
-      </button>
+      {!isAtLeft && (
+        <button
+          onClick={handlePrevious}
+          className="absolute left-0 z-10 p-2 rounded-full bg-white dark:bg-gray-900 shadow-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+        >
+          <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
+        </button>
+      )}
 
-      <div ref={scrollContainerRef} className="flex gap-2 overflow-x-auto flex-1 scrollbar-hide px-12">
+      <div ref={scrollContainerRef} className={`flex gap-2 overflow-x-auto flex-1 scrollbar-hide pr-12 ${isAtLeft ? 'pl-0' : 'pl-12'}`}>
         {fixedDates.map((date, index) => {
           const isSelected = format(selectedDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd');
           const emphasized = isDateEmphasized(date);
