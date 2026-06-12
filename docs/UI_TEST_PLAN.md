@@ -403,7 +403,7 @@ Frontend/e2e/
 | C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
 | C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club + integrated court | Game start order: court → reservation card → auth or date → duration → time |
-| C-13x | Integrated court booked toggle opt-out | BOOKTIME club, mapped court, reservation OFF or auth opt-out | "I've booked this court" toggle visible |
+| C-13x | Integrated court no manual booked toggle | BOOKTIME club, mapped court, reservation OFF or auth opt-out | "I've booked this court" toggle hidden; reservation card only |
 | C-13y | Create-game reservation default | Pick integrated court, connected, live API | Reservation switch ON; Create label "Create game & reserve court" |
 | C-13z | Create-game inline auth gate | Reservation ON, not connected | Date/time hidden; phone OTP inline; opt-out reveals normal grid |
 | C-14a | Create-game confirm morph | Reservation ON, connected, pick slot → Create | Single dialog: review → reserve → create → success → calendar |

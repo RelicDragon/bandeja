@@ -1,6 +1,7 @@
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, RefObject, type ReactNode } from 'react';
+import { CreateGameTimeSlots } from '@/components/createGame/CreateGameTimeSlots';
 import { addDays, format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DateSelector } from '@/components';
@@ -8,7 +9,6 @@ import { CalendarComponent } from '@/components/Calendar';
 import { EntityType, Club } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
 import { useBookedCourts } from '@/hooks/useBookedCourts';
-import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { useClubIntegrationDurations } from '@/hooks/useClubIntegrationDurations';
 import { pickClosestDurationOption } from '@/integrations/booktime/durations';
@@ -117,79 +117,7 @@ export const GameStartSection = ({
       : getBookedSlotInfo(selectedTime);
   }, [selectedTime, duration, entityType, getOverlappingBookings, getBookedSlotInfo, hideOccupancyOverlay]);
 
-  const groupedBookedSlots = useMemo(() => {
-    if (!bookedSlotInfo || bookedSlotInfo.length === 0) return [];
-
-    const parseTime = (timeStr: string): number => {
-      const [hours, minutes] = timeStr.split(':').map(Number);
-      return hours * 60 + minutes;
-    };
-
-    const sorted = [...bookedSlotInfo].sort((a, b) => {
-      const clubBookedCompare = (b.clubBooked ? 1 : 0) - (a.clubBooked ? 1 : 0);
-      if (clubBookedCompare !== 0) return clubBookedCompare;
-      const courtCompare = (a.courtName || '').localeCompare(b.courtName || '');
-      if (courtCompare !== 0) return courtCompare;
-      const confirmedCompare = (a.hasBookedCourt ? 1 : 0) - (b.hasBookedCourt ? 1 : 0);
-      if (confirmedCompare !== 0) return confirmedCompare;
-      return parseTime(a.startTime) - parseTime(b.startTime);
-    });
-
-    const grouped: Array<{
-      courtName: string | null;
-      integrationCourtName: string | null;
-      startTime: string;
-      endTime: string;
-      hasBookedCourt: boolean;
-      clubBooked: boolean;
-    }> = [];
-
-    for (const slot of sorted) {
-      const lastGroup = grouped[grouped.length - 1];
-
-      if (
-        lastGroup &&
-        lastGroup.courtName === slot.courtName &&
-        lastGroup.integrationCourtName === slot.integrationCourtName &&
-        lastGroup.hasBookedCourt === slot.hasBookedCourt &&
-        lastGroup.clubBooked === slot.clubBooked
-      ) {
-        const lastStart = parseTime(lastGroup.startTime);
-        const lastEnd = parseTime(lastGroup.endTime);
-        const slotStart = parseTime(slot.startTime);
-        const slotEnd = parseTime(slot.endTime);
-
-        if (slotStart <= lastEnd) {
-          if (slotStart < lastStart) {
-            lastGroup.startTime = slot.startTime;
-          }
-          if (slotEnd > lastEnd) {
-            lastGroup.endTime = slot.endTime;
-          }
-        } else {
-          grouped.push({
-            courtName: slot.courtName,
-            integrationCourtName: slot.integrationCourtName,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            hasBookedCourt: slot.hasBookedCourt,
-            clubBooked: slot.clubBooked,
-          });
-        }
-      } else {
-        grouped.push({
-          courtName: slot.courtName,
-          integrationCourtName: slot.integrationCourtName,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
-          hasBookedCourt: slot.hasBookedCourt,
-          clubBooked: slot.clubBooked,
-        });
-      }
-    }
-
-    return grouped;
-  }, [bookedSlotInfo]);
+  const timeOptions = useMemo(() => generateTimeOptions(), [generateTimeOptions]);
 
   const startDate = generateTimeOptionsForDate(new Date()).length === 0 ? addDays(new Date(), 1) : new Date();
   const defaultFixedDates = Array.from({ length: 8 }, (_, i) => addDays(startDate, i));
@@ -305,126 +233,25 @@ export const GameStartSection = ({
           </div>
         </div>
       )}
-      <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-          {t('createGame.selectTime')}
-          {showTimezone && timezoneString && (
-            <span className="ml-2 text-gray-500 dark:text-gray-500 font-normal">
-              ({t('createGame.clubTime')} {timezoneString})
-            </span>
-          )}
-        </label>
-        {slotsLoading ? (
-          <div className="grid grid-cols-6 gap-1.5 p-1">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-6 gap-1.5 p-1">
-            {generateTimeOptions().map((time) => {
-              const isSelected = selectedTime === time;
-              const isHighlighted = entityType !== 'BAR' ? isSlotHighlighted(time) : false;
-              const canAccommodate = entityType !== 'BAR' ? canAccommodateDuration(time, duration) : true;
-              const isBooked = !hideOccupancyOverlay && isSlotBooked(time);
-              const allUnconfirmed = isBooked && areAllSlotsUnconfirmed(time);
-              const isExternallyBooked = isBooked && hasExternallyBookedSlot(time);
-              const isHardBlocked = isBooked && isSlotHardBlocked(time);
-
-              const handleTimeClick = () => {
-                if (entityType !== 'BAR' && isHardBlocked) return;
-                if (entityType === 'BAR') {
-                  onTimeSelect(time);
-                } else if (canAccommodate) {
-                  onTimeSelect(time);
-                } else {
-                  const adjustedStartTime = getAdjustedStartTime(time, duration);
-                  if (adjustedStartTime) {
-                    onTimeSelect(adjustedStartTime);
-                  }
-                }
-              };
-
-              return (
-                <button
-                  key={time}
-                  type="button"
-                  disabled={entityType !== 'BAR' && isHardBlocked}
-                  onClick={handleTimeClick}
-                  className={`w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${
-                    isSelected
-                      ? 'bg-primary-500 text-white'
-                      : isHighlighted
-                        ? 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 border border-primary-400 dark:border-primary-600'
-                        : isBooked
-                          ? isExternallyBooked
-                            ? allUnconfirmed
-                              ? 'bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-500 border border-red-200 dark:border-red-900/30'
-                              : 'bg-red-200 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-400 dark:border-red-700'
-                            : allUnconfirmed
-                              ? 'bg-yellow-50 dark:bg-yellow-900/10 text-yellow-600 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-900/30'
-                              : 'bg-yellow-200 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-400 dark:border-yellow-700'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                >
-                  {time}
-                </button>
-              );
-            })}
-          </div>
-        )}
-        {!hideOccupancyOverlay && groupedBookedSlots && groupedBookedSlots.length > 0 && (() => {
-          const hasExternalBooking = groupedBookedSlots.some((info) => info.clubBooked);
-          const bgColor = hasExternalBooking
-            ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-            : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
-          const textColor = hasExternalBooking
-            ? 'text-red-900 dark:text-red-200'
-            : 'text-yellow-900 dark:text-yellow-200';
-          const itemTextColor = hasExternalBooking
-            ? 'text-red-800 dark:text-red-300'
-            : 'text-yellow-800 dark:text-yellow-300';
-
-          return (
-            <div className={`mt-2 px-3 py-2 ${bgColor} border rounded-lg`}>
-              <p className={`text-xs font-medium ${textColor} mb-1`}>
-                {(() => {
-                  if (entityType !== 'BAR' && duration && selectedTime) {
-                    const [startHour, startMinute] = selectedTime.split(':').map(Number);
-                    const totalMinutes = duration * 60;
-                    const endMinutes = startMinute + totalMinutes;
-                    const endHour = startHour + Math.floor(endMinutes / 60);
-                    const finalMinute = endMinutes % 60;
-                    const endTime = `${endHour.toString().padStart(2, '0')}:${finalMinute.toString().padStart(2, '0')}`;
-                    return `${t('createGame.timeSlot')} • ${selectedTime} - ${endTime}:`;
-                  }
-                  return `${t('createGame.timeSlot')} • ${selectedTime}:`;
-                })()}
-              </p>
-              <div className="space-y-1">
-                {groupedBookedSlots.map((info, idx) => (
-                  <div key={idx} className={`text-xs ${itemTextColor} flex flex-wrap items-baseline gap-x-1 gap-y-0.5`}>
-                    {info.clubBooked && club?.name ? <span>{club.name} •</span> : null}
-                    <CourtDisplayName
-                      name={info.courtName || t('createGame.bookedWithoutCourt')}
-                      integrationName={info.integrationCourtName}
-                      primaryClassName=""
-                      secondaryClassName="text-[10px] opacity-75"
-                      className="inline"
-                    />
-                    <span>
-                      {`• ${info.startTime} - ${info.endTime}${!info.hasBookedCourt ? ` (${t('createGame.notConfirmed')})` : ''}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })()}
-      </div>
+      <CreateGameTimeSlots
+        times={timeOptions}
+        selectedTime={selectedTime}
+        duration={duration}
+        entityType={entityType}
+        club={club}
+        hideOccupancyOverlay={hideOccupancyOverlay}
+        slotsLoading={slotsLoading}
+        timezoneLabel={showTimezone && timezoneString ? timezoneString : undefined}
+        isSlotBooked={isSlotBooked}
+        areAllSlotsUnconfirmed={areAllSlotsUnconfirmed}
+        hasExternallyBookedSlot={hasExternallyBookedSlot}
+        isSlotHardBlocked={isSlotHardBlocked}
+        canAccommodateDuration={canAccommodateDuration}
+        getAdjustedStartTime={getAdjustedStartTime}
+        isSlotHighlighted={isSlotHighlighted}
+        onTimeSelect={onTimeSelect}
+        bookedSlotInfo={bookedSlotInfo}
+      />
     </>
   );
 

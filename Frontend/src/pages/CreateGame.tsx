@@ -1515,7 +1515,6 @@ export const CreateGame = ({
                   selectedClub={selectedClub}
                   selectedCourt={selectedCourt}
                   hasBookedCourt={hasBookedCourt}
-                  bookCourtEnabled={bookCourtEnabled}
                   isCourtModalOpen={isCourtModalOpen}
                   entityType={entityType}
                   onSelectCourt={setSelectedCourt}

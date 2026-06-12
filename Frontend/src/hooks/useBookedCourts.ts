@@ -7,6 +7,7 @@ import {
   type BooktimeSnapshotBanner,
 } from './useBooktimeSnapshotRefresh';
 import { useAuthStore } from '@/store/authStore';
+import { bookedCourtsEqual } from '@/utils/bookedCourts/bookedCourtsEqual';
 
 interface UseBookedCourtsProps {
   clubId: string | null;
@@ -53,6 +54,7 @@ export const useBookedCourts = ({
 
   const refreshSnapshotRef = useRef(refreshSnapshot);
   refreshSnapshotRef.current = refreshSnapshot;
+  const hasFetchedRef = useRef(false);
 
   const startOfDay = useMemo(() => {
     if (!clubId || !selectedDate) return null;
@@ -68,14 +70,27 @@ export const useBookedCourts = ({
     return endDate.toISOString();
   }, [selectedDate, club, clubId]);
 
+  const applyBookedCourts = useCallback((next: BookedCourtSlot[]) => {
+    setBookedCourts((prev) => (bookedCourtsEqual(prev, next) ? prev : next));
+  }, []);
+
+  const applyExternalLoading = useCallback((next: boolean) => {
+    setIsLoadingExternalSlots((prev) => (prev === next ? prev : next));
+  }, []);
+
   const fetchBookedCourts = useCallback(async () => {
     if (!enabled || !clubId || !startOfDay || !endOfDay) {
+      hasFetchedRef.current = false;
       setBookedCourts([]);
       setIsLoadingExternalSlots(false);
       return;
     }
 
-    setLoading(true);
+    const isBackgroundRefresh = hasFetchedRef.current;
+    if (!isBackgroundRefresh) {
+      setLoading(true);
+    }
+
     try {
       const response = await gamesApi.getBookedCourts({
         clubId,
@@ -83,9 +98,9 @@ export const useBookedCourts = ({
         endDate: endOfDay,
         courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
       });
-      setBookedCourts(response.data || []);
+      applyBookedCourts(response.data || []);
       const externalLoading = response.isLoadingExternalSlots || false;
-      setIsLoadingExternalSlots(externalLoading);
+      applyExternalLoading(externalLoading);
 
       if (externalLoading && refreshEnabled && !liveApiLoading) {
         await refreshSnapshotRef.current({ force: true });
@@ -95,15 +110,20 @@ export const useBookedCourts = ({
           endDate: endOfDay,
           courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
         });
-        setBookedCourts(retry.data || []);
-        setIsLoadingExternalSlots(retry.isLoadingExternalSlots || false);
+        applyBookedCourts(retry.data || []);
+        applyExternalLoading(retry.isLoadingExternalSlots || false);
       }
+
+      hasFetchedRef.current = true;
     } catch (error) {
       console.error('Failed to fetch booked courts:', error);
+      hasFetchedRef.current = false;
       setBookedCourts([]);
       setIsLoadingExternalSlots(false);
     } finally {
-      setLoading(false);
+      if (!isBackgroundRefresh) {
+        setLoading(false);
+      }
     }
   }, [
     enabled,
@@ -113,7 +133,13 @@ export const useBookedCourts = ({
     selectedCourt,
     refreshEnabled,
     liveApiLoading,
+    applyBookedCourts,
+    applyExternalLoading,
   ]);
+
+  useEffect(() => {
+    hasFetchedRef.current = false;
+  }, [clubId, startOfDay, endOfDay, selectedCourt, enabled]);
 
   useEffect(() => {
     void fetchBookedCourts();
@@ -158,15 +184,15 @@ export const useBookedCourts = ({
     return slotsMap;
   }, [bookedCourts, club]);
 
-  const isSlotBooked = (time: string): boolean => {
+  const isSlotBooked = useCallback((time: string): boolean => {
     return bookedSlots.has(time);
-  };
+  }, [bookedSlots]);
 
-  const getBookedSlotInfo = (time: string): BookedSlotInfo[] | null => {
+  const getBookedSlotInfo = useCallback((time: string): BookedSlotInfo[] | null => {
     return bookedSlots.get(time) || null;
-  };
+  }, [bookedSlots]);
 
-  const getOverlappingBookings = (startTime: string, duration: number): BookedSlotInfo[] => {
+  const getOverlappingBookings = useCallback((startTime: string, duration: number): BookedSlotInfo[] => {
     if (!startTime || !duration) return [];
 
     const [startHour, startMinute] = startTime.split(':').map(Number);
@@ -202,25 +228,25 @@ export const useBookedCourts = ({
     });
 
     return overlapping;
-  };
+  }, [bookedCourts, club]);
 
-  const areAllSlotsUnconfirmed = (time: string): boolean => {
+  const areAllSlotsUnconfirmed = useCallback((time: string): boolean => {
     const slots = bookedSlots.get(time);
     if (!slots || slots.length === 0) return false;
     return slots.every(slot => !slot.hasBookedCourt);
-  };
+  }, [bookedSlots]);
 
-  const hasExternallyBookedSlot = (time: string): boolean => {
+  const hasExternallyBookedSlot = useCallback((time: string): boolean => {
     const slots = bookedSlots.get(time);
     if (!slots || slots.length === 0) return false;
     return slots.some((slot) => slot.clubBooked || slot.holdBlocked);
-  };
+  }, [bookedSlots]);
 
-  const isSlotHardBlocked = (time: string): boolean => {
+  const isSlotHardBlocked = useCallback((time: string): boolean => {
     const slots = bookedSlots.get(time);
     if (!slots || slots.length === 0) return false;
     return slots.some((slot) => slot.clubBooked || slot.holdBlocked);
-  };
+  }, [bookedSlots]);
 
   const externalSlotsLoading =
     isRefreshingSnapshot || loading || (isLoadingExternalSlots && liveApiLoading);
