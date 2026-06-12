@@ -14,6 +14,7 @@
     "court": "Teren",
     "hall": "Sala",
     "notBookedYet": "Ne rezerviši teren",
+    "multiCourtHint": "Izaberite do {{count}} terena za {{participants}} igrača (izabrano {{selected}})",
     "hasBookedCourt": "Rezervisao sam ovaj teren",
     "hasBookedHall": "Rezervisao sam sto",
     "selectCourt": "Izaberite teren",

@@ -10,6 +10,9 @@ interface CreateGameCourtSectionProps {
   courts: Court[];
   selectedClub: string;
   selectedCourt: string;
+  selectedCourtIds?: string[];
+  maxParticipants?: number;
+  multiSelectCourts?: boolean;
   selectedDate: Date;
   hasBookedCourt: boolean;
   entityType: EntityType;
@@ -24,6 +27,9 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
   courts,
   selectedClub,
   selectedCourt,
+  selectedCourtIds = [],
+  maxParticipants = 4,
+  multiSelectCourts = false,
   selectedDate,
   hasBookedCourt,
   entityType,
@@ -49,7 +55,8 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
         : undefined;
   const showHasBookedSwitch =
     (selectedCourt !== 'notBooked' || (entityType === 'BAR' && courts.length === 1)) &&
-    !courtHasActiveBookingIntegration(club, court);
+    !courtHasActiveBookingIntegration(club, court) &&
+    !multiSelectCourts;
 
   return (
     <div className="space-y-3">
@@ -62,6 +69,9 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
             club={club}
             courts={courts}
             selectedCourt={selectedCourt}
+            selectedCourtIds={selectedCourtIds}
+            maxParticipants={maxParticipants}
+            multiSelect={multiSelectCourts}
             selectedDate={selectedDate}
             entityType={entityType}
             preferredSport={preferredSport}

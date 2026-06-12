@@ -15,6 +15,7 @@
     "court": "Court",
     "hall": "Hall",
     "notBookedYet": "Don't book court",
+    "multiCourtHint": "Select up to {{count}} courts for {{participants}} players ({{selected}} selected)",
     "hasBookedCourt": "I've booked this court",
     "hasBookedHall": "I've booked a table",
     "selectCourt": "Select Court",

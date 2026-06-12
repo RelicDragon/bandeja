@@ -13,6 +13,7 @@ import {
   shouldShowCourtSportTabs,
   sportLabelKey,
 } from '@/utils/courtSport';
+import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
 import { CourtSelectionCard } from './CourtSelectionCard';
 import type { Club, Court, EntityType, Sport } from '@/types';
 
@@ -20,6 +21,9 @@ interface CourtSelectionGridProps {
   club?: Club;
   courts: Court[];
   selectedCourt: string;
+  selectedCourtIds?: string[];
+  maxParticipants?: number;
+  multiSelect?: boolean;
   selectedDate: Date;
   entityType: EntityType;
   showNotBookedOption?: boolean;
@@ -33,6 +37,9 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
   club,
   courts,
   selectedCourt,
+  selectedCourtIds = [],
+  maxParticipants = 4,
+  multiSelect = false,
   selectedDate,
   entityType,
   showNotBookedOption = true,
@@ -71,6 +78,11 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
     return courtsInClub;
   }, [courtsInClub, showSportTabs, activeSportTab, sportFilter]);
 
+  const maxSelectable = useMemo(
+    () => computeMaxSelectableCourts(maxParticipants, visibleCourts.length),
+    [maxParticipants, visibleCourts.length],
+  );
+
   const { occupancyByCourtId, loading } = useCourtDayOccupancy({
     clubId: club?.id ?? null,
     club,
@@ -102,9 +114,21 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
 
   const isBar = entityType === 'BAR';
   const noAvailableText = isBar ? t('createGame.noHallsAvailable') : t('createGame.noCourtsAvailable');
+  const notBookedSelected = multiSelect
+    ? selectedCourtIds.length === 0
+    : selectedCourt === 'notBooked';
 
   return (
     <div className="space-y-2">
+      {multiSelect ? (
+        <p className="text-[11px] leading-snug text-gray-500 dark:text-gray-400">
+          {t('createGame.multiCourtHint', {
+            selected: selectedCourtIds.length,
+            count: maxSelectable,
+            participants: maxParticipants,
+          })}
+        </p>
+      ) : null}
       {showSportTabs && sportTabs.length > 0 && (
         <SegmentedSwitch
           tabs={sportTabs}
@@ -123,18 +147,30 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
             <CourtSelectionCard
               selectId="notBooked"
               label={t('createGame.notBookedYet')}
-              selected={selectedCourt === 'notBooked'}
+              selected={notBookedSelected}
               onSelectCourt={onSelectCourt}
             />
           )}
           {visibleCourts.map((court) => {
             const occupancy = occupancyByCourtId.get(court.id);
+            const selectionIndex = multiSelect
+              ? selectedCourtIds.indexOf(court.id)
+              : -1;
+            const isSelected = multiSelect
+              ? selectionIndex >= 0
+              : selectedCourt === court.id;
+            const atCapacity = multiSelect
+              && selectedCourtIds.length >= maxSelectable
+              && !isSelected;
+
             return (
               <CourtSelectionCard
                 key={court.id}
                 court={court}
                 selectId={court.id}
-                selected={selectedCourt === court.id}
+                selected={isSelected}
+                selectionIndex={selectionIndex >= 0 ? selectionIndex + 1 : undefined}
+                disabled={atCapacity}
                 fillPercent={occupancy?.fillPercent ?? 0}
                 loading={loading}
                 onSelectCourt={onSelectCourt}

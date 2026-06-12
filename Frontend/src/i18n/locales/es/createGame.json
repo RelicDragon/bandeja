@@ -14,6 +14,7 @@
     "court": "Cancha",
     "hall": "Salón",
     "notBookedYet": "No reservar cancha",
+    "multiCourtHint": "Selecciona hasta {{count}} canchas para {{participants}} jugadores ({{selected}} seleccionadas)",
     "hasBookedCourt": "He reservado esta cancha",
     "hasBookedHall": "He reservado una mesa",
     "selectCourt": "Seleccionar cancha",

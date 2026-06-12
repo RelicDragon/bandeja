@@ -14,6 +14,7 @@
     "court": "Kurt",
     "hall": "Hala",
     "notBookedYet": "Nerezervovat kurt",
+    "multiCourtHint": "Vyberte až {{count}} kurtů pro {{participants}} hráčů (vybráno {{selected}})",
     "hasBookedCourt": "Mám rezervovaný tento kurt",
     "hasBookedHall": "Mám rezervovaný stůl",
     "selectCourt": "Vybrat kurt",

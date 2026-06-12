@@ -14,6 +14,49 @@ import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerat
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
 import { rollbackBooktimeBookingOnCreateFailure } from '../booktime/booktimeBookingRollback.service';
+import { GameCourtService } from '../gameCourt/gameCourt.service';
+
+function normalizeCreateCourtIds(data: { courtIds?: unknown }): string[] | null {
+  if (!Array.isArray(data.courtIds)) return null;
+  const ids = data.courtIds
+    .filter((id): id is string => typeof id === 'string' && id.trim().length > 0)
+    .map((id) => id.trim());
+  if (ids.length === 0) return null;
+  return Array.from(new Set(ids));
+}
+
+async function resolveCreateCourts(
+  clubId: string | undefined,
+  courtId: string | undefined,
+  courtIds: string[] | null,
+): Promise<{ primaryCourtId: string | undefined; gameCourtIds: string[] | null }> {
+  if (!courtIds?.length) {
+    return { primaryCourtId: courtId, gameCourtIds: null };
+  }
+
+  const courts = await prisma.court.findMany({
+    where: { id: { in: courtIds } },
+    select: { id: true, clubId: true },
+  });
+
+  if (courts.length !== courtIds.length) {
+    throw new ApiError(404, 'One or more courts not found');
+  }
+
+  const clubIds = new Set(courts.map((c) => c.clubId));
+  if (clubIds.size > 1) {
+    throw new ApiError(400, 'All courts must belong to the same club');
+  }
+
+  if (clubId && courts.some((c) => c.clubId !== clubId)) {
+    throw new ApiError(400, 'Courts must belong to the selected club');
+  }
+
+  const primaryCourtId =
+    courtId && courtIds.includes(courtId) ? courtId : courtIds[0];
+
+  return { primaryCourtId, gameCourtIds: courtIds };
+}
 
 export class GameCreateService {
   static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {
@@ -106,6 +149,13 @@ export class GameCreateService {
     }
 
     let cityId: string | null = null;
+    const createCourtIds = normalizeCreateCourtIds(data);
+    const { primaryCourtId, gameCourtIds } = await resolveCreateCourts(
+      data.clubId,
+      data.courtId,
+      createCourtIds,
+    );
+    data.courtId = primaryCourtId;
 
     if (data.cityId) {
       cityId = data.cityId;
@@ -137,6 +187,19 @@ export class GameCreateService {
             select: { cityId: true }
           }
         }
+      });
+
+      if (!court) {
+        throw new ApiError(404, 'Court not found');
+      }
+
+      cityId = court.club.cityId;
+    } else if (gameCourtIds?.length) {
+      const court = await prisma.court.findUnique({
+        where: { id: gameCourtIds[0] },
+        select: {
+          club: { select: { cityId: true } },
+        },
       });
 
       if (!court) {
@@ -388,6 +451,10 @@ export class GameCreateService {
 
     await GameReadinessService.updateGameReadiness(createdGame.id);
     await touchLastCreatedSport(userId, sport);
+
+    if (gameCourtIds?.length) {
+      await GameCourtService.setGameCourts(createdGame.id, gameCourtIds);
+    }
 
     const finalGame = await prisma.game.findUnique({
       where: { id: createdGame.id },

@@ -14,6 +14,7 @@
     "court": "Корт",
     "hall": "Зал",
     "notBookedYet": "Не бронировать корт",
+    "multiCourtHint": "Выберите до {{count}} кортов для {{participants}} игроков (выбрано {{selected}})",
     "hasBookedCourt": "Я забронировал этот корт",
     "hasBookedHall": "Я забронировал стол",
     "selectCourt": "Выбрать корт",

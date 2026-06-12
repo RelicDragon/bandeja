@@ -2,14 +2,13 @@ import { useState, useEffect, useMemo, useRef, useCallback, createRef } from 're
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, MultipleCourtsSelector, AvatarUpload, PriceSection, CreateGameIntentPicker } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, AvatarUpload, PriceSection, CreateGameIntentPicker } from '@/components';
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { usePlayersStore } from '@/store/playersStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { clubsApi, courtsApi, gamesApi, invitesApi } from '@/api';
-import { gameCourtsApi } from '@/api/gameCourts';
 import { mediaApi } from '@/api/media';
 import { Club, Court, EntityType, GenderTeam, PriceType, PriceCurrency, Game, BasicUser } from '@/types';
 import { addHours, format, startOfDay } from 'date-fns';
@@ -47,6 +46,7 @@ import {
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
+import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
 import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsFields';
 import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
@@ -97,7 +97,16 @@ export const CreateGame = ({
   const [clubs, setClubs] = useState<Club[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
   const [selectedClub, setSelectedClub] = useState<string>(() => initialGameData?.clubId || '');
-  const [selectedCourt, setSelectedCourt] = useState<string>(() => initialGameData?.courtId || 'notBooked');
+  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => {
+    const fromGameCourts = initialGameData?.gameCourts?.map((gc) => gc.courtId) || [];
+    if (fromGameCourts.length > 0) return fromGameCourts;
+    if (initialGameData?.courtId) return [initialGameData.courtId];
+    return [];
+  });
+  const [selectedCourt, setSelectedCourt] = useState<string>(() => {
+    if (initialGameData?.gameCourts?.length) return initialGameData.gameCourts[0].courtId;
+    return initialGameData?.courtId || 'notBooked';
+  });
   const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>(() => {
     const sport: Sport =
       initialGameData?.sport ?? (resolveCreateGameDefaultSport(user));
@@ -367,9 +376,8 @@ export const CreateGame = ({
     handleWizardClose();
     setIsFormatWizardOpen(false);
   }, [handleWizardClose]);
-  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => {
-    return initialGameData?.gameCourts?.map(gc => gc.courtId) || [];
-  });
+
+  const multiCourtMode = entityType !== 'BAR' && maxParticipants > 4;
 
   const templateDurationContext = useMemo((): CreateTemplateDurationContext => {
     const sport = selectedSport;
@@ -380,7 +388,11 @@ export const CreateGame = ({
       sport,
       maxParticipants,
       playersPerMatch: playersPerMatch === 4 ? 4 : 2,
-      selectedCourtCount: selectedCourtIds.length,
+      selectedCourtCount: multiCourtMode
+        ? selectedCourtIds.length
+        : selectedCourt !== 'notBooked'
+          ? 1
+          : 0,
       creatorLevel: user ? getDisplayLevelForSport(user, sport) : 2,
       playerLevelRange,
       invitedLevels,
@@ -395,6 +407,8 @@ export const CreateGame = ({
     maxParticipants,
     playersPerMatch,
     selectedCourtIds,
+    selectedCourt,
+    multiCourtMode,
     user,
     playerLevelRange,
     invitedPlayers,
@@ -486,6 +500,7 @@ export const CreateGame = ({
         setCourts([]);
         if (!initialCourtId) {
           setSelectedCourt('notBooked');
+          setSelectedCourtIds([]);
           setHasBookedCourt(false);
         } else {
           setHasBookedCourt(initialHasBookedCourt);
@@ -498,12 +513,15 @@ export const CreateGame = ({
 
         if (initialCourtId && response.data.some((c) => c.id === initialCourtId)) {
           setSelectedCourt(initialCourtId);
+          setSelectedCourtIds([initialCourtId]);
           setHasBookedCourt(initialHasBookedCourt);
         } else if (response.data.length === 1) {
           setSelectedCourt(response.data[0].id);
+          setSelectedCourtIds([response.data[0].id]);
           setHasBookedCourt(false);
         } else {
           setSelectedCourt('notBooked');
+          setSelectedCourtIds([]);
           setHasBookedCourt(false);
         }
       } catch (error) {
@@ -637,6 +655,7 @@ export const CreateGame = ({
     const court = courts.find((c) => c.id === selectedCourt);
     if (!court?.sport || court.sport === selectedSport) return;
     setSelectedCourt('notBooked');
+    setSelectedCourtIds([]);
   }, [selectedSport, selectedCourt, courts]);
 
   const handleCourtSportTab = useCallback(
@@ -648,6 +667,54 @@ export const CreateGame = ({
     },
     [handleSportChange],
   );
+
+  const handleCourtSelect = useCallback(
+    (id: string) => {
+      if (id === 'notBooked') {
+        setSelectedCourt('notBooked');
+        setSelectedCourtIds([]);
+        return;
+      }
+
+      if (!multiCourtMode) {
+        setSelectedCourt(id);
+        setSelectedCourtIds([id]);
+        return;
+      }
+
+      setSelectedCourtIds((prev) => {
+        const existing = prev.indexOf(id);
+        if (existing >= 0) {
+          const next = prev.filter((courtId) => courtId !== id);
+          setSelectedCourt(next[0] ?? 'notBooked');
+          return next;
+        }
+        const max = computeMaxSelectableCourts(maxParticipants, courts.length);
+        if (prev.length >= max) return prev;
+        const next = [...prev, id];
+        setSelectedCourt(next[0]);
+        return next;
+      });
+    },
+    [multiCourtMode, maxParticipants, courts.length],
+  );
+
+  useEffect(() => {
+    if (multiCourtMode) return;
+    setSelectedCourtIds((prev) => {
+      if (prev.length <= 1) return prev;
+      const first = prev[0];
+      setSelectedCourt(first ?? 'notBooked');
+      return first ? [first] : [];
+    });
+  }, [multiCourtMode]);
+
+  useEffect(() => {
+    if (!multiCourtMode || selectedCourtIds.length <= 1) return;
+    if (bookCourtEnabled) {
+      setBookCourtEnabled(false);
+    }
+  }, [multiCourtMode, selectedCourtIds.length, bookCourtEnabled]);
 
   useEffect(() => {
     if (initialGameData?.minLevel !== undefined || initialGameData?.maxLevel !== undefined) {
@@ -879,6 +946,7 @@ export const CreateGame = ({
     selectedClub,
     courts,
     selectedCourt,
+    selectedCourtIds,
     selectedDate,
     selectedTime,
     duration,
@@ -908,6 +976,7 @@ export const CreateGame = ({
     selectedClub,
     courts,
     selectedCourt,
+    selectedCourtIds,
     selectedDate,
     selectedTime,
     duration,
@@ -939,10 +1008,13 @@ export const CreateGame = ({
         courts={courts}
         selectedClub={selectedClub}
         selectedCourt={selectedCourt}
+        selectedCourtIds={selectedCourtIds}
+        maxParticipants={maxParticipants}
+        multiSelectCourts={multiCourtMode}
         selectedDate={selectedDate}
         hasBookedCourt={hasBookedCourt}
         entityType={entityType}
-        onSelectCourt={setSelectedCourt}
+        onSelectCourt={handleCourtSelect}
         onToggleHasBookedCourt={setHasBookedCourt}
         preferredSport={selectedSport}
         onSportTabChange={handleCourtSportTab}
@@ -953,9 +1025,13 @@ export const CreateGame = ({
       courts,
       selectedClub,
       selectedCourt,
+      selectedCourtIds,
+      maxParticipants,
+      multiCourtMode,
       selectedDate,
       hasBookedCourt,
       entityType,
+      handleCourtSelect,
       selectedSport,
       handleCourtSportTab,
     ],
@@ -1077,6 +1153,8 @@ export const CreateGame = ({
         entityType: entityType,
         clubId: selectedClub || undefined,
         courtId: selectedCourt !== 'notBooked' ? selectedCourt : undefined,
+        courtIds:
+          multiCourtMode && selectedCourtIds.length > 0 ? selectedCourtIds : undefined,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
         timeIsSet: true,
@@ -1165,14 +1243,6 @@ export const CreateGame = ({
           }
         } catch (inviteError) {
           console.error('Failed to send invites:', inviteError);
-        }
-      }
-
-      if (selectedCourtIds.length > 0 && gameResponse.data.id) {
-        try {
-          await gameCourtsApi.setGameCourts(gameResponse.data.id, selectedCourtIds);
-        } catch (courtError) {
-          console.error('Failed to set game courts:', courtError);
         }
       }
 
@@ -1474,6 +1544,7 @@ export const CreateGame = ({
               onSelectClub={(id: string) => {
                 setSelectedClub(id);
                 setSelectedCourt('notBooked');
+                setSelectedCourtIds([]);
               }}
               onOpenClubModal={() => setIsClubModalOpen(true)}
               onCloseClubModal={() => setIsClubModalOpen(false)}
@@ -1613,16 +1684,6 @@ export const CreateGame = ({
           hideRatingGame={showTemplatePicker}
         />
         </div>
-
-        {maxParticipants > 4 && entityType !== 'BAR' && (
-          <MultipleCourtsSelector
-            courts={courts}
-            selectedClub={selectedClub}
-            entityType={entityType}
-            isEditing={true}
-            onCourtsChange={setSelectedCourtIds}
-          />
-        )}
 
         <div ref={summarySectionRefs.name}>
         <GameNameCommentsSection

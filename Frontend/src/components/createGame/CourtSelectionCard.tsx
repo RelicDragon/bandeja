@@ -12,6 +12,8 @@ interface CourtSelectionCardProps {
   selected: boolean;
   fillPercent?: number;
   loading?: boolean;
+  selectionIndex?: number;
+  disabled?: boolean;
   onSelectCourt: (id: string) => void;
 }
 
@@ -22,6 +24,8 @@ export function CourtSelectionCard({
   selected,
   fillPercent = 0,
   loading = false,
+  selectionIndex,
+  disabled = false,
   onSelectCourt,
 }: CourtSelectionCardProps) {
   const nameParts = court ? resolveCourtNameParts(court.name, court.integrationCourtName) : null;
@@ -38,11 +42,14 @@ export function CourtSelectionCard({
   return (
     <button
       type="button"
+      disabled={disabled}
       onClick={() => onSelectCourt(selectId)}
       className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all min-w-0 ${
-        selected
-          ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/40 ring-1 ring-primary-500/30'
-          : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 hover:border-primary-400 dark:hover:border-primary-600'
+        disabled
+          ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60'
+          : selected
+            ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/40 ring-1 ring-primary-500/30'
+            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 hover:border-primary-400 dark:hover:border-primary-600'
       }`}
     >
       <div className="flex-1 min-w-0">
@@ -72,12 +79,19 @@ export function CourtSelectionCard({
         )}
       </div>
       {court ? (
-        <CourtOccupancyRing
-          percent={fillPercent}
-          loading={loading}
-          selected={selected}
-          size={RING_SIZE}
-        />
+        <div className="relative shrink-0">
+          {selectionIndex != null && selected ? (
+            <span className="absolute -top-1 -right-1 z-10 flex h-4 w-4 items-center justify-center rounded-full bg-primary-600 text-[10px] font-semibold text-white">
+              {selectionIndex}
+            </span>
+          ) : null}
+          <CourtOccupancyRing
+            percent={fillPercent}
+            loading={loading}
+            selected={selected}
+            size={RING_SIZE}
+          />
+        </div>
       ) : (
         <div
           className="rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 shrink-0"

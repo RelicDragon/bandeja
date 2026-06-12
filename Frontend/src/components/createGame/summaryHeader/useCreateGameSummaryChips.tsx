@@ -42,6 +42,7 @@ interface UseCreateGameSummaryChipsArgs {
   selectedClub: string;
   courts: Court[];
   selectedCourt: string;
+  selectedCourtIds?: string[];
   selectedDate: Date;
   selectedTime: string;
   duration: number;
@@ -75,6 +76,7 @@ export function useCreateGameSummaryChips({
   selectedClub,
   courts,
   selectedCourt,
+  selectedCourtIds = [],
   selectedDate,
   selectedTime,
   duration,
@@ -174,10 +176,20 @@ export function useCreateGameSummaryChips({
         parts.push(selectedTime);
         if (duration) parts.push(getDurationLabel(duration));
       }
-      if (selectedCourt !== 'notBooked') {
-        const court = courts.find((c) => c.id === selectedCourt);
-        if (court) {
-          parts.push(resolveCourtNameParts(court.name, court.integrationCourtName).name);
+      if (selectedCourt !== 'notBooked' || selectedCourtIds.length > 0) {
+        const courtIds = selectedCourtIds.length > 0
+          ? selectedCourtIds
+          : selectedCourt !== 'notBooked'
+            ? [selectedCourt]
+            : [];
+        const courtLabels = courtIds
+          .map((id) => courts.find((c) => c.id === id))
+          .filter((court): court is Court => court != null)
+          .map((court) => resolveCourtNameParts(court.name, court.integrationCourtName).name);
+        if (courtLabels.length === 1) {
+          parts.push(courtLabels[0]);
+        } else if (courtLabels.length > 1) {
+          parts.push(`${courtLabels[0]} +${courtLabels.length - 1}`);
         }
       }
       chips.push({
@@ -251,6 +263,7 @@ export function useCreateGameSummaryChips({
     selectedClub,
     courts,
     selectedCourt,
+    selectedCourtIds,
     selectedDate,
     selectedTime,
     duration,
