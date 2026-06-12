@@ -111,9 +111,10 @@ flowchart TD
 | Create game / tournament / league / training | Club → court → date → time grid |
 | Edit game | `WhereTab` + time; re-validate occupancy |
 | Find → join game | No booking |
-| Club detail | Read-only; **no** “Book a court” CTA |
+| Club detail | `AvailabilitySheet` is **browse-only**: shows free slots; tap navigates to create-game with club/court/time prefilled — **no API book** on club detail |
+| Booktime booking row → create game | Existing booking deep link (`externalBookingId`); skip reserve step in create-game |
 
-Copy: **“Reserve when you create a game”**, not “Book a court”.
+Copy: **“Reserve when you create a game”**, not “Book a court”. Club detail grid hint: tap a time to create a game — court is reserved when you publish the game.
 
 ### What “booking” means
 

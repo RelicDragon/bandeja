@@ -1,6 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { booktimeApi } from '@/api/booktime';
 import type { Club, Court } from '@/types';
+
+function booktimeCourtMappingKey(courts: Court[] | undefined, club: Club | undefined): string {
+  return (courts ?? club?.courts ?? [])
+    .filter((c) => typeof c.externalCourtId === 'string' && c.externalCourtId.trim())
+    .map((c) => `${c.id}:${c.externalCourtId!.trim()}`)
+    .sort()
+    .join('|');
+}
 import { BooktimeClient } from '@/integrations/booktime/client';
 import { computeFreeSlotsForCourt, formatClubDateKey } from '@/integrations/booktime/slots';
 import { clubLocalDateString, clubLocalNowMinutes } from '@/utils/clubAdmin/scheduleTime';
@@ -47,16 +55,33 @@ export function useBooktimeTimeOptions({
   enabled,
 }: UseBooktimeTimeOptionsParams) {
   const [cache, setCache] = useState<OptionsCache>(new Map());
+  const [cacheTick, setCacheTick] = useState(0);
+  const cacheRef = useRef(cache);
+  cacheRef.current = cache;
   const [loading, setLoading] = useState(false);
   const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(club?.id, enabled);
 
   const durationMinutes = Math.round(durationHours * 60);
   const companyId = club ? booktimeCompanyId(club) : null;
+  const courtMappingKey = booktimeCourtMappingKey(courts, club);
+  const mappedCourtsRef = useRef<Court[]>([]);
+  mappedCourtsRef.current = (courts ?? club?.courts ?? []).filter(
+    (c) => typeof c.externalCourtId === 'string' && c.externalCourtId.trim(),
+  );
 
   const loadDate = useCallback(
     async (date: Date) => {
       if (!enabled || !liveApiEnabled || !club || !companyId) return;
       const dateKey = formatClubDateKey(date, club);
+      if (!courtMappingKey) {
+        setCache((prev) => {
+          const next = new Map(prev);
+          next.set(dateKey, []);
+          return next;
+        });
+        setCacheTick((tick) => tick + 1);
+        return;
+      }
       setLoading(true);
       try {
         const client = new BooktimeClient({ companyId });
@@ -72,9 +97,7 @@ export function useBooktimeTimeOptions({
           }
         }
 
-        const mappedCourts = (courts ?? club.courts ?? []).filter(
-          (c) => typeof c.externalCourtId === 'string' && c.externalCourtId.trim()
-        );
+        const mappedCourts = mappedCourtsRef.current;
 
         let raw: string[];
 
@@ -115,6 +138,7 @@ export function useBooktimeTimeOptions({
           next.set(dateKey, options);
           return next;
         });
+        setCacheTick((tick) => tick + 1);
       } catch (err) {
         console.error('Booktime time options load failed:', err);
         setCache((prev) => {
@@ -122,16 +146,18 @@ export function useBooktimeTimeOptions({
           next.set(dateKey, []);
           return next;
         });
+        setCacheTick((tick) => tick + 1);
       } finally {
         setLoading(false);
       }
     },
-    [club, companyId, courts, durationMinutes, enabled, liveApiEnabled, selectedCourtId]
+    [club, companyId, courtMappingKey, durationMinutes, enabled, liveApiEnabled, selectedCourtId]
   );
 
   useEffect(() => {
     setCache(new Map());
-  }, [club?.id, companyId, selectedCourtId, courts]);
+    setCacheTick((tick) => tick + 1);
+  }, [club?.id, companyId, selectedCourtId, courtMappingKey]);
 
   useEffect(() => {
     void loadDate(selectedDate);
@@ -149,11 +175,12 @@ export function useBooktimeTimeOptions({
 
   const optionsForDate = useCallback(
     (date: Date): string[] => {
+      void cacheTick;
       if (!club) return [];
       const dateKey = formatClubDateKey(date, club);
-      return cache.get(dateKey) ?? [];
+      return cacheRef.current.get(dateKey) ?? [];
     },
-    [cache, club]
+    [cacheTick, club]
   );
 
   const generateTimeOptions = useCallback(
@@ -211,10 +238,15 @@ export function useBooktimeTimeOptions({
 
   const active = enabled && liveApiEnabled && !!club && !!companyId;
 
+  const reload = useCallback(() => {
+    void loadDate(selectedDate);
+  }, [loadDate, selectedDate]);
+
   return useMemo(
     () => ({
       active,
       loading,
+      reload,
       generateTimeOptions,
       generateTimeOptionsForDate,
       canAccommodateDuration,
@@ -225,6 +257,7 @@ export function useBooktimeTimeOptions({
     [
       active,
       loading,
+      reload,
       generateTimeOptions,
       generateTimeOptionsForDate,
       canAccommodateDuration,

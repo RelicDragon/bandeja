@@ -18,9 +18,18 @@ export const getBooktimeAuth = asyncHandler(async (req: AuthRequest, res: Respon
   res.json({ success: true, data: status });
 });
 
+function parseOptionalName(raw: unknown): string | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null || raw === '') return null;
+  if (typeof raw !== 'string') throw new ApiError(400, 'Name must be a string');
+  const trimmed = raw.trim();
+  return trimmed || null;
+}
+
 export const putBooktimeAuth = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { clubId } = req.params;
-  const { accessToken, refreshToken, externalUserId, phoneNumber, expiresAt } = req.body ?? {};
+  const { accessToken, refreshToken, externalUserId, phoneNumber, firstName, lastName, expiresAt } =
+    req.body ?? {};
 
   if (typeof accessToken !== 'string' || !accessToken.trim()) {
     throw new ApiError(400, 'accessToken is required');
@@ -39,6 +48,8 @@ export const putBooktimeAuth = asyncHandler(async (req: AuthRequest, res: Respon
     refreshToken: refreshToken.trim(),
     externalUserId: externalUserId.trim(),
     phoneNumber: typeof phoneNumber === 'string' ? phoneNumber.trim() || null : null,
+    firstName: parseOptionalName(firstName),
+    lastName: parseOptionalName(lastName),
     expiresAt: parseExpiresAt(expiresAt),
   });
 

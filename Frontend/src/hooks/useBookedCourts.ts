@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { gamesApi } from '@/api';
 import { Club, BookedCourtSlot } from '@/types';
 import { getClubTimezone, createDateFromClubTime } from './useGameTimeDuration';
@@ -14,6 +14,7 @@ interface UseBookedCourtsProps {
   selectedCourt: string | null;
   club?: Club;
   snapshotRefreshEnabled?: boolean;
+  enabled?: boolean;
 }
 
 interface BookedSlotInfo {
@@ -32,6 +33,7 @@ export const useBookedCourts = ({
   selectedCourt,
   club,
   snapshotRefreshEnabled = true,
+  enabled = true,
 }: UseBookedCourtsProps) => {
   const [bookedCourts, setBookedCourts] = useState<BookedCourtSlot[]>([]);
   const [loading, setLoading] = useState(false);
@@ -49,6 +51,9 @@ export const useBookedCourts = ({
     liveApiLoading,
   } = useBooktimeSnapshotRefresh(refreshEnabled ? club : undefined, selectedDate, refreshEnabled);
 
+  const refreshSnapshotRef = useRef(refreshSnapshot);
+  refreshSnapshotRef.current = refreshSnapshot;
+
   const startOfDay = useMemo(() => {
     if (!clubId || !selectedDate) return null;
     
@@ -64,7 +69,7 @@ export const useBookedCourts = ({
   }, [selectedDate, club, clubId]);
 
   const fetchBookedCourts = useCallback(async () => {
-    if (!clubId || !startOfDay || !endOfDay) {
+    if (!enabled || !clubId || !startOfDay || !endOfDay) {
       setBookedCourts([]);
       setIsLoadingExternalSlots(false);
       return;
@@ -83,7 +88,7 @@ export const useBookedCourts = ({
       setIsLoadingExternalSlots(externalLoading);
 
       if (externalLoading && refreshEnabled && !liveApiLoading) {
-        await refreshSnapshot({ force: true });
+        await refreshSnapshotRef.current({ force: true });
         const retry = await gamesApi.getBookedCourts({
           clubId,
           startDate: startOfDay,
@@ -101,12 +106,12 @@ export const useBookedCourts = ({
       setLoading(false);
     }
   }, [
+    enabled,
     clubId,
     startOfDay,
     endOfDay,
     selectedCourt,
     refreshEnabled,
-    refreshSnapshot,
     liveApiLoading,
   ]);
 

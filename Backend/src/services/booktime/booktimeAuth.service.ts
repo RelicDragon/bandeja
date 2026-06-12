@@ -9,6 +9,8 @@ const SCOUT_INVALID_SKIP_MS = 24 * 60 * 60 * 1000;
 export type BooktimeAuthStatus = {
   connected: boolean;
   phoneNumber: string | null;
+  firstName: string | null;
+  lastName: string | null;
   externalUserId: string | null;
   scoutOptIn: boolean;
 };
@@ -27,6 +29,8 @@ export type StoreBooktimeAuthInput = {
   refreshToken: string;
   externalUserId: string;
   phoneNumber?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
   expiresAt?: Date | null;
 };
 
@@ -45,12 +49,16 @@ async function assertBooktimeClub(clubId: string) {
 
 function toStatus(row: {
   phoneNumber: string | null;
+  firstName: string | null;
+  lastName: string | null;
   externalUserId: string;
   scoutOptIn: boolean;
 }): BooktimeAuthStatus {
   return {
     connected: true,
     phoneNumber: row.phoneNumber,
+    firstName: row.firstName,
+    lastName: row.lastName,
     externalUserId: row.externalUserId,
     scoutOptIn: row.scoutOptIn,
   };
@@ -60,10 +68,17 @@ export async function getBooktimeAuthStatus(userId: string, clubId: string): Pro
   await assertBooktimeClub(clubId);
   const row = await prisma.userClubBooktimeAuth.findUnique({
     where: { userId_clubId: { userId, clubId } },
-    select: { phoneNumber: true, externalUserId: true, scoutOptIn: true },
+    select: { phoneNumber: true, firstName: true, lastName: true, externalUserId: true, scoutOptIn: true },
   });
   if (!row) {
-    return { connected: false, phoneNumber: null, externalUserId: null, scoutOptIn: true };
+    return {
+      connected: false,
+      phoneNumber: null,
+      firstName: null,
+      lastName: null,
+      externalUserId: null,
+      scoutOptIn: true,
+    };
   }
   return toStatus(row);
 }
@@ -77,6 +92,8 @@ export async function storeBooktimeAuth(input: StoreBooktimeAuthInput): Promise<
       clubId: input.clubId,
       externalUserId: input.externalUserId,
       phoneNumber: input.phoneNumber ?? null,
+      firstName: input.firstName ?? null,
+      lastName: input.lastName ?? null,
       accessToken: encryptToken(input.accessToken),
       refreshToken: encryptToken(input.refreshToken),
       expiresAt: input.expiresAt ?? null,
@@ -86,12 +103,14 @@ export async function storeBooktimeAuth(input: StoreBooktimeAuthInput): Promise<
     update: {
       externalUserId: input.externalUserId,
       phoneNumber: input.phoneNumber ?? null,
+      ...(input.firstName !== undefined ? { firstName: input.firstName ?? null } : {}),
+      ...(input.lastName !== undefined ? { lastName: input.lastName ?? null } : {}),
       accessToken: encryptToken(input.accessToken),
       refreshToken: encryptToken(input.refreshToken),
       expiresAt: input.expiresAt ?? null,
       scoutInvalidAt: null,
     },
-    select: { phoneNumber: true, externalUserId: true, scoutOptIn: true },
+    select: { phoneNumber: true, firstName: true, lastName: true, externalUserId: true, scoutOptIn: true },
   });
   return toStatus(row);
 }

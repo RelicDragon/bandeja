@@ -14,14 +14,13 @@ import {
   formatClubDateKey,
 } from '@/integrations/booktime/slots';
 import { clubLocalDateString, clubLocalNowMinutes } from '@/utils/clubAdmin/scheduleTime';
+import { DEFAULT_BOOKABLE_DAYS } from '@/hooks/useBooktimeCompanyMeta';
 
 export type BooktimeCourtAvailability = {
   court: Court;
   externalCourtId: string;
   freeSlots: string[];
 };
-
-const BOOKABLE_DAYS = 14;
 
 function mappedCourts(club: Club): Court[] {
   return (club.courts ?? [])
@@ -56,6 +55,7 @@ export function useBooktimeAvailability(
   const [busyByCourtId, setBusyByCourtId] = useState<Map<string, Array<{ startTime: string; endTime: string }>>>(
     new Map()
   );
+  const [bookableDays, setBookableDays] = useState(DEFAULT_BOOKABLE_DAYS);
   const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(club.id, enabled);
 
   const dateKey = useMemo(() => formatClubDateKey(selectedDate, club), [selectedDate, club]);
@@ -76,6 +76,11 @@ export function useBooktimeAvailability(
       const resolvedDurations = resolveBooktimeDurationsMinutes(company);
       setDurations(resolvedDurations);
       setDurationMinutes((current) => pickClosestDurationOption(current, resolvedDurations));
+      if (typeof company.bookableDays === 'number' && company.bookableDays > 0) {
+        setBookableDays(company.bookableDays);
+      } else {
+        setBookableDays(DEFAULT_BOOKABLE_DAYS);
+      }
 
       const busyMap = new Map<string, Array<{ startTime: string; endTime: string }>>();
       for (const row of snapshotRes.data?.courts ?? []) {
@@ -122,10 +127,11 @@ export function useBooktimeAvailability(
 
   const minDateKey = useMemo(() => clubLocalDateString(club), [club]);
   const maxDateKey = useMemo(() => {
-    const max = new Date();
-    max.setDate(max.getDate() + BOOKABLE_DAYS - 1);
+    const todayKey = clubLocalDateString(club);
+    const [y, m, d] = todayKey.split('-').map(Number);
+    const max = new Date(y, m - 1, d + bookableDays - 1, 12, 0, 0);
     return formatClubDateKey(max, club);
-  }, [club]);
+  }, [bookableDays, club]);
 
   return {
     durationMinutes,

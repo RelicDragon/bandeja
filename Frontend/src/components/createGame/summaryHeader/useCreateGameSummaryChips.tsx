@@ -54,6 +54,7 @@ interface UseCreateGameSummaryChipsArgs {
   priceTotal: number | undefined;
   priceCurrency: PriceCurrency | undefined;
   defaultCurrency: PriceCurrency | undefined;
+  excludeKeys?: string[];
 }
 
 const ICON_SIZE = 12;
@@ -86,6 +87,7 @@ export function useCreateGameSummaryChips({
   priceTotal,
   priceCurrency,
   defaultCurrency,
+  excludeKeys = [],
 }: UseCreateGameSummaryChipsArgs): SummaryChipItem[] {
   const { t } = useTranslation();
 
@@ -232,7 +234,7 @@ export function useCreateGameSummaryChips({
       }
     }
 
-    return chips;
+    return chips.filter((chip) => !excludeKeys.includes(chip.key));
   }, [
     past,
     entityType,
@@ -261,6 +263,7 @@ export function useCreateGameSummaryChips({
     priceTotal,
     priceCurrency,
     defaultCurrency,
+    excludeKeys,
     t,
   ]);
 }

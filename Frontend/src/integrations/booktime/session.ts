@@ -176,6 +176,8 @@ export async function persistBooktimeSessionAfterConnect(
     refreshToken: string;
     externalUserId: string;
     phoneNumber?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
   }
 ): Promise<void> {
   const session: BooktimeStoredSession = {
@@ -196,6 +198,8 @@ export async function persistBooktimeSessionAfterConnect(
     refreshToken: payload.refreshToken,
     externalUserId: payload.externalUserId,
     phoneNumber: payload.phoneNumber ?? null,
+    firstName: payload.firstName ?? null,
+    lastName: payload.lastName ?? null,
   });
 }
 

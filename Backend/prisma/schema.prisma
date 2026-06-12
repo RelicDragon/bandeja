@@ -319,6 +319,8 @@ model UserClubBooktimeAuth {
   clubId         String
   externalUserId String
   phoneNumber    String?
+  firstName      String?
+  lastName       String?
   accessToken    String
   refreshToken   String
   expiresAt      DateTime?

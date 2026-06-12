@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { CreateGame } from './CreateGame';
 import { EntityType, Game } from '@/types';
@@ -17,10 +17,6 @@ function initialGameDataFromSearch(search: string): Partial<Game> | undefined {
   const endTime = params.get('endTime');
   if (startTime) data.startTime = startTime;
   if (endTime) data.endTime = endTime;
-  const hasBookedCourt = params.get('hasBookedCourt');
-  if (hasBookedCourt === '1' || hasBookedCourt === 'true') {
-    data.hasBookedCourt = true;
-  }
   const externalBookingId = params.get('externalBookingId');
   if (externalBookingId) {
     data.externalBookingId = externalBookingId;
@@ -43,12 +39,18 @@ export const CreateGameWrapper = () => {
     createIntent?: CreateFlowIntent;
     selectedTemplateId?: CreateTemplateId;
   };
-  const queryInitialGameData = initialGameDataFromSearch(location.search);
+  const queryInitialGameData = useMemo(
+    () => initialGameDataFromSearch(location.search),
+    [location.search],
+  );
   const entityType =
     state?.entityType ??
     (new URLSearchParams(location.search).get('entityType') as EntityType | null) ??
     (queryInitialGameData ? 'GAME' : undefined);
-  const initialGameData = { ...queryInitialGameData, ...state?.initialGameData };
+  const initialGameData = useMemo(
+    () => ({ ...queryInitialGameData, ...state?.initialGameData }),
+    [queryInitialGameData, state?.initialGameData],
+  );
   const initialCreateIntent = state?.createIntent;
   const initialTemplateId = state?.selectedTemplateId;
   const { setBottomTabsVisible } = useShellNavStore();

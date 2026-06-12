@@ -16,6 +16,8 @@ export function useBooktimeClubAuth(clubId: string | undefined, enabled: boolean
       const next = res.data ?? {
         connected: false,
         phoneNumber: null,
+        firstName: null,
+        lastName: null,
         externalUserId: null,
         scoutOptIn: true,
       };

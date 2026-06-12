@@ -12,6 +12,8 @@ interface DateSelectorProps {
   hideTodayIfNoSlots?: boolean;
   hasTimeSlotsForToday?: boolean;
   hideCurrentDateIndicator?: boolean;
+  fixedDates?: Date[];
+  hideCalendar?: boolean;
 }
 
 const localeMap = {
@@ -30,7 +32,17 @@ const dateFormatMap: Record<string, string> = {
   cs: 'dd.MM.yyyy',
 };
 
-export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, showCalendarAsSelected, hideTodayIfNoSlots = false, hasTimeSlotsForToday = true, hideCurrentDateIndicator = false }: DateSelectorProps) => {
+export const DateSelector = ({
+  selectedDate,
+  onDateSelect,
+  onCalendarClick,
+  showCalendarAsSelected,
+  hideTodayIfNoSlots = false,
+  hasTimeSlotsForToday = true,
+  hideCurrentDateIndicator = false,
+  fixedDates: fixedDatesProp,
+  hideCalendar = false,
+}: DateSelectorProps) => {
   const { t, i18n } = useTranslation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -45,9 +57,9 @@ export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, show
     }
   }, [selectedDate]);
 
-  // Generate fixed dates: today (if available), tomorrow, and 6 next days
   const startDate = hideTodayIfNoSlots && !hasTimeSlotsForToday ? addDays(new Date(), 1) : new Date();
-  const fixedDates = Array.from({ length: 8 }, (_, i) => addDays(startDate, i));
+  const fixedDates =
+    fixedDatesProp ?? Array.from({ length: 8 }, (_, i) => addDays(startDate, i));
 
   const handlePrevious = () => {
     if (scrollContainerRef.current) {
@@ -123,22 +135,24 @@ export const DateSelector = ({ selectedDate, onDateSelect, onCalendarClick, show
           );
         })}
         
-        <button
-          data-selected={showCalendarAsSelected || undefined}
-          onClick={onCalendarClick}
-          className={`flex-shrink-0 px-4 py-3 rounded-lg min-w-[80px] flex flex-col items-center justify-center transition-all ${
-            showCalendarAsSelected
-              ? 'bg-primary-500 text-white border-2 border-transparent'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600'
-          }`}
-        >
-          <Calendar size={24} className="mb-1" />
-          {showCalendarAsSelected ? (
-            <div className="text-xs font-medium text-center leading-tight">{format(selectedDate, dateFormat, { locale })}</div>
-          ) : (
-            <div className="text-xs font-medium text-center leading-tight">{t('createGame.selectFromCalendar')}</div>
-          )}
-        </button>
+        {!hideCalendar ? (
+          <button
+            data-selected={showCalendarAsSelected || undefined}
+            onClick={onCalendarClick}
+            className={`flex-shrink-0 px-4 py-3 rounded-lg min-w-[80px] flex flex-col items-center justify-center transition-all ${
+              showCalendarAsSelected
+                ? 'bg-primary-500 text-white border-2 border-transparent'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600'
+            }`}
+          >
+            <Calendar size={24} className="mb-1" />
+            {showCalendarAsSelected ? (
+              <div className="text-xs font-medium text-center leading-tight">{format(selectedDate, dateFormat, { locale })}</div>
+            ) : (
+              <div className="text-xs font-medium text-center leading-tight">{t('createGame.selectFromCalendar')}</div>
+            )}
+          </button>
+        ) : null}
       </div>
 
       <button

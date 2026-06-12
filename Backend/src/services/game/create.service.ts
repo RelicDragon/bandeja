@@ -13,9 +13,70 @@ import { normalizeGameFormatPatch } from '../../utils/gameFormat/normalizeGameFo
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
+import { rollbackBooktimeBookingOnCreateFailure } from '../booktime/booktimeBookingRollback.service';
 
 export class GameCreateService {
   static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {
+    const externalBookingId =
+      typeof data.externalBookingId === 'string' && data.externalBookingId.trim()
+        ? data.externalBookingId.trim()
+        : null;
+    const clubIdForRollback = typeof data.clubId === 'string' ? data.clubId.trim() : '';
+    const shouldRollbackBooktime =
+      data.rollbackBooktimeBooking === true && !!externalBookingId && !!clubIdForRollback;
+
+    let externalBookingProvider: ClubIntegrationType | null = null;
+    if (externalBookingId) {
+      const provider = data.externalBookingProvider;
+      if (provider !== ClubIntegrationType.BOOKTIME) {
+        throw new ApiError(400, 'externalBookingProvider must be BOOKTIME when externalBookingId is set');
+      }
+      externalBookingProvider = ClubIntegrationType.BOOKTIME;
+      const conflict = await prisma.game.findFirst({
+        where: { externalBookingId },
+        select: { id: true },
+      });
+      if (conflict) {
+        throw new ApiError(400, 'This court booking is already linked to another game');
+      }
+    }
+    const hasBookedCourtCreate = externalBookingId ? true : Boolean(data.hasBookedCourt);
+
+    try {
+      return await GameCreateService.createGameBody(
+        data,
+        userId,
+        jwtIsAdmin,
+        externalBookingId,
+        externalBookingProvider,
+        hasBookedCourtCreate
+      );
+    } catch (err) {
+      if (shouldRollbackBooktime) {
+        const rollback = await rollbackBooktimeBookingOnCreateFailure(
+          userId,
+          clubIdForRollback,
+          externalBookingId!
+        );
+        if (err instanceof ApiError) {
+          throw new ApiError(err.statusCode, err.message, err.isOperational, {
+            ...err.data,
+            booktimeRollback: rollback,
+          });
+        }
+      }
+      throw err;
+    }
+  }
+
+  private static async createGameBody(
+    data: any,
+    userId: string,
+    jwtIsAdmin: boolean,
+    externalBookingId: string | null,
+    externalBookingProvider: ClubIntegrationType | null,
+    hasBookedCourtCreate: boolean
+  ) {
     // Validate currency if provided
     if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
       throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
@@ -209,20 +270,6 @@ export class GameCreateService {
       data.affectsRating !== undefined
         ? data.affectsRating
         : true;
-
-    const externalBookingId =
-      typeof data.externalBookingId === 'string' && data.externalBookingId.trim()
-        ? data.externalBookingId.trim()
-        : null;
-    let externalBookingProvider: ClubIntegrationType | null = null;
-    if (externalBookingId) {
-      const provider = data.externalBookingProvider;
-      if (provider !== ClubIntegrationType.BOOKTIME) {
-        throw new ApiError(400, 'externalBookingProvider must be BOOKTIME when externalBookingId is set');
-      }
-      externalBookingProvider = ClubIntegrationType.BOOKTIME;
-    }
-    const hasBookedCourtCreate = externalBookingId ? true : Boolean(data.hasBookedCourt);
 
     const createdGame = await prisma.game.create({
       data: {

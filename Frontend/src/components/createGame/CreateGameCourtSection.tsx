@@ -11,6 +11,7 @@ interface CreateGameCourtSectionProps {
   selectedClub: string;
   selectedCourt: string;
   hasBookedCourt: boolean;
+  bookCourtEnabled?: boolean;
   isCourtModalOpen: boolean;
   entityType: EntityType;
   onSelectCourt: (id: string) => void;
@@ -27,6 +28,7 @@ export const CreateGameCourtSection = ({
   selectedClub,
   selectedCourt,
   hasBookedCourt,
+  bookCourtEnabled = false,
   isCourtModalOpen,
   entityType,
   onSelectCourt,
@@ -49,7 +51,7 @@ export const CreateGameCourtSection = ({
         : undefined;
   const showHasBookedSwitch =
     (selectedCourt !== 'notBooked' || (entityType === 'BAR' && courts.length === 1)) &&
-    !courtHasActiveBookingIntegration(club, court);
+    (!courtHasActiveBookingIntegration(club, court) || !bookCourtEnabled);
 
   return (
     <>

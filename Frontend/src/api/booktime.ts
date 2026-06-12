@@ -4,6 +4,8 @@ import { ApiResponse, User } from '@/types';
 export type BooktimeAuthStatus = {
   connected: boolean;
   phoneNumber: string | null;
+  firstName: string | null;
+  lastName: string | null;
   externalUserId: string | null;
   scoutOptIn: boolean;
 };
@@ -74,6 +76,8 @@ export const booktimeApi = {
       refreshToken: string;
       externalUserId: string;
       phoneNumber?: string | null;
+      firstName?: string | null;
+      lastName?: string | null;
       expiresAt?: string | null;
     }
   ) => {

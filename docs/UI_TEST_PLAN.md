@@ -387,13 +387,13 @@ Frontend/e2e/
 | C-13e | Club booking no sync banner | Unconnected user, empty scout pool, no snapshot today | "No sync yet today" or scout-pool degraded banner |
 | C-13f | Club booking availability sheet | Open BOOKTIME club detail with mapped courts | Free slot grid per court; duration toggle matches club API `bookingDurations` |
 | C-13t | Integrated club duration options | Create GAME or TOURNAMENT at BOOKTIME club | Duration buttons match club API (e.g. 1h/2h only); tournament extras (3h/4h/6h) hidden when unsupported |
-| C-13g | Club booking slot connect gate | Tap slot while not connected to club booking | ConnectClubSheet opens |
+| C-13g | Club availability slot → create-game | Tap free slot on club detail availability grid | Navigates to `/create-game` with club/court/time prefilled; no API book on club detail |
 | C-13h | Club booking last sync | After snapshot refresh on club detail | "Last synced …" shown on availability section |
 | C-13i | External booking unmapped courts hidden | Club has unmapped external booking courts | Only mapped courts appear in availability sheet |
-| C-13j | Club booking with price | Connected user taps free slot → confirm | Price shown; booking succeeds; success modal with "Create game here" |
-| C-13k | Club booking slot taken | Confirm book while slot becomes busy | Toast "That slot was just taken"; grid refreshes |
+| C-13j | Club browse grid copy | Open BOOKTIME club detail availability | Title + browse hint; no in-sheet book confirm dialog |
+| C-13k | Club booking slot taken | _(club-detail book removed)_ | N/A — slot-taken handled on create-game confirm step 1 |
 | C-13l | Club booking cancel | Connected user → upcoming list → cancel | Policy confirm modal; booking removed; snapshot refreshes |
-| C-13m | Club booking create game CTA | After book success tap "Create game here" | Create-game opens with club/court/time pre-filled |
+| C-13m | Club slot → create-game prefill | Tap slot on availability grid | Create-game opens with club/court/time; reservation ON if integrated + live API |
 | C-13n | Club booking create game soft link | Create game from booking with externalBookingId | Game saved with `hasBookedCourt: true` and external link |
 | C-13o | Club booking cancel linked game warn | Cancel booking that has linked game | Success + non-blocking "Your game is still on the calendar" + Open game |
 | C-13p | Club booking orphan link notice | Game with external link but booking cancelled elsewhere | Game details shows "Court may no longer be reserved" |
@@ -402,9 +402,20 @@ Frontend/e2e/
 | C-13s | Club booking scout pool degraded | Unconnected user, empty scout pool | "Live availability unavailable" banner on create-game/club detail |
 | C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
-| C-13w | Create-game scheduling layout | Open create-game, pick club | Location shows club + call/site links; Game start card order is date → duration → court → time grid |
-| C-13x | Integrated court hides booked toggle | Create GAME at BOOKTIME club, pick mapped court | "I have booked court" switch hidden; unmapped court or non-integrated club still shows it |
-| C-13x | Create-game availability banner clears | Open create-game for BOOKTIME club on localhost/stale snapshot; wait for booked-courts | Spinner does not persist after time grid renders; 10s polling does not re-show infinite spinner |
+| C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club + integrated court | Game start order: court → reservation card → auth or date → duration → time |
+| C-13x | Integrated court booked toggle opt-out | BOOKTIME club, mapped court, reservation OFF or auth opt-out | "I've booked this court" toggle visible |
+| C-13y | Create-game reservation default | Pick integrated court, connected, live API | Reservation switch ON; Create label "Create game & reserve court" |
+| C-13z | Create-game inline auth gate | Reservation ON, not connected | Date/time hidden; phone OTP inline; opt-out reveals normal grid |
+| C-14a | Create-game confirm morph | Reservation ON, connected, pick slot → Create | Single dialog: review → reserve → create → success → calendar |
+| C-14b | Create-game bookable days strip | Reservation ON, connected | Date strip only (no calendar); days clamped to club `bookableDays` |
+| C-14c | Create-game no overlap when reserving | Reservation ON | No yellow/red overlay; overlap gate skipped on submit |
+| C-14d | Create-game slot taken on confirm | Slot taken between confirm and API | Step 1 error; dialog closes to time grid |
+| C-14e | Create-game snapshot block | Reservation ON, `noSyncToday` banner | Confirm disabled until snapshot usable |
+| C-14f | externalBookingId deep link | Open create-game from existing booking row | Reservation OFF; banner "Court already reserved"; confirm skips book step |
+| C-14g | Create-game confirm closes on edit | Open confirm; change time/court/date | Dialog closes automatically |
+| C-14h | Create-game !liveApiEnabled | BOOKTIME club without scout/connection | No reservation UI; generic time grid |
+| C-14i | Create-game rollback on create fail | Reservation ON; force game create API error after successful book | Confirm shows create-failed copy; court reservation rolled back (or rollback-failed message if cancel fails) |
+| C-14j | Create-game no request loop | Reservation ON, connected; open create-game for BOOKTIME club | Snapshot/slots/club fetches settle once per date/court change — no repeating network storm |
 | C-14 | Court not booked | Select "not booked" | Allowed |
 | C-15 | Court booked | Pick court | Overlap warning if conflict |
 | C-16 | Mark court booked modal | Confirm booking | Court marked |
