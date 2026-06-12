@@ -8,19 +8,21 @@ const RING_SIZE = 28;
 interface CourtSelectionCardProps {
   court?: Court;
   label?: string;
+  selectId: string;
   selected: boolean;
   fillPercent?: number;
   loading?: boolean;
-  onSelect: () => void;
+  onSelectCourt: (id: string) => void;
 }
 
 export function CourtSelectionCard({
   court,
   label,
+  selectId,
   selected,
   fillPercent = 0,
   loading = false,
-  onSelect,
+  onSelectCourt,
 }: CourtSelectionCardProps) {
   const nameParts = court ? resolveCourtNameParts(court.name, court.integrationCourtName) : null;
   const primaryTextClass = selected
@@ -36,7 +38,7 @@ export function CourtSelectionCard({
   return (
     <button
       type="button"
-      onClick={onSelect}
+      onClick={() => onSelectCourt(selectId)}
       className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all min-w-0 ${
         selected
           ? 'border-primary-500 bg-primary-50 dark:bg-primary-950/40 ring-1 ring-primary-500/30'
