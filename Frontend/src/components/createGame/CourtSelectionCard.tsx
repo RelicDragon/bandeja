@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Home } from 'lucide-react';
 import { CourtOccupancyRing } from './CourtOccupancyRing';
 import { resolveCourtNameParts } from '@/utils/courtDisplayName';
@@ -17,7 +18,7 @@ interface CourtSelectionCardProps {
   onSelectCourt: (id: string) => void;
 }
 
-export function CourtSelectionCard({
+export const CourtSelectionCard = memo(function CourtSelectionCard({
   court,
   label,
   selectId,
@@ -44,7 +45,7 @@ export function CourtSelectionCard({
       type="button"
       disabled={disabled}
       onClick={() => onSelectCourt(selectId)}
-      className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-all min-w-0 ${
+      className={`flex items-center gap-2 p-2 rounded-lg border text-left transition-colors min-w-0 ${
         disabled
           ? 'opacity-50 cursor-not-allowed border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60'
           : selected
@@ -100,4 +101,4 @@ export function CourtSelectionCard({
       )}
     </button>
   );
-}
+});

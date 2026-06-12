@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { parseSport } from '@shared/sport';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
@@ -63,10 +63,13 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
   const [activeSportTab, setActiveSportTab] = useState<Sport | undefined>(() =>
     resolveDefaultCourtSportTab(clubSports, sportFilter),
   );
+  const prevGridClubIdRef = useRef(club?.id);
 
   useEffect(() => {
+    if (prevGridClubIdRef.current === club?.id) return;
+    prevGridClubIdRef.current = club?.id;
     setActiveSportTab(resolveDefaultCourtSportTab(clubSports, sportFilter));
-  }, [clubSports, sportFilter, club?.id]);
+  }, [club?.id, clubSports, sportFilter]);
 
   const visibleCourts = useMemo(() => {
     if (showSportTabs && activeSportTab) {

@@ -103,10 +103,7 @@ export const CreateGame = ({
     if (initialGameData?.courtId) return [initialGameData.courtId];
     return [];
   });
-  const [selectedCourt, setSelectedCourt] = useState<string>(() => {
-    if (initialGameData?.gameCourts?.length) return initialGameData.gameCourts[0].courtId;
-    return initialGameData?.courtId || 'notBooked';
-  });
+  const selectedCourt = selectedCourtIds[0] ?? 'notBooked';
   const [playerLevelRange, setPlayerLevelRange] = useState<[number, number]>(() => {
     const sport: Sport =
       initialGameData?.sport ?? (resolveCreateGameDefaultSport(user));
@@ -388,11 +385,7 @@ export const CreateGame = ({
       sport,
       maxParticipants,
       playersPerMatch: playersPerMatch === 4 ? 4 : 2,
-      selectedCourtCount: multiCourtMode
-        ? selectedCourtIds.length
-        : selectedCourt !== 'notBooked'
-          ? 1
-          : 0,
+      selectedCourtCount: selectedCourtIds.length,
       creatorLevel: user ? getDisplayLevelForSport(user, sport) : 2,
       playerLevelRange,
       invitedLevels,
@@ -407,8 +400,6 @@ export const CreateGame = ({
     maxParticipants,
     playersPerMatch,
     selectedCourtIds,
-    selectedCourt,
-    multiCourtMode,
     user,
     playerLevelRange,
     invitedPlayers,
@@ -493,13 +484,14 @@ export const CreateGame = ({
 
   const initialCourtId = initialGameData?.courtId;
   const initialHasBookedCourt = initialGameData?.hasBookedCourt ?? false;
+  const courtsClubRef = useRef<string | null>(null);
 
   useEffect(() => {
     const fetchCourts = async () => {
       if (!selectedClub) {
         setCourts([]);
+        courtsClubRef.current = null;
         if (!initialCourtId) {
-          setSelectedCourt('notBooked');
           setSelectedCourtIds([]);
           setHasBookedCourt(false);
         } else {
@@ -511,16 +503,17 @@ export const CreateGame = ({
         const response = await courtsApi.getByClubId(selectedClub);
         setCourts(response.data);
 
+        const clubChanged = courtsClubRef.current !== selectedClub;
+        courtsClubRef.current = selectedClub;
+        if (!clubChanged) return;
+
         if (initialCourtId && response.data.some((c) => c.id === initialCourtId)) {
-          setSelectedCourt(initialCourtId);
           setSelectedCourtIds([initialCourtId]);
           setHasBookedCourt(initialHasBookedCourt);
         } else if (response.data.length === 1) {
-          setSelectedCourt(response.data[0].id);
           setSelectedCourtIds([response.data[0].id]);
           setHasBookedCourt(false);
         } else {
-          setSelectedCourt('notBooked');
           setSelectedCourtIds([]);
           setHasBookedCourt(false);
         }
@@ -651,12 +644,15 @@ export const CreateGame = ({
   }, [selectedCourt, courts, selectedSport, handleSportChange]);
 
   useEffect(() => {
-    if (selectedCourt === 'notBooked') return;
-    const court = courts.find((c) => c.id === selectedCourt);
-    if (!court?.sport || court.sport === selectedSport) return;
-    setSelectedCourt('notBooked');
-    setSelectedCourtIds([]);
-  }, [selectedSport, selectedCourt, courts]);
+    setSelectedCourtIds((prev) => {
+      if (prev.length === 0) return prev;
+      const filtered = prev.filter((id) => {
+        const court = courts.find((c) => c.id === id);
+        return !court?.sport || court.sport === selectedSport;
+      });
+      return filtered.length === prev.length ? prev : filtered;
+    });
+  }, [selectedSport, courts]);
 
   const handleCourtSportTab = useCallback(
     (sport: typeof selectedSport) => {
@@ -671,29 +667,21 @@ export const CreateGame = ({
   const handleCourtSelect = useCallback(
     (id: string) => {
       if (id === 'notBooked') {
-        setSelectedCourt('notBooked');
         setSelectedCourtIds([]);
         return;
       }
 
       if (!multiCourtMode) {
-        setSelectedCourt(id);
         setSelectedCourtIds([id]);
         return;
       }
 
       setSelectedCourtIds((prev) => {
         const existing = prev.indexOf(id);
-        if (existing >= 0) {
-          const next = prev.filter((courtId) => courtId !== id);
-          setSelectedCourt(next[0] ?? 'notBooked');
-          return next;
-        }
+        if (existing >= 0) return prev.filter((courtId) => courtId !== id);
         const max = computeMaxSelectableCourts(maxParticipants, courts.length);
         if (prev.length >= max) return prev;
-        const next = [...prev, id];
-        setSelectedCourt(next[0]);
-        return next;
+        return [...prev, id];
       });
     },
     [multiCourtMode, maxParticipants, courts.length],
@@ -701,12 +689,7 @@ export const CreateGame = ({
 
   useEffect(() => {
     if (multiCourtMode) return;
-    setSelectedCourtIds((prev) => {
-      if (prev.length <= 1) return prev;
-      const first = prev[0];
-      setSelectedCourt(first ?? 'notBooked');
-      return first ? [first] : [];
-    });
+    setSelectedCourtIds((prev) => (prev.length <= 1 ? prev : [prev[0]]));
   }, [multiCourtMode]);
 
   useEffect(() => {
@@ -1543,7 +1526,6 @@ export const CreateGame = ({
               isClubModalOpen={isClubModalOpen}
               onSelectClub={(id: string) => {
                 setSelectedClub(id);
-                setSelectedCourt('notBooked');
                 setSelectedCourtIds([]);
               }}
               onOpenClubModal={() => setIsClubModalOpen(true)}

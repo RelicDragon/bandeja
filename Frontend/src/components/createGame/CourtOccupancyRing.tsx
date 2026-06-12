@@ -23,18 +23,20 @@ export const CourtOccupancyRing = memo(function CourtOccupancyRing({
     ? 'stroke-primary-200 dark:stroke-primary-800'
     : 'stroke-gray-200 dark:stroke-gray-700';
 
-  const fillClass = loading
-    ? 'stroke-gray-300 dark:stroke-gray-600'
-    : clamped >= 90
-      ? 'stroke-red-500'
-      : clamped >= 60
-        ? 'stroke-amber-500'
-        : selected
-          ? 'stroke-primary-600 dark:stroke-primary-400'
-          : 'stroke-primary-500';
+  const fillClass = clamped >= 90
+    ? 'stroke-red-500'
+    : clamped >= 60
+      ? 'stroke-amber-500'
+      : selected
+        ? 'stroke-primary-600 dark:stroke-primary-400'
+        : 'stroke-primary-500';
 
   return (
-    <svg width={size} height={size} className={`shrink-0 -rotate-90 ${loading ? 'animate-pulse' : ''}`}>
+    <svg
+      width={size}
+      height={size}
+      className={`shrink-0 -rotate-90 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}
+    >
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -52,7 +54,7 @@ export const CourtOccupancyRing = memo(function CourtOccupancyRing({
         strokeLinecap="round"
         className={fillClass}
         strokeDasharray={circumference}
-        strokeDashoffset={loading ? circumference : offset}
+        strokeDashoffset={offset}
       />
     </svg>
   );
