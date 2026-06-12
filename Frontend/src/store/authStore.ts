@@ -12,6 +12,7 @@ import {
 import { extractLanguageCode, detectTimeFormat, detectWeekStart, normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { usersApi, authApi, pushApi } from '@/api';
 import { clearProactiveAccessRefresh, scheduleProactiveAccessRefresh } from '@/api/authRefresh';
+import { clearAllProactiveBooktimeRefresh } from '@/integrations/booktime/proactiveRefresh';
 import { clearChatLocalStores } from '@/services/chat/chatThreadIndex';
 import { clearChatThreadMemory } from '@/services/chat/chatThreadMemoryCache';
 import { clearChatSyncScheduler } from '@/services/chat/chatSyncScheduler';
@@ -168,6 +169,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         });
         bumpApiAuthCredentialGeneration();
         clearProactiveAccessRefresh();
+        clearAllProactiveBooktimeRefresh();
         try {
           await pushApi.removeAllTokens();
           console.info('[auth:logout] push removeAllTokens ok');

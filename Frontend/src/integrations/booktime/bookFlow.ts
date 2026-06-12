@@ -3,8 +3,7 @@ import type { BooktimeClient, BooktimeCompany } from './client';
 import {
   BOOKTIME_CONFIRM_RECHECK_MS,
   isSnapshotOlderThan,
-  parseGetForDayResponse,
-  slotOverlapsInterval,
+  slotFitsAvailableRanges,
   type BooktimeBookingDuration,
 } from './slots';
 import { getBooktimeExternalUserId } from './session';
@@ -88,47 +87,21 @@ export function buildBookingIsoRange(
   };
 }
 
-function normalizeBusyInterval(raw: Record<string, unknown>) {
-  const startRaw = raw.bookingStart ?? raw.startTime;
-  const endRaw = raw.bookingEnd ?? raw.endTime;
-  if (typeof startRaw !== 'string' || typeof endRaw !== 'string') return null;
-  const start = new Date(startRaw);
-  const end = new Date(endRaw);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return null;
-  return { startTime: start.toISOString(), endTime: end.toISOString() };
-}
-
 export async function isSlotStillFree(
   client: BooktimeClient,
-  club: Club,
+  _club: Club,
   pending: BooktimePendingBooking,
   selectedDate: Date
 ): Promise<boolean> {
-  const dayData = await client.getForDay(selectedDate);
-  const resources = parseGetForDayResponse(dayData);
-  const resource = resources.find(
-    (r) => (r.bookingResourceId ?? r.uuid) === pending.externalCourtId
-  );
-  if (!resource) return true;
+  const slotsRes = await client.getAvailableSlots(selectedDate);
+  const courtRow = slotsRes.find((row) => row.uuid === pending.externalCourtId);
+  if (!courtRow) return false;
 
   const [sh, sm] = pending.startTime.split(':').map(Number);
   const slotStartMin = sh * 60 + sm;
   const slotEndMin = slotStartMin + pending.durationMinutes;
 
-  const intervals = [...(resource.bookings ?? []), ...(resource.busySlots ?? [])];
-  return !intervals.some((raw) => {
-    if (!raw || typeof raw !== 'object') return false;
-    const interval = normalizeBusyInterval(raw as Record<string, unknown>);
-    if (!interval) return false;
-    return slotOverlapsInterval(
-      slotStartMin,
-      slotEndMin,
-      new Date(interval.startTime),
-      new Date(interval.endTime),
-      club,
-      pending.dateKey
-    );
-  });
+  return slotFitsAvailableRanges(slotStartMin, slotEndMin, courtRow.availableSlots ?? []);
 }
 
 export function isBooktimeSlotTakenError(err: unknown): boolean {

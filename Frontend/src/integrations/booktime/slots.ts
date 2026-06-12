@@ -287,6 +287,134 @@ export function mapGetForDayToSnapshotCourts(
   return [...grouped.values()];
 }
 
+type MinutesRange = { start: number; end: number };
+
+export type BooktimeAvailableCourtRow = {
+  uuid: string;
+  name?: string;
+  availableSlots: string[];
+};
+
+function parseAvailableSlotRange(range: string): MinutesRange | null {
+  const [startLabel, endLabel] = range.split('-');
+  if (!startLabel || !endLabel) return null;
+  const start = parseTimeLabelToMinutes(startLabel.trim());
+  const end = parseTimeLabelToMinutes(endLabel.trim());
+  if (start == null || end == null || end <= start) return null;
+  return { start, end };
+}
+
+function mergeMinuteRanges(ranges: MinutesRange[]): MinutesRange[] {
+  if (ranges.length === 0) return [];
+  const sorted = [...ranges].sort((a, b) => a.start - b.start);
+  const merged: MinutesRange[] = [sorted[0]];
+  for (let i = 1; i < sorted.length; i += 1) {
+    const current = sorted[i];
+    const last = merged[merged.length - 1];
+    if (current.start <= last.end) {
+      last.end = Math.max(last.end, current.end);
+    } else {
+      merged.push({ ...current });
+    }
+  }
+  return merged;
+}
+
+function minutesToBusyInterval(
+  dateKey: string,
+  startMinutes: number,
+  endMinutes: number,
+  club: Club
+): BooktimeBusyInterval | null {
+  if (endMinutes <= startMinutes) return null;
+  const tz = getClubTimezone(club);
+  const sh = Math.floor(startMinutes / 60);
+  const sm = startMinutes % 60;
+  const eh = Math.floor(endMinutes / 60);
+  const em = endMinutes % 60;
+  const start = parseClubLocalIso(`${dateKey}T${pad2(sh)}:${pad2(sm)}:00`, tz);
+  const end = parseClubLocalIso(`${dateKey}T${pad2(eh)}:${pad2(em)}:00`, tz);
+  if (!start || !end || end <= start) return null;
+  return { startTime: start.toISOString(), endTime: end.toISOString() };
+}
+
+export function deriveBusyFromAvailableSlots(
+  availableSlots: string[],
+  dateKey: string,
+  club: Club
+): BooktimeBusyInterval[] {
+  const parsed = availableSlots
+    .map(parseAvailableSlotRange)
+    .filter((range): range is MinutesRange => range != null);
+  const merged = mergeMinuteRanges(parsed);
+  if (merged.length < 2) return [];
+
+  const busy: BooktimeBusyInterval[] = [];
+  for (let i = 1; i < merged.length; i += 1) {
+    const prev = merged[i - 1];
+    const current = merged[i];
+    if (current.start > prev.end) {
+      const interval = minutesToBusyInterval(dateKey, prev.end, current.start, club);
+      if (interval) busy.push(interval);
+    }
+  }
+
+  return busy;
+}
+
+export function slotFitsAvailableRanges(
+  startMinutes: number,
+  endMinutes: number,
+  availableSlots: string[]
+): boolean {
+  return availableSlots.some((range) => {
+    const parsed = parseAvailableSlotRange(range);
+    if (!parsed) return false;
+    return parsed.start <= startMinutes && parsed.end >= endMinutes;
+  });
+}
+
+export function mapAvailableSlotsToSnapshotCourts(
+  club: Club,
+  rows: BooktimeAvailableCourtRow[],
+  dateKey: string
+): BooktimeSnapshotCourtPayload[] {
+  const courtsByExternal = new Map(
+    (club.courts ?? [])
+      .filter((c) => c.externalCourtId)
+      .map((c) => [c.externalCourtId!, c])
+  );
+  const grouped = new Map<string, BooktimeSnapshotCourtPayload>();
+
+  const ensure = (externalCourtId: string, integrationCourtName: string | null) => {
+    const existing = grouped.get(externalCourtId);
+    if (existing) return existing;
+    const mapped = courtsByExternal.get(externalCourtId);
+    const entry: BooktimeSnapshotCourtPayload = {
+      courtId: mapped?.id ?? null,
+      externalCourtId,
+      externalCourtName: integrationCourtName,
+      busySlots: [],
+    };
+    grouped.set(externalCourtId, entry);
+    return entry;
+  };
+
+  for (const row of rows) {
+    const externalCourtId = typeof row.uuid === 'string' && row.uuid.trim() ? row.uuid.trim() : null;
+    if (!externalCourtId) continue;
+    const entry = ensure(externalCourtId, typeof row.name === 'string' ? row.name : null);
+    entry.busySlots = deriveBusyFromAvailableSlots(row.availableSlots ?? [], dateKey, club);
+  }
+
+  for (const court of club.courts ?? []) {
+    if (!court.externalCourtId) continue;
+    ensure(court.externalCourtId, court.name);
+  }
+
+  return [...grouped.values()];
+}
+
 function pad2(n: number): string {
   return String(n).padStart(2, '0');
 }

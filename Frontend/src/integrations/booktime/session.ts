@@ -1,6 +1,15 @@
 import { booktimeApi } from '@/api/booktime';
 import { BooktimeClient } from './client';
-import { booktimeSessionStorageKey, type BooktimeStoredSession } from './config';
+import {
+  booktimeSessionStorageKey,
+  BOOKTIME_SESSION_STORAGE_PREFIX,
+  type BooktimeStoredSession,
+} from './config';
+import {
+  clearProactiveBooktimeRefresh,
+  restoreProactiveBooktimeRefreshForStoredSessions,
+  scheduleProactiveBooktimeRefresh,
+} from './proactiveRefresh';
 
 type SessionEntry = {
   client: BooktimeClient;
@@ -10,6 +19,38 @@ type SessionEntry = {
 
 const memoryClients = new Map<string, SessionEntry>();
 const reconnectListeners = new Map<string, Set<() => void>>();
+const backendSyncTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+function listStoredBooktimeClubIds(): string[] {
+  const ids: string[] = [];
+  for (let i = 0; i < sessionStorage.length; i += 1) {
+    const key = sessionStorage.key(i);
+    if (key?.startsWith(BOOKTIME_SESSION_STORAGE_PREFIX)) {
+      ids.push(key.slice(BOOKTIME_SESSION_STORAGE_PREFIX.length));
+    }
+  }
+  return ids;
+}
+
+function scheduleBackendTokenSync(clubId: string, session: BooktimeStoredSession): void {
+  const existing = backendSyncTimers.get(clubId);
+  if (existing) clearTimeout(existing);
+  backendSyncTimers.set(
+    clubId,
+    setTimeout(() => {
+      backendSyncTimers.delete(clubId);
+      void booktimeApi
+        .putAuth(clubId, {
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+          externalUserId: session.externalUserId,
+        })
+        .catch(() => {
+          /* non-blocking */
+        });
+    }, 500)
+  );
+}
 
 function readStoredSession(clubId: string): BooktimeStoredSession | null {
   const raw = sessionStorage.getItem(booktimeSessionStorageKey(clubId));
@@ -60,14 +101,26 @@ function createClient(clubId: string, companyId: string, stored: BooktimeStoredS
     onTokensUpdated: ({ accessToken, refreshToken }) => {
       const current = readStoredSession(clubId);
       if (!current) return;
-      writeStoredSession(clubId, { ...current, accessToken, refreshToken });
+      const updated = { ...current, accessToken, refreshToken };
+      writeStoredSession(clubId, updated);
+      scheduleBackendTokenSync(clubId, updated);
+      scheduleProactiveBooktimeRefresh(clubId, accessToken, client);
     },
     onSessionExpired: () => {
+      clearProactiveBooktimeRefresh(clubId);
+      const syncTimer = backendSyncTimers.get(clubId);
+      if (syncTimer) {
+        clearTimeout(syncTimer);
+        backendSyncTimers.delete(clubId);
+      }
       clearStoredSession(clubId);
       memoryClients.delete(clubId);
       notifyReconnect(clubId);
     },
   });
+  if (stored?.accessToken && stored.refreshToken) {
+    scheduleProactiveBooktimeRefresh(clubId, stored.accessToken, client);
+  }
   return client;
 }
 
@@ -148,13 +201,23 @@ export async function persistBooktimeSessionAfterConnect(
 
 export async function disconnectBooktimeClub(clubId: string): Promise<void> {
   await booktimeApi.deleteAuth(clubId);
+  clearProactiveBooktimeRefresh(clubId);
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
 }
 
 export function clearBooktimeSessionLocal(clubId: string): void {
+  clearProactiveBooktimeRefresh(clubId);
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
+}
+
+export function ensureBooktimeProactiveRefresh(): void {
+  restoreProactiveBooktimeRefreshForStoredSessions(listStoredBooktimeClubIds, (clubId) => {
+    const stored = readStoredSession(clubId);
+    if (!stored?.accessToken || !stored.refreshToken) return null;
+    return getBooktimeClient(clubId, stored.companyId);
+  });
 }
 
 export function hasBooktimeSession(clubId: string): boolean {

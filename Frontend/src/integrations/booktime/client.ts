@@ -165,7 +165,12 @@ export class BooktimeClient {
     return data as T;
   }
 
-  private async refreshAccessToken(): Promise<boolean> {
+  expireSession(): void {
+    this.clearSession();
+    this.onSessionExpired?.();
+  }
+
+  async refreshAccessToken(): Promise<boolean> {
     if (!this.refreshToken) return false;
     if (this.refreshInFlight) return this.refreshInFlight;
 
@@ -205,8 +210,7 @@ export class BooktimeClient {
         if (refreshed) {
           return this.requestOnce<T>(path, options);
         }
-        this.clearSession();
-        this.onSessionExpired?.();
+        this.expireSession();
       }
       throw err;
     }

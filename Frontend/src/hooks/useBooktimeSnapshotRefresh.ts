@@ -5,10 +5,11 @@ import { BooktimeClient } from '@/integrations/booktime/client';
 import {
   formatClubDateKey,
   isSnapshotStale,
+  mapAvailableSlotsToSnapshotCourts,
   mapGetForDayToSnapshotCourts,
   parseGetForDayResponse,
+  type BooktimeSnapshotCourtPayload,
 } from '@/integrations/booktime/slots';
-import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 
 export type BooktimeSnapshotBanner = 'updating' | 'noSyncToday' | 'scoutPoolEmpty' | null;
 
@@ -25,6 +26,10 @@ function booktimeCompanyId(club: Club): string | null {
 
 function requestStatus(err: unknown): number {
   return err && typeof err === 'object' && 'status' in err ? Number((err as { status: number }).status) : 0;
+}
+
+function isBooktimeTokenRejected(status: number): boolean {
+  return status === 401 || status === 403;
 }
 
 async function getForDayWithScoutPool(
@@ -44,7 +49,7 @@ async function getForDayWithScoutPool(
       const data = await client.getForDay(date);
       return { ok: true, data };
     } catch (err) {
-      if (requestStatus(err) === 401) {
+      if (isBooktimeTokenRejected(requestStatus(err))) {
         await booktimeApi.invalidateScoutToken(clubId, scout.authId);
         excludedAuthIds.push(scout.authId);
         continue;
@@ -53,6 +58,22 @@ async function getForDayWithScoutPool(
     }
   }
   return { ok: false, poolEmpty: true };
+}
+
+async function fetchDaySnapshotCourts(
+  club: Club,
+  companyId: string,
+  selectedDate: Date,
+  dateKey: string
+): Promise<BooktimeSnapshotCourtPayload[]> {
+  const scoutResult = await getForDayWithScoutPool(club.id, companyId, selectedDate);
+  if (scoutResult.ok) {
+    return mapGetForDayToSnapshotCourts(club, parseGetForDayResponse(scoutResult.data));
+  }
+
+  const client = new BooktimeClient({ companyId });
+  const slotsRes = await client.getAvailableSlots(selectedDate);
+  return mapAvailableSlotsToSnapshotCourts(club, slotsRes ?? [], dateKey);
 }
 
 export function useBooktimeSnapshotRefresh(
@@ -88,32 +109,7 @@ export function useBooktimeSnapshotRefresh(
             return true;
           }
 
-          const authRes = await booktimeApi.getAuth(club.id);
-          const connected = !!authRes.data?.connected;
-          let dayData: unknown;
-
-          if (connected) {
-            await hydrateBooktimeSession(club.id, companyId);
-            const client = getBooktimeClient(club.id, companyId);
-            if (client.isAuthenticated) {
-              try {
-                dayData = await client.getForDay(selectedDate);
-              } catch (err) {
-                if (requestStatus(err) !== 401) throw err;
-              }
-            }
-          }
-
-          if (dayData == null) {
-            const scoutResult = await getForDayWithScoutPool(club.id, companyId, selectedDate);
-            if (!scoutResult.ok) {
-              setBanner(existingFetchedAt ? 'scoutPoolEmpty' : 'noSyncToday');
-              return false;
-            }
-            dayData = scoutResult.data;
-          }
-
-          const courts = mapGetForDayToSnapshotCourts(club, parseGetForDayResponse(dayData));
+          const courts = await fetchDaySnapshotCourts(club, companyId, selectedDate, dateKey);
           const fetchedAt = new Date().toISOString();
           await booktimeApi.putSnapshot(club.id, {
             date: dateKey,

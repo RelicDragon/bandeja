@@ -70,6 +70,7 @@ import pushNotificationService from './services/pushNotificationService';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
 import { ensureAuthBroadcastListener, scheduleProactiveAccessRefresh } from '@/api/authRefresh';
+import { ensureBooktimeProactiveRefresh } from '@/integrations/booktime/session';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
 import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
@@ -136,6 +137,11 @@ function AppContent() {
     if (isInitializing || !token) return;
     scheduleProactiveAccessRefresh(token);
   }, [isInitializing, token]);
+
+  useEffect(() => {
+    if (isInitializing || !isAuthenticated) return;
+    ensureBooktimeProactiveRefresh();
+  }, [isInitializing, isAuthenticated]);
 
   useEffect(() => {
     if (isInitializing || !isAuthenticated) return;
