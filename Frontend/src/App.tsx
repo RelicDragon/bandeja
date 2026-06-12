@@ -164,14 +164,18 @@ function AppContent() {
 
   useEffect(() => {
     initChatOutboxRetryListeners();
+    let wasOnline = useNetworkStore.getState().isOnline;
     const syncChatNet = () => {
       const online = useNetworkStore.getState().isOnline;
       refreshChatOfflineBanner();
       if (online && useAuthStore.getState().isAuthenticated) {
-        void warmChatSyncHeads(undefined, { enrichFromUnread: true });
+        if (!wasOnline) {
+          void warmChatSyncHeads(undefined, { enrichFromUnread: true });
+        }
         scheduleUnifiedChatOfflineFlush();
         scheduleRetryStuckChatOutbox();
       }
+      wasOnline = online;
     };
     syncChatNet();
     return useNetworkStore.subscribe(syncChatNet);

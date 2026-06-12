@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useBooktimeMyClubs } from '@/hooks/useBooktimeMyClubs';
@@ -20,10 +20,17 @@ export function MyTabBookingsSection() {
   const firstConnected = clubs.find((c) => c.connected && c.companyId) ?? null;
   const allowedHoursToCancel = useBooktimeCancelPolicy(firstConnected, !!firstConnected);
 
+  const prevActiveTab = useRef(activeTab);
   useEffect(() => {
-    if (activeTab !== 'calendar') return;
-    setRefreshKey((k) => k + 1);
-    void reloadMyClubs();
+    if (activeTab !== 'calendar') {
+      prevActiveTab.current = activeTab;
+      return;
+    }
+    if (prevActiveTab.current !== 'calendar') {
+      setRefreshKey((k) => k + 1);
+      void reloadMyClubs();
+    }
+    prevActiveTab.current = activeTab;
   }, [activeTab, reloadMyClubs]);
 
   if (!myClubs) return null;

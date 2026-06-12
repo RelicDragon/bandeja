@@ -3,14 +3,21 @@ import { chatApi } from '@/api/chat';
 import { chatCursorKey, chatLocalDb } from './chatLocalDb';
 import { broadcastChatPullHint } from './chatLocalCoop';
 
+const BATCH_HEAD_CACHE_MS = 30_000;
+
 export async function reconcileCursorWithServerHead(
   contextType: ChatContextType,
   contextId: string
 ): Promise<void> {
   try {
-    const head = await chatApi.getChatSyncHead(contextType, contextId);
     const key = chatCursorKey(contextType, contextId);
     const local = (await chatLocalDb.chatSyncCursor.get(key))?.lastAppliedSeq ?? 0;
+    const threadRow = await chatLocalDb.chatThreads.get(key);
+    const cachedMax = threadRow?.serverMaxSeq;
+    const warmHeadAge = threadRow?.updatedAt != null ? Date.now() - threadRow.updatedAt : Infinity;
+    const canUseCachedGap =
+      cachedMax != null && warmHeadAge < BATCH_HEAD_CACHE_MS && local < cachedMax;
+    const head = canUseCachedGap ? cachedMax : await chatApi.getChatSyncHead(contextType, contextId);
     if (head > local) {
       if (import.meta.env.DEV) {
         console.warn('[chatSync] server head ahead of applied cursor; scheduling pull', {

@@ -6,7 +6,11 @@ import { chatSyncService, type ChatRoomRef } from '@/services/chatSyncService';
 import pushNotificationService from '@/services/pushNotificationService';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { useAuthStore } from '@/store/authStore';
-import { warmChatSyncHeads, collectContextsForWarmEnriched } from '@/services/chat/chatSyncBatchWarm';
+import {
+  warmChatSyncHeads,
+  collectContextsForWarmEnriched,
+  shouldDeferImplicitChatWarm,
+} from '@/services/chat/chatSyncBatchWarm';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { setChatSyncNativeAppActive } from '@/services/chat/chatSyncAppVisibility';
 import { recordChatSyncForegroundSyncMs } from '@/services/chat/chatSyncMetrics';
@@ -35,7 +39,9 @@ async function runForegroundSync(): Promise<void> {
   if (useAuthStore.getState().isAuthenticated) {
     void ensureChatPersistentStorageOnce();
     void probeChatStoragePressure();
-    void warmChatSyncHeads(undefined, { enrichFromUnread: true });
+    if (!shouldDeferImplicitChatWarm()) {
+      void warmChatSyncHeads(undefined, { enrichFromUnread: true });
+    }
     void purgeExpiredFailedOutbox();
     scheduleUnifiedChatOfflineFlush();
     void import('@/services/chat/chatHotThreadPrefetch').then((m) => m.scheduleChatHotThreadPrefetchFromIdle());

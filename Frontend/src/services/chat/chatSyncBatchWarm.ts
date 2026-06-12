@@ -28,9 +28,19 @@ let warmDrainTimer: ReturnType<typeof setTimeout> | null = null;
 
 let warmSerialTail: Promise<void> = Promise.resolve();
 let implicitWarmInFlight: Promise<void> | null = null;
+let lastRunWarmBodyAt = 0;
 
 function isImplicitWarmCooldownActive(): boolean {
   return Date.now() < implicitWarmCooldownUntil;
+}
+
+/** Skip redundant warm / batch-head when bootstrap or another warm just ran. */
+export function shouldDeferImplicitChatWarm(): boolean {
+  return (
+    implicitWarmInFlight != null ||
+    isImplicitWarmCooldownActive() ||
+    Date.now() - lastRunWarmBodyAt < IMPLICIT_WARM_COOLDOWN_MS
+  );
 }
 
 /** Skip duplicate full-thread warms right after bootstrap / implicit warm. */
@@ -166,6 +176,7 @@ export async function collectContextsForWarmEnriched(): Promise<
 export function resetChatSyncWarmSession(): void {
   sessionWarmBootstrapDone = false;
   implicitWarmCooldownUntil = 0;
+  lastRunWarmBodyAt = 0;
   if (warmFromPayloadTimer) {
     clearTimeout(warmFromPayloadTimer);
     warmFromPayloadTimer = null;
@@ -277,9 +288,13 @@ async function messageContextHeadReferencesMissingRow(
 
 async function runWarmBody(
   list: Array<{ contextType: ChatContextType; contextId: string }>,
-  unreadKeys?: Set<string>
+  unreadKeys?: Set<string>,
+  options?: { force?: boolean }
 ): Promise<void> {
   if (list.length === 0) return;
+  const now = Date.now();
+  if (!options?.force && now - lastRunWarmBodyAt < IMPLICIT_WARM_COOLDOWN_MS) return;
+  lastRunWarmBodyAt = now;
   const map = new Map<string, { contextType: ChatContextType; contextId: string }>();
   for (const it of list) {
     map.set(`${it.contextType}:${it.contextId}`, it);
@@ -343,7 +358,7 @@ export function warmChatSyncHeads(
       list = await collectContextsForWarm();
     }
     try {
-      await runWarmBody(list, unreadKeys);
+      await runWarmBody(list, unreadKeys, { force: explicit });
       if (!explicit && !options?.skipCooldown) {
         implicitWarmCooldownUntil = Date.now() + IMPLICIT_WARM_COOLDOWN_MS;
       }

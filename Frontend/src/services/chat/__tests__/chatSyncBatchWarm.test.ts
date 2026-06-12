@@ -71,6 +71,28 @@ describe('chatSyncBatchWarm dedupe', () => {
     vi.useRealTimers();
   });
 
+  it('implicit warmChatSyncHeads is deduped within cooldown window', async () => {
+    const warm = await import('../chatSyncBatchWarm');
+    warm.resetChatSyncWarmSession();
+    await warm.warmChatSyncHeads();
+    postChatSyncBatchHeadMock.mockClear();
+
+    await warm.warmChatSyncHeads();
+
+    expect(postChatSyncBatchHeadMock).not.toHaveBeenCalled();
+  });
+
+  it('explicit warmChatSyncHeads still runs batch-head during implicit cooldown', async () => {
+    const warm = await import('../chatSyncBatchWarm');
+    warm.resetChatSyncWarmSession();
+    await warm.warmChatSyncHeads();
+    postChatSyncBatchHeadMock.mockClear();
+
+    await warm.warmChatSyncHeads([{ contextType: 'USER', contextId: 'user-2' }]);
+
+    expect(postChatSyncBatchHeadMock).toHaveBeenCalledTimes(1);
+  });
+
   it('scheduleWarmFromUnreadApiPayload skips batch-head during implicit warm cooldown', async () => {
     const warm = await import('../chatSyncBatchWarm');
     warm.resetChatSyncWarmSession();

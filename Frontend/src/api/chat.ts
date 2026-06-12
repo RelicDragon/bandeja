@@ -65,6 +65,48 @@ let unreadCountPromise: Promise<any> | null = null;
 let unreadObjectsInFlight: Promise<ApiResponse<UnreadObjectsApiPayload>> | null = null;
 const UNREAD_OBJECTS_IN_FLIGHT_TTL_MS = 1800;
 
+const syncHeadInFlight = new Map<string, Promise<number>>();
+const syncMissedInFlight = new Map<string, Promise<ChatMessage[]>>();
+const syncEventsInFlight = new Map<string, Promise<{
+  events: Array<{ id: string; seq: number; eventType: string; payload: unknown; createdAt: string }>;
+  hasMore: boolean;
+  oldestRetainedSeq?: number | null;
+  cursorStale?: boolean;
+}>>();
+let syncBatchHeadDrain: Promise<Record<string, number>> | null = null;
+let syncBatchHeadPending: Map<string, { contextType: ChatContextType; contextId: string }> | null = null;
+
+async function drainChatSyncBatchHeadQueue(): Promise<Record<string, number>> {
+  if (syncBatchHeadDrain) return syncBatchHeadDrain;
+  syncBatchHeadDrain = (async () => {
+    const merged: Record<string, number> = {};
+    while (syncBatchHeadPending && syncBatchHeadPending.size > 0) {
+      const items = [...syncBatchHeadPending.values()];
+      syncBatchHeadPending = null;
+      const chunk = await withChatSyncRetry('batch-head', () =>
+        api
+          .post<ApiResponse<Record<string, number>>>('/chat/sync/batch-head', { items }, { timeout: 35_000 })
+          .then((response) => response.data.data)
+      );
+      Object.assign(merged, chunk);
+    }
+    return merged;
+  })().finally(() => {
+    syncBatchHeadDrain = null;
+  });
+  return syncBatchHeadDrain;
+}
+
+function singleFlight<K, T>(map: Map<K, Promise<T>>, key: K, fn: () => Promise<T>): Promise<T> {
+  const existing = map.get(key);
+  if (existing) return existing;
+  const promise = fn().finally(() => {
+    map.delete(key);
+  });
+  map.set(key, promise);
+  return promise;
+}
+
 export interface ChatMessage {
   id: string;
   chatContextType: ChatContextType;
@@ -854,18 +896,21 @@ export const chatApi = {
     lastMessageId?: string,
     gameChatType?: ChatType
   ): Promise<ChatMessage[]> => {
-    const params = new URLSearchParams({
-      contextType,
-      contextId
+    const missedKey = `${contextType}:${contextId}:${lastMessageId ?? ''}:${gameChatType ?? ''}`;
+    return singleFlight(syncMissedInFlight, missedKey, async () => {
+      const params = new URLSearchParams({
+        contextType,
+        contextId,
+      });
+      if (lastMessageId) {
+        params.append('lastMessageId', lastMessageId);
+      }
+      if (contextType === 'GAME' && gameChatType) {
+        params.append('chatType', normalizeChatType(gameChatType));
+      }
+      const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/messages/missed?${params.toString()}`);
+      return response.data.data ?? [];
     });
-    if (lastMessageId) {
-      params.append('lastMessageId', lastMessageId);
-    }
-    if (contextType === 'GAME' && gameChatType) {
-      params.append('chatType', normalizeChatType(gameChatType));
-    }
-    const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/messages/missed?${params.toString()}`);
-    return response.data.data ?? [];
   },
 
   invalidateUnreadCache: () => {
@@ -976,13 +1021,16 @@ export const chatApi = {
   },
 
   getChatSyncHead: async (contextType: ChatContextType, contextId: string): Promise<number> => {
-    return withChatSyncRetry('head', () =>
-      api
-        .get<ApiResponse<{ maxSeq: number }>>('/chat/sync/head', {
-          params: { contextType, contextId },
-          timeout: 25_000,
-        })
-        .then((response) => response.data.data.maxSeq)
+    const headKey = `${contextType}:${contextId}`;
+    return singleFlight(syncHeadInFlight, headKey, () =>
+      withChatSyncRetry('head', () =>
+        api
+          .get<ApiResponse<{ maxSeq: number }>>('/chat/sync/head', {
+            params: { contextType, contextId },
+            timeout: 25_000,
+          })
+          .then((response) => response.data.data.maxSeq)
+      )
     );
   },
 
@@ -997,30 +1045,35 @@ export const chatApi = {
     oldestRetainedSeq?: number | null;
     cursorStale?: boolean;
   }> => {
-    return withChatSyncRetry('events', () =>
-      api
-        .get<
-          ApiResponse<{
-            events: Array<{ id: string; seq: number; eventType: string; payload: unknown; createdAt: string }>;
-            hasMore: boolean;
-            oldestRetainedSeq?: number | null;
-            cursorStale?: boolean;
-          }>
-        >('/chat/sync/events', {
-          params: { contextType, contextId, afterSeq, limit },
-          timeout: 55_000,
-        })
-        .then((response) => response.data.data)
+    const eventsKey = `${contextType}:${contextId}:${afterSeq}:${limit}`;
+    return singleFlight(syncEventsInFlight, eventsKey, () =>
+      withChatSyncRetry('events', () =>
+        api
+          .get<
+            ApiResponse<{
+              events: Array<{ id: string; seq: number; eventType: string; payload: unknown; createdAt: string }>;
+              hasMore: boolean;
+              oldestRetainedSeq?: number | null;
+              cursorStale?: boolean;
+            }>
+          >('/chat/sync/events', {
+            params: { contextType, contextId, afterSeq, limit },
+            timeout: 55_000,
+          })
+          .then((response) => response.data.data)
+      )
     );
   },
 
   postChatSyncBatchHead: async (
     items: Array<{ contextType: ChatContextType; contextId: string }>
   ): Promise<Record<string, number>> => {
-    return withChatSyncRetry('batch-head', () =>
-      api
-        .post<ApiResponse<Record<string, number>>>('/chat/sync/batch-head', { items }, { timeout: 35_000 })
-        .then((response) => response.data.data)
-    );
+    if (items.length === 0) return drainChatSyncBatchHeadQueue();
+    const pending = syncBatchHeadPending ?? new Map<string, { contextType: ChatContextType; contextId: string }>();
+    syncBatchHeadPending = pending;
+    for (const it of items) {
+      pending.set(`${it.contextType}:${it.contextId}`, it);
+    }
+    return drainChatSyncBatchHeadQueue();
   },
 };

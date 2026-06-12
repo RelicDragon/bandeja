@@ -91,6 +91,7 @@ export class BooktimeClient {
   private onTokensUpdated?: (tokens: { accessToken: string; refreshToken: string }) => void;
   private onSessionExpired?: () => void;
   private refreshInFlight: Promise<boolean> | null = null;
+  private upcomingInFlight: Promise<BooktimeBookingsPage> | null = null;
 
   constructor(options: BooktimeClientOptions) {
     this.companyId = options.companyId;
@@ -355,11 +356,16 @@ export class BooktimeClient {
   }
 
   async getUpcomingBookings(index = 0, size = 20) {
-    return this.request<BooktimeBookingsPage>('/booking/get-upcoming', {
+    if (this.upcomingInFlight) return this.upcomingInFlight;
+    const run = this.request<BooktimeBookingsPage>('/booking/get-upcoming', {
       method: 'POST',
       auth: true,
       body: { index, size },
     });
+    this.upcomingInFlight = run.finally(() => {
+      this.upcomingInFlight = null;
+    });
+    return this.upcomingInFlight;
   }
 
   async getPreviousBookings(index = 0, size = 20) {

@@ -63,6 +63,10 @@ export const chatSyncService = {
       return;
     }
 
+    if (contextType !== 'GAME') {
+      return;
+    }
+
     try {
       const messages = await pullMissedAndPersistToDexie({
         contextType,

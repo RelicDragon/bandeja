@@ -56,6 +56,16 @@ function buildSyncFetchHeaders(): Record<string, string> {
 let worker: Worker | null = null;
 let nextId = 1;
 const pending = new Map<number, { resolve: (v: { status: number; body: unknown }) => void; reject: (e: unknown) => void }>();
+const syncEventsWorkerInFlight = new Map<string, Promise<ChatSyncEventsPack>>();
+
+function syncEventsWorkerKey(
+  contextType: ChatContextType,
+  contextId: string,
+  afterSeq: number,
+  limit: number
+): string {
+  return `${contextType}:${contextId}:${afterSeq}:${limit}`;
+}
 
 function rejectAllPending(reason: unknown): void {
   for (const [, p] of pending) {
@@ -124,6 +134,23 @@ function extractPackFromApiBody(body: unknown): ChatSyncEventsPack {
 }
 
 export async function fetchChatSyncEventsPackOffMainThread(
+  contextType: ChatContextType,
+  contextId: string,
+  afterSeq: number,
+  limit: number
+): Promise<ChatSyncEventsPack> {
+  const inflightKey = syncEventsWorkerKey(contextType, contextId, afterSeq, limit);
+  const existing = syncEventsWorkerInFlight.get(inflightKey);
+  if (existing) return existing;
+
+  const run = fetchChatSyncEventsPackOffMainThreadInner(contextType, contextId, afterSeq, limit).finally(() => {
+    syncEventsWorkerInFlight.delete(inflightKey);
+  });
+  syncEventsWorkerInFlight.set(inflightKey, run);
+  return run;
+}
+
+async function fetchChatSyncEventsPackOffMainThreadInner(
   contextType: ChatContextType,
   contextId: string,
   afterSeq: number,
