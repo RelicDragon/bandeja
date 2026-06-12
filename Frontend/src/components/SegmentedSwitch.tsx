@@ -46,7 +46,7 @@ export const SegmentedSwitch = ({
     role="tablist"
     aria-label={ariaLabel}
     aria-orientation={isVertical ? 'vertical' : 'horizontal'}
-    className={`relative mx-auto flex items-stretch gap-1 overflow-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${
+    className={`relative flex items-stretch gap-1 overflow-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${
       isVertical ? 'w-full flex-col' : 'w-fit'
     } ${className}`.trim()}
   >

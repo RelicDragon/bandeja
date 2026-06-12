@@ -89,7 +89,7 @@ export function buildBookingIsoRange(
 
 export async function isSlotStillFree(
   client: BooktimeClient,
-  club: Club,
+  _club: Club,
   pending: BooktimePendingBooking,
   selectedDate: Date
 ): Promise<boolean> {
