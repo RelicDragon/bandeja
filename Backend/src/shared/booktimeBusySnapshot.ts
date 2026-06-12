@@ -3,7 +3,7 @@ import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { UNASSIGNED_COURT_KEY } from './clubScheduleConstants';
 
-export const BOOKTIME_SNAPSHOT_FRESH_MS = 5 * 60 * 1000;
+export const BOOKTIME_SNAPSHOT_FRESH_MS = 60 * 1000;
 
 export type BooktimeBusySlot = {
   startTime: string;

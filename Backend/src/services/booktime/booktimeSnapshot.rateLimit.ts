@@ -1,6 +1,6 @@
 import { ApiError } from '../../utils/ApiError';
 
-const FIVE_MIN_MS = 5 * 60 * 1000;
+const SNAPSHOT_PUT_RATE_LIMIT_MS = 60 * 1000;
 
 type Bucket = { count: number; resetAt: number };
 
@@ -17,7 +17,7 @@ export function assertSnapshotPutRateLimit(
   const now = Date.now();
   const bucket = putBuckets.get(key);
   if (!bucket || now >= bucket.resetAt) {
-    putBuckets.set(key, { count: 1, resetAt: now + FIVE_MIN_MS });
+    putBuckets.set(key, { count: 1, resetAt: now + SNAPSHOT_PUT_RATE_LIMIT_MS });
     return;
   }
   if (bucket.count >= 1) {
