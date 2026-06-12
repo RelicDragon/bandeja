@@ -392,6 +392,7 @@
       "createFailedRollback": "Hru se nepodařilo vytvořit. Nepodařilo se potvrdit zrušení rezervace kurtu — ověřte to u klubu.",
       "sessionExpired": "Přihlášení vypršelo. Přihlaste se znovu.",
       "alreadyReserved": "Kurt je již rezervován",
+      "liveApiUnavailable": "Rezervace kurtu teď není k dispozici — pokračujte běžným plánováním.",
       "reservedAs": "Rezervováno jako: {{identity}}",
       "cancelPolicy": "Bezplatné zrušení až {{hours}} hodin před termínem.",
       "yourGame": "Vaše hra",

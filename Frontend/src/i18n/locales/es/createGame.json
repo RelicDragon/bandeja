@@ -391,6 +391,7 @@
       "createFailedRollback": "No se pudo crear el partido. No pudimos confirmar que la reserva se canceló — consulta con el club.",
       "sessionExpired": "Tu sesión expiró. Inicia sesión de nuevo.",
       "alreadyReserved": "Pista ya reservada",
+      "liveApiUnavailable": "La reserva de pista no está disponible ahora — usa la programación normal.",
       "reservedAs": "Reservado como: {{identity}}",
       "cancelPolicy": "Cancelación gratuita hasta {{hours}} horas antes.",
       "yourGame": "Tu partido",

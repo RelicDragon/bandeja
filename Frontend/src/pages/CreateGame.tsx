@@ -551,9 +551,23 @@ export const CreateGame = ({
   }, [selectedClub]);
 
   const bookCourtSelectionRef = useRef<{ club: string; court: string } | null>(null);
+  const prevLiveApiEnabledRef = useRef(liveApiEnabled);
+
+  useEffect(() => {
+    if (prevLiveApiEnabledRef.current && !liveApiEnabled && bookCourtEnabled) {
+      toast(t('createGame.booktime.liveApiUnavailable'));
+      setBookCourtEnabled(false);
+    }
+    prevLiveApiEnabledRef.current = liveApiEnabled;
+  }, [liveApiEnabled, bookCourtEnabled, t]);
 
   useEffect(() => {
     if (skipBookFlow) {
+      setBookCourtEnabled(false);
+      bookCourtSelectionRef.current = { club: selectedClub, court: selectedCourt };
+      return;
+    }
+    if (!liveApiEnabled) {
       setBookCourtEnabled(false);
       bookCourtSelectionRef.current = { club: selectedClub, court: selectedCourt };
       return;
@@ -570,7 +584,7 @@ export const CreateGame = ({
     if (clubCourtChanged) {
       setBookCourtEnabled(true);
     }
-  }, [selectedClub, selectedCourt, courtIntegrates, skipBookFlow]);
+  }, [selectedClub, selectedCourt, courtIntegrates, skipBookFlow, liveApiEnabled]);
 
   useEffect(() => {
     if (selectedCourt === 'notBooked') {

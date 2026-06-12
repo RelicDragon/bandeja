@@ -256,7 +256,8 @@
       "cancelPolicy": "Free cancellation up to {{hours}} hours before start.",
       "yourGame": "Your game",
       "snapshotBlocked": "Live availability isn't synced yet. Wait for sync or pick another day.",
-      "alreadyReserved": "Court already reserved for this game."
+      "alreadyReserved": "Court already reserved for this game.",
+      "liveApiUnavailable": "Court reservation isn't available right now — using normal scheduling."
     },
     "intent": {
       "title": "What kind of game?",

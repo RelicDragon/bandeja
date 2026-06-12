@@ -392,6 +392,7 @@
       "createFailedRollback": "Meč nije kreiran. Nismo mogli da potvrdimo otkazivanje rezervacije — proveri u klubu.",
       "sessionExpired": "Prijava je istekla. Prijavi se ponovo.",
       "alreadyReserved": "Teren je već rezervisan",
+      "liveApiUnavailable": "Rezervacija terena trenutno nije dostupna — nastavite sa običnim zakazivanjem.",
       "reservedAs": "Rezervisano kao: {{identity}}",
       "cancelPolicy": "Besplatno otkazivanje do {{hours}} sati pre termina.",
       "yourGame": "Tvoj meč",
