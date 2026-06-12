@@ -234,8 +234,10 @@ export const CreateGame = ({
   const [priceType, setPriceType] = useState<PriceType>(initialGameData?.priceType || 'NOT_KNOWN');
   const [priceCurrency, setPriceCurrency] = useState<PriceCurrency | undefined>(initialGameData?.priceCurrency ?? undefined);
   const [storedInitialDate] = useState<Date>(() => {
+    const today = startOfDay(new Date());
     if (initialGameData?.startTime) {
-      return new Date(initialGameData.startTime);
+      const date = startOfDay(new Date(initialGameData.startTime));
+      return date < today ? today : date;
     }
     return new Date();
   });

@@ -89,11 +89,11 @@ export function buildBookingIsoRange(
 
 export async function isSlotStillFree(
   client: BooktimeClient,
-  _club: Club,
+  club: Club,
   pending: BooktimePendingBooking,
   selectedDate: Date
 ): Promise<boolean> {
-  const slotsRes = await client.getAvailableSlots(selectedDate);
+  const slotsRes = await client.getAvailableSlots(selectedDate, pending.dateKey);
   const courtRow = slotsRes.find((row) => row.uuid === pending.externalCourtId);
   if (!courtRow) return false;
 

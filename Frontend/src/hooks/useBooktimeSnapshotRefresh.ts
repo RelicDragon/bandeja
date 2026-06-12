@@ -6,8 +6,6 @@ import {
   formatClubDateKey,
   isSnapshotStale,
   mapAvailableSlotsToSnapshotCourts,
-  mapGetForDayToSnapshotCourts,
-  parseGetForDayResponse,
   type BooktimeSnapshotCourtPayload,
 } from '@/integrations/booktime/slots';
 
@@ -28,51 +26,14 @@ function requestStatus(err: unknown): number {
   return err && typeof err === 'object' && 'status' in err ? Number((err as { status: number }).status) : 0;
 }
 
-function isBooktimeTokenRejected(status: number): boolean {
-  return status === 401 || status === 403;
-}
-
-async function getForDayWithScoutPool(
-  clubId: string,
-  companyId: string,
-  date: Date
-): Promise<{ ok: true; data: unknown } | { ok: false; poolEmpty: true }> {
-  const excludedAuthIds: string[] = [];
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const scoutRes = await booktimeApi.getScoutToken(clubId, excludedAuthIds);
-    if (!scoutRes.success || !scoutRes.data?.available) {
-      return { ok: false, poolEmpty: true };
-    }
-    const scout = scoutRes.data;
-    const client = new BooktimeClient({ companyId, accessToken: scout.accessToken });
-    try {
-      const data = await client.getForDay(date);
-      return { ok: true, data };
-    } catch (err) {
-      if (isBooktimeTokenRejected(requestStatus(err))) {
-        await booktimeApi.invalidateScoutToken(clubId, scout.authId);
-        excludedAuthIds.push(scout.authId);
-        continue;
-      }
-      throw err;
-    }
-  }
-  return { ok: false, poolEmpty: true };
-}
-
 async function fetchDaySnapshotCourts(
   club: Club,
   companyId: string,
   selectedDate: Date,
   dateKey: string
 ): Promise<BooktimeSnapshotCourtPayload[]> {
-  const scoutResult = await getForDayWithScoutPool(club.id, companyId, selectedDate);
-  if (scoutResult.ok) {
-    return mapGetForDayToSnapshotCourts(club, parseGetForDayResponse(scoutResult.data));
-  }
-
   const client = new BooktimeClient({ companyId });
-  const slotsRes = await client.getAvailableSlots(selectedDate);
+  const slotsRes = await client.getAvailableSlots(selectedDate, dateKey);
   return mapAvailableSlotsToSnapshotCourts(club, slotsRes ?? [], dateKey);
 }
 

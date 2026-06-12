@@ -43,17 +43,37 @@ export function parseBusySlots(raw: unknown): BooktimeBusySlot[] {
   return slots;
 }
 
-export function datesInRange(startDate: string, endDate: string): string[] {
+export function formatDateKeyInTimezone(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+export function datesInRangeForTimezone(rangeStart: Date, rangeEnd: Date, timeZone: string): string[] {
+  if (Number.isNaN(rangeStart.getTime()) || Number.isNaN(rangeEnd.getTime())) return [];
+
+  const startKey = formatDateKeyInTimezone(rangeStart, timeZone);
+  const endKey = formatDateKeyInTimezone(rangeEnd, timeZone);
   const dates: string[] = [];
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return dates;
-  const cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
-  const endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
-  while (cur <= endDay) {
-    dates.push(cur.toISOString().slice(0, 10));
-    cur.setUTCDate(cur.getUTCDate() + 1);
+
+  let [y, m, d] = startKey.split('-').map(Number);
+  const [endY, endM, endD] = endKey.split('-').map(Number);
+  const endNum = endY * 10000 + endM * 100 + endD;
+
+  for (let guard = 0; guard < 366; guard += 1) {
+    const key = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    dates.push(key);
+    const num = y * 10000 + m * 100 + d;
+    if (num >= endNum) break;
+    const next = new Date(Date.UTC(y, m - 1, d + 1));
+    y = next.getUTCFullYear();
+    m = next.getUTCMonth() + 1;
+    d = next.getUTCDate();
   }
+
   return dates;
 }
 
@@ -170,7 +190,13 @@ export async function loadMergedBusySlots(options: {
   includeUnmapped: boolean;
 }): Promise<{ slots: MergedBusySlot[]; isLoading: boolean }> {
   const { clubId, rangeStart, rangeEnd, filterCourtId, includeUnmapped } = options;
-  const dates = datesInRange(rangeStart.toISOString(), rangeEnd.toISOString());
+
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { city: { select: { timezone: true } } },
+  });
+  const timeZone = club?.city?.timezone ?? 'Europe/Belgrade';
+  const dates = datesInRangeForTimezone(rangeStart, rangeEnd, timeZone);
   const { isStale } = await getSnapshotFreshness(clubId, dates);
 
   const rows = await prisma.clubBooktimeBusySnapshot.findMany({

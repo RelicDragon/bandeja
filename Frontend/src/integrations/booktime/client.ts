@@ -301,10 +301,11 @@ export class BooktimeClient {
     return `${y}-${m}-${d}T00:00`;
   }
 
-  async getAvailableSlots(date: Date) {
+  async getAvailableSlots(date: Date, dateKey?: string) {
+    const dateParam = dateKey ? `${dateKey}T00:00` : this.formatDate(date);
     return this.request<BooktimeCourtSlots[]>('/booking-resources/get-available-slots', {
       method: 'POST',
-      body: { date: this.formatDate(date) },
+      body: { date: dateParam },
     });
   }
 

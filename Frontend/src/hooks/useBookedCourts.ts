@@ -86,17 +86,15 @@ export const useBookedCourts = ({
         const attemptKey = `${clubId}:${selectedDate.toISOString()}`;
         if (refreshAttemptedRef.current !== attemptKey) {
           refreshAttemptedRef.current = attemptKey;
-          const refreshed = await refreshSnapshot();
-          if (refreshed) {
-            const retry = await gamesApi.getBookedCourts({
-              clubId,
-              startDate: startOfDay,
-              endDate: endOfDay,
-              courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
-            });
-            setBookedCourts(retry.data || []);
-            setIsLoadingExternalSlots(retry.isLoadingExternalSlots || false);
-          }
+          await refreshSnapshot({ force: true });
+          const retry = await gamesApi.getBookedCourts({
+            clubId,
+            startDate: startOfDay,
+            endDate: endOfDay,
+            courtId: selectedCourt && selectedCourt !== 'notBooked' ? selectedCourt : undefined,
+          });
+          setBookedCourts(retry.data || []);
+          setIsLoadingExternalSlots(retry.isLoadingExternalSlots || false);
         }
       }
     } catch (error) {

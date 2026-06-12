@@ -67,7 +67,7 @@ export function useBooktimeAvailability(
       const client = new BooktimeClient({ companyId });
       const [snapshotRes, slotsRes, company] = await Promise.all([
         booktimeApi.getSnapshot(club.id, dateKey),
-        client.getAvailableSlots(selectedDate),
+        client.getAvailableSlots(selectedDate, dateKey),
         loadBooktimeCompany(client, companyId),
       ]);
 
