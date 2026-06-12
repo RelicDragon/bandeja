@@ -176,11 +176,29 @@ export const CreateGameIntentPicker = ({
 
   const scrollSectionToTop = () => {
     requestAnimationFrame(() => {
-      sectionRef.current?.scrollIntoView({
+      const el = sectionRef.current;
+      if (!el) return;
+      const floatingBar = document.querySelector<HTMLElement>('[data-floating-summary-bar]');
+      el.style.scrollMarginTop = floatingBar ? `${floatingBar.offsetHeight + 8}px` : '';
+      el.scrollIntoView({
         behavior: reduceMotion ? 'auto' : 'smooth',
         block: 'start',
       });
     });
+  };
+
+  const handleSelectTemplate = (tpl: CreateTemplate) => {
+    const movesToTop =
+      collapsible &&
+      !(orderedCards[0]?.kind === 'template' && orderedCards[0].tpl.id === tpl.id);
+    onSelectTemplate(tpl);
+    if (movesToTop) scrollSectionToTop();
+  };
+
+  const handleSelectCustom = () => {
+    const movesToTop = collapsible && orderedCards[0]?.kind !== 'custom';
+    onSelectCustom();
+    if (movesToTop) scrollSectionToTop();
   };
 
   const handleCollapseToggle = () => {
@@ -213,7 +231,7 @@ export const CreateGameIntentPicker = ({
                     setIsCollapsed(false);
                     return;
                   }
-                  onSelectTemplate(tpl);
+                  handleSelectTemplate(tpl);
                 }
           }
           icon={Icon}
@@ -265,7 +283,7 @@ export const CreateGameIntentPicker = ({
                   setIsCollapsed(false);
                   return;
                 }
-                onSelectCustom();
+                handleSelectCustom();
               }
         }
         icon={Settings2}

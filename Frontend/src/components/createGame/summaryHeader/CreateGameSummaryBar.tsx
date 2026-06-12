@@ -18,6 +18,7 @@ export const CreateGameSummaryBar = ({ chips, onChipClick }: CreateGameSummaryBa
     {chips.length > 0 && (
       <motion.div
         key="create-game-summary-bar"
+        data-floating-summary-bar
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: -20, opacity: 0 }}
