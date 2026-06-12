@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import { bookingMatchesClubCourts } from '@/components/booktime/booktimeBookingUtils';
+import { booktimeBookingStartMs } from '@/integrations/booktime/localTime';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import type { AggregatedBooktimeBooking } from './useBooktimeAllUpcoming';
 
@@ -45,7 +46,7 @@ export function useBooktimeAllPast(
           console.error('Club booking past failed for club', club.clubId, err);
         }
       }
-      all.sort((a, b) => new Date(b.bookingStart).getTime() - new Date(a.bookingStart).getTime());
+      all.sort((a, b) => booktimeBookingStartMs(b.bookingStart) - booktimeBookingStartMs(a.bookingStart));
       setBookings(all);
     } finally {
       setLoading(false);

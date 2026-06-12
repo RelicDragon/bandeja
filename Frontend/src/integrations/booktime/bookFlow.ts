@@ -1,5 +1,6 @@
 import type { Club } from '@/types';
 import type { BooktimeClient, BooktimeCompany } from './client';
+import { BOOKTIME_DEFAULT_TIMEZONE, booktimeLocalIsoToDate } from './localTime';
 import {
   BOOKTIME_CONFIRM_RECHECK_MS,
   isSnapshotOlderThan,
@@ -175,8 +176,15 @@ export async function confirmBooktimeBooking(
   };
 }
 
-export function canCancelByPolicy(bookingStart: string, allowedHoursToCancel: number): boolean {
-  const startMs = new Date(bookingStart).getTime();
+export function canCancelByPolicy(
+  bookingStart: string,
+  allowedHoursToCancel: number,
+  clubTimezone?: string | null
+): boolean {
+  const start =
+    booktimeLocalIsoToDate(bookingStart, clubTimezone ?? BOOKTIME_DEFAULT_TIMEZONE) ??
+    new Date(bookingStart);
+  const startMs = start.getTime();
   if (Number.isNaN(startMs)) return false;
   return startMs - Date.now() >= allowedHoursToCancel * 60 * 60 * 1000;
 }

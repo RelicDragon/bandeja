@@ -3,6 +3,7 @@ import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { bookingMatchesClubCourts } from '@/components/booktime/booktimeBookingUtils';
+import { booktimeBookingStartMs } from '@/integrations/booktime/localTime';
 
 export type AggregatedBooktimeBooking = BooktimeBookingRecord & {
   clubId: string;
@@ -53,7 +54,7 @@ export function useBooktimeAllUpcoming(
           console.error('Club booking upcoming failed for club', club.clubId, err);
         }
       }
-      all.sort((a, b) => new Date(a.bookingStart).getTime() - new Date(b.bookingStart).getTime());
+      all.sort((a, b) => booktimeBookingStartMs(a.bookingStart) - booktimeBookingStartMs(b.bookingStart));
       setBookings(all);
     } finally {
       setLoading(false);

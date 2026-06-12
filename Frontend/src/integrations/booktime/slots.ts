@@ -2,6 +2,7 @@ import type { Club } from '@/types';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 
 import { BOOKTIME_FALLBACK_DURATIONS_MINUTES } from './durations';
+import { booktimeLocalIsoToDate } from './localTime';
 
 export const BOOKTIME_SNAPSHOT_FRESH_MS = 60 * 1000;
 export const BOOKTIME_CONFIRM_RECHECK_MS = 60 * 1000;
@@ -115,8 +116,8 @@ export function slotOverlapsInterval(
   const endMinute = slotEndMinutes % 60;
   const tz = getClubTimezone(club);
   const base = dateKey ?? formatClubDateKey(new Date(), club);
-  const slotStart = parseClubLocalIso(`${base}T${pad2(startHour)}:${pad2(startMinute)}:00`, tz);
-  const slotEnd = parseClubLocalIso(`${base}T${pad2(endHour)}:${pad2(endMinute)}:00`, tz);
+  const slotStart = booktimeLocalIsoToDate(`${base}T${pad2(startHour)}:${pad2(startMinute)}:00`, tz);
+  const slotEnd = booktimeLocalIsoToDate(`${base}T${pad2(endHour)}:${pad2(endMinute)}:00`, tz);
   if (!slotStart || !slotEnd) return false;
   return intervalsOverlap(slotStart, slotEnd, intervalStart, intervalEnd);
 }
@@ -338,8 +339,8 @@ function minutesToBusyInterval(
   const sm = startMinutes % 60;
   const eh = Math.floor(endMinutes / 60);
   const em = endMinutes % 60;
-  const start = parseClubLocalIso(`${dateKey}T${pad2(sh)}:${pad2(sm)}:00`, tz);
-  const end = parseClubLocalIso(`${dateKey}T${pad2(eh)}:${pad2(em)}:00`, tz);
+  const start = booktimeLocalIsoToDate(`${dateKey}T${pad2(sh)}:${pad2(sm)}:00`, tz);
+  const end = booktimeLocalIsoToDate(`${dateKey}T${pad2(eh)}:${pad2(em)}:00`, tz);
   if (!start || !end || end <= start) return null;
   return { startTime: start.toISOString(), endTime: end.toISOString() };
 }
@@ -448,25 +449,3 @@ function formatTimeInClubTz(date: Date, club?: Club): string {
   }).format(date);
 }
 
-function parseClubLocalIso(localIso: string, timeZone: string): Date | null {
-  const match = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/.exec(localIso);
-  if (!match) return null;
-  const [, ymd, hh, mm] = match;
-  const probe = new Date(`${ymd}T${hh}:${mm}:00`);
-  const formatter = new Intl.DateTimeFormat('en-GB', {
-    timeZone,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  });
-  const parts = formatter.formatToParts(probe);
-  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '0';
-  const displayedMinutes =
-    Number(get('hour')) * 60 + Number(get('minute'));
-  const targetMinutes = Number(hh) * 60 + Number(mm);
-  return new Date(probe.getTime() + (targetMinutes - displayedMinutes) * 60_000);
-}

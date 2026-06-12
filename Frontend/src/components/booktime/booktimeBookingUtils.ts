@@ -1,12 +1,8 @@
 import type { Club } from '@/types';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
+import { parseBooktimeLocalComponents } from '@/integrations/booktime/localTime';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
-import {
-  formatGameDateInTimezone,
-  formatGameTimeInTimezone,
-  getUserTimezone,
-} from '@/utils/gameTimeDisplay';
 
 export function booktimeRowToClub(row: BooktimeMyClubRow): Club {
   return {
@@ -27,6 +23,18 @@ export function booktimeRowToClub(row: BooktimeMyClubRow): Club {
   };
 }
 
+function formatBooktimeWallClock(
+  hour: number,
+  minute: number,
+  displaySettings: ResolvedDisplaySettings
+): string {
+  return new Intl.DateTimeFormat(displaySettings.locale, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: displaySettings.hour12,
+  }).format(new Date(2000, 0, 1, hour, minute));
+}
+
 export function formatBooktimeBookingWhen(
   booking: BooktimeBookingRecord,
   options: {
@@ -35,15 +43,19 @@ export function formatBooktimeBookingWhen(
     t: (key: string) => string;
   }
 ): string {
-  const timezone = options.timezone || getUserTimezone();
-  const start = new Date(booking.bookingStart);
-  const end = new Date(booking.bookingEnd);
-  if (Number.isNaN(start.getTime())) return booking.bookingStart;
+  const start = parseBooktimeLocalComponents(booking.bookingStart);
+  const end = parseBooktimeLocalComponents(booking.bookingEnd);
+  if (!start) return booking.bookingStart;
 
-  const dateLabel = formatGameDateInTimezone(start, timezone, options.displaySettings, 'long');
-  const startTime = formatGameTimeInTimezone(start, timezone, options.displaySettings);
-  const endTime = formatGameTimeInTimezone(end, timezone, options.displaySettings);
-  return `${dateLabel} · ${startTime} – ${endTime}`;
+  const [year, month, day] = start.dateKey.split('-').map(Number);
+  const dateLabel = new Intl.DateTimeFormat(options.displaySettings.locale, {
+    dateStyle: 'long',
+  }).format(new Date(year, month - 1, day));
+  const startTime = formatBooktimeWallClock(start.hour, start.minute, options.displaySettings);
+  const endTime = end
+    ? formatBooktimeWallClock(end.hour, end.minute, options.displaySettings)
+    : null;
+  return endTime ? `${dateLabel} · ${startTime} – ${endTime}` : `${dateLabel} · ${startTime}`;
 }
 
 type BooktimeCourtRef = {

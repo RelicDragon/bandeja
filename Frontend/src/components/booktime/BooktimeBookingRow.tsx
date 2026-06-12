@@ -56,7 +56,7 @@ export function BooktimeBookingRow({
   const { linkedGame, reload: reloadLinkedGame } = useBooktimeLinkedGame(booking.uuid);
   const [cancelDoneBanner, setCancelDoneBanner] = useState<BooktimeLinkedGame | null>(null);
   const courtInfo = resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt'));
-  const cancellable = canCancelByPolicy(booking.bookingStart, allowedHoursToCancel);
+  const cancellable = canCancelByPolicy(booking.bookingStart, allowedHoursToCancel, clubTimezone);
 
   const openCreateGame = () => {
     onCreateGame?.();
