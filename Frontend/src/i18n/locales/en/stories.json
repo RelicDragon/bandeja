@@ -132,6 +132,7 @@
       "storyUnavailable": "Story is no longer available",
       "storyExpired": "This story is no longer available",
       "storyForbidden": "You cannot reply to this story",
+      "storyInvalid": "Could not attach story to this message",
       "share": "Share",
       "shareTitle": "Share profile"
     }

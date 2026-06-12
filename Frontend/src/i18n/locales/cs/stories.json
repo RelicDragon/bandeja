@@ -130,6 +130,7 @@
       "storyUnavailable": "Příběh už není k dispozici",
       "storyExpired": "Tento příběh už není k dispozici",
       "storyForbidden": "Na tento příběh nemůžete odpovědět",
+      "storyInvalid": "Příběh se nepodařilo připojit k této zprávě",
       "share": "Sdílet",
       "shareTitle": "Sdílet profil"
     },

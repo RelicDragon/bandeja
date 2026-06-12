@@ -10,7 +10,12 @@ import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, cancelSend, resend } from '@/services/chatSendService';
 import { normalizeChatType } from '@/utils/chatType';
 import { parseSystemMessage } from '@/utils/systemMessages';
-import { STORY_DM_SENT_EVENT } from '@/services/chat/storyDmApply';
+import {
+  STORY_DM_OPTIMISTIC_EVENT,
+  STORY_DM_OPTIMISTIC_FAILED_EVENT,
+  STORY_DM_SENT_EVENT,
+  type StoryDmOptimisticDetail,
+} from '@/services/chat/storyDmApply';
 import { usePlayersStore } from '@/store/playersStore';
 import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
 import { reconcileOptimisticMessages } from '@/services/chat/optimisticReconcile';
@@ -93,6 +98,7 @@ export function useThreadOptimistic({
         updatedAt: new Date().toISOString(),
         replyToId: payload.replyToId,
         replyTo: payload.replyTo,
+        storyReply: payload.storyReply,
         sender: user ? (user as import('@/types').BasicUser) : null,
         reactions: [],
         readReceipts: [],
@@ -402,15 +408,68 @@ export function useThreadOptimistic({
       if (!d?.message || d.contextType !== contextType || d.contextId !== id) return;
       handleNewMessage(d.message);
     };
+    const onStoryDmOptimistic = (ev: Event) => {
+      const d = (ev as CustomEvent<StoryDmOptimisticDetail>).detail;
+      if (!d?.tempId || d.contextId !== id || contextType !== 'USER') return;
+      const optimistic: ChatMessageWithStatus = {
+        id: d.tempId,
+        chatContextType: 'USER',
+        contextId: d.contextId,
+        senderId: d.sender.id,
+        content: d.content,
+        mediaUrls: [],
+        thumbnailUrls: [],
+        mentionIds: [],
+        state: 'SENT',
+        chatType: 'PUBLIC',
+        storyReply: d.storyReply,
+        createdAt: d.createdAt,
+        updatedAt: d.createdAt,
+        sender: d.sender,
+        reactions: [],
+        readReceipts: [],
+        _status: 'SENDING',
+        _optimisticId: d.tempId,
+        _clientMutationId: d.clientMutationId,
+      };
+      setMessages((prev) => {
+        if (prev.some((m) => (m as ChatMessageWithStatus)._optimisticId === d.tempId)) return prev;
+        const next = [...prev, optimistic];
+        messagesRef.current = next;
+        return next;
+      });
+      requestAnimationFrame(() => {
+        try {
+          scrollToBottom();
+        } catch {
+          /* scroll handled by MessageList */
+        }
+      });
+    };
+    const onStoryDmOptimisticFailed = (ev: Event) => {
+      const d = (
+        ev as CustomEvent<{ contextType?: string; contextId?: string; tempId?: string }>
+      ).detail;
+      if (!d?.tempId || d.contextType !== contextType || d.contextId !== id) return;
+      setMessages((prev) => {
+        const next = prev.filter((m) => (m as ChatMessageWithStatus)._optimisticId !== d.tempId);
+        messagesRef.current = next;
+        return next;
+      });
+    };
     window.addEventListener(CHAT_OUTBOX_SUCCESS_EVENT, onSuccess);
     window.addEventListener(CHAT_OUTBOX_FAILED_EVENT, onFail);
     window.addEventListener(CHAT_OUTBOX_REMOVED_EVENT, onRemoved);
     window.addEventListener(STORY_DM_SENT_EVENT, onStoryDmSent);
+    window.addEventListener(STORY_DM_OPTIMISTIC_EVENT, onStoryDmOptimistic);
+    window.addEventListener(STORY_DM_OPTIMISTIC_FAILED_EVENT, onStoryDmOptimisticFailed);
     return () => {
       window.removeEventListener(CHAT_OUTBOX_SUCCESS_EVENT, onSuccess);
       window.removeEventListener(CHAT_OUTBOX_FAILED_EVENT, onFail);
       window.removeEventListener(CHAT_OUTBOX_REMOVED_EVENT, onRemoved);
       window.removeEventListener(STORY_DM_SENT_EVENT, onStoryDmSent);
+      window.removeEventListener(STORY_DM_OPTIMISTIC_EVENT, onStoryDmOptimistic);
+      window.removeEventListener(STORY_DM_OPTIMISTIC_FAILED_EVENT, onStoryDmOptimisticFailed);
     };
   }, [
     contextType,
@@ -418,6 +477,7 @@ export function useThreadOptimistic({
     handleNewMessage,
     handleReplaceOptimisticWithServerMessage,
     handleMarkFailed,
+    scrollToBottom,
     setMessages,
     messagesRef,
   ]);

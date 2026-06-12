@@ -238,6 +238,7 @@ export interface OptimisticMessagePayload {
   videoWidth?: number;
   videoHeight?: number;
   waveformData?: number[];
+  storyReply?: StoryReplyInfo;
 }
 
 export interface CreateMessageRequest {

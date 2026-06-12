@@ -129,6 +129,7 @@
       "storyUnavailable": "La historia ya no está disponible",
       "storyExpired": "Esta historia ya no está disponible",
       "storyForbidden": "No puedes responder a esta historia",
+      "storyInvalid": "No se pudo adjuntar la historia a este mensaje",
       "share": "Compartir",
       "shareTitle": "Compartir perfil"
     },

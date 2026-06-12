@@ -38,7 +38,6 @@ describe('parseStoryReplyInfo', () => {
       sourceType: 'USER_STORY_ITEM',
       sourceId: 'item-1',
       ownerUserId: 'owner-1',
-      mediaType: 'VIDEO',
     });
   });
 

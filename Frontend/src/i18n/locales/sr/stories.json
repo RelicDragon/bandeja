@@ -130,6 +130,7 @@
       "storyUnavailable": "Priča više nije dostupna",
       "storyExpired": "Ova priča više nije dostupna",
       "storyForbidden": "Ne možete odgovoriti na ovu priču",
+      "storyInvalid": "Nije moguće priložiti priču ovoj poruci",
       "share": "Podeli",
       "shareTitle": "Podeli profil"
     },

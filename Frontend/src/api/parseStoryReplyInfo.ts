@@ -35,7 +35,12 @@ export function parseStoryReplyInfo(raw: unknown): StoryReplyInfo | null {
   if (mediaUrl && isSafeStoryReplyMediaUrl(mediaUrl)) info.mediaUrl = mediaUrl;
 
   const mediaType = takeString(input.mediaType, 16);
-  if (mediaType === 'IMAGE' || mediaType === 'VIDEO') info.mediaType = mediaType;
+  if (
+    (mediaType === 'IMAGE' || mediaType === 'VIDEO') &&
+    (info.thumbnailUrl || info.mediaUrl)
+  ) {
+    info.mediaType = mediaType;
+  }
 
   return info;
 }
