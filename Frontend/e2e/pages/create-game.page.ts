@@ -98,9 +98,14 @@ export class CreateGamePage {
   }
 
   async selectCourtNotBooked() {
-    await this.page.getByRole('button', { name: /select court|select hall|not booked/i }).click();
+    const inline = this.page.getByRole('button', { name: /don't book court/i });
+    if (await inline.isVisible({ timeout: 3_000 }).catch(() => false)) {
+      await inline.click();
+      return;
+    }
+    await this.page.getByRole('button', { name: /select court|select hall|don't book court/i }).click();
     const dialog = this.page.getByRole('dialog');
-    const notBooked = dialog.getByRole('button', { name: /not booked/i });
+    const notBooked = dialog.getByRole('button', { name: /don't book court/i });
     if (await notBooked.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await notBooked.click();
     } else {

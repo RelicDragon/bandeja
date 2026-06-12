@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback, createRef } from 're
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, LocationSection, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, MultipleCourtsSelector, AvatarUpload, PriceSection, CreateGameIntentPicker } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, MultipleCourtsSelector, AvatarUpload, PriceSection, CreateGameIntentPicker } from '@/components';
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
@@ -262,7 +262,6 @@ export const CreateGame = ({
   });
   const [loading, setLoading] = useState(false);
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
-  const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
   const [isInvitePlayersModalOpen, setIsInvitePlayersModalOpen] = useState(false);
@@ -444,8 +443,7 @@ export const CreateGame = ({
     [applyRosterSyncForSport],
   );
 
-  const clubSectionRef = useRef<HTMLDivElement>(null);
-  const timeSectionRef = useRef<HTMLDivElement>(null);
+  const locationTimeSectionRef = useRef<HTMLDivElement>(null);
   const durationSectionRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const summarySectionRefs = useMemo(
@@ -453,8 +451,8 @@ export const CreateGame = ({
       sport: createRef<HTMLDivElement>(),
       setup: createRef<HTMLDivElement>(),
       format: createRef<HTMLDivElement>(),
-      location: clubSectionRef,
-      time: timeSectionRef,
+      location: locationTimeSectionRef,
+      time: locationTimeSectionRef,
       participants: createRef<HTMLDivElement>(),
       settings: createRef<HTMLDivElement>(),
       name: createRef<HTMLDivElement>(),
@@ -641,12 +639,15 @@ export const CreateGame = ({
     setSelectedCourt('notBooked');
   }, [selectedSport, selectedCourt, courts]);
 
-  const handleCourtSportTab = (sport: typeof selectedSport) => {
-    const config = getSportConfig(sport);
-    if (config.implemented) {
-      handleSportChange(sport);
-    }
-  };
+  const handleCourtSportTab = useCallback(
+    (sport: typeof selectedSport) => {
+      const config = getSportConfig(sport);
+      if (config.implemented) {
+        handleSportChange(sport);
+      }
+    },
+    [handleSportChange],
+  );
 
   useEffect(() => {
     if (initialGameData?.minLevel !== undefined || initialGameData?.maxLevel !== undefined) {
@@ -931,6 +932,35 @@ export const CreateGame = ({
     [summarySectionRefs],
   );
 
+  const courtSection = useMemo(
+    () => (
+      <CreateGameCourtSection
+        clubs={clubs}
+        courts={courts}
+        selectedClub={selectedClub}
+        selectedCourt={selectedCourt}
+        selectedDate={selectedDate}
+        hasBookedCourt={hasBookedCourt}
+        entityType={entityType}
+        onSelectCourt={setSelectedCourt}
+        onToggleHasBookedCourt={setHasBookedCourt}
+        preferredSport={selectedSport}
+        onSportTabChange={handleCourtSportTab}
+      />
+    ),
+    [
+      clubs,
+      courts,
+      selectedClub,
+      selectedCourt,
+      selectedDate,
+      hasBookedCourt,
+      entityType,
+      selectedSport,
+      handleCourtSportTab,
+    ],
+  );
+
   const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
       ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -985,12 +1015,12 @@ export const CreateGame = ({
     }
 
     if (!selectedClub) {
-      scrollToAndHighlightError(clubSectionRef);
+      scrollToAndHighlightError(locationTimeSectionRef);
       return;
     }
 
     if (!selectedTime || selectedTime === '') {
-      scrollToAndHighlightError(timeSectionRef);
+      scrollToAndHighlightError(locationTimeSectionRef);
       return;
     }
 
@@ -1000,12 +1030,12 @@ export const CreateGame = ({
     }
 
     if (needsBooktimeAuth) {
-      scrollToAndHighlightError(timeSectionRef);
+      scrollToAndHighlightError(locationTimeSectionRef);
       return;
     }
 
     if (bookCourtEnabled && courtIntegrates && selectedCourt === 'notBooked') {
-      scrollToAndHighlightError(timeSectionRef);
+      scrollToAndHighlightError(locationTimeSectionRef);
       return;
     }
 
@@ -1435,35 +1465,18 @@ export const CreateGame = ({
           </div>
         ) : null}
 
-        <div ref={clubSectionRef}>
-          <LocationSection
-            clubs={clubs}
-            courts={courts}
-            selectedClub={selectedClub}
-            selectedCourt={selectedCourt}
-            hasBookedCourt={hasBookedCourt}
-            isClubModalOpen={isClubModalOpen}
-            isCourtModalOpen={isCourtModalOpen}
-            entityType={entityType}
-            onSelectClub={(id: string) => {
-              setSelectedClub(id);
-              setSelectedCourt('notBooked');
-            }}
-            onSelectCourt={setSelectedCourt}
-            onToggleHasBookedCourt={setHasBookedCourt}
-            onOpenClubModal={() => setIsClubModalOpen(true)}
-            onCloseClubModal={() => setIsClubModalOpen(false)}
-            onOpenCourtModal={() => setIsCourtModalOpen(true)}
-            onCloseCourtModal={() => setIsCourtModalOpen(false)}
-            preferredSport={selectedSport}
-            onSportTabChange={handleCourtSportTab}
-            hideCourts
-          />
-        </div>
-
-        <div ref={timeSectionRef}>
+        <div ref={locationTimeSectionRef}>
           <div ref={durationSectionRef}>
             <GameStartSection
+              clubs={clubs}
+              courts={courts}
+              isClubModalOpen={isClubModalOpen}
+              onSelectClub={(id: string) => {
+                setSelectedClub(id);
+                setSelectedCourt('notBooked');
+              }}
+              onOpenClubModal={() => setIsClubModalOpen(true)}
+              onCloseClubModal={() => setIsClubModalOpen(false)}
               selectedDate={selectedDate}
               selectedTime={selectedTime}
               duration={duration}
@@ -1508,23 +1521,7 @@ export const CreateGame = ({
                   />
                 ) : null
               }
-              courtSection={
-                <CreateGameCourtSection
-                  clubs={clubs}
-                  courts={courts}
-                  selectedClub={selectedClub}
-                  selectedCourt={selectedCourt}
-                  hasBookedCourt={hasBookedCourt}
-                  isCourtModalOpen={isCourtModalOpen}
-                  entityType={entityType}
-                  onSelectCourt={setSelectedCourt}
-                  onToggleHasBookedCourt={setHasBookedCourt}
-                  onOpenCourtModal={() => setIsCourtModalOpen(true)}
-                  onCloseCourtModal={() => setIsCourtModalOpen(false)}
-                  preferredSport={selectedSport}
-                  onSportTabChange={handleCourtSportTab}
-                />
-              }
+              courtSection={courtSection}
               reservationSection={
                 showBookCourtSwitch && selectedCourtData && selectedClubData ? (
                   <BooktimeReservationCard

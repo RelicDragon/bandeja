@@ -1508,7 +1508,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
           {user && <UserGameNotes gameId={game.id} initialContent={game.userNote} />}
 
-          {user && canViewSettings && (
+          {user && canViewSettings && !isLeague && (
             <div id="game-settings">
               <GameSettings
                 game={game}

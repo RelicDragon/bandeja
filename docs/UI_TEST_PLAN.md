@@ -402,10 +402,10 @@ Frontend/e2e/
 | C-13s | Club booking scout pool degraded | Unconnected user, empty scout pool | "Live availability unavailable" banner on create-game/club detail |
 | C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
-| C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club + integrated court | Game start order: court → reservation card → auth or date → duration → time |
+| C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club + integrated court | Single location & start card: club → date → court → reservation card → auth or duration → time |
 | C-13x | Integrated court no manual booked toggle | BOOKTIME club, mapped court, reservation OFF or auth opt-out | "I've booked this court" toggle hidden; reservation card only |
 | C-13y | Create-game reservation default | Pick integrated court, connected, live API | Reservation switch ON; Create label "Create game & reserve court" |
-| C-13z | Create-game inline auth gate | Reservation ON, not connected | Date/time hidden; phone OTP inline; opt-out reveals normal grid |
+| C-13z | Create-game inline auth gate | Reservation ON, not connected | Date visible; duration/time hidden; phone OTP inline; opt-out reveals normal grid |
 | C-14a | Create-game confirm morph | Reservation ON, connected, pick slot → Create | Single dialog: review → reserve → create → success → calendar |
 | C-14b | Create-game bookable days strip | Reservation ON, connected | Date strip only (no calendar); days clamped to club `bookableDays` |
 | C-14c | Create-game no overlap when reserving | Reservation ON | No yellow/red overlay; overlap gate skipped on submit |
@@ -416,7 +416,8 @@ Frontend/e2e/
 | C-14h | Create-game !liveApiEnabled | BOOKTIME club without scout/connection | No reservation UI; generic time grid |
 | C-14i | Create-game rollback on create fail | Reservation ON; force game create API error after successful book | Confirm shows create-failed copy; court reservation rolled back (or rollback-failed message if cancel fails) |
 | C-14j | Create-game no request loop | Reservation ON, connected; open create-game for BOOKTIME club | Snapshot/slots/club fetches settle once per date/court change — no repeating network storm |
-| C-14 | Court not booked | Select "not booked" | Allowed |
+| C-14k | Create-game court grid occupancy | Pick club with multiple courts; change date | Court picker is inline grid (not dropdown); each compact card shows court name (+ indoor icon) and integration name on the left, smaller occupancy ring on the right with fill % for selected date |
+| C-14 | Court not booked | Select "Don't book court" | Allowed |
 | C-15 | Court booked | Pick court | Overlap warning if conflict |
 | C-16 | Mark court booked modal | Confirm booking | Court marked |
 | C-17 | Date/time | Change start + duration | End time updates |
@@ -561,6 +562,7 @@ Frontend/e2e/
 | GD-59 | Kick admin | Owner kicks admin participant | Role change / removal |
 | GD-60 | Reduce max participants | Edit max → kick overflow users | Capacity enforced |
 | GD-61 | Navigate to parent league | Open league fixture (`parentId`) | Link to season game works |
+| GD-85 | League match settings hidden | Open `LEAGUE` fixture as owner/admin before results | Game Settings section absent; season (`LEAGUE_SEASON`) still shows settings when editable |
 | GD-62 | Pending trainer invite | TRAINING without trainer | Pending trainer row + accept flow |
 | GD-63 | FAQ edit (owner) | Edit game FAQs | Content saved |
 | GD-64 | Announced game results gate | Enter results on ANNOUNCED game | Confirm modal before entry |

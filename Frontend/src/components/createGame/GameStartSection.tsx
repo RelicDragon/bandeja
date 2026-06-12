@@ -1,12 +1,13 @@
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, RefObject, type ReactNode } from 'react';
+import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
 import { CreateGameTimeSlots } from '@/components/createGame/CreateGameTimeSlots';
 import { addDays, format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
 import { DateSelector } from '@/components';
 import { CalendarComponent } from '@/components/Calendar';
-import { EntityType, Club } from '@/types';
+import { EntityType, Club, Court } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
 import { useBookedCourts } from '@/hooks/useBookedCourts';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
@@ -49,6 +50,12 @@ interface GameStartSectionProps {
   slotsLoading?: boolean;
   existingBookingBanner?: ReactNode;
   snapshotBanner?: ReactNode;
+  clubs?: Club[];
+  courts?: Court[];
+  isClubModalOpen?: boolean;
+  onSelectClub?: (id: string) => void;
+  onOpenClubModal?: () => void;
+  onCloseClubModal?: () => void;
 }
 
 export const GameStartSection = ({
@@ -86,6 +93,12 @@ export const GameStartSection = ({
   slotsLoading = false,
   existingBookingBanner,
   snapshotBanner,
+  clubs,
+  courts,
+  isClubModalOpen = false,
+  onSelectClub,
+  onOpenClubModal,
+  onCloseClubModal,
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
   const { durationOptions } = useClubIntegrationDurations(club, entityType);
@@ -144,7 +157,9 @@ export const GameStartSection = ({
     return () => clearInterval(interval);
   }, [selectedClub, refetch, bookedCourtsEnabled]);
 
-  const timeSchedulingSection = (
+  const showClubPicker = clubs != null && courts != null && onSelectClub && onOpenClubModal && onCloseClubModal;
+
+  const schedulingBanners = (
     <>
       {!needsBooktimeAuth && snapshotBanner}
       {!needsBooktimeAuth && entityType !== 'BAR' && !bookCourtEnabled && club?.integrationType === 'BOOKTIME' ? (
@@ -167,6 +182,11 @@ export const GameStartSection = ({
           )}
         </div>
       ) : null}
+    </>
+  );
+
+  const dateSection = (
+    <>
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
           {t('createGame.selectDate')}
@@ -204,6 +224,11 @@ export const GameStartSection = ({
           </div>
         </div>
       )}
+    </>
+  );
+
+  const timeSlotsSection = (
+    <>
       {entityType !== 'BAR' && (
         <div>
           <div className="flex items-center justify-between gap-2 mb-2">
@@ -220,6 +245,7 @@ export const GameStartSection = ({
             {durationOptions.map((dur) => (
               <button
                 key={dur}
+                type="button"
                 onClick={() => onDurationChange(dur)}
                 className={`h-10 rounded-lg font-semibold text-sm transition-all ${
                   duration === dur
@@ -255,42 +281,62 @@ export const GameStartSection = ({
     </>
   );
 
+  const schedulingContent = (
+    <>
+      {schedulingBanners}
+      {dateSection}
+      {courtSection}
+      {reservationSection}
+      {existingBookingBanner}
+      <AnimatePresence mode="wait">
+        {needsBooktimeAuth ? (
+          <motion.div
+            key="auth-gate"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {authGateSection}
+          </motion.div>
+        ) : (
+          <motion.div
+            key="time-scheduling"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="space-y-4"
+          >
+            {timeSlotsSection}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+
   const content = (
     <div className={compact ? 'space-y-4' : 'space-y-4'}>
+      {showClubPicker ? (
+        <CreateGameClubSection
+          clubs={clubs}
+          courts={courts}
+          selectedClub={selectedClub}
+          selectedCourt={selectedCourt ?? 'notBooked'}
+          isClubModalOpen={isClubModalOpen}
+          onSelectClub={onSelectClub}
+          onOpenClubModal={onOpenClubModal}
+          onCloseClubModal={onCloseClubModal}
+        />
+      ) : null}
       {!selectedClub ? (
         <div className="px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm text-center">
           {t('createGame.selectClubFirst')}
         </div>
+      ) : showClubPicker ? (
+        <div className="space-y-4">{schedulingContent}</div>
       ) : (
-        <>
-          {courtSection}
-          {reservationSection}
-          {existingBookingBanner}
-          <AnimatePresence mode="wait">
-            {needsBooktimeAuth ? (
-              <motion.div
-                key="auth-gate"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-              >
-                {authGateSection}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="time-scheduling"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-4"
-              >
-                {timeSchedulingSection}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </>
+        schedulingContent
       )}
     </div>
   );
