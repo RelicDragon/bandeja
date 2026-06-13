@@ -19,7 +19,7 @@ type LinkedBookingListItemProps = {
   booktimeClub: BooktimeMyClubRow;
   resolvedClub?: Club;
   courts: Court[];
-  clubTimezone: string;
+  clubTimezone: string | null;
   isOwner: boolean;
   onRefreshOwnership: () => Promise<UserBooktimeBookingIdsResult | null>;
   readOnly: boolean;

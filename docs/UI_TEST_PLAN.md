@@ -490,7 +490,9 @@ Frontend/e2e/
 | GD-81 | Compact game details back | Narrow viewport; game with sport + format tags and Chat visible | Back shows arrow only (no label) so tags and Chat fit on one row |
 | GD-82 | Game info collapse handle | Open game details; tap chevron strip at bottom edge of info card | Card collapses to compact summary with smooth height animation; chevron rotates |
 | GD-83 | Collapsed info tap-to-expand | Collapse info card; tap anywhere on the collapsed summary | Card expands; detail rows animate in with stagger; action buttons reappear |
-| GD-86 | Linked bookings section | Game with `linkedBookings` at BOOKTIME-integrated club | Separate card below game info lists linked reservations; hidden when club unset or not integration-enabled |
+| GD-86 | Linked bookings section | Game with `linkedBookings` at BOOKTIME-integrated club | Collapsible card (collapsed by default) below game info; header shows label, link count, and coverage badge; expand reveals linked reservation rows; hidden when club unset or not integration-enabled |
+| GD-89 | Linked bookings coverage badge | Game with linked bookings where count or booking window does not cover game courts/time | Header shows amber “Not fully booked” badge |
+| GD-90 | Linked bookings fully covered badge | Game with enough linked bookings spanning full `startTime`–`endTime` for required courts | Header shows green check “Fully booked” badge |
 | GD-87 | Linked booking refresh (owner) | Game details linked booking that exists in viewer's Booktime account | Refresh icon on row; success toast if still active |
 | GD-88 | Linked booking absent unlink | Refresh when booking gone from viewer's Booktime account | Modal explains link removal; game stays; confirm removes link from this game |
 

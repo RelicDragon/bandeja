@@ -37,6 +37,8 @@
       "unlinkSaveConfirmMessage": "Vas a desvincular {{count}} reserva(s) de este partido. Las reservas reales de pista no se cancelarán automáticamente."
     },
     "linkedBookings": {
+      "fullyCovered": "Completamente reservado",
+      "notFullyCovered": "No completamente reservado",
       "refreshAriaLabel": "Comprobar estado de la reserva",
       "refreshStillActive": "La reserva sigue activa en tu cuenta del club",
       "refreshCheckFailed": "No se pudo comprobar el estado de la reserva. Inténtalo de nuevo.",

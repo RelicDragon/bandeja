@@ -34,6 +34,8 @@
       "unlinkSaveConfirmMessage": "Odebíráte {{count}} propojení rezervací s touto hrou. Skutečné rezervace kurtů se automaticky nezruší."
     },
     "linkedBookings": {
+      "fullyCovered": "Plně rezervováno",
+      "notFullyCovered": "Není plně rezervováno",
       "refreshAriaLabel": "Zkontrolovat stav rezervace",
       "refreshStillActive": "Rezervace je stále aktivní ve vašem klubovém účtu",
       "refreshCheckFailed": "Stav rezervace se nepodařilo ověřit. Zkuste to znovu.",

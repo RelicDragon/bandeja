@@ -37,6 +37,8 @@
       "unlinkSaveConfirmMessage": "You are unlinking {{count}} reservation(s) from this game. The real court bookings will not be cancelled automatically."
     },
     "linkedBookings": {
+      "fullyCovered": "Fully booked",
+      "notFullyCovered": "Not fully booked",
       "refreshAriaLabel": "Check reservation status",
       "refreshStillActive": "Reservation is still active in your club account",
       "refreshCheckFailed": "Could not check reservation status. Try again.",
