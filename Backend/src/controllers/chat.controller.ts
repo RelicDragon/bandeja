@@ -22,6 +22,7 @@ import { TranscriptionService } from '../services/chat/transcription.service';
 import { MESSAGE_TRANSCRIPTION_PENDING } from '@bandeja/chat-contract';
 import { DraftService } from '../services/chat/draft.service';
 import { GameReadService } from '../services/game/read.service';
+import { GameChatContextService } from '../services/game/gameChatContext.service';
 import { PollService } from '../services/chat/poll.service';
 import { MessageSearchService } from '../services/chat/messageSearch.service';
 import { PinnedMessageService } from '../services/chat/pinnedMessage.service';
@@ -1504,7 +1505,7 @@ export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Resp
   const gameChatType =
     ct === 'GAME' && typeof chatType === 'string' ? (chatType as ChatType) : null;
 
-  const messages = await MessageService.getMissedMessages(
+  const result = await MessageService.getMissedMessages(
     ct,
     contextId as string,
     userId,
@@ -1514,12 +1515,20 @@ export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Resp
 
   res.json({
     success: true,
-    data: messages
+    data: result.messages,
+    ...(result.threadInvalidated ? { meta: { threadInvalidated: true } } : {}),
   });
 });
 
 async function assertChatSyncAccess(contextType: ChatContextType, contextId: string, userId: string) {
   if (contextType === 'GAME') {
+    const gameStatus = await GameChatContextService.resolve(contextId);
+    if (gameStatus === 'missing') {
+      throw new ApiError(404, 'Game not found');
+    }
+    if (gameStatus === 'cancelled') {
+      return;
+    }
     await MessageService.validateGameAccess(contextId, userId);
   } else if (contextType === 'BUG') {
     await MessageService.validateBugAccess(contextId, userId);

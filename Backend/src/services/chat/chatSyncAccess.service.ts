@@ -1,6 +1,7 @@
 import { ChatContextType } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { GameChatContextService } from '../game/gameChatContext.service';
 
 /**
  * Batched read-access validation for chat sync endpoints.
@@ -29,13 +30,12 @@ export class ChatSyncAccessService {
 
     if (gameIds.size > 0) {
       tasks.push(
-        prisma.game
-          .findMany({ where: { id: { in: [...gameIds] } }, select: { id: true } })
-          .then((rows) => {
-            if (rows.length !== gameIds.size) {
-              throw new ApiError(404, 'Game not found');
-            }
-          })
+        (async () => {
+          const { missingIds } = await GameChatContextService.filterExistingGameIds([...gameIds]);
+          if (missingIds.length > 0) {
+            throw new ApiError(404, 'Game not found');
+          }
+        })()
       );
     }
 

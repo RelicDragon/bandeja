@@ -807,6 +807,7 @@ export interface ApiResponse<T> {
   data: T;
   message?: string;
   serverTime?: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface LoginResponse {

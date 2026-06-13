@@ -14,6 +14,7 @@ import {
   MessageType,
 } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
+import { GameChatContextService } from '../game/gameChatContext.service';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import notificationService from '../notification.service';
 import { UserChatService } from './userChat.service';
@@ -1314,8 +1315,18 @@ export class MessageService {
     userId: string,
     lastMessageId?: string | null,
     gameChatType?: ChatType | null
-  ) {
+  ): Promise<{
+    messages: Awaited<ReturnType<typeof MessageService.enrichMessagesWithTranslations>>;
+    threadInvalidated?: boolean;
+  }> {
     if (chatContextType === 'GAME') {
+      const gameStatus = await GameChatContextService.resolve(contextId);
+      if (gameStatus === 'cancelled') {
+        return { messages: [], threadInvalidated: true };
+      }
+      if (gameStatus === 'missing') {
+        throw new ApiError(404, 'Game not found');
+      }
       await this.validateGameAccess(contextId, userId);
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
@@ -1368,7 +1379,9 @@ export class MessageService {
           select: { language: true },
         });
         const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
-        return this.enrichMessagesWithTranslations(recent, languageCode);
+        return {
+          messages: await this.enrichMessagesWithTranslations(recent, languageCode),
+        };
       }
     }
 
@@ -1417,7 +1430,9 @@ export class MessageService {
       select: { language: true },
     });
     const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
-    return this.enrichMessagesWithTranslations(all, languageCode);
+    return {
+      messages: await this.enrichMessagesWithTranslations(all, languageCode),
+    };
   }
 
   static async updateMessageContent(

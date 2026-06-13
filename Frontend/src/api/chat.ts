@@ -67,7 +67,10 @@ let unreadObjectsInFlight: Promise<ApiResponse<UnreadObjectsApiPayload>> | null 
 const UNREAD_OBJECTS_IN_FLIGHT_TTL_MS = 1800;
 
 const syncHeadInFlight = new Map<string, Promise<number>>();
-const syncMissedInFlight = new Map<string, Promise<ChatMessage[]>>();
+const syncMissedInFlight = new Map<
+  string,
+  Promise<{ messages: ChatMessage[]; threadInvalidated?: boolean }>
+>();
 const syncEventsInFlight = new Map<string, Promise<{
   events: Array<{ id: string; seq: number; eventType: string; payload: unknown; createdAt: string }>;
   hasMore: boolean;
@@ -908,7 +911,7 @@ export const chatApi = {
     contextId: string,
     lastMessageId?: string,
     gameChatType?: ChatType
-  ): Promise<ChatMessage[]> => {
+  ): Promise<{ messages: ChatMessage[]; threadInvalidated?: boolean }> => {
     const missedKey = `${contextType}:${contextId}:${lastMessageId ?? ''}:${gameChatType ?? ''}`;
     return singleFlight(syncMissedInFlight, missedKey, async () => {
       const params = new URLSearchParams({
@@ -922,7 +925,11 @@ export const chatApi = {
         params.append('chatType', normalizeChatType(gameChatType));
       }
       const response = await api.get<ApiResponse<ChatMessage[]>>(`/chat/messages/missed?${params.toString()}`);
-      return response.data.data ?? [];
+      const threadInvalidated = response.data.meta?.threadInvalidated === true;
+      return {
+        messages: response.data.data ?? [],
+        ...(threadInvalidated ? { threadInvalidated: true } : {}),
+      };
     });
   },
 

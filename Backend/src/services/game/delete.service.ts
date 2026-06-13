@@ -1,7 +1,8 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ImageProcessor } from '../../utils/imageProcessor';
-import { ParticipantRole, Sport } from '@prisma/client';
+import { ChatContextType, ChatSyncEventType, ParticipantRole, Sport } from '@prisma/client';
+import { ChatSyncEventService } from '../chat/chatSyncEvent.service';
 import notificationService from '../notification.service';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
@@ -56,8 +57,15 @@ export class GameDeleteService {
       }
     }
 
-    await prisma.$transaction([
-      prisma.cancelledGame.create({
+    await prisma.$transaction(async (tx) => {
+      await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        ChatContextType.GAME,
+        id,
+        ChatSyncEventType.THREAD_LOCAL_INVALIDATE,
+        {}
+      );
+      await tx.cancelledGame.create({
         data: {
           id: game.id,
           entityType: game.entityType,
@@ -67,11 +75,9 @@ export class GameDeleteService {
           cityId: game.cityId,
           startTime: game.startTime,
         },
-      }),
-      prisma.game.delete({
-        where: { id },
-      }),
-    ]);
+      });
+      await tx.game.delete({ where: { id } });
+    });
 
     const cancelledSport = game.sport ?? Sport.PADEL;
     const cancelledByUserRaw = await prisma.user.findUnique({

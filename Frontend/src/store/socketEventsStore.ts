@@ -620,6 +620,9 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
 
       const handleGameCancelled = (data: GameCancelledData) => {
         set({ lastGameCancelled: data });
+        void import('@/services/chat/purgeGameChatLocal').then(({ purgeGameChatLocal }) =>
+          purgeGameChatLocal(data.gameId).catch(() => {})
+        );
       };
 
       const handlePollVote = (data: PollVoteData) => {
