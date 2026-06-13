@@ -33,6 +33,10 @@ test.describe('auth select city', () => {
     await seedAuthInBrowser(page, token, user);
     const selectCity = new SelectCityPage(page);
     await selectCity.goto();
+    const onboarding = new OnboardingPage(page);
+    if (await onboarding.primarySportModal().isVisible({ timeout: 5_000 }).catch(() => false)) {
+      await onboarding.confirmPrimarySport();
+    }
     await selectCity.expectLoaded();
     const target = cities.find((c) => c.name === 'Belgrade') ?? cities[0]!;
     await selectCity.pickCityByName(target.name, target.country);
