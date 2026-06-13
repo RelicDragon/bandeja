@@ -8,7 +8,10 @@ import {
   parseBusySlots,
   parseDateParam,
 } from '../../shared/booktimeBusySnapshot';
-import { prepareSnapshotCourtsForStorage } from '../../shared/booktimeSnapshotCourtResolve';
+import {
+  prepareSnapshotCourtsForStorage,
+  type SnapshotCourtLookupRow,
+} from '../../shared/booktimeSnapshotCourtResolve';
 import { assertSnapshotPutRateLimit } from './booktimeSnapshot.rateLimit';
 
 export type BooktimeSnapshotResponse = {
@@ -69,11 +72,8 @@ function parseCourtsInput(raw: unknown): BooktimeSnapshotCourtInput[] {
   return courts;
 }
 
-async function resolveSnapshotCourtIds(
-  clubId: string,
-  courts: BooktimeSnapshotCourtInput[]
-): Promise<BooktimeSnapshotCourtInput[]> {
-  const dbCourts = await prisma.court.findMany({
+async function loadActiveClubCourts(clubId: string): Promise<SnapshotCourtLookupRow[]> {
+  return prisma.court.findMany({
     where: { clubId, isActive: true },
     select: {
       id: true,
@@ -82,8 +82,6 @@ async function resolveSnapshotCourtIds(
       integrationCourtName: true,
     },
   });
-
-  return prepareSnapshotCourtsForStorage(courts, dbCourts);
 }
 
 export async function getBooktimeSnapshot(
@@ -130,7 +128,8 @@ export async function replaceBooktimeSnapshot(
   await assertBooktimeClub(clubId);
   parseDateParam(input.date);
   const fetchedAt = parseFetchedAt(input.fetchedAt);
-  const courts = await resolveSnapshotCourtIds(clubId, parseCourtsInput(input.courts));
+  const dbCourts = await loadActiveClubCourts(clubId);
+  const courts = prepareSnapshotCourtsForStorage(parseCourtsInput(input.courts), dbCourts);
   const force = input.force === true;
 
   const existing = await prisma.clubBooktimeBusySnapshot.findMany({
@@ -170,7 +169,12 @@ export async function replaceBooktimeSnapshot(
     fetchedAt,
   }));
 
+  const snapshotLockKey = `${clubId}:${input.date}`;
+
   await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw(
+      Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${snapshotLockKey}::text))`
+    );
     await tx.clubBooktimeBusySnapshot.deleteMany({
       where: { clubId, date: input.date },
     });

@@ -18,8 +18,17 @@ export type E2eUser = {
 type LoginPayload = {
   data?: {
     token?: string;
+    refreshToken?: string;
+    currentSessionId?: string;
     user?: E2eUser;
   };
+};
+
+export type E2eLoginSession = {
+  token: string;
+  user: E2eUser;
+  refreshToken?: string;
+  currentSessionId?: string;
 };
 
 type ApiEnvelope<T> = {
@@ -40,11 +49,11 @@ export type E2eUserIds = {
   userBId: string;
 };
 
-export async function e2eLogin(role: E2eUserRole = 'A'): Promise<{ token: string; user: E2eUser }> {
+export async function e2eLogin(role: E2eUserRole = 'A'): Promise<E2eLoginSession> {
   return e2eLoginAs(role);
 }
 
-export async function e2eLoginAs(role: E2eUserRole): Promise<{ token: string; user: E2eUser }> {
+export async function e2eLoginAs(role: E2eUserRole): Promise<E2eLoginSession> {
   const { phone, password } = getE2eCredentials(role);
   const loginRes = await fetch(`${apiURL()}/auth/login/phone`, {
     method: 'POST',
@@ -60,7 +69,12 @@ export async function e2eLoginAs(role: E2eUserRole): Promise<{ token: string; us
   if (!token || !user?.id) {
     throw new Error(`[e2e] API login response for ${role} missing token or user`);
   }
-  return { token, user };
+  return {
+    token,
+    user,
+    refreshToken: payload.data?.refreshToken,
+    currentSessionId: payload.data?.currentSessionId,
+  };
 }
 
 export async function e2eLoginBoth(): Promise<E2eDualSession> {

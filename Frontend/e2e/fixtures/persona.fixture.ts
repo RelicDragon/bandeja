@@ -118,15 +118,10 @@ export async function createWelcomePromptUser(): Promise<{
   user: E2eUser & Record<string, unknown>;
 }> {
   const { token, user } = await registerTestUser();
-  const profile = await e2eGetProfile(token);
+  const updated = await updateTestProfile(token, { cityIsSet: true, welcomeScreenPassed: false });
   return {
     token,
-    user: {
-      ...user,
-      ...profile,
-      welcomeScreenPassed: false,
-      cityIsSet: true,
-    },
+    user: { ...user, ...updated, welcomeScreenPassed: false, cityIsSet: true },
   };
 }
 
@@ -167,12 +162,12 @@ export async function createNoSportsUser(): Promise<{
   user: E2eUser & Record<string, unknown>;
 }> {
   const { token, user } = await registerTestUser();
+  const updated = await e2eApi<E2eUser & Record<string, unknown>>(token, '/users/e2e/clear-sports', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
   return {
     token,
-    user: {
-      ...user,
-      sportsEnabled: [],
-      nameIsSet: true,
-    },
+    user: { ...user, ...updated, sportsEnabled: [], nameIsSet: true },
   };
 }

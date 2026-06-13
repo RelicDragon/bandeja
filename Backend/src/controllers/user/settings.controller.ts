@@ -39,6 +39,21 @@ export const e2eClearAssignedCity = asyncHandler(async (req: AuthRequest, res: R
   });
 });
 
+export const e2eClearSports = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!isE2eTestHeader(req)) {
+    throw new ApiError(403, 'Forbidden');
+  }
+  const user = await prisma.user.update({
+    where: { id: req.userId! },
+    data: { sportsEnabled: [] },
+    select: PROFILE_SELECT_FIELDS,
+  });
+  res.json({
+    success: true,
+    data: enrichProfileUser(user),
+  });
+});
+
 export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { cityId } = req.body as { cityId: string };
   const userId = req.userId!;

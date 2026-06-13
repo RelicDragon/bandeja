@@ -104,6 +104,7 @@ router.post(
 );
 
 router.post('/e2e/clear-assigned-city', authenticate, userController.e2eClearAssignedCity);
+router.post('/e2e/clear-sports', authenticate, userController.e2eClearSports);
 
 router.post(
   '/set-initial-level',

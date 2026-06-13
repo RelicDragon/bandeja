@@ -4,7 +4,9 @@ export class OnboardingPage {
   constructor(private readonly page: Page) {}
 
   nameSetModal() {
-    return this.page.getByText(/set your name/i);
+    return this.page.getByRole('dialog').filter({
+      has: this.page.getByText('Set your name', { exact: true }),
+    });
   }
 
   nameFirstInput() {
@@ -28,11 +30,15 @@ export class OnboardingPage {
   }
 
   welcomePromptBanner() {
-    return this.page.getByText(/welcome|questionnaire|tell us about/i);
+    return this.questionnairePromptBanner();
   }
 
   sportQuestionnairePrompt() {
-    return this.page.getByText(/level questionnaire|sport questionnaire|estimate your level/i);
+    return this.questionnairePromptBanner();
+  }
+
+  questionnairePromptBanner() {
+    return this.page.getByRole('button', { name: /fill out the questionnaire/i });
   }
 
   async expectNameGateOpen() {

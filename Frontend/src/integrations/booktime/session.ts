@@ -1,5 +1,6 @@
 import { booktimeApi } from '@/api/booktime';
 import { BooktimeClient } from './client';
+import { formatBooktimeErrorMessage } from './formatBooktimeErrorMessage';
 import {
   booktimeSessionStorageKey,
   BOOKTIME_SESSION_STORAGE_PREFIX,
@@ -151,7 +152,14 @@ export async function hydrateBooktimeSession(
   }
 
   const res = await booktimeApi.getSessionToken(clubId);
-  if (!res.success || !res.data) return false;
+  if (!res.success || !res.data) {
+    throw new Error(
+      formatBooktimeErrorMessage(
+        { message: res.message },
+        'Club booking session expired',
+      ),
+    );
+  }
 
   const session: BooktimeStoredSession = {
     accessToken: res.data.accessToken,

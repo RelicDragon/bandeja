@@ -17,6 +17,7 @@ import {
   loadBooktimeCompany,
   type BooktimeBookFlowContext,
 } from '@/integrations/booktime/bookFlow';
+import { formatBooktimeErrorMessage } from '@/integrations/booktime/formatBooktimeErrorMessage';
 import { readBooktimeRollbackFromError } from '@/integrations/booktime/createGameErrors';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
@@ -104,6 +105,7 @@ export function BooktimeCreateGameConfirmModal({
   const [errorKey, setErrorKey] = useState<
     'slotTaken' | 'bookFailed' | 'multiBookFailed' | 'createFailed' | 'createFailedRollback' | 'session' | null
   >(null);
+  const [errorDetail, setErrorDetail] = useState<string | null>(null);
   const [failedBookingIndex, setFailedBookingIndex] = useState<number | null>(null);
   const [priceLabels, setPriceLabels] = useState<Record<string, string | null>>({});
   const [courtPriceQuotes, setCourtPriceQuotes] = useState<
@@ -122,6 +124,7 @@ export function BooktimeCreateGameConfirmModal({
   const resetState = useCallback(() => {
     setPhase('confirm');
     setErrorKey(null);
+    setErrorDetail(null);
     setFailedBookingIndex(null);
     setPriceLabels({});
     setCourtPriceQuotes({});
@@ -235,6 +238,7 @@ export function BooktimeCreateGameConfirmModal({
     if (inFlightRef.current) return;
     inFlightRef.current = true;
     setErrorKey(null);
+    setErrorDetail(null);
     setFailedBookingIndex(null);
 
     try {
@@ -268,16 +272,18 @@ export function BooktimeCreateGameConfirmModal({
         } catch (bookErr) {
           setFailedBookingIndex(i);
           await rollbackBookedIds();
+          const detail = formatBooktimeErrorMessage(bookErr);
+          setErrorDetail(detail || null);
           if (bookErr instanceof BooktimeSlotTakenError) {
             setErrorKey('slotTaken');
-          } else {
+          } else if (/session|expired|401/i.test(detail)) {
+            setErrorKey('session');
+          } else if (bookings.length > 1) {
             setErrorKey('multiBookFailed');
-            toast.error(
-              t('createGame.booktime.multiBookFailed', {
-                court: entry.court.name,
-              }),
-            );
+          } else {
+            setErrorKey('bookFailed');
           }
+          toast.error(detail);
           setPhase('error');
           return;
         }
@@ -310,13 +316,18 @@ export function BooktimeCreateGameConfirmModal({
       await new Promise((r) => window.setTimeout(r, 800));
       onSuccess();
     } catch (err) {
-      const message = err instanceof Error ? err.message : '';
-      if (/session|expired|401/i.test(message)) {
+      const detail = formatBooktimeErrorMessage(err);
+      const serverRollback = readBooktimeRollbackFromError(err);
+      const rollbackDetail = serverRollback?.error?.trim();
+      const combinedDetail = [detail, rollbackDetail].filter(Boolean).join(' — ');
+      setErrorDetail(combinedDetail || null);
+
+      if (/session|expired|401/i.test(combinedDetail)) {
         setErrorKey('session');
         setPhase('error');
+        toast.error(combinedDetail);
         return;
       }
-      const serverRollback = readBooktimeRollbackFromError(err);
       if (!serverRollback?.cancelled && bookedIdsRef.current.length > 0) {
         await rollbackBookedIds();
       }
@@ -324,6 +335,7 @@ export function BooktimeCreateGameConfirmModal({
       setErrorKey(
         serverRollback?.attempted && !serverRollback.cancelled ? 'createFailedRollback' : 'createFailed',
       );
+      toast.error(combinedDetail || t('createGame.booktime.createFailedAfterBook'));
       setPhase('error');
     } finally {
       inFlightRef.current = false;
@@ -376,6 +388,29 @@ export function BooktimeCreateGameConfirmModal({
     });
     return steps;
   }, [bookings, flowMode, phase, failedBookingIndex, t]);
+
+  const fallbackErrorMessage = useMemo(() => {
+    switch (errorKey) {
+      case 'slotTaken':
+        return t('createGame.booktime.slotTaken');
+      case 'session':
+        return t('createGame.booktime.sessionExpired');
+      case 'multiBookFailed':
+        return t('createGame.booktime.multiBookFailed', {
+          court: failedBookingIndex != null ? bookings[failedBookingIndex]?.court.name : '',
+        });
+      case 'createFailed':
+        return t('createGame.booktime.createFailedAfterBook');
+      case 'createFailedRollback':
+        return t('createGame.booktime.createFailedRollback');
+      case 'bookFailed':
+        return t('createGame.booktime.bookFailed');
+      default:
+        return t('createGame.booktime.bookFailed');
+    }
+  }, [errorKey, failedBookingIndex, bookings, t]);
+
+  const displayedErrorMessage = errorDetail ?? fallbackErrorMessage;
 
   return (
     <Dialog open={open} onClose={handleClose} onOpenChange={onOpenChange} modalId="booktime-create-game-confirm">
@@ -557,20 +592,8 @@ export function BooktimeCreateGameConfirmModal({
 
             {phase === 'error' ? (
               <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 py-2">
-                <p className="text-sm text-red-600 dark:text-red-400">
-                  {errorKey === 'slotTaken'
-                    ? t('createGame.booktime.slotTaken')
-                    : errorKey === 'session'
-                      ? t('createGame.booktime.sessionExpired')
-                      : errorKey === 'multiBookFailed'
-                        ? t('createGame.booktime.multiBookFailed', {
-                            court: failedBookingIndex != null ? bookings[failedBookingIndex]?.court.name : '',
-                          })
-                        : errorKey === 'createFailed'
-                          ? t('createGame.booktime.createFailedAfterBook')
-                          : errorKey === 'createFailedRollback'
-                            ? t('createGame.booktime.createFailedRollback')
-                            : t('createGame.booktime.bookFailed')}
+                <p className="text-sm text-red-600 dark:text-red-400 whitespace-pre-wrap break-words">
+                  {displayedErrorMessage}
                 </p>
                 <div className="flex gap-2">
                   {errorKey === 'slotTaken' ? (

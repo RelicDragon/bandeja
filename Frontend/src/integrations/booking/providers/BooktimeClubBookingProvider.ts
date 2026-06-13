@@ -4,8 +4,10 @@ import {
   confirmBooktimeBooking,
   cancelBooktimeBooking,
   BooktimeSlotTakenError,
+  isBooktimeSlotTakenError,
   type BooktimePendingBooking,
 } from '@/integrations/booktime/bookFlow';
+import { formatBooktimeErrorMessage } from '@/integrations/booktime/formatBooktimeErrorMessage';
 import { mapAvailableSlotsToSnapshotCourts } from '@/integrations/booktime/slots';
 import { bookingProviderError } from '@shared/booking';
 import type {
@@ -52,13 +54,14 @@ export class BooktimeClubBookingProvider implements ClubBookingProvider {
         price: result.price,
       };
     } catch (err) {
-      if (err instanceof BooktimeSlotTakenError) {
-        throw bookingProviderError('SlotTaken', err.message);
+      const message = formatBooktimeErrorMessage(err);
+      if (err instanceof BooktimeSlotTakenError || isBooktimeSlotTakenError(err)) {
+        throw bookingProviderError('SlotTaken', message);
       }
-      if (err instanceof Error && /session expired/i.test(err.message)) {
-        throw bookingProviderError('AuthExpired', err.message);
+      if (/session|expired|401/i.test(message)) {
+        throw bookingProviderError('AuthExpired', message);
       }
-      throw err;
+      throw new Error(message);
     }
   }
 

@@ -8,6 +8,7 @@ import {
   type BooktimeBookingDuration,
 } from './slots';
 import { getBooktimeExternalUserId } from './session';
+import { formatBooktimeErrorMessage } from './formatBooktimeErrorMessage';
 
 export type BooktimePendingBooking = {
   clubId: string;
@@ -161,7 +162,7 @@ export async function confirmBooktimeBooking(
   } catch (err) {
     if (isBooktimeSlotTakenError(err)) {
       await ctx.refreshSnapshot({ force: true });
-      throw new BooktimeSlotTakenError();
+      throw new BooktimeSlotTakenError(formatBooktimeErrorMessage(err, 'Slot no longer available'));
     }
     throw err;
   }

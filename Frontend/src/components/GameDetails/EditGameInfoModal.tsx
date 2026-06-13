@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Save, Edit3, CalendarClock, Banknote } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
@@ -22,14 +23,18 @@ import {
 import type { EditLocationTimeDraft } from '@/components/gameLocationTime/locationTimeDraft';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
+import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
 import { BooktimeCreateGameConfirmModal } from '@/components/createGame/BooktimeCreateGameConfirmModal';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
+import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
+import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price';
 export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
@@ -274,16 +279,34 @@ export const EditGameInfoModal = ({
   const willBookOnEdit =
     locationTimeDraft?.willBookOnCreate === true &&
     (locationTimeDraft.integratedCourtIds.length ?? 0) > 0;
-  const { status: booktimeAuth } = useBooktimeClubAuth(
+  const bookingsModeActive = locationTimeDraft?.locationTimeMode === 'bookings';
+  const booktimeIntegrationConfig = useMemo((): BooktimeIntegrationConfig | null => {
+    const raw = selectedClubData?.integrationConfig;
+    const companyId = raw?.companyId?.trim();
+    if (!companyId) return null;
+    return {
+      companyId,
+      termsUrl: typeof raw?.termsUrl === 'string' ? raw.termsUrl : undefined,
+      privacyUrl: typeof raw?.privacyUrl === 'string' ? raw.privacyUrl : undefined,
+    };
+  }, [selectedClubData]);
+  const { status: booktimeAuth, refresh: refreshBooktimeAuth } = useBooktimeClubAuth(
     where.clubId || undefined,
-    willBookOnEdit && clubBookingFlowActive,
+    clubBookingFlowActive && Boolean(booktimeIntegrationConfig),
   );
-  const booktimeCompanyMeta = useBooktimeCompanyMeta(selectedClubData, willBookOnEdit);
+  const needsBooktimeAuth = Boolean(
+    willBookOnEdit && clubBookingFlowActive && !booktimeAuth?.connected,
+  );
+  const booktimeCompanyMeta = useBooktimeCompanyMeta(
+    selectedClubData,
+    (willBookOnEdit || bookingsModeActive) && clubBookingFlowActive && !needsBooktimeAuth,
+  );
   const snapshotRefreshEnabled =
     isOpen &&
-    activeTab === 'locationTime' &&
+    (willBookOnEdit || bookingsModeActive || confirmModalOpen) &&
     clubBookingFlowActive &&
-    Boolean(selectedClubData?.integrationConfig?.companyId);
+    Boolean(booktimeIntegrationConfig) &&
+    !needsBooktimeAuth;
   const {
     refreshSnapshot,
     lastFetchedAt: snapshotLastFetchedAt,
@@ -294,8 +317,60 @@ export const EditGameInfoModal = ({
       whenSelectedDate,
       snapshotRefreshEnabled,
     );
-  const snapshotBlocked = snapshotBanner === 'noSyncToday' || snapshotBanner === 'scoutPoolEmpty';
-  const booktimeIntegrationConfig = selectedClubData?.integrationConfig;
+  const snapshotBlocked =
+    snapshotBanner === 'noSyncToday' ||
+    (snapshotBanner === 'scoutPoolEmpty' && !snapshotLastFetchedAt);
+  const booktimeTimeOptions = useBooktimeTimeOptions({
+    club: selectedClubData,
+    courts: modalCourts,
+    selectedDate: whenSelectedDate,
+    durationHours: whenDuration,
+    selectedCourtId: where.courtId || selectedCourtIds[0] || null,
+    enabled:
+      isOpen &&
+      clubHasBookingIntegration(selectedClubData) &&
+      !needsBooktimeAuth &&
+      (locationTimeDraft?.locationTimeMode !== 'timeSlots' ||
+        !willBookOnEdit ||
+        Boolean(booktimeAuth?.connected)),
+  });
+  const resolvedGenerateTimeOptions = booktimeTimeOptions.active
+    ? booktimeTimeOptions.generateTimeOptions
+    : generateTimeOptions;
+  const resolvedGenerateTimeOptionsForDate = booktimeTimeOptions.active
+    ? booktimeTimeOptions.generateTimeOptionsForDate
+    : generateTimeOptionsForDate;
+  const resolvedCanAccommodateDuration = booktimeTimeOptions.active
+    ? booktimeTimeOptions.canAccommodateDuration
+    : canAccommodateDuration;
+  const resolvedGetAdjustedStartTime = booktimeTimeOptions.active
+    ? booktimeTimeOptions.getAdjustedStartTime
+    : getAdjustedStartTime;
+  const resolvedGetTimeSlotsForDuration = booktimeTimeOptions.active
+    ? booktimeTimeOptions.getTimeSlotsForDuration
+    : getTimeSlotsForDuration;
+  const resolvedIsSlotHighlighted = booktimeTimeOptions.active
+    ? (time: string) => booktimeTimeOptions.isSlotHighlighted(time, whenSelectedTime, whenDuration)
+    : isSlotHighlighted;
+  const { clampDate: clampBooktimeDate, fixedDates: booktimeFixedDates } = booktimeCompanyMeta;
+
+  useEffect(() => {
+    if (!willBookOnEdit || !booktimeFixedDates?.length) return;
+    const clamped = clampBooktimeDate(whenSelectedDate);
+    if (format(clamped, 'yyyy-MM-dd') !== format(whenSelectedDate, 'yyyy-MM-dd')) {
+      setWhenSelectedDate(clamped);
+      setHookDate(clamped);
+      setWhenSelectedTime('');
+      setHookTime('');
+    }
+  }, [
+    willBookOnEdit,
+    booktimeFixedDates,
+    clampBooktimeDate,
+    whenSelectedDate,
+    setHookDate,
+    setHookTime,
+  ]);
   const integratedCourtsForConfirm = useMemo(
     () =>
       (locationTimeDraft?.integratedCourtIds ?? [])
@@ -306,7 +381,9 @@ export const EditGameInfoModal = ({
 
 
   const editSnapshotBanner =
-    clubBookingFlowActive && selectedClubData?.integrationType === 'BOOKTIME' ? (
+    (willBookOnEdit || bookingsModeActive) &&
+    !needsBooktimeAuth &&
+    selectedClubData?.integrationType === 'BOOKTIME' ? (
       <BooktimeAvailabilityBanner
         loading={isRefreshingSnapshot}
         banner={snapshotBanner}
@@ -389,6 +466,11 @@ export const EditGameInfoModal = ({
     }
 
     if (willBookOnEdit) {
+      if (needsBooktimeAuth) {
+        setActiveTab('locationTime');
+        return;
+      }
+      await refreshSnapshot({ force: true });
       setConfirmModalOpen(true);
       return;
     }
@@ -399,6 +481,11 @@ export const EditGameInfoModal = ({
   const proceedAfterUnlinkConfirm = async () => {
     setShowConfirmUnlinkSave(false);
     if (willBookOnEdit) {
+      if (needsBooktimeAuth) {
+        setActiveTab('locationTime');
+        return;
+      }
+      await refreshSnapshot({ force: true });
       setConfirmModalOpen(true);
       return;
     }
@@ -585,12 +672,12 @@ export const EditGameInfoModal = ({
                 setHookDuration(d);
               }}
               onShowDatePickerChange={setWhenShowDatePicker}
-              generateTimeOptions={generateTimeOptions}
-              generateTimeOptionsForDate={generateTimeOptionsForDate}
-              canAccommodateDuration={canAccommodateDuration}
-              getAdjustedStartTime={getAdjustedStartTime}
-              getTimeSlotsForDuration={getTimeSlotsForDuration}
-              isSlotHighlighted={isSlotHighlighted}
+              generateTimeOptions={resolvedGenerateTimeOptions}
+              generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
+              canAccommodateDuration={resolvedCanAccommodateDuration}
+              getAdjustedStartTime={resolvedGetAdjustedStartTime}
+              getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
+              isSlotHighlighted={resolvedIsSlotHighlighted}
               dateInputRef={{ current: null }}
               onUnlinkBooking={(externalBookingId) =>
                 setPendingRemoveBookingIds((prev) =>
@@ -601,6 +688,21 @@ export const EditGameInfoModal = ({
               onDraftChange={handleLocationTimeDraftChange}
               snapshotBanner={editSnapshotBanner}
               willBookOnCreate={willBookOnEdit}
+              needsBooktimeAuth={needsBooktimeAuth}
+              booktimeFixedDates={willBookOnEdit ? booktimeFixedDates : undefined}
+              slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
+              connectedPhone={booktimeAuth?.phoneNumber ?? null}
+              bookableDaysHint={willBookOnEdit ? booktimeCompanyMeta.bookableDays : null}
+              authGateSection={
+                needsBooktimeAuth && selectedClubData && booktimeIntegrationConfig ? (
+                  <BooktimeConnectInline
+                    club={selectedClubData}
+                    integrationConfig={booktimeIntegrationConfig}
+                    onConnected={() => void refreshBooktimeAuth()}
+                    onSkip={() => setActiveTab('locationTime')}
+                  />
+                ) : null
+              }
             />
           )}
           {activeTab === 'price' && (
@@ -669,7 +771,7 @@ export const EditGameInfoModal = ({
       confirmVariant="danger"
     />
 
-    {selectedClubData && booktimeIntegrationConfig?.companyId && confirmModalOpen ? (
+    {selectedClubData && booktimeIntegrationConfig && confirmModalOpen ? (
       <BooktimeCreateGameConfirmModal
         open={confirmModalOpen}
         onOpenChange={setConfirmModalOpen}
@@ -700,6 +802,8 @@ export const EditGameInfoModal = ({
         }}
         onSlotTaken={() => {
           setWhenSelectedTime('');
+          setHookTime('');
+          booktimeTimeOptions.reload();
         }}
         onSuccess={() => {
           setConfirmModalOpen(false);

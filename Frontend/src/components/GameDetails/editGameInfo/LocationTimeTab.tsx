@@ -46,6 +46,12 @@ type LocationTimeTabProps = {
   onDraftChange: (draft: EditLocationTimeDraft) => void;
   snapshotBanner?: ReactNode;
   willBookOnCreate?: boolean;
+  needsBooktimeAuth?: boolean;
+  booktimeFixedDates?: Date[];
+  slotsLoading?: boolean;
+  connectedPhone?: string | null;
+  bookableDaysHint?: number | null;
+  authGateSection?: ReactNode;
 };
 
 export function LocationTimeTab({
@@ -80,6 +86,12 @@ export function LocationTimeTab({
   onDraftChange,
   snapshotBanner,
   willBookOnCreate: willBookOnCreateProp = false,
+  needsBooktimeAuth = false,
+  booktimeFixedDates,
+  slotsLoading = false,
+  connectedPhone = null,
+  bookableDaysHint = null,
+  authGateSection,
 }: LocationTimeTabProps) {
   const { t } = useTranslation();
   const club = clubs.find((c) => c.id === selectedClub);
@@ -265,6 +277,8 @@ export function LocationTimeTab({
       dirtyFlags={dirtyFlags}
       companyId={club?.integrationConfig?.companyId}
       bookingsPanelEnabled
+      needsBooktimeAuth={needsBooktimeAuth}
+      authGateSection={authGateSection}
       onUnlinkBooking={handleUnlinkBooking}
       courtSection={courtSection}
       timeSlotsChildren={
@@ -293,6 +307,12 @@ export function LocationTimeTab({
           panelMode="edit"
           bookCourtEnabled={willBookOnCreateProp}
           hideOccupancyOverlay={willBookOnCreateProp}
+          needsBooktimeAuth={needsBooktimeAuth}
+          dateFixedDates={booktimeFixedDates}
+          hideCalendar={willBookOnCreateProp}
+          bookableDaysHint={bookableDaysHint}
+          connectedPhone={connectedPhone}
+          slotsLoading={slotsLoading}
           snapshotBanner={snapshotBanner}
           compact
         />

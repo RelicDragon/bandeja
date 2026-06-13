@@ -7,7 +7,7 @@ export {
   syncTelegramProfile,
 } from './user/profile.controller';
 export { getNotificationPreferences, updateNotificationPreferences } from './user/notificationPreferences.controller';
-export { switchCity, e2eClearAssignedCity, setInitialLevel, completeWelcome, resetWelcome, skipWelcome } from './user/settings.controller';
+export { switchCity, e2eClearAssignedCity, e2eClearSports, setInitialLevel, completeWelcome, resetWelcome, skipWelcome } from './user/settings.controller';
 export {
   addSport,
   confirmPrimarySport,
