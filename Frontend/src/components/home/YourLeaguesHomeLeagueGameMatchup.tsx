@@ -8,8 +8,8 @@ import {
 } from '@/utils/leagueHomeGameMatchup';
 
 const MATCHUP_BLOCK =
-  'rounded-md border border-indigo-100/80 bg-indigo-50/50 dark:border-indigo-900/50 dark:bg-indigo-950/30';
-const MATCHUP_BLOCK_DIVIDER = 'border-t border-indigo-100/80 dark:border-indigo-900/50';
+  'rounded-md border border-indigo-200/70 bg-indigo-50/60 dark:border-indigo-800/60 dark:bg-indigo-950/40';
+const MATCHUP_BLOCK_DIVIDER = 'border-t border-indigo-200/70 dark:border-indigo-800/60';
 const MATCHUP_AVATAR_RING = 'ring-indigo-50 dark:ring-indigo-950/40';
 const MATCHUP_ROW_TEXT =
   'min-w-0 truncate text-[11px] font-semibold leading-snug text-gray-800 dark:text-gray-100';

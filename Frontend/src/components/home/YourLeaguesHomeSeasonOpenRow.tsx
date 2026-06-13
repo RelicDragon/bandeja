@@ -67,7 +67,7 @@ export function YourLeaguesHomeSeasonOpenRow({
     <button
       type="button"
       onClick={() => navigate(`/games/${hub.hubId}`)}
-      className="flex min-h-[3.25rem] w-full items-center gap-2.5 px-2.5 py-2 text-left transition-colors hover:bg-gray-100/80 active:bg-gray-100 dark:hover:bg-gray-800/60 dark:active:bg-gray-800"
+      className="flex min-h-[3.25rem] w-full items-center gap-2.5 border-b border-gray-200/80 px-3 py-2.5 text-left transition-colors hover:bg-gray-50 active:bg-gray-100 dark:border-gray-700/80 dark:hover:bg-gray-800/60 dark:active:bg-gray-800"
     >
         {stale ? (
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white dark:bg-amber-600">

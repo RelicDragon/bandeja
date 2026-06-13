@@ -219,6 +219,7 @@ Frontend/e2e/
 | H-07 | Gender prompt banner | When applicable | Banner + action |
 | H-08 | User teams section | User in teams | Teams row on More subtab |
 | H-09 | Your leagues section | User in leagues | League cards on More subtab |
+| H-10 | League game sections collapse | More → league hub with scheduled/unscheduled games → tap section header | Section collapses/expands with chevron; both sections expanded by default |
 | H-11 | Mark all read banner | Unread games exist | Banner + action clears counts |
 
 ### 6.2 Invites

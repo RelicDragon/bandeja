@@ -66,8 +66,8 @@ export function YourLeaguesHomeSection({
           const scheduledGames = scheduledGamesByHub[hub.hubId] ?? [];
           const unscheduledGames = unscheduledGamesByHub[hub.hubId] ?? [];
           const hubShellClass = hub.stalePastSchedule
-            ? 'overflow-hidden rounded-xl border border-amber-500/80 bg-amber-50/50 dark:border-amber-600/60 dark:bg-amber-950/20'
-            : 'overflow-hidden rounded-xl border border-gray-200/80 bg-gray-50/50 dark:border-gray-700/80 dark:bg-gray-800/30';
+            ? 'overflow-hidden rounded-xl border border-amber-500/80 bg-amber-50/90 shadow-md shadow-amber-500/10 dark:border-amber-600/60 dark:bg-amber-950/30 dark:shadow-amber-900/20'
+            : 'overflow-hidden rounded-xl border border-gray-200/90 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900';
 
           return (
             <div key={hub.hubId} className={hubShellClass}>
@@ -78,16 +78,18 @@ export function YourLeaguesHomeSection({
                 hasBracketPlayoff={hubHasBracketLeagueGames(games, hub.hubId)}
                 bracketShortcutPath={buildLeagueHomeHubBracketPath(games, hub.hubId)}
               />
-              <YourLeaguesHomeSeasonScheduledGamesExpandable
-                hubGames={scheduledGames}
-                gamesUnreadCounts={gamesUnreadCounts}
-                titleKey="home.leagueSeasonScheduledGames"
-              />
-              <YourLeaguesHomeSeasonScheduledGamesExpandable
-                hubGames={unscheduledGames}
-                gamesUnreadCounts={gamesUnreadCounts}
-                titleKey="home.leagueSeasonUnscheduledGames"
-              />
+              <div className="flex flex-col gap-2 p-2">
+                <YourLeaguesHomeSeasonScheduledGamesExpandable
+                  hubGames={scheduledGames}
+                  gamesUnreadCounts={gamesUnreadCounts}
+                  titleKey="home.leagueSeasonScheduledGames"
+                />
+                <YourLeaguesHomeSeasonScheduledGamesExpandable
+                  hubGames={unscheduledGames}
+                  gamesUnreadCounts={gamesUnreadCounts}
+                  titleKey="home.leagueSeasonUnscheduledGames"
+                />
+              </div>
             </div>
           );
         })}

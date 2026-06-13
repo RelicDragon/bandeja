@@ -59,7 +59,7 @@ export function YourLeaguesHomeLeagueGameRow({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full flex-col gap-1 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-[0.99]"
+      className="flex w-full flex-col gap-1.5 rounded-lg border border-gray-200/80 bg-white px-2.5 py-2 text-left shadow-xs transition-[border-color,box-shadow,transform] hover:border-gray-300 hover:shadow-sm active:scale-[0.99] dark:border-gray-700/80 dark:bg-gray-900/90 dark:hover:border-gray-600"
     >
       <div className="flex w-full min-w-0 items-start gap-2.5">
         <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400">
