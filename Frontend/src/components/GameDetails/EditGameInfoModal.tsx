@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Save, Edit3, CalendarClock, Banknote } from 'lucide-react';
+import { Save, Edit3, CalendarClock, Banknote, Loader2 } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
 import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import { gamesApi, courtsApi, mediaApi } from '@/api';
@@ -457,39 +457,57 @@ export const EditGameInfoModal = ({
       return;
     }
 
-    const overlapOk = await runBookingOverlapGate();
-    if (!overlapOk) return;
-
-    if (pendingUnlinkIds.length > 0) {
-      setShowConfirmUnlinkSave(true);
-      return;
-    }
-
-    if (willBookOnEdit) {
-      if (needsBooktimeAuth) {
-        setActiveTab('locationTime');
+    setIsSaving(true);
+    try {
+      const overlapOk = await runBookingOverlapGate();
+      if (!overlapOk) {
+        setIsSaving(false);
         return;
       }
-      await refreshSnapshot({ force: true });
-      setConfirmModalOpen(true);
-      return;
-    }
 
-    await executeSave();
+      if (pendingUnlinkIds.length > 0) {
+        setIsSaving(false);
+        setShowConfirmUnlinkSave(true);
+        return;
+      }
+
+      if (willBookOnEdit) {
+        if (needsBooktimeAuth) {
+          setIsSaving(false);
+          setActiveTab('locationTime');
+          return;
+        }
+        await refreshSnapshot({ force: true });
+        setIsSaving(false);
+        setConfirmModalOpen(true);
+        return;
+      }
+
+      await executeSave();
+    } catch {
+      setIsSaving(false);
+    }
   };
 
   const proceedAfterUnlinkConfirm = async () => {
     setShowConfirmUnlinkSave(false);
-    if (willBookOnEdit) {
-      if (needsBooktimeAuth) {
-        setActiveTab('locationTime');
+    setIsSaving(true);
+    try {
+      if (willBookOnEdit) {
+        if (needsBooktimeAuth) {
+          setIsSaving(false);
+          setActiveTab('locationTime');
+          return;
+        }
+        await refreshSnapshot({ force: true });
+        setIsSaving(false);
+        setConfirmModalOpen(true);
         return;
       }
-      await refreshSnapshot({ force: true });
-      setConfirmModalOpen(true);
-      return;
+      await executeSave();
+    } catch {
+      setIsSaving(false);
     }
-    await executeSave();
   };
 
   const executeSave = async (bookingOverrides?: {
@@ -722,9 +740,14 @@ export const EditGameInfoModal = ({
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-busy={isSaving}
+            className="flex items-center justify-center gap-2 min-w-[6.5rem] px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Save size={18} />
+            {isSaving ? (
+              <Loader2 size={18} className="animate-spin shrink-0" aria-hidden />
+            ) : (
+              <Save size={18} className="shrink-0" aria-hidden />
+            )}
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
         </DialogFooter>
