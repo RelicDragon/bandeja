@@ -27,7 +27,7 @@ import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
-import { clubHasBookingIntegration } from '@shared/clubIntegration';
+import { clubHasBookingIntegration, parseBooktimeIntegrationConfig } from '@shared/clubIntegration';
 import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
@@ -275,20 +275,15 @@ export const EditGameInfoModal = ({
   }, [isOpen, where.clubId, onCourtsChange]);
 
   const selectedClubData = clubs.find((c) => c.id === where.clubId);
-  const clubBookingFlowActive = supportsClubBookingFlow(game.entityType, 'edit');
+  const clubBookingFlowActive =
+    supportsClubBookingFlow(game.entityType, 'edit') && clubHasBookingIntegration(selectedClubData);
   const willBookOnEdit =
     locationTimeDraft?.willBookOnCreate === true &&
     (locationTimeDraft.integratedCourtIds.length ?? 0) > 0;
   const bookingsModeActive = locationTimeDraft?.locationTimeMode === 'bookings';
   const booktimeIntegrationConfig = useMemo((): BooktimeIntegrationConfig | null => {
-    const raw = selectedClubData?.integrationConfig;
-    const companyId = raw?.companyId?.trim();
-    if (!companyId) return null;
-    return {
-      companyId,
-      termsUrl: typeof raw?.termsUrl === 'string' ? raw.termsUrl : undefined,
-      privacyUrl: typeof raw?.privacyUrl === 'string' ? raw.privacyUrl : undefined,
-    };
+    if (!selectedClubData || !clubHasBookingIntegration(selectedClubData)) return null;
+    return parseBooktimeIntegrationConfig(selectedClubData.integrationConfig);
   }, [selectedClubData]);
   const { status: booktimeAuth, refresh: refreshBooktimeAuth } = useBooktimeClubAuth(
     where.clubId || undefined,

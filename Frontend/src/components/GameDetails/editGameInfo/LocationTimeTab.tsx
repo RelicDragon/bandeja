@@ -11,6 +11,7 @@ import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtS
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
 import type { RefObject, ReactNode } from 'react';
@@ -98,7 +99,7 @@ export function LocationTimeTab({
   const club = clubs.find((c) => c.id === selectedClub);
   const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(
     selectedClub || undefined,
-    supportsClubBookingFlow(entityType, 'edit'),
+    supportsClubBookingFlow(entityType, 'edit') && clubHasBookingIntegration(club),
   );
   const [selectedBookingRecords, setSelectedBookingRecords] = useState<BooktimeBookingRecord[]>([]);
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);

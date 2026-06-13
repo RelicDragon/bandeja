@@ -15,7 +15,7 @@ import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
-import { clubHasBookingIntegration } from '@shared/clubIntegration';
+import { clubHasBookingIntegration, parseBooktimeIntegrationConfig } from '@shared/clubIntegration';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { assembleCreateGameBookingFields } from './assembleCreateGameBookingFields';
@@ -210,14 +210,8 @@ export function useCreateGameBookingFlow({
   const { clampDate: clampBooktimeDate, fixedDates: booktimeFixedDates } = booktimeCompanyMeta;
 
   const booktimeIntegrationConfig = useMemo((): BooktimeIntegrationConfig | null => {
-    const raw = selectedClubData?.integrationConfig;
-    const companyId = raw?.companyId?.trim();
-    if (!companyId) return null;
-    return {
-      companyId,
-      termsUrl: typeof raw?.termsUrl === 'string' ? raw.termsUrl : undefined,
-      privacyUrl: typeof raw?.privacyUrl === 'string' ? raw.privacyUrl : undefined,
-    };
+    if (!selectedClubData || !clubHasBookingIntegration(selectedClubData)) return null;
+    return parseBooktimeIntegrationConfig(selectedClubData.integrationConfig);
   }, [selectedClubData]);
 
   const snapshotBlocked =
