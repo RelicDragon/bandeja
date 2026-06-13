@@ -1,4 +1,4 @@
-import { e2eApi, e2eGetProfile, type E2eUser } from './api-client';
+import { e2eApi, type E2eUser } from './api-client';
 import { e2eApiHeaders } from '../test-user';
 
 const apiURL = () => process.env.E2E_API_URL ?? 'http://localhost:3000/api';
