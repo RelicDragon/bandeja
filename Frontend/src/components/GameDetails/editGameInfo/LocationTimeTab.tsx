@@ -247,7 +247,6 @@ export function LocationTimeTab({
       onLocationTimeModeChange={setLocationTimeMode}
       showSegmentedSwitch={showSegmentedSwitch}
       showBookingsOnly={showBookingsOnly}
-      willBookOnCreate={willBookOnCreate}
       skipRealCourtBooking={skipRealCourtBooking}
       onSkipRealCourtBookingChange={setSkipRealCourtBooking}
       selectedCourtIds={selectedCourtIds}

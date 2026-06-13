@@ -32,7 +32,7 @@ export function BooktimePastBookingRow({ booking, club, displaySettings, showClu
         secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400"
       />
       <span className="block text-xs text-gray-500 mt-0.5">
-        {formatBooktimeBookingWhen(booking, { timezone: null, displaySettings, t })}
+        {formatBooktimeBookingWhen(booking, { timezone: null, displaySettings })}
       </span>
       {linkedGame ? <BooktimeLinkedGameLink game={linkedGame} /> : null}
       {!linkedGame ? (

@@ -40,7 +40,6 @@ export function formatBooktimeBookingWhen(
   options: {
     timezone?: string | null;
     displaySettings: ResolvedDisplaySettings;
-    t: (key: string) => string;
   }
 ): string {
   const start = parseBooktimeLocalComponents(booking.bookingStart);

@@ -32,6 +32,7 @@ import { BooktimeCreateGameConfirmModal } from '@/components/createGame/Booktime
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price';
+export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
 
 interface EditGameInfoModalProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ interface EditGameInfoModalProps {
   game: Game;
   clubs: Club[];
   courts: Court[];
-  initialTab?: EditGameInfoTabId;
+  initialTab?: EditGameInfoInitialTabId;
   onGameUpdate?: (game: Game) => void;
   onCourtsChange?: (courts: Court[]) => void;
 }
@@ -668,7 +669,7 @@ export const EditGameInfoModal = ({
       confirmVariant="danger"
     />
 
-    {selectedClubData && booktimeIntegrationConfig && confirmModalOpen ? (
+    {selectedClubData && booktimeIntegrationConfig?.companyId && confirmModalOpen ? (
       <BooktimeCreateGameConfirmModal
         open={confirmModalOpen}
         onOpenChange={setConfirmModalOpen}

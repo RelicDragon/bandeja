@@ -47,7 +47,6 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
   const bookingWhen = formatBooktimeBookingWhen(booking, {
     timezone: null,
     displaySettings,
-    t,
   });
 
   const formatGameWhen = (game: Game) => {

@@ -40,7 +40,7 @@ import { LeagueSeasonPointsSection } from '@/components/GameDetails/LeagueSeason
 import { FaqTab } from '@/components/GameDetails/FaqTab';
 import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
-import { EditGameInfoModal, type EditGameInfoTabId } from '@/components/GameDetails/EditGameInfoModal';
+import { EditGameInfoModal, type EditGameInfoInitialTabId } from '@/components/GameDetails/EditGameInfoModal';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { ResultsTableView } from '@/components/gameResults/ResultsTableView';
 import { HorizontalScoreEntryModal, RoundAddedModal } from '@/components/gameResults';
@@ -151,7 +151,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [isLeaving, setIsLeaving] = useState(false);
   const [isEditMaxParticipantsModalOpen, setIsEditMaxParticipantsModalOpen] = useState(false);
   const [isEditGameInfoModalOpen, setIsEditGameInfoModalOpen] = useState(false);
-  const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoTabId>('general');
+  const [editGameInfoInitialTab, setEditGameInfoInitialTab] = useState<EditGameInfoInitialTabId>('general');
   const [activeTab, setActiveTab] = useState<LeagueSeasonShellTab>(() => leagueTabFromSearch(location.search));
 
   const persistLeagueSeasonTabInUrl = useCallback(

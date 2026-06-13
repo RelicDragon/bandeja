@@ -16,7 +16,7 @@ import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { AddToCalendarModal } from '@/components';
 import { getShareUrl } from '@/utils/shareUrl';
 import { resolveUserCurrency } from '@/utils/currency';
-import type { EditGameInfoTabId } from './EditGameInfoModal';
+import type { EditGameInfoInitialTabId } from './EditGameInfoModal';
 import { isCapacitor } from '@/utils/capacitor';
 import { addToNativeCalendar } from '@/utils/calendar';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
@@ -64,7 +64,7 @@ interface GameInfoProps {
   isEditMode: boolean;
   onToggleFavorite: () => void;
   onEditCourt: () => void;
-  onOpenEditGameInfo?: (initialTab?: EditGameInfoTabId) => void;
+  onOpenEditGameInfo?: (initialTab?: EditGameInfoInitialTabId) => void;
   collapsedByDefault?: boolean;
   onInviteTrainer?: () => void;
   canInviteTrainer?: boolean;

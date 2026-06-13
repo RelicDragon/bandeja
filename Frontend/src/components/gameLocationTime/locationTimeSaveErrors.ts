@@ -5,11 +5,14 @@ export class LocationTimePartialSaveError extends Error {
 
   readonly completedSteps: LocationTimeSaveStep[];
 
+  readonly cause: unknown;
+
   constructor(failedStep: LocationTimeSaveStep, completedSteps: LocationTimeSaveStep[], cause: unknown) {
-    super('LocationTimePartialSaveError', { cause });
+    super('LocationTimePartialSaveError');
     this.name = 'LocationTimePartialSaveError';
     this.failedStep = failedStep;
     this.completedSteps = completedSteps;
+    this.cause = cause;
   }
 }
 

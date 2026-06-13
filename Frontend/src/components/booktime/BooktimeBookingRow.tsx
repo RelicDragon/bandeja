@@ -128,7 +128,7 @@ export function BooktimeBookingRow({
         secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400 truncate"
       />
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings, t })}
+        {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings })}
       </p>
       <LinkedGamesPills games={linkedGames} t={t} />
       {!selectable && linkedGame ? <BooktimeLinkedGameLink game={linkedGame} /> : null}
