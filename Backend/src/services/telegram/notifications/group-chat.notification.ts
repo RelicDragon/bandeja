@@ -3,7 +3,11 @@ import { ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatChatNotificationMessageBody, formatUserName } from '../../shared/notification-base';
+import {
+  formatChatNotificationMessageBody,
+  formatUserName,
+  truncateBugNotificationTitle,
+} from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import prisma from '../../../config/database';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
@@ -77,7 +81,10 @@ export async function sendGroupChatNotification(
           : groupChannel.isChannel
             ? `📢 ${t('notifications.channel', lang)}`
             : `👥 ${t('notifications.group', lang)}`;
-      const formattedMessage = `${contextLabel}: *${escapeMarkdown(groupChannel.name)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
+      const headerName = groupChannel.bug?.id
+        ? truncateBugNotificationTitle(groupChannel.name)
+        : groupChannel.name;
+      const formattedMessage = `${contextLabel}: *${escapeMarkdown(headerName)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
       
       const viewButtonKey = groupChannel.bug?.id
         ? 'telegram.viewBug'

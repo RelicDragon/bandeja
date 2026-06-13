@@ -1,5 +1,6 @@
 import { ClubIntegrationType } from '@prisma/client';
 import prisma from '../../config/database';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { assertBooktimeIntegrationConfig } from '../../shared/clubIntegration';
 import { decryptToken, encryptToken } from '../../utils/tokenEncryption';
@@ -41,7 +42,7 @@ async function assertBooktimeClub(clubId: string) {
   });
   if (!club) throw new ApiError(404, 'Club not found');
   if (club.integrationType !== ClubIntegrationType.BOOKTIME) {
-    throw new ApiError(400, 'Club is not configured for online booking');
+    throw new ApiError(400, BOOKING_ERROR_KEYS.clubNotConfigured);
   }
   assertBooktimeIntegrationConfig(club.integrationType, club.integrationConfig);
   return club;

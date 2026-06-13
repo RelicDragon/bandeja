@@ -81,7 +81,29 @@
     "roundNotFound": "Ronda no encontrada",
     "matchNotFound": "Partido no encontrado",
     "setIndexExceedsMax": "El índice de set no puede exceder {{max}}",
-    "cannotRemoveLastSet": "No se puede eliminar el último set"
+    "cannotRemoveLastSet": "No se puede eliminar el último set",
+    "booking": {
+      "slotNoLongerAvailable": "Ese horario ya no está disponible.",
+      "sessionExpired": "Tu sesión de reservas del club expiró. Inicia sesión de nuevo.",
+      "courtNotConfigured": "La reserva online no está configurada para esta pista.",
+      "clubNotConfigured": "Este club no está configurado para reservas online.",
+      "connectionNotFound": "No hay cuenta del club conectada para reservas.",
+      "configNotFound": "No se encontró la configuración de reservas del club.",
+      "cancelFailed": "No se pudo cancelar la reserva.",
+      "providerNotConfigured": "El proveedor de reservas no está configurado.",
+      "externalProviderMustBeBooktime": "Proveedor de reservas no válido para reservas vinculadas.",
+      "cannotClearBookedCourtWithLinks": "Elimina las reservas vinculadas antes de quitar la pista reservada.",
+      "patchRequiresBookingId": "Indica al menos una reserva para vincular o desvincular.",
+      "updateLinksForbidden": "Solo propietarios y admins pueden gestionar reservas vinculadas.",
+      "alreadyLinked": "Esta reserva ya está vinculada al partido.",
+      "updateSnapshotsForbidden": "Solo propietarios y admins pueden actualizar los datos de la reserva.",
+      "snapshotsRequired": "Se requiere al menos una instantánea de reserva.",
+      "bookingNotLinked": "La reserva {{externalBookingId}} no está vinculada a este partido.",
+      "legacyExternalBookingIdRejected": "Campo de reserva obsoleto eliminado. Usa externalBookingIds y PATCH /games/:id/bookings.",
+      "companyIdRequired": "La integración de reservas del club requiere un company ID.",
+      "integrationTypeMustBeOnlineBooking": "La integración del club debe ser reserva online.",
+      "rollbackFailed": "No pudimos confirmar que la reserva se canceló."
+    }
   },
   "leagues": {
     "fullRoundRobin": {

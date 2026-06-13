@@ -11,6 +11,7 @@ import {
 } from './slots';
 import { getBooktimeExternalUserId } from './session';
 import { formatBooktimeErrorMessage } from './formatBooktimeErrorMessage';
+import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 
 export type BooktimePendingBooking = {
   clubId: string;
@@ -34,7 +35,7 @@ export type BooktimeBookingRange = {
 };
 
 export class BooktimeSlotTakenError extends Error {
-  constructor(message = 'Slot no longer available') {
+  constructor(message = BOOKING_ERROR_KEYS.slotNoLongerAvailable) {
     super(message);
     this.name = 'BooktimeSlotTakenError';
   }
@@ -126,7 +127,7 @@ export async function confirmBooktimeBooking(
   }
 
   const externalUserId = getBooktimeExternalUserId(club.id);
-  if (!externalUserId) throw new Error('Club booking session expired');
+  if (!externalUserId) throw new Error(BOOKING_ERROR_KEYS.sessionExpired);
 
   const company = await loadBooktimeCompany(client, companyId);
   const serviceUuid = resolveServiceUuid(
@@ -155,7 +156,7 @@ export async function confirmBooktimeBooking(
   } catch (err) {
     if (isBooktimeSlotTakenError(err)) {
       await ctx.refreshSnapshot({ force: true });
-      throw new BooktimeSlotTakenError(formatBooktimeErrorMessage(err, 'Slot no longer available'));
+      throw new BooktimeSlotTakenError(formatBooktimeErrorMessage(err, BOOKING_ERROR_KEYS.slotNoLongerAvailable));
     }
     throw err;
   }

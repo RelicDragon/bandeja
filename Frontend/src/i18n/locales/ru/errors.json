@@ -81,7 +81,29 @@
     "roundNotFound": "Раунд не найден",
     "matchNotFound": "Матч не найден",
     "setIndexExceedsMax": "Индекс сета не может превышать {{max}}",
-    "cannotRemoveLastSet": "Нельзя удалить последний сет"
+    "cannotRemoveLastSet": "Нельзя удалить последний сет",
+    "booking": {
+      "slotNoLongerAvailable": "Это время больше недоступно.",
+      "sessionExpired": "Сессия бронирования клуба истекла. Войдите снова.",
+      "courtNotConfigured": "Онлайн-бронирование не настроено для этого корта.",
+      "clubNotConfigured": "Этот клуб не настроен для онлайн-бронирования.",
+      "connectionNotFound": "Аккаунт клуба для бронирования не подключён.",
+      "configNotFound": "Настройки бронирования клуба не найдены.",
+      "cancelFailed": "Не удалось отменить бронирование.",
+      "providerNotConfigured": "Провайдер бронирования не настроен.",
+      "externalProviderMustBeBooktime": "Неверный провайдер для связанных бронирований.",
+      "cannotClearBookedCourtWithLinks": "Удалите связанные бронирования перед снятием флага забронированного корта.",
+      "patchRequiresBookingId": "Укажите хотя бы одно бронирование для привязки или отвязки.",
+      "updateLinksForbidden": "Только владельцы и админы могут управлять связанными бронированиями.",
+      "alreadyLinked": "Это бронирование уже привязано к игре.",
+      "updateSnapshotsForbidden": "Только владельцы и админы могут обновлять данные бронирования.",
+      "snapshotsRequired": "Нужен хотя бы один снимок бронирования.",
+      "bookingNotLinked": "Бронирование {{externalBookingId}} не привязано к этой игре.",
+      "legacyExternalBookingIdRejected": "Устаревшее поле бронирования удалено. Используйте externalBookingIds и PATCH /games/:id/bookings.",
+      "companyIdRequired": "Для интеграции бронирования клуба нужен company ID.",
+      "integrationTypeMustBeOnlineBooking": "Интеграция клуба должна быть онлайн-бронированием.",
+      "rollbackFailed": "Не удалось подтвердить отмену бронирования."
+    }
   },
   "leagues": {
     "fullRoundRobin": {

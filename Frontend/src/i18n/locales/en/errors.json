@@ -81,7 +81,29 @@
     "roundNotFound": "Round not found",
     "matchNotFound": "Match not found",
     "setIndexExceedsMax": "Set index cannot exceed {{max}}",
-    "cannotRemoveLastSet": "Cannot remove the last set"
+    "cannotRemoveLastSet": "Cannot remove the last set",
+    "booking": {
+      "slotNoLongerAvailable": "This slot is no longer available.",
+      "sessionExpired": "Your club booking sign-in expired. Please sign in again.",
+      "courtNotConfigured": "Online booking is not set up for this court.",
+      "clubNotConfigured": "This club is not set up for online booking.",
+      "connectionNotFound": "No club booking account is connected.",
+      "configNotFound": "Club booking settings were not found.",
+      "cancelFailed": "Could not cancel the booking.",
+      "providerNotConfigured": "Booking provider is not configured.",
+      "externalProviderMustBeBooktime": "Invalid booking provider for linked reservations.",
+      "cannotClearBookedCourtWithLinks": "Remove linked reservations before clearing the booked court flag.",
+      "patchRequiresBookingId": "Specify at least one reservation to link or unlink.",
+      "updateLinksForbidden": "Only owners and admins can manage linked reservations.",
+      "alreadyLinked": "This reservation is already linked to the game.",
+      "updateSnapshotsForbidden": "Only owners and admins can update reservation details.",
+      "snapshotsRequired": "At least one reservation snapshot is required.",
+      "bookingNotLinked": "Reservation {{externalBookingId}} is not linked to this game.",
+      "legacyExternalBookingIdRejected": "Legacy booking field removed. Use externalBookingIds and PATCH /games/:id/bookings.",
+      "companyIdRequired": "Club booking integration requires a company ID.",
+      "integrationTypeMustBeOnlineBooking": "Club integration must be online booking.",
+      "rollbackFailed": "Could not confirm the reservation was cancelled."
+    }
   },
   "leagues": {
     "fullRoundRobin": {

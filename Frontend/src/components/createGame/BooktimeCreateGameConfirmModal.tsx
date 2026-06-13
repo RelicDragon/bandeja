@@ -21,6 +21,11 @@ import {
 import { resolveBooktimeServiceUuid } from '@/integrations/booktime/resolveBooktimeServiceUuid';
 import { formatBooktimeErrorMessage } from '@/integrations/booktime/formatBooktimeErrorMessage';
 import { readBooktimeRollbackFromError } from '@/integrations/booktime/createGameErrors';
+import {
+  bookingErrorMessage,
+  isBookingAuthExpiredMessage,
+  localizeBookingErrorText,
+} from '@/utils/bookingErrorMessage.util';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
 import toast from 'react-hot-toast';
@@ -274,11 +279,11 @@ export function BooktimeCreateGameConfirmModal({
         } catch (bookErr) {
           setFailedBookingIndex(i);
           await rollbackBookedIds();
-          const detail = formatBooktimeErrorMessage(bookErr);
+          const detail = bookingErrorMessage(bookErr, t, 'createGame.booktime.bookFailed');
           setErrorDetail(detail || null);
           if (bookErr instanceof BooktimeSlotTakenError) {
             setErrorKey('slotTaken');
-          } else if (/session|expired|401/i.test(detail)) {
+          } else if (isBookingAuthExpiredMessage(formatBooktimeErrorMessage(bookErr))) {
             setErrorKey('session');
           } else if (bookings.length > 1) {
             setErrorKey('multiBookFailed');
@@ -318,13 +323,13 @@ export function BooktimeCreateGameConfirmModal({
       await new Promise((r) => window.setTimeout(r, 800));
       onSuccess();
     } catch (err) {
-      const detail = formatBooktimeErrorMessage(err);
+      const detail = bookingErrorMessage(err, t, 'createGame.booktime.createFailedAfterBook');
       const serverRollback = readBooktimeRollbackFromError(err);
-      const rollbackDetail = serverRollback?.error?.trim();
+      const rollbackDetail = localizeBookingErrorText(serverRollback?.error, t);
       const combinedDetail = [detail, rollbackDetail].filter(Boolean).join(' — ');
       setErrorDetail(combinedDetail || null);
 
-      if (/session|expired|401/i.test(combinedDetail)) {
+      if (isBookingAuthExpiredMessage(formatBooktimeErrorMessage(err)) || isBookingAuthExpiredMessage(rollbackDetail ?? '')) {
         setErrorKey('session');
         setPhase('error');
         toast.error(combinedDetail);

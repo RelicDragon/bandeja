@@ -10,6 +10,7 @@ import {
 import { formatBooktimeErrorMessage } from '@/integrations/booktime/formatBooktimeErrorMessage';
 import { mapAvailableSlotsToSnapshotCourts } from '@/integrations/booktime/slots';
 import { bookingProviderError } from '@shared/booking';
+import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import type {
   BookSlotContext,
   BookSlotParams,
@@ -56,10 +57,10 @@ export class BooktimeClubBookingProvider implements ClubBookingProvider {
     } catch (err) {
       const message = formatBooktimeErrorMessage(err);
       if (err instanceof BooktimeSlotTakenError || isBooktimeSlotTakenError(err)) {
-        throw bookingProviderError('SlotTaken', message);
+        throw bookingProviderError('SlotTaken', BOOKING_ERROR_KEYS.slotNoLongerAvailable);
       }
-      if (/session|expired|401/i.test(message)) {
-        throw bookingProviderError('AuthExpired', message);
+      if (/session|expired|401/i.test(message) || message === BOOKING_ERROR_KEYS.sessionExpired) {
+        throw bookingProviderError('AuthExpired', BOOKING_ERROR_KEYS.sessionExpired);
       }
       throw new Error(message);
     }

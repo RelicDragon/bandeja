@@ -1,6 +1,7 @@
 import type { Sport } from '@shared/sport';
 import { DEFAULT_SPORT, parseSport } from '@shared/sport';
 import type { Club } from '@/types';
+import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import type { BooktimeCompany, BooktimeCompanyResource } from './client';
 
 type BookableService = {
@@ -106,5 +107,5 @@ export function resolveBooktimeServiceUuid(
 
   if (configIds.length === 1) return configIds[0]!;
 
-  throw new Error('Online booking not configured for this court');
+  throw new Error(BOOKING_ERROR_KEYS.courtNotConfigured);
 }

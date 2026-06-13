@@ -81,7 +81,29 @@
     "roundNotFound": "Runda nije pronađena",
     "matchNotFound": "Meč nije pronađen",
     "setIndexExceedsMax": "Indeks seta ne može premašiti {{max}}",
-    "cannotRemoveLastSet": "Ne možete ukloniti poslednji set"
+    "cannotRemoveLastSet": "Ne možete ukloniti poslednji set",
+    "booking": {
+      "slotNoLongerAvailable": "Ovaj termin više nije dostupan.",
+      "sessionExpired": "Prijava za rezervacije kluba je istekla. Prijavi se ponovo.",
+      "courtNotConfigured": "Online rezervacija nije podešena za ovaj teren.",
+      "clubNotConfigured": "Ovaj klub nije podešen za online rezervacije.",
+      "connectionNotFound": "Nije povezan nalog kluba za rezervacije.",
+      "configNotFound": "Podešavanja rezervacija kluba nisu pronađena.",
+      "cancelFailed": "Rezervacija nije otkazana.",
+      "providerNotConfigured": "Provajder rezervacija nije podešen.",
+      "externalProviderMustBeBooktime": "Neispravan provajder za povezane rezervacije.",
+      "cannotClearBookedCourtWithLinks": "Ukloni povezane rezervacije pre nego što poništiš oznaku rezervisanog terena.",
+      "patchRequiresBookingId": "Navedi bar jednu rezervaciju za povezivanje ili uklanjanje.",
+      "updateLinksForbidden": "Samo vlasnici i admini mogu da upravljaju povezanim rezervacijama.",
+      "alreadyLinked": "Ova rezervacija je već povezana sa mečem.",
+      "updateSnapshotsForbidden": "Samo vlasnici i admini mogu da ažuriraju detalje rezervacije.",
+      "snapshotsRequired": "Potreban je bar jedan snimak rezervacije.",
+      "bookingNotLinked": "Rezervacija {{externalBookingId}} nije povezana sa ovim mečem.",
+      "legacyExternalBookingIdRejected": "Zastarelo polje za rezervaciju je uklonjeno. Koristi externalBookingIds i PATCH /games/:id/bookings.",
+      "companyIdRequired": "Integracija rezervacija kluba zahteva company ID.",
+      "integrationTypeMustBeOnlineBooking": "Integracija kluba mora biti online rezervacija.",
+      "rollbackFailed": "Nismo mogli da potvrdimo da je rezervacija otkazana."
+    }
   },
   "leagues": {
     "fullRoundRobin": {

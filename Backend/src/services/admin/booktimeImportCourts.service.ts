@@ -1,5 +1,6 @@
 import { Sport } from '@prisma/client';
 import prisma from '../../config/database';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 import { parseBooktimeIntegrationConfig } from '../../shared/clubIntegration';
@@ -34,7 +35,7 @@ export class BooktimeImportCourtsService {
     });
     if (!club) throw new ApiError(404, 'Club not found');
     if (club.integrationType !== 'BOOKTIME') {
-      throw new ApiError(400, 'Club integration type must be online booking');
+      throw new ApiError(400, BOOKING_ERROR_KEYS.integrationTypeMustBeOnlineBooking);
     }
 
     const config = parseBooktimeIntegrationConfig(club.integrationConfig);

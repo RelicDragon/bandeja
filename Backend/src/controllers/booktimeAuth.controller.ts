@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import * as booktimeAuthService from '../services/booktime/booktimeAuth.service';
@@ -60,7 +61,7 @@ export const postBooktimeSessionToken = asyncHandler(async (req: AuthRequest, re
   const { clubId } = req.params;
   const tokens = await booktimeAuthService.getBooktimeSessionTokens(req.userId!, clubId);
   if (!tokens) {
-    throw new ApiError(404, 'Club booking connection not found');
+    throw new ApiError(404, BOOKING_ERROR_KEYS.connectionNotFound);
   }
   res.json({
     success: true,

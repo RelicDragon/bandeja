@@ -1,4 +1,5 @@
 import { ClubIntegrationType } from '@prisma/client';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import type { RollbackBookingResult } from '../../shared/booking';
 import { getExternalBookingProvider } from '../booking/getExternalBookingProvider';
 
@@ -15,7 +16,7 @@ export async function rollbackBooktimeBookingsOnCreateFailure(
       externalBookingId: id.trim(),
       attempted: false,
       cancelled: false,
-      error: 'External booking provider not configured',
+      error: BOOKING_ERROR_KEYS.providerNotConfigured,
     }));
   }
   return provider.rollbackBookings(userId, clubId, externalBookingIds);

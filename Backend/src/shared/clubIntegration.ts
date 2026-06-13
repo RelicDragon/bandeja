@@ -1,4 +1,5 @@
 import { ClubIntegrationType } from '@prisma/client';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../utils/ApiError';
 
 export interface BooktimeIntegrationConfig {
@@ -35,7 +36,7 @@ export function assertBooktimeIntegrationConfig(
   }
   const config = parseBooktimeIntegrationConfig(integrationConfig);
   if (!config) {
-    throw new ApiError(400, 'companyId is required for online booking integration');
+    throw new ApiError(400, BOOKING_ERROR_KEYS.companyIdRequired);
   }
   return config;
 }

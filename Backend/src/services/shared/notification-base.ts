@@ -167,6 +167,14 @@ export function formatUserName(user: { firstName?: string | null; lastName?: str
   return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown';
 }
 
+export const BUG_NOTIFICATION_TITLE_MAX_LENGTH = 50;
+
+export function truncateBugNotificationTitle(text: string | null | undefined): string {
+  const normalized = (text || 'Bug').replace(/\s+/g, ' ').trim();
+  if (!normalized) return 'Bug';
+  return normalized.substring(0, BUG_NOTIFICATION_TITLE_MAX_LENGTH);
+}
+
 export interface GameTextOptions {
   includeParticipants?: boolean;
   includeLink?: boolean;

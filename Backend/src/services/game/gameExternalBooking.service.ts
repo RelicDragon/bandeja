@@ -1,5 +1,6 @@
 import { ClubIntegrationType, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { deriveGameTimeFromBookings } from '../../shared/gameBooking/deriveGameTimeFromBookings';
 import {
@@ -173,7 +174,7 @@ export async function patchGameBookings(
 ) {
   const allowed = await canMutateGameBookings(gameId, userId, isAdmin);
   if (!allowed) {
-    throw new ApiError(403, 'Only owners and admins can update booking links');
+    throw new ApiError(403, BOOKING_ERROR_KEYS.updateLinksForbidden);
   }
 
   const add = Array.isArray(body.add)
@@ -196,7 +197,7 @@ export async function patchGameBookings(
     : [];
 
   if (add.length === 0 && remove.length === 0) {
-    throw new ApiError(400, 'add or remove must contain at least one booking id');
+    throw new ApiError(400, BOOKING_ERROR_KEYS.patchRequiresBookingId);
   }
 
   await prisma.$transaction(async (tx) => {
@@ -212,7 +213,7 @@ export async function patchGameBookings(
         select: { externalBookingId: true },
       });
       if (existing.length > 0) {
-        throw new ApiError(400, 'Booking is already linked to this game');
+        throw new ApiError(400, BOOKING_ERROR_KEYS.alreadyLinked);
       }
 
       await tx.gameExternalBooking.createMany({
@@ -242,12 +243,12 @@ export async function putGameBookingSnapshots(
 ) {
   const allowed = await canMutateGameBookings(gameId, userId, isAdmin);
   if (!allowed) {
-    throw new ApiError(403, 'Only owners and admins can update booking snapshots');
+    throw new ApiError(403, BOOKING_ERROR_KEYS.updateSnapshotsForbidden);
   }
 
   const snapshots = parseBookingSnapshots({ bookingSnapshots: body.snapshots });
   if (snapshots.length === 0) {
-    throw new ApiError(400, 'snapshots must be a non-empty array');
+    throw new ApiError(400, BOOKING_ERROR_KEYS.snapshotsRequired);
   }
 
   await prisma.$transaction(async (tx) => {
@@ -263,7 +264,9 @@ export async function putGameBookingSnapshots(
         data: snapshotToRowData(snap),
       });
       if (updated.count === 0) {
-        throw new ApiError(404, `Booking ${snap.externalBookingId} is not linked to this game`);
+        throw new ApiError(404, BOOKING_ERROR_KEYS.bookingNotLinked, true, {
+          externalBookingId: snap.externalBookingId,
+        });
       }
     }
 

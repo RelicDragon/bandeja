@@ -11,6 +11,7 @@ import { normalizeGameFormatPatch } from '../../utils/gameFormat/normalizeGameFo
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { rollbackBooktimeBookingsOnCreateFailure } from '../booktime/booktimeBookingRollback.service';
 import { GameCourtService } from '../gameCourt/gameCourt.service';
 import {
@@ -77,7 +78,7 @@ export class GameCreateService {
     if (externalBookingIds.length > 0) {
       const provider = data.externalBookingProvider;
       if (provider !== undefined && provider !== ClubIntegrationType.BOOKTIME) {
-        throw new ApiError(400, 'externalBookingProvider must be BOOKTIME when externalBookingIds is set');
+        throw new ApiError(400, BOOKING_ERROR_KEYS.externalProviderMustBeBooktime);
       }
     }
 

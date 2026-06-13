@@ -1,3 +1,4 @@
+import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import { describe, expect, it } from 'vitest';
 import { BooktimeSlotTakenError } from './bookFlow';
 import { formatBooktimeErrorMessage } from './formatBooktimeErrorMessage';
@@ -22,8 +23,8 @@ describe('formatBooktimeErrorMessage', () => {
   });
 
   it('falls back to Error message', () => {
-    expect(formatBooktimeErrorMessage(new Error('Online booking not configured for this court'))).toBe(
-      'Online booking not configured for this court',
+    expect(formatBooktimeErrorMessage(new Error(BOOKING_ERROR_KEYS.courtNotConfigured))).toBe(
+      BOOKING_ERROR_KEYS.courtNotConfigured,
     );
   });
 

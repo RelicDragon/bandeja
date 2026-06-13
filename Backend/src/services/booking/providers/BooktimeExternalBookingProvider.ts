@@ -3,6 +3,7 @@ import { decryptToken } from '../../../utils/tokenEncryption';
 import { cancelBooktimeBookingForUser, resolveBooktimeCompanyId } from '../../booktime/booktimeApi.client';
 import { BooktimeImportCourtsService } from '../../admin/booktimeImportCourts.service';
 import type { ExternalBookingProvider } from '../ExternalBookingProvider';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import type { RollbackBookingResult } from '../../../shared/booking';
 
 type RollbackDeps = {
@@ -48,7 +49,7 @@ async function cancelOneBooking(
       externalBookingId: bookingId,
       attempted: true,
       cancelled: false,
-      error: 'Club booking config not found',
+      error: BOOKING_ERROR_KEYS.configNotFound,
     };
   }
 
@@ -58,7 +59,7 @@ async function cancelOneBooking(
       externalBookingId: bookingId,
       attempted: true,
       cancelled: false,
-      error: 'Club booking connection not found',
+      error: BOOKING_ERROR_KEYS.connectionNotFound,
     };
   }
 
@@ -74,7 +75,7 @@ async function cancelOneBooking(
     );
     return { externalBookingId: bookingId, attempted: true, cancelled: true };
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Cancel booking failed';
+    const message = err instanceof Error ? err.message : BOOKING_ERROR_KEYS.cancelFailed;
     console.error('[booktime] rollback cancel failed', { userId, clubId, bookingId, message });
     return { externalBookingId: bookingId, attempted: true, cancelled: false, error: message };
   }

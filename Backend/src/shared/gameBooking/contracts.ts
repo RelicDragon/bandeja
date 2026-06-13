@@ -33,5 +33,6 @@ export interface CreateGameBookingFields {
   rollbackBooktimeBooking?: boolean;
 }
 
-export const LEGACY_EXTERNAL_BOOKING_ID_REJECTED =
-  'externalBookingId was removed; use externalBookingIds and PATCH /games/:id/bookings';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
+
+export const LEGACY_EXTERNAL_BOOKING_ID_REJECTED = BOOKING_ERROR_KEYS.legacyExternalBookingIdRejected;

@@ -1,6 +1,7 @@
 import { booktimeApi } from '@/api/booktime';
 import { BooktimeClient } from './client';
 import { formatBooktimeErrorMessage } from './formatBooktimeErrorMessage';
+import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import {
   booktimeSessionStorageKey,
   BOOKTIME_SESSION_STORAGE_PREFIX,
@@ -156,7 +157,7 @@ export async function hydrateBooktimeSession(
     throw new Error(
       formatBooktimeErrorMessage(
         { message: res.message },
-        'Club booking session expired',
+        BOOKING_ERROR_KEYS.sessionExpired,
       ),
     );
   }

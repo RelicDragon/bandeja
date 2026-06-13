@@ -7,7 +7,11 @@ import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
-import { formatChatNotificationMessageBody, formatUserName } from '../../shared/notification-base';
+import {
+  formatChatNotificationMessageBody,
+  formatUserName,
+  truncateBugNotificationTitle,
+} from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
@@ -18,7 +22,7 @@ export async function sendBugChatNotification(
   bug: any,
   sender: any
 ) {
-  const bugText = (bug.text || 'Bug').substring(0, 50);
+  const bugText = truncateBugNotificationTitle(bug.text);
   const senderName = formatUserName(sender);
   const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
 

@@ -1,9 +1,15 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
-import { formatChatNotificationMessageBody, formatUserName } from '../../shared/notification-base';
+import {
+  formatChatNotificationMessageBody,
+  formatUserName,
+  truncateBugNotificationTitle,
+} from '../../shared/notification-base';
 import { t } from '../../../utils/translations';
 
 function getGroupNotificationTitle(groupChannel: any, lang: string): string {
-  const name = groupChannel.name;
+  const name = groupChannel.bug?.id
+    ? truncateBugNotificationTitle(groupChannel.name)
+    : groupChannel.name;
   if (groupChannel.bug?.id) return `🐛 ${t('notifications.bugReport', lang)}: ${name}`;
   if (groupChannel.marketItem?.id) return `🛒 ${t('notifications.marketplaceListing', lang)}: ${name}`;
   if (groupChannel.isChannel) return `📢 ${t('notifications.channel', lang)}: ${name}`;

@@ -610,9 +610,16 @@ export const EditGameInfoModal = ({
         );
         return;
       }
-      const axiosErr = err as { response?: { data?: { message?: string } } };
-      const msg = axiosErr.response?.data?.message || 'errors.generic';
-      toast.error(t(msg, { defaultValue: msg }));
+      const axiosErr = err as {
+        response?: { data?: { message?: string; externalBookingId?: string } };
+      };
+      const data = axiosErr.response?.data;
+      const msg = data?.message || 'errors.generic';
+      const interpolation =
+        typeof data?.externalBookingId === 'string' && data.externalBookingId.trim()
+          ? { externalBookingId: data.externalBookingId.trim() }
+          : undefined;
+      toast.error(t(msg, { ...interpolation, defaultValue: msg }));
     } finally {
       setIsSaving(false);
     }

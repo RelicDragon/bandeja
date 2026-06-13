@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
 import { EntityType, ParticipantRole, Prisma, Sport } from '@prisma/client';
+import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
@@ -528,7 +529,7 @@ export class GameUpdateService {
     if (data.hasBookedCourt === false) {
       const linkCount = await prisma.gameExternalBooking.count({ where: { gameId: id } });
       if (linkCount > 0) {
-        throw new ApiError(400, 'Cannot set hasBookedCourt to false while booking links exist');
+        throw new ApiError(400, BOOKING_ERROR_KEYS.cannotClearBookedCourtWithLinks);
       }
     }
 

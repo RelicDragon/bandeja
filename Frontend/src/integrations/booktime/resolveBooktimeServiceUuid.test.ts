@@ -1,3 +1,4 @@
+import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
 import { describe, expect, it } from 'vitest';
 import { Sports } from '@shared/sport';
 import type { BooktimeCompany } from './client';
@@ -57,7 +58,7 @@ describe('resolveBooktimeServiceUuid', () => {
 
   it('throws when service cannot be resolved', () => {
     expect(() => resolveBooktimeServiceUuid({ bookingResources: [] }, 'missing-court')).toThrow(
-      'Online booking not configured for this court',
+      BOOKING_ERROR_KEYS.courtNotConfigured,
     );
   });
 });

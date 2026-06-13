@@ -81,7 +81,29 @@
     "roundNotFound": "Kolo nenalezeno",
     "matchNotFound": "Zápas nenalezen",
     "setIndexExceedsMax": "Index setu nemůže přesáhnout {{max}}",
-    "cannotRemoveLastSet": "Poslední set nelze odebrat"
+    "cannotRemoveLastSet": "Poslední set nelze odebrat",
+    "booking": {
+      "slotNoLongerAvailable": "Tento termín už není k dispozici.",
+      "sessionExpired": "Přihlášení k rezervacím klubu vypršelo. Přihlaste se znovu.",
+      "courtNotConfigured": "Online rezervace není pro tento kurt nastavena.",
+      "clubNotConfigured": "Tento klub není nastaven pro online rezervace.",
+      "connectionNotFound": "Není připojen účet klubu pro rezervace.",
+      "configNotFound": "Nastavení rezervací klubu nebylo nalezeno.",
+      "cancelFailed": "Rezervaci se nepodařilo zrušit.",
+      "providerNotConfigured": "Poskytovatel rezervací není nakonfigurován.",
+      "externalProviderMustBeBooktime": "Neplatný poskytovatel pro propojené rezervace.",
+      "cannotClearBookedCourtWithLinks": "Před zrušením příznaku rezervovaného kurtu odstraňte propojené rezervace.",
+      "patchRequiresBookingId": "Zadejte alespoň jednu rezervaci k propojení nebo odpojení.",
+      "updateLinksForbidden": "Propojené rezervace mohou spravovat pouze vlastníci a administrátoři.",
+      "alreadyLinked": "Tato rezervace je již propojena se hrou.",
+      "updateSnapshotsForbidden": "Detaily rezervace mohou aktualizovat pouze vlastníci a administrátoři.",
+      "snapshotsRequired": "Je vyžadován alespoň jeden snímek rezervace.",
+      "bookingNotLinked": "Rezervace {{externalBookingId}} není propojena s touto hrou.",
+      "legacyExternalBookingIdRejected": "Zastaralé pole rezervace bylo odstraněno. Použijte externalBookingIds a PATCH /games/:id/bookings.",
+      "companyIdRequired": "Integrace rezervací klubu vyžaduje company ID.",
+      "integrationTypeMustBeOnlineBooking": "Integrace klubu musí být online rezervace.",
+      "rollbackFailed": "Nepodařilo se potvrdit zrušení rezervace."
+    }
   },
   "leagues": {
     "fullRoundRobin": {
