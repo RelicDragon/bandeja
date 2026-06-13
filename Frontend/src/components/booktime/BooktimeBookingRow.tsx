@@ -43,7 +43,8 @@ type Props = {
   onToggleSelect?: () => void;
 };
 
-function LinkedGamesPills({ games, t }: { games: BooktimeLinkedGame[]; t: (key: string, opts?: object) => string }) {
+function LinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
+  const { t } = useTranslation();
   if (games.length === 0) return null;
   const labels = games.map((g) => g.name?.trim() || g.id).join(', ');
   return (
@@ -130,7 +131,7 @@ export function BooktimeBookingRow({
       <p className="text-xs text-gray-500 dark:text-gray-400">
         {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings })}
       </p>
-      <LinkedGamesPills games={linkedGames} t={t} />
+      <LinkedGamesPills games={linkedGames} />
       {!selectable && linkedGame ? <BooktimeLinkedGameLink game={linkedGame} /> : null}
     </div>
   );
