@@ -1,15 +1,7 @@
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { Game } from '@/types';
-import { linkedBookingToRecord } from '@/components/booktime/booktimeBookingUtils';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
-
-type LinkedBookingLike = {
-  externalBookingId?: string;
-  courtId?: string;
-  bookingStart?: string;
-  bookingEnd?: string;
-};
 
 export function bookingMatchesGameSlot(booking: BooktimeBookingRecord, game: Game): boolean {
   if (game.timeIsSet !== true) return false;
@@ -17,22 +9,6 @@ export function bookingMatchesGameSlot(booking: BooktimeBookingRecord, game: Gam
     new Date(game.startTime).getTime() === new Date(booking.bookingStart).getTime() &&
     new Date(game.endTime).getTime() === new Date(booking.bookingEnd).getTime()
   );
-}
-
-export function linkedBookingMatchesGame(link: LinkedBookingLike, game: Game): boolean {
-  if (!link.bookingStart || !link.bookingEnd) return false;
-
-  const gameCourtId = game.courtId ?? game.court?.id;
-  if (link.courtId) {
-    if (!gameCourtId || link.courtId !== gameCourtId) return false;
-  }
-
-  const booking = linkedBookingToRecord({
-    externalBookingId: link.externalBookingId ?? '',
-    bookingStart: link.bookingStart,
-    bookingEnd: link.bookingEnd,
-  });
-  return bookingMatchesGameSlot(booking, game);
 }
 
 export function isRecommendedLinkTarget(game: Game, booking: BooktimeBookingRecord): boolean {

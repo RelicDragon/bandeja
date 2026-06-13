@@ -398,7 +398,6 @@ Frontend/e2e/
 | C-13m | Club slot → create-game prefill | Tap slot on availability grid | Create-game opens with club/court/time; reservation ON if integrated + live API |
 | C-13n | Club booking create game soft link | Create game from booking row (`locationTimeMode=bookings&bookingIds=…`) | Bookings tab active; game saved with `hasBookedCourt: true` and `linkedBookings` |
 | C-13o | Club booking cancel linked game warn | Cancel booking that has linked game | Success + non-blocking "Your game is still on the calendar" + Open game |
-| C-13p | Club booking orphan link notice | Game with `linkedBookings` but booking cancelled elsewhere | Game details shows orphan notice for missing linked reservation(s) |
 | C-13q | Club booking signup connect | ConnectClubSheet → new user signup + OTP | Account created; connected chip shown |
 | C-13r | Club booking create-game grid refresh | Open create-game for BOOKTIME club with stale snapshot | Banner then red external cells after snapshot PUT |
 | C-13s | Club booking scout pool degraded | Unconnected user, empty scout pool | "Live availability unavailable" banner on create-game/club detail |
@@ -491,8 +490,6 @@ Frontend/e2e/
 | GD-81 | Compact game details back | Narrow viewport; game with sport + format tags and Chat visible | Back shows arrow only (no label) so tags and Chat fit on one row |
 | GD-82 | Game info collapse handle | Open game details; tap chevron strip at bottom edge of info card | Card collapses to compact summary with smooth height animation; chevron rotates |
 | GD-83 | Collapsed info tap-to-expand | Collapse info card; tap anywhere on the collapsed summary | Card expands; detail rows animate in with stagger; action buttons reappear |
-| GD-84 | Linked booking card when aligned | Game with `linkedBookings` where court + start/end match game | Location section shows linked booking card with court and time |
-| GD-85 | Linked booking card hidden when mismatched | Game with `linkedBookings` but `timeOverride`, different court, or edited start/end | No linked booking card in location section; orphan notice still applies if booking cancelled |
 
 ### 9.2 Participation
 
