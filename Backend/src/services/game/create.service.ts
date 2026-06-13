@@ -2,10 +2,8 @@ import prisma from '../../config/database';
 import { ClubIntegrationType, EntityType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
-import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
-import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import notificationService from '../notification.service';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
 import { resolvePlayersPerMatch, resolveSport } from '../../sport/sportRegistry';
@@ -280,8 +278,6 @@ export class GameCreateService {
       }
     }
     
-    const cityTimezone = await getUserTimezoneFromCityId(cityId);
-    
     const gameType = isTraining ? 'CLASSIC' : data.gameType;
 
     let trainerId: string | null = null;
@@ -400,13 +396,7 @@ export class GameCreateService {
         priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,
         metadata: data.metadata,
         timeIsSet: data.timeIsSet ?? false,
-        status: calculateGameStatus({
-          startTime,
-          endTime,
-          resultsStatus: 'NONE',
-          timeIsSet: data.timeIsSet ?? false,
-          entityType: entityType,
-        }, cityTimezone),
+        status: 'ANNOUNCED',
         ...(trainerId && { trainerId }),
         participants: {
           create: {

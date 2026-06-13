@@ -8,8 +8,6 @@ import {
   MatchGenerationType,
   ScoringPreset,
 } from '@prisma/client';
-import { calculateGameStatus } from '../../utils/gameStatus';
-import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { GameService } from '../game/game.service';
 import type { GameReadinessDb } from '../game/readiness.service';
 import {
@@ -304,7 +302,6 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       throw new ApiError(400, 'Fixed teams must not share participants');
     }
   }
-  const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
   const startTime = new Date();
   const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
   const format = resolveLeagueFixtureFormatFields(seasonGame, gameSetup);
@@ -338,13 +335,7 @@ export async function createLeagueGame(params: CreateLeagueGameParams) {
       parentId: leagueSeasonId,
       leagueRoundId: leagueRoundId,
       leagueGroupId,
-      status: calculateGameStatus({
-        startTime,
-        endTime,
-        resultsStatus: 'NONE',
-        timeIsSet: false,
-        entityType: EntityType.LEAGUE,
-      }, cityTimezone),
+      status: 'ANNOUNCED',
       participants: {
         create: participantUserIds.map(userId => ({
           userId,
@@ -428,7 +419,6 @@ export async function createLeaguePlayoffGame(
   const participantCount = Math.max(userIds.length, playersPerMatch);
   const hasFixedTeams = Boolean(teams?.length);
   const allowUserInMultipleTeams = Boolean(seasonGame.allowUserInMultipleTeams);
-  const cityTimezone = await getUserTimezoneFromCityId(seasonGame.cityId);
   const startTime = new Date();
   const endTime = new Date(startTime.getTime() + 1 * 60 * 60 * 1000);
 
@@ -497,16 +487,7 @@ export async function createLeaguePlayoffGame(
       parentId: leagueSeasonId,
       leagueRoundId,
       leagueGroupId,
-      status: calculateGameStatus(
-        {
-          startTime,
-          endTime,
-          resultsStatus: 'NONE',
-          timeIsSet: false,
-          entityType: EntityType.LEAGUE,
-        },
-        cityTimezone
-      ),
+      status: 'ANNOUNCED',
       participants: {
         create: userIds.map((userId) => ({
           userId,
