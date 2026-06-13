@@ -287,6 +287,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
     <div className="space-y-4">
       {showTemplatePicker ? (
         <CreateGameIntentPicker
+          collapsible
           sport={sport}
           allowedScoringPresets={allowedScoringPresets}
           participantContext={templateParticipantContext}
