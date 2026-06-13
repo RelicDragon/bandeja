@@ -19,12 +19,9 @@ export function CityPromptBanner() {
   const [confirming, setConfirming] = useState(false);
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(CITY_PROMPT_DISMISSED_KEY) === 'true');
 
-  if (!user || user.cityIsSet === true || dismissed) return null;
+  if (!user || user.primarySportIsSet !== true || user.cityIsSet === true || dismissed || user.currentCity == null) return null;
 
-  const cityLabel =
-    user.currentCity != null
-      ? translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country)
-      : null;
+  const cityLabel = translateCity(user.currentCity.id, user.currentCity.name, user.currentCity.country);
 
   const handleDismiss = () => {
     localStorage.setItem(CITY_PROMPT_DISMISSED_KEY, 'true');
@@ -69,9 +66,7 @@ export function CityPromptBanner() {
           </button>
           <div className="relative px-4 pb-4 pt-10 sm:px-6 sm:pb-5">
             <p className="text-sm text-center text-slate-600 dark:text-slate-400">
-              {cityLabel != null
-                ? t('games.cityPromptSubtitle', { cityName: cityLabel })
-                : t('games.cityPromptSubtitleNoCity')}
+              {t('games.cityPromptSubtitle', { cityName: cityLabel })}
             </p>
             <div className="mt-3 flex flex-col items-stretch justify-center gap-2 sm:flex-row sm:items-center sm:gap-3">
               <Button
@@ -82,9 +77,7 @@ export function CityPromptBanner() {
                 className="inline-flex items-center justify-center gap-2 animate-pulse"
               >
                 <MapPin className="h-4 w-4 shrink-0" aria-hidden />
-                {cityLabel != null
-                  ? t('games.cityPromptAction', { cityName: cityLabel })
-                  : t('games.cityPromptActionNoCity')}
+                {t('games.cityPromptAction', { cityName: cityLabel })}
               </Button>
               <Button
                 variant="secondary"

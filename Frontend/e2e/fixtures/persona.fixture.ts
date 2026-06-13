@@ -92,14 +92,25 @@ export async function createGenderPromptUser(): Promise<{
   return { token, user: { ...user, ...updated, genderIsSet: false, cityIsSet: true } };
 }
 
-/** Fresh user after auto-assign: has currentCity, cityIsSet false → CityPromptBanner on home. */
+/** Fresh user after auto-assign: sport confirmed, has currentCity, cityIsSet false → CityPromptBanner on home. */
 export async function createCityPromptUser(): Promise<{
   token: string;
   user: E2eUser & Record<string, unknown>;
 }> {
   const { token, user } = await registerTestUser();
+  const sports = Array.isArray(user.sportsEnabled) && user.sportsEnabled.length > 0
+    ? (user.sportsEnabled as string[])
+    : ['PADEL'];
+  const primarySport = typeof user.primarySport === 'string' ? user.primarySport : sports[0]!;
+  const confirmed = await e2eApi<E2eUser & Record<string, unknown>>(token, '/users/primary-sport/confirm', {
+    method: 'POST',
+    body: JSON.stringify({ sports, primarySport }),
+  });
   const updated = await updateTestProfile(token, { cityIsSet: false });
-  return { token, user: { ...user, ...updated, cityIsSet: false } };
+  return {
+    token,
+    user: { ...user, ...confirmed, ...updated, cityIsSet: false, primarySportIsSet: true },
+  };
 }
 
 export async function createWelcomePromptUser(): Promise<{

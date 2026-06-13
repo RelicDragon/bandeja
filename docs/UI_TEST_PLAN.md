@@ -144,7 +144,7 @@ Frontend/e2e/
 | OG-03 | Primary sport gate | User needs primary sport | `PrimarySportSetModal` shown |
 | OG-04 | Gender prompt banner | User without gender set | Banner on home/find; opens `GenderSetModal` |
 | OG-05 | Gender prompt dismiss | Dismiss gender banner | Banner hidden; mixed-gender games may stay limited |
-| OG-06 | City prompt banner | User missing city context | `CityPromptBanner` with action |
+| OG-06 | City prompt banner | User with auto-city, after sport gate | `CityPromptBanner` on home |
 | OG-07 | Welcome questionnaire | New user, city set | `WelcomeQuestionnairePrompt` shown |
 | OG-08 | Welcome questionnaire skip | Skip welcome flow | `welcomeScreenPassed` set, prompt gone |
 | OG-09 | Sport questionnaire | Incomplete per-sport Q | `SportQuestionnairePrompt` on home |
@@ -184,9 +184,9 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| A-17 | New user auto-city | Fresh user, `cityIsSet: false`, auto-assigned city | `CityPromptBanner` on home; `/select-city` redirects home |
+| A-17 | New user auto-city | Fresh user, sport confirmed, `cityIsSet: false`, auto-assigned city | `CityPromptBanner` on home; `/select-city` redirects home |
 | A-18 | City already set @auth | `cityIsSet: true` | Redirect home |
-| A-19 | Pick city | Auto-detect failed (`currentCity` null) | Full `/select-city` picker; profile updated |
+| A-19 | Pick city | Auto-detect failed, after sport gate | Redirect to `/select-city`; profile updated |
 
 ### 5.4 Logout & sessions
 

@@ -77,6 +77,8 @@ import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBoot
 import { AdPlacementsBootstrap } from './components/sponsorSlots/AdPlacementsBootstrap';
 import { ProfileNameGateHost } from './components/home/ProfileNameGateHost';
 import { PrimarySportGateHost } from './components/home/PrimarySportGateHost';
+import { CityPickerRedirectHost } from './components/home/CityPickerRedirectHost';
+import { needsPrimarySportSelection } from './utils/needsPrimarySportSelection';
 import i18n from './i18n/config';
 import './i18n/config';
 import { parseLiveBoardTheme } from '@/utils/liveScoring';
@@ -425,6 +427,7 @@ function AppContent() {
         <ToastProvider>
           <ProfileNameGateHost />
           <PrimarySportGateHost />
+          <CityPickerRedirectHost />
           <PermissionModalProvider />
           <ReactionEmojiUsageBootstrap />
           {isAuthenticated && <AdPlacementsBootstrap />}
@@ -468,6 +471,8 @@ function AppContent() {
             <ProtectedRoute>
               {/* Full picker only when auto-assign failed (no currentCity). Auto-assigned users confirm via CityPromptBanner on home. */}
               {user?.currentCity ? (
+                <Navigate to="/" replace />
+              ) : needsPrimarySportSelection(user) ? (
                 <Navigate to="/" replace />
               ) : (
                 <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>

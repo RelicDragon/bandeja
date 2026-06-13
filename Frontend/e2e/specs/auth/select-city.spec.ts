@@ -31,12 +31,14 @@ test.describe('auth select city', () => {
     test.skip(cities.length === 0, 'No cities seeded');
 
     await seedAuthInBrowser(page, token, user);
-    const selectCity = new SelectCityPage(page);
-    await selectCity.goto();
     const onboarding = new OnboardingPage(page);
+    const selectCity = new SelectCityPage(page);
+
+    await page.goto('/');
     if (await onboarding.primarySportModal().isVisible({ timeout: 5_000 }).catch(() => false)) {
       await onboarding.confirmPrimarySport();
     }
+    await page.waitForURL(/\/select-city/, { timeout: 20_000 });
     await selectCity.expectLoaded();
     const target = cities.find((c) => c.name === 'Belgrade') ?? cities[0]!;
     await selectCity.pickCityByName(target.name, target.country);
