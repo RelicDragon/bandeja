@@ -806,6 +806,7 @@ export const EditGameInfoModal = ({
         lastName={booktimeAuth?.lastName ?? null}
         allowedHoursToCancel={booktimeCompanyMeta.allowedHoursToCancel}
         currency={booktimeCompanyMeta.currency}
+        sport={game.sport}
         summaryChips={[]}
         bookFlowContext={{
           refreshSnapshot,

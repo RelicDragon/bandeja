@@ -8,11 +8,18 @@ export type BooktimeUser = {
   email?: string;
 };
 
+export type BooktimeCompanyService = {
+  uuid?: string;
+  name?: string;
+  isBookable?: boolean;
+};
+
 export type BooktimeCompanyResource = {
   uuid?: string;
   bookingResourceId?: string;
   name?: string;
   serviceUuid?: string;
+  services?: BooktimeCompanyService[];
 };
 
 export type BooktimeCompany = {

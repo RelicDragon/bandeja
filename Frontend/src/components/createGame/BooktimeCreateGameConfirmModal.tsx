@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarCheck, Check, Loader2 } from 'lucide-react';
 import type { Club, Court } from '@/types';
+import type { Sport } from '@shared/sport';
 import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -17,6 +18,7 @@ import {
   loadBooktimeCompany,
   type BooktimeBookFlowContext,
 } from '@/integrations/booktime/bookFlow';
+import { resolveBooktimeServiceUuid } from '@/integrations/booktime/resolveBooktimeServiceUuid';
 import { formatBooktimeErrorMessage } from '@/integrations/booktime/formatBooktimeErrorMessage';
 import { readBooktimeRollbackFromError } from '@/integrations/booktime/createGameErrors';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
@@ -49,6 +51,7 @@ type BooktimeCreateGameConfirmModalProps = {
   lastName?: string | null;
   allowedHoursToCancel: number;
   currency: string;
+  sport?: Sport | null;
   summaryChips: SummaryChipItem[];
   bookFlowContext: BooktimeBookFlowContext;
   snapshotBlocked: boolean;
@@ -92,6 +95,7 @@ export function BooktimeCreateGameConfirmModal({
   lastName,
   allowedHoursToCancel,
   currency,
+  sport,
   summaryChips,
   bookFlowContext,
   snapshotBlocked,
@@ -159,15 +163,12 @@ export function BooktimeCreateGameConfirmModal({
             entry.startTime,
             entry.durationMinutes,
           );
-          const resource = company.bookingResources?.find(
-            (r) => (r.bookingResourceId ?? r.uuid) === entry.court.externalCourtId,
+          const serviceUuid = resolveBooktimeServiceUuid(
+            company,
+            entry.court.externalCourtId!,
+            club.integrationConfig,
+            sport ?? entry.court.sport,
           );
-          const serviceUuid = resource?.serviceUuid;
-          if (!serviceUuid) {
-            next[entry.court.id] = t('club.booktime.priceUnavailable');
-            quotes[entry.court.id] = null;
-            continue;
-          }
           const quote = await client.getPrice({ bookingStart, bookingEnd, serviceUuid });
           const quoteCurrency = quote.currency ?? company.currency ?? currency;
           if (quote.price != null) {
@@ -204,7 +205,7 @@ export function BooktimeCreateGameConfirmModal({
     return () => {
       cancelled = true;
     };
-  }, [bookings, club, companyId, currency, open, resetState, t]);
+  }, [bookings, club, companyId, currency, open, resetState, sport, t]);
 
   const reviewPriceTotal = useMemo(() => {
     if (bookings.length < 2 || priceLoading) return null;
@@ -256,6 +257,7 @@ export function BooktimeCreateGameConfirmModal({
           dateKey,
           startTime: entry.startTime,
           durationMinutes: entry.durationMinutes,
+          sport: sport ?? entry.court.sport,
         };
         try {
           const result = await confirmBooktimeBooking(

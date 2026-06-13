@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
 import type { Club, Court, EntityType } from '@/types';
+import type { Sport } from '@shared/sport';
 import type { LocationTimeMode } from '@/components/gameLocationTime/LocationTimeMode';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
@@ -40,6 +41,7 @@ type TimeOptionHelpers = {
 
 export type UseCreateGameBookingFlowArgs = {
   entityType: EntityType;
+  sport?: Sport;
   selectedClub: string;
   selectedClubData: Club | undefined;
   selectedCourt: string;
@@ -69,6 +71,7 @@ export type UseCreateGameBookingFlowArgs = {
 
 export function useCreateGameBookingFlow({
   entityType,
+  sport,
   selectedClub,
   selectedClubData,
   selectedCourt,
@@ -526,6 +529,7 @@ export function useCreateGameBookingFlow({
         lastName: booktimeAuth?.lastName ?? null,
         allowedHoursToCancel: booktimeCompanyMeta.allowedHoursToCancel,
         currency: booktimeCompanyMeta.currency,
+        sport,
         summaryChips: args.summaryChips,
         bookFlowContext: {
           refreshSnapshot,
@@ -554,6 +558,7 @@ export function useCreateGameBookingFlow({
       booktimeAuth?.lastName,
       booktimeCompanyMeta.allowedHoursToCancel,
       booktimeCompanyMeta.currency,
+      sport,
       refreshSnapshot,
       snapshotLastFetchedAt,
       snapshotBlocked,

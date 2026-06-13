@@ -1,5 +1,7 @@
+import type { Sport } from '@shared/sport';
 import type { Club } from '@/types';
 import type { BooktimeClient, BooktimeCompany } from './client';
+import { resolveBooktimeServiceUuid } from './resolveBooktimeServiceUuid';
 import { BOOKTIME_DEFAULT_TIMEZONE, booktimeLocalIsoToDate } from './localTime';
 import {
   BOOKTIME_CONFIRM_RECHECK_MS,
@@ -18,6 +20,7 @@ export type BooktimePendingBooking = {
   dateKey: string;
   startTime: string;
   durationMinutes: BooktimeBookingDuration;
+  sport?: Sport | null;
 };
 
 export type BooktimeBookFlowContext = {
@@ -51,25 +54,10 @@ export function loadBooktimeCompany(client: BooktimeClient, companyId: string): 
 export function resolveServiceUuid(
   company: BooktimeCompany,
   externalCourtId: string,
-  integrationConfig?: Club['integrationConfig']
+  integrationConfig?: Club['integrationConfig'],
+  sportHint?: Sport | null,
 ): string {
-  for (const resource of company.bookingResources ?? []) {
-    const id = resource.bookingResourceId ?? resource.uuid;
-    if (id === externalCourtId && resource.serviceUuid) {
-      return resource.serviceUuid;
-    }
-  }
-  const configIds =
-    integrationConfig &&
-    typeof integrationConfig === 'object' &&
-    !Array.isArray(integrationConfig) &&
-    Array.isArray((integrationConfig as Record<string, unknown>).serviceIds)
-      ? ((integrationConfig as Record<string, unknown>).serviceIds as unknown[]).filter(
-          (id): id is string => typeof id === 'string' && id.trim().length > 0
-        )
-      : [];
-  if (configIds.length === 1) return configIds[0]!;
-  throw new Error('Online booking not configured for this court');
+  return resolveBooktimeServiceUuid(company, externalCourtId, integrationConfig, sportHint);
 }
 
 export function buildBookingIsoRange(
@@ -141,7 +129,12 @@ export async function confirmBooktimeBooking(
   if (!externalUserId) throw new Error('Club booking session expired');
 
   const company = await loadBooktimeCompany(client, companyId);
-  const serviceUuid = resolveServiceUuid(company, pending.externalCourtId, club.integrationConfig);
+  const serviceUuid = resolveServiceUuid(
+    company,
+    pending.externalCourtId,
+    club.integrationConfig,
+    pending.sport,
+  );
   const { bookingStart, bookingEnd } = buildBookingIsoRange(
     pending.dateKey,
     pending.startTime,

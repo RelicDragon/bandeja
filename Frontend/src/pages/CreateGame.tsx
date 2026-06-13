@@ -344,6 +344,7 @@ export const CreateGame = ({
 
   const bookingFlow = useCreateGameBookingFlow({
     entityType,
+    sport: selectedSport,
     selectedClub,
     selectedClubData,
     selectedCourt,
