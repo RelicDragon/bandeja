@@ -371,7 +371,7 @@
     },
     "locationTime": {
       "tabTimeSlots": "Elegir horario",
-      "tabBookings": "Usar una reserva",
+      "tabBookings": "Reservas",
       "tabSubtitleTimeSlots": "Reservamos la pista al crear el partido",
       "tabSubtitleTimeSlotsEdit": "Reservamos la pista al guardar los cambios",
       "tabSubtitleBookings": "Vincula pista(s) que ya hayas reservado",

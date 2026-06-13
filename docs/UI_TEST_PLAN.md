@@ -426,7 +426,7 @@ Frontend/e2e/
 | C-14 | Court not booked | Select "Don't book court" | Allowed |
 | C-15 | Court booked | Pick court | Overlap warning if conflict |
 | C-16 | Mark court booked modal | Confirm booking | Court marked |
-| C-17 | Segmented switch (integrated club) | Pick BOOKTIME club on create | "Pick a time" \| "Use a reservation" visible |
+| C-17 | Segmented switch (integrated club) | Pick BOOKTIME club on create | "Pick a time" \| "Bookings" labels visible on both tabs |
 | C-18 | Time slots + integrated court | Select integrated court on Time slots tab | Opt-out toggle; default reserves on create; toggle ON creates game only |
 | C-19 | Bookings tab multi-select | Bookings tab; select N reservations | Derived min–max window; live counter |
 | C-20 | Override time on Bookings tab | Toggle adjust game time | Expand animates; create uses shorter window |
@@ -490,6 +490,8 @@ Frontend/e2e/
 | GD-81 | Compact game details back | Narrow viewport; game with sport + format tags and Chat visible | Back shows arrow only (no label) so tags and Chat fit on one row |
 | GD-82 | Game info collapse handle | Open game details; tap chevron strip at bottom edge of info card | Card collapses to compact summary with smooth height animation; chevron rotates |
 | GD-83 | Collapsed info tap-to-expand | Collapse info card; tap anywhere on the collapsed summary | Card expands; detail rows animate in with stagger; action buttons reappear |
+| GD-84 | Linked booking card when aligned | Game with `linkedBookings` where court + start/end match game | Location section shows linked booking card with court and time |
+| GD-85 | Linked booking card hidden when mismatched | Game with `linkedBookings` but `timeOverride`, different court, or edited start/end | No linked booking card in location section; orphan notice still applies if booking cancelled |
 
 ### 9.2 Participation
 

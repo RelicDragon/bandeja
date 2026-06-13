@@ -142,8 +142,7 @@ export function GameLocationTimePanel({
             ]}
             activeId={locationTimeMode}
             onChange={(id) => requestTabChange(id as LocationTimeMode)}
-            showOnlyActiveTabText={true}
-            activeLabelMaxWidth={200}
+            showOnlyActiveTabText={false}
             layoutId={`location-time-tabs-${mode}`}
             className="w-fit max-w-full"
           />
@@ -194,22 +193,26 @@ export function GameLocationTimePanel({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
           >
-            <BookingsPickerPanel
-              club={club}
-              courts={courts}
-              companyId={companyId}
-              enabled={bookingsPanelEnabled}
-              selectedBookingIds={selectedBookingIds}
-              onSelectedBookingIdsChange={onSelectedBookingIdsChange}
-              selectionLimits={bookingSelectionLimits}
-              timeOverride={timeOverride}
-              onTimeOverrideChange={onTimeOverrideChange}
-              overrideStartTime={overrideStartTime}
-              overrideEndTime={overrideEndTime}
-              onOverrideTimesChange={onOverrideTimesChange ?? (() => {})}
-              onSwitchToTimeSlots={() => onLocationTimeModeChange('timeSlots')}
-              onDerivedTimeChange={onDerivedTimeChange}
-            />
+            {needsBooktimeAuth && authGateSection ? (
+              authGateSection
+            ) : (
+              <BookingsPickerPanel
+                club={club}
+                courts={courts}
+                companyId={companyId}
+                enabled={bookingsPanelEnabled}
+                selectedBookingIds={selectedBookingIds}
+                onSelectedBookingIdsChange={onSelectedBookingIdsChange}
+                selectionLimits={bookingSelectionLimits}
+                timeOverride={timeOverride}
+                onTimeOverrideChange={onTimeOverrideChange}
+                overrideStartTime={overrideStartTime}
+                overrideEndTime={overrideEndTime}
+                onOverrideTimesChange={onOverrideTimesChange ?? (() => {})}
+                onSwitchToTimeSlots={() => onLocationTimeModeChange('timeSlots')}
+                onDerivedTimeChange={onDerivedTimeChange}
+              />
+            )}
           </motion.div>
         ) : (
           <motion.div

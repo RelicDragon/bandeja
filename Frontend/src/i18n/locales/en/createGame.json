@@ -233,7 +233,7 @@
     "markCourtBookedSkip": "Not yet",
     "locationTime": {
       "tabTimeSlots": "Pick a time",
-      "tabBookings": "Use a reservation",
+      "tabBookings": "Bookings",
       "tabSubtitleTimeSlots": "Book court when you create the game",
       "tabSubtitleTimeSlotsEdit": "Book court when you save changes",
       "tabSubtitleBookings": "Link court(s) you already booked",

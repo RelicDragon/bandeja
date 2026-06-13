@@ -1451,7 +1451,11 @@ export const CreateGame = ({
                         club={selectedClubData}
                         integrationConfig={booktimeIntegrationConfig}
                         onConnected={handleAuthConnected}
-                        onSkip={handleCourtSelectForAuthSkip}
+                        onSkip={
+                          locationTimeMode === 'bookings'
+                            ? () => setLocationTimeMode('timeSlots')
+                            : handleCourtSelectForAuthSkip
+                        }
                       />
                     ) : null
                   }

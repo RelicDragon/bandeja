@@ -374,7 +374,7 @@
     },
     "locationTime": {
       "tabTimeSlots": "Выбрать время",
-      "tabBookings": "Использовать бронь",
+      "tabBookings": "Бронирования",
       "tabSubtitleTimeSlots": "Корт забронируем при создании игры",
       "tabSubtitleTimeSlotsEdit": "Корт забронируем при сохранении изменений",
       "tabSubtitleBookings": "Привяжите уже забронированный корт(ы)",

@@ -163,7 +163,9 @@ export function useCreateGameBookingFlow({
     clubBookingFlowActive,
   );
   const needsBooktimeAuth = Boolean(
-    willBookOnCreate && clubBookingFlowActive && !booktimeAuth?.connected,
+    clubBookingFlowActive &&
+      !booktimeAuth?.connected &&
+      (willBookOnCreate || locationTimeMode === 'bookings'),
   );
   const booktimeCompanyMeta = useBooktimeCompanyMeta(
     selectedClubData,

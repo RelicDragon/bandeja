@@ -372,7 +372,7 @@
     },
     "locationTime": {
       "tabTimeSlots": "Vybrat čas",
-      "tabBookings": "Použít rezervaci",
+      "tabBookings": "Rezervace",
       "tabSubtitleTimeSlots": "Kurt rezervujeme při vytvoření hry",
       "tabSubtitleTimeSlotsEdit": "Kurt rezervujeme při uložení změn",
       "tabSubtitleBookings": "Propojte kurt(y), které už máte rezervované",

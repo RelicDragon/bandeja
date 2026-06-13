@@ -372,7 +372,7 @@
     },
     "locationTime": {
       "tabTimeSlots": "Izaberi termin",
-      "tabBookings": "Koristi rezervaciju",
+      "tabBookings": "Rezervacije",
       "tabSubtitleTimeSlots": "Teren rezervišemo pri kreiranju meča",
       "tabSubtitleTimeSlotsEdit": "Teren rezervišemo pri čuvanju izmena",
       "tabSubtitleBookings": "Poveži teren(e) koje već imaš rezervisane",

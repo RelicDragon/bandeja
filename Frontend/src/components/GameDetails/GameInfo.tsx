@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '@/components';
 import { Game, GameParticipant } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
@@ -22,6 +22,7 @@ import { addToNativeCalendar } from '@/utils/calendar';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { BooktimeOrphanBookingNotice } from '@/components/booktime/BooktimeOrphanBookingNotice';
+import { linkedBookingMatchesGame } from '@/components/booktime/booktimeGameLinkUtils';
 import { LinkedBookingsList } from '@/components/gameLocationTime/LinkedBookingsList';
 import { InfoIconChip } from './InfoIconChip';
 import { Share } from '@capacitor/share';
@@ -323,6 +324,10 @@ export const GameInfo = ({
   const userCityId = user?.currentCity?.id || user?.currentCityId;
   const gameCityId = game.city?.id;
   const isDifferentCity = Boolean(gameCityId && userCityId && gameCityId !== userCityId);
+  const matchingLinkedBookings = useMemo(
+    () => (game.linkedBookings ?? []).filter((link) => linkedBookingMatchesGame(link, game)),
+    [game],
+  );
 
   const renderName = () => {
     const titleClass = isCollapsed 
@@ -955,10 +960,10 @@ export const GameInfo = ({
                   </p>
                 )}
                 <BooktimeOrphanBookingNotice game={game} isOwner={isOwner} />
-                {(game.linkedBookings?.length ?? 0) > 0 ? (
+                {matchingLinkedBookings.length > 0 ? (
                   <div className="mt-2">
                     <LinkedBookingsList
-                      game={game}
+                      game={{ ...game, linkedBookings: matchingLinkedBookings }}
                       club={game.court?.club || game.club}
                       courts={courts}
                       readOnly
