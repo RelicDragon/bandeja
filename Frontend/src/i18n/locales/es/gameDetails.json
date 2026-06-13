@@ -36,6 +36,17 @@
       "unlinkSaveConfirmTitle": "¿Quitar enlaces de reserva?",
       "unlinkSaveConfirmMessage": "Vas a desvincular {{count}} reserva(s) de este partido. Las reservas reales de pista no se cancelarán automáticamente."
     },
+    "linkedBookings": {
+      "refreshAriaLabel": "Comprobar estado de la reserva",
+      "refreshStillActive": "La reserva sigue activa en tu cuenta del club",
+      "refreshCheckFailed": "No se pudo comprobar el estado de la reserva. Inténtalo de nuevo.",
+      "absentTitle": "Reserva no encontrada",
+      "absentMessage": "Esta reserva de pista ya no está en tu cuenta del club. Quitaremos el vínculo de este partido. El partido seguirá en el calendario.",
+      "absentMessageOtherGames": "Esta reserva también está vinculada a {{count}} otro(s) partido(s) — aquí solo se actualizará este partido.",
+      "absentConfirm": "Quitar vínculo",
+      "absentSuccess": "Vínculo de reserva eliminado",
+      "absentFailed": "No se pudo eliminar el vínculo de reserva"
+    },
     "booktimeEdit": {
       "activityTitle": "Guardando cambios…",
       "activityStep2": "Actualizando partido…"

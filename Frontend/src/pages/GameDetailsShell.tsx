@@ -49,7 +49,7 @@ import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { TrainingResultsSection } from '@/components/GameDetails/TrainingResultsSection';
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
-import { UserGameNotes } from '@/components/GameDetails/UserGameNotes';
+import { GameLinkedBookingsSection } from '@/components/GameDetails/GameLinkedBookingsSection';
 import { gamesApi, invitesApi, courtsApi, clubsApi, normalizeGameFromApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
 import { resultsApi } from '@/api/results';
@@ -1417,6 +1417,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               onCancelTrainerInvite={isOwner ? handleCancelTrainerInvite : undefined}
             />
           </div>
+
+          <GameLinkedBookingsSection game={game} courts={courts} clubs={clubs} onGameUpdate={setGame} />
 
           {!(canEdit && game.resultsStatus !== 'FINAL') && (
             <PhotosSection game={game} onGameUpdate={setGame} />

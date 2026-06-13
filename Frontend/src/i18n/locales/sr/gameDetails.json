@@ -36,6 +36,17 @@
       "unlinkSaveConfirmTitle": "Ukloniti veze rezervacija?",
       "unlinkSaveConfirmMessage": "Uklanjate {{count}} vezu(e) rezervacija sa ovom igrom. Stvarne rezervacije terena se automatski ne otkazuju."
     },
+    "linkedBookings": {
+      "refreshAriaLabel": "Proveri status rezervacije",
+      "refreshStillActive": "Rezervacija je i dalje aktivna na tvom klubskom nalogu",
+      "refreshCheckFailed": "Status rezervacije nije moguće proveriti. Pokušaj ponovo.",
+      "absentTitle": "Rezervacija nije pronađena",
+      "absentMessage": "Ova rezervacija terena više nije na tvom klubskom nalogu. Uklonićemo vezu sa ovom igrom. Igra ostaje u kalendaru.",
+      "absentMessageOtherGames": "Ova rezervacija je povezana i sa {{count}} drugom(ima) igrom(a) — ovde se ažurira samo ova igra.",
+      "absentConfirm": "Ukloni vezu",
+      "absentSuccess": "Veza sa rezervacijom uklonjena",
+      "absentFailed": "Veza sa rezervacijom nije uklonjena"
+    },
     "booktimeEdit": {
       "activityTitle": "Čuvanje izmena…",
       "activityStep2": "Ažuriranje meča…"

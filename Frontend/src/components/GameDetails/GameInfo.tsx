@@ -21,7 +21,6 @@ import { isCapacitor } from '@/utils/capacitor';
 import { addToNativeCalendar } from '@/utils/calendar';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
-import { LinkedBookingsList } from '@/components/gameLocationTime/LinkedBookingsList';
 import { InfoIconChip } from './InfoIconChip';
 import { Share } from '@capacitor/share';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -953,17 +952,6 @@ export const GameInfo = ({
                     }
                   </p>
                 )}
-                {(game.linkedBookings?.length ?? 0) > 0 ? (
-                  <div className="mt-2">
-                    <LinkedBookingsList
-                      game={game}
-                      club={game.court?.club || game.club}
-                      courts={courts}
-                      readOnly
-                      readOnlyLabel
-                    />
-                  </div>
-                ) : null}
                 <CourtLocationLinks
                   club={game.court?.club || game.club}
                   court={game.court && game.court.id ? game.court : undefined}

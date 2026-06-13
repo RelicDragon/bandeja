@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club, Court, Game } from '@/types';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
-import { clubToBooktimeRow, linkedBookingToRecord } from '@/components/booktime/booktimeBookingUtils';
+import { clubToBooktimeRow } from '@/components/booktime/booktimeBookingUtils';
 import { getClubTimezone } from '@/utils/gameTimeDisplay';
+import { useBooktimeUserBookingIds } from '@/hooks/useBooktimeUserBookingIds';
+import { LinkedBookingListItem } from './LinkedBookingListItem';
 
 type LinkedBookingsListProps = {
   game: Game;
@@ -13,6 +14,8 @@ type LinkedBookingsListProps = {
   onRemove?: (externalBookingId: string) => void;
   readOnly?: boolean;
   readOnlyLabel?: boolean;
+  verifyOwnership?: boolean;
+  onBookingUnlinked?: () => void | Promise<void>;
 };
 
 export function LinkedBookingsList({
@@ -22,6 +25,8 @@ export function LinkedBookingsList({
   onRemove,
   readOnly = false,
   readOnlyLabel = false,
+  verifyOwnership = false,
+  onBookingUnlinked,
 }: LinkedBookingsListProps) {
   const { t } = useTranslation();
   const clubTimezone = getClubTimezone(game);
@@ -31,6 +36,11 @@ export function LinkedBookingsList({
   const booktimeClub = useMemo(
     () => (resolvedClub ? clubToBooktimeRow(resolvedClub) : null),
     [resolvedClub],
+  );
+  const { isOwner, reload } = useBooktimeUserBookingIds(
+    booktimeClub?.clubId,
+    booktimeClub?.companyId,
+    verifyOwnership && Boolean(booktimeClub?.companyId),
   );
 
   if (links.length === 0 || !booktimeClub) return null;
@@ -43,45 +53,22 @@ export function LinkedBookingsList({
         </p>
       ) : null}
       <ul className="space-y-2">
-        {links.map((link) => {
-          const court =
-            courts.find((c) => c.id === link.courtId) ??
-            resolvedClub?.courts?.find((c) => c.id === link.courtId) ??
-            (game.court?.id === link.courtId ? game.court : undefined);
-          const courtOverride = court
-            ? {
-                courtName: court.name,
-                integrationCourtName: court.integrationCourtName ?? null,
-              }
-            : {
-                courtName: t('club.booktime.unknownCourt'),
-                integrationCourtName: null,
-              };
-
-          return (
-            <BooktimeBookingRow
-              key={link.id}
-              booking={linkedBookingToRecord(link)}
-              club={booktimeClub}
-              readOnly
-              compact
-              clubTimezone={clubTimezone}
-              courtOverride={courtOverride}
-              trailing={
-                !readOnly && onRemove ? (
-                  <button
-                    type="button"
-                    data-testid="linked-booking-unlink"
-                    onClick={() => setPendingRemove(link.externalBookingId)}
-                    className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline shrink-0"
-                  >
-                    {t('common.remove')}
-                  </button>
-                ) : undefined
-              }
-            />
-          );
-        })}
+        {links.map((link) => (
+          <LinkedBookingListItem
+            key={link.id}
+            link={link}
+            game={game}
+            booktimeClub={booktimeClub}
+            resolvedClub={resolvedClub}
+            courts={courts}
+            clubTimezone={clubTimezone}
+            isOwner={verifyOwnership && isOwner(link.externalBookingId)}
+            onRefreshOwnership={reload}
+            readOnly={readOnly}
+            onRemove={onRemove ? (id) => setPendingRemove(id) : undefined}
+            onBookingUnlinked={onBookingUnlinked}
+          />
+        ))}
       </ul>
       {!readOnly && onRemove ? (
         <ConfirmationModal

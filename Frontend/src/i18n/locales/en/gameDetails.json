@@ -36,6 +36,17 @@
       "unlinkSaveConfirmTitle": "Remove reservation links?",
       "unlinkSaveConfirmMessage": "You are unlinking {{count}} reservation(s) from this game. The real court bookings will not be cancelled automatically."
     },
+    "linkedBookings": {
+      "refreshAriaLabel": "Check reservation status",
+      "refreshStillActive": "Reservation is still active in your club account",
+      "refreshCheckFailed": "Could not check reservation status. Try again.",
+      "absentTitle": "Reservation not found",
+      "absentMessage": "This court reservation is no longer in your club account. We will remove the link from this game. Your game stays on the calendar.",
+      "absentMessageOtherGames": "This reservation is also linked to {{count}} other game(s) — only this game will be updated here.",
+      "absentConfirm": "Remove link",
+      "absentSuccess": "Reservation link removed",
+      "absentFailed": "Could not remove reservation link"
+    },
     "booktimeEdit": {
       "activityTitle": "Saving changes…",
       "activityStep2": "Updating game…"

@@ -33,6 +33,17 @@
       "unlinkSaveConfirmTitle": "Odebrat propojení rezervací?",
       "unlinkSaveConfirmMessage": "Odebíráte {{count}} propojení rezervací s touto hrou. Skutečné rezervace kurtů se automaticky nezruší."
     },
+    "linkedBookings": {
+      "refreshAriaLabel": "Zkontrolovat stav rezervace",
+      "refreshStillActive": "Rezervace je stále aktivní ve vašem klubovém účtu",
+      "refreshCheckFailed": "Stav rezervace se nepodařilo ověřit. Zkuste to znovu.",
+      "absentTitle": "Rezervace nenalezena",
+      "absentMessage": "Tato rezervace kurtu už není ve vašem klubovém účtu. Odebereme propojení s touto hrou. Hra zůstane v kalendáři.",
+      "absentMessageOtherGames": "Tato rezervace je propojena i s {{count}} další(mi) hrou(hrami) — zde se aktualizuje pouze tato hra.",
+      "absentConfirm": "Odebrat propojení",
+      "absentSuccess": "Propojení s rezervací odebráno",
+      "absentFailed": "Propojení s rezervací se nepodařilo odebrat"
+    },
     "booktimeEdit": {
       "activityTitle": "Ukládání změn…",
       "activityStep2": "Aktualizace hry…"
