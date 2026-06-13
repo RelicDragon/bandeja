@@ -147,9 +147,9 @@ export const booktimeApi = {
     return response.data;
   },
 
-  getLinkedGame: async (externalBookingId: string) => {
-    const response = await api.get<ApiResponse<BooktimeLinkedGame | null>>(
-      `/booktime/linked-game/${encodeURIComponent(externalBookingId)}`
+  getLinkedGames: async (externalBookingId: string) => {
+    const response = await api.get<ApiResponse<BooktimeLinkedGame[]>>(
+      `/booktime/linked-games/${encodeURIComponent(externalBookingId)}`
     );
     return response.data;
   },

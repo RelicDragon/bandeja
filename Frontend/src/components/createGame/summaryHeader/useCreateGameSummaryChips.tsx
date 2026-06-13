@@ -4,6 +4,7 @@ import {
   Users,
   MapPin,
   CalendarClock,
+  CalendarCheck,
   LayoutGrid,
   Lock,
   Tag,
@@ -56,6 +57,10 @@ interface UseCreateGameSummaryChipsArgs {
   priceCurrency: PriceCurrency | undefined;
   defaultCurrency: PriceCurrency | undefined;
   excludeKeys?: string[];
+  locationTimeMode?: 'timeSlots' | 'bookings';
+  willBookOnCreate?: boolean;
+  selectedBookingCount?: number;
+  derivedBookingWindow?: string | null;
 }
 
 const ICON_SIZE = 12;
@@ -90,6 +95,10 @@ export function useCreateGameSummaryChips({
   priceCurrency,
   defaultCurrency,
   excludeKeys = [],
+  locationTimeMode = 'timeSlots',
+  willBookOnCreate = false,
+  selectedBookingCount = 0,
+  derivedBookingWindow = null,
 }: UseCreateGameSummaryChipsArgs): SummaryChipItem[] {
   const { t } = useTranslation();
 
@@ -171,32 +180,44 @@ export function useCreateGameSummaryChips({
     }
 
     if (past.time) {
-      const parts: string[] = [formatDate(selectedDate, 'EEE d MMM')];
-      if (selectedTime) {
-        parts.push(selectedTime);
-        if (duration) parts.push(getDurationLabel(duration));
-      }
-      if (selectedCourt !== 'notBooked' || selectedCourtIds.length > 0) {
-        const courtIds = selectedCourtIds.length > 0
-          ? selectedCourtIds
-          : selectedCourt !== 'notBooked'
-            ? [selectedCourt]
-            : [];
-        const courtLabels = courtIds
-          .map((id) => courts.find((c) => c.id === id))
-          .filter((court): court is Court => court != null)
-          .map((court) => resolveCourtNameParts(court.name, court.integrationCourtName).name);
-        if (courtLabels.length === 1) {
-          parts.push(courtLabels[0]);
-        } else if (courtLabels.length > 1) {
-          parts.push(`${courtLabels[0]} +${courtLabels.length - 1}`);
+      if (locationTimeMode === 'bookings' && selectedBookingCount > 0) {
+        const parts = [
+          t('createGame.locationTime.summaryFromBookings', { count: selectedBookingCount }),
+        ];
+        if (derivedBookingWindow) parts.push(derivedBookingWindow);
+        chips.push({
+          key: 'time',
+          icon: <CalendarCheck size={ICON_SIZE} />,
+          label: parts.join(' · '),
+        });
+      } else {
+        const parts: string[] = [formatDate(selectedDate, 'EEE d MMM')];
+        if (selectedTime) {
+          parts.push(selectedTime);
+          if (duration) parts.push(getDurationLabel(duration));
         }
+        if (selectedCourt !== 'notBooked' || selectedCourtIds.length > 0) {
+          const courtIds = selectedCourtIds.length > 0
+            ? selectedCourtIds
+            : selectedCourt !== 'notBooked'
+              ? [selectedCourt]
+              : [];
+          const courtLabels = courtIds
+            .map((id) => courts.find((c) => c.id === id))
+            .filter((court): court is Court => court != null)
+            .map((court) => resolveCourtNameParts(court.name, court.integrationCourtName).name);
+          if (courtLabels.length === 1) {
+            parts.push(courtLabels[0]);
+          } else if (courtLabels.length > 1) {
+            parts.push(`${courtLabels[0]} +${courtLabels.length - 1}`);
+          }
+        }
+        chips.push({
+          key: 'time',
+          icon: willBookOnCreate ? <CalendarCheck size={ICON_SIZE} /> : <CalendarClock size={ICON_SIZE} />,
+          label: parts.join(' · '),
+        });
       }
-      chips.push({
-        key: 'time',
-        icon: <CalendarClock size={ICON_SIZE} />,
-        label: parts.join(' · '),
-      });
     }
 
     if (
@@ -277,6 +298,10 @@ export function useCreateGameSummaryChips({
     priceCurrency,
     defaultCurrency,
     excludeKeys,
+    locationTimeMode,
+    willBookOnCreate,
+    selectedBookingCount,
+    derivedBookingWindow,
     t,
   ]);
 }

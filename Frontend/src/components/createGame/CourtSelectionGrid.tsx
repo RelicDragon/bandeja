@@ -149,7 +149,7 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
           {showNotBookedOption && (
             <CourtSelectionCard
               selectId="notBooked"
-              label={t('createGame.notBookedYet')}
+              label={t(entityType === 'BAR' ? 'createGame.dontSelectHall' : 'createGame.dontSelectCourt')}
               selected={notBookedSelected}
               onSelectCourt={onSelectCourt}
             />

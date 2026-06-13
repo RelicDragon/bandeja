@@ -19,8 +19,26 @@
       "general": "General",
       "when": "When",
       "where": "Where",
+      "locationTime": "Location & time",
       "price": "Price",
       "eraseTime": "Erase time"
+    },
+    "locationTime": {
+      "tabLabel": "Location & time",
+      "partialSaveFailed": "Some changes were saved, but {{step}} could not be updated. Review and try again.",
+      "saveStep": {
+        "gameFields": "location or time",
+        "bookings": "reservation links",
+        "snapshots": "reservation details",
+        "courts": "courts"
+      },
+      "unlinkNoCancelHint": "The court reservation at the club stays active — we only remove the link from this game.",
+      "unlinkSaveConfirmTitle": "Remove reservation links?",
+      "unlinkSaveConfirmMessage": "You are unlinking {{count}} reservation(s) from this game. The real court bookings will not be cancelled automatically."
+    },
+    "booktimeEdit": {
+      "activityTitle": "Saving changes…",
+      "activityStep2": "Updating game…"
     },
     "gameAvatar": "Game Avatar",
     "avatarUpdated": "Game avatar updated successfully",

@@ -53,10 +53,23 @@ function testGameFormatUpdateKeysParity(): void {
   assert(GAME_FORMAT_UPDATE_KEYS.has('affectsRating'));
 }
 
+function testGameBookingSharedParity(): void {
+  for (const file of ['supportsClubBookingFlow.ts', 'deriveGameTimeFromBookings.ts', 'contracts.ts']) {
+    const feSrc = readFileSync(join(feSharedRoot, 'gameBooking', file), 'utf8');
+    const beSrc = readFileSync(join(__dirname, 'gameBooking', file), 'utf8');
+    assert.equal(
+      normalizeSharedSource(feSrc),
+      normalizeSharedSource(beSrc),
+      `gameBooking/${file} FE/BE source parity`,
+    );
+  }
+}
+
 function run(): void {
   testDeriveBallsInGamesSourceParity();
   testDeriveBallsInGamesBehavior();
   testGameFormatUpdateKeysParity();
+  testGameBookingSharedParity();
   console.log('sharedModuleParity.test.ts: all passed');
 }
 

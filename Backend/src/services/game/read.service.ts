@@ -18,6 +18,7 @@ import {
   gameWithRoundsAndOutcomes,
   MAIN_PHOTO_RELATION_SELECT,
 } from './gamePrismaIncludes';
+import { serializeLinkedBooking } from './gameExternalBooking.service';
 
 export { MAIN_PHOTO_RELATION_SELECT };
 
@@ -27,13 +28,17 @@ export function projectGamePhotoPayload(game: any): any {
     mainPhotoId: _mainPhotoId,
     photos: _photos,
     resultsArtifactJob: _resultsArtifactJob,
+    externalBookings: _externalBookings,
     ...rest
   } = game;
   void _mainPhotoId;
   void _photos;
   void _resultsArtifactJob;
+  void _externalBookings;
   return {
     ...rest,
+    timeOverride: game.timeOverride ?? false,
+    linkedBookings: (game.externalBookings ?? []).map(serializeLinkedBooking),
     photosCount: game.photosCount ?? 0,
     mainPhoto: mainPhoto
       ? {

@@ -19,8 +19,26 @@
       "general": "Opšte",
       "when": "Kada",
       "where": "Gde",
+      "locationTime": "Lokacija i vreme",
       "price": "Cena",
       "eraseTime": "Ukloni vreme"
+    },
+    "locationTime": {
+      "tabLabel": "Lokacija i vreme",
+      "partialSaveFailed": "Neke izmene su sačuvane, ali {{step}} nije ažurirano. Proverite i pokušajte ponovo.",
+      "saveStep": {
+        "gameFields": "lokaciju ili vreme",
+        "bookings": "veze rezervacija",
+        "snapshots": "detalje rezervacija",
+        "courts": "terene"
+      },
+      "unlinkNoCancelHint": "Rezervacija terena u klubu ostaje aktivna — uklanjamo samo vezu sa ovom igrom.",
+      "unlinkSaveConfirmTitle": "Ukloniti veze rezervacija?",
+      "unlinkSaveConfirmMessage": "Uklanjate {{count}} vezu(e) rezervacija sa ovom igrom. Stvarne rezervacije terena se automatski ne otkazuju."
+    },
+    "booktimeEdit": {
+      "activityTitle": "Čuvanje izmena…",
+      "activityStep2": "Ažuriranje meča…"
     },
     "navigateToClub": "Navigacija do kluba",
     "openLeagueSeason": "Otvori sezonu lige",

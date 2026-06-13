@@ -3,24 +3,30 @@ import { decryptToken } from '../../utils/tokenEncryption';
 import { cancelBooktimeBookingForUser, resolveBooktimeCompanyId } from './booktimeApi.client';
 
 export type BooktimeRollbackResult = {
+  externalBookingId: string;
   attempted: boolean;
   cancelled: boolean;
   error?: string;
 };
 
-export async function rollbackBooktimeBookingOnCreateFailure(
+async function cancelOneBooking(
   userId: string,
   clubId: string,
-  externalBookingId: string
+  externalBookingId: string,
 ): Promise<BooktimeRollbackResult> {
   const bookingId = externalBookingId.trim();
   if (!bookingId || !clubId) {
-    return { attempted: false, cancelled: false };
+    return { externalBookingId: bookingId, attempted: false, cancelled: false };
   }
 
   const companyId = await resolveBooktimeCompanyId(clubId);
   if (!companyId) {
-    return { attempted: true, cancelled: false, error: 'Club booking config not found' };
+    return {
+      externalBookingId: bookingId,
+      attempted: true,
+      cancelled: false,
+      error: 'Club booking config not found',
+    };
   }
 
   const auth = await prisma.userClubBooktimeAuth.findUnique({
@@ -28,7 +34,12 @@ export async function rollbackBooktimeBookingOnCreateFailure(
     select: { id: true, accessToken: true, refreshToken: true },
   });
   if (!auth) {
-    return { attempted: true, cancelled: false, error: 'Club booking connection not found' };
+    return {
+      externalBookingId: bookingId,
+      attempted: true,
+      cancelled: false,
+      error: 'Club booking connection not found',
+    };
   }
 
   try {
@@ -39,12 +50,27 @@ export async function rollbackBooktimeBookingOnCreateFailure(
         accessToken: decryptToken(auth.accessToken),
         refreshToken: decryptToken(auth.refreshToken),
       },
-      bookingId
+      bookingId,
     );
-    return { attempted: true, cancelled: true };
+    return { externalBookingId: bookingId, attempted: true, cancelled: true };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Cancel booking failed';
     console.error('[booktime] rollback cancel failed', { userId, clubId, bookingId, message });
-    return { attempted: true, cancelled: false, error: message };
+    return { externalBookingId: bookingId, attempted: true, cancelled: false, error: message };
   }
+}
+
+export async function rollbackBooktimeBookingsOnCreateFailure(
+  userId: string,
+  clubId: string,
+  externalBookingIds: string[],
+): Promise<BooktimeRollbackResult[]> {
+  const ids = Array.from(
+    new Set(externalBookingIds.map((id) => id.trim()).filter((id) => id.length > 0)),
+  );
+  const results: BooktimeRollbackResult[] = [];
+  for (const id of ids) {
+    results.push(await cancelOneBooking(userId, clubId, id));
+  }
+  return results;
 }

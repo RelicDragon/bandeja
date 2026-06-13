@@ -6,6 +6,6 @@ const router = Router();
 
 router.get('/my-clubs', authenticate, booktimeMyClubsController.getMyBooktimeClubs);
 router.post('/connect-hint/dismiss', authenticate, booktimeMyClubsController.dismissConnectHint);
-router.get('/linked-game/:externalBookingId', authenticate, booktimeMyClubsController.getLinkedGame);
+router.get('/linked-games/:externalBookingId', authenticate, booktimeMyClubsController.getLinkedGames);
 
 export default router;

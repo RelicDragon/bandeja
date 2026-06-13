@@ -308,6 +308,22 @@ export const gamesApi = {
     return response.data;
   },
 
+  patchBookings: async (
+    id: string,
+    body: { add?: string[]; remove?: string[] },
+  ) => {
+    const response = await api.patch<ApiResponse<Game>>(`/games/${id}/bookings`, body);
+    return mapApiGameResponse(response.data);
+  },
+
+  putBookingSnapshots: async (
+    id: string,
+    body: { snapshots: Array<{ externalBookingId: string; courtId?: string; bookingStart?: string; bookingEnd?: string }> },
+  ) => {
+    const response = await api.put<ApiResponse<Game>>(`/games/${id}/booking-snapshots`, body);
+    return mapApiGameResponse(response.data);
+  },
+
   getMyWorkoutForGame: async (gameId: string) => {
     try {
       const response = await api.get<ApiResponse<GameWorkoutSummary | null>>(`/games/${gameId}/workout/me`);

@@ -13,6 +13,7 @@ import { GameCreateService } from './create.service';
 import { GameReadService } from './read.service';
 import { GameUpdateService } from './update.service';
 import { GameDeleteService } from './delete.service';
+import { patchGameBookings, putGameBookingSnapshots } from './gameExternalBooking.service';
 
 export class GameService {
   static async calculateGameReadiness(gameId: string) {
@@ -86,6 +87,24 @@ export class GameService {
 
   static async deleteGame(id: string, cancelledByUserId: string) {
     return GameDeleteService.deleteGame(id, cancelledByUserId);
+  }
+
+  static patchGameBookings(
+    gameId: string,
+    userId: string,
+    isAdmin: boolean,
+    body: { add?: unknown; remove?: unknown },
+  ) {
+    return patchGameBookings(gameId, userId, isAdmin, body);
+  }
+
+  static putGameBookingSnapshots(
+    gameId: string,
+    userId: string,
+    isAdmin: boolean,
+    body: { snapshots?: unknown },
+  ) {
+    return putGameBookingSnapshots(gameId, userId, isAdmin, body);
   }
 }
 

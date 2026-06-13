@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Save, Edit3, Clock, MapPin, Banknote } from 'lucide-react';
+import { Save, Edit3, CalendarClock, Banknote } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
-import { addHours } from 'date-fns';
-import { createDateFromClubTime } from '@/hooks/useGameTimeDuration';
+import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import { gamesApi, courtsApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { resolveUserCurrency } from '@/utils/currency';
@@ -11,14 +10,28 @@ import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { GeneralTab, type GeneralTabState } from './editGameInfo/GeneralTab';
-import { WhenTab } from './editGameInfo/WhenTab';
-import { WhereTab, type WhereTabState } from './editGameInfo/WhereTab';
+import { LocationTimeTab } from './editGameInfo/LocationTimeTab';
+import type { WhereTabState } from './editGameInfo/locationTimeTypes';
+import {
+  isLocationTimePartialSaveError,
+} from '@/components/gameLocationTime/locationTimeSaveErrors';
+import {
+  saveLocationTime,
+  buildEditLocationTimeSaveDraft,
+} from '@/components/gameLocationTime/useSaveGameLocationTime';
+import type { EditLocationTimeDraft } from '@/components/gameLocationTime/locationTimeDraft';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
-import { isUserParentGameAdminOrOwner } from '@/utils/gameResults';
-export type EditGameInfoTabId = 'general' | 'when' | 'where' | 'price';
+import { supportsClubBookingFlow } from '@/components/gameLocationTime/supportsClubBookingFlow';
+import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
+import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
+import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
+import { BooktimeCreateGameConfirmModal } from '@/components/createGame/BooktimeCreateGameConfirmModal';
+import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
+import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
+export type EditGameInfoTabId = 'general' | 'locationTime' | 'price';
 
 interface EditGameInfoModalProps {
   isOpen: boolean;
@@ -32,10 +45,9 @@ interface EditGameInfoModalProps {
 }
 
 const TABS = [
-  { id: 'general' as const, label: 'General', icon: Edit3 },
-  { id: 'where' as const, label: 'Where', icon: MapPin },
-  { id: 'when' as const, label: 'When', icon: Clock },
-  { id: 'price' as const, label: 'Price', icon: Banknote },
+  { id: 'general' as const, icon: Edit3 },
+  { id: 'locationTime' as const, icon: CalendarClock },
+  { id: 'price' as const, icon: Banknote },
 ];
 
 function getInitialGeneralState(game: Game): GeneralTabState {
@@ -70,7 +82,7 @@ export const EditGameInfoModal = ({
   game,
   clubs,
   courts,
-  initialTab = 'general',
+  initialTab: initialTabProp = 'general',
   onGameUpdate,
   onCourtsChange,
 }: EditGameInfoModalProps) => {
@@ -78,6 +90,8 @@ export const EditGameInfoModal = ({
   const user = useAuthStore((s) => s.user);
   const userCurrency = resolveUserCurrency(user?.defaultCurrency);
 
+  const initialTab: EditGameInfoTabId =
+    initialTabProp === 'where' || initialTabProp === 'when' ? 'locationTime' : initialTabProp;
   const [activeTab, setActiveTab] = useState<EditGameInfoTabId>(initialTab);
   const [general, setGeneral] = useState<GeneralTabState>(() => getInitialGeneralState(game));
   const [where, setWhere] = useState<WhereTabState>(() => getInitialWhereState(game));
@@ -96,13 +110,43 @@ export const EditGameInfoModal = ({
   const [whenShowDatePicker, setWhenShowDatePicker] = useState(false);
   const [disableWhenAutoAdjust, setDisableWhenAutoAdjust] = useState(true);
   const [modalCourts, setModalCourts] = useState<Court[]>(courts);
-  const [isLoadingCourts, setIsLoadingCourts] = useState(false);
+  const [_isLoadingCourts, setIsLoadingCourts] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [softOverlapOpen, setSoftOverlapOpen] = useState(false);
   const [showConfirmRemoveTime, setShowConfirmRemoveTime] = useState(false);
+  const [pendingRemoveBookingIds, setPendingRemoveBookingIds] = useState<string[]>([]);
+  const [locationTimeDraft, setLocationTimeDraft] = useState<EditLocationTimeDraft | null>(null);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [showConfirmUnlinkSave, setShowConfirmUnlinkSave] = useState(false);
+  const initialLinkedBookingIds = useMemo(
+    () => game.linkedBookings?.map((b) => b.externalBookingId) ?? [],
+    [game.linkedBookings],
+  );
+  const pendingUnlinkIds = useMemo(
+    () =>
+      computePendingBookingUnlinks(
+        initialLinkedBookingIds,
+        pendingRemoveBookingIds,
+        locationTimeDraft?.selectedBookingIds ?? initialLinkedBookingIds,
+        locationTimeDraft?.locationTimeMode === 'bookings',
+      ),
+    [
+      initialLinkedBookingIds,
+      pendingRemoveBookingIds,
+      locationTimeDraft?.selectedBookingIds,
+      locationTimeDraft?.locationTimeMode,
+    ],
+  );
+  const handleLocationTimeDraftChange = useCallback((draft: EditLocationTimeDraft) => {
+    setLocationTimeDraft(draft);
+  }, []);
+  const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() =>
+    game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : []),
+  );
   const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const prevIsOpenRef = useRef(false);
   const fetchAbortRef = useRef<AbortController | null>(null);
+  const contentScrollRef = useRef<HTMLDivElement>(null);
 
   const whenInitialValues = useMemo(
     () => ({
@@ -150,6 +194,10 @@ export const EditGameInfoModal = ({
       setHookDuration(whenInitialValues.initialDuration);
       setDisableWhenAutoAdjust(true);
       setModalCourts(game.clubId && courts.length > 0 && courts[0]?.clubId === game.clubId ? courts : []);
+      setPendingRemoveBookingIds([]);
+      setLocationTimeDraft(null);
+      setConfirmModalOpen(false);
+      setShowConfirmUnlinkSave(false);
       setTimeout(() => setDisableWhenAutoAdjust(false), 200);
     }
     prevIsOpenRef.current = isOpen;
@@ -175,6 +223,10 @@ export const EditGameInfoModal = ({
       setWhenDuration(hookDuration);
     }
   }, [disableWhenAutoAdjust, hookDate, hookTime, hookDuration]);
+
+  useEffect(() => {
+    contentScrollRef.current?.scrollTo({ top: 0 });
+  }, [activeTab]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -216,11 +268,50 @@ export const EditGameInfoModal = ({
     };
   }, [isOpen, where.clubId, onCourtsChange]);
 
-  const canRemoveLeagueTime =
-    game.entityType === 'LEAGUE' &&
-    game.timeIsSet !== false &&
-    !!user?.id &&
-    (user.isAdmin || isUserParentGameAdminOrOwner(game, user.id));
+  const selectedClubData = clubs.find((c) => c.id === where.clubId);
+  const clubBookingFlowActive = supportsClubBookingFlow(game.entityType, 'edit');
+  const willBookOnEdit =
+    locationTimeDraft?.willBookOnCreate === true &&
+    (locationTimeDraft.integratedCourtIds.length ?? 0) > 0;
+  const { status: booktimeAuth } = useBooktimeClubAuth(
+    where.clubId || undefined,
+    willBookOnEdit && clubBookingFlowActive,
+  );
+  const booktimeCompanyMeta = useBooktimeCompanyMeta(selectedClubData, willBookOnEdit);
+  const snapshotRefreshEnabled =
+    isOpen &&
+    activeTab === 'locationTime' &&
+    clubBookingFlowActive &&
+    Boolean(selectedClubData?.integrationConfig?.companyId);
+  const {
+    refreshSnapshot,
+    lastFetchedAt: snapshotLastFetchedAt,
+    snapshotBanner,
+    isRefreshingSnapshot,
+  } = useBooktimeSnapshotRefresh(
+      selectedClubData,
+      whenSelectedDate,
+      snapshotRefreshEnabled,
+    );
+  const snapshotBlocked = snapshotBanner === 'noSyncToday' || snapshotBanner === 'scoutPoolEmpty';
+  const booktimeIntegrationConfig = selectedClubData?.integrationConfig;
+  const integratedCourtsForConfirm = useMemo(
+    () =>
+      (locationTimeDraft?.integratedCourtIds ?? [])
+        .map((id) => modalCourts.find((c) => c.id === id))
+        .filter((court): court is Court => court != null),
+    [locationTimeDraft?.integratedCourtIds, modalCourts],
+  );
+
+
+  const editSnapshotBanner =
+    clubBookingFlowActive && selectedClubData?.integrationType === 'BOOKTIME' ? (
+      <BooktimeAvailabilityBanner
+        loading={isRefreshingSnapshot}
+        banner={snapshotBanner}
+        gameFlow="edit"
+      />
+    ) : null;
 
   const handleRemoveTime = async () => {
     if (!game.id) return;
@@ -238,13 +329,6 @@ export const EditGameInfoModal = ({
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const getDurationLabel = (dur: number) => {
-    if (dur === Math.floor(dur)) return t('createGame.hours', { count: dur });
-    const hours = Math.floor(dur);
-    const minutes = (dur % 1) * 60;
-    return t('createGame.hoursMinutes', { hours, minutes });
   };
 
   const validatePrice = (): boolean => {
@@ -298,10 +382,32 @@ export const EditGameInfoModal = ({
     const overlapOk = await runBookingOverlapGate();
     if (!overlapOk) return;
 
+    if (pendingUnlinkIds.length > 0) {
+      setShowConfirmUnlinkSave(true);
+      return;
+    }
+
+    if (willBookOnEdit) {
+      setConfirmModalOpen(true);
+      return;
+    }
+
     await executeSave();
   };
 
-  const executeSave = async () => {
+  const proceedAfterUnlinkConfirm = async () => {
+    setShowConfirmUnlinkSave(false);
+    if (willBookOnEdit) {
+      setConfirmModalOpen(true);
+      return;
+    }
+    await executeSave();
+  };
+
+  const executeSave = async (bookingOverrides?: {
+    externalBookingIds: string[];
+    bookingSnapshots: BookingSnapshotInput[];
+  }) => {
     if (!game.id) return;
 
     setIsSaving(true);
@@ -316,22 +422,6 @@ export const EditGameInfoModal = ({
         priceType: price.priceType,
       };
 
-      const currentClubId = game.clubId || '';
-      const currentCourtId = game.courtId || '';
-      const clubChanged = where.clubId !== currentClubId;
-      const courtChanged = where.courtId !== currentCourtId;
-
-      if (clubChanged) {
-        updateData.clubId = where.clubId || undefined;
-      }
-
-      if (courtChanged) {
-        updateData.courtId = where.courtId || '';
-        updateData.hasBookedCourt = where.courtId ? where.hasBookedCourt : false;
-      } else if (where.courtId && where.hasBookedCourt !== (game.hasBookedCourt ?? false)) {
-        updateData.hasBookedCourt = where.hasBookedCourt;
-      }
-
       if (general.removeAvatar) {
         updateData.avatar = null;
         updateData.originalAvatar = null;
@@ -345,16 +435,50 @@ export const EditGameInfoModal = ({
         if (price.priceCurrency != null) updateData.priceCurrency = price.priceCurrency;
       }
 
-      if (where.clubId && whenSelectedTime) {
-        const club = clubs.find((c) => c.id === where.clubId);
-        const startTime = createDateFromClubTime(whenSelectedDate, whenSelectedTime, club);
-        const endTime = addHours(startTime, whenDuration);
-        updateData.startTime = startTime.toISOString();
-        updateData.endTime = endTime.toISOString();
-        updateData.timeIsSet = true;
+      await gamesApi.update(game.id, updateData);
+
+      const club = clubs.find((c) => c.id === where.clubId);
+      if (snapshotRefreshEnabled && bookingOverrides) {
+        await refreshSnapshot({ force: true });
       }
 
-      await gamesApi.update(game.id, updateData);
+      const locationDraft = buildEditLocationTimeSaveDraft({
+        game,
+        clubId: where.clubId,
+        courtId: where.courtId,
+        selectedCourtIds,
+        whenSelectedDate,
+        whenSelectedTime,
+        whenDuration,
+        hasBookedCourt: where.hasBookedCourt,
+        club,
+        courts: modalCourts,
+        pendingRemoveBookingIds,
+        locationTimeDraft,
+        bookingOverrides,
+      });
+
+      const hasLocationChanges =
+        locationDraft.addBookingIds.length > 0 ||
+        locationDraft.removeBookingIds.length > 0 ||
+        locationDraft.clubId !== (game.clubId || undefined) ||
+        locationDraft.courtId !== (game.courtId || undefined) ||
+        locationDraft.startTime !== game.startTime ||
+        locationDraft.endTime !== game.endTime ||
+        locationDraft.timeOverride !== (game.timeOverride ?? false) ||
+        locationDraft.hasBookedCourt !== (game.hasBookedCourt ?? false) ||
+        Boolean(locationDraft.snapshots?.length) ||
+        Boolean(locationDraft.courtIds?.length);
+
+      if (hasLocationChanges) {
+        await saveLocationTime(game.id, locationDraft);
+      } else if (selectedCourtIds.length > 0) {
+        const initialCourtIds =
+          game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : []);
+        if (selectedCourtIds.join(',') !== initialCourtIds.join(',')) {
+          await saveLocationTime(game.id, { ...locationDraft, addBookingIds: [], removeBookingIds: [] });
+        }
+      }
 
       if (where.clubId && where.clubId !== game.clubId) {
         const res = await courtsApi.getByClubId(where.clubId);
@@ -364,9 +488,27 @@ export const EditGameInfoModal = ({
       const response = await gamesApi.getById(game.id);
       onGameUpdate?.(response.data);
       toast.success(t('gameDetails.settingsUpdated'));
+      setConfirmModalOpen(false);
       onClose();
-    } catch (err: any) {
-      const msg = err.response?.data?.message || 'errors.generic';
+    } catch (err: unknown) {
+      if (isLocationTimePartialSaveError(err)) {
+        if (err.completedSteps.length > 0) {
+          try {
+            const response = await gamesApi.getById(game.id);
+            onGameUpdate?.(response.data);
+          } catch {
+            /* best effort refresh */
+          }
+        }
+        toast.error(
+          t('gameDetails.locationTime.partialSaveFailed', {
+            step: t(`gameDetails.locationTime.saveStep.${err.failedStep}`),
+          }),
+        );
+        return;
+      }
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      const msg = axiosErr.response?.data?.message || 'errors.generic';
       toast.error(t(msg, { defaultValue: msg }));
     } finally {
       setIsSaving(false);
@@ -379,17 +521,20 @@ export const EditGameInfoModal = ({
     <>
     <Dialog open={isOpen} onClose={onClose} modalId="edit-game-info-modal">
       <DialogContent className="max-w-[480px]">
-        <DialogHeader>
+        <DialogHeader className="flex-col items-start gap-3 pt-10 pr-10">
           <DialogTitle className="sr-only">{t('common.edit')}</DialogTitle>
           <SegmentedSwitch
             tabs={TABS.map((tab) => ({ id: tab.id, label: t(`gameDetails.editTab.${tab.id}`), icon: tab.icon }))}
             activeId={activeTab}
             onChange={(id) => setActiveTab(id as EditGameInfoTabId)}
             showOnlyActiveTabText={true}
+            activeLabelMaxWidth={200}
             layoutId="edit-game-info-tabs"
+            disabled={isSaving}
+            className="w-fit max-w-full"
           />
         </DialogHeader>
-        <div className="overflow-y-auto flex-1 min-h-0 px-6 py-4">
+        <div ref={contentScrollRef} className="overflow-y-auto flex-1 min-h-0 px-6 py-4">
           {activeTab === 'general' && (
             <GeneralTab
               game={game}
@@ -398,12 +543,30 @@ export const EditGameInfoModal = ({
               avatarPreviewUrl={avatarPreviewUrl}
             />
           )}
-          {activeTab === 'when' && (
-            <div className="-mx-4">
-              <WhenTab
+          {activeTab === 'locationTime' && (
+            <LocationTimeTab
               game={game}
+              entityType={game.entityType}
               clubs={clubs}
-              clubId={where.clubId}
+              courts={modalCourts}
+              selectedClub={where.clubId}
+              selectedCourtIds={selectedCourtIds}
+              selectedCourt={where.courtId || selectedCourtIds[0] || 'notBooked'}
+              hasBookedCourt={where.hasBookedCourt}
+              onSelectClub={(id) => {
+                setWhere((s) => ({ ...s, clubId: id, courtId: '' }));
+                setSelectedCourtIds([]);
+              }}
+              onSelectCourt={(id) => {
+                if (id === 'notBooked') {
+                  setSelectedCourtIds([]);
+                  setWhere((s) => ({ ...s, courtId: '' }));
+                  return;
+                }
+                setSelectedCourtIds([id]);
+                setWhere((s) => ({ ...s, courtId: id }));
+              }}
+              onToggleHasBookedCourt={(checked) => setWhere((s) => ({ ...s, hasBookedCourt: checked }))}
               selectedDate={whenSelectedDate}
               selectedTime={whenSelectedTime}
               duration={whenDuration}
@@ -412,9 +575,9 @@ export const EditGameInfoModal = ({
                 setWhenSelectedDate(d);
                 setHookDate(d);
               }}
-              onTimeChange={(t) => {
-                setWhenSelectedTime(t);
-                setHookTime(t);
+              onTimeChange={(timeValue) => {
+                setWhenSelectedTime(timeValue);
+                setHookTime(timeValue);
               }}
               onDurationChange={(d) => {
                 setWhenDuration(d);
@@ -427,20 +590,16 @@ export const EditGameInfoModal = ({
               getAdjustedStartTime={getAdjustedStartTime}
               getTimeSlotsForDuration={getTimeSlotsForDuration}
               isSlotHighlighted={isSlotHighlighted}
-              getDurationLabel={getDurationLabel}
-              showRemoveTime={canRemoveLeagueTime}
-              onRemoveTime={() => setShowConfirmRemoveTime(true)}
-            />
-            </div>
-          )}
-          {activeTab === 'where' && (
-            <WhereTab
-              game={game}
-              clubs={clubs}
-              courts={modalCourts}
-              state={where}
-              onChange={(patch) => setWhere((s) => ({ ...s, ...patch }))}
-              isLoadingCourts={isLoadingCourts}
+              dateInputRef={{ current: null }}
+              onUnlinkBooking={(externalBookingId) =>
+                setPendingRemoveBookingIds((prev) =>
+                  prev.includes(externalBookingId) ? prev : [...prev, externalBookingId],
+                )
+              }
+              pendingRemoveBookingIds={pendingRemoveBookingIds}
+              onDraftChange={handleLocationTimeDraftChange}
+              snapshotBanner={editSnapshotBanner}
+              willBookOnCreate={willBookOnEdit}
             />
           )}
           {activeTab === 'price' && (
@@ -478,6 +637,10 @@ export const EditGameInfoModal = ({
       cancelText={t('common.cancel')}
       onConfirm={() => {
         setSoftOverlapOpen(false);
+        if (pendingUnlinkIds.length > 0) {
+          setShowConfirmUnlinkSave(true);
+          return;
+        }
         void executeSave();
       }}
       onClose={() => setSoftOverlapOpen(false)}
@@ -493,6 +656,56 @@ export const EditGameInfoModal = ({
       cancelText={t('common.cancel')}
       confirmVariant="danger"
     />
+
+    <ConfirmationModal
+      isOpen={showConfirmUnlinkSave}
+      onClose={() => setShowConfirmUnlinkSave(false)}
+      onConfirm={() => void proceedAfterUnlinkConfirm()}
+      title={t('gameDetails.locationTime.unlinkSaveConfirmTitle')}
+      message={t('gameDetails.locationTime.unlinkSaveConfirmMessage', { count: pendingUnlinkIds.length })}
+      confirmText={isSaving ? t('common.saving') : t('common.save')}
+      cancelText={t('common.cancel')}
+      confirmVariant="danger"
+    />
+
+    {selectedClubData && booktimeIntegrationConfig && confirmModalOpen ? (
+      <BooktimeCreateGameConfirmModal
+        open={confirmModalOpen}
+        onOpenChange={setConfirmModalOpen}
+        club={selectedClubData}
+        companyId={booktimeIntegrationConfig.companyId}
+        bookings={integratedCourtsForConfirm.map((court) => ({
+          court,
+          date: whenSelectedDate,
+          startTime: whenSelectedTime,
+          durationMinutes: Math.round(whenDuration * 60),
+        }))}
+        phoneNumber={booktimeAuth?.phoneNumber ?? null}
+        firstName={booktimeAuth?.firstName ?? null}
+        lastName={booktimeAuth?.lastName ?? null}
+        allowedHoursToCancel={booktimeCompanyMeta.allowedHoursToCancel}
+        currency={booktimeCompanyMeta.currency}
+        summaryChips={[]}
+        bookFlowContext={{
+          refreshSnapshot,
+          lastFetchedAt: snapshotLastFetchedAt,
+        }}
+        snapshotBlocked={snapshotBlocked}
+        onExecuteCreateGame={async (overrides) => {
+          await executeSave({
+            externalBookingIds: overrides.externalBookingIds,
+            bookingSnapshots: overrides.bookingSnapshots,
+          });
+        }}
+        onSlotTaken={() => {
+          setWhenSelectedTime('');
+        }}
+        onSuccess={() => {
+          setConfirmModalOpen(false);
+        }}
+        flowMode="edit"
+      />
+    ) : null}
     </>
   );
 };

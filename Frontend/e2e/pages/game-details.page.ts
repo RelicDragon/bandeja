@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 
-export type EditGameInfoTab = 'general' | 'when' | 'where' | 'price';
+export type EditGameInfoTab = 'general' | 'locationTime' | 'when' | 'where' | 'price';
 export type LeagueSeasonTab = 'general' | 'schedule' | 'planner' | 'standings' | 'faq';
 
 export class GameDetailsPage {
@@ -168,11 +168,14 @@ export class GameDetailsPage {
     if (tab !== 'general') {
       const labels: Record<EditGameInfoTab, RegExp> = {
         general: /^general$/i,
+        locationTime: /location.*time/i,
         when: /^when$/i,
         where: /^where$/i,
         price: /^price$/i,
       };
-      await dialog.getByRole('button', { name: labels[tab] }).click();
+      const tabKey = tab === 'when' || tab === 'where' ? 'locationTime' : tab;
+      await dialog.getByRole('button', { name: labels[tabKey] }).click();
+      return;
     }
   }
 
@@ -197,12 +200,8 @@ export class GameDetailsPage {
 
   async expectEditTabVisible(tab: EditGameInfoTab) {
     const dialog = this.page.getByRole('dialog');
-    if (tab === 'when') {
-      await dialog.getByText(/select time|duration/i).first().waitFor({ state: 'visible', timeout: 10_000 });
-      return;
-    }
-    if (tab === 'where') {
-      await dialog.getByText(/club|court/i).first().waitFor({ state: 'visible', timeout: 10_000 });
+    if (tab === 'locationTime' || tab === 'when' || tab === 'where') {
+      await dialog.getByText(/club|court|select time|duration|reservation/i).first().waitFor({ state: 'visible', timeout: 10_000 });
       return;
     }
     if (tab === 'price') {
@@ -264,6 +263,35 @@ export class GameDetailsPage {
   async openLiveScoringFromResults(gameId: string) {
     await this.page.getByRole('link', { name: /^play$/i }).click();
     await this.page.waitForURL(new RegExp(`/games/${gameId}/live`), { timeout: 15_000 });
+  }
+
+  async expectLinkedBookingCardVisible(count = 1) {
+    const dialog = this.page.getByRole('dialog');
+    await expect(dialog.getByTestId('linked-booking-card')).toHaveCount(count);
+  }
+
+  async clickUnlinkLinkedBooking(index = 0) {
+    const dialog = this.page.getByRole('dialog');
+    await dialog.getByTestId('linked-booking-unlink').nth(index).click();
+    const confirm = this.page.getByRole('dialog').filter({ hasText: /reservation|remove/i });
+    if (await confirm.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await confirm.getByRole('button', { name: /^remove$/i }).click();
+    }
+  }
+
+  async toggleBookingTimeOverride() {
+    const dialog = this.page.getByRole('dialog');
+    await dialog.getByTestId('booking-time-override-toggle').getByRole('switch').click();
+  }
+
+  async expectBookingTimeOverrideVisible(visible = true) {
+    const dialog = this.page.getByRole('dialog');
+    const toggle = dialog.getByTestId('booking-time-override-toggle');
+    if (visible) {
+      await toggle.waitFor({ state: 'visible', timeout: 10_000 });
+    } else {
+      await expect(toggle).toBeHidden({ timeout: 5_000 });
+    }
   }
 
   async clickLeagueTab(tab: LeagueSeasonTab) {

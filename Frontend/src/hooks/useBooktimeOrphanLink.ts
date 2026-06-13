@@ -2,20 +2,27 @@ import { useEffect, useState } from 'react';
 import type { Game } from '@/types';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 
+export type BooktimeOrphanLinkState = {
+  orphan: boolean | null;
+  missingCount: number;
+};
+
 export function useBooktimeOrphanLink(
   game: Game,
   isOwner: boolean,
-  enabled: boolean
-): boolean | null {
-  const [orphan, setOrphan] = useState<boolean | null>(null);
+  enabled: boolean,
+): BooktimeOrphanLinkState {
+  const [state, setState] = useState<BooktimeOrphanLinkState>({ orphan: null, missingCount: 0 });
+  const linkedIdsKey = (game.linkedBookings ?? []).map((b) => b.externalBookingId).filter(Boolean).join(',');
 
   useEffect(() => {
-    if (!enabled || !isOwner || !game.externalBookingId || game.externalBookingProvider !== 'BOOKTIME') {
-      setOrphan(null);
+    const linkedIds = linkedIdsKey ? linkedIdsKey.split(',') : [];
+    if (!enabled || !isOwner || linkedIds.length === 0) {
+      setState({ orphan: null, missingCount: 0 });
       return;
     }
     if (game.status !== 'ANNOUNCED' && game.status !== 'STARTED') {
-      setOrphan(null);
+      setState({ orphan: null, missingCount: 0 });
       return;
     }
     const clubId = game.clubId ?? game.court?.clubId ?? game.court?.club?.id;
@@ -23,7 +30,7 @@ export function useBooktimeOrphanLink(
       game.club?.integrationConfig?.companyId ??
       game.court?.club?.integrationConfig?.companyId;
     if (!clubId || !companyId) {
-      setOrphan(null);
+      setState({ orphan: null, missingCount: 0 });
       return;
     }
 
@@ -33,7 +40,7 @@ export function useBooktimeOrphanLink(
         await hydrateBooktimeSession(clubId, companyId);
         const client = getBooktimeClient(clubId, companyId);
         if (!client.isAuthenticated) {
-          if (!cancelled) setOrphan(null);
+          if (!cancelled) setState({ orphan: null, missingCount: 0 });
           return;
         }
         const [upcoming, previous] = await Promise.all([
@@ -41,13 +48,14 @@ export function useBooktimeOrphanLink(
           client.getPreviousBookings(0, 50),
         ]);
         const ids = new Set(
-          [...(upcoming.bookings ?? []), ...(previous.bookings ?? [])].map((b) => b.uuid)
+          [...(upcoming.bookings ?? []), ...(previous.bookings ?? [])].map((b) => b.uuid),
         );
         if (!cancelled) {
-          setOrphan(!ids.has(game.externalBookingId!));
+          const missing = linkedIds.filter((id) => !ids.has(id));
+          setState({ orphan: missing.length > 0, missingCount: missing.length });
         }
       } catch {
-        if (!cancelled) setOrphan(null);
+        if (!cancelled) setState({ orphan: null, missingCount: 0 });
       }
     })();
 
@@ -57,8 +65,7 @@ export function useBooktimeOrphanLink(
   }, [
     enabled,
     isOwner,
-    game.externalBookingId,
-    game.externalBookingProvider,
+    linkedIdsKey,
     game.status,
     game.clubId,
     game.club?.integrationConfig?.companyId,
@@ -67,5 +74,5 @@ export function useBooktimeOrphanLink(
     game.court?.club?.integrationConfig?.companyId,
   ]);
 
-  return orphan;
+  return state;
 }

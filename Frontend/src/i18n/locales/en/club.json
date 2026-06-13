@@ -118,6 +118,7 @@
       "linkGameRescheduleBody": "This game has a different time. Linking will move it to {{when}} and notify participants.",
       "linkGameRescheduleConfirm": "Update & link",
       "orphanBookingNotice": "Court may no longer be reserved",
+      "orphanBookingNoticeMulti": "{{count}} linked reservations may no longer be active",
       "connectedClubsPageTitle": "Connected clubs & bookings",
       "connectedClubsCardTitle": "Club bookings",
       "connectedClubsCardHint": "Connect local clubs, manage bookings, and share availability.",

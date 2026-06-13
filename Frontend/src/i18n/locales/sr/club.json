@@ -120,6 +120,7 @@
       "linkGameRescheduleBody": "Meč ima drugo vreme. Povezivanje će ga pomeriti na {{when}} i obavestiti učesnike.",
       "linkGameRescheduleConfirm": "Ažuriraj i poveži",
       "orphanBookingNotice": "Teren možda više nije rezervisan",
+      "orphanBookingNoticeMulti": "{{count}} povezanih rezervacija možda više nije aktivno",
       "connectedClubsPageTitle": "Povezani klubovi i rezervacije",
       "connectedClubsCardTitle": "Rezervacije klubova",
       "connectedClubsCardHint": "Poveži lokalne klubove, upravljaj rezervacijama i deljenjem dostupnosti.",

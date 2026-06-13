@@ -21,9 +21,18 @@ import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
-import { BooktimeReservationCard } from '@/components/createGame/BooktimeReservationCard';
+import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
+import { useGameLocationTimeState } from '@/components/gameLocationTime/useGameLocationTimeState';
+import { supportsClubBookingFlow } from '@/components/gameLocationTime/supportsClubBookingFlow';
+import type { LocationTimeMode } from '@/components/gameLocationTime/LocationTimeMode';
+import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
+import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
 import { BooktimeCreateGameConfirmModal } from '@/components/createGame/BooktimeCreateGameConfirmModal';
+import {
+  CreateGameProgressOverlay,
+  type CreateGameProgressPhase,
+} from '@/components/createGame/CreateGameProgressOverlay';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
@@ -57,6 +66,7 @@ import { SOCIAL_LEVEL_BAND, type CreateFlowIntent, type CreateTemplateId } from 
 import type { CreateTemplateParticipantContext } from '@/sport/createTemplateParticipantFit';
 import { useGameFormatTemplateFlow } from '@/hooks/useGameFormatTemplateFlow';
 import { showGameFormatTemplatePicker } from '@/utils/gameFormat/showGameFormatTemplatePicker';
+import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
 import { CreateGameSummaryBar } from '@/components/createGame/summaryHeader/CreateGameSummaryBar';
 import { useScrolledPastSections } from '@/components/createGame/summaryHeader/useScrolledPastSections';
 import { useCreateGameSummaryChips } from '@/components/createGame/summaryHeader/useCreateGameSummaryChips';
@@ -66,6 +76,8 @@ interface CreateGameProps {
   initialGameData?: Partial<Game>;
   initialCreateIntent?: CreateFlowIntent;
   initialTemplateId?: CreateTemplateId;
+  initialLocationTimeMode?: LocationTimeMode;
+  initialBookingIds?: string[];
 }
 
 const getDefaultLevelRange = (level?: number): [number, number] => {
@@ -83,6 +95,8 @@ export const CreateGame = ({
   initialGameData,
   initialCreateIntent,
   initialTemplateId,
+  initialLocationTimeMode,
+  initialBookingIds = [],
 }: CreateGameProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -151,10 +165,14 @@ export const CreateGame = ({
   const [participants, setParticipants] = useState<Array<string | null>>([user?.id || null]);
   const [anyoneCanInvite, setAnyoneCanInvite] = useState<boolean>(initialGameData?.anyoneCanInvite ?? false);
   const [hasBookedCourt, setHasBookedCourt] = useState<boolean>(initialGameData?.hasBookedCourt ?? false);
-  const [externalBookingId] = useState<string | null>(initialGameData?.externalBookingId ?? null);
-  const skipBookFlow = Boolean(externalBookingId);
-  const [bookCourtEnabled, setBookCourtEnabled] = useState(() => !skipBookFlow);
+  const [selectedBookingRecords, setSelectedBookingRecords] = useState<BooktimeBookingRecord[]>([]);
+  const [derivedBookingSummary, setDerivedBookingSummary] = useState<{
+    startTime: string | null;
+    endTime: string | null;
+    count: number;
+  }>({ startTime: null, endTime: null, count: 0 });
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const preselectedBookings = initialBookingIds.length > 0;
   const [isPublic, setIsPublic] = useState<boolean>(initialGameData?.isPublic ?? true);
   const [isRatingGame, setIsRatingGame] = useState<boolean>(initialGameData?.affectsRating ?? true);
   const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(initialGameData?.resultsByAnyone ?? false);
@@ -267,6 +285,7 @@ export const CreateGame = ({
     return new Date();
   });
   const [loading, setLoading] = useState(false);
+  const [createOverlayPhase, setCreateOverlayPhase] = useState<CreateGameProgressPhase | null>(null);
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedPlayerId, setSelectedPlayerId] = useState<string | null>(null);
@@ -299,32 +318,74 @@ export const CreateGame = ({
     () => clubs.find((c) => c.id === selectedClub),
     [clubs, selectedClub]
   );
-  const selectedCourtData = useMemo(
-    () => (selectedCourt !== 'notBooked' ? courts.find((c) => c.id === selectedCourt) : undefined),
-    [courts, selectedCourt],
-  );
   const isBooktimeClub =
     selectedClubData?.integrationType === 'BOOKTIME' &&
     Boolean(selectedClubData.integrationConfig?.companyId?.trim());
-  const courtIntegrates = courtHasActiveBookingIntegration(selectedClubData, selectedCourtData);
-  const booktimeFlowActive = isBooktimeClub && courtIntegrates && entityType === 'GAME';
+  const clubBookingFlowActive =
+    isBooktimeClub && supportsClubBookingFlow(entityType, 'create') && Boolean(selectedClub);
   const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(
     selectedClub || undefined,
-    booktimeFlowActive,
+    clubBookingFlowActive,
   );
-  const showBookCourtSwitch = booktimeFlowActive && liveApiEnabled && !skipBookFlow;
+
+  const createDateFromSelection = useCallback(() => {
+    const club = clubs.find((c) => c.id === selectedClub);
+    const start = createDateFromClubTime(selectedDate, selectedTime, club);
+    const end = addHours(start, duration);
+    return { startTime: start.toISOString(), endTime: end.toISOString() };
+  }, [clubs, selectedClub, selectedDate, selectedTime, duration]);
+
+  const locationTimeState = useGameLocationTimeState({
+    entityType,
+    panelMode: 'create',
+    club: selectedClubData,
+    courts,
+    liveApiEnabled,
+    maxParticipants,
+    playersPerMatch,
+    selectedCourtIds,
+    selectedDate,
+    selectedTime,
+    duration,
+    hasBookedCourt,
+    initialLocationTimeMode: initialLocationTimeMode ?? (preselectedBookings ? 'bookings' : undefined),
+    initialSelectedBookingIds: initialBookingIds,
+    createDateFromSelection,
+  });
+
+  const {
+    locationTimeMode,
+    setLocationTimeMode,
+    showSegmentedSwitch,
+    willBookOnCreate,
+    skipRealCourtBooking,
+    setSkipRealCourtBooking,
+    selectedBookingIds,
+    setSelectedBookingIds,
+    timeOverride,
+    setTimeOverride,
+    overrideStartTime,
+    overrideEndTime,
+    setOverrideTimes,
+    bookingSelectionLimits,
+    integratedCourtIds,
+    buildCreatePayload,
+    dirtyFlags,
+  } = locationTimeState;
+
   const { status: booktimeAuth, refresh: refreshBooktimeAuth } = useBooktimeClubAuth(
     selectedClub || undefined,
-    booktimeFlowActive,
+    clubBookingFlowActive,
   );
   const needsBooktimeAuth = Boolean(
-    bookCourtEnabled && booktimeFlowActive && !booktimeAuth?.connected,
+    willBookOnCreate && clubBookingFlowActive && !booktimeAuth?.connected,
   );
   const booktimeCompanyMeta = useBooktimeCompanyMeta(
     selectedClubData,
-    bookCourtEnabled && booktimeFlowActive && !needsBooktimeAuth,
+    (willBookOnCreate || locationTimeMode === 'bookings') && clubBookingFlowActive && !needsBooktimeAuth,
   );
-  const snapshotRefreshEnabled = bookCourtEnabled && booktimeFlowActive && !needsBooktimeAuth;
+  const snapshotRefreshEnabled =
+    (willBookOnCreate || locationTimeMode === 'bookings') && clubBookingFlowActive && !needsBooktimeAuth;
   const {
     refreshSnapshot,
     snapshotBanner: createGameSnapshotBanner,
@@ -345,7 +406,7 @@ export const CreateGame = ({
       entityType !== 'BAR' &&
       isBooktimeClub &&
       !needsBooktimeAuth &&
-      (!bookCourtEnabled || Boolean(booktimeAuth?.connected)),
+      (locationTimeMode !== 'timeSlots' || !willBookOnCreate || Boolean(booktimeAuth?.connected)),
   });
   const resolvedGenerateTimeOptions = booktimeTimeOptions.active
     ? booktimeTimeOptions.generateTimeOptions
@@ -559,61 +620,34 @@ export const CreateGame = ({
     initialDateSetForClubRef.current = null;
   }, [selectedClub]);
 
-  const bookCourtSelectionRef = useRef<{ club: string; court: string } | null>(null);
   const prevLiveApiEnabledRef = useRef(liveApiEnabled);
 
   useEffect(() => {
-    if (prevLiveApiEnabledRef.current && !liveApiEnabled && bookCourtEnabled) {
+    if (prevLiveApiEnabledRef.current && !liveApiEnabled && willBookOnCreate) {
       toast(t('createGame.booktime.liveApiUnavailable'));
-      setBookCourtEnabled(false);
     }
     prevLiveApiEnabledRef.current = liveApiEnabled;
-  }, [liveApiEnabled, bookCourtEnabled, t]);
+  }, [liveApiEnabled, willBookOnCreate, t]);
 
   useEffect(() => {
-    if (skipBookFlow) {
-      setBookCourtEnabled(false);
-      bookCourtSelectionRef.current = { club: selectedClub, court: selectedCourt };
-      return;
-    }
-    if (!liveApiEnabled) {
-      setBookCourtEnabled(false);
-      bookCourtSelectionRef.current = { club: selectedClub, court: selectedCourt };
-      return;
-    }
-    if (selectedCourt === 'notBooked' || !courtIntegrates) {
-      setBookCourtEnabled(false);
-      bookCourtSelectionRef.current = { club: selectedClub, court: selectedCourt };
-      return;
-    }
-    const prev = bookCourtSelectionRef.current;
-    const clubCourtChanged =
-      !prev || prev.club !== selectedClub || prev.court !== selectedCourt;
-    bookCourtSelectionRef.current = { club: selectedClub, court: selectedCourt };
-    if (clubCourtChanged) {
-      setBookCourtEnabled(true);
-    }
-  }, [selectedClub, selectedCourt, courtIntegrates, skipBookFlow, liveApiEnabled]);
-
-  useEffect(() => {
-    if (selectedCourt === 'notBooked') {
+    if (selectedCourt === 'notBooked' && selectedCourtIds.length === 0) {
       setHasBookedCourt(false);
       return;
     }
-    if (courtIntegrates && bookCourtEnabled) {
+    if (willBookOnCreate || locationTimeMode === 'bookings') {
       setHasBookedCourt(false);
     }
-  }, [selectedCourt, courtIntegrates, bookCourtEnabled]);
+  }, [selectedCourt, selectedCourtIds.length, willBookOnCreate, locationTimeMode]);
 
   const { clampDate: clampBooktimeDate, fixedDates: booktimeFixedDates } = booktimeCompanyMeta;
   useEffect(() => {
-    if (!bookCourtEnabled || !booktimeFixedDates?.length) return;
+    if (!willBookOnCreate || !booktimeFixedDates?.length) return;
     const clamped = clampBooktimeDate(selectedDate);
     if (format(clamped, 'yyyy-MM-dd') !== format(selectedDate, 'yyyy-MM-dd')) {
       setSelectedDate(clamped);
       setSelectedTime('');
     }
-  }, [bookCourtEnabled, booktimeFixedDates, clampBooktimeDate, selectedDate, setSelectedDate, setSelectedTime]);
+  }, [willBookOnCreate, booktimeFixedDates, clampBooktimeDate, selectedDate, setSelectedDate, setSelectedTime]);
 
   const confirmFormSnapshotRef = useRef<string | null>(null);
   useEffect(() => {
@@ -692,12 +726,6 @@ export const CreateGame = ({
     setSelectedCourtIds((prev) => (prev.length <= 1 ? prev : [prev[0]]));
   }, [multiCourtMode]);
 
-  useEffect(() => {
-    if (!multiCourtMode || selectedCourtIds.length <= 1) return;
-    if (bookCourtEnabled) {
-      setBookCourtEnabled(false);
-    }
-  }, [multiCourtMode, selectedCourtIds.length, bookCourtEnabled]);
 
   useEffect(() => {
     if (initialGameData?.minLevel !== undefined || initialGameData?.maxLevel !== undefined) {
@@ -912,6 +940,13 @@ export const CreateGame = ({
     [t],
   );
 
+  const derivedBookingWindowLabel = useMemo(() => {
+    if (!derivedBookingSummary.startTime || !derivedBookingSummary.endTime) return null;
+    const start = new Date(derivedBookingSummary.startTime);
+    const end = new Date(derivedBookingSummary.endTime);
+    return `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }, [derivedBookingSummary.startTime, derivedBookingSummary.endTime]);
+
   const scrolledPastSections = useScrolledPastSections(scrollContainerRef, summarySectionRefs);
   const summaryChips = useCreateGameSummaryChips({
     past: scrolledPastSections,
@@ -942,6 +977,10 @@ export const CreateGame = ({
     priceTotal,
     priceCurrency,
     defaultCurrency: user?.defaultCurrency as PriceCurrency | undefined,
+    locationTimeMode,
+    willBookOnCreate,
+    selectedBookingCount: selectedBookingIds.length,
+    derivedBookingWindow: derivedBookingWindowLabel,
   });
   const confirmSummaryChips = useCreateGameSummaryChips({
     past: scrolledPastSections,
@@ -973,6 +1012,10 @@ export const CreateGame = ({
     priceCurrency,
     defaultCurrency: user?.defaultCurrency as PriceCurrency | undefined,
     excludeKeys: ['location', 'time'],
+    locationTimeMode,
+    willBookOnCreate,
+    selectedBookingCount: selectedBookingIds.length,
+    derivedBookingWindow: derivedBookingWindowLabel,
   });
   const handleSummaryChipClick = useCallback(
     (key: string) => {
@@ -1040,7 +1083,7 @@ export const CreateGame = ({
   };
 
   const runBookingOverlapGate = async (): Promise<boolean> => {
-    if (bookCourtEnabled && courtIntegrates) return true;
+    if (willBookOnCreate || locationTimeMode === 'bookings') return true;
     if (entityType === 'BAR' || !selectedClub || !selectedTime || !duration) return true;
     const selectedClubData = clubs.find((c) => c.id === selectedClub);
     try {
@@ -1093,7 +1136,16 @@ export const CreateGame = ({
       return;
     }
 
-    if (bookCourtEnabled && courtIntegrates && selectedCourt === 'notBooked') {
+    if (locationTimeMode === 'bookings') {
+      if (selectedBookingIds.length < bookingSelectionLimits.min) {
+        scrollToAndHighlightError(locationTimeSectionRef);
+        return;
+      }
+      await executeCreateGame();
+      return;
+    }
+
+    if (willBookOnCreate && integratedCourtIds.length > 0 && selectedCourt === 'notBooked' && selectedCourtIds.length === 0) {
       scrollToAndHighlightError(locationTimeSectionRef);
       return;
     }
@@ -1101,12 +1153,7 @@ export const CreateGame = ({
     const overlapOk = await runBookingOverlapGate();
     if (!overlapOk) return;
 
-    if (bookCourtEnabled && courtIntegrates && !skipBookFlow) {
-      setConfirmModalOpen(true);
-      return;
-    }
-
-    if (skipBookFlow && externalBookingId) {
+    if (willBookOnCreate && integratedCourtIds.length > 0) {
       setConfirmModalOpen(true);
       return;
     }
@@ -1116,30 +1163,49 @@ export const CreateGame = ({
 
   const executeCreateGame = async (
     overrides?: {
-      externalBookingId?: string;
+      externalBookingIds?: string[];
+      bookingSnapshots?: BookingSnapshotInput[];
       hasBookedCourt?: boolean;
       rollbackBooktimeBooking?: boolean;
+      startTime?: string;
+      endTime?: string;
+      timeOverride?: boolean;
+      courtIds?: string[];
     },
     options?: { skipNavigate?: boolean },
   ) => {
     if (!user) return;
 
+    const showCreateOverlay = !options?.skipNavigate;
+    if (showCreateOverlay) setCreateOverlayPhase('creating');
+
     setLoading(true);
     try {
-      const selectedClubData = clubs.find(c => c.id === selectedClub);
-      const { createDateFromClubTime } = await import('@/hooks/useGameTimeDuration');
-      const startTime = createDateFromClubTime(selectedDate, selectedTime, selectedClubData);
-      const endTime = addHours(startTime, duration);
+      if (snapshotRefreshEnabled) {
+        await refreshSnapshot({ force: true });
+      }
 
-      const gameData: any = {
+      const bookingPayload =
+        locationTimeMode === 'bookings'
+          ? buildCreatePayload(selectedBookingRecords)
+          : null;
+      const slotTimes = createDateFromSelection();
+
+      const gameData: Record<string, unknown> = {
         sport: selectedSport,
         entityType: entityType,
         clubId: selectedClub || undefined,
-        courtId: selectedCourt !== 'notBooked' ? selectedCourt : undefined,
+        courtId:
+          overrides?.courtIds?.[0] ??
+          bookingPayload?.courtIds?.[0] ??
+          (selectedCourt !== 'notBooked' ? selectedCourt : undefined),
         courtIds:
-          multiCourtMode && selectedCourtIds.length > 0 ? selectedCourtIds : undefined,
-        startTime: startTime.toISOString(),
-        endTime: endTime.toISOString(),
+          overrides?.courtIds ??
+          bookingPayload?.courtIds ??
+          (multiCourtMode && selectedCourtIds.length > 0 ? selectedCourtIds : undefined),
+        startTime: overrides?.startTime ?? bookingPayload?.startTime ?? slotTimes.startTime,
+        endTime: overrides?.endTime ?? bookingPayload?.endTime ?? slotTimes.endTime,
+        timeOverride: overrides?.timeOverride ?? bookingPayload?.timeOverride ?? false,
         timeIsSet: true,
         maxParticipants,
         playersPerMatch:
@@ -1152,21 +1218,26 @@ export const CreateGame = ({
         allowDirectJoin,
         hasBookedCourt:
           overrides?.hasBookedCourt ??
-          (overrides?.externalBookingId || externalBookingId ? true : hasBookedCourt),
-        externalBookingId: overrides?.externalBookingId ?? externalBookingId ?? undefined,
+          bookingPayload?.hasBookedCourt ??
+          hasBookedCourt,
+        externalBookingIds:
+          overrides?.externalBookingIds ?? bookingPayload?.externalBookingIds,
         externalBookingProvider:
-          overrides?.externalBookingId || externalBookingId ? 'BOOKTIME' : undefined,
+          overrides?.externalBookingIds?.length || bookingPayload?.externalBookingIds?.length
+            ? 'BOOKTIME'
+            : undefined,
+        bookingSnapshots: overrides?.bookingSnapshots ?? bookingPayload?.bookingSnapshots,
         afterGameGoToBar: afterGameGoToBar,
         name: gameName || undefined,
         description: comments,
-        participants: participants.filter((id): id is string => id !== null) as any,
+        participants: participants.filter((id): id is string => id !== null),
         priceTotal: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? priceTotal : undefined,
         priceType: priceType,
         priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? (priceCurrency ?? resolveUserCurrency(user?.defaultCurrency)) : undefined,
         parentId: initialGameData?.parentId,
         rollbackBooktimeBooking:
           overrides?.rollbackBooktimeBooking === true &&
-          Boolean(overrides?.externalBookingId ?? externalBookingId),
+          Boolean(overrides?.externalBookingIds?.length),
       };
 
       if (entityType === 'TRAINING' && creatorNonPlaying) {
@@ -1238,14 +1309,24 @@ export const CreateGame = ({
         selectedCourt !== 'notBooked' &&
         !hasBookedCourt &&
         !overrides?.hasBookedCourt &&
-        !bookCourtEnabled &&
+        !willBookOnCreate &&
+        locationTimeMode !== 'bookings' &&
         !courtHasActiveBookingIntegration(createClub, createCourt) &&
         created.id
       ) {
+        if (showCreateOverlay) setCreateOverlayPhase(null);
         setPendingGameId(created.id);
         setPendingGameStartTime(created.startTime);
         setMarkCourtOpen(true);
         return;
+      }
+
+      if (showCreateOverlay) {
+        setCreateOverlayPhase('success');
+        await new Promise<void>((resolve) => {
+          window.setTimeout(resolve, 800);
+        });
+        setCreateOverlayPhase(null);
       }
 
       if (!options?.skipNavigate) {
@@ -1254,6 +1335,7 @@ export const CreateGame = ({
       return created;
     } catch (error) {
       console.error('Failed to create game:', error);
+      if (showCreateOverlay) setCreateOverlayPhase(null);
       if (options?.skipNavigate) throw error;
     } finally {
       setLoading(false);
@@ -1354,7 +1436,7 @@ export const CreateGame = ({
 
   const createButtonLabel = () => {
     if (needsBooktimeAuth) return t('createGame.booktime.signInToContinue');
-    if (bookCourtEnabled && courtIntegrates && entityType === 'GAME') {
+    if (willBookOnCreate && integratedCourtIds.length > 0) {
       return t('createGame.booktime.createCta');
     }
     if (entityType === 'TOURNAMENT') return t('createGame.createButtonTournament');
@@ -1369,7 +1451,13 @@ export const CreateGame = ({
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <CreateGameHeader onBack={() => handleBack(navigate)} entityType={entityType} />
 
-      <div className="flex-1 relative overflow-hidden">
+      <CreateGameProgressOverlay phase={createOverlayPhase} />
+
+      <div
+        className={`flex-1 relative overflow-hidden transition-opacity duration-300 ${
+          createOverlayPhase ? 'opacity-35 pointer-events-none' : ''
+        }`}
+      >
         <CreateGameSummaryBar chips={summaryChips} onChipClick={handleSummaryChipClick} />
         <div ref={scrollContainerRef} className="h-full overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-6">
@@ -1520,92 +1608,166 @@ export const CreateGame = ({
 
         <div ref={locationTimeSectionRef}>
           <div ref={durationSectionRef}>
-            <GameStartSection
-              clubs={clubs}
-              courts={courts}
-              isClubModalOpen={isClubModalOpen}
-              onSelectClub={(id: string) => {
-                setSelectedClub(id);
-                setSelectedCourtIds([]);
-              }}
-              onOpenClubModal={() => setIsClubModalOpen(true)}
-              onCloseClubModal={() => setIsClubModalOpen(false)}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              duration={duration}
-              showDatePicker={showDatePicker}
-              selectedClub={selectedClub}
-              selectedCourt={selectedCourt}
-              club={selectedClubData}
-              generateTimeOptions={resolvedGenerateTimeOptions}
-              generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
-              canAccommodateDuration={resolvedCanAccommodateDuration}
-              getAdjustedStartTime={resolvedGetAdjustedStartTime}
-              getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
-              isSlotHighlighted={resolvedIsSlotHighlighted}
-              getDurationLabel={getDurationLabel}
-              onDateSelect={setSelectedDate}
-              onCalendarClick={() => setShowDatePicker(true)}
-              onCloseDatePicker={() => setShowDatePicker(false)}
-              onTimeSelect={setSelectedTime}
-              onDurationChange={setDuration}
-              entityType={entityType}
-              dateInputRef={dateInputRef}
-              needsBooktimeAuth={needsBooktimeAuth}
-              bookCourtEnabled={bookCourtEnabled}
-              hideOccupancyOverlay={bookCourtEnabled && courtIntegrates}
-              dateFixedDates={bookCourtEnabled ? booktimeFixedDates : undefined}
-              hideCalendar={bookCourtEnabled && courtIntegrates}
-              bookableDaysHint={bookCourtEnabled ? booktimeCompanyMeta.bookableDays : null}
-              connectedPhone={booktimeAuth?.phoneNumber ?? null}
-              slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
-              existingBookingBanner={
-                skipBookFlow ? (
-                  <div className="rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50/60 dark:bg-primary-950/30 px-3 py-2 text-sm text-primary-800 dark:text-primary-200">
-                    {t('createGame.booktime.alreadyReserved')}
-                  </div>
-                ) : null
-              }
-              snapshotBanner={
-                bookCourtEnabled && !needsBooktimeAuth ? (
-                  <BooktimeAvailabilityBanner
-                    loading={isRefreshingSnapshot}
-                    banner={createGameSnapshotBanner}
-                  />
-                ) : null
-              }
-              courtSection={courtSection}
-              reservationSection={
-                showBookCourtSwitch && selectedCourtData && selectedClubData ? (
-                  <BooktimeReservationCard
-                    club={selectedClubData}
-                    court={selectedCourtData}
-                    enabled={showBookCourtSwitch}
-                    checked={bookCourtEnabled}
-                    onChange={setBookCourtEnabled}
-                  />
-                ) : null
-              }
-              authGateSection={
-                needsBooktimeAuth && selectedClubData && booktimeIntegrationConfig ? (
-                  <BooktimeConnectInline
-                    club={selectedClubData}
-                    integrationConfig={booktimeIntegrationConfig}
-                    onConnected={() => {
-                      void refreshBooktimeAuth();
-                      if (booktimeFixedDates?.length) {
-                        const clamped = clampBooktimeDate(selectedDate);
-                        if (format(clamped, 'yyyy-MM-dd') !== format(selectedDate, 'yyyy-MM-dd')) {
-                          setSelectedDate(clamped);
-                          setSelectedTime('');
-                        }
+            {entityType !== 'BAR' && selectedClub && clubBookingFlowActive && selectedClubData ? (
+              <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-4">
+                <CreateGameClubSection
+                  clubs={clubs}
+                  courts={courts}
+                  selectedClub={selectedClub}
+                  selectedCourt={selectedCourt}
+                  isClubModalOpen={isClubModalOpen}
+                  onSelectClub={(id: string) => {
+                    setSelectedClub(id);
+                    setSelectedCourtIds([]);
+                    setSelectedBookingIds([]);
+                    setSelectedBookingRecords([]);
+                  }}
+                  onOpenClubModal={() => setIsClubModalOpen(true)}
+                  onCloseClubModal={() => setIsClubModalOpen(false)}
+                />
+                <GameLocationTimePanel
+                  mode="create"
+                  entityType={entityType}
+                  club={selectedClubData}
+                  locationTimeMode={locationTimeMode}
+                  onLocationTimeModeChange={setLocationTimeMode}
+                  showSegmentedSwitch={showSegmentedSwitch}
+                  showBookingsOnly={false}
+                  skipRealCourtBooking={skipRealCourtBooking}
+                  onSkipRealCourtBookingChange={setSkipRealCourtBooking}
+                  selectedCourtIds={selectedCourtIds}
+                  courts={courts}
+                  selectedBookingIds={selectedBookingIds}
+                  onSelectedBookingIdsChange={(ids, records = []) => {
+                    setSelectedBookingIds(ids);
+                    setSelectedBookingRecords(records);
+                  }}
+                  bookingSelectionLimits={bookingSelectionLimits}
+                  timeOverride={timeOverride}
+                  onTimeOverrideChange={setTimeOverride}
+                  overrideStartTime={overrideStartTime}
+                  overrideEndTime={overrideEndTime}
+                  onOverrideTimesChange={setOverrideTimes}
+                  dirtyFlags={dirtyFlags}
+                  companyId={booktimeIntegrationConfig?.companyId}
+                  bookingsPanelEnabled={locationTimeMode === 'bookings'}
+                  preselectedBanner={preselectedBookings}
+                  derivedSummary={{
+                    startTime: derivedBookingSummary.startTime,
+                    endTime: derivedBookingSummary.endTime,
+                    count: derivedBookingSummary.count,
+                  }}
+                  onDerivedTimeChange={(start, end) => {
+                    setDerivedBookingSummary({
+                      startTime: start,
+                      endTime: end,
+                      count: selectedBookingIds.length,
+                    });
+                  }}
+                  needsBooktimeAuth={needsBooktimeAuth}
+                  courtSection={courtSection}
+                  authGateSection={
+                    needsBooktimeAuth && booktimeIntegrationConfig ? (
+                      <BooktimeConnectInline
+                        club={selectedClubData}
+                        integrationConfig={booktimeIntegrationConfig}
+                        onConnected={() => {
+                          void refreshBooktimeAuth();
+                          if (booktimeFixedDates?.length) {
+                            const clamped = clampBooktimeDate(selectedDate);
+                            if (format(clamped, 'yyyy-MM-dd') !== format(selectedDate, 'yyyy-MM-dd')) {
+                              setSelectedDate(clamped);
+                              setSelectedTime('');
+                            }
+                          }
+                        }}
+                        onSkip={() => {
+                          handleCourtSelect('notBooked');
+                          setLocationTimeMode('timeSlots');
+                        }}
+                      />
+                    ) : null
+                  }
+                  timeSlotsChildren={
+                    <GameStartSection
+                      selectedDate={selectedDate}
+                      selectedTime={selectedTime}
+                      duration={duration}
+                      showDatePicker={showDatePicker}
+                      selectedClub={selectedClub}
+                      selectedCourt={selectedCourt}
+                      club={selectedClubData}
+                      generateTimeOptions={resolvedGenerateTimeOptions}
+                      generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
+                      canAccommodateDuration={resolvedCanAccommodateDuration}
+                      getAdjustedStartTime={resolvedGetAdjustedStartTime}
+                      getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
+                      isSlotHighlighted={resolvedIsSlotHighlighted}
+                      getDurationLabel={getDurationLabel}
+                      onDateSelect={setSelectedDate}
+                      onCalendarClick={() => setShowDatePicker(true)}
+                      onCloseDatePicker={() => setShowDatePicker(false)}
+                      onTimeSelect={setSelectedTime}
+                      onDurationChange={setDuration}
+                      entityType={entityType}
+                      dateInputRef={dateInputRef}
+                      needsBooktimeAuth={needsBooktimeAuth}
+                      bookCourtEnabled={willBookOnCreate}
+                      hideOccupancyOverlay={willBookOnCreate}
+                      dateFixedDates={willBookOnCreate ? booktimeFixedDates : undefined}
+                      hideCalendar={willBookOnCreate}
+                      bookableDaysHint={willBookOnCreate ? booktimeCompanyMeta.bookableDays : null}
+                      connectedPhone={booktimeAuth?.phoneNumber ?? null}
+                      slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
+                      snapshotBanner={
+                        willBookOnCreate && !needsBooktimeAuth ? (
+                          <BooktimeAvailabilityBanner
+                            loading={isRefreshingSnapshot}
+                            banner={createGameSnapshotBanner}
+                            gameFlow="create"
+                          />
+                        ) : null
                       }
-                    }}
-                    onSkip={() => setBookCourtEnabled(false)}
-                  />
-                ) : null
-              }
-            />
+                      compact
+                    />
+                  }
+                />
+              </div>
+            ) : (
+              <GameStartSection
+                clubs={clubs}
+                courts={courts}
+                isClubModalOpen={isClubModalOpen}
+                onSelectClub={(id: string) => {
+                  setSelectedClub(id);
+                  setSelectedCourtIds([]);
+                }}
+                onOpenClubModal={() => setIsClubModalOpen(true)}
+                onCloseClubModal={() => setIsClubModalOpen(false)}
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
+                duration={duration}
+                showDatePicker={showDatePicker}
+                selectedClub={selectedClub}
+                selectedCourt={selectedCourt}
+                club={selectedClubData}
+                generateTimeOptions={resolvedGenerateTimeOptions}
+                generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
+                canAccommodateDuration={resolvedCanAccommodateDuration}
+                getAdjustedStartTime={resolvedGetAdjustedStartTime}
+                getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
+                isSlotHighlighted={resolvedIsSlotHighlighted}
+                getDurationLabel={getDurationLabel}
+                onDateSelect={setSelectedDate}
+                onCalendarClick={() => setShowDatePicker(true)}
+                onCloseDatePicker={() => setShowDatePicker(false)}
+                onTimeSelect={setSelectedTime}
+                onDurationChange={setDuration}
+                entityType={entityType}
+                dateInputRef={dateInputRef}
+                courtSection={courtSection}
+              />
+            )}
           </div>
         </div>
 
@@ -1793,16 +1955,21 @@ export const CreateGame = ({
         onSkip={handleSkipMarkCourt}
       />
 
-      {selectedClubData && selectedCourtData && booktimeIntegrationConfig && confirmModalOpen ? (
+      {selectedClubData && booktimeIntegrationConfig && confirmModalOpen ? (
         <BooktimeCreateGameConfirmModal
           open={confirmModalOpen}
           onOpenChange={setConfirmModalOpen}
           club={selectedClubData}
-          court={selectedCourtData}
           companyId={booktimeIntegrationConfig.companyId}
-          selectedDate={selectedDate}
-          selectedTime={selectedTime}
-          durationHours={duration}
+          bookings={integratedCourtIds
+            .map((id) => courts.find((c) => c.id === id))
+            .filter((court): court is Court => court != null)
+            .map((court) => ({
+              court,
+              date: selectedDate,
+              startTime: selectedTime,
+              durationMinutes: Math.round(duration * 60),
+            }))}
           phoneNumber={booktimeAuth?.phoneNumber ?? null}
           firstName={booktimeAuth?.firstName ?? null}
           lastName={booktimeAuth?.lastName ?? null}
@@ -1814,11 +1981,17 @@ export const CreateGame = ({
             lastFetchedAt: snapshotLastFetchedAt,
           }}
           snapshotBlocked={snapshotBlocked}
-          skipBookStep={skipBookFlow}
-          existingExternalBookingId={externalBookingId}
           onExecuteCreateGame={async (overrides) => {
             await executeCreateGame(
-              { ...overrides, rollbackBooktimeBooking: !skipBookFlow },
+              {
+                externalBookingIds: overrides.externalBookingIds,
+                bookingSnapshots: overrides.bookingSnapshots,
+                hasBookedCourt: overrides.hasBookedCourt,
+                rollbackBooktimeBooking: overrides.rollbackBooktimeBooking,
+                courtIds: overrides.bookingSnapshots
+                  .map((s) => s.courtId)
+                  .filter((id): id is string => Boolean(id)),
+              },
               { skipNavigate: true },
             );
           }}

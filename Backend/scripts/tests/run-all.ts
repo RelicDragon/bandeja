@@ -630,6 +630,16 @@ const suites: Suite[] = [
       path.join(backendRoot, 'scripts', 'qa-mexicanoRoundGeneration.ts'),
     ],
   },
+  {
+    label: 'game external booking',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'game-external-booking.ts'),
+    ],
+  },
 ];
 
 function parseSuiteIndexArg(prefix: string): number | null {

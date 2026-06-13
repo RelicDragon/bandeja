@@ -7,30 +7,26 @@ export type LinkedGameSummary = {
   status: string;
 };
 
-export async function findLinkedGameForUser(
-  userId: string,
-  externalBookingId: string
-): Promise<LinkedGameSummary | null> {
+export async function findLinkedGamesForBooking(
+  externalBookingId: string,
+): Promise<LinkedGameSummary[]> {
   const trimmed = externalBookingId.trim();
-  if (!trimmed) return null;
+  if (!trimmed) return [];
 
-  const game = await prisma.game.findFirst({
-    where: {
-      externalBookingId: trimmed,
-      participants: {
-        some: {
-          userId,
-          role: 'OWNER',
+  const links = await prisma.gameExternalBooking.findMany({
+    where: { externalBookingId: trimmed },
+    select: {
+      game: {
+        select: {
+          id: true,
+          name: true,
+          startTime: true,
+          status: true,
         },
       },
     },
-    select: {
-      id: true,
-      name: true,
-      startTime: true,
-      status: true,
-    },
+    orderBy: { createdAt: 'asc' },
   });
 
-  return game;
+  return links.map((link) => link.game);
 }

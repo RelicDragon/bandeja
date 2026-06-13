@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { ApiError } from '../utils/ApiError';
 import { GameService } from '../services/game/game.service';
+import { serializeLinkedBooking } from '../services/game/gameExternalBooking.service';
 import { ParticipantService } from '../services/game/participant.service';
 import { AdminService } from '../services/game/admin.service';
 import { OwnershipService } from '../services/game/ownership.service';
@@ -320,6 +321,18 @@ export const updateGame = asyncHandler(async (req: AuthRequest, res: Response) =
     success: true,
     data: game,
   });
+});
+
+export const patchGameBookings = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const rows = await GameService.patchGameBookings(id, req.userId!, req.user?.isAdmin || false, req.body);
+  res.json({ success: true, data: rows.map(serializeLinkedBooking) });
+});
+
+export const putGameBookingSnapshots = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const rows = await GameService.putGameBookingSnapshots(id, req.userId!, req.user?.isAdmin || false, req.body);
+  res.json({ success: true, data: rows.map(serializeLinkedBooking) });
 });
 
 export const patchMyWatchSessionHandler = asyncHandler(async (req: AuthRequest, res: Response) => {

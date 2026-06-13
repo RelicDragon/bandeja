@@ -60,10 +60,13 @@ export const DateSelectorWithCount = ({
   const fixedDates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i));
 
   useEffect(() => {
-    if (!scrollContainerRef.current) return;
-    const selected = scrollContainerRef.current.querySelector('[data-selected="true"]') as HTMLElement;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const selected = container.querySelector('[data-selected="true"]') as HTMLElement | null;
     if (selected) {
-      selected.scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
+      const scrollLeft =
+        selected.offsetLeft - (container.clientWidth - selected.offsetWidth) / 2;
+      container.scrollTo({ left: Math.max(0, scrollLeft), behavior: 'instant' });
     }
   }, [selectedDate]);
 

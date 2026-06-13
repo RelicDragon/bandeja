@@ -120,6 +120,7 @@
       "linkGameRescheduleBody": "У игры другое время. Привязка перенесёт её на {{when}} и уведомит участников.",
       "linkGameRescheduleConfirm": "Обновить и привязать",
       "orphanBookingNotice": "Корт, возможно, больше не зарезервирован",
+      "orphanBookingNoticeMulti": "{{count}} связанных броней, возможно, больше не активны",
       "connectedClubsPageTitle": "Подключённые клубы и бронирования",
       "connectedClubsCardTitle": "Бронирования клубов",
       "connectedClubsCardHint": "Подключайте местные клубы, управляйте бронированиями и делитесь доступностью.",

@@ -1,6 +1,7 @@
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { Game } from '@/types';
+import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 
 export function bookingMatchesGameSlot(booking: BooktimeBookingRecord, game: Game): boolean {
   if (game.timeIsSet !== true) return false;
@@ -19,7 +20,6 @@ export function filterLinkableGames(games: Game[], userId: string, now = new Dat
   return games.filter((game) => {
     if (game.entityType !== 'GAME') return false;
     if (game.status !== 'ANNOUNCED') return false;
-    if (game.externalBookingId) return false;
     const isOwner = game.participants?.some((p) => p.userId === userId && p.role === 'OWNER');
     if (!isOwner) return false;
     if (game.timeIsSet === false) return true;
@@ -48,6 +48,27 @@ export function gameNeedsDatetimeUpdateForLink(game: Game, booking: BooktimeBook
   return game.timeIsSet !== true || !bookingMatchesGameSlot(booking, game);
 }
 
+export function buildPatchBookingsBody(add: string[], remove: string[] = []) {
+  return {
+    add: add.length > 0 ? add : undefined,
+    remove: remove.length > 0 ? remove : undefined,
+  };
+}
+
+export function buildLinkBookingSnapshot(
+  booking: BooktimeBookingRecord,
+  club: BooktimeMyClubRow,
+  courtId?: string,
+) {
+  const courts = club.courts.map((c) => ({
+    id: c.id,
+    externalCourtId: c.externalCourtId,
+  }));
+  const snapshots = buildBookingSnapshots([booking], courts);
+  if (courtId && snapshots[0]) snapshots[0].courtId = courtId;
+  return snapshots[0];
+}
+
 export function buildLinkBookingToGameUpdate(
   game: Game,
   booking: BooktimeBookingRecord,
@@ -55,8 +76,6 @@ export function buildLinkBookingToGameUpdate(
   courtId?: string
 ): Partial<Game> {
   const update: Partial<Game> = {
-    externalBookingId: booking.uuid,
-    externalBookingProvider: 'BOOKTIME',
     hasBookedCourt: true,
   };
   if (gameNeedsDatetimeUpdateForLink(game, booking)) {

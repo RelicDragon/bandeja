@@ -19,8 +19,26 @@
       "general": "Основное",
       "when": "Когда",
       "where": "Где",
+      "locationTime": "Место и время",
       "price": "Цена",
       "eraseTime": "Убрать время"
+    },
+    "locationTime": {
+      "tabLabel": "Место и время",
+      "partialSaveFailed": "Часть изменений сохранена, но не удалось обновить: {{step}}. Проверьте и попробуйте снова.",
+      "saveStep": {
+        "gameFields": "место или время",
+        "bookings": "привязки бронирований",
+        "snapshots": "данные бронирований",
+        "courts": "корты"
+      },
+      "unlinkNoCancelHint": "Бронь корта в клубе останется активной — мы только убираем связь с этой игрой.",
+      "unlinkSaveConfirmTitle": "Удалить привязки бронирований?",
+      "unlinkSaveConfirmMessage": "Вы отвязываете {{count}} бронирование(й) от этой игры. Реальные брони кортов автоматически не отменяются."
+    },
+    "booktimeEdit": {
+      "activityTitle": "Сохранение изменений…",
+      "activityStep2": "Обновление игры…"
     },
     "navigateToClub": "Проложить маршрут к клубу",
     "openLeagueSeason": "Открыть сезон лиги",

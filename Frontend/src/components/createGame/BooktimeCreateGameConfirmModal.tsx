@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CalendarCheck, Check, Loader2 } from 'lucide-react';
 import type { Club, Court } from '@/types';
+import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
+import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import type { SummaryChipItem } from './summaryHeader/CreateGameSummaryBar';
@@ -18,18 +20,29 @@ import {
 import { readBooktimeRollbackFromError } from '@/integrations/booktime/createGameErrors';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
+import toast from 'react-hot-toast';
 
-type ActivityPhase = 'confirm' | 'booking' | 'booking-done' | 'creating' | 'success' | 'error';
+type CourtBookingEntry = {
+  court: Court;
+  date: Date;
+  startTime: string;
+  durationMinutes: number;
+};
+
+type ActivityPhase =
+  | 'confirm'
+  | `booking_${number}`
+  | `booking_${number}_done`
+  | 'creating'
+  | 'success'
+  | 'error';
 
 type BooktimeCreateGameConfirmModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   club: Club;
-  court: Court;
   companyId: string;
-  selectedDate: Date;
-  selectedTime: string;
-  durationHours: number;
+  bookings: CourtBookingEntry[];
   phoneNumber: string | null;
   firstName?: string | null;
   lastName?: string | null;
@@ -38,14 +51,16 @@ type BooktimeCreateGameConfirmModalProps = {
   summaryChips: SummaryChipItem[];
   bookFlowContext: BooktimeBookFlowContext;
   snapshotBlocked: boolean;
-  skipBookStep: boolean;
-  existingExternalBookingId?: string | null;
   onExecuteCreateGame: (overrides: {
-    externalBookingId: string;
-    hasBookedCourt: boolean;
+    externalBookingIds: string[];
+    bookingSnapshots: BookingSnapshotInput[];
+    hasBookedCourt: true;
+    rollbackBooktimeBooking: true;
   }) => Promise<void>;
   onSlotTaken: () => void;
   onSuccess: () => void;
+  /** When `edit`, save-step copy reflects game update instead of create. */
+  flowMode?: 'create' | 'edit';
 };
 
 function formatSheetDate(date: Date, club: Club): string {
@@ -57,10 +72,9 @@ function formatSheetDate(date: Date, club: Club): string {
   }).format(date);
 }
 
-function formatEndTime(startTime: string, durationHours: number): string {
+function formatEndTime(startTime: string, durationMinutes: number): string {
   const [h, m] = startTime.split(':').map(Number);
-  const totalMinutes = Math.round(durationHours * 60);
-  const endMinutes = h * 60 + m + totalMinutes;
+  const endMinutes = h * 60 + m + durationMinutes;
   const endH = Math.floor(endMinutes / 60);
   const endM = endMinutes % 60;
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
@@ -70,11 +84,8 @@ export function BooktimeCreateGameConfirmModal({
   open,
   onOpenChange,
   club,
-  court,
   companyId,
-  selectedDate,
-  selectedTime,
-  durationHours,
+  bookings,
   phoneNumber,
   firstName,
   lastName,
@@ -83,26 +94,25 @@ export function BooktimeCreateGameConfirmModal({
   summaryChips,
   bookFlowContext,
   snapshotBlocked,
-  skipBookStep,
-  existingExternalBookingId,
   onExecuteCreateGame,
   onSlotTaken,
   onSuccess,
+  flowMode = 'create',
 }: BooktimeCreateGameConfirmModalProps) {
   const { t } = useTranslation();
   const [phase, setPhase] = useState<ActivityPhase>('confirm');
   const [errorKey, setErrorKey] = useState<
-    'slotTaken' | 'bookFailed' | 'createFailed' | 'createFailedRollback' | 'session' | null
+    'slotTaken' | 'bookFailed' | 'multiBookFailed' | 'createFailed' | 'createFailedRollback' | 'session' | null
   >(null);
-  const [priceLabel, setPriceLabel] = useState<string | null>(null);
+  const [failedBookingIndex, setFailedBookingIndex] = useState<number | null>(null);
+  const [priceLabels, setPriceLabels] = useState<Record<string, string | null>>({});
+  const [courtPriceQuotes, setCourtPriceQuotes] = useState<
+    Record<string, { amount: number; currency: string } | null>
+  >({});
   const [priceLoading, setPriceLoading] = useState(false);
   const inFlightRef = useRef(false);
-  const bookedIdRef = useRef<string | null>(null);
+  const bookedIdsRef = useRef<string[]>([]);
 
-  const durationMinutes = Math.round(durationHours * 60);
-  const dateKey = formatClubDateKey(selectedDate, club);
-  const endTime = formatEndTime(selectedTime, durationHours);
-  const dismissLocked = phase === 'booking' || phase === 'creating' || phase === 'booking-done';
   const reservedAsIdentity = useMemo(() => {
     const name = [firstName, lastName].filter((part) => part?.trim()).join(' ').trim();
     if (name && phoneNumber) return `${name} · ${phoneNumber}`;
@@ -112,10 +122,12 @@ export function BooktimeCreateGameConfirmModal({
   const resetState = useCallback(() => {
     setPhase('confirm');
     setErrorKey(null);
-    setPriceLabel(null);
+    setFailedBookingIndex(null);
+    setPriceLabels({});
+    setCourtPriceQuotes({});
     setPriceLoading(false);
     inFlightRef.current = false;
-    bookedIdRef.current = null;
+    bookedIdsRef.current = [];
   }, []);
 
   useEffect(() => {
@@ -123,40 +135,64 @@ export function BooktimeCreateGameConfirmModal({
       resetState();
       return;
     }
-    if (skipBookStep) return;
+    if (bookings.length === 0) return;
 
     let cancelled = false;
     setPriceLoading(true);
-    setPriceLabel(null);
+    setPriceLabels({});
+    setCourtPriceQuotes({});
 
     void (async () => {
       try {
         await hydrateBooktimeSession(club.id, companyId);
         const client = getBooktimeClient(club.id, companyId);
         const company = await loadBooktimeCompany(client, companyId);
-        const { bookingStart, bookingEnd } = buildBookingIsoRange(dateKey, selectedTime, durationMinutes);
-        const resource = company.bookingResources?.find(
-          (r) => (r.bookingResourceId ?? r.uuid) === court.externalCourtId,
-        );
-        const serviceUuid = resource?.serviceUuid;
-        if (!serviceUuid) {
-          if (!cancelled) setPriceLabel(t('club.booktime.priceUnavailable'));
-          return;
-        }
-        const quote = await client.getPrice({ bookingStart, bookingEnd, serviceUuid });
-        if (cancelled) return;
-        if (quote.price != null) {
-          setPriceLabel(
-            t('club.booktime.priceLabel', {
-              price: quote.price.toLocaleString(),
-              currency: quote.currency ?? company.currency ?? currency,
-            }),
+        const next: Record<string, string | null> = {};
+        const quotes: Record<string, { amount: number; currency: string } | null> = {};
+        for (const entry of bookings) {
+          const dateKey = formatClubDateKey(entry.date, club);
+          const { bookingStart, bookingEnd } = buildBookingIsoRange(
+            dateKey,
+            entry.startTime,
+            entry.durationMinutes,
           );
-        } else {
-          setPriceLabel(t('club.booktime.priceUnavailable'));
+          const resource = company.bookingResources?.find(
+            (r) => (r.bookingResourceId ?? r.uuid) === entry.court.externalCourtId,
+          );
+          const serviceUuid = resource?.serviceUuid;
+          if (!serviceUuid) {
+            next[entry.court.id] = t('club.booktime.priceUnavailable');
+            quotes[entry.court.id] = null;
+            continue;
+          }
+          const quote = await client.getPrice({ bookingStart, bookingEnd, serviceUuid });
+          const quoteCurrency = quote.currency ?? company.currency ?? currency;
+          if (quote.price != null) {
+            next[entry.court.id] = t('club.booktime.priceLabel', {
+              price: quote.price.toLocaleString(),
+              currency: quoteCurrency,
+            });
+            quotes[entry.court.id] = { amount: quote.price, currency: quoteCurrency };
+          } else {
+            next[entry.court.id] = t('club.booktime.priceUnavailable');
+            quotes[entry.court.id] = null;
+          }
+        }
+        if (!cancelled) {
+          setPriceLabels(next);
+          setCourtPriceQuotes(quotes);
         }
       } catch {
-        if (!cancelled) setPriceLabel(t('club.booktime.priceUnavailable'));
+        if (!cancelled) {
+          const fallback: Record<string, string | null> = {};
+          const quoteFallback: Record<string, null> = {};
+          for (const entry of bookings) {
+            fallback[entry.court.id] = t('club.booktime.priceUnavailable');
+            quoteFallback[entry.court.id] = null;
+          }
+          setPriceLabels(fallback);
+          setCourtPriceQuotes(quoteFallback);
+        }
       } finally {
         if (!cancelled) setPriceLoading(false);
       }
@@ -165,107 +201,140 @@ export function BooktimeCreateGameConfirmModal({
     return () => {
       cancelled = true;
     };
-  }, [
-    club.id,
-    companyId,
-    court.externalCourtId,
-    currency,
-    dateKey,
-    durationMinutes,
-    open,
-    selectedTime,
-    skipBookStep,
-    resetState,
-    t,
-  ]);
+  }, [bookings, club, companyId, currency, open, resetState, t]);
+
+  const reviewPriceTotal = useMemo(() => {
+    if (bookings.length < 2 || priceLoading) return null;
+    const quotes = bookings.map((entry) => courtPriceQuotes[entry.court.id]);
+    if (quotes.some((q) => q == null)) return null;
+    const currencies = new Set(quotes.map((q) => q!.currency));
+    if (currencies.size !== 1) return null;
+    const total = quotes.reduce((sum, q) => sum + (q?.amount ?? 0), 0);
+    return { amount: total, currency: quotes[0]!.currency };
+  }, [bookings, courtPriceQuotes, priceLoading]);
+
+  const rollbackBookedIds = async () => {
+    if (bookedIdsRef.current.length === 0) return;
+    try {
+      await hydrateBooktimeSession(club.id, companyId);
+      const client = getBooktimeClient(club.id, companyId);
+      for (const id of bookedIdsRef.current) {
+        try {
+          await cancelBooktimeBooking(client, id, bookFlowContext.refreshSnapshot);
+        } catch {
+          /* best effort */
+        }
+      }
+    } catch {
+      /* best effort */
+    }
+    bookedIdsRef.current = [];
+  };
 
   const runActivity = async () => {
     if (inFlightRef.current) return;
     inFlightRef.current = true;
     setErrorKey(null);
+    setFailedBookingIndex(null);
 
     try {
-      let externalBookingId = bookedIdRef.current;
-
-      if (!skipBookStep) {
-        setPhase('booking');
+      for (let i = 0; i < bookings.length; i++) {
+        const entry = bookings[i];
+        setPhase(`booking_${i}`);
         await hydrateBooktimeSession(club.id, companyId);
         const client = getBooktimeClient(club.id, companyId);
+        const dateKey = formatClubDateKey(entry.date, club);
         const pending = {
           clubId: club.id,
-          courtId: court.id,
-          externalCourtId: court.externalCourtId!,
-          courtName: court.name,
+          courtId: entry.court.id,
+          externalCourtId: entry.court.externalCourtId!,
+          courtName: entry.court.name,
           dateKey,
-          startTime: selectedTime,
-          durationMinutes,
+          startTime: entry.startTime,
+          durationMinutes: entry.durationMinutes,
         };
-        const result = await confirmBooktimeBooking(
-          client,
-          club,
-          companyId,
-          pending,
-          selectedDate,
-          bookFlowContext,
-        );
-        externalBookingId = result.bookingId;
-        bookedIdRef.current = result.bookingId;
-
-        setPhase('booking-done');
-        await new Promise((r) => window.setTimeout(r, 500));
+        try {
+          const result = await confirmBooktimeBooking(
+            client,
+            club,
+            companyId,
+            pending,
+            entry.date,
+            bookFlowContext,
+          );
+          bookedIdsRef.current.push(result.bookingId);
+          setPhase(`booking_${i}_done`);
+          await new Promise((r) => window.setTimeout(r, 400));
+        } catch (bookErr) {
+          setFailedBookingIndex(i);
+          await rollbackBookedIds();
+          if (bookErr instanceof BooktimeSlotTakenError) {
+            setErrorKey('slotTaken');
+          } else {
+            setErrorKey('multiBookFailed');
+            toast.error(
+              t('createGame.booktime.multiBookFailed', {
+                court: entry.court.name,
+              }),
+            );
+          }
+          setPhase('error');
+          return;
+        }
       }
+
+      const snapshotInputs = buildBookingSnapshots(
+        bookedIdsRef.current.map((id, index) => {
+          const entry = bookings[index];
+          const dateKey = formatClubDateKey(entry.date, club);
+          const range = buildBookingIsoRange(dateKey, entry.startTime, entry.durationMinutes);
+          return {
+            uuid: id,
+            bookingStart: range.bookingStart,
+            bookingEnd: range.bookingEnd,
+            bookingResourceId: entry.court.externalCourtId ?? undefined,
+          };
+        }),
+        bookings.map((b) => b.court),
+      );
 
       setPhase('creating');
       await onExecuteCreateGame({
-        externalBookingId: skipBookStep ? (existingExternalBookingId ?? '') : (externalBookingId ?? ''),
+        externalBookingIds: bookedIdsRef.current,
+        bookingSnapshots: snapshotInputs,
         hasBookedCourt: true,
+        rollbackBooktimeBooking: true,
       });
 
       setPhase('success');
       await new Promise((r) => window.setTimeout(r, 800));
       onSuccess();
     } catch (err) {
-      if (err instanceof BooktimeSlotTakenError) {
-        setErrorKey('slotTaken');
-        setPhase('error');
-        return;
-      }
       const message = err instanceof Error ? err.message : '';
       if (/session|expired|401/i.test(message)) {
         setErrorKey('session');
         setPhase('error');
         return;
       }
-      if (bookedIdRef.current && !skipBookStep) {
-        const serverRollback = readBooktimeRollbackFromError(err);
-        if (!serverRollback?.cancelled) {
-          try {
-            await hydrateBooktimeSession(club.id, companyId);
-            const client = getBooktimeClient(club.id, companyId);
-            await cancelBooktimeBooking(client, bookedIdRef.current, bookFlowContext.refreshSnapshot);
-          } catch {
-            /* best effort rollback */
-          }
-        }
-        bookedIdRef.current = null;
-        setErrorKey(
-          serverRollback?.attempted && !serverRollback.cancelled
-            ? 'createFailedRollback'
-            : 'createFailed',
-        );
-      } else if (!skipBookStep && phase === 'booking') {
-        setErrorKey('bookFailed');
-      } else {
-        setErrorKey('createFailed');
+      const serverRollback = readBooktimeRollbackFromError(err);
+      if (!serverRollback?.cancelled && bookedIdsRef.current.length > 0) {
+        await rollbackBookedIds();
       }
+      bookedIdsRef.current = [];
+      setErrorKey(
+        serverRollback?.attempted && !serverRollback.cancelled ? 'createFailedRollback' : 'createFailed',
+      );
       setPhase('error');
     } finally {
       inFlightRef.current = false;
     }
   };
 
+  const dismissLocked =
+    phase.startsWith('booking_') || phase === 'creating';
+
   const handleConfirm = () => {
-    if (snapshotBlocked && !skipBookStep) return;
+    if (snapshotBlocked && bookings.length > 0) return;
     void runActivity();
   };
 
@@ -274,12 +343,39 @@ export function BooktimeCreateGameConfirmModal({
     onOpenChange(false);
   };
 
-  const handleSlotTakenRetry = () => {
-    onOpenChange(false);
-    onSlotTaken();
-  };
-
-  const showBookingSection = !skipBookStep;
+  const activitySteps = useMemo(() => {
+    const steps: Array<{ key: string; label: string; done: boolean; active: boolean; failed?: boolean }> = [];
+    for (let i = 0; i < bookings.length; i++) {
+      const entry = bookings[i];
+      const bookingPhase = phase === `booking_${i}`;
+      const bookingDone =
+        phase === `booking_${i}_done` ||
+        (phase.startsWith('booking_') && Number(phase.split('_')[1]) > i) ||
+        phase === 'creating' ||
+        phase === 'success';
+      steps.push({
+        key: `book-${i}`,
+        label: t('createGame.booktime.activityStepBookCourt', {
+          court: entry.court.name,
+          current: i + 1,
+          total: bookings.length,
+        }),
+        done: bookingDone,
+        active: bookingPhase,
+        failed: failedBookingIndex === i,
+      });
+    }
+    steps.push({
+      key: 'create',
+      label:
+        flowMode === 'edit'
+          ? t('gameDetails.booktimeEdit.activityStep2')
+          : t('createGame.booktime.activityStep2'),
+      done: phase === 'success',
+      active: phase === 'creating',
+    });
+    return steps;
+  }, [bookings, flowMode, phase, failedBookingIndex, t]);
 
   return (
     <Dialog open={open} onClose={handleClose} onOpenChange={onOpenChange} modalId="booktime-create-game-confirm">
@@ -296,7 +392,9 @@ export function BooktimeCreateGameConfirmModal({
                 ? t('createGame.booktime.errorTitle')
                 : phase === 'confirm'
                   ? t('createGame.booktime.confirmTitle')
-                  : t('createGame.booktime.activityTitle')}
+                  : flowMode === 'edit'
+                    ? t('gameDetails.booktimeEdit.activityTitle')
+                    : t('createGame.booktime.activityTitle')}
           </DialogTitle>
         </DialogHeader>
 
@@ -310,67 +408,83 @@ export function BooktimeCreateGameConfirmModal({
                 exit={{ opacity: 0 }}
                 className="space-y-4"
               >
-                {showBookingSection ? (
-                  <div className="rounded-xl border-l-4 border-l-primary-500 border border-gray-200 dark:border-gray-700 bg-primary-50/40 dark:bg-primary-950/20 p-4 space-y-2">
-                    <div className="flex items-start gap-2">
-                      <CalendarCheck size={18} className="text-primary-600 dark:text-primary-400 mt-0.5 shrink-0" />
-                      <div className="min-w-0 space-y-1">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {formatSheetDate(selectedDate, club)} · {selectedTime}–{endTime}
-                        </p>
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
-                          <CourtDisplayName
-                            name={court.name}
-                            integrationName={court.integrationCourtName}
-                            primaryClassName="font-medium"
-                            secondaryClassName="text-xs text-gray-500 dark:text-gray-400"
-                          />
-                          {' · '}
-                          {club.name}
-                        </p>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {priceLoading ? (
-                            <span className="inline-flex items-center gap-2 text-gray-500 font-normal">
-                              <Loader2 size={14} className="animate-spin" />
-                              {t('club.booktime.loadingPrice')}
-                            </span>
-                          ) : (
-                            priceLabel ?? t('club.booktime.priceUnavailable')
-                          )}
-                        </p>
-                        {reservedAsIdentity ? (
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {t('createGame.booktime.reservedAs', { identity: reservedAsIdentity })}
+                {bookings.map((entry) => {
+                  const endTime = formatEndTime(entry.startTime, entry.durationMinutes);
+                  return (
+                    <div
+                      key={entry.court.id}
+                      className="rounded-xl border-l-4 border-l-primary-500 border border-gray-200 dark:border-gray-700 bg-primary-50/40 dark:bg-primary-950/20 p-4 space-y-2"
+                    >
+                      <div className="flex items-start gap-2">
+                        <CalendarCheck size={18} className="text-primary-600 dark:text-primary-400 mt-0.5 shrink-0" />
+                        <div className="min-w-0 space-y-1">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {formatSheetDate(entry.date, club)} · {entry.startTime}–{endTime}
                           </p>
-                        ) : null}
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {t('createGame.booktime.cancelPolicy', { hours: allowedHoursToCancel })}
-                        </p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300">
+                            <CourtDisplayName
+                              name={entry.court.name}
+                              integrationName={entry.court.integrationCourtName}
+                              primaryClassName="font-medium"
+                              secondaryClassName="text-xs text-gray-500 dark:text-gray-400"
+                            />
+                            {' · '}
+                            {club.name}
+                          </p>
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {priceLoading ? (
+                              <span className="inline-flex items-center gap-2 text-gray-500 font-normal">
+                                <Loader2 size={14} className="animate-spin" />
+                                {t('club.booktime.loadingPrice')}
+                              </span>
+                            ) : (
+                              priceLabels[entry.court.id] ?? t('club.booktime.priceUnavailable')
+                            )}
+                          </p>
+                        </div>
                       </div>
                     </div>
+                  );
+                })}
+
+                {reviewPriceTotal ? (
+                  <div className="flex items-center justify-between rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 px-4 py-3">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {t('createGame.booktime.reviewTotal')}
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                      {t('club.booktime.priceLabel', {
+                        price: reviewPriceTotal.amount.toLocaleString(),
+                        currency: reviewPriceTotal.currency,
+                      })}
+                    </span>
                   </div>
                 ) : null}
 
+                {reservedAsIdentity ? (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t('createGame.booktime.reservedAs', { identity: reservedAsIdentity })}
+                  </p>
+                ) : null}
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {t('createGame.booktime.cancelPolicy', { hours: allowedHoursToCancel })}
+                </p>
+
                 {summaryChips.length > 0 ? (
-                  <>
-                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                      {t('createGame.booktime.yourGame')}
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {summaryChips.map((chip) => (
-                        <span
-                          key={chip.key}
-                          className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200"
-                        >
-                          <span className="shrink-0 text-gray-500 dark:text-gray-400">{chip.icon}</span>
-                          {chip.label ? <span className="max-w-[11rem] truncate">{chip.label}</span> : null}
-                        </span>
-                      ))}
-                    </div>
-                  </>
+                  <div className="flex flex-wrap gap-1.5">
+                    {summaryChips.map((chip) => (
+                      <span
+                        key={chip.key}
+                        className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-900/60 dark:text-gray-200"
+                      >
+                        <span className="shrink-0 text-gray-500 dark:text-gray-400">{chip.icon}</span>
+                        {chip.label ? <span className="max-w-[11rem] truncate">{chip.label}</span> : null}
+                      </span>
+                    ))}
+                  </div>
                 ) : null}
 
-                {snapshotBlocked && !skipBookStep ? (
+                {snapshotBlocked && bookings.length > 0 ? (
                   <p className="text-sm text-amber-700 dark:text-amber-300">
                     {t('createGame.booktime.snapshotBlocked')}
                   </p>
@@ -386,45 +500,39 @@ export function BooktimeCreateGameConfirmModal({
                   </button>
                   <button
                     type="button"
-                    disabled={snapshotBlocked && !skipBookStep}
+                    disabled={snapshotBlocked && bookings.length > 0}
                     onClick={handleConfirm}
                     className="flex-1 rounded-lg bg-primary-600 text-white py-2.5 text-sm font-medium disabled:opacity-50"
                   >
-                    {skipBookStep ? t('createGame.createButton') : t('createGame.booktime.confirmPrimary')}
+                    {t('createGame.booktime.confirmPrimary')}
                   </button>
                 </div>
               </motion.div>
             ) : null}
 
-            {(phase === 'booking' || phase === 'booking-done' || phase === 'creating') && !skipBookStep ? (
+            {(phase.startsWith('booking_') || phase === 'creating') && phase !== 'confirm' ? (
               <motion.div
                 key="activity"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="space-y-6 py-4"
+                className="space-y-4 py-4"
               >
-                <ActivityStep
-                  label={t('createGame.booktime.activityStep1')}
-                  done={phase === 'booking-done' || phase === 'creating'}
-                  active={phase === 'booking'}
-                />
-                <ActivityStep
-                  label={t('createGame.booktime.activityStep2')}
-                  done={false}
-                  active={phase === 'creating'}
-                />
-              </motion.div>
-            ) : null}
-
-            {(phase === 'creating' || phase === 'success') && skipBookStep ? (
-              <motion.div
-                key="game-only-activity"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-6 py-4"
-              >
-                <ActivityStep label={t('createGame.booktime.activityStep2')} done={phase === 'success'} active={phase === 'creating'} />
+                {activitySteps.map((step, index) => (
+                  <motion.div
+                    key={step.key}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                  >
+                    <ActivityStep
+                      label={step.label}
+                      done={step.done}
+                      active={step.active}
+                      failed={step.failed}
+                    />
+                  </motion.div>
+                ))}
               </motion.div>
             ) : null}
 
@@ -433,7 +541,6 @@ export function BooktimeCreateGameConfirmModal({
                 key="success"
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 24 }}
                 className="flex flex-col items-center py-8 text-center space-y-3"
               >
                 <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
@@ -443,36 +550,36 @@ export function BooktimeCreateGameConfirmModal({
                   {t('createGame.booktime.successTitle')}
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {skipBookStep
-                    ? t('createGame.booktime.successGameOnly')
-                    : t('createGame.booktime.successBody')}
+                  {t('createGame.booktime.successBody')}
                 </p>
               </motion.div>
             ) : null}
 
             {phase === 'error' ? (
-              <motion.div
-                key="error"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-4 py-2"
-              >
+              <motion.div key="error" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 py-2">
                 <p className="text-sm text-red-600 dark:text-red-400">
                   {errorKey === 'slotTaken'
                     ? t('createGame.booktime.slotTaken')
                     : errorKey === 'session'
                       ? t('createGame.booktime.sessionExpired')
-                      : errorKey === 'createFailed'
-                        ? t('createGame.booktime.createFailedAfterBook')
-                        : errorKey === 'createFailedRollback'
-                          ? t('createGame.booktime.createFailedRollback')
-                          : t('createGame.booktime.bookFailed')}
+                      : errorKey === 'multiBookFailed'
+                        ? t('createGame.booktime.multiBookFailed', {
+                            court: failedBookingIndex != null ? bookings[failedBookingIndex]?.court.name : '',
+                          })
+                        : errorKey === 'createFailed'
+                          ? t('createGame.booktime.createFailedAfterBook')
+                          : errorKey === 'createFailedRollback'
+                            ? t('createGame.booktime.createFailedRollback')
+                            : t('createGame.booktime.bookFailed')}
                 </p>
                 <div className="flex gap-2">
                   {errorKey === 'slotTaken' ? (
                     <button
                       type="button"
-                      onClick={handleSlotTakenRetry}
+                      onClick={() => {
+                        onOpenChange(false);
+                        onSlotTaken();
+                      }}
                       className="flex-1 rounded-lg bg-primary-600 text-white py-2.5 text-sm font-medium"
                     >
                       {t('createGame.booktime.pickAnotherTime')}
@@ -510,33 +617,35 @@ function ActivityStep({
   label,
   done,
   active,
+  failed,
 }: {
   label: string;
   done: boolean;
   active: boolean;
+  failed?: boolean;
 }) {
   return (
     <div className="flex items-center gap-3">
       <div
         className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-          done
-            ? 'bg-green-500 text-white'
-            : active
-              ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
+          failed
+            ? 'bg-red-500 text-white'
+            : done
+              ? 'bg-green-500 text-white'
+              : active
+                ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 ring-2 ring-primary-400/50'
+                : 'bg-gray-100 dark:bg-gray-800 text-gray-400'
         }`}
       >
         {done ? (
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 28 }}>
-            <Check size={16} />
-          </motion.div>
+          <Check size={16} />
         ) : active ? (
           <Loader2 size={16} className="animate-spin" />
         ) : (
           <span className="text-xs font-semibold">○</span>
         )}
       </div>
-      <span className={`text-sm ${active || done ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500'}`}>
+      <span className={`text-sm ${active || done || failed ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-500'}`}>
         {label}
       </span>
     </div>

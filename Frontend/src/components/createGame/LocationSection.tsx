@@ -126,7 +126,7 @@ export const LocationSection = ({
                     className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors"
                   >
                     {selectedCourt === 'notBooked' ? (
-                      t('createGame.notBookedYet')
+                      t(entityType === 'BAR' ? 'createGame.dontSelectHall' : 'createGame.dontSelectCourt')
                     ) : (() => {
                       const court = courts.find((c) => c.id === selectedCourt);
                       return court ? (

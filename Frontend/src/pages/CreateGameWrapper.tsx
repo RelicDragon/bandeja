@@ -3,31 +3,43 @@ import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { CreateGame } from './CreateGame';
 import { EntityType, Game } from '@/types';
 import type { CreateFlowIntent, CreateTemplateId } from '@/sport/createFlow';
+import type { LocationTimeMode } from '@/components/gameLocationTime/LocationTimeMode';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 
-function initialGameDataFromSearch(search: string): Partial<Game> | undefined {
+function initialGameDataFromSearch(search: string): {
+  gameData: Partial<Game>;
+  locationTimeMode?: LocationTimeMode;
+  bookingIds: string[];
+} {
   const params = new URLSearchParams(search);
   const clubId = params.get('clubId');
-  if (!clubId) return undefined;
-  const data: Partial<Game> = { clubId };
+  const gameData: Partial<Game> = {};
+  if (clubId) gameData.clubId = clubId;
   const courtId = params.get('courtId');
-  if (courtId) data.courtId = courtId;
+  if (courtId) gameData.courtId = courtId;
   const startTime = params.get('startTime');
   const endTime = params.get('endTime');
-  if (startTime) data.startTime = startTime;
-  if (endTime) data.endTime = endTime;
-  const externalBookingId = params.get('externalBookingId');
-  if (externalBookingId) {
-    data.externalBookingId = externalBookingId;
-    data.externalBookingProvider = 'BOOKTIME';
-    data.hasBookedCourt = true;
-  }
-  const externalBookingProvider = params.get('externalBookingProvider');
-  if (externalBookingProvider === 'BOOKTIME') {
-    data.externalBookingProvider = 'BOOKTIME';
-  }
-  return data;
+  if (startTime) gameData.startTime = startTime;
+  if (endTime) gameData.endTime = endTime;
+  if (params.get('hasBookedCourt') === '1') gameData.hasBookedCourt = true;
+
+  const locationTimeMode = params.get('locationTimeMode');
+  const bookingIdsRaw = params.get('bookingIds');
+  const bookingIds = bookingIdsRaw
+    ? bookingIdsRaw.split(',').map((id) => id.trim()).filter(Boolean)
+    : [];
+
+  return {
+    gameData,
+    locationTimeMode:
+      locationTimeMode === 'bookings' || locationTimeMode === 'timeSlots'
+        ? locationTimeMode
+        : bookingIds.length > 0
+          ? 'bookings'
+          : undefined,
+    bookingIds,
+  };
 }
 
 export const CreateGameWrapper = () => {
@@ -39,17 +51,17 @@ export const CreateGameWrapper = () => {
     createIntent?: CreateFlowIntent;
     selectedTemplateId?: CreateTemplateId;
   };
-  const queryInitialGameData = useMemo(
+  const queryInitial = useMemo(
     () => initialGameDataFromSearch(location.search),
     [location.search],
   );
   const entityType =
     state?.entityType ??
     (new URLSearchParams(location.search).get('entityType') as EntityType | null) ??
-    (queryInitialGameData ? 'GAME' : undefined);
+    (queryInitial.gameData.clubId ? 'GAME' : undefined);
   const initialGameData = useMemo(
-    () => ({ ...queryInitialGameData, ...state?.initialGameData }),
-    [queryInitialGameData, state?.initialGameData],
+    () => ({ ...queryInitial.gameData, ...state?.initialGameData }),
+    [queryInitial.gameData, state?.initialGameData],
   );
   const initialCreateIntent = state?.createIntent;
   const initialTemplateId = state?.selectedTemplateId;
@@ -77,7 +89,8 @@ export const CreateGameWrapper = () => {
       initialGameData={initialGameData}
       initialCreateIntent={initialCreateIntent}
       initialTemplateId={initialTemplateId}
+      initialLocationTimeMode={queryInitial.locationTimeMode}
+      initialBookingIds={queryInitial.bookingIds}
     />
   );
 };
-

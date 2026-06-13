@@ -488,8 +488,15 @@ export interface Game {
   resultsByAnyone?: boolean;
   allowDirectJoin: boolean;
   hasBookedCourt?: boolean;
-  externalBookingId?: string | null;
-  externalBookingProvider?: 'BOOKTIME' | null;
+  timeOverride?: boolean;
+  linkedBookings?: Array<{
+    id: string;
+    externalBookingId: string;
+    externalBookingProvider: 'BOOKTIME';
+    courtId?: string;
+    bookingStart?: string;
+    bookingEnd?: string;
+  }>;
   afterGameGoToBar?: boolean;
   hasFixedTeams?: boolean;
   allowUserInMultipleTeams?: boolean;

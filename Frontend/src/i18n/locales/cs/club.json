@@ -120,6 +120,7 @@
       "linkGameRescheduleBody": "Zápas má jiný čas. Propojení ho přesune na {{when}} a upozorní účastníky.",
       "linkGameRescheduleConfirm": "Aktualizovat a propojit",
       "orphanBookingNotice": "Kurt možná už není rezervován",
+      "orphanBookingNoticeMulti": "{{count}} propojených rezervací možná už není aktivních",
       "connectedClubsPageTitle": "Propojené kluby a rezervace",
       "connectedClubsCardTitle": "Rezervace klubů",
       "connectedClubsCardHint": "Propojte místní kluby, spravujte rezervace a sdílení dostupnosti.",

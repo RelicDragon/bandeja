@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { Check } from 'lucide-react';
 
 interface CourtOccupancyRingProps {
   percent: number;
@@ -32,30 +33,40 @@ export const CourtOccupancyRing = memo(function CourtOccupancyRing({
         : 'stroke-primary-500';
 
   return (
-    <svg
-      width={size}
-      height={size}
-      className={`shrink-0 -rotate-90 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}
-    >
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        strokeWidth={stroke}
-        className={trackClass}
-      />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={radius}
-        fill="none"
-        strokeWidth={stroke}
-        strokeLinecap="round"
-        className={fillClass}
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-      />
-    </svg>
+    <div className="relative shrink-0" style={{ width: size, height: size }}>
+      <svg
+        width={size}
+        height={size}
+        className={`-rotate-90 transition-opacity ${loading ? 'opacity-50' : 'opacity-100'}`}
+      >
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={stroke}
+          className={trackClass}
+        />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="none"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          className={fillClass}
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+        />
+      </svg>
+      {selected ? (
+        <Check
+          size={Math.round(size * 0.45)}
+          strokeWidth={3}
+          className="absolute inset-0 m-auto text-primary-600 dark:text-primary-400 pointer-events-none"
+          aria-hidden
+        />
+      ) : null}
+    </div>
   );
 });

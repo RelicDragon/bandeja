@@ -56,7 +56,7 @@ test.describe('create game fields @auth', () => {
     await createGame.gotoWithEntityType('GAME');
     await createGame.pickDefaultTemplateIfShown();
     await createGame.selectFirstClub();
-    await expect(page.getByRole('button', { name: /don't book court/i })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByRole('button', { name: /don't select court/i })).toBeVisible({ timeout: 10_000 });
   });
 
   test('C-14 court not booked selection', async ({ page }) => {
@@ -65,7 +65,7 @@ test.describe('create game fields @auth', () => {
     await createGame.pickDefaultTemplateIfShown();
     await createGame.selectFirstClub();
     await createGame.selectCourtNotBooked();
-    await expect(page.getByRole('button', { name: /don't book court/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /don't select court/i })).toBeVisible();
   });
 
   test('C-15 court booked overlap warning', async () => {

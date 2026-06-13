@@ -50,6 +50,7 @@ interface GameStartSectionProps {
   slotsLoading?: boolean;
   existingBookingBanner?: ReactNode;
   snapshotBanner?: ReactNode;
+  panelMode?: 'create' | 'edit';
   clubs?: Club[];
   courts?: Court[];
   isClubModalOpen?: boolean;
@@ -93,6 +94,7 @@ export const GameStartSection = ({
   slotsLoading = false,
   existingBookingBanner,
   snapshotBanner,
+  panelMode = 'create',
   clubs,
   courts,
   isClubModalOpen = false,
@@ -162,8 +164,16 @@ export const GameStartSection = ({
   const schedulingBanners = (
     <>
       {!needsBooktimeAuth && snapshotBanner}
-      {!needsBooktimeAuth && entityType !== 'BAR' && !bookCourtEnabled && club?.integrationType === 'BOOKTIME' ? (
-        <BooktimeAvailabilityBanner loading={isLoadingExternalSlots} banner={bookedCourtsBanner} />
+      {!snapshotBanner &&
+      !needsBooktimeAuth &&
+      entityType !== 'BAR' &&
+      !bookCourtEnabled &&
+      club?.integrationType === 'BOOKTIME' ? (
+        <BooktimeAvailabilityBanner
+          loading={isLoadingExternalSlots}
+          banner={bookedCourtsBanner}
+          gameFlow={panelMode}
+        />
       ) : null}
       {entityType !== 'BAR' && (club?.policyText || club?.cancellationNoticeHours) && !needsBooktimeAuth ? (
         <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">

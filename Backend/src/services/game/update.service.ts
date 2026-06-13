@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import { EntityType, ParticipantRole, Prisma, Sport, ClubIntegrationType } from '@prisma/client';
+import { EntityType, ParticipantRole, Prisma, Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
@@ -22,6 +22,10 @@ import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCle
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { resolvePlayersPerMatch } from '../../sport/sportRegistry';
 import { BracketAdvancementService } from '../league/bracketAdvancement.service';
+import {
+  assertNoLegacyExternalBookingFieldsOnUpdate,
+  deriveGameTimesFromJoinRows,
+} from './gameExternalBooking.service';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -78,9 +82,8 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'leagueRoundId',
   'leagueGroupId',
   'timeIsSet',
+  'timeOverride',
   'finishedDate',
-  'externalBookingId',
-  'externalBookingProvider',
   'priceTotal',
   'priceType',
   'priceCurrency',
@@ -101,6 +104,8 @@ function pickUncheckedGameScalars(src: Record<string, unknown>): Prisma.GameUnch
 
 export class GameUpdateService {
   static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
+    assertNoLegacyExternalBookingFieldsOnUpdate(data);
+
     // Validate currency if provided
     if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
       throw new ApiError(400, `Invalid currency. Supported currencies: ${SUPPORTED_CURRENCIES.join(', ')}`);
@@ -520,28 +525,23 @@ export class GameUpdateService {
       throw new ApiError(400, 'Game photos must be managed via /games/:gameId/photos endpoints');
     }
 
-    if (data.externalBookingId !== undefined || data.externalBookingProvider !== undefined) {
-      const bookingId =
-        typeof data.externalBookingId === 'string' ? data.externalBookingId.trim() : '';
-      if (bookingId) {
-        const provider = data.externalBookingProvider;
-        if (provider !== ClubIntegrationType.BOOKTIME) {
-          throw new ApiError(400, 'externalBookingProvider must be BOOKTIME when externalBookingId is set');
-        }
-        const conflict = await prisma.game.findFirst({
-          where: { externalBookingId: bookingId, NOT: { id } },
-          select: { id: true },
-        });
-        if (conflict) {
-          throw new ApiError(400, 'This court booking is already linked to another game');
-        }
-        updateData.externalBookingId = bookingId;
-        updateData.externalBookingProvider = ClubIntegrationType.BOOKTIME;
-        updateData.hasBookedCourt = true;
-      } else if (data.externalBookingId === null || data.externalBookingId === '') {
-        updateData.externalBookingId = null;
-        updateData.externalBookingProvider = null;
+    if (data.hasBookedCourt === false) {
+      const linkCount = await prisma.gameExternalBooking.count({ where: { gameId: id } });
+      if (linkCount > 0) {
+        throw new ApiError(400, 'Cannot set hasBookedCourt to false while booking links exist');
       }
+    }
+
+    if (data.timeOverride === false) {
+      updateData.timeOverride = false;
+      const derived = await deriveGameTimesFromJoinRows(id);
+      if (derived) {
+        updateData.startTime = derived.startTime;
+        updateData.endTime = derived.endTime;
+        updateData.timeIsSet = true;
+      }
+    } else if (data.timeOverride === true) {
+      updateData.timeOverride = true;
     }
 
     delete updateData.resultsRoundGenV2;

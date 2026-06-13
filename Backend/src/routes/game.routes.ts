@@ -119,6 +119,10 @@ router.post(
 
 router.put('/:id', authenticate, gameController.updateGame);
 
+router.patch('/:id/bookings', authenticate, canEditGame, gameController.patchGameBookings);
+
+router.put('/:id/booking-snapshots', authenticate, canEditGame, gameController.putGameBookingSnapshots);
+
 router.patch('/:id/my-session', authenticate, canAccessGame, gameController.patchMyWatchSessionHandler);
 
 router.delete('/:id', authenticate, requireGamePermission([ParticipantRole.OWNER]), gameController.deleteGame);

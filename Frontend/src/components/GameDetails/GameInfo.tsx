@@ -22,6 +22,7 @@ import { addToNativeCalendar } from '@/utils/calendar';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { BooktimeOrphanBookingNotice } from '@/components/booktime/BooktimeOrphanBookingNotice';
+import { LinkedBookingsList } from '@/components/gameLocationTime/LinkedBookingsList';
 import { InfoIconChip } from './InfoIconChip';
 import { Share } from '@capacitor/share';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -807,7 +808,7 @@ export const GameInfo = ({
               </InfoIconChip>
               {canEdit && canShowEdit && !isEditMode ? (
                 <button
-                  onClick={() => onOpenEditGameInfo?.('when')}
+                  onClick={() => onOpenEditGameInfo?.('locationTime')}
                   className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 italic"
                 >
                   {t('gameDetails.datetimeNotSet')}
@@ -826,7 +827,7 @@ export const GameInfo = ({
                   <div className="whitespace-nowrap">
                     {canEdit && canShowEdit && !isEditMode ? (
                       <button
-                        onClick={() => onOpenEditGameInfo?.('when')}
+                        onClick={() => onOpenEditGameInfo?.('locationTime')}
                         className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                       >
                         <span>{weekdayLabel}</span>
@@ -853,7 +854,7 @@ export const GameInfo = ({
                   <div>
                     {canEdit && canShowEdit && !isEditMode ? (
                       <button
-                        onClick={() => onOpenEditGameInfo?.('when')}
+                        onClick={() => onOpenEditGameInfo?.('locationTime')}
                         className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer whitespace-nowrap"
                       >
                         {game.entityType === 'BAR' ? timeDisplay.primaryText : timeRangeDisplay.primaryText}
@@ -875,7 +876,7 @@ export const GameInfo = ({
               <div className="flex-1">
                 {canEdit && canShowEdit && !isEditMode ? (
                   <button
-                    onClick={() => onOpenEditGameInfo?.('when')}
+                    onClick={() => onOpenEditGameInfo?.('locationTime')}
                     className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                   >
                     <span>{weekdayLabel}</span>
@@ -909,7 +910,7 @@ export const GameInfo = ({
                 <div className="flex items-center gap-2">
                   {canEdit && canShowEdit && !isEditMode ? (
                     <button
-                      onClick={() => onOpenEditGameInfo?.('where')}
+                      onClick={() => onOpenEditGameInfo?.('locationTime')}
                       className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
                     >
                       {game.court?.club?.name || game.club?.name}
@@ -941,7 +942,7 @@ export const GameInfo = ({
                 )}
                 {!game.court && game.club && (
                   <p className="text-xs text-gray-600 dark:text-gray-400">
-                    {t('createGame.notBookedYet')}
+                    {t(game.entityType === 'BAR' ? 'createGame.hallNotSelected' : 'createGame.courtNotSelected')}
                   </p>
                 )}
                 {/* Show booking status */}
@@ -954,6 +955,17 @@ export const GameInfo = ({
                   </p>
                 )}
                 <BooktimeOrphanBookingNotice game={game} isOwner={isOwner} />
+                {(game.linkedBookings?.length ?? 0) > 0 ? (
+                  <div className="mt-2">
+                    <LinkedBookingsList
+                      game={game}
+                      club={game.court?.club || game.club}
+                      courts={courts}
+                      readOnly
+                      readOnlyLabel
+                    />
+                  </div>
+                ) : null}
                 <CourtLocationLinks
                   club={game.court?.club || game.club}
                   court={game.court && game.court.id ? game.court : undefined}

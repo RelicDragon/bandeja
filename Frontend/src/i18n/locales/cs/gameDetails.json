@@ -16,8 +16,26 @@
       "general": "Obecné",
       "when": "Kdy",
       "where": "Kde",
+      "locationTime": "Místo a čas",
       "price": "Cena",
       "eraseTime": "Zrušit čas"
+    },
+    "locationTime": {
+      "tabLabel": "Místo a čas",
+      "partialSaveFailed": "Některé změny byly uloženy, ale {{step}} se nepodařilo aktualizovat. Zkontrolujte a zkuste to znovu.",
+      "saveStep": {
+        "gameFields": "místo nebo čas",
+        "bookings": "propojení rezervací",
+        "snapshots": "podrobnosti rezervací",
+        "courts": "kurtů"
+      },
+      "unlinkNoCancelHint": "Rezervace kurtu u klubu zůstane aktivní — odebíráme jen propojení s touto hrou.",
+      "unlinkSaveConfirmTitle": "Odebrat propojení rezervací?",
+      "unlinkSaveConfirmMessage": "Odebíráte {{count}} propojení rezervací s touto hrou. Skutečné rezervace kurtů se automaticky nezruší."
+    },
+    "booktimeEdit": {
+      "activityTitle": "Ukládání změn…",
+      "activityStep2": "Aktualizace hry…"
     },
     "gameAvatar": "Avatar zápasu",
     "avatarUpdated": "Avatar zápasu byl aktualizován",

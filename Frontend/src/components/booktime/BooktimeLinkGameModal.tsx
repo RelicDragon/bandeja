@@ -21,6 +21,7 @@ import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { formatGameTimeInTimezone, getClubTimezone, getUserTimezone } from '@/utils/gameTimeDisplay';
 import { formatBooktimeBookingWhen, resolveCourtForBooking } from './booktimeBookingUtils';
 import {
+  buildLinkBookingSnapshot,
   buildLinkBookingToGameUpdate,
   gameNeedsDatetimeUpdateForLink,
   isRecommendedLinkTarget,
@@ -64,6 +65,11 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
     try {
       const update = buildLinkBookingToGameUpdate(game, booking, club, courtInfo.courtId);
       await gamesApi.update(game.id, update);
+      await gamesApi.patchBookings(game.id, { add: [booking.uuid] });
+      const snapshot = buildLinkBookingSnapshot(booking, club, courtInfo.courtId);
+      if (snapshot) {
+        await gamesApi.putBookingSnapshots(game.id, { snapshots: [snapshot] });
+      }
       toast.success(t('club.booktime.linkGameSuccess'));
       onOpenChange(false);
       onLinked();

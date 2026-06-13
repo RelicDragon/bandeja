@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Home } from 'lucide-react';
+import { Home, X } from 'lucide-react';
 import { CourtOccupancyRing } from './CourtOccupancyRing';
 import { resolveCourtNameParts } from '@/utils/courtDisplayName';
 import type { Court } from '@/types';
@@ -95,9 +95,22 @@ export const CourtSelectionCard = memo(function CourtSelectionCard({
         </div>
       ) : (
         <div
-          className="rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 shrink-0"
+          className={`relative flex shrink-0 items-center justify-center rounded-full border-2 border-dashed ${
+            selected
+              ? 'border-primary-500 dark:border-primary-400'
+              : 'border-gray-300 dark:border-gray-600'
+          }`}
           style={{ width: RING_SIZE, height: RING_SIZE }}
-        />
+        >
+          {selected ? (
+            <X
+              size={Math.round(RING_SIZE * 0.45)}
+              strokeWidth={3}
+              className="text-primary-600 dark:text-primary-400"
+              aria-hidden
+            />
+          ) : null}
+        </div>
       )}
     </button>
   );

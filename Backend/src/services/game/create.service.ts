@@ -13,8 +13,16 @@ import { normalizeGameFormatPatch } from '../../utils/gameFormat/normalizeGameFo
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
-import { rollbackBooktimeBookingOnCreateFailure } from '../booktime/booktimeBookingRollback.service';
+import { rollbackBooktimeBookingsOnCreateFailure } from '../booktime/booktimeBookingRollback.service';
 import { GameCourtService } from '../gameCourt/gameCourt.service';
+import {
+  assertNoLegacyExternalBookingId,
+  insertJoinRows,
+  parseBookingSnapshots,
+  parseExternalBookingIds,
+  gameExternalBookingInclude,
+  serializeLinkedBooking,
+} from './gameExternalBooking.service';
 
 function normalizeCreateCourtIds(data: { courtIds?: unknown }): string[] | null {
   if (!Array.isArray(data.courtIds)) return null;
@@ -60,51 +68,46 @@ async function resolveCreateCourts(
 
 export class GameCreateService {
   static async createGame(data: any, userId: string, jwtIsAdmin: boolean = false) {
-    const externalBookingId =
-      typeof data.externalBookingId === 'string' && data.externalBookingId.trim()
-        ? data.externalBookingId.trim()
-        : null;
+    assertNoLegacyExternalBookingId(data);
+
+    const externalBookingIds = parseExternalBookingIds(data);
+    const bookingSnapshots = parseBookingSnapshots(data);
     const clubIdForRollback = typeof data.clubId === 'string' ? data.clubId.trim() : '';
     const shouldRollbackBooktime =
-      data.rollbackBooktimeBooking === true && !!externalBookingId && !!clubIdForRollback;
+      data.rollbackBooktimeBooking === true && externalBookingIds.length > 0 && !!clubIdForRollback;
 
-    let externalBookingProvider: ClubIntegrationType | null = null;
-    if (externalBookingId) {
+    if (externalBookingIds.length > 0) {
       const provider = data.externalBookingProvider;
-      if (provider !== ClubIntegrationType.BOOKTIME) {
-        throw new ApiError(400, 'externalBookingProvider must be BOOKTIME when externalBookingId is set');
-      }
-      externalBookingProvider = ClubIntegrationType.BOOKTIME;
-      const conflict = await prisma.game.findFirst({
-        where: { externalBookingId },
-        select: { id: true },
-      });
-      if (conflict) {
-        throw new ApiError(400, 'This court booking is already linked to another game');
+      if (provider !== undefined && provider !== ClubIntegrationType.BOOKTIME) {
+        throw new ApiError(400, 'externalBookingProvider must be BOOKTIME when externalBookingIds is set');
       }
     }
-    const hasBookedCourtCreate = externalBookingId ? true : Boolean(data.hasBookedCourt);
+
+    const hasBookedCourtCreate =
+      externalBookingIds.length > 0 ? true : Boolean(data.hasBookedCourt);
+    const timeOverride = data.timeOverride === true;
+    const externalBookingProvider =
+      externalBookingIds.length > 0 ? ClubIntegrationType.BOOKTIME : null;
 
     try {
-      return await GameCreateService.createGameBody(
-        data,
-        userId,
-        jwtIsAdmin,
-        externalBookingId,
+      return await GameCreateService.createGameBody(data, userId, jwtIsAdmin, {
+        externalBookingIds,
+        bookingSnapshots,
         externalBookingProvider,
-        hasBookedCourtCreate
-      );
+        hasBookedCourtCreate,
+        timeOverride,
+      });
     } catch (err) {
       if (shouldRollbackBooktime) {
-        const rollback = await rollbackBooktimeBookingOnCreateFailure(
+        const booktimeRollback = await rollbackBooktimeBookingsOnCreateFailure(
           userId,
           clubIdForRollback,
-          externalBookingId!
+          externalBookingIds,
         );
         if (err instanceof ApiError) {
           throw new ApiError(err.statusCode, err.message, err.isOperational, {
             ...err.data,
-            booktimeRollback: rollback,
+            booktimeRollback,
           });
         }
       }
@@ -116,9 +119,13 @@ export class GameCreateService {
     data: any,
     userId: string,
     jwtIsAdmin: boolean,
-    externalBookingId: string | null,
-    externalBookingProvider: ClubIntegrationType | null,
-    hasBookedCourtCreate: boolean
+    booking: {
+      externalBookingIds: string[];
+      bookingSnapshots: ReturnType<typeof parseBookingSnapshots>;
+      externalBookingProvider: ClubIntegrationType | null;
+      hasBookedCourtCreate: boolean;
+      timeOverride: boolean;
+    },
   ) {
     // Validate currency if provided
     if (data.priceCurrency && !SUPPORTED_CURRENCIES.includes(data.priceCurrency)) {
@@ -334,7 +341,8 @@ export class GameCreateService {
         ? data.affectsRating
         : true;
 
-    const createdGame = await prisma.game.create({
+    const createdGame = await prisma.$transaction(async (tx) => {
+      const game = await tx.game.create({
       data: {
         entityType: entityType,
         sport,
@@ -358,9 +366,8 @@ export class GameCreateService {
         anyoneCanInvite: data.anyoneCanInvite || false,
         resultsByAnyone: entityType === EntityType.TOURNAMENT ? false : (data.resultsByAnyone || false),
         allowDirectJoin: data.allowDirectJoin || false,
-        hasBookedCourt: hasBookedCourtCreate,
-        externalBookingId,
-        externalBookingProvider,
+        hasBookedCourt: booking.hasBookedCourtCreate,
+        timeOverride: booking.timeOverride,
         afterGameGoToBar: data.afterGameGoToBar || false,
         hasFixedTeams: (formatNorm.hasFixedTeams as boolean | undefined) ?? hasFixedTeams,
         allowUserInMultipleTeams:
@@ -449,6 +456,19 @@ export class GameCreateService {
       },
     });
 
+      if (booking.externalBookingIds.length > 0 && booking.externalBookingProvider) {
+        await insertJoinRows(
+          tx,
+          game.id,
+          booking.externalBookingIds,
+          booking.externalBookingProvider,
+          booking.bookingSnapshots,
+        );
+      }
+
+      return game;
+    });
+
     await GameReadinessService.updateGameReadiness(createdGame.id);
     await touchLastCreatedSport(userId, sport);
 
@@ -511,6 +531,7 @@ export class GameCreateService {
           },
           orderBy: { order: 'asc' },
         },
+        externalBookings: gameExternalBookingInclude,
       },
     });
 
@@ -523,8 +544,10 @@ export class GameCreateService {
     if (!finalGame) return finalGame;
 
     const gameSport = finalGame.sport;
+    const { externalBookings, ...gameRest } = finalGame;
     return {
-      ...finalGame,
+      ...gameRest,
+      linkedBookings: externalBookings.map(serializeLinkedBooking),
       participants: finalGame.participants.map((participant) => ({
         ...participant,
         user: projectUserForSportContext(participant.user, gameSport),

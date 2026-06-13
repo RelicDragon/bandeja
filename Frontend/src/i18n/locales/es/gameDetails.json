@@ -19,8 +19,26 @@
       "general": "General",
       "when": "Cuándo",
       "where": "Dónde",
+      "locationTime": "Ubicación y horario",
       "price": "Precio",
       "eraseTime": "Quitar hora"
+    },
+    "locationTime": {
+      "tabLabel": "Ubicación y horario",
+      "partialSaveFailed": "Algunos cambios se guardaron, pero no se pudo actualizar {{step}}. Revise e inténtelo de nuevo.",
+      "saveStep": {
+        "gameFields": "ubicación u horario",
+        "bookings": "enlaces de reserva",
+        "snapshots": "detalles de reserva",
+        "courts": "pistas"
+      },
+      "unlinkNoCancelHint": "La reserva de pista en el club sigue activa — solo quitamos el vínculo con este partido.",
+      "unlinkSaveConfirmTitle": "¿Quitar enlaces de reserva?",
+      "unlinkSaveConfirmMessage": "Vas a desvincular {{count}} reserva(s) de este partido. Las reservas reales de pista no se cancelarán automáticamente."
+    },
+    "booktimeEdit": {
+      "activityTitle": "Guardando cambios…",
+      "activityStep2": "Actualizando partido…"
     },
     "navigateToClub": "Navegar al club",
     "openLeagueSeason": "Abrir temporada de liga",

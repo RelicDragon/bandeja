@@ -394,6 +394,7 @@ model Court {
   matches        Match[]
   courtSlotHolds CourtSlotHold[]
   booktimeBusySnapshots ClubBooktimeBusySnapshot[]
+  gameExternalBookings  GameExternalBooking[]
 
   @@index([clubId])
   @@index([isActive])
@@ -515,8 +516,7 @@ model Game {
   priceTotal             Float?
   priceType              PriceType           @default(NOT_KNOWN)
   priceCurrency          PriceCurrency?
-  externalBookingId      String?
-  externalBookingProvider ClubIntegrationType?
+  timeOverride           Boolean             @default(false)
   metadata               Json?
   lastMessagePreview     String?             @db.VarChar(500)
   createdAt              DateTime            @default(now())
@@ -547,6 +547,7 @@ model Game {
   photos                 GamePhoto[]
   mainPhoto              GamePhoto?           @relation("GameMainPhoto", fields: [mainPhotoId], references: [id], onDelete: SetNull)
   resultsArtifactJob     GameResultsArtifactJob?
+  externalBookings       GameExternalBooking[]
 
   @@index([clubId])
   @@index([courtId])
@@ -565,7 +566,25 @@ model Game {
   @@index([endTime])
   @@index([timeIsSet, courtId])
   @@index([mainPhotoId])
+}
+
+model GameExternalBooking {
+  id                      String              @id @default(cuid())
+  gameId                  String
+  externalBookingId       String
+  externalBookingProvider ClubIntegrationType @default(BOOKTIME)
+  courtId                 String?
+  bookingStart            DateTime?
+  bookingEnd              DateTime?
+  createdAt               DateTime            @default(now())
+  updatedAt               DateTime            @updatedAt
+
+  game  Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  court Court? @relation(fields: [courtId], references: [id], onDelete: SetNull)
+
+  @@unique([gameId, externalBookingId])
   @@index([externalBookingId])
+  @@index([gameId])
 }
 
 model GamePhoto {

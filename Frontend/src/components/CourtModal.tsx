@@ -146,7 +146,9 @@ export const CourtModal = ({
                       : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <div className="font-medium">{t('createGame.notBookedYet')}</div>
+                  <div className="font-medium">
+                    {t(entityType === 'BAR' ? 'createGame.dontSelectHall' : 'createGame.dontSelectCourt')}
+                  </div>
                 </button>
               )}
               {visibleCourts.map((court) => (

@@ -170,8 +170,8 @@ export const GameCard = ({
     });
   const timeDisplay = getTimeDisplay('time');
   const timeRangeDisplay = getTimeDisplay('timeRange');
-  const showConfirmedCourtBadge = gameHasConfirmedClubBooking(game);
   const linkedExternalBooking = gameHasLinkedExternalBooking(game);
+  const showConfirmedCourtBadge = gameHasConfirmedClubBooking(game) || linkedExternalBooking;
   const infoHintText = timeDisplay.hintText || timeRangeDisplay.hintText;
   const trainerParticipant =
     game.entityType === 'TRAINING' && game.trainerId

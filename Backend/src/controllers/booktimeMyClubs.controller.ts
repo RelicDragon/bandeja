@@ -16,14 +16,11 @@ export const dismissConnectHint = asyncHandler(async (req: AuthRequest, res: Res
   res.json({ success: true, data: user });
 });
 
-export const getLinkedGame = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const getLinkedGames = asyncHandler(async (req: AuthRequest, res: Response) => {
   const externalBookingId = req.params.externalBookingId;
   if (typeof externalBookingId !== 'string' || !externalBookingId.trim()) {
     throw new ApiError(400, 'externalBookingId is required');
   }
-  const game = await booktimeGameLinkService.findLinkedGameForUser(
-    req.userId!,
-    externalBookingId.trim()
-  );
-  res.json({ success: true, data: game });
+  const games = await booktimeGameLinkService.findLinkedGamesForBooking(externalBookingId.trim());
+  res.json({ success: true, data: games });
 });

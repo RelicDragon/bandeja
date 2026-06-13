@@ -8,6 +8,5 @@ export function gameHasConfirmedClubBooking(game: Game): boolean {
 }
 
 export function gameHasLinkedExternalBooking(game: Game): boolean {
-  if (!gameHasConfirmedClubBooking(game)) return false;
-  return Boolean(game.externalBookingId?.trim());
+  return (game.linkedBookings?.length ?? 0) > 0;
 }

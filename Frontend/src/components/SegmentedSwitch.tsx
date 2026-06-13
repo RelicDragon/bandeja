@@ -27,6 +27,8 @@ interface SegmentedSwitchProps {
   ariaLabel?: string;
   /** Stack options vertically (full-width rows). Default horizontal. */
   orientation?: 'horizontal' | 'vertical';
+  /** Max animated width (px) for active tab label when showOnlyActiveTabText. Default 96. */
+  activeLabelMaxWidth?: number;
 }
 
 export const SegmentedSwitch = ({
@@ -39,6 +41,7 @@ export const SegmentedSwitch = ({
   disabled = false,
   ariaLabel,
   orientation = 'horizontal',
+  activeLabelMaxWidth = 96,
 }: SegmentedSwitchProps) => {
   const isVertical = orientation === 'vertical';
   return (
@@ -113,10 +116,10 @@ export const SegmentedSwitch = ({
                 {showLabel && (
                   <motion.span
                     initial={isVertical ? { opacity: 0 } : { maxWidth: 0, opacity: 0 }}
-                    animate={isVertical ? { opacity: 1 } : { maxWidth: 96, opacity: 1 }}
+                    animate={isVertical ? { opacity: 1 } : { maxWidth: activeLabelMaxWidth, opacity: 1 }}
                     exit={isVertical ? { opacity: 0 } : { maxWidth: 0, opacity: 0 }}
                     transition={{ type: 'tween', duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-                    className={isVertical ? '' : 'overflow-hidden truncate whitespace-nowrap'}
+                    className={isVertical ? '' : 'overflow-hidden whitespace-nowrap'}
                   >
                     {tab.label}
                   </motion.span>

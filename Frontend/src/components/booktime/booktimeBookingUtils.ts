@@ -120,9 +120,9 @@ export function buildCreateGameSearchParams(
 ): URLSearchParams {
   const params = new URLSearchParams({
     clubId,
+    locationTimeMode: 'bookings',
+    bookingIds: booking.uuid,
     hasBookedCourt: '1',
-    externalBookingId: booking.uuid,
-    externalBookingProvider: 'BOOKTIME',
     startTime: booking.bookingStart,
     endTime: booking.bookingEnd,
   });

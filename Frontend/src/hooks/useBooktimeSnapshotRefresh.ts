@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { booktimeApi } from '@/api/booktime';
 import type { Club } from '@/types';
 import { BooktimeClient } from '@/integrations/booktime/client';
@@ -51,6 +51,8 @@ export function useBooktimeSnapshotRefresh(
     club?.id,
     enabled
   );
+
+  const dateKey = club ? formatClubDateKey(selectedDate, club) : null;
 
   const refreshSnapshot = useCallback(
     async (options: RefreshOptions = {}): Promise<boolean> => {
@@ -113,6 +115,17 @@ export function useBooktimeSnapshotRefresh(
     },
     [club, enabled, liveApiEnabled, selectedDate]
   );
+
+  useEffect(() => {
+    setBanner(null);
+    setLastFetchedAt(null);
+    inFlightRef.current = null;
+  }, [club?.id, dateKey, enabled]);
+
+  useEffect(() => {
+    if (!enabled || !club || club.integrationType !== 'BOOKTIME') return;
+    void refreshSnapshot();
+  }, [enabled, club?.id, dateKey, refreshSnapshot, club]);
 
   return {
     refreshSnapshot,

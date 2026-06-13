@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { X } from 'lucide-react';
+import { Check, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeLinkedGame } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
@@ -34,7 +35,23 @@ type Props = {
   onRefreshSnapshot?: (options?: { force?: boolean }) => Promise<boolean>;
   compact?: boolean;
   clubTimezone?: string | null;
+  selectable?: boolean;
+  selected?: boolean;
+  dimmed?: boolean;
+  disableDeselect?: boolean;
+  linkedGames?: BooktimeLinkedGame[];
+  onToggleSelect?: () => void;
 };
+
+function LinkedGamesPills({ games, t }: { games: BooktimeLinkedGame[]; t: (key: string, opts?: object) => string }) {
+  if (games.length === 0) return null;
+  const labels = games.map((g) => g.name?.trim() || g.id).join(', ');
+  return (
+    <p className="text-[10px] text-primary-700 dark:text-primary-300 mt-1">
+      {t('createGame.locationTime.alsoUsedIn', { games: labels })}
+    </p>
+  );
+}
 
 export function BooktimeBookingRow({
   booking,
@@ -46,6 +63,12 @@ export function BooktimeBookingRow({
   onRefreshSnapshot,
   compact = false,
   clubTimezone,
+  selectable = false,
+  selected = false,
+  dimmed = false,
+  disableDeselect = false,
+  linkedGames: linkedGamesProp,
+  onToggleSelect,
 }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -53,7 +76,11 @@ export function BooktimeBookingRow({
   const navigate = useNavigate();
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelBusy, setCancelBusy] = useState(false);
-  const { linkedGame, reload: reloadLinkedGame } = useBooktimeLinkedGame(booking.uuid);
+  const { linkedGame, linkedGames: fetchedLinkedGames, reload: reloadLinkedGame } = useBooktimeLinkedGame(
+    booking.uuid,
+    !selectable,
+  );
+  const linkedGames = linkedGamesProp ?? fetchedLinkedGames;
   const [cancelDoneBanner, setCancelDoneBanner] = useState<BooktimeLinkedGame | null>(null);
   const courtInfo = resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt'));
   const cancellable = canCancelByPolicy(booking.bookingStart, allowedHoursToCancel, clubTimezone);
@@ -89,6 +116,58 @@ export function BooktimeBookingRow({
     }
   };
 
+  const rowContent = (
+    <div className="min-w-0 flex-1">
+      {showClubName ? (
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{club.clubName}</p>
+      ) : null}
+      <CourtDisplayName
+        name={courtInfo.courtName}
+        integrationName={courtInfo.integrationCourtName}
+        primaryClassName="text-sm font-medium text-gray-900 dark:text-white truncate"
+        secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400 truncate"
+      />
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings, t })}
+      </p>
+      <LinkedGamesPills games={linkedGames} t={t} />
+      {!selectable && linkedGame ? <BooktimeLinkedGameLink game={linkedGame} /> : null}
+    </div>
+  );
+
+  if (selectable) {
+    return (
+      <li>
+        <motion.button
+          type="button"
+          whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
+          disabled={dimmed || (selected && disableDeselect)}
+          onClick={onToggleSelect}
+          className={`w-full rounded-lg border px-3 py-2.5 flex items-center gap-3 text-left transition-opacity ${
+            selected
+              ? 'border-primary-400 dark:border-primary-600 bg-primary-50/50 dark:bg-primary-950/30'
+              : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
+          } ${dimmed ? 'opacity-50 cursor-default' : ''} ${selected && disableDeselect ? 'cursor-default' : ''}`}
+        >
+          <span
+            className={`h-5 w-5 rounded-full border flex items-center justify-center shrink-0 ${
+              selected
+                ? 'border-primary-500 bg-primary-500 text-white'
+                : 'border-gray-300 dark:border-gray-600'
+            }`}
+          >
+            {selected ? (
+              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 28 }}>
+                <Check size={12} />
+              </motion.span>
+            ) : null}
+          </span>
+          {rowContent}
+        </motion.button>
+      </li>
+    );
+  }
+
   return (
     <>
       <li
@@ -110,40 +189,22 @@ export function BooktimeBookingRow({
             </button>
           </div>
         ) : null}
-        <div className="min-w-0">
-          {showClubName ? (
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{club.clubName}</p>
-          ) : null}
-          <CourtDisplayName
-            name={courtInfo.courtName}
-            integrationName={courtInfo.integrationCourtName}
-            primaryClassName="text-sm font-medium text-gray-900 dark:text-white truncate"
-            secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400 truncate"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings, t })}
-          </p>
-          {linkedGame ? <BooktimeLinkedGameLink game={linkedGame} /> : null}
-        </div>
+        {rowContent}
         {!cancelDoneBanner ? (
           <div className="flex flex-wrap gap-2">
-            {!linkedGame ? (
-              <>
-                <BooktimeLinkGameButton
-                  booking={booking}
-                  club={club}
-                  compact={compact}
-                  onLinked={() => void reloadLinkedGame()}
-                />
-                <button
-                  type="button"
-                  onClick={openCreateGame}
-                  className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-                >
-                  {t('club.booktime.createGameHere')}
-                </button>
-              </>
-            ) : null}
+            <BooktimeLinkGameButton
+              booking={booking}
+              club={club}
+              compact={compact}
+              onLinked={() => void reloadLinkedGame()}
+            />
+            <button
+              type="button"
+              onClick={openCreateGame}
+              className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+            >
+              {t('club.booktime.createGameHere')}
+            </button>
             {cancellable ? (
               <button
                 type="button"
@@ -167,7 +228,7 @@ export function BooktimeBookingRow({
         onClose={() => !cancelBusy && setCancelOpen(false)}
         title={t('club.booktime.cancelConfirmTitle')}
         message={
-          linkedGame
+          linkedGames.length > 0
             ? t('club.booktime.cancelConfirmLinkedBody', { hours: allowedHoursToCancel })
             : t('club.booktime.cancelConfirmBody', { hours: allowedHoursToCancel })
         }

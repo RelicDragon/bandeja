@@ -118,6 +118,7 @@
       "linkGameRescheduleBody": "Este partido tiene otra hora. Vincularlo lo moverá a {{when}} y avisará a los participantes.",
       "linkGameRescheduleConfirm": "Actualizar y vincular",
       "orphanBookingNotice": "Es posible que la pista ya no esté reservada",
+      "orphanBookingNoticeMulti": "{{count}} reservas vinculadas pueden ya no estar activas",
       "connectedClubsPageTitle": "Clubs conectados y reservas",
       "connectedClubsCardTitle": "Reservas de clubs",
       "connectedClubsCardHint": "Conecta clubs locales, gestiona reservas y comparte disponibilidad.",

@@ -1,8 +1,11 @@
 # Plan: Booktime create-game — book court + unified flow
 
+> **Superseded in part** by [PLAN_GAME_BOOKING_MULTI_LINK.md](./PLAN_GAME_BOOKING_MULTI_LINK.md) (2026-06): many-to-many game↔booking links, segmented **Time slots | Bookings** UI (replaces `BooktimeReservationCard` toggle), multi-court confirm, `externalBookingIds[]` + `linkedBookings[]`, dedicated `PATCH /games/:id/bookings`. Sections marked **(superseded)** below defer to the multi-link plan. Single-book `externalBookingId` on `Game` is removed — no shim.
+
 Booktime clubs only. Consolidate court booking into create-game with a toggle, confirm modal, and animated two-step submit.
 
-**Companion:** [PLAN_CLUB_BOOKING_UX.md](./PLAN_CLUB_BOOKING_UX.md) — player booking = game record; grid semantics; “reserve when you create a game” copy.
+**Companion:** [PLAN_CLUB_BOOKING_UX.md](./PLAN_CLUB_BOOKING_UX.md) — player booking = game record; grid semantics; “reserve when you create a game” copy.  
+**Multi-link:** [PLAN_GAME_BOOKING_MULTI_LINK.md](./PLAN_GAME_BOOKING_MULTI_LINK.md) — target model, API contract, phased rollout.
 
 **Canonical book implementation:** `Frontend/src/integrations/booktime/bookFlow.ts` (`confirmBooktimeBooking`, `BooktimeSlotTakenError`). Do not duplicate booking logic.
 
@@ -18,8 +21,8 @@ Booktime clubs only. Consolidate court booking into create-game with a toggle, c
 
 ### Non-goals (v1)
 
-- Edit-game re-booking or changing external booking on edit.
-- Tournament / league / training / bar flows via Booktime API (see entity-type decision).
+- Edit-game re-booking or changing external booking on edit. **(superseded)** — edit flow in [PLAN_GAME_BOOKING_MULTI_LINK.md](./PLAN_GAME_BOOKING_MULTI_LINK.md) Phase 6.
+- Tournament / league / training / bar flows via Booktime API (see entity-type decision). **(superseded)** — create: `GAME` | `TRAINING` | `TOURNAMENT`; edit-only `LEAGUE` via planner; `BAR` / `LEAGUE_SEASON` out of scope. Guard: `supportsClubBookingFlow` in `Frontend/shared/gameBooking/`.
 - Standalone “book a court” product or booking wizard outside game flows.
 - Multi-court Booktime API booking (`MultipleCourtsSelector` extra courts stay in-app planned only).
 
@@ -83,7 +86,9 @@ Create-game time selection stays **select only**; booking runs on Confirm in the
 
 ---
 
-## 2. “Book court” switch
+## 2. “Book court” switch **(superseded)**
+
+> Replaced by segmented **Time slots | Bookings** + court hint (no toggle). See [PLAN_GAME_BOOKING_MULTI_LINK.md § Create Game UX](./PLAN_GAME_BOOKING_MULTI_LINK.md#create-game-ux-target).
 
 **Visibility:**
 
@@ -450,7 +455,9 @@ await executeCreateGame();
 
 ---
 
-## 8. Backend / persistence
+## 8. Backend / persistence **(superseded)**
+
+> Target: `GameExternalBooking` join table, `externalBookingIds[]` on create, `linkedBookings[]` on read, `PATCH /games/:id/bookings`, `timeOverride` column. Hard-remove `Game.externalBookingId`. Contract types: `Frontend/shared/gameBooking/contracts.ts` (FE/BE parity). See [PLAN_GAME_BOOKING_MULTI_LINK.md](./PLAN_GAME_BOOKING_MULTI_LINK.md) Phase 1.
 
 | Topic | Current behavior | Plan |
 |-------|------------------|------|
@@ -461,7 +468,7 @@ await executeCreateGame();
 
 ### Rollback policy (recommended)
 
-**Auto-cancel** via `cancelBooktimeBooking` if `gamesApi.create` fails after successful book; show error; user stays on create-game. Alternative (leave booking + orphan notice) is worse UX for the unified flow.
+**Auto-cancel** via `cancelBooktimeBooking` if `gamesApi.create` fails after successful book; show error; user stays on create-game. Alternative (leave booking + orphan notice) is worse UX for the unified flow. **(superseded)** — cancel all IDs from **this create attempt** (`string[]`); see multi-link plan locked decision #1 / #15.
 
 ---
 
@@ -590,7 +597,7 @@ Update `Frontend/e2e/specs/games/create-game-fields.spec.ts` — overlap tests (
 | 1 | Switch default when connected | **ON** |
 | 2 | `AvailabilitySheet` | **Browse-only** (slots visible; CTA to create-game, no API book) |
 | 3 | Rollback if game create fails | **Auto-cancel** Booktime booking |
-| 4 | Entity types | **GAME only** in v1 |
+| 4 | Entity types | **GAME only** in v1 **(superseded)** → `GAME` \| `TRAINING` \| `TOURNAMENT` create; `LEAGUE` edit-only (`supportsClubBookingFlow`) |
 | 5 | Names in booking section | **Extend `UserClubBooktimeAuth`** at connect |
 | 6 | Overlap gate when book court ON | **Skip** |
 | 7 | Occupancy overlay when book court ON | **Hide** |
