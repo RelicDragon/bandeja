@@ -1,3 +1,38 @@
 {
-  "type": "commonjs"
+  "name": "@bandeja/shared",
+  "version": "1.0.0",
+  "description": "Shared Frontend/Backend modules",
+  "type": "commonjs",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    "./booking": {
+      "types": "./dist/booking/index.d.ts",
+      "default": "./dist/booking/index.js"
+    },
+    "./booking/*": {
+      "types": "./dist/booking/*.d.ts",
+      "default": "./dist/booking/*.js"
+    },
+    "./clubIntegration": {
+      "types": "./dist/clubIntegration.d.ts",
+      "default": "./dist/clubIntegration.js"
+    },
+    "./gameBooking/*": {
+      "types": "./dist/gameBooking/*.d.ts",
+      "default": "./dist/gameBooking/*.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "default": "./dist/*.js"
+    }
+  },
+  "scripts": {
+    "build": "npx -p typescript@6.0.3 tsc"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
 }

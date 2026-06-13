@@ -54,6 +54,7 @@ export default defineConfig(() => ({
     alias: {
       '@': path.resolve(__dirname, './src'),
       '@shared': path.resolve(__dirname, './shared'),
+      '@bandeja/shared': path.resolve(__dirname, './shared'),
       '@backend': path.resolve(__dirname, '../Backend/src'),
       '@bandeja/chat-contract': path.resolve(__dirname, '../packages/chat-contract/src/index.ts'),
     },
@@ -61,7 +62,7 @@ export default defineConfig(() => ({
   test: {
     server: {
       deps: {
-        inline: ['@backend/sport/sportRegistry', '@bandeja/chat-contract'],
+        inline: ['@backend/sport/sportRegistry', '@bandeja/chat-contract', '@bandeja/shared'],
       },
     },
   },

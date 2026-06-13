@@ -1,5 +1,5 @@
 import { ClubIntegrationType } from '@prisma/client';
-import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@shared/gameBooking/booktimeSnapshotFreshness';
+import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@bandeja/shared/gameBooking/booktimeSnapshotFreshness';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { UNASSIGNED_COURT_KEY } from './clubScheduleConstants';

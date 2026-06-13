@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest';
 import {
   computeFreeSlotsForCourt,
   deriveBusyFromAvailableSlots,
@@ -12,34 +13,39 @@ const club = {
 
 const dateKey = '2026-06-12';
 
-function assert(cond: boolean, msg: string): void {
-  if (!cond) {
-    console.error('FAIL:', msg);
-    process.exit(1);
-  }
-}
+describe('slots availability helpers', () => {
+  it('derives busy gaps from available slot ranges', () => {
+    const ranges = ['08:00-10:00', '12:00-19:00', '20:00-23:00'];
+    const busy = deriveBusyFromAvailableSlots(ranges, dateKey, club);
+    expect(busy).toHaveLength(2);
+  });
 
-const ranges = ['08:00-10:00', '12:00-19:00', '20:00-23:00'];
-const busy = deriveBusyFromAvailableSlots(ranges, dateKey, club);
-assert(busy.length === 2, 'two internal gaps marked busy');
+  it('computes free slot starts for 60m duration', () => {
+    const ranges = ['08:00-10:00', '12:00-19:00', '20:00-23:00'];
+    const busy = deriveBusyFromAvailableSlots(ranges, dateKey, club);
+    const free60 = computeFreeSlotsForCourt(ranges, busy, 60, club, dateKey);
+    expect(free60).toContain('08:00');
+    expect(free60).toContain('12:00');
+    expect(free60).not.toContain('10:00');
+    expect(free60).not.toContain('19:00');
+  });
 
-const free60 = computeFreeSlotsForCourt(ranges, busy, 60, club, dateKey);
-assert(free60.includes('08:00'), '08:00 start for 60m');
-assert(free60.includes('12:00'), '12:00 start for 60m');
-assert(!free60.includes('10:00'), 'gap start hidden');
-assert(!free60.includes('19:00'), 'second gap start hidden');
+  it('computes free slot starts for 120m duration', () => {
+    const ranges = ['08:00-10:00', '12:00-19:00', '20:00-23:00'];
+    const busy = deriveBusyFromAvailableSlots(ranges, dateKey, club);
+    const free120 = computeFreeSlotsForCourt(ranges, busy, 120, club, dateKey);
+    expect(free120).toContain('08:00');
+    expect(free120).not.toContain('09:00');
+    expect(free120).toContain('12:00');
+  });
 
-const free120 = computeFreeSlotsForCourt(ranges, busy, 120, club, dateKey);
-assert(free120.includes('08:00'), '08:00 fits 120m in first range');
-assert(!free120.includes('09:00'), '09:00 cannot fit 120m in first range');
-assert(free120.includes('12:00'), '12:00 fits 120m in middle range');
-
-const union = unionAvailableSlotRanges([
-  { availableSlots: ['08:00-10:00', '12:00-14:00'] },
-  { availableSlots: ['09:00-11:00', '15:00-18:00'] },
-]);
-assert(union.includes('08:00-11:00'), 'union merges overlaps');
-assert(union.includes('12:00-14:00'), 'union keeps separate block');
-assert(union.includes('15:00-18:00'), 'union keeps second court block');
-
-console.log('ok: slots.availability.test.ts');
+  it('unions overlapping available slot ranges across courts', () => {
+    const union = unionAvailableSlotRanges([
+      { availableSlots: ['08:00-10:00', '12:00-14:00'] },
+      { availableSlots: ['09:00-11:00', '15:00-18:00'] },
+    ]);
+    expect(union).toContain('08:00-11:00');
+    expect(union).toContain('12:00-14:00');
+    expect(union).toContain('15:00-18:00');
+  });
+});

@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { bookingProviderError as pkgBookingProviderError } from '@bandeja/shared/booking';
+import { BOOKTIME_SNAPSHOT_FRESH_MS as pkgBooktimeSnapshotFreshMs } from '@bandeja/shared/gameBooking/booktimeSnapshotFreshness';
+import { supportsClubBookingFlow as pkgSupportsClubBookingFlow } from '@bandeja/shared/gameBooking/supportsClubBookingFlow';
 import { deriveBallsInGamesFromScoring } from './deriveBallsInGames';
 import { GAME_FORMAT_UPDATE_KEYS } from './gameFormatUpdateKeys';
 
@@ -66,15 +69,14 @@ function testGameBookingSharedParity(): void {
 }
 
 function testBookingSharedParity(): void {
-  for (const file of ['types.ts', 'index.ts']) {
-    const feSrc = readFileSync(join(feSharedRoot, 'booking', file), 'utf8');
-    const beSrc = readFileSync(join(__dirname, 'booking', file), 'utf8');
-    assert.equal(
-      normalizeSharedSource(feSrc),
-      normalizeSharedSource(beSrc),
-      `booking/${file} FE/BE source parity`,
-    );
-  }
+  assert.equal(pkgBooktimeSnapshotFreshMs, 60_000);
+  assert.deepEqual(
+    pkgBookingProviderError('SlotTaken', 'taken'),
+    { code: 'SlotTaken', message: 'taken' },
+  );
+  assert.equal(pkgSupportsClubBookingFlow('GAME'), true);
+  assert.equal(pkgSupportsClubBookingFlow('LEAGUE'), false);
+  assert.equal(pkgSupportsClubBookingFlow('LEAGUE', 'edit'), true);
 }
 
 function run(): void {

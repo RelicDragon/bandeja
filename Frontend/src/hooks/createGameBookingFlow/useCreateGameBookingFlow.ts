@@ -15,7 +15,7 @@ import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
-import { isBooktimeClub } from '@shared/clubIntegration';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { assembleCreateGameBookingFields } from './assembleCreateGameBookingFields';
@@ -109,7 +109,7 @@ export function useCreateGameBookingFlow({
   const [pendingGameStartTime, setPendingGameStartTime] = useState<string | null>(null);
 
   const clubBookingFlowActive =
-    isBooktimeClub(selectedClubData) &&
+    clubHasBookingIntegration(selectedClubData) &&
     supportsClubBookingFlow(entityType, 'create') &&
     Boolean(selectedClub);
   const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(
@@ -183,7 +183,7 @@ export function useCreateGameBookingFlow({
     selectedCourtId: selectedCourt === 'notBooked' ? null : selectedCourt,
     enabled:
       entityType !== 'BAR' &&
-      isBooktimeClub(selectedClubData) &&
+      clubHasBookingIntegration(selectedClubData) &&
       !needsBooktimeAuth &&
       (locationTimeMode !== 'timeSlots' || !willBookOnCreate || Boolean(booktimeAuth?.connected)),
   });

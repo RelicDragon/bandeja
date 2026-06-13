@@ -8,7 +8,7 @@ import { bookingProviderError as feBookingProviderError } from './booking/types'
 import { deriveBallsInGamesFromScoring as beDeriveBallsInGames } from '@backend/shared/deriveBallsInGames';
 import { deriveGameTimeFromBookings as beDeriveGameTime } from '@backend/shared/gameBooking/deriveGameTimeFromBookings';
 import { GAME_FORMAT_UPDATE_KEYS as beFormatKeys } from '@backend/shared/gameFormatUpdateKeys';
-import { bookingProviderError as beBookingProviderError } from '@backend/shared/booking/types';
+import { bookingProviderError as pkgBookingProviderError } from '@bandeja/shared/booking';
 
 describe('shared module FE/BE parity', () => {
   it('parseBooktimeIntegrationConfig matches backend export', () => {
@@ -59,9 +59,9 @@ describe('shared module FE/BE parity', () => {
     expect(feDeriveGameTime([])).toEqual(beDeriveGameTime([]));
   });
 
-  it('bookingProviderError matches backend export', () => {
+  it('bookingProviderError matches @bandeja/shared export', () => {
     expect(feBookingProviderError('SlotTaken', 'taken')).toEqual(
-      beBookingProviderError('SlotTaken', 'taken'),
+      pkgBookingProviderError('SlotTaken', 'taken'),
     );
   });
 });

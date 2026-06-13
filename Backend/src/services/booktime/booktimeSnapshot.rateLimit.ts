@@ -1,4 +1,4 @@
-import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@shared/gameBooking/booktimeSnapshotFreshness';
+import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@bandeja/shared/gameBooking/booktimeSnapshotFreshness';
 import { ApiError } from '../../utils/ApiError';
 
 type Bucket = { count: number; resetAt: number };
