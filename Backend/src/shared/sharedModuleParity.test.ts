@@ -54,7 +54,7 @@ function testGameFormatUpdateKeysParity(): void {
 }
 
 function testGameBookingSharedParity(): void {
-  for (const file of ['supportsClubBookingFlow.ts', 'deriveGameTimeFromBookings.ts', 'contracts.ts']) {
+  for (const file of ['deriveGameTimeFromBookings.ts', 'contracts.ts']) {
     const feSrc = readFileSync(join(feSharedRoot, 'gameBooking', file), 'utf8');
     const beSrc = readFileSync(join(__dirname, 'gameBooking', file), 'utf8');
     assert.equal(
@@ -65,11 +65,24 @@ function testGameBookingSharedParity(): void {
   }
 }
 
+function testBookingSharedParity(): void {
+  for (const file of ['types.ts', 'index.ts']) {
+    const feSrc = readFileSync(join(feSharedRoot, 'booking', file), 'utf8');
+    const beSrc = readFileSync(join(__dirname, 'booking', file), 'utf8');
+    assert.equal(
+      normalizeSharedSource(feSrc),
+      normalizeSharedSource(beSrc),
+      `booking/${file} FE/BE source parity`,
+    );
+  }
+}
+
 function run(): void {
   testDeriveBallsInGamesSourceParity();
   testDeriveBallsInGamesBehavior();
   testGameFormatUpdateKeysParity();
   testGameBookingSharedParity();
+  testBookingSharedParity();
   console.log('sharedModuleParity.test.ts: all passed');
 }
 

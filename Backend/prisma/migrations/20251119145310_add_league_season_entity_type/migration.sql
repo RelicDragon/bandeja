@@ -1,2 +1,0 @@
--- AlterEnum
-ALTER TYPE "EntityType" ADD VALUE 'LEAGUE_SEASON';

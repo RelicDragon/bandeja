@@ -9,19 +9,13 @@ import {
   mapAvailableSlotsToSnapshotCourts,
   type BooktimeSnapshotCourtPayload,
 } from '@/integrations/booktime/slots';
+import { getBooktimeCompanyId, isBooktimeClub } from '@shared/clubIntegration';
 
 export type BooktimeSnapshotBanner = 'updating' | 'noSyncToday' | 'scoutPoolEmpty' | null;
 
 type RefreshOptions = {
   force?: boolean;
 };
-
-function booktimeCompanyId(club: Club): string | null {
-  const raw = club.integrationConfig;
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  const companyId = (raw as Record<string, unknown>).companyId;
-  return typeof companyId === 'string' && companyId.trim() ? companyId.trim() : null;
-}
 
 function requestStatus(err: unknown): number {
   return err && typeof err === 'object' && 'status' in err ? Number((err as { status: number }).status) : 0;
@@ -56,8 +50,8 @@ export function useBooktimeSnapshotRefresh(
 
   const refreshSnapshot = useCallback(
     async (options: RefreshOptions = {}): Promise<boolean> => {
-      if (!enabled || !club || club.integrationType !== 'BOOKTIME') return false;
-      const companyId = booktimeCompanyId(club);
+      if (!enabled || !club || !isBooktimeClub(club)) return false;
+      const companyId = getBooktimeCompanyId(club);
       if (!companyId) return false;
 
       if (inFlightRef.current) return inFlightRef.current;
@@ -123,7 +117,7 @@ export function useBooktimeSnapshotRefresh(
   }, [club?.id, dateKey, enabled]);
 
   useEffect(() => {
-    if (!enabled || !club || club.integrationType !== 'BOOKTIME') return;
+    if (!enabled || !club || !isBooktimeClub(club)) return;
     void refreshSnapshot();
   }, [enabled, club?.id, dateKey, refreshSnapshot, club]);
 

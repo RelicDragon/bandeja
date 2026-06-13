@@ -1,6 +1,5 @@
+import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@shared/gameBooking/booktimeSnapshotFreshness';
 import { ApiError } from '../../utils/ApiError';
-
-const SNAPSHOT_PUT_RATE_LIMIT_MS = 60 * 1000;
 
 type Bucket = { count: number; resetAt: number };
 
@@ -17,7 +16,7 @@ export function assertSnapshotPutRateLimit(
   const now = Date.now();
   const bucket = putBuckets.get(key);
   if (!bucket || now >= bucket.resetAt) {
-    putBuckets.set(key, { count: 1, resetAt: now + SNAPSHOT_PUT_RATE_LIMIT_MS });
+    putBuckets.set(key, { count: 1, resetAt: now + BOOKTIME_SNAPSHOT_FRESH_MS });
     return;
   }
   if (bucket.count >= 1) {

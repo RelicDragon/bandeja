@@ -24,7 +24,7 @@ import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
-import { supportsClubBookingFlow } from '@/components/gameLocationTime/supportsClubBookingFlow';
+import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';

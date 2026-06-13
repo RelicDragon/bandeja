@@ -1,13 +1,9 @@
 import type { Club, EntityType, Game } from '@/types';
-import { supportsClubBookingFlow } from './supportsClubBookingFlow';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
+import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import type { LocationTimeMode } from './LocationTimeMode';
 
-export function clubHasBookingIntegration(club: Club | undefined): boolean {
-  return (
-    club?.integrationType === 'BOOKTIME' &&
-    Boolean(club.integrationConfig?.companyId?.trim())
-  );
-}
+export { clubHasBookingIntegration };
 
 export function resolveLocationTimeUiMode(args: {
   entityType: EntityType;

@@ -1,9 +1,10 @@
 import { ClubIntegrationType } from '@prisma/client';
+import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@shared/gameBooking/booktimeSnapshotFreshness';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { UNASSIGNED_COURT_KEY } from './clubScheduleConstants';
 
-export const BOOKTIME_SNAPSHOT_FRESH_MS = 60 * 1000;
+export { BOOKTIME_SNAPSHOT_FRESH_MS };
 
 export type BooktimeBusySlot = {
   startTime: string;

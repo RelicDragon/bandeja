@@ -1,10 +1,9 @@
 import type { Club } from '@/types';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
+import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@shared/gameBooking/booktimeSnapshotFreshness';
 
 import { BOOKTIME_FALLBACK_DURATIONS_MINUTES } from './durations';
 import { booktimeLocalIsoToDate } from './localTime';
-
-export const BOOKTIME_SNAPSHOT_FRESH_MS = 60 * 1000;
 export const BOOKTIME_CONFIRM_RECHECK_MS = 60 * 1000;
 export const BOOKTIME_SLOT_STEP_MINUTES = 60;
 export const BOOKTIME_BOOKING_DURATIONS = BOOKTIME_FALLBACK_DURATIONS_MINUTES;

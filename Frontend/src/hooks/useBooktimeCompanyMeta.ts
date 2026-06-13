@@ -5,6 +5,7 @@ import { BooktimeClient } from '@/integrations/booktime/client';
 import { loadBooktimeCompany } from '@/integrations/booktime/bookFlow';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { clubLocalDateString } from '@/utils/clubAdmin/scheduleTime';
+import { getBooktimeCompanyId } from '@shared/clubIntegration';
 
 export const DEFAULT_BOOKABLE_DAYS = 14;
 
@@ -14,8 +15,7 @@ export function useBooktimeCompanyMeta(club: Club | undefined, enabled: boolean)
   const [currency, setCurrency] = useState('RSD');
   const [loading, setLoading] = useState(false);
 
-  const companyId =
-    club?.integrationType === 'BOOKTIME' ? club.integrationConfig?.companyId?.trim() : undefined;
+  const companyId = getBooktimeCompanyId(club) ?? undefined;
 
   useEffect(() => {
     if (!enabled || !companyId) {

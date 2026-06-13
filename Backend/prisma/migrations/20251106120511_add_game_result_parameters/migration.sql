@@ -1,5 +1,0 @@
--- AlterTable
-ALTER TABLE "Game" ADD COLUMN     "fixedNumberOfSets" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "hasMultiRounds" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "maxPointsPerTeam" INTEGER NOT NULL DEFAULT 0,
-ADD COLUMN     "maxTotalPointsPerSet" INTEGER NOT NULL DEFAULT 0;

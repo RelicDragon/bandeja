@@ -32,7 +32,7 @@ Rebuild external club booking around **external booking provider** (`api.booktim
 2. User sees **correct reserved slots** on create-game + club admin grids (merged with app games).
 3. User can **book** when connected to that club.
 4. User **without** club account: availability via scout token + public ranges; **Connect** to book.
-5. Snapshot refresh on club/date open, **max once per 5 minutes**; **force refresh** after book/cancel.
+5. Snapshot refresh on club/date open, **max once per 60 seconds** (`BOOKTIME_SNAPSHOT_FRESH_MS`); **force refresh** after book/cancel.
 
 After a club booking → **Create game here** (pre-filled; optional soft link). See [PLAN_CLUB_BOOKING_UX.md](./PLAN_CLUB_BOOKING_UX.md) for grid colors.
 
@@ -74,7 +74,9 @@ Padel City `companyId`: `d4130d78-a7e8-499d-90f0-92773ccc2f9c`.
 
 ## Occupancy pipeline (create-game + admin schedule)
 
-**Decision:** backend merge — extend `bookedCourts.service.ts` to read `ClubBooktimeBusySnapshot` and emit `clubBooked` rows (same `GET /games/booked-courts` contract as CRS today).
+**Decision (ADR-005):** **A+C hybrid** — Frontend owns snapshot refresh; Backend merges games + holds + externals via `CourtOccupancyService` → `OccupancyBlock[]`. See [ADR-005](./adr/ADR-005-court-occupancy-ac-hybrid.md). Implementation: #123.
+
+**Shipped today:** backend merge in `bookedCourts.service.ts` reads `ClubBooktimeBusySnapshot` and emits `clubBooked` rows (same `GET /games/booked-courts` contract as CRS today).
 
 ```mermaid
 sequenceDiagram
@@ -92,8 +94,8 @@ sequenceDiagram
   BE-->>FE: games + holds + external busy
 ```
 
-- `useBookedCourts` unchanged — no client-side snapshot merge for grid.
-- Club admin schedule uses same external rows.
+- **Target (#123):** `useCourtOccupancy` replaces `useBookedCourts` (same public interface) — refresh → GET booked-courts → slot helpers; no client-side snapshot merge for grid.
+- Club admin schedule uses same external rows via shared `CourtOccupancyService`.
 - **Cold start:** `isLoadingExternalSlots: true` while opener refreshes; auto-fetch provider slots + PUT when snapshot missing/stale; refetch grid after PUT. Banner: “Updating club availability…” / “No sync yet today”.
 
 ---
@@ -150,8 +152,8 @@ Backend: delete all rows for `(clubId, date)` → bulk insert. Empty `busySlots:
 |------|--------|
 | Who may PUT | Any authenticated PadelPulse user for BOOKTIME clubs |
 | Scout refreshes | **Count** — unconnected users can refresh via scout token |
-| Server dedupe | Reject PUT if snapshot `fetchedAt` &lt; 5 min ago unless `force: true` |
-| Per-user limit | Max 1 PUT / user / club / date / 5 min |
+| Server dedupe | Reject PUT if snapshot `fetchedAt` &lt; 60 s ago unless `force: true` |
+| Per-user limit | Max 1 PUT / user / club / date / 60 s |
 | Force | After successful book or cancel |
 
 No cron.
@@ -408,7 +410,7 @@ Trigger snapshot refresh from create-game / club detail / availability when stal
 | 1 | Grid external source | **Backend** merge in `getBookedCourts` |
 | 2 | Snapshot content | Busy only; **atomic full replace** per club+date |
 | 3 | Snapshot PUT | **Single transaction**; body with `courts[]` |
-| 4 | Snapshot writes | Any auth user; **scout OK**; server 5-min dedupe + per-user limit |
+| 4 | Snapshot writes | Any auth user; **scout OK**; server 60s dedupe + per-user limit |
 | 5 | `get-for-day` | Auth only; else **scout token** |
 | 6 | Token persistence | **Hybrid:** sessionStorage + `POST session-token` |
 | 7 | Game link | **Columns** `externalBookingId` + provider; no cancel sync v1 |
@@ -433,8 +435,8 @@ Trigger snapshot refresh from create-game / club detail / availability when stal
 | Area | Path |
 |------|------|
 | Booking provider client | `Frontend/src/integrations/booktime/client.ts` |
-| Occupancy | `Backend/src/services/game/bookedCourts.service.ts` |
-| Grid hook | `Frontend/src/hooks/useBookedCourts.ts` |
+| Occupancy (target) | `Backend/src/services/game/courtOccupancy.service.ts` → `bookedCourts.service.ts` |
+| Grid hook (target) | `Frontend/src/hooks/useCourtOccupancy.ts` (replaces `useBookedCourts.ts`) |
 | Legacy remove | `clubIntegration.service.ts`, `NoviSad/crs.js` |
 | Admin club admin external | `clubAdminSchedule.service.ts`, `ClubSchedulePage` |
 

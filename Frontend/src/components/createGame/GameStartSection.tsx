@@ -9,7 +9,7 @@ import { DateSelector } from '@/components';
 import { CalendarComponent } from '@/components/Calendar';
 import { EntityType, Club, Court } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
-import { useBookedCourts } from '@/hooks/useBookedCourts';
+import { useCourtOccupancy } from '@/hooks/useCourtOccupancy';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { useClubIntegrationDurations } from '@/hooks/useClubIntegrationDurations';
 import { pickClosestDurationOption } from '@/integrations/booktime/durations';
@@ -113,7 +113,7 @@ export const GameStartSection = ({
 
   const bookedCourtsEnabled = !hideOccupancyOverlay && !needsBooktimeAuth;
 
-  const { isSlotBooked, getBookedSlotInfo, getOverlappingBookings, areAllSlotsUnconfirmed, hasExternallyBookedSlot, isSlotHardBlocked, isLoadingExternalSlots, snapshotBanner: bookedCourtsBanner, refetch } = useBookedCourts({
+  const { isSlotBooked, getBookedSlotInfo, getOverlappingBookings, areAllSlotsUnconfirmed, hasExternallyBookedSlot, isSlotHardBlocked, isLoadingExternalSlots, snapshotBanner: bookedCourtsBanner, refetch } = useCourtOccupancy({
     clubId: bookedCourtsEnabled ? selectedClub || null : null,
     selectedDate,
     selectedCourt: selectedCourt || null,

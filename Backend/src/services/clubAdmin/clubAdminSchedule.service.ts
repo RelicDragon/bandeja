@@ -1,12 +1,16 @@
-import { ClubIntegrationType, ParticipantRole, Prisma } from '@prisma/client';
+import { ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import {
   countUnmappedExternalCourts,
   getSnapshotDateMeta,
-  loadMergedBusySlots,
 } from '../../shared/booktimeBusySnapshot';
 import { UNASSIGNED_COURT_KEY } from '../../shared/clubScheduleConstants';
+import {
+  CourtOccupancyService,
+  mapExternalBlockToScheduleSlot,
+  mapHoldBlockToScheduleSlot,
+} from '../game/courtOccupancy.service';
 import { ScheduleConflict, ScheduleSlot } from './clubAdmin.types';
 
 export { UNASSIGNED_COURT_KEY };
@@ -94,12 +98,7 @@ export class ClubAdminScheduleService {
       ];
     }
 
-    const club = await prisma.club.findUnique({
-      where: { id: clubId },
-      select: { integrationType: true },
-    });
-
-    const [games, holds] = await Promise.all([
+    const [games, occupancyResult, dateMeta, unmappedCount] = await Promise.all([
       prisma.game.findMany({
         where: gameWhere,
         include: {
@@ -115,14 +114,17 @@ export class ClubAdminScheduleService {
         },
         orderBy: { startTime: 'asc' },
       }),
-      prisma.courtSlotHold.findMany({
-        where: {
-          clubId,
-          ...(courtId ? { courtId } : {}),
-          startTime: { lt: dayEnd },
-          endTime: { gt: dayStart },
-        },
+      CourtOccupancyService.getOccupancy({
+        clubId,
+        rangeStart: dayStart,
+        rangeEnd: dayEnd,
+        courtId,
+        includeUnmapped: !courtId,
+        gameCourtFilter: 'admin',
+        sources: { games: false, holds: true, externals: true },
       }),
+      getSnapshotDateMeta(clubId, dateStr),
+      countUnmappedExternalCourts(clubId),
     ]);
 
     const slots: ScheduleSlot[] = [];
@@ -168,67 +170,34 @@ export class ClubAdminScheduleService {
       }
     }
 
-    for (const hold of holds) {
-      slots.push({
-        type: 'hold',
-        holdId: hold.id,
-        courtId: hold.courtId,
-        label: hold.label,
-        note: hold.note,
-        startTime: hold.startTime.toISOString(),
-        endTime: hold.endTime.toISOString(),
-      });
-    }
-
-    let isLoadingExternalSlots = false;
     let externalSlotsFailed = false;
-    let snapshotFetchedAt: string | null = null;
-    let hasSnapshotForDate = false;
-    let unmappedExternalCourtCount = 0;
-
-    if (club?.integrationType === ClubIntegrationType.BOOKTIME) {
-      try {
-        const [merged, dateMeta, unmappedCount] = await Promise.all([
-          loadMergedBusySlots({
-            clubId,
-            rangeStart: dayStart,
-            rangeEnd: dayEnd,
-            filterCourtId: courtId,
-            includeUnmapped: !courtId,
-          }),
-          getSnapshotDateMeta(clubId, dateStr),
-          countUnmappedExternalCourts(clubId),
-        ]);
-        isLoadingExternalSlots = merged.isLoading;
-        snapshotFetchedAt = dateMeta.snapshotFetchedAt?.toISOString() ?? null;
-        hasSnapshotForDate = dateMeta.hasSnapshotForDate;
-        unmappedExternalCourtCount = unmappedCount;
-
-        for (const slot of merged.slots) {
-          if (courtId && slot.courtId !== courtId) continue;
-          slots.push({
-            type: 'external',
-            courtId: slot.courtId!,
-            courtName: slot.courtName,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-          });
+    try {
+      for (const block of occupancyResult.blocks) {
+        if (block.kind === 'hold') {
+          const holdSlot = mapHoldBlockToScheduleSlot(block);
+          if (holdSlot) slots.push(holdSlot);
+          continue;
         }
-      } catch (err) {
-        console.error('Club admin schedule booking snapshot error', err);
-        externalSlotsFailed = true;
+        if (block.kind === 'external') {
+          if (courtId && block.courtId !== courtId) continue;
+          const externalSlot = mapExternalBlockToScheduleSlot(block);
+          if (externalSlot) slots.push(externalSlot);
+        }
       }
+    } catch (err) {
+      console.error('Club admin schedule booking snapshot error', err);
+      externalSlotsFailed = true;
     }
 
     slots.sort((a, b) => a.startTime.localeCompare(b.startTime));
     return {
       slots,
       conflicts: detectScheduleConflicts(slots),
-      isLoadingExternalSlots,
+      isLoadingExternalSlots: occupancyResult.isLoadingExternalSlots,
       externalSlotsFailed,
-      snapshotFetchedAt,
-      hasSnapshotForDate,
-      unmappedExternalCourtCount,
+      snapshotFetchedAt: dateMeta.snapshotFetchedAt?.toISOString() ?? null,
+      hasSnapshotForDate: dateMeta.hasSnapshotForDate,
+      unmappedExternalCourtCount: unmappedCount,
     };
   }
 }

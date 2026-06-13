@@ -9,7 +9,7 @@ import { GameStartSection } from '@/components/createGame/GameStartSection';
 import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
-import { supportsClubBookingFlow } from '@/components/gameLocationTime/supportsClubBookingFlow';
+import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
 import type { RefObject, ReactNode } from 'react';

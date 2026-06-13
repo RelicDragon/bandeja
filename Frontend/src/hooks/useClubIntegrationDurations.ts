@@ -7,6 +7,7 @@ import {
   DEFAULT_TOURNAMENT_DURATIONS_HOURS,
   resolveBooktimeDurationsHours,
 } from '@/integrations/booktime/durations';
+import { getBooktimeCompanyId } from '@shared/clubIntegration';
 
 function defaultDurationOptions(entityType: EntityType): number[] {
   if (entityType === 'TOURNAMENT') return [...DEFAULT_TOURNAMENT_DURATIONS_HOURS];
@@ -17,8 +18,7 @@ export function useClubIntegrationDurations(club: Club | undefined, entityType: 
   const [integrationDurationsHours, setIntegrationDurationsHours] = useState<number[] | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const companyId =
-    club?.integrationType === 'BOOKTIME' ? club.integrationConfig?.companyId?.trim() : undefined;
+  const companyId = getBooktimeCompanyId(club) ?? undefined;
 
   useEffect(() => {
     if (!companyId) {

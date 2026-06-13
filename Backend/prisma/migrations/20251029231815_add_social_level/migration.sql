@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "socialLevel" DOUBLE PRECISION NOT NULL DEFAULT 1.0;

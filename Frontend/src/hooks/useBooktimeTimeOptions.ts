@@ -1,41 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { booktimeApi } from '@/api/booktime';
 import type { Club, Court } from '@/types';
-
-function booktimeCourtMappingKey(courts: Court[] | undefined, club: Club | undefined): string {
-  return (courts ?? club?.courts ?? [])
-    .filter((c) => typeof c.externalCourtId === 'string' && c.externalCourtId.trim())
-    .map((c) => `${c.id}:${c.externalCourtId!.trim()}`)
-    .sort()
-    .join('|');
-}
-import { BooktimeClient } from '@/integrations/booktime/client';
-import { computeFreeSlotsForCourt, formatClubDateKey } from '@/integrations/booktime/slots';
-import { clubLocalDateString, clubLocalNowMinutes } from '@/utils/clubAdmin/scheduleTime';
+import {
+  aggregateFreeSlotStarts,
+  booktimeCourtMappingKey,
+  computeCourtAvailabilityRows,
+  fetchBooktimeCourtAvailabilityForDate,
+  mappedBooktimeCourts,
+  parseSlotMinutes,
+} from '@/integrations/booktime/availability';
+import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
+import { getBooktimeCompanyId } from '@shared/clubIntegration';
 
 type OptionsCache = Map<string, string[]>;
-
-function filterPastSlots(slotStarts: string[], dateKey: string, club: Club): string[] {
-  const todayKey = clubLocalDateString(club);
-  if (dateKey !== todayKey) return slotStarts;
-  const nowMinutes = clubLocalNowMinutes(club);
-  return slotStarts.filter((start) => {
-    const [h, m] = start.split(':').map(Number);
-    if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
-    return h * 60 + m >= nowMinutes;
-  });
-}
-
-function parseMinutes(time: string): number {
-  const [h, m] = time.split(':').map(Number);
-  return h * 60 + m;
-}
-
-function booktimeCompanyId(club: Club): string | null {
-  const companyId = club.integrationConfig?.companyId;
-  return typeof companyId === 'string' && companyId.trim() ? companyId.trim() : null;
-}
 
 type UseBooktimeTimeOptionsParams = {
   club: Club | undefined;
@@ -62,12 +39,10 @@ export function useBooktimeTimeOptions({
   const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(club?.id, enabled);
 
   const durationMinutes = Math.round(durationHours * 60);
-  const companyId = club ? booktimeCompanyId(club) : null;
+  const companyId = getBooktimeCompanyId(club);
   const courtMappingKey = booktimeCourtMappingKey(courts, club);
   const mappedCourtsRef = useRef<Court[]>([]);
-  mappedCourtsRef.current = (courts ?? club?.courts ?? []).filter(
-    (c) => typeof c.externalCourtId === 'string' && c.externalCourtId.trim(),
-  );
+  mappedCourtsRef.current = club ? mappedBooktimeCourts(club, courts) : [];
 
   const loadDate = useCallback(
     async (date: Date) => {
@@ -84,54 +59,22 @@ export function useBooktimeTimeOptions({
       }
       setLoading(true);
       try {
-        const client = new BooktimeClient({ companyId });
-        const [snapshotRes, slotsRes] = await Promise.all([
-          booktimeApi.getSnapshot(club.id, dateKey),
-          client.getAvailableSlots(date, dateKey),
-        ]);
-
-        const busyByCourtId = new Map<string, Array<{ startTime: string; endTime: string }>>();
-        for (const row of snapshotRes.data?.courts ?? []) {
-          if (row.courtId) {
-            busyByCourtId.set(row.courtId, row.busySlots ?? []);
-          }
-        }
-
-        const mappedCourts = mappedCourtsRef.current;
-
-        let raw: string[];
-
-        if (selectedCourtId) {
-          const court = mappedCourts.find((c) => c.id === selectedCourtId);
-          const externalCourtId = court?.externalCourtId?.trim();
-          const courtRow = externalCourtId
-            ? slotsRes?.find((row) => row.uuid === externalCourtId)
-            : undefined;
-          raw = computeFreeSlotsForCourt(
-            courtRow?.availableSlots ?? [],
-            busyByCourtId.get(selectedCourtId) ?? [],
-            durationMinutes,
-            club,
-            dateKey
-          );
-        } else {
-          const freeStarts = new Set<string>();
-          for (const court of mappedCourts) {
-            const externalCourtId = court.externalCourtId!.trim();
-            const courtRow = slotsRes?.find((row) => row.uuid === externalCourtId);
-            for (const start of computeFreeSlotsForCourt(
-              courtRow?.availableSlots ?? [],
-              busyByCourtId.get(court.id) ?? [],
-              durationMinutes,
-              club,
-              dateKey
-            )) {
-              freeStarts.add(start);
-            }
-          }
-          raw = [...freeStarts].sort((a, b) => parseMinutes(a) - parseMinutes(b));
-        }
-        const options = filterPastSlots(raw, dateKey, club);
+        const { raw } = await fetchBooktimeCourtAvailabilityForDate({
+          club,
+          companyId,
+          date,
+        });
+        const rows = computeCourtAvailabilityRows({
+          club,
+          courts: mappedCourtsRef.current,
+          raw,
+          durationMinutes,
+          dateKey,
+          courtFilter: selectedCourtId,
+        });
+        const options = selectedCourtId
+          ? (rows[0]?.freeSlots ?? [])
+          : aggregateFreeSlotStarts(rows);
 
         setCache((prev) => {
           const next = new Map(prev);
@@ -201,11 +144,11 @@ export function useBooktimeTimeOptions({
   const getTimeSlotsForDuration = useCallback(
     (startTime: string, durHours: number) => {
       const options = optionsForDate(selectedDate);
-      const startMin = parseMinutes(startTime);
+      const startMin = parseSlotMinutes(startTime) ?? 0;
       const endMin = startMin + Math.round(durHours * 60);
       return options.filter((time) => {
-        const t = parseMinutes(time);
-        return t >= startMin && t < endMin;
+        const t = parseSlotMinutes(time);
+        return t != null && t >= startMin && t < endMin;
       });
     },
     [optionsForDate, selectedDate]
@@ -215,10 +158,11 @@ export function useBooktimeTimeOptions({
     (clickedTime: string, durHours: number) => {
       if (Math.round(durHours * 60) !== durationMinutes) return null;
       const options = optionsForDate(selectedDate);
-      const clickedMin = parseMinutes(clickedTime);
+      const clickedMin = parseSlotMinutes(clickedTime);
+      if (clickedMin == null) return null;
       const matches = options.filter((start) => {
-        const startMin = parseMinutes(start);
-        return startMin <= clickedMin && clickedMin < startMin + durationMinutes;
+        const startMin = parseSlotMinutes(start);
+        return startMin != null && startMin <= clickedMin && clickedMin < startMin + durationMinutes;
       });
       return matches.length > 0 ? matches[matches.length - 1]! : null;
     },
@@ -228,9 +172,10 @@ export function useBooktimeTimeOptions({
   const isSlotHighlighted = useCallback(
     (time: string, selectedTime: string, durHours: number) => {
       if (!selectedTime) return false;
-      const startMin = parseMinutes(selectedTime);
+      const startMin = parseSlotMinutes(selectedTime);
+      const t = parseSlotMinutes(time);
+      if (startMin == null || t == null) return false;
       const endMin = startMin + Math.round(durHours * 60);
-      const t = parseMinutes(time);
       return t >= startMin && t < endMin;
     },
     []
