@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import type { Sport, User } from '@/types';
 import {
-  findSportProfile,
   getDisplayLevelForSport,
+  getReliabilityForSport,
   getUserPrimarySport,
   shouldShowSportLevelBadge,
 } from '@/utils/profileSports';
@@ -24,8 +24,7 @@ export const LevelHistoryAvatarSection = ({
   const levelSport = sport ?? getUserPrimarySport(user);
   const competitiveLevel = getDisplayLevelForSport(user, levelSport);
   const showCompetitive = shouldShowSportLevelBadge(user, levelSport);
-  const sportProfile = findSportProfile(user, levelSport);
-  const reliability = sportProfile?.reliability ?? 0;
+  const reliability = getReliabilityForSport(user, levelSport);
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
 
   return (
