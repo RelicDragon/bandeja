@@ -35,7 +35,7 @@ export type BooktimeBookingRange = {
 };
 
 export class BooktimeSlotTakenError extends Error {
-  constructor(message = BOOKING_ERROR_KEYS.slotNoLongerAvailable) {
+  constructor(message: string = BOOKING_ERROR_KEYS.slotNoLongerAvailable) {
     super(message);
     this.name = 'BooktimeSlotTakenError';
   }
