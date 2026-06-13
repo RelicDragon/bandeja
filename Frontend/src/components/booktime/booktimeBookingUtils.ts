@@ -4,6 +4,36 @@ import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { parseBooktimeLocalComponents } from '@/integrations/booktime/localTime';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 
+export function linkedBookingToRecord(link: {
+  externalBookingId: string;
+  bookingStart?: string;
+  bookingEnd?: string;
+}): BooktimeBookingRecord {
+  return {
+    uuid: link.externalBookingId,
+    bookingStart: link.bookingStart ?? '',
+    bookingEnd: link.bookingEnd ?? '',
+  };
+}
+
+export function clubToBooktimeRow(club: Club): BooktimeMyClubRow {
+  return {
+    clubId: club.id,
+    clubName: club.name,
+    avatar: club.avatar ?? null,
+    companyId: club.integrationConfig?.companyId ?? null,
+    connected: true,
+    phoneNumber: club.phone ?? null,
+    scoutOptIn: false,
+    courts: (club.courts ?? []).map((c) => ({
+      id: c.id,
+      name: c.name,
+      externalCourtId: c.externalCourtId ?? null,
+      integrationCourtName: c.integrationCourtName ?? null,
+    })),
+  };
+}
+
 export function booktimeRowToClub(row: BooktimeMyClubRow): Club {
   return {
     id: row.clubId,

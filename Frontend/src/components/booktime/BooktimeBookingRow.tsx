@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -41,6 +41,12 @@ type Props = {
   disableDeselect?: boolean;
   linkedGames?: BooktimeLinkedGame[];
   onToggleSelect?: () => void;
+  readOnly?: boolean;
+  trailing?: ReactNode;
+  courtOverride?: {
+    courtName: string;
+    integrationCourtName?: string | null;
+  };
 };
 
 function LinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
@@ -70,6 +76,9 @@ export function BooktimeBookingRow({
   disableDeselect = false,
   linkedGames: linkedGamesProp,
   onToggleSelect,
+  readOnly = false,
+  trailing,
+  courtOverride,
 }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -79,11 +88,16 @@ export function BooktimeBookingRow({
   const [cancelBusy, setCancelBusy] = useState(false);
   const { linkedGame, linkedGames: fetchedLinkedGames, reload: reloadLinkedGame } = useBooktimeLinkedGame(
     booking.uuid,
-    !selectable,
+    !selectable && !readOnly,
   );
   const linkedGames = linkedGamesProp ?? fetchedLinkedGames;
   const [cancelDoneBanner, setCancelDoneBanner] = useState<BooktimeLinkedGame | null>(null);
-  const courtInfo = resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt'));
+  const courtInfo = courtOverride
+    ? {
+        courtName: courtOverride.courtName,
+        integrationCourtName: courtOverride.integrationCourtName ?? null,
+      }
+    : resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt'));
   const cancellable = canCancelByPolicy(booking.bookingStart, allowedHoursToCancel, clubTimezone);
 
   const openCreateGame = () => {
@@ -135,6 +149,20 @@ export function BooktimeBookingRow({
       {!selectable && linkedGame ? <BooktimeLinkedGameLink game={linkedGame} /> : null}
     </div>
   );
+
+  if (readOnly) {
+    return (
+      <li
+        data-testid="linked-booking-card"
+        className={`rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 ${
+          compact ? 'px-3 py-2' : 'px-3 py-2.5'
+        } ${trailing ? 'flex items-center justify-between gap-2' : ''}`}
+      >
+        {rowContent}
+        {trailing}
+      </li>
+    );
+  }
 
   if (selectable) {
     return (

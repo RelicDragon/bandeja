@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club, Court, Game } from '@/types';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
-import { CourtDisplayName } from '@/components/CourtDisplayName';
-import { formatDate } from '@/utils/dateFormat';
-import { parseISO } from 'date-fns';
+import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
+import { clubToBooktimeRow, linkedBookingToRecord } from '@/components/booktime/booktimeBookingUtils';
+import { getClubTimezone } from '@/utils/gameTimeDisplay';
 
 type LinkedBookingsListProps = {
   game: Game;
@@ -24,10 +24,16 @@ export function LinkedBookingsList({
   readOnlyLabel = false,
 }: LinkedBookingsListProps) {
   const { t } = useTranslation();
+  const clubTimezone = getClubTimezone(game);
   const [pendingRemove, setPendingRemove] = useState<string | null>(null);
   const links = game.linkedBookings ?? [];
+  const resolvedClub = club ?? game.court?.club ?? game.club;
+  const booktimeClub = useMemo(
+    () => (resolvedClub ? clubToBooktimeRow(resolvedClub) : null),
+    [resolvedClub],
+  );
 
-  if (links.length === 0) return null;
+  if (links.length === 0 || !booktimeClub) return null;
 
   return (
     <div className="space-y-3">
@@ -40,43 +46,40 @@ export function LinkedBookingsList({
         {links.map((link) => {
           const court =
             courts.find((c) => c.id === link.courtId) ??
-            club?.courts?.find((c) => c.id === link.courtId) ??
-            game.court;
-          const when =
-            link.bookingStart && link.bookingEnd
-              ? `${formatDate(parseISO(link.bookingStart), 'EEE d MMM')} · ${new Date(link.bookingStart).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : null;
+            resolvedClub?.courts?.find((c) => c.id === link.courtId) ??
+            (game.court?.id === link.courtId ? game.court : undefined);
+          const courtOverride = court
+            ? {
+                courtName: court.name,
+                integrationCourtName: court.integrationCourtName ?? null,
+              }
+            : {
+                courtName: t('club.booktime.unknownCourt'),
+                integrationCourtName: null,
+              };
+
           return (
-            <li
+            <BooktimeBookingRow
               key={link.id}
-              data-testid="linked-booking-card"
-              className="rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2.5 flex items-center justify-between gap-2"
-            >
-              <div className="min-w-0">
-                {court ? (
-                  <CourtDisplayName
-                    name={court.name}
-                    integrationName={court.integrationCourtName}
-                    primaryClassName="text-sm font-medium text-gray-900 dark:text-white truncate"
-                  />
-                ) : (
-                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                    {t('club.booktime.unknownCourt')}
-                  </p>
-                )}
-                {when ? <p className="text-xs text-gray-500 dark:text-gray-400">{when}</p> : null}
-              </div>
-              {!readOnly && onRemove ? (
-                <button
-                  type="button"
-                  data-testid="linked-booking-unlink"
-                  onClick={() => setPendingRemove(link.externalBookingId)}
-                  className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline shrink-0"
-                >
-                  {t('common.remove')}
-                </button>
-              ) : null}
-            </li>
+              booking={linkedBookingToRecord(link)}
+              club={booktimeClub}
+              readOnly
+              compact
+              clubTimezone={clubTimezone}
+              courtOverride={courtOverride}
+              trailing={
+                !readOnly && onRemove ? (
+                  <button
+                    type="button"
+                    data-testid="linked-booking-unlink"
+                    onClick={() => setPendingRemove(link.externalBookingId)}
+                    className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline shrink-0"
+                  >
+                    {t('common.remove')}
+                  </button>
+                ) : undefined
+              }
+            />
           );
         })}
       </ul>
