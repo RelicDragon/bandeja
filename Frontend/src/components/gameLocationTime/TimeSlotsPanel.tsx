@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 type TimeSlotsPanelProps = {
+  dateSection: ReactNode;
   courtSection: ReactNode;
   timeSlotsChildren: ReactNode;
   hintSection?: ReactNode;
@@ -9,6 +10,7 @@ type TimeSlotsPanelProps = {
 };
 
 export function TimeSlotsPanel({
+  dateSection,
   courtSection,
   timeSlotsChildren,
   hintSection,
@@ -17,6 +19,7 @@ export function TimeSlotsPanel({
 }: TimeSlotsPanelProps) {
   return (
     <div className="space-y-4">
+      {dateSection}
       {courtSection}
       {needsBooktimeAuth ? authGateSection : null}
       {!needsBooktimeAuth ? (

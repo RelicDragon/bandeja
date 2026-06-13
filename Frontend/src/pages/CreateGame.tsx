@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
 import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, AvatarUpload, PriceSection, CreateGameIntentPicker } from '@/components';
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
+import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { usePlayersStore } from '@/store/playersStore';
@@ -950,6 +951,31 @@ export const CreateGame = ({
     ],
   );
 
+  const dateSection = useMemo(
+    () => (
+      <CreateGameDateSection
+        selectedDate={selectedDate}
+        showDatePicker={showDatePicker}
+        onDateSelect={setSelectedDate}
+        onCalendarClick={() => setShowDatePicker(true)}
+        onCloseDatePicker={() => setShowDatePicker(false)}
+        generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
+        dateFixedDates={willBookOnCreate ? booktimeFixedDates : undefined}
+        hideCalendar={willBookOnCreate}
+        bookableDaysHint={willBookOnCreate ? booktimeCompanyMeta.bookableDays : null}
+      />
+    ),
+    [
+      selectedDate,
+      showDatePicker,
+      setSelectedDate,
+      resolvedGenerateTimeOptionsForDate,
+      willBookOnCreate,
+      booktimeFixedDates,
+      booktimeCompanyMeta.bookableDays,
+    ],
+  );
+
   const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
       ref.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1416,6 +1442,7 @@ export const CreateGame = ({
                   }}
                   onDerivedTimeChange={onDerivedTimeChange}
                   needsBooktimeAuth={needsBooktimeAuth}
+                  dateSection={dateSection}
                   courtSection={courtSection}
                   authGateSection={
                     needsBooktimeAuth && booktimeIntegrationConfig ? (
@@ -1468,6 +1495,7 @@ export const CreateGame = ({
                         ) : null
                       }
                       compact
+                      hideDateSection
                     />
                   }
                 />

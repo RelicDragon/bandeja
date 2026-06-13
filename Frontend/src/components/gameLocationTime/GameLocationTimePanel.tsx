@@ -38,6 +38,7 @@ export type GameLocationTimePanelProps = {
   overrideEndTime?: string;
   onOverrideTimesChange?: (start: string, end: string) => void;
   timeSlotsChildren: ReactNode;
+  dateSection: ReactNode;
   courtSection: ReactNode;
   authGateSection?: ReactNode;
   needsBooktimeAuth?: boolean;
@@ -72,6 +73,7 @@ export function GameLocationTimePanel({
   overrideEndTime,
   onOverrideTimesChange,
   timeSlotsChildren,
+  dateSection,
   courtSection,
   authGateSection,
   needsBooktimeAuth,
@@ -218,6 +220,7 @@ export function GameLocationTimePanel({
             transition={{ duration: 0.22, ease: 'easeOut' }}
           >
             <TimeSlotsPanel
+              dateSection={dateSection}
               courtSection={courtSection}
               timeSlotsChildren={timeSlotsChildren}
               needsBooktimeAuth={needsBooktimeAuth}

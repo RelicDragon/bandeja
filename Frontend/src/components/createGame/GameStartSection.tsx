@@ -2,11 +2,9 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, RefObject, type ReactNode } from 'react';
 import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
+import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { CreateGameTimeSlots } from '@/components/createGame/CreateGameTimeSlots';
-import { addDays, format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
-import { DateSelector } from '@/components';
-import { CalendarComponent } from '@/components/Calendar';
 import { EntityType, Club, Court } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
 import { useCourtOccupancy } from '@/hooks/useCourtOccupancy';
@@ -45,6 +43,7 @@ interface GameStartSectionProps {
   hideOccupancyOverlay?: boolean;
   dateFixedDates?: Date[];
   hideCalendar?: boolean;
+  hideDateSection?: boolean;
   bookableDaysHint?: number | null;
   connectedPhone?: string | null;
   slotsLoading?: boolean;
@@ -89,6 +88,7 @@ export const GameStartSection = ({
   hideOccupancyOverlay = false,
   dateFixedDates,
   hideCalendar = false,
+  hideDateSection = false,
   bookableDaysHint,
   connectedPhone,
   slotsLoading = false,
@@ -133,13 +133,6 @@ export const GameStartSection = ({
   }, [selectedTime, duration, entityType, getOverlappingBookings, getBookedSlotInfo, hideOccupancyOverlay]);
 
   const timeOptions = useMemo(() => generateTimeOptions(), [generateTimeOptions]);
-
-  const startDate = generateTimeOptionsForDate(new Date()).length === 0 ? addDays(new Date(), 1) : new Date();
-  const defaultFixedDates = Array.from({ length: 8 }, (_, i) => addDays(startDate, i));
-  const fixedDates = dateFixedDates ?? defaultFixedDates;
-  const isSelectedDateInFixedRange = fixedDates.some(
-    (date) => format(date, 'yyyy-MM-dd') === format(selectedDate, 'yyyy-MM-dd'),
-  );
 
   useEffect(() => {
     if (showDatePicker && dateInputRef.current) {
@@ -195,46 +188,18 @@ export const GameStartSection = ({
     </>
   );
 
-  const dateSection = (
-    <>
-      <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-          {t('createGame.selectDate')}
-        </label>
-        <DateSelector
-          selectedDate={selectedDate}
-          onDateSelect={onDateSelect}
-          onCalendarClick={onCalendarClick}
-          showCalendarAsSelected={!hideCalendar && (showDatePicker || !isSelectedDateInFixedRange)}
-          hideTodayIfNoSlots={!dateFixedDates}
-          hasTimeSlotsForToday={generateTimeOptionsForDate(new Date()).length > 0}
-          hideCurrentDateIndicator={true}
-          fixedDates={dateFixedDates}
-          hideCalendar={hideCalendar}
-        />
-        {bookableDaysHint != null && bookableDaysHint > 0 ? (
-          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-            {t('createGame.booktime.dateHint', { days: bookableDaysHint })}
-          </p>
-        ) : null}
-      </div>
-      {showDatePicker && !hideCalendar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCloseDatePicker} />
-          <div className="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl p-8 mx-4 max-w-md w-full border border-gray-200 dark:border-gray-800">
-            <h3 className="section-title mb-4">{t('createGame.selectDate')}</h3>
-            <CalendarComponent
-              selectedDate={selectedDate}
-              onDateSelect={(date: Date) => {
-                onDateSelect(date);
-                onCloseDatePicker();
-              }}
-              minDate={startDate}
-            />
-          </div>
-        </div>
-      )}
-    </>
+  const dateSection = hideDateSection ? null : (
+    <CreateGameDateSection
+      selectedDate={selectedDate}
+      showDatePicker={showDatePicker}
+      onDateSelect={onDateSelect}
+      onCalendarClick={onCalendarClick}
+      onCloseDatePicker={onCloseDatePicker}
+      generateTimeOptionsForDate={generateTimeOptionsForDate}
+      dateFixedDates={dateFixedDates}
+      hideCalendar={hideCalendar}
+      bookableDaysHint={bookableDaysHint}
+    />
   );
 
   const timeSlotsSection = (

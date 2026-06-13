@@ -8,6 +8,7 @@ import type { EditLocationTimeDraft } from '@/components/gameLocationTime/locati
 import { GameStartSection } from '@/components/createGame/GameStartSection';
 import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
+import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
@@ -232,6 +233,20 @@ export function LocationTimeTab({
     />
   );
 
+  const dateSection = (
+    <CreateGameDateSection
+      selectedDate={selectedDate}
+      showDatePicker={showDatePicker}
+      onDateSelect={onDateChange}
+      onCalendarClick={() => onShowDatePickerChange(true)}
+      onCloseDatePicker={() => onShowDatePickerChange(false)}
+      generateTimeOptionsForDate={generateTimeOptionsForDate}
+      dateFixedDates={booktimeFixedDates}
+      hideCalendar={willBookOnCreateProp}
+      bookableDaysHint={bookableDaysHint}
+    />
+  );
+
   return (
     <div className="space-y-4">
       {pendingUnlinkIds.length > 0 ? <PendingBookingUnlinkHint /> : null}
@@ -280,6 +295,7 @@ export function LocationTimeTab({
       needsBooktimeAuth={needsBooktimeAuth}
       authGateSection={authGateSection}
       onUnlinkBooking={handleUnlinkBooking}
+      dateSection={dateSection}
       courtSection={courtSection}
       timeSlotsChildren={
         <GameStartSection
@@ -315,6 +331,7 @@ export function LocationTimeTab({
           slotsLoading={slotsLoading}
           snapshotBanner={snapshotBanner}
           compact
+          hideDateSection
         />
       }
     />
