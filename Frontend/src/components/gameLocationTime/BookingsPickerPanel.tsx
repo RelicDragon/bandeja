@@ -97,12 +97,13 @@ export function BookingsPickerPanel({
   onDerivedTimeChange,
 }: BookingsPickerPanelProps) {
   const { t } = useTranslation();
-  const { status: auth } = useBooktimeClubAuth(club.id, enabled);
+  const { status: auth, loading: authLoading } = useBooktimeClubAuth(club.id, enabled);
   const { bookings, loading } = useBooktimeUpcomingBookings(
     club,
     companyId,
     Boolean(auth?.connected),
     enabled,
+    courts,
   );
 
   const selectedBookings = useMemo(
@@ -168,7 +169,7 @@ export function BookingsPickerPanel({
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t('common.loading')}</p>;
   }
 

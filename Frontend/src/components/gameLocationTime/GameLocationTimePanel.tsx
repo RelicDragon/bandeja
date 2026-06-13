@@ -193,26 +193,22 @@ export function GameLocationTimePanel({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
           >
-            {needsBooktimeAuth && authGateSection ? (
-              authGateSection
-            ) : (
-              <BookingsPickerPanel
-                club={club}
-                courts={courts}
-                companyId={companyId}
-                enabled={bookingsPanelEnabled}
-                selectedBookingIds={selectedBookingIds}
-                onSelectedBookingIdsChange={onSelectedBookingIdsChange}
-                selectionLimits={bookingSelectionLimits}
-                timeOverride={timeOverride}
-                onTimeOverrideChange={onTimeOverrideChange}
-                overrideStartTime={overrideStartTime}
-                overrideEndTime={overrideEndTime}
-                onOverrideTimesChange={onOverrideTimesChange ?? (() => {})}
-                onSwitchToTimeSlots={() => onLocationTimeModeChange('timeSlots')}
-                onDerivedTimeChange={onDerivedTimeChange}
-              />
-            )}
+            <BookingsPickerPanel
+              club={club}
+              courts={courts}
+              companyId={companyId}
+              enabled={bookingsPanelEnabled}
+              selectedBookingIds={selectedBookingIds}
+              onSelectedBookingIdsChange={onSelectedBookingIdsChange}
+              selectionLimits={bookingSelectionLimits}
+              timeOverride={timeOverride}
+              onTimeOverrideChange={onTimeOverrideChange}
+              overrideStartTime={overrideStartTime}
+              overrideEndTime={overrideEndTime}
+              onOverrideTimesChange={onOverrideTimesChange ?? (() => {})}
+              onSwitchToTimeSlots={() => onLocationTimeModeChange('timeSlots')}
+              onDerivedTimeChange={onDerivedTimeChange}
+            />
           </motion.div>
         ) : (
           <motion.div

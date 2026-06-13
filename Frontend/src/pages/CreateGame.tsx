@@ -1434,7 +1434,7 @@ export const CreateGame = ({
                   onOverrideTimesChange={setOverrideTimes}
                   dirtyFlags={dirtyFlags}
                   companyId={booktimeIntegrationConfig?.companyId}
-                  bookingsPanelEnabled={locationTimeMode === 'bookings'}
+                  bookingsPanelEnabled
                   preselectedBanner={preselectedBookings}
                   derivedSummary={{
                     startTime: derivedBookingSummary.startTime,
@@ -1451,11 +1451,7 @@ export const CreateGame = ({
                         club={selectedClubData}
                         integrationConfig={booktimeIntegrationConfig}
                         onConnected={handleAuthConnected}
-                        onSkip={
-                          locationTimeMode === 'bookings'
-                            ? () => setLocationTimeMode('timeSlots')
-                            : handleCourtSelectForAuthSkip
-                        }
+                        onSkip={handleCourtSelectForAuthSkip}
                       />
                     ) : null
                   }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Club } from '@/types';
+import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { bookingMatchesClubCourts } from '@/components/booktime/booktimeBookingUtils';
@@ -8,7 +8,8 @@ export function useBooktimeUpcomingBookings(
   club: Club,
   companyId: string,
   connected: boolean,
-  enabled: boolean
+  enabled: boolean,
+  filterCourts?: Court[],
 ) {
   const [bookings, setBookings] = useState<BooktimeBookingRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,12 @@ export function useBooktimeUpcomingBookings(
         return;
       }
       const res = await client.getUpcomingBookings(0, 20);
-      const filtered = (res.bookings ?? []).filter((b) => bookingMatchesClubCourts(b, club.courts ?? []));
+      const courtsForMatch = filterCourts ?? club.courts ?? [];
+      const raw = res.bookings ?? [];
+      const filtered =
+        courtsForMatch.length === 0
+          ? raw
+          : raw.filter((b) => bookingMatchesClubCourts(b, courtsForMatch));
       setBookings(filtered);
     } catch (err) {
       console.error('Club booking upcoming failed:', err);
@@ -38,7 +44,7 @@ export function useBooktimeUpcomingBookings(
     } finally {
       setLoading(false);
     }
-  }, [club, companyId, connected, enabled]);
+  }, [club, companyId, connected, enabled, filterCourts]);
 
   useEffect(() => {
     void reload();
