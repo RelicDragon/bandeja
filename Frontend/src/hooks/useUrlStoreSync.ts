@@ -3,10 +3,10 @@ import { useLocation } from 'react-router-dom';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { parseLocation } from '@/utils/urlSchema';
 
-export type HomeSubTab = 'calendar' | 'past-games';
+export type HomeSubTab = 'calendar' | 'advanced';
 
 export function homeSubTabFromParams(tab: string | undefined): HomeSubTab {
-  if (tab === 'past-games') return tab;
+  if (tab === 'advanced') return 'advanced';
   return 'calendar';
 }
 
@@ -30,8 +30,8 @@ export function useUrlStoreSync() {
         const view = (parsed.params.view as string) || 'calendar';
         state.setFindViewMode(view as 'calendar' | 'list');
         const rawTab = (parsed.params.tab as string) || 'my-games';
-        const findTab = ['my-games', 'past-games', 'search'].includes(rawTab) ? rawTab : 'my-games';
-        state.setActiveTab(findTab as 'my-games' | 'past-games' | 'search');
+        const findTab = ['my-games', 'search'].includes(rawTab) ? rawTab : 'my-games';
+        state.setActiveTab(findTab as 'my-games' | 'search');
         break;
       }
       case 'chats': {

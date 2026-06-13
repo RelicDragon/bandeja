@@ -24,13 +24,6 @@ test.describe('home banners & misc @auth', () => {
     test.skip(true, 'requires user in leagues');
   });
 
-  test('H-10 past games section', async ({ page }) => {
-    const home = new HomePage(page);
-    await home.goto('tab=past-games');
-    await home.waitForMyGamesLoaded();
-    await expect(home.subtab('past-games')).toHaveAttribute('aria-selected', 'true');
-  });
-
   test('H-11 mark all read banner', async ({ page }) => {
     const home = new HomePage(page);
     await home.goto();

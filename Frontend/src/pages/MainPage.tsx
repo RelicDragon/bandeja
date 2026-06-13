@@ -56,6 +56,14 @@ export const MainPage = () => {
   const showGameTabs = hasEnabledSports(user);
 
   useEffect(() => {
+    if (parsed.place !== 'home') return;
+    const tab = new URLSearchParams(location.search).get('tab');
+    if (tab === 'list' || tab === 'past-games') {
+      navigate('/', { replace: true });
+    }
+  }, [parsed.place, location.search, navigate]);
+
+  useEffect(() => {
     if (showGameTabs) return;
     if (parsed.place === 'home' || parsed.place === 'find') {
       navigate('/profile', { replace: true });

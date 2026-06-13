@@ -16,7 +16,6 @@ import {
   selectContextUnreadForListItem,
   selectMarketBuyerUnread,
   selectMarketSellerUnread,
-  selectMyGamesUnread,
   selectTotalAll,
   selectUnreadByUserId,
   type ChatsSubtabFilter,
@@ -62,15 +61,6 @@ export function useContextUnread(
 export function useGameUnreadCountsForIds(gameIds: readonly string[]): Record<string, number> {
   return useUnreadStore(
     useShallow((s) => gameUnreadCountsMap([...gameIds], s.byContext))
-  );
-}
-
-export function useMyGamesSubtabUnreadBadges() {
-  return useUnreadStore(
-    useShallow((s) => ({
-      myGames: selectMyGamesUnread(s),
-      pastGames: s.totals.pastGames,
-    }))
   );
 }
 

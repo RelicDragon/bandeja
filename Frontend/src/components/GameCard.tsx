@@ -437,9 +437,9 @@ export const GameCard = ({
                 e.stopPropagation();
                 navigate(`/games/${game.id}/chat`);
               }}
-              className="px-3 py-1.5 text-sm font-semibold rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1.5 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+              className="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             >
-              <Camera size={16} />
+              <Camera size={12} />
               {game.photosCount}
             </button>
           )}
@@ -513,9 +513,8 @@ export const GameCard = ({
           )}
           {!game.affectsRating && (
             <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
-              <Award size={12} />
               <Ban size={12} />
-              <span className="hidden sm:inline">{t('games.noRating')}</span>
+              {t('games.noRating')}
             </span>
           )}
           {game.hasFixedTeams && (

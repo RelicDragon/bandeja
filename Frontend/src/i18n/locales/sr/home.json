@@ -18,6 +18,8 @@
     "myGamesShort": "Moje",
     "upcoming": "Predstojeće",
     "past": "Prošle",
+    "more": "Još",
+    "moreTabMovedHint": "Timovi i lige — kartica {{tab}}",
     "search": "Pretraga",
     "loadMore": "Učitaj više",
     "noPastGames": "Nema prošlih igara",

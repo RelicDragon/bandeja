@@ -75,21 +75,13 @@ test.describe('home calendar @auth', () => {
     await expect(page.getByText(format(tomorrow, 'dd.MM.yyyy')).or(page.getByText(format(tomorrow, 'd')))).toBeVisible({ timeout: 10_000 });
   });
 
-  test('H-28 past games subtab loads', async ({ page }) => {
+  test('H-33 advanced subtab survives refresh', async ({ page }) => {
     const home = new HomePage(page);
-    await home.goto('tab=past-games');
-    await expect(home.subtab('past-games')).toHaveAttribute('aria-selected', 'true');
-    await home.waitForMyGamesLoaded();
-    await expect(page).toHaveURL(/\?tab=past-games/);
-  });
-
-  test('H-33 subtab survives refresh', async ({ page }) => {
-    const home = new HomePage(page);
-    await home.goto('tab=past-games');
+    await home.goto('tab=advanced');
     await page.reload();
     await home.waitForShell();
-    await expect(page).toHaveURL(/\?tab=past-games/);
-    await expect(home.subtab('past-games')).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(/\?tab=advanced/);
+    await expect(home.subtab('advanced')).toHaveAttribute('aria-selected', 'true');
   });
 
   test('H-34 restore calendar after create', async ({ page }) => {
@@ -107,7 +99,7 @@ test.describe('home calendar @auth', () => {
 
     try {
       await expect(page).toHaveURL(/\/?(\?|$)/);
-      await expect(home.subtab('calendar')).toHaveAttribute('aria-selected', 'true');
+      await home.waitForMyGamesLoaded();
     } finally {
       if (gameId) await deleteGameViaApi(token, gameId);
     }

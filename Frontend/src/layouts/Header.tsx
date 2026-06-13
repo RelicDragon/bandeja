@@ -17,8 +17,8 @@ import {
   GameDetailsHeader,
   GameDetailsHeaderContent,
   GameModeToggle,
+  LeaderboardTabController,
   MyGamesTabController,
-  LeaderboardTabController
 } from '@/components';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { GameSubscriptionsHeaderContent } from '@/components/headerContent/GameSubscriptionsHeaderContent';

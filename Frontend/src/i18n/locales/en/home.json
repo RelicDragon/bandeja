@@ -18,6 +18,8 @@
     "myGamesShort": "My",
     "upcoming": "Upcoming",
     "past": "Past",
+    "more": "More",
+    "moreTabMovedHint": "Teams and leagues — {{tab}} tab",
     "search": "Search",
     "loadMore": "Load More",
     "noPastGames": "No past games",

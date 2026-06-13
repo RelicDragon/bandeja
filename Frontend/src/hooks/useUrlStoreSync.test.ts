@@ -7,8 +7,12 @@ describe('homeSubTabFromParams', () => {
     expect(homeSubTabFromParams(undefined)).toBe('calendar');
   });
 
-  it('maps past-games query param', () => {
-    expect(homeSubTabFromParams('past-games')).toBe('past-games');
+  it('maps advanced query param', () => {
+    expect(homeSubTabFromParams('advanced')).toBe('advanced');
+  });
+
+  it('falls back to calendar for legacy past-games tab', () => {
+    expect(homeSubTabFromParams('past-games')).toBe('calendar');
   });
 
   it('falls back to calendar for legacy list tab', () => {
@@ -22,8 +26,9 @@ describe('homeSubTabFromParams', () => {
 
 describe('parseLocation home tab', () => {
   it('derives sub-tab from ?tab= query param', () => {
+    expect(homeSubTabFromParams(parseLocation('/', '?tab=advanced').params.tab as string)).toBe('advanced');
     expect(homeSubTabFromParams(parseLocation('/', '?tab=list').params.tab as string)).toBe('calendar');
-    expect(homeSubTabFromParams(parseLocation('/', '?tab=past-games').params.tab as string)).toBe('past-games');
+    expect(homeSubTabFromParams(parseLocation('/', '?tab=past-games').params.tab as string)).toBe('calendar');
     expect(homeSubTabFromParams(parseLocation('/', '').params.tab as string)).toBe('calendar');
   });
 });

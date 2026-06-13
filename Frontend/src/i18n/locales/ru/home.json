@@ -18,6 +18,8 @@
     "myGamesShort": "Мои",
     "upcoming": "Предстоящие",
     "past": "Прошедшие",
+    "more": "Прочее",
+    "moreTabMovedHint": "Команды и лиги теперь во вкладке {{tab}}",
     "search": "Поиск",
     "loadMore": "Загрузить ещё",
     "noPastGames": "Нет прошедших игр",

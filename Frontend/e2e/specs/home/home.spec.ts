@@ -13,11 +13,18 @@ test.describe('home tab @auth', () => {
     await expect(home.subtab('calendar')).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('H-32 URL deep link past games', async ({ page }) => {
+  test('H-32 URL deep link advanced tab', async ({ page }) => {
+    const home = new HomePage(page);
+    await home.goto('tab=advanced');
+    await expect(page).toHaveURL(/\?tab=advanced/);
+    await expect(home.subtab('advanced')).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('H-32 legacy past-games URL redirects to calendar', async ({ page }) => {
     const home = new HomePage(page);
     await home.goto('tab=past-games');
-    await expect(page).toHaveURL(/\?tab=past-games/);
-    await expect(home.subtab('past-games')).toHaveAttribute('aria-selected', 'true');
+    await expect(page).toHaveURL(/\/?(\?|$)/);
+    await expect(home.subtab('calendar')).toHaveAttribute('aria-selected', 'true');
   });
 
   test('H-19 create game entry', async ({ page }) => {

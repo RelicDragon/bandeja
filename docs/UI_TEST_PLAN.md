@@ -126,7 +126,7 @@ Frontend/e2e/
 | G-18 | i18n switch | Change language in profile | UI strings update |
 | G-19 | Dark/light theme | Toggle theme | Persisted appearance |
 | G-20 | Desktop split chat | `@desktop` open `/chats` + select thread | List + thread side by side |
-| G-21 | Home URL subtab sync | Open `/?tab=past-games`; legacy `/?tab=list` | Past subtab; list URL redirects to calendar |
+| G-21 | Home URL subtab sync | Open `/?tab=advanced`; legacy `/?tab=list` or `/?tab=past-games` | More subtab; legacy URLs redirect to calendar |
 | G-22 | Find URL view sync | Open `/find?view=list` | Find list view active |
 | G-23 | Chats filter URL sync | Open `/chats?filter=channels`, `/chats/marketplace`, `/bugs` | Correct inbox filter |
 | G-24 | Player overlay URL | Open any page with `?player=:userId` | Player card bottom sheet |
@@ -208,7 +208,7 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| H-01 | Calendar view | Open My tab | Calendar + games render |
+| H-01 | Calendar view | Open My tab | Calendar + games render; hint above stories links to More tab |
 | H-02 | Calendar date select | Pick date on calendar | Games for that day |
 | H-41 | Selected date heading | Pick date on My tab calendar | Long localized date (e.g. "Thursday, 11 June") with Today/Tomorrow badge shown below calendar; updates on re-select, localized per language |
 | H-40 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game badge | Selected day highlights; that day's games in list (not upcoming sections) |
@@ -217,9 +217,8 @@ Frontend/e2e/
 | H-05 | Sport questionnaire prompt | Incomplete questionnaire | Prompt shown, links to flow |
 | H-06 | City prompt banner | User missing city prefs | Banner shown |
 | H-07 | Gender prompt banner | When applicable | Banner + action |
-| H-08 | User teams section | User in teams | Teams row visible |
-| H-09 | Your leagues section | User in leagues | League cards visible |
-| H-10 | Past games section | User with history | Past games listed |
+| H-08 | User teams section | User in teams | Teams row on More subtab |
+| H-09 | Your leagues section | User in leagues | League cards on More subtab |
 | H-11 | Mark all read banner | Unread games exist | Banner + action clears counts |
 
 ### 6.2 Invites
@@ -240,7 +239,7 @@ Frontend/e2e/
 | H-18 | Unread badge on game | Game with chat unread | Badge on card |
 | H-19 | Create game entry | Header/FAB create | `/create-game` with entity picker |
 | H-20 | Create from calendar date | Select date → create | Pre-filled date |
-| H-36 | Finished section excludes archived | User with FINISHED and ARCHIVED games on list/calendar | Finished divider lists only FINISHED games; ARCHIVED only on past-games subtab |
+| H-36 | Selected date shows archived/finished | User with FINISHED and ARCHIVED games on a past calendar day | Select that day on My tab calendar; both FINISHED and ARCHIVED games appear under Finished section |
 
 ### 6.4 Stories
 
@@ -270,11 +269,10 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| H-28 | Past games subtab | Header → Past | Past games list loads |
-| H-29 | Past games unread badge | Unread on past game | Badge on Past subtab |
-| H-31 | Calendar subtab default | Open home | Calendar view default |
-| H-32 | URL deep link past games | `/?tab=past-games` | Past subtab selected |
-| H-33 | Subtab survives refresh | On past-games subtab → reload | Still on past-games |
+| H-28 | More subtab | Header → More (Trophy) or calendar hint | Teams + leagues sections; URL `/?tab=advanced` |
+| H-31 | Calendar subtab default | Open home | Calendar view default; no `tab` query param |
+| H-32 | URL deep link More | `/?tab=advanced` | More subtab selected |
+| H-33 | Subtab survives refresh | On More subtab → reload | Still on `/?tab=advanced` |
 | H-34 | Restore calendar after create | Create game from calendar | Returns to calendar + game date selected |
 | H-35 | Invite friend to app | `InviteFriendToBandejaButton` | Share sheet / copy invite link |
 | H-37 | Club booking connect banner (My tab) | User in city with BOOKTIME club, not connected | Connect banner on My tab → settings page |

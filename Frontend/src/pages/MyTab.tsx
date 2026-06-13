@@ -6,7 +6,7 @@ import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
 import {
   InvitesSection,
   MyGamesSection,
-  PastGamesSection,
+  AdvancedTabMovedHint,
   CityPromptBanner,
   UserTeamsHomeSection,
   YourLeaguesHomeSection,
@@ -29,7 +29,6 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useMyGames } from '@/hooks/useMyGames';
-import { usePastGames } from '@/hooks/usePastGames';
 import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -38,44 +37,6 @@ import { useDeclineInvite } from '@/hooks/useDeclineInvite';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
-const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string }>(
-  list: T[] = [],
-  unreadCounts?: Record<string, number>
-): T[] => {
-  const getStatusPriority = (status?: string): number => {
-    if (status === 'ANNOUNCED' || status === 'STARTED') return 0;
-    if (status === 'FINISHED') return 1;
-    if (status === 'ARCHIVED') return 2;
-    return 3;
-  };
-
-  const isPrimaryGame = (game: T): boolean => !game.parentId;
-  const hasUnreadChats = (game: T): boolean => (unreadCounts?.[game.id] || 0) > 0;
-
-  return [...list].sort((a, b) => {
-    const aIsPrimaryWithUnread = isPrimaryGame(a) && hasUnreadChats(a);
-    const bIsPrimaryWithUnread = isPrimaryGame(b) && hasUnreadChats(b);
-
-    if (aIsPrimaryWithUnread && !bIsPrimaryWithUnread) return -1;
-    if (!aIsPrimaryWithUnread && bIsPrimaryWithUnread) return 1;
-
-    const statusPriorityA = getStatusPriority(a.status);
-    const statusPriorityB = getStatusPriority(b.status);
-    
-    if (statusPriorityA !== statusPriorityB) {
-      return statusPriorityA - statusPriorityB;
-    }
-    
-    const dateTimeA = new Date(a.startTime).getTime();
-    const dateTimeB = new Date(b.startTime).getTime();
-    
-    if (statusPriorityA === 0) {
-      return dateTimeA - dateTimeB;
-    }
-    
-    return dateTimeB - dateTimeA;
-  });
-};
 
 const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string; entityType?: string }>(
   list: T[] = [],
@@ -100,18 +61,18 @@ const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: 
 
     const statusPriorityA = getStatusPriority(a.status);
     const statusPriorityB = getStatusPriority(b.status);
-    
+
     if (statusPriorityA !== statusPriorityB) {
       return statusPriorityA - statusPriorityB;
     }
-    
+
     const dateTimeA = new Date(a.startTime).getTime();
     const dateTimeB = new Date(b.startTime).getTime();
-    
+
     if (statusPriorityA === 0) {
       return dateTimeA - dateTimeB;
     }
-    
+
     return dateTimeB - dateTimeA;
   });
 };
@@ -122,6 +83,7 @@ export const MyTab = () => {
   const isDesktop = useDesktop();
   const markAllBannerUnread = useTotalUnreadForMarkAllBanner();
   const activeTab = useShellNavStore((s) => s.activeTab);
+  const isCalendarTab = activeTab === 'calendar';
   const myGamesSelectedDay = useShellNavStore((s) => s.myGamesSelectedDay);
   const setMyGamesSelectedDay = useShellNavStore((s) => s.setMyGamesSelectedDay);
   const myGamesCalendarDateAfterCreate = useShellNavStore((s) => s.myGamesCalendarDateAfterCreate);
@@ -139,7 +101,7 @@ export const MyTab = () => {
   const [loading, setLoading] = useState(true);
 
   const skeletonAnimation = useSkeletonAnimation();
-  
+
   const {
     games,
     invites,
@@ -150,23 +112,14 @@ export const MyTab = () => {
     hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
   });
 
-  const {
-    pastGames,
-    loadingPastGames,
-    hasMorePastGames,
-    loadPastGames,
-    refetchGame,
-  } = usePastGames(user, activeTab === 'past-games');
-
   const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
 
   const gameIdsForUnread = useMemo(() => {
     const ids = new Set<string>();
     for (const g of games) ids.add(g.id);
-    for (const g of pastGames) ids.add(g.id);
     for (const g of pastGamesInRange) ids.add(g.id);
     return [...ids];
-  }, [games, pastGames, pastGamesInRange]);
+  }, [games, pastGamesInRange]);
 
   const gameUnreadForSort = useGameUnreadCountsForIds(gameIdsForUnread);
 
@@ -194,12 +147,12 @@ export const MyTab = () => {
     }
   }, [myGamesCalendarDateAfterCreate, setMyGamesCalendarDateAfterCreate, setMyGamesSelectedDay]);
   useEffect(() => {
-    if (activeTab === 'calendar') {
+    if (isCalendarTab) {
       setCreateGameInitialDate(myGamesSelectedDate);
     } else {
       setCreateGameInitialDate(null);
     }
-  }, [activeTab, myGamesSelectedDate, setCreateGameInitialDate]);
+  }, [isCalendarTab, myGamesSelectedDate, setCreateGameInitialDate]);
   const [loadingPastInRange, setLoadingPastInRange] = useState(false);
   const calendarMergedGames = useMemo(() => {
     const noSeason = (g: (typeof filteredMyGames)[0]) => g.entityType !== 'LEAGUE_SEASON';
@@ -217,7 +170,6 @@ export const MyTab = () => {
   }, [myGamesSelectedDate, calendarMergedGames, calendarMergedUnreadCounts]);
 
   const upcomingGamesForCalendar = useMemo(() => {
-    if (activeTab !== 'calendar') return [];
     const base = calendarMergedGames.filter((g) => {
       if (g.timeIsSet === false) return false;
       const status = g.status;
@@ -233,7 +185,7 @@ export const MyTab = () => {
         return gameStr !== selectedStr;
       })
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-  }, [activeTab, myGamesSelectedDate, calendarMergedGames]);
+  }, [myGamesSelectedDate, calendarMergedGames]);
   const handleCalendarDateRangeChange = useCallback(
     async (start: Date, end: Date) => {
       const today = startOfDay(new Date());
@@ -263,10 +215,6 @@ export const MyTab = () => {
     },
     []
   );
-  const filteredPastGames = useMemo(() => {
-    const list = pastGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
-    return sortGamesByStatusAndDateTime(list, gameUnreadForSort);
-  }, [pastGames, gameUnreadForSort]);
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
   const [decliningInviteIds, setDecliningInviteIds] = useState<Set<string>>(new Set());
@@ -297,13 +245,13 @@ export const MyTab = () => {
       const { invitesApi } = await import('@/api');
       const response = await invitesApi.accept(inviteId);
       const message = (response as any).message || 'Invite accepted successfully';
-      
+
       if (message === 'games.addedToJoinQueue') {
         toast.success(t('games.addedToJoinQueue', { defaultValue: 'Added to join queue' }));
       } else {
         toast.success(t(message, { defaultValue: message }));
       }
-      
+
       setInvites(invites.filter((inv) => inv.id !== inviteId));
       const { setPendingInvites } = useHeaderStore.getState();
       const currentCount = useHeaderStore.getState().pendingInvites;
@@ -341,15 +289,22 @@ export const MyTab = () => {
     await clearCachesExceptUnsyncedResults();
     await Promise.all([
       refetchMyGames(),
-      loadPastGames?.(),
       useUserTeamsStore.getState().refreshAll(),
     ]);
-  }, [refetchMyGames, loadPastGames]);
+  }, [refetchMyGames]);
 
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
+  const renderAdvancedContent = (footerLoading: boolean) => (
+    <>
+      <UserTeamsHomeSection className="mb-3" />
+      <YourLeaguesHomeSection games={games} gamesUnreadCounts={calendarMergedUnreadCounts} className="mb-3" />
+      <MainTabFooter isLoading={footerLoading} />
+    </>
+  );
   const calendarContentPanel = (
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+        {user && <AdvancedTabMovedHint />}
         {user && <StoriesRail />}
         {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
@@ -364,8 +319,6 @@ export const MyTab = () => {
             onNoteSaved={() => refetchMyGames()}
           />
         </div>
-        <UserTeamsHomeSection className="mb-3" />
-        <YourLeaguesHomeSection games={games} gamesUnreadCounts={calendarMergedUnreadCounts} className="mb-3" />
         <MyGamesSection
           games={myGamesForSelectedDate}
           user={user}
@@ -390,11 +343,23 @@ export const MyTab = () => {
             </Button>
           </div>
         </div>
-        <MainTabFooter isLoading={loading || loadingPastGames} />
+        <MainTabFooter isLoading={loading} />
       </div>
     </div>
   );
-  if (isDesktop && activeTab === 'calendar') {
+  if (isDesktop) {
+    if (!isCalendarTab) {
+      return (
+        <>
+          <div className="fixed inset-x-0 bottom-0 overflow-y-auto z-0 bg-gray-50 dark:bg-gray-900" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
+            <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+              {renderAdvancedContent(loading)}
+            </div>
+          </div>
+          {declineInviteModal}
+        </>
+      );
+    }
     return (
       <>
       <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
@@ -429,9 +394,12 @@ export const MyTab = () => {
 
   return (
     <>
-    <PullToRefreshShell onRefresh={handleRefresh} disabled={loading || loadingPastGames}>
+    <PullToRefreshShell onRefresh={handleRefresh} disabled={loading}>
       {({ isRefreshing }) => (
         <>
+        {isCalendarTab ? (
+          <>
+        {user && <AdvancedTabMovedHint />}
         {user && <StoriesRail />}
         {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
@@ -453,52 +421,27 @@ export const MyTab = () => {
           />
         </div>
 
-        {activeTab === 'calendar' && <UserTeamsHomeSection className="mb-3" />}
-        {activeTab === 'calendar' && (
-          <YourLeaguesHomeSection
-            games={games}
-            gamesUnreadCounts={calendarMergedUnreadCounts}
-            className="mb-3"
-          />
-        )}
-
         <div className="min-h-[100px]">
-          {activeTab === 'calendar' && (
-            <>
-              {hasUpcomingGames && (
-                <MonthCalendar
-                  selectedDate={myGamesSelectedDate}
-                  onDateSelect={setMyGamesSelectedDate}
-                  availableGames={calendarMergedGames}
-                  onDateRangeChange={handleCalendarDateRangeChange}
-                />
-              )}
-              {hasUpcomingGames && <SelectedDateHeading date={myGamesSelectedDate} />}
-              <MyGamesSection
-                games={myGamesForSelectedDate}
-                user={user}
-                loading={loading || loadingPastInRange}
-                showSkeleton={skeletonAnimation.showSkeleton}
-                skeletonStates={skeletonAnimation.skeletonStates}
-                gamesUnreadCounts={calendarMergedUnreadCounts}
-                onNoteSaved={() => refetchMyGames()}
-                upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
-                onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
-              />
-            </>
-          )}
-
-          {activeTab === 'past-games' && (
-            <PastGamesSection
-              pastGames={filteredPastGames}
-              loadingPastGames={loadingPastGames}
-              hasMorePastGames={hasMorePastGames}
-              user={user}
-              pastGamesUnreadCounts={gameUnreadForSort}
-              onLoadMore={loadPastGames}
-              onNoteSaved={(gameId) => refetchGame(gameId)}
+          {hasUpcomingGames && (
+            <MonthCalendar
+              selectedDate={myGamesSelectedDate}
+              onDateSelect={setMyGamesSelectedDate}
+              availableGames={calendarMergedGames}
+              onDateRangeChange={handleCalendarDateRangeChange}
             />
           )}
+          {hasUpcomingGames && <SelectedDateHeading date={myGamesSelectedDate} />}
+          <MyGamesSection
+            games={myGamesForSelectedDate}
+            user={user}
+            loading={loading || loadingPastInRange}
+            showSkeleton={skeletonAnimation.showSkeleton}
+            skeletonStates={skeletonAnimation.skeletonStates}
+            gamesUnreadCounts={calendarMergedUnreadCounts}
+            onNoteSaved={() => refetchMyGames()}
+            upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
+            onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
+          />
         </div>
 
         <div
@@ -520,7 +463,11 @@ export const MyTab = () => {
             </Button>
           </div>
         </div>
-        <MainTabFooter isLoading={loading || loadingPastGames || isRefreshing} />
+        <MainTabFooter isLoading={loading || isRefreshing} />
+          </>
+        ) : (
+          renderAdvancedContent(loading || isRefreshing)
+        )}
         </>
       )}
     </PullToRefreshShell>

@@ -5,8 +5,8 @@ export * from './GameResultsHeaderContent';
 export * from './LeaderboardHeaderContent';
 export * from './GameSubscriptionsHeaderContent';
 export * from './HeaderContentWrapper';
-export * from './MyGamesTabController';
 export * from './LeaderboardTabController';
 export * from './ChatsTabController';
 export * from './FindTabController';
+export * from './MyGamesTabController';
 

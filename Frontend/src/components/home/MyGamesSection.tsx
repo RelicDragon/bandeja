@@ -60,9 +60,7 @@ export const MyGamesSection = ({
     );
   }
 
-  const displayGames = games.filter(
-    (game) => game.entityType !== 'LEAGUE_SEASON' && game.status !== 'ARCHIVED'
-  );
+  const displayGames = games.filter((game) => game.entityType !== 'LEAGUE_SEASON');
 
   if (displayGames.length === 0) {
     if (upcomingGames && upcomingGames.length > 0) {
@@ -111,7 +109,7 @@ export const MyGamesSection = ({
       return 0;
     });
   const finishedGames = displayGames
-    .filter((game) => game.status === 'FINISHED')
+    .filter((game) => game.status === 'FINISHED' || game.status === 'ARCHIVED')
     .sort((a, b) => {
       if (a.timeIsSet === false && b.timeIsSet !== false) return 1;
       if (a.timeIsSet !== false && b.timeIsSet === false) return -1;

@@ -113,13 +113,6 @@ export class ShellPage {
     await expectUrlPath(this.page, TAB_PATHS[tab]);
   }
 
-  async expectHomeSubtab(subtab: 'calendar' | 'past-games') {
-    await this.waitForShellReady();
-    const tablist = this.page.locator('header').getByRole('tablist').first();
-    const label = subtab === 'calendar' ? /calendar/i : /past/i;
-    await expect(tablist.getByRole('tab', { selected: true })).toContainText(label);
-  }
-
   async expectChatsFilter(filter: 'users' | 'channels' | 'market' | 'bugs') {
     await this.waitForChatsHeader();
     const tablist = this.page.locator('header').getByRole('tablist').first();

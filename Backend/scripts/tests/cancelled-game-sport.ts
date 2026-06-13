@@ -22,14 +22,16 @@ function testSchemaAndMigration(): void {
   assert(modelMatch != null, 'CancelledGame model in schema');
   assert(/^\s+sport\s+Sport\s+@default\(PADEL\)/m.test(modelMatch![0]), 'CancelledGame.sport with PADEL default');
 
-  const migrationDir = join(backendRoot, 'prisma/migrations');
+  const baselineMigration =
+    process.env.PRISMA_BASELINE_MIGRATION ?? '20260613120000_baseline';
   const migrationSql = readFileSync(
-    join(migrationDir, '20260527224014_cancelled_game_sport/migration.sql'),
+    join(backendRoot, 'prisma/migrations', baselineMigration, 'migration.sql'),
     'utf8',
   );
-  assert(migrationSql.includes('CancelledGame'), 'cancelled_game_sport migration targets CancelledGame');
-  assert(/sport/i.test(migrationSql), 'cancelled_game_sport migration adds sport column');
-  console.log('ok: CancelledGame schema + migration');
+  const cancelledGameTable = migrationSql.match(/CREATE TABLE "CancelledGame" \([\s\S]*?\);/);
+  assert(cancelledGameTable != null, 'baseline migration defines CancelledGame table');
+  assert(/"sport"\s+"Sport"\s+NOT NULL DEFAULT 'PADEL'/.test(cancelledGameTable![0]), 'baseline CancelledGame.sport with PADEL default');
+  console.log('ok: CancelledGame schema + baseline migration');
 }
 
 function testDeleteServicePersistsSport(): void {

@@ -1,17 +1,26 @@
 import { test, expect } from '@playwright/test';
 import { ShellPage } from '../../pages/shell.page';
+import { HomePage } from '../../pages/home.page';
 
 test.describe('shell deep links', () => {
   test('G-21 legacy home URL tab=list redirects to calendar @auth', async ({ page }) => {
     await page.goto('/?tab=list');
     await expect(page).toHaveURL(/\/?(\?|$)/);
-    await new ShellPage(page).expectHomeSubtab('calendar');
+    await new HomePage(page).waitForShell();
   });
 
-  test('G-21 home URL subtab past-games @auth', async ({ page }) => {
+  test('G-21 legacy home URL tab=past-games redirects to calendar @auth', async ({ page }) => {
     await page.goto('/?tab=past-games');
-    await expect(page).toHaveURL(/tab=past-games/);
-    await new ShellPage(page).expectHomeSubtab('past-games');
+    await expect(page).toHaveURL(/\/?(\?|$)/);
+    await new HomePage(page).waitForShell();
+  });
+
+  test('G-21 home URL subtab advanced @auth', async ({ page }) => {
+    await page.goto('/?tab=advanced');
+    await expect(page).toHaveURL(/tab=advanced/);
+    const home = new HomePage(page);
+    await home.waitForShell();
+    await expect(home.subtab('advanced')).toHaveAttribute('aria-selected', 'true');
   });
 
   test('G-22 find URL view list @auth', async ({ page }) => {

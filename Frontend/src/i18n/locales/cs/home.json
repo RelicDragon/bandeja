@@ -18,6 +18,8 @@
     "myGamesShort": "Moje",
     "upcoming": "Nadcházející",
     "past": "Minulé",
+    "more": "Více",
+    "moreTabMovedHint": "Týmy a ligy — záložka {{tab}}",
     "search": "Hledat",
     "loadMore": "Načíst další",
     "noPastGames": "Žádné minulé zápasy",

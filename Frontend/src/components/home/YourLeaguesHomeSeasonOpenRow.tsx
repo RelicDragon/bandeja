@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
 import {
   AlertTriangle,
-  ChevronDown,
   ChevronRight,
   LayoutGrid,
   MapPin,
@@ -20,8 +19,6 @@ interface YourLeaguesHomeSeasonOpenRowProps {
   hub: LeagueSeasonHubRow;
   hubGame: Game | undefined;
   unread: number;
-  expanded: boolean;
-  onToggleExpanded: () => void;
   hasBracketPlayoff?: boolean;
   bracketShortcutPath?: string | null;
 }
@@ -30,8 +27,6 @@ export function YourLeaguesHomeSeasonOpenRow({
   hub,
   hubGame,
   unread: unreadProp,
-  expanded,
-  onToggleExpanded,
   hasBracketPlayoff = false,
   bracketShortcutPath = null,
 }: YourLeaguesHomeSeasonOpenRowProps) {
@@ -69,12 +64,11 @@ export function YourLeaguesHomeSeasonOpenRow({
   );
 
   return (
-    <div className="flex items-stretch">
-      <button
-        type="button"
-        onClick={() => navigate(`/games/${hub.hubId}`)}
-        className="flex min-h-[3.25rem] min-w-0 flex-1 items-center gap-2.5 px-2.5 py-2 text-left transition-colors hover:bg-gray-100/80 active:bg-gray-100 dark:hover:bg-gray-800/60 dark:active:bg-gray-800"
-      >
+    <button
+      type="button"
+      onClick={() => navigate(`/games/${hub.hubId}`)}
+      className="flex min-h-[3.25rem] w-full items-center gap-2.5 px-2.5 py-2 text-left transition-colors hover:bg-gray-100/80 active:bg-gray-100 dark:hover:bg-gray-800/60 dark:active:bg-gray-800"
+    >
         {stale ? (
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white dark:bg-amber-600">
             <AlertTriangle size={16} strokeWidth={2.25} />
@@ -165,23 +159,6 @@ export function YourLeaguesHomeSeasonOpenRow({
           )}
           <ChevronRight size={18} className="shrink-0 text-gray-400 dark:text-gray-500" aria-hidden />
         </div>
-      </button>
-      <button
-        type="button"
-        onClick={onToggleExpanded}
-        aria-expanded={expanded}
-        aria-label={t('home.toggleLeagueGames', { defaultValue: 'Show or hide games' })}
-        className="flex w-11 shrink-0 items-center justify-center self-stretch border-l border-gray-200/80 text-gray-400 transition-colors hover:bg-gray-100/80 hover:text-gray-600 active:bg-gray-100 dark:border-gray-700/80 dark:text-gray-500 dark:hover:bg-gray-800/60 dark:hover:text-gray-300 dark:active:bg-gray-800"
-      >
-        <ChevronDown
-          size={20}
-          strokeWidth={2}
-          className={`transition-transform duration-200 ease-out motion-reduce:transition-none ${
-            expanded ? '' : '-rotate-90'
-          }`}
-          aria-hidden
-        />
-      </button>
-    </div>
+    </button>
   );
 }
