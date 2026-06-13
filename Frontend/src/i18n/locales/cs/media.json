@@ -2,6 +2,8 @@
   "media": {
     "resetView": "Resetovat zobrazení",
     "download": "Stáhnout",
-    "copyImage": "Kopírovat obrázek"
+    "copyImage": "Kopírovat obrázek",
+    "imageCopied": "Obrázek zkopírován",
+    "copyImageFailed": "Obrázek se nepodařilo zkopírovat"
   }
 }

@@ -2,6 +2,8 @@
   "media": {
     "resetView": "Restablecer Vista",
     "download": "Descargar",
-    "copyImage": "Copiar imagen"
+    "copyImage": "Copiar imagen",
+    "imageCopied": "Imagen copiada",
+    "copyImageFailed": "No se pudo copiar la imagen"
   }
 }

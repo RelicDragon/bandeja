@@ -414,6 +414,7 @@ export const EditGameInfoModal = ({
   };
 
   const runBookingOverlapGate = async (): Promise<boolean> => {
+    if (willBookOnEdit || locationTimeDraft?.locationTimeMode === 'bookings') return true;
     if (!where.clubId || !whenSelectedTime || !whenDuration) return true;
 
     const scheduleUnchanged =
@@ -433,10 +434,6 @@ export const EditGameInfoModal = ({
         club,
       });
       const overlap = checkBookingOverlap(bookings, whenSelectedTime, whenDuration, club);
-      if (overlap.hasHardOverlap) {
-        toast.error(t('createGame.overlapHardSave'));
-        return false;
-      }
       if (overlap.hasSoftOverlap) {
         setSoftOverlapOpen(true);
         return false;

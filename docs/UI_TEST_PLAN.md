@@ -405,7 +405,8 @@ Frontend/e2e/
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
 | C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club + integrated court | Single location & start card: club → date → court → reservation card → auth or duration → time |
 | C-13x | Integrated court opt-out toggle | BOOKTIME club, pick integrated court(s) on Time slots tab | "Don't book real court" switch + hint; OFF by default (will reserve); ON skips real booking and shows full club time grid (not API-only slots); red external cells selectable |
-| C-14p | Don't select court time grid | BOOKTIME club, tap "Don't select court" | Full club schedule; red external cells selectable; no bookable-days strip |
+| C-14p | Don't select court time grid | BOOKTIME club, tap "Don't select court" | Full club schedule; red external cells selectable and saveable; no bookable-days strip |
+| C-14q | Opt-out save on external overlap | Don't book real court ON; pick slot overlapping red external booking | Save succeeds (info banner ok); no hard-block toast |
 | C-13y | Create-game reserve CTA | Pick integrated court(s), connected, live API, opt-out OFF | CTA "Create game & reserve court" |
 | C-13z | Create-game inline auth gate | Reservation ON, not connected | Date visible; duration/time hidden; phone OTP inline; opt-out reveals normal grid |
 | C-14a | Create-game confirm morph | Reservation ON, connected, pick slot → Create | Single dialog: review → reserve → create → success → calendar |
@@ -518,7 +519,7 @@ Frontend/e2e/
 |----|------|-------|----------|
 | GD-19 | Edit general info | Edit modal → general tab | Name/description updated |
 | GD-20 | Edit location & time tab | Edit modal → Location & time | Single tab replaces Where+When; club picker visible; tab label not truncated; bookings/time slots switch visible on open (no auto-scroll past it) |
-| GD-20b | Edit opt-out full schedule | BOOKTIME game, integrated court, toggle "Don't book real court" ON (or Don't select court) | Full club time grid; red external cells selectable; same as create-game opt-out |
+| GD-20b | Edit opt-out full schedule | BOOKTIME game, integrated court, toggle "Don't book real court" ON (or Don't select court) | Full club time grid; red external cells selectable and saveable; same as create-game opt-out |
 | GD-20a | Edit game change club | Edit modal → Location & time → change club | Club modal opens; new club selected; courts refresh for new club |
 | GD-21 | Edit with linked bookings | Game with `linkedBookings` | Bookings list only; no time slots switch |
 | GD-22 | Edit unlink last booking | Remove last linked reservation | Dual subtab unlocks; `hasBookedCourt` clears; amber hint that club booking stays active; save asks to confirm unlink without auto-cancel |
@@ -663,6 +664,7 @@ Frontend/e2e/
 | CH-28 | Send image | Attach image | Image message renders |
 | CH-29 | Send video | Attach video | Upload + transcode state |
 | CH-30 | Fullscreen media | Tap image/video | Viewer opens |
+| CH-30a | Copy fullscreen image | Open image viewer → tap copy | Success toast; image in clipboard (native: paste in Photos/Messages) |
 | CH-31 | Send voice (if enabled) | Record voice | Audio message |
 | CH-32 | Create poll | Poll composer | Poll message |
 | CH-33 | Vote on poll | Select option | Vote count updates |

@@ -6,9 +6,11 @@ import {
   FullscreenImageZoom,
   type FullscreenImageZoomHandle,
 } from '@/components/fullscreenImageViewer/FullscreenImageZoom';
+import toast from 'react-hot-toast';
 import { Share } from '@capacitor/share';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { isCapacitor, isAndroid } from '@/utils/capacitor';
+import { copyImageToClipboard } from '@/utils/copyImageToClipboard';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
@@ -183,51 +185,18 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   const handleCopy = useCallback(
     async (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') return;
       setIsCopying(true);
       try {
-        const response = await fetch(displayUrl);
-        const blob = await response.blob();
-        const fromBlob = blob.type?.trim();
-        const fromHeader = response.headers.get('content-type')?.split(';')[0]?.trim();
-        const mime =
-          fromBlob && fromBlob.startsWith('image/')
-            ? fromBlob
-            : fromHeader && fromHeader.startsWith('image/')
-              ? fromHeader
-              : '';
-
-        if (mime) {
-          await navigator.clipboard.write([
-            new ClipboardItem({ [mime]: Promise.resolve(blob) }),
-          ]);
-          return;
-        }
-
-        const bitmap = await createImageBitmap(blob);
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = bitmap.width;
-          canvas.height = bitmap.height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) throw new Error('no canvas context');
-          ctx.drawImage(bitmap, 0, 0);
-          const pngBlob = await new Promise<Blob>((resolve, reject) => {
-            canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/png');
-          });
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': Promise.resolve(pngBlob) }),
-          ]);
-        } finally {
-          bitmap.close();
-        }
+        await copyImageToClipboard(displayUrl);
+        toast.success(t('media.imageCopied'));
       } catch (error) {
         console.error('Failed to copy image:', error);
+        toast.error(t('media.copyImageFailed'));
       } finally {
         setIsCopying(false);
       }
     },
-    [displayUrl],
+    [displayUrl, t],
   );
 
   const resetView = useCallback(

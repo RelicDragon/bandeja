@@ -335,10 +335,6 @@ export function useCreateGameBookingFlow({
         club,
       });
       const overlap = checkBookingOverlap(bookings, selectedTime, duration, club);
-      if (overlap.hasHardOverlap) {
-        toast.error(t('createGame.overlapHardSave'));
-        return 'hard';
-      }
       if (overlap.hasSoftOverlap) return 'soft';
     } catch {
       return 'ok';
@@ -354,7 +350,6 @@ export function useCreateGameBookingFlow({
     clubs,
     selectedDate,
     selectedCourt,
-    t,
   ]);
 
   const resolveCreateAttempt = useCallback(async (): Promise<CreateGameAttemptResult> => {

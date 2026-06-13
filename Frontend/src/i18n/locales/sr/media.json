@@ -2,6 +2,8 @@
   "media": {
     "resetView": "Resetuj prikaz",
     "download": "Preuzmi",
-    "copyImage": "Kopiraj sliku"
+    "copyImage": "Kopiraj sliku",
+    "imageCopied": "Slika je kopirana",
+    "copyImageFailed": "Kopiranje slike nije uspelo"
   }
 }

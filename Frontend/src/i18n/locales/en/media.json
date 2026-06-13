@@ -2,6 +2,8 @@
   "media": {
     "resetView": "Reset View",
     "download": "Download",
-    "copyImage": "Copy image"
+    "copyImage": "Copy image",
+    "imageCopied": "Image copied",
+    "copyImageFailed": "Could not copy image"
   }
 }
