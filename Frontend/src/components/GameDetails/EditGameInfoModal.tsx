@@ -36,6 +36,7 @@ import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvaila
 import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
 import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
+import { shouldUseBooktimeTimeOptions } from '@/hooks/createGameBookingFlow/shouldUseBooktimeTimeOptions';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price';
 export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
 
@@ -321,13 +322,14 @@ export const EditGameInfoModal = ({
     selectedDate: whenSelectedDate,
     durationHours: whenDuration,
     selectedCourtId: where.courtId || selectedCourtIds[0] || null,
-    enabled:
-      isOpen &&
-      clubHasBookingIntegration(selectedClubData) &&
-      !needsBooktimeAuth &&
-      (locationTimeDraft?.locationTimeMode !== 'timeSlots' ||
-        !willBookOnEdit ||
-        Boolean(booktimeAuth?.connected)),
+    enabled: shouldUseBooktimeTimeOptions({
+      entityType: game.entityType,
+      clubHasBookingIntegration: clubHasBookingIntegration(selectedClubData),
+      needsBooktimeAuth,
+      locationTimeMode: locationTimeDraft?.locationTimeMode,
+      willBookOnCreate: willBookOnEdit,
+      booktimeConnected: Boolean(booktimeAuth?.connected),
+    }) && isOpen,
   });
   const resolvedGenerateTimeOptions = booktimeTimeOptions.active
     ? booktimeTimeOptions.generateTimeOptions

@@ -142,8 +142,10 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
             const isExternallyBooked = isBooked && hasExternallyBookedSlot(time);
             const isHardBlocked = isBooked && isSlotHardBlocked(time);
 
+            const blockHardBookedSlot = hideOccupancyOverlay && isHardBlocked;
+
             const handleTimeClick = () => {
-              if (entityType !== 'BAR' && isHardBlocked) return;
+              if (entityType !== 'BAR' && blockHardBookedSlot) return;
               if (entityType === 'BAR') {
                 onTimeSelect(time);
               } else if (canAccommodate) {
@@ -160,7 +162,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
               <button
                 key={time}
                 type="button"
-                disabled={entityType !== 'BAR' && isHardBlocked}
+                disabled={entityType !== 'BAR' && blockHardBookedSlot}
                 onClick={handleTimeClick}
                 className={`w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${
                   isSelected

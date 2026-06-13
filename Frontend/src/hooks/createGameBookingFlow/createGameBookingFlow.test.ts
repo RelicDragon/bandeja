@@ -3,6 +3,7 @@ import { assembleCreateGameBookingFields } from './assembleCreateGameBookingFiel
 import { resolveCreateGameBookingAction } from './resolveCreateGameBookingAction';
 import { resolveCreateButtonLabel } from './resolveCreateButtonLabel';
 import { shouldPromptMarkCourtAfterCreate } from './shouldPromptMarkCourtAfterCreate';
+import { shouldUseBooktimeTimeOptions } from './shouldUseBooktimeTimeOptions';
 
 const t = ((key: string) => key) as Parameters<typeof resolveCreateButtonLabel>[0]['t'];
 
@@ -178,6 +179,43 @@ describe('resolveCreateButtonLabel', () => {
         integratedCourtCount: 1,
       }),
     ).toBe('createGame.booktime.createCta');
+  });
+});
+
+describe('shouldUseBooktimeTimeOptions', () => {
+  const base = {
+    entityType: 'GAME' as const,
+    clubHasBookingIntegration: true,
+    needsBooktimeAuth: false,
+    locationTimeMode: 'timeSlots' as const,
+    willBookOnCreate: true,
+    booktimeConnected: true,
+  };
+
+  it('uses booktime slots only when reserving on create', () => {
+    expect(shouldUseBooktimeTimeOptions(base)).toBe(true);
+    expect(
+      shouldUseBooktimeTimeOptions({
+        ...base,
+        willBookOnCreate: false,
+      }),
+    ).toBe(false);
+  });
+
+  it('falls back to full club schedule when court not selected or opt-out', () => {
+    expect(
+      shouldUseBooktimeTimeOptions({
+        ...base,
+        willBookOnCreate: false,
+        booktimeConnected: true,
+      }),
+    ).toBe(false);
+    expect(
+      shouldUseBooktimeTimeOptions({
+        ...base,
+        locationTimeMode: 'bookings',
+      }),
+    ).toBe(false);
   });
 });
 

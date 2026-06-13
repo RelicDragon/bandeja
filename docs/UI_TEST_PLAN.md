@@ -405,7 +405,8 @@ Frontend/e2e/
 | C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
 | C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club + integrated court | Single location & start card: club → date → court → reservation card → auth or duration → time |
-| C-13x | Integrated court opt-out toggle | BOOKTIME club, pick integrated court(s) on Time slots tab | "Don't book real court" switch + hint; OFF by default (will reserve); ON skips real booking |
+| C-13x | Integrated court opt-out toggle | BOOKTIME club, pick integrated court(s) on Time slots tab | "Don't book real court" switch + hint; OFF by default (will reserve); ON skips real booking and shows full club time grid (not API-only slots); red external cells selectable |
+| C-14p | Don't select court time grid | BOOKTIME club, tap "Don't select court" | Full club schedule; red external cells selectable; no bookable-days strip |
 | C-13y | Create-game reserve CTA | Pick integrated court(s), connected, live API, opt-out OFF | CTA "Create game & reserve court" |
 | C-13z | Create-game inline auth gate | Reservation ON, not connected | Date visible; duration/time hidden; phone OTP inline; opt-out reveals normal grid |
 | C-14a | Create-game confirm morph | Reservation ON, connected, pick slot → Create | Single dialog: review → reserve → create → success → calendar |
@@ -427,7 +428,7 @@ Frontend/e2e/
 | C-15 | Court booked | Pick court | Overlap warning if conflict |
 | C-16 | Mark court booked modal | Confirm booking | Court marked |
 | C-17 | Segmented switch (integrated club) | Pick BOOKTIME club on create | "Pick a time" \| "Bookings" labels visible on both tabs |
-| C-18 | Time slots + integrated court | Select integrated court on Time slots tab | Opt-out toggle; default reserves on create; toggle ON creates game only |
+| C-18 | Time slots + integrated court | Select integrated court on Time slots tab | Opt-out toggle; default reserves on create; toggle ON creates game only with full schedule and selectable red cells |
 | C-19 | Bookings tab multi-select | Bookings tab; select N reservations | Derived min–max window; live counter |
 | C-20 | Override time on Bookings tab | Toggle adjust game time | Expand animates; create uses shorter window |
 | C-21 | Multi-court confirm 2 steps | 2 integrated courts → Create | Stepper: 2 reserve steps + create; rollback on fail |
@@ -515,6 +516,7 @@ Frontend/e2e/
 |----|------|-------|----------|
 | GD-19 | Edit general info | Edit modal → general tab | Name/description updated |
 | GD-20 | Edit location & time tab | Edit modal → Location & time | Single tab replaces Where+When; club picker visible; tab label not truncated; bookings/time slots switch visible on open (no auto-scroll past it) |
+| GD-20b | Edit opt-out full schedule | BOOKTIME game, integrated court, toggle "Don't book real court" ON (or Don't select court) | Full club time grid; red external cells selectable; same as create-game opt-out |
 | GD-20a | Edit game change club | Edit modal → Location & time → change club | Club modal opens; new club selected; courts refresh for new club |
 | GD-21 | Edit with linked bookings | Game with `linkedBookings` | Bookings list only; no time slots switch |
 | GD-22 | Edit unlink last booking | Remove last linked reservation | Dual subtab unlocks; `hasBookedCourt` clears; amber hint that club booking stays active; save asks to confirm unlink without auto-cancel |

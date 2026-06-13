@@ -23,6 +23,7 @@ import { assembleCreateGameBookingFields } from './assembleCreateGameBookingFiel
 import { resolveCreateButtonLabel } from './resolveCreateButtonLabel';
 import { resolveCreateGameBookingAction } from './resolveCreateGameBookingAction';
 import { shouldPromptMarkCourtAfterCreate } from './shouldPromptMarkCourtAfterCreate';
+import { shouldUseBooktimeTimeOptions } from './shouldUseBooktimeTimeOptions';
 import type {
   CreateGameAttemptResult,
   CreateGameBookingFields,
@@ -184,11 +185,14 @@ export function useCreateGameBookingFlow({
     selectedDate,
     durationHours: duration,
     selectedCourtId: selectedCourt === 'notBooked' ? null : selectedCourt,
-    enabled:
-      entityType !== 'BAR' &&
-      clubHasBookingIntegration(selectedClubData) &&
-      !needsBooktimeAuth &&
-      (locationTimeMode !== 'timeSlots' || !willBookOnCreate || Boolean(booktimeAuth?.connected)),
+    enabled: shouldUseBooktimeTimeOptions({
+      entityType,
+      clubHasBookingIntegration: clubHasBookingIntegration(selectedClubData),
+      needsBooktimeAuth,
+      locationTimeMode,
+      willBookOnCreate,
+      booktimeConnected: Boolean(booktimeAuth?.connected),
+    }),
   });
 
   const resolvedGenerateTimeOptions = booktimeTimeOptions.active
