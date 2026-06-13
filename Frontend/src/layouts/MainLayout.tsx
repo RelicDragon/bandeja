@@ -21,7 +21,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
   const {
     bottomTabsVisible,
     chatsFilter,
-    activeTab,
     findViewMode,
     initShellAnimationPlayed,
     setInitShellAnimationPlayed,
@@ -29,7 +28,6 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     useShallow((s) => ({
       bottomTabsVisible: s.bottomTabsVisible,
       chatsFilter: s.chatsFilter,
-      activeTab: s.activeTab,
       findViewMode: s.findViewMode,
       initShellAnimationPlayed: s.initShellAnimationPlayed,
       setInitShellAnimationPlayed: s.setInitShellAnimationPlayed,
@@ -59,10 +57,9 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     (isDesktop || isLandscape) && parsed.place === 'game' && isGameDetailsPath;
   const isDesktopGameDetailsSplitView = isGameDetailsWidePath && !gameDetailsOccludesSideChat;
   const isGameDetailsTableFullBleed = isGameDetailsWidePath && gameDetailsOccludesSideChat;
-  const isDesktopCalendarSplitView = isDesktop && (
-    (parsed.place === 'home' && activeTab === 'calendar') ||
-    (parsed.place === 'find' && findViewMode === 'calendar')
-  );
+  const isDesktopHomeShell = isDesktop && parsed.place === 'home';
+  const isDesktopCalendarSplitView =
+    isDesktopHomeShell || (isDesktop && parsed.place === 'find' && findViewMode === 'calendar');
   const isOnSpecificChatRoute = location.pathname.includes('/user-chat/') ||
                                  location.pathname.includes('/group-chat/') ||
                                  location.pathname.includes('/channel-chat/') ||

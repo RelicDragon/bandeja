@@ -36,11 +36,10 @@ export const MainPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const { bottomTabsVisible, initShellAnimationPlayed, activeTab, findViewMode } = useShellNavStore(
+  const { bottomTabsVisible, initShellAnimationPlayed, findViewMode } = useShellNavStore(
     useShallow((s) => ({
       bottomTabsVisible: s.bottomTabsVisible,
       initShellAnimationPlayed: s.initShellAnimationPlayed,
-      activeTab: s.activeTab,
       findViewMode: s.findViewMode,
     }))
   );
@@ -70,10 +69,9 @@ export const MainPage = () => {
     }
   }, [showGameTabs, parsed.place, navigate]);
 
-  const isCalendarSplitView = isDesktop && (
-    (parsed.place === 'home' && activeTab === 'calendar') ||
-    (parsed.place === 'find' && findViewMode === 'calendar')
-  );
+  const isHomeDesktopShell = isDesktop && parsed.place === 'home';
+  const isCalendarSplitView =
+    isHomeDesktopShell || (isDesktop && parsed.place === 'find' && findViewMode === 'calendar');
 
   const scrollablePage =
     parsed.place === 'home' ||

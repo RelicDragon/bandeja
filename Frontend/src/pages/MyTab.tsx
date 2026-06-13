@@ -29,6 +29,7 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useMyGames } from '@/hooks/useMyGames';
+import { useHomeFromUrl } from '@/hooks/useHomeFromUrl';
 import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
@@ -82,8 +83,8 @@ export const MyTab = () => {
   const user = useAuthStore((state) => state.user);
   const isDesktop = useDesktop();
   const markAllBannerUnread = useTotalUnreadForMarkAllBanner();
-  const activeTab = useShellNavStore((s) => s.activeTab);
-  const isCalendarTab = activeTab === 'calendar';
+  const { tab: homeTab } = useHomeFromUrl();
+  const isCalendarTab = homeTab === 'calendar';
   const myGamesSelectedDay = useShellNavStore((s) => s.myGamesSelectedDay);
   const setMyGamesSelectedDay = useShellNavStore((s) => s.setMyGamesSelectedDay);
   const myGamesCalendarDateAfterCreate = useShellNavStore((s) => s.myGamesCalendarDateAfterCreate);
@@ -96,7 +97,7 @@ export const MyTab = () => {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [activeTab]);
+  }, [homeTab]);
 
   const [loading, setLoading] = useState(true);
 
