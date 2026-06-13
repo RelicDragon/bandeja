@@ -184,9 +184,9 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| A-17 | New user no city | User without `currentCity` | Select city screen |
-| A-18 | City already set | Visit `/select-city` | Redirect home |
-| A-19 | Pick city | Select from list | Profile updated, proceed |
+| A-17 | New user auto-city | Fresh user, `cityIsSet: false`, auto-assigned city | `CityPromptBanner` on home; `/select-city` redirects home |
+| A-18 | City already set @auth | `cityIsSet: true` | Redirect home |
+| A-19 | Pick city | Auto-detect failed (`currentCity` null) | Full `/select-city` picker; profile updated |
 
 ### 5.4 Logout & sessions
 

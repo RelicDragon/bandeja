@@ -13,6 +13,31 @@ import {
   upsertPadelSportProfileFromUser,
 } from '../../services/user/userSportProfile.service';
 import { CityGroupService } from '../../services/chat/cityGroup.service';
+import { isE2eTestHeader } from '../../utils/e2eRequestContext';
+
+export const e2eClearAssignedCity = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!isE2eTestHeader(req)) {
+    throw new ApiError(403, 'Forbidden');
+  }
+  const userId = req.userId!;
+  const currentUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { currentCityId: true },
+  });
+  const previousCityId = currentUser?.currentCityId ?? null;
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: { currentCityId: null },
+    select: PROFILE_SELECT_FIELDS,
+  });
+  if (previousCityId) {
+    await CityGroupService.removeUserFromCityGroup(userId, previousCityId);
+  }
+  res.json({
+    success: true,
+    data: enrichProfileUser(user),
+  });
+});
 
 export const switchCity = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { cityId } = req.body as { cityId: string };

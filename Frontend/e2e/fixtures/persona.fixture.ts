@@ -3,8 +3,14 @@ import { e2eApiHeaders } from '../test-user';
 
 const apiURL = () => process.env.E2E_API_URL ?? 'http://localhost:3000/api';
 
+let e2ePhoneSeq = 0;
+
 export function generateE2ePhone(): string {
-  const suffix = `${Date.now()}`.slice(-7);
+  e2ePhoneSeq += 1;
+  const suffix = `${Date.now()}${e2ePhoneSeq}${Math.floor(Math.random() * 1000)}`
+    .replace(/\D/g, '')
+    .slice(-7)
+    .padStart(7, '0');
   return `+7900${suffix}`;
 }
 
@@ -86,6 +92,7 @@ export async function createGenderPromptUser(): Promise<{
   return { token, user: { ...user, ...updated, genderIsSet: false, cityIsSet: true } };
 }
 
+/** Fresh user after auto-assign: has currentCity, cityIsSet false → CityPromptBanner on home. */
 export async function createCityPromptUser(): Promise<{
   token: string;
   user: E2eUser & Record<string, unknown>;
@@ -121,19 +128,27 @@ export async function createPrimarySportGateUser(): Promise<{
   return { token, user: { ...user, ...updated, primarySportIsSet: false, nameIsSet: true } };
 }
 
+/** Simulates auto-detect failure: no currentCity → full /select-city picker. */
 export async function createNoCityUser(): Promise<{
   token: string;
   user: E2eUser & Record<string, unknown>;
 }> {
   const { token, user } = await registerTestUser();
+  await updateTestProfile(token, { cityIsSet: false });
+  const profile = await e2eApi<E2eUser & Record<string, unknown>>(token, '/users/e2e/clear-assigned-city', {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
   return {
     token,
-    user: {
-      ...user,
-      currentCity: null,
-      cityIsSet: false,
-    },
+    user: { ...user, ...profile, currentCity: null, cityIsSet: false },
   };
+}
+
+export async function listCities(
+  token: string,
+): Promise<Array<{ id: string; name: string; country?: string }>> {
+  return e2eApi<Array<{ id: string; name: string; country?: string }>>(token, '/cities');
 }
 
 export async function createNoSportsUser(): Promise<{
@@ -149,9 +164,4 @@ export async function createNoSportsUser(): Promise<{
       nameIsSet: true,
     },
   };
-}
-
-export async function listCities(token: string): Promise<Array<{ id: string; name: string }>> {
-  const cities = await e2eApi<Array<{ id: string; name: string; country?: string }>>(token, '/cities');
-  return cities;
 }

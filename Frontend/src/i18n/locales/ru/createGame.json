@@ -469,9 +469,9 @@
     "overlapSoftTitle": "Another game is planned here",
     "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
     "overlapSoftProceed": "Continue anyway",
-    "markCourtBookedTitle": "Mark court as booked?",
-    "markCourtBookedMessage": "You selected a court but have not marked it as booked. Confirm when you have reserved it with the club.",
-    "markCourtBookedYes": "Yes, I've booked it",
-    "markCourtBookedSkip": "Not yet"
+    "markCourtBookedTitle": "Отметить корт как забронированный?",
+    "markCourtBookedMessage": "Вы выбрали корт, но не отметили его как забронированный. Подтвердите, когда забронируете его в клубе.",
+    "markCourtBookedYes": "Да, я забронировал",
+    "markCourtBookedSkip": "Пока нет"
   }
 }

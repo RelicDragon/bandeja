@@ -466,6 +466,7 @@ function AppContent() {
           path="/select-city"
           element={
             <ProtectedRoute>
+              {/* Full picker only when auto-assign failed (no currentCity). Auto-assigned users confirm via CityPromptBanner on home. */}
               {user?.currentCity ? (
                 <Navigate to="/" replace />
               ) : (

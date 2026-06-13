@@ -103,6 +103,8 @@ router.post(
   userController.switchCity
 );
 
+router.post('/e2e/clear-assigned-city', authenticate, userController.e2eClearAssignedCity);
+
 router.post(
   '/set-initial-level',
   authenticate,

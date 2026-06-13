@@ -468,9 +468,9 @@
     "overlapSoftTitle": "Another game is planned here",
     "overlapSoftMessage": "Another player has a game on this court at this time but has not confirmed the booking yet. You can still continue.",
     "overlapSoftProceed": "Continue anyway",
-    "markCourtBookedTitle": "Mark court as booked?",
-    "markCourtBookedMessage": "You selected a court but have not marked it as booked. Confirm when you have reserved it with the club.",
-    "markCourtBookedYes": "Yes, I've booked it",
-    "markCourtBookedSkip": "Not yet"
+    "markCourtBookedTitle": "Označiti teren kao rezervisan?",
+    "markCourtBookedMessage": "Izabrali ste teren, ali niste ga označili kao rezervisan. Potvrdite kada ga rezervišete u klubu.",
+    "markCourtBookedYes": "Da, rezervisao sam ga",
+    "markCourtBookedSkip": "Još ne"
   }
 }
