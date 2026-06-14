@@ -1,0 +1,24 @@
+export const BOOKING_ERROR_KEYS = {
+  slotNoLongerAvailable: 'errors.booking.slotNoLongerAvailable',
+  sessionExpired: 'errors.booking.sessionExpired',
+  courtNotConfigured: 'errors.booking.courtNotConfigured',
+  clubNotConfigured: 'errors.booking.clubNotConfigured',
+  connectionNotFound: 'errors.booking.connectionNotFound',
+  configNotFound: 'errors.booking.configNotFound',
+  cancelFailed: 'errors.booking.cancelFailed',
+  providerNotConfigured: 'errors.booking.providerNotConfigured',
+  externalProviderMustBeBooktime: 'errors.booking.externalProviderMustBeBooktime',
+  cannotClearBookedCourtWithLinks: 'errors.booking.cannotClearBookedCourtWithLinks',
+  patchRequiresBookingId: 'errors.booking.patchRequiresBookingId',
+  updateLinksForbidden: 'errors.booking.updateLinksForbidden',
+  alreadyLinked: 'errors.booking.alreadyLinked',
+  updateSnapshotsForbidden: 'errors.booking.updateSnapshotsForbidden',
+  snapshotsRequired: 'errors.booking.snapshotsRequired',
+  bookingNotLinked: 'errors.booking.bookingNotLinked',
+  legacyExternalBookingIdRejected: 'errors.booking.legacyExternalBookingIdRejected',
+  companyIdRequired: 'errors.booking.companyIdRequired',
+  integrationTypeMustBeOnlineBooking: 'errors.booking.integrationTypeMustBeOnlineBooking',
+  rollbackFailed: 'errors.booking.rollbackFailed',
+} as const;
+
+export type BookingErrorKey = (typeof BOOKING_ERROR_KEYS)[keyof typeof BOOKING_ERROR_KEYS];

@@ -33,6 +33,6 @@ export interface CreateGameBookingFields {
   rollbackBooktimeBooking?: boolean;
 }
 
-import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
+import { BOOKING_ERROR_KEYS } from '../booking/errorKeys';
 
 export const LEGACY_EXTERNAL_BOOKING_ID_REJECTED = BOOKING_ERROR_KEYS.legacyExternalBookingIdRejected;
