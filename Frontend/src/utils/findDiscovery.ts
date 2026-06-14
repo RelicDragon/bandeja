@@ -70,40 +70,36 @@ export function passesFindNoRatingFilter(game: Game, filterNoRating: boolean | u
 }
 
 export type GameDiscoveryBadgeParts = {
-  tier: FindTierFilter;
-  tierLabel: string;
-  detailLabel?: string;
+  label: string;
 };
 
 export function buildGameDiscoveryBadgeParts(game: Game, t: TFunction): GameDiscoveryBadgeParts | null {
+  if (game.entityType !== 'GAME') return null;
+
+  const template = matchCreateTemplateForGame(game);
+  if (template) {
+    return { label: t(template.labelKey) };
+  }
+
   const tier = resolveGameDiscoveryTier(game);
   if (!tier) return null;
 
   const sport = parseGameSport(game.sport);
-  const tierLabel = t(`createGame.intent.${tier}.title`);
   const preset = game.scoringPreset;
   const presetLabel =
     preset && presetLabelKey(sport, preset) ? t(presetLabelKey(sport, preset)!) : '';
 
-  let detailLabel: string | undefined;
-  if (tier === 'social') {
-    if (game.gameType && game.gameType !== 'CLASSIC') {
-      detailLabel = t(`games.gameTypes.${game.gameType}`);
-    } else if (presetLabel) {
-      detailLabel = presetLabel;
-    }
+  let label: string | undefined;
+  if (game.gameType && game.gameType !== 'CLASSIC') {
+    label = t(`games.gameTypes.${game.gameType}`);
   } else if (presetLabel) {
-    detailLabel = presetLabel;
-  } else if (game.gameType) {
-    detailLabel = t(`games.gameTypes.${game.gameType}`);
+    label = presetLabel;
   }
 
-  return { tier, tierLabel, detailLabel };
+  if (!label) return null;
+  return { label };
 }
 
 export function buildGameDiscoveryBadge(game: Game, t: TFunction): string | null {
-  const parts = buildGameDiscoveryBadgeParts(game, t);
-  if (!parts) return null;
-  const joined = [parts.tierLabel, parts.detailLabel].filter(Boolean);
-  return joined.join(' · ');
+  return buildGameDiscoveryBadgeParts(game, t)?.label ?? null;
 }
