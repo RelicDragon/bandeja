@@ -65,7 +65,16 @@ export function BooktimeAdjacentBookingGroup({
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {formatBooktimeBookingDate(bookings[0]!, { timezone: clubTimezone, displaySettings })}
           </p>
-          <BooktimeSlotTimeCards bookings={bookings} clubTimezone={clubTimezone} compact={compact} />
+          <div
+            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
+              expanded ? 'grid-rows-[0fr] opacity-0 pointer-events-none' : 'grid-rows-[1fr] opacity-100'
+            }`}
+            aria-hidden={expanded}
+          >
+            <div className={`min-h-0 overflow-hidden ${compact ? 'pt-1' : 'pt-1.5'}`}>
+              <BooktimeSlotTimeCards bookings={bookings} clubTimezone={clubTimezone} />
+            </div>
+          </div>
         </div>
         <ChevronDown
           size={18}

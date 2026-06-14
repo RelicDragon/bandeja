@@ -7,15 +7,14 @@ import { formatBooktimeBookingSlotRange } from './booktimeBookingUtils';
 type Props = {
   bookings: BooktimeBookingRecord[];
   clubTimezone?: string | null;
-  compact?: boolean;
 };
 
-export function BooktimeSlotTimeCards({ bookings, clubTimezone, compact = false }: Props) {
+export function BooktimeSlotTimeCards({ bookings, clubTimezone }: Props) {
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
   return (
-    <div className={`flex flex-wrap gap-1.5 ${compact ? 'mt-1' : 'mt-1.5'}`}>
+    <div className="flex flex-wrap gap-1.5">
       {bookings.map((booking) => (
         <span
           key={booking.uuid}
