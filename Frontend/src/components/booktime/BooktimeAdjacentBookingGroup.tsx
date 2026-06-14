@@ -7,8 +7,9 @@ import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { BooktimeBookingRow } from './BooktimeBookingRow';
+import { BooktimeSlotTimeCards } from './BooktimeSlotTimeCards';
 import {
-  formatBooktimeBookingWhen,
+  formatBooktimeBookingDate,
   resolveCourtForBooking,
 } from './booktimeBookingUtils';
 
@@ -37,14 +38,6 @@ export function BooktimeAdjacentBookingGroup({
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const [expanded, setExpanded] = useState(false);
-
-  const summaryBooking = useMemo(
-    () => ({
-      ...bookings[0]!,
-      bookingEnd: bookings[bookings.length - 1]!.bookingEnd,
-    }),
-    [bookings],
-  );
   const courtInfo = resolveCourtForBooking(bookings[0]!, club, t('club.booktime.unknownCourt'));
 
   return (
@@ -70,11 +63,9 @@ export function BooktimeAdjacentBookingGroup({
             secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400 truncate"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400">
-            {formatBooktimeBookingWhen(summaryBooking, { timezone: clubTimezone, displaySettings })}
+            {formatBooktimeBookingDate(bookings[0]!, { timezone: clubTimezone, displaySettings })}
           </p>
-          <p className="text-[10px] font-medium text-primary-700 dark:text-primary-300 mt-0.5">
-            {t('club.booktime.adjacentSlotsCount', { count: bookings.length })}
-          </p>
+          <BooktimeSlotTimeCards bookings={bookings} clubTimezone={clubTimezone} compact={compact} />
         </div>
         <ChevronDown
           size={18}

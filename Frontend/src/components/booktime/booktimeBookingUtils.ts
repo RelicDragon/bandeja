@@ -93,6 +93,40 @@ export function formatBooktimeBookingWhen(
   return endTime ? `${dateLabel} · ${startTime} – ${endTime}` : `${dateLabel} · ${startTime}`;
 }
 
+export function formatBooktimeBookingDate(
+  booking: BooktimeBookingRecord,
+  options: {
+    timezone?: string | null;
+    displaySettings: ResolvedDisplaySettings;
+  }
+): string {
+  const timezone = options.timezone ?? BOOKTIME_DEFAULT_TIMEZONE;
+  const startDate = storedUtcIsoToInstant(booking.bookingStart);
+  if (!startDate) return booking.bookingStart;
+
+  return new Intl.DateTimeFormat(options.displaySettings.locale, {
+    timeZone: timezone,
+    dateStyle: 'long',
+  }).format(startDate);
+}
+
+export function formatBooktimeBookingSlotRange(
+  booking: BooktimeBookingRecord,
+  options: {
+    timezone?: string | null;
+    displaySettings: ResolvedDisplaySettings;
+  }
+): string {
+  const timezone = options.timezone ?? BOOKTIME_DEFAULT_TIMEZONE;
+  const startDate = storedUtcIsoToInstant(booking.bookingStart);
+  if (!startDate) return booking.bookingStart;
+
+  const endDate = booking.bookingEnd ? storedUtcIsoToInstant(booking.bookingEnd) : null;
+  const startTime = formatBooktimeWallClock(startDate, timezone, options.displaySettings);
+  const endTime = endDate ? formatBooktimeWallClock(endDate, timezone, options.displaySettings) : null;
+  return endTime ? `${startTime} – ${endTime}` : startTime;
+}
+
 type BooktimeCourtRef = {
   id: string;
   name: string;
