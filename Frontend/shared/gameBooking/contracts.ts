@@ -25,12 +25,26 @@ export interface PutGameBookingSnapshotsBody {
   snapshots: BookingSnapshotInput[];
 }
 
+export interface LinkBookingToGamePatch {
+  clubId?: string;
+  courtId?: string;
+  startTime?: string;
+  endTime?: string;
+  timeIsSet?: boolean;
+  hasBookedCourt?: boolean;
+}
+
+export interface LinkBookingToGameBody {
+  externalBookingId: string;
+  snapshot: BookingSnapshotInput;
+  gamePatch?: LinkBookingToGamePatch;
+}
+
 export interface CreateGameBookingFields {
   externalBookingIds?: string[];
   externalBookingProvider?: ExternalBookingProvider;
   bookingSnapshots?: BookingSnapshotInput[];
   timeOverride?: boolean;
-  rollbackBooktimeBooking?: boolean;
 }
 
 import { BOOKING_ERROR_KEYS } from '../booking/errorKeys';

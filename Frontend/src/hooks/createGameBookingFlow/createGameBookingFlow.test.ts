@@ -128,13 +128,11 @@ describe('assembleCreateGameBookingFields', () => {
         externalBookingIds: ['ext-1'],
         bookingSnapshots: [{ courtId: 'court-1', externalBookingId: 'ext-1' } as never],
         hasBookedCourt: true,
-        rollbackBooktimeBooking: true,
         courtIds: ['court-1'],
       },
     });
 
     expect(fields.externalBookingProvider).toBe('BOOKTIME');
-    expect(fields.rollbackBooktimeBooking).toBe(true);
   });
 });
 

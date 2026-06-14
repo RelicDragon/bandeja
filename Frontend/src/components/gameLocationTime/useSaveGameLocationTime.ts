@@ -1,10 +1,15 @@
 import { addHours } from 'date-fns';
+import type { BooktimeMyClubRow } from '@/api/booktime';
+import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { Club, Court, Game } from '@/types';
 import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
+import { resolveBooktimeClubTimezone } from '@shared/gameBooking/linkBookingToGame';
 import { gamesApi } from '@/api/games';
 import { gameCourtsApi } from '@/api/gameCourts';
+import { clubToBooktimeRow, resolveCourtForBooking } from '@/components/booktime/booktimeBookingUtils';
+import { linkBookingToGame } from '@/services/gameBooking/linkBookingToGame';
 import { createDateFromClubTime } from '@/hooks/useGameTimeDuration';
 import type { EditLocationTimeDraft } from './locationTimeDraft';
 import { computePendingBookingUnlinks } from './computePendingBookingUnlinks';
@@ -12,6 +17,18 @@ import {
   LocationTimePartialSaveError,
   type LocationTimeSaveStep,
 } from './locationTimeSaveErrors';
+
+export type LinkBookingSaveAdd = {
+  booking: BooktimeBookingRecord;
+  courtId?: string;
+};
+
+export type LinkBookingSaveContext = {
+  game: Game;
+  club: BooktimeMyClubRow;
+  adds: LinkBookingSaveAdd[];
+  skipGameDatetimePatch?: boolean;
+};
 
 export type LocationTimeSaveDraft = {
   clubId?: string;
@@ -24,6 +41,7 @@ export type LocationTimeSaveDraft = {
   addBookingIds: string[];
   removeBookingIds: string[];
   snapshots?: BookingSnapshotInput[];
+  linkBookingContext?: LinkBookingSaveContext;
 };
 
 async function runSaveStep(
@@ -39,8 +57,35 @@ async function runSaveStep(
   }
 }
 
+async function applyLinkBookingAdds(context: LinkBookingSaveContext): Promise<void> {
+  let currentGame = context.game;
+  const timeZone = resolveBooktimeClubTimezone({ club: context.club, game: currentGame });
+  for (const add of context.adds) {
+    await linkBookingToGame({
+      gameId: currentGame.id!,
+      game: currentGame,
+      booking: add.booking,
+      club: context.club,
+      options: {
+        courtId: add.courtId,
+        timeZone,
+        skipGameDatetimePatch: context.skipGameDatetimePatch,
+      },
+    });
+    const refreshed = await gamesApi.getById(currentGame.id!);
+    currentGame = refreshed.data;
+  }
+}
+
 export async function saveLocationTime(gameId: string, draft: LocationTimeSaveDraft): Promise<Game> {
   const completedSteps: LocationTimeSaveStep[] = [];
+
+  if (draft.linkBookingContext && draft.linkBookingContext.adds.length > 0) {
+    await runSaveStep('bookings', completedSteps, async () => {
+      await applyLinkBookingAdds(draft.linkBookingContext!);
+    });
+  }
+
   const updateData: Partial<Game> = {};
   if (draft.clubId !== undefined) updateData.clubId = draft.clubId;
   if (draft.courtId !== undefined) updateData.courtId = draft.courtId;
@@ -56,12 +101,13 @@ export async function saveLocationTime(gameId: string, draft: LocationTimeSaveDr
     });
   }
 
-  if (draft.addBookingIds.length > 0 || draft.removeBookingIds.length > 0) {
+  if (draft.removeBookingIds.length > 0) {
     await runSaveStep('bookings', completedSteps, async () => {
-      await gamesApi.patchBookings(gameId, {
-        add: draft.addBookingIds.length > 0 ? draft.addBookingIds : undefined,
-        remove: draft.removeBookingIds.length > 0 ? draft.removeBookingIds : undefined,
-      });
+      await gamesApi.patchBookings(gameId, { remove: draft.removeBookingIds });
+    });
+  } else if (draft.addBookingIds.length > 0) {
+    await runSaveStep('bookings', completedSteps, async () => {
+      await gamesApi.patchBookings(gameId, { add: draft.addBookingIds });
     });
   }
 
@@ -100,6 +146,22 @@ type BuildEditSaveDraftArgs = {
   };
 };
 
+function bookingRecordForAddId(
+  id: string,
+  locationTimeDraft: EditLocationTimeDraft | null,
+  bookingOverrides: BuildEditSaveDraftArgs['bookingOverrides'],
+): BooktimeBookingRecord | undefined {
+  const fromPicker = locationTimeDraft?.selectedBookingRecords.find((b) => b.uuid === id);
+  if (fromPicker) return fromPicker;
+  const snap = bookingOverrides?.bookingSnapshots.find((s) => s.externalBookingId === id);
+  if (!snap) return undefined;
+  return {
+    uuid: id,
+    bookingStart: snap.bookingStart ?? '',
+    bookingEnd: snap.bookingEnd ?? '',
+  };
+}
+
 export function buildEditLocationTimeSaveDraft({
   game,
   clubId,
@@ -136,16 +198,34 @@ export function buildEditLocationTimeSaveDraft({
     ) ?? [];
 
   const addBookingIds = [...new Set([...pickerAddIds, ...bookFlowAddIds])];
+  const clubRow = club ? clubToBooktimeRow(club) : undefined;
+  const linkAdds: LinkBookingSaveAdd[] = [];
+
+  if (clubRow) {
+    for (const id of addBookingIds) {
+      const record = bookingRecordForAddId(id, locationTimeDraft, bookingOverrides);
+      if (!record) continue;
+      const snap = bookingOverrides?.bookingSnapshots.find((s) => s.externalBookingId === id);
+      const courtIdForLink =
+        snap?.courtId ?? resolveCourtForBooking(record, clubRow, '').courtId;
+      linkAdds.push({ booking: record, courtId: courtIdForLink });
+    }
+  }
+
+  const useAtomicLink = linkAdds.length > 0 && Boolean(clubRow);
+  const effectiveAddBookingIds = useAtomicLink ? [] : addBookingIds;
 
   let snapshots: BookingSnapshotInput[] | undefined;
-  if (bookingOverrides?.bookingSnapshots.length) {
-    snapshots = bookingOverrides.bookingSnapshots;
-  } else if (addBookingIds.length > 0 && locationTimeDraft) {
-    const records = locationTimeDraft.selectedBookingRecords.filter((b) =>
-      addBookingIds.includes(b.uuid),
-    );
-    if (records.length > 0) {
-      snapshots = buildBookingSnapshots(records, courts);
+  if (!useAtomicLink) {
+    if (bookingOverrides?.bookingSnapshots.length) {
+      snapshots = bookingOverrides.bookingSnapshots;
+    } else if (effectiveAddBookingIds.length > 0 && locationTimeDraft) {
+      const records = locationTimeDraft.selectedBookingRecords.filter((b) =>
+        effectiveAddBookingIds.includes(b.uuid),
+      );
+      if (records.length > 0) {
+        snapshots = buildBookingSnapshots(records, courts);
+      }
     }
   }
 
@@ -160,7 +240,8 @@ export function buildEditLocationTimeSaveDraft({
     .filter((s) => s.bookingStart && s.bookingEnd);
 
   const unionSnapshots = [...remainingSnapshots, ...(snapshots ?? [])];
-  const remainingLinkedCount = initialLinked.length - removeBookingIds.length + addBookingIds.length;
+  const remainingLinkedCount =
+    initialLinked.length - removeBookingIds.length + addBookingIds.length;
 
   let startTime: string | undefined;
   let endTime: string | undefined;
@@ -210,8 +291,17 @@ export function buildEditLocationTimeSaveDraft({
     endTime,
     timeOverride,
     hasBookedCourt: resolvedHasBookedCourt,
-    addBookingIds,
+    addBookingIds: effectiveAddBookingIds,
     removeBookingIds,
-    snapshots,
+    snapshots: useAtomicLink ? undefined : snapshots,
+    linkBookingContext:
+      useAtomicLink && clubRow
+        ? {
+            game,
+            club: clubRow,
+            adds: linkAdds,
+            skipGameDatetimePatch: timeOverride,
+          }
+        : undefined,
   };
 }

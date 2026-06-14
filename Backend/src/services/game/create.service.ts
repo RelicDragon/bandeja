@@ -13,7 +13,6 @@ import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxPart
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { BOOKTIME_DEFAULT_TIMEZONE, parseBooktimeStoredOrNaiveToDate } from '../../shared/booktime/localTime';
-import { rollbackBooktimeBookingsOnCreateFailure } from '../booktime/booktimeBookingRollback.service';
 import { GameCourtService } from '../gameCourt/gameCourt.service';
 import {
   assertNoLegacyExternalBookingId,
@@ -72,10 +71,6 @@ export class GameCreateService {
 
     const externalBookingIds = parseExternalBookingIds(data);
     const bookingSnapshots = parseBookingSnapshots(data);
-    const clubIdForRollback = typeof data.clubId === 'string' ? data.clubId.trim() : '';
-    const shouldRollbackBooktime =
-      data.rollbackBooktimeBooking === true && externalBookingIds.length > 0 && !!clubIdForRollback;
-
     if (externalBookingIds.length > 0) {
       const provider = data.externalBookingProvider;
       if (provider !== undefined && provider !== ClubIntegrationType.BOOKTIME) {
@@ -89,30 +84,13 @@ export class GameCreateService {
     const externalBookingProvider =
       externalBookingIds.length > 0 ? ClubIntegrationType.BOOKTIME : null;
 
-    try {
-      return await GameCreateService.createGameBody(data, userId, jwtIsAdmin, {
-        externalBookingIds,
-        bookingSnapshots,
-        externalBookingProvider,
-        hasBookedCourtCreate,
-        timeOverride,
-      });
-    } catch (err) {
-      if (shouldRollbackBooktime) {
-        const booktimeRollback = await rollbackBooktimeBookingsOnCreateFailure(
-          userId,
-          clubIdForRollback,
-          externalBookingIds,
-        );
-        if (err instanceof ApiError) {
-          throw new ApiError(err.statusCode, err.message, err.isOperational, {
-            ...err.data,
-            booktimeRollback,
-          });
-        }
-      }
-      throw err;
-    }
+    return GameCreateService.createGameBody(data, userId, jwtIsAdmin, {
+      externalBookingIds,
+      bookingSnapshots,
+      externalBookingProvider,
+      hasBookedCourtCreate,
+      timeOverride,
+    });
   }
 
   private static async createGameBody(

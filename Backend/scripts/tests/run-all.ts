@@ -631,6 +631,22 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'booktime ingest unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'shared', 'booktime', 'ingest.test.ts'),
+    ],
+  },
+  {
+    label: 'booktime no outbound HTTP',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'booktime', 'booktimeNoOutboundHttp.test.ts'),
+    ],
+  },
+  {
     label: 'game external booking',
     command: process.execPath,
     args: [
@@ -638,6 +654,16 @@ const suites: Suite[] = [
       'dotenv/config',
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'scripts', 'tests', 'game-external-booking.ts'),
+    ],
+  },
+  {
+    label: 'game link booking',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'game-link-booking.ts'),
     ],
   },
 ];

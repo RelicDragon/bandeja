@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
-import { gamesApi } from '@/api/games';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { Button } from '@/components';
 import {
@@ -19,14 +18,13 @@ import { useAuthStore } from '@/store/authStore';
 import type { Game } from '@/types';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { formatGameTimeInTimezone, getClubTimezone, getUserTimezone } from '@/utils/gameTimeDisplay';
-import { BOOKTIME_DEFAULT_TIMEZONE } from '@shared/booktime/localTime';
 import { formatBooktimeBookingWhen, resolveCourtForBooking } from './booktimeBookingUtils';
 import {
-  buildLinkBookingSnapshot,
-  buildLinkBookingToGameUpdate,
   gameNeedsDatetimeUpdateForLink,
   isRecommendedLinkTarget,
-} from './booktimeGameLinkUtils';
+  linkBookingToGame,
+  resolveBooktimeClubTimezone,
+} from '@/services/gameBooking/linkBookingToGame';
 import { useBooktimeLinkableGames } from './useBooktimeLinkableGames';
 
 type ModalProps = {
@@ -45,7 +43,7 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
   const [pendingGame, setPendingGame] = useState<Game | null>(null);
   const [linkBusy, setLinkBusy] = useState(false);
   const courtInfo = resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt'));
-  const clubTimezone = BOOKTIME_DEFAULT_TIMEZONE;
+  const clubTimezone = resolveBooktimeClubTimezone({ club });
   const bookingWhen = formatBooktimeBookingWhen(booking, {
     timezone: clubTimezone,
     displaySettings,
@@ -64,13 +62,13 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
   const performLink = async (game: Game) => {
     setLinkBusy(true);
     try {
-      const update = buildLinkBookingToGameUpdate(game, booking, club, courtInfo.courtId, clubTimezone);
-      await gamesApi.update(game.id, update);
-      await gamesApi.patchBookings(game.id, { add: [booking.uuid] });
-      const snapshot = buildLinkBookingSnapshot(booking, club, courtInfo.courtId);
-      if (snapshot) {
-        await gamesApi.putBookingSnapshots(game.id, { snapshots: [snapshot] });
-      }
+      await linkBookingToGame({
+        gameId: game.id,
+        game,
+        booking,
+        club,
+        options: { courtId: courtInfo.courtId, timeZone: clubTimezone },
+      });
       toast.success(t('club.booktime.linkGameSuccess'));
       onOpenChange(false);
       onLinked();

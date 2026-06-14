@@ -8,6 +8,7 @@ import {
   parseBusySlots,
   parseDateParam,
 } from '../../shared/booktimeBusySnapshot';
+import { parseBusySlotsForIngest } from '../../shared/booktime/ingest';
 import {
   prepareSnapshotCourtsForStorage,
   type SnapshotCourtLookupRow,
@@ -65,7 +66,7 @@ function parseCourtsInput(raw: unknown): BooktimeSnapshotCourtInput[] {
         typeof externalCourtName === 'string' && externalCourtName.trim()
           ? externalCourtName.trim()
           : null,
-      busySlots: parseBusySlots(record.busySlots),
+      busySlots: parseBusySlotsForIngest(record.busySlots),
     });
   }
 

@@ -37,6 +37,7 @@ export class BooktimeClubBookingProvider implements ClubBookingProvider {
       dateKey: params.dateKey,
       startTime: params.startTime,
       durationMinutes: params.durationMinutes,
+      sport: params.sport,
     };
 
     try {

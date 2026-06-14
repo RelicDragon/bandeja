@@ -1,19 +1,17 @@
 import { Sport } from '@prisma/client';
 import prisma from '../../config/database';
-import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
+import { BOOKING_ERROR_KEYS } from '../../shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 import { parseBooktimeIntegrationConfig } from '../../shared/clubIntegration';
 
-const BOOKTIME_API_URL = 'https://api.booktime.rs';
-
-type BooktimeCompanyResource = {
+export type BooktimeCompanyResource = {
   uuid?: string;
   bookingResourceId?: string;
   name?: string;
 };
 
-type BooktimeCompanyResponse = {
+export type BooktimeCompanyImportPayload = {
   name?: string;
   bookingResources?: BooktimeCompanyResource[];
 };
@@ -28,7 +26,7 @@ function normalizeCourtName(name: string): string {
 }
 
 export class BooktimeImportCourtsService {
-  static async importCourts(clubId: string) {
+  static async applyImport(clubId: string, payload: BooktimeCompanyImportPayload) {
     const club = await prisma.club.findUnique({
       where: { id: clubId },
       include: { courts: true },
@@ -43,18 +41,9 @@ export class BooktimeImportCourtsService {
       throw new ApiError(400, 'Booking provider companyId is not configured');
     }
 
-    const res = await fetch(`${BOOKTIME_API_URL}/public/company/${config.companyId}`, {
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new ApiError(502, `Booking provider company fetch failed (${res.status})${text ? `: ${text.slice(0, 200)}` : ''}`);
-    }
-
-    const payload = (await res.json()) as BooktimeCompanyResponse;
     const resources = payload.bookingResources ?? [];
     if (resources.length === 0) {
-      throw new ApiError(502, 'Booking provider returned no booking resources');
+      throw new ApiError(400, 'Booking provider returned no booking resources');
     }
 
     const defaultSport = club.sports[0] ?? Sport.PADEL;

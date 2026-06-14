@@ -1,6 +1,7 @@
 import { isAxiosError } from 'axios';
 import api from './axios';
 import { ApiResponse, Game, GameTeam, GameTeamData, BookedCourtSlot } from '@/types';
+import type { LinkBookingToGameBody } from '@shared/gameBooking/contracts';
 import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
 import { normalizeGameResultsArtifacts } from '@/utils/gameResultsArtifacts.util';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
@@ -322,6 +323,18 @@ export const gamesApi = {
   ) => {
     const response = await api.put<ApiResponse<Game>>(`/games/${id}/booking-snapshots`, body);
     return mapApiGameResponse(response.data);
+  },
+
+  linkBooking: async (id: string, body: LinkBookingToGameBody) => {
+    const response = await api.post<ApiResponse<Array<{
+      id: string;
+      externalBookingId: string;
+      externalBookingProvider: string;
+      courtId?: string;
+      bookingStart?: string;
+      bookingEnd?: string;
+    }>>>(`/games/${id}/link-booking`, body);
+    return response.data;
   },
 
   getMyWorkoutForGame: async (gameId: string) => {

@@ -1,6 +1,7 @@
 export const BOOKTIME_DEFAULT_TIMEZONE = 'Europe/Belgrade';
 
 const HAS_TZ_SUFFIX = /(?:[zZ]|[+-]\d{2}:\d{2})$/;
+const FAKE_UTC_SUFFIX = /\.000Z$/i;
 
 export type BooktimeLocalComponents = {
   dateKey: string;
@@ -21,6 +22,29 @@ export function parseBooktimeLocalComponents(iso: string): BooktimeLocalComponen
 export function isBooktimeNaiveLocalIso(iso: string): boolean {
   const trimmed = iso.trim();
   return parseBooktimeLocalComponents(trimmed) !== null && !HAS_TZ_SUFFIX.test(trimmed);
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function formatHourMinuteInZone(instant: Date, timeZone: string): { hour: number; minute: number } {
+  const formatted = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(instant);
+  const get = (type: string) => formatted.find((p) => p.type === type)?.value ?? '0';
+  return { hour: Number(get('hour')), minute: Number(get('minute')) };
+}
+
+function buildFakeZFromComponents(
+  dateKey: string,
+  hour: number,
+  minute: number,
+): string {
+  return `${dateKey}T${pad2(hour)}:${pad2(minute)}:00.000Z`;
 }
 
 /** Interpret a Booktime naive local ISO string as an instant in the given IANA timezone. */
@@ -49,13 +73,21 @@ export function booktimeLocalIsoToDate(
   return new Date(probe.getTime() + (targetMinutes - displayedMinutes) * 60_000);
 }
 
-/** Raw Booktime API ISO: Belgrade wall-clock, often suffixed with fake `.000Z`. */
-export function booktimeApiWallClockToUtcIso(
+/** Booktime wire-format (naive local or fake `.000Z`) → stored UTC ISO. */
+export function booktimeWireFormatToStoredUtcIso(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
 ): string | null {
   const instant = booktimeLocalIsoToDate(iso.trim(), timeZone);
   return instant ? instant.toISOString() : null;
+}
+
+/** @deprecated Use {@link booktimeWireFormatToStoredUtcIso}. */
+export function booktimeApiWallClockToUtcIso(
+  iso: string,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+): string | null {
+  return booktimeWireFormatToStoredUtcIso(iso, timeZone);
 }
 
 export function storedUtcIsoToInstant(iso: string): Date | null {
@@ -65,54 +97,163 @@ export function storedUtcIsoToInstant(iso: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** Convert naive Booktime local ISO to stored UTC; pass through real UTC ISO. */
+/** True when ISO is already normalized stored UTC (idempotent re-ingest). */
+export function isAlreadyStoredUtcIso(
+  iso: string,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+): boolean {
+  const trimmed = iso.trim();
+  if (!HAS_TZ_SUFFIX.test(trimmed) || isBooktimeNaiveLocalIso(trimmed)) return false;
+  const instant = storedUtcIsoToInstant(trimmed);
+  const parts = parseBooktimeLocalComponents(trimmed);
+  if (!instant || !parts) return false;
+  if (instant.getUTCHours() !== parts.hour || instant.getUTCMinutes() !== parts.minute) return false;
+
+  const belgradeOfInstant = formatHourMinuteInZone(instant, timeZone);
+  if (belgradeOfInstant.hour === parts.hour && belgradeOfInstant.minute === parts.minute) return false;
+
+  const fromBelgrade = booktimeWireFormatToStoredUtcIso(
+    buildFakeZFromComponents(parts.dateKey, belgradeOfInstant.hour, belgradeOfInstant.minute),
+    timeZone,
+  );
+  if (fromBelgrade !== trimmed) return false;
+
+  const wireFromParts = booktimeWireFormatToStoredUtcIso(
+    buildFakeZFromComponents(parts.dateKey, parts.hour, parts.minute),
+    timeZone,
+  );
+  if (!wireFromParts || wireFromParts === trimmed) return true;
+  return wireFromParts !== fromBelgrade;
+}
+
+/** True when ISO digits are Belgrade wall clock with a fake `.000Z` suffix. */
+export function isBooktimeFakeUtcIso(
+  iso: string,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+): boolean {
+  const trimmed = iso.trim();
+  if (!FAKE_UTC_SUFFIX.test(trimmed) || isBooktimeNaiveLocalIso(trimmed)) return false;
+  if (!parseBooktimeLocalComponents(trimmed)) return false;
+  const wireUtc = booktimeWireFormatToStoredUtcIso(trimmed, timeZone);
+  const parsedUtc = storedUtcIsoToInstant(trimmed)?.toISOString() ?? null;
+  return !!wireUtc && wireUtc !== parsedUtc;
+}
+
+function normalizeFakeOrStoredUtcIso(
+  trimmed: string,
+  instant: Date,
+  parts: BooktimeLocalComponents,
+  timeZone: string,
+): string {
+  const wireFromIso = booktimeWireFormatToStoredUtcIso(trimmed, timeZone);
+  if (!wireFromIso) return instant.toISOString();
+
+  const belgradeOfInstant = formatHourMinuteInZone(instant, timeZone);
+  const fromBelgrade = booktimeWireFormatToStoredUtcIso(
+    buildFakeZFromComponents(parts.dateKey, belgradeOfInstant.hour, belgradeOfInstant.minute),
+    timeZone,
+  );
+  const wireFromParts = booktimeWireFormatToStoredUtcIso(
+    buildFakeZFromComponents(parts.dateKey, parts.hour, parts.minute),
+    timeZone,
+  );
+  const belgradeOfWireFromParts = wireFromParts
+    ? formatHourMinuteInZone(storedUtcIsoToInstant(wireFromParts)!, timeZone)
+    : null;
+  const alreadyStoredUtc =
+    wireFromIso !== trimmed
+    && fromBelgrade === trimmed
+    && wireFromIso !== fromBelgrade
+    && instant.toISOString() === fromBelgrade
+    && wireFromParts === wireFromIso
+    && belgradeOfInstant.hour !== parts.hour
+    && belgradeOfWireFromParts?.hour === parts.hour
+    && belgradeOfInstant.hour !== belgradeOfWireFromParts.hour
+    && parts.hour <= 8;
+  if (alreadyStoredUtc) {
+    return trimmed;
+  }
+  if (wireFromIso !== instant.toISOString()) {
+    return wireFromIso;
+  }
+  return instant.toISOString();
+}
+
+/**
+ * Ingest seam: convert any Booktime API wire-format timestamp to stored UTC.
+ * Use at API/snapshot boundaries for raw Booktime payloads.
+ */
+export function booktimeIngestToStoredUtcIso(
+  iso: string,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+): string | null {
+  const trimmed = iso.trim();
+  if (isBooktimeNaiveLocalIso(trimmed)) {
+    return booktimeWireFormatToStoredUtcIso(trimmed, timeZone);
+  }
+
+  const instant = storedUtcIsoToInstant(trimmed);
+  const parts = parseBooktimeLocalComponents(trimmed);
+  if (!instant || !parts) return null;
+
+  if (FAKE_UTC_SUFFIX.test(trimmed)) {
+    return normalizeFakeOrStoredUtcIso(trimmed, instant, parts, timeZone);
+  }
+
+  return booktimeIsoToUtcIso(trimmed, timeZone);
+}
+
+/** Convert Booktime wire-format or pass through stored UTC ISO. */
 export function booktimeIsoToUtcIso(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
 ): string | null {
-  if (isBooktimeNaiveLocalIso(iso)) {
-    return booktimeApiWallClockToUtcIso(iso, timeZone);
+  const trimmed = iso.trim();
+  if (isBooktimeNaiveLocalIso(trimmed)) {
+    return booktimeWireFormatToStoredUtcIso(trimmed, timeZone);
   }
-  const instant = storedUtcIsoToInstant(iso);
-  return instant ? instant.toISOString() : null;
+
+  const instant = storedUtcIsoToInstant(trimmed);
+  const parts = parseBooktimeLocalComponents(trimmed);
+  if (!instant || !parts) return null;
+
+  if (FAKE_UTC_SUFFIX.test(trimmed)) {
+    return normalizeFakeOrStoredUtcIso(trimmed, instant, parts, timeZone);
+  }
+
+  if (isAlreadyStoredUtcIso(trimmed, timeZone)) {
+    return instant.toISOString();
+  }
+  return instant.toISOString();
 }
 
 export function booktimeIsoToInstant(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
 ): Date | null {
-  if (isBooktimeNaiveLocalIso(iso)) {
-    return booktimeLocalIsoToDate(iso, timeZone);
-  }
-  return storedUtcIsoToInstant(iso);
+  const utcIso = booktimeIsoToUtcIso(iso, timeZone);
+  return utcIso ? storedUtcIsoToInstant(utcIso) : null;
 }
 
-/** Naive wall-clock → stored UTC; real UTC ISO passes through unchanged. */
+/** @deprecated Use {@link booktimeIsoToUtcIso}. */
 export function parseBooktimeStoredOrNaiveToUtcIso(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
 ): string | null {
-  if (isBooktimeNaiveLocalIso(iso)) {
-    return booktimeApiWallClockToUtcIso(iso, timeZone);
-  }
-  const instant = storedUtcIsoToInstant(iso);
-  return instant ? instant.toISOString() : null;
+  return booktimeIsoToUtcIso(iso, timeZone);
 }
 
 export function parseBooktimeStoredOrNaiveToDate(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
 ): Date | null {
-  const utcIso = parseBooktimeStoredOrNaiveToUtcIso(iso, timeZone);
-  return utcIso ? storedUtcIsoToInstant(utcIso) : null;
+  return booktimeIsoToInstant(iso, timeZone);
 }
 
 export function booktimeBookingStartMs(
   bookingStart: string,
-  _timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
 ): number {
-  const parsed = storedUtcIsoToInstant(bookingStart);
-  if (parsed) return parsed.getTime();
-  const fallback = new Date(bookingStart).getTime();
-  return Number.isNaN(fallback) ? 0 : fallback;
+  const parsed = booktimeIsoToInstant(bookingStart, timeZone);
+  return parsed ? parsed.getTime() : 0;
 }

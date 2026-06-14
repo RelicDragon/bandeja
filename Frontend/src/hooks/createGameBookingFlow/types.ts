@@ -4,7 +4,6 @@ export type CreateGameBookingOverrides = {
   externalBookingIds?: string[];
   bookingSnapshots?: BookingSnapshotInput[];
   hasBookedCourt?: boolean;
-  rollbackBooktimeBooking?: boolean;
   startTime?: string;
   endTime?: string;
   timeOverride?: boolean;
@@ -21,7 +20,6 @@ export type CreateGameBookingFields = {
   externalBookingIds?: string[];
   externalBookingProvider?: 'BOOKTIME';
   bookingSnapshots?: BookingSnapshotInput[];
-  rollbackBooktimeBooking?: boolean;
 };
 
 export type CreateGameAttemptResult =

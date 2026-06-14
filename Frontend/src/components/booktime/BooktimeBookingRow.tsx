@@ -10,18 +10,18 @@ import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import {
   canCancelByPolicy,
-  cancelBooktimeBooking,
 } from '@/integrations/booktime/bookFlow';
-import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { createHydratedBooktimeClubBookingProvider } from '@/integrations/booking/createBooktimeClubBookingProvider';
 import { useBooktimeLinkedGame } from '@/hooks/useBooktimeLinkedGame';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import {
-  buildCreateGameSearchParams,
+  booktimeRowToClub,
   formatBooktimeBookingWhen,
   resolveCourtForBooking,
 } from './booktimeBookingUtils';
+import { buildCreateGameDeepLinkParams } from '@/services/gameBooking/linkBookingToGame';
 import { BooktimeLinkedGameLink } from './BooktimeLinkedGameLink';
 import { BooktimeLinkGameButton } from './BooktimeLinkGameModal';
 
@@ -102,20 +102,21 @@ export function BooktimeBookingRow({
 
   const openCreateGame = () => {
     onCreateGame?.();
-    const params = buildCreateGameSearchParams(club.clubId, booking, courtInfo.courtId);
-    navigate(`/create-game?${params.toString()}`, { state: { entityType: 'GAME' } });
+    const params = buildCreateGameDeepLinkParams(club.clubId, booking, courtInfo.courtId, clubTimezone);
+    navigate(`/create-game?${new URLSearchParams(params).toString()}`, { state: { entityType: 'GAME' } });
   };
 
   const handleConfirmCancel = async () => {
     if (!club.companyId) return;
     setCancelBusy(true);
     try {
-      await hydrateBooktimeSession(club.clubId, club.companyId);
-      const client = getBooktimeClient(club.clubId, club.companyId);
-      await cancelBooktimeBooking(
-        client,
+      const provider = await createHydratedBooktimeClubBookingProvider(
+        booktimeRowToClub(club),
+        club.companyId,
+      );
+      await provider.cancelBooking(
         booking.uuid,
-        onRefreshSnapshot ?? (async () => true)
+        onRefreshSnapshot ?? (async () => true),
       );
       setCancelOpen(false);
       toast.success(t('club.booktime.cancelSuccess'));

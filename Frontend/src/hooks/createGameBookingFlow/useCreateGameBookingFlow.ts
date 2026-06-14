@@ -508,7 +508,6 @@ export function useCreateGameBookingFlow({
         externalBookingIds: string[];
         bookingSnapshots: BookingSnapshotInput[];
         hasBookedCourt: true;
-        rollbackBooktimeBooking: true;
       }) => Promise<void>;
       onSuccess: () => void;
     }) => {

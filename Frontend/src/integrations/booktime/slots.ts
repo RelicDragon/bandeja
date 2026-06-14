@@ -3,7 +3,7 @@ import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@shared/gameBooking/booktimeSnapshotFreshness';
 
 import { BOOKTIME_FALLBACK_DURATIONS_MINUTES } from './durations';
-import { booktimeLocalIsoToDate, booktimeApiWallClockToUtcIso } from './localTime';
+import { booktimeLocalIsoToDate, booktimeIngestToStoredUtcIso } from './localTime';
 export const BOOKTIME_CONFIRM_RECHECK_MS = 60 * 1000;
 export const BOOKTIME_SLOT_STEP_MINUTES = 60;
 export const BOOKTIME_BOOKING_DURATIONS = BOOKTIME_FALLBACK_DURATIONS_MINUTES;
@@ -194,8 +194,8 @@ function normalizeInterval(
   const startRaw = raw.bookingStart ?? raw.startTime;
   const endRaw = raw.bookingEnd ?? raw.endTime;
   if (typeof startRaw !== 'string' || typeof endRaw !== 'string') return null;
-  const startIso = booktimeApiWallClockToUtcIso(startRaw, timeZone) ?? startRaw;
-  const endIso = booktimeApiWallClockToUtcIso(endRaw, timeZone) ?? endRaw;
+  const startIso = booktimeIngestToStoredUtcIso(startRaw, timeZone) ?? startRaw;
+  const endIso = booktimeIngestToStoredUtcIso(endRaw, timeZone) ?? endRaw;
   const start = new Date(startIso);
   const end = new Date(endIso);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return null;
