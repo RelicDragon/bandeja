@@ -424,6 +424,7 @@ export const GameCard = ({
               </span>
             </h3>
             <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
+          {!bookmarkInTitleRow && noteBookmarkButton}
           {!shouldMoveIconsToTitle && showFireIcon && <AnnouncedFireIcon />}
           {!shouldMoveIconsToTitle && isUserParticipant && (
             <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white">
@@ -436,7 +437,6 @@ export const GameCard = ({
           )}
           {!shouldMoveIconsToTitle && !showFireIcon && <GameStatusIcon status={game.status} />}
           {!shouldMoveIconsToTitle && gameSportTags}
-          {!bookmarkInTitleRow && noteBookmarkButton}
           {showPhotoCountBadge && (
             <button
               onClick={(e) => {
