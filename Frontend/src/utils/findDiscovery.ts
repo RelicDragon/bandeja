@@ -1,16 +1,11 @@
-import type { TFunction } from 'i18next';
 import type { Game } from '@/types';
 import {
-  CREATE_TEMPLATES,
-  type CreateTemplate,
   inferPresetTier,
   isCasualCreateFlowEnabled,
   presetTierMap,
 } from '@/sport/createFlow';
 import { getSportConfig } from '@/sport/sportRegistry';
-import type { Sport } from '@shared/sport';
 import { parseGameSport } from '@/utils/gameSport';
-import { playersPerMatchOf } from '@/utils/matchFormat';
 import { listEnabledSports } from '@/utils/profileSports';
 import type { BasicUser, User } from '@/types';
 
@@ -37,26 +32,6 @@ export function resolveGameDiscoveryTier(game: Game): FindTierFilter | null {
   return 'match';
 }
 
-export function matchCreateTemplateForGame(game: Game): CreateTemplate | null {
-  const sport = parseGameSport(game.sport);
-  const ppm = playersPerMatchOf(game);
-  for (const id of getSportConfig(sport).createTemplates) {
-    const tpl = CREATE_TEMPLATES[id];
-    if (tpl.scoringPreset !== game.scoringPreset) continue;
-    if (tpl.gameType !== game.gameType) continue;
-    if (tpl.matchGenerationType !== (game.matchGenerationType ?? tpl.matchGenerationType)) continue;
-    if (tpl.playersPerMatch !== ppm) continue;
-    if (tpl.affectsRating !== game.affectsRating) continue;
-    return tpl;
-  }
-  return null;
-}
-
-function presetLabelKey(sport: Sport, preset: string): string | null {
-  const row = getSportConfig(sport).presetMeta.find((m) => m.preset === preset);
-  return row?.labelKey ?? null;
-}
-
 export function passesFindTierFilter(game: Game, filterTier: FindTierFilter | undefined): boolean {
   if (!filterTier) return true;
   const tier = resolveGameDiscoveryTier(game);
@@ -67,39 +42,4 @@ export function passesFindTierFilter(game: Game, filterTier: FindTierFilter | un
 export function passesFindNoRatingFilter(game: Game, filterNoRating: boolean | undefined): boolean {
   if (!filterNoRating) return true;
   return game.affectsRating === false;
-}
-
-export type GameDiscoveryBadgeParts = {
-  label: string;
-};
-
-export function buildGameDiscoveryBadgeParts(game: Game, t: TFunction): GameDiscoveryBadgeParts | null {
-  if (game.entityType !== 'GAME') return null;
-
-  const template = matchCreateTemplateForGame(game);
-  if (template) {
-    return { label: t(template.labelKey) };
-  }
-
-  const tier = resolveGameDiscoveryTier(game);
-  if (!tier) return null;
-
-  const sport = parseGameSport(game.sport);
-  const preset = game.scoringPreset;
-  const presetLabel =
-    preset && presetLabelKey(sport, preset) ? t(presetLabelKey(sport, preset)!) : '';
-
-  let label: string | undefined;
-  if (game.gameType && game.gameType !== 'CLASSIC') {
-    label = t(`games.gameTypes.${game.gameType}`);
-  } else if (presetLabel) {
-    label = presetLabel;
-  }
-
-  if (!label) return null;
-  return { label };
-}
-
-export function buildGameDiscoveryBadge(game: Game, t: TFunction): string | null {
-  return buildGameDiscoveryBadgeParts(game, t)?.label ?? null;
 }

@@ -533,7 +533,6 @@ export const AvailableGamesSection = ({
 
   const filteredGames = getFilteredGames();
   const findFilterSport = filterSportVal;
-  const showDiscoveryFormatBadge = findDiscoveryEnabled;
   const findSportTabs = useMemo<SegmentedSwitchTab[]>(() => {
     const enabledSports = listEnabledSports(user);
     if (enabledSports.length <= 1) return [];
@@ -704,7 +703,6 @@ export const AvailableGamesSection = ({
           onJoin={onJoin}
           onNoteSaved={onNoteSaved}
           findFilterSport={findFilterSport}
-          showDiscoveryFormatBadge={showDiscoveryFormatBadge}
         />
       )}
     />

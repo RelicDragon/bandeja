@@ -21,7 +21,6 @@ import { shouldShowGameCardSportGlyph, getViewerPrimarySport } from '@/utils/fin
 import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
-import { DiscoveryBadgePills } from '@/components/multisport/DiscoveryBadgePills';
 import {
   gameHasConfirmedClubBooking,
   gameHasLinkedExternalBooking,
@@ -48,8 +47,6 @@ interface GameCardProps {
   unreadCount?: number;
   /** Set on Find tab only — drives sport glyph visibility. */
   findFilterSport?: FindSportFilterValue;
-  /** Multisport Find: tier · format · duration badge from presetMeta / templates. */
-  showDiscoveryFormatBadge?: boolean;
 }
 
 export const GameCard = ({ 
@@ -62,7 +59,6 @@ export const GameCard = ({
   onNoteSaved,
   unreadCount: unreadCountProp = 0,
   findFilterSport,
-  showDiscoveryFormatBadge = false,
 }: GameCardProps) => {
   const displayUnread = useContextUnread('GAME', game.id, unreadCountProp);
   const { t } = useTranslation();
@@ -299,8 +295,15 @@ export const GameCard = ({
     findFilterSport,
   );
   const gameSport = parseGameSport(game.sport);
-  const showDiscoveryBadges =
-    showDiscoveryFormatBadge && game.entityType === 'GAME';
+  const gameSportTags = (
+    <GameSportTagRow
+      sport={gameSport}
+      showSport={showSportTag}
+      playersPerMatch={playersPerMatchOf(game)}
+      showMatchFormat={game.entityType !== 'TRAINING'}
+      className="shrink-0"
+    />
+  );
 
   return (
     <SportLevelProvider sport={gameSport}>
@@ -343,13 +346,6 @@ export const GameCard = ({
       </div>
       {/* Header - Always visible */}
       <div className="mb-3 relative z-10">
-        <GameSportTagRow
-          sport={gameSport}
-          showSport={showSportTag}
-          playersPerMatch={playersPerMatchOf(game)}
-          showMatchFormat={game.entityType !== 'TRAINING'}
-        />
-        {showDiscoveryBadges ? <DiscoveryBadgePills game={game} /> : null}
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
@@ -375,6 +371,7 @@ export const GameCard = ({
                         </span>
                       )}
                       {!showFireIcon && <GameStatusIcon status={game.status} />}
+                      {gameSportTags}
                     </>
                   )}
                 </div>
@@ -438,6 +435,7 @@ export const GameCard = ({
             </span>
           )}
           {!shouldMoveIconsToTitle && !showFireIcon && <GameStatusIcon status={game.status} />}
+          {!shouldMoveIconsToTitle && gameSportTags}
           {!bookmarkInTitleRow && noteBookmarkButton}
           {showPhotoCountBadge && (
             <button

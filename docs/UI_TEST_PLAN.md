@@ -334,7 +334,6 @@ Frontend/e2e/
 | F-25 | Quick join from Find | Join button on card | Joined + toast + navigate |
 | F-26 | Join queue | Full game with queue | Added to queue toast |
 | F-27 | Join blocked no name | `@P5` join attempt | Name gate modal |
-| F-39 | Template format badge | `@multisport` Find game card with discovery enabled | Gray pill shows localized create template name (e.g. Best-of-3), not Social/Match tier label |
 | F-28 | Trainers list section | When training filter | Trainers visible |
 | F-29 | Empty find results | Filters with no match | Empty state |
 | F-30 | Change city from header | Find header city button → `CityModal` | City changes; games refetch |
