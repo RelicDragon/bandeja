@@ -1,7 +1,7 @@
 import type { Club } from '@/types';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
-import { BOOKTIME_DEFAULT_TIMEZONE, storedUtcIsoToInstant, booktimeIsoToUtcIso } from '@shared/booktime/localTime';
+import { BOOKTIME_DEFAULT_TIMEZONE, storedUtcIsoToInstant } from '@shared/booktime/localTime';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 
 export function linkedBookingToRecord(link: {
@@ -151,11 +151,10 @@ export function buildCreateGameSearchParams(
   clubId: string,
   booking: BooktimeBookingRecord,
   courtId?: string,
-  timeZone?: string | null,
+  _timeZone?: string | null,
 ): URLSearchParams {
-  const tz = timeZone ?? BOOKTIME_DEFAULT_TIMEZONE;
-  const startTime = booktimeIsoToUtcIso(booking.bookingStart, tz) ?? booking.bookingStart;
-  const endTime = booktimeIsoToUtcIso(booking.bookingEnd, tz) ?? booking.bookingEnd;
+  const startTime = booking.bookingStart;
+  const endTime = booking.bookingEnd;
   const params = new URLSearchParams({
     clubId,
     locationTimeMode: 'bookings',

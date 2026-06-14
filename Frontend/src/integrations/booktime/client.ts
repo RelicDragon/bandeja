@@ -1,5 +1,5 @@
 import { BOOKTIME_API_URL } from './config';
-import { BOOKTIME_DEFAULT_TIMEZONE, booktimeIsoToUtcIso } from '@shared/booktime/localTime';
+import { BOOKTIME_DEFAULT_TIMEZONE, booktimeApiWallClockToUtcIso } from '@shared/booktime/localTime';
 
 export type BooktimeUser = {
   uuid: string;
@@ -367,9 +367,9 @@ export class BooktimeClient {
     return {
       ...booking,
       bookingStart:
-        booktimeIsoToUtcIso(booking.bookingStart, BOOKTIME_DEFAULT_TIMEZONE) ?? booking.bookingStart,
+        booktimeApiWallClockToUtcIso(booking.bookingStart, BOOKTIME_DEFAULT_TIMEZONE) ?? booking.bookingStart,
       bookingEnd:
-        booktimeIsoToUtcIso(booking.bookingEnd, BOOKTIME_DEFAULT_TIMEZONE) ?? booking.bookingEnd,
+        booktimeApiWallClockToUtcIso(booking.bookingEnd, BOOKTIME_DEFAULT_TIMEZONE) ?? booking.bookingEnd,
     };
   }
 

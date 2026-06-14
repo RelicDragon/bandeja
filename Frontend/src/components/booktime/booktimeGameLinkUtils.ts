@@ -1,7 +1,7 @@
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { Game } from '@/types';
-import { booktimeIsoToUtcIso, storedUtcIsoToInstant } from '@shared/booktime/localTime';
+import { storedUtcIsoToInstant } from '@shared/booktime/localTime';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 
 function bookingInstantMs(bookingStart: string, bookingEnd: string): {
@@ -120,13 +120,8 @@ export function buildLinkBookingToGameUpdate(
     hasBookedCourt: true,
   };
   if (gameNeedsDatetimeUpdateForLink(game, booking, tz)) {
-    if (tz) {
-      update.startTime = booktimeIsoToUtcIso(booking.bookingStart, tz) ?? booking.bookingStart;
-      update.endTime = booktimeIsoToUtcIso(booking.bookingEnd, tz) ?? booking.bookingEnd;
-    } else {
-      update.startTime = booking.bookingStart;
-      update.endTime = booking.bookingEnd;
-    }
+    update.startTime = booking.bookingStart;
+    update.endTime = booking.bookingEnd;
     update.timeIsSet = true;
   }
   if (club.clubId && game.clubId !== club.clubId) {

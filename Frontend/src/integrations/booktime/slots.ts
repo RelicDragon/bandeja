@@ -3,7 +3,7 @@ import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@shared/gameBooking/booktimeSnapshotFreshness';
 
 import { BOOKTIME_FALLBACK_DURATIONS_MINUTES } from './durations';
-import { booktimeLocalIsoToDate } from './localTime';
+import { booktimeLocalIsoToDate, booktimeApiWallClockToUtcIso } from './localTime';
 export const BOOKTIME_CONFIRM_RECHECK_MS = 60 * 1000;
 export const BOOKTIME_SLOT_STEP_MINUTES = 60;
 export const BOOKTIME_BOOKING_DURATIONS = BOOKTIME_FALLBACK_DURATIONS_MINUTES;
@@ -187,12 +187,17 @@ function resourceExternalId(resource: BooktimeForDayResource): string | null {
   return typeof id === 'string' && id.trim() ? id.trim() : null;
 }
 
-function normalizeInterval(raw: Record<string, unknown>): BooktimeBusyInterval | null {
+function normalizeInterval(
+  raw: Record<string, unknown>,
+  timeZone: string,
+): BooktimeBusyInterval | null {
   const startRaw = raw.bookingStart ?? raw.startTime;
   const endRaw = raw.bookingEnd ?? raw.endTime;
   if (typeof startRaw !== 'string' || typeof endRaw !== 'string') return null;
-  const start = new Date(startRaw);
-  const end = new Date(endRaw);
+  const startIso = booktimeApiWallClockToUtcIso(startRaw, timeZone) ?? startRaw;
+  const endIso = booktimeApiWallClockToUtcIso(endRaw, timeZone) ?? endRaw;
+  const start = new Date(startIso);
+  const end = new Date(endIso);
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) return null;
   return { startTime: start.toISOString(), endTime: end.toISOString() };
 }
@@ -246,6 +251,7 @@ export function mapGetForDayToSnapshotCourts(
   club: Club,
   resources: BooktimeForDayResource[]
 ): BooktimeSnapshotCourtPayload[] {
+  const clubTimezone = getClubTimezone(club);
   const courtsByExternal = new Map(
     (club.courts ?? [])
       .filter((c) => c.externalCourtId)
@@ -274,7 +280,7 @@ export function mapGetForDayToSnapshotCourts(
     const rawIntervals = [...(resource.bookings ?? []), ...(resource.busySlots ?? [])];
     for (const raw of rawIntervals) {
       if (!raw || typeof raw !== 'object') continue;
-      const interval = normalizeInterval(raw as Record<string, unknown>);
+      const interval = normalizeInterval(raw as Record<string, unknown>, clubTimezone);
       if (interval) entry.busySlots.push(interval);
     }
   }

@@ -49,18 +49,13 @@ export function booktimeLocalIsoToDate(
   return new Date(probe.getTime() + (targetMinutes - displayedMinutes) * 60_000);
 }
 
-/** Booktime API returns Serbia wall-clock times, often suffixed with a fake `.000Z`. */
-export function booktimeIsoToInstant(
+/** Raw Booktime API ISO: Belgrade wall-clock, often suffixed with fake `.000Z`. */
+export function booktimeApiWallClockToUtcIso(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
-): Date | null {
-  const trimmed = iso.trim();
-  if (!trimmed) return null;
-  if (parseBooktimeLocalComponents(trimmed)) {
-    return booktimeLocalIsoToDate(trimmed, timeZone);
-  }
-  const d = new Date(trimmed);
-  return Number.isNaN(d.getTime()) ? null : d;
+): string | null {
+  const instant = booktimeLocalIsoToDate(iso.trim(), timeZone);
+  return instant ? instant.toISOString() : null;
 }
 
 export function storedUtcIsoToInstant(iso: string): Date | null {
@@ -70,12 +65,26 @@ export function storedUtcIsoToInstant(iso: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** Convert naive Booktime local ISO to stored UTC; pass through real UTC ISO. */
 export function booktimeIsoToUtcIso(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
 ): string | null {
-  const instant = booktimeIsoToInstant(iso, timeZone);
+  if (isBooktimeNaiveLocalIso(iso)) {
+    return booktimeApiWallClockToUtcIso(iso, timeZone);
+  }
+  const instant = storedUtcIsoToInstant(iso);
   return instant ? instant.toISOString() : null;
+}
+
+export function booktimeIsoToInstant(
+  iso: string,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+): Date | null {
+  if (isBooktimeNaiveLocalIso(iso)) {
+    return booktimeLocalIsoToDate(iso, timeZone);
+  }
+  return storedUtcIsoToInstant(iso);
 }
 
 export function booktimeBookingStartMs(

@@ -4,6 +4,7 @@ export {
   parseBooktimeLocalComponents,
   isBooktimeNaiveLocalIso,
   booktimeLocalIsoToDate,
+  booktimeApiWallClockToUtcIso,
   booktimeIsoToInstant,
   booktimeIsoToUtcIso,
   storedUtcIsoToInstant,
