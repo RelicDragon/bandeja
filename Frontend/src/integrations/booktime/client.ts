@@ -1,4 +1,5 @@
 import { BOOKTIME_API_URL } from './config';
+import { BOOKTIME_DEFAULT_TIMEZONE, booktimeIsoToUtcIso } from '@shared/booktime/localTime';
 
 export type BooktimeUser = {
   uuid: string;
@@ -362,13 +363,30 @@ export class BooktimeClient {
     });
   }
 
+  private normalizeBooking(booking: BooktimeBookingRecord): BooktimeBookingRecord {
+    return {
+      ...booking,
+      bookingStart:
+        booktimeIsoToUtcIso(booking.bookingStart, BOOKTIME_DEFAULT_TIMEZONE) ?? booking.bookingStart,
+      bookingEnd:
+        booktimeIsoToUtcIso(booking.bookingEnd, BOOKTIME_DEFAULT_TIMEZONE) ?? booking.bookingEnd,
+    };
+  }
+
+  private normalizeBookingsPage(page: BooktimeBookingsPage): BooktimeBookingsPage {
+    return {
+      ...page,
+      bookings: page.bookings.map((booking) => this.normalizeBooking(booking)),
+    };
+  }
+
   async getUpcomingBookings(index = 0, size = 20) {
     if (this.upcomingInFlight) return this.upcomingInFlight;
     const run = this.request<BooktimeBookingsPage>('/booking/get-upcoming', {
       method: 'POST',
       auth: true,
       body: { index, size },
-    });
+    }).then((page) => this.normalizeBookingsPage(page));
     this.upcomingInFlight = run.finally(() => {
       this.upcomingInFlight = null;
     });
@@ -380,6 +398,6 @@ export class BooktimeClient {
       method: 'POST',
       auth: true,
       body: { index, size },
-    });
+    }).then((page) => this.normalizeBookingsPage(page));
   }
 }

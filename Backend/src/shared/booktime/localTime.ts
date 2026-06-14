@@ -49,17 +49,25 @@ export function booktimeLocalIsoToDate(
   return new Date(probe.getTime() + (targetMinutes - displayedMinutes) * 60_000);
 }
 
+/** Booktime API returns Serbia wall-clock times, often suffixed with a fake `.000Z`. */
 export function booktimeIsoToInstant(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
 ): Date | null {
   const trimmed = iso.trim();
   if (!trimmed) return null;
-  if (!isBooktimeNaiveLocalIso(trimmed)) {
-    const d = new Date(trimmed);
-    return Number.isNaN(d.getTime()) ? null : d;
+  if (parseBooktimeLocalComponents(trimmed)) {
+    return booktimeLocalIsoToDate(trimmed, timeZone);
   }
-  return booktimeLocalIsoToDate(trimmed, timeZone);
+  const d = new Date(trimmed);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+export function storedUtcIsoToInstant(iso: string): Date | null {
+  const trimmed = iso.trim();
+  if (!trimmed) return null;
+  const d = new Date(trimmed);
+  return Number.isNaN(d.getTime()) ? null : d;
 }
 
 export function booktimeIsoToUtcIso(
@@ -72,9 +80,9 @@ export function booktimeIsoToUtcIso(
 
 export function booktimeBookingStartMs(
   bookingStart: string,
-  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+  _timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
 ): number {
-  const parsed = booktimeIsoToInstant(bookingStart, timeZone);
+  const parsed = storedUtcIsoToInstant(bookingStart);
   if (parsed) return parsed.getTime();
   const fallback = new Date(bookingStart).getTime();
   return Number.isNaN(fallback) ? 0 : fallback;

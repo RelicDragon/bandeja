@@ -10,14 +10,14 @@ describe('booktime localTime', () => {
     expect(isBooktimeNaiveLocalIso('2026-06-14T09:00:00.000Z')).toBe(false);
   });
 
-  it('converts naive Belgrade summer time to UTC', () => {
-    expect(booktimeIsoToUtcIso('2026-06-14T09:00', 'Europe/Belgrade')).toBe(
+  it('converts fake-Z Belgrade wall clock to UTC', () => {
+    expect(booktimeIsoToUtcIso('2026-06-14T09:00:00.000Z', 'Europe/Belgrade')).toBe(
       '2026-06-14T07:00:00.000Z',
     );
   });
 
-  it('passes through UTC ISO strings', () => {
-    expect(booktimeIsoToUtcIso('2026-06-14T07:00:00.000Z', 'Europe/Belgrade')).toBe(
+  it('converts naive Belgrade summer time to UTC', () => {
+    expect(booktimeIsoToUtcIso('2026-06-14T09:00', 'Europe/Belgrade')).toBe(
       '2026-06-14T07:00:00.000Z',
     );
   });

@@ -1,7 +1,7 @@
 import type { Club } from '@/types';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
-import { BOOKTIME_DEFAULT_TIMEZONE, booktimeIsoToInstant, booktimeIsoToUtcIso } from '@shared/booktime/localTime';
+import { BOOKTIME_DEFAULT_TIMEZONE, storedUtcIsoToInstant, booktimeIsoToUtcIso } from '@shared/booktime/localTime';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 
 export function linkedBookingToRecord(link: {
@@ -74,11 +74,11 @@ export function formatBooktimeBookingWhen(
   }
 ): string {
   const timezone = options.timezone ?? BOOKTIME_DEFAULT_TIMEZONE;
-  const startDate = booktimeIsoToInstant(booking.bookingStart, timezone);
+  const startDate = storedUtcIsoToInstant(booking.bookingStart);
   if (!startDate) return booking.bookingStart;
 
   const endDate = booking.bookingEnd
-    ? booktimeIsoToInstant(booking.bookingEnd, timezone)
+    ? storedUtcIsoToInstant(booking.bookingEnd)
     : null;
 
   const dateLabel = new Intl.DateTimeFormat(options.displaySettings.locale, {

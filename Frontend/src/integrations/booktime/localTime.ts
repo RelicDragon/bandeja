@@ -6,5 +6,6 @@ export {
   booktimeLocalIsoToDate,
   booktimeIsoToInstant,
   booktimeIsoToUtcIso,
+  storedUtcIsoToInstant,
   booktimeBookingStartMs,
 } from '@shared/booktime/localTime';

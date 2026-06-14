@@ -1,15 +1,15 @@
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { Game } from '@/types';
-import { booktimeIsoToInstant, booktimeIsoToUtcIso } from '@shared/booktime/localTime';
+import { booktimeIsoToUtcIso, storedUtcIsoToInstant } from '@shared/booktime/localTime';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 
-function bookingInstantMs(bookingStart: string, bookingEnd: string, timeZone: string): {
+function bookingInstantMs(bookingStart: string, bookingEnd: string): {
   startMs: number;
   endMs: number;
 } | null {
-  const start = booktimeIsoToInstant(bookingStart, timeZone);
-  const end = booktimeIsoToInstant(bookingEnd, timeZone);
+  const start = storedUtcIsoToInstant(bookingStart);
+  const end = storedUtcIsoToInstant(bookingEnd);
   if (!start || !end) return null;
   return { startMs: start.getTime(), endMs: end.getTime() };
 }
@@ -27,7 +27,7 @@ export function bookingMatchesGameSlot(
       new Date(game.endTime).getTime() === new Date(booking.bookingEnd).getTime()
     );
   }
-  const bookingMs = bookingInstantMs(booking.bookingStart, booking.bookingEnd, tz);
+  const bookingMs = bookingInstantMs(booking.bookingStart, booking.bookingEnd);
   if (!bookingMs) return false;
   return (
     new Date(game.startTime).getTime() === bookingMs.startMs &&
