@@ -164,7 +164,6 @@ export function useThreadOptimistic({
 
   const handleReplaceOptimisticWithServerMessage = useCallback(
     (optimisticId: string, serverMessage: ChatMessage) => {
-      void applyThreadEvent({ kind: 'sendSuccess', message: serverMessage }).catch(() => {});
       setMessages((prev) => {
         const result = reconcileOptimisticMessages({
           messages: prev,
@@ -177,6 +176,7 @@ export function useThreadOptimistic({
         messagesRef.current = result.messages;
         return result.messages;
       });
+      void applyThreadEvent({ kind: 'sendSuccess', message: serverMessage }).catch(() => {});
       if (id) {
         messageQueueStorage.remove(optimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
       }

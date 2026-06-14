@@ -228,4 +228,39 @@ describe('reconcileAfterPaint', () => {
     });
     expect(result.pinToBottom).toBe(false);
   });
+
+  it('does not restore SENDING optimistic after send-success updated live rows during pull', async () => {
+    const { loadLocalThreadBootstrap } = await import('@/services/chat/chatLocalApply');
+    const optimistic = {
+      ...msg('opt-1'),
+      _status: 'SENDING' as const,
+      _optimisticId: 'opt-1',
+      _clientMutationId: 'cid-1',
+    };
+    const server = { ...msg('srv-1'), clientMutationId: 'cid-1' };
+    messagesRef.current = [msg('a'), optimistic];
+    let releaseBootstrap!: () => void;
+    const bootstrapGate = new Promise<{ messages: ChatMessageWithStatus[] }>((resolve) => {
+      releaseBootstrap = () => resolve({ messages: [msg('a'), server] });
+    });
+    vi.mocked(loadLocalThreadBootstrap).mockImplementationOnce(() => bootstrapGate);
+    commitThreadOpenPaint(KEY, { atBottom: true });
+    const reconcilePromise = reconcileAfterPaint({
+      threadKey: KEY,
+      paintGeneration: getThreadOpenPaintGeneration(KEY),
+      contextType: 'GAME',
+      contextId: 'g1',
+      gameChatType: 'PUBLIC',
+      currentIdRef,
+      messagesRef,
+      setMessages,
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    messagesRef.current = [msg('a'), server];
+    releaseBootstrap();
+    await reconcilePromise;
+    expect(messagesRef.current.map((m) => m.id)).toEqual(['a', 'srv-1']);
+    expect((messagesRef.current[1] as ChatMessageWithStatus)._status).toBeUndefined();
+  });
 });

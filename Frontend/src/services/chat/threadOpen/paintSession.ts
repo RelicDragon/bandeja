@@ -200,33 +200,31 @@ export async function reconcileAfterPaint(
     const { messages: dexieTail } = await loadLocalThreadBootstrap(contextType, contextId, gameChatType);
     if (currentIdRef.current !== contextId) return noop;
 
-    let next = messagesRef.current;
-    if (missedBuffer.length > 0) {
-      next = mergeOpenSnapshot(next, missedBuffer, []);
-    }
-    if (missedNetwork.length > 0) {
-      next = mergeOpenSnapshot(next, missedNetwork, []);
-    }
-    if (dexieTail.length > 0) {
-      next = mergeOpenSnapshot(next, dexieTail, []);
-    }
-
     const stalePaint =
       paintGeneration != null &&
       paintSession?.threadKey === threadKey &&
       paintGeneration !== paintSession.paintGeneration;
 
     let committedRows = false;
-    if (
-      currentIdRef.current === contextId &&
-      isActiveOpenReconcile(generation) &&
-      !stalePaint &&
-      !chatOpenMessagesSnapshotEqual(messagesRef.current, next)
-    ) {
-      commitChatOpenMessages(messagesRef, (v) => setMessages(v), next, 'reconcile-batched');
-      traceChatOpenLength('afterReconcile', next.length);
-      await applyThreadEvent({ kind: 'syncTailsFromHeads', contextType, contextId });
-      committedRows = true;
+    if (currentIdRef.current === contextId && isActiveOpenReconcile(generation) && !stalePaint) {
+      // Re-read live rows: send-success / socket may have updated the thread while we pulled.
+      let next = messagesRef.current;
+      if (missedBuffer.length > 0) {
+        next = mergeOpenSnapshot(next, missedBuffer, []);
+      }
+      if (missedNetwork.length > 0) {
+        next = mergeOpenSnapshot(next, missedNetwork, []);
+      }
+      if (dexieTail.length > 0) {
+        next = mergeOpenSnapshot(next, dexieTail, []);
+      }
+
+      if (!chatOpenMessagesSnapshotEqual(messagesRef.current, next)) {
+        commitChatOpenMessages(messagesRef, (v) => setMessages(v), next, 'reconcile-batched');
+        traceChatOpenLength('afterReconcile', next.length);
+        await applyThreadEvent({ kind: 'syncTailsFromHeads', contextType, contextId });
+        committedRows = true;
+      }
     }
 
     const after = messagesRef.current;
