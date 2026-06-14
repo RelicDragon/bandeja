@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { gamesApi } from '@/api/games';
 import { useAuthStore } from '@/store/authStore';
+import { BOOKTIME_DEFAULT_TIMEZONE } from '@shared/booktime/localTime';
 import {
   filterLinkableGames,
   sortLinkableGames,
@@ -23,7 +24,7 @@ export function useBooktimeLinkableGames(booking: BooktimeBookingRecord | null, 
     try {
       const res = await gamesApi.getMyGames();
       const filtered = filterLinkableGames(res.data ?? [], userId);
-      setGames(sortLinkableGames(filtered, booking));
+      setGames(sortLinkableGames(filtered, booking, BOOKTIME_DEFAULT_TIMEZONE));
     } catch {
       setError(true);
       setGames([]);

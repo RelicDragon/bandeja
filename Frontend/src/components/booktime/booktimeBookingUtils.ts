@@ -1,7 +1,7 @@
 import type { Club } from '@/types';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
-import { parseBooktimeLocalComponents } from '@/integrations/booktime/localTime';
+import { BOOKTIME_DEFAULT_TIMEZONE, booktimeIsoToInstant, booktimeIsoToUtcIso } from '@shared/booktime/localTime';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 
 export function linkedBookingToRecord(link: {
@@ -54,15 +54,16 @@ export function booktimeRowToClub(row: BooktimeMyClubRow): Club {
 }
 
 function formatBooktimeWallClock(
-  hour: number,
-  minute: number,
+  date: Date,
+  timezone: string,
   displaySettings: ResolvedDisplaySettings
 ): string {
   return new Intl.DateTimeFormat(displaySettings.locale, {
+    timeZone: timezone,
     hour: 'numeric',
     minute: '2-digit',
     hour12: displaySettings.hour12,
-  }).format(new Date(2000, 0, 1, hour, minute));
+  }).format(date);
 }
 
 export function formatBooktimeBookingWhen(
@@ -72,17 +73,21 @@ export function formatBooktimeBookingWhen(
     displaySettings: ResolvedDisplaySettings;
   }
 ): string {
-  const start = parseBooktimeLocalComponents(booking.bookingStart);
-  const end = parseBooktimeLocalComponents(booking.bookingEnd);
-  if (!start) return booking.bookingStart;
+  const timezone = options.timezone ?? BOOKTIME_DEFAULT_TIMEZONE;
+  const startDate = booktimeIsoToInstant(booking.bookingStart, timezone);
+  if (!startDate) return booking.bookingStart;
 
-  const [year, month, day] = start.dateKey.split('-').map(Number);
+  const endDate = booking.bookingEnd
+    ? booktimeIsoToInstant(booking.bookingEnd, timezone)
+    : null;
+
   const dateLabel = new Intl.DateTimeFormat(options.displaySettings.locale, {
+    timeZone: timezone,
     dateStyle: 'long',
-  }).format(new Date(year, month - 1, day));
-  const startTime = formatBooktimeWallClock(start.hour, start.minute, options.displaySettings);
-  const endTime = end
-    ? formatBooktimeWallClock(end.hour, end.minute, options.displaySettings)
+  }).format(startDate);
+  const startTime = formatBooktimeWallClock(startDate, timezone, options.displaySettings);
+  const endTime = endDate
+    ? formatBooktimeWallClock(endDate, timezone, options.displaySettings)
     : null;
   return endTime ? `${dateLabel} · ${startTime} – ${endTime}` : `${dateLabel} · ${startTime}`;
 }
@@ -145,15 +150,19 @@ export function resolveCourtForBooking(
 export function buildCreateGameSearchParams(
   clubId: string,
   booking: BooktimeBookingRecord,
-  courtId?: string
+  courtId?: string,
+  timeZone?: string | null,
 ): URLSearchParams {
+  const tz = timeZone ?? BOOKTIME_DEFAULT_TIMEZONE;
+  const startTime = booktimeIsoToUtcIso(booking.bookingStart, tz) ?? booking.bookingStart;
+  const endTime = booktimeIsoToUtcIso(booking.bookingEnd, tz) ?? booking.bookingEnd;
   const params = new URLSearchParams({
     clubId,
     locationTimeMode: 'bookings',
     bookingIds: booking.uuid,
     hasBookedCourt: '1',
-    startTime: booking.bookingStart,
-    endTime: booking.bookingEnd,
+    startTime,
+    endTime,
   });
   if (courtId) params.set('courtId', courtId);
   return params;

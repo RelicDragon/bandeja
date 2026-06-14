@@ -19,6 +19,7 @@ import { useAuthStore } from '@/store/authStore';
 import type { Game } from '@/types';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { formatGameTimeInTimezone, getClubTimezone, getUserTimezone } from '@/utils/gameTimeDisplay';
+import { BOOKTIME_DEFAULT_TIMEZONE } from '@shared/booktime/localTime';
 import { formatBooktimeBookingWhen, resolveCourtForBooking } from './booktimeBookingUtils';
 import {
   buildLinkBookingSnapshot,
@@ -44,8 +45,9 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
   const [pendingGame, setPendingGame] = useState<Game | null>(null);
   const [linkBusy, setLinkBusy] = useState(false);
   const courtInfo = resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt'));
+  const clubTimezone = BOOKTIME_DEFAULT_TIMEZONE;
   const bookingWhen = formatBooktimeBookingWhen(booking, {
-    timezone: null,
+    timezone: clubTimezone,
     displaySettings,
   });
 
@@ -62,10 +64,10 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
   const performLink = async (game: Game) => {
     setLinkBusy(true);
     try {
-      const update = buildLinkBookingToGameUpdate(game, booking, club, courtInfo.courtId);
+      const update = buildLinkBookingToGameUpdate(game, booking, club, courtInfo.courtId, clubTimezone);
       await gamesApi.update(game.id, update);
       await gamesApi.patchBookings(game.id, { add: [booking.uuid] });
-      const snapshot = buildLinkBookingSnapshot(booking, club, courtInfo.courtId);
+      const snapshot = buildLinkBookingSnapshot(booking, club, courtInfo.courtId, clubTimezone);
       if (snapshot) {
         await gamesApi.putBookingSnapshots(game.id, { snapshots: [snapshot] });
       }
@@ -83,7 +85,7 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
 
   const handleSelectGame = (game: Game) => {
     if (linkBusy) return;
-    if (gameNeedsDatetimeUpdateForLink(game, booking) && game.timeIsSet === true) {
+    if (gameNeedsDatetimeUpdateForLink(game, booking, clubTimezone) && game.timeIsSet === true) {
       setPendingGame(game);
       return;
     }
@@ -115,7 +117,7 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
             ) : (
               <ul className="space-y-2 py-1">
                 {games.map((game) => {
-                  const recommended = isRecommendedLinkTarget(game, booking);
+                  const recommended = isRecommendedLinkTarget(game, booking, clubTimezone);
                   return (
                     <li key={game.id}>
                       <button

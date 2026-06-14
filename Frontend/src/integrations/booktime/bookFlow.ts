@@ -2,7 +2,7 @@ import type { Sport } from '@shared/sport';
 import type { Club } from '@/types';
 import type { BooktimeClient, BooktimeCompany } from './client';
 import { resolveBooktimeServiceUuid } from './resolveBooktimeServiceUuid';
-import { BOOKTIME_DEFAULT_TIMEZONE, booktimeLocalIsoToDate } from './localTime';
+import { BOOKTIME_DEFAULT_TIMEZONE, booktimeIsoToInstant } from './localTime';
 import {
   BOOKTIME_CONFIRM_RECHECK_MS,
   isSnapshotOlderThan,
@@ -177,8 +177,8 @@ export function canCancelByPolicy(
   clubTimezone?: string | null
 ): boolean {
   const start =
-    booktimeLocalIsoToDate(bookingStart, clubTimezone ?? BOOKTIME_DEFAULT_TIMEZONE) ??
-    new Date(bookingStart);
+    booktimeIsoToInstant(bookingStart, clubTimezone ?? BOOKTIME_DEFAULT_TIMEZONE);
+  if (!start) return false;
   const startMs = start.getTime();
   if (Number.isNaN(startMs)) return false;
   return startMs - Date.now() >= allowedHoursToCancel * 60 * 60 * 1000;

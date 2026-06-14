@@ -187,6 +187,14 @@ export function LocationTimeTab({
     [setSelectedBookingIds, onUnlinkBooking],
   );
 
+  const handleSelectedBookingIdsChange = useCallback(
+    (ids: string[], records?: BooktimeBookingRecord[]) => {
+      setSelectedBookingIds(ids);
+      if (records) setSelectedBookingRecords(records);
+    },
+    [setSelectedBookingIds],
+  );
+
   useEffect(() => {
     onDraftChange({
       locationTimeMode,
@@ -280,10 +288,7 @@ export function LocationTimeTab({
       selectedCourtIds={selectedCourtIds}
       courts={courts}
       selectedBookingIds={selectedBookingIds}
-      onSelectedBookingIdsChange={(ids, records) => {
-        setSelectedBookingIds(ids);
-        if (records) setSelectedBookingRecords(records);
-      }}
+      onSelectedBookingIdsChange={handleSelectedBookingIdsChange}
       bookingSelectionLimits={bookingSelectionLimits}
       timeOverride={timeOverride}
       onTimeOverrideChange={setTimeOverride}

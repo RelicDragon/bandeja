@@ -1,4 +1,9 @@
+import { booktimeIsoToUtcIso } from '../booktime/localTime';
 import type { BookingSnapshotInput } from './contracts';
+
+export type BuildBookingSnapshotsOptions = {
+  timeZone?: string;
+};
 
 type CourtRef = {
   id: string;
@@ -29,15 +34,23 @@ function findCourtByExternalId(externalId: string | null, courts: CourtRef[]): C
 export function buildBookingSnapshots(
   bookings: BookingLike[],
   courts: CourtRef[],
+  options?: BuildBookingSnapshotsOptions,
 ): BookingSnapshotInput[] {
+  const timeZone = options?.timeZone;
   return bookings.map((booking) => {
     const externalId = bookingResourceExternalId(booking);
     const court = findCourtByExternalId(externalId, courts);
+    const bookingStart = timeZone
+      ? booktimeIsoToUtcIso(booking.bookingStart, timeZone) ?? booking.bookingStart
+      : booking.bookingStart;
+    const bookingEnd = timeZone
+      ? booktimeIsoToUtcIso(booking.bookingEnd, timeZone) ?? booking.bookingEnd
+      : booking.bookingEnd;
     return {
       externalBookingId: booking.uuid,
       courtId: court?.id,
-      bookingStart: booking.bookingStart,
-      bookingEnd: booking.bookingEnd,
+      bookingStart,
+      bookingEnd,
     };
   });
 }

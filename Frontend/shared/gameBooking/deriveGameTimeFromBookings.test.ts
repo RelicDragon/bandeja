@@ -14,6 +14,18 @@ describe('deriveGameTimeFromBookings', () => {
     });
   });
 
+  it('converts naive booktime local times when timeZone is provided', () => {
+    expect(
+      deriveGameTimeFromBookings(
+        [{ bookingStart: '2026-06-14T09:00', bookingEnd: '2026-06-14T10:00' }],
+        { timeZone: 'Europe/Belgrade' },
+      ),
+    ).toEqual({
+      startTime: '2026-06-14T07:00:00.000Z',
+      endTime: '2026-06-14T08:00:00.000Z',
+    });
+  });
+
   it('returns nulls when no valid times', () => {
     expect(deriveGameTimeFromBookings([])).toEqual({ startTime: null, endTime: null });
     expect(deriveGameTimeFromBookings([{ bookingStart: '2026-06-12T10:00:00.000Z' }])).toEqual({

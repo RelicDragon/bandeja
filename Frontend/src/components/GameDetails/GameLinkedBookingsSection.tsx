@@ -31,13 +31,17 @@ export function GameLinkedBookingsSection({ game, courts, clubs, onGameUpdate }:
 
   const coverage = useMemo(
     () =>
-      evaluateLinkedBookingCoverage(game.linkedBookings ?? [], {
-        startTime: game.startTime,
-        endTime: game.endTime,
-        maxParticipants: game.maxParticipants,
-        playersPerMatch: playersPerMatchOf(game),
-      }),
-    [game],
+      evaluateLinkedBookingCoverage(
+        game.linkedBookings ?? [],
+        {
+          startTime: game.startTime,
+          endTime: game.endTime,
+          maxParticipants: game.maxParticipants,
+          playersPerMatch: playersPerMatchOf(game),
+        },
+        { timeZone: club?.city?.timezone ?? undefined },
+      ),
+    [game, club?.city?.timezone],
   );
 
   if (!hasClub || !club || !clubHasBookingIntegration(club)) return null;

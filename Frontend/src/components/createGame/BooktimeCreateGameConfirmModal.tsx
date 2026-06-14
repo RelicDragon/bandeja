@@ -309,6 +309,7 @@ export function BooktimeCreateGameConfirmModal({
           };
         }),
         bookings.map((b) => b.court),
+        { timeZone: getClubTimezone(club) },
       );
 
       setPhase('creating');

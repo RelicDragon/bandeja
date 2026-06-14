@@ -1,9 +1,9 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { CalendarX2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import type { Club } from '@/types';
+import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
@@ -14,7 +14,7 @@ import { useBooktimeLinkedGames } from '@/hooks/useBooktimeLinkedGames';
 import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
 import { booktimeRowToClub } from '@/components/booktime/booktimeBookingUtils';
 import { BookingTimeOverrideSection } from './BookingTimeOverrideSection';
-import type { Court } from '@/types';
+import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 
 type BookingsPickerPanelProps = {
   club: Club;
@@ -111,23 +111,35 @@ export function BookingsPickerPanel({
     [bookings, selectedBookingIds],
   );
 
+  const clubTimezone = getClubTimezone(club);
+  const onSelectedBookingIdsChangeRef = useRef(onSelectedBookingIdsChange);
+  onSelectedBookingIdsChangeRef.current = onSelectedBookingIdsChange;
+  const onDerivedTimeChangeRef = useRef(onDerivedTimeChange);
+  onDerivedTimeChangeRef.current = onDerivedTimeChange;
+  const lastSyncedBookingRecordsKeyRef = useRef('');
+
   const derived = useMemo(() => {
     if (selectedBookings.length === 0) return { startTime: null, endTime: null };
-    const snapshots = buildBookingSnapshots(selectedBookings, courts);
-    return deriveGameTimeFromBookings(snapshots);
-  }, [selectedBookings, courts]);
+    const snapshots = buildBookingSnapshots(selectedBookings, courts, { timeZone: clubTimezone });
+    return deriveGameTimeFromBookings(snapshots, { timeZone: clubTimezone });
+  }, [selectedBookings, courts, clubTimezone]);
 
   useEffect(() => {
-    onDerivedTimeChange?.(derived.startTime, derived.endTime);
-  }, [derived.startTime, derived.endTime, onDerivedTimeChange]);
+    onDerivedTimeChangeRef.current?.(derived.startTime, derived.endTime);
+  }, [derived.startTime, derived.endTime]);
 
   useEffect(() => {
-    if (selectedBookingIds.length === 0) return;
-    const records = bookings.filter((b) => selectedBookingIds.includes(b.uuid));
-    if (records.length === selectedBookingIds.length) {
-      onSelectedBookingIdsChange(selectedBookingIds, records);
+    if (selectedBookingIds.length === 0) {
+      lastSyncedBookingRecordsKeyRef.current = '';
+      return;
     }
-  }, [bookings, selectedBookingIds, onSelectedBookingIdsChange]);
+    const records = bookings.filter((b) => selectedBookingIds.includes(b.uuid));
+    if (records.length !== selectedBookingIds.length) return;
+    const syncKey = `${selectedBookingIds.join('\0')}:${records.map((record) => record.uuid).join('\0')}`;
+    if (lastSyncedBookingRecordsKeyRef.current === syncKey) return;
+    lastSyncedBookingRecordsKeyRef.current = syncKey;
+    onSelectedBookingIdsChangeRef.current(selectedBookingIds, records);
+  }, [bookings, selectedBookingIds]);
 
   const atMax = selectedBookingIds.length >= selectionLimits.max;
   const clubRow = booktimeRowToClub({
