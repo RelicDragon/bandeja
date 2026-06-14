@@ -4,6 +4,7 @@ import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { BooktimeAdjacentBookingGroup } from './BooktimeAdjacentBookingGroup';
 import { BooktimeBookingRow } from './BooktimeBookingRow';
 import { groupAdjacentBooktimeBookings } from './groupAdjacentBooktimeBookings';
+import { DEFAULT_BOOKTIME_CANCEL_HOURS, resolveBooktimeCancelHoursForClub } from './useBooktimeCancelPolicy';
 
 type UpcomingBooking = BooktimeBookingRecord & { clubId?: string };
 
@@ -23,6 +24,7 @@ type Props = {
   clubById: Map<string, BooktimeMyClubRow>;
   showClubName?: boolean;
   allowedHoursToCancel?: number;
+  allowedHoursToCancelByClubId?: ReadonlyMap<string, number>;
   compact?: boolean;
   limit?: number;
   clubTimezone?: string | null;
@@ -35,7 +37,8 @@ export function BooktimeUpcomingBookingsList({
   bookings,
   clubById,
   showClubName = false,
-  allowedHoursToCancel = 12,
+  allowedHoursToCancel = DEFAULT_BOOKTIME_CANCEL_HOURS,
+  allowedHoursToCancelByClubId,
   compact = false,
   limit,
   clubTimezone,
@@ -43,6 +46,8 @@ export function BooktimeUpcomingBookingsList({
   onCanceled,
   onRefreshSnapshot,
 }: Props) {
+  const resolveAllowedHours = (clubId: string | undefined) =>
+    resolveBooktimeCancelHoursForClub(clubId, allowedHoursToCancelByClubId, allowedHoursToCancel);
   const entries = useMemo(
     () =>
       groupAdjacentBooktimeBookings(bookings, {
@@ -59,13 +64,14 @@ export function BooktimeUpcomingBookingsList({
         if (entry.kind === 'group') {
           const club = resolveClub(entry.bookings[0]!, clubById, clubIdOf);
           if (!club) return null;
+          const clubAllowedHours = resolveAllowedHours(club.clubId);
           return (
             <BooktimeAdjacentBookingGroup
               key={entry.bookings.map((booking) => booking.uuid).join('-')}
               bookings={entry.bookings}
               club={club}
               showClubName={showClubName}
-              allowedHoursToCancel={allowedHoursToCancel}
+              allowedHoursToCancel={clubAllowedHours}
               compact={compact}
               clubTimezone={clubTimezone}
               onRefreshSnapshot={onRefreshSnapshot}
@@ -76,13 +82,14 @@ export function BooktimeUpcomingBookingsList({
 
         const club = resolveClub(entry.booking, clubById, clubIdOf);
         if (!club) return null;
+        const clubAllowedHours = resolveAllowedHours(club.clubId);
         return (
           <BooktimeBookingRow
             key={`${club.clubId}-${entry.booking.uuid}`}
             booking={entry.booking}
             club={club}
             showClubName={showClubName}
-            allowedHoursToCancel={allowedHoursToCancel}
+            allowedHoursToCancel={clubAllowedHours}
             compact={compact}
             clubTimezone={clubTimezone}
             onRefreshSnapshot={onRefreshSnapshot}

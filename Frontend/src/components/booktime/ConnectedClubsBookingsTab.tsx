@@ -7,7 +7,7 @@ import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
 import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
 import { BooktimePastBookingsSection } from './BooktimePastBookingsSection';
-import { useBooktimeCancelPolicy } from './useBooktimeCancelPolicy';
+import { useBooktimeCancelPoliciesForClubs } from './useBooktimeCancelPolicy';
 
 type Props = {
   clubs: BooktimeMyClubRow[];
@@ -27,8 +27,7 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged
     true,
     combinedRefreshKey
   );
-  const firstConnected = connectedClubs[0] ?? null;
-  const allowedHoursToCancel = useBooktimeCancelPolicy(firstConnected, !!firstConnected);
+  const allowedHoursToCancelByClubId = useBooktimeCancelPoliciesForClubs(clubs, connectedClubs.length > 0);
   const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
 
   const handleCanceled = (bookingId: string) => {
@@ -60,7 +59,7 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged
             bookings={upcoming}
             clubById={clubById}
             showClubName
-            allowedHoursToCancel={allowedHoursToCancel}
+            allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
             onCanceled={handleCanceled}
           />
         )}

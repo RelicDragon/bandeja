@@ -6,7 +6,7 @@ import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
 import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
 import { MyTabConnectBanner } from './MyTabConnectBanner';
-import { useBooktimeCancelPolicy } from './useBooktimeCancelPolicy';
+import { useBooktimeCancelPoliciesForClubs } from './useBooktimeCancelPolicy';
 import { useShellNavStore } from '@/store/shellNavStore';
 
 export function MyTabBookingsSection() {
@@ -17,8 +17,10 @@ export function MyTabBookingsSection() {
   const [refreshKey, setRefreshKey] = useState(0);
   const clubs = useMemo(() => myClubs?.clubs ?? [], [myClubs?.clubs]);
   const { bookings, loading, removeBooking } = useBooktimeAllUpcoming(clubs, true, refreshKey);
-  const firstConnected = clubs.find((c) => c.connected && c.companyId) ?? null;
-  const allowedHoursToCancel = useBooktimeCancelPolicy(firstConnected, !!firstConnected);
+  const allowedHoursToCancelByClubId = useBooktimeCancelPoliciesForClubs(
+    clubs,
+    myClubs != null && myClubs.connectedCount > 0,
+  );
 
   const prevActiveTab = useRef(activeTab);
   useEffect(() => {
@@ -69,7 +71,7 @@ export function MyTabBookingsSection() {
           bookings={bookings}
           clubById={clubById}
           showClubName={clubs.filter((c) => c.connected).length > 1}
-          allowedHoursToCancel={allowedHoursToCancel}
+          allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
           compact
           limit={previewLimit}
           onCanceled={removeBooking}
