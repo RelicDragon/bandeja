@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useBooktimeMyClubs } from '@/hooks/useBooktimeMyClubs';
 import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
-import { BooktimeBookingRow } from './BooktimeBookingRow';
+import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
 import { MyTabConnectBanner } from './MyTabConnectBanner';
 import { useBooktimeCancelPolicy } from './useBooktimeCancelPolicy';
@@ -44,7 +44,7 @@ export function MyTabBookingsSection() {
 
   if (myClubs.connectedCount === 0) return null;
 
-  const preview = bookings.slice(0, 3);
+  const previewLimit = 3;
   const clubById = new Map(clubs.map((c) => [c.clubId, c]));
 
   return (
@@ -62,26 +62,18 @@ export function MyTabBookingsSection() {
 
       {loading ? (
         <BooktimeBookingsLoading />
-      ) : preview.length === 0 ? (
+      ) : bookings.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>
       ) : (
-        <ul className="space-y-2">
-          {preview.map((booking) => {
-            const club = clubById.get(booking.clubId);
-            if (!club) return null;
-            return (
-              <BooktimeBookingRow
-                key={`${booking.clubId}-${booking.uuid}`}
-                booking={booking}
-                club={club}
-                showClubName={clubs.filter((c) => c.connected).length > 1}
-                allowedHoursToCancel={allowedHoursToCancel}
-                compact
-                onCanceled={() => removeBooking(booking.uuid)}
-              />
-            );
-          })}
-        </ul>
+        <BooktimeUpcomingBookingsList
+          bookings={bookings}
+          clubById={clubById}
+          showClubName={clubs.filter((c) => c.connected).length > 1}
+          allowedHoursToCancel={allowedHoursToCancel}
+          compact
+          limit={previewLimit}
+          onCanceled={removeBooking}
+        />
       )}
     </section>
   );

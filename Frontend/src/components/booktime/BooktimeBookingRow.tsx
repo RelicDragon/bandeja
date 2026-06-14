@@ -47,6 +47,7 @@ type Props = {
     courtName: string;
     integrationCourtName?: string | null;
   };
+  nested?: boolean;
 };
 
 function LinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
@@ -79,6 +80,7 @@ export function BooktimeBookingRow({
   readOnly = false,
   trailing,
   courtOverride,
+  nested = false,
 }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -151,18 +153,21 @@ export function BooktimeBookingRow({
     </div>
   );
 
+  const rowShellClassName = `rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 ${
+    compact ? 'px-3 py-2' : 'px-3 py-2.5'
+  }`;
+
   if (readOnly) {
-    return (
-      <li
+    const shell = (
+      <div
         data-testid="linked-booking-card"
-        className={`rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 ${
-          compact ? 'px-3 py-2' : 'px-3 py-2.5'
-        } ${trailing ? 'flex items-center justify-between gap-2' : ''}`}
+        className={`${rowShellClassName} ${trailing ? 'flex items-center justify-between gap-2' : ''}`}
       >
         {rowContent}
         {trailing}
-      </li>
+      </div>
     );
+    return nested ? shell : <li>{shell}</li>;
   }
 
   if (selectable) {
@@ -198,13 +203,8 @@ export function BooktimeBookingRow({
     );
   }
 
-  return (
-    <>
-      <li
-        className={`rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 ${
-          compact ? 'px-3 py-2' : 'px-3 py-2.5'
-        } space-y-2`}
-      >
+  const bookingCard = (
+    <div className={`${rowShellClassName} space-y-2`}>
         {cancelDoneBanner ? (
           <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 space-y-2">
             <p className="text-xs text-amber-900 dark:text-amber-100">
@@ -251,7 +251,12 @@ export function BooktimeBookingRow({
             )}
           </div>
         ) : null}
-      </li>
+    </div>
+  );
+
+  return (
+    <>
+      {nested ? bookingCard : <li>{bookingCard}</li>}
 
       <ConfirmationModal
         isOpen={cancelOpen}

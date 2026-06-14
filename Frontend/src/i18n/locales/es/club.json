@@ -134,6 +134,7 @@
       "myTabConnectCta": "Conectar clubs",
       "myTabUpcomingTitle": "Próximas reservas de pista",
       "seeAllBookings": "Ver todo",
+      "adjacentSlotsCount": "{{count}} franjas consecutivas",
       "noUpcomingAny": "No hay reservas próximas en tus clubs conectados.",
       "tabBookings": "Reservas",
       "tabIntegrations": "Integraciones"

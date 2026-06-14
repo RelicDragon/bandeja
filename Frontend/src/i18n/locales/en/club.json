@@ -134,6 +134,7 @@
       "myTabConnectCta": "Connect clubs",
       "myTabUpcomingTitle": "Upcoming court bookings",
       "seeAllBookings": "See all",
+      "adjacentSlotsCount": "{{count}} consecutive slots",
       "noUpcomingAny": "No upcoming bookings across your connected clubs.",
       "tabBookings": "Bookings",
       "tabIntegrations": "Integrations"

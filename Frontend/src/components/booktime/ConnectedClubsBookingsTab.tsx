@@ -4,7 +4,7 @@ import type { BooktimeMyClubRow } from '@/api/booktime';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
-import { BooktimeBookingRow } from './BooktimeBookingRow';
+import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
 import { BooktimePastBookingsSection } from './BooktimePastBookingsSection';
 import { useBooktimeCancelPolicy } from './useBooktimeCancelPolicy';
@@ -56,22 +56,13 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged
         ) : upcoming.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>
         ) : (
-          <ul className="space-y-2">
-            {upcoming.map((booking) => {
-              const club = clubById.get(booking.clubId);
-              if (!club) return null;
-              return (
-                <BooktimeBookingRow
-                  key={`${booking.clubId}-${booking.uuid}`}
-                  booking={booking}
-                  club={club}
-                  showClubName
-                  allowedHoursToCancel={allowedHoursToCancel}
-                  onCanceled={() => handleCanceled(booking.uuid)}
-                />
-              );
-            })}
-          </ul>
+          <BooktimeUpcomingBookingsList
+            bookings={upcoming}
+            clubById={clubById}
+            showClubName
+            allowedHoursToCancel={allowedHoursToCancel}
+            onCanceled={handleCanceled}
+          />
         )}
       </section>
 

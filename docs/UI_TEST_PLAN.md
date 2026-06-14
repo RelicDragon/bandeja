@@ -279,6 +279,7 @@ Frontend/e2e/
 | H-37 | Club booking connect banner (My tab) | User in city with BOOKTIME club, not connected | Connect banner on My tab → settings page |
 | H-40 | Club booking connect banner dismiss | User sees connect banner on My tab | Close (×) hides banner; does not reappear for same user |
 | H-38 | Club booking upcoming cards (My tab) | Connected user with upcoming bookings | Up to 3 cards + "See all" |
+| H-38a | Adjacent booking group (My tab) | User with 2+ back-to-back slots same court | One grouped card with slot count; tap expands individual slots with cancel/link actions |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
 ---
@@ -854,6 +855,7 @@ Frontend/e2e/
 | PR-56 | Connected clubs settings entry | Profile → Connected clubs & bookings | Navigates to `/profile/connected-clubs` |
 | PR-57 | Connected clubs page tabs | Profile → Connected clubs & bookings | Segmented switch Bookings/Integrations centered; Bookings default |
 | PR-57a | Bookings tab | Bookings tab with connected clubs | All upcoming across clubs with club name; linked game chip opens game; Link to game dialog lists announced games with recommended match |
+| PR-57a1 | Adjacent booking group (settings) | Connected clubs → Bookings with consecutive same-court slots | Grouped card with combined time; expand/collapse reveals each slot row |
 | PR-57b | Integrations tab | Integrations tab | Club list with connect/disconnect state; hint card |
 | PR-57c | Link booking to game (happy path) | My tab → Bookings → Link to game → pick game (confirm reschedule if times differ) | Single request succeeds; success toast; game shows linked booking with correct time/club |
 | PR-57d | Link booking to game (failure) | Link to game while offline or on already-linked booking | Error toast; no partial link (game unchanged if request failed) |

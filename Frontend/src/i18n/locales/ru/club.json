@@ -136,6 +136,7 @@
       "myTabConnectCta": "Подключить клубы",
       "myTabUpcomingTitle": "Предстоящие бронирования кортов",
       "seeAllBookings": "Показать все",
+      "adjacentSlotsCount": "{{count}} слотов подряд",
       "noUpcomingAny": "Нет предстоящих бронирований в подключённых клубах.",
       "tabBookings": "Бронирования",
       "tabIntegrations": "Интеграции"

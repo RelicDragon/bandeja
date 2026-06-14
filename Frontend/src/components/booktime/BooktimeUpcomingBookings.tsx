@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club } from '@/types';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import { useBooktimeUpcomingBookings } from '@/hooks/useBooktimeUpcomingBookings';
-import { BooktimeBookingRow } from './BooktimeBookingRow';
+import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
 import { useBooktimeCancelPolicy } from './useBooktimeCancelPolicy';
 
@@ -43,6 +43,7 @@ export function BooktimeUpcomingBookings({
 }: Props) {
   const { t } = useTranslation();
   const clubRow = clubToMyClubRow(club, companyId, connected);
+  const clubById = useMemo(() => new Map([[clubRow.clubId, clubRow]]), [clubRow]);
   const allowedHoursToCancel = useBooktimeCancelPolicy(clubRow, enabled && connected);
   const { bookings, loading, error, reload, removeBooking } = useBooktimeUpcomingBookings(
     club,
@@ -70,22 +71,17 @@ export function BooktimeUpcomingBookings({
       ) : bookings.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcoming')}</p>
       ) : (
-        <ul className="space-y-2">
-          {bookings.map((booking) => (
-            <BooktimeBookingRow
-              key={booking.uuid}
-              booking={booking}
-              club={clubRow}
-              allowedHoursToCancel={allowedHoursToCancel}
-              onRefreshSnapshot={onRefreshSnapshot}
-              clubTimezone={club.city?.timezone}
-              onCanceled={() => {
-                removeBooking(booking.uuid);
-                void reload();
-              }}
-            />
-          ))}
-        </ul>
+        <BooktimeUpcomingBookingsList
+          bookings={bookings}
+          clubById={clubById}
+          allowedHoursToCancel={allowedHoursToCancel}
+          clubTimezone={club.city?.timezone}
+          onRefreshSnapshot={onRefreshSnapshot}
+          onCanceled={(bookingId) => {
+            removeBooking(bookingId);
+            void reload();
+          }}
+        />
       )}
     </section>
   );
