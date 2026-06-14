@@ -12,7 +12,7 @@ import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerat
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
-import { booktimeIsoToUtcIso, BOOKTIME_DEFAULT_TIMEZONE } from '../../shared/booktime/localTime';
+import { BOOKTIME_DEFAULT_TIMEZONE, parseBooktimeStoredOrNaiveToDate } from '../../shared/booktime/localTime';
 import { rollbackBooktimeBookingsOnCreateFailure } from '../booktime/booktimeBookingRollback.service';
 import { GameCourtService } from '../gameCourt/gameCourt.service';
 import {
@@ -266,10 +266,10 @@ export class GameCreateService {
     
     const useBooktimeTz = booking.externalBookingProvider === ClubIntegrationType.BOOKTIME;
     const startTime = useBooktimeTz
-      ? new Date(booktimeIsoToUtcIso(data.startTime, BOOKTIME_DEFAULT_TIMEZONE) ?? data.startTime)
+      ? parseBooktimeStoredOrNaiveToDate(data.startTime, BOOKTIME_DEFAULT_TIMEZONE) ?? new Date(data.startTime)
       : new Date(data.startTime);
     const endTime = useBooktimeTz
-      ? new Date(booktimeIsoToUtcIso(data.endTime, BOOKTIME_DEFAULT_TIMEZONE) ?? data.endTime)
+      ? parseBooktimeStoredOrNaiveToDate(data.endTime, BOOKTIME_DEFAULT_TIMEZONE) ?? new Date(data.endTime)
       : new Date(data.endTime);
     
     const priceType = data.priceType ?? 'NOT_KNOWN';

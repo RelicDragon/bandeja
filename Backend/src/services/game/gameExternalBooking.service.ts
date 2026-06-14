@@ -2,7 +2,7 @@ import { ClubIntegrationType, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
-import { BOOKTIME_DEFAULT_TIMEZONE, booktimeIsoToUtcIso } from '../../shared/booktime/localTime';
+import { BOOKTIME_DEFAULT_TIMEZONE, parseBooktimeStoredOrNaiveToDate } from '../../shared/booktime/localTime';
 import { deriveGameTimeFromBookings } from '../../shared/gameBooking/deriveGameTimeFromBookings';
 import {
   LEGACY_EXTERNAL_BOOKING_ID_REJECTED,
@@ -65,9 +65,7 @@ function snapshotMap(snapshots: BookingSnapshotInput[]): Map<string, BookingSnap
 
 function parseBooktimeSnapshotInstant(iso: string | undefined): Date | null {
   if (!iso?.trim()) return null;
-  const utcIso = booktimeIsoToUtcIso(iso, BOOKTIME_DEFAULT_TIMEZONE);
-  const d = new Date(utcIso ?? iso);
-  return Number.isNaN(d.getTime()) ? null : d;
+  return parseBooktimeStoredOrNaiveToDate(iso, BOOKTIME_DEFAULT_TIMEZONE);
 }
 
 function snapshotToRowData(

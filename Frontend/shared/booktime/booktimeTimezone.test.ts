@@ -3,6 +3,7 @@ import { formatBooktimeBookingWhen } from '../../src/components/booktime/booktim
 import {
   booktimeApiWallClockToUtcIso,
   booktimeIsoToUtcIso,
+  parseBooktimeStoredOrNaiveToUtcIso,
   storedUtcIsoToInstant,
 } from './localTime';
 import { buildBookingSnapshots } from '../gameBooking/buildBookingSnapshots';
@@ -76,6 +77,18 @@ describe('booktime timezone pipeline', () => {
     expect(belgradeTime(game.startTime)).toBe('09:00');
   });
 
+  it('uses stored UTC for cancel policy', () => {
+    const storedStart = booktimeApiWallClockToUtcIso('2035-06-30T18:00:00.000Z', TZ)!;
+    const farFuture = new Date('2030-01-01T00:00:00.000Z').getTime();
+    const originalNow = Date.now;
+    Date.now = () => farFuture;
+    try {
+      expect(canCancelByPolicy(storedStart, 24, TZ)).toBe(true);
+    } finally {
+      Date.now = originalNow;
+    }
+  });
+
   it('converts naive create-flow times only once', () => {
     const snapshots = buildBookingSnapshots(
       [{ uuid: 'b1', bookingStart: '2026-06-14T09:00', bookingEnd: '2026-06-14T10:00', bookingResourceId: 'ext-a' }],
@@ -89,15 +102,12 @@ describe('booktime timezone pipeline', () => {
     });
   });
 
-  it('uses stored UTC for cancel policy', () => {
-    const storedStart = booktimeApiWallClockToUtcIso('2035-06-30T18:00:00.000Z', TZ)!;
-    const farFuture = new Date('2030-01-01T00:00:00.000Z').getTime();
-    const originalNow = Date.now;
-    Date.now = () => farFuture;
-    try {
-      expect(canCancelByPolicy(storedStart, 24, TZ)).toBe(true);
-    } finally {
-      Date.now = originalNow;
-    }
+  it('parseBooktimeStoredOrNaive keeps stored UTC and converts naive', () => {
+    expect(parseBooktimeStoredOrNaiveToUtcIso('2026-06-19T07:00:00.000Z', TZ)).toBe(
+      '2026-06-19T07:00:00.000Z',
+    );
+    expect(parseBooktimeStoredOrNaiveToUtcIso('2026-06-14T09:00', TZ)).toBe(
+      '2026-06-14T07:00:00.000Z',
+    );
   });
 });

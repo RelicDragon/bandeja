@@ -4,7 +4,6 @@ import type { CreateGameBookingFields } from '@shared/gameBooking/contracts';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import { computeBookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
-import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import type { LocationTimeMode } from './LocationTimeMode';
 import { resolveLocationTimeUiMode } from './resolveLocationTimeUiMode';
@@ -141,9 +140,8 @@ export function useGameLocationTimeState({
       hasBookedCourt: boolean;
     } => {
       if (locationTimeMode === 'bookings' && selectedBookings.length > 0) {
-        const clubTimezone = getClubTimezone(club);
-        const snapshots = buildBookingSnapshots(selectedBookings, courts, { timeZone: clubTimezone });
-        const derived = deriveGameTimeFromBookings(snapshots, { timeZone: clubTimezone });
+        const snapshots = buildBookingSnapshots(selectedBookings, courts);
+        const derived = deriveGameTimeFromBookings(snapshots);
         const slotTimes = timeOverride && overrideStartTime && overrideEndTime
           ? { startTime: overrideStartTime, endTime: overrideEndTime }
           : derived;
@@ -171,7 +169,6 @@ export function useGameLocationTimeState({
     },
     [
       locationTimeMode,
-      club,
       courts,
       timeOverride,
       overrideStartTime,

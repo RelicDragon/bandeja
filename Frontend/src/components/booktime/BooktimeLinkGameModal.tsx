@@ -67,7 +67,7 @@ export function BooktimeLinkGameModal({ booking, club, open, onOpenChange, onLin
       const update = buildLinkBookingToGameUpdate(game, booking, club, courtInfo.courtId, clubTimezone);
       await gamesApi.update(game.id, update);
       await gamesApi.patchBookings(game.id, { add: [booking.uuid] });
-      const snapshot = buildLinkBookingSnapshot(booking, club, courtInfo.courtId, clubTimezone);
+      const snapshot = buildLinkBookingSnapshot(booking, club, courtInfo.courtId);
       if (snapshot) {
         await gamesApi.putBookingSnapshots(game.id, { snapshots: [snapshot] });
       }

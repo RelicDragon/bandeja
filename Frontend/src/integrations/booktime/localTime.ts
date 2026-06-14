@@ -8,5 +8,7 @@ export {
   booktimeIsoToInstant,
   booktimeIsoToUtcIso,
   storedUtcIsoToInstant,
+  parseBooktimeStoredOrNaiveToUtcIso,
+  parseBooktimeStoredOrNaiveToDate,
   booktimeBookingStartMs,
 } from '@shared/booktime/localTime';

@@ -2,7 +2,8 @@ import type { Sport } from '@shared/sport';
 import type { Club } from '@/types';
 import type { BooktimeClient, BooktimeCompany } from './client';
 import { resolveBooktimeServiceUuid } from './resolveBooktimeServiceUuid';
-import { storedUtcIsoToInstant } from './localTime';
+import { booktimeIsoToUtcIso, storedUtcIsoToInstant } from './localTime';
+import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import {
   BOOKTIME_CONFIRM_RECHECK_MS,
   isSnapshotOlderThan,
@@ -163,10 +164,11 @@ export async function confirmBooktimeBooking(
 
   await ctx.refreshSnapshot({ force: true });
 
+  const clubTimezone = getClubTimezone(club);
   return {
     bookingId: booking.uuid,
-    bookingStart,
-    bookingEnd,
+    bookingStart: booktimeIsoToUtcIso(bookingStart, clubTimezone) ?? bookingStart,
+    bookingEnd: booktimeIsoToUtcIso(bookingEnd, clubTimezone) ?? bookingEnd,
     price: priceRes.price,
   };
 }

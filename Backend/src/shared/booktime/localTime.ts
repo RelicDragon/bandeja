@@ -87,6 +87,26 @@ export function booktimeIsoToInstant(
   return storedUtcIsoToInstant(iso);
 }
 
+/** Naive wall-clock → stored UTC; real UTC ISO passes through unchanged. */
+export function parseBooktimeStoredOrNaiveToUtcIso(
+  iso: string,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+): string | null {
+  if (isBooktimeNaiveLocalIso(iso)) {
+    return booktimeApiWallClockToUtcIso(iso, timeZone);
+  }
+  const instant = storedUtcIsoToInstant(iso);
+  return instant ? instant.toISOString() : null;
+}
+
+export function parseBooktimeStoredOrNaiveToDate(
+  iso: string,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+): Date | null {
+  const utcIso = parseBooktimeStoredOrNaiveToUtcIso(iso, timeZone);
+  return utcIso ? storedUtcIsoToInstant(utcIso) : null;
+}
+
 export function booktimeBookingStartMs(
   bookingStart: string,
   _timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,

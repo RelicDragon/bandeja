@@ -15,8 +15,6 @@ import { useBooktimeLinkedGames } from '@/hooks/useBooktimeLinkedGames';
 import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
 import { booktimeRowToClub } from '@/components/booktime/booktimeBookingUtils';
 import { BookingTimeOverrideSection } from './BookingTimeOverrideSection';
-import { getClubTimezone } from '@/hooks/useGameTimeDuration';
-
 type BookingsPickerPanelProps = {
   club: Club;
   courts: Court[];
@@ -112,7 +110,6 @@ export function BookingsPickerPanel({
     [bookings, selectedBookingIds],
   );
 
-  const clubTimezone = getClubTimezone(club);
   const onSelectedBookingIdsChangeRef = useRef(onSelectedBookingIdsChange);
   onSelectedBookingIdsChangeRef.current = onSelectedBookingIdsChange;
   const onDerivedTimeChangeRef = useRef(onDerivedTimeChange);
@@ -121,9 +118,9 @@ export function BookingsPickerPanel({
 
   const derived = useMemo(() => {
     if (selectedBookings.length === 0) return { startTime: null, endTime: null };
-    const snapshots = buildBookingSnapshots(selectedBookings, courts, { timeZone: clubTimezone });
-    return deriveGameTimeFromBookings(snapshots, { timeZone: clubTimezone });
-  }, [selectedBookings, courts, clubTimezone]);
+    const snapshots = buildBookingSnapshots(selectedBookings, courts);
+    return deriveGameTimeFromBookings(snapshots);
+  }, [selectedBookings, courts]);
 
   useEffect(() => {
     onDerivedTimeChangeRef.current?.(derived.startTime, derived.endTime);

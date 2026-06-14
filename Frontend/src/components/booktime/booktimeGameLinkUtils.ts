@@ -95,15 +95,12 @@ export function buildLinkBookingSnapshot(
   booking: BooktimeBookingRecord,
   club: BooktimeMyClubRow,
   courtId?: string,
-  timeZone?: string | null,
 ) {
   const courts = club.courts.map((c) => ({
     id: c.id,
     externalCourtId: c.externalCourtId,
   }));
-  const snapshots = buildBookingSnapshots([booking], courts, {
-    timeZone: timeZone ?? undefined,
-  });
+  const snapshots = buildBookingSnapshots([booking], courts);
   if (courtId && snapshots[0]) snapshots[0].courtId = courtId;
   return snapshots[0];
 }

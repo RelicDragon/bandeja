@@ -5,7 +5,7 @@ import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
 import { gamesApi } from '@/api/games';
 import { gameCourtsApi } from '@/api/gameCourts';
-import { createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
+import { createDateFromClubTime } from '@/hooks/useGameTimeDuration';
 import type { EditLocationTimeDraft } from './locationTimeDraft';
 import { computePendingBookingUnlinks } from './computePendingBookingUnlinks';
 import {
@@ -137,8 +137,6 @@ export function buildEditLocationTimeSaveDraft({
 
   const addBookingIds = [...new Set([...pickerAddIds, ...bookFlowAddIds])];
 
-  const clubTimezone = getClubTimezone(club);
-
   let snapshots: BookingSnapshotInput[] | undefined;
   if (bookingOverrides?.bookingSnapshots.length) {
     snapshots = bookingOverrides.bookingSnapshots;
@@ -147,7 +145,7 @@ export function buildEditLocationTimeSaveDraft({
       addBookingIds.includes(b.uuid),
     );
     if (records.length > 0) {
-      snapshots = buildBookingSnapshots(records, courts, { timeZone: clubTimezone });
+      snapshots = buildBookingSnapshots(records, courts);
     }
   }
 
@@ -173,7 +171,7 @@ export function buildEditLocationTimeSaveDraft({
     (addBookingIds.length > 0 || remainingLinkedCount > 0) &&
     unionSnapshots.length > 0
   ) {
-    const derived = deriveGameTimeFromBookings(unionSnapshots, { timeZone: clubTimezone });
+    const derived = deriveGameTimeFromBookings(unionSnapshots);
     if (timeOverride && locationTimeDraft.overrideStartTime && locationTimeDraft.overrideEndTime) {
       startTime = locationTimeDraft.overrideStartTime;
       endTime = locationTimeDraft.overrideEndTime;
