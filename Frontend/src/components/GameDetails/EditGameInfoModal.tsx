@@ -21,6 +21,7 @@ import {
   buildEditLocationTimeSaveDraft,
 } from '@/components/gameLocationTime/useSaveGameLocationTime';
 import type { EditLocationTimeDraft } from '@/components/gameLocationTime/locationTimeDraft';
+import { areEditLocationTimeDraftsEqual } from '@/components/gameLocationTime/locationTimeDraft';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
@@ -145,7 +146,7 @@ export const EditGameInfoModal = ({
     ],
   );
   const handleLocationTimeDraftChange = useCallback((draft: EditLocationTimeDraft) => {
-    setLocationTimeDraft(draft);
+    setLocationTimeDraft((prev) => (areEditLocationTimeDraftsEqual(prev, draft) ? prev : draft));
   }, []);
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() =>
     game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : []),

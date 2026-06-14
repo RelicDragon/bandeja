@@ -5,13 +5,19 @@ import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
 import { useGameLocationTimeState } from '@/components/gameLocationTime/useGameLocationTimeState';
 import type { EditLocationTimeDraft } from '@/components/gameLocationTime/locationTimeDraft';
+import {
+  areBookingRecordsEqual,
+  areStringArraysEqual,
+  buildSelectedBookingRecordsSyncKey,
+} from '@/components/gameLocationTime/locationTimeDraft';
+import { linkedBookingToRecord } from '@/components/booktime/booktimeBookingUtils';
 import { GameStartSection } from '@/components/createGame/GameStartSection';
 import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
-import { clubHasBookingIntegration } from '@shared/clubIntegration';
+import { clubHasBookingIntegration, getBooktimeCompanyId } from '@shared/clubIntegration';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
 import type { RefObject, ReactNode } from 'react';
@@ -101,7 +107,9 @@ export function LocationTimeTab({
     selectedClub || undefined,
     supportsClubBookingFlow(entityType, 'edit') && clubHasBookingIntegration(club),
   );
-  const [selectedBookingRecords, setSelectedBookingRecords] = useState<BooktimeBookingRecord[]>([]);
+  const [selectedBookingRecords, setSelectedBookingRecords] = useState<BooktimeBookingRecord[]>(() =>
+    (game.linkedBookings ?? []).map(linkedBookingToRecord),
+  );
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
 
   const createDateFromSelection = () => {
@@ -189,14 +197,16 @@ export function LocationTimeTab({
 
   const handleSelectedBookingIdsChange = useCallback(
     (ids: string[], records?: BooktimeBookingRecord[]) => {
-      setSelectedBookingIds(ids);
-      if (records) setSelectedBookingRecords(records);
+      setSelectedBookingIds((prev) => (areStringArraysEqual(prev, ids) ? prev : ids));
+      if (records) {
+        setSelectedBookingRecords((prev) => (areBookingRecordsEqual(prev, records) ? prev : records));
+      }
     },
-    [setSelectedBookingIds],
+    [],
   );
 
-  useEffect(() => {
-    onDraftChange({
+  const draftPayload = useMemo(
+    (): EditLocationTimeDraft => ({
       locationTimeMode,
       selectedBookingIds,
       selectedBookingRecords,
@@ -205,18 +215,22 @@ export function LocationTimeTab({
       overrideEndTime,
       willBookOnCreate,
       integratedCourtIds,
-    });
-  }, [
-    onDraftChange,
-    locationTimeMode,
-    selectedBookingIds,
-    timeOverride,
-    overrideStartTime,
-    overrideEndTime,
-    willBookOnCreate,
-    integratedCourtIds,
-    selectedBookingRecords,
-  ]);
+    }),
+    [
+      locationTimeMode,
+      selectedBookingIds,
+      selectedBookingRecords,
+      timeOverride,
+      overrideStartTime,
+      overrideEndTime,
+      willBookOnCreate,
+      integratedCourtIds,
+    ],
+  );
+
+  useEffect(() => {
+    onDraftChange(draftPayload);
+  }, [draftPayload, onDraftChange]);
 
   const linkedGame: Game = {
     ...game,
@@ -296,7 +310,7 @@ export function LocationTimeTab({
       overrideEndTime={overrideEndTime}
       onOverrideTimesChange={setOverrideTimes}
       dirtyFlags={dirtyFlags}
-      companyId={club?.integrationConfig?.companyId}
+      companyId={getBooktimeCompanyId(club) ?? undefined}
       bookingsPanelEnabled
       needsBooktimeAuth={needsBooktimeAuth}
       authGateSection={authGateSection}

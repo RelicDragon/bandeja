@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { buildSelectedBookingRecordsSyncKey } from '@/components/gameLocationTime/locationTimeDraft';
 import { motion } from 'framer-motion';
 import { CalendarX2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -135,7 +136,7 @@ export function BookingsPickerPanel({
     }
     const records = bookings.filter((b) => selectedBookingIds.includes(b.uuid));
     if (records.length !== selectedBookingIds.length) return;
-    const syncKey = `${selectedBookingIds.join('\0')}:${records.map((record) => record.uuid).join('\0')}`;
+    const syncKey = buildSelectedBookingRecordsSyncKey(selectedBookingIds, records);
     if (lastSyncedBookingRecordsKeyRef.current === syncKey) return;
     lastSyncedBookingRecordsKeyRef.current = syncKey;
     onSelectedBookingIdsChangeRef.current(selectedBookingIds, records);

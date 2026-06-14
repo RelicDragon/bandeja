@@ -1,8 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { bookingMatchesClubCourts } from '@/components/booktime/booktimeBookingUtils';
+
+function areBookingListsEqual(
+  left: BooktimeBookingRecord[],
+  right: BooktimeBookingRecord[],
+): boolean {
+  if (left.length !== right.length) return false;
+  return left.every((booking, index) => booking.uuid === right[index]?.uuid);
+}
 
 export function useBooktimeUpcomingBookings(
   club: Club,
@@ -14,6 +22,16 @@ export function useBooktimeUpcomingBookings(
   const [bookings, setBookings] = useState<BooktimeBookingRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const filterCourtsRef = useRef(filterCourts);
+  filterCourtsRef.current = filterCourts;
+  const filterCourtsKey = useMemo(
+    () =>
+      (filterCourts ?? [])
+        .map((court) => court.id)
+        .sort()
+        .join('\0'),
+    [filterCourts],
+  );
 
   const reload = useCallback(async () => {
     if (!enabled || !connected || club.integrationType !== 'BOOKTIME') {
@@ -30,13 +48,13 @@ export function useBooktimeUpcomingBookings(
         return;
       }
       const res = await client.getUpcomingBookings(0, 20);
-      const courtsForMatch = filterCourts ?? club.courts ?? [];
+      const courtsForMatch = filterCourtsRef.current ?? club.courts ?? [];
       const raw = res.bookings ?? [];
       const filtered =
         courtsForMatch.length === 0
           ? raw
           : raw.filter((b) => bookingMatchesClubCourts(b, courtsForMatch));
-      setBookings(filtered);
+      setBookings((prev) => (areBookingListsEqual(prev, filtered) ? prev : filtered));
     } catch (err) {
       console.error('Club booking upcoming failed:', err);
       setError('loadFailed');
@@ -44,7 +62,7 @@ export function useBooktimeUpcomingBookings(
     } finally {
       setLoading(false);
     }
-  }, [club, companyId, connected, enabled, filterCourts]);
+  }, [club, companyId, connected, enabled, filterCourtsKey]);
 
   useEffect(() => {
     void reload();
