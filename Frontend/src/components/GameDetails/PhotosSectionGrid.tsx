@@ -11,6 +11,7 @@ type PhotosSectionGridProps = {
   canDeletePhoto: (photo: GamePhoto) => boolean;
   isUploadingPhoto: boolean;
   isUpdatingMainPhoto: boolean;
+  canUpload?: boolean;
   gameId: string;
   onImageClick: (index: number) => void;
   onMainPhotoSelect: (photoId: string) => void;
@@ -25,6 +26,7 @@ export const PhotosSectionGrid = ({
   canDeletePhoto,
   isUploadingPhoto,
   isUpdatingMainPhoto,
+  canUpload = true,
   gameId,
   onImageClick,
   onMainPhotoSelect,
@@ -89,16 +91,18 @@ export const PhotosSectionGrid = ({
                 </div>
               );
             })}
-            <div className="flex-shrink-0">
-              <button
-                onClick={onPhotoCapture}
-                disabled={isUploadingPhoto || !gameId}
-                className="w-24 h-24 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                title={t('gameDetails.addPhoto')}
-              >
-                <Camera size={24} className="text-white" />
-              </button>
-            </div>
+            {canUpload ? (
+              <div className="flex-shrink-0">
+                <button
+                  onClick={onPhotoCapture}
+                  disabled={isUploadingPhoto || !gameId}
+                  className="w-24 h-24 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  title={t('gameDetails.addPhoto')}
+                >
+                  <Camera size={24} className="text-white" />
+                </button>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>

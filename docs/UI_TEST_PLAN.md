@@ -480,6 +480,12 @@ Frontend/e2e/
 | GD-04 | Share game | Share modal | Link/copy works |
 | GD-05 | FAQ tab | Game with FAQs | FAQ content |
 | GD-06 | Photos section | Upload/view photos | Gallery works |
+| GD-06a | Open photos API | FINAL game, `forbidOthersPhotosView` off; anonymous `GET /games/:id/photos` | Returns photo list (200) |
+| GD-06b | Open photos UI guest | Same game; guest opens game details and games list | PhotosSection and GameCard thumbnail visible without login |
+| GD-06c | Restricted photos | FINAL + `forbidOthersPhotosView` on; stranger or anonymous | Gallery and thumb hidden; participant sees gallery |
+| GD-06d | Photos before FINAL | Game with `resultsStatus` not FINAL | Nobody sees photos section or card thumb (any viewer) |
+| GD-06e | Photo privacy toggle | FINAL game with visible Photos section; owner/admin toggles in gallery header | Setting persists; visibility matches matrix |
+| GD-06f | Photo upload permissions | Participant uploads; stranger cannot upload/set main | Upload/set-main succeed for participant/admin only |
 | GD-07 | Open game chat | Chat button | `/games/:id/chat` |
 | GD-73 | Scroll-more hint | Open long game details; scroll partway down | Bottom gradient + bouncing chevron; hides at page bottom |
 | GD-74 | Scroll-more hint tap | Tap chevron on long game details | Smooth scroll to bottom; hint hides when at bottom |

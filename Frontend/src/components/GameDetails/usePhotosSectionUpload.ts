@@ -17,7 +17,8 @@ function newClientUploadId(): string {
 export function usePhotosSectionUpload(
   game: Game,
   onGameUpdate?: (game: Game) => void,
-  onMainPhotoIdChange?: (photoId: string) => void
+  onMainPhotoIdChange?: (photoId: string) => void,
+  canUpload = true
 ) {
   const { t } = useTranslation();
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
@@ -37,7 +38,7 @@ export function usePhotosSectionUpload(
 
   const handlePhotoSelect = useCallback(
     async (files: File[]) => {
-      if (!files.length || isUploadingPhoto || !game.id) return;
+      if (!files.length || isUploadingPhoto || !game.id || !canUpload) return;
 
       const authUser = useAuthStore.getState().user;
       if (authUser && authUser.nameIsSet !== true) {
@@ -97,7 +98,7 @@ export function usePhotosSectionUpload(
         setIsUploadingPhoto(false);
       }
     },
-    [addPhotoLocal, game.id, isUploadingPhoto, onMainPhotoIdChange, refreshGame, t]
+    [addPhotoLocal, canUpload, game.id, isUploadingPhoto, onMainPhotoIdChange, refreshGame, t]
   );
 
   return { isUploadingPhoto, handlePhotoSelect };

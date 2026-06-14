@@ -26,6 +26,8 @@ import {
   gameHasConfirmedClubBooking,
   gameHasLinkedExternalBooking,
 } from '@/utils/gameHasConfirmedClubBooking';
+import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
+import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
 
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -84,10 +86,16 @@ export const GameCard = ({
     setReactions((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
   }, [game.id, game.reactions]);
 
-  const mainPhotoUrl =
-    game.status !== 'ANNOUNCED' && effectiveUser && game.mainPhoto?.thumbnailUrl
-      ? game.mainPhoto.thumbnailUrl
-      : null;
+  const showPhotoPreview =
+    canViewGamePhotos(game, effectiveUser ? { id: effectiveUser.id, isAdmin: effectiveUser.isAdmin } : null) &&
+    (game.photosCount ?? 0) > 0 &&
+    !!getGameMainPhotoId(game) &&
+    !!game.mainPhoto?.thumbnailUrl;
+
+  const mainPhotoUrl = showPhotoPreview ? game.mainPhoto?.thumbnailUrl ?? null : null;
+  const showPhotoCountBadge =
+    canViewGamePhotos(game, effectiveUser ? { id: effectiveUser.id, isAdmin: effectiveUser.isAdmin } : null) &&
+    (game.photosCount ?? 0) > 0;
 
   const participants = game.participants ?? [];
   const participation = getGameParticipationState(participants, effectiveUser?.id, game);
@@ -431,7 +439,7 @@ export const GameCard = ({
           )}
           {!shouldMoveIconsToTitle && !showFireIcon && <GameStatusIcon status={game.status} />}
           {!bookmarkInTitleRow && noteBookmarkButton}
-          {(game.photosCount ?? 0) > 0 && (
+          {showPhotoCountBadge && (
             <button
               onClick={(e) => {
                 e.stopPropagation();

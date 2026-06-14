@@ -2,8 +2,8 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { emitGamePhotoMainChanged } from './gamePhoto.events';
 import {
-  assertCanSetMain,
-  loadGamePhotoAccessContext,
+  assertCanManage,
+  loadGamePhotoManageContext,
 } from './gamePhoto.permissions';
 
 export class GamePhotoUpdateService {
@@ -13,8 +13,8 @@ export class GamePhotoUpdateService {
     isGlobalAdmin: boolean,
     photoId: string | null
   ): Promise<{ gameId: string; mainPhotoId: string | null }> {
-    const ctx = await loadGamePhotoAccessContext(gameId, userId, isGlobalAdmin);
-    await assertCanSetMain(ctx);
+    const ctx = await loadGamePhotoManageContext(gameId, userId, isGlobalAdmin);
+    await assertCanManage(ctx);
 
     if (photoId) {
       const photo = await prisma.gamePhoto.findFirst({

@@ -67,7 +67,22 @@ export const useGamePhotosStore = create<GamePhotosState>((set, get) => ({
         },
       }));
       return allPhotos;
-    } catch (error) {
+    } catch (error: unknown) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 403) {
+        set((s) => ({
+          byGameId: {
+            ...s.byGameId,
+            [gameId]: {
+              ...(s.byGameId[gameId] ?? emptySlice()),
+              isLoading: false,
+              loaded: true,
+              photos: [],
+            },
+          },
+        }));
+        return [];
+      }
       set((s) => ({
         byGameId: {
           ...s.byGameId,

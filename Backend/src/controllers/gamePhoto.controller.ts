@@ -34,7 +34,7 @@ export const uploadGamePhoto = asyncHandler(async (req: AuthRequest, res: Respon
 
 export const listGamePhotos = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
-  const userId = req.userId!;
+  const userId = req.userId ?? null;
   const limit = req.query.limit != null ? Number(req.query.limit) : undefined;
   const cursor = typeof req.query.cursor === 'string' ? req.query.cursor : null;
 

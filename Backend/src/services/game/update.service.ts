@@ -27,6 +27,7 @@ import {
   assertNoLegacyExternalBookingFieldsOnUpdate,
   deriveGameTimesFromJoinRows,
 } from './gameExternalBooking.service';
+import { canConfigureGamePhotosPrivacy } from '../../shared/gamePhotos/permissions';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -77,6 +78,7 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'scoringMode',
   'hasGoldenPoint',
   'mediaUrls',
+  'forbidOthersPhotosView',
   'resultsSentToTelegram',
   'parentId',
   'trainerId',
@@ -519,6 +521,22 @@ export class GameUpdateService {
       
       if (data.priceType !== undefined) {
         updateData.priceType = priceType;
+      }
+    }
+
+    if (data.forbidOthersPhotosView !== undefined) {
+      const gameForPhotoPrivacy = await prisma.game.findUnique({
+        where: { id },
+        select: {
+          participants: { select: { userId: true, role: true } },
+          parent: { select: { participants: { select: { userId: true, role: true } } } },
+        },
+      });
+      if (!gameForPhotoPrivacy) {
+        throw new ApiError(404, 'Game not found');
+      }
+      if (!canConfigureGamePhotosPrivacy(gameForPhotoPrivacy, { id: userId, isAdmin })) {
+        throw new ApiError(403, 'Only owners and admins can change photo privacy settings');
       }
     }
 

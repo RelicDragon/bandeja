@@ -500,6 +500,7 @@ model Game {
   hasGoldenPoint         Boolean             @default(false)
   mediaUrls              String[]
   photosCount            Int                 @default(0)
+  forbidOthersPhotosView Boolean             @default(false)
   mainPhotoId            String?             @unique
   resultsSentToTelegram  Boolean             @default(false)
   telegramResultsSummary String?             @db.Text

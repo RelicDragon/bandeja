@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { parseBooktimeIntegrationConfig as feParseBooktimeIntegrationConfig } from './clubIntegration';
 import { deriveBallsInGamesFromScoring as feDeriveBallsInGames } from './deriveBallsInGames';
 import { deriveGameTimeFromBookings as feDeriveGameTime } from './gameBooking/deriveGameTimeFromBookings';
@@ -57,6 +59,19 @@ describe('shared module FE/BE parity', () => {
     ];
     expect(feDeriveGameTime(snapshots)).toEqual(beDeriveGameTime(snapshots));
     expect(feDeriveGameTime([])).toEqual(beDeriveGameTime([]));
+  });
+
+  it('gamePhotos permissions matches backend export', () => {
+    const feSrc = readFileSync(
+      join(__dirname, 'gamePhotos/permissions.ts'),
+      'utf8',
+    );
+    const beSrc = readFileSync(
+      join(__dirname, '../../Backend/src/shared/gamePhotos/permissions.ts'),
+      'utf8',
+    );
+    const normalize = (src: string) => src.replace(/\s+/g, '').trim();
+    expect(normalize(feSrc)).toEqual(normalize(beSrc));
   });
 
   it('bookingProviderError matches @bandeja/shared export', () => {

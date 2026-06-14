@@ -251,6 +251,13 @@
     "kickAllNonFemaleMessage": "Are you sure you want to remove all {{count}} player(s) who are not women? This action cannot be undone.",
     "kickAllPreferNotToSayMessage": "Are you sure you want to remove all {{count}} player(s) without gender specified? This action cannot be undone.",
     "addPhoto": "Add Photo",
+    "photosPrivacy": {
+      "title": "Only participants can see photos",
+      "noteOn": "Photos are visible to game participants, admins, and owners only.",
+      "noteOff": "Anyone can view photos after results are finalized.",
+      "updated": "Photo privacy updated",
+      "updateFailed": "Failed to update photo privacy"
+    },
     "photoAdded": "Photo added",
     "photosAdded": "{{count}} photo(s) added",
     "photoUploadFailed": "Failed to upload photo",

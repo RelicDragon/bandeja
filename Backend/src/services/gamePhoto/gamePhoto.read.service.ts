@@ -2,7 +2,11 @@ import prisma from '../../config/database';
 import { Prisma } from '@prisma/client';
 import { getUserDisplayName } from '../../utils/systemMessages';
 import { DEFAULT_PHOTOS_PAGE_LIMIT } from './gamePhoto.constants';
-import { assertCanRead, loadGamePhotoAccessContext } from './gamePhoto.permissions';
+import {
+  assertCanReadGamePhotos,
+  loadGameForPhotoPermissions,
+  toPhotoViewer,
+} from './gamePhoto.permissions';
 
 const UPLOADER_SELECT = {
   id: true,
@@ -47,12 +51,12 @@ export function formatGamePhotoDto(photo: PhotoWithUploader): GamePhotoDto {
 export class GamePhotoReadService {
   static async listGamePhotos(
     gameId: string,
-    userId: string,
+    userId: string | null,
     isGlobalAdmin: boolean,
     options: { limit?: number; cursor?: string | null } = {}
   ): Promise<{ items: GamePhotoDto[]; nextCursor: string | null }> {
-    const ctx = await loadGamePhotoAccessContext(gameId, userId, isGlobalAdmin);
-    await assertCanRead(ctx);
+    const game = await loadGameForPhotoPermissions(gameId);
+    await assertCanReadGamePhotos(game, toPhotoViewer(userId, isGlobalAdmin));
 
     const limit = Math.min(
       DEFAULT_PHOTOS_PAGE_LIMIT,

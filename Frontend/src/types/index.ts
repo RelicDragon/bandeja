@@ -520,6 +520,7 @@ export interface Game {
   scoringPreset?: ScoringPreset | null;
   scoringMode?: ScoringMode | null;
   hasGoldenPoint?: boolean;
+  forbidOthersPhotosView?: boolean;
   photosCount?: number;
   mainPhotoId?: string | null;
   mainPhoto?: {

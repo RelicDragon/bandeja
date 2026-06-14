@@ -15,6 +15,7 @@ type ResultsArtifactsTelegramBlockProps = {
   isSending: boolean;
   isStartingGeneration: boolean;
   photoGenerationsMaxFallback?: number;
+  canManagePhotos?: boolean;
   onSend: () => void;
   onGeneratePhoto: () => void;
 };
@@ -26,19 +27,20 @@ export function ResultsArtifactsTelegramBlock({
   isSending,
   isStartingGeneration,
   photoGenerationsMaxFallback,
+  canManagePhotos = true,
   onSend,
   onGeneratePhoto,
 }: ResultsArtifactsTelegramBlockProps) {
   const { t } = useTranslation();
 
   const photoReady = isPhotoReadyForTelegram(artifacts, hasGamePhoto);
-  const canGeneratePhoto = canShowPhotoGenerationAction(artifacts);
+  const generationsAvailable = canShowPhotoGenerationAction(artifacts);
   const isGenerating =
     isStartingGeneration ||
     isAnyArtifactGenerating(artifacts, { hasSummaryText, hasGamePhoto });
   const isBusy = isSending || isGenerating;
 
-  const showPhotoBtn = canGeneratePhoto;
+  const showPhotoBtn = canManagePhotos && generationsAvailable;
   const photoBtnLabel = photoReady
     ? t('gameResults.regeneratePhoto')
     : t('gameResults.generatePhoto');

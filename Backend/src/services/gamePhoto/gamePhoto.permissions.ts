@@ -1,89 +1,88 @@
-import { ParticipantRole } from '@prisma/client';
+import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import {
-  hasParentGamePermissionWithUserCheck,
-} from '../../utils/parentGamePermissions';
-import { MessageService } from '../chat/message.service';
+  canConfigureGamePhotosPrivacy,
+  canManageGamePhotos,
+  canViewGamePhotos,
+  type GamePhotosPermissionGame,
+  type GamePhotosViewer,
+} from '../../shared/gamePhotos/permissions';
+
+const GAME_PHOTO_PERMISSION_SELECT = {
+  id: true,
+  status: true,
+  resultsStatus: true,
+  forbidOthersPhotosView: true,
+  participants: { select: { userId: true, role: true, status: true } },
+  parent: {
+    select: {
+      participants: { select: { userId: true, role: true, status: true } },
+    },
+  },
+} as const;
 
 export type GamePhotoAccessContext = {
-  game: { id: string; status: string };
-  participant?: { status: string; role: string } | null;
+  game: GamePhotosPermissionGame & { id: string; status: string };
   userId: string;
   isGlobalAdmin: boolean;
 };
 
-export async function loadGamePhotoAccessContext(
+export async function loadGameForPhotoPermissions(gameId: string): Promise<GamePhotosPermissionGame & { id: string; status: string }> {
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: GAME_PHOTO_PERMISSION_SELECT,
+  });
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+  return game;
+}
+
+export async function loadGamePhotoManageContext(
   gameId: string,
   userId: string,
-  isGlobalAdmin: boolean
+  isGlobalAdmin: boolean,
 ): Promise<GamePhotoAccessContext> {
-  const { game, participant, isParticipant } = await MessageService.validateGameAccess(gameId, userId);
-  if (!isParticipant) {
+  const game = await loadGameForPhotoPermissions(gameId);
+  return { game, userId, isGlobalAdmin };
+}
+
+export function toPhotoViewer(userId: string | null | undefined, isGlobalAdmin: boolean): GamePhotosViewer | undefined {
+  if (!userId) return undefined;
+  return { id: userId, isAdmin: isGlobalAdmin };
+}
+
+export function canReadGamePhotos(
+  game: GamePhotosPermissionGame,
+  viewer?: GamePhotosViewer | null,
+): boolean {
+  return canViewGamePhotos(game, viewer);
+}
+
+export function canManage(ctx: GamePhotoAccessContext): boolean {
+  return canManageGamePhotos(ctx.game, toPhotoViewer(ctx.userId, ctx.isGlobalAdmin));
+}
+
+export async function assertCanReadGamePhotos(
+  game: GamePhotosPermissionGame,
+  viewer?: GamePhotosViewer | null,
+): Promise<void> {
+  if (!canViewGamePhotos(game, viewer)) {
     throw new ApiError(403, 'Access denied');
   }
-  return { game, participant, userId, isGlobalAdmin };
 }
 
-export function canRead(ctx: GamePhotoAccessContext): boolean {
-  return ctx.game.status !== 'ANNOUNCED';
-}
-
-export async function canUpload(ctx: GamePhotoAccessContext): Promise<boolean> {
-  if (ctx.game.status === 'ANNOUNCED') return false;
-  const isPlaying = ctx.participant?.status === 'PLAYING';
-  const isAdminOrOwner =
-    ctx.participant?.role === ParticipantRole.OWNER ||
-    ctx.participant?.role === ParticipantRole.ADMIN;
-  if (ctx.isGlobalAdmin || isPlaying || isAdminOrOwner) return true;
-  return hasParentGamePermissionWithUserCheck(ctx.game.id, ctx.userId, [
-    ParticipantRole.OWNER,
-    ParticipantRole.ADMIN,
-  ]);
-}
-
-export async function canSetMain(ctx: GamePhotoAccessContext): Promise<boolean> {
-  if (ctx.isGlobalAdmin) return true;
-  const isAdminOrOwner =
-    ctx.participant?.role === ParticipantRole.OWNER ||
-    ctx.participant?.role === ParticipantRole.ADMIN;
-  if (isAdminOrOwner) return true;
-  return hasParentGamePermissionWithUserCheck(ctx.game.id, ctx.userId, [
-    ParticipantRole.OWNER,
-    ParticipantRole.ADMIN,
-  ]);
-}
-
-export async function canDelete(
-  ctx: GamePhotoAccessContext,
-  photo: { uploaderId: string | null }
-): Promise<boolean> {
-  if (photo.uploaderId === ctx.userId) return true;
-  return canSetMain(ctx);
-}
-
-export async function assertCanRead(ctx: GamePhotoAccessContext): Promise<void> {
-  if (!canRead(ctx)) {
-    throw new ApiError(403, 'Game photos are only available after the game has started');
+export async function assertCanManage(ctx: GamePhotoAccessContext): Promise<void> {
+  if (!canManage(ctx)) {
+    throw new ApiError(403, 'Only participants, admins, and owners can manage game photos');
   }
 }
 
-export async function assertCanUpload(ctx: GamePhotoAccessContext): Promise<void> {
-  if (!(await canUpload(ctx))) {
-    throw new ApiError(403, 'Only playing participants, admins, and owners can upload photos');
-  }
-}
-
-export async function assertCanSetMain(ctx: GamePhotoAccessContext): Promise<void> {
-  if (!(await canSetMain(ctx))) {
-    throw new ApiError(403, 'Only game owners and admins can set the main photo');
-  }
-}
-
-export async function assertCanDelete(
-  ctx: GamePhotoAccessContext,
-  photo: { uploaderId: string | null }
+export async function assertCanConfigurePrivacy(
+  game: GamePhotosPermissionGame,
+  viewer: GamePhotosViewer,
 ): Promise<void> {
-  if (!(await canDelete(ctx, photo))) {
-    throw new ApiError(403, 'You cannot delete this photo');
+  if (!canConfigureGamePhotosPrivacy(game, viewer)) {
+    throw new ApiError(403, 'Only owners and admins can change photo privacy settings');
   }
 }

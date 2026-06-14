@@ -72,6 +72,7 @@ import {
   isAnyArtifactGenerating,
   mergeGameResultsArtifactsFields,
 } from '@/utils/gameResultsArtifacts.util';
+import { canManageGamePhotos } from '@shared/gamePhotos/permissions';
 import { ResultsArtifactsTelegramBlock } from './ResultsArtifactsTelegramBlock';
 import { GameResultsShareCard } from './GameResultsShareCard';
 import { useGamePhotosStore } from '@/store/gamePhotosStore';
@@ -252,6 +253,11 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
   const canUseResultsTelegram = useMemo(
     () => canAccessResultsTelegramActions(currentGame, user),
+    [currentGame, user]
+  );
+
+  const canManagePhotos = useMemo(
+    () => (currentGame && user ? canManageGamePhotos(currentGame, { id: user.id, isAdmin: user.isAdmin }) : false),
     [currentGame, user]
   );
 
@@ -1178,6 +1184,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
           isSending={isSendingToTelegram}
           isStartingGeneration={isStartingArtifactGeneration}
           photoGenerationsMaxFallback={photoGenerationsMaxFallback}
+          canManagePhotos={canManagePhotos}
           onSend={handleSendToTelegram}
           onGeneratePhoto={handleGenerateResultsPhoto}
         />

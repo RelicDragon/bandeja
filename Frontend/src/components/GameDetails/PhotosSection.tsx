@@ -18,6 +18,8 @@ import { PhotosSectionGrid } from './PhotosSectionGrid';
 import { usePhotosSectionUpload } from './usePhotosSectionUpload';
 import { gamePhotoOriginalUrl, hasGamePhotoUrl } from '@/utils/gamePhotoUrl';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
+import { canManageGamePhotos, canViewGamePhotos } from '@shared/gamePhotos/permissions';
+import { PhotosPrivacyToggle } from './PhotosPrivacyToggle';
 
 const EMPTY_GAME_PHOTOS: GamePhoto[] = [];
 
@@ -29,6 +31,10 @@ interface PhotosSectionProps {
 export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
+  const viewer = user ? { id: user.id, isAdmin: user.isAdmin } : null;
+  const canView = canViewGamePhotos(game, viewer);
+  const canManage = canManageGamePhotos(game, viewer);
+
   const lastGamePhotoAdded = useSocketEventsStore((state) => state.lastGamePhotoAdded);
   const lastGamePhotoDeleted = useSocketEventsStore((state) => state.lastGamePhotoDeleted);
   const lastGamePhotoMainChanged = useSocketEventsStore((state) => state.lastGamePhotoMainChanged);
@@ -59,18 +65,19 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   const { isUploadingPhoto, handlePhotoSelect } = usePhotosSectionUpload(
     game,
     onGameUpdate,
-    setMainPhotoId
+    setMainPhotoId,
+    canManage
   );
 
-  const canEditMainPhoto = user ? isUserGameAdminOrOwner(game, user.id) : false;
+  const canEditMainPhoto = canManage;
 
   const canDeletePhoto = useCallback(
     (photo: GamePhoto) => {
-      if (!user) return false;
+      if (!canManage || !user) return false;
       if (isUserGameAdminOrOwner(game, user.id)) return true;
       return photo.uploader?.id === user.id;
     },
-    [game, user]
+    [canManage, game, user]
   );
 
   useEffect(() => {
@@ -83,23 +90,23 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
   }, [game.id]);
 
   useEffect(() => {
-    if (game.status === 'ANNOUNCED' || !user || !game.id) return;
+    if (!canView || !game.id) return;
     if (loaded || isLoading) return;
     loadGamePhotos(game.id).catch((error: { response?: { status?: number } }) => {
-      if (error?.response?.status !== 401) {
+      if (error?.response?.status !== 401 && error?.response?.status !== 403) {
         console.error('Failed to load photos:', error);
       }
     });
-  }, [game.id, game.status, isLoading, loadGamePhotos, loaded, user]);
+  }, [canView, game.id, isLoading, loadGamePhotos, loaded]);
 
   useEffect(() => {
-    if (!game.id || game.status === 'ANNOUNCED') return;
+    if (!game.id || !canView) return;
     if (!lastGamePhotoAdded || lastGamePhotoAdded.gameId !== game.id) return;
     setMainPhotoId(lastGamePhotoAdded.photo.id);
-  }, [game.id, game.status, lastGamePhotoAdded]);
+  }, [canView, game.id, lastGamePhotoAdded]);
 
   useEffect(() => {
-    if (!game.id || game.status === 'ANNOUNCED') return;
+    if (!game.id || !canView) return;
     if (!lastGamePhotoDeleted || lastGamePhotoDeleted.gameId !== game.id) return;
     setMainPhotoId(lastGamePhotoDeleted.mainPhotoId);
     if (
@@ -113,28 +120,28 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
       });
     }
   }, [
+    canView,
     game,
     game.id,
     game.mainPhotoId,
     game.photosCount,
-    game.status,
     lastGamePhotoDeleted,
     onGameUpdate,
   ]);
 
   useEffect(() => {
-    if (!game.id || game.status === 'ANNOUNCED') return;
+    if (!game.id || !canView) return;
     if (!lastGamePhotoMainChanged || lastGamePhotoMainChanged.gameId !== game.id) return;
     setMainPhotoId(lastGamePhotoMainChanged.mainPhotoId);
     if (onGameUpdate && game.mainPhotoId !== lastGamePhotoMainChanged.mainPhotoId) {
       onGameUpdate({ ...game, mainPhotoId: lastGamePhotoMainChanged.mainPhotoId });
     }
-  }, [game, game.id, game.mainPhotoId, game.status, lastGamePhotoMainChanged, onGameUpdate]);
+  }, [canView, game, game.id, game.mainPhotoId, lastGamePhotoMainChanged, onGameUpdate]);
 
   const handlePhotoCapture = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isUploadingPhoto || !game.id) return;
+    if (!canManage || isUploadingPhoto || !game.id) return;
 
     if (isCapacitor()) {
       try {
@@ -249,7 +256,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [fullscreenImage, galleryIndex, galleryImages]);
 
-  if (game.status === 'ANNOUNCED' || !user) {
+  if (!canView) {
     return null;
   }
 
@@ -276,39 +283,46 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
 
   return (
     <>
-      {photos.length === 0 ? (
-        <Card>
-          <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                {t(getNoPhotosKey())}
-              </span>
-              <button
-                onClick={handlePhotoCapture}
-                disabled={isUploadingPhoto || !game.id}
-                className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
-                title={t('gameDetails.addPhoto')}
-              >
-                <Camera size={20} className="text-white" />
-              </button>
+      <div className="space-y-2">
+        <PhotosPrivacyToggle game={game} onGameUpdate={onGameUpdate} />
+
+        {photos.length === 0 ? (
+          <Card>
+            <div className="p-2 rounded-lg bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  {t(getNoPhotosKey())}
+                </span>
+                {canManage ? (
+                  <button
+                    onClick={handlePhotoCapture}
+                    disabled={isUploadingPhoto || !game.id}
+                    className="p-2 rounded-lg bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors active:scale-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={t('gameDetails.addPhoto')}
+                  >
+                    <Camera size={20} className="text-white" />
+                  </button>
+                ) : null}
+              </div>
             </div>
-          </div>
-        </Card>
-      ) : (
-        <PhotosSectionGrid
-          photos={photos}
-          mainPhotoId={displayMainPhotoId}
-          canEditMainPhoto={canEditMainPhoto}
-          canDeletePhoto={canDeletePhoto}
-          isUploadingPhoto={isUploadingPhoto}
-          isUpdatingMainPhoto={isUpdatingMainPhoto}
-          gameId={game.id}
-          onImageClick={handleImageClick}
-          onMainPhotoSelect={(photoId) => void handleMainPhotoSelect(photoId)}
-          onDeleteClick={setPhotoToDelete}
-          onPhotoCapture={handlePhotoCapture}
-        />
-      )}
+          </Card>
+        ) : (
+          <PhotosSectionGrid
+            photos={photos}
+            mainPhotoId={displayMainPhotoId}
+            canEditMainPhoto={canEditMainPhoto}
+            canDeletePhoto={canDeletePhoto}
+            isUploadingPhoto={isUploadingPhoto}
+            isUpdatingMainPhoto={isUpdatingMainPhoto}
+            canUpload={canManage}
+            gameId={game.id}
+            onImageClick={handleImageClick}
+            onMainPhotoSelect={(photoId) => void handleMainPhotoSelect(photoId)}
+            onDeleteClick={setPhotoToDelete}
+            onPhotoCapture={handlePhotoCapture}
+          />
+        )}
+      </div>
 
       {fullscreenImage && (
         <FullscreenImageViewer
@@ -332,20 +346,22 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
         closeOnConfirm={false}
       />
 
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        onChange={(e) => {
-          const files = e.target.files;
-          if (files) {
-            void handlePhotoSelect(Array.from(files));
-          }
-          e.target.value = '';
-        }}
-        className="hidden"
-      />
+      {canManage ? (
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={(e) => {
+            const files = e.target.files;
+            if (files) {
+              void handlePhotoSelect(Array.from(files));
+            }
+            e.target.value = '';
+          }}
+          className="hidden"
+        />
+      ) : null}
     </>
   );
 };

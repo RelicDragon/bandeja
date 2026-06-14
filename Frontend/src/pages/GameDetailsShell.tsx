@@ -30,6 +30,7 @@ import { GameCancelled } from '@/components/GameDetails/GameCancelled';
 import { GameDetailsSkeleton } from '@/components/GameDetails/GameDetailsSkeleton';
 import { GameActionCard } from '@/components/GameDetails/GameActionCard';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
+import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
 import { LeagueFixedTeamsSection } from '@/components/GameDetails/LeagueFixedTeamsSection';
@@ -1421,7 +1422,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
           <GameLinkedBookingsSection game={game} courts={courts} clubs={clubs} onGameUpdate={setGame} />
 
-          {!(canEdit && game.resultsStatus !== 'FINAL') && (
+          {canViewGamePhotos(game, user ? { id: user.id, isAdmin: user.isAdmin } : null) && (
             <PhotosSection game={game} onGameUpdate={setGame} />
           )}
 

@@ -1,15 +1,23 @@
+import {
+  canViewGamePhotos,
+  type GamePhotosPermissionGame,
+  type GamePhotosViewer,
+} from '../../shared/gamePhotos/permissions';
+
 export function canSeeManualStory(viewerFollows: boolean): boolean {
   return viewerFollows;
 }
 
 export function canSeePhotoInStories(opts: {
   viewerFollows: boolean;
-  game: { status: string; isPublic: boolean };
+  game: GamePhotosPermissionGame & { status: string; isPublic: boolean };
   uploader: { shareGamePhotosToFollowers: boolean };
+  viewer?: GamePhotosViewer | null;
 }): boolean {
   if (!opts.viewerFollows) return false;
   if (!opts.uploader.shareGamePhotosToFollowers) return false;
   if (!opts.game.isPublic) return false;
+  if (!canViewGamePhotos(opts.game, opts.viewer)) return false;
   return opts.game.status === 'FINISHED' || opts.game.status === 'ARCHIVED';
 }
 

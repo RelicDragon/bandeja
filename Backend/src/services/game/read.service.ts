@@ -19,11 +19,21 @@ import {
   MAIN_PHOTO_RELATION_SELECT,
 } from './gamePrismaIncludes';
 import { serializeLinkedBooking } from './gameExternalBooking.service';
+import {
+  canViewGamePhotos,
+  type GamePhotosViewer,
+} from '../../shared/gamePhotos/permissions';
 
 export { MAIN_PHOTO_RELATION_SELECT };
 
-export function projectGamePhotoPayload(game: any): any {
+function buildPhotoViewer(userId?: string, isAdmin?: boolean): GamePhotosViewer | undefined {
+  if (!userId) return undefined;
+  return { id: userId, isAdmin: isAdmin ?? false };
+}
+
+export function projectGamePhotoPayload(game: any, viewer?: GamePhotosViewer | null): any {
   const mainPhoto = game.mainPhoto;
+  const canViewPhotos = canViewGamePhotos(game, viewer);
   const {
     mainPhotoId: _mainPhotoId,
     photos: _photos,
@@ -39,8 +49,9 @@ export function projectGamePhotoPayload(game: any): any {
     ...rest,
     timeOverride: game.timeOverride ?? false,
     linkedBookings: (game.externalBookings ?? []).map(serializeLinkedBooking),
-    photosCount: game.photosCount ?? 0,
-    mainPhoto: mainPhoto
+    photosCount: canViewPhotos ? (game.photosCount ?? 0) : 0,
+    mainPhoto:
+      canViewPhotos && mainPhoto
       ? {
           id: mainPhoto.id,
           thumbnailUrl: mainPhoto.thumbnailUrl,
@@ -349,17 +360,26 @@ export class GameReadService {
       throw new ApiError(404, 'Game not found');
     }
 
+    let viewerIsAdmin = false;
     if (userId && !skipRestrictions) {
       const user = await prisma.user.findUnique({
         where: { id: userId },
         select: { currentCityId: true, isAdmin: true }
       });
 
+      viewerIsAdmin = user?.isAdmin ?? false;
+
       if (user && !user.isAdmin) {
         if (game.cityId === null) {
           throw new ApiError(403, 'Access denied: System games are not accessible');
         }
       }
+    } else if (userId) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { isAdmin: true },
+      });
+      viewerIsAdmin = user?.isAdmin ?? false;
     }
 
     let isClubFavorite = false;
@@ -383,7 +403,11 @@ export class GameReadService {
       userNote = note?.content || null;
     }
 
-    const gameWithSportLevels = projectGamePhotoPayload(projectGameUsersForSportContext(game));
+    const photoViewer = buildPhotoViewer(userId, viewerIsAdmin);
+    const gameWithSportLevels = projectGamePhotoPayload(
+      projectGameUsersForSportContext(game),
+      photoViewer,
+    );
     const base = {
       ...gameWithSportLevels,
       isClubFavorite,
@@ -441,6 +465,7 @@ export class GameReadService {
       };
     }
 
+    let listViewerIsAdmin = false;
     const cityIdToFilter = filters.cityId || userCityId;
     if (cityIdToFilter) {
       where.cityId = cityIdToFilter;
@@ -449,6 +474,7 @@ export class GameReadService {
         where: { id: userId },
         select: { currentCityId: true, isAdmin: true }
       });
+      listViewerIsAdmin = user?.isAdmin ?? false;
       if (user && user.currentCityId && !user.isAdmin) {
         where.cityId = user.currentCityId;
       }
@@ -469,7 +495,10 @@ export class GameReadService {
       ...(offset && { skip: offset }),
     });
 
-    const games = gamesRaw.map((g) => projectGamePhotoPayload(projectGameUsersForSportContext(g)));
+    const photoViewer = buildPhotoViewer(userId, listViewerIsAdmin);
+    const games = gamesRaw.map((g) =>
+      projectGamePhotoPayload(projectGameUsersForSportContext(g), photoViewer)
+    );
 
     // Batch fetch user notes
     if (userId && games.length > 0) {
@@ -510,12 +539,20 @@ export class GameReadService {
       ]
     };
 
+    const myUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+    const photoViewer = buildPhotoViewer(userId, myUser?.isAdmin ?? false);
+
     const gamesRaw = await prisma.game.findMany({
       where,
       include: gameWithRoundsAndOutcomes,
       orderBy: { startTime: 'desc' },
     });
-    const games = gamesRaw.map((g) => projectGamePhotoPayload(projectGameUsersForSportContext(g)));
+    const games = gamesRaw.map((g) =>
+      projectGamePhotoPayload(projectGameUsersForSportContext(g), photoViewer)
+    );
 
     // Batch fetch user notes
     if (games.length > 0) {
@@ -588,6 +625,12 @@ export class GameReadService {
       ],
     };
 
+    const pastUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+    const photoViewer = buildPhotoViewer(userId, pastUser?.isAdmin ?? false);
+
     const gamesRaw = await prisma.game.findMany({
       where,
       include: gameWithRoundsAndOutcomes,
@@ -595,7 +638,9 @@ export class GameReadService {
       take: limit,
       skip: offset,
     });
-    const games = gamesRaw.map((g) => projectGamePhotoPayload(projectGameUsersForSportContext(g)));
+    const games = gamesRaw.map((g) =>
+      projectGamePhotoPayload(projectGameUsersForSportContext(g), photoViewer)
+    );
 
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);
@@ -698,12 +743,16 @@ export class GameReadService {
       where.sport = sportFilter.sport;
     }
 
+    const photoViewer = buildPhotoViewer(userId, isAdmin ?? false);
+
     const gamesRaw = await prisma.game.findMany({
       where,
       include: getAvailableGamesInclude() as any,
       orderBy: { startTime: 'desc' },
     });
-    const games = gamesRaw.map((g) => projectGamePhotoPayload(projectGameUsersForSportContext(g)));
+    const games = gamesRaw.map((g) =>
+      projectGamePhotoPayload(projectGameUsersForSportContext(g), photoViewer)
+    );
 
     if (games.length > 0) {
       const gameIds = games.map(g => g.id);

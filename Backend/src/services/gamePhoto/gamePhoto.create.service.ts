@@ -6,8 +6,8 @@ import { deadlockRetryDelayMs, isPrismaDeadlockError } from '../../utils/prismaD
 import { MAX_PHOTOS_PER_GAME } from './gamePhoto.constants';
 import { emitGamePhotoAdded, emitGamePhotoMainChanged } from './gamePhoto.events';
 import {
-  assertCanUpload,
-  loadGamePhotoAccessContext,
+  assertCanManage,
+  loadGamePhotoManageContext,
 } from './gamePhoto.permissions';
 import { assignMainPhotoForUpload } from './gamePhoto.mainPhotoAssign';
 import { formatGamePhotoDto, type GamePhotoDto, type PhotoWithUploader } from './gamePhoto.read.service';
@@ -44,8 +44,8 @@ export class GamePhotoCreateService {
     file: { buffer: Buffer; originalname: string; size: number },
     clientUploadId?: string | null
   ): Promise<GamePhotoDto> {
-    const ctx = await loadGamePhotoAccessContext(gameId, userId, isGlobalAdmin);
-    await assertCanUpload(ctx);
+    const ctx = await loadGamePhotoManageContext(gameId, userId, isGlobalAdmin);
+    await assertCanManage(ctx);
 
     const normalizedClientUploadId = clientUploadId?.trim() || null;
     if (normalizedClientUploadId) {
@@ -65,13 +65,10 @@ export class GamePhotoCreateService {
 
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { photosCount: true, mainPhotoId: true, status: true },
+      select: { photosCount: true, mainPhotoId: true },
     });
     if (!game) {
       throw new ApiError(404, 'Game not found');
-    }
-    if (game.status === 'ANNOUNCED') {
-      throw new ApiError(403, 'Cannot upload photos before the game has started');
     }
     if (game.photosCount >= MAX_PHOTOS_PER_GAME) {
       throw new ApiError(400, `Maximum ${MAX_PHOTOS_PER_GAME} photos per game`);

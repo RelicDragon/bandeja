@@ -23,6 +23,7 @@ import { buildResultsArtifactsDto } from '../services/gameResultsArtifact/gameRe
 import { resolvePhotoGenerationsMaxForGame } from '../services/gameResultsArtifact/gameResultsArtifact.ownerPremium';
 import { GameResultsArtifactQueueService } from '../services/gameResultsArtifact/gameResultsArtifactQueue.service';
 import { assertPhotoGenerationsAvailable } from '../services/gameResultsArtifact/gameResultsArtifact.photoLimit';
+import { canManageGamePhotos } from '../shared/gamePhotos/permissions';
 import prisma from '../config/database';
 import { GameWorkoutService } from '../services/game/gameWorkout.service';
 import { GameReactionService } from '../services/game/gameReaction.service';
@@ -60,6 +61,8 @@ async function loadGameForArtifactPrepare(gameId: string) {
       resultsArtifactsVersion: true,
       resultsArtifactsReadyAt: true,
       resultsSummaryText: true,
+      participants: { select: { userId: true, role: true } },
+      parent: { select: { participants: { select: { userId: true, role: true } } } },
       resultsArtifactJob: {
         select: {
           status: true,
@@ -158,6 +161,10 @@ export const prepareResultsArtifactPhoto = asyncHandler(async (req: AuthRequest,
 
   if (!game) {
     throw new ApiError(404, 'Game not found');
+  }
+
+  if (!canManageGamePhotos(game, { id: req.userId, isAdmin: req.user?.isAdmin ?? false })) {
+    throw new ApiError(403, 'Only participants, admins, and owners can manage game photos');
   }
 
   if (game.resultsStatus !== 'FINAL') {

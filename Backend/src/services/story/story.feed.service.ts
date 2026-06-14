@@ -20,6 +20,10 @@ import {
 import { isStoryItemMediaInvalid } from './story.validate.service';
 import { MAIN_PHOTO_RELATION_SELECT } from '../game/read.service';
 import {
+  canViewGamePhotos,
+  type GamePhotosViewer,
+} from '../../shared/gamePhotos/permissions';
+import {
   buildStoryResultMatchesForPlayer,
   loadStoryResultMatchesByGame,
   type StoryResultMatch,
@@ -184,6 +188,7 @@ const GAME_STORY_GAME_SELECT = {
   createdAt: true,
   finishedDate: true,
   resultsStatus: true,
+  forbidOthersPhotosView: true,
   mainPhotoId: true,
   resultsSentToTelegram: true,
   resultsSummaryText: true,
@@ -198,6 +203,12 @@ const GAME_STORY_GAME_SELECT = {
     },
   },
   mainPhoto: MAIN_PHOTO_RELATION_SELECT,
+  participants: { select: { userId: true, role: true } },
+  parent: {
+    select: {
+      participants: { select: { userId: true, role: true } },
+    },
+  },
 } as const;
 
 type GameStoryGameRow = {
@@ -217,6 +228,7 @@ type GameStoryGameRow = {
   createdAt?: Date;
   finishedDate?: Date | null;
   resultsStatus?: string;
+  forbidOthersPhotosView?: boolean;
   mainPhotoId?: string | null;
   resultsSentToTelegram?: boolean;
   resultsSummaryText?: string | null;
@@ -226,15 +238,20 @@ type GameStoryGameRow = {
   club?: { name: string } | null;
   court?: { club: { name: string } | null } | null;
   _count?: { participants: number };
+  participants?: Array<{ userId: string; role: string }>;
+  parent?: { participants?: Array<{ userId: string; role: string }> } | null;
   mainPhoto?: { id: string; thumbnailUrl: string; originalUrl: string } | null;
 };
 
-/** Story bubble preview / activity slide backdrop: main photo when set, else game avatar. */
-export function storyGameBackdropUrl(game: {
-  avatar: string | null;
-  mainPhoto?: { thumbnailUrl: string } | null;
-}): string | null {
-  return game.mainPhoto?.thumbnailUrl ?? game.avatar ?? null;
+/** Story bubble preview / activity slide backdrop: main photo when viewer may see it, else game avatar. */
+export function storyGameBackdropUrl(
+  game: GameStoryGameRow,
+  viewer?: GamePhotosViewer | null,
+): string | null {
+  if (game.mainPhoto && canViewGamePhotos(game, viewer)) {
+    return game.mainPhoto.thumbnailUrl;
+  }
+  return game.avatar ?? null;
 }
 
 const STORY_USER_SELECT = {
@@ -279,9 +296,11 @@ function toBasicUser(u: {
   };
 }
 
-export function toGameSummary(game: GameStoryGameRow): GameStorySummary {
+export function toGameSummary(game: GameStoryGameRow, viewer?: GamePhotosViewer | null): GameStorySummary {
   const clubName = game.club?.name ?? game.court?.club?.name ?? null;
   const telegramSummary = game.resultsSummaryText?.trim() ?? null;
+  const mainPhoto = game.mainPhoto;
+  const showMainPhoto = mainPhoto && canViewGamePhotos(game, viewer);
   return {
     id: game.id,
     name: game.name,
@@ -295,10 +314,10 @@ export function toGameSummary(game: GameStoryGameRow): GameStorySummary {
     cityId: game.cityId,
     clubId: game.clubId,
     avatar: game.avatar,
-    mainPhoto: game.mainPhoto
+    mainPhoto: showMainPhoto
       ? {
-          thumbnailUrl: game.mainPhoto.thumbnailUrl,
-          originalUrl: game.mainPhoto.originalUrl,
+          thumbnailUrl: mainPhoto.thumbnailUrl,
+          originalUrl: mainPhoto.originalUrl,
         }
       : null,
     maxParticipants: game.maxParticipants,
@@ -374,6 +393,15 @@ export class StoryFeedService {
   static async getFeed(viewerId: string): Promise<StoryFeed> {
     const now = new Date();
     const activitySince = new Date(now.getTime() - ACTIVITY_WINDOW_MS);
+
+    const viewerRow = await prisma.user.findUnique({
+      where: { id: viewerId },
+      select: { isAdmin: true },
+    });
+    const photoViewer: GamePhotosViewer = {
+      id: viewerId,
+      isAdmin: viewerRow?.isAdmin ?? false,
+    };
 
     const favorites = await prisma.userFavoriteUser.findMany({
       where: { userId: viewerId },
@@ -464,6 +492,7 @@ export class StoryFeedService {
             viewerFollows,
             game: photo.game,
             uploader: photo.uploader,
+            viewer: photoViewer,
           })
         ) {
           continue;
@@ -481,7 +510,7 @@ export class StoryFeedService {
             ...(photo.width != null ? { width: photo.width } : {}),
             ...(photo.height != null ? { height: photo.height } : {}),
           },
-          game: toGameSummary(photo.game),
+          game: toGameSummary(photo.game, photoViewer),
         };
         rawSegments.push({
           ownerUserId: photo.uploaderId,
@@ -532,13 +561,13 @@ export class StoryFeedService {
           continue;
         }
         const key = segmentKey(StorySourceType.GAME_CREATED, row.game.id);
-        const preview = storyGameBackdropUrl(row.game);
+        const preview = storyGameBackdropUrl(row.game, photoViewer);
         const seg: StorySegment = {
           key,
           sourceType: 'GAME_CREATED',
           viewed: viewedSet.has(key),
           createdAt: row.game.createdAt.toISOString(),
-          game: toGameSummary(row.game),
+          game: toGameSummary(row.game, photoViewer),
         };
         rawSegments.push({
           ownerUserId,
@@ -601,7 +630,7 @@ export class StoryFeedService {
       for (const { ownerUserId, outcome } of pendingResults) {
         const createdAt = outcome.game.finishedDate ?? outcome.createdAt;
         const key = segmentKey(StorySourceType.GAME_RESULT, outcome.game.id);
-        const preview = storyGameBackdropUrl(outcome.game);
+        const preview = storyGameBackdropUrl(outcome.game, photoViewer);
         const gameRounds = gamesWithRounds.get(outcome.game.id);
         const matches =
           gameRounds != null
@@ -612,7 +641,7 @@ export class StoryFeedService {
           sourceType: 'GAME_RESULT',
           viewed: viewedSet.has(key),
           createdAt: createdAt.toISOString(),
-          game: toGameSummary(outcome.game),
+          game: toGameSummary(outcome.game, photoViewer),
           result: {
             isWinner: outcome.isWinner,
             position: outcome.position,
@@ -643,6 +672,7 @@ export class StoryFeedService {
         followedIds,
         activitySince,
         viewedSet,
+        viewer: photoViewer,
       });
       rawSegments.push(...bracketChampionSegs);
     }

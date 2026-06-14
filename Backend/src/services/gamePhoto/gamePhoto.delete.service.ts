@@ -3,8 +3,8 @@ import { ApiError } from '../../utils/ApiError';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { emitGamePhotoDeleted } from './gamePhoto.events';
 import {
-  assertCanDelete,
-  loadGamePhotoAccessContext,
+  assertCanManage,
+  loadGamePhotoManageContext,
 } from './gamePhoto.permissions';
 
 export class GamePhotoDeleteService {
@@ -14,7 +14,7 @@ export class GamePhotoDeleteService {
     userId: string,
     isGlobalAdmin: boolean
   ): Promise<{ ok: true }> {
-    const ctx = await loadGamePhotoAccessContext(gameId, userId, isGlobalAdmin);
+    const ctx = await loadGamePhotoManageContext(gameId, userId, isGlobalAdmin);
 
     const photo = await prisma.gamePhoto.findFirst({
       where: { id: photoId, gameId, deletedAt: null },
@@ -23,7 +23,7 @@ export class GamePhotoDeleteService {
       throw new ApiError(404, 'Photo not found');
     }
 
-    await assertCanDelete(ctx, photo);
+    await assertCanManage(ctx);
 
     const deletedAt = new Date();
 

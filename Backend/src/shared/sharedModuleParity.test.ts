@@ -79,11 +79,22 @@ function testBookingSharedParity(): void {
   assert.equal(pkgSupportsClubBookingFlow('LEAGUE', 'edit'), true);
 }
 
+function testGamePhotosSharedParity(): void {
+  const feSrc = readFileSync(join(feSharedRoot, 'gamePhotos/permissions.ts'), 'utf8');
+  const beSrc = readFileSync(join(__dirname, 'gamePhotos/permissions.ts'), 'utf8');
+  assert.equal(
+    normalizeSharedSource(feSrc),
+    normalizeSharedSource(beSrc),
+    'gamePhotos/permissions.ts FE/BE source parity',
+  );
+}
+
 function run(): void {
   testDeriveBallsInGamesSourceParity();
   testDeriveBallsInGamesBehavior();
   testGameFormatUpdateKeysParity();
   testGameBookingSharedParity();
+  testGamePhotosSharedParity();
   testBookingSharedParity();
   console.log('sharedModuleParity.test.ts: all passed');
 }

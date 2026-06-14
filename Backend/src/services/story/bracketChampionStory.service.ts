@@ -3,6 +3,7 @@ import prisma from '../../config/database';
 import { BracketAdvancementService } from '../league/bracketAdvancement.service';
 import type { BracketScopeDto } from '../league/leagueBracketDeepLink.util';
 import { canSeeBracketChampionInStories } from './story.permissions';
+import type { GamePhotosViewer } from '../../shared/gamePhotos/permissions';
 import { emitStoryNew } from './story.events';
 import {
   segmentKey,
@@ -26,6 +27,8 @@ const SEASON_GAME_SELECT = {
   clubId: true,
   avatar: true,
   maxParticipants: true,
+  resultsStatus: true,
+  forbidOthersPhotosView: true,
   mainPhotoId: true,
   city: { select: { name: true } },
   club: { select: { name: true } },
@@ -37,6 +40,12 @@ const SEASON_GAME_SELECT = {
   },
   mainPhoto: {
     select: { id: true, thumbnailUrl: true, originalUrl: true },
+  },
+  participants: { select: { userId: true, role: true } },
+  parent: {
+    select: {
+      participants: { select: { userId: true, role: true } },
+    },
   },
 } as const;
 
@@ -198,7 +207,6 @@ export class BracketChampionStoryService {
       leagueGroupId: params.leagueGroupId,
       bracketScope,
     };
-    const game = toGameSummary(seasonGame);
     const leagueName = round.leagueSeason.league.name;
 
     const owners = await prisma.user.findMany({
@@ -208,6 +216,7 @@ export class BracketChampionStoryService {
 
     for (const owner of owners) {
       if (!owner.shareGameResultsToFollowers) continue;
+      const game = toGameSummary(seasonGame, { id: owner.id, isAdmin: false });
       const segment = buildBracketChampionSegment({
         sourceId,
         createdAt,
@@ -226,6 +235,7 @@ export class BracketChampionStoryService {
     followedIds: Set<string>;
     activitySince: Date;
     viewedSet: Set<string>;
+    viewer: GamePhotosViewer;
   }): Promise<BracketChampionRawSegment[]> {
     if (params.activityOwnerIds.length === 0) return [];
 
@@ -290,7 +300,7 @@ export class BracketChampionStoryService {
       const sourceId = bracketChampionSourceId(slot.leagueRoundId, slot.leagueGroupId);
       const championLabel = await resolveChampionTeamLabel(championParticipantId);
       const createdAt = slot.game?.finishedDate ?? new Date();
-      const preview = storyGameBackdropUrl(seasonGame);
+      const preview = storyGameBackdropUrl(seasonGame, params.viewer);
       const bracketScope: BracketScopeDto =
         slot.leagueRound.bracketScope === BracketScope.CROSS_GROUP ? 'CROSS_GROUP' : 'PER_GROUP';
       const bracket: BracketChampionStoryBracket = {
@@ -299,7 +309,7 @@ export class BracketChampionStoryService {
         leagueGroupId: slot.leagueGroupId,
         bracketScope,
       };
-      const game = toGameSummary(seasonGame);
+      const game = toGameSummary(seasonGame, params.viewer);
       const leagueName = slot.leagueRound.leagueSeason.league.name;
 
       for (const owner of owners) {
