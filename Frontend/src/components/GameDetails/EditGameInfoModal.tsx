@@ -20,8 +20,10 @@ import {
   saveLocationTime,
   buildEditLocationTimeSaveDraft,
 } from '@/components/gameLocationTime/useSaveGameLocationTime';
-import type { EditLocationTimeDraft } from '@/components/gameLocationTime/locationTimeDraft';
-import { areEditLocationTimeDraftsEqual } from '@/components/gameLocationTime/locationTimeDraft';
+import {
+  areEditLocationTimeDraftsEqual,
+  type EditLocationTimeDraft,
+} from '@/components/gameLocationTime/locationTimeDraft';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';

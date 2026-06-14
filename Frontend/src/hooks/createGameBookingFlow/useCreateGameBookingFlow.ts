@@ -10,6 +10,10 @@ import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import type { SummaryChipItem } from '@/components/createGame/summaryHeader/CreateGameSummaryBar';
 import { useGameLocationTimeState } from '@/components/gameLocationTime/useGameLocationTimeState';
+import {
+  areBookingRecordsEqual,
+  areStringArraysEqual,
+} from '@/components/gameLocationTime/locationTimeDraft';
 import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
 import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
@@ -565,6 +569,29 @@ export function useCreateGameBookingFlow({
     ],
   );
 
+  const handleSelectedBookingIdsChange = useCallback(
+    (ids: string[], records: BooktimeBookingRecord[] = []) => {
+      setSelectedBookingIds((prev) => (areStringArraysEqual(prev, ids) ? prev : ids));
+      setSelectedBookingRecords((prev) => (areBookingRecordsEqual(prev, records) ? prev : records));
+      setDerivedBookingSummary((prev) => (prev.count === ids.length ? prev : { ...prev, count: ids.length }));
+    },
+    [setSelectedBookingIds],
+  );
+
+  const handleDerivedTimeChange = useCallback(
+    (start: string | null, end: string | null) => {
+      setDerivedBookingSummary((prev) => {
+        if (prev.startTime === start && prev.endTime === end) return prev;
+        return {
+          startTime: start,
+          endTime: end,
+          count: prev.count,
+        };
+      });
+    },
+    [],
+  );
+
   return {
     clubBookingFlowActive,
     hasBookedCourt,
@@ -633,18 +660,8 @@ export function useCreateGameBookingFlow({
         }
       }
     },
-    onSelectedBookingIdsChange: (ids: string[], records: BooktimeBookingRecord[] = []) => {
-      setSelectedBookingIds(ids);
-      setSelectedBookingRecords(records);
-      setDerivedBookingSummary((prev) => ({ ...prev, count: ids.length }));
-    },
-    onDerivedTimeChange: (start: string | null, end: string | null) => {
-      setDerivedBookingSummary({
-        startTime: start,
-        endTime: end,
-        count: selectedBookingIds.length,
-      });
-    },
+    onSelectedBookingIdsChange: handleSelectedBookingIdsChange,
+    onDerivedTimeChange: handleDerivedTimeChange,
   };
 }
 

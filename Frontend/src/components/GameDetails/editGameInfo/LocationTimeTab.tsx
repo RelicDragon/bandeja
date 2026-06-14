@@ -8,7 +8,6 @@ import type { EditLocationTimeDraft } from '@/components/gameLocationTime/locati
 import {
   areBookingRecordsEqual,
   areStringArraysEqual,
-  buildSelectedBookingRecordsSyncKey,
 } from '@/components/gameLocationTime/locationTimeDraft';
 import { linkedBookingToRecord } from '@/components/booktime/booktimeBookingUtils';
 import { GameStartSection } from '@/components/createGame/GameStartSection';
@@ -202,7 +201,7 @@ export function LocationTimeTab({
         setSelectedBookingRecords((prev) => (areBookingRecordsEqual(prev, records) ? prev : records));
       }
     },
-    [],
+    [setSelectedBookingIds],
   );
 
   const draftPayload = useMemo(

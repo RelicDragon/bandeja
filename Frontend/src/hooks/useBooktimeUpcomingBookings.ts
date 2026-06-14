@@ -33,9 +33,12 @@ export function useBooktimeUpcomingBookings(
     [filterCourts],
   );
 
+  const lastLoadedCourtsKeyRef = useRef<string | null>(null);
+
   const reload = useCallback(async () => {
     if (!enabled || !connected || club.integrationType !== 'BOOKTIME') {
       setBookings([]);
+      lastLoadedCourtsKeyRef.current = filterCourtsKey;
       return;
     }
     setLoading(true);
@@ -45,6 +48,7 @@ export function useBooktimeUpcomingBookings(
       const client = getBooktimeClient(club.id, companyId);
       if (!client.isAuthenticated) {
         setBookings([]);
+        lastLoadedCourtsKeyRef.current = filterCourtsKey;
         return;
       }
       const res = await client.getUpcomingBookings(0, 20);
@@ -55,6 +59,7 @@ export function useBooktimeUpcomingBookings(
           ? raw
           : raw.filter((b) => bookingMatchesClubCourts(b, courtsForMatch));
       setBookings((prev) => (areBookingListsEqual(prev, filtered) ? prev : filtered));
+      lastLoadedCourtsKeyRef.current = filterCourtsKey;
     } catch (err) {
       console.error('Club booking upcoming failed:', err);
       setError('loadFailed');
