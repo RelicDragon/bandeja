@@ -5,6 +5,12 @@ import { BOOKTIME_DEFAULT_TIMEZONE, storedUtcIsoToInstant } from '@shared/bookti
 import { buildCreateGameDeepLinkParams } from '@shared/gameBooking/linkBookingToGame';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 
+export function resolveBooktimeMyClubTimezone(club: {
+  cityTimezone?: string | null;
+}): string {
+  return club.cityTimezone ?? BOOKTIME_DEFAULT_TIMEZONE;
+}
+
 export function linkedBookingToRecord(link: {
   externalBookingId: string;
   bookingStart?: string;
@@ -26,6 +32,7 @@ export function clubToBooktimeRow(club: Club): BooktimeMyClubRow {
     connected: true,
     phoneNumber: club.phone ?? null,
     scoutOptIn: false,
+    cityTimezone: club.city?.timezone ?? null,
     courts: (club.courts ?? []).map((c) => ({
       id: c.id,
       name: c.name,

@@ -1,59 +1,56 @@
 import { useLayoutEffect, useRef } from 'react';
+import type { Virtualizer } from '@tanstack/react-virtual';
 import { isMessageListNearBottom } from '@/utils/messageListScroll';
+import {
+  snapshotMeasurements,
+  sumSizeDeltaAboveScrollTop,
+  type MeasurementSnapshot,
+} from '@/utils/messageListScrollAnchor';
 
-const SCROLL_IDLE_MS = 180;
 const NEAR_BOTTOM_PX = 120;
 
 type UseMessageListScrollAnchorParams = {
   containerRef: React.RefObject<HTMLDivElement | null>;
-  totalSize: number;
+  virtualizer: Virtualizer<HTMLDivElement, Element>;
   isLoadingMoreRef: React.RefObject<boolean>;
+  threadScrollKey: string | null;
+  measurementRevision: number;
 };
 
 /**
- * When the virtual list total height changes from row remeasurement, preserve the
- * user's scroll position (unless at top/bottom or actively scrolling).
+ * When row heights change (measure or estimate), preserve scroll for rows above the viewport.
+ * Uses per-row deltas — not total list height — so tail-only growth does not yank mid-history readers.
  */
 export function useMessageListScrollAnchor({
   containerRef,
-  totalSize,
+  virtualizer,
   isLoadingMoreRef,
+  threadScrollKey,
+  measurementRevision,
 }: UseMessageListScrollAnchorParams): void {
-  const prevTotalSizeRef = useRef(0);
-  const scrollIdleRef = useRef(true);
-  const scrollIdleTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const prevMeasurementsRef = useRef<MeasurementSnapshot | null>(null);
 
   useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const onScroll = () => {
-      scrollIdleRef.current = false;
-      if (scrollIdleTimerRef.current) clearTimeout(scrollIdleTimerRef.current);
-      scrollIdleTimerRef.current = setTimeout(() => {
-        scrollIdleRef.current = true;
-      }, SCROLL_IDLE_MS);
-    };
-
-    container.addEventListener('scroll', onScroll, { passive: true });
-    return () => {
-      container.removeEventListener('scroll', onScroll);
-      if (scrollIdleTimerRef.current) clearTimeout(scrollIdleTimerRef.current);
-    };
-  }, [containerRef]);
+    prevMeasurementsRef.current = null;
+  }, [threadScrollKey]);
 
   useLayoutEffect(() => {
-    const prev = prevTotalSizeRef.current;
-    prevTotalSizeRef.current = totalSize;
-    if (prev <= 0 || prev === totalSize) return;
-
     const container = containerRef.current;
     if (!container || isLoadingMoreRef.current) return;
-    if (!scrollIdleRef.current || container.scrollTop <= 0) return;
+    if (container.scrollTop <= 0) return;
     if (isMessageListNearBottom(container, NEAR_BOTTOM_PX)) return;
 
-    const delta = totalSize - prev;
+    const measurements = virtualizer.getMeasurements();
+    const next = snapshotMeasurements(measurements);
+    const prev = prevMeasurementsRef.current;
+    prevMeasurementsRef.current = next;
+
+    if (!prev || prev.length === 0) return;
+
+    const scrollTop = container.scrollTop;
+    const delta = sumSizeDeltaAboveScrollTop(prev, next, scrollTop);
     if (delta === 0) return;
-    container.scrollTop = Math.max(0, container.scrollTop + delta);
-  }, [totalSize, containerRef, isLoadingMoreRef]);
+
+    container.scrollTop = Math.max(0, scrollTop + delta);
+  }, [virtualizer, containerRef, isLoadingMoreRef, measurementRevision]);
 }

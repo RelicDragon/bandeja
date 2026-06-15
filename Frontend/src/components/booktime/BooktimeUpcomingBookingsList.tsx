@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { BooktimeAdjacentBookingGroup } from './BooktimeAdjacentBookingGroup';
 import { BooktimeBookingRow } from './BooktimeBookingRow';
 import { groupAdjacentBooktimeBookings } from './groupAdjacentBooktimeBookings';
+import { resolveBooktimeMyClubTimezone } from './booktimeBookingUtils';
 import { DEFAULT_BOOKTIME_CANCEL_HOURS, resolveBooktimeCancelHoursForClub } from './useBooktimeCancelPolicy';
 
 type UpcomingBooking = BooktimeBookingRecord & { clubId?: string };
@@ -48,13 +49,21 @@ export function BooktimeUpcomingBookingsList({
 }: Props) {
   const resolveAllowedHours = (clubId: string | undefined) =>
     resolveBooktimeCancelHoursForClub(clubId, allowedHoursToCancelByClubId, allowedHoursToCancel);
+  const resolveClubTimezone = useCallback(
+    (club: BooktimeMyClubRow) => clubTimezone ?? resolveBooktimeMyClubTimezone(club),
+    [clubTimezone],
+  );
   const entries = useMemo(
     () =>
       groupAdjacentBooktimeBookings(bookings, {
         clubIdOf,
         timeZone: clubTimezone ?? undefined,
+        timeZoneOf: (booking) => {
+          const club = resolveClub(booking, clubById, clubIdOf);
+          return club ? resolveClubTimezone(club) : undefined;
+        },
       }),
-    [bookings, clubIdOf, clubTimezone],
+    [bookings, clubById, clubIdOf, clubTimezone, resolveClubTimezone],
   );
   const visibleEntries = limit != null ? entries.slice(0, limit) : entries;
 
@@ -73,7 +82,7 @@ export function BooktimeUpcomingBookingsList({
               showClubName={showClubName}
               allowedHoursToCancel={clubAllowedHours}
               compact={compact}
-              clubTimezone={clubTimezone}
+              clubTimezone={resolveClubTimezone(club)}
               onRefreshSnapshot={onRefreshSnapshot}
               onCanceled={onCanceled}
             />
@@ -91,7 +100,7 @@ export function BooktimeUpcomingBookingsList({
             showClubName={showClubName}
             allowedHoursToCancel={clubAllowedHours}
             compact={compact}
-            clubTimezone={clubTimezone}
+            clubTimezone={resolveClubTimezone(club)}
             onRefreshSnapshot={onRefreshSnapshot}
             onCanceled={() => onCanceled?.(entry.booking.uuid)}
           />

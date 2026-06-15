@@ -5,6 +5,8 @@ import {
   booktimeIngestToStoredUtcIso,
   booktimeIsoToUtcIso,
   booktimeWireFormatToStoredUtcIso,
+  isAlreadyStoredUtcIso,
+  isBooktimeFakeUtcIso,
   isBooktimeNaiveLocalIso,
 } from './localTime';
 
@@ -60,5 +62,28 @@ describe('booktime localTime', () => {
   it('uses normalized UTC for booktimeBookingStartMs after ingest', () => {
     const stored = booktimeIngestToStoredUtcIso('2026-06-14T09:00:00.000Z', TZ)!;
     expect(booktimeBookingStartMs(stored, TZ)).toBe(Date.parse('2026-06-14T07:00:00.000Z'));
+  });
+
+  it('is idempotent for morning stored UTC on wire ingest (misuse guard)', () => {
+    const stored = '2026-06-19T07:00:00.000Z';
+    expect(booktimeIngestToStoredUtcIso(stored, TZ)).toBe(stored);
+    expect(booktimeIngestToStoredUtcIso(stored, TZ)).toBe(stored);
+    expect(isAlreadyStoredUtcIso(stored, TZ)).toBe(true);
+  });
+
+  it('passes afternoon stored UTC through booktimeIsoToUtcIso (not wire ingest)', () => {
+    const stored = booktimeIngestToStoredUtcIso('2026-06-15T18:00:00.000Z', TZ)!;
+    expect(stored).toBe('2026-06-15T16:00:00.000Z');
+    expect(booktimeIsoToUtcIso(stored, TZ)).toBe(stored);
+    expect(booktimeIsoToUtcIso(stored, TZ)).toBe(stored);
+  });
+
+  it('documents afternoon wire re-ingest footgun — use booktimeIsoToUtcIso instead', () => {
+    const stored = '2026-06-15T16:00:00.000Z';
+    expect(isBooktimeFakeUtcIso(stored, TZ)).toBe(true);
+    expect(booktimeIngestToStoredUtcIso(stored, TZ)).toBe('2026-06-15T14:00:00.000Z');
+    expect(booktimeIngestToStoredUtcIso(booktimeIngestToStoredUtcIso(stored, TZ)!, TZ)).toBe(
+      '2026-06-15T12:00:00.000Z',
+    );
   });
 });

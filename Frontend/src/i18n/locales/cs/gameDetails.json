@@ -179,6 +179,17 @@
     "deleteGameTraining": "Smazat trénink",
     "deleteLeague": "Smazat ligu",
     "deleteGameConfirmation": "Opravdu chcete smazat tento zápas? Tuto akci nelze vrátit.",
+    "deleteWithBookings": {
+      "title": "Rezervace kurtů zůstanou aktivní",
+      "messageGame": "Smazáním této hry se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
+      "messageTournament": "Smazáním tohoto turnaje se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
+      "messageLeague": "Smazáním této ligy se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
+      "messageLeagueSeason": "Smazáním této sezóny ligy se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
+      "messageBar": "Smazáním tohoto baru se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
+      "messageTraining": "Smazáním tohoto tréninku se nezruší níže uvedené rezervace kurtů u klubu. Zůstanou ve vašem klubovém účtu — zrušte je tam, pokud je už nepotřebujete.",
+      "bookingsHeading": "Propojené rezervace",
+      "confirm": "Přesto smazat"
+    },
     "gameDeleted": "Zápas byl smazán",
     "gameCancelledTitle": "Zrušeno",
     "gameCancelled": "Pořadatel zrušil událost.",

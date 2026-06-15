@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
 
 const itemVariants: Variants = {
@@ -29,6 +29,15 @@ export function AnimatedGameList<T>({
   renderItem,
   className = 'space-y-4 pb-8',
 }: AnimatedGameListProps<T>) {
+  const hasShownItemsRef = useRef(false);
+  const shouldAnimateEntrance = hasShownItemsRef.current;
+
+  useEffect(() => {
+    if (items.length > 0) {
+      hasShownItemsRef.current = true;
+    }
+  }, [items.length]);
+
   return (
     <div className={className}>
       <AnimatePresence mode="popLayout">
@@ -38,7 +47,7 @@ export function AnimatedGameList<T>({
             layout
             custom={index}
             variants={itemVariants}
-            initial="hidden"
+            initial={shouldAnimateEntrance ? 'hidden' : false}
             animate="visible"
             exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.18 } }}
           >

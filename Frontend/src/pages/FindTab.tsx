@@ -15,11 +15,10 @@ import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
 import { findSportFilterToApiParam, getViewerPrimarySport } from '@/utils/findSportFilter';
 import type { Sport } from '@/types';
-import { startOfMonth, endOfMonth, startOfWeek, endOfWeek, parse, startOfDay } from 'date-fns';
-import { enGB, ru, es, sr, cs } from 'date-fns/locale';
-import { useTranslation as useI18nTranslation } from 'react-i18next';
+import { parse, startOfDay } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { unionDateRangeWithDay } from '@/utils/calendarSelectedDayFilter';
+import { computeFindMonthDateRange, isFindGamesQueryReady } from '@/utils/findMonthDateRange';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
@@ -60,18 +59,17 @@ export const FindTab = () => {
   const findSelectedDay = useShellNavStore((s) => s.findSelectedDay);
   const setFindHeaderActions = useShellNavStore((s) => s.setFindHeaderActions);
 
-  const { i18n } = useI18nTranslation();
-  const localeMap = { en: enGB, ru: ru, es: es, sr: sr, cs: cs };
-  const locale = localeMap[i18n.language as keyof typeof localeMap] || enGB;
+  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
-  const [dateRange, setDateRange] = useState<{ startDate?: Date; endDate?: Date }>(() => {
-    const now = new Date();
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
-    const start = startOfWeek(monthStart, { locale, weekStartsOn: resolveDisplaySettings(null).weekStart });
-    const end = endOfWeek(monthEnd, { locale, weekStartsOn: resolveDisplaySettings(null).weekStart });
-    return { startDate: start, endDate: end };
-  });
+  const [dateRange, setDateRange] = useState<{ startDate?: Date; endDate?: Date }>(() =>
+    computeFindMonthDateRange(new Date(), resolveDisplaySettings(user).weekStart),
+  );
+  const [calendarRangeReady, setCalendarRangeReady] = useState(false);
+
+  useEffect(() => {
+    if (calendarRangeReady) return;
+    setDateRange(computeFindMonthDateRange(new Date(), displaySettings.weekStart));
+  }, [displaySettings.weekStart, calendarRangeReady]);
 
   const selectedCalendarDay = useMemo(() => {
     if (findSelectedDay) {
@@ -91,12 +89,17 @@ export const FindTab = () => {
     return unionDateRangeWithDay(startDate, endDate, selectedCalendarDay);
   }, [dateRange, selectedCalendarDay]);
 
-  const { filters, updateFilter, updateFilters } = useGameFilters();
+  const { filters, updateFilter, updateFilters, isHydrated } = useGameFilters();
   const findSportApiParam = useMemo(
     () => findSportFilterToApiParam(filters.filterSport, getViewerPrimarySport(user)),
     [filters.filterSport, user],
   );
   useRegisterAdSportContext(AD_PLACEMENTS.FIND_TOP, findSportApiParam as Sport | undefined);
+  const queryEnabled = isFindGamesQueryReady({
+    isHydrated,
+    calendarRangeReady,
+    userId: user?.id,
+  });
   const {
     availableGames,
     loading: loadingAvailableGames,
@@ -108,11 +111,13 @@ export const FindTab = () => {
     true,
     findSportApiParam,
     filters.showPrivateGames,
+    queryEnabled,
   );
 
-  const handleDateRangeChange = (startDate: Date, endDate: Date) => {
+  const handleDateRangeChange = useCallback((startDate: Date, endDate: Date) => {
     setDateRange({ startDate, endDate });
-  };
+    setCalendarRangeReady(true);
+  }, []);
 
   const filteredAvailableGames = useMemo(() => sortGamesByStatusAndDateTime(availableGames), [availableGames]);
 
@@ -148,16 +153,21 @@ export const FindTab = () => {
 
   const splitView = isDesktop && findViewMode === 'calendar';
 
-  useEffect(() => {
-    setFindHeaderActions(
+  const findHeaderActions = useMemo(
+    () => (
       <FindHeaderActions
         user={user}
         filters={filters}
         onFiltersChange={updateFilters}
-      />,
-    );
+      />
+    ),
+    [filters, updateFilters, user],
+  );
+
+  useEffect(() => {
+    setFindHeaderActions(findHeaderActions);
     return () => setFindHeaderActions(null);
-  }, [filters, setFindHeaderActions, updateFilters, user]);
+  }, [findHeaderActions, setFindHeaderActions]);
 
   if (splitView) {
     return (

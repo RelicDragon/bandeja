@@ -42,6 +42,7 @@ export type BooktimeMyClubRow = {
   connected: boolean;
   phoneNumber: string | null;
   scoutOptIn: boolean;
+  cityTimezone: string | null;
   courts: Array<{
     id: string;
     name: string;

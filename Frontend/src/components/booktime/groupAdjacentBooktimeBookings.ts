@@ -38,11 +38,13 @@ function entryStartMs<T extends BooktimeBookingRecord>(
 function groupPartition<T extends BooktimeBookingRecord>(
   bookings: T[],
   timeZone?: string,
+  timeZoneOf?: (booking: T) => string | undefined,
 ): BooktimeBookingListEntry<T>[] {
   if (bookings.length === 0) return [];
 
+  const partitionTimeZone = timeZone ?? timeZoneOf?.(bookings[0]!);
   const sorted = [...bookings].sort(
-    (a, b) => bookingInstantMs(a.bookingStart, timeZone) - bookingInstantMs(b.bookingStart, timeZone),
+    (a, b) => bookingInstantMs(a.bookingStart, partitionTimeZone) - bookingInstantMs(b.bookingStart, partitionTimeZone),
   );
   const entries: BooktimeBookingListEntry<T>[] = [];
   let currentGroup: T[] = [sorted[0]!];
@@ -58,7 +60,7 @@ function groupPartition<T extends BooktimeBookingRecord>(
   for (let i = 1; i < sorted.length; i += 1) {
     const prev = currentGroup[currentGroup.length - 1]!;
     const next = sorted[i]!;
-    if (sameBookingResource(prev, next) && areAdjacentBookings(prev, next, timeZone)) {
+    if (sameBookingResource(prev, next) && areAdjacentBookings(prev, next, partitionTimeZone)) {
       currentGroup.push(next);
     } else {
       flushGroup();
@@ -83,12 +85,14 @@ export function groupAdjacentBooktimeBookings<T extends BooktimeBookingRecord>(
   options?: {
     clubIdOf?: (booking: T) => string | undefined;
     timeZone?: string;
+    timeZoneOf?: (booking: T) => string | undefined;
   },
 ): BooktimeBookingListEntry<T>[] {
   if (bookings.length === 0) return [];
 
   const clubIdOf = options?.clubIdOf;
   const timeZone = options?.timeZone;
+  const timeZoneOf = options?.timeZoneOf;
   const partitions = new Map<string, T[]>();
 
   for (const booking of bookings) {
@@ -99,8 +103,12 @@ export function groupAdjacentBooktimeBookings<T extends BooktimeBookingRecord>(
   }
 
   const entries = Array.from(partitions.values()).flatMap((partition) =>
-    groupPartition(partition, timeZone),
+    groupPartition(partition, timeZone, timeZoneOf),
   );
-  entries.sort((a, b) => entryStartMs(a, timeZone) - entryStartMs(b, timeZone));
+  entries.sort((a, b) => {
+    const aTz = timeZone ?? (a.kind === 'single' ? timeZoneOf?.(a.booking) : timeZoneOf?.(a.bookings[0]!));
+    const bTz = timeZone ?? (b.kind === 'single' ? timeZoneOf?.(b.booking) : timeZoneOf?.(b.bookings[0]!));
+    return entryStartMs(a, aTz) - entryStartMs(b, bTz);
+  });
   return entries;
 }

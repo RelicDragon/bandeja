@@ -13,6 +13,7 @@ export const useAvailableGames = (
   includeLeagues?: boolean,
   sport?: string,
   showPrivateGames?: boolean,
+  queryEnabled = true,
 ) => {
   const { data, isPending, isFetching, refetch } = useAvailableGamesQuery({
     userId: user?.id,
@@ -23,7 +24,7 @@ export const useAvailableGames = (
     showPrivateGames,
     isAdmin: user?.isAdmin,
     cityId: user?.currentCity?.id || user?.currentCityId,
-  });
+  }, { enabled: queryEnabled });
 
   const availableGames = data ?? [];
   const loading = isPending || (isFetching && availableGames.length === 0);

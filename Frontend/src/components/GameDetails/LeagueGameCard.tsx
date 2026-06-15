@@ -2,6 +2,7 @@ import { Edit2, ExternalLink, MapPin, Calendar, Trash2, Plane, MessageCircle, Bo
 import { useTranslation } from 'react-i18next';
 import { useMemo, useState } from 'react';
 import { ConfirmationModal, PlayerAvatar } from '@/components';
+import { DeleteGameBookingsWarningModal } from '@/components/GameDetails/DeleteGameBookingsWarningModal';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { Game } from '@/types';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
@@ -20,6 +21,7 @@ import {
 } from '@/utils/leagueBracketMatchStatus';
 import { resolveLeagueGameCardTeams } from '@/utils/leagueGameCardTeams.util';
 import { resolveLeagueGameCardWinner } from '@/utils/leagueGameCardWinner.util';
+import { gameHasLinkedExternalBooking } from '@/utils/gameHasConfirmedClubBooking';
 
 interface LeagueGameCardProps {
   game: Game;
@@ -58,6 +60,7 @@ export const LeagueGameCard = ({
   const leagueCardRules = useMemo(() => getRules(game), [game]);
   const { user } = useAuthStore();
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [showDeleteBookingsWarning, setShowDeleteBookingsWarning] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showNoteModal, setShowNoteModal] = useState(false);
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
@@ -161,6 +164,15 @@ export const LeagueGameCard = ({
     );
   };
 
+  const handleDeleteFirstConfirm = () => {
+    setShowConfirmDelete(false);
+    if (gameHasLinkedExternalBooking(game)) {
+      setShowDeleteBookingsWarning(true);
+      return;
+    }
+    void handleDelete();
+  };
+
   const handleDelete = async () => {
     if (isDeleting) return;
     
@@ -189,6 +201,7 @@ export const LeagueGameCard = ({
     } finally {
       setIsDeleting(false);
       setShowConfirmDelete(false);
+      setShowDeleteBookingsWarning(false);
     }
   };
 
@@ -429,12 +442,20 @@ export const LeagueGameCard = ({
       <ConfirmationModal
         isOpen={showConfirmDelete}
         onClose={() => setShowConfirmDelete(false)}
-        onConfirm={handleDelete}
+        onConfirm={handleDeleteFirstConfirm}
         title={t('gameDetails.deleteGame') || 'Delete Game'}
         message={t('gameDetails.deleteGameConfirmation') || 'Are you sure you want to delete this game? This action cannot be undone.'}
-        confirmText={isDeleting ? (t('common.deleting') || 'Deleting...') : (t('common.delete') || 'Delete')}
+        confirmText={t('common.delete') || 'Delete'}
         cancelText={t('common.cancel') || 'Cancel'}
         confirmVariant="danger"
+      />
+
+      <DeleteGameBookingsWarningModal
+        isOpen={showDeleteBookingsWarning}
+        game={game}
+        isLoading={isDeleting}
+        onConfirm={() => void handleDelete()}
+        onClose={() => !isDeleting && setShowDeleteBookingsWarning(false)}
       />
 
       <UserGameNoteModal

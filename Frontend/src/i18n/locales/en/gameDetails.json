@@ -182,6 +182,17 @@
     "deleteGameTraining": "Delete Training",
     "deleteLeague": "Delete League",
     "deleteGameConfirmation": "Are you sure you want to delete this game? This action cannot be undone.",
+    "deleteWithBookings": {
+      "title": "Court reservations stay active",
+      "messageGame": "Deleting this game won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
+      "messageTournament": "Deleting this tournament won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
+      "messageLeague": "Deleting this league won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
+      "messageLeagueSeason": "Deleting this league season won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
+      "messageBar": "Deleting this bar won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
+      "messageTraining": "Deleting this training won't cancel your club court reservations listed below. They'll remain in your club account — cancel them there if you no longer need them.",
+      "bookingsHeading": "Linked reservations",
+      "confirm": "Delete anyway"
+    },
     "gameDeleted": "Game deleted successfully",
     "gameCancelledTitle": "Cancelled",
     "gameCancelled": "Cancelled by the organizer.",

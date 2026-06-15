@@ -12,7 +12,8 @@ import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerat
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
-import { BOOKTIME_DEFAULT_TIMEZONE, parseBooktimeStoredOrNaiveToDate } from '../../shared/booktime/localTime';
+import { parseBooktimeStoredOrNaiveToDate, BOOKTIME_DEFAULT_TIMEZONE } from '../../shared/booktime/localTime';
+import { resolveBooktimeTimezoneFromCityId } from '../../shared/booktime/resolveClubTimezone';
 import { GameCourtService } from '../gameCourt/gameCourt.service';
 import {
   assertNoLegacyExternalBookingId,
@@ -243,11 +244,14 @@ export class GameCreateService {
     }
     
     const useBooktimeTz = booking.externalBookingProvider === ClubIntegrationType.BOOKTIME;
-    const startTime = useBooktimeTz
-      ? parseBooktimeStoredOrNaiveToDate(data.startTime, BOOKTIME_DEFAULT_TIMEZONE) ?? new Date(data.startTime)
+    const booktimeTimeZone = useBooktimeTz
+      ? await resolveBooktimeTimezoneFromCityId(cityId)
+      : null;
+    const startTime = booktimeTimeZone
+      ? parseBooktimeStoredOrNaiveToDate(data.startTime, booktimeTimeZone) ?? new Date(data.startTime)
       : new Date(data.startTime);
-    const endTime = useBooktimeTz
-      ? parseBooktimeStoredOrNaiveToDate(data.endTime, BOOKTIME_DEFAULT_TIMEZONE) ?? new Date(data.endTime)
+    const endTime = booktimeTimeZone
+      ? parseBooktimeStoredOrNaiveToDate(data.endTime, booktimeTimeZone) ?? new Date(data.endTime)
       : new Date(data.endTime);
     
     const priceType = data.priceType ?? 'NOT_KNOWN';
@@ -438,6 +442,7 @@ export class GameCreateService {
           booking.externalBookingIds,
           booking.externalBookingProvider,
           booking.bookingSnapshots,
+          booktimeTimeZone ?? BOOKTIME_DEFAULT_TIMEZONE,
         );
       }
 

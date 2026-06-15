@@ -173,6 +173,17 @@
     "deleteGame": "Obriši igru",
     "deleteLeague": "Obriši ligu",
     "deleteGameConfirmation": "Da li ste sigurni da želite da obrišete ovu igru? Ova akcija se ne može poništiti.",
+    "deleteWithBookings": {
+      "title": "Rezervacije terena ostaju aktivne",
+      "messageGame": "Brisanje ove igre neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
+      "messageTournament": "Brisanje ovog turnira neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
+      "messageLeague": "Brisanje ove lige neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
+      "messageLeagueSeason": "Brisanje ove sezone lige neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
+      "messageBar": "Brisanje ovog bara neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
+      "messageTraining": "Brisanje ovog treninga neće otkazati rezervacije terena u klubu navedene ispod. Ostaće na vašem klubskom nalogu — otkažite ih tamo ako vam više nisu potrebne.",
+      "bookingsHeading": "Povezane rezervacije",
+      "confirm": "Ipak obriši"
+    },
     "gameDeleted": "Igra je uspešno obrisana",
     "gameCancelledTitle": "Otkazano",
     "gameCancelled": "Organizator je otkazao događaj.",

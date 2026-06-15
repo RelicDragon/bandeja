@@ -158,4 +158,31 @@ describe('buildCreateGameDeepLinkParams', () => {
     expect(params.endTime).toBe(booking.bookingEnd);
     expect(params.courtId).toBe('court-a');
   });
+
+  it('keeps afternoon stored UTC for create-game deep link', () => {
+    const booking = normalizeBooking('2026-06-15T18:00:00.000Z', '2026-06-15T20:00:00.000Z');
+    expect(booking.bookingStart).toBe('2026-06-15T16:00:00.000Z');
+    expect(booking.bookingEnd).toBe('2026-06-15T18:00:00.000Z');
+    const params = buildCreateGameDeepLinkParams('club-1', booking, 'court-a');
+    expect(params.startTime).toBe('2026-06-15T16:00:00.000Z');
+    expect(params.endTime).toBe('2026-06-15T18:00:00.000Z');
+  });
+});
+
+describe('buildLinkBookingRequest afternoon stored UTC', () => {
+  it('keeps afternoon stored UTC in snapshot and game patch', () => {
+    const booking = normalizeBooking('2026-06-15T18:00:00.000Z', '2026-06-15T20:00:00.000Z');
+    const game = {
+      id: 'game-1',
+      timeIsSet: true,
+      startTime: '2026-06-20T07:00:00.000Z',
+      endTime: '2026-06-20T08:00:00.000Z',
+      clubId: 'other-club',
+    };
+    const body = buildLinkBookingRequest(game, booking, club, { courtId: 'court-a' });
+    expect(body.snapshot.bookingStart).toBe('2026-06-15T16:00:00.000Z');
+    expect(body.snapshot.bookingEnd).toBe('2026-06-15T18:00:00.000Z');
+    expect(body.gamePatch?.startTime).toBe('2026-06-15T16:00:00.000Z');
+    expect(body.gamePatch?.endTime).toBe('2026-06-15T18:00:00.000Z');
+  });
 });

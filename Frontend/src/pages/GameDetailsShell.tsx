@@ -9,6 +9,7 @@ import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitialData';
+import { gameHasLinkedExternalBooking } from '@/utils/gameHasConfirmedClubBooking';
 import {
   Card,
   PlayerListModal,
@@ -26,6 +27,7 @@ import {
   SegmentedSwitch,
   type SegmentedSwitchTab,
 } from '@/components';
+import { DeleteGameBookingsWarningModal } from '@/components/GameDetails/DeleteGameBookingsWarningModal';
 import { GameCancelled } from '@/components/GameDetails/GameCancelled';
 import { GameDetailsSkeleton } from '@/components/GameDetails/GameDetailsSkeleton';
 import { GameActionCard } from '@/components/GameDetails/GameActionCard';
@@ -141,6 +143,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [showDeleteBookingsWarning, setShowDeleteBookingsWarning] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [cancelledGameInfo, setCancelledGameInfo] = useState<{
     entityType: string;
@@ -1085,9 +1088,18 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     return game.resultsStatus === 'NONE';
   };
 
+  const handleDeleteFirstConfirm = () => {
+    setShowDeleteConfirmation(false);
+    if (game && gameHasLinkedExternalBooking(game)) {
+      setShowDeleteBookingsWarning(true);
+      return;
+    }
+    void handleDeleteGame();
+  };
+
   const handleDeleteGame = async () => {
     if (!id || isDeleting) return;
-    
+
     setIsDeleting(true);
     try {
       await gamesApi.delete(id);
@@ -1099,6 +1111,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirmation(false);
+      setShowDeleteBookingsWarning(false);
     }
   };
 
@@ -1845,9 +1858,21 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         isLoading={isDeleting}
         loadingText={t('common.deleting')}
         closeOnConfirm={false}
-        onConfirm={handleDeleteGame}
+        onConfirm={handleDeleteFirstConfirm}
         onClose={() => setShowDeleteConfirmation(false)}
       />
+
+      {game && showDeleteBookingsWarning ? (
+        <DeleteGameBookingsWarningModal
+          isOpen={showDeleteBookingsWarning}
+          game={game}
+          courts={courts}
+          clubs={clubs}
+          isLoading={isDeleting}
+          onConfirm={() => void handleDeleteGame()}
+          onClose={() => !isDeleting && setShowDeleteBookingsWarning(false)}
+        />
+      ) : null}
 
       {showResetConfirmation && (
         <ConfirmationModal

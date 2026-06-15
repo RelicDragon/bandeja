@@ -1,4 +1,4 @@
-import { booktimeIngestToStoredUtcIso } from '../booktime/localTime';
+import { booktimeIsoToUtcIso } from '../booktime/localTime';
 import type { BookingSnapshotInput } from './contracts';
 
 export type BuildBookingSnapshotsOptions = {
@@ -41,10 +41,10 @@ export function buildBookingSnapshots(
     const externalId = bookingResourceExternalId(booking);
     const court = findCourtByExternalId(externalId, courts);
     const bookingStart = timeZone
-      ? booktimeIngestToStoredUtcIso(booking.bookingStart, timeZone) ?? booking.bookingStart
+      ? booktimeIsoToUtcIso(booking.bookingStart, timeZone) ?? booking.bookingStart
       : booking.bookingStart;
     const bookingEnd = timeZone
-      ? booktimeIngestToStoredUtcIso(booking.bookingEnd, timeZone) ?? booking.bookingEnd
+      ? booktimeIsoToUtcIso(booking.bookingEnd, timeZone) ?? booking.bookingEnd
       : booking.bookingEnd;
     return {
       externalBookingId: booking.uuid,

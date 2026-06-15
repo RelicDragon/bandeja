@@ -247,6 +247,11 @@ export const AvailableGamesSection = ({
   const hydratedViewPeriodFromStorageRef = useRef(false);
 
   useEffect(() => {
+    if (externalFilters) {
+      setIsInitialized(true);
+      return;
+    }
+
     const loadFilters = async () => {
       const filters = await getGameFilters();
       if (!externalFilters) {

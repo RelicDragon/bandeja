@@ -138,6 +138,49 @@ function testIngestBookingSnapshotInvalidInterval(): void {
   );
 }
 
+function testIngestBookingSnapshotNonBelgradeNaive(): void {
+  const nyc = 'America/New_York';
+  const { bookingStart, bookingEnd } = ingestBookingSnapshotTimes(
+    '2026-06-14T18:00',
+    '2026-06-14T19:00',
+    nyc,
+  );
+  assert(
+    bookingStart?.toISOString() === '2026-06-14T22:00:00.000Z',
+    'naive 18:00 NYC → 22:00Z',
+  );
+  assert(
+    bookingEnd?.toISOString() === '2026-06-14T23:00:00.000Z',
+    'naive 19:00 NYC → 23:00Z',
+  );
+
+  const belgrade = ingestBookingSnapshotTimes('2026-06-14T18:00', '2026-06-14T19:00', TZ);
+  assert(
+    belgrade.bookingStart?.toISOString() === '2026-06-14T16:00:00.000Z',
+    'same naive wall clock differs by timezone',
+  );
+}
+
+function testAfternoonWireReingestFootgun(): void {
+  const stored = '2026-06-15T16:00:00.000Z';
+  const once = normalizeBooktimeWireIngestIso(stored, 'start', TZ);
+  assert(once === '2026-06-15T14:00:00.000Z', 'afternoon stored UTC shifts on wire re-ingest');
+  const twice = normalizeBooktimeWireIngestIso(once, 'start', TZ);
+  assert(twice === '2026-06-15T12:00:00.000Z', 'double wire re-ingest shifts again');
+  assert(
+    normalizeBooktimeIngestIso(stored, 'start', TZ) === stored,
+    'normalizeBooktimeIngestIso pass-through for stored UTC',
+  );
+}
+
+function testAfternoonFakeZWireIngestOnce(): void {
+  assert(
+    normalizeBooktimeWireIngestIso('2026-06-15T18:00:00.000Z', 'start', TZ)
+      === '2026-06-15T16:00:00.000Z',
+    'afternoon fake-Z converts once at wire boundary',
+  );
+}
+
 testNormalizeFakeZ();
 testNormalizeNaive();
 testNormalizeAlreadyUtc();
@@ -150,5 +193,8 @@ testIngestBookingSnapshotNaive();
 testIngestBookingSnapshotAlreadyUtc();
 testIngestBookingSnapshotAfternoonStoredUtc();
 testIngestBookingSnapshotInvalidInterval();
+testIngestBookingSnapshotNonBelgradeNaive();
+testAfternoonWireReingestFootgun();
+testAfternoonFakeZWireIngestOnce();
 
 console.log('booktime ingest tests: OK');

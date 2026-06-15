@@ -409,7 +409,9 @@ export const GameInfo = ({
 
     return (
       <div className={`flex items-center ${gapClass} ${mbClass} ${prClass} flex-wrap`}>
-        <GameStatusIcon status={game.status} className={!isCollapsed ? 'p-1' : ''} />
+        {game.status !== 'ANNOUNCED' && (
+          <GameStatusIcon status={game.status} className={!isCollapsed ? 'p-1' : ''} />
+        )}
         {!game.isPublic && (
           <span className={`${tagPadding} ${tagText} font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1`}>
             <Lock size={iconSize} />

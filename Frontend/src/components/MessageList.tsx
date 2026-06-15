@@ -151,6 +151,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
     overscan: VIRTUAL_OVERSCAN,
     getItemKey: (index) =>
       index === rowCount - 1 ? '__end__' : (messages[index] ? getMessageRowKey(messages[index]) : `i-${index}`),
+    shouldAdjustScrollPositionOnItemSizeChange: () => false,
   });
 
   const virtualizerRef = useRef(virtualizer);
@@ -248,11 +249,12 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
     if (materialChange) bumpHeightEstimates();
   }, [virtualMeasureKey, rowCount]);
 
-  const virtualTotalSize = virtualizer.getTotalSize();
   useMessageListScrollAnchor({
     containerRef: messagesContainerRef,
-    totalSize: virtualTotalSize,
+    virtualizer,
     isLoadingMoreRef,
+    threadScrollKey,
+    measurementRevision: virtualizer.getTotalSize(),
   });
 
   const pinBottomRafRef = useRef<number | null>(null);

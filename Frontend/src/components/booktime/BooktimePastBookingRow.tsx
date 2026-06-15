@@ -6,7 +6,7 @@ import { useBooktimeLinkedGame } from '@/hooks/useBooktimeLinkedGame';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 import { BooktimeLinkedGameLink } from './BooktimeLinkedGameLink';
 import { BooktimeLinkGameButton } from './BooktimeLinkGameModal';
-import { formatBooktimeBookingWhen, resolveCourtForBooking } from './booktimeBookingUtils';
+import { formatBooktimeBookingWhen, resolveBooktimeMyClubTimezone, resolveCourtForBooking } from './booktimeBookingUtils';
 
 type Props = {
   booking: AggregatedBooktimeBooking;
@@ -32,7 +32,10 @@ export function BooktimePastBookingRow({ booking, club, displaySettings, showClu
         secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400"
       />
       <span className="block text-xs text-gray-500 mt-0.5">
-        {formatBooktimeBookingWhen(booking, { timezone: null, displaySettings })}
+        {formatBooktimeBookingWhen(booking, {
+          timezone: resolveBooktimeMyClubTimezone(club),
+          displaySettings,
+        })}
       </span>
       {linkedGame ? <BooktimeLinkedGameLink game={linkedGame} /> : null}
       {!linkedGame ? (

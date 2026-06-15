@@ -25,6 +25,7 @@ function clubToMyClubRow(club: Club, companyId: string, connected: boolean): Boo
     connected,
     phoneNumber: null,
     scoutOptIn: true,
+    cityTimezone: club.city?.timezone ?? null,
     courts: (club.courts ?? []).map((c) => ({
       id: c.id,
       name: c.name,

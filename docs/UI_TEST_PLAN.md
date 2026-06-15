@@ -281,6 +281,7 @@ Frontend/e2e/
 | H-38 | Club booking upcoming cards (My tab) | Connected user with upcoming bookings | Up to 3 cards + "See all" |
 | H-38a | Adjacent booking group (My tab) | User with 2+ back-to-back slots same court | One grouped card with date + small time chips per slot; tap expands individual slots with cancel/link actions |
 | H-38b | Linked game on booking card (My tab) | Upcoming booking linked to one game | Single tappable "Linked game" chip; no duplicate "Also used in" line |
+| H-38c | Booking times use club TZ | Club city TZ ≠ Europe/Belgrade; upcoming booking on My tab or connected-clubs page | Wall-clock times match club city TZ (not Belgrade default) |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
 ---
@@ -433,6 +434,7 @@ Frontend/e2e/
 | C-17 | Segmented switch (integrated club) | Pick BOOKTIME club on create | "Pick a time" \| "Bookings" labels visible on both tabs |
 | C-18 | Time slots + integrated court | Select integrated court on Time slots tab | Opt-out toggle; default reserves on create; toggle ON creates game only with full schedule and selectable red cells |
 | C-19 | Bookings tab multi-select | Bookings tab; select N reservations | Derived min–max window; live counter |
+| C-19a | Bookings tab club TZ display | Create-game Bookings tab at club whose city TZ ≠ Europe/Belgrade | Booking row wall-clock matches My bookings for same reservation |
 | C-20 | Override time on Bookings tab | Toggle adjust game time | Expand animates; create uses shorter window |
 | C-21 | Multi-court confirm 2 steps | 2 integrated courts → Create | Stepper: 2 reserve steps + create; rollback on fail |
 | C-22 | Deep link bookingIds | `?locationTimeMode=bookings&bookingIds=uuid` | Bookings tab; row selected; preselected banner |
@@ -505,6 +507,8 @@ Frontend/e2e/
 | GD-90 | Linked bookings fully covered badge | Game with enough linked bookings spanning full `startTime`–`endTime` for required courts | Header shows green check “Fully booked” badge |
 | GD-87 | Linked booking refresh (owner) | Game details linked booking that exists in viewer's Booktime account | Refresh icon on row; success toast if still active |
 | GD-88 | Linked booking absent unlink | Refresh when booking gone from viewer's Booktime account | Modal explains link removal; game stays; confirm removes link from this game |
+| GD-91 | Delete game with linked bookings | Owner deletes game with `linkedBookings` → confirm → second modal | Lists linked reservations; explains club bookings stay active; "Delete anyway" proceeds |
+| GD-92 | Delete game without linked bookings | Owner deletes game with no `linkedBookings` | Single confirm modal only; delete proceeds immediately |
 
 ### 9.2 Participation
 
@@ -693,6 +697,7 @@ Frontend/e2e/
 | CH-65 | Offline thread access | Go offline → open previously visited chat thread | Cached history renders (no full-page No Internet screen); composer queues sends |
 | CH-66 | New message entry animation | Receive/send message near bottom | Message fades + slides in smoothly; no scroll jump |
 | CH-67 | Date separator pill | Scroll across day boundary | Rounded pill date label (Today/Yesterday/date) centered between days |
+| CH-68 | Mid-history scroll stability | Long thread → scroll up into history; wheel/trackpad with pauses | View stays anchored on the same messages; no abrupt jumps when row heights settle or tail preloads |
 
 ### 11.4 Group/channel settings
 

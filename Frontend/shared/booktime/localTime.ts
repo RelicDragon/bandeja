@@ -97,7 +97,11 @@ export function storedUtcIsoToInstant(iso: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** True when ISO is already normalized stored UTC (idempotent re-ingest). */
+/**
+ * Heuristic: ISO may already be canonical stored UTC (safe to pass through re-parse).
+ * False for naive local and for afternoon fake-Z that still needs wire ingest.
+ * Prefer {@link booktimeIsoToUtcIso} after the API boundary — do not rely on this alone.
+ */
 export function isAlreadyStoredUtcIso(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
@@ -126,7 +130,7 @@ export function isAlreadyStoredUtcIso(
   return wireFromParts !== fromBelgrade;
 }
 
-/** True when ISO digits are Belgrade wall clock with a fake `.000Z` suffix. */
+/** True when `.000Z` digits are Booktime API wall clock (wire ingest required once). */
 export function isBooktimeFakeUtcIso(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
@@ -180,8 +184,12 @@ function normalizeFakeOrStoredUtcIso(
 }
 
 /**
- * Ingest seam: convert any Booktime API wire-format timestamp to stored UTC.
- * Use at API/snapshot boundaries for raw Booktime payloads.
+ * Booktime API wire ingest: naive local or fake `.000Z` wall clock → stored UTC.
+ *
+ * Call **once** at the Booktime client boundary (`normalizeBooking`, raw busy slots).
+ * After that use {@link booktimeIsoToUtcIso} / {@link storedUtcIsoToInstant} — re-ingest
+ * can shift afternoon stored UTC (−2h per call in CEST). Same `.000Z` string can mean
+ * fake wall clock or stored UTC; callers must not pipe normalized snapshots back through here.
  */
 export function booktimeIngestToStoredUtcIso(
   iso: string,

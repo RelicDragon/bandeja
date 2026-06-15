@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { formatBooktimeBookingWhen } from '../../src/components/booktime/booktimeBookingUtils';
+import { formatBooktimeBookingWhen, resolveBooktimeMyClubTimezone } from '../../src/components/booktime/booktimeBookingUtils';
 import {
   booktimeIngestToStoredUtcIso,
+  booktimeIsoToUtcIso,
   storedUtcIsoToInstant,
 } from './localTime';
 import { buildBookingSnapshots } from '../gameBooking/buildBookingSnapshots';
@@ -118,5 +119,23 @@ describe('booktime timezone pipeline', () => {
       '2026-06-19T07:00:00.000Z',
     );
     expect(booktimeIngestToStoredUtcIso('2026-06-14T09:00', TZ)).toBe('2026-06-14T07:00:00.000Z');
+  });
+
+  it('wire ingest then booktimeIsoToUtcIso does not double-shift afternoon stored UTC', () => {
+    const stored = booktimeIngestToStoredUtcIso('2026-06-15T18:00:00.000Z', TZ)!;
+    expect(stored).toBe('2026-06-15T16:00:00.000Z');
+    expect(booktimeIsoToUtcIso(stored, TZ)).toBe(stored);
+    expect(booktimeIngestToStoredUtcIso(stored, TZ)).not.toBe(stored);
+  });
+});
+
+describe('resolveBooktimeMyClubTimezone', () => {
+  it('uses club cityTimezone when set', () => {
+    expect(resolveBooktimeMyClubTimezone({ cityTimezone: 'Europe/London' })).toBe('Europe/London');
+  });
+
+  it('falls back to Belgrade when cityTimezone is missing', () => {
+    expect(resolveBooktimeMyClubTimezone({ cityTimezone: null })).toBe(TZ);
+    expect(resolveBooktimeMyClubTimezone({})).toBe(TZ);
   });
 });

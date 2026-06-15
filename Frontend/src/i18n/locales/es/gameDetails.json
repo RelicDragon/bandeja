@@ -173,6 +173,17 @@
     "deleteGame": "Eliminar juego",
     "deleteLeague": "Eliminar liga",
     "deleteGameConfirmation": "¿Estás seguro de que quieres eliminar este juego? Esta acción no se puede deshacer.",
+    "deleteWithBookings": {
+      "title": "Las reservas de pista siguen activas",
+      "messageGame": "Eliminar este partido no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
+      "messageTournament": "Eliminar este torneo no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
+      "messageLeague": "Eliminar esta liga no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
+      "messageLeagueSeason": "Eliminar esta temporada de liga no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
+      "messageBar": "Eliminar este bar no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
+      "messageTraining": "Eliminar este entrenamiento no cancelará las reservas de pista del club que aparecen abajo. Seguirán en tu cuenta del club — cancélalas allí si ya no las necesitas.",
+      "bookingsHeading": "Reservas vinculadas",
+      "confirm": "Eliminar de todos modos"
+    },
     "gameDeleted": "Juego eliminado exitosamente",
     "gameCancelledTitle": "Cancelado",
     "gameCancelled": "Cancelado por el organizador.",

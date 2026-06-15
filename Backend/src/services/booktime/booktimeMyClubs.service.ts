@@ -10,6 +10,7 @@ export type BooktimeMyClubRow = {
   connected: boolean;
   phoneNumber: string | null;
   scoutOptIn: boolean;
+  cityTimezone: string | null;
   courts: Array<{
     id: string;
     name: string;
@@ -48,6 +49,7 @@ export async function getMyBooktimeClubs(userId: string): Promise<BooktimeMyClub
           name: true,
           avatar: true,
           integrationConfig: true,
+          city: { select: { timezone: true } },
           courts: {
             where: { isActive: true },
             select: { id: true, name: true, externalCourtId: true, integrationCourtName: true },
@@ -75,6 +77,7 @@ export async function getMyBooktimeClubs(userId: string): Promise<BooktimeMyClub
             name: true,
             avatar: true,
             integrationConfig: true,
+            city: { select: { timezone: true } },
             courts: {
               where: { isActive: true },
               select: { id: true, name: true, externalCourtId: true, integrationCourtName: true },
@@ -98,6 +101,7 @@ export async function getMyBooktimeClubs(userId: string): Promise<BooktimeMyClub
       connected: !!auth,
       phoneNumber: auth?.phoneNumber ?? null,
       scoutOptIn: auth?.scoutOptIn ?? true,
+      cityTimezone: club.city?.timezone ?? null,
       courts: club.courts,
     };
   });

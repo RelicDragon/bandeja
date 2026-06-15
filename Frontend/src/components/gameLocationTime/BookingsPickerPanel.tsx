@@ -12,6 +12,7 @@ import type { BookingSelectionLimits } from '@shared/gameBooking/computeBookingS
 import { useBooktimeUpcomingBookings } from '@/hooks/useBooktimeUpcomingBookings';
 import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
 import { useBooktimeLinkedGames } from '@/hooks/useBooktimeLinkedGames';
+import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
 import { booktimeRowToClub } from '@/components/booktime/booktimeBookingUtils';
 import { BookingTimeOverrideSection } from './BookingTimeOverrideSection';
@@ -40,6 +41,7 @@ function BookingRowWithLinkedGames({
   dimmed,
   disableDeselect,
   onToggle,
+  clubTimezone,
 }: {
   booking: BooktimeBookingRecord;
   club: ReturnType<typeof booktimeRowToClub>;
@@ -48,6 +50,7 @@ function BookingRowWithLinkedGames({
   dimmed: boolean;
   disableDeselect: boolean;
   onToggle: () => void;
+  clubTimezone: string;
 }) {
   const { linkedGames } = useBooktimeLinkedGames(booking.uuid);
   return (
@@ -61,6 +64,7 @@ function BookingRowWithLinkedGames({
         connected: true,
         phoneNumber: null,
         scoutOptIn: false,
+        cityTimezone: clubTimezone,
         courts: (club.courts ?? []).map((c) => ({
           id: c.id,
           name: c.name,
@@ -74,6 +78,7 @@ function BookingRowWithLinkedGames({
       disableDeselect={disableDeselect}
       linkedGames={linkedGames}
       onToggleSelect={onToggle}
+      clubTimezone={clubTimezone}
       compact
     />
   );
@@ -140,6 +145,7 @@ export function BookingsPickerPanel({
   }, [bookings, selectedBookingIds]);
 
   const atMax = selectedBookingIds.length >= selectionLimits.max;
+  const clubTimezone = getClubTimezone(club);
   const clubRow = booktimeRowToClub({
     clubId: club.id,
     clubName: club.name,
@@ -148,6 +154,7 @@ export function BookingsPickerPanel({
     connected: true,
     phoneNumber: null,
     scoutOptIn: false,
+    cityTimezone: club.city?.timezone ?? null,
     courts: (club.courts ?? courts).map((c) => ({
       id: c.id,
       name: c.name,
@@ -234,6 +241,7 @@ export function BookingsPickerPanel({
               dimmed={dimmed}
               disableDeselect={atMinSelection}
               onToggle={() => handleToggle(booking.uuid)}
+              clubTimezone={clubTimezone}
             />
           );
         })}

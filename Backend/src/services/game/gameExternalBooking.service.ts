@@ -3,6 +3,8 @@ import prisma from '../../config/database';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { ingestBookingSnapshotTimes } from '../../shared/booktime/ingest';
+import { parseBooktimeStoredOrNaiveToDate } from '../../shared/booktime/localTime';
+import { resolveBooktimeTimezoneForGame } from '../../shared/booktime/resolveClubTimezone';
 import { deriveGameTimeFromBookings } from '../../shared/gameBooking/deriveGameTimeFromBookings';
 import {
   LEGACY_EXTERNAL_BOOKING_ID_REJECTED,
@@ -72,18 +74,12 @@ function parseLinkGamePatch(raw: unknown): LinkBookingToGamePatch | undefined {
     hasField = true;
   }
   if (typeof src.startTime === 'string' && src.startTime.trim()) {
-    const parsed = new Date(src.startTime.trim());
-    if (!Number.isNaN(parsed.getTime())) {
-      patch.startTime = parsed.toISOString();
-      hasField = true;
-    }
+    patch.startTime = src.startTime.trim();
+    hasField = true;
   }
   if (typeof src.endTime === 'string' && src.endTime.trim()) {
-    const parsed = new Date(src.endTime.trim());
-    if (!Number.isNaN(parsed.getTime())) {
-      patch.endTime = parsed.toISOString();
-      hasField = true;
-    }
+    patch.endTime = src.endTime.trim();
+    hasField = true;
   }
   if (typeof src.timeIsSet === 'boolean') {
     patch.timeIsSet = src.timeIsSet;
@@ -145,10 +141,12 @@ function snapshotMap(snapshots: BookingSnapshotInput[]): Map<string, BookingSnap
 
 function snapshotToRowData(
   snap: BookingSnapshotInput | undefined,
+  timeZone: string,
 ): Pick<Prisma.GameExternalBookingCreateManyInput, 'courtId' | 'bookingStart' | 'bookingEnd'> {
   const { bookingStart, bookingEnd } = ingestBookingSnapshotTimes(
     snap?.bookingStart,
     snap?.bookingEnd,
+    timeZone,
   );
   return {
     courtId: snap?.courtId ?? null,
@@ -195,6 +193,7 @@ export async function insertJoinRows(
   externalBookingIds: string[],
   provider: ClubIntegrationType,
   snapshots: BookingSnapshotInput[],
+  timeZone: string,
 ): Promise<void> {
   if (externalBookingIds.length === 0) return;
   const snaps = snapshotMap(snapshots);
@@ -203,7 +202,7 @@ export async function insertJoinRows(
       gameId,
       externalBookingId,
       externalBookingProvider: provider,
-      ...snapshotToRowData(snaps.get(externalBookingId)),
+      ...snapshotToRowData(snaps.get(externalBookingId), timeZone),
     })),
   });
 }
@@ -336,6 +335,8 @@ export async function putGameBookingSnapshots(
     throw new ApiError(400, BOOKING_ERROR_KEYS.snapshotsRequired);
   }
 
+  const timeZone = await resolveBooktimeTimezoneForGame(gameId);
+
   await prisma.$transaction(async (tx) => {
     const game = await tx.game.findUnique({
       where: { id: gameId },
@@ -346,7 +347,7 @@ export async function putGameBookingSnapshots(
     for (const snap of snapshots) {
       const updated = await tx.gameExternalBooking.updateMany({
         where: { gameId, externalBookingId: snap.externalBookingId },
-        data: snapshotToRowData(snap),
+        data: snapshotToRowData(snap, timeZone),
       });
       if (updated.count === 0) {
         throw new ApiError(404, BOOKING_ERROR_KEYS.bookingNotLinked, true, {
@@ -377,12 +378,21 @@ export async function putGameBookingSnapshots(
   });
 }
 
-function linkGamePatchToUpdateData(patch: LinkBookingToGamePatch): Prisma.GameUncheckedUpdateInput {
+function linkGamePatchToUpdateData(
+  patch: LinkBookingToGamePatch,
+  timeZone: string,
+): Prisma.GameUncheckedUpdateInput {
   const data: Prisma.GameUncheckedUpdateInput = {};
   if (patch.clubId !== undefined) data.clubId = patch.clubId;
   if (patch.courtId !== undefined) data.courtId = patch.courtId;
-  if (patch.startTime !== undefined) data.startTime = new Date(patch.startTime);
-  if (patch.endTime !== undefined) data.endTime = new Date(patch.endTime);
+  if (patch.startTime !== undefined) {
+    data.startTime =
+      parseBooktimeStoredOrNaiveToDate(patch.startTime, timeZone) ?? new Date(patch.startTime);
+  }
+  if (patch.endTime !== undefined) {
+    data.endTime =
+      parseBooktimeStoredOrNaiveToDate(patch.endTime, timeZone) ?? new Date(patch.endTime);
+  }
   if (patch.timeIsSet !== undefined) data.timeIsSet = patch.timeIsSet;
   if (patch.hasBookedCourt !== undefined) data.hasBookedCourt = patch.hasBookedCourt;
   return data;
@@ -400,6 +410,7 @@ export async function linkBookingToGame(
   }
 
   const { externalBookingId, snapshot, gamePatch } = parseLinkBookingToGameBody(body);
+  const timeZone = await resolveBooktimeTimezoneForGame(gameId);
 
   await prisma.$transaction(async (tx) => {
     const game = await tx.game.findUnique({
@@ -417,7 +428,7 @@ export async function linkBookingToGame(
     }
 
     if (gamePatch) {
-      const patchData = linkGamePatchToUpdateData(gamePatch);
+      const patchData = linkGamePatchToUpdateData(gamePatch, timeZone);
       if (Object.keys(patchData).length > 0) {
         await tx.game.update({ where: { id: gameId }, data: patchData });
       }
@@ -428,7 +439,7 @@ export async function linkBookingToGame(
         gameId,
         externalBookingId,
         externalBookingProvider: ClubIntegrationType.BOOKTIME,
-        ...snapshotToRowData(snapshot),
+        ...snapshotToRowData(snapshot, timeZone),
       },
     });
 
