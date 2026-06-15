@@ -1,0 +1,7 @@
+{
+  "push": {
+    "reply": "Reply",
+    "replyPlaceholder": "Reply…",
+    "replyFailed": "Couldn't send your reply"
+  }
+}

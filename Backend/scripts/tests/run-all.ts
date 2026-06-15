@@ -647,6 +647,78 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'chat notification media preview',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'shared', 'chat-notification-media-preview.test.ts'),
+    ],
+  },
+  {
+    label: 'fcm chat media preview',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'push', 'fcm.service.test.ts'),
+    ],
+  },
+  {
+    label: 'apns mutable content',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'push', 'push-notification.service.test.ts'),
+    ],
+  },
+  {
+    label: 'user chat push preview',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'push', 'notifications', 'user-chat-push.notification.test.ts'),
+    ],
+  },
+  {
+    label: 'game chat push preview',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'push', 'notifications', 'game-chat-push.notification.test.ts'),
+    ],
+  },
+  {
+    label: 'group chat push preview',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'push', 'notifications', 'group-chat-push.notification.test.ts'),
+    ],
+  },
+  {
+    label: 'bug chat push preview',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'push', 'notifications', 'bug-chat-push.notification.test.ts'),
+    ],
+  },
+  {
+    label: 'telegram chat media preview',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'telegram', 'notifications', 'telegram-chat-media.notification.test.ts'),
+    ],
+  },
+  {
     label: 'game external booking',
     command: process.execPath,
     args: [

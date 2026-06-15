@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="notification_channel_messages">Zprávy</string>
+    <string name="notification_channel_messages_desc">Oznámení o chatových zprávách</string>
+    <string name="push_reply_hint">Odpovědět</string>
+    <string name="push_reply_failed">Nepodařilo se odeslat</string>
+    <string name="push_reply_self">Vy</string>
+</resources>

@@ -12,6 +12,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
+import com.funified.bandeja.auth.AuthBridgePlugin;
+import com.funified.bandeja.push.ChatNotificationHelper;
 import ee.forgr.capacitor.social.login.GoogleProvider;
 import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
 import ee.forgr.capacitor.social.login.SocialLoginPlugin;
@@ -33,7 +35,9 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(AuthBridgePlugin.class);
         super.onCreate(savedInstanceState);
+        ChatNotificationHelper.ensureChannel(this);
         
         // Enable edge-to-edge display for safe area insets
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);

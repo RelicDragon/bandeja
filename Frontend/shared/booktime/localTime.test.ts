@@ -8,6 +8,7 @@ import {
   isAlreadyStoredUtcIso,
   isBooktimeFakeUtcIso,
   isBooktimeNaiveLocalIso,
+  storedUtcIsoToBooktimeWireIso,
 } from './localTime';
 
 const TZ = 'Europe/Belgrade';
@@ -85,5 +86,10 @@ describe('booktime localTime', () => {
     expect(booktimeIngestToStoredUtcIso(booktimeIngestToStoredUtcIso(stored, TZ)!, TZ)).toBe(
       '2026-06-15T12:00:00.000Z',
     );
+  });
+
+  it('converts stored UTC back to naive wire ISO for outbound API calls', () => {
+    const stored = booktimeWireFormatToStoredUtcIso('2026-06-14T18:00', TZ)!;
+    expect(storedUtcIsoToBooktimeWireIso(stored, TZ)).toBe('2026-06-14T18:00');
   });
 });

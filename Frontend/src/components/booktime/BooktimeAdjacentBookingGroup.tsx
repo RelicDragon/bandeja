@@ -7,7 +7,10 @@ import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { BooktimeBookingRow } from './BooktimeBookingRow';
+import { BooktimeBookingPriceLabel } from './BooktimeBookingPriceLabel';
 import { BooktimeSlotTimeCards } from './BooktimeSlotTimeCards';
+import { buildBooktimePriceById, sumBooktimeBookingPrices } from './booktimeBookingPrices';
+import { useBooktimeClubCurrency } from './useBooktimeClubCurrency';
 import {
   formatBooktimeBookingDate,
   resolveCourtForBooking,
@@ -39,6 +42,15 @@ export function BooktimeAdjacentBookingGroup({
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const [expanded, setExpanded] = useState(false);
   const courtInfo = resolveCourtForBooking(bookings[0]!, club, t('club.booktime.unknownCourt'));
+  const currency = useBooktimeClubCurrency(club);
+  const priceById = useMemo(
+    () => (currency ? buildBooktimePriceById(bookings, currency) : new Map()),
+    [bookings, currency],
+  );
+  const totalPrice = useMemo(
+    () => (currency ? sumBooktimeBookingPrices(bookings, currency) : null),
+    [bookings, currency],
+  );
 
   return (
     <li
@@ -65,6 +77,7 @@ export function BooktimeAdjacentBookingGroup({
           <p className="text-xs text-gray-500 dark:text-gray-400">
             {formatBooktimeBookingDate(bookings[0]!, { timezone: clubTimezone, displaySettings })}
           </p>
+          <BooktimeBookingPriceLabel quote={totalPrice} />
           <div
             className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
               expanded ? 'grid-rows-[0fr] opacity-0 pointer-events-none' : 'grid-rows-[1fr] opacity-100'
@@ -72,7 +85,11 @@ export function BooktimeAdjacentBookingGroup({
             aria-hidden={expanded}
           >
             <div className={`min-h-0 overflow-hidden ${compact ? 'pt-1' : 'pt-1.5'}`}>
-              <BooktimeSlotTimeCards bookings={bookings} clubTimezone={clubTimezone} />
+              <BooktimeSlotTimeCards
+                bookings={bookings}
+                clubTimezone={clubTimezone}
+                priceById={priceById}
+              />
             </div>
           </div>
         </div>
@@ -102,6 +119,7 @@ export function BooktimeAdjacentBookingGroup({
                 compact={compact}
                 clubTimezone={clubTimezone}
                 nested
+                priceQuote={priceById.get(booking.uuid) ?? null}
                 onRefreshSnapshot={onRefreshSnapshot}
                 onCanceled={() => onCanceled?.(booking.uuid)}
               />

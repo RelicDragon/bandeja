@@ -8,13 +8,41 @@ import { PreferenceKey } from '../../../types/notifications.types';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import {
-  formatChatNotificationMessageBody,
   formatUserName,
   truncateBugNotificationTitle,
 } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
-import { buildMessageWithButtons } from '../shared/message-builder';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { sendTelegramChatMediaNotification } from './telegram-chat-media.notification';
+
+async function sendBugChatTelegramToUser(
+  api: Api,
+  params: {
+    telegramId: string;
+    lang: string;
+    message: any;
+    senderName: string;
+    bugText: string;
+    bugId: string;
+    bugChatUrl: string;
+  }
+): Promise<void> {
+  const captionPrefix = `🐛 ${escapeMarkdown(t('notifications.bugReport', params.lang))}: ${escapeMarkdown(params.bugText)}`;
+  const buttons = [[
+    { text: t('telegram.viewBug', params.lang), url: params.bugChatUrl },
+    { text: t('telegram.reply', params.lang), callback_data: `rbm:${params.message.id}:${params.bugId}` },
+  ]];
+
+  await sendTelegramChatMediaNotification(api, {
+    telegramId: params.telegramId,
+    message: params.message,
+    senderName: params.senderName,
+    captionPrefix,
+    buttons,
+    lang: params.lang,
+    senderLineStyle: 'context',
+  });
+}
 
 export async function sendBugChatNotification(
   api: Api,
@@ -24,19 +52,10 @@ export async function sendBugChatNotification(
 ) {
   const bugText = truncateBugNotificationTitle(bug.text);
   const senderName = formatUserName(sender);
-  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
-
-  const getBugMessage = (lang: string) =>
-    `🐛 ${escapeMarkdown(t('notifications.bugReport', lang))}: ${escapeMarkdown(bugText)}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
 
   const bugChatUrl = bug.groupChannel
     ? `${config.frontendUrl}/bugs/${bug.groupChannel.id}`
     : `${config.frontendUrl}/bugs`;
-
-  const buildBugButtons = (lang: string) => [[
-    { text: t('telegram.viewBug', lang), url: bugChatUrl },
-    { text: t('telegram.reply', lang), callback_data: `rbm:${message.id}:${bug.id}` }
-  ]];
 
   const mentionIds = message.mentionIds || [];
   const hasMentions = mentionIds.length > 0;
@@ -118,9 +137,15 @@ export async function sendBugChatNotification(
         notifiedUserIds.add(userId);
         try {
           const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
-          const buttons = buildBugButtons(lang);
-          const { message: finalMessage, options } = buildMessageWithButtons(`${getBugMessage(lang)}`, buttons, lang);
-          await api.sendMessage(user.telegramId, finalMessage, options);
+          await sendBugChatTelegramToUser(api, {
+            telegramId: user.telegramId,
+            lang,
+            message,
+            senderName,
+            bugText,
+            bugId: bug.id,
+            bugChatUrl,
+          });
         } catch (error) {
           if (!isBenignTelegramRecipientError(error)) {
             console.error(`Failed to send Telegram notification to mentioned user ${userId}:`, error);
@@ -170,9 +195,15 @@ export async function sendBugChatNotification(
       if (!isMuted && bugCreator.telegramId && creatorAllowed) {
         try {
           const lang = await getUserLanguageFromTelegramId(bugCreator.telegramId, undefined);
-          const buttons = buildBugButtons(lang);
-          const { message: finalMessage, options } = buildMessageWithButtons(getBugMessage(lang), buttons, lang);
-          await api.sendMessage(bugCreator.telegramId, finalMessage, options);
+          await sendBugChatTelegramToUser(api, {
+            telegramId: bugCreator.telegramId,
+            lang,
+            message,
+            senderName,
+            bugText,
+            bugId: bug.id,
+            bugChatUrl,
+          });
         } catch (error) {
           if (!isBenignTelegramRecipientError(error)) {
             console.error(`Failed to send Telegram notification to bug creator ${bugCreator.id}:`, error);
@@ -197,9 +228,15 @@ export async function sendBugChatNotification(
       notifiedUserIds.add(user.id);
       try {
         const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
-        const buttons = buildBugButtons(lang);
-        const { message: finalMessage, options } = buildMessageWithButtons(getBugMessage(lang), buttons, lang);
-        await api.sendMessage(user.telegramId, finalMessage, options);
+        await sendBugChatTelegramToUser(api, {
+          telegramId: user.telegramId,
+          lang,
+          message,
+          senderName,
+          bugText,
+          bugId: bug.id,
+          bugChatUrl,
+        });
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {
           console.error(`Failed to send Telegram notification to bug participant ${user.id}:`, error);
@@ -219,9 +256,15 @@ export async function sendBugChatNotification(
       notifiedUserIds.add(admin.id);
       try {
         const lang = await getUserLanguageFromTelegramId(admin.telegramId, undefined);
-        const buttons = buildBugButtons(lang);
-        const { message: finalMessage, options } = buildMessageWithButtons(getBugMessage(lang), buttons, lang);
-        await api.sendMessage(admin.telegramId, finalMessage, options);
+        await sendBugChatTelegramToUser(api, {
+          telegramId: admin.telegramId,
+          lang,
+          message,
+          senderName,
+          bugText,
+          bugId: bug.id,
+          bugChatUrl,
+        });
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {
           console.error(`Failed to send Telegram notification to admin ${admin.id}:`, error);

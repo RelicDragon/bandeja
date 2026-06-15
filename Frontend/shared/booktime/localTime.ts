@@ -261,3 +261,24 @@ export function booktimeBookingStartMs(
   const parsed = booktimeIsoToInstant(bookingStart, timeZone);
   return parsed ? parsed.getTime() : 0;
 }
+
+/** Stored UTC ISO → naive local wire string for outbound Booktime API calls (e.g. get-price). */
+export function storedUtcIsoToBooktimeWireIso(
+  storedUtcIso: string,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+): string | null {
+  const instant = storedUtcIsoToInstant(storedUtcIso);
+  if (!instant) return null;
+
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(instant);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '00';
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
+}

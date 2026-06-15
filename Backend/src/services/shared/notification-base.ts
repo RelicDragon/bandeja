@@ -1,4 +1,3 @@
-import { convertMentionsToPlaintext } from '../../utils/parseMentions';
 import { formatDateInTimezone, getDateLabelInTimezone, getShortDayOfWeek, getUserTimezoneFromCityId } from '../user-timezone.service';
 import { formatDuration, escapeMarkdown } from '../telegram/utils';
 import { t } from '../../utils/translations';
@@ -7,7 +6,10 @@ import { Sport } from '@prisma/client';
 import { resolveSport } from '../../sport/sportRegistry';
 import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
 import { appendTelegramGameScheduleExtras } from './notificationSport';
-import { formatStoryReplyNotificationBody, hasStoryReplyPayload } from '../chat/storyReplySanitize';
+import {
+  resolveChatNotificationMediaPreview,
+  type ChatMessageForMediaPreview,
+} from './chat-notification-media-preview';
 
 export interface GameInfo {
   id: string;
@@ -334,34 +336,9 @@ export async function formatNewGameText(
 }
 
 export function formatChatNotificationMessageBody(
-  message: {
-    content?: string | null;
-    messageType?: string;
-    mediaUrls?: string[];
-    audioDurationMs?: number | null;
-    videoDurationMs?: number | null;
-    storyReply?: unknown;
-  },
+  message: ChatMessageForMediaPreview,
   lang = 'en'
 ): string {
-  if (hasStoryReplyPayload(message.storyReply)) {
-    return formatStoryReplyNotificationBody(message.content, lang);
-  }
-
-  if (message.messageType === 'VOICE' && message.audioDurationMs != null) {
-    const totalSec = Math.floor(message.audioDurationMs / 1000);
-    const mm = Math.floor(totalSec / 60);
-    const ss = totalSec % 60;
-    return `🎤 Voice message (${mm}:${ss.toString().padStart(2, '0')})`;
-  }
-  if (message.messageType === 'VIDEO' && message.videoDurationMs != null) {
-    const totalSec = Math.floor(message.videoDurationMs / 1000);
-    const mm = Math.floor(totalSec / 60);
-    const ss = totalSec % 60;
-    return `🎬 Video (${mm}:${ss.toString().padStart(2, '0')})`;
-  }
-  if (message.content?.trim()) return convertMentionsToPlaintext(message.content);
-  if (message.mediaUrls && message.mediaUrls.length > 0) return '[Media]';
-  return '';
+  return resolveChatNotificationMediaPreview(message, lang).body;
 }
 

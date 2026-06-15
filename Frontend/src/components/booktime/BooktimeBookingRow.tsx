@@ -24,6 +24,9 @@ import {
 import { buildCreateGameDeepLinkParams } from '@/services/gameBooking/linkBookingToGame';
 import { BooktimeLinkedGameLink } from './BooktimeLinkedGameLink';
 import { BooktimeLinkGameButton } from './BooktimeLinkGameModal';
+import { BooktimeBookingPriceLabel } from './BooktimeBookingPriceLabel';
+import { bookingPriceQuote } from './booktimeBookingPrices';
+import { useBooktimeClubCurrency } from './useBooktimeClubCurrency';
 
 type Props = {
   booking: BooktimeBookingRecord;
@@ -48,6 +51,7 @@ type Props = {
     integrationCourtName?: string | null;
   };
   nested?: boolean;
+  priceQuote?: ReturnType<typeof bookingPriceQuote>;
 };
 
 function LinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
@@ -81,6 +85,7 @@ export function BooktimeBookingRow({
   trailing,
   courtOverride,
   nested = false,
+  priceQuote: priceQuoteProp,
 }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -101,6 +106,9 @@ export function BooktimeBookingRow({
       }
     : resolveCourtForBooking(booking, club, t('club.booktime.unknownCourt'));
   const cancellable = canCancelByPolicy(booking.bookingStart, allowedHoursToCancel, clubTimezone);
+  const currency = useBooktimeClubCurrency(club);
+  const priceQuote =
+    priceQuoteProp !== undefined ? priceQuoteProp : bookingPriceQuote(booking, currency ?? '');
 
   const openCreateGame = () => {
     onCreateGame?.();
@@ -148,6 +156,7 @@ export function BooktimeBookingRow({
       <p className="text-xs text-gray-500 dark:text-gray-400">
         {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings })}
       </p>
+      <BooktimeBookingPriceLabel quote={priceQuote} />
       {selectable ? <LinkedGamesPills games={linkedGames} /> : null}
       {!selectable
         ? linkedGames.map((game) => <BooktimeLinkedGameLink key={game.id} game={game} />)

@@ -59,12 +59,43 @@ import {
   getChatMessageById,
   postChatListRowPreviews,
 } from '../controllers/chat.controller';
+import { pushReply } from '../controllers/pushReply.controller';
+import { pushConfirmReceipt } from '../controllers/pushConfirmReceipt.controller';
 import { authenticate, AuthRequest } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import rateLimit from 'express-rate-limit';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
 const router = Router();
+
+const pushReplyLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: { success: false, message: 'Too many push replies, please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
+});
+
+router.post(
+  '/push-reply',
+  pushReplyLimiter,
+  validate([
+    body('replyToken').isString().trim().notEmpty().withMessage('replyToken is required'),
+    body('content').isString().trim().notEmpty().withMessage('content is required'),
+    body('clientMutationId').optional().isString(),
+  ]),
+  pushReply
+);
+
+router.post(
+  '/push-confirm-receipt',
+  pushReplyLimiter,
+  validate([
+    body('replyToken').isString().trim().notEmpty().withMessage('replyToken is required'),
+  ]),
+  pushConfirmReceipt
+);
 
 router.use(authenticate);
 

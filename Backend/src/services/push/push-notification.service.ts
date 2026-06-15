@@ -1,10 +1,16 @@
 import apn from 'apn';
 import { config } from '../../config/env';
 import { PushTokenService } from './push-token.service';
-import { NotificationPayload, NotificationType } from '../../types/notifications.types';
+import { NotificationPayload } from '../../types/notifications.types';
 import { PushPlatform } from '@prisma/client';
 import fcmService from './fcm.service';
 import { canDispatchToUser } from '../../utils/notificationDispatchGuard';
+import { preparePushPayloadForRecipient } from './preparePushPayload';
+import { resolveApnsNotificationCategory } from './notifications/chat-push-reply.utils';
+
+export function shouldSetApnsMutableContent(previewImageUrl: string | undefined): boolean {
+  return !!previewImageUrl?.trim() && previewImageUrl.trim().startsWith('https://');
+}
 
 class PushNotificationService {
   private apnProvider: apn.Provider | null = null;
@@ -76,9 +82,22 @@ class PushNotificationService {
         data: payload.data || {}
       };
 
-      if (payload.actions && payload.actions.length > 0) {
-        (notification as any).category =
-          payload.type === NotificationType.TEAM_INVITE ? NotificationType.INVITE : payload.type;
+      if (payload.category) {
+        (notification as apn.Notification & { category?: string }).category = payload.category;
+      } else {
+        const category = resolveApnsNotificationCategory(payload);
+        if (category) {
+          (notification as apn.Notification & { category?: string }).category = category;
+        }
+      }
+
+      if (payload.threadId) {
+        (notification as apn.Notification & { threadId?: string }).threadId = payload.threadId;
+      }
+
+      const previewImageUrl = payload.data?.previewImageUrl;
+      if (shouldSetApnsMutableContent(previewImageUrl)) {
+        notification.mutableContent = true;
       }
 
       console.log(`[APNS] Sending notification with topic: ${config.apns.bundleId}`);
@@ -133,13 +152,15 @@ class PushNotificationService {
       return 0;
     }
 
+    const prepared = await preparePushPayloadForRecipient(userId, payload);
+
     let successCount = 0;
     for (let i = 0; i < tokens.length; i++) {
       const tokenRecord = tokens[i];
       console.log(`[APNS] Sending to iOS token ${i + 1}/${tokens.length} (deviceId: ${tokenRecord.deviceId || 'unknown'})`);
       
       try {
-        const success = await this.sendIOSNotification(tokenRecord.token, payload);
+        const success = await this.sendIOSNotification(tokenRecord.token, prepared);
         if (success) {
           successCount++;
           console.log(`[APNS] ✅ Success for token ${i + 1}/${tokens.length}`);
@@ -176,13 +197,15 @@ class PushNotificationService {
       return 0;
     }
 
+    const prepared = await preparePushPayloadForRecipient(userId, payload);
+
     let successCount = 0;
     for (let i = 0; i < tokens.length; i++) {
       const tokenRecord = tokens[i];
       console.log(`[FCM] Sending to Android token ${i + 1}/${tokens.length} (deviceId: ${tokenRecord.deviceId || 'unknown'})`);
       
       try {
-        const success = await this.sendAndroidNotification(tokenRecord.token, payload);
+        const success = await this.sendAndroidNotification(tokenRecord.token, prepared);
         if (success) {
           successCount++;
           console.log(`[FCM] ✅ Success for token ${i + 1}/${tokens.length}`);

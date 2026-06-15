@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { Capacitor } from '@capacitor/core';
 import { User } from '@/types';
 import i18n from '@/i18n/config';
-import { syncTokenToNative, syncLogoutToNative } from '@/services/authBridge';
+import { syncTokenToNative, syncLogoutToNative, syncApiBaseUrlToNative } from '@/services/authBridge';
 import {
   clearRefreshBundle,
   getRefreshTokenForRequest,
@@ -53,6 +53,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       savedToken = tokenStr;
       console.log('Token loaded from localStorage');
       syncTokenToNative(tokenStr);
+      void syncApiBaseUrlToNative();
     }
     
     if (userStr) {
@@ -81,6 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       localStorage.setItem('token', token);
       set({ user, token, isAuthenticated: true });
       syncTokenToNative(token);
+      void syncApiBaseUrlToNative();
       if (opts?.refreshToken) {
         await persistRefreshBundle(opts.refreshToken, opts.currentSessionId);
       } else if (opts?.currentSessionId && isWebHttpOnlyRefreshCookie()) {
@@ -149,6 +151,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
         localStorage.setItem('token', token);
         set({ token, isAuthenticated: true });
         syncTokenToNative(token);
+      void syncApiBaseUrlToNative();
         scheduleProactiveAccessRefresh(token);
       } catch (error) {
         console.error('Error saving token to localStorage:', error);

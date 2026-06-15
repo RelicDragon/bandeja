@@ -126,6 +126,7 @@ model User {
   trainerRating               Float?
   trainerReviewCount          Int                 @default(0)
   pushTokens                 PushToken[]
+  pushReplyTokens            PushReplyToken[]
   messageReports             MessageReport[]      @relation("MessageReportReporter")
   blockedUsers               BlockedUser[]        @relation("UserBlocked")
   blockedBy                    BlockedUser[]        @relation("UserBlockedBy")
@@ -2411,6 +2412,25 @@ enum PriceCurrency {
   MYR  // Malaysian Ringgit
   IDR  // Indonesian Rupiah
   PHP  // Philippine Peso
+}
+
+model PushReplyToken {
+  id               String          @id @default(cuid())
+  tokenHash        String          @unique
+  recipientUserId  String
+  chatContextType  ChatContextType
+  contextId        String
+  messageId        String
+  chatType         ChatType?
+  clientMutationId String?
+  resultMessageId  String?
+  usedAt           DateTime?
+  expiresAt        DateTime
+  createdAt        DateTime        @default(now())
+  recipient        User            @relation(fields: [recipientUserId], references: [id], onDelete: Cascade)
+
+  @@index([recipientUserId])
+  @@index([expiresAt])
 }
 
 model PushToken {

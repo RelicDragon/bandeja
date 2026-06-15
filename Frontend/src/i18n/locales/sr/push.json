@@ -1,0 +1,7 @@
+{
+  "push": {
+    "reply": "Odgovori",
+    "replyPlaceholder": "Odgovori…",
+    "replyFailed": "Nije moguće poslati odgovor"
+  }
+}

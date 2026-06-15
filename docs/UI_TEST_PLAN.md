@@ -282,6 +282,7 @@ Frontend/e2e/
 | H-38a | Adjacent booking group (My tab) | User with 2+ back-to-back slots same court | One grouped card with date + small time chips per slot; tap expands individual slots with cancel/link actions |
 | H-38b | Linked game on booking card (My tab) | Upcoming booking linked to one game | Single tappable "Linked game" chip; no duplicate "Also used in" line |
 | H-38c | Booking times use club TZ | Club city TZ ≠ Europe/Belgrade; upcoming booking on My tab or connected-clubs page | Wall-clock times match club city TZ (not Belgrade default) |
+| H-38d | Booking card prices (My tab) | Connected user with priced upcoming booking(s) | Single card shows slot price from booking list; grouped adjacent slots show per-slot price on chips and summed total on card header (no separate price loading state) |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
 ---
@@ -1010,6 +1011,18 @@ Frontend/e2e/
 | X-35 | Tap bracket schedule push | Routes to league schedule/bracket tab |
 | X-36 | Tap DM push | Routes to `/user-chat/:id` |
 | X-37 | Permission prompt | First launch push permission | `@manual` |
+| PN-R1 | iOS inline chat reply (background) | DM push → expand → reply | Message sent with `replyToId`; no app open |
+| PN-R2 | iOS inline reply (killed, token-only) | Force-quit → reply from lock screen without JWT | Reply via `POST /chat/push-reply` succeeds |
+| PN-R3 | Android inline chat reply (killed) | Shade reply with app killed | Message sent via native `replyToken` path |
+| PN-R4 | Android game invite actions | Game invite push → Accept/Decline from shade | Same outcome as in-app invite handlers |
+| PN-R5 | Android team invite actions | Team invite push → Accept/Decline | Navigates or declines per handler |
+| PN-R6 | iOS Communication Notification | Chat push on iOS 15+ with entitlement | Rich sender layout; inline reply still works |
+| PN-R7 | Invalid reply token | Reply after token reuse/expiry | Localized "Couldn't send your reply" |
+| PN-R8 | Story push | Story like notification | No reply action |
+| PN-M1 | Image chat push thumbnail (iOS) | Send image in DM with app backgrounded/killed | Expanded notification shows photo thumbnail; tap opens chat |
+| PN-M2 | Image chat push thumbnail (Android) | Send image in game chat with app backgrounded | Collapsed/expanded notification shows thumbnail as large icon; MessagingStyle conversation + inline reply preserved |
+| PN-M3 | Video chat push poster | Send video message push | Poster thumbnail visible; text shows duration label |
+| PN-M4 | Story-reply push thumbnail | Reply to a story with thumbnail in DM | Push shows story thumb on iOS (NSE) / Android large icon; body shows story-reply label |
 
 ### 18.9 Native permissions (manual)
 

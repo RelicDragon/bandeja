@@ -15,4 +15,5 @@ export {
   parseBooktimeStoredOrNaiveToUtcIso,
   parseBooktimeStoredOrNaiveToDate,
   booktimeBookingStartMs,
+  storedUtcIsoToBooktimeWireIso,
 } from '@shared/booktime/localTime';

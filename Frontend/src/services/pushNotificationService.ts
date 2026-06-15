@@ -8,6 +8,17 @@ import { getAppInfo } from '@/utils/capacitor';
 import { pushApi } from '@/api/push';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { parsePushChatContext } from '@/services/push/parsePushChatContext';
+import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
+import {
+  PUSH_ACTION_ACCEPT,
+  PUSH_ACTION_DECLINE,
+  PUSH_ACTION_REPLY,
+  PUSH_REPLY_MAX_CONTENT_LENGTH,
+} from '@/services/push/pushNotificationConstants';
+import { chatApi } from '@/api/chat';
+import { restoreAuthIfNeeded } from '@/utils/authPersistence';
+import { getTokenNative } from '@/services/authBridge';
 
 interface NotificationData {
   type: string;
@@ -26,6 +37,9 @@ interface NotificationData {
     scheduleSubtab?: string;
     scheduleGroup?: string;
     scheduleRoundId?: string;
+    chatContextType?: string;
+    contextId?: string;
+    replyToken?: string;
   };
 }
 
@@ -96,8 +110,12 @@ class PushNotificationService {
 
     await PushNotifications.addListener(
       'pushNotificationReceived',
-      (notification: PushNotificationSchema) => {
+      async (notification: PushNotificationSchema) => {
         console.log('Push notification received:', notification);
+        if (Capacitor.getPlatform() === 'android' && parsePushChatContext(notification.data)) {
+          return;
+        }
+        await this.confirmPushMessageReceipt(notification.data);
       }
     );
 
@@ -216,28 +234,87 @@ class PushNotificationService {
     }
 
     if (actionId === 'tap') {
-      await this.handleNotificationTap(normalizedData);
-    } else if (actionId === 'accept') {
+      await this.handleNotificationTap(normalizedData, notification.data);
+    } else if (actionId === PUSH_ACTION_ACCEPT) {
       if (normalizedData.type === 'TEAM_INVITE') {
         await this.handleAcceptTeamInvite(normalizedData);
       } else {
         await this.handleAcceptInvite(normalizedData);
       }
-    } else if (actionId === 'decline') {
+    } else if (actionId === PUSH_ACTION_DECLINE) {
       if (normalizedData.type === 'TEAM_INVITE') {
         await this.handleDeclineTeamInvite(normalizedData);
       } else {
         await this.handleDeclineInvite(normalizedData);
       }
+    } else if (actionId === PUSH_ACTION_REPLY && action.inputValue?.trim()) {
+      const ctx = parsePushChatContext(notification.data);
+      if (!ctx?.chatContextType || !ctx?.contextId || !ctx?.messageId) {
+        return;
+      }
+      const content = action.inputValue.trim().slice(0, PUSH_REPLY_MAX_CONTENT_LENGTH);
+      await this.handleChatReply(ctx, content);
     }
   }
 
-  private async handleNotificationTap(data: NotificationData) {
+  private async confirmPushMessageReceipt(rawData: unknown): Promise<void> {
+    const ctx = parsePushChatContext(rawData);
+    if (!ctx?.messageId) {
+      return;
+    }
+
+    if (ctx.replyToken) {
+      try {
+        await api.post('/chat/push-confirm-receipt', { replyToken: ctx.replyToken });
+      } catch (error) {
+        console.warn('[push-reply] confirm receipt on receive (token) failed', error);
+      }
+      return;
+    }
+
+    restoreAuthIfNeeded();
+    let token = localStorage.getItem('token');
+    if (!token && Capacitor.getPlatform() === 'ios') {
+      token = await getTokenNative();
+      if (token) {
+        localStorage.setItem('token', token);
+        useAuthStore.getState().setToken(token);
+      }
+    }
+    if (!token) {
+      return;
+    }
+
+    try {
+      await chatApi.confirmMessageReceipt(ctx.messageId, 'push');
+    } catch (error) {
+      console.warn('[push-reply] confirm receipt on receive failed', error);
+    }
+  }
+
+  private async handleChatReply(
+    ctx: NonNullable<ReturnType<typeof parsePushChatContext>>,
+    content: string
+  ): Promise<void> {
+    if (ctx.replyToken) {
+      await sendChatReplyFromPush(ctx, content);
+      return;
+    }
+
+    restoreAuthIfNeeded();
+    const authUser = useAuthStore.getState().user;
+    if (authUser && authUser.nameIsSet !== true) {
+      runWithProfileName(() => void sendChatReplyFromPush(ctx, content));
+      return;
+    }
+    await sendChatReplyFromPush(ctx, content);
+  }
+
+  private async handleNotificationTap(data: NotificationData, rawData: unknown) {
     const { type, data: payload } = data;
 
     switch (type) {
       case 'INVITE':
-      case 'GAME_CHAT':
       case 'GAME_SYSTEM_MESSAGE':
       case 'GAME_REMINDER':
       case 'GAME_RESULTS':
@@ -246,24 +323,41 @@ class PushNotificationService {
           break;
         }
         if (payload?.gameId) {
-          const openChat = type === 'GAME_CHAT';
-          navigationService.navigateToGame(
-            payload.gameId,
-            openChat,
-            openChat
-              ? {
-                  forceReload: true,
-                  initialChatType: payload?.chatType,
-                  anchorMessageId: payload?.messageId,
-                }
-              : undefined
-          );
+          navigationService.navigateToGame(payload.gameId);
         }
         break;
 
+      case 'GAME_CHAT': {
+        const chatCtx = parsePushChatContext(rawData);
+        if (this.tryNavigateToBracketSchedule(payload)) {
+          break;
+        }
+        if (chatCtx) {
+          navigationService.navigateToGame(chatCtx.contextId, true, {
+            forceReload: true,
+            initialChatType: chatCtx.chatType,
+            anchorMessageId: chatCtx.messageId,
+          });
+        } else if (payload?.gameId) {
+          navigationService.navigateToGame(payload.gameId, true, {
+            forceReload: true,
+            initialChatType: payload?.chatType,
+            anchorMessageId: payload?.messageId,
+          });
+        }
+        break;
+      }
+
       case 'BUG_CHAT':
-      case 'NEW_BUG':
-        if (payload?.groupChannelId) {
+      case 'NEW_BUG': {
+        const chatCtx = type === 'BUG_CHAT' ? parsePushChatContext(rawData) : null;
+        if (chatCtx?.groupChannelId) {
+          navigationService.navigateToChannelChat(chatCtx.groupChannelId, {
+            anchorMessageId: chatCtx.messageId,
+          });
+        } else if (chatCtx) {
+          navigationService.navigateToBugChat(chatCtx.contextId);
+        } else if (payload?.groupChannelId) {
           navigationService.navigateToChannelChat(payload.groupChannelId, {
             anchorMessageId: payload?.messageId,
           });
@@ -273,17 +367,29 @@ class PushNotificationService {
           navigationService.navigateToBugsList();
         }
         break;
+      }
 
-      case 'USER_CHAT':
-        if (payload?.userChatId) {
-          navigationService.navigateToUserChat(payload.userChatId, {
-            anchorMessageId: payload?.messageId,
+      case 'USER_CHAT': {
+        const chatCtx = parsePushChatContext(rawData);
+        if (chatCtx) {
+          navigationService.navigateToUserChat(chatCtx.userChatId ?? chatCtx.contextId, {
+            anchorMessageId: chatCtx.messageId,
           });
         }
         break;
+      }
 
-      case 'GROUP_CHAT':
-        if (payload?.groupChannelId) {
+      case 'GROUP_CHAT': {
+        const chatCtx = parsePushChatContext(rawData);
+        if (chatCtx?.bugId) {
+          navigationService.navigateToBugChat(chatCtx.bugId);
+        } else if (chatCtx?.marketItemId) {
+          navigationService.navigateToMarketplace({ item: chatCtx.marketItemId });
+        } else if (chatCtx) {
+          navigationService.navigateToGroupChat(chatCtx.contextId, {
+            anchorMessageId: chatCtx.messageId,
+          });
+        } else if (payload?.groupChannelId) {
           if (payload.bugId) {
             navigationService.navigateToBugChat(payload.bugId);
           } else if (payload.marketItemId) {
@@ -295,6 +401,7 @@ class PushNotificationService {
           }
         }
         break;
+      }
 
       case 'NEW_MARKET_ITEM':
       case 'AUCTION_OUTBID':

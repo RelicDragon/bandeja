@@ -39,6 +39,7 @@ export interface NotificationAction {
   id: string;
   title: string;
   action: string;
+  input?: boolean;
 }
 
 export interface NotificationData {
@@ -47,6 +48,8 @@ export interface NotificationData {
   bugId?: string;
   userId?: string;
   inviteId?: string;
+  chatContextType?: string;
+  contextId?: string;
   chatType?: string;
   messageId?: string;
   userChatId?: string;
@@ -55,6 +58,15 @@ export interface NotificationData {
   marketItemId?: string;
   shortDayOfWeek?: string;
   teamId?: string;
+  replyToken?: string;
+  senderName?: string;
+  senderAvatarUrl?: string;
+  conversationKey?: string;
+  acceptActionTitle?: string;
+  declineActionTitle?: string;
+  previewImageUrl?: string;
+  previewMediaType?: string;
+  mediaCount?: number;
 }
 
 export interface NotificationPayload {
@@ -65,6 +77,8 @@ export interface NotificationPayload {
   actions?: NotificationAction[];
   badge?: number;
   sound?: string;
+  category?: string;
+  threadId?: string;
 }
 
 export interface UnifiedNotificationRequest {

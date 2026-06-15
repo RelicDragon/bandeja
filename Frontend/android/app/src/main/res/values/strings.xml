@@ -4,4 +4,12 @@
     <string name="title_activity_main">Bandeja</string>
     <string name="package_name">com.funified.bandeja</string>
     <string name="custom_url_scheme">com.funified.bandeja</string>
+    <string name="notification_channel_messages">Messages</string>
+    <string name="notification_channel_messages_desc">Chat message notifications</string>
+    <string name="push_reply_hint">Reply</string>
+    <string name="push_reply_failed">Couldn\'t send</string>
+    <string name="push_reply_self">You</string>
+    <string name="invite_accept">Accept</string>
+    <string name="invite_decline">Decline</string>
+    <string name="api_base_url_default" translatable="false">https://bandeja.me/api</string>
 </resources>

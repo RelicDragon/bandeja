@@ -35,6 +35,7 @@ import playerCard from './playerCard.json';
 import playerInvite from './playerInvite.json';
 import playerProfile from './playerProfile.json';
 import profile from './profile.json';
+import push from './push.json';
 import rating from './rating.json';
 import sportRating from './sportRating.json';
 import teams from './teams.json';
@@ -91,6 +92,7 @@ export default {
     ...playerInvite,
     ...playerProfile,
     ...profile,
+    ...push,
     ...rating,
     ...sportRating,
     ...teams,

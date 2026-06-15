@@ -2,12 +2,11 @@ import { Api } from 'grammy';
 import { ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
-import { buildMessageWithButtons } from '../shared/message-builder';
 import {
-  formatChatNotificationMessageBody,
   formatUserName,
   truncateBugNotificationTitle,
 } from '../../shared/notification-base';
+import { sendTelegramChatMediaNotification } from './telegram-chat-media.notification';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import prisma from '../../../config/database';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
@@ -15,6 +14,7 @@ import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { config } from '../../../config/env';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
+import { guardedTelegramSendMessage } from '../guardedTelegramSend';
 
 export async function sendGroupChatNotification(
   api: Api,
@@ -23,7 +23,6 @@ export async function sendGroupChatNotification(
   sender: any
 ) {
   const senderName = formatUserName(sender);
-  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
   const mentionIds = message.mentionIds || [];
   const hasMentions = mentionIds.length > 0;
   const mentionedUserIds = hasMentions ? new Set(mentionIds) : null;
@@ -84,8 +83,8 @@ export async function sendGroupChatNotification(
       const headerName = groupChannel.bug?.id
         ? truncateBugNotificationTitle(groupChannel.name)
         : groupChannel.name;
-      const formattedMessage = `${contextLabel}: *${escapeMarkdown(headerName)}*\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
-      
+      const captionPrefix = `${contextLabel}: *${escapeMarkdown(headerName)}*`;
+
       const viewButtonKey = groupChannel.bug?.id
         ? 'telegram.viewBug'
         : groupChannel.marketItem?.id
@@ -100,9 +99,20 @@ export async function sendGroupChatNotification(
         buttons.push({ text: t('telegram.reply', lang), callback_data: `rg:${message.id}:${groupChannel.id}` });
       }
 
-      const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, [buttons], lang);
-      
-      await api.sendMessage(user.telegramId, finalMessage, options);
+      const telegramId = user.telegramId;
+      await guardedTelegramSendMessage(
+        api,
+        { userId: user.id, telegramId, kind: 'group-chat' },
+        () => sendTelegramChatMediaNotification(api, {
+          telegramId,
+          message,
+          senderName,
+          captionPrefix,
+          buttons: [buttons],
+          lang,
+          senderLineStyle: 'context',
+        }),
+      );
     } catch (error) {
       if (!isBenignTelegramRecipientError(error)) {
         console.error(`Failed to send Telegram notification to user ${user.id}:`, error);

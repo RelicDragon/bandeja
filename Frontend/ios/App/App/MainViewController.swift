@@ -5,6 +5,7 @@ import Capacitor
 final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDelegate {
     override public func capacitorDidLoad() {
         bridge?.registerPluginInstance(AuthBridgePlugin())
+        bridge?.registerPluginInstance(BandejaPushDelegatePlugin())
     }
 
     override public func webViewConfiguration(for instanceConfiguration: InstanceConfiguration) -> WKWebViewConfiguration {

@@ -4,6 +4,8 @@ import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { isCapacitor, isIOS, isAndroid } from './capacitor';
 import { setupCapacitorNetwork } from './capacitorNetwork';
 import pushNotificationService from '@/services/pushNotificationService';
+import { registerPushNotificationActionTypes } from '@/services/push/registerPushNotificationActionTypes';
+import { syncApiBaseUrlToNative } from '@/services/authBridge';
 import {
   computeKeyboardInsetPx,
   isInsideKeyboardManagedSurface,
@@ -181,8 +183,11 @@ export const setupCapacitor = async () => {
     
     // Setup network monitoring first
     await setupCapacitorNetwork();
-    
-    // Initialize push notifications
+
+    // iOS invite action categories are registered here; Android invite buttons use native
+    // FCM handling in ChatReplyMessagingService (FCM notification payloads ignore actions[]).
+    await syncApiBaseUrlToNative();
+    await registerPushNotificationActionTypes();
     await pushNotificationService.initialize();
     
     // Show status bar first

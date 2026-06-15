@@ -1,10 +1,14 @@
 import { NotificationPayload, NotificationType } from '../../../types/notifications.types';
 import {
-  formatChatNotificationMessageBody,
   formatUserName,
   truncateBugNotificationTitle,
 } from '../../shared/notification-base';
+import {
+  mergeMediaPreviewIntoNotificationData,
+  resolveChatNotificationMediaPreview,
+} from '../../shared/chat-notification-media-preview';
 import { t } from '../../../utils/translations';
+import { withChatPushReplyPayload } from './chat-push-reply.utils';
 
 function getGroupNotificationTitle(groupChannel: any, lang: string): string {
   const name = groupChannel.bug?.id
@@ -14,6 +18,14 @@ function getGroupNotificationTitle(groupChannel: any, lang: string): string {
   if (groupChannel.marketItem?.id) return `🛒 ${t('notifications.marketplaceListing', lang)}: ${name}`;
   if (groupChannel.isChannel) return `📢 ${t('notifications.channel', lang)}: ${name}`;
   return `👥 ${t('notifications.group', lang)}: ${name}`;
+}
+
+function senderPushFields(sender: { firstName?: string | null; lastName?: string | null; avatar?: string | null }) {
+  const fields: Record<string, string> = { senderName: formatUserName(sender) };
+  if (sender.avatar?.trim()) {
+    fields.senderAvatarUrl = sender.avatar.trim();
+  }
+  return fields;
 }
 
 export async function createGroupChatPushNotification(
@@ -27,24 +39,27 @@ export async function createGroupChatPushNotification(
   }
 
   const senderName = formatUserName(sender);
-  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
-  const lang = recipient?.language ?? 'en';
+  const lang = (recipient?.language ?? 'en').split('-')[0].toLowerCase();
+  const preview = resolveChatNotificationMediaPreview(message, lang);
 
   const title = getGroupNotificationTitle(groupChannel, lang);
-  const body = `${senderName}: ${messageContent}`;
+  const body = `${senderName}: ${preview.body}`;
 
-  const data: Record<string, string> = {
+  const legacyFields: Record<string, string> = {
     groupChannelId: groupChannel.id,
-    messageId: message.id
+    ...senderPushFields(sender),
   };
-  if (groupChannel.bug?.id) data.bugId = groupChannel.bug.id;
-  if (groupChannel.marketItem?.id) data.marketItemId = groupChannel.marketItem.id;
+  if (groupChannel.bug?.id) legacyFields.bugId = groupChannel.bug.id;
+  if (groupChannel.marketItem?.id) legacyFields.marketItemId = groupChannel.marketItem.id;
+
+  const reply = withChatPushReplyPayload('GROUP', groupChannel.id, message.id, legacyFields, lang);
 
   return {
     type: NotificationType.GROUP_CHAT,
     title,
     body,
-    data,
-    sound: 'default'
+    data: mergeMediaPreviewIntoNotificationData(reply.data, preview),
+    actions: reply.actions,
+    sound: 'default',
   };
 }

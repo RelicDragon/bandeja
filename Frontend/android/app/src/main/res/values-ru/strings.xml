@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="notification_channel_messages">Сообщения</string>
+    <string name="notification_channel_messages_desc">Уведомления о сообщениях в чате</string>
+    <string name="push_reply_hint">Ответить</string>
+    <string name="push_reply_failed">Не удалось отправить</string>
+    <string name="push_reply_self">Вы</string>
+</resources>

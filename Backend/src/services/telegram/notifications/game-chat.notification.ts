@@ -2,10 +2,8 @@ import { Api } from 'grammy';
 import prisma from '../../../config/database';
 import { ChatType, ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
-import { buildMessageWithButtons } from '../shared/message-builder';
+import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import {
-  formatChatNotificationMessageBody,
   formatGameContextHeader,
   formatGameInfoForUser,
   formatUserName,
@@ -20,6 +18,64 @@ import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { guardedTelegramSendMessage } from '../guardedTelegramSend';
+import { sendTelegramChatMediaNotification } from './telegram-chat-media.notification';
+
+async function notifyGameChatRecipient(
+  api: Api,
+  params: {
+    user: {
+      id: string;
+      telegramId: string;
+      currentCityId: string | null;
+      primarySport: string | null;
+    };
+    lang: string;
+    game: any;
+    message: any;
+    senderName: string;
+    chatType: ChatType;
+  }
+): Promise<void> {
+  const { user, lang, game, message, senderName, chatType } = params;
+  const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
+  const entityLabel = getEntityTypeLabel(game.entityType, lang);
+  const showButtonText = getShowEntityButtonText(game.entityType, lang);
+  const scheduleLine = appendTelegramGameScheduleExtras(
+    `📍 ${escapeMarkdown(formatGameContextHeader(gameInfo))}`,
+    game,
+    user.primarySport,
+    lang,
+    escapeMarkdown,
+  );
+  const captionPrefix = entityLabel
+    ? `🏷️ ${escapeMarkdown(entityLabel)}\n${scheduleLine}`
+    : scheduleLine;
+  const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A' }[chatType] ?? 'P';
+  const buttons = [[
+    {
+      text: showButtonText,
+      callback_data: `sg:${game.id}:${user.id}`
+    },
+    {
+      text: t('telegram.reply', lang),
+      callback_data: `rm:${message.id}:${game.id}:${chatTypeChar}`
+    }
+  ]];
+
+  await guardedTelegramSendMessage(
+    api,
+    { userId: user.id, telegramId: user.telegramId, kind: 'game-chat' },
+    () => sendTelegramChatMediaNotification(api, {
+      telegramId: user.telegramId,
+      message,
+      senderName,
+      captionPrefix,
+      buttons,
+      lang,
+      senderLineStyle: 'context',
+    }),
+  );
+}
 
 export async function sendGameChatNotification(
   api: Api,
@@ -28,7 +84,6 @@ export async function sendGameChatNotification(
   sender: any
 ) {
   const senderName = formatUserName(sender);
-  const messageContent = formatChatNotificationMessageBody(message) || '[Media]';
 
   const chatType = message.chatType as ChatType;
   const participants = await prisma.gameParticipant.findMany({
@@ -57,7 +112,6 @@ export async function sendGameChatNotification(
     if (participant.status === 'INVITED' || participant.status === 'INVITE_DECLINED' || participant.status === 'INVITE_CANCELLED') continue;
     const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
     if (!allowed || !user.telegramId) continue;
-    const telegramId = user.telegramId;
 
     if (hasMentions) {
       if (!mentionedUserIds?.has(user.id)) {
@@ -75,43 +129,19 @@ export async function sendGameChatNotification(
     if (canSeeMessage) {
       try {
         const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
-        const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
-        const entityLabel = getEntityTypeLabel(game.entityType, lang);
-        const showButtonText = getShowEntityButtonText(game.entityType, lang);
-
-        const scheduleLine = appendTelegramGameScheduleExtras(
-          `📍 ${escapeMarkdown(formatGameContextHeader(gameInfo))}`,
-          game,
-          user.primarySport,
-          lang,
-          escapeMarkdown,
-        );
-        const header = entityLabel
-          ? `🏷️ ${escapeMarkdown(entityLabel)}\n${scheduleLine}`
-          : scheduleLine;
-        const formattedMessage = `${header}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
-        
-        const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A' }[chatType] ?? 'P';
-        
-        const buttons = [[
-          {
-            text: showButtonText,
-            callback_data: `sg:${game.id}:${user.id}`
+        await notifyGameChatRecipient(api, {
+          user: {
+            id: user.id,
+            telegramId: user.telegramId!,
+            currentCityId: user.currentCityId,
+            primarySport: user.primarySport,
           },
-          {
-            text: t('telegram.reply', lang),
-            callback_data: `rm:${message.id}:${game.id}:${chatTypeChar}`
-          }
-        ]];
-
-        const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
-        const trimmedMessage = trimTextForTelegram(finalMessage, false);
-        
-        await guardedTelegramSendMessage(
-          api,
-          { userId: user.id, telegramId, kind: 'game-chat' },
-          () => api.sendMessage(telegramId, trimmedMessage, options),
-        );
+          lang,
+          game,
+          message,
+          senderName,
+          chatType,
+        });
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {
           console.error(`Failed to send Telegram notification to user ${user.id}:`, error);
@@ -150,7 +180,6 @@ export async function sendGameChatNotification(
       if (parentParticipant.status === 'INVITED' || parentParticipant.status === 'INVITE_DECLINED' || parentParticipant.status === 'INVITE_CANCELLED') continue;
       const allowed = await NotificationPreferenceService.doesUserAllow(user.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_MESSAGES);
       if (!allowed || !user.telegramId) continue;
-      const telegramId = user.telegramId;
 
       if (currentGameUserIds.has(user.id)) {
         continue;
@@ -162,43 +191,19 @@ export async function sendGameChatNotification(
 
       try {
         const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
-        const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
-        const entityLabel = getEntityTypeLabel(game.entityType, lang);
-        const showButtonText = getShowEntityButtonText(game.entityType, lang);
-
-        const scheduleLine = appendTelegramGameScheduleExtras(
-          `📍 ${escapeMarkdown(formatGameContextHeader(gameInfo))}`,
-          game,
-          user.primarySport,
-          lang,
-          escapeMarkdown,
-        );
-        const header = entityLabel
-          ? `🏷️ ${escapeMarkdown(entityLabel)}\n${scheduleLine}`
-          : scheduleLine;
-        const formattedMessage = `${header}\n👤 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
-        
-        const chatTypeChar = { [ChatType.PUBLIC]: 'P', [ChatType.PRIVATE]: 'V', [ChatType.ADMINS]: 'A' }[chatType] ?? 'P';
-        
-        const buttons = [[
-          {
-            text: showButtonText,
-            callback_data: `sg:${game.id}:${user.id}`
+        await notifyGameChatRecipient(api, {
+          user: {
+            id: user.id,
+            telegramId: user.telegramId!,
+            currentCityId: user.currentCityId,
+            primarySport: user.primarySport,
           },
-          {
-            text: t('telegram.reply', lang),
-            callback_data: `rm:${message.id}:${game.id}:${chatTypeChar}`
-          }
-        ]];
-
-        const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
-        const trimmedMessage = trimTextForTelegram(finalMessage, false);
-        
-        await guardedTelegramSendMessage(
-          api,
-          { userId: user.id, telegramId, kind: 'game-chat' },
-          () => api.sendMessage(telegramId, trimmedMessage, options),
-        );
+          lang,
+          game,
+          message,
+          senderName,
+          chatType,
+        });
       } catch (error) {
         if (!isBenignTelegramRecipientError(error)) {
           console.error(`Failed to send Telegram notification to parent game admin ${user.id}:`, error);

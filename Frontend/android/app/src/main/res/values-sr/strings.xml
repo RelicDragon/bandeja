@@ -1,0 +1,8 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="notification_channel_messages">Poruke</string>
+    <string name="notification_channel_messages_desc">Obaveštenja o porukama u četu</string>
+    <string name="push_reply_hint">Odgovori</string>
+    <string name="push_reply_failed">Slanje nije uspelo</string>
+    <string name="push_reply_self">Vi</string>
+</resources>

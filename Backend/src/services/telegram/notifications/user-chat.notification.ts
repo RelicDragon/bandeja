@@ -1,15 +1,15 @@
 import { Api } from 'grammy';
 import { ChatContextType } from '@prisma/client';
 import { t } from '../../../utils/translations';
-import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
-import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatChatNotificationMessageBody, formatUserName } from '../../shared/notification-base';
+import { getUserLanguageFromTelegramId } from '../utils';
+import { formatUserName } from '../../shared/notification-base';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { guardedTelegramSendMessage } from '../guardedTelegramSend';
+import { sendTelegramChatMediaNotification } from './telegram-chat-media.notification';
 
 export async function sendUserChatNotification(
   api: Api,
@@ -19,8 +19,6 @@ export async function sendUserChatNotification(
 ) {
   const recipient = userChat.user1Id === sender.id ? userChat.user2 : userChat.user1;
   const senderName = formatUserName(sender);
-  const lang = (recipient?.language ?? 'en').split('-')[0].toLowerCase();
-  const messageContent = formatChatNotificationMessageBody(message, lang) || '[Media]';
 
   if (!recipient || recipient.id === sender.id) return;
   const allowed = await NotificationPreferenceService.doesUserAllow(recipient.id, NotificationChannelType.TELEGRAM, PreferenceKey.SEND_DIRECT_MESSAGES);
@@ -42,27 +40,29 @@ export async function sendUserChatNotification(
   }
 
   try {
-    const lang = await getUserLanguageFromTelegramId(recipient.telegramId, undefined);
-    const formattedMessage = `💬 *${escapeMarkdown(senderName)}*: ${escapeMarkdown(messageContent)}`;
-    
+    const resolvedLang = await getUserLanguageFromTelegramId(recipient.telegramId, undefined);
     const buttons = [[
       {
-        text: t('telegram.reply', lang),
+        text: t('telegram.reply', resolvedLang),
         callback_data: `rum:${message.id}:${userChat.id}`
       }
     ]];
 
-    const { message: finalMessage, options } = buildMessageWithButtons(formattedMessage, buttons, lang);
-    const trimmedMessage = trimTextForTelegram(finalMessage, false);
-    
     await guardedTelegramSendMessage(
       api,
       { userId: recipient.id, telegramId: recipient.telegramId, kind: 'user-chat' },
-      () => api.sendMessage(recipient.telegramId, trimmedMessage, options),
+      () => sendTelegramChatMediaNotification(api, {
+        telegramId: recipient.telegramId,
+        message,
+        senderName,
+        captionPrefix: '',
+        buttons,
+        lang: resolvedLang,
+        senderLineStyle: 'dm',
+      }),
     );
   } catch (error) {
     if (isBenignTelegramRecipientError(error)) return;
     console.error(`Failed to send Telegram notification to user ${recipient.id}:`, error);
   }
 }
-
