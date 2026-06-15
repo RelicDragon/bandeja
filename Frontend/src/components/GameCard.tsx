@@ -7,6 +7,7 @@ import { AnnouncedFireIcon } from '@/components/AnnouncedFireIcon';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { GameCardTrainerBadge } from '@/components/gameCard/GameCardTrainerBadge';
 import { GameCardInfoRows } from '@/components/gameCard/GameCardInfoRows';
+import { GameCardHeaderTags } from '@/components/gameCard/GameCardHeaderTags';
 import { Game } from '@/types';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { getGameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
@@ -34,7 +35,7 @@ import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { GameCardReactions } from '@/components/GameCardReactions';
-import { Users, MessageCircle, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Plane, Bookmark } from 'lucide-react';
+import { Users, MessageCircle, Dumbbell, Beer, Swords, Trophy, Plane, Bookmark } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -123,14 +124,19 @@ export const GameCard = ({
     onNoteSaved?.(game.id);
   }, [game.id, onNoteSaved]);
 
-  const hasOtherTags = (game.photosCount ?? 0) > 0 ||
+  const isLeagueEntity = game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON';
+  const isNonGameEntity = game.entityType !== 'GAME';
+
+  const hasOtherTags = isLeagueEntity && (
+    (game.photosCount ?? 0) > 0 ||
     !game.isPublic ||
     (game.genderTeams && game.genderTeams !== 'ANY') ||
     myParticipationBadge != null ||
     game.entityType !== 'GAME' ||
     !game.affectsRating ||
     game.hasFixedTeams ||
-    ((game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && game.resultsStatus === 'FINAL');
+    ((game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && game.resultsStatus === 'FINAL')
+  );
 
   const hasVisibleGameName = (game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name) ||
     (game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name) ||
@@ -143,8 +149,6 @@ export const GameCard = ({
   const isLeagueSeasonHeader =
     game.entityType === 'LEAGUE_SEASON' && Boolean(game.leagueSeason?.league?.name);
 
-  const isNonGameEntity = game.entityType !== 'GAME';
-
   /** Title row shows `game.name`, game-type fallback, league headers, or bookmark+entity when non-GAME without name */
   const bookmarkInTitleRow = isLeagueSeasonHeader
     ? true
@@ -154,7 +158,10 @@ export const GameCard = ({
         (game.entityType !== 'TRAINING' && !game.name && game.gameType !== 'CLASSIC') ||
         (!game.name && isNonGameEntity);
 
-  const shouldMoveIconsToTitle = hasVisibleGameName && !hasOtherTags;
+  const shouldMoveIconsToTitle = isLeagueEntity && hasVisibleGameName && !hasOtherTags;
+
+  const nonLeagueShowEntityIcon = !isLeagueEntity && bookmarkInTitleRow && isNonGameEntity;
+  const nonLeagueShowEntityPill = !isLeagueEntity && isNonGameEntity && !bookmarkInTitleRow;
 
   const userCityId = effectiveUser?.currentCity?.id || effectiveUser?.currentCityId;
   const gameCityId = game.city?.id;
@@ -252,7 +259,7 @@ export const GameCard = ({
     (shouldShowTiming ? ` ${timeRangeDisplay.primaryText}` : '');
 
   const titleEntityInlineIcon =
-    bookmarkInTitleRow && isNonGameEntity ? (
+    (isLeagueEntity ? bookmarkInTitleRow && isNonGameEntity : nonLeagueShowEntityIcon) ? (
       game.entityType === 'TOURNAMENT' ? (
         <span
           className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-red-400/80 dark:border-red-500/70 bg-transparent"
@@ -284,10 +291,11 @@ export const GameCard = ({
       ) : null
     ) : null;
 
-  const showTitleLeadingCluster =
+  const showTitleLeadingCluster = isLeagueEntity && (
     bookmarkInTitleRow ||
     titleEntityInlineIcon != null ||
-    shouldMoveIconsToTitle;
+    shouldMoveIconsToTitle
+  );
 
   const viewerPrimarySport = getViewerPrimarySport(effectiveUser);
   const showSportTag = shouldShowGameCardSportGlyph(
@@ -310,20 +318,42 @@ export const GameCard = ({
     />
   ) : null;
 
-  const showBadgeRow =
-    (!bookmarkInTitleRow && noteBookmarkButton != null) ||
-    (!shouldMoveIconsToTitle && showFireIcon) ||
-    (!shouldMoveIconsToTitle && showStatusIcon) ||
-    (!shouldMoveIconsToTitle && hasGameSportTags) ||
-    showPhotoCountBadge ||
-    !game.isPublic ||
-    (game.genderTeams != null && game.genderTeams !== 'ANY') ||
-    myParticipationBadge != null ||
-    (game.entityType !== 'GAME' && !bookmarkInTitleRow) ||
-    !game.affectsRating ||
-    game.hasFixedTeams ||
-    ((game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') &&
-      game.resultsStatus === 'FINAL');
+  const headerTagsProps = {
+    game,
+    showStatusIcon,
+    sportTags: gameSportTags,
+    showPhotoCountBadge,
+    myParticipationBadge,
+  };
+
+  const showLeagueBadgeRow =
+    isLeagueEntity &&
+    ((!bookmarkInTitleRow && noteBookmarkButton != null) ||
+      (!shouldMoveIconsToTitle && showFireIcon) ||
+      (!shouldMoveIconsToTitle && showStatusIcon) ||
+      (!shouldMoveIconsToTitle && hasGameSportTags) ||
+      showPhotoCountBadge ||
+      !game.isPublic ||
+      (game.genderTeams != null && game.genderTeams !== 'ANY') ||
+      myParticipationBadge != null ||
+      (game.entityType !== 'GAME' && !bookmarkInTitleRow) ||
+      !game.affectsRating ||
+      game.hasFixedTeams ||
+      ((game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') &&
+        game.resultsStatus === 'FINAL'));
+
+  const nonLeagueTitle = (
+    <>
+      {game.name}
+      {game.entityType !== 'TRAINING' && game.name && game.gameType !== 'CLASSIC' && (
+        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+          ({t(`games.gameTypes.${game.gameType}`)})
+        </span>
+      )}
+      {game.entityType !== 'TRAINING' && !game.name && game.gameType !== 'CLASSIC' &&
+        t(`games.gameTypes.${game.gameType}`)}
+    </>
+  );
 
   return (
     <SportLevelProvider sport={gameSport}>
@@ -365,7 +395,7 @@ export const GameCard = ({
         )}
       </div>
       {/* Header - Always visible */}
-      <div className={`relative z-10 ${showBadgeRow ? 'mb-2' : 'mb-1'}`}>
+      <div className={`relative z-10 ${isLeagueEntity && showLeagueBadgeRow ? 'mb-2' : 'mb-1'}`}>
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
@@ -373,175 +403,86 @@ export const GameCard = ({
           </div>
         )}
         <>
-            <h3 className={`text-sm font-semibold text-gray-900 dark:text-white pr-[5.5rem] sm:pr-24 flex flex-wrap items-center gap-2 ${showBadgeRow ? 'mb-1.5' : 'mb-0'}`}>
-              {showTitleLeadingCluster && (
-                <div className="flex shrink-0 items-center gap-1">
-                  {bookmarkInTitleRow && noteBookmarkButton}
-                  {titleEntityInlineIcon}
-                  {shouldMoveIconsToTitle && (
-                    <>
-                      {showFireIcon && <AnnouncedFireIcon />}
-                      {showStatusIcon && <GameStatusIcon status={game.status} />}
-                      {gameSportTags}
-                    </>
+            {isLeagueEntity ? (
+              <>
+                <h3 className={`text-sm font-semibold text-gray-900 dark:text-white pr-[5.5rem] sm:pr-24 flex flex-wrap items-center gap-2 ${showLeagueBadgeRow ? 'mb-1.5' : 'mb-0'}`}>
+                  {showTitleLeadingCluster && (
+                    <div className="flex shrink-0 items-center gap-1">
+                      {bookmarkInTitleRow && noteBookmarkButton}
+                      {titleEntityInlineIcon}
+                      {shouldMoveIconsToTitle && (
+                        <>
+                          {showFireIcon && <AnnouncedFireIcon />}
+                          {showStatusIcon && <GameStatusIcon status={game.status} />}
+                          {gameSportTags}
+                        </>
+                      )}
+                    </div>
                   )}
-                </div>
-              )}
-              <span className="min-w-0">
-                {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name
-                  ? (
-                    <>
-                      <span className="text-blue-600 dark:text-blue-400">
-                        {game.parent.leagueSeason.league.name}
-                      </span>
-                      {game.parent.leagueSeason.game?.name && (
-                        <span className="text-purple-600 dark:text-purple-400"> {game.parent.leagueSeason.game.name}</span>
-                      )}
-                      {(game.leagueGroup?.name || game.leagueRound) && (
-                        <div className="mt-1 flex items-center gap-2 flex-wrap">
-                          {game.leagueGroup?.name && (
-                            <span
-                              className="px-2 py-0.5 text-xs font-medium rounded-full text-white"
-                              style={{ backgroundColor: game.leagueGroup.color || '#6b7280' }}
-                            >
-                              {game.leagueGroup.name}
-                            </span>
+                  <span className="min-w-0">
+                    {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name
+                      ? (
+                        <>
+                          <span className="text-blue-600 dark:text-blue-400">
+                            {game.parent.leagueSeason.league.name}
+                          </span>
+                          {game.parent.leagueSeason.game?.name && (
+                            <span className="text-purple-600 dark:text-purple-400"> {game.parent.leagueSeason.game.name}</span>
                           )}
-                          {game.leagueRound && (
-                            <span className="text-gray-600 dark:text-gray-400">
-                              {t('gameDetails.round')} {game.leagueRound.orderIndex + 1}
-                            </span>
+                          {(game.leagueGroup?.name || game.leagueRound) && (
+                            <div className="mt-1 flex items-center gap-2 flex-wrap">
+                              {game.leagueGroup?.name && (
+                                <span
+                                  className="px-2 py-0.5 text-xs font-medium rounded-full text-white"
+                                  style={{ backgroundColor: game.leagueGroup.color || '#6b7280' }}
+                                >
+                                  {game.leagueGroup.name}
+                                </span>
+                              )}
+                              {game.leagueRound && (
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  {t('gameDetails.round')} {game.leagueRound.orderIndex + 1}
+                                </span>
+                              )}
+                            </div>
                           )}
-                        </div>
-                      )}
-                    </>
-                  )
-                  : game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name
-                    ? (
-                      <>
-                        <span className="text-blue-600 dark:text-blue-400">{game.leagueSeason.league.name}</span>
-                        {game.name && (
-                          <span className="text-purple-600 dark:text-purple-400"> {game.name}</span>
-                        )}
-                      </>
-                    )
-                    : game.name}
-                {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && game.name && game.gameType !== 'CLASSIC' && (
-                  <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                    ({t(`games.gameTypes.${game.gameType}`)})
+                        </>
+                      )
+                      : game.entityType === 'LEAGUE_SEASON' && game.leagueSeason?.league?.name
+                        ? (
+                          <>
+                            <span className="text-blue-600 dark:text-blue-400">{game.leagueSeason.league.name}</span>
+                            {game.name && (
+                              <span className="text-purple-600 dark:text-purple-400"> {game.name}</span>
+                            )}
+                          </>
+                        )
+                        : game.name}
                   </span>
+                </h3>
+                {showLeagueBadgeRow && (
+                  <div className="flex items-center gap-2 pr-10 flex-wrap">
+                    {!bookmarkInTitleRow && noteBookmarkButton}
+                    {!shouldMoveIconsToTitle && showFireIcon && <AnnouncedFireIcon />}
+                    <GameCardHeaderTags
+                      {...headerTagsProps}
+                      skipStatusAndSport={shouldMoveIconsToTitle}
+                      showEntityTypePill={game.entityType !== 'GAME' && !bookmarkInTitleRow}
+                    />
+                  </div>
                 )}
-                {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
-              </span>
-            </h3>
-            {showBadgeRow && (
-            <div className="flex items-center gap-2 pr-10 flex-wrap">
-          {!bookmarkInTitleRow && noteBookmarkButton}
-          {!shouldMoveIconsToTitle && showFireIcon && <AnnouncedFireIcon />}
-          {!shouldMoveIconsToTitle && showStatusIcon && <GameStatusIcon status={game.status} />}
-          {!shouldMoveIconsToTitle && gameSportTags}
-          {showPhotoCountBadge && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/games/${game.id}/chat`);
-              }}
-              className="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
-            >
-              <Camera size={12} />
-              {game.photosCount}
-            </button>
-          )}
-          {!game.isPublic && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
-              <Lock size={12} />
-              <span className="hidden sm:inline">{t('games.private')}</span>
-            </span>
-          )}
-          {game.genderTeams && game.genderTeams !== 'ANY' && (
-            <div className="flex items-center gap-1">
-              {game.genderTeams === 'MIX_PAIRS' ? (
-                <div className="h-6 px-2 rounded-full bg-gradient-to-r from-blue-500 to-pink-500 dark:from-blue-600 dark:to-pink-600 flex items-center justify-center gap-1">
-                  <i className="bi bi-gender-male text-white text-[10px]"></i>
-                  <i className="bi bi-gender-female -ml-1 text-white text-[10px]"></i>
-                </div>
-              ) : (
-                <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                  game.genderTeams === 'MEN' 
-                    ? 'bg-blue-500 dark:bg-blue-600' 
-                    : 'bg-pink-500 dark:bg-pink-600'
-                }`}>
-                  <i className={`bi ${game.genderTeams === 'MEN' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-xs`}></i>
-                </div>
-              )}
-            </div>
-          )}
-          {myParticipationBadge === 'owner' && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-              {t('games.owner')}
-            </span>
-          )}
-          {myParticipationBadge === 'admin' && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-400">
-              {t('games.admin')}
-            </span>
-          )}
-          {myParticipationBadge === 'guest' && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-              {t('games.statusGuest')}
-            </span>
-          )}
-          {myParticipationBadge === 'invited' && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
-              {t('games.statusInvited')}
-            </span>
-          )}
-          {myParticipationBadge === 'in_queue' && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400">
-              {t('games.statusInQueue')}
-            </span>
-          )}
-          {myParticipationBadge === 'playing' && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full whitespace-nowrap bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
-              {t('games.badgePlaying', { defaultValue: 'Playing' })}
-            </span>
-          )}
-          {myParticipationBadge === 'non_playing' && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800 dark:bg-gray-800/40 dark:text-gray-300">
-              {t('games.statusNonPlaying')}
-            </span>
-          )}
-          {game.entityType !== 'GAME' && !bookmarkInTitleRow && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400 flex items-center gap-1">
-              {game.entityType === 'TOURNAMENT' && <Swords size={12} />}
-              {(game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') && <Trophy size={12} />}
-              {game.entityType === 'TRAINING' && <Dumbbell size={12} />}
-              {game.entityType === 'BAR' && <Beer size={12} />}
-              {t(`games.entityTypes.${game.entityType}`)}
-            </span>
-          )}
-          {!game.affectsRating && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
-              <Ban size={12} />
-              {t('games.noRating')}
-            </span>
-          )}
-          {game.hasFixedTeams && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 flex items-center gap-1">
-              <div className="flex items-center">
-                <Users size={12} />
-                <Users size={12} />
-              </div>
-              <span className="hidden sm:inline">{t('games.fixedTeams')}</span>
-            </span>
-          )}
-          {(game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') && game.resultsStatus === 'FINAL' && (
-            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
-              <Award size={12} />
-              {t('games.resultsAvailable')}
-            </span>
-          )}
-            </div>
+              </>
+            ) : (
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white pr-[5.5rem] sm:pr-24 flex flex-wrap items-center gap-2 mb-0">
+                {showFireIcon && <AnnouncedFireIcon />}
+                {noteBookmarkButton}
+                <span className="min-w-0">{nonLeagueTitle}</span>
+                {titleEntityInlineIcon}
+                <GameCardHeaderTags
+                  {...headerTagsProps}
+                  showEntityTypePill={nonLeagueShowEntityPill}
+                />
+              </h3>
             )}
 
             {showJoinQueueHint && (
