@@ -1067,7 +1067,6 @@ export const CreateGame = ({
         priceType: priceType,
         priceCurrency: priceType !== 'NOT_KNOWN' && priceType !== 'FREE' ? (priceCurrency ?? resolveUserCurrency(user?.defaultCurrency)) : undefined,
         parentId: initialGameData?.parentId,
-        rollbackBooktimeBooking: bookingFields.rollbackBooktimeBooking,
       };
 
       if (entityType === 'TRAINING' && creatorNonPlaying) {
@@ -1219,7 +1218,6 @@ export const CreateGame = ({
           externalBookingIds: overrides.externalBookingIds,
           bookingSnapshots: overrides.bookingSnapshots,
           hasBookedCourt: overrides.hasBookedCourt,
-          rollbackBooktimeBooking: overrides.rollbackBooktimeBooking,
           courtIds: overrides.bookingSnapshots
             .map((s) => s.courtId)
             .filter((id): id is string => Boolean(id)),

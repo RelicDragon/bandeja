@@ -5,3 +5,5 @@ export * from './deriveGameTimeFromBookings';
 export * from './computeBookingSelectionLimits';
 export * from './buildBookingSnapshots';
 export * from './evaluateLinkedBookingCoverage';
+export * from './linkBookingToGame';
+export * from './rollbackBooktimeBookings';

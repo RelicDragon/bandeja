@@ -1043,10 +1043,48 @@ async function importBooktimeCourtsForCenter() {
         alert('No club selected');
         return;
     }
+    const config = currentCenter.integrationConfig && typeof currentCenter.integrationConfig === 'object'
+        ? currentCenter.integrationConfig
+        : null;
+    const companyId = config?.companyId?.trim?.() || '';
+    if (!companyId) {
+        alert('Booking provider companyId is not configured for this club');
+        return;
+    }
     if (!confirm('Import courts from the club booking system? Existing courts will be matched by external ID or name.')) return;
     try {
+        const sessionRes = await fetch(`${API_URL}/clubs/${currentCenter.id}/booktime/session-token`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                ...adminClientHeaders(),
+                ...(authToken && { Authorization: `Bearer ${authToken}` }),
+            },
+        });
+        const sessionData = await sessionRes.json().catch(() => ({}));
+        if (sessionRes.status === 404) {
+            alert('Connect Booktime for this club in the main app first, then retry import.');
+            return;
+        }
+        if (!sessionRes.ok || !sessionData.success || !sessionData.data?.accessToken) {
+            throw new Error(sessionData.message || `Session token failed (${sessionRes.status})`);
+        }
+
+        const booktimeRes = await fetch(`https://api.booktime.rs/company/${encodeURIComponent(companyId)}`, {
+            headers: {
+                Accept: 'application/json',
+                Authorization: `Bearer ${sessionData.data.accessToken}`,
+            },
+        });
+        if (!booktimeRes.ok) {
+            const text = await booktimeRes.text().catch(() => '');
+            throw new Error(`Booking provider company fetch failed (${booktimeRes.status})${text ? `: ${text.slice(0, 200)}` : ''}`);
+        }
+        const payload = await booktimeRes.json();
         const response = await apiRequest(`/admin/clubs/${currentCenter.id}/booktime/import-courts`, {
             method: 'POST',
+            body: JSON.stringify(payload),
         });
         if (response.success) {
             const summary = response.data;

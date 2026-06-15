@@ -564,6 +564,7 @@ export const EditGameInfoModal = ({
       const hasLocationChanges =
         locationDraft.addBookingIds.length > 0 ||
         locationDraft.removeBookingIds.length > 0 ||
+        Boolean(locationDraft.linkBookingContext?.adds.length) ||
         locationDraft.clubId !== (game.clubId || undefined) ||
         locationDraft.courtId !== (game.courtId || undefined) ||
         locationDraft.startTime !== game.startTime ||

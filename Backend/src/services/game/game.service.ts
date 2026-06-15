@@ -13,7 +13,7 @@ import { GameCreateService } from './create.service';
 import { GameReadService } from './read.service';
 import { GameUpdateService } from './update.service';
 import { GameDeleteService } from './delete.service';
-import { patchGameBookings, putGameBookingSnapshots } from './gameExternalBooking.service';
+import { patchGameBookings, putGameBookingSnapshots, linkBookingToGame } from './gameExternalBooking.service';
 
 export class GameService {
   static async calculateGameReadiness(gameId: string) {
@@ -105,6 +105,15 @@ export class GameService {
     body: { snapshots?: unknown },
   ) {
     return putGameBookingSnapshots(gameId, userId, isAdmin, body);
+  }
+
+  static linkBookingToGame(
+    gameId: string,
+    userId: string,
+    isAdmin: boolean,
+    body: unknown,
+  ) {
+    return linkBookingToGame(gameId, userId, isAdmin, body);
   }
 }
 

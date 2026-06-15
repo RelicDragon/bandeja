@@ -2,6 +2,7 @@ import type {
   BusySnapshotCourt,
   ExternalBookingResult,
 } from '@shared/booking';
+import type { Sport } from '@shared/sport';
 
 export type BookSlotParams = {
   courtId: string;
@@ -10,6 +11,7 @@ export type BookSlotParams = {
   dateKey: string;
   startTime: string;
   durationMinutes: number;
+  sport?: Sport | null;
 };
 
 export type BookSlotContext = {

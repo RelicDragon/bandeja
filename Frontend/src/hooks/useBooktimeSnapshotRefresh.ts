@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { booktimeApi } from '@/api/booktime';
 import type { Club } from '@/types';
-import { BooktimeClient } from '@/integrations/booktime/client';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
+import { createScoutBooktimeClubBookingProvider } from '@/integrations/booking/createBooktimeClubBookingProvider';
 import {
   formatClubDateKey,
   isSnapshotStale,
-  mapAvailableSlotsToSnapshotCourts,
-  type BooktimeSnapshotCourtPayload,
 } from '@/integrations/booktime/slots';
 import { getBooktimeCompanyId, isBooktimeClub } from '@shared/clubIntegration';
 
@@ -19,17 +17,6 @@ type RefreshOptions = {
 
 function requestStatus(err: unknown): number {
   return err && typeof err === 'object' && 'status' in err ? Number((err as { status: number }).status) : 0;
-}
-
-async function fetchDaySnapshotCourts(
-  club: Club,
-  companyId: string,
-  selectedDate: Date,
-  dateKey: string
-): Promise<BooktimeSnapshotCourtPayload[]> {
-  const client = new BooktimeClient({ companyId });
-  const slotsRes = await client.getAvailableSlots(selectedDate, dateKey);
-  return mapAvailableSlotsToSnapshotCourts(club, slotsRes ?? [], dateKey);
 }
 
 export function useBooktimeSnapshotRefresh(
@@ -78,7 +65,8 @@ export function useBooktimeSnapshotRefresh(
             return false;
           }
 
-          const courts = await fetchDaySnapshotCourts(club, companyId, selectedDate, dateKey);
+          const provider = createScoutBooktimeClubBookingProvider(club, companyId);
+          const courts = await provider.fetchSnapshotCourts(selectedDate, dateKey);
           const fetchedAt = new Date().toISOString();
           await booktimeApi.putSnapshot(club.id, {
             date: dateKey,

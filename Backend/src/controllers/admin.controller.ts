@@ -445,7 +445,7 @@ export const updateCourt = asyncHandler(async (req: AuthRequest, res: Response) 
 });
 
 export const importBooktimeCourts = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const data = await BooktimeImportCourtsService.importCourts(req.params.clubId);
+  const data = await BooktimeImportCourtsService.applyImport(req.params.clubId, req.body ?? {});
   res.json({ success: true, data });
 });
 

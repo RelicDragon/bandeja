@@ -2,11 +2,13 @@ import { ClubIntegrationType, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
-import { BOOKTIME_DEFAULT_TIMEZONE, parseBooktimeStoredOrNaiveToDate } from '../../shared/booktime/localTime';
+import { ingestBookingSnapshotTimes } from '../../shared/booktime/ingest';
 import { deriveGameTimeFromBookings } from '../../shared/gameBooking/deriveGameTimeFromBookings';
 import {
   LEGACY_EXTERNAL_BOOKING_ID_REJECTED,
   type BookingSnapshotInput,
+  type LinkBookingToGameBody,
+  type LinkBookingToGamePatch,
 } from '../../shared/gameBooking/contracts';
 import { canMutateGameBookings } from '../../shared/gameBooking/bookingLinkAuthorization';
 
@@ -55,6 +57,84 @@ export function parseBookingSnapshots(data: { bookingSnapshots?: unknown }): Boo
   return out;
 }
 
+function parseLinkGamePatch(raw: unknown): LinkBookingToGamePatch | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const src = raw as Record<string, unknown>;
+  const patch: LinkBookingToGamePatch = {};
+  let hasField = false;
+
+  if (typeof src.clubId === 'string' && src.clubId.trim()) {
+    patch.clubId = src.clubId.trim();
+    hasField = true;
+  }
+  if (typeof src.courtId === 'string' && src.courtId.trim()) {
+    patch.courtId = src.courtId.trim();
+    hasField = true;
+  }
+  if (typeof src.startTime === 'string' && src.startTime.trim()) {
+    const parsed = new Date(src.startTime.trim());
+    if (!Number.isNaN(parsed.getTime())) {
+      patch.startTime = parsed.toISOString();
+      hasField = true;
+    }
+  }
+  if (typeof src.endTime === 'string' && src.endTime.trim()) {
+    const parsed = new Date(src.endTime.trim());
+    if (!Number.isNaN(parsed.getTime())) {
+      patch.endTime = parsed.toISOString();
+      hasField = true;
+    }
+  }
+  if (typeof src.timeIsSet === 'boolean') {
+    patch.timeIsSet = src.timeIsSet;
+    hasField = true;
+  }
+  if (typeof src.hasBookedCourt === 'boolean') {
+    patch.hasBookedCourt = src.hasBookedCourt;
+    hasField = true;
+  }
+
+  return hasField ? patch : undefined;
+}
+
+function parseSingleSnapshot(raw: unknown): BookingSnapshotInput | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const externalBookingId = (raw as Record<string, unknown>).externalBookingId;
+  if (typeof externalBookingId !== 'string' || !externalBookingId.trim()) return null;
+  const snap: BookingSnapshotInput = { externalBookingId: externalBookingId.trim() };
+  const courtId = (raw as Record<string, unknown>).courtId;
+  if (typeof courtId === 'string' && courtId.trim()) snap.courtId = courtId.trim();
+  const bookingStart = (raw as Record<string, unknown>).bookingStart;
+  if (typeof bookingStart === 'string' && bookingStart.trim()) snap.bookingStart = bookingStart.trim();
+  const bookingEnd = (raw as Record<string, unknown>).bookingEnd;
+  if (typeof bookingEnd === 'string' && bookingEnd.trim()) snap.bookingEnd = bookingEnd.trim();
+  return snap;
+}
+
+export function parseLinkBookingToGameBody(body: unknown): LinkBookingToGameBody {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    throw new ApiError(400, BOOKING_ERROR_KEYS.snapshotsRequired);
+  }
+  const src = body as Record<string, unknown>;
+  const externalBookingId =
+    typeof src.externalBookingId === 'string' ? src.externalBookingId.trim() : '';
+  if (!externalBookingId) {
+    throw new ApiError(400, BOOKING_ERROR_KEYS.patchRequiresBookingId);
+  }
+  const snapshot = parseSingleSnapshot(src.snapshot);
+  if (!snapshot) {
+    throw new ApiError(400, BOOKING_ERROR_KEYS.snapshotsRequired);
+  }
+  if (snapshot.externalBookingId !== externalBookingId) {
+    throw new ApiError(400, BOOKING_ERROR_KEYS.snapshotsRequired);
+  }
+  return {
+    externalBookingId,
+    snapshot,
+    gamePatch: parseLinkGamePatch(src.gamePatch),
+  };
+}
+
 function snapshotMap(snapshots: BookingSnapshotInput[]): Map<string, BookingSnapshotInput> {
   const map = new Map<string, BookingSnapshotInput>();
   for (const snap of snapshots) {
@@ -63,18 +143,17 @@ function snapshotMap(snapshots: BookingSnapshotInput[]): Map<string, BookingSnap
   return map;
 }
 
-function parseBooktimeSnapshotInstant(iso: string | undefined): Date | null {
-  if (!iso?.trim()) return null;
-  return parseBooktimeStoredOrNaiveToDate(iso, BOOKTIME_DEFAULT_TIMEZONE);
-}
-
 function snapshotToRowData(
   snap: BookingSnapshotInput | undefined,
 ): Pick<Prisma.GameExternalBookingCreateManyInput, 'courtId' | 'bookingStart' | 'bookingEnd'> {
+  const { bookingStart, bookingEnd } = ingestBookingSnapshotTimes(
+    snap?.bookingStart,
+    snap?.bookingEnd,
+  );
   return {
     courtId: snap?.courtId ?? null,
-    bookingStart: parseBooktimeSnapshotInstant(snap?.bookingStart),
-    bookingEnd: parseBooktimeSnapshotInstant(snap?.bookingEnd),
+    bookingStart,
+    bookingEnd,
   };
 }
 
@@ -289,6 +368,71 @@ export async function putGameBookingSnapshots(
         });
       }
     }
+  });
+
+  return prisma.gameExternalBooking.findMany({
+    where: { gameId },
+    select: gameExternalBookingSelect,
+    orderBy: { createdAt: 'asc' },
+  });
+}
+
+function linkGamePatchToUpdateData(patch: LinkBookingToGamePatch): Prisma.GameUncheckedUpdateInput {
+  const data: Prisma.GameUncheckedUpdateInput = {};
+  if (patch.clubId !== undefined) data.clubId = patch.clubId;
+  if (patch.courtId !== undefined) data.courtId = patch.courtId;
+  if (patch.startTime !== undefined) data.startTime = new Date(patch.startTime);
+  if (patch.endTime !== undefined) data.endTime = new Date(patch.endTime);
+  if (patch.timeIsSet !== undefined) data.timeIsSet = patch.timeIsSet;
+  if (patch.hasBookedCourt !== undefined) data.hasBookedCourt = patch.hasBookedCourt;
+  return data;
+}
+
+export async function linkBookingToGame(
+  gameId: string,
+  userId: string,
+  isAdmin: boolean,
+  body: unknown,
+) {
+  const allowed = await canMutateGameBookings(gameId, userId, isAdmin);
+  if (!allowed) {
+    throw new ApiError(403, BOOKING_ERROR_KEYS.updateLinksForbidden);
+  }
+
+  const { externalBookingId, snapshot, gamePatch } = parseLinkBookingToGameBody(body);
+
+  await prisma.$transaction(async (tx) => {
+    const game = await tx.game.findUnique({
+      where: { id: gameId },
+      select: { id: true, timeOverride: true },
+    });
+    if (!game) throw new ApiError(404, 'Game not found');
+
+    const existing = await tx.gameExternalBooking.findFirst({
+      where: { gameId, externalBookingId },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new ApiError(400, BOOKING_ERROR_KEYS.alreadyLinked);
+    }
+
+    if (gamePatch) {
+      const patchData = linkGamePatchToUpdateData(gamePatch);
+      if (Object.keys(patchData).length > 0) {
+        await tx.game.update({ where: { id: gameId }, data: patchData });
+      }
+    }
+
+    await tx.gameExternalBooking.create({
+      data: {
+        gameId,
+        externalBookingId,
+        externalBookingProvider: ClubIntegrationType.BOOKTIME,
+        ...snapshotToRowData(snapshot),
+      },
+    });
+
+    await syncHasBookedCourtAndTimes(tx, gameId);
   });
 
   return prisma.gameExternalBooking.findMany({

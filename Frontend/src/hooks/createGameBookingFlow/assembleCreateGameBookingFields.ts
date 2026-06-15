@@ -57,8 +57,5 @@ export function assembleCreateGameBookingFields(
     externalBookingIds,
     externalBookingProvider: externalBookingIds?.length ? 'BOOKTIME' : undefined,
     bookingSnapshots: input.overrides?.bookingSnapshots ?? bookingPayload?.bookingSnapshots,
-    rollbackBooktimeBooking:
-      input.overrides?.rollbackBooktimeBooking === true &&
-      Boolean(input.overrides?.externalBookingIds?.length),
   };
 }

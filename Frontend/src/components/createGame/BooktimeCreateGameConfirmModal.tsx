@@ -6,25 +6,26 @@ import type { Club, Court } from '@/types';
 import type { Sport } from '@shared/sport';
 import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
+import {
+  hasRollbackFailures,
+  rollbackBooktimeBookings,
+} from '@shared/gameBooking/rollbackBooktimeBookings';
+import type { BookingProviderError } from '@shared/booking';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import type { SummaryChipItem } from './summaryHeader/CreateGameSummaryBar';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import {
-  BooktimeSlotTakenError,
   buildBookingIsoRange,
-  cancelBooktimeBooking,
-  confirmBooktimeBooking,
   loadBooktimeCompany,
-  type BooktimeBookFlowContext,
 } from '@/integrations/booktime/bookFlow';
+import { createHydratedBooktimeClubBookingProvider } from '@/integrations/booking/createBooktimeClubBookingProvider';
+import type { BookSlotContext } from '@/integrations/booking/ClubBookingProvider';
 import { resolveBooktimeServiceUuid } from '@/integrations/booktime/resolveBooktimeServiceUuid';
 import { formatBooktimeErrorMessage } from '@/integrations/booktime/formatBooktimeErrorMessage';
-import { readBooktimeRollbackFromError } from '@/integrations/booktime/createGameErrors';
 import {
   bookingErrorMessage,
   isBookingAuthExpiredMessage,
-  localizeBookingErrorText,
 } from '@/utils/bookingErrorMessage.util';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
@@ -58,13 +59,12 @@ type BooktimeCreateGameConfirmModalProps = {
   currency: string;
   sport?: Sport | null;
   summaryChips: SummaryChipItem[];
-  bookFlowContext: BooktimeBookFlowContext;
+  bookFlowContext: BookSlotContext;
   snapshotBlocked: boolean;
   onExecuteCreateGame: (overrides: {
     externalBookingIds: string[];
     bookingSnapshots: BookingSnapshotInput[];
     hasBookedCourt: true;
-    rollbackBooktimeBooking: true;
   }) => Promise<void>;
   onSlotTaken: () => void;
   onSuccess: () => void;
@@ -87,6 +87,17 @@ function formatEndTime(startTime: string, durationMinutes: number): string {
   const endH = Math.floor(endMinutes / 60);
   const endM = endMinutes % 60;
   return `${String(endH).padStart(2, '0')}:${String(endM).padStart(2, '0')}`;
+}
+
+function isProviderBookingError(err: unknown): err is BookingProviderError {
+  return (
+    !!err &&
+    typeof err === 'object' &&
+    'code' in err &&
+    'message' in err &&
+    typeof (err as BookingProviderError).code === 'string' &&
+    typeof (err as BookingProviderError).message === 'string'
+  );
 }
 
 export function BooktimeCreateGameConfirmModal({
@@ -223,21 +234,23 @@ export function BooktimeCreateGameConfirmModal({
   }, [bookings, courtPriceQuotes, priceLoading]);
 
   const rollbackBookedIds = async () => {
-    if (bookedIdsRef.current.length === 0) return;
-    try {
-      await hydrateBooktimeSession(club.id, companyId);
-      const client = getBooktimeClient(club.id, companyId);
-      for (const id of bookedIdsRef.current) {
-        try {
-          await cancelBooktimeBooking(client, id, bookFlowContext.refreshSnapshot);
-        } catch {
-          /* best effort */
-        }
-      }
-    } catch {
-      /* best effort */
-    }
+    const ids = [...bookedIdsRef.current];
     bookedIdsRef.current = [];
+    if (ids.length === 0) return { outcomes: [], failed: false };
+
+    try {
+      const provider = await createHydratedBooktimeClubBookingProvider(club, companyId);
+      const outcomes = await rollbackBooktimeBookings(
+        (externalBookingId) => provider.cancelBooking(externalBookingId, bookFlowContext.refreshSnapshot),
+        ids,
+      );
+      return { outcomes, failed: hasRollbackFailures(outcomes) };
+    } catch {
+      return {
+        outcomes: ids.map((externalBookingId) => ({ externalBookingId, cancelled: false })),
+        failed: true,
+      };
+    }
   };
 
   const runActivity = async () => {
@@ -248,47 +261,52 @@ export function BooktimeCreateGameConfirmModal({
     setFailedBookingIndex(null);
 
     try {
+      const provider = await createHydratedBooktimeClubBookingProvider(club, companyId);
       for (let i = 0; i < bookings.length; i++) {
         const entry = bookings[i];
         setPhase(`booking_${i}`);
-        await hydrateBooktimeSession(club.id, companyId);
-        const client = getBooktimeClient(club.id, companyId);
         const dateKey = formatClubDateKey(entry.date, club);
-        const pending = {
-          clubId: club.id,
-          courtId: entry.court.id,
-          externalCourtId: entry.court.externalCourtId!,
-          courtName: entry.court.name,
-          dateKey,
-          startTime: entry.startTime,
-          durationMinutes: entry.durationMinutes,
-          sport: sport ?? entry.court.sport,
-        };
         try {
-          const result = await confirmBooktimeBooking(
-            client,
-            club,
-            companyId,
-            pending,
+          const result = await provider.bookSlot(
+            {
+              courtId: entry.court.id,
+              externalCourtId: entry.court.externalCourtId!,
+              courtName: entry.court.name,
+              dateKey,
+              startTime: entry.startTime,
+              durationMinutes: entry.durationMinutes,
+              sport: sport ?? entry.court.sport,
+            },
             entry.date,
             bookFlowContext,
           );
-          bookedIdsRef.current.push(result.bookingId);
+          bookedIdsRef.current.push(result.externalBookingId);
           setPhase(`booking_${i}_done`);
           await new Promise((r) => window.setTimeout(r, 400));
         } catch (bookErr) {
           setFailedBookingIndex(i);
-          await rollbackBookedIds();
+          const rollback = await rollbackBookedIds();
           const detail = bookingErrorMessage(bookErr, t, 'createGame.booktime.bookFailed');
           setErrorDetail(detail || null);
-          if (bookErr instanceof BooktimeSlotTakenError) {
-            setErrorKey('slotTaken');
+          if (isProviderBookingError(bookErr)) {
+            if (bookErr.code === 'SlotTaken') {
+              setErrorKey('slotTaken');
+            } else if (bookErr.code === 'AuthExpired') {
+              setErrorKey('session');
+            } else if (bookings.length > 1) {
+              setErrorKey('multiBookFailed');
+            } else {
+              setErrorKey('bookFailed');
+            }
           } else if (isBookingAuthExpiredMessage(formatBooktimeErrorMessage(bookErr))) {
             setErrorKey('session');
           } else if (bookings.length > 1) {
             setErrorKey('multiBookFailed');
           } else {
             setErrorKey('bookFailed');
+          }
+          if (rollback.failed) {
+            setErrorKey('createFailedRollback');
           }
           toast.error(detail);
           setPhase('error');
@@ -317,7 +335,6 @@ export function BooktimeCreateGameConfirmModal({
         externalBookingIds: bookedIdsRef.current,
         bookingSnapshots: snapshotInputs,
         hasBookedCourt: true,
-        rollbackBooktimeBooking: true,
       });
 
       setPhase('success');
@@ -325,25 +342,21 @@ export function BooktimeCreateGameConfirmModal({
       onSuccess();
     } catch (err) {
       const detail = bookingErrorMessage(err, t, 'createGame.booktime.createFailedAfterBook');
-      const serverRollback = readBooktimeRollbackFromError(err);
-      const rollbackDetail = localizeBookingErrorText(serverRollback?.error, t);
-      const combinedDetail = [detail, rollbackDetail].filter(Boolean).join(' — ');
-      setErrorDetail(combinedDetail || null);
+      setErrorDetail(detail || null);
 
-      if (isBookingAuthExpiredMessage(formatBooktimeErrorMessage(err)) || isBookingAuthExpiredMessage(rollbackDetail ?? '')) {
+      if (isBookingAuthExpiredMessage(formatBooktimeErrorMessage(err))) {
         setErrorKey('session');
         setPhase('error');
-        toast.error(combinedDetail);
+        toast.error(detail);
         return;
       }
-      if (!serverRollback?.cancelled && bookedIdsRef.current.length > 0) {
-        await rollbackBookedIds();
+      if (bookedIdsRef.current.length > 0) {
+        const rollback = await rollbackBookedIds();
+        setErrorKey(rollback.failed ? 'createFailedRollback' : 'createFailed');
+      } else {
+        setErrorKey('createFailed');
       }
-      bookedIdsRef.current = [];
-      setErrorKey(
-        serverRollback?.attempted && !serverRollback.cancelled ? 'createFailedRollback' : 'createFailed',
-      );
-      toast.error(combinedDetail || t('createGame.booktime.createFailedAfterBook'));
+      toast.error(detail || t('createGame.booktime.createFailedAfterBook'));
       setPhase('error');
     } finally {
       inFlightRef.current = false;

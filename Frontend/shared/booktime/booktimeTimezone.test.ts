@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { formatBooktimeBookingWhen } from '../../src/components/booktime/booktimeBookingUtils';
 import {
-  booktimeApiWallClockToUtcIso,
-  booktimeIsoToUtcIso,
-  parseBooktimeStoredOrNaiveToUtcIso,
+  booktimeIngestToStoredUtcIso,
   storedUtcIsoToInstant,
 } from './localTime';
 import { buildBookingSnapshots } from '../gameBooking/buildBookingSnapshots';
 import { deriveGameTimeFromBookings } from '../gameBooking/deriveGameTimeFromBookings';
-import { bookingMatchesGameSlot } from '../../src/components/booktime/booktimeGameLinkUtils';
+import { bookingMatchesGameSlot } from '@shared/gameBooking/linkBookingToGame';
 import type { Game } from '../../src/types';
 import { canCancelByPolicy } from '../../src/integrations/booktime/bookFlow';
 
@@ -18,8 +16,8 @@ const DISPLAY = { locale: 'ru-RU', hour12: false } as const;
 function normalizeApiBooking(start: string, end: string) {
   return {
     uuid: 'test-booking',
-    bookingStart: booktimeApiWallClockToUtcIso(start, TZ)!,
-    bookingEnd: booktimeApiWallClockToUtcIso(end, TZ)!,
+    bookingStart: booktimeIngestToStoredUtcIso(start, TZ)!,
+    bookingEnd: booktimeIngestToStoredUtcIso(end, TZ)!,
   };
 }
 
@@ -36,17 +34,17 @@ function belgradeTime(iso: string): string {
 
 describe('booktime timezone pipeline', () => {
   it('converts fake-Z API wall clock to stored UTC once', () => {
-    expect(booktimeApiWallClockToUtcIso('2026-06-15T18:00:00.000Z', TZ)).toBe(
+    expect(booktimeIngestToStoredUtcIso('2026-06-15T18:00:00.000Z', TZ)).toBe(
       '2026-06-15T16:00:00.000Z',
     );
-    expect(booktimeApiWallClockToUtcIso('2026-06-19T09:00:00.000Z', TZ)).toBe(
+    expect(booktimeIngestToStoredUtcIso('2026-06-19T09:00:00.000Z', TZ)).toBe(
       '2026-06-19T07:00:00.000Z',
     );
   });
 
   it('does not double-convert stored UTC', () => {
     const stored = '2026-06-19T07:00:00.000Z';
-    expect(booktimeIsoToUtcIso(stored, TZ)).toBe(stored);
+    expect(booktimeIngestToStoredUtcIso(stored, TZ)).toBe(stored);
     expect(
       deriveGameTimeFromBookings(
         [{ bookingStart: stored, bookingEnd: '2026-06-19T08:00:00.000Z' }],
@@ -78,7 +76,7 @@ describe('booktime timezone pipeline', () => {
   });
 
   it('uses stored UTC for cancel policy', () => {
-    const storedStart = booktimeApiWallClockToUtcIso('2035-06-30T18:00:00.000Z', TZ)!;
+    const storedStart = booktimeIngestToStoredUtcIso('2035-06-30T18:00:00.000Z', TZ)!;
     const farFuture = new Date('2030-01-01T00:00:00.000Z').getTime();
     const originalNow = Date.now;
     Date.now = () => farFuture;
@@ -103,11 +101,9 @@ describe('booktime timezone pipeline', () => {
   });
 
   it('parseBooktimeStoredOrNaive keeps stored UTC and converts naive', () => {
-    expect(parseBooktimeStoredOrNaiveToUtcIso('2026-06-19T07:00:00.000Z', TZ)).toBe(
+    expect(booktimeIngestToStoredUtcIso('2026-06-19T07:00:00.000Z', TZ)).toBe(
       '2026-06-19T07:00:00.000Z',
     );
-    expect(parseBooktimeStoredOrNaiveToUtcIso('2026-06-14T09:00', TZ)).toBe(
-      '2026-06-14T07:00:00.000Z',
-    );
+    expect(booktimeIngestToStoredUtcIso('2026-06-14T09:00', TZ)).toBe('2026-06-14T07:00:00.000Z');
   });
 });

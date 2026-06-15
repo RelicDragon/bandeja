@@ -16,9 +16,8 @@ Club online booking is implemented only for Booktime today, but logic is spread 
 | Port | Tier | Adapter (today) |
 | ---- | ---- | ---------------- |
 | `ClubBookingProvider` | FE | `BooktimeClubBookingProvider` |
-| `ExternalBookingProvider` | BE | `BooktimeExternalBookingProvider` |
 
-Dispatch on BE uses `ClubIntegrationType` via `getExternalBookingProvider`. Auth/session remains in existing Booktime auth routes + `session.ts` (not on FE port).
+Dispatch on FE uses club integration config. Auth/session remains in existing Booktime auth routes + `session.ts` (not on FE port). Backend stores tokens/snapshots/joins only — no outbound Booktime HTTP (#131).
 
 ### Module mapping
 
@@ -48,3 +47,7 @@ Full FE caller migration (`bookFlow`, confirm modal, hooks) until provider #2 or
 - BE rollback is testable through the port (mock provider or injected deps).
 - FE adapter exists but is unused by callers until a follow-up slice.
 - New providers add adapters + `getExternalBookingProvider` registry entry; shared types stay stable.
+
+## Update (2026-06-14, #131)
+
+**Production backend must not call `api.booktime.rs`.** `booktimeApi.client.ts` and BE-side cancel rollback were removed. Player cancel and create-game rollback are FE-owned via `ClubBookingProvider`. Platform admin court import: Admin UI obtains a session token from the backend, fetches Booktime company data in the browser with `Authorization: Bearer`, then POSTs the payload to `import-courts`; backend `BooktimeImportCourtsService.applyImport` only persists the payload.

@@ -342,6 +342,12 @@ export const putGameBookingSnapshots = asyncHandler(async (req: AuthRequest, res
   res.json({ success: true, data: rows.map(serializeLinkedBooking) });
 });
 
+export const linkBookingToGame = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const rows = await GameService.linkBookingToGame(id, req.userId!, req.user?.isAdmin || false, req.body);
+  res.json({ success: true, data: rows.map(serializeLinkedBooking) });
+});
+
 export const patchMyWatchSessionHandler = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   if (!('activeMatchId' in req.body)) {
