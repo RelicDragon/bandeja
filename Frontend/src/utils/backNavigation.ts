@@ -15,8 +15,11 @@ export function getBackAction(): BackAction {
   return { type: 'home', url: homeUrl() };
 }
 
-export function handleBack(navigate: NavigateFunction): void {
+export function handleBack(navigate: NavigateFunction, onComplete?: () => void): void {
   const action = getBackAction();
+  const complete = () => {
+    onComplete?.();
+  };
 
   if (action.type === 'history') {
     const previousPathname = window.location.pathname;
@@ -27,8 +30,10 @@ export function handleBack(navigate: NavigateFunction): void {
       if (currentPathname === previousPathname || !isAppPath(currentPathname)) {
         navigate(homeUrl(), { replace: true });
       }
+      complete();
     }, SAFETY_CHECK_MS);
   } else {
     navigate(action.url, { replace: true });
+    complete();
   }
 }

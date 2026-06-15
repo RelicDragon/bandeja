@@ -1,12 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import type { Game } from '../../src/types';
-import { booktimeIngestToStoredUtcIso } from '../booktime/localTime';
+import { booktimeIngestToStoredUtcIso, booktimeWireFormatToStoredUtcIso, storedUtcIsoToInstant } from '../booktime/localTime';
 import {
   bookingMatchesGameSlot,
   buildCreateGameDeepLinkParams,
   buildLinkBookingRequest,
   filterLinkableGames,
   isRecommendedLinkTarget,
+  linkedGamesBookingGroupOccupancyPercent,
+  linkedGamesBookingGroupSlotSegments,
+  linkedGamesBookingSlotOccupancyPercent,
+  linkedGamesBookingSlotSegments,
+  linkedGamesFullyCoverBookingSlot,
   resolveBooktimeClubTimezone,
   sortLinkableGames,
 } from './linkBookingToGame';
@@ -25,6 +30,11 @@ function normalizeBooking(start: string, end: string) {
     bookingEnd: booktimeIngestToStoredUtcIso(end, TZ)!,
     bookingResourceId: 'ext-a',
   };
+}
+
+function bookingInstantMs(iso: string) {
+  const normalized = booktimeWireFormatToStoredUtcIso(iso, TZ) ?? iso;
+  return storedUtcIsoToInstant(normalized)?.getTime() ?? null;
 }
 
 function gameWithSlot(start: string, end: string): Game {
@@ -145,6 +155,243 @@ describe('buildLinkBookingRequest', () => {
     const body = buildLinkBookingRequest(game, booking, club, { skipGameDatetimePatch: true });
     expect(body.gamePatch?.startTime).toBeUndefined();
     expect(body.gamePatch?.hasBookedCourt).toBe(true);
+  });
+});
+
+describe('linkedGamesFullyCoverBookingSlot', () => {
+  it('returns true when one linked game matches the full slot', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const game = gameWithSlot('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    expect(linkedGamesFullyCoverBookingSlot(booking, [game], TZ)).toBe(true);
+  });
+
+  it('returns true when multiple linked games cover the slot without gaps', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const startMs = bookingInstantMs(booking.bookingStart)!;
+    const endMs = bookingInstantMs(booking.bookingEnd)!;
+    const midIso = new Date(startMs + (endMs - startMs) / 2).toISOString();
+    expect(
+      linkedGamesFullyCoverBookingSlot(
+        booking,
+        [
+          {
+            timeIsSet: true,
+            startTime: booking.bookingStart,
+            endTime: midIso,
+          },
+          {
+            timeIsSet: true,
+            startTime: midIso,
+            endTime: booking.bookingEnd,
+          },
+        ],
+        TZ,
+      ),
+    ).toBe(true);
+  });
+
+  it('returns false when linked games leave part of the slot uncovered', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const startMs = bookingInstantMs(booking.bookingStart)!;
+    const endMs = bookingInstantMs(booking.bookingEnd)!;
+    const midIso = new Date(startMs + (endMs - startMs) / 2).toISOString();
+    expect(
+      linkedGamesFullyCoverBookingSlot(
+        booking,
+        [
+          {
+            timeIsSet: true,
+            startTime: booking.bookingStart,
+            endTime: midIso,
+          },
+        ],
+        TZ,
+      ),
+    ).toBe(false);
+  });
+
+  it('returns 100 for a single linked game without usable time fields', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    expect(linkedGamesFullyCoverBookingSlot(booking, [{ startTime: '', endTime: null }], TZ)).toBe(true);
+  });
+});
+
+describe('linkedGamesBookingSlotOccupancyPercent', () => {
+  it('returns 100 for a full-slot linked game', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const game = gameWithSlot('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    expect(linkedGamesBookingSlotOccupancyPercent(booking, [game], TZ)).toBe(100);
+  });
+
+  it('returns 50 for half-slot coverage', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const startMs = bookingInstantMs(booking.bookingStart)!;
+    const endMs = bookingInstantMs(booking.bookingEnd)!;
+    const midIso = new Date(startMs + (endMs - startMs) / 2).toISOString();
+    expect(
+      linkedGamesBookingSlotOccupancyPercent(
+        booking,
+        [
+          {
+            timeIsSet: true,
+            startTime: booking.bookingStart,
+            endTime: midIso,
+          },
+        ],
+        TZ,
+      ),
+    ).toBe(50);
+  });
+
+  it('matches real UTC game times against booktime stored booking slot', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    expect(
+      linkedGamesBookingSlotOccupancyPercent(
+        booking,
+        [
+          {
+            timeIsSet: true,
+            startTime: '2026-06-19T07:00:00.000Z',
+            endTime: '2026-06-19T08:00:00.000Z',
+          },
+        ],
+        TZ,
+      ),
+    ).toBe(100);
+  });
+
+  it('uses link snapshot times for occupancy on the booking slot', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    expect(
+      linkedGamesBookingSlotOccupancyPercent(
+        booking,
+        [
+          {
+            startTime: '2026-06-19T10:00:00.000Z',
+            endTime: '2026-06-19T11:00:00.000Z',
+            linkBookingStart: '2026-06-19T07:00:00.000Z',
+            linkBookingEnd: '2026-06-19T08:00:00.000Z',
+          },
+        ],
+        TZ,
+      ),
+    ).toBe(100);
+  });
+
+  it('returns 100 when a link exists but game times do not overlap', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    expect(
+      linkedGamesBookingSlotOccupancyPercent(
+        booking,
+        [{ startTime: '2026-06-20T07:00:00.000Z', endTime: '2026-06-20T08:00:00.000Z' }],
+        TZ,
+      ),
+    ).toBe(100);
+  });
+});
+
+describe('linkedGamesBookingGroupOccupancyPercent', () => {
+  it('weights occupancy across all bookings in the group', () => {
+    const first = { ...normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z'), uuid: 'booking-1' };
+    const second = { ...normalizeBooking('2026-06-19T10:00:00.000Z', '2026-06-19T11:00:00.000Z'), uuid: 'booking-2' };
+    const fullGame = gameWithSlot(first.bookingStart, first.bookingEnd);
+    expect(
+      linkedGamesBookingGroupOccupancyPercent(
+        [first, second],
+        new Map([
+          [first.uuid, [fullGame]],
+          [second.uuid, []],
+        ]),
+        TZ,
+      ),
+    ).toBe(50);
+  });
+});
+
+describe('linkedGamesBookingSlotSegments', () => {
+  it('returns two full segments for a fully linked hour', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const game = gameWithSlot('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    expect(linkedGamesBookingSlotSegments(booking, [game], TZ)).toEqual(['full', 'full']);
+  });
+
+  it('returns partial then empty for half-slot coverage', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const startMs = bookingInstantMs(booking.bookingStart)!;
+    const endMs = bookingInstantMs(booking.bookingEnd)!;
+    const midIso = new Date(startMs + (endMs - startMs) / 2).toISOString();
+    expect(
+      linkedGamesBookingSlotSegments(
+        booking,
+        [{ timeIsSet: true, startTime: booking.bookingStart, endTime: midIso }],
+        TZ,
+      ),
+    ).toEqual(['partial', 'empty']);
+  });
+
+  it('marks overlapping games as overlap in the same segment', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const game = gameWithSlot('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    expect(linkedGamesBookingSlotSegments(booking, [game, game], TZ)).toEqual(['overlap', 'overlap']);
+  });
+
+  it('returns partial for a single game covering part of one segment', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const startMs = bookingInstantMs(booking.bookingStart)!;
+    const quarterIso = new Date(startMs + 15 * 60 * 1000).toISOString();
+    expect(
+      linkedGamesBookingSlotSegments(
+        booking,
+        [{ timeIsSet: true, startTime: booking.bookingStart, endTime: quarterIso }],
+        TZ,
+      ),
+    ).toEqual(['partial', 'empty']);
+  });
+
+  it('returns all full when a link exists but game times do not overlap', () => {
+    const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    expect(
+      linkedGamesBookingSlotSegments(
+        booking,
+        [{ startTime: '2026-06-20T07:00:00.000Z', endTime: '2026-06-20T08:00:00.000Z' }],
+        TZ,
+      ),
+    ).toEqual(['full', 'full']);
+  });
+});
+
+describe('linkedGamesBookingGroupSlotSegments', () => {
+  it('shows full then empty across adjacent bookings', () => {
+    const first = { ...normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z'), uuid: 'booking-1' };
+    const second = { ...normalizeBooking('2026-06-19T10:00:00.000Z', '2026-06-19T11:00:00.000Z'), uuid: 'booking-2' };
+    const fullGame = gameWithSlot(first.bookingStart, first.bookingEnd);
+    expect(
+      linkedGamesBookingGroupSlotSegments(
+        [first, second],
+        new Map([
+          [first.uuid, [fullGame]],
+          [second.uuid, []],
+        ]),
+        TZ,
+      ),
+    ).toEqual(['partial', 'partial', 'empty', 'empty']);
+  });
+
+  it('shows all full when every booking in the group is linked', () => {
+    const first = { ...normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z'), uuid: 'booking-1' };
+    const second = { ...normalizeBooking('2026-06-19T10:00:00.000Z', '2026-06-19T11:00:00.000Z'), uuid: 'booking-2' };
+    const firstGame = gameWithSlot(first.bookingStart, first.bookingEnd);
+    const secondGame = gameWithSlot(second.bookingStart, second.bookingEnd);
+    expect(
+      linkedGamesBookingGroupSlotSegments(
+        [first, second],
+        new Map([
+          [first.uuid, [firstGame]],
+          [second.uuid, [secondGame]],
+        ]),
+        TZ,
+      ),
+    ).toEqual(['full', 'full', 'full', 'full']);
   });
 });
 

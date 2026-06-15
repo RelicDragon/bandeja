@@ -14,6 +14,8 @@ import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
 import { useBooktimeLinkedGames } from '@/hooks/useBooktimeLinkedGames';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
+import { BooktimeAdjacentBookingGroup } from '@/components/booktime/BooktimeAdjacentBookingGroup';
+import { groupAdjacentBooktimeBookings } from '@/components/booktime/groupAdjacentBooktimeBookings';
 import { booktimeRowToClub } from '@/components/booktime/booktimeBookingUtils';
 import { BookingTimeOverrideSection } from './BookingTimeOverrideSection';
 type BookingsPickerPanelProps = {
@@ -176,6 +178,27 @@ export function BookingsPickerPanel({
     onSelectedBookingIdsChange(nextIds, bookings.filter((b) => nextIds.includes(b.uuid)));
   };
 
+  const handleGroupToggle = (groupIds: string[]) => {
+    const groupSelected = groupIds.every((id) => selectedBookingIds.includes(id));
+    if (groupSelected) {
+      const nextIds = selectedBookingIds.filter((id) => !groupIds.includes(id));
+      if (nextIds.length < selectionLimits.min) return;
+      onSelectedBookingIdsChange(nextIds, bookings.filter((b) => nextIds.includes(b.uuid)));
+      return;
+    }
+    const nextIds = [...new Set([...selectedBookingIds, ...groupIds])];
+    if (nextIds.length > selectionLimits.max) return;
+    onSelectedBookingIdsChange(nextIds, bookings.filter((b) => nextIds.includes(b.uuid)));
+  };
+
+  const bookingEntries = useMemo(
+    () =>
+      groupAdjacentBooktimeBookings(bookings, {
+        timeZone: clubTimezone,
+      }),
+    [bookings, clubTimezone],
+  );
+
   const handleOverrideChange = (value: boolean) => {
     if (!value && timeOverride) {
       toast(t('createGame.locationTime.overrideResetToast'));
@@ -227,7 +250,31 @@ export function BookingsPickerPanel({
         })}
       </motion.p>
       <ul className="space-y-2">
-        {bookings.map((booking) => {
+        {bookingEntries.map((entry) => {
+          if (entry.kind === 'group') {
+            const groupIds = entry.bookings.map((booking) => booking.uuid);
+            const groupSelected = groupIds.every((id) => selectedBookingIds.includes(id));
+            const slotsToAdd = groupIds.filter((id) => !selectedBookingIds.includes(id)).length;
+            const dimmed = !groupSelected && selectedBookingIds.length + slotsToAdd > selectionLimits.max;
+            const disableDeselect =
+              groupSelected && selectedBookingIds.length - groupIds.length < selectionLimits.min;
+            return (
+              <BooktimeAdjacentBookingGroup
+                key={groupIds.join('-')}
+                bookings={entry.bookings}
+                club={clubRow}
+                compact
+                clubTimezone={clubTimezone}
+                selectable
+                selected={groupSelected}
+                dimmed={dimmed}
+                disableDeselect={disableDeselect}
+                onToggleSelect={() => handleGroupToggle(groupIds)}
+              />
+            );
+          }
+
+          const booking = entry.booking;
           const selected = selectedBookingIds.includes(booking.uuid);
           const dimmed = !selected && atMax;
           const atMinSelection = selected && selectedBookingIds.length <= selectionLimits.min;

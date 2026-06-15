@@ -126,7 +126,7 @@ Frontend/e2e/
 | G-18 | i18n switch | Change language in profile | UI strings update |
 | G-19 | Dark/light theme | Toggle theme | Persisted appearance |
 | G-20 | Desktop split chat | `@desktop` open `/chats` + select thread | List + thread side by side |
-| G-21 | Home URL subtab sync | Open `/?tab=past-games`, `/?tab=advanced`; legacy `/?tab=list` | Past or More subtab selected; legacy list URL redirects to calendar |
+| G-21 | Home URL subtab sync | Open `/?tab=past-games`; legacy `/?tab=list`, `/?tab=advanced` | Past subtab selected; legacy list/advanced URLs redirect to calendar |
 | G-22 | Find URL view sync | Open `/find?view=list` | Find list view active |
 | G-23 | Chats filter URL sync | Open `/chats?filter=channels`, `/chats/marketplace`, `/bugs` | Correct inbox filter |
 | G-24 | Player overlay URL | Open any page with `?player=:userId` | Player card bottom sheet |
@@ -208,7 +208,10 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| H-01 | Calendar view | Open My tab | Calendar + games render; hint above stories links to More tab |
+| H-01 | Calendar view | Open My tab | Calendar + games render; Bookings / Teams / Leagues switch row below stories |
+| H-54 | My tab panel switcher | Logged in → My tab below stories | Three toggles: Bookings, Teams, Leagues; none selected by default |
+| H-55 | My tab panel single select | Tap Bookings then Teams | Bookings panel animates out; Teams panel animates in; only Teams highlighted |
+| H-57 | My tab panel switcher counts | User with bookings, teams, and leagues | Bookings / Teams / Leagues buttons show matching counts; hidden when zero |
 | H-02 | Calendar date select | Pick date on calendar | Games for that day |
 | H-41 | Selected date heading | Pick date on My tab calendar | Long localized date (e.g. "Thursday, 11 June") with Today/Tomorrow badge shown below calendar; updates on re-select, localized per language |
 | H-40 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game badge | Selected day highlights; that day's games in list (not upcoming sections) |
@@ -217,9 +220,9 @@ Frontend/e2e/
 | H-05 | Sport questionnaire prompt | Incomplete questionnaire | Prompt shown, links to flow |
 | H-06 | City prompt banner | User missing city prefs | Banner shown |
 | H-07 | Gender prompt banner | When applicable | Banner + action |
-| H-08 | User teams section | User in teams | Teams row on More subtab |
-| H-09 | Your leagues section | User in leagues | League cards on More subtab |
-| H-10 | League game sections collapse | More → league hub with scheduled/unscheduled games → tap section header | Section collapses/expands with chevron; both sections expanded by default |
+| H-08 | User teams section | User in teams | My tab → Teams switch shows teams row |
+| H-09 | Your leagues section | User in leagues | My tab → Leagues switch shows league cards |
+| H-10 | League game sections collapse | My tab → Leagues → league hub with scheduled/unscheduled games → tap section header | Section collapses/expands with chevron; both sections expanded by default |
 | H-11 | Mark all read banner | Unread games exist | Banner + action clears counts |
 
 ### 6.2 Invites
@@ -270,23 +273,28 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| H-28 | More subtab | Header → More (Trophy) or calendar hint | Teams + leagues sections; URL `/?tab=advanced` |
-| H-29 | Past games subtab | Header → Past (History) | Past games list only (no stories, bookings, invites, or banners); load more when available; URL `/?tab=past-games` |
+| H-28 | Past games subtab | Header → Past (History) | Past games list only (no stories, bookings, invites, or banners); load more when available; URL `/?tab=past-games` |
 | H-29a | Past games empty | User with no past games → Past subtab | Empty state "No past games" |
 | H-31 | Calendar subtab default | Open home | Calendar view default; no `tab` query param |
 | H-32 | URL deep link Past | `/?tab=past-games` | Past subtab selected |
-| H-32a | URL deep link More | `/?tab=advanced` | More subtab selected |
-| H-33 | Subtab survives refresh | On Past or More subtab → reload | Same subtab + query param preserved |
+| H-33 | Subtab survives refresh | On Past subtab → reload | Same subtab + query param preserved |
 | H-34 | Restore calendar after create | Create game from calendar | Returns to calendar + game date selected |
 | H-35 | Invite friend to app | `InviteFriendToBandejaButton` | Share sheet / copy invite link |
-| H-37 | Club booking connect banner (My tab) | User in city with BOOKTIME club, not connected | Connect banner on My tab → settings page |
-| H-40 | Club booking connect banner dismiss | User sees connect banner on My tab | Close (×) hides banner; does not reappear for same user |
-| H-38 | Club booking upcoming cards (My tab) | Connected user with upcoming bookings | Section collapsed by default; header shows count + chevron; expand reveals up to 3 cards + "See all" below cards |
-| H-38a | Adjacent booking group (My tab) | User with 2+ back-to-back slots same court | One grouped card with date + small time chips per slot; tap expands individual slots with cancel/link actions |
-| H-38e | Upcoming bookings collapse (My tab) | Connected user with upcoming bookings | Tap header toggles smooth expand/collapse; chevron rotates; "See all" not in header |
+| H-37 | Club booking connect banner (My tab) | User in city with BOOKTIME club, not connected | Tap Bookings switch → connect banner → settings page |
+| H-40 | Club booking connect banner dismiss | User sees connect banner via Bookings switch | Close (×) hides banner; does not reappear for same user |
+| H-38 | Club booking upcoming cards (My tab) | Connected user with upcoming bookings | Tap Bookings switch → up to 3 cards + "See all" below cards |
+| H-38a | Adjacent booking group (My tab) | User with 2+ back-to-back slots same court | Bookings switch → grouped card with date + time chips; tap highlights card and expands per-slot rows with actions; tap another card collapses first |
+| H-38e | Upcoming bookings via switch (My tab) | Connected user with upcoming bookings | Bookings switch toggles panel open/closed with animation |
 | H-38b | Linked game on booking card (My tab) | Upcoming booking linked to one game | Single tappable "Linked game" chip; no duplicate "Also used in" line |
 | H-38c | Booking times use club TZ | Club city TZ ≠ Europe/Belgrade; upcoming booking on My tab or connected-clubs page | Wall-clock times match club city TZ (not Belgrade default) |
 | H-38d | Booking card prices (My tab) | Connected user with priced upcoming booking(s) | Single card shows slot price from booking list; grouped adjacent slots show per-slot price on chips and summed total on card header (no separate price loading state) |
+| H-38g | Past booking card price | Connected user with past booking(s) on connected-clubs page | Expand past section → past card shows price top-right when get-previous returns a positive amount; no price label when list sends 0 or omits price |
+| H-38h | Past booking card actions | Past booking without linked game | Tap card → "Link to game" animates in; one expanded at a time; tap again collapses; linked-game cards stay static with chip visible |
+| H-38i | Full-slot linked booking actions | Upcoming booking linked to game(s) whose times fully cover the slot | Linked game chip(s) shown; Link more + Create game hidden; Cancel still available when policy allows |
+| H-38j | Booking slot occupancy pill | Upcoming booking with partial or full linked game coverage | Small % pill beside slot time; grouped adjacent card shows weighted % across all slots |
+| H-38f | Standalone booking card actions (My tab) | Connected user with at least one non-grouped upcoming booking | Tap standalone card → link/create/cancel actions animate in and card highlights; tap another standalone card → first collapses, second expands; tap same card again → actions collapse |
+| H-38k | Grouped booking card actions (My tab) | Connected user with adjacent same-court upcoming slots | Tap grouped card → per-slot rows animate in with link/create/cancel; only one card expanded at a time; tap again collapses |
+| H-38l | Bookings integrations shortcut (My tab) | Connected user with upcoming bookings on My tab | Gear icon beside "See all" → `/profile/connected-clubs?tab=integrations` with Integrations subtab active; "See all" still opens Bookings subtab |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
 ---
@@ -443,6 +451,7 @@ Frontend/e2e/
 | C-20 | Override time on Bookings tab | Toggle adjust game time | Expand animates; create uses shorter window |
 | C-21 | Multi-court confirm 2 steps | 2 integrated courts → Create | Stepper: 2 reserve steps + create; rollback on fail |
 | C-22 | Deep link bookingIds | `?locationTimeMode=bookings&bookingIds=uuid` | Bookings tab; row selected; preselected banner |
+| C-22a | Adjacent bookings picker group | Create game → Bookings tab with 2+ consecutive same-court slots | Adjacent slots shown as one grouped card; tap selects all slots and reveals per-slot rows; deselect respects min selection |
 | C-23 | Tab switch discard | Dirty selection on tab → switch | Confirm discard modal |
 | C-24 | Date/time | Change start + duration | End time updates |
 | C-25 | Level range slider | Adjust range | Min ≤ max |
@@ -866,15 +875,17 @@ Frontend/e2e/
 | PR-53 | Share user profile | Share button | `ShareModal` with profile URL |
 | PR-54 | Display preferences | 12h/24h, date format toggles | Affects game time display app-wide |
 | PR-55 | Competitive vs social badge | User with both levels | Correct badge for sport context |
-| PR-56 | Connected clubs settings entry | Profile → Connected clubs & bookings | Navigates to `/profile/connected-clubs` |
-| PR-57 | Connected clubs page tabs | Profile → Connected clubs & bookings | Segmented switch Bookings/Integrations centered; Bookings default |
+| PR-56 | Bookings settings entry | Profile → Bookings | Navigates to `/profile/connected-clubs` |
+| PR-57 | Bookings page tabs | Profile → Bookings | Segmented switch Bookings/Integrations centered; Bookings default |
 | PR-57a | Bookings tab | Bookings tab with connected clubs | All upcoming across clubs with club name; one linked-game chip per link (opens game); no "Also used in" duplicate; Link to game dialog lists announced games with recommended match |
-| PR-57a1 | Adjacent booking group (settings) | Connected clubs → Bookings with consecutive same-court slots | Grouped card with date + per-slot time chips; expand/collapse reveals each slot row |
+| PR-57a1 | Adjacent booking group (settings) | Bookings → Bookings tab with consecutive same-court slots | Grouped card with date + per-slot time chips; tap highlights and expands each slot row; only one expanded at a time |
+| PR-57a2 | Standalone booking card actions (settings) | Bookings → Bookings tab with non-grouped upcoming booking | Tap standalone card → actions animate in; only one expanded at a time; tap again collapses |
+| PR-57a3 | Past booking card actions (settings) | Bookings → expand Past section; unlinked past booking | Same tap-to-expand "Link to game" behavior as upcoming standalone cards |
 | PR-57b | Integrations tab | Integrations tab | Club list with connect/disconnect state; hint card |
 | PR-57c | Link booking to game (happy path) | My tab → Bookings → Link to game → pick game (confirm reschedule if times differ) | Single request succeeds; success toast; game shows linked booking with correct time/club |
 | PR-57d | Link booking to game (failure) | Link to game while offline or on already-linked booking | Error toast; no partial link (game unchanged if request failed) |
-| PR-57e | Connected clubs back navigation | My tab → See all → back; Profile → Connected clubs → back | Browser back returns to previous screen (My tab or Profile) |
-| PR-59 | Club account disconnect | Connected clubs page → Disconnect | Toast "Club account disconnected"; club shows connect CTA |
+| PR-57e | Bookings back navigation | My tab → See all → back; Profile → Bookings → back | Browser back returns to previous screen (My tab or Profile) |
+| PR-59 | Club account disconnect | Bookings page → Integrations tab → Disconnect | Toast "Club account disconnected"; club shows connect CTA |
 | PR-60 | Club booking cancel from settings | Settings page upcoming → cancel booking | Same policy modal + snapshot refresh as club detail |
 
 ---

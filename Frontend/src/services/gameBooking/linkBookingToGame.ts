@@ -32,6 +32,12 @@ export {
   filterLinkableGames,
   gameNeedsDatetimeUpdateForLink,
   isRecommendedLinkTarget,
+  bookingSlotSegmentsOccupancyPercent,
+  linkedGamesBookingGroupOccupancyPercent,
+  linkedGamesBookingGroupSlotSegments,
+  linkedGamesBookingSlotOccupancyPercent,
+  linkedGamesBookingSlotSegments,
+  linkedGamesFullyCoverBookingSlot,
   resolveBooktimeClubTimezone,
   sortLinkableGames,
 } from '@shared/gameBooking/linkBookingToGame';

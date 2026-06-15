@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react';
+import { Link2, Loader2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -6,6 +6,7 @@ import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { Button } from '@/components';
+import { BooktimeBookingActionButton } from './BooktimeBookingActionButton';
 import {
   Dialog,
   DialogContent,
@@ -185,7 +186,6 @@ type ButtonProps = {
   booking: BooktimeBookingRecord;
   club: BooktimeMyClubRow;
   onLinked: () => void;
-  compact?: boolean;
   hasLinkedGame?: boolean;
 };
 
@@ -193,28 +193,20 @@ export function BooktimeLinkGameButton({
   booking,
   club,
   onLinked,
-  compact = false,
   hasLinkedGame = false,
 }: ButtonProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const label = hasLinkedGame
-    ? compact
-      ? t('club.booktime.linkGameMoreShort')
-      : t('club.booktime.linkGameMore')
-    : compact
-      ? t('club.booktime.linkGameShort')
-      : t('club.booktime.linkGame');
+    ? t('club.booktime.linkGameMoreShort')
+    : t('club.booktime.linkGameShort');
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-      >
+      <BooktimeBookingActionButton onClick={() => setOpen(true)}>
+        <Link2 size={12} aria-hidden />
         {label}
-      </button>
+      </BooktimeBookingActionButton>
       <BooktimeLinkGameModal
         booking={booking}
         club={club}

@@ -1,4 +1,5 @@
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
+import { booktimeBookingListPrice } from '@/integrations/booktime/booktimeListPrice';
 
 export type BooktimeBookingPriceQuote = {
   amount: number;
@@ -9,8 +10,9 @@ export function bookingPriceQuote(
   booking: BooktimeBookingRecord,
   currency: string,
 ): BooktimeBookingPriceQuote {
-  if (booking.price == null || !currency) return null;
-  return { amount: booking.price, currency };
+  const amount = booktimeBookingListPrice(booking.price);
+  if (amount == null || !currency) return null;
+  return { amount, currency };
 }
 
 export function buildBooktimePriceById(

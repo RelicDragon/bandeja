@@ -17,12 +17,12 @@ test.describe('shell deep links', () => {
     await expect(home.subtab('past-games')).toHaveAttribute('aria-selected', 'true');
   });
 
-  test('G-21 home URL subtab advanced @auth', async ({ page }) => {
+  test('G-21 legacy home URL tab=advanced redirects to calendar @auth', async ({ page }) => {
     await page.goto('/?tab=advanced');
-    await expect(page).toHaveURL(/tab=advanced/);
+    await expect(page).toHaveURL(/\/?(\?|$)/);
     const home = new HomePage(page);
     await home.waitForShell();
-    await expect(home.subtab('advanced')).toHaveAttribute('aria-selected', 'true');
+    await expect(home.subtab('calendar')).toHaveAttribute('aria-selected', 'true');
   });
 
   test('G-22 find URL view list @auth', async ({ page }) => {

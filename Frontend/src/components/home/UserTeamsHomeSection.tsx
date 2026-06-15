@@ -19,9 +19,10 @@ function teamNameWordRows(name: string): string[] {
 
 interface UserTeamsHomeSectionProps {
   className?: string;
+  embedded?: boolean;
 }
 
-export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionProps) {
+export function UserTeamsHomeSection({ className = '', embedded = false }: UserTeamsHomeSectionProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -98,21 +99,23 @@ export function UserTeamsHomeSection({ className = '' }: UserTeamsHomeSectionPro
 
   return (
     <section className={className}>
-      <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
-        <Users
-          size={18}
-          strokeWidth={2}
-          className="shrink-0 text-gray-500 dark:text-gray-400"
-          fill="none"
-          aria-hidden
-        />
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('teams.title')}</p>
-        {!showSkeleton && totalTiles > 0 && (
-          <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gray-900/5 px-1.5 text-[10px] font-semibold tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-300">
-            {totalTiles}
-          </span>
-        )}
-      </div>
+      {!embedded && (
+        <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
+          <Users
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-gray-500 dark:text-gray-400"
+            fill="none"
+            aria-hidden
+          />
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{t('teams.title')}</p>
+          {!showSkeleton && totalTiles > 0 && (
+            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gray-900/5 px-1.5 text-[10px] font-semibold tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-300">
+              {totalTiles}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto py-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button

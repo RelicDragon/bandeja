@@ -77,6 +77,37 @@ describe('BooktimeClient wire ingest timezone', () => {
     expect(page.bookings[0]?.isPaid).toBe(false);
   });
 
+  it('preserves price from get-previous list response', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        statusText: 'OK',
+        text: async () =>
+          JSON.stringify({
+            bookings: [
+              {
+                uuid: 'b-past',
+                bookingStart: '2026-06-14T18:00:00.000Z',
+                bookingEnd: '2026-06-14T19:00:00.000Z',
+                price: 3500,
+              },
+            ],
+          }),
+      }),
+    );
+
+    const client = new BooktimeClient({
+      companyId: 'co-1',
+      accessToken: 'tok',
+      clubTimeZone: 'Europe/Belgrade',
+    });
+
+    const page = await client.getPreviousBookings(0, 1);
+    expect(page.bookings[0]?.price).toBe(3500);
+  });
+
   it('setClubTimeZone updates ingest for subsequent fetches', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,

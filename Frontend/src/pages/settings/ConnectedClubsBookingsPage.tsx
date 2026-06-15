@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
@@ -18,12 +18,17 @@ import { handleBack } from '@/utils/backNavigation';
 
 type PageTab = 'bookings' | 'integrations';
 
+function parseConnectedClubsTab(value: string | null): PageTab {
+  return value === 'integrations' ? 'integrations' : 'bookings';
+}
+
 export function ConnectedClubsBookingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   useBackButtonHandler();
   const { data, loading, reload } = useBooktimeMyClubs(true);
-  const [activeTab, setActiveTab] = useState<PageTab>('bookings');
+  const activeTab = parseConnectedClubsTab(searchParams.get('tab'));
   const [bookingsRefreshKey, setBookingsRefreshKey] = useState(0);
   const [connectClub, setConnectClub] = useState<BooktimeMyClubRow | null>(null);
   const [connectClubEntity, setConnectClubEntity] = useState<Club | null>(null);
@@ -75,7 +80,14 @@ export function ConnectedClubsBookingsPage() {
           <SegmentedSwitch
             tabs={tabs}
             activeId={activeTab}
-            onChange={(id) => setActiveTab(id as PageTab)}
+            onChange={(id) => {
+              const tab = id as PageTab;
+              if (tab === 'bookings') {
+                setSearchParams({}, { replace: true });
+              } else {
+                setSearchParams({ tab }, { replace: true });
+              }
+            }}
             showOnlyActiveTabText={false}
             layoutId="connectedClubsPageTab"
             ariaLabel={t('club.booktime.connectedClubsPageTitle')}

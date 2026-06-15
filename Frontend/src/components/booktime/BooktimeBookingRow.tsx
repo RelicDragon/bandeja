@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Check, X } from 'lucide-react';
+import { Check, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeLinkedGame } from '@/api/booktime';
@@ -22,7 +22,13 @@ import {
   formatBooktimeBookingWhen,
   resolveCourtForBooking,
 } from './booktimeBookingUtils';
-import { buildCreateGameDeepLinkParams } from '@/services/gameBooking/linkBookingToGame';
+import {
+  buildCreateGameDeepLinkParams,
+  linkedGamesBookingSlotSegments,
+  linkedGamesFullyCoverBookingSlot,
+} from '@/services/gameBooking/linkBookingToGame';
+import { BooktimeBookingActionButton } from './BooktimeBookingActionButton';
+import { BooktimeBookingOccupancyPill } from './BooktimeBookingOccupancyPill';
 import { BooktimeLinkedGameLink } from './BooktimeLinkedGameLink';
 import { BooktimeLinkGameButton } from './BooktimeLinkGameModal';
 import { BooktimeBookingPriceLabel } from './BooktimeBookingPriceLabel';
@@ -44,6 +50,7 @@ type Props = {
   dimmed?: boolean;
   disableDeselect?: boolean;
   linkedGames?: BooktimeLinkedGame[];
+  onLinkedGamesReload?: () => void;
   onToggleSelect?: () => void;
   readOnly?: boolean;
   trailing?: ReactNode;
@@ -53,6 +60,9 @@ type Props = {
   };
   nested?: boolean;
   priceQuote?: ReturnType<typeof bookingPriceQuote>;
+  expandableActions?: boolean;
+  actionsExpanded?: boolean;
+  onToggleActions?: () => void;
 };
 
 function LinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
@@ -81,12 +91,16 @@ export function BooktimeBookingRow({
   dimmed = false,
   disableDeselect = false,
   linkedGames: linkedGamesProp,
+  onLinkedGamesReload,
   onToggleSelect,
   readOnly = false,
   trailing,
   courtOverride,
   nested = false,
   priceQuote: priceQuoteProp,
+  expandableActions = false,
+  actionsExpanded = false,
+  onToggleActions,
 }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -96,7 +110,7 @@ export function BooktimeBookingRow({
   const [cancelBusy, setCancelBusy] = useState(false);
   const { linkedGame, linkedGames: fetchedLinkedGames, reload: reloadLinkedGame } = useBooktimeLinkedGame(
     booking.uuid,
-    !selectable && !readOnly,
+    !selectable && !readOnly && linkedGamesProp === undefined,
   );
   const linkedGames = linkedGamesProp ?? fetchedLinkedGames;
   const [cancelDoneBanner, setCancelDoneBanner] = useState<BooktimeLinkedGame | null>(null);
@@ -110,6 +124,22 @@ export function BooktimeBookingRow({
   const currency = useBooktimeClubCurrency(club);
   const priceQuote =
     priceQuoteProp !== undefined ? priceQuoteProp : bookingPriceQuote(booking, currency ?? '');
+  const slotFullyLinked = useMemo(
+    () => linkedGamesFullyCoverBookingSlot(booking, linkedGames, clubTimezone),
+    [booking, linkedGames, clubTimezone],
+  );
+  const slotSegments = useMemo(
+    () => linkedGamesBookingSlotSegments(booking, linkedGames, clubTimezone),
+    [booking, linkedGames, clubTimezone],
+  );
+
+  const handleLinkedGame = () => {
+    if (linkedGamesProp === undefined) {
+      void reloadLinkedGame();
+    } else {
+      onLinkedGamesReload?.();
+    }
+  };
 
   const openCreateGame = () => {
     onCreateGame?.();
@@ -147,8 +177,32 @@ export function BooktimeBookingRow({
     ? formatBooktimeBookingSlotRange(booking, { timezone: clubTimezone, displaySettings })
     : formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings });
 
+  const showActionButtons = !expandableActions || actionsExpanded;
+  const hasCancel = !readOnly && !selectable && !cancelDoneBanner;
+  const showCancelHint = hasCancel && !cancellable;
+  const actionRevealClass = (visible: boolean) =>
+    `grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
+      visible ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
+    }`;
+
+  const cancelButton = hasCancel && cancellable ? (
+    <BooktimeBookingActionButton
+      variant="danger"
+      onClick={() => setCancelOpen(true)}
+    >
+      <Trash2 size={12} aria-hidden />
+      {t('club.booktime.cancelBooking')}
+    </BooktimeBookingActionButton>
+  ) : null;
+
+  const cancelHint = showCancelHint ? (
+    <p className="text-[10px] leading-tight text-gray-400 dark:text-gray-500">
+      {t('club.booktime.cancelTooLate', { hours: allowedHoursToCancel })}
+    </p>
+  ) : null;
+
   const rowContent = (
-    <div className={`min-w-0 flex-1 ${nested ? 'pr-14' : ''}`}>
+    <div className={`min-w-0 flex-1 ${priceQuote ? 'pr-14' : 'pr-12'}`}>
       {showClubName && !nested ? (
         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{club.clubName}</p>
       ) : null}
@@ -160,8 +214,9 @@ export function BooktimeBookingRow({
           secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400 truncate"
         />
       ) : null}
-      <p className="text-xs text-gray-500 dark:text-gray-400">{whenLabel}</p>
-      {!nested ? <BooktimeBookingPriceLabel quote={priceQuote} /> : null}
+      <p className="text-xs text-gray-500 dark:text-gray-400">
+        <span>{whenLabel}</span>
+      </p>
       {selectable ? <LinkedGamesPills games={linkedGames} /> : null}
       {!selectable
         ? linkedGames.map((game) => <BooktimeLinkedGameLink key={game.id} game={game} />)
@@ -173,22 +228,25 @@ export function BooktimeBookingRow({
     compact ? 'px-3 py-2' : 'px-3 py-2.5'
   }`;
 
-  const nestedPriceLabel = nested ? (
-    <div className="pointer-events-none absolute top-2 right-3">
-      <BooktimeBookingPriceLabel
-        quote={priceQuote}
-        className="text-right text-xs font-medium text-gray-700 dark:text-gray-300"
-      />
+  const cornerStack = (
+    <div className="absolute top-2 right-3 z-10 flex flex-col items-end gap-1 pointer-events-none">
+      {priceQuote ? (
+        <BooktimeBookingPriceLabel
+          quote={priceQuote}
+          className="text-right text-xs font-medium text-gray-700 dark:text-gray-300"
+        />
+      ) : null}
+      <BooktimeBookingOccupancyPill segments={slotSegments} />
     </div>
-  ) : null;
+  );
 
   if (readOnly) {
     const shell = (
       <div
         data-testid="linked-booking-card"
-        className={`${rowShellClassName} ${nested ? 'relative' : ''} ${trailing ? 'flex items-center justify-between gap-2' : ''}`}
+        className={`${rowShellClassName} relative ${trailing ? 'flex items-center justify-between gap-2' : ''}`}
       >
-        {nestedPriceLabel}
+        {cornerStack}
         {rowContent}
         {trailing}
       </div>
@@ -204,12 +262,13 @@ export function BooktimeBookingRow({
           whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
           disabled={dimmed || (selected && disableDeselect)}
           onClick={onToggleSelect}
-          className={`w-full rounded-lg border px-3 py-2.5 flex items-center gap-3 text-left transition-opacity ${
+          className={`relative w-full rounded-lg border px-3 py-2.5 flex items-center gap-3 text-left transition-opacity ${
             selected
               ? 'border-primary-400 dark:border-primary-600 bg-primary-50/50 dark:bg-primary-950/30'
               : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
           } ${dimmed ? 'opacity-50 cursor-default' : ''} ${selected && disableDeselect ? 'cursor-default' : ''}`}
         >
+          {cornerStack}
           <span
             className={`h-5 w-5 rounded-full border flex items-center justify-center shrink-0 ${
               selected
@@ -229,56 +288,78 @@ export function BooktimeBookingRow({
     );
   }
 
+  const cancelDoneBannerBlock = cancelDoneBanner ? (
+    <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 space-y-2">
+      <p className="text-xs text-amber-900 dark:text-amber-100">
+        {t('club.booktime.cancelLinkedGameBanner')}
+      </p>
+      <BooktimeBookingActionButton onClick={() => navigate(`/games/${cancelDoneBanner.id}`)}>
+        <ExternalLink size={12} aria-hidden />
+        {t('club.booktime.openLinkedGame')}
+      </BooktimeBookingActionButton>
+    </div>
+  ) : null;
+
+  const actionButtons = !cancelDoneBanner && (!slotFullyLinked || hasCancel) ? (
+    <div className="flex flex-wrap items-center gap-2">
+      {!slotFullyLinked ? (
+        <>
+          <BooktimeLinkGameButton
+            booking={booking}
+            club={club}
+            hasLinkedGame={linkedGames.length > 0}
+            onLinked={handleLinkedGame}
+          />
+          <BooktimeBookingActionButton onClick={openCreateGame}>
+            <Plus size={12} aria-hidden />
+            {t('club.booktime.createGameHere')}
+          </BooktimeBookingActionButton>
+        </>
+      ) : null}
+      {hasCancel && cancellable ? cancelButton : null}
+    </div>
+  ) : null;
+
   const bookingCard = (
-    <div className={`${rowShellClassName} space-y-2 ${nested ? 'relative' : ''}`}>
-        {nestedPriceLabel}
-        {cancelDoneBanner ? (
-          <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 space-y-2">
-            <p className="text-xs text-amber-900 dark:text-amber-100">
-              {t('club.booktime.cancelLinkedGameBanner')}
-            </p>
-            <button
-              type="button"
-              onClick={() => navigate(`/games/${cancelDoneBanner.id}`)}
-              className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              {t('club.booktime.openLinkedGame')}
-            </button>
+    <div
+      className={`${rowShellClassName} relative ${
+        expandableActions && actionsExpanded
+          ? 'border-primary-400 dark:border-primary-600 bg-primary-50/50 dark:bg-primary-950/30'
+          : ''
+      } ${expandableActions ? 'space-y-0' : 'space-y-2'}`}
+    >
+      {cornerStack}
+      {cancelDoneBannerBlock}
+      {expandableActions ? (
+        <button
+          type="button"
+          data-testid="booktime-booking-card-toggle"
+          aria-expanded={actionsExpanded}
+          onClick={onToggleActions}
+          className="w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md"
+        >
+          {rowContent}
+        </button>
+      ) : (
+        rowContent
+      )}
+      {expandableActions ? (
+        <div className={actionRevealClass(Boolean(showActionButtons && (actionButtons || cancelHint)))}>
+          <div className="min-h-0 overflow-hidden">
+            {actionButtons ? <div className="pt-2">{actionButtons}</div> : null}
+            {cancelHint ? (
+              <div className={actionButtons ? 'pt-1' : 'pt-2'}>{cancelHint}</div>
+            ) : null}
           </div>
-        ) : null}
-        {rowContent}
-        {!cancelDoneBanner ? (
-          <div className="flex flex-wrap gap-2">
-            <BooktimeLinkGameButton
-              booking={booking}
-              club={club}
-              compact={compact}
-              hasLinkedGame={linkedGames.length > 0}
-              onLinked={() => void reloadLinkedGame()}
-            />
-            <button
-              type="button"
-              onClick={openCreateGame}
-              className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              {t('club.booktime.createGameHere')}
-            </button>
-            {cancellable ? (
-              <button
-                type="button"
-                onClick={() => setCancelOpen(true)}
-                className="text-xs font-medium text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1"
-              >
-                <X size={12} />
-                {t('club.booktime.cancelBooking')}
-              </button>
-            ) : (
-              <span className="text-xs text-gray-400 dark:text-gray-500">
-                {t('club.booktime.cancelTooLate', { hours: allowedHoursToCancel })}
-              </span>
-            )}
-          </div>
-        ) : null}
+        </div>
+      ) : (
+        <>
+          {actionButtons}
+          {cancelHint ? (
+            <div className={actionButtons ? 'pt-1' : undefined}>{cancelHint}</div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 

@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { BooktimeAdjacentBookingGroup } from './BooktimeAdjacentBookingGroup';
@@ -47,6 +47,7 @@ export function BooktimeUpcomingBookingsList({
   onCanceled,
   onRefreshSnapshot,
 }: Props) {
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const resolveAllowedHours = (clubId: string | undefined) =>
     resolveBooktimeCancelHoursForClub(clubId, allowedHoursToCancelByClubId, allowedHoursToCancel);
   const resolveClubTimezone = useCallback(
@@ -74,9 +75,10 @@ export function BooktimeUpcomingBookingsList({
           const club = resolveClub(entry.bookings[0]!, clubById, clubIdOf);
           if (!club) return null;
           const clubAllowedHours = resolveAllowedHours(club.clubId);
+          const groupId = entry.bookings.map((booking) => booking.uuid).join('-');
           return (
             <BooktimeAdjacentBookingGroup
-              key={entry.bookings.map((booking) => booking.uuid).join('-')}
+              key={groupId}
               bookings={entry.bookings}
               club={club}
               showClubName={showClubName}
@@ -84,7 +86,17 @@ export function BooktimeUpcomingBookingsList({
               compact={compact}
               clubTimezone={resolveClubTimezone(club)}
               onRefreshSnapshot={onRefreshSnapshot}
-              onCanceled={onCanceled}
+              expandableActions
+              actionsExpanded={selectedBookingId === groupId}
+              onToggleActions={() =>
+                setSelectedBookingId((prev) => (prev === groupId ? null : groupId))
+              }
+              onCanceled={(bookingId) => {
+                setSelectedBookingId((prev) =>
+                  prev === groupId || prev === bookingId ? null : prev,
+                );
+                onCanceled?.(bookingId);
+              }}
             />
           );
         }
@@ -92,9 +104,10 @@ export function BooktimeUpcomingBookingsList({
         const club = resolveClub(entry.booking, clubById, clubIdOf);
         if (!club) return null;
         const clubAllowedHours = resolveAllowedHours(club.clubId);
+        const bookingId = entry.booking.uuid;
         return (
           <BooktimeBookingRow
-            key={`${club.clubId}-${entry.booking.uuid}`}
+            key={`${club.clubId}-${bookingId}`}
             booking={entry.booking}
             club={club}
             showClubName={showClubName}
@@ -102,7 +115,15 @@ export function BooktimeUpcomingBookingsList({
             compact={compact}
             clubTimezone={resolveClubTimezone(club)}
             onRefreshSnapshot={onRefreshSnapshot}
-            onCanceled={() => onCanceled?.(entry.booking.uuid)}
+            expandableActions
+            actionsExpanded={selectedBookingId === bookingId}
+            onToggleActions={() =>
+              setSelectedBookingId((prev) => (prev === bookingId ? null : bookingId))
+            }
+            onCanceled={() => {
+              setSelectedBookingId((prev) => (prev === bookingId ? null : prev));
+              onCanceled?.(bookingId);
+            }}
           />
         );
       })}

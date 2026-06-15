@@ -7,12 +7,9 @@ import {
   InvitesSection,
   MyGamesSection,
   PastGamesSection,
-  AdvancedTabMovedHint,
   CityPromptBanner,
-  UserTeamsHomeSection,
-  YourLeaguesHomeSection,
+  MyTabPanelSwitcher,
 } from '@/components/home';
-import { MyTabBookingsSection } from '@/components/booktime/MyTabBookingsSection';
 import { SportQuestionnairePrompt } from '@/components/sportQuestionnaire';
 import { StoriesRail } from '@/components/stories/StoriesRail';
 import { AdSlot } from '@/components/sponsorSlots';
@@ -311,13 +308,6 @@ export const MyTab = () => {
   }, [refetchMyGames, loadPastGames]);
 
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
-  const renderAdvancedContent = (footerLoading: boolean) => (
-    <>
-      <UserTeamsHomeSection className="mb-3" />
-      <YourLeaguesHomeSection games={games} gamesUnreadCounts={calendarMergedUnreadCounts} className="mb-3" />
-      <MainTabFooter isLoading={footerLoading} />
-    </>
-  );
   const renderPastGamesContent = (footerLoading: boolean) => (
     <>
       <PastGamesSection
@@ -335,12 +325,13 @@ export const MyTab = () => {
   const calendarContentPanel = (
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-        {user && <AdvancedTabMovedHint />}
         {user && <StoriesRail />}
+        {user && (
+          <MyTabPanelSwitcher games={games} gamesUnreadCounts={calendarMergedUnreadCounts} />
+        )}
         {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
-        {user && <MyTabBookingsSection />}
         <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
           <InvitesSection
             invites={invites}
@@ -391,18 +382,6 @@ export const MyTab = () => {
         </>
       );
     }
-    if (!isCalendarTab) {
-      return (
-        <>
-          <div className="fixed inset-x-0 bottom-0 overflow-y-auto z-0 bg-gray-50 dark:bg-gray-900" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
-            <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-              {renderAdvancedContent(loading)}
-            </div>
-          </div>
-          {declineInviteModal}
-        </>
-      );
-    }
     return (
       <>
       <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
@@ -440,14 +419,17 @@ export const MyTab = () => {
     <PullToRefreshShell onRefresh={handleRefresh} disabled={loading || loadingPastGames}>
       {({ isRefreshing }) => (
         <>
-        {isCalendarTab ? (
+        {isPastGamesTab ? (
+          renderPastGamesContent(loading || loadingPastGames || isRefreshing)
+        ) : (
           <>
-        {user && <AdvancedTabMovedHint />}
         {user && <StoriesRail />}
+        {user && (
+          <MyTabPanelSwitcher games={games} gamesUnreadCounts={calendarMergedUnreadCounts} />
+        )}
         {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
         {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
         <CityPromptBanner />
-        {user && <MyTabBookingsSection />}
         <div
           className={`transition-all duration-500 ease-in-out overflow-hidden ${
             !loading
@@ -508,10 +490,6 @@ export const MyTab = () => {
         </div>
         <MainTabFooter isLoading={loading || isRefreshing} />
           </>
-        ) : isPastGamesTab ? (
-          renderPastGamesContent(loading || loadingPastGames || isRefreshing)
-        ) : (
-          renderAdvancedContent(loading || isRefreshing)
         )}
         </>
       )}

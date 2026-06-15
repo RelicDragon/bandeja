@@ -4,6 +4,8 @@ import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { BOOKTIME_DEFAULT_TIMEZONE, storedUtcIsoToInstant } from '@shared/booktime/localTime';
 import { buildCreateGameDeepLinkParams } from '@shared/gameBooking/linkBookingToGame';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
+import i18n from '@/i18n/config';
+import { getDateLabelInClubTz } from '@/utils/gameTimeDisplay';
 
 export function resolveBooktimeMyClubTimezone(club: {
   cityTimezone?: string | null;
@@ -90,10 +92,7 @@ export function formatBooktimeBookingWhen(
     ? storedUtcIsoToInstant(booking.bookingEnd)
     : null;
 
-  const dateLabel = new Intl.DateTimeFormat(options.displaySettings.locale, {
-    timeZone: timezone,
-    dateStyle: 'long',
-  }).format(startDate);
+  const dateLabel = formatBooktimeBookingDate(booking, options);
   const startTime = formatBooktimeWallClock(startDate, timezone, options.displaySettings);
   const endTime = endDate
     ? formatBooktimeWallClock(endDate, timezone, options.displaySettings)
@@ -112,10 +111,7 @@ export function formatBooktimeBookingDate(
   const startDate = storedUtcIsoToInstant(booking.bookingStart);
   if (!startDate) return booking.bookingStart;
 
-  return new Intl.DateTimeFormat(options.displaySettings.locale, {
-    timeZone: timezone,
-    dateStyle: 'long',
-  }).format(startDate);
+  return getDateLabelInClubTz(startDate, timezone, options.displaySettings, (key) => i18n.t(key));
 }
 
 export function formatBooktimeBookingSlotRange(

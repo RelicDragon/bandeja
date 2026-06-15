@@ -22,6 +22,7 @@ export function BooktimePastBookingsSection({
 }: Props) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const { bookings: past, loading } = useBooktimeAllPast(clubs, expanded, refreshKey);
   const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
 
@@ -31,7 +32,12 @@ export function BooktimePastBookingsSection({
         type="button"
         className="flex w-full items-center justify-between gap-2 text-left rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
         aria-expanded={expanded}
-        onClick={() => setExpanded((v) => !v)}
+        onClick={() => {
+          setExpanded((v) => {
+            if (v) setSelectedBookingId(null);
+            return !v;
+          });
+        }}
       >
         <span className="flex min-w-0 items-center gap-2">
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('club.booktime.pastTitle')}</h3>
@@ -63,13 +69,19 @@ export function BooktimePastBookingsSection({
                 {past.map((booking) => {
                   const club = clubById.get(booking.clubId);
                   if (!club) return null;
+                  const bookingId = booking.uuid;
                   return (
                     <BooktimePastBookingRow
-                      key={`${booking.clubId}-${booking.uuid}`}
+                      key={`${booking.clubId}-${bookingId}`}
                       booking={booking}
                       club={club}
                       displaySettings={displaySettings}
                       showClubName={showClubName}
+                      expandableActions
+                      actionsExpanded={selectedBookingId === bookingId}
+                      onToggleActions={() =>
+                        setSelectedBookingId((prev) => (prev === bookingId ? null : bookingId))
+                      }
                     />
                   );
                 })}

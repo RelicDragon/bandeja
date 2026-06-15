@@ -20,6 +20,10 @@ describe('bookingPriceQuote', () => {
     expect(bookingPriceQuote(booking('a'), 'RSD')).toBeNull();
   });
 
+  it('returns null when list API sends price 0 (unknown)', () => {
+    expect(bookingPriceQuote(booking('a', 0), 'RSD')).toBeNull();
+  });
+
   it('returns quote when price and currency are present', () => {
     expect(bookingPriceQuote(booking('a', 4000), 'RSD')).toEqual({
       amount: 4000,

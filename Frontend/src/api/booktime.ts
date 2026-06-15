@@ -61,7 +61,11 @@ export type BooktimeLinkedGame = {
   id: string;
   name: string | null;
   startTime: string;
+  endTime: string;
+  timeIsSet: boolean;
   status: string;
+  linkBookingStart?: string | null;
+  linkBookingEnd?: string | null;
 };
 
 export const booktimeApi = {

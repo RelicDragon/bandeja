@@ -807,13 +807,13 @@ function AppContent() {
 
 function App() {
   return (
-    <NavigationErrorBoundary fallbackPath="/">
-      <QueryProvider>
-        <BrowserRouter>
+    <QueryProvider>
+      <BrowserRouter>
+        <NavigationErrorBoundary>
           <AppContent />
-        </BrowserRouter>
-      </QueryProvider>
-    </NavigationErrorBoundary>
+        </NavigationErrorBoundary>
+      </BrowserRouter>
+    </QueryProvider>
   );
 }
 

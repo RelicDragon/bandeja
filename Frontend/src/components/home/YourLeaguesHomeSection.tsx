@@ -19,12 +19,14 @@ interface YourLeaguesHomeSectionProps {
   games: Game[];
   gamesUnreadCounts?: Record<string, number>;
   className?: string;
+  embedded?: boolean;
 }
 
 export function YourLeaguesHomeSection({
   games,
   gamesUnreadCounts = {},
   className = '',
+  embedded = false,
 }: YourLeaguesHomeSectionProps) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -38,25 +40,36 @@ export function YourLeaguesHomeSection({
     [games, user?.id]
   );
 
-  if (hubs.length === 0) return null;
+  if (hubs.length === 0) {
+    if (embedded) {
+      return (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t('home.noLeagues', { defaultValue: 'No leagues yet' })}
+        </p>
+      );
+    }
+    return null;
+  }
 
   return (
     <section className={className}>
-      <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
-        <Trophy
-          size={18}
-          strokeWidth={2}
-          className="shrink-0 text-gray-500 dark:text-gray-400"
-          fill="none"
-          aria-hidden
-        />
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          {t('home.yourLeagues', { defaultValue: 'Leagues' })}
-        </p>
-        <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gray-900/5 px-1.5 text-[10px] font-semibold tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-300">
-          {hubs.length}
-        </span>
-      </div>
+      {!embedded && (
+        <div className="mb-2 flex min-w-0 flex-wrap items-center gap-2">
+          <Trophy
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-gray-500 dark:text-gray-400"
+            fill="none"
+            aria-hidden
+          />
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            {t('home.yourLeagues', { defaultValue: 'Leagues' })}
+          </p>
+          <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gray-900/5 px-1.5 text-[10px] font-semibold tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-300">
+            {hubs.length}
+          </span>
+        </div>
+      )}
 
       <div className="flex flex-col gap-2.5">
         {hubs.map((hub) => {
