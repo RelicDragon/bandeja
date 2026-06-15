@@ -873,6 +873,7 @@ Frontend/e2e/
 | PR-57b | Integrations tab | Integrations tab | Club list with connect/disconnect state; hint card |
 | PR-57c | Link booking to game (happy path) | My tab → Bookings → Link to game → pick game (confirm reschedule if times differ) | Single request succeeds; success toast; game shows linked booking with correct time/club |
 | PR-57d | Link booking to game (failure) | Link to game while offline or on already-linked booking | Error toast; no partial link (game unchanged if request failed) |
+| PR-57e | Connected clubs back navigation | My tab → See all → back; Profile → Connected clubs → back | Browser back returns to previous screen (My tab or Profile) |
 | PR-59 | Club account disconnect | Connected clubs page → Disconnect | Toast "Club account disconnected"; club shows connect CTA |
 | PR-60 | Club booking cancel from settings | Settings page upcoming → cancel booking | Same policy modal + snapshot refresh as club detail |
 

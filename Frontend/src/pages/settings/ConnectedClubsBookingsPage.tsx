@@ -14,16 +14,14 @@ import { ConnectedClubsIntegrationsTab } from '@/components/booktime/ConnectedCl
 import { useBooktimeMyClubs } from '@/hooks/useBooktimeMyClubs';
 import type { Club } from '@/types';
 import { disconnectBooktimeClub } from '@/integrations/booktime/session';
+import { handleBack } from '@/utils/backNavigation';
 
 type PageTab = 'bookings' | 'integrations';
 
 export function ConnectedClubsBookingsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  useBackButtonHandler(() => {
-    navigate('/profile');
-    return true;
-  });
+  useBackButtonHandler();
   const { data, loading, reload } = useBooktimeMyClubs(true);
   const [activeTab, setActiveTab] = useState<PageTab>('bookings');
   const [bookingsRefreshKey, setBookingsRefreshKey] = useState(0);
@@ -69,7 +67,7 @@ export function ConnectedClubsBookingsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-safe">
       <SubPageHeader
         title={t('club.booktime.connectedClubsPageTitle')}
-        onBack={() => navigate('/profile')}
+        onBack={() => handleBack(navigate)}
       />
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-4">
