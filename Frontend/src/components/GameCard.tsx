@@ -17,6 +17,7 @@ import { getGameCardEntityGradientClasses } from '@/utils/gameCardEntityTheme';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { GameSportTagRow } from '@/components/GameSportTag';
 import { playersPerMatchOf } from '@/utils/matchFormat';
+import { matchFormatSummaryPart } from '@/utils/gameFormat';
 import { shouldShowGameCardSportGlyph, getViewerPrimarySport } from '@/utils/findSportFilter';
 import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
@@ -295,7 +296,11 @@ export const GameCard = ({
     findFilterSport,
   );
   const gameSport = parseGameSport(game.sport);
-  const gameSportTags = (
+  const hasGameSportTags =
+    showSportTag ||
+    (game.entityType !== 'TRAINING' &&
+      matchFormatSummaryPart(t, playersPerMatchOf(game), game.sport) != null);
+  const gameSportTags = hasGameSportTags ? (
     <GameSportTagRow
       sport={gameSport}
       showSport={showSportTag}
@@ -303,7 +308,22 @@ export const GameCard = ({
       showMatchFormat={game.entityType !== 'TRAINING'}
       className="shrink-0"
     />
-  );
+  ) : null;
+
+  const showBadgeRow =
+    (!bookmarkInTitleRow && noteBookmarkButton != null) ||
+    (!shouldMoveIconsToTitle && showFireIcon) ||
+    (!shouldMoveIconsToTitle && showStatusIcon) ||
+    (!shouldMoveIconsToTitle && hasGameSportTags) ||
+    showPhotoCountBadge ||
+    !game.isPublic ||
+    (game.genderTeams != null && game.genderTeams !== 'ANY') ||
+    myParticipationBadge != null ||
+    (game.entityType !== 'GAME' && !bookmarkInTitleRow) ||
+    !game.affectsRating ||
+    game.hasFixedTeams ||
+    ((game.status === 'STARTED' || game.status === 'FINISHED' || game.status === 'ARCHIVED') &&
+      game.resultsStatus === 'FINAL');
 
   return (
     <SportLevelProvider sport={gameSport}>
@@ -345,7 +365,7 @@ export const GameCard = ({
         )}
       </div>
       {/* Header - Always visible */}
-      <div className="mb-3 relative z-10">
+      <div className={`relative z-10 ${showBadgeRow ? 'mb-2' : 'mb-1'}`}>
         {isDifferentCity && game.city?.name && (
           <div className="inline-flex items-center gap-1.5 mb-2 px-1.5 py-0.5 bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/30 dark:to-amber-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
             <Plane size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)]" />
@@ -353,7 +373,7 @@ export const GameCard = ({
           </div>
         )}
         <>
-            <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 pr-[5.5rem] sm:pr-24 flex flex-wrap items-center gap-2">
+            <h3 className={`text-sm font-semibold text-gray-900 dark:text-white pr-[5.5rem] sm:pr-24 flex flex-wrap items-center gap-2 ${showBadgeRow ? 'mb-1.5' : 'mb-0'}`}>
               {showTitleLeadingCluster && (
                 <div className="flex shrink-0 items-center gap-1">
                   {bookmarkInTitleRow && noteBookmarkButton}
@@ -414,7 +434,8 @@ export const GameCard = ({
                 {game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON' && game.entityType !== 'TRAINING' && !game.name && game.gameType !== 'CLASSIC' && t(`games.gameTypes.${game.gameType}`)}
               </span>
             </h3>
-            <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
+            {showBadgeRow && (
+            <div className="flex items-center gap-2 pr-10 flex-wrap">
           {!bookmarkInTitleRow && noteBookmarkButton}
           {!shouldMoveIconsToTitle && showFireIcon && <AnnouncedFireIcon />}
           {!shouldMoveIconsToTitle && showStatusIcon && <GameStatusIcon status={game.status} />}
@@ -521,6 +542,7 @@ export const GameCard = ({
             </span>
           )}
             </div>
+            )}
 
             {showJoinQueueHint && (
               <div className="mt-3">
