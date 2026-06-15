@@ -1,3 +1,4 @@
+import Intents
 import UserNotifications
 
 class NotificationService: UNNotificationServiceExtension {
@@ -17,12 +18,78 @@ class NotificationService: UNNotificationServiceExtension {
         }
         bestAttemptContent = mutableContent
 
+        decorateCommunicationNotification(mutableContent) { decoratedContent in
+            self.attachPreviewIfNeeded(to: decoratedContent) { finalContent in
+                contentHandler(finalContent)
+            }
+        }
+    }
+
+    override func serviceExtensionTimeWillExpire() {
+        if let contentHandler, let bestAttemptContent {
+            contentHandler(bestAttemptContent)
+        }
+    }
+
+    private func decorateCommunicationNotification(
+        _ content: UNMutableNotificationContent,
+        completion: @escaping (UNMutableNotificationContent) -> Void
+    ) {
+        guard ChatCommunicationIntentBuilder.shouldDecorate(userInfo: content.userInfo) else {
+            completion(content)
+            return
+        }
+
+        let avatarUrl = ChatCommunicationIntentBuilder.resolveSenderAvatarUrl(from: content.userInfo)
+        if let avatarUrl, Self.isAllowedHttpsUrl(avatarUrl) {
+            downloadImage(from: avatarUrl) { localUrl in
+                let senderImage = localUrl.flatMap { try? Data(contentsOf: $0) }.flatMap { INImage(imageData: $0) }
+                self.applyCommunicationIntent(to: content, senderImage: senderImage, completion: completion)
+            }
+            return
+        }
+
+        applyCommunicationIntent(to: content, senderImage: nil, completion: completion)
+    }
+
+    private func applyCommunicationIntent(
+        to content: UNMutableNotificationContent,
+        senderImage: INImage?,
+        completion: @escaping (UNMutableNotificationContent) -> Void
+    ) {
+        guard let intent = ChatCommunicationIntentBuilder.makeIntent(
+            userInfo: content.userInfo,
+            messageBody: content.body,
+            senderImage: senderImage
+        ) else {
+            completion(content)
+            return
+        }
+
+        do {
+            let updated = try content.updating(from: intent)
+            guard let mutableUpdated = updated.mutableCopy() as? UNMutableNotificationContent else {
+                completion(content)
+                return
+            }
+            bestAttemptContent = mutableUpdated
+            completion(mutableUpdated)
+        } catch {
+            NSLog("[push-reply] communication notification decorate failed: %@", error.localizedDescription)
+            completion(content)
+        }
+    }
+
+    private func attachPreviewIfNeeded(
+        to content: UNMutableNotificationContent,
+        completion: @escaping (UNMutableNotificationContent) -> Void
+    ) {
         guard
-            let previewUrlString = Self.resolvePreviewImageUrl(from: mutableContent.userInfo),
+            let previewUrlString = Self.resolvePreviewImageUrl(from: content.userInfo),
             let previewUrl = URL(string: previewUrlString),
             Self.isAllowedHttpsUrl(previewUrl)
         else {
-            contentHandler(mutableContent)
+            completion(content)
             return
         }
 
@@ -35,15 +102,10 @@ class NotificationService: UNNotificationServiceExtension {
                     options: [UNNotificationAttachmentOptionsTypeHintKey: "public.jpeg"]
                 )
             {
-                mutableContent.attachments = [attachment]
+                content.attachments = [attachment]
+                self.bestAttemptContent = content
             }
-            contentHandler(mutableContent)
-        }
-    }
-
-    override func serviceExtensionTimeWillExpire() {
-        if let contentHandler, let bestAttemptContent {
-            contentHandler(bestAttemptContent)
+            completion(content)
         }
     }
 

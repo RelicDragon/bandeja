@@ -49,6 +49,17 @@ async function run() {
   const metrics = getPushReplyMetrics();
   assert.ok(metrics.invalidToken >= 1);
 
+  const expiredToken = await PushReplyTokenService.generate(scope);
+  const expiredHash = createHash('sha256').update(expiredToken).digest('hex');
+  await prisma.pushReplyToken.update({
+    where: { tokenHash: expiredHash },
+    data: { expiresAt: new Date(Date.now() - 60_000) },
+  });
+  const purged = await PushReplyTokenService.purgeExpired();
+  assert.ok(purged >= 1);
+  const expiredRow = await prisma.pushReplyToken.findUnique({ where: { tokenHash: expiredHash } });
+  assert.equal(expiredRow, null);
+
   await prisma.pushReplyToken.deleteMany({ where: { recipientUserId: recipient.id } });
 
   console.log('pushReplyToken.service.test.ts: ok');

@@ -25,6 +25,7 @@
 		B79A10042F7443E0002D7100 /* BandejaWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C1A2B3C4D5E6F708192A3B57 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */; };
 		E14000042F7443E0002D7100 /* NotificationServiceExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E140000E2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -119,6 +120,8 @@
 		C1A2B3C4D5E6F708192A3B4C /* BandejaWatchWatchTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BandejaWatchWatchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/WatchOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ChatCommunicationIntentBuilder.swift; path = NotificationServiceExtension/ChatCommunicationIntentBuilder.swift; sourceTree = "<group>"; };
+		E14000102F7443E0002D7100 /* NotificationServiceExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = NotificationServiceExtension.entitlements; path = NotificationServiceExtension/NotificationServiceExtension.entitlements; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -529,6 +532,7 @@
 				99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */,
 				B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */,
 				B1A2C3D4E5F60718293A3C7 /* BandejaPushDelegatePlugin.swift in Sources */,
+				E140000E2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1027,6 +1031,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 142;
@@ -1058,6 +1063,7 @@
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = NotificationServiceExtension/NotificationServiceExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;

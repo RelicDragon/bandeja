@@ -6,9 +6,18 @@ import { PushPlatform } from '@prisma/client';
 import fcmService from './fcm.service';
 import { canDispatchToUser } from '../../utils/notificationDispatchGuard';
 import { preparePushPayloadForRecipient } from './preparePushPayload';
-import { resolveApnsNotificationCategory } from './notifications/chat-push-reply.utils';
+import {
+  PUSH_CATEGORY_CHAT_REPLY,
+  resolveApnsNotificationCategory,
+} from './notifications/chat-push-reply.utils';
 
-export function shouldSetApnsMutableContent(previewImageUrl: string | undefined): boolean {
+export function shouldSetApnsMutableContent(
+  category: string | undefined,
+  previewImageUrl: string | undefined
+): boolean {
+  if (category === PUSH_CATEGORY_CHAT_REPLY) {
+    return true;
+  }
   return !!previewImageUrl?.trim() && previewImageUrl.trim().startsWith('https://');
 }
 
@@ -82,13 +91,9 @@ class PushNotificationService {
         data: payload.data || {}
       };
 
-      if (payload.category) {
-        (notification as apn.Notification & { category?: string }).category = payload.category;
-      } else {
-        const category = resolveApnsNotificationCategory(payload);
-        if (category) {
-          (notification as apn.Notification & { category?: string }).category = category;
-        }
+      const resolvedCategory = payload.category ?? resolveApnsNotificationCategory(payload);
+      if (resolvedCategory) {
+        (notification as apn.Notification & { category?: string }).category = resolvedCategory;
       }
 
       if (payload.threadId) {
@@ -96,7 +101,7 @@ class PushNotificationService {
       }
 
       const previewImageUrl = payload.data?.previewImageUrl;
-      if (shouldSetApnsMutableContent(previewImageUrl)) {
+      if (shouldSetApnsMutableContent(resolvedCategory, previewImageUrl)) {
         notification.mutableContent = true;
       }
 

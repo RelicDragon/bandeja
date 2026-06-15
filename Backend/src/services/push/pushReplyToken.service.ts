@@ -176,4 +176,11 @@ export class PushReplyTokenService {
     });
     return row?.resultMessageId ?? null;
   }
+
+  static async purgeExpired(): Promise<number> {
+    const result = await prisma.pushReplyToken.deleteMany({
+      where: { expiresAt: { lt: new Date() } },
+    });
+    return result.count;
+  }
 }

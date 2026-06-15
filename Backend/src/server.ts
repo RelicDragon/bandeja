@@ -18,6 +18,7 @@ import { ReliabilityDecayScheduler } from './services/reliabilityDecayScheduler.
 import { AdCampaignScheduleScheduler } from './services/adCampaignScheduleScheduler.service';
 import { AdAnalyticsScheduler } from './services/adAnalyticsScheduler.service';
 import { BetPayoutReconcileScheduler } from './services/bets/betPayoutReconcileScheduler.service';
+import { PushReplyTokenCleanupScheduler } from './services/push/pushReplyTokenCleanupScheduler.service';
 import { reportCriticalError, maybeReportFromConsole } from './services/developerAlert.service';
 import { createServer } from 'http';
 import { resumeMatchTimerSchedulesOnStartup } from './services/results/matchTimer.service';
@@ -85,6 +86,9 @@ const startServer = async () => {
     const betPayoutReconcileScheduler = new BetPayoutReconcileScheduler();
     betPayoutReconcileScheduler.start();
 
+    const pushReplyTokenCleanupScheduler = new PushReplyTokenCleanupScheduler();
+    pushReplyTokenCleanupScheduler.start();
+
     // Create HTTP server
     const httpServer = createServer(app);
     
@@ -134,6 +138,8 @@ const startServer = async () => {
         reliabilityDecayScheduler.stop();
         adCampaignScheduleScheduler.stop();
         adAnalyticsScheduler.stop();
+        betPayoutReconcileScheduler.stop();
+        pushReplyTokenCleanupScheduler.stop();
         stopQueueWorkers();
         telegramBotService.stop();
         pushNotificationService.shutdown();
