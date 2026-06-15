@@ -291,12 +291,6 @@ export const GameCard = ({
       ) : null
     ) : null;
 
-  const showTitleLeadingCluster = isLeagueEntity && (
-    bookmarkInTitleRow ||
-    titleEntityInlineIcon != null ||
-    shouldMoveIconsToTitle
-  );
-
   const viewerPrimarySport = getViewerPrimarySport(effectiveUser);
   const showSportTag = shouldShowGameCardSportGlyph(
     game.sport,
@@ -406,19 +400,8 @@ export const GameCard = ({
             {isLeagueEntity ? (
               <>
                 <h3 className={`text-sm font-semibold text-gray-900 dark:text-white pr-[5.5rem] sm:pr-24 flex flex-wrap items-center gap-2 ${showLeagueBadgeRow ? 'mb-1.5' : 'mb-0'}`}>
-                  {showTitleLeadingCluster && (
-                    <div className="flex shrink-0 items-center gap-1">
-                      {bookmarkInTitleRow && noteBookmarkButton}
-                      {titleEntityInlineIcon}
-                      {shouldMoveIconsToTitle && (
-                        <>
-                          {showFireIcon && <AnnouncedFireIcon />}
-                          {showStatusIcon && <GameStatusIcon status={game.status} />}
-                          {gameSportTags}
-                        </>
-                      )}
-                    </div>
-                  )}
+                  {bookmarkInTitleRow && noteBookmarkButton}
+                  {titleEntityInlineIcon}
                   <span className="min-w-0">
                     {game.entityType === 'LEAGUE' && game.leagueRound && game.parent?.leagueSeason?.league?.name
                       ? (
@@ -459,6 +442,9 @@ export const GameCard = ({
                         )
                         : game.name}
                   </span>
+                  {shouldMoveIconsToTitle && showFireIcon && <AnnouncedFireIcon />}
+                  {shouldMoveIconsToTitle && showStatusIcon && <GameStatusIcon status={game.status} />}
+                  {shouldMoveIconsToTitle && gameSportTags}
                 </h3>
                 {showLeagueBadgeRow && (
                   <div className="flex items-center gap-2 pr-10 flex-wrap">
@@ -466,7 +452,7 @@ export const GameCard = ({
                     {!shouldMoveIconsToTitle && showFireIcon && <AnnouncedFireIcon />}
                     <GameCardHeaderTags
                       {...headerTagsProps}
-                      skipStatusAndSport={shouldMoveIconsToTitle}
+                      skipStatus={shouldMoveIconsToTitle}
                       showEntityTypePill={game.entityType !== 'GAME' && !bookmarkInTitleRow}
                     />
                   </div>
@@ -477,9 +463,11 @@ export const GameCard = ({
                 {showFireIcon && <AnnouncedFireIcon />}
                 {noteBookmarkButton}
                 <span className="min-w-0">{nonLeagueTitle}</span>
+                {showStatusIcon && <GameStatusIcon status={game.status} />}
                 {titleEntityInlineIcon}
                 <GameCardHeaderTags
                   {...headerTagsProps}
+                  skipStatus
                   showEntityTypePill={nonLeagueShowEntityPill}
                 />
               </h3>

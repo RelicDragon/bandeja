@@ -12,7 +12,7 @@ interface GameCardHeaderTagsProps {
   showPhotoCountBadge: boolean;
   myParticipationBadge: GameCardMyParticipationBadge | null;
   showEntityTypePill: boolean;
-  skipStatusAndSport?: boolean;
+  skipStatus?: boolean;
 }
 
 export const GameCardHeaderTags = ({
@@ -22,15 +22,15 @@ export const GameCardHeaderTags = ({
   showPhotoCountBadge,
   myParticipationBadge,
   showEntityTypePill,
-  skipStatusAndSport = false,
+  skipStatus = false,
 }: GameCardHeaderTagsProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
     <>
-      {!skipStatusAndSport && showStatusIcon && <GameStatusIcon status={game.status} />}
-      {!skipStatusAndSport && sportTags}
+      {!skipStatus && showStatusIcon && <GameStatusIcon status={game.status} />}
+      {sportTags}
       {showPhotoCountBadge && (
         <button
           onClick={(e) => {
