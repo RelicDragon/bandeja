@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.os.Build;
 import com.funified.bandeja.auth.SecureTokenStorage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -63,9 +62,9 @@ public class InviteActionReceiver extends BroadcastReceiver {
             return;
         }
         if (accept) {
-            ChatReplyApiClient.acceptInvite(context, inviteId);
+            ChatReplyApiClient.acceptInvite(context, token, inviteId);
         } else {
-            ChatReplyApiClient.declineInvite(context, inviteId);
+            ChatReplyApiClient.declineInvite(context, token, inviteId);
         }
     }
 
@@ -74,16 +73,12 @@ public class InviteActionReceiver extends BroadcastReceiver {
         if (manager == null) {
             return false;
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            Network network = manager.getActiveNetwork();
-            if (network == null) {
-                return false;
-            }
-            NetworkCapabilities capabilities = manager.getNetworkCapabilities(network);
-            return capabilities != null
-                && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
+        Network network = manager.getActiveNetwork();
+        if (network == null) {
+            return false;
         }
-        android.net.NetworkInfo networkInfo = manager.getActiveNetworkInfo();
-        return networkInfo != null && networkInfo.isConnected();
+        NetworkCapabilities capabilities = manager.getNetworkCapabilities(network);
+        return capabilities != null
+            && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET);
     }
 }
