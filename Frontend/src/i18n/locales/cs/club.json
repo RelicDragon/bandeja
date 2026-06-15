@@ -109,6 +109,8 @@
       "linkedGameUntitled": "Zápas bez názvu",
       "linkGame": "Propojit se zápasem",
       "linkGameShort": "Propojit",
+      "linkGameMore": "Propojit další",
+      "linkGameMoreShort": "Propojit další",
       "linkGameTitle": "Propojit se zápasem",
       "linkGameHint": "Vyberte zápas pro tuto rezervaci ({{when}}).",
       "linkGameRecommended": "Doporučeno",

@@ -109,6 +109,8 @@
       "linkedGameUntitled": "Игра без названия",
       "linkGame": "Привязать к игре",
       "linkGameShort": "Привязать",
+      "linkGameMore": "Привязать ещё",
+      "linkGameMoreShort": "Привязать ещё",
       "linkGameTitle": "Привязать к игре",
       "linkGameHint": "Выберите игру для этой брони ({{when}}).",
       "linkGameRecommended": "Рекомендуется",

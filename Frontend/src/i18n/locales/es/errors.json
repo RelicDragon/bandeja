@@ -6,7 +6,8 @@
     "notFound": "No encontrado",
     "serverError": "Error del servidor. Inténtalo más tarde",
     "accessDenied": "Acceso denegado. No tienes permisos para ver este contenido.",
-    "navigationError": "Estamos teniendo problemas con la navegación. Actualizando la página...",
+    "navigationError": "Esta página no se cargó correctamente. Vuelve atrás o inténtalo de nuevo.",
+    "tryAgain": "Intentar de nuevo",
     "invites": {
       "mustSpecifyGameId": "Debe especificar gameId",
       "receiverNotFound": "Receptor no encontrado",

@@ -109,6 +109,8 @@
       "linkedGameUntitled": "Meč bez naziva",
       "linkGame": "Poveži sa mečem",
       "linkGameShort": "Poveži",
+      "linkGameMore": "Poveži još jedan",
+      "linkGameMoreShort": "Poveži još",
       "linkGameTitle": "Poveži sa mečem",
       "linkGameHint": "Izaberi meč za ovu rezervaciju ({{when}}).",
       "linkGameRecommended": "Preporučeno",

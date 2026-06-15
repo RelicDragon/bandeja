@@ -6,7 +6,8 @@
     "notFound": "Nenalezeno",
     "serverError": "Chyba serveru. Zkuste to později",
     "accessDenied": "Přístup odepřen. Nemáte oprávnění zobrazit tento obsah.",
-    "navigationError": "Problém s navigací. Obnovujeme stránku...",
+    "navigationError": "Stránka se nenačetla správně. Vraťte se zpět nebo to zkuste znovu.",
+    "tryAgain": "Zkusit znovu",
     "invites": {
       "mustSpecifyGameId": "Je třeba zadat gameId",
       "receiverNotFound": "Příjemce nenalezen",

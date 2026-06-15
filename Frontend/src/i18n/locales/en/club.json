@@ -107,6 +107,8 @@
       "linkedGameUntitled": "Untitled game",
       "linkGame": "Link to game",
       "linkGameShort": "Link game",
+      "linkGameMore": "Link another game",
+      "linkGameMoreShort": "Link another",
       "linkGameTitle": "Link to a game",
       "linkGameHint": "Choose a game to link with this booking ({{when}}).",
       "linkGameRecommended": "Recommended",

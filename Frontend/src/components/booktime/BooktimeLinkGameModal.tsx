@@ -186,11 +186,25 @@ type ButtonProps = {
   club: BooktimeMyClubRow;
   onLinked: () => void;
   compact?: boolean;
+  hasLinkedGame?: boolean;
 };
 
-export function BooktimeLinkGameButton({ booking, club, onLinked, compact = false }: ButtonProps) {
+export function BooktimeLinkGameButton({
+  booking,
+  club,
+  onLinked,
+  compact = false,
+  hasLinkedGame = false,
+}: ButtonProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+  const label = hasLinkedGame
+    ? compact
+      ? t('club.booktime.linkGameMoreShort')
+      : t('club.booktime.linkGameMore')
+    : compact
+      ? t('club.booktime.linkGameShort')
+      : t('club.booktime.linkGame');
 
   return (
     <>
@@ -199,7 +213,7 @@ export function BooktimeLinkGameButton({ booking, club, onLinked, compact = fals
         onClick={() => setOpen(true)}
         className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
       >
-        {compact ? t('club.booktime.linkGameShort') : t('club.booktime.linkGame')}
+        {label}
       </button>
       <BooktimeLinkGameModal
         booking={booking}

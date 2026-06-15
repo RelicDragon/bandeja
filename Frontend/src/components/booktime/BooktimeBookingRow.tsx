@@ -253,6 +253,7 @@ export function BooktimeBookingRow({
               booking={booking}
               club={club}
               compact={compact}
+              hasLinkedGame={linkedGames.length > 0}
               onLinked={() => void reloadLinkedGame()}
             />
             <button

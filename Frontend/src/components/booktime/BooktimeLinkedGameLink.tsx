@@ -18,9 +18,6 @@ export function BooktimeLinkedGameLink({ game }: Props) {
       onClick={() => navigate(`/games/${game.id}`)}
       className="mt-1.5 flex w-full min-w-0 items-center gap-1.5 rounded-md border border-primary-200/60 bg-primary-50/80 px-2 py-1.5 text-left transition-colors hover:bg-primary-100/80 dark:border-primary-800/50 dark:bg-primary-950/30 dark:hover:bg-primary-950/50"
     >
-      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-primary-700/80 dark:text-primary-300/80">
-        {t('club.booktime.linkedGameLabel')}
-      </span>
       <span className="min-w-0 flex-1 truncate text-xs font-medium text-primary-700 dark:text-primary-300">
         {title}
       </span>

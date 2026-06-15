@@ -107,6 +107,8 @@
       "linkedGameUntitled": "Partido sin título",
       "linkGame": "Vincular a partido",
       "linkGameShort": "Vincular",
+      "linkGameMore": "Vincular otro",
+      "linkGameMoreShort": "Vincular otro",
       "linkGameTitle": "Vincular a un partido",
       "linkGameHint": "Elige un partido para esta reserva ({{when}}).",
       "linkGameRecommended": "Recomendado",

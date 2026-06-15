@@ -6,7 +6,8 @@
     "notFound": "Nije pronađeno",
     "serverError": "Greška servera. Pokušajte kasnije",
     "accessDenied": "Pristup odbijen. Nemate dozvolu da vidite ovaj sadržaj.",
-    "navigationError": "Imamo problema sa navigacijom. Osvežavanje stranice...",
+    "navigationError": "Stranica se nije učitala ispravno. Vratite se nazad ili pokušajte ponovo.",
+    "tryAgain": "Pokušaj ponovo",
     "invites": {
       "mustSpecifyGameId": "Mora se navesti gameId",
       "receiverNotFound": "Primalac nije pronađen",

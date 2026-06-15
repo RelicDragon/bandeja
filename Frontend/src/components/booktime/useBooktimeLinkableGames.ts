@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
+import { booktimeApi } from '@/api/booktime';
 import { gamesApi } from '@/api/games';
 import { useAuthStore } from '@/store/authStore';
 import type { Game } from '@/types';
@@ -23,8 +24,14 @@ export function useBooktimeLinkableGames(booking: BooktimeBookingRecord | null, 
     setLoading(true);
     setError(false);
     try {
-      const res = await gamesApi.getMyGames();
-      const filtered = filterLinkableGames(res.data ?? [], userId);
+      const [gamesRes, linkedRes] = await Promise.all([
+        gamesApi.getMyGames(),
+        booktimeApi.getLinkedGames(booking.uuid),
+      ]);
+      const linkedIds = new Set((linkedRes.data ?? []).map((game) => game.id));
+      const filtered = filterLinkableGames(gamesRes.data ?? [], userId).filter(
+        (game) => !linkedIds.has(game.id),
+      );
       setGames(sortLinkableGames(filtered, booking, resolveBooktimeClubTimezone({})));
     } catch {
       setError(true);
