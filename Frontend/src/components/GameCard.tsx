@@ -158,7 +158,7 @@ export const GameCard = ({
         (game.entityType !== 'TRAINING' && !game.name && game.gameType !== 'CLASSIC') ||
         (!game.name && isNonGameEntity);
 
-  const shouldMoveIconsToTitle = isLeagueEntity && hasVisibleGameName && !hasOtherTags;
+  const shouldMoveIconsToTitle = Boolean(isLeagueEntity && hasVisibleGameName && !hasOtherTags);
 
   const nonLeagueShowEntityIcon = !isLeagueEntity && bookmarkInTitleRow && isNonGameEntity;
   const nonLeagueShowEntityPill = !isLeagueEntity && isNonGameEntity && !bookmarkInTitleRow;
