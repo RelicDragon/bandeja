@@ -109,6 +109,7 @@ export const GameCard = ({
     game.status === 'ANNOUNCED' &&
     ((['GAME', 'TOURNAMENT', 'TRAINING', 'LEAGUE_SEASON'].includes(game.entityType) && hasUnoccupiedSlots) ||
       game.entityType === 'BAR');
+  const showStatusIcon = game.status !== 'ANNOUNCED';
   const hasMyInvites = participation.hasPendingInvite;
   const isInJoinQueue = participation.isInJoinQueue;
 
@@ -360,7 +361,7 @@ export const GameCard = ({
                   {shouldMoveIconsToTitle && (
                     <>
                       {showFireIcon && <AnnouncedFireIcon />}
-                      {!showFireIcon && <GameStatusIcon status={game.status} />}
+                      {showStatusIcon && <GameStatusIcon status={game.status} />}
                       {gameSportTags}
                     </>
                   )}
@@ -416,7 +417,7 @@ export const GameCard = ({
             <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
           {!bookmarkInTitleRow && noteBookmarkButton}
           {!shouldMoveIconsToTitle && showFireIcon && <AnnouncedFireIcon />}
-          {!shouldMoveIconsToTitle && !showFireIcon && <GameStatusIcon status={game.status} />}
+          {!shouldMoveIconsToTitle && showStatusIcon && <GameStatusIcon status={game.status} />}
           {!shouldMoveIconsToTitle && gameSportTags}
           {showPhotoCountBadge && (
             <button
