@@ -37,4 +37,10 @@ end
 
 post_install do |installer|
   assertDeploymentTarget(installer)
+
+  installer.pods_project.targets.each do |target|
+    target.shell_script_build_phases.each do |phase|
+      phase.always_out_of_date = '1' if phase.name&.start_with?('[CP]')
+    end
+  end
 end
