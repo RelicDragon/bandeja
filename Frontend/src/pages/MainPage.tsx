@@ -117,19 +117,19 @@ export const MainPage = () => {
                                  location.pathname.match(/^\/bugs\/[^/]+$/);
   const shouldShowChatsSplitView = isChatPage && (isDesktop || !isOnSpecificChatRoute);
   const showBottomTabBar = bottomTabsVisible && (!isDesktop || isChatPage);
+  const bottomTabBarSlotClass = (visible: boolean) =>
+    visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none';
+  const bottomTabBarSlot = (visible: boolean) => (
+    <div className={bottomTabBarSlotClass(visible)} aria-hidden={!visible}>
+      <BottomTabBar animateEntry={animateShellEntry} />
+    </div>
+  );
 
   if (isChatPage && shouldShowChatsSplitView) {
     return (
       <MainLayout>
         <ChatsTab />
-        {!isDesktop && (
-          <div
-            className={showBottomTabBar ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}
-            aria-hidden={!showBottomTabBar}
-          >
-            <BottomTabBar animateEntry={animateShellEntry} />
-          </div>
-        )}
+        {!isDesktop && bottomTabBarSlot(showBottomTabBar)}
       </MainLayout>
     );
   }
@@ -142,7 +142,7 @@ export const MainPage = () => {
     return (
       <MainLayout>
         <GameDetailsPage />
-        {bottomTabsVisible && <BottomTabBar animateEntry={animateShellEntry} />}
+        {bottomTabBarSlot(bottomTabsVisible)}
       </MainLayout>
     );
   }
@@ -155,7 +155,7 @@ export const MainPage = () => {
     return (
       <MainLayout>
         {renderContent}
-        {bottomTabsVisible && <BottomTabBar animateEntry={animateShellEntry} />}
+        {bottomTabBarSlot(bottomTabsVisible)}
       </MainLayout>
     );
   }
@@ -176,7 +176,7 @@ export const MainPage = () => {
           {renderContent}
         </div>
       </div>
-      {bottomTabsVisible && <BottomTabBar animateEntry={animateShellEntry} />}
+      {bottomTabBarSlot(bottomTabsVisible)}
     </MainLayout>
   );
 };
