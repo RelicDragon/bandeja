@@ -1,6 +1,7 @@
-import { Calendar, Trophy } from 'lucide-react';
+import { Calendar, History, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useMyGamesSubtabUnreadBadges } from '@/hooks/useUnreadBridge';
 import { useHomeFromUrl } from '@/hooks/useHomeFromUrl';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 
@@ -9,6 +10,7 @@ export const MyGamesTabController = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { tab } = useHomeFromUrl();
+  const { myGames: myGamesUnreadCount, pastGames: pastGamesUnreadCount } = useMyGamesSubtabUnreadBadges();
 
   const handleTabChange = (id: string) => {
     const newParams = new URLSearchParams(searchParams);
@@ -22,7 +24,8 @@ export const MyGamesTabController = () => {
   };
 
   const tabs: SegmentedSwitchTab[] = [
-    { id: 'calendar', label: t('games.calendar'), icon: Calendar },
+    { id: 'calendar', label: t('games.calendar'), icon: Calendar, badge: myGamesUnreadCount },
+    { id: 'past-games', label: t('home.past'), icon: History, badge: pastGamesUnreadCount },
     { id: 'advanced', label: t('home.more', { defaultValue: 'More' }), icon: Trophy },
   ];
 

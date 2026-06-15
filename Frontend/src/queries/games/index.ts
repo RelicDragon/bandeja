@@ -4,3 +4,9 @@ export {
   availableGamesQueryOptions,
   type AvailableGamesQueryParams,
 } from './useAvailableGamesQuery';
+export {
+  usePastGamesQuery,
+  pastGamesInfiniteQueryOptions,
+  flattenPastGamesPages,
+  type PastGamesPage,
+} from './usePastGamesQuery';

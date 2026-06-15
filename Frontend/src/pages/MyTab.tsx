@@ -6,6 +6,7 @@ import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
 import {
   InvitesSection,
   MyGamesSection,
+  PastGamesSection,
   AdvancedTabMovedHint,
   CityPromptBanner,
   UserTeamsHomeSection,
@@ -29,6 +30,7 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useMyGames } from '@/hooks/useMyGames';
+import { usePastGames } from '@/hooks/usePastGames';
 import { useHomeFromUrl } from '@/hooks/useHomeFromUrl';
 import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
@@ -85,6 +87,7 @@ export const MyTab = () => {
   const markAllBannerUnread = useTotalUnreadForMarkAllBanner();
   const { tab: homeTab } = useHomeFromUrl();
   const isCalendarTab = homeTab === 'calendar';
+  const isPastGamesTab = homeTab === 'past-games';
   const myGamesSelectedDay = useShellNavStore((s) => s.myGamesSelectedDay);
   const setMyGamesSelectedDay = useShellNavStore((s) => s.setMyGamesSelectedDay);
   const myGamesCalendarDateAfterCreate = useShellNavStore((s) => s.myGamesCalendarDateAfterCreate);
@@ -112,6 +115,14 @@ export const MyTab = () => {
     showSkeletonsAnimated: skeletonAnimation.showSkeletonsAnimated,
     hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
   });
+
+  const {
+    pastGames,
+    loadingPastGames,
+    hasMorePastGames,
+    loadPastGames,
+    refetchGame,
+  } = usePastGames(user, isPastGamesTab);
 
   const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
 
@@ -216,6 +227,10 @@ export const MyTab = () => {
     },
     []
   );
+  const filteredPastGames = useMemo(() => {
+    const list = pastGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
+    return sortMyGamesByStatusAndDateTime(list, gameUnreadForSort);
+  }, [pastGames, gameUnreadForSort]);
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
   const [decliningInviteIds, setDecliningInviteIds] = useState<Set<string>>(new Set());
@@ -290,15 +305,30 @@ export const MyTab = () => {
     await clearCachesExceptUnsyncedResults();
     await Promise.all([
       refetchMyGames(),
+      loadPastGames?.(),
       useUserTeamsStore.getState().refreshAll(),
     ]);
-  }, [refetchMyGames]);
+  }, [refetchMyGames, loadPastGames]);
 
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   const renderAdvancedContent = (footerLoading: boolean) => (
     <>
       <UserTeamsHomeSection className="mb-3" />
       <YourLeaguesHomeSection games={games} gamesUnreadCounts={calendarMergedUnreadCounts} className="mb-3" />
+      <MainTabFooter isLoading={footerLoading} />
+    </>
+  );
+  const renderPastGamesContent = (footerLoading: boolean) => (
+    <>
+      <PastGamesSection
+        pastGames={filteredPastGames}
+        loadingPastGames={loadingPastGames}
+        hasMorePastGames={hasMorePastGames}
+        user={user}
+        pastGamesUnreadCounts={gameUnreadForSort}
+        onLoadMore={loadPastGames}
+        onNoteSaved={(gameId) => refetchGame(gameId)}
+      />
       <MainTabFooter isLoading={footerLoading} />
     </>
   );
@@ -349,6 +379,18 @@ export const MyTab = () => {
     </div>
   );
   if (isDesktop) {
+    if (isPastGamesTab) {
+      return (
+        <>
+          <div className="fixed inset-x-0 bottom-0 overflow-y-auto z-0 bg-gray-50 dark:bg-gray-900" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
+            <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+              {renderPastGamesContent(loading || loadingPastGames)}
+            </div>
+          </div>
+          {declineInviteModal}
+        </>
+      );
+    }
     if (!isCalendarTab) {
       return (
         <>
@@ -395,7 +437,7 @@ export const MyTab = () => {
 
   return (
     <>
-    <PullToRefreshShell onRefresh={handleRefresh} disabled={loading}>
+    <PullToRefreshShell onRefresh={handleRefresh} disabled={loading || loadingPastGames}>
       {({ isRefreshing }) => (
         <>
         {isCalendarTab ? (
@@ -466,6 +508,8 @@ export const MyTab = () => {
         </div>
         <MainTabFooter isLoading={loading || isRefreshing} />
           </>
+        ) : isPastGamesTab ? (
+          renderPastGamesContent(loading || loadingPastGames || isRefreshing)
         ) : (
           renderAdvancedContent(loading || isRefreshing)
         )}

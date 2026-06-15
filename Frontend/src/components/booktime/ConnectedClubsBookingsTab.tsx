@@ -1,3 +1,4 @@
+import { Calendar } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { BooktimeMyClubRow } from '@/api/booktime';
@@ -47,9 +48,17 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged
   return (
     <div className="space-y-4">
       <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50/60 dark:bg-gray-800/40 p-3 space-y-3">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-          {t('club.booktime.myTabUpcomingTitle')}
-        </h3>
+        <div className="flex min-w-0 items-center gap-2">
+          <Calendar
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-gray-500 dark:text-gray-400"
+            aria-hidden
+          />
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            {t('club.booktime.myTabUpcomingTitle')}
+          </p>
+        </div>
         {upcomingLoading ? (
           <BooktimeBookingsLoading />
         ) : upcoming.length === 0 ? (

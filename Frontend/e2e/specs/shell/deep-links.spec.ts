@@ -9,10 +9,12 @@ test.describe('shell deep links', () => {
     await new HomePage(page).waitForShell();
   });
 
-  test('G-21 legacy home URL tab=past-games redirects to calendar @auth', async ({ page }) => {
+  test('G-21 home URL subtab past-games @auth', async ({ page }) => {
     await page.goto('/?tab=past-games');
-    await expect(page).toHaveURL(/\/?(\?|$)/);
-    await new HomePage(page).waitForShell();
+    await expect(page).toHaveURL(/tab=past-games/);
+    const home = new HomePage(page);
+    await home.waitForShell();
+    await expect(home.subtab('past-games')).toHaveAttribute('aria-selected', 'true');
   });
 
   test('G-21 home URL subtab advanced @auth', async ({ page }) => {

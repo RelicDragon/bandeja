@@ -57,7 +57,7 @@ export const MainPage = () => {
   useEffect(() => {
     if (parsed.place !== 'home') return;
     const tab = new URLSearchParams(location.search).get('tab');
-    if (tab === 'list' || tab === 'past-games') {
+    if (tab === 'list') {
       navigate('/', { replace: true });
     }
   }, [parsed.place, location.search, navigate]);

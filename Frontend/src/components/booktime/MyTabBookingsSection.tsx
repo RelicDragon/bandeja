@@ -1,4 +1,5 @@
-import { ChevronDown } from 'lucide-react';
+import { Calendar, ChevronDown } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +18,10 @@ export function MyTabBookingsSection() {
   const { data: myClubs, reload: reloadMyClubs } = useBooktimeMyClubs(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const expandTransition = reduceMotion
+    ? { duration: 0 }
+    : { duration: 0.32, ease: [0.21, 0.47, 0.32, 0.98] as const };
   const clubs = useMemo(() => myClubs?.clubs ?? [], [myClubs?.clubs]);
   const { bookings, loading, removeBooking } = useBooktimeAllUpcoming(clubs, true, refreshKey);
   const allowedHoursToCancelByClubId = useBooktimeCancelPoliciesForClubs(
@@ -60,9 +65,15 @@ export function MyTabBookingsSection() {
         onClick={() => setExpanded((v) => !v)}
       >
         <span className="flex min-w-0 items-center gap-2">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+          <Calendar
+            size={18}
+            strokeWidth={2}
+            className="shrink-0 text-gray-500 dark:text-gray-400"
+            aria-hidden
+          />
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
             {t('club.booktime.myTabUpcomingTitle')}
-          </h3>
+          </p>
           {!loading && bookings.length > 0 ? (
             <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-gray-900/5 px-1.5 text-[10px] font-semibold tabular-nums text-gray-600 dark:bg-white/10 dark:text-gray-300">
               {bookings.length}
@@ -77,38 +88,47 @@ export function MyTabBookingsSection() {
         />
       </button>
 
-      <div
-        className={`grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none ${expanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}
-      >
-        <div className="min-h-0 overflow-hidden">
-          <div className="space-y-3 pt-3">
-            {loading ? (
-              <BooktimeBookingsLoading />
-            ) : bookings.length === 0 ? (
-              <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>
-            ) : (
-              <>
-                <BooktimeUpcomingBookingsList
-                  bookings={bookings}
-                  clubById={clubById}
-                  showClubName
-                  allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
-                  compact
-                  limit={previewLimit}
-                  onCanceled={removeBooking}
-                />
-                <button
-                  type="button"
-                  onClick={() => navigate('/profile/connected-clubs')}
-                  className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-                >
-                  {t('club.booktime.seeAllBookings')}
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
+      <AnimatePresence initial={false}>
+        {expanded ? (
+          <motion.div
+            key="my-tab-upcoming-bookings"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={expandTransition}
+            className="overflow-hidden"
+          >
+            <div className="space-y-3 pt-3">
+              {loading ? (
+                <BooktimeBookingsLoading />
+              ) : bookings.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>
+              ) : (
+                <>
+                  <BooktimeUpcomingBookingsList
+                    bookings={bookings}
+                    clubById={clubById}
+                    showClubName
+                    allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
+                    compact
+                    limit={previewLimit}
+                    onCanceled={removeBooking}
+                  />
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => navigate('/profile/connected-clubs')}
+                      className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                    >
+                      {t('club.booktime.seeAllBookings')}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </section>
   );
 }

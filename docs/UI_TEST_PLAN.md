@@ -126,7 +126,7 @@ Frontend/e2e/
 | G-18 | i18n switch | Change language in profile | UI strings update |
 | G-19 | Dark/light theme | Toggle theme | Persisted appearance |
 | G-20 | Desktop split chat | `@desktop` open `/chats` + select thread | List + thread side by side |
-| G-21 | Home URL subtab sync | Open `/?tab=advanced`; legacy `/?tab=list` or `/?tab=past-games` | More subtab; legacy URLs redirect to calendar |
+| G-21 | Home URL subtab sync | Open `/?tab=past-games`, `/?tab=advanced`; legacy `/?tab=list` | Past or More subtab selected; legacy list URL redirects to calendar |
 | G-22 | Find URL view sync | Open `/find?view=list` | Find list view active |
 | G-23 | Chats filter URL sync | Open `/chats?filter=channels`, `/chats/marketplace`, `/bugs` | Correct inbox filter |
 | G-24 | Player overlay URL | Open any page with `?player=:userId` | Player card bottom sheet |
@@ -271,9 +271,12 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | H-28 | More subtab | Header → More (Trophy) or calendar hint | Teams + leagues sections; URL `/?tab=advanced` |
+| H-29 | Past games subtab | Header → Past (History) | Past games list only (no stories, bookings, invites, or banners); load more when available; URL `/?tab=past-games` |
+| H-29a | Past games empty | User with no past games → Past subtab | Empty state "No past games" |
 | H-31 | Calendar subtab default | Open home | Calendar view default; no `tab` query param |
-| H-32 | URL deep link More | `/?tab=advanced` | More subtab selected |
-| H-33 | Subtab survives refresh | On More subtab → reload | Still on `/?tab=advanced` |
+| H-32 | URL deep link Past | `/?tab=past-games` | Past subtab selected |
+| H-32a | URL deep link More | `/?tab=advanced` | More subtab selected |
+| H-33 | Subtab survives refresh | On Past or More subtab → reload | Same subtab + query param preserved |
 | H-34 | Restore calendar after create | Create game from calendar | Returns to calendar + game date selected |
 | H-35 | Invite friend to app | `InviteFriendToBandejaButton` | Share sheet / copy invite link |
 | H-37 | Club booking connect banner (My tab) | User in city with BOOKTIME club, not connected | Connect banner on My tab → settings page |
