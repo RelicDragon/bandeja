@@ -33,7 +33,7 @@ import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { GameCardReactions } from '@/components/GameCardReactions';
-import { Users, MessageCircle, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Star, Plane, Bookmark } from 'lucide-react';
+import { Users, MessageCircle, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera, Plane, Bookmark } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
 interface GameCardProps {
@@ -96,7 +96,6 @@ export const GameCard = ({
   const participants = game.participants ?? [];
   const participation = getGameParticipationState(participants, effectiveUser?.id, game);
   const isParticipant = participation.isPlaying;
-  const isUserParticipant = participation.isParticipant;
   const myParticipationBadge = getGameCardMyParticipationBadge(participants, effectiveUser?.id);
   const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';
   const shouldShowTiming = !isLeagueSeasonGame;
@@ -361,15 +360,6 @@ export const GameCard = ({
                   {shouldMoveIconsToTitle && (
                     <>
                       {showFireIcon && <AnnouncedFireIcon />}
-                      {isUserParticipant && (
-                        <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white flex-shrink-0">
-                          <Star 
-                            size={12} 
-                            className="text-white"
-                            fill="currentColor"
-                          />
-                        </span>
-                      )}
                       {!showFireIcon && <GameStatusIcon status={game.status} />}
                       {gameSportTags}
                     </>
@@ -426,15 +416,6 @@ export const GameCard = ({
             <div className="flex items-center gap-2 mb-1 pr-10 flex-wrap">
           {!bookmarkInTitleRow && noteBookmarkButton}
           {!shouldMoveIconsToTitle && showFireIcon && <AnnouncedFireIcon />}
-          {!shouldMoveIconsToTitle && isUserParticipant && (
-            <span className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-yellow-500 dark:bg-yellow-600 text-white">
-              <Star 
-                size={12} 
-                className="text-white"
-                fill="currentColor"
-              />
-            </span>
-          )}
           {!shouldMoveIconsToTitle && !showFireIcon && <GameStatusIcon status={game.status} />}
           {!shouldMoveIconsToTitle && gameSportTags}
           {showPhotoCountBadge && (
