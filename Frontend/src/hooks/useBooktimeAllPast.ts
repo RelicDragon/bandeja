@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
-import { bookingMatchesClubCourts } from '@/components/booktime/booktimeBookingUtils';
+import { bookingMatchesClubCourts, resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { booktimeBookingStartMs } from '@/integrations/booktime/localTime';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 import type { AggregatedBooktimeBooking } from './useBooktimeAllUpcoming';
@@ -28,8 +28,9 @@ export function useBooktimeAllPast(
       const all: AggregatedBooktimeBooking[] = [];
       for (const club of connectedClubs) {
         try {
-          await hydrateBooktimeSession(club.clubId, club.companyId!);
-          const client = getBooktimeClient(club.clubId, club.companyId!);
+          const clubTimeZone = resolveBooktimeMyClubTimezone(club);
+          await hydrateBooktimeSession(club.clubId, club.companyId!, clubTimeZone);
+          const client = getBooktimeClient(club.clubId, club.companyId!, clubTimeZone);
           if (!client.isAuthenticated) continue;
           const res = await client.getPreviousBookings(0, 20);
           for (const booking of res.bookings ?? []) {

@@ -95,11 +95,17 @@ export function onBooktimeReconnectRequired(clubId: string, listener: () => void
   };
 }
 
-function createClient(clubId: string, companyId: string, stored: BooktimeStoredSession | null): BooktimeClient {
+function createClient(
+  clubId: string,
+  companyId: string,
+  stored: BooktimeStoredSession | null,
+  clubTimeZone?: string | null,
+): BooktimeClient {
   const client = new BooktimeClient({
     companyId,
     accessToken: stored?.accessToken ?? null,
     refreshToken: stored?.refreshToken ?? null,
+    clubTimeZone,
     onTokensUpdated: ({ accessToken, refreshToken }) => {
       const current = readStoredSession(clubId);
       if (!current) return;
@@ -126,14 +132,26 @@ function createClient(clubId: string, companyId: string, stored: BooktimeStoredS
   return client;
 }
 
-export function getBooktimeClient(clubId: string, companyId: string): BooktimeClient {
+export function getBooktimeClient(
+  clubId: string,
+  companyId: string,
+  clubTimeZone?: string | null,
+): BooktimeClient {
   const existing = memoryClients.get(clubId);
   if (existing && existing.companyId === companyId) {
+    if (clubTimeZone !== undefined) {
+      existing.client.setClubTimeZone(clubTimeZone);
+    }
     return existing.client;
   }
 
   const stored = readStoredSession(clubId);
-  const client = createClient(clubId, companyId, stored?.companyId === companyId ? stored : null);
+  const client = createClient(
+    clubId,
+    companyId,
+    stored?.companyId === companyId ? stored : null,
+    clubTimeZone,
+  );
   memoryClients.set(clubId, {
     client,
     companyId,
@@ -144,11 +162,12 @@ export function getBooktimeClient(clubId: string, companyId: string): BooktimeCl
 
 export async function hydrateBooktimeSession(
   clubId: string,
-  companyId: string
+  companyId: string,
+  clubTimeZone?: string | null,
 ): Promise<boolean> {
   const stored = readStoredSession(clubId);
   if (stored?.companyId === companyId && stored.accessToken && stored.refreshToken) {
-    getBooktimeClient(clubId, companyId);
+    getBooktimeClient(clubId, companyId, clubTimeZone);
     return true;
   }
 
@@ -170,7 +189,7 @@ export async function hydrateBooktimeSession(
   };
   writeStoredSession(clubId, session);
   memoryClients.set(clubId, {
-    client: createClient(clubId, companyId, session),
+    client: createClient(clubId, companyId, session, clubTimeZone),
     companyId,
     externalUserId: session.externalUserId,
   });
@@ -187,7 +206,8 @@ export async function persistBooktimeSessionAfterConnect(
     phoneNumber?: string | null;
     firstName?: string | null;
     lastName?: string | null;
-  }
+  },
+  clubTimeZone?: string | null,
 ): Promise<void> {
   const session: BooktimeStoredSession = {
     accessToken: payload.accessToken,
@@ -197,7 +217,7 @@ export async function persistBooktimeSessionAfterConnect(
   };
   writeStoredSession(clubId, session);
   memoryClients.set(clubId, {
-    client: createClient(clubId, companyId, session),
+    client: createClient(clubId, companyId, session, clubTimeZone),
     companyId,
     externalUserId: payload.externalUserId,
   });

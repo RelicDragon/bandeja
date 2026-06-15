@@ -186,7 +186,7 @@ function normalizeFakeOrStoredUtcIso(
 /**
  * Booktime API wire ingest: naive local or fake `.000Z` wall clock → stored UTC.
  *
- * Call **once** at the Booktime client boundary (`normalizeBooking`, raw busy slots).
+ * Call **once** at the Booktime client boundary (`BooktimeClient.normalizeBooking`, raw busy slots).
  * After that use {@link booktimeIsoToUtcIso} / {@link storedUtcIsoToInstant} — re-ingest
  * can shift afternoon stored UTC (−2h per call in CEST). Same `.000Z` string can mean
  * fake wall clock or stored UTC; callers must not pipe normalized snapshots back through here.

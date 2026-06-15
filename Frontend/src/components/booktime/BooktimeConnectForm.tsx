@@ -6,6 +6,7 @@ import { OTPInput } from '@/components/OTPInput';
 import { useAuthStore } from '@/store/authStore';
 import { BooktimeClient } from '@/integrations/booktime/client';
 import { persistBooktimeSessionAfterConnect } from '@/integrations/booktime/session';
+import { resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { openExternalUrl } from '@/utils/openExternalUrl';
 import type { BooktimeIntegrationConfig } from './ConnectClubSheet';
 
@@ -86,6 +87,7 @@ export function BooktimeConnectForm({
     const externalUserId = session.user?.uuid;
     if (!externalUserId) throw new Error(t('club.booktime.errors.incompleteSession'));
 
+    const clubTimeZone = resolveBooktimeMyClubTimezone(club);
     await persistBooktimeSessionAfterConnect(club.id, integrationConfig.companyId, {
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
@@ -93,12 +95,13 @@ export function BooktimeConnectForm({
       phoneNumber: formattedPhone,
       firstName: firstName.trim() || null,
       lastName: lastName.trim() || null,
-    });
+    }, clubTimeZone);
 
     const connectedClient = new BooktimeClient({
       companyId: integrationConfig.companyId,
       accessToken: session.accessToken,
       refreshToken: session.refreshToken,
+      clubTimeZone,
     });
     await connectedClient.acceptCustomTerms();
 

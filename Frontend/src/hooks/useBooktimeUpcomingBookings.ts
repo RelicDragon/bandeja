@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { bookingMatchesClubCourts } from '@/components/booktime/booktimeBookingUtils';
 
 function areBookingListsEqual(
@@ -44,8 +45,9 @@ export function useBooktimeUpcomingBookings(
     setLoading(true);
     setError(null);
     try {
-      await hydrateBooktimeSession(club.id, companyId);
-      const client = getBooktimeClient(club.id, companyId);
+      const clubTimeZone = resolveBooktimeMyClubTimezone(club);
+      await hydrateBooktimeSession(club.id, companyId, clubTimeZone);
+      const client = getBooktimeClient(club.id, companyId, clubTimeZone);
       if (!client.isAuthenticated) {
         setBookings([]);
         lastLoadedCourtsKeyRef.current = filterCourtsKey;

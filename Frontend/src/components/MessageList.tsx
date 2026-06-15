@@ -151,8 +151,9 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
     overscan: VIRTUAL_OVERSCAN,
     getItemKey: (index) =>
       index === rowCount - 1 ? '__end__' : (messages[index] ? getMessageRowKey(messages[index]) : `i-${index}`),
-    shouldAdjustScrollPositionOnItemSizeChange: () => false,
   });
+
+  virtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => false;
 
   const virtualizerRef = useRef(virtualizer);
   virtualizerRef.current = virtualizer;

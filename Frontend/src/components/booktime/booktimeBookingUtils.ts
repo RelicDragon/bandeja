@@ -7,8 +7,9 @@ import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 
 export function resolveBooktimeMyClubTimezone(club: {
   cityTimezone?: string | null;
-}): string {
-  return club.cityTimezone ?? BOOKTIME_DEFAULT_TIMEZONE;
+  city?: { timezone?: string } | null;
+} | null | undefined): string {
+  return club?.cityTimezone ?? club?.city?.timezone ?? BOOKTIME_DEFAULT_TIMEZONE;
 }
 
 export function linkedBookingToRecord(link: {

@@ -28,6 +28,7 @@ import {
   isBookingAuthExpiredMessage,
 } from '@/utils/bookingErrorMessage.util';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
 import toast from 'react-hot-toast';
 
@@ -167,8 +168,9 @@ export function BooktimeCreateGameConfirmModal({
 
     void (async () => {
       try {
-        await hydrateBooktimeSession(club.id, companyId);
-        const client = getBooktimeClient(club.id, companyId);
+        const clubTimeZone = resolveBooktimeMyClubTimezone(club);
+        await hydrateBooktimeSession(club.id, companyId, clubTimeZone);
+        const client = getBooktimeClient(club.id, companyId, clubTimeZone);
         const company = await loadBooktimeCompany(client, companyId);
         const next: Record<string, string | null> = {};
         const quotes: Record<string, { amount: number; currency: string } | null> = {};

@@ -86,6 +86,8 @@ export type BooktimeClientOptions = {
   companyId: string;
   accessToken?: string | null;
   refreshToken?: string | null;
+  /** Club city IANA timezone for wire-format booking ingest at API boundary. */
+  clubTimeZone?: string | null;
   onTokensUpdated?: (tokens: { accessToken: string; refreshToken: string }) => void;
   onSessionExpired?: () => void;
 };
@@ -99,6 +101,7 @@ export class BooktimeClient {
   private accessToken: string | null;
   private refreshToken: string | null;
   private companyId: string;
+  private clubTimeZone: string | null;
   private onTokensUpdated?: (tokens: { accessToken: string; refreshToken: string }) => void;
   private onSessionExpired?: () => void;
   private refreshInFlight: Promise<boolean> | null = null;
@@ -108,8 +111,13 @@ export class BooktimeClient {
     this.companyId = options.companyId;
     this.accessToken = options.accessToken ?? null;
     this.refreshToken = options.refreshToken ?? null;
+    this.clubTimeZone = options.clubTimeZone ?? null;
     this.onTokensUpdated = options.onTokensUpdated;
     this.onSessionExpired = options.onSessionExpired;
+  }
+
+  setClubTimeZone(timeZone: string | null | undefined): void {
+    this.clubTimeZone = timeZone ?? null;
   }
 
   get isAuthenticated(): boolean {
@@ -366,13 +374,18 @@ export class BooktimeClient {
     });
   }
 
+  private wireIngestTimeZone(): string {
+    return this.clubTimeZone ?? BOOKTIME_DEFAULT_TIMEZONE;
+  }
+
   private normalizeBooking(booking: BooktimeBookingRecord): BooktimeBookingRecord {
+    const timeZone = this.wireIngestTimeZone();
     return {
       ...booking,
       bookingStart:
-        booktimeIngestToStoredUtcIso(booking.bookingStart, BOOKTIME_DEFAULT_TIMEZONE) ?? booking.bookingStart,
+        booktimeIngestToStoredUtcIso(booking.bookingStart, timeZone) ?? booking.bookingStart,
       bookingEnd:
-        booktimeIngestToStoredUtcIso(booking.bookingEnd, BOOKTIME_DEFAULT_TIMEZONE) ?? booking.bookingEnd,
+        booktimeIngestToStoredUtcIso(booking.bookingEnd, timeZone) ?? booking.bookingEnd,
     };
   }
 

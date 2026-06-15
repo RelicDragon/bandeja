@@ -20,6 +20,7 @@ import {
   type BooktimeIntegrationConfig,
 } from '@/components/booktime/ConnectClubSheet';
 import { hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { AvailabilitySheet } from '@/components/booktime/AvailabilitySheet';
@@ -148,7 +149,11 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
   const handleConnected = async () => {
     clearReconnectRequired();
     if (booktimeConfig) {
-      await hydrateBooktimeSession(club.id, booktimeConfig.companyId);
+      await hydrateBooktimeSession(
+        club.id,
+        booktimeConfig.companyId,
+        resolveBooktimeMyClubTimezone(club),
+      );
     }
     await refreshBooktimeAuth();
     await onClubRefresh?.();

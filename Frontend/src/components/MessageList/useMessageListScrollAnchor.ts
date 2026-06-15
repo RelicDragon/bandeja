@@ -40,7 +40,7 @@ export function useMessageListScrollAnchor({
     if (container.scrollTop <= 0) return;
     if (isMessageListNearBottom(container, NEAR_BOTTOM_PX)) return;
 
-    const measurements = virtualizer.getMeasurements();
+    const measurements = virtualizer.measurementsCache;
     const next = snapshotMeasurements(measurements);
     const prev = prevMeasurementsRef.current;
     prevMeasurementsRef.current = next;

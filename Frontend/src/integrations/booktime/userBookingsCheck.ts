@@ -8,9 +8,10 @@ export type UserBooktimeBookingIdsResult = {
 export async function fetchUserBooktimeBookingIds(
   clubId: string,
   companyId: string,
+  clubTimeZone?: string | null,
 ): Promise<UserBooktimeBookingIdsResult> {
-  await hydrateBooktimeSession(clubId, companyId);
-  const client = getBooktimeClient(clubId, companyId);
+  await hydrateBooktimeSession(clubId, companyId, clubTimeZone);
+  const client = getBooktimeClient(clubId, companyId, clubTimeZone);
   if (!client.isAuthenticated) {
     return { authenticated: false, ids: new Set() };
   }

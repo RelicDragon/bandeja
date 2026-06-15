@@ -138,4 +138,8 @@ describe('resolveBooktimeMyClubTimezone', () => {
     expect(resolveBooktimeMyClubTimezone({ cityTimezone: null })).toBe(TZ);
     expect(resolveBooktimeMyClubTimezone({})).toBe(TZ);
   });
+
+  it('uses club.city.timezone when cityTimezone is absent', () => {
+    expect(resolveBooktimeMyClubTimezone({ city: { timezone: 'Europe/London' } })).toBe('Europe/London');
+  });
 });
