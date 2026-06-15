@@ -54,12 +54,12 @@ export function parseBusySlotsForIngest(
     if (typeof startTime !== 'string' || typeof endTime !== 'string') {
       throw new ApiError(400, `busySlots[${i}] must have startTime and endTime strings`);
     }
-    const startIso = normalizeBooktimeWireIngestIso(
+    const startIso = normalizeBooktimeIngestIso(
       startTime,
       `busySlots[${i}].startTime`,
       timeZone,
     );
-    const endIso = normalizeBooktimeWireIngestIso(endTime, `busySlots[${i}].endTime`, timeZone);
+    const endIso = normalizeBooktimeIngestIso(endTime, `busySlots[${i}].endTime`, timeZone);
     const start = storedUtcIsoToInstant(startIso)!;
     const end = storedUtcIsoToInstant(endIso)!;
     if (end <= start) {

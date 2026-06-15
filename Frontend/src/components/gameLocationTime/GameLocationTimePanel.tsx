@@ -13,6 +13,7 @@ import { LocationTimeSummaryBar } from './LocationTimeSummaryBar';
 import { LinkedBookingsList } from './LinkedBookingsList';
 import type { BookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { useAuthStore } from '@/store/authStore';
 import { useMemo } from 'react';
 
@@ -94,8 +95,8 @@ export function GameLocationTimePanel({
     () =>
       selectedCourtIds
         .map((id) => courts.find((c) => c.id === id))
-        .filter((c): c is Court => c != null),
-    [selectedCourtIds, courts],
+        .filter((c): c is Court => c != null && courtHasActiveBookingIntegration(club, c)),
+    [selectedCourtIds, courts, club],
   );
 
   const requestTabChange = (next: LocationTimeMode) => {
@@ -225,7 +226,7 @@ export function GameLocationTimePanel({
               needsBooktimeAuth={needsBooktimeAuth}
               authGateSection={authGateSection}
               hintSection={
-                integratedCourts.length > 0 && club ? (
+                club ? (
                   <BooktimeRealBookingSection
                     mode={mode}
                     club={club}

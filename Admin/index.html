@@ -320,6 +320,7 @@
                                     <th>Surface Type</th>
                                     <th>Price/Hour</th>
                                     <th>External ID</th>
+                                    <th>Camera</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -1077,6 +1078,10 @@
                 <div class="form-group">
                     <label for="courtExternalCourtId">External court ID</label>
                     <input type="text" id="courtExternalCourtId" placeholder="External bookingResourceId" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="courtWebCameraUrl">Web camera URL</label>
+                    <input type="url" id="courtWebCameraUrl" placeholder="https://" autocomplete="off">
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeModal('courtModal')">Cancel</button>

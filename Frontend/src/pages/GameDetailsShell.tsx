@@ -32,6 +32,7 @@ import { GameCancelled } from '@/components/GameDetails/GameCancelled';
 import { GameDetailsSkeleton } from '@/components/GameDetails/GameDetailsSkeleton';
 import { GameActionCard } from '@/components/GameDetails/GameActionCard';
 import { PhotosSection } from '@/components/GameDetails/PhotosSection';
+import { GameWebCamerasSection } from '@/components/GameDetails/GameWebCamerasSection';
 import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
 import { BarParticipantsList } from '@/components/GameDetails/BarParticipantsList';
 import { LeaveGameConfirmationModal } from '@/components/LeaveGameConfirmationModal';
@@ -1446,6 +1447,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
             <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
           )}
+
+          <GameWebCamerasSection game={game} courts={courts} />
 
           {!isLeague && game.resultsStatus === 'NONE' && (
             <>

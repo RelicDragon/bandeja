@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Home, X } from 'lucide-react';
+import { Home, Video, X } from 'lucide-react';
 import { CourtOccupancyRing } from './CourtOccupancyRing';
 import { resolveCourtNameParts } from '@/utils/courtDisplayName';
 import type { Court } from '@/types';
@@ -64,10 +64,17 @@ export const CourtSelectionCard = memo(function CourtSelectionCard({
                 <Home size={11} className={`shrink-0 ${iconClass}`} />
               )}
             </div>
-            {nameParts.integrationName ? (
-              <span className={`block text-[10px] leading-tight truncate mt-0.5 ${secondaryTextClass}`}>
-                {nameParts.integrationName}
-              </span>
+            {nameParts.integrationName || court.webCameraUrl?.trim() ? (
+              <div className="flex items-center gap-1 min-w-0 mt-0.5">
+                {nameParts.integrationName ? (
+                  <span className={`text-[10px] leading-tight truncate ${secondaryTextClass}`}>
+                    {nameParts.integrationName}
+                  </span>
+                ) : null}
+                {court.webCameraUrl?.trim() ? (
+                  <Video size={11} className={`shrink-0 ${iconClass}`} aria-hidden />
+                ) : null}
+              </div>
             ) : null}
           </>
         ) : (

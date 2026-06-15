@@ -1005,10 +1005,22 @@ async function loadCourtsForCenter(centerId) {
     }
 }
 
+function openCourtCameraUrl(url) {
+    const trimmed = (url || '').trim();
+    if (!trimmed) return;
+    window.open(trimmed, '_blank', 'noopener,noreferrer');
+}
+
+function renderCourtCameraCell(webCameraUrl) {
+    const url = (webCameraUrl || '').trim();
+    if (!url) return '—';
+    return `<button type="button" class="court-camera-link" title="${escapeHtml(url)}" onclick="openCourtCameraUrl(${JSON.stringify(url)})" aria-label="Open web camera">✓</button>`;
+}
+
 function renderCourtsTable(courts) {
     const tbody = document.getElementById('courtsTableBody');
     if (courts.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 2rem;">No courts found. Add a court to get started.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 2rem;">No courts found. Add a court to get started.</td></tr>';
         return;
     }
     tbody.innerHTML = courts.map(court => `
@@ -1023,6 +1035,7 @@ function renderCourtsTable(courts) {
             <td>${escapeHtml(court.surfaceType) || '-'}</td>
             <td>${court.pricePerHour ? '$' + court.pricePerHour : '-'}</td>
             <td><code style="font-size: 0.8rem;">${escapeHtml(court.externalCourtId) || '—'}</code></td>
+            <td>${renderCourtCameraCell(court.webCameraUrl)}</td>
             <td>
                 <span class="badge ${court.isActive ? 'badge-success' : 'badge-danger'}">
                     ${court.isActive ? 'Active' : 'Inactive'}

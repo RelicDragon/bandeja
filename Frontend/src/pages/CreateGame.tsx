@@ -27,7 +27,6 @@ import {
   CreateGameProgressOverlay,
   type CreateGameProgressPhase,
 } from '@/components/createGame/CreateGameProgressOverlay';
-import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
@@ -1484,15 +1483,9 @@ export const CreateGame = ({
                       bookableDaysHint={willBookOnCreate ? booktimeCompanyMeta.bookableDays : null}
                       connectedPhone={booktimeAuth?.phoneNumber ?? null}
                       slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
-                      snapshotBanner={
-                        willBookOnCreate && !needsBooktimeAuth ? (
-                          <BooktimeAvailabilityBanner
-                            loading={isRefreshingSnapshot}
-                            banner={createGameSnapshotBanner}
-                            gameFlow="create"
-                          />
-                        ) : null
-                      }
+                      snapshotOverlayEnabled={willBookOnCreate && !needsBooktimeAuth}
+                      snapshotLoading={isRefreshingSnapshot}
+                      snapshotBannerState={createGameSnapshotBanner}
                       compact
                       hideDateSection
                     />

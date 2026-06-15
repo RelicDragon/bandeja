@@ -46,6 +46,9 @@
       "absentSuccess": "Propojení s rezervací odebráno",
       "absentFailed": "Propojení s rezervací se nepodařilo odebrat"
     },
+    "webCameras": {
+      "title": "Kamerové záznamy kurtů"
+    },
     "booktimeEdit": {
       "activityTitle": "Ukládání změn…",
       "activityStep2": "Aktualizace hry…"

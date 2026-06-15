@@ -163,6 +163,7 @@ export const LocationSection = ({
               }
               className="flex flex-wrap items-center gap-x-4 gap-y-1"
               linkClassName="flex items-center gap-1.5 text-sm text-primary-600 dark:text-primary-400 hover:underline"
+              showWebCameraLink={false}
             />
           )}
         </div>

@@ -49,6 +49,9 @@
       "absentSuccess": "Veza sa rezervacijom uklonjena",
       "absentFailed": "Veza sa rezervacijom nije uklonjena"
     },
+    "webCameras": {
+      "title": "Kamere terena"
+    },
     "booktimeEdit": {
       "activityTitle": "Čuvanje izmena…",
       "activityStep2": "Ažuriranje meča…"

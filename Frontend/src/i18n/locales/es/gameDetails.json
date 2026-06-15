@@ -49,6 +49,9 @@
       "absentSuccess": "Vínculo de reserva eliminado",
       "absentFailed": "No se pudo eliminar el vínculo de reserva"
     },
+    "webCameras": {
+      "title": "Cámaras de pista"
+    },
     "booktimeEdit": {
       "activityTitle": "Guardando cambios…",
       "activityStep2": "Actualizando partido…"

@@ -418,6 +418,20 @@ tbody tr:hover {
     opacity: 0.8;
 }
 
+.court-camera-link {
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: var(--success-color, #22c55e);
+    cursor: pointer;
+}
+
+.court-camera-link:hover {
+    opacity: 0.8;
+}
+
 .btn-toggle {
     background-color: var(--warning-color);
     color: white;

@@ -10,6 +10,7 @@ type CourtLocationLinksProps = {
   linkClassName?: string;
   iconSize?: number;
   showWebCameraLabel?: boolean;
+  showWebCameraLink?: boolean;
 };
 
 export function CourtLocationLinks({
@@ -19,13 +20,14 @@ export function CourtLocationLinks({
   linkClassName = 'flex items-center gap-1.5 text-xs text-primary-600 dark:text-primary-400 hover:underline',
   iconSize = 14,
   showWebCameraLabel = true,
+  showWebCameraLink = true,
 }: CourtLocationLinksProps) {
   const { t } = useTranslation();
   const website = club?.website?.trim();
   const telHref = club?.phone?.trim() ? getTelUrl(club.phone.trim()) : '';
   const webCameraUrl = court?.webCameraUrl?.trim();
 
-  if (!website && !telHref && !webCameraUrl) return null;
+  if (!website && !telHref && !(showWebCameraLink && webCameraUrl)) return null;
 
   return (
     <div className={className}>
@@ -41,7 +43,7 @@ export function CourtLocationLinks({
           {t('common.call')}
         </a>
       ) : null}
-      {webCameraUrl ? (
+      {showWebCameraLink && webCameraUrl ? (
         <button
           type="button"
           onClick={() => openExternalUrl(webCameraUrl)}

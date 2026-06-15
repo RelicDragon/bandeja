@@ -35,7 +35,6 @@ import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
 import { BooktimeCreateGameConfirmModal } from '@/components/createGame/BooktimeCreateGameConfirmModal';
-import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
 import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
@@ -380,16 +379,10 @@ export const EditGameInfoModal = ({
   );
 
 
-  const editSnapshotBanner =
+  const editSnapshotOverlayEnabled =
     (willBookOnEdit || bookingsModeActive) &&
     !needsBooktimeAuth &&
-    selectedClubData?.integrationType === 'BOOKTIME' ? (
-      <BooktimeAvailabilityBanner
-        loading={isRefreshingSnapshot}
-        banner={snapshotBanner}
-        gameFlow="edit"
-      />
-    ) : null;
+    selectedClubData?.integrationType === 'BOOKTIME';
 
   const handleRemoveTime = async () => {
     if (!game.id) return;
@@ -709,7 +702,9 @@ export const EditGameInfoModal = ({
               }
               pendingRemoveBookingIds={pendingRemoveBookingIds}
               onDraftChange={handleLocationTimeDraftChange}
-              snapshotBanner={editSnapshotBanner}
+              snapshotOverlayEnabled={editSnapshotOverlayEnabled}
+              snapshotLoading={isRefreshingSnapshot}
+              snapshotBannerState={snapshotBanner}
               willBookOnCreate={willBookOnEdit}
               needsBooktimeAuth={needsBooktimeAuth}
               booktimeFixedDates={willBookOnEdit ? booktimeFixedDates : undefined}

@@ -15,6 +15,7 @@ import {
 } from '@/utils/courtSport';
 import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
 import { CourtSelectionCard } from './CourtSelectionCard';
+import { SelectedCourtWebCameraHint } from './SelectedCourtWebCameraHint';
 import type { Club, Court, EntityType, Sport } from '@/types';
 
 interface CourtSelectionGridProps {
@@ -121,6 +122,16 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
     ? selectedCourtIds.length === 0
     : selectedCourt === 'notBooked';
 
+  const selectedCourtIdsForHint = useMemo(
+    () =>
+      multiSelect
+        ? selectedCourtIds
+        : selectedCourt !== 'notBooked'
+          ? [selectedCourt]
+          : [],
+    [multiSelect, selectedCourtIds, selectedCourt],
+  );
+
   return (
     <div className="space-y-2">
       {multiSelect ? (
@@ -182,6 +193,7 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
           })}
         </div>
       )}
+      <SelectedCourtWebCameraHint courts={courts} selectedCourtIds={selectedCourtIdsForHint} />
     </div>
   );
 });

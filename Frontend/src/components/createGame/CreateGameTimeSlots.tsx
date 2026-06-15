@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EntityType, Club } from '@/types';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
@@ -32,6 +32,8 @@ interface CreateGameTimeSlotsProps {
   onTimeSelect: (time: string) => void;
   bookedSlotInfo: BookedSlotInfo[] | null;
   getDurationLabel: (dur: number) => string;
+  availabilityOverlay?: ReactNode;
+  availabilityOverlayLoading?: boolean;
 }
 
 function parseTime(timeStr: string): number {
@@ -104,6 +106,8 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
   onTimeSelect,
   bookedSlotInfo,
   getDurationLabel,
+  availabilityOverlay,
+  availabilityOverlayLoading = false,
 }: CreateGameTimeSlotsProps) {
   const { t } = useTranslation();
 
@@ -122,70 +126,93 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
           </span>
         ) : null}
       </label>
-      {slotsLoading ? (
-        <div className="grid grid-cols-6 gap-1.5 p-1">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse"
-            />
-          ))}
+      <div className="relative min-h-[5.5rem]">
+        <div
+          className={
+            availabilityOverlay && availabilityOverlayLoading
+              ? 'opacity-40 pointer-events-none select-none'
+              : undefined
+          }
+        >
+          {slotsLoading ? (
+            <div className="grid grid-cols-6 gap-1.5 p-1">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-10 rounded-lg bg-gray-100 dark:bg-gray-800 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-6 gap-1.5 p-1">
+              {times.map((time) => {
+                const isSelected = selectedTime === time;
+                const isHighlighted = entityType !== 'BAR' ? isSlotHighlighted(time) : false;
+                const canAccommodate = entityType !== 'BAR' ? canAccommodateDuration(time, duration) : true;
+                const isBooked = !hideOccupancyOverlay && isSlotBooked(time);
+                const allUnconfirmed = isBooked && areAllSlotsUnconfirmed(time);
+                const isExternallyBooked = isBooked && hasExternallyBookedSlot(time);
+                const isHardBlocked = isBooked && isSlotHardBlocked(time);
+
+                const blockHardBookedSlot = hideOccupancyOverlay && isHardBlocked;
+
+                const handleTimeClick = () => {
+                  if (entityType !== 'BAR' && blockHardBookedSlot) return;
+                  if (entityType === 'BAR') {
+                    onTimeSelect(time);
+                  } else if (canAccommodate) {
+                    onTimeSelect(time);
+                  } else {
+                    const adjustedStartTime = getAdjustedStartTime(time, duration);
+                    if (adjustedStartTime) {
+                      onTimeSelect(adjustedStartTime);
+                    }
+                  }
+                };
+
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    disabled={entityType !== 'BAR' && blockHardBookedSlot}
+                    onClick={handleTimeClick}
+                    className={`w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${
+                      isSelected
+                        ? 'bg-primary-500 text-white'
+                        : isHighlighted
+                          ? 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 border border-primary-400 dark:border-primary-600'
+                          : isBooked
+                            ? isExternallyBooked
+                              ? allUnconfirmed
+                                ? 'bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-500 border border-red-200 dark:border-red-900/30'
+                                : 'bg-red-200 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-400 dark:border-red-700'
+                              : allUnconfirmed
+                                ? 'bg-yellow-50 dark:bg-yellow-900/10 text-yellow-600 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-900/30'
+                                : 'bg-yellow-200 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-400 dark:border-yellow-700'
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    {time}
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="grid grid-cols-6 gap-1.5 p-1">
-          {times.map((time) => {
-            const isSelected = selectedTime === time;
-            const isHighlighted = entityType !== 'BAR' ? isSlotHighlighted(time) : false;
-            const canAccommodate = entityType !== 'BAR' ? canAccommodateDuration(time, duration) : true;
-            const isBooked = !hideOccupancyOverlay && isSlotBooked(time);
-            const allUnconfirmed = isBooked && areAllSlotsUnconfirmed(time);
-            const isExternallyBooked = isBooked && hasExternallyBookedSlot(time);
-            const isHardBlocked = isBooked && isSlotHardBlocked(time);
-
-            const blockHardBookedSlot = hideOccupancyOverlay && isHardBlocked;
-
-            const handleTimeClick = () => {
-              if (entityType !== 'BAR' && blockHardBookedSlot) return;
-              if (entityType === 'BAR') {
-                onTimeSelect(time);
-              } else if (canAccommodate) {
-                onTimeSelect(time);
-              } else {
-                const adjustedStartTime = getAdjustedStartTime(time, duration);
-                if (adjustedStartTime) {
-                  onTimeSelect(adjustedStartTime);
-                }
-              }
-            };
-
-            return (
-              <button
-                key={time}
-                type="button"
-                disabled={entityType !== 'BAR' && blockHardBookedSlot}
-                onClick={handleTimeClick}
-                className={`w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${
-                  isSelected
-                    ? 'bg-primary-500 text-white'
-                    : isHighlighted
-                      ? 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 border border-primary-400 dark:border-primary-600'
-                      : isBooked
-                        ? isExternallyBooked
-                          ? allUnconfirmed
-                            ? 'bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-500 border border-red-200 dark:border-red-900/30'
-                            : 'bg-red-200 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-400 dark:border-red-700'
-                          : allUnconfirmed
-                            ? 'bg-yellow-50 dark:bg-yellow-900/10 text-yellow-600 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-900/30'
-                            : 'bg-yellow-200 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-400 dark:border-yellow-700'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                {time}
-              </button>
-            );
-          })}
-        </div>
-      )}
+        {availabilityOverlay ? (
+          <div
+            className={
+              availabilityOverlayLoading
+                ? 'absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/85 px-2 dark:bg-gray-900/85'
+                : 'pointer-events-none absolute inset-x-0 top-0 z-10 px-1 pt-1'
+            }
+            aria-live="polite"
+            aria-busy={availabilityOverlayLoading || undefined}
+          >
+            {availabilityOverlay}
+          </div>
+        ) : null}
+      </div>
       {!slotsLoading ? (
         <SelectedTimeSummary
           selectedTime={selectedTime}

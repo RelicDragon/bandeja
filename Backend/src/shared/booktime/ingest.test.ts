@@ -5,8 +5,40 @@ import {
   normalizeBooktimeWireIngestIso,
   parseBusySlotsForIngest,
 } from './ingest';
+import { booktimeLocalIsoToDate, storedUtcIsoToInstant } from './localTime';
 
 const TZ = 'Europe/Belgrade';
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function belgradeHm(iso: string): string {
+  const d = storedUtcIsoToInstant(iso);
+  if (!d) return iso;
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone: TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(d);
+}
+
+/** Mirrors Frontend deriveBusyFromAvailableSlots → minutesToBusyInterval output. */
+function frontendBusyGap(
+  dateKey: string,
+  startMinutes: number,
+  endMinutes: number,
+): { startTime: string; endTime: string } | null {
+  const sh = Math.floor(startMinutes / 60);
+  const sm = startMinutes % 60;
+  const eh = Math.floor(endMinutes / 60);
+  const em = endMinutes % 60;
+  const start = booktimeLocalIsoToDate(`${dateKey}T${pad2(sh)}:${pad2(sm)}:00`, TZ);
+  const end = booktimeLocalIsoToDate(`${dateKey}T${pad2(eh)}:${pad2(em)}:00`, TZ);
+  if (!start || !end || end <= start) return null;
+  return { startTime: start.toISOString(), endTime: end.toISOString() };
+}
 
 function assert(cond: boolean, msg: string): void {
   if (!cond) {
@@ -60,17 +92,26 @@ function testNormalizeUnparseable(): void {
 function testParseBusySlotsForIngest(): void {
   const slots = parseBusySlotsForIngest(
     [
-      { startTime: '2026-06-14T09:00:00.000Z', endTime: '2026-06-14T10:00:00.000Z' },
+      { startTime: '2026-06-14T07:00:00.000Z', endTime: '2026-06-14T08:00:00.000Z' },
       { startTime: '2026-06-14T11:00', endTime: '2026-06-14T12:00' },
       { startTime: '2026-06-14T13:00:00.000Z', endTime: '2026-06-14T14:00:00.000Z' },
     ],
     TZ,
   );
   assert(slots.length === 3, 'three slots parsed');
-  assert(slots[0].startTime === '2026-06-14T07:00:00.000Z', 'slot0 start fake-Z');
-  assert(slots[0].endTime === '2026-06-14T08:00:00.000Z', 'slot0 end fake-Z');
+  assert(slots[0].startTime === '2026-06-14T07:00:00.000Z', 'slot0 start stored UTC pass-through');
+  assert(slots[0].endTime === '2026-06-14T08:00:00.000Z', 'slot0 end stored UTC pass-through');
   assert(slots[1].startTime === '2026-06-14T09:00:00.000Z', 'slot1 start naive');
-  assert(slots[2].startTime === '2026-06-14T11:00:00.000Z', 'slot2 start already UTC');
+  assert(slots[2].startTime === '2026-06-14T13:00:00.000Z', 'slot2 start already UTC');
+}
+
+function testParseBusySlotsStoredUtcMorningEdge(): void {
+  const slots = parseBusySlotsForIngest(
+    [{ startTime: '2026-06-15T08:00:00.000Z', endTime: '2026-06-15T09:00:00.000Z' }],
+    TZ,
+  );
+  assert(slots[0].startTime === '2026-06-15T08:00:00.000Z', '08Z start pass-through');
+  assert(slots[0].endTime === '2026-06-15T09:00:00.000Z', '09Z end pass-through');
 }
 
 function testParseBusySlotsInvalidInterval(): void {
@@ -173,6 +214,37 @@ function testAfternoonWireReingestFootgun(): void {
   );
 }
 
+function testSnapshotPutRoundTripPreservesWallClock(): void {
+  const dateKey = '2026-06-15';
+  const gaps: Array<{ startMin: number; endMin: number; startLabel: string; endLabel: string }> = [
+    { startMin: 10 * 60, endMin: 12 * 60, startLabel: '10:00', endLabel: '12:00' },
+    { startMin: 19 * 60, endMin: 20 * 60, startLabel: '19:00', endLabel: '20:00' },
+    { startMin: 8 * 60, endMin: 9 * 60, startLabel: '08:00', endLabel: '09:00' },
+  ];
+
+  for (const gap of gaps) {
+    const wire = frontendBusyGap(dateKey, gap.startMin, gap.endMin);
+    assert(wire != null, `frontend gap ${gap.startLabel}-${gap.endLabel}`);
+    if (!wire) continue;
+    const [stored] = parseBusySlotsForIngest([wire], TZ);
+    assert(stored.startTime === wire.startTime, `${gap.startLabel} stored start unchanged`);
+    assert(stored.endTime === wire.endTime, `${gap.endLabel} stored end unchanged`);
+    assert(belgradeHm(stored.startTime) === gap.startLabel, `${gap.startLabel} Belgrade start`);
+    assert(belgradeHm(stored.endTime) === gap.endLabel, `${gap.endLabel} Belgrade end`);
+  }
+}
+
+function testSnapshotPutAfternoonGapRoundTrip(): void {
+  const wire = frontendBusyGap('2026-06-15', 18 * 60, 20 * 60);
+  assert(wire != null, '18:00-20:00 gap');
+  if (!wire) return;
+  const [stored] = parseBusySlotsForIngest([wire], TZ);
+  assert(stored.startTime === '2026-06-15T16:00:00.000Z', '18:00 Belgrade → 16:00Z');
+  assert(stored.endTime === '2026-06-15T18:00:00.000Z', '20:00 Belgrade → 18:00Z');
+  assert(belgradeHm(stored.startTime) === '18:00', 'afternoon gap start display');
+  assert(belgradeHm(stored.endTime) === '20:00', 'afternoon gap end display');
+}
+
 function testAfternoonFakeZWireIngestOnce(): void {
   assert(
     normalizeBooktimeWireIngestIso('2026-06-15T18:00:00.000Z', 'start', TZ)
@@ -186,6 +258,9 @@ testNormalizeNaive();
 testNormalizeAlreadyUtc();
 testNormalizeUnparseable();
 testParseBusySlotsForIngest();
+testParseBusySlotsStoredUtcMorningEdge();
+testSnapshotPutRoundTripPreservesWallClock();
+testSnapshotPutAfternoonGapRoundTrip();
 testParseBusySlotsInvalidInterval();
 testParseBusySlotsUnparseable();
 testIngestBookingSnapshotTimes();

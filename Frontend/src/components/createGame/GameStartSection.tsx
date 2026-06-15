@@ -11,6 +11,7 @@ import { useCourtOccupancy } from '@/hooks/useCourtOccupancy';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { useClubIntegrationDurations } from '@/hooks/useClubIntegrationDurations';
 import { pickClosestDurationOption } from '@/integrations/booktime/durations';
+import type { BooktimeSnapshotBanner } from '@/hooks/useBooktimeSnapshotRefresh';
 
 interface GameStartSectionProps {
   selectedDate: Date;
@@ -48,7 +49,9 @@ interface GameStartSectionProps {
   connectedPhone?: string | null;
   slotsLoading?: boolean;
   existingBookingBanner?: ReactNode;
-  snapshotBanner?: ReactNode;
+  snapshotOverlayEnabled?: boolean;
+  snapshotLoading?: boolean;
+  snapshotBannerState?: BooktimeSnapshotBanner;
   panelMode?: 'create' | 'edit';
   clubs?: Club[];
   courts?: Court[];
@@ -93,7 +96,9 @@ export const GameStartSection = ({
   connectedPhone,
   slotsLoading = false,
   existingBookingBanner,
-  snapshotBanner,
+  snapshotOverlayEnabled = false,
+  snapshotLoading = false,
+  snapshotBannerState = null,
   panelMode = 'create',
   clubs,
   courts,
@@ -154,20 +159,41 @@ export const GameStartSection = ({
 
   const showClubPicker = clubs != null && courts != null && onSelectClub && onOpenClubModal && onCloseClubModal;
 
+  const booktimeOccupancyOverlayEnabled =
+    !snapshotOverlayEnabled &&
+    !needsBooktimeAuth &&
+    entityType !== 'BAR' &&
+    !bookCourtEnabled &&
+    club?.integrationType === 'BOOKTIME';
+
+  const isAvailabilityWarning = (banner: BooktimeSnapshotBanner) =>
+    banner === 'noSyncToday' || banner === 'scoutPoolEmpty';
+
+  const availabilityOverlayLoading = snapshotOverlayEnabled
+    ? snapshotLoading
+    : booktimeOccupancyOverlayEnabled && isLoadingExternalSlots;
+
+  const availabilityOverlayBanner = snapshotOverlayEnabled
+    ? snapshotBannerState
+    : bookedCourtsBanner;
+
+  const availabilityOverlayVisible =
+    !needsBooktimeAuth &&
+    (snapshotOverlayEnabled
+      ? availabilityOverlayLoading || isAvailabilityWarning(availabilityOverlayBanner)
+      : booktimeOccupancyOverlayEnabled &&
+        (availabilityOverlayLoading || isAvailabilityWarning(availabilityOverlayBanner)));
+
+  const availabilityOverlay = availabilityOverlayVisible ? (
+    <BooktimeAvailabilityBanner
+      loading={availabilityOverlayLoading}
+      banner={availabilityOverlayBanner}
+      gameFlow={panelMode}
+    />
+  ) : null;
+
   const schedulingBanners = (
     <>
-      {!needsBooktimeAuth && snapshotBanner}
-      {!snapshotBanner &&
-      !needsBooktimeAuth &&
-      entityType !== 'BAR' &&
-      !bookCourtEnabled &&
-      club?.integrationType === 'BOOKTIME' ? (
-        <BooktimeAvailabilityBanner
-          loading={isLoadingExternalSlots}
-          banner={bookedCourtsBanner}
-          gameFlow={panelMode}
-        />
-      ) : null}
       {entityType !== 'BAR' && (club?.policyText || club?.cancellationNoticeHours) && !needsBooktimeAuth ? (
         <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
           {club.cancellationNoticeHours != null && club.cancellationNoticeHours > 0 && (
@@ -253,6 +279,8 @@ export const GameStartSection = ({
         onTimeSelect={onTimeSelect}
         bookedSlotInfo={bookedSlotInfo}
         getDurationLabel={getDurationLabel}
+        availabilityOverlay={availabilityOverlay}
+        availabilityOverlayLoading={availabilityOverlayLoading}
       />
     </>
   );

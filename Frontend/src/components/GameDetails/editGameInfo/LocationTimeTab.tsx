@@ -20,6 +20,7 @@ import { clubHasBookingIntegration, getBooktimeCompanyId } from '@shared/clubInt
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
 import type { RefObject, ReactNode } from 'react';
+import type { BooktimeSnapshotBanner } from '@/hooks/useBooktimeSnapshotRefresh';
 
 type LocationTimeTabProps = {
   game: Game;
@@ -51,7 +52,9 @@ type LocationTimeTabProps = {
   onUnlinkBooking: (externalBookingId: string) => void;
   pendingRemoveBookingIds: string[];
   onDraftChange: (draft: EditLocationTimeDraft) => void;
-  snapshotBanner?: ReactNode;
+  snapshotOverlayEnabled?: boolean;
+  snapshotLoading?: boolean;
+  snapshotBannerState?: BooktimeSnapshotBanner;
   willBookOnCreate?: boolean;
   needsBooktimeAuth?: boolean;
   booktimeFixedDates?: Date[];
@@ -91,7 +94,9 @@ export function LocationTimeTab({
   onUnlinkBooking,
   pendingRemoveBookingIds,
   onDraftChange,
-  snapshotBanner,
+  snapshotOverlayEnabled = false,
+  snapshotLoading = false,
+  snapshotBannerState = null,
   willBookOnCreate: willBookOnCreateProp = false,
   needsBooktimeAuth = false,
   booktimeFixedDates,
@@ -348,7 +353,9 @@ export function LocationTimeTab({
           bookableDaysHint={bookableDaysHint}
           connectedPhone={connectedPhone}
           slotsLoading={slotsLoading}
-          snapshotBanner={snapshotBanner}
+          snapshotOverlayEnabled={snapshotOverlayEnabled}
+          snapshotLoading={snapshotLoading}
+          snapshotBannerState={snapshotBannerState}
           compact
           hideDateSection
         />

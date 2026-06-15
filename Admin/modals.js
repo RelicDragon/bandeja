@@ -468,6 +468,7 @@ function editCourtModal(court) {
     document.getElementById('courtPricePerHour').value = court.pricePerHour || '';
     document.getElementById('courtIsActive').checked = court.isActive;
     document.getElementById('courtExternalCourtId').value = court.externalCourtId || '';
+    document.getElementById('courtWebCameraUrl').value = court.webCameraUrl || '';
     document.getElementById('courtForm').dataset.mode = 'edit';
     document.getElementById('courtForm').dataset.courtId = court.id;
 }
@@ -490,6 +491,7 @@ async function handleCourtSubmit(e) {
         pricePerHour: priceValue ? parseFloat(priceValue) : null,
         isActive: document.getElementById('courtIsActive').checked,
         externalCourtId: optionalTrimToNull(document.getElementById('courtExternalCourtId').value),
+        webCameraUrl: optionalTrimToNull(document.getElementById('courtWebCameraUrl').value),
     };
 
     try {

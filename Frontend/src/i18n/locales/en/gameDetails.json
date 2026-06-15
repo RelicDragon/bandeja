@@ -49,6 +49,9 @@
       "absentSuccess": "Reservation link removed",
       "absentFailed": "Could not remove reservation link"
     },
+    "webCameras": {
+      "title": "Court cameras"
+    },
     "booktimeEdit": {
       "activityTitle": "Saving changes…",
       "activityStep2": "Updating game…"

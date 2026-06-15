@@ -278,8 +278,9 @@ Frontend/e2e/
 | H-35 | Invite friend to app | `InviteFriendToBandejaButton` | Share sheet / copy invite link |
 | H-37 | Club booking connect banner (My tab) | User in city with BOOKTIME club, not connected | Connect banner on My tab → settings page |
 | H-40 | Club booking connect banner dismiss | User sees connect banner on My tab | Close (×) hides banner; does not reappear for same user |
-| H-38 | Club booking upcoming cards (My tab) | Connected user with upcoming bookings | Up to 3 cards + "See all" |
+| H-38 | Club booking upcoming cards (My tab) | Connected user with upcoming bookings | Section collapsed by default; header shows count + chevron; expand reveals up to 3 cards + "See all" below cards |
 | H-38a | Adjacent booking group (My tab) | User with 2+ back-to-back slots same court | One grouped card with date + small time chips per slot; tap expands individual slots with cancel/link actions |
+| H-38e | Upcoming bookings collapse (My tab) | Connected user with upcoming bookings | Tap header toggles smooth expand/collapse; chevron rotates; "See all" not in header |
 | H-38b | Linked game on booking card (My tab) | Upcoming booking linked to one game | Single tappable "Linked game" chip; no duplicate "Also used in" line |
 | H-38c | Booking times use club TZ | Club city TZ ≠ Europe/Belgrade; upcoming booking on My tab or connected-clubs page | Wall-clock times match club city TZ (not Belgrade default) |
 | H-38d | Booking card prices (My tab) | Connected user with priced upcoming booking(s) | Single card shows slot price from booking list; grouped adjacent slots show per-slot price on chips and summed total on card header (no separate price loading state) |
@@ -408,7 +409,7 @@ Frontend/e2e/
 | C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
 | C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club + integrated court | Single location & start card: club → date → court → reservation card → auth or duration → time |
-| C-13x | Integrated court opt-out toggle | BOOKTIME club, pick integrated court(s) on Time slots tab | "Don't book real court" switch + hint; OFF by default (will reserve); ON skips real booking and shows full club time grid (not API-only slots); red external cells selectable |
+| C-13x | Integrated court opt-out toggle | BOOKTIME club, pick integrated court(s) on Time slots tab | "Don't book real court" switch + hint animate in; OFF by default (will reserve); ON skips real booking and shows full club time grid (not API-only slots); red external cells selectable; deselect integrated court or pick non-integrated court only → switch animates out |
 | C-14p | Don't select court time grid | BOOKTIME club, tap "Don't select court" | Full club schedule; red external cells selectable and saveable; no bookable-days strip |
 | C-14q | Opt-out save on external overlap | Don't book real court ON; pick slot overlapping red external booking | Save succeeds (info banner ok); no hard-block toast |
 | C-13y | Create-game reserve CTA | Pick integrated court(s), connected, live API, opt-out OFF | CTA "Create game & reserve court" |
@@ -510,6 +511,8 @@ Frontend/e2e/
 | GD-88 | Linked booking absent unlink | Refresh when booking gone from viewer's Booktime account | Modal explains link removal; game stays; confirm removes link from this game |
 | GD-91 | Delete game with linked bookings | Owner deletes game with `linkedBookings` → confirm → second modal | Lists linked reservations; explains club bookings stay active; "Delete anyway" proceeds |
 | GD-92 | Delete game without linked bookings | Owner deletes game with no `linkedBookings` | Single confirm modal only; delete proceeds immediately |
+| GD-93 | Court cameras section visible | FINAL game on court(s) with `webCameraUrl` | “Court cameras” card lists each court with “Web camera” link; link opens URL |
+| GD-94 | Court cameras section hidden | Game not FINAL, or FINAL but no played court has `webCameraUrl` | Court cameras section absent; web camera link absent from game info club row |
 
 ### 9.2 Participation
 
@@ -1039,6 +1042,8 @@ Frontend/e2e/
 | X-41 | Online booking integration type | Platform admin → edit club → Integration type online booking + companyId | Saved; player app shows club booking surfaces for club |
 | X-42 | Import booking courts | BOOKTIME club → Import courts | Courts matched/created; `externalCourtId` set; schedule grid shows mapped externals |
 | X-43 | Manual external court ID | Platform admin court list → set externalCourtId | Snapshot maps busy to internal court column |
+| X-53 | Court web camera URL | Platform admin → edit court → Web camera URL → Save | URL persisted; Camera column shows ✓ |
+| X-54 | Open court camera from list | Platform admin court list → click ✓ in Camera column | Opens web camera URL in new tab |
 
 ### 18.10 Software keyboard (Capacitor iOS/Android, `@manual`)
 

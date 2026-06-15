@@ -958,6 +958,7 @@ export const GameInfo = ({
                   club={game.court?.club || game.club}
                   court={game.court && game.court.id ? game.court : undefined}
                   className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2"
+                  showWebCameraLink={false}
                 />
               </div>
               <div className="flex items-center gap-2">

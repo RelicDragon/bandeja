@@ -49,6 +49,9 @@
       "absentSuccess": "Связь с бронью удалена",
       "absentFailed": "Не удалось удалить связь с бронью"
     },
+    "webCameras": {
+      "title": "Камеры кортов"
+    },
     "booktimeEdit": {
       "activityTitle": "Сохранение изменений…",
       "activityStep2": "Обновление игры…"
