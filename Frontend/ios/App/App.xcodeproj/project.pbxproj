@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 71;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -19,12 +19,12 @@
 		99AF71D22F744E2000B32563 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71D02F744E2000B32563 /* KeychainHelper.swift */; };
 		99AF71D32F744E2000B32563 /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71D12F744E2000B32563 /* WatchSessionManager.swift */; };
 		99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */; };
+		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */; };
 		B1A2C3D4E5F60718293A3C7 /* BandejaPushDelegatePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */; };
-		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		B79A10042F7443E0002D7100 /* BandejaWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		E14000042F7443E0002D7100 /* NotificationServiceExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C1A2B3C4D5E6F708192A3B57 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */; };
+		E14000042F7443E0002D7100 /* NotificationServiceExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,19 +42,19 @@
 			remoteGlobalIDString = B79A10032F7443E0002D7100;
 			remoteInfo = BandejaWatchWidgets;
 		};
-		E14000092F7443E0002D7100 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = E14000032F7443E0002D7100;
-			remoteInfo = NotificationServiceExtension;
-		};
 		C1A2B3C4D5E6F708192A3B53 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 99414BE02F7443DE002D7100;
 			remoteInfo = "BandejaWatch Watch App";
+		};
+		E14000092F7443E0002D7100 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E14000032F7443E0002D7100;
+			remoteInfo = NotificationServiceExtension;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -87,7 +87,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				E14000042F7443E0002D7100 /* NotificationServiceExtension.appex in Embed Foundation Extensions */,
+				E14000042F7443E0002D7100 /* NotificationServiceExtension.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -109,24 +109,64 @@
 		99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthBridgePlugin.swift; sourceTree = "<group>"; };
 		99AF71D02F744E2000B32563 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		99AF71D12F744E2000B32563 /* WatchSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
-		B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicationNotificationHelper.swift; sourceTree = "<group>"; };
-		B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaPushDelegatePlugin.swift; sourceTree = "<group>"; };
 		99B2AB672EF1892700E5021A /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		99CD437F2F1BAEE700F7431D /* AppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppDebug.entitlements; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
+		B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicationNotificationHelper.swift; sourceTree = "<group>"; };
+		B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaPushDelegatePlugin.swift; sourceTree = "<group>"; };
 		B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BandejaWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1A2B3C4D5E6F708192A3B4C /* BandejaWatchWatchTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BandejaWatchWatchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/WatchOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		99414BE22F7443DE002D7100 /* BandejaWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "BandejaWatch Watch App"; sourceTree = "<group>"; };
-		B79A10022F7443E0002D7100 /* BandejaWatchWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWidgets; sourceTree = "<group>"; };
-		E14000022F7443E0002D7100 /* NotificationServiceExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = NotificationServiceExtension; sourceTree = "<group>"; };
-		C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWatchTests; sourceTree = "<group>"; };
+		99414BE22F7443DE002D7100 /* BandejaWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "BandejaWatch Watch App";
+			sourceTree = "<group>";
+		};
+		B79A10022F7443E0002D7100 /* BandejaWatchWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = BandejaWatchWidgets;
+			sourceTree = "<group>";
+		};
+		C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = BandejaWatchWatchTests;
+			sourceTree = "<group>";
+		};
+		E14000022F7443E0002D7100 /* NotificationServiceExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = NotificationServiceExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -152,18 +192,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		E14000072F7443E0002D7100 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		C1A2B3C4D5E6F708192A3B4F /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				C1A2B3C4D5E6F708192A3B57 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E14000072F7443E0002D7100 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -305,26 +345,6 @@
 			productReference = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		E14000032F7443E0002D7100 /* NotificationServiceExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = E140000B2F7443E0002D7100 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */;
-			buildPhases = (
-				E14000062F7443E0002D7100 /* Sources */,
-				E14000072F7443E0002D7100 /* Frameworks */,
-				E14000082F7443E0002D7100 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				E14000022F7443E0002D7100 /* NotificationServiceExtension */,
-			);
-			name = NotificationServiceExtension;
-			productName = NotificationServiceExtension;
-			productReference = E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		C1A2B3C4D5E6F708192A3B4E /* BandejaWatchWatchTests */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = C1A2B3C4D5E6F708192A3B54 /* Build configuration list for PBXNativeTarget "BandejaWatchWatchTests" */;
@@ -345,6 +365,26 @@
 			productName = BandejaWatchWatchTests;
 			productReference = C1A2B3C4D5E6F708192A3B4C /* BandejaWatchWatchTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E14000032F7443E0002D7100 /* NotificationServiceExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E140000B2F7443E0002D7100 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */;
+			buildPhases = (
+				E14000062F7443E0002D7100 /* Sources */,
+				E14000072F7443E0002D7100 /* Frameworks */,
+				E14000082F7443E0002D7100 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E14000022F7443E0002D7100 /* NotificationServiceExtension */,
+			);
+			name = NotificationServiceExtension;
+			productName = NotificationServiceExtension;
+			productReference = E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -466,12 +506,8 @@
 			);
 			inputFileListPaths = (
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1089,20 +1125,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E140000B2F7443E0002D7100 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				E140000C2F7443E0002D7100 /* Debug */,
-				E140000D2F7443E0002D7100 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		C1A2B3C4D5E6F708192A3B54 /* Build configuration list for PBXNativeTarget "BandejaWatchWatchTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C1A2B3C4D5E6F708192A3B55 /* Debug */,
 				C1A2B3C4D5E6F708192A3B56 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E140000B2F7443E0002D7100 /* Build configuration list for PBXNativeTarget "NotificationServiceExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E140000C2F7443E0002D7100 /* Debug */,
+				E140000D2F7443E0002D7100 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

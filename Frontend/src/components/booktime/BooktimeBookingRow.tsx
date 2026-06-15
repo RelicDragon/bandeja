@@ -18,6 +18,7 @@ import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import {
   booktimeRowToClub,
+  formatBooktimeBookingSlotRange,
   formatBooktimeBookingWhen,
   resolveCourtForBooking,
 } from './booktimeBookingUtils';
@@ -142,21 +143,25 @@ export function BooktimeBookingRow({
     }
   };
 
+  const whenLabel = nested
+    ? formatBooktimeBookingSlotRange(booking, { timezone: clubTimezone, displaySettings })
+    : formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings });
+
   const rowContent = (
-    <div className="min-w-0 flex-1">
-      {showClubName ? (
+    <div className={`min-w-0 flex-1 ${nested ? 'pr-14' : ''}`}>
+      {showClubName && !nested ? (
         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{club.clubName}</p>
       ) : null}
-      <CourtDisplayName
-        name={courtInfo.courtName}
-        integrationName={courtInfo.integrationCourtName}
-        primaryClassName="text-sm font-medium text-gray-900 dark:text-white truncate"
-        secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400 truncate"
-      />
-      <p className="text-xs text-gray-500 dark:text-gray-400">
-        {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings })}
-      </p>
-      <BooktimeBookingPriceLabel quote={priceQuote} />
+      {!nested ? (
+        <CourtDisplayName
+          name={courtInfo.courtName}
+          integrationName={courtInfo.integrationCourtName}
+          primaryClassName="text-sm font-medium text-gray-900 dark:text-white truncate"
+          secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400 truncate"
+        />
+      ) : null}
+      <p className="text-xs text-gray-500 dark:text-gray-400">{whenLabel}</p>
+      {!nested ? <BooktimeBookingPriceLabel quote={priceQuote} /> : null}
       {selectable ? <LinkedGamesPills games={linkedGames} /> : null}
       {!selectable
         ? linkedGames.map((game) => <BooktimeLinkedGameLink key={game.id} game={game} />)
@@ -168,12 +173,22 @@ export function BooktimeBookingRow({
     compact ? 'px-3 py-2' : 'px-3 py-2.5'
   }`;
 
+  const nestedPriceLabel = nested ? (
+    <div className="pointer-events-none absolute top-2 right-3">
+      <BooktimeBookingPriceLabel
+        quote={priceQuote}
+        className="text-right text-xs font-medium text-gray-700 dark:text-gray-300"
+      />
+    </div>
+  ) : null;
+
   if (readOnly) {
     const shell = (
       <div
         data-testid="linked-booking-card"
-        className={`${rowShellClassName} ${trailing ? 'flex items-center justify-between gap-2' : ''}`}
+        className={`${rowShellClassName} ${nested ? 'relative' : ''} ${trailing ? 'flex items-center justify-between gap-2' : ''}`}
       >
+        {nestedPriceLabel}
         {rowContent}
         {trailing}
       </div>
@@ -215,7 +230,8 @@ export function BooktimeBookingRow({
   }
 
   const bookingCard = (
-    <div className={`${rowShellClassName} space-y-2`}>
+    <div className={`${rowShellClassName} space-y-2 ${nested ? 'relative' : ''}`}>
+        {nestedPriceLabel}
         {cancelDoneBanner ? (
           <div className="rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 px-3 py-2 space-y-2">
             <p className="text-xs text-amber-900 dark:text-amber-100">

@@ -70,7 +70,7 @@ export function MyTabBookingsSection() {
         <BooktimeUpcomingBookingsList
           bookings={bookings}
           clubById={clubById}
-          showClubName={clubs.filter((c) => c.connected).length > 1}
+          showClubName
           allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
           compact
           limit={previewLimit}

@@ -36,6 +36,8 @@ PODS:
     - IONGeolocationLib (= 2.0.0)
   - CapacitorKeyboard (8.0.0):
     - Capacitor
+  - CapacitorLocalNotifications (8.2.0):
+    - Capacitor
   - CapacitorNetwork (8.0.0):
     - Capacitor
   - CapacitorPushNotifications (8.0.0):
@@ -96,6 +98,7 @@ DEPENDENCIES:
   - "CapacitorFilesystem (from `../../node_modules/@capacitor/filesystem`)"
   - "CapacitorGeolocation (from `../../node_modules/@capacitor/geolocation`)"
   - "CapacitorKeyboard (from `../../node_modules/@capacitor/keyboard`)"
+  - "CapacitorLocalNotifications (from `../../node_modules/@capacitor/local-notifications`)"
   - "CapacitorNetwork (from `../../node_modules/@capacitor/network`)"
   - "CapacitorPushNotifications (from `../../node_modules/@capacitor/push-notifications`)"
   - "CapacitorShare (from `../../node_modules/@capacitor/share`)"
@@ -146,6 +149,8 @@ EXTERNAL SOURCES:
     :path: "../../node_modules/@capacitor/geolocation"
   CapacitorKeyboard:
     :path: "../../node_modules/@capacitor/keyboard"
+  CapacitorLocalNotifications:
+    :path: "../../node_modules/@capacitor/local-notifications"
   CapacitorNetwork:
     :path: "../../node_modules/@capacitor/network"
   CapacitorPushNotifications:
@@ -175,6 +180,7 @@ SPEC CHECKSUMS:
   CapacitorFilesystem: 2cb7c29536024668f333266a2177f8c10bbd9c98
   CapacitorGeolocation: 8a405e707de9aff6ac9eca7f408966a370f7ca33
   CapacitorKeyboard: d7868c079a4d5277a3deca27a10a488fcbbb8b69
+  CapacitorLocalNotifications: 2615aa008f608b95d3921a778ee1988abf1e6148
   CapacitorNetwork: 156f8096cbbce5337eb1769fcc0d6adc4b85d3f3
   CapacitorPushNotifications: 722c1528eabbefd355f47e373a4c6235d01e85e9
   CapacitorShare: 12f1d192170cbcf9f108fd675ac8e343761a4638
@@ -194,6 +200,6 @@ SPEC CHECKSUMS:
   IONGeolocationLib: a5e40b54edc2ee9902036eda5aaa41ddf07bb68d
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
 
-PODFILE CHECKSUM: 5d5ffdb849675185f97b93d664f062e5dc5c57dd
+PODFILE CHECKSUM: 0973d5009e4303e7b6c6c1779c6f4f8b391e56e7
 
 COCOAPODS: 1.16.2

@@ -135,6 +135,39 @@ export function formatBooktimeBookingSlotRange(
   return endTime ? `${startTime} – ${endTime}` : startTime;
 }
 
+export function formatBooktimeBookingsCombinedSlotRange(
+  bookings: BooktimeBookingRecord[],
+  options: {
+    timezone?: string | null;
+    displaySettings: ResolvedDisplaySettings;
+  },
+): string {
+  if (bookings.length === 0) return '';
+  const first = bookings[0]!;
+  const last = bookings[bookings.length - 1]!;
+  const timezone = options.timezone ?? BOOKTIME_DEFAULT_TIMEZONE;
+  const startDate = storedUtcIsoToInstant(first.bookingStart);
+  if (!startDate) return first.bookingStart;
+
+  const endDate = last.bookingEnd ? storedUtcIsoToInstant(last.bookingEnd) : null;
+  const startTime = formatBooktimeWallClock(startDate, timezone, options.displaySettings);
+  const endTime = endDate ? formatBooktimeWallClock(endDate, timezone, options.displaySettings) : null;
+  return endTime ? `${startTime} – ${endTime}` : startTime;
+}
+
+export function formatBooktimeBookingsCombinedWhen(
+  bookings: BooktimeBookingRecord[],
+  options: {
+    timezone?: string | null;
+    displaySettings: ResolvedDisplaySettings;
+  },
+): string {
+  if (bookings.length === 0) return '';
+  const dateLabel = formatBooktimeBookingDate(bookings[0]!, options);
+  const slotRange = formatBooktimeBookingsCombinedSlotRange(bookings, options);
+  return `${dateLabel} · ${slotRange}`;
+}
+
 type BooktimeCourtRef = {
   id: string;
   name: string;

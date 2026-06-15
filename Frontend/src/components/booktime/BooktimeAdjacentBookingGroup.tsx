@@ -12,7 +12,7 @@ import { BooktimeSlotTimeCards } from './BooktimeSlotTimeCards';
 import { buildBooktimePriceById, sumBooktimeBookingPrices } from './booktimeBookingPrices';
 import { useBooktimeClubCurrency } from './useBooktimeClubCurrency';
 import {
-  formatBooktimeBookingDate,
+  formatBooktimeBookingsCombinedWhen,
   resolveCourtForBooking,
 } from './booktimeBookingUtils';
 
@@ -51,6 +51,10 @@ export function BooktimeAdjacentBookingGroup({
     () => (currency ? sumBooktimeBookingPrices(bookings, currency) : null),
     [bookings, currency],
   );
+  const whenLabel = formatBooktimeBookingsCombinedWhen(bookings, {
+    timezone: clubTimezone,
+    displaySettings,
+  });
 
   return (
     <li
@@ -60,11 +64,26 @@ export function BooktimeAdjacentBookingGroup({
     >
       <button
         type="button"
-        className="flex w-full items-start gap-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md"
+        className="relative w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500 rounded-md"
         aria-expanded={expanded}
         onClick={() => setExpanded((value) => !value)}
       >
-        <div className="min-w-0 flex-1">
+        <div className="pointer-events-none absolute top-0 right-0 flex flex-col items-end">
+          <BooktimeBookingPriceLabel
+            quote={totalPrice}
+            className="text-right text-xs font-medium text-gray-700 dark:text-gray-300"
+          />
+          <ChevronDown
+            size={18}
+            strokeWidth={2}
+            className={`mt-0.5 text-gray-500 transition-transform duration-300 ease-out motion-reduce:transition-none dark:text-gray-400 ${
+              expanded ? 'rotate-180' : ''
+            }`}
+            aria-hidden
+          />
+        </div>
+
+        <div className="min-w-0 pr-14">
           {showClubName ? (
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{club.clubName}</p>
           ) : null}
@@ -74,10 +93,7 @@ export function BooktimeAdjacentBookingGroup({
             primaryClassName="text-sm font-medium text-gray-900 dark:text-white truncate"
             secondaryClassName="text-[10px] text-gray-500 dark:text-gray-400 truncate"
           />
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            {formatBooktimeBookingDate(bookings[0]!, { timezone: clubTimezone, displaySettings })}
-          </p>
-          <BooktimeBookingPriceLabel quote={totalPrice} />
+          <p className="text-xs text-gray-500 dark:text-gray-400">{whenLabel}</p>
           <div
             className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
               expanded ? 'grid-rows-[0fr] opacity-0 pointer-events-none' : 'grid-rows-[1fr] opacity-100'
@@ -85,22 +101,10 @@ export function BooktimeAdjacentBookingGroup({
             aria-hidden={expanded}
           >
             <div className={`min-h-0 overflow-hidden ${compact ? 'pt-1' : 'pt-1.5'}`}>
-              <BooktimeSlotTimeCards
-                bookings={bookings}
-                clubTimezone={clubTimezone}
-                priceById={priceById}
-              />
+              <BooktimeSlotTimeCards bookings={bookings} clubTimezone={clubTimezone} />
             </div>
           </div>
         </div>
-        <ChevronDown
-          size={18}
-          strokeWidth={2}
-          className={`mt-0.5 shrink-0 text-gray-500 transition-transform duration-300 ease-out motion-reduce:transition-none dark:text-gray-400 ${
-            expanded ? 'rotate-180' : ''
-          }`}
-          aria-hidden
-        />
       </button>
 
       <div
