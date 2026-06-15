@@ -28,6 +28,7 @@ export function useBooktimeSnapshotRefresh(
   const [banner, setBanner] = useState<BooktimeSnapshotBanner>(null);
   const [lastFetchedAt, setLastFetchedAt] = useState<string | null>(null);
   const inFlightRef = useRef<Promise<boolean> | null>(null);
+  const refreshEpochRef = useRef(0);
   const { apiEnabled: liveApiEnabled, loading: liveApiLoading } = useBooktimeLiveApiEnabled(
     club?.id,
     enabled
@@ -40,33 +41,36 @@ export function useBooktimeSnapshotRefresh(
       if (!enabled || !club || !isBooktimeClub(club)) return false;
       const companyId = getBooktimeCompanyId(club);
       if (!companyId) return false;
+      if (liveApiLoading) return false;
 
+      const epoch = refreshEpochRef.current;
       if (inFlightRef.current) return inFlightRef.current;
 
       const run = (async () => {
         const dateKey = formatClubDateKey(selectedDate, club);
         let fetchedAtBeforeRefresh: string | null = null;
+        const isStale = () => epoch !== refreshEpochRef.current;
+
         setIsRefreshing(true);
-        setBanner('updating');
+        if (!isStale()) setBanner('updating');
 
         try {
           const snapshotRes = await booktimeApi.getSnapshot(club.id, dateKey);
+          if (isStale()) return false;
+
           const existingFetchedAt = snapshotRes.data?.fetchedAt ?? null;
           fetchedAtBeforeRefresh = existingFetchedAt;
-          setLastFetchedAt(existingFetchedAt);
+          if (!isStale()) setLastFetchedAt(existingFetchedAt);
 
           if (!options.force && existingFetchedAt && !isSnapshotStale(existingFetchedAt)) {
-            setBanner(null);
+            if (!isStale()) setBanner(null);
             return true;
-          }
-
-          if (!liveApiEnabled) {
-            setBanner(existingFetchedAt ? 'scoutPoolEmpty' : 'noSyncToday');
-            return false;
           }
 
           const provider = createScoutBooktimeClubBookingProvider(club, companyId);
           const courts = await provider.fetchSnapshotCourts(selectedDate, dateKey);
+          if (isStale()) return false;
+
           const fetchedAt = new Date().toISOString();
           await booktimeApi.putSnapshot(club.id, {
             date: dateKey,
@@ -75,10 +79,13 @@ export function useBooktimeSnapshotRefresh(
             courts,
           });
 
-          setLastFetchedAt(fetchedAt);
-          setBanner(null);
+          if (!isStale()) {
+            setLastFetchedAt(fetchedAt);
+            setBanner(null);
+          }
           return true;
         } catch (err) {
+          if (isStale()) return false;
           if (requestStatus(err) === 429) {
             setBanner(null);
             return false;
@@ -87,27 +94,40 @@ export function useBooktimeSnapshotRefresh(
           setBanner(fetchedAtBeforeRefresh ? 'scoutPoolEmpty' : 'noSyncToday');
           return false;
         } finally {
-          setIsRefreshing(false);
-          inFlightRef.current = null;
+          if (!isStale()) {
+            setIsRefreshing(false);
+            inFlightRef.current = null;
+          }
         }
       })();
 
       inFlightRef.current = run;
       return run;
     },
-    [club, enabled, liveApiEnabled, selectedDate]
+    [club, enabled, liveApiLoading, selectedDate]
   );
 
   useEffect(() => {
     setBanner(null);
     setLastFetchedAt(null);
     inFlightRef.current = null;
+    refreshEpochRef.current += 1;
   }, [club?.id, dateKey, enabled]);
 
   useEffect(() => {
+    if (liveApiLoading) return;
+    refreshEpochRef.current += 1;
+    inFlightRef.current = null;
+  }, [liveApiEnabled, liveApiLoading]);
+
+  useEffect(() => {
     if (!enabled || !club || !isBooktimeClub(club)) return;
+    if (liveApiLoading) {
+      setBanner('updating');
+      return;
+    }
     void refreshSnapshot();
-  }, [enabled, club?.id, dateKey, refreshSnapshot, club]);
+  }, [enabled, club?.id, dateKey, refreshSnapshot, club, liveApiLoading]);
 
   return {
     refreshSnapshot,

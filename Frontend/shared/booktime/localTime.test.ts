@@ -32,13 +32,14 @@ describe('booktime localTime', () => {
 
   it('passes through stored UTC ISO strings', () => {
     expect(booktimeIsoToUtcIso('2026-06-14T07:00:00.000Z', TZ)).toBe('2026-06-14T07:00:00.000Z');
+    expect(booktimeIsoToUtcIso('2026-06-15T16:00:00.000Z', TZ)).toBe('2026-06-15T16:00:00.000Z');
     expect(booktimeIngestToStoredUtcIso('2026-06-14T07:00:00.000Z', TZ)).toBe(
       '2026-06-14T07:00:00.000Z',
     );
   });
 
-  it('converts fake-Z via booktimeIsoToUtcIso and ingest seam', () => {
-    expect(booktimeIsoToUtcIso('2026-06-14T09:00:00.000Z', TZ)).toBe('2026-06-14T07:00:00.000Z');
+  it('converts fake-Z via ingest seam only (not booktimeIsoToUtcIso)', () => {
+    expect(booktimeIsoToUtcIso('2026-06-14T09:00:00.000Z', TZ)).toBe('2026-06-14T09:00:00.000Z');
     expect(booktimeIngestToStoredUtcIso('2026-06-14T09:00:00.000Z', TZ)).toBe(
       '2026-06-14T07:00:00.000Z',
     );
@@ -56,9 +57,8 @@ describe('booktime localTime', () => {
     );
   });
 
-  it('uses normalized UTC for booktimeBookingStartMs on fake-Z', () => {
-    expect(booktimeBookingStartMs('2026-06-14T09:00:00.000Z', TZ)).toBe(
-      Date.parse('2026-06-14T07:00:00.000Z'),
-    );
+  it('uses normalized UTC for booktimeBookingStartMs after ingest', () => {
+    const stored = booktimeIngestToStoredUtcIso('2026-06-14T09:00:00.000Z', TZ)!;
+    expect(booktimeBookingStartMs(stored, TZ)).toBe(Date.parse('2026-06-14T07:00:00.000Z'));
   });
 });

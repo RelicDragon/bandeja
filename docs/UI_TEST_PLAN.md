@@ -280,6 +280,7 @@ Frontend/e2e/
 | H-40 | Club booking connect banner dismiss | User sees connect banner on My tab | Close (×) hides banner; does not reappear for same user |
 | H-38 | Club booking upcoming cards (My tab) | Connected user with upcoming bookings | Up to 3 cards + "See all" |
 | H-38a | Adjacent booking group (My tab) | User with 2+ back-to-back slots same court | One grouped card with date + small time chips per slot; tap expands individual slots with cancel/link actions |
+| H-38b | Linked game on booking card (My tab) | Upcoming booking linked to one game | Single tappable "Linked game" chip; no duplicate "Also used in" line |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
 ---
@@ -415,6 +416,7 @@ Frontend/e2e/
 | C-14c | Create-game no overlap when reserving | Reservation ON | No yellow/red overlay; overlap gate skipped on submit |
 | C-14d | Create-game slot taken on confirm | Slot taken between confirm and API | Step 1 error; dialog closes to time grid |
 | C-14e | Create-game snapshot block | Reservation ON, `noSyncToday` banner | Confirm disabled until snapshot usable |
+| C-14r | Create-game sync banner false positive | BOOKTIME club, user connected (bookings visible on My bookings); open create-game and select club | No amber "sync isn't active" banner while availability loads; banner only if snapshot refresh actually fails |
 | C-14f | bookingIds deep link | Open create-game from booking row (`locationTimeMode=bookings&bookingIds=…`) | Bookings tab active; row pre-selected; preselected banner; no book confirm |
 | C-14g | Create-game confirm closes on edit | Open confirm; change time/court/date | Dialog closes automatically |
 | C-14h | Create-game !liveApiEnabled | BOOKTIME club without scout/connection | No reservation UI; generic time grid |
@@ -854,7 +856,7 @@ Frontend/e2e/
 | PR-55 | Competitive vs social badge | User with both levels | Correct badge for sport context |
 | PR-56 | Connected clubs settings entry | Profile → Connected clubs & bookings | Navigates to `/profile/connected-clubs` |
 | PR-57 | Connected clubs page tabs | Profile → Connected clubs & bookings | Segmented switch Bookings/Integrations centered; Bookings default |
-| PR-57a | Bookings tab | Bookings tab with connected clubs | All upcoming across clubs with club name; linked game chip opens game; Link to game dialog lists announced games with recommended match |
+| PR-57a | Bookings tab | Bookings tab with connected clubs | All upcoming across clubs with club name; one linked-game chip per link (opens game); no "Also used in" duplicate; Link to game dialog lists announced games with recommended match |
 | PR-57a1 | Adjacent booking group (settings) | Connected clubs → Bookings with consecutive same-court slots | Grouped card with date + per-slot time chips; expand/collapse reveals each slot row |
 | PR-57b | Integrations tab | Integrations tab | Club list with connect/disconnect state; hint card |
 | PR-57c | Link booking to game (happy path) | My tab → Bookings → Link to game → pick game (confirm reschedule if times differ) | Single request succeeds; success toast; game shows linked booking with correct time/club |

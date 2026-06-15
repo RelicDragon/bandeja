@@ -2,6 +2,7 @@ import { ApiError } from '../../utils/ApiError';
 import {
   ingestBookingSnapshotTimes,
   normalizeBooktimeIngestIso,
+  normalizeBooktimeWireIngestIso,
   parseBusySlotsForIngest,
 } from './ingest';
 
@@ -28,7 +29,7 @@ function assertThrows400(fn: () => void, msgSubstring: string): void {
 
 function testNormalizeFakeZ(): void {
   assert(
-    normalizeBooktimeIngestIso('2026-06-14T09:00:00.000Z', 'start', TZ)
+    normalizeBooktimeWireIngestIso('2026-06-14T09:00:00.000Z', 'start', TZ)
       === '2026-06-14T07:00:00.000Z',
     'fake-Z converts to real UTC',
   );
@@ -96,12 +97,12 @@ function testParseBusySlotsUnparseable(): void {
 
 function testIngestBookingSnapshotTimes(): void {
   const { bookingStart, bookingEnd } = ingestBookingSnapshotTimes(
-    '2026-06-14T09:00:00.000Z',
-    '2026-06-14T10:00:00.000Z',
+    '2026-06-14T07:00:00.000Z',
+    '2026-06-14T08:00:00.000Z',
     TZ,
   );
-  assert(bookingStart?.toISOString() === '2026-06-14T07:00:00.000Z', 'booking start fake-Z');
-  assert(bookingEnd?.toISOString() === '2026-06-14T08:00:00.000Z', 'booking end fake-Z');
+  assert(bookingStart?.toISOString() === '2026-06-14T07:00:00.000Z', 'booking start stored UTC');
+  assert(bookingEnd?.toISOString() === '2026-06-14T08:00:00.000Z', 'booking end stored UTC');
 }
 
 function testIngestBookingSnapshotNaive(): void {
@@ -122,6 +123,14 @@ function testIngestBookingSnapshotAlreadyUtc(): void {
   assert(result.bookingEnd?.toISOString() === end, 'stored UTC end');
 }
 
+function testIngestBookingSnapshotAfternoonStoredUtc(): void {
+  const start = '2026-06-15T16:00:00.000Z';
+  const end = '2026-06-15T18:00:00.000Z';
+  const result = ingestBookingSnapshotTimes(start, end, TZ);
+  assert(result.bookingStart?.toISOString() === start, 'afternoon stored UTC start');
+  assert(result.bookingEnd?.toISOString() === end, 'afternoon stored UTC end');
+}
+
 function testIngestBookingSnapshotInvalidInterval(): void {
   assertThrows400(
     () => ingestBookingSnapshotTimes('2026-06-14T10:00:00.000Z', '2026-06-14T09:00:00.000Z', TZ),
@@ -139,6 +148,7 @@ testParseBusySlotsUnparseable();
 testIngestBookingSnapshotTimes();
 testIngestBookingSnapshotNaive();
 testIngestBookingSnapshotAlreadyUtc();
+testIngestBookingSnapshotAfternoonStoredUtc();
 testIngestBookingSnapshotInvalidInterval();
 
 console.log('booktime ingest tests: OK');

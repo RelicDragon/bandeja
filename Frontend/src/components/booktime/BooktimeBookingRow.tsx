@@ -148,8 +148,10 @@ export function BooktimeBookingRow({
       <p className="text-xs text-gray-500 dark:text-gray-400">
         {formatBooktimeBookingWhen(booking, { timezone: clubTimezone, displaySettings })}
       </p>
-      <LinkedGamesPills games={linkedGames} />
-      {!selectable && linkedGame ? <BooktimeLinkedGameLink game={linkedGame} /> : null}
+      {selectable ? <LinkedGamesPills games={linkedGames} /> : null}
+      {!selectable
+        ? linkedGames.map((game) => <BooktimeLinkedGameLink key={game.id} game={game} />)
+        : null}
     </div>
   );
 

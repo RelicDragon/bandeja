@@ -3,10 +3,12 @@ import type { BooktimeBusySlot } from '../booktimeBusySnapshot';
 import {
   BOOKTIME_DEFAULT_TIMEZONE,
   booktimeIngestToStoredUtcIso,
+  isBooktimeNaiveLocalIso,
   storedUtcIsoToInstant,
 } from './localTime';
 
-export function normalizeBooktimeIngestIso(
+/** Ingest raw Booktime API wire-format (fake-Z / naive local). */
+export function normalizeBooktimeWireIngestIso(
   iso: string,
   fieldLabel: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
@@ -16,6 +18,23 @@ export function normalizeBooktimeIngestIso(
     throw new ApiError(400, `${fieldLabel} is unparseable`);
   }
   return normalized;
+}
+
+/** Parse stored UTC or naive local; does not re-ingest fake-Z. */
+export function normalizeBooktimeIngestIso(
+  iso: string,
+  fieldLabel: string,
+  timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
+): string {
+  const trimmed = iso.trim();
+  if (isBooktimeNaiveLocalIso(trimmed)) {
+    return normalizeBooktimeWireIngestIso(trimmed, fieldLabel, timeZone);
+  }
+  const instant = storedUtcIsoToInstant(trimmed);
+  if (!instant) {
+    throw new ApiError(400, `${fieldLabel} is unparseable`);
+  }
+  return instant.toISOString();
 }
 
 export function parseBusySlotsForIngest(
@@ -35,12 +54,12 @@ export function parseBusySlotsForIngest(
     if (typeof startTime !== 'string' || typeof endTime !== 'string') {
       throw new ApiError(400, `busySlots[${i}] must have startTime and endTime strings`);
     }
-    const startIso = normalizeBooktimeIngestIso(
+    const startIso = normalizeBooktimeWireIngestIso(
       startTime,
       `busySlots[${i}].startTime`,
       timeZone,
     );
-    const endIso = normalizeBooktimeIngestIso(endTime, `busySlots[${i}].endTime`, timeZone);
+    const endIso = normalizeBooktimeWireIngestIso(endTime, `busySlots[${i}].endTime`, timeZone);
     const start = storedUtcIsoToInstant(startIso)!;
     const end = storedUtcIsoToInstant(endIso)!;
     if (end <= start) {

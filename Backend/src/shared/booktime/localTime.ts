@@ -200,10 +200,10 @@ export function booktimeIngestToStoredUtcIso(
     return normalizeFakeOrStoredUtcIso(trimmed, instant, parts, timeZone);
   }
 
-  return booktimeIsoToUtcIso(trimmed, timeZone);
+  return instant.toISOString();
 }
 
-/** Convert Booktime wire-format or pass through stored UTC ISO. */
+/** Parse stored UTC or naive local; does not re-ingest fake-Z (use {@link booktimeIngestToStoredUtcIso} at API boundary). */
 export function booktimeIsoToUtcIso(
   iso: string,
   timeZone: string = BOOKTIME_DEFAULT_TIMEZONE,
@@ -214,17 +214,13 @@ export function booktimeIsoToUtcIso(
   }
 
   const instant = storedUtcIsoToInstant(trimmed);
-  const parts = parseBooktimeLocalComponents(trimmed);
-  if (!instant || !parts) return null;
+  if (!instant) return null;
 
-  if (FAKE_UTC_SUFFIX.test(trimmed)) {
-    return normalizeFakeOrStoredUtcIso(trimmed, instant, parts, timeZone);
-  }
-
-  if (isAlreadyStoredUtcIso(trimmed, timeZone)) {
+  if (HAS_TZ_SUFFIX.test(trimmed)) {
     return instant.toISOString();
   }
-  return instant.toISOString();
+
+  return null;
 }
 
 export function booktimeIsoToInstant(

@@ -56,6 +56,19 @@ describe('booktime timezone pipeline', () => {
     });
   });
 
+  it('does not shift afternoon stored UTC on re-parse', () => {
+    const storedStart = booktimeIngestToStoredUtcIso('2026-06-15T18:00:00.000Z', TZ)!;
+    const storedEnd = booktimeIngestToStoredUtcIso('2026-06-15T20:00:00.000Z', TZ)!;
+    expect(storedStart).toBe('2026-06-15T16:00:00.000Z');
+    expect(storedEnd).toBe('2026-06-15T18:00:00.000Z');
+    expect(
+      deriveGameTimeFromBookings(
+        [{ bookingStart: storedStart, bookingEnd: storedEnd }],
+        { timeZone: TZ },
+      ),
+    ).toEqual({ startTime: storedStart, endTime: storedEnd });
+  });
+
   it('displays normalized UTC in Belgrade wall clock', () => {
     const booking = normalizeApiBooking('2026-06-15T18:00:00.000Z', '2026-06-15T20:00:00.000Z');
     const label = formatBooktimeBookingWhen(booking, { timezone: TZ, displaySettings: DISPLAY });
