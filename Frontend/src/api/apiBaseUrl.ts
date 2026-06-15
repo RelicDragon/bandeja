@@ -5,7 +5,11 @@ export const DEFAULT_API_BASE_URL = 'https://bandeja.me/api';
 function readViteApiBaseUrl(): string | undefined {
   const fromEnv = import.meta.env.VITE_API_BASE_URL as string | undefined;
   if (!fromEnv?.trim()) return undefined;
-  return fromEnv.trim().replace(/\/$/, '');
+  const url = fromEnv.trim().replace(/\/$/, '');
+  if (isCapacitor() && /localhost|127\.0\.0\.1/i.test(url)) {
+    return undefined;
+  }
+  return url;
 }
 
 export function resolveNativeApiBaseUrl(): string {

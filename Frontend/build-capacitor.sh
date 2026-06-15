@@ -4,6 +4,8 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/build-env.sh"
 source "$SCRIPT_DIR/scripts/fix-ios-pbx-object-version.sh"
+source "$SCRIPT_DIR/scripts/ensure-cocoapods.sh"
+ensure_cocoapods
 
 echo "🔨 Building Capacitor app..."
 
