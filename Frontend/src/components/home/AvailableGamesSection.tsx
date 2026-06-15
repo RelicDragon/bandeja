@@ -776,9 +776,7 @@ export const AvailableGamesSection = ({
       {filterBlock}
       <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
 
-      {loading && availableGames.length === 0 ? (
-        <GamesLoadingSkeleton />
-      ) : findViewMode === 'calendar' ? (
+      {findViewMode === 'calendar' ? (
         <>
           <MonthCalendar
             selectedDate={selectedDate}
@@ -801,7 +799,9 @@ export const AvailableGamesSection = ({
           />
           <SelectedDateHeading date={selectedDate} />
 
-          {filteredGames.length === 0 ? (
+          {loading && availableGames.length === 0 ? (
+            <GamesLoadingSkeleton />
+          ) : filteredGames.length === 0 ? (
             <EmptyStateCard icon={SearchX} title={emptyMessage} />
           ) : (
             gamesList
@@ -815,7 +815,9 @@ export const AvailableGamesSection = ({
             onNavigate={handleListNavigation}
           />
 
-          {filteredGames.length === 0 ? (
+          {loading && availableGames.length === 0 ? (
+            <GamesLoadingSkeleton />
+          ) : filteredGames.length === 0 ? (
             <EmptyStateCard icon={SearchX} title={emptyMessage} />
           ) : (
             gamesList

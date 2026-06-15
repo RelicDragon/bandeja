@@ -1,6 +1,15 @@
 import { useCallback } from 'react';
 import { useAvailableGamesQuery } from '@/queries/games/useAvailableGamesQuery';
 
+export function deriveAvailableGamesLoading(
+  queryEnabled: boolean,
+  isPending: boolean,
+  isFetching: boolean,
+  gamesCount: number,
+): boolean {
+  return queryEnabled && (isPending || (isFetching && gamesCount === 0));
+}
+
 export const useAvailableGames = (
   user: {
     id?: string;
@@ -27,7 +36,12 @@ export const useAvailableGames = (
   }, { enabled: queryEnabled });
 
   const availableGames = data ?? [];
-  const loading = isPending || (isFetching && availableGames.length === 0);
+  const loading = deriveAvailableGamesLoading(
+    queryEnabled,
+    isPending,
+    isFetching,
+    availableGames.length,
+  );
 
   const fetchData = useCallback(
     async (_force = false) => {
