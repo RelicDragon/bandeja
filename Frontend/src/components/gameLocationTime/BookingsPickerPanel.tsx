@@ -4,6 +4,7 @@ import { buildSelectedBookingRecordsSyncKey } from '@/components/gameLocationTim
 import { motion } from 'framer-motion';
 import { CalendarX2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
@@ -148,7 +149,7 @@ export function BookingsPickerPanel({
 
   const atMax = selectedBookingIds.length >= selectionLimits.max;
   const clubTimezone = getClubTimezone(club);
-  const clubRow = booktimeRowToClub({
+  const booktimeMyClubRow: BooktimeMyClubRow = {
     clubId: club.id,
     clubName: club.name,
     avatar: null,
@@ -163,7 +164,8 @@ export function BookingsPickerPanel({
       externalCourtId: c.externalCourtId ?? null,
       integrationCourtName: c.integrationCourtName ?? null,
     })),
-  });
+  };
+  const clubRow = booktimeRowToClub(booktimeMyClubRow);
 
   const handleToggle = (bookingId: string) => {
     const isSelected = selectedBookingIds.includes(bookingId);
@@ -262,7 +264,7 @@ export function BookingsPickerPanel({
               <BooktimeAdjacentBookingGroup
                 key={groupIds.join('-')}
                 bookings={entry.bookings}
-                club={clubRow}
+                club={booktimeMyClubRow}
                 compact
                 clubTimezone={clubTimezone}
                 selectable

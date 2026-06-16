@@ -53,7 +53,7 @@ function GroupLinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
 }
 
 function uniqueLinkedGames(
-  linkedGamesByBookingId: Map<string, BooktimeLinkedGame[]>,
+  linkedGamesByBookingId: ReadonlyMap<string, BooktimeLinkedGame[]>,
   bookingIds: string[],
 ): BooktimeLinkedGame[] {
   const seen = new Set<string>();

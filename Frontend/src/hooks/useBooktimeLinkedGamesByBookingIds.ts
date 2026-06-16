@@ -19,13 +19,13 @@ export function useBooktimeLinkedGamesByBookingIds(
     }
     setLoading(true);
     try {
-      const entries = await Promise.all(
-        ids.map(async (bookingId) => {
+      const entries: [string, BooktimeLinkedGame[]][] = await Promise.all(
+        ids.map(async (bookingId): Promise<[string, BooktimeLinkedGame[]]> => {
           try {
             const res = await booktimeApi.getLinkedGames(bookingId);
-            return [bookingId, res.data ?? []] as const;
+            return [bookingId, res.data ?? []];
           } catch {
-            return [bookingId, []] as const;
+            return [bookingId, []];
           }
         }),
       );
