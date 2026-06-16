@@ -133,7 +133,15 @@ export const useDeepLink = () => {
         };
         
         if (simpleRoutes[pathname]) {
-          navigateWithTracking(navigate, simpleRoutes[pathname], { replace: true });
+          const target = simpleRoutes[pathname];
+          if (
+            pathname === '/login' &&
+            (url.searchParams.has('google_code') || url.searchParams.has('google_error'))
+          ) {
+            navigateWithTracking(navigate, `${target}${url.search}`, { replace: true });
+            return;
+          }
+          navigateWithTracking(navigate, target, { replace: true });
           return;
         }
       } catch (error) {

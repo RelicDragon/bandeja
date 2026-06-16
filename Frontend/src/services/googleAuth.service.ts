@@ -1,7 +1,12 @@
 import { SocialLogin } from '@capgo/capacitor-social-login';
-import type { GoogleLoginResponse, GoogleLoginResponseOnline } from '@capgo/capacitor-social-login';
+import type { GoogleLoginOptions, GoogleLoginResponse, GoogleLoginResponseOnline } from '@capgo/capacitor-social-login';
 import { Capacitor } from '@capacitor/core';
+import { authApi } from '@/api';
 import { config } from '@/config/media';
+import { ensureSocialLoginInitialized } from '@/services/socialLoginInit.service';
+import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
+
+export const ANDROID_GOOGLE_LOGIN_PENDING_KEY = 'bandeja_android_google_login_pending';
 
 export interface GoogleAuthResult {
   idToken: string;
@@ -411,29 +416,118 @@ function signInWithGoogleWeb(options?: GoogleSignInOptions): Promise<GoogleAuthR
   });
 }
 
-function isReauthError(error: unknown): boolean {
-  const msg = error instanceof Error ? error.message : String(error);
-  const code = error && typeof error === 'object' && 'code' in error ? String((error as { code: unknown }).code) : '';
-  const s = (msg + ' ' + code).toLowerCase();
-  return s.includes('reauth') || s.includes('[16]') || s.includes('account reauth failed');
+function markAndroidGoogleLoginPending(): void {
+  if (Capacitor.getPlatform() !== 'android' || typeof sessionStorage === 'undefined') return;
+  try {
+    sessionStorage.setItem(ANDROID_GOOGLE_LOGIN_PENDING_KEY, '1');
+  } catch {
+    /* no-op */
+  }
+}
+
+function clearAndroidGoogleLoginPending(): void {
+  if (typeof sessionStorage === 'undefined') return;
+  try {
+    sessionStorage.removeItem(ANDROID_GOOGLE_LOGIN_PENDING_KEY);
+  } catch {
+    /* no-op */
+  }
+}
+
+function hasAndroidGoogleLoginPending(): boolean {
+  if (typeof sessionStorage === 'undefined') return false;
+  try {
+    return sessionStorage.getItem(ANDROID_GOOGLE_LOGIN_PENDING_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export async function loginWithGoogleCredentials(result: GoogleAuthResult) {
+  const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
+  const profile = result.profile;
+  return authApi.loginGoogle({
+    idToken: result.idToken,
+    language: normalizedLanguage,
+    firstName: profile?.givenName,
+    lastName: profile?.familyName,
+  });
+}
+
+/** After Android Credential Manager UI, the WebView may reload while native Google tokens persist. */
+export async function recoverAndroidGoogleLoginFromNative(): Promise<GoogleAuthResult | null> {
+  if (Capacitor.getPlatform() !== 'android') return null;
+
+  await ensureSocialLoginInitialized();
+  if (!config.googleWebClientId) return null;
+
+  let loggedIn = false;
+  try {
+    const status = await SocialLogin.isLoggedIn({ provider: 'google' });
+    loggedIn = !!status?.isLoggedIn;
+  } catch {
+    loggedIn = false;
+  }
+
+  if (!loggedIn && !hasAndroidGoogleLoginPending()) {
+    return null;
+  }
+
+  if (!loggedIn) {
+    clearAndroidGoogleLoginPending();
+    return null;
+  }
+
+  try {
+    const auth = await SocialLogin.getAuthorizationCode({ provider: 'google' });
+    const idToken = typeof auth.jwt === 'string' ? auth.jwt : null;
+    if (!idToken) {
+      clearAndroidGoogleLoginPending();
+      return null;
+    }
+    clearAndroidGoogleLoginPending();
+    return {
+      idToken,
+      accessToken: typeof auth.accessToken === 'string' ? auth.accessToken : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function androidGoogleSignInOptions(): GoogleLoginOptions {
+  return {
+    scopes: ['email', 'profile'],
+    forceRefreshToken: false,
+    forcePrompt: true,
+    prompt: 'select_account',
+    style: 'standard',
+  };
 }
 
 async function signInWithGoogleNative(options?: GoogleSignInOptions): Promise<GoogleAuthResult | null> {
   const LOGIN_TIMEOUT_MS = 60_000;
   const platform = Capacitor.getPlatform();
 
+  await ensureSocialLoginInitialized();
+  if (platform === 'android') {
+    markAndroidGoogleLoginPending();
+  }
+
   options?.onUiOpened?.();
+  const loginOptions: GoogleLoginOptions =
+    platform === 'android'
+      ? androidGoogleSignInOptions()
+      : {
+          scopes: ['email', 'profile'],
+          forceRefreshToken: false,
+          forcePrompt: true,
+          prompt: 'select_account',
+        };
+
   const loginPromise = SocialLogin.login({
     provider: 'google',
-    options: {
-      scopes: ['email', 'profile'],
-      forceRefreshToken: false,
-      forcePrompt: true,
-      prompt: 'select_account',
-      ...(platform === 'android'
-        ? { style: 'bottom' as const, filterByAuthorizedAccounts: false, autoSelectEnabled: false }
-        : {}),
-    },
+    options: loginOptions,
   });
 
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -456,6 +550,8 @@ async function signInWithGoogleNative(options?: GoogleSignInOptions): Promise<Go
       throw new Error('auth.googleNoIdToken');
     }
 
+    clearAndroidGoogleLoginPending();
+
     return {
       idToken: onlineResult.idToken,
       accessToken: onlineResult.accessToken?.token,
@@ -470,6 +566,13 @@ async function signInWithGoogleNative(options?: GoogleSignInOptions): Promise<Go
   } finally {
     if (timeoutId !== undefined) clearTimeout(timeoutId);
   }
+}
+
+function isReauthError(error: unknown): boolean {
+  const msg = error instanceof Error ? error.message : String(error);
+  const code = error && typeof error === 'object' && 'code' in error ? String((error as { code: unknown }).code) : '';
+  const s = (msg + ' ' + code).toLowerCase();
+  return s.includes('reauth') || s.includes('[16]') || s.includes('account reauth failed');
 }
 
 export async function signInWithGoogle(options?: GoogleSignInOptions): Promise<GoogleAuthResult | null> {
@@ -532,6 +635,9 @@ export async function signInWithGoogle(options?: GoogleSignInOptions): Promise<G
     );
 
     if (isCancelled) {
+      if (Capacitor.getPlatform() === 'android') {
+        clearAndroidGoogleLoginPending();
+      }
       return null;
     }
     throw error;

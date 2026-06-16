@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -11,9 +11,15 @@ import { config } from '@/config/media';
 import { Phone, AlertCircle } from 'lucide-react';
 import { TelegramIcon } from '@/components';
 import { signInWithApple } from '@/services/appleAuth.service';
-import { signInWithGoogle } from '@/services/googleAuth.service';
+import {
+  loginWithGoogleCredentials,
+  recoverAndroidGoogleLoginFromNative,
+  signInWithGoogle,
+  type GoogleAuthResult,
+} from '@/services/googleAuth.service';
 import pushNotificationService from '@/services/pushNotificationService';
-import { isIOS, isCapacitor, getAppInfo } from '@/utils/capacitor';
+import { isIOS, isCapacitor, isAndroid, getAppInfo } from '@/utils/capacitor';
+import { App } from '@capacitor/app';
 import { openEula } from '@/utils/openEula';
 import { AppleIcon } from '@/components/AppleIcon';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
@@ -28,6 +34,7 @@ export const Login = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [tab, setTab] = useState<LoginTab>('main');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
@@ -52,6 +59,62 @@ export const Login = () => {
       });
     }
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  const completeGoogleSession = useCallback(async (result: GoogleAuthResult) => {
+    const response = await loginWithGoogleCredentials(result);
+    await setAuth(response.data.user, response.data.token, {
+      refreshToken: response.data.refreshToken,
+      currentSessionId: response.data.currentSessionId,
+    });
+    await pushNotificationService.ensureTokenSentToBackend();
+    navigate('/', { replace: true });
+  }, [navigate, setAuth]);
+
+  useEffect(() => {
+    if (!isAndroid() || isAuthenticated) return;
+
+    let cancelled = false;
+    let recoveryInFlight = false;
+
+    const tryRecoverAndroidGoogleLogin = async () => {
+      if (cancelled || recoveryInFlight || useAuthStore.getState().isAuthenticated) return;
+      recoveryInFlight = true;
+      setLoading(true);
+      setError('');
+      try {
+        const recovered = await recoverAndroidGoogleLoginFromNative();
+        if (!recovered || cancelled) return;
+        await completeGoogleSession(recovered);
+      } catch (err: unknown) {
+        if (!cancelled && !isCancelError(err)) {
+          setError(extractApiErrorMessage(err, t));
+        }
+      } finally {
+        recoveryInFlight = false;
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    void tryRecoverAndroidGoogleLogin();
+
+    let listenerHandle: { remove: () => void } | null = null;
+    void App.addListener('appStateChange', ({ isActive }) => {
+      if (isActive) void tryRecoverAndroidGoogleLogin();
+    }).then((handle) => {
+      listenerHandle = handle;
+    });
+
+    return () => {
+      cancelled = true;
+      listenerHandle?.remove();
+    };
+  }, [completeGoogleSession, isAuthenticated, t]);
 
   // Handle Google OAuth redirect return (?google_code= or ?google_error=)
   useEffect(() => {
@@ -169,20 +232,7 @@ export const Login = () => {
       }
       clearTimeout(clearLoadingTimer);
       setLoading(true);
-      const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
-      const profile = result.profile;
-      const response = await authApi.loginGoogle({
-        idToken: result.idToken,
-        language: normalizedLanguage,
-        firstName: profile?.givenName,
-        lastName: profile?.familyName,
-      });
-      await setAuth(response.data.user, response.data.token, {
-        refreshToken: response.data.refreshToken,
-        currentSessionId: response.data.currentSessionId,
-      });
-      await pushNotificationService.ensureTokenSentToBackend();
-      navigate('/');
+      await completeGoogleSession(result);
     } catch (err: any) {
       clearTimeout(clearLoadingTimer);
       if (!isCancelError(err)) setError(extractApiErrorMessage(err, t));
