@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Check, ExternalLink, Plus, Trash2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeLinkedGame } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
@@ -32,6 +32,7 @@ import { BooktimeBookingOccupancyPill } from './BooktimeBookingOccupancyPill';
 import { BooktimeLinkedGameLink } from './BooktimeLinkedGameLink';
 import { BooktimeLinkGameButton } from './BooktimeLinkGameModal';
 import { BooktimeBookingPriceLabel } from './BooktimeBookingPriceLabel';
+import { BooktimeBookingListItem } from './BooktimeBookingListItem';
 import { bookingPriceQuote } from './booktimeBookingPrices';
 import { useBooktimeClubCurrency } from './useBooktimeClubCurrency';
 
@@ -63,6 +64,7 @@ type Props = {
   expandableActions?: boolean;
   actionsExpanded?: boolean;
   onToggleActions?: () => void;
+  entryVariants?: Variants;
 };
 
 function LinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
@@ -101,6 +103,7 @@ export function BooktimeBookingRow({
   expandableActions = false,
   actionsExpanded = false,
   onToggleActions,
+  entryVariants,
 }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -251,12 +254,14 @@ export function BooktimeBookingRow({
         {trailing}
       </div>
     );
-    return nested ? shell : <li>{shell}</li>;
+    return nested ? shell : (
+      <BooktimeBookingListItem entryVariants={entryVariants}>{shell}</BooktimeBookingListItem>
+    );
   }
 
   if (selectable) {
     return (
-      <li>
+      <BooktimeBookingListItem entryVariants={entryVariants}>
         <motion.button
           type="button"
           whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
@@ -284,7 +289,7 @@ export function BooktimeBookingRow({
           </span>
           {rowContent}
         </motion.button>
-      </li>
+      </BooktimeBookingListItem>
     );
   }
 
@@ -365,7 +370,11 @@ export function BooktimeBookingRow({
 
   return (
     <>
-      {nested ? bookingCard : <li>{bookingCard}</li>}
+      {nested ? (
+        bookingCard
+      ) : (
+        <BooktimeBookingListItem entryVariants={entryVariants}>{bookingCard}</BooktimeBookingListItem>
+      )}
 
       <ConfirmationModal
         isOpen={cancelOpen}

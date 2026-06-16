@@ -5,10 +5,12 @@ import { Settings } from 'lucide-react';
 import { useBooktimeMyClubs } from '@/hooks/useBooktimeMyClubs';
 import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
 import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
-import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
+import { BooktimeBookingsCardsSkeleton } from './BooktimeBookingsCardsSkeleton';
 import { MyTabConnectBanner } from './MyTabConnectBanner';
 import { useBooktimeCancelPoliciesForClubs } from './useBooktimeCancelPolicy';
 import { useShellNavStore } from '@/store/shellNavStore';
+
+const PREVIEW_LIMIT = 3;
 
 export function MyTabBookingsSection() {
   const { t } = useTranslation();
@@ -36,7 +38,9 @@ export function MyTabBookingsSection() {
     prevActiveTab.current = activeTab;
   }, [activeTab, reloadMyClubs]);
 
-  if (!myClubs) return null;
+  if (!myClubs) {
+    return <BooktimeBookingsCardsSkeleton count={PREVIEW_LIMIT} compact />;
+  }
 
   const showConnectBanner =
     myClubs.cityBooktimeClubCount > 0 && myClubs.connectedCount === 0;
@@ -47,13 +51,12 @@ export function MyTabBookingsSection() {
 
   if (myClubs.connectedCount === 0) return null;
 
-  const previewLimit = 3;
   const clubById = new Map(clubs.map((c) => [c.clubId, c]));
 
   return (
     <div className="space-y-3">
       {loading ? (
-        <BooktimeBookingsLoading />
+        <BooktimeBookingsCardsSkeleton count={PREVIEW_LIMIT} compact />
       ) : bookings.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>
       ) : (
@@ -64,7 +67,8 @@ export function MyTabBookingsSection() {
             showClubName
             allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
             compact
-            limit={previewLimit}
+            limit={PREVIEW_LIMIT}
+            animateEntries
             onCanceled={removeBooking}
           />
           <div className="relative flex items-center justify-center">

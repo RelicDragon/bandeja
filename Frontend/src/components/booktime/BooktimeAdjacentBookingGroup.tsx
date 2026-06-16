@@ -1,7 +1,7 @@
 import { Check, ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import type { BooktimeLinkedGame, BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { useBooktimeLinkedGamesByBookingIds } from '@/hooks/useBooktimeLinkedGamesByBookingIds';
@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { BooktimeBookingRow } from './BooktimeBookingRow';
+import { BooktimeBookingListItem } from './BooktimeBookingListItem';
 import { BooktimeBookingOccupancyPill } from './BooktimeBookingOccupancyPill';
 import { BooktimeBookingPriceLabel } from './BooktimeBookingPriceLabel';
 import { BooktimeSlotTimeCards } from './BooktimeSlotTimeCards';
@@ -37,6 +38,7 @@ type Props = {
   expandableActions?: boolean;
   actionsExpanded?: boolean;
   onToggleActions?: () => void;
+  entryVariants?: Variants;
 };
 
 function GroupLinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
@@ -83,6 +85,7 @@ export function BooktimeAdjacentBookingGroup({
   expandableActions = false,
   actionsExpanded = false,
   onToggleActions,
+  entryVariants,
 }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -216,7 +219,7 @@ export function BooktimeAdjacentBookingGroup({
 
   if (selectable) {
     return (
-      <li>
+      <BooktimeBookingListItem entryVariants={entryVariants}>
         <motion.button
           type="button"
           whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
@@ -249,7 +252,7 @@ export function BooktimeAdjacentBookingGroup({
           </div>
           {childrenPanel}
         </motion.button>
-      </li>
+      </BooktimeBookingListItem>
     );
   }
 
@@ -258,7 +261,7 @@ export function BooktimeAdjacentBookingGroup({
     : () => setExpanded((value) => !value);
 
   return (
-    <li className={shellClassName}>
+    <BooktimeBookingListItem entryVariants={entryVariants} className={shellClassName}>
       <button
         type="button"
         data-testid={expandableActions ? 'booktime-booking-group-toggle' : undefined}
@@ -270,6 +273,6 @@ export function BooktimeAdjacentBookingGroup({
         {headerContent}
       </button>
       {childrenPanel}
-    </li>
+    </BooktimeBookingListItem>
   );
 }

@@ -15,10 +15,8 @@ export interface SegmentedSwitchTab {
   title?: string;
 }
 
-interface SegmentedSwitchProps {
+interface SegmentedSwitchBaseProps {
   tabs: SegmentedSwitchTab[];
-  activeId: string;
-  onChange: (id: string) => void;
   showOnlyActiveTabText: boolean;
   layoutId: string;
   className?: string;
@@ -29,7 +27,15 @@ interface SegmentedSwitchProps {
   orientation?: 'horizontal' | 'vertical';
   /** Max animated width (px) for active tab label when showOnlyActiveTabText. Default 96. */
   activeLabelMaxWidth?: number;
+  /** `notification`: red corner badge (default). `inline`: gray pill on the same row as label/icon. */
+  badgeStyle?: 'notification' | 'inline';
 }
+
+type SegmentedSwitchProps = SegmentedSwitchBaseProps &
+  (
+    | { allowDeselect?: false; activeId: string; onChange: (id: string) => void }
+    | { allowDeselect: true; activeId: string | null; onChange: (id: string | null) => void }
+  );
 
 export const SegmentedSwitch = ({
   tabs,
@@ -42,8 +48,19 @@ export const SegmentedSwitch = ({
   ariaLabel,
   orientation = 'horizontal',
   activeLabelMaxWidth = 96,
+  allowDeselect = false,
+  badgeStyle = 'notification',
 }: SegmentedSwitchProps) => {
   const isVertical = orientation === 'vertical';
+
+  const handleTabClick = (tabId: string, tabDisabled?: boolean) => {
+    if (disabled || tabDisabled) return;
+    if (allowDeselect && activeId === tabId) {
+      (onChange as (id: string | null) => void)(null);
+      return;
+    }
+    onChange(tabId);
+  };
   return (
   <div
     role="tablist"
@@ -66,9 +83,7 @@ export const SegmentedSwitch = ({
           aria-selected={isActive}
           disabled={disabled || tab.disabled}
           title={tab.disabled ? tab.title : undefined}
-          onClick={() => {
-            if (!disabled && !tab.disabled) onChange(tab.id);
-          }}
+          onClick={() => handleTabClick(tab.id, tab.disabled)}
           className={`relative flex min-w-0 items-center rounded-md py-2.5 text-sm font-medium transition-colors duration-200 ${
             isVertical ? 'w-full justify-start gap-2.5 text-left' : 'justify-center gap-1.5'
           } ${pad} ${
@@ -128,12 +143,23 @@ export const SegmentedSwitch = ({
             ) : (
               <span className={isVertical ? '' : 'truncate whitespace-nowrap'}>{tab.label}</span>
             )}
+            {badgeStyle === 'inline' && tab.badge !== undefined && tab.badge > 0 ? (
+              <span
+                className={`relative z-[1] inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${
+                  isActive
+                    ? 'bg-gray-900/10 text-gray-800 dark:bg-white/15 dark:text-gray-200'
+                    : 'bg-gray-900/5 text-gray-600 dark:bg-white/10 dark:text-gray-300'
+                }`}
+              >
+                {tab.badge > 99 ? '99+' : tab.badge}
+              </span>
+            ) : null}
           </span>
-          {tab.badge !== undefined && tab.badge > 0 && (
+          {badgeStyle === 'notification' && tab.badge !== undefined && tab.badge > 0 ? (
             <span className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-medium text-white">
               {tab.badge > 99 ? '99+' : tab.badge}
             </span>
-          )}
+          ) : null}
         </motion.button>
       );
     })}

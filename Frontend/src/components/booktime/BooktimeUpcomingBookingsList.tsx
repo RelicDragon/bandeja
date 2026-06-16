@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import { motion, type Variants } from 'framer-motion';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { BooktimeAdjacentBookingGroup } from './BooktimeAdjacentBookingGroup';
@@ -6,6 +7,8 @@ import { BooktimeBookingRow } from './BooktimeBookingRow';
 import { groupAdjacentBooktimeBookings } from './groupAdjacentBooktimeBookings';
 import { resolveBooktimeMyClubTimezone } from './booktimeBookingUtils';
 import { DEFAULT_BOOKTIME_CANCEL_HOURS, resolveBooktimeCancelHoursForClub } from './useBooktimeCancelPolicy';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { BOOKING_LIST_CONTAINER_VARIANTS, BOOKING_LIST_ITEM_VARIANTS } from './booktimeListMotion';
 
 type UpcomingBooking = BooktimeBookingRecord & { clubId?: string };
 
@@ -32,6 +35,7 @@ type Props = {
   clubIdOf?: (booking: UpcomingBooking) => string | undefined;
   onCanceled?: (bookingId: string) => void;
   onRefreshSnapshot?: (options?: { force?: boolean }) => Promise<boolean>;
+  animateEntries?: boolean;
 };
 
 export function BooktimeUpcomingBookingsList({
@@ -46,7 +50,13 @@ export function BooktimeUpcomingBookingsList({
   clubIdOf = (booking) => booking.clubId,
   onCanceled,
   onRefreshSnapshot,
+  animateEntries = false,
 }: Props) {
+  const reduceMotion = usePrefersReducedMotion();
+  const shouldAnimateEntries = animateEntries && !reduceMotion;
+  const entryVariants: Variants | undefined = shouldAnimateEntries
+    ? BOOKING_LIST_ITEM_VARIANTS
+    : undefined;
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const resolveAllowedHours = (clubId: string | undefined) =>
     resolveBooktimeCancelHoursForClub(clubId, allowedHoursToCancelByClubId, allowedHoursToCancel);
@@ -68,9 +78,8 @@ export function BooktimeUpcomingBookingsList({
   );
   const visibleEntries = limit != null ? entries.slice(0, limit) : entries;
 
-  return (
-    <ul className="space-y-2">
-      {visibleEntries.map((entry) => {
+  const listClassName = 'space-y-2';
+  const listContent = visibleEntries.map((entry) => {
         if (entry.kind === 'group') {
           const club = resolveClub(entry.bookings[0]!, clubById, clubIdOf);
           if (!club) return null;
@@ -97,6 +106,7 @@ export function BooktimeUpcomingBookingsList({
                 );
                 onCanceled?.(bookingId);
               }}
+              entryVariants={entryVariants}
             />
           );
         }
@@ -124,9 +134,27 @@ export function BooktimeUpcomingBookingsList({
               setSelectedBookingId((prev) => (prev === bookingId ? null : prev));
               onCanceled?.(bookingId);
             }}
+            entryVariants={entryVariants}
           />
         );
-      })}
+      });
+
+  if (shouldAnimateEntries) {
+    return (
+      <motion.ul
+        className={listClassName}
+        variants={BOOKING_LIST_CONTAINER_VARIANTS}
+        initial="hidden"
+        animate="show"
+      >
+        {listContent}
+      </motion.ul>
+    );
+  }
+
+  return (
+    <ul className={listClassName}>
+      {listContent}
     </ul>
   );
 }
