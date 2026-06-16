@@ -12,6 +12,6 @@ npm run build
 verify_capacitor_bundle
 
 echo "📲 Syncing with Capacitor..."
-npx cap sync
+npx cap sync android
 
 npx cap open android
