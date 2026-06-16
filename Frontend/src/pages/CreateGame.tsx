@@ -160,7 +160,7 @@ export const CreateGame = ({
   const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(initialGameData?.allowDirectJoin ?? false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(initialGameData?.afterGameGoToBar ?? false);
   const enabledSports = useMemo(() => listCreateFlowSports(user), [user]);
-  const showTemplatePicker = showGameFormatTemplatePicker(entityType, selectedSport, enabledSports);
+  const showTemplatePicker = showGameFormatTemplatePicker(entityType, selectedSport);
   const gameFormat = useGameFormat(
     { ...initialGameData, maxParticipants },
     { skipGenerationParticipantDefaults: showTemplatePicker },

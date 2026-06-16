@@ -6,14 +6,11 @@ import {
 } from '@/sport/createFlow';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { parseGameSport } from '@/utils/gameSport';
-import { listEnabledSports } from '@/utils/profileSports';
-import type { BasicUser, User } from '@/types';
 
 export type FindTierFilter = 'social' | 'match';
 
-export function isFindDiscoveryEnabled(user: User | BasicUser | null | undefined): boolean {
-  const enabled = listEnabledSports(user);
-  return isCasualCreateFlowEnabled('GAME', enabled);
+export function isFindDiscoveryEnabled(): boolean {
+  return isCasualCreateFlowEnabled('GAME');
 }
 
 export function resolveGameDiscoveryTier(game: Game): FindTierFilter | null {

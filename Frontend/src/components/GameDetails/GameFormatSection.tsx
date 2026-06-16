@@ -17,7 +17,6 @@ import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
 import { playersPerMatchOf } from '@/utils/matchFormat';
 import { Game, GenderTeam } from '@/types';
 import { useAuthStore } from '@/store/authStore';
-import { listCreateFlowSports } from '@/utils/profileSports';
 import type { CreateTemplateParticipantContext } from '@/sport/createTemplateParticipantFit';
 import { showGameFormatTemplatePicker } from '@/utils/gameFormat/showGameFormatTemplatePicker';
 import { inferTemplateFromFormat } from '@/utils/gameFormat/templateFormatCoordinator';
@@ -39,8 +38,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
   const user = useAuthStore((s) => s.user);
   const sport = parseGameSport(game.sport);
   const formatMaxParticipants = game.entityType === 'LEAGUE_SEASON' ? 4 : game.maxParticipants;
-  const enabledSports = useMemo(() => listCreateFlowSports(user), [user]);
-  const showTemplatePicker = showGameFormatTemplatePicker(game.entityType, sport, enabledSports);
+  const showTemplatePicker = showGameFormatTemplatePicker(game.entityType, sport);
   const gameFormat = useGameFormat(
     {
       ...game,

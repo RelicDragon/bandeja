@@ -301,10 +301,6 @@ export const PROFILE_SELECT_FIELDS = {
 
 export {
   getCreatableSports,
-  isCasualCreateFlowGloballyEnabled,
-  isMultisport6SportsEnabled,
-  isMultisportPolishEnabled,
-  isMultisportTennisEnabled,
   isSportCreatable,
 } from './multisportFlags';
 

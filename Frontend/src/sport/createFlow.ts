@@ -1,5 +1,5 @@
 import type { EntityType, ScoringPreset } from '@/types';
-import { isCasualCreateFlowGloballyEnabled, isSportCreatable } from '@/config/multisportFlags';
+import { isSportCreatable } from '@/config/multisportFlags';
 import { ALL_SPORTS, Sports, isSport, type Sport } from '@shared/sport';
 import {
   listTemplatesForParticipantSetup,
@@ -164,16 +164,9 @@ export function getOfficiatingLevelForGame(
 
 export { type OfficiatingLevel } from '@shared/officiatingLevel';
 
-export function isCasualCreateFlowEnabled(
-  entityType: EntityType,
-  enabledSports: Sport[],
-): boolean {
+export function isCasualCreateFlowEnabled(entityType: EntityType): boolean {
   if (entityType !== 'GAME' && entityType !== 'LEAGUE') return false;
-  if (isCasualCreateFlowGloballyEnabled()) {
-    return ALL_SPORTS.filter((s) => isSportCreatable(s)).length > 1;
-  }
-  if (enabledSports.length === 1 && enabledSports[0] === Sports.PADEL) return false;
-  return enabledSports.length > 1;
+  return ALL_SPORTS.filter((s) => isSportCreatable(s)).length > 1;
 }
 
 export function getCreateFlowConfig(sport: Sport): SportCreateFlowConfig {

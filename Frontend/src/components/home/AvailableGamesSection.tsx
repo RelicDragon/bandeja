@@ -124,7 +124,7 @@ export const AvailableGamesSection = ({
   const filterTierVal = externalFilters?.filterTier ?? filterTier;
   const filterNoRatingVal = externalFilters?.filterNoRating ?? filterNoRating;
   const showPrivateGamesVal = externalFilters?.showPrivateGames ?? showPrivateGames;
-  const findDiscoveryEnabled = useMemo(() => isFindDiscoveryEnabled(user), [user]);
+  const findDiscoveryEnabled = isFindDiscoveryEnabled();
   const isAdmin = Boolean(user?.isAdmin);
   const viewerPrimarySport = useMemo(() => getViewerPrimarySport(user), [user]);
   const findLevelSport = useMemo(

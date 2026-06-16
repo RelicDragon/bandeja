@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 71;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -125,10 +125,50 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		99414BE22F7443DE002D7100 /* BandejaWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "BandejaWatch Watch App"; sourceTree = "<group>"; };
-		B79A10022F7443E0002D7100 /* BandejaWatchWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWidgets; sourceTree = "<group>"; };
-		C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWatchTests; sourceTree = "<group>"; };
-		E14000022F7443E0002D7100 /* NotificationServiceExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = NotificationServiceExtension; sourceTree = "<group>"; };
+		99414BE22F7443DE002D7100 /* BandejaWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "BandejaWatch Watch App";
+			sourceTree = "<group>";
+		};
+		B79A10022F7443E0002D7100 /* BandejaWatchWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = BandejaWatchWidgets;
+			sourceTree = "<group>";
+		};
+		C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = BandejaWatchWatchTests;
+			sourceTree = "<group>";
+		};
+		E14000022F7443E0002D7100 /* NotificationServiceExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = NotificationServiceExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -478,12 +518,8 @@
 			);
 			inputFileListPaths = (
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

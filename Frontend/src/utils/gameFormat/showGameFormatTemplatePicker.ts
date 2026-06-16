@@ -6,12 +6,11 @@ import { isSportCreatable } from '@/config/multisportFlags';
 export function showGameFormatTemplatePicker(
   entityType: EntityType,
   sport: Sport,
-  enabledSports: Sport[],
 ): boolean {
   if (entityType !== 'GAME' && entityType !== 'LEAGUE') return false;
   if (sport === Sports.PADEL) return true;
   if (!isSportCreatable(sport)) return false;
   const hasTemplates = getCreateFlowConfig(sport).createTemplates.length > 0;
   if (hasTemplates) return true;
-  return isCasualCreateFlowEnabled(entityType, enabledSports);
+  return isCasualCreateFlowEnabled(entityType);
 }

@@ -4,10 +4,10 @@ import { showGameFormatTemplatePicker } from './showGameFormatTemplatePicker';
 
 describe('showGameFormatTemplatePicker', () => {
   it('always shows padel templates', () => {
-    expect(showGameFormatTemplatePicker('GAME', Sports.PADEL, [Sports.PADEL])).toBe(true);
+    expect(showGameFormatTemplatePicker('GAME', Sports.PADEL)).toBe(true);
   });
 
-  it('shows badminton templates when sport is creatable even with one enabled sport', () => {
-    expect(showGameFormatTemplatePicker('GAME', Sports.BADMINTON, [Sports.BADMINTON])).toBe(true);
+  it('shows badminton templates when sport is creatable', () => {
+    expect(showGameFormatTemplatePicker('GAME', Sports.BADMINTON)).toBe(true);
   });
 });
