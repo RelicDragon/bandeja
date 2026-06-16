@@ -82,13 +82,13 @@ function clientPlatformHeader(): string {
 }
 
 const refreshClient = axios.create({
-  baseURL: getApiAxiosBaseURL(),
   headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
   timeout: 20_000,
   withCredentials: !isCapacitor(),
 });
 
 refreshClient.interceptors.request.use((config) => {
+  config.baseURL = getApiAxiosBaseURL();
   config.headers['X-Client-Version'] = getClientAppSemver();
   config.headers['X-Client-Platform'] = clientPlatformHeader();
   return config;

@@ -45,7 +45,12 @@ const swcMinify = defineRollupSwcMinifyOption({
   },
 })
 
-export default defineConfig(() => ({
+export default defineConfig(({ command }) => {
+  const isDevServer = command === 'serve';
+  const defaultApiBaseUrl = isDevServer ? 'http://localhost:3000/api' : 'https://bandeja.me/api';
+  const defaultMediaBaseUrl = isDevServer ? 'http://localhost:3000' : 'https://bandeja.me';
+
+  return {
   plugins: [react(), tailwindcss(), viteMinify(swcMinify), ensureWellKnown()],
   worker: {
     format: 'es',
@@ -103,14 +108,18 @@ export default defineConfig(() => ({
     copyPublicDir: true,
   },
   define: {
-    'import.meta.env.VITE_MEDIA_BASE_URL': JSON.stringify(process.env.VITE_MEDIA_BASE_URL || 'http://localhost:3000'),
-    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || 'http://localhost:3000/api'),
+    'import.meta.env.VITE_MEDIA_BASE_URL': JSON.stringify(process.env.VITE_MEDIA_BASE_URL || defaultMediaBaseUrl),
+    'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || defaultApiBaseUrl),
     'import.meta.env.VITE_APP_SEMVER': JSON.stringify(appSemver),
     'import.meta.env.VITE_ACCESS_REFRESH_LEEWAY_MS': JSON.stringify(accessRefreshLeewayMs),
+    'import.meta.env.VITE_MULTISPORT_6_SPORTS': JSON.stringify(process.env.VITE_MULTISPORT_6_SPORTS ?? ''),
+    'import.meta.env.VITE_MULTISPORT_TENNIS': JSON.stringify(process.env.VITE_MULTISPORT_TENNIS ?? ''),
+    'import.meta.env.VITE_MULTISPORT_POLISH': JSON.stringify(process.env.VITE_MULTISPORT_POLISH ?? ''),
   },
   // Optimize dependencies
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom'],
   },
-}))
+};
+})
 
