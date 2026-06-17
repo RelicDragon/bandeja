@@ -9,6 +9,7 @@ import {
   parseSportParam,
   projectUserForSportContext,
 } from '../../services/user/userSportProfile.service';
+import { projectEmbeddedUserByPrimarySport } from '../../services/user/projectEmbeddedBasicUsers';
 import { BasicUser } from '../../types/user.types';
 import { CommonChatsService } from '../../services/user/commonChats.service';
 
@@ -120,7 +121,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
     };
     const projected = gameSport
       ? projectUserForSportContext(withMeta, gameSport)
-      : withMeta;
+      : projectEmbeddedUserByPrimarySport(withMeta);
     return {
       ...projected,
       sportsEnabled: user.sportsEnabled ?? [Sport.PADEL],
