@@ -32,6 +32,7 @@ import {
   CHAT_MESSAGE_MENU_ROOT,
   CHAT_MESSAGE_MENU_SECTION,
   CHAT_MESSAGE_MENU_SHELL,
+  CHAT_MESSAGE_ROW_EXIT_MS,
 } from '@/components/chat/chatListMotion';
 
 function mergeBasicUsers(fromMessage: BasicUser | undefined, fromStore: BasicUser | undefined): BasicUser | undefined {
@@ -283,7 +284,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     // Delay the actual deletion to allow animation to play
     setTimeout(() => {
       onDelete(message.id);
-    }, 300);
+    }, CHAT_MESSAGE_ROW_EXIT_MS);
   };
 
   const handleReactionClick = (emoji: string, source: ReactionEmojiPickSource) => {

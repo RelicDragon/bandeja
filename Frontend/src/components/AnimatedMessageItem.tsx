@@ -18,6 +18,7 @@ interface AnimatedMessageItemProps {
   isNew: boolean;
   staggerIndex: number;
   dateSeparatorLabel?: string;
+  fadeDateSeparator?: boolean;
   loadMediaEager?: boolean;
   onAddReaction: (messageId: string, emoji: string) => void;
   onRemoveReaction: (messageId: string) => void;
@@ -47,6 +48,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
   isNew,
   staggerIndex,
   dateSeparatorLabel,
+  fadeDateSeparator = false,
   loadMediaEager = false,
   onAddReaction,
   onRemoveReaction,
@@ -82,7 +84,9 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
       staggerIndex={staggerIndex}
       variant={isOutgoing ? 'outgoing' : 'incoming'}
     >
-      {dateSeparatorLabel ? <ChatDateSeparator label={dateSeparatorLabel} /> : null}
+      {dateSeparatorLabel ? (
+        <ChatDateSeparator label={dateSeparatorLabel} fadeIn={fadeDateSeparator} />
+      ) : null}
       <MessageItem
         message={message}
         onAddReaction={onAddReaction}
@@ -118,6 +122,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
   prev.isNew === next.isNew &&
   prev.staggerIndex === next.staggerIndex &&
   prev.dateSeparatorLabel === next.dateSeparatorLabel &&
+  prev.fadeDateSeparator === next.fadeDateSeparator &&
   messageRowPropsEqual(
     {
       message: prev.message,

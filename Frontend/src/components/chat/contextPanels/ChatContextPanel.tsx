@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { Bug, MarketItem, PriceCurrency } from '@/types';
 import type { GroupChannel } from '@/api/chat';
@@ -7,6 +8,8 @@ import { BugContextPanel } from './BugContextPanel';
 import { MarketItemContextPanel } from './MarketItemContextPanel';
 import { useAuthStore } from '@/store/authStore';
 import { resolveUserCurrency } from '@/utils/currency';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { CHAT_PANEL_TRANSITION } from '@/components/chat/chatListMotion';
 
 interface ChatContextPanelProps {
   contextType: 'GAME' | 'USER' | 'GROUP';
@@ -35,6 +38,8 @@ export const ChatContextPanel = ({
 }: ChatContextPanelProps) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
+  const reduceMotion = usePrefersReducedMotion();
+  const panelTransition = reduceMotion ? { duration: 0 } : CHAT_PANEL_TRANSITION;
   const currentUser = useAuthStore((state) => state.user);
   const userCurrency = resolveUserCurrency(currentUser?.defaultCurrency) as PriceCurrency;
 
@@ -79,17 +84,20 @@ export const ChatContextPanel = ({
     <div className="absolute top-0 left-0 right-0 z-30 flex justify-center px-4 pointer-events-none">
       <div className="w-full max-w-[90%] pointer-events-auto">
         {/* Unified Panel with Integrated Toggle */}
-        <div className="bg-gradient-to-b from-gray-50/80 to-white/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-sm border-x border-b border-gray-200 dark:border-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.4)] rounded-b-xl transition-all duration-[600ms] ease-in-out">
-          {/* Panel Content */}
-          <div
-            className={`bg-gradient-to-b from-white via-white to-gray-50/90 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900/90 overflow-hidden transition-all duration-[600ms] ease-in-out ${
-              isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
-            }`}
+        <div className="bg-gradient-to-b from-gray-50/80 to-white/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-sm border-x border-b border-gray-200 dark:border-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.4)] rounded-b-xl">
+          <motion.div
+            className="bg-gradient-to-b from-white via-white to-gray-50/90 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900/90 overflow-hidden"
+            initial={false}
+            animate={{
+              height: isExpanded ? 'auto' : 0,
+              opacity: isExpanded ? 1 : 0,
+            }}
+            transition={panelTransition}
           >
             <div className="px-4 py-4">
               {renderContextPanel()}
             </div>
-          </div>
+          </motion.div>
 
           {/* Toggle Button (Integrated Handle) */}
           <button

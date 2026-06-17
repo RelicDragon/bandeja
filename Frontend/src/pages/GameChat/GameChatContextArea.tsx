@@ -1,6 +1,7 @@
 import React from 'react';
 import { chatApi } from '@/api/chat';
 import { ChatContextPanel } from '@/components/chat/contextPanels';
+import { ChatPaneSlideOverlay } from '@/components/chat/ChatPaneSlideOverlay';
 import { GroupChannelSettings } from '@/components/chat/GroupChannelSettings';
 import { MarketItemPanel } from '@/components/marketplace';
 import { useThreadChrome, useThreadMessageActions } from './useThreadView';
@@ -39,34 +40,24 @@ export const GameChatContextArea: React.FC = () => {
       )}
 
       {contextType === 'GROUP' && derived.isItemChat && (panels.showItemPage || panels.isItemPageAnimating) && groupChannel?.marketItem && (
-        <div
-          className={`absolute inset-0 h-full transition-all duration-[600ms] ease-in-out bg-gray-50 dark:bg-gray-900 ${
-            panels.showItemPage && !panels.isItemPageAnimating
-              ? 'opacity-100 translate-x-0 z-10'
-              : 'opacity-0 translate-x-full z-0 pointer-events-none'
-          }`}
-          onTransitionEnd={() =>
-            panels.isItemPageAnimating && !panels.showItemPage && panels.setIsItemPageAnimating(false)
-          }
+        <ChatPaneSlideOverlay
+          visible={panels.showItemPage}
+          animating={panels.isItemPageAnimating}
+          onExitComplete={() => panels.setIsItemPageAnimating(false)}
         >
           <MarketItemPanel
             item={groupChannel.marketItem}
             onClose={panels.closeItemPage}
             onItemUpdate={refreshContext}
           />
-        </div>
+        </ChatPaneSlideOverlay>
       )}
 
       {contextType === 'GROUP' && !derived.isItemChat && (panels.showParticipantsPage || panels.isParticipantsPageAnimating) && groupChannel && (
-        <div
-          className={`absolute inset-0 h-full transition-all duration-[600ms] ease-in-out bg-gray-50 dark:bg-gray-900 ${
-            panels.showParticipantsPage && !panels.isParticipantsPageAnimating
-              ? 'opacity-100 translate-x-0 z-10'
-              : 'opacity-0 translate-x-full z-0 pointer-events-none'
-          }`}
-          onTransitionEnd={() =>
-            panels.isParticipantsPageAnimating && !panels.showParticipantsPage && panels.setIsParticipantsPageAnimating(false)
-          }
+        <ChatPaneSlideOverlay
+          visible={panels.showParticipantsPage}
+          animating={panels.isParticipantsPageAnimating}
+          onExitComplete={() => panels.setIsParticipantsPageAnimating(false)}
         >
           <GroupChannelSettings
             groupChannel={groupChannel}
@@ -79,7 +70,7 @@ export const GameChatContextArea: React.FC = () => {
               }
             }}
           />
-        </div>
+        </ChatPaneSlideOverlay>
       )}
     </>
   );

@@ -30,6 +30,7 @@ import { useMessageLongPress } from './useMessageLongPress';
 import { useMessageReactions } from './useMessageReactions';
 import { MessageItemReactionStrip, MESSAGE_REACTION_GUTTER_CLASS } from './MessageItemReactionStrip';
 import { messageRowPropsEqual } from './messageRowPropsEqual';
+import { MessageRowDeleteMotion } from './MessageRowDeleteMotion';
 
 export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem({
   message,
@@ -327,9 +328,10 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   return (
     <>
       {isSystemMessage ? (
-        <div
-          ref={messageRef}
-          className={`group flex justify-center mb-4 relative transition-all duration-[600ms] ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
+        <MessageRowDeleteMotion
+          isDeleting={isDeleting}
+          messageRef={messageRef}
+          className="group flex justify-center mb-4 relative overflow-visible"
         >
           <div className="relative">
             <SystemMessageBlock
@@ -368,11 +370,12 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
               </div>
             )}
           </div>
-        </div>
+        </MessageRowDeleteMotion>
       ) : (
-        <div
-          ref={messageRef}
-          className={`group flex select-none ${isChannel ? 'justify-start' : isOwnMessage ? 'justify-end' : 'justify-start'} ${isLastInGroup ? 'mb-3.5' : hasReplies() ? 'mb-3' : 'mb-1'} relative transition-all duration-[600ms] ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
+        <MessageRowDeleteMotion
+          isDeleting={isDeleting}
+          messageRef={messageRef}
+          className={`group flex select-none ${isChannel ? 'justify-start' : isOwnMessage ? 'justify-end' : 'justify-start'} ${isLastInGroup ? 'mb-3.5' : hasReplies() ? 'mb-3' : 'mb-1'} relative overflow-visible`}
         >
           <div
             className={`flex ${isChannel ? 'w-full max-w-full' : currentMessage.poll ? 'w-[85%] min-w-[85%] flex-shrink-0' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : isOwnMessage ? 'flex-row-reverse' : 'flex-row'} overflow-visible`}
@@ -519,7 +522,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
               </div>
             </div>
           </div>
-        </div>
+        </MessageRowDeleteMotion>
       )}
 
       {isMenuOpen && (

@@ -1,8 +1,11 @@
 import { useLayoutEffect, useMemo, useReducer, useRef } from 'react';
-import { chatTailEnterMarkSeenMs } from '@/components/chat/chatListMotion';
+import {
+  CHAT_TAIL_ENTER_MARK_SEEN_MS_MAX,
+  chatTailEnterMarkSeenMs,
+} from '@/components/chat/chatListMotion';
 import { partitionMessageListNewKeys } from './partitionMessageListNewKeys';
 
-export const TAIL_ENTER_MARK_SEEN_MS = chatTailEnterMarkSeenMs();
+export const TAIL_ENTER_MARK_SEEN_MS = CHAT_TAIL_ENTER_MARK_SEEN_MS_MAX;
 
 /** Tracks message row keys seen in the current thread; tail appends animate before being marked seen. */
 export function useMessageListNewKeys(

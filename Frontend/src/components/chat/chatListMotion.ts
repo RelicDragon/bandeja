@@ -29,6 +29,19 @@ export function chatListRowEnterDelay(index: number): number {
 
 export const CHAT_ROW_EXIT_DURATION_S = 0.36;
 
+export const CHAT_MESSAGE_ROW_EXIT_TRANSITION: Transition = {
+  duration: CHAT_ROW_EXIT_DURATION_S,
+  ease: EASE,
+};
+
+export const CHAT_MESSAGE_ROW_EXIT = {
+  opacity: 0,
+  scale: 0.96,
+  y: -8,
+};
+
+export const CHAT_MESSAGE_ROW_EXIT_MS = Math.ceil(CHAT_ROW_EXIT_DURATION_S * 1000) + 40;
+
 export const CHAT_VIRTUAL_ROW_POSITION_TRANSITION =
   'transform 0.64s cubic-bezier(0.21, 0.47, 0.32, 0.98)';
 
@@ -161,6 +174,10 @@ export const CHAT_SEARCH_BAR_TRANSITION = {
   ease: 'easeInOut' as const,
 };
 
+export const CHAT_TAIL_ENTER_MAX_STAGGER_INDEX = Math.floor(
+  CHAT_ROW_STAGGER_MAX_S / CHAT_ROW_STAGGER_STEP_S
+);
+
 /** Tail-append keys stay "new" until enter motion can finish (stagger + duration). */
 export function chatTailEnterMarkSeenMs(staggerIndex = 0): number {
   const duration =
@@ -170,3 +187,8 @@ export function chatTailEnterMarkSeenMs(staggerIndex = 0): number {
   const delay = chatListRowEnterDelay(staggerIndex);
   return Math.ceil((delay + duration) * 1000) + 80;
 }
+
+/** Worst-case tail enter mark-seen delay (max stagger + duration). */
+export const CHAT_TAIL_ENTER_MARK_SEEN_MS_MAX = chatTailEnterMarkSeenMs(
+  CHAT_TAIL_ENTER_MAX_STAGGER_INDEX
+);
