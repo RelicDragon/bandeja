@@ -7,7 +7,8 @@ import { applySharedPlacementToOutcomes } from './outcomeComputation';
 import { updateMatchWinners } from './matchWinner.service';
 import { isPrismaMatchCountedForStandingsAndRating } from './matchStandingsPrisma';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { projectGameUsersForSportContext } from '../game/read.service';
 import { LeagueGameResultsService } from '../league/gameResults.service';
 import { BracketAdvancementService } from '../league/bracketAdvancement.service';
 import { BracketGameNotificationService } from '../league/bracketGameNotification.service';
@@ -654,7 +655,7 @@ export async function recalculateGameOutcomes(gameId: string) {
                     players: {
                       include: {
                         user: {
-                          select: USER_SELECT_FIELDS,
+                          select: USER_SELECT_WITH_SPORT_PROFILES,
                         },
                       },
                     },
@@ -666,7 +667,7 @@ export async function recalculateGameOutcomes(gameId: string) {
             outcomes: {
               include: {
                 user: {
-                  select: USER_SELECT_FIELDS,
+                  select: USER_SELECT_WITH_SPORT_PROFILES,
                 },
               },
             },
@@ -676,10 +677,7 @@ export async function recalculateGameOutcomes(gameId: string) {
         outcomes: {
           include: {
             user: {
-              select: {
-                ...USER_SELECT_FIELDS,
-                reliability: true,
-              },
+              select: USER_SELECT_WITH_SPORT_PROFILES,
             },
           },
           orderBy: { position: 'asc' },
@@ -687,7 +685,11 @@ export async function recalculateGameOutcomes(gameId: string) {
       },
     });
     
-    return { game, shouldResolveBets, bracketCreatedGameIds };
+    return {
+      game: game ? projectGameUsersForSportContext(game) : game,
+      shouldResolveBets,
+      bracketCreatedGameIds,
+    };
   });
   
   console.log(`[RECALCULATE GAME OUTCOMES] Transaction completed, wasEdited: ${wasEdited}`);
