@@ -81,7 +81,7 @@ import {
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { BasicUser } from '@/types';
 import { createPortal } from 'react-dom';
-import { getGameParticipationState } from '@/utils/gameParticipationState';
+import { canUserViewGameInvites, getGameParticipationState } from '@/utils/gameParticipationState';
 import { mergeGameWithInviteDeletedPayload, isPendingGameInvite } from '@/utils/gameInviteParticipant';
 import { socketService } from '@/services/socketService';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
@@ -286,8 +286,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
           setMyInvites(gameMyInvites);
 
-          const isParticipant = response.data.participants.some((p) => p.userId === user.id);
-          if (isParticipant) {
+          if (canUserViewGameInvites(response.data.participants, user.id, response.data)) {
             const gameInvitesResponse = await invitesApi.getGameInvites(id);
             setGameInvites(gameInvitesResponse.data);
           }
@@ -610,8 +609,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       if (id) {
         const response = await gamesApi.getById(id);
         setGame(response.data);
-        const gameInvitesResponse = await invitesApi.getGameInvites(id);
-        setGameInvites(gameInvitesResponse.data);
+        if (canUserViewGameInvites(response.data.participants, user?.id, response.data)) {
+          const gameInvitesResponse = await invitesApi.getGameInvites(id);
+          setGameInvites(gameInvitesResponse.data);
+        }
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
@@ -628,8 +629,12 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       if (id) {
         const response = await gamesApi.getById(id);
         setGame(response.data);
-        const gameInvitesResponse = await invitesApi.getGameInvites(id);
-        setGameInvites(gameInvitesResponse.data);
+        if (canUserViewGameInvites(response.data.participants, user?.id, response.data)) {
+          const gameInvitesResponse = await invitesApi.getGameInvites(id);
+          setGameInvites(gameInvitesResponse.data);
+        } else {
+          setGameInvites([]);
+        }
       }
     },
   });
@@ -939,8 +944,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
         const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
         setMyInvites(gameMyInvites);
-        const isParticipant = response.data.participants.some((p) => p.userId === user?.id);
-        if (isParticipant) {
+        if (canUserViewGameInvites(response.data.participants, user.id, response.data)) {
           const gameInvitesResponse = await invitesApi.getGameInvites(id);
           setGameInvites(gameInvitesResponse.data);
         }
@@ -1784,8 +1788,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             if (id) {
               const response = await gamesApi.getById(id);
               setGame(response.data);
-              const gameInvitesResponse = await invitesApi.getGameInvites(id);
-              setGameInvites(gameInvitesResponse.data);
+              if (canUserViewGameInvites(response.data.participants, user?.id, response.data)) {
+                const gameInvitesResponse = await invitesApi.getGameInvites(id);
+                setGameInvites(gameInvitesResponse.data);
+              }
             }
           }}
         />

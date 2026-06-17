@@ -82,3 +82,13 @@ export function getGameParticipationState(
     isFull: game ? game.entityType !== 'BAR' && playingCount >= game.maxParticipants : false,
   };
 }
+
+/** Matches backend `canAccessGame` — invited-only users cannot list game invites. */
+export function canUserViewGameInvites(
+  participants: GameParticipant[],
+  userId: string | undefined,
+  game?: Game | null,
+): boolean {
+  const state = getGameParticipationState(participants, userId, game);
+  return state.isAdminOrOwner || state.isRealParticipant || state.isInJoinQueue;
+}
