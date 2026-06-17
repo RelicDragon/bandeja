@@ -1,6 +1,36 @@
 import html2canvas from 'html2canvas';
 import { Share } from '@capacitor/share';
+import type { GamePhoto } from '@/api/gamePhotos';
+import type { Game } from '@/types';
+import { gamePhotoOriginalUrl } from '@/utils/gamePhotoUrl';
+import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { getShareUrl } from '@/utils/shareUrl';
+
+type ShareCardGame = Pick<Game, 'mainPhotoId' | 'mainPhoto'>;
+
+export function resolveGameResultsSharePhotoUrl(
+  game: ShareCardGame,
+  photos: GamePhoto[] = []
+): string | null {
+  const mainPhotoId = getGameMainPhotoId(game);
+  const fromStore = photos.find((p) => p.id === mainPhotoId) ?? photos[0];
+  if (fromStore) {
+    const url = gamePhotoOriginalUrl(fromStore);
+    if (url) return url;
+  }
+  if (game.mainPhoto) {
+    const url = gamePhotoOriginalUrl(game.mainPhoto);
+    if (url) return url;
+  }
+  return null;
+}
+
+export function canShowGameResultsShareCard(
+  game: ShareCardGame,
+  photos: GamePhoto[] = []
+): boolean {
+  return resolveGameResultsSharePhotoUrl(game, photos) !== null;
+}
 
 export async function exportElementToPngBlob(el: HTMLElement): Promise<Blob> {
   const canvas = await html2canvas(el, {

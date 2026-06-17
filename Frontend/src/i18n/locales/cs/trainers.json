@@ -3,6 +3,7 @@
     "ourTrainers": "Naši trenéři",
     "selectToFilterHint": "Klepněte na trenéra a filtrujte tréninky podle něj",
     "trainingsBy": "Tréninky od",
-    "clearTrainerFilter": "Zrušit filtr trenéra"
+    "clearTrainerFilter": "Zrušit filtr trenéra",
+    "noTrainingsByTrainer": "U {{name}} nejsou žádné tréninky"
   }
 }

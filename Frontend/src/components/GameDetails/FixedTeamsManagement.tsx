@@ -10,25 +10,30 @@ import toast from 'react-hot-toast';
 import { useAuthStore } from '@/store/authStore';
 import { canUserEditGameFormat } from '@/utils/gameResults';
 import { maxFixedTeamSlots, playersPerTeamOf } from '@/utils/matchFormat';
+import { resolveFixedTeamPlayerUser } from '@/utils/resolveFixedTeamPlayerUser';
+import { parseGameSport } from '@/utils/gameSport';
 function playerDisplayName(user: BasicUser): string {
   return [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
 }
 
 interface FixedTeamPlayerSlotProps {
   player: GameTeam['players'][number] | undefined;
+  game: Game;
   canEdit: boolean;
   onRemove: () => void;
   onAdd: () => void;
 }
 
-function FixedTeamPlayerSlot({ player, canEdit, onRemove, onAdd }: FixedTeamPlayerSlotProps) {
+function FixedTeamPlayerSlot({ player, game, canEdit, onRemove, onAdd }: FixedTeamPlayerSlotProps) {
   const { t } = useTranslation();
 
   if (player) {
+    const displayUser = resolveFixedTeamPlayerUser(game, player.userId, player.user);
     return (
       <div className="flex min-w-0 flex-1 items-center gap-2.5">
         <PlayerAvatar
-          player={player.user}
+          player={displayUser}
+          levelSport={game.sport ? parseGameSport(game.sport) : undefined}
           showName={false}
           fullHideName
           extrasmall
@@ -37,10 +42,10 @@ function FixedTeamPlayerSlot({ player, canEdit, onRemove, onAdd }: FixedTeamPlay
         />
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium leading-snug text-gray-900 dark:text-white line-clamp-2">
-            {playerDisplayName(player.user)}
+            {playerDisplayName(displayUser)}
           </p>
-          {player.user.verbalStatus ? (
-            <p className="verbal-status mt-0.5 line-clamp-1 text-[10px]">{player.user.verbalStatus}</p>
+          {displayUser.verbalStatus ? (
+            <p className="verbal-status mt-0.5 line-clamp-1 text-[10px]">{displayUser.verbalStatus}</p>
           ) : null}
         </div>
       </div>
@@ -437,6 +442,7 @@ export const FixedTeamsManagement = ({ game, onGameUpdate, embedded = false }: F
                   <div key={slotIndex} className="min-w-0 flex-1 p-2.5">
                     <FixedTeamPlayerSlot
                       player={player}
+                      game={game}
                       canEdit={canEdit}
                       onRemove={() => player && handleRemovePlayer(index, player.userId)}
                       onAdd={openSelector}

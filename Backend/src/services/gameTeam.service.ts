@@ -1,11 +1,41 @@
 import prisma from '../config/database';
-import { Prisma } from '@prisma/client';
+import { Prisma, Sport } from '@prisma/client';
 import { ApiError } from '../utils/ApiError';
 import { GameService } from './game/game.service';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../utils/constants';
 import { LeagueSyncService } from './league/sync.service';
 import { EntityType } from '@prisma/client';
 import { maxFixedTeamSlots } from './results/generation/matchUtils';
+import { projectUserForSportContext } from './user/userSportProfile.service';
+
+const FIXED_TEAM_PLAYER_USER_SELECT = USER_SELECT_FIELDS_WITH_SPORT_PROFILES;
+
+function projectFixedTeamsForSport<T extends { players: Array<{ user: unknown }> }>(
+  teams: T[],
+  sport: Sport,
+): T[] {
+  return teams.map((team) => ({
+    ...team,
+    players: team.players.map((player) => ({
+      ...player,
+      user: projectUserForSportContext(player.user as Parameters<typeof projectUserForSportContext>[0], sport),
+    })),
+  }));
+}
+
+function projectGameUsersForSportContext<T extends { sport?: Sport; participants?: any[]; fixedTeams?: any[] }>(
+  game: T,
+): T {
+  const sport = game.sport ?? Sport.PADEL;
+  return {
+    ...game,
+    participants: (game.participants ?? []).map((p) => ({
+      ...p,
+      user: projectUserForSportContext(p.user, sport),
+    })),
+    fixedTeams: projectFixedTeamsForSport(game.fixedTeams ?? [], sport),
+  };
+}
 
 interface GameTeamData {
   teamNumber: number;
@@ -140,7 +170,7 @@ export class GameTeamService {
         participants: {
           include: {
             user: {
-                select: USER_SELECT_FIELDS,
+              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
             },
           },
         },
@@ -151,14 +181,7 @@ export class GameTeamService {
             players: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    avatar: true,
-                    level: true,
-                    gender: true,
-                  },
+                  select: FIXED_TEAM_PLAYER_USER_SELECT,
                 },
               },
             },
@@ -168,13 +191,13 @@ export class GameTeamService {
       },
     });
 
-    return updatedGame;
+    return updatedGame ? projectGameUsersForSportContext(updatedGame) : updatedGame;
   }
 
   static async getGameTeams(gameId: string) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, hasFixedTeams: true },
+      select: { id: true, hasFixedTeams: true, sport: true },
     });
 
     if (!game) {
@@ -185,25 +208,21 @@ export class GameTeamService {
       return [];
     }
 
-    return await prisma.gameTeam.findMany({
+    const teams = await prisma.gameTeam.findMany({
       where: { gameId },
       include: {
         players: {
           include: {
             user: {
-              select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                avatar: true,
-                level: true,
-              },
+              select: FIXED_TEAM_PLAYER_USER_SELECT,
             },
           },
         },
       },
       orderBy: { teamNumber: 'asc' },
     });
+
+    return projectFixedTeamsForSport(teams, game.sport ?? Sport.PADEL);
   }
 
   static async deleteGameTeams(gameId: string) {

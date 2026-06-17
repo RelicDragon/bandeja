@@ -4,6 +4,7 @@
     "download": "Descargar",
     "copyImage": "Copiar imagen",
     "imageCopied": "Imagen copiada",
+    "imageShareOpened": "Elige Copiar o Guardar en el menú de compartir",
     "copyImageFailed": "No se pudo copiar la imagen"
   }
 }

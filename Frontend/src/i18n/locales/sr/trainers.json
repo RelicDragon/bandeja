@@ -3,6 +3,7 @@
     "ourTrainers": "Naši treneri",
     "selectToFilterHint": "Dodirnite trenera da filtrirate treninge",
     "trainingsBy": "Treninzi od",
-    "clearTrainerFilter": "Poništi filter trenera"
+    "clearTrainerFilter": "Poništi filter trenera",
+    "noTrainingsByTrainer": "Nema treninga od {{name}}"
   }
 }

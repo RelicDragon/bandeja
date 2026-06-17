@@ -32,7 +32,12 @@ async function run() {
   assert.equal(receiptScope.messageId, scope.messageId);
   assert.equal(receiptScope.recipientUserId, scope.recipientUserId);
 
-  await PushReplyTokenService.markUsed(validated.tokenId, 'reply-msg-1');
+  await PushReplyTokenService.markUsed(validated.tokenId, 'reply-msg-1', 'push-reply-token-abc12345');
+
+  const reused = await PushReplyTokenService.validate(token, 'different-mutation-id');
+  assert.equal(reused.alreadyUsed, true);
+  assert.equal(reused.tokenId, validated.tokenId);
+
   const receiptAfterUse = await PushReplyTokenService.validateForReceipt(token);
   assert.equal(receiptAfterUse.messageId, scope.messageId);
 

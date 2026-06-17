@@ -5,11 +5,13 @@ import toast from 'react-hot-toast';
 import { Loader2, RotateCcw, Share2 } from 'lucide-react';
 import type { Game } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
-import { gamePhotoOriginalUrl } from '@/utils/gamePhotoUrl';
 import { useGamePhotosStore } from '@/store/gamePhotosStore';
-import { shareGameResultsCard } from '@/utils/gameResultsShare.util';
+import {
+  canShowGameResultsShareCard,
+  resolveGameResultsSharePhotoUrl,
+  shareGameResultsCard,
+} from '@/utils/gameResultsShare.util';
 import { hasCachedResultsSummary } from '@/utils/gameResultsArtifacts.util';
-import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitialData';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { useAuthStore } from '@/store/authStore';
@@ -26,9 +28,8 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
   const photos = useGamePhotosStore((s) => s.byGameId[game.id]?.photos) ?? EMPTY_GAME_PHOTOS;
-  const mainPhoto =
-    photos.find((p) => p.id === getGameMainPhotoId(game)) ?? photos[0];
-  const photoUrl = mainPhoto ? gamePhotoOriginalUrl(mainPhoto) : null;
+  const photoUrl = resolveGameResultsSharePhotoUrl(game, photos);
+  const showShareCard = canShowGameResultsShareCard(game, photos);
   const summary = hasCachedResultsSummary(game.resultsSummaryText)
     ? game.resultsSummaryText!.trim()
     : null;
@@ -36,7 +37,7 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
   const canPlayAgain = game.entityType === 'GAME';
 
   const handleShare = async () => {
-    if (!cardRef.current) return;
+    if (!showShareCard || !cardRef.current) return;
     setSharing(true);
     try {
       await shareGameResultsCard({
@@ -69,6 +70,24 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
     }
     go();
   };
+
+  if (!showShareCard) {
+    if (!canPlayAgain) return null;
+    return (
+      <div className="mb-4 flex flex-col items-center gap-3 px-1">
+        <div className="grid w-full max-w-sm grid-cols-1 gap-2">
+          <button
+            type="button"
+            onClick={handlePlayAgain}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-violet-500/40 bg-violet-950/40 px-5 py-2.5 text-sm font-semibold text-violet-100 transition hover:bg-violet-900/50"
+          >
+            <RotateCcw className="h-4 w-4" aria-hidden />
+            {t('gameResults.playAgainCta')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-4 flex flex-col items-center gap-3 px-1">

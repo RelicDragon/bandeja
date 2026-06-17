@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, RefObject } from 'react';
+import { getAppScrollElement, getAppScrollTop } from '@/utils/appScroll';
 
 interface UsePullToRefreshOptions {
   onRefresh: () => Promise<void>;
@@ -50,13 +51,7 @@ export const usePullToRefresh = ({
     const getScrollTop = () => {
       const container = scrollContainerRefRef.current?.current;
       if (container) return container.scrollTop;
-      return Math.max(
-        window.scrollY,
-        window.pageYOffset,
-        document.documentElement.scrollTop,
-        document.body.scrollTop,
-        0
-      );
+      return getAppScrollTop();
     };
 
     const isScrollableElement = (element: HTMLElement): boolean => {
@@ -73,7 +68,7 @@ export const usePullToRefresh = ({
         if (isScrollableElement(node)) return node;
         node = node.parentElement;
       }
-      return preferred;
+      return preferred ?? getAppScrollElement();
     };
 
     const handleTouchStart = (e: TouchEvent) => {

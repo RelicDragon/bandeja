@@ -4,6 +4,7 @@
     "download": "Stáhnout",
     "copyImage": "Kopírovat obrázek",
     "imageCopied": "Obrázek zkopírován",
+    "imageShareOpened": "V menu sdílení zvolte Kopírovat nebo Uložit",
     "copyImageFailed": "Obrázek se nepodařilo zkopírovat"
   }
 }

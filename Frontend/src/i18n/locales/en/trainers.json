@@ -3,6 +3,7 @@
     "ourTrainers": "Our trainers",
     "selectToFilterHint": "Tap a trainer to filter trainings by them",
     "trainingsBy": "Trainings by",
-    "clearTrainerFilter": "Clear trainer filter"
+    "clearTrainerFilter": "Clear trainer filter",
+    "noTrainingsByTrainer": "No trainings by {{name}}"
   }
 }

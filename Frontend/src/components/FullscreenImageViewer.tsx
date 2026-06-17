@@ -44,6 +44,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
   const [displayUrl, setDisplayUrl] = useState(imageUrl);
+  const resolvedBlobRef = useRef<Blob | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const zoomActive = enableTransform && isOpen;
@@ -54,6 +55,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 
   useEffect(() => {
     setDisplayUrl(imageUrl);
+    resolvedBlobRef.current = null;
   }, [imageUrl]);
 
   useEffect(() => {
@@ -68,6 +70,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         if (cancelled) return;
         if (hit?.ok) {
           const blob = await hit.blob();
+          resolvedBlobRef.current = blob;
           const u = URL.createObjectURL(blob);
           revoked = u;
           setDisplayUrl(u);
@@ -82,6 +85,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           await writeCachedMediaResponse(key, res);
           if (!revoked) {
             const b = await res.blob();
+            resolvedBlobRef.current = b;
             const u = URL.createObjectURL(b);
             revoked = u;
             setDisplayUrl(u);
@@ -187,8 +191,14 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       e.stopPropagation();
       setIsCopying(true);
       try {
-        await copyImageToClipboard(displayUrl);
-        toast.success(t('media.imageCopied'));
+        const img = containerRef.current?.querySelector('img');
+        const outcome = await copyImageToClipboard(displayUrl, {
+          blob: resolvedBlobRef.current,
+          img,
+        });
+        toast.success(
+          outcome === 'shared' ? t('media.imageShareOpened') : t('media.imageCopied'),
+        );
       } catch (error) {
         console.error('Failed to copy image:', error);
         toast.error(t('media.copyImageFailed'));

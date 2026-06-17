@@ -141,7 +141,8 @@ describe('sendChatReplyFromPush', () => {
     const request = createMessage.mock.calls[0][0];
     expect(request.content.length).toBe(PUSH_REPLY_MAX_CONTENT_LENGTH);
     expect(request.replyToId).toBe('msg-1');
-    expect(request.clientMutationId).toMatch(/^push-reply:msg-1:/);
+    expect(request.clientMutationId).toMatch(/^push-reply-msg-msg-1-[0-9a-f]{16}$/);
+    expect(request.clientMutationId).not.toContain(':');
     expect(confirmMessageReceipt).toHaveBeenCalledWith('msg-1', 'push');
     expect(schedule).not.toHaveBeenCalled();
   });
@@ -165,9 +166,22 @@ describe('sendChatReplyFromPush', () => {
     expect(apiPost).toHaveBeenCalledWith('/chat/push-reply', expect.objectContaining({
       replyToken: 'rtok-test',
       content: 'hello from push',
+      clientMutationId: expect.stringMatching(/^push-reply-token-[0-9a-f]{48}$/),
     }));
     expect(createMessage).not.toHaveBeenCalled();
     expect(confirmMessageReceipt).not.toHaveBeenCalled();
     expect(schedule).not.toHaveBeenCalled();
+  });
+
+  it('dedupes concurrent identical push replies', async () => {
+    const tokenCtx: PushChatContext = { ...ctx, replyToken: 'rtok-dedupe' };
+    apiPost.mockResolvedValue({ data: { success: true } });
+
+    await Promise.all([
+      sendChatReplyFromPush(tokenCtx, 'same text'),
+      sendChatReplyFromPush(tokenCtx, 'same text'),
+    ]);
+
+    expect(apiPost).toHaveBeenCalledTimes(1);
   });
 });

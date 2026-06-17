@@ -10,6 +10,8 @@ import { BasicUser, Game } from '@/types';
 import type { Sport } from '@shared/sport';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { getTrainerChipClassName } from './trainerChipLayout';
+import { formatTrainerDisplayName } from './findTrainerEmptyMessage';
 
 interface TrainersListProps {
   show: boolean;
@@ -141,14 +143,8 @@ export const TrainersList = ({ show, availableGames = [], levelSport }: Trainers
                 <button
                   key={trainer.id}
                   type="button"
-                  onClick={() => (hasTrainings ? handleSelectTrainer(trainer.id) : openPlayerCard(trainer.id, levelSport))}
-                  className={`relative flex-shrink-0 flex flex-col items-center min-w-[5rem] w-max p-2 rounded-xl border-2 transition-all ${
-                    !hasTrainings
-                      ? 'opacity-60 border-gray-200 dark:border-gray-600 hover:opacity-100'
-                      : isSelected
-                        ? 'bg-primary-100 dark:bg-primary-900/40 border-primary-500 dark:border-primary-400'
-                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-600'
-                  }`}
+                  onClick={() => handleSelectTrainer(trainer.id)}
+                  className={getTrainerChipClassName({ isSelected, hasTrainings })}
                 >
                   <span
                     onClick={(e) => {
@@ -224,15 +220,20 @@ export const TrainersList = ({ show, availableGames = [], levelSport }: Trainers
             >
               <X size={14} />
             </button>
-            <span className="[&>div]:pointer-events-none">
+            <button
+              type="button"
+              onClick={() => openPlayerCard(displayedTrainer.id, levelSport)}
+              className="flex-shrink-0 cursor-pointer [&>div]:pointer-events-none"
+              aria-label={formatTrainerDisplayName(displayedTrainer.firstName, displayedTrainer.lastName) ?? undefined}
+            >
               <PlayerAvatar player={displayedTrainer} asDiv extrasmall fullHideName levelSport={levelSport} />
-            </span>
+            </button>
             <div className="flex flex-col items-start">
               <span className="text-xs text-primary-600 dark:text-primary-400 leading-tight">
                 {t('trainers.trainingsBy', { defaultValue: 'Trainings by' })}
               </span>
               <span className="text-sm text-primary-700 dark:text-primary-300 font-medium leading-tight">
-                {[displayedTrainer.firstName, displayedTrainer.lastName].filter(Boolean).join(' ') || ''}
+                {formatTrainerDisplayName(displayedTrainer.firstName, displayedTrainer.lastName) ?? ''}
               </span>
             </div>
             </div>

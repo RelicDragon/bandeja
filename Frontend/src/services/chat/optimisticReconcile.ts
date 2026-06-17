@@ -166,6 +166,28 @@ function reconcileOneServerMessage(
         };
       }
     }
+    // Socket echo may append the server row before send-ack reconcile runs (common on deep-link open).
+    if (pendingIdx >= 0) {
+      const { next, replacedOptimisticId } = removePendingOptimisticAt(prev, pendingIdx);
+      return {
+        messages: next,
+        removedOptimisticIds: replacedOptimisticId ? [replacedOptimisticId] : [],
+        replacedOptimisticIds: [],
+        action: 'remove-pending',
+      };
+    }
+    if (own) {
+      const fpIdx = findPendingOptimisticByFingerprint(prev, serverMessage, normalizedMessageChatType);
+      if (fpIdx >= 0) {
+        const { next, replacedOptimisticId } = removePendingOptimisticAt(prev, fpIdx);
+        return {
+          messages: next,
+          removedOptimisticIds: replacedOptimisticId ? [replacedOptimisticId] : [],
+          replacedOptimisticIds: [],
+          action: 'remove-pending',
+        };
+      }
+    }
     return {
       messages: [...prev],
       removedOptimisticIds: [],

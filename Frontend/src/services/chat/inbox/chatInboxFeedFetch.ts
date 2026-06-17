@@ -13,6 +13,7 @@ import { loadGlobalInvitablePlayers } from '@/utils/loadGlobalInvitablePlayers';
 import { usePlayersStore } from '@/store/playersStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
+import { buildBugsApiFilterParams } from '@/components/bugs/bugsFilterParams';
 import { useAuthStore } from '@/store/authStore';
 import { ensureCityGroupInUsersChatItems } from '@/utils/chatListCityGroup';
 import {
@@ -122,10 +123,7 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
     if (!user) return { chats: [], hasMore: false };
     try {
       const bf = useGameDetailsChromeStore.getState().bugsFilter;
-      const filterParams =
-        bf.status || bf.type || bf.createdByMe
-          ? { status: bf.status, type: bf.type, createdByMe: bf.createdByMe }
-          : undefined;
+      const filterParams = buildBugsApiFilterParams(bf);
       const [channelsRes, allDrafts] = await Promise.all([
         chatApi.getGroupChannels('bugs', page, filterParams),
         getMergedDrafts(),
@@ -194,10 +192,7 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
     const user = useAuthStore.getState().user;
     if (!user) return;
     const bf = useGameDetailsChromeStore.getState().bugsFilter;
-    const bugsFilterParams =
-      bf.status || bf.type || bf.createdByMe
-        ? { status: bf.status, type: bf.type, createdByMe: bf.createdByMe }
-        : undefined;
+    const bugsFilterParams = buildBugsApiFilterParams(bf);
 
     if (filter === 'users') {
       const playersStore = usePlayersStore.getState();

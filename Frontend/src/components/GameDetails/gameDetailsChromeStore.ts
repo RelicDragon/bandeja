@@ -10,7 +10,7 @@ export interface GameDetailsSportTagState {
 }
 
 export interface BugsFilterState {
-  status: BugStatus | null;
+  statuses: BugStatus[];
   type: BugType | null;
   createdByMe: boolean;
 }
@@ -58,7 +58,7 @@ export const useGameDetailsChromeStore = create<GameDetailsChromeState>((set) =>
   bugsButtonSlidingUp: false,
   bugsButtonSlidingDown: false,
   openBugModal: false,
-  bugsFilter: { status: null, type: null, createdByMe: false },
+  bugsFilter: { statuses: [], type: null, createdByMe: false },
   viewingGroupChannelId: null,
   viewingUserChatId: null,
   viewingGameChatId: null,

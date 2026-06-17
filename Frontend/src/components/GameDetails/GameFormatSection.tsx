@@ -283,7 +283,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
 
   return (
     <div className="space-y-4">
-      {showTemplatePicker ? (
+      {showTemplatePicker && canEdit ? (
         <CreateGameIntentPicker
           collapsible
           sport={sport}
@@ -312,7 +312,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
           onOpenFormatWizard={handleOpenWizard}
           formatWizardCustomizeLabel={templateFlow.formatWizardCustomizeLabel}
         />
-      ) : templateFlow.showFormatSection ? (
+      ) : showTemplatePicker || templateFlow.showFormatSection ? (
         renderFormatCard()
       ) : null}
 

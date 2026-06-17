@@ -117,7 +117,7 @@ Frontend/e2e/
 | G-09 | Primary sport gate | User without enabled sports | Redirect from `/` and `/find` to `/profile` |
 | G-10 | Bottom tab navigation | Tap each tab | Correct route + active state |
 | G-11 | Tab unread badges | Seed unread game + chat + market | Badges on My, Chats, Market |
-| G-12 | Pull to refresh | Pull on My / Find / Profile | List refreshes, no crash |
+| G-12 | Pull to refresh | Pull on My / Find / Profile | Spinner sits in blank gap below header (not over stories/content); list refreshes, no crash |
 | G-13 | Deep link game | Open `/games/:id` | Game details loads |
 | G-14 | Deep link game chat | Open `/games/:id/chat` | Game chat thread opens |
 | G-15 | Deep link user chat | Open `/user-chat/:id` | DM thread opens |
@@ -349,8 +349,10 @@ Frontend/e2e/
 | F-25 | Quick join from Find | Join button on card | Joined + toast + navigate |
 | F-26 | Join queue | Full game with queue | Added to queue toast |
 | F-27 | Join blocked no name | `@P5` join attempt | Name gate modal |
-| F-28 | Trainers list section | When training filter | Trainers visible |
+| F-28 | Trainers list section | Training filter on | Trainers carousel visible; hint “tap a trainer to filter” |
 | F-29 | Empty find results | Filters with no match | Empty state |
+| F-37 | Trainer without slots filters | Training filter → tap trainer chip body (no count badge) | “Trainings by …” banner; list empty with trainer-specific no-slots message |
+| F-38 | Trainer avatar opens profile | Training filter → tap trainer avatar (with or without slots) | Player card opens; trainer filter unchanged |
 | F-30 | Change city from header | Find header city button → `CityModal` | City changes; games refetch |
 | F-31 | Filter button active state | Apply any advanced filter | Filter button highlighted |
 | F-32 | Favorite trainer highlight | `@user with favoriteTrainerId` + training filter | Favorite trainer games emphasized on calendar |
@@ -557,6 +559,8 @@ Frontend/e2e/
 | GD-23 | Edit level range | Level modal | Min/max saved |
 | GD-24 | Edit max participants | Max participants modal | Capacity updated |
 | GD-25 | Edit game format | Format wizard (pre-results) | Format updated |
+| GD-95 | Format summary for read-only viewer | Open padel game pre-results as participant without format edit rights, or non-participant who can view the game | “What kind of game?” picker hidden; format card shows title + summary; tap help icon expands full format details; no pencil |
+| GD-96 | Format picker for editor | Open same game as owner/admin or `resultsByAnyone` playing participant | “What kind of game?” picker shown; can change template / format |
 | GD-82 | Fixed pairs roster section | Open padel game with fixed pairs enabled, 4+ even roster, no results | Standalone Fixed Pairs card below format; team slots editable; no toggle in format card |
 | GD-83 | Fixed pairs section hidden | Same game after results start, or `hasFixedTeams` off, or odd roster | Fixed Pairs card absent |
 | GD-77 | Non-default match format display | Game with padel singles or tennis doubles | Format section summary + expanded details show non-default match format |
@@ -576,7 +580,8 @@ Frontend/e2e/
 | GD-33 | Live scoring link | Open live board | `/games/:id/live` |
 | GD-34 | TV mode | `?tv=1` on live | TV layout/theme |
 | GD-35 | Broadcast view | `/games/:id/broadcast` | Broadcast layout |
-| GD-36 | Results share card | Share results | Image/link generated |
+| GD-36 | Results share card hidden without photo | Final results, no game photo yet | No share card or share CTA; Play again still available |
+| GD-36b | Results share card with photo | Add/generate photo, open Results tab | Share card preview shows photo; Share results card succeeds |
 | GD-37 | Game results artifact | Photo/story from results | Artifact flow |
 
 ### 9.5 Bets
@@ -693,7 +698,7 @@ Frontend/e2e/
 | CH-28 | Send image | Attach image | Image message renders |
 | CH-29 | Send video | Attach video | Upload + transcode state |
 | CH-30 | Fullscreen media | Tap image/video | Viewer opens |
-| CH-30a | Copy fullscreen image | Open image viewer → tap copy | Success toast; image in clipboard (native: paste in Photos/Messages) |
+| CH-30a | Copy fullscreen image | Open image viewer → tap copy | Desktop/native: “Image copied” toast; paste works. Mobile web without clipboard image API: share sheet opens with “Choose Copy or Save…” toast |
 | CH-31 | Send voice (if enabled) | Record voice | Audio message |
 | CH-32 | Create poll | Poll composer | Poll message |
 | CH-33 | Vote on poll | Select option | Vote count updates |
@@ -734,7 +739,7 @@ Frontend/e2e/
 | CH-50 | Desktop split persist | Select chat → resize splitter | Layout preserved |
 | CH-51 | Back from thread mobile | Back | Returns to list |
 | CH-52 | Create bug report | Bugs filter → add bug | `BugModal` → bug thread created |
-| CH-53 | Bugs filter panel | Filter by status/type/createdByMe | List updates |
+| CH-53 | Bugs filter panel | Panel closed by default; non-admin: Created by me on + all statuses; admin: Created by me off + open statuses only | List matches defaults; open panel → multi-select status chips → list updates |
 | CH-54 | Pin chat from list | Pin DM/group | Pinned ordering |
 | CH-55 | Mute chat from list | Mute thread | Mute persisted; notifications suppressed |
 | CH-56 | Unmute from thread | Thread settings unmute | Mute cleared |

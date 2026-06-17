@@ -92,7 +92,7 @@ export class PushReplyTokenService {
     };
   }
 
-  static async validate(replyToken: string, clientMutationId?: string | null): Promise<ValidatedPushReplyToken> {
+  static async validate(replyToken: string, _clientMutationId?: string | null): Promise<ValidatedPushReplyToken> {
     if (!replyToken || typeof replyToken !== 'string' || replyToken.length < 16) {
       recordPushReplyMetric('invalidToken');
       console.log('[push-reply] invalid-token reason=malformed');
@@ -117,14 +117,8 @@ export class PushReplyTokenService {
       throw new ApiError(401, 'Reply token expired', true, { code: 'push.replyTokenExpired' });
     }
 
-    const normalizedMutationId = normalizeChatClientMutationId(clientMutationId);
     if (row.usedAt) {
-      if (
-        normalizedMutationId &&
-        row.clientMutationId &&
-        normalizedMutationId === row.clientMutationId &&
-        row.resultMessageId
-      ) {
+      if (row.resultMessageId) {
         return {
           tokenId: row.id,
           recipientUserId: row.recipientUserId,
@@ -135,12 +129,12 @@ export class PushReplyTokenService {
           alreadyUsed: true,
         };
       }
-      recordPushReplyMetric('invalidToken');
-      console.log('[push-reply] invalid-token reason=reused', {
+      recordPushReplyMetric('error');
+      console.log('[push-reply] invalid-token reason=used-without-result', {
         chatContextType: row.chatContextType,
         recipientUserId: row.recipientUserId,
       });
-      throw new ApiError(403, 'Reply token already used', true, { code: 'push.replyTokenUsed' });
+      throw new ApiError(500, 'Reply idempotency state incomplete');
     }
 
     return {

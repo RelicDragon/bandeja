@@ -49,7 +49,7 @@ export function useChatListModel({
   const marketChatRole = (searchParams.get('role') === 'seller' ? 'seller' : 'buyer') as 'buyer' | 'seller';
   const [unreadFilterActive, setUnreadFilterActive] = useState(false);
   const [showBugModal, setShowBugModal] = useState(false);
-  const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(true);
+  const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(false);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const listBodyScrollRef = useRef<HTMLDivElement>(null);
 

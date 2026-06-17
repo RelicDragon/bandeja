@@ -111,6 +111,36 @@ describe('reconcileOptimisticMessages', () => {
     expect(result.messages).toHaveLength(1);
   });
 
+  it('send-ack after socket append: drops pending by optimisticIdHint when server row exists', () => {
+    const result = reconcileOptimisticMessages({
+      messages: [
+        server('srv-1') as ChatMessageWithStatus,
+        optimistic('opt-1', { _clientMutationId: 'cid-a' }),
+      ],
+      incoming: [server('srv-1', { clientMutationId: 'cid-a' })],
+      userId: USER,
+      optimisticIdHint: 'opt-1',
+    });
+    expect(result.actions).toEqual(['remove-pending']);
+    expect(result.removedOptimisticIds).toEqual(['opt-1']);
+    expect(result.messages).toHaveLength(1);
+    expect(result.messages[0]!.id).toBe('srv-1');
+  });
+
+  it('socket inbound after append: drops pending by fingerprint when server row exists', () => {
+    const result = reconcileOptimisticMessages({
+      messages: [
+        server('srv-1', { content: 'hi', clientMutationId: undefined }) as ChatMessageWithStatus,
+        optimistic('opt-1', { _clientMutationId: undefined, content: 'hi' }),
+      ],
+      incoming: [server('srv-1', { content: 'hi', clientMutationId: undefined })],
+      userId: USER,
+    });
+    expect(result.actions).toEqual(['remove-pending']);
+    expect(result.removedOptimisticIds).toEqual(['opt-1']);
+    expect(result.messages).toHaveLength(1);
+  });
+
   it('no-match append: adds server row when no pending match', () => {
     const result = reconcileOptimisticMessages({
       messages: [server('srv-1', { content: 'first' }) as ChatMessageWithStatus],

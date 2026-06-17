@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { getLastMessageTime } from '@/api/chat';
 import { deduplicateChats } from '@/utils/chatListHelpers';
 import { sortChatItems } from '@/utils/chatListSort';
@@ -9,6 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
+import { getDefaultBugsFilter } from '@/components/bugs/bugsFilterParams';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import {
@@ -83,6 +84,15 @@ export function useChatInbox(opts: UseChatInboxOptions) {
   const userId = user?.id;
   const isOnline = useNetworkStore((s) => s.isOnline);
   const bugsFilter = useGameDetailsChromeStore((s) => s.bugsFilter);
+  const setBugsFilter = useGameDetailsChromeStore((s) => s.setBugsFilter);
+  const bugsFilterDefaultsAppliedRef = useRef<string | null>(null);
+
+  useLayoutEffect(() => {
+    if (!userId) return;
+    if (bugsFilterDefaultsAppliedRef.current === userId) return;
+    bugsFilterDefaultsAppliedRef.current = userId;
+    setBugsFilter(getDefaultBugsFilter(Boolean(user?.isAdmin)));
+  }, [userId, user?.isAdmin, setBugsFilter]);
   const viewingGameChatId = useGameDetailsChromeStore((s) => s.viewingGameChatId);
   const fetchFavorites = useFavoritesStore((s) => s.fetchFavorites);
   const chatListDexieBump = useChatSyncStore((s) => s.chatListDexieBump);

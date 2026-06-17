@@ -126,7 +126,12 @@ export class ShellPage {
   }
 
   async simulatePullToRefresh() {
-    await this.page.evaluate(async () => {
+    await this.simulatePullGesture({ release: true });
+  }
+
+  async simulatePullGesture(options: { release?: boolean } = {}) {
+    const release = options.release ?? true;
+    await this.page.evaluate(async (shouldRelease) => {
       const startY = 120;
       const endY = 220;
       const target = document.body;
@@ -143,13 +148,31 @@ export class ShellPage {
           touches: [new Touch({ identifier: 1, target, clientX: 200, clientY: endY })],
         }),
       );
-      target.dispatchEvent(
-        new TouchEvent('touchend', {
-          ...touchInit,
-          changedTouches: [new Touch({ identifier: 1, target, clientX: 200, clientY: endY })],
-        }),
-      );
-    });
+      if (shouldRelease) {
+        target.dispatchEvent(
+          new TouchEvent('touchend', {
+            ...touchInit,
+            changedTouches: [new Touch({ identifier: 1, target, clientX: 200, clientY: endY })],
+          }),
+        );
+      }
+    }, release);
+  }
+
+  async expectRefreshIndicatorAboveStories() {
+    const indicator = this.page.getByTestId('refresh-indicator');
+    await expect(indicator).toBeVisible({ timeout: 5_000 });
+    const stories = this.page.getByRole('button', { name: /your story/i }).first();
+    await expect(stories).toBeVisible({ timeout: 5_000 });
+
+    const indicatorBox = await indicator.boundingBox();
+    const storiesBox = await stories.boundingBox();
+    expect(indicatorBox).not.toBeNull();
+    expect(storiesBox).not.toBeNull();
+    if (!indicatorBox || !storiesBox) return;
+
+    const indicatorBottom = indicatorBox.y + indicatorBox.height;
+    expect(indicatorBottom).toBeLessThanOrEqual(storiesBox.y + 2);
   }
 
   findTabButton() {

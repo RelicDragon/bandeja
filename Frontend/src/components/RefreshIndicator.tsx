@@ -1,4 +1,5 @@
 import { Loader2 } from 'lucide-react';
+import { getRefreshIndicatorTopCss } from '@/components/refreshIndicatorLayout';
 
 interface RefreshIndicatorProps {
   isRefreshing: boolean;
@@ -17,9 +18,10 @@ export const RefreshIndicator = ({
 
   return (
     <div
-      className="fixed left-1/2 -translate-x-1/2 z-50 pointer-events-none"
+      data-testid="refresh-indicator"
+      className="fixed left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 pointer-events-none"
       style={{
-        top: `calc(4rem + env(safe-area-inset-top) + ${Math.min(pullDistance * 0.6, 40)}px)`,
+        top: getRefreshIndicatorTopCss(pullDistance),
         opacity: Math.min(pullProgress * 2, 1),
       }}
     >

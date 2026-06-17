@@ -12,8 +12,18 @@ import type { PushChatContext } from './parsePushChatContext';
 import { PUSH_REPLY_MAX_CONTENT_LENGTH } from './pushNotificationConstants';
 import { markPushReplyContextAsRead } from './markPushReplyContextAsRead';
 import { syncAppBadgeAfterPushReply } from './syncAppBadgeAfterPushReply';
+import { buildPushReplyClientMutationId } from './pushReplyClientMutationId';
 
 const LOG_PREFIX = '[push-reply]';
+
+const inflightPushReplies = new Map<string, Promise<boolean>>();
+
+function inflightPushReplyKey(ctx: PushChatContext, content: string): string {
+  if (ctx.replyToken) {
+    return `token:${ctx.replyToken}`;
+  }
+  return `msg:${ctx.messageId}:${content}`;
+}
 
 export { PUSH_REPLY_MAX_CONTENT_LENGTH };
 
@@ -94,15 +104,12 @@ async function afterSuccessfulPushReply(ctx: PushChatContext, unreadBadgeCount?:
   await syncAppBadgeAfterPushReply(unreadBadgeCount);
 }
 
-export async function sendChatReplyFromPush(
+async function sendChatReplyFromPushOnce(
   ctx: PushChatContext,
-  content: string
+  trimmed: string
 ): Promise<boolean> {
-  const trimmed = truncatePushReplyContent(content.trim());
-  if (!trimmed) return false;
-
   const actionId = 'reply';
-  const clientMutationId = `push-reply:${ctx.messageId}:${Date.now()}`;
+  const clientMutationId = await buildPushReplyClientMutationId(ctx, trimmed);
 
   if (await isDeviceOffline()) {
     logReplyEvent(ctx.chatContextType, actionId, 'offline');
@@ -165,4 +172,26 @@ export async function sendChatReplyFromPush(
     await scheduleReplyFailedNotification();
     return false;
   }
+}
+
+export async function sendChatReplyFromPush(
+  ctx: PushChatContext,
+  content: string
+): Promise<boolean> {
+  const trimmed = truncatePushReplyContent(content.trim());
+  if (!trimmed) return false;
+
+  const key = inflightPushReplyKey(ctx, trimmed);
+  const existing = inflightPushReplies.get(key);
+  if (existing) {
+    return existing;
+  }
+
+  const promise = sendChatReplyFromPushOnce(ctx, trimmed).finally(() => {
+    if (inflightPushReplies.get(key) === promise) {
+      inflightPushReplies.delete(key);
+    }
+  });
+  inflightPushReplies.set(key, promise);
+  return promise;
 }

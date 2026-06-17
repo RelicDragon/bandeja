@@ -3,6 +3,7 @@
     "ourTrainers": "Наши тренеры",
     "selectToFilterHint": "Нажмите на тренера, чтобы фильтровать тренировки",
     "trainingsBy": "Тренировки от",
-    "clearTrainerFilter": "Сбросить фильтр тренера"
+    "clearTrainerFilter": "Сбросить фильтр тренера",
+    "noTrainingsByTrainer": "У {{name}} нет тренировок"
   }
 }

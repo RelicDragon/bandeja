@@ -6,11 +6,21 @@ test.describe('shell pull refresh @auth', () => {
   test('G-12 pull to refresh My', async ({ page }) => {
     const shell = new ShellPage(page);
     await shell.expectAuthenticatedHome();
+    await shell.simulatePullGesture({ release: false });
+    await shell.expectRefreshIndicatorAboveStories();
+    await page.evaluate(() => {
+      document.body.dispatchEvent(
+        new TouchEvent('touchend', {
+          bubbles: true,
+          cancelable: true,
+          changedTouches: [new Touch({ identifier: 1, target: document.body, clientX: 200, clientY: 220 })],
+        }),
+      );
+    });
     const refreshPromise = page.waitForResponse(
       (res) => res.url().includes('/api/') && res.request().method() === 'GET' && res.ok(),
       { timeout: 30_000 },
     );
-    await shell.simulatePullToRefresh();
     await refreshPromise.catch(() => undefined);
     await shell.expectBottomTabsVisible();
   });

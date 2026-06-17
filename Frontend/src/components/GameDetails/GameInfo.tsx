@@ -818,9 +818,9 @@ export const GameInfo = ({
               )}
             </div>
           ) : shouldShowTiming ? (
-            <div className="@container">
-              <div className="flex flex-col @[320px]:flex-row @[320px]:items-center gap-3 @[320px]:gap-0 w-fit max-w-full text-sm text-gray-700 dark:text-gray-300">
-                <div className="flex items-center gap-3 w-fit shrink-0">
+            <div className="pr-20 min-w-0">
+              <div className="flex flex-row flex-wrap items-center gap-x-4 gap-y-3 w-full max-w-full text-sm text-gray-700 dark:text-gray-300">
+                <div className="flex items-center gap-3">
                   <InfoIconChip>
                     {renderCalendarIcon(18, 'text-primary-600 dark:text-primary-400')}
                   </InfoIconChip>
@@ -841,7 +841,7 @@ export const GameInfo = ({
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 w-fit shrink-0 @[320px]:border-l @[320px]:border-gray-200 @[320px]:dark:border-gray-600 @[320px]:pl-4 @[320px]:ml-1">
+                <div className="flex items-center gap-3">
                   <InfoIconChip>
                     <TimePeriodClockIcon
                       startTime={game.startTime}

@@ -38,6 +38,8 @@ import {
   passesFindTierFilter,
 } from '@/utils/findDiscovery';
 import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
+import { usePlayersStore } from '@/store/playersStore';
+import { formatTrainerDisplayName, resolveFindEmptyMessage } from './findTrainerEmptyMessage';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
@@ -68,6 +70,7 @@ export const AvailableGamesSection = ({
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const players = usePlayersStore((state) => state.users);
   const findViewMode = useShellNavStore((s) => s.findViewMode);
   const requestFindGoToCurrent = useShellNavStore((s) => s.requestFindGoToCurrent);
   const setIsAnimating = useShellNavStore((s) => s.setIsAnimating);
@@ -686,15 +689,25 @@ export const AvailableGamesSection = ({
     </div>
   );
 
-  const emptyMessage = gameFilterVal
-    ? t('games.noGamesFound', { defaultValue: 'No games found' })
-    : trainingFilterVal
-      ? t('games.noTrainingFound', { defaultValue: 'No training found' })
-      : tournamentFilterVal
-        ? t('games.noTournamentFound', { defaultValue: 'No tournament found' })
-        : leaguesFilterVal
-          ? t('games.noLeaguesFound', { defaultValue: 'No leagues found' })
-          : t('games.noGamesFound');
+  const favoriteTrainerName = useMemo(() => {
+    if (!trainingFilterVal || !user?.favoriteTrainerId) return null;
+    const trainer = players[user.favoriteTrainerId];
+    if (!trainer) return null;
+    return formatTrainerDisplayName(trainer.firstName, trainer.lastName);
+  }, [trainingFilterVal, user?.favoriteTrainerId, players]);
+
+  const emptyMessage = useMemo(
+    () =>
+      resolveFindEmptyMessage({
+        gameFilterVal,
+        trainingFilterVal,
+        tournamentFilterVal,
+        leaguesFilterVal,
+        favoriteTrainerName,
+        t,
+      }),
+    [gameFilterVal, trainingFilterVal, tournamentFilterVal, leaguesFilterVal, favoriteTrainerName, t],
+  );
 
   const gamesList = (
     <AnimatedGameList
