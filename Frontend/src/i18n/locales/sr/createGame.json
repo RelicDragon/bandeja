@@ -113,6 +113,13 @@
         "false": "Does not include a social gathering after the training."
       }
     },
+    "participantsOnlyChat": {
+      "title": "Ćaskanje samo za učesnike",
+      "note": {
+        "false": "Posle kreiranja biće dostupno samo opšte ćaskanje.",
+        "true": "Ćaskanja za učesnike i organizatore biće kreirana pri kreiranju igre."
+      }
+    },
     "hasFixedTeams": {
       "note": {
         "false": "Tabela rezultata je individualna. Igrači će igrati sa bilo kim prema pravilima.",

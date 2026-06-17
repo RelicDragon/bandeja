@@ -12,6 +12,7 @@ interface GameSettingsSectionProps {
   resultsByAnyone: boolean;
   allowDirectJoin: boolean;
   afterGameGoToBar: boolean;
+  participantsOnlyChat: boolean;
   entityType: EntityType;
   onPublicChange: (checked: boolean) => void;
   onRatingGameChange: (checked: boolean) => void;
@@ -19,6 +20,7 @@ interface GameSettingsSectionProps {
   onResultsByAnyoneChange: (checked: boolean) => void;
   onAllowDirectJoinChange: (checked: boolean) => void;
   onAfterGameGoToBarChange: (checked: boolean) => void;
+  onParticipantsOnlyChatChange: (checked: boolean) => void;
   hideRatingGame?: boolean;
 }
 
@@ -29,6 +31,7 @@ export const GameSettingsSection = ({
   resultsByAnyone,
   allowDirectJoin,
   afterGameGoToBar,
+  participantsOnlyChat,
   entityType,
   onPublicChange,
   onRatingGameChange,
@@ -36,6 +39,7 @@ export const GameSettingsSection = ({
   onResultsByAnyoneChange,
   onAllowDirectJoinChange,
   onAfterGameGoToBarChange,
+  onParticipantsOnlyChatChange,
   hideRatingGame = false,
 }: GameSettingsSectionProps) => {
   const { t } = useTranslation();
@@ -172,6 +176,25 @@ export const GameSettingsSection = ({
                 {afterGameGoToBar 
                   ? (entityType === 'TRAINING' ? t('createGame.afterGameGoToBar.noteTraining.true') : t('createGame.afterGameGoToBar.note.true'))
                   : (entityType === 'TRAINING' ? t('createGame.afterGameGoToBar.noteTraining.false') : t('createGame.afterGameGoToBar.note.false'))}
+              </p>
+            )}
+          </div>
+        )}
+        {entityType !== 'BAR' && entityType !== 'TRAINING' && (
+          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
+                {t('createGame.participantsOnlyChat.title')}
+              </span>
+              <div className="flex-shrink-0">
+                <ToggleSwitch checked={participantsOnlyChat} onChange={onParticipantsOnlyChatChange} />
+              </div>
+            </div>
+            {showNotes && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {participantsOnlyChat
+                  ? t('createGame.participantsOnlyChat.note.true')
+                  : t('createGame.participantsOnlyChat.note.false')}
               </p>
             )}
           </div>

@@ -93,6 +93,7 @@ export function useThreadMessages({
   const [messages, setMessages] = useState<ChatMessageWithStatus[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isSwitchingChatType, setIsSwitchingChatType] = useState(false);
+  const isSwitchingChatTypeRef = useRef(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(true);
   const [page, setPage] = useState(1);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
@@ -231,23 +232,16 @@ export function useThreadMessages({
   }, []);
 
   const teardownForChatTypeSwitch = useCallback(() => {
-    applyThreadTeardown();
+    openPaintCommittedRef.current = false;
+    openScrollReadyKeyRef.current = null;
+    setInitialScroll(undefined);
     setMessagesTagged('thread-reset', []);
     messagesRef.current = [];
-    beginThreadOpenSettling();
+    isSwitchingChatTypeRef.current = true;
     setIsLoadingMessages(true);
-    setIsInitialLoad(true);
     setPage(1);
     setHasMoreMessages(false);
-  }, [
-    applyThreadTeardown,
-    setMessagesTagged,
-    beginThreadOpenSettling,
-    setIsLoadingMessages,
-    setIsInitialLoad,
-    setPage,
-    setHasMoreMessages,
-  ]);
+  }, [setMessagesTagged, setIsLoadingMessages, setPage, setHasMoreMessages]);
 
   const commitChatTypeSwitchPaint = useCallback(
     (merged: ChatMessageWithStatus[], targetChatType: ChatType) => {
@@ -258,6 +252,7 @@ export function useThreadMessages({
         contextType === 'GAME' ? targetChatType : undefined
       );
       if (!threadKey) return;
+      seededThreadKeyRef.current = threadKey;
       const scrollPlan = paintScrollFor(merged, undefined);
       commitOpenThreadPaint(
         { messages: merged, scroll: scrollPlan.scroll, scrollRow: scrollPlan.scrollRow },
@@ -265,9 +260,16 @@ export function useThreadMessages({
         'chat-type-switch',
         scrollPlan
       );
+      endThreadOpenSettling();
     },
-    [id, contextType, paintScrollFor, commitOpenThreadPaint]
+    [id, contextType, paintScrollFor, commitOpenThreadPaint, endThreadOpenSettling]
   );
+
+  const finishChatTypeSwitch = useCallback(() => {
+    isSwitchingChatTypeRef.current = false;
+    setIsSwitchingChatType(false);
+    endThreadOpenSettling();
+  }, [endThreadOpenSettling, setIsSwitchingChatType]);
 
   /** ThreadSession layout seed: warm L1 in messagesRef; first visible paint is bootstrap commit. */
   useLayoutEffect(() => {
@@ -306,6 +308,10 @@ export function useThreadMessages({
         void persistChatMessagesFromApi(tabMissed).catch(() => {});
         warmCache = mergeMissedIntoWarmRef(warmCache, tabMissed) as ChatMessageWithStatus[];
       }
+    }
+
+    if (isSwitchingChatTypeRef.current) {
+      return;
     }
 
     const seedPlan = planLayoutSeed({
@@ -756,6 +762,7 @@ export function useThreadMessages({
     openPaintCommittedRef,
     teardownForChatTypeSwitch,
     commitChatTypeSwitchPaint,
+    finishChatTypeSwitch,
     pinAfterSocketMergeIfAllowed,
     setMessages,
     messagesRef,

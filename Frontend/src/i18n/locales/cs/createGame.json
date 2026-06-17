@@ -114,6 +114,13 @@
         "true": "Obsahuje společenské posezení po tréninku."
       }
     },
+    "participantsOnlyChat": {
+      "title": "Chat pouze pro účastníky",
+      "note": {
+        "false": "Po vytvoření bude k dispozici pouze obecný chat.",
+        "true": "Po vytvoření hry budou vytvořeny chaty pro účastníky a organizátory."
+      }
+    },
     "hasFixedTeams": {
       "note": {
         "false": "Tabulka je individuální. Hráči budou hrát s kýmkoli dle pravidel.",

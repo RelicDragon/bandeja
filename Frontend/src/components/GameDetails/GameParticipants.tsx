@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Card, Button, PlayerAvatar, InvitesList } from '@/components';
 import { Game, Invite, InviteStatus, JoinQueue } from '@/types';
-import { Users, UserPlus, Sliders, CheckCircle, XCircle, Edit3, LayoutGrid, List } from 'lucide-react';
+import { UserPlus, CheckCircle, XCircle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { AnimatePresence, motion } from 'framer-motion';
 import { PlayersCarousel } from './PlayersCarousel';
 import { getParticipantsViewMode, setParticipantsViewMode } from '@/utils/participantsViewStorage';
 import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
 import { parseGameSport } from '@/utils/gameSport';
-import { ParticipantSetupTags } from './ParticipantSetupTags';
+import { ParticipantsSectionHeader } from './ParticipantsSectionHeader';
+import { ParticipantsActionBar } from './ParticipantsActionBar';
 
 interface GameParticipantsProps {
   game: Game;
@@ -102,54 +104,20 @@ export const GameParticipants = ({
   const hasUnoccupiedSlots = game.entityType === 'BAR' || !isFull;
   const canEditParticipantsSetup =
     canViewSettings && game.entityType !== 'BAR' && !!onEditMaxParticipants;
+  const playingCount = game.participants.filter((p) => p.status === 'PLAYING').length;
 
   return (
-    <Card>
-      <div className="flex items-start gap-2 mb-4">
-        <Users size={18} className="text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-2 gap-y-1.5">
-          <h2 className="section-title">
-            {typeof game.minLevel === 'number' && typeof game.maxLevel === 'number' && game.entityType !== 'BAR' ? `${t('games.level')} ${game.minLevel.toFixed(1)}-${game.maxLevel.toFixed(1)}` : t('games.participants')}
-          </h2>
-          <ParticipantSetupTags
-            game={game}
-            canEdit={canEditParticipantsSetup}
-            onEditMaxParticipants={onEditMaxParticipants}
-          />
-        </div>
-        <div className="ml-auto shrink-0 flex items-center gap-2">
-          <button
-            onClick={toggleViewMode}
-            className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 active:scale-90"
-            title={viewMode === 'carousel' ? t('games.listView', { defaultValue: 'List view' }) : t('games.carouselView', { defaultValue: 'Carousel view' })}
-          >
-            {viewMode === 'carousel' ? (
-              <List size={18} className="text-gray-600 dark:text-gray-400" />
-            ) : (
-              <LayoutGrid size={18} className="text-gray-600 dark:text-gray-400" />
-            )}
-          </button>
-          {canViewSettings && game.entityType !== 'BAR' && onEditMaxParticipants ? (
-            <Button
-              onClick={onEditMaxParticipants}
-              variant="primary"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <Edit3 size={16} />
-              {`${game.participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`}
-            </Button>
-          ) : (
-            <span className="text-gray-600 dark:text-gray-400">
-              {game.entityType === 'BAR' 
-                ? game.participants.filter(p => p.status === 'PLAYING').length
-                : `${game.participants.filter(p => p.status === 'PLAYING').length} / ${game.maxParticipants}`
-              }
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="space-y-4">
+    <Card className="overflow-hidden p-3 sm:p-4">
+      <ParticipantsSectionHeader
+        game={game}
+        playingCount={playingCount}
+        maxCount={game.maxParticipants}
+        viewMode={viewMode}
+        canEditParticipantsSetup={canEditParticipantsSetup}
+        onToggleViewMode={toggleViewMode}
+        onEditMaxParticipants={onEditMaxParticipants}
+      />
+      <div className="space-y-2">
         {!isUnauthorized && myInvites.length > 0 && (
           <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50/70 dark:from-blue-900/25 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl shadow-sm shadow-blue-500/5">
             {myInvites.map((invite) => (
@@ -307,9 +275,17 @@ export const GameParticipants = ({
 
           const carousel1Gender = isMix ? 'MALE' : isMen ? 'MALE' : isWomen ? 'FEMALE' : undefined;
 
-          if (viewMode === 'list') {
-            return (
-              <div className="space-y-2">
+          return (
+            <AnimatePresence mode="wait">
+              {viewMode === 'list' ? (
+              <motion.div
+                key="participants-list"
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-3"
+              >
                 {isMix && (
                   <>
                     <div>
@@ -318,9 +294,12 @@ export const GameParticipants = ({
                       </h3>
                       <div className="space-y-1">
                         {carousel1Participants.map((participant) => (
-                          <div
+                          <motion.div
                             key={participant.userId}
-                            className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-xl transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/70"
+                            layout
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex items-center gap-3 rounded-xl border border-transparent bg-gray-50/90 p-2.5 transition-colors hover:border-gray-200 hover:bg-gray-100 dark:bg-gray-800/70 dark:hover:border-gray-700 dark:hover:bg-gray-800"
                           >
                             <PlayerAvatar
                               player={participant.user}
@@ -342,7 +321,7 @@ export const GameParticipants = ({
                                 </p>
                               )}
                             </div>
-                          </div>
+                          </motion.div>
                         ))}
                         {carousel1EmptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                           <button
@@ -363,9 +342,12 @@ export const GameParticipants = ({
                       </h3>
                       <div className="space-y-1">
                         {carousel2Participants.map((participant) => (
-                          <div
+                          <motion.div
                             key={participant.userId}
-                            className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-xl transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/70"
+                            layout
+                            initial={{ opacity: 0, x: -8 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex items-center gap-3 rounded-xl border border-transparent bg-gray-50/90 p-2.5 transition-colors hover:border-gray-200 hover:bg-gray-100 dark:bg-gray-800/70 dark:hover:border-gray-700 dark:hover:bg-gray-800"
                           >
                             <PlayerAvatar
                               player={participant.user}
@@ -387,7 +369,7 @@ export const GameParticipants = ({
                                 </p>
                               )}
                             </div>
-                          </div>
+                          </motion.div>
                         ))}
                         {carousel2EmptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                           <button
@@ -407,9 +389,12 @@ export const GameParticipants = ({
                 {!isMix && (
                   <div className="space-y-1">
                     {playingParticipants.map((participant) => (
-                      <div
+                      <motion.div
                         key={participant.userId}
-                        className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-gray-800 rounded-xl transition-colors duration-200 hover:bg-gray-100 dark:hover:bg-gray-700/70"
+                        layout
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center gap-3 rounded-xl border border-transparent bg-gray-50/90 p-2.5 transition-colors hover:border-gray-200 hover:bg-gray-100 dark:bg-gray-800/70 dark:hover:border-gray-700 dark:hover:bg-gray-800"
                       >
                         <PlayerAvatar
                           player={participant.user}
@@ -431,7 +416,7 @@ export const GameParticipants = ({
                             </p>
                           )}
                         </div>
-                      </div>
+                      </motion.div>
                     ))}
                     {emptySlots > 0 && !isUnauthorized && canInvitePlayers && (
                       <button
@@ -446,12 +431,16 @@ export const GameParticipants = ({
                     )}
                   </div>
                 )}
-              </div>
-            );
-          }
-
-          return (
-            <div className={isMix ? 'space-y-4' : ''}>
+              </motion.div>
+              ) : (
+            <motion.div
+              key="participants-carousel"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -6 }}
+              transition={{ duration: 0.2 }}
+              className={isMix ? 'space-y-3' : ''}
+            >
               <PlayersCarousel
                 participants={carousel1Participants}
                 emptySlots={carousel1EmptySlots}
@@ -478,48 +467,17 @@ export const GameParticipants = ({
                   onShowPlayerList={!isUnauthorized ? onShowPlayerList : undefined}
                 />
               )}
-            </div>
+            </motion.div>
+              )}
+            </AnimatePresence>
           );
         })()}
-        {(() => {
-          const showInviteButton = !isUnauthorized && canInvitePlayers;
-          const showManageButton = !isUnauthorized && isOwner && canViewSettings;
-          const buttonCount = (showInviteButton ? 1 : 0) + (showManageButton ? 1 : 0);
-          
-          if (buttonCount === 0) return null;
-          
-          return (
-            <div className="-mt-2 flex gap-3">
-              {showInviteButton && (
-                <Button
-                  onClick={() => onShowPlayerList()}
-                  variant="outline"
-                  size="md"
-                  className="flex-1 h-10 rounded-xl flex items-center justify-center"
-                >
-                  <UserPlus size={18} />
-                  <span className={`ml-2 ${buttonCount === 2 ? 'hidden sm:inline' : 'inline'}`}>
-                    {t('games.invite')}
-                  </span>
-                </Button>
-              )}
-              
-              {showManageButton && (
-                <Button
-                  onClick={onShowManageUsers}
-                  variant="outline"
-                  size="md"
-                  className="flex-1 h-10 rounded-xl flex items-center justify-center"
-                >
-                  <Sliders size={18} />
-                  <span className={`ml-2 ${buttonCount === 2 ? 'hidden sm:inline' : 'inline'}`}>
-                    {t('games.players')}
-                  </span>
-                </Button>
-              )}
-            </div>
-          );
-        })()}
+        <ParticipantsActionBar
+          showInviteButton={!isUnauthorized && canInvitePlayers}
+          showManageButton={!isUnauthorized && isOwner && canViewSettings}
+          onInvite={() => onShowPlayerList()}
+          onManage={onShowManageUsers}
+        />
         {!isUnauthorized && gameInvites.length > 0 && (
           <div className="mt-4">
             <InvitesList

@@ -111,7 +111,7 @@ export const GameChatMessagesPane: React.FC = () => {
       userChatUser1Id={contextType === 'USER' && userChat ? userChat.user1Id : undefined}
       userChatUser2Id={contextType === 'USER' && userChat ? userChat.user2Id : undefined}
       onChatRequestRespond={handleChatRequestRespond}
-      hasContextPanel={!panels.showParticipantsPage && !panels.showItemPage}
+      hasContextPanel={derived.isBugChat || derived.isItemChat}
       pinnedMessageIds={pinnedBarIds}
       onPin={derived.canWriteChat ? handlePinMessage : undefined}
       onUnpin={derived.canWriteChat ? handleUnpinMessage : undefined}

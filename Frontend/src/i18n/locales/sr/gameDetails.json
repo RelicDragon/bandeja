@@ -649,6 +649,16 @@
       "openGame": "Otvori utakmicu",
       "mySchedule": "Moj raspored"
     },
+    "participantsOnlyChat": {
+      "title": "Ćaskanje samo za učesnike",
+      "description": "Kreirajte odvojena ćaskanja za igrače i organizatore.",
+      "enableButton": "Kreiraj ćaskanja za učesnike",
+      "confirmTitle": "Kreirati ćaskanja za učesnike?",
+      "confirmMessage": "Biće kreirana ćaskanja {{participantsChat}} i {{adminsChat}} za ovu igru.",
+      "confirmButton": "Kreiraj ćaskanja",
+      "successToast": "Ćaskanja za učesnike su kreirana",
+      "errorToast": "Nije uspelo kreiranje ćaskanja za učesnike"
+    },
     "photoPickFailed": "Nije uspelo biranje fotografija",
     "deleteGameGame": "Delete Game",
     "deleteGameTournament": "Delete Tournament",

@@ -655,6 +655,16 @@
       "openGame": "Otevřít zápas",
       "mySchedule": "Můj rozvrh"
     },
+    "participantsOnlyChat": {
+      "title": "Chat pouze pro účastníky",
+      "description": "Vytvořte samostatné chaty pro hrající účastníky a organizátory.",
+      "enableButton": "Vytvořit chaty účastníků",
+      "confirmTitle": "Vytvořit chaty účastníků?",
+      "confirmMessage": "Tím se vytvoří chaty {{participantsChat}} a {{adminsChat}} pro tuto hru.",
+      "confirmButton": "Vytvořit chaty",
+      "successToast": "Chaty účastníků byly vytvořeny",
+      "errorToast": "Nepodařilo se vytvořit chaty účastníků"
+    },
     "photoPickFailed": "Nepodařilo se vybrat fotky",
     "bracketPreviewUnassignedLabel": "Unassigned teams",
     "playoffWizardStep": "Step {{current}} of {{total}}",

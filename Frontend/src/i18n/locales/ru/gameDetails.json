@@ -670,6 +670,16 @@
       "openGame": "Открыть игру",
       "mySchedule": "Моё расписание"
     },
+    "participantsOnlyChat": {
+      "title": "Чат только для участников",
+      "description": "Создайте отдельные чаты для играющих участников и организаторов.",
+      "enableButton": "Создать чаты участников",
+      "confirmTitle": "Создать чаты участников?",
+      "confirmMessage": "Будут созданы чаты «{{participantsChat}}» и «{{adminsChat}}» для этой игры.",
+      "confirmButton": "Создать чаты",
+      "successToast": "Чаты участников созданы",
+      "errorToast": "Не удалось создать чаты участников"
+    },
     "photoPickFailed": "Не удалось выбрать фото",
     "bracketPreviewUnassignedLabel": "Unassigned teams",
     "playoffWizardStep": "Step {{current}} of {{total}}"

@@ -14,6 +14,16 @@
     "settingsUpdated": "Settings updated successfully",
     "scrollMoreBelow": "More content below",
     "scrollMoreAbove": "More content above",
+    "participantsOnlyChat": {
+      "title": "Participants-only chat",
+      "description": "Create separate chats for playing participants and organizers.",
+      "enableButton": "Create participant chats",
+      "confirmTitle": "Create participant chats?",
+      "confirmMessage": "This will create the {{participantsChat}} and {{adminsChat}} chats for this game.",
+      "confirmButton": "Create chats",
+      "successToast": "Participant chats created",
+      "errorToast": "Could not create participant chats"
+    },
     "photoPickFailed": "Failed to pick photos",
     "editTab": {
       "general": "General",

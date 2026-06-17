@@ -342,6 +342,8 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       prevThreadScrollKeyRef.current = threadScrollKey;
       restoredScrollThreadRef.current = null;
       lastOpenPaintGenerationRef.current = 0;
+      const container = messagesContainerRef.current;
+      if (container) container.scrollTop = 0;
     }
     if (openPaintGeneration !== lastOpenPaintGenerationRef.current) {
       lastOpenPaintGenerationRef.current = openPaintGeneration;
@@ -714,7 +716,8 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   const showEmpty = messages.length === 0 && !isMessagesPending;
   const showMessages = messages.length > 0;
   const panelTransition = reduceMotion ? { duration: 0 } : CHAT_PANEL_TRANSITION;
-  const heightTransition = reduceMotion ? { duration: 0 } : CHAT_LIST_HEIGHT_TRANSITION;
+  const heightTransition =
+    reduceMotion || threadLayoutSettling ? { duration: 0 } : CHAT_LIST_HEIGHT_TRANSITION;
 
   const emptyStateContent = (
     <div className="text-center">

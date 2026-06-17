@@ -248,6 +248,13 @@ router.post(
   gameController.sendResultsToTelegram
 );
 
+router.post(
+  '/:id/enable-participant-chats',
+  authenticate,
+  canEditGame,
+  gameController.enableParticipantChats
+);
+
 router.patch(
   '/:id/reset-telegram-results-sent',
   authenticate,

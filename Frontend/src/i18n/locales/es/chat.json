@@ -180,6 +180,8 @@
       "USER_CHAT_REQUEST": "{{requesterName}} solicita chatear contigo",
       "USER_CHAT_ACCEPTED": "{{userName}} aceptó la solicitud de chat",
       "USER_CHAT_DECLINED": "{{userName}} rechazó la solicitud de chat",
+      "PARTICIPANTS_ONLY_CHAT_CREATED": "Se ha creado el chat solo para participantes",
+      "ADMINS_CHAT_CREATED": "Se ha creado el chat de organizadores",
       "actions": {
         "joined": "se unió al juego",
         "left": "abandonó el juego"

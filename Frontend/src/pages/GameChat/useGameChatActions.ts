@@ -52,6 +52,7 @@ export interface UseGameChatActionsParams {
   setIsSwitchingChatType: (v: boolean) => void;
   teardownForChatTypeSwitch: () => void;
   commitChatTypeSwitchPaint: (merged: ChatMessageWithStatus[], targetChatType: ChatType) => void;
+  finishChatTypeSwitch: () => void;
   handleMarkFailed: (tempId: string) => void;
   handleNewMessageRef: React.MutableRefObject<(message: import('@/api/chat').ChatMessage) => string | void>;
   scrollToBottom: () => void;
@@ -88,6 +89,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
     setIsSwitchingChatType,
     teardownForChatTypeSwitch,
     commitChatTypeSwitchPaint,
+    finishChatTypeSwitch,
     handleMarkFailed,
     handleNewMessageRef,
     scrollToBottom,
@@ -395,7 +397,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
             immediate: true,
           });
         }
-        setIsSwitchingChatType(false);
+        finishChatTypeSwitch();
       }
     },
     [
@@ -415,6 +417,7 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       handleNewMessageRef,
       teardownForChatTypeSwitch,
       commitChatTypeSwitchPaint,
+      finishChatTypeSwitch,
     ]
   );
 

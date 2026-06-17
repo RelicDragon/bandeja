@@ -74,6 +74,24 @@ export function shouldSkipLayoutSeed(
   return threadKey === seededThreadKey && !forceFreshOpen;
 }
 
+/** Same game thread, different chat type — explicit switch owns teardown/paint. */
+export function isGameChatTypeOnlyChange(
+  previousThreadKey: ThreadSessionKey | null,
+  threadKey: ThreadSessionKey
+): boolean {
+  if (!previousThreadKey || previousThreadKey === threadKey) return false;
+  const prev = previousThreadKey.split(':');
+  const next = threadKey.split(':');
+  return (
+    prev.length === 3 &&
+    next.length === 3 &&
+    prev[0] === 'GAME' &&
+    next[0] === 'GAME' &&
+    prev[1] === next[1] &&
+    prev[2] !== next[2]
+  );
+}
+
 export function planThreadTeardown(): ThreadTeardownPlan {
   return {
     seededThreadKey: null,
@@ -94,6 +112,17 @@ export function planLayoutSeed(input: {
 }): LayoutSeedPlan {
   const skip = shouldSkipLayoutSeed(input.threadKey, input.seededThreadKey, input.forceFreshOpen);
   if (skip) {
+    return {
+      threadKey: input.threadKey,
+      clearVisible: false,
+      warmRefMessages: [],
+      invalidateOpen: false,
+      deleteWarmCache: false,
+      flushOnUnmountKey: null,
+    };
+  }
+
+  if (isGameChatTypeOnlyChange(input.previousThreadKey, input.threadKey)) {
     return {
       threadKey: input.threadKey,
       clearVisible: false,

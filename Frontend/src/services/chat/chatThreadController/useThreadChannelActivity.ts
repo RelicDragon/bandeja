@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { chatApi, type ChatMessage } from '@/api/chat';
 import {
-  chatMessagesHaveUserSender,
+  chatMessageActivatesGameChannel,
   EMPTY_GAME_CHAT_CHANNEL_ACTIVITY,
+  gameChatChannelIsActive,
   type GameChatChannelActivity,
 } from '@/utils/gameChatChannelActivity';
 import { getAvailableGameChatTypes } from '@/utils/chatType';
-import type { ChatType } from '@/types';
 import type { Game } from '@/types';
 
 export function useThreadChannelActivity(game: Game | null, userId: string | undefined) {
@@ -41,18 +41,18 @@ export function useThreadChannelActivity(game: Game | null, userId: string | und
         toProbe.map(async (chatType) => {
           try {
             const messages = await chatApi.getGameMessages(gameId, 1, 50, chatType);
-            return { chatType, hasUser: chatMessagesHaveUserSender(messages) };
+            return { chatType, active: gameChatChannelIsActive(messages, chatType) };
           } catch {
-            return { chatType, hasUser: false };
+            return { chatType, active: false };
           }
         })
       );
       if (cancelled || ac.signal.aborted) return;
 
       const next: GameChatChannelActivity = { ...EMPTY_GAME_CHAT_CHANNEL_ACTIVITY };
-      for (const { chatType, hasUser } of results) {
-        if (chatType === 'PRIVATE') next.privateHasUserMessages = hasUser;
-        if (chatType === 'ADMINS') next.adminsHasUserMessages = hasUser;
+      for (const { chatType, active } of results) {
+        if (chatType === 'PRIVATE') next.privateHasUserMessages = active;
+        if (chatType === 'ADMINS') next.adminsHasUserMessages = active;
       }
       setActivity(next);
       setIsResolved(true);
@@ -68,14 +68,13 @@ export function useThreadChannelActivity(game: Game | null, userId: string | und
   activityRef.current = activity;
 
   const noteUserMessage = useCallback((message: ChatMessage) => {
-    if (!message.senderId) return;
-    const chatType = message.chatType as ChatType | undefined;
-    if (chatType !== 'PRIVATE' && chatType !== 'ADMINS') return;
-    if (chatType === 'PRIVATE' && activityRef.current.privateHasUserMessages) return;
-    if (chatType === 'ADMINS' && activityRef.current.adminsHasUserMessages) return;
+    const activated = chatMessageActivatesGameChannel(message);
+    if (!activated) return;
+    if (activated === 'PRIVATE' && activityRef.current.privateHasUserMessages) return;
+    if (activated === 'ADMINS' && activityRef.current.adminsHasUserMessages) return;
     setActivity((prev) => ({
-      privateHasUserMessages: prev.privateHasUserMessages || chatType === 'PRIVATE',
-      adminsHasUserMessages: prev.adminsHasUserMessages || chatType === 'ADMINS',
+      privateHasUserMessages: prev.privateHasUserMessages || activated === 'PRIVATE',
+      adminsHasUserMessages: prev.adminsHasUserMessages || activated === 'ADMINS',
     }));
   }, []);
 

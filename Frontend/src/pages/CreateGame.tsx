@@ -159,6 +159,7 @@ export const CreateGame = ({
   const [resultsByAnyone, setResultsByAnyone] = useState<boolean>(initialGameData?.resultsByAnyone ?? false);
   const [allowDirectJoin, setAllowDirectJoin] = useState<boolean>(initialGameData?.allowDirectJoin ?? false);
   const [afterGameGoToBar, setAfterGameGoToBar] = useState<boolean>(initialGameData?.afterGameGoToBar ?? false);
+  const [participantsOnlyChat, setParticipantsOnlyChat] = useState(false);
   const enabledSports = useMemo(() => listCreateFlowSports(user), [user]);
   const showTemplatePicker = showGameFormatTemplatePicker(entityType, selectedSport);
   const gameFormat = useGameFormat(
@@ -1128,6 +1129,14 @@ export const CreateGame = ({
         }
       }
 
+      if (participantsOnlyChat && gameResponse.data.id) {
+        try {
+          await gamesApi.enableParticipantChats(gameResponse.data.id);
+        } catch (chatError) {
+          console.error('Failed to enable participant chats:', chatError);
+        }
+      }
+
       const created = gameResponse.data;
       if (evaluatePostCreate(created, overrides) === 'markCourtPrompt') {
         if (showCreateOverlay) setCreateOverlayPhase(null);
@@ -1577,6 +1586,7 @@ export const CreateGame = ({
           resultsByAnyone={resultsByAnyone}
           allowDirectJoin={allowDirectJoin}
           afterGameGoToBar={afterGameGoToBar}
+          participantsOnlyChat={participantsOnlyChat}
           entityType={entityType}
           onPublicChange={setIsPublic}
           onRatingGameChange={setIsRatingGame}
@@ -1584,6 +1594,7 @@ export const CreateGame = ({
           onResultsByAnyoneChange={setResultsByAnyone}
           onAllowDirectJoinChange={setAllowDirectJoin}
           onAfterGameGoToBarChange={setAfterGameGoToBar}
+          onParticipantsOnlyChatChange={setParticipantsOnlyChat}
           hideRatingGame={showTemplatePicker}
         />
         </div>

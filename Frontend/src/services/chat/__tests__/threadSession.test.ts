@@ -10,6 +10,7 @@ import {
   resolvePaintScrollPlan,
   resolveSessionScroll,
   resolveThreadKey,
+  isGameChatTypeOnlyChange,
   shouldForceFreshOpen,
   shouldSkipLayoutSeed,
 } from '../threadSession';
@@ -71,6 +72,20 @@ describe('planLayoutSeed — open/bootstrap', () => {
     });
     expect(plan.clearVisible).toBe(false);
     expect(shouldSkipLayoutSeed('GAME:g1:PUBLIC', 'GAME:g1:PUBLIC', false)).toBe(true);
+  });
+
+  it('skips re-seed on game chat type switch (explicit handler owns paint)', () => {
+    expect(isGameChatTypeOnlyChange('GAME:g1:PUBLIC', 'GAME:g1:PRIVATE')).toBe(true);
+    expect(isGameChatTypeOnlyChange('GAME:g1:PUBLIC', 'GAME:g2:PUBLIC')).toBe(false);
+    expect(isGameChatTypeOnlyChange(null, 'GAME:g1:PRIVATE')).toBe(false);
+    const plan = planLayoutSeed({
+      threadKey: 'GAME:g1:PRIVATE',
+      previousThreadKey: 'GAME:g1:PUBLIC',
+      seededThreadKey: 'GAME:g1:PUBLIC',
+      forceFreshOpen: false,
+      warmCache: [msg('pr1', 'PRIVATE')],
+    });
+    expect(plan.clearVisible).toBe(false);
   });
 
   it('re-seeds on force reload for same key', () => {

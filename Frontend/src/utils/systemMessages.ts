@@ -22,7 +22,9 @@ export enum SystemMessageType {
   GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED',
   USER_CHAT_REQUEST = 'USER_CHAT_REQUEST',
   USER_CHAT_ACCEPTED = 'USER_CHAT_ACCEPTED',
-  USER_CHAT_DECLINED = 'USER_CHAT_DECLINED'
+  USER_CHAT_DECLINED = 'USER_CHAT_DECLINED',
+  PARTICIPANTS_ONLY_CHAT_CREATED = 'PARTICIPANTS_ONLY_CHAT_CREATED',
+  ADMINS_CHAT_CREATED = 'ADMINS_CHAT_CREATED',
 }
 
 export interface SystemMessageData {
@@ -52,7 +54,9 @@ const FALLBACK_TEMPLATES: Record<SystemMessageType, string> = {
   [SystemMessageType.GAME_DATE_TIME_CHANGED]: 'Game date/time changed to {{dateTime}}',
   [SystemMessageType.USER_CHAT_REQUEST]: '{{requesterName}} requests to chat with you',
   [SystemMessageType.USER_CHAT_ACCEPTED]: '{{userName}} accepted the chat request',
-  [SystemMessageType.USER_CHAT_DECLINED]: '{{userName}} declined the chat request'
+  [SystemMessageType.USER_CHAT_DECLINED]: '{{userName}} declined the chat request',
+  [SystemMessageType.PARTICIPANTS_ONLY_CHAT_CREATED]: 'Participants-only chat has been created',
+  [SystemMessageType.ADMINS_CHAT_CREATED]: 'Admins chat has been created',
 };
 
 const interpolateTemplate = (template: string, variables: Record<string, string>): string => {

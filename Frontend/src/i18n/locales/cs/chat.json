@@ -180,6 +180,8 @@
       "USER_CHAT_REQUEST": "{{requesterName}} žádá o chat s vámi",
       "USER_CHAT_ACCEPTED": "{{userName}} přijal žádost o chat",
       "USER_CHAT_DECLINED": "{{userName}} odmítl žádost o chat",
+      "PARTICIPANTS_ONLY_CHAT_CREATED": "Chat pouze pro účastníky byl vytvořen",
+      "ADMINS_CHAT_CREATED": "Chat organizátorů byl vytvořen",
       "actions": {
         "joined": "se připojil k zápasu",
         "left": "opustil zápas"

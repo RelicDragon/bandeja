@@ -184,6 +184,7 @@ export function useThreadViewController({
     setIsSwitchingChatType: thread.setIsSwitchingChatType,
     teardownForChatTypeSwitch: thread.teardownForChatTypeSwitch,
     commitChatTypeSwitchPaint: thread.commitChatTypeSwitchPaint,
+    finishChatTypeSwitch: thread.finishChatTypeSwitch,
     handleMarkFailed: thread.handleMarkFailed,
     handleNewMessageRef: thread.handleNewMessageRef,
     scrollToBottom: thread.scrollToBottom,

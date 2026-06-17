@@ -20,7 +20,7 @@ export const VoiceRecordButton: React.FC<VoiceRecordButtonProps> = ({
     whileTap={{ scale: 0.94 }}
     onClick={onClick}
     disabled={disabled}
-    className="absolute bottom-0.5 right-[2px] w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed z-10 shadow-[0_3px_14px_rgba(59,130,246,0.75),0_8px_36px_rgba(37,99,235,0.55)]"
+    className="message-input-action-btn absolute bottom-0.5 right-[2px] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white disabled:cursor-not-allowed disabled:opacity-50"
     title={title}
     aria-label={ariaLabel}
   >

@@ -22,6 +22,7 @@ import { addToNativeCalendar } from '@/utils/calendar';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
 import { InfoIconChip } from './InfoIconChip';
+import { GameInfoUserNote } from './GameInfoUserNote';
 import { Share } from '@capacitor/share';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -1130,6 +1131,8 @@ export const GameInfo = ({
               </button>
             </div>
           )}
+
+          {user && <GameInfoUserNote gameId={game.id} initialContent={game.userNote} />}
         </AnimatedChildrenStagger>
           </motion.div>
         )}

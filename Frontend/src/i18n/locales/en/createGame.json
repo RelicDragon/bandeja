@@ -116,6 +116,13 @@
         "true": "Includes a social gathering after the training."
       }
     },
+    "participantsOnlyChat": {
+      "title": "Participants-only chat",
+      "note": {
+        "false": "Only the general chat will be available after creation.",
+        "true": "Participants and organizers chats will be created when the game is created."
+      }
+    },
     "hasFixedTeams": {
       "note": {
         "false": "Scoreboard is individual. Players will play with anyone based on rules.",

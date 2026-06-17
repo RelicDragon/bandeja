@@ -180,6 +180,8 @@
       "USER_CHAT_REQUEST": "{{requesterName}} requests to chat with you",
       "USER_CHAT_ACCEPTED": "{{userName}} accepted the chat request",
       "USER_CHAT_DECLINED": "{{userName}} declined the chat request",
+      "PARTICIPANTS_ONLY_CHAT_CREATED": "Participants-only chat has been created",
+      "ADMINS_CHAT_CREATED": "Admins chat has been created",
       "actions": {
         "joined": "joined the game",
         "left": "left the game"

@@ -184,6 +184,8 @@
       "USER_CHAT_REQUEST": "{{requesterName}} запрашивает чат с вами",
       "USER_CHAT_ACCEPTED": "{{userName}} принял запрос на чат",
       "USER_CHAT_DECLINED": "{{userName}} отклонил запрос на чат",
+      "PARTICIPANTS_ONLY_CHAT_CREATED": "Создан чат только для участников",
+      "ADMINS_CHAT_CREATED": "Создан чат организаторов",
       "actions": {
         "joined": "присоединился к игре",
         "left": "покинул игру"

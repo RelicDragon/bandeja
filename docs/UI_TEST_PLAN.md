@@ -393,6 +393,8 @@ Frontend/e2e/
 | C-41 | Padel singles templates | Create padel game → participants 1v1 → open format templates | Match tab: Best-of-3 (Official) + Single set; Social tab: Singles Americano (24 pts) when roster ≥4 |
 | C-42 | What game collapsed | Create GAME with template picker → default load | “What game” section collapsed; only selected template card visible; gender + rating badges stay in section header row; setup-format button and inline pickers hidden |
 | C-44 | What game collapse scroll | Expand section → tap collapse chevron | Section scrolls to top; header stays visible |
+| C-45 | Create with participants-only chat | Enable “Participants-only chat” toggle → create game | Game chat has Participants + Organizers tabs with localized system messages |
+| C-46 | Participants-only chat toggle default | Open create game settings | Toggle off by default; not persisted in game payload |
 | C-43 | What game expand/collapse | Tap chevron or collapsed card | All template cards animate open; collapse hides non-selected; selected card stays on top |
 
 ### 8.3 Core fields
@@ -527,6 +529,11 @@ Frontend/e2e/
 | GD-92 | Delete game without linked bookings | Owner deletes game with no `linkedBookings` | Single confirm modal only; delete proceeds immediately |
 | GD-93 | Court cameras section visible | FINAL game on court(s) with `webCameraUrl` | “Court cameras” card lists each court with “Web camera” link; link opens URL |
 | GD-94 | Court cameras section hidden | Game not FINAL, or FINAL but no played court has `webCameraUrl` | Court cameras section absent; web camera link absent from game info club row |
+| GD-97 | Participants chat section visible | Owner opens game before participant chats enabled | “Participants-only chat” card with create button |
+| GD-98 | Enable participant chats | Tap create → confirm | Section animates away; game chat shows Participants + Organizers tabs with system messages |
+| GD-99 | Parent admin enable participant chats | League owner opens child game | Same as GD-98 |
+| GD-100 | Participants chat section hidden | Open game after chats enabled | Section absent |
+| GD-101 | Non-admin no participants chat section | Regular playing participant | Section not shown |
 
 ### 9.2 Participation
 
@@ -611,7 +618,7 @@ Frontend/e2e/
 | GD-51 | Walkover / BYE handling | Set walkover | Bracket updates |
 | GD-52 | Club favorite toggle | Star on club in game info | Favorited state persists |
 | GD-53 | Club mini map | Game with geo | Map renders |
-| GD-54 | User game note | Add private note from game card/modal | Note saved; only visible to self |
+| GD-54 | User game note | Add private note from game info card, game card, or modal | Note saved; only visible to self |
 | GD-55 | Edit/delete game note | Update note content | Persisted / deleted |
 | GD-56 | Game settings panel | Toggle anyoneCanInvite, visibility, etc. | Settings saved |
 | GD-57 | Manage users modal | Owner opens manage users | Roles/kick actions available |

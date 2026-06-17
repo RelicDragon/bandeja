@@ -1,10 +1,72 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, type Variants } from 'framer-motion';
 import { PlayerAvatar } from '@/components';
 import { GameParticipant } from '@/types';
 import type { Sport } from '@shared/sport';
 import { useUnreadByUserIdBridge } from '@/hooks/useUnreadBridge';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+
+const slotVariants: Variants = {
+  hidden: { opacity: 0, scale: 0.85, y: 8 },
+  visible: (i: number) => ({
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { delay: i * 0.05, type: 'spring', stiffness: 260, damping: 22 },
+  }),
+};
+
+function EmptyParticipantSlot({
+  index,
+  canInvite,
+  onInvite,
+}: {
+  index: number;
+  canInvite: boolean;
+  onInvite?: () => void;
+}) {
+  if (!canInvite) {
+    return (
+      <motion.div
+        custom={index}
+        variants={slotVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex-shrink-0 w-16 pt-1 pb-0"
+      >
+        <PlayerAvatar player={null} smallLayout={true} />
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      custom={index}
+      variants={slotVariants}
+      initial="hidden"
+      animate="visible"
+      className="flex-shrink-0 w-16 pt-1 pb-0"
+    >
+      <motion.button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onInvite?.();
+        }}
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
+        className="group flex w-full flex-col items-center"
+      >
+        <div className="relative flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-primary-300/80 bg-gradient-to-br from-primary-50 to-white transition-colors group-hover:border-primary-400 group-hover:from-primary-100 dark:border-primary-600/70 dark:from-primary-950/50 dark:to-gray-900 dark:group-hover:border-primary-500 dark:group-hover:from-primary-900/40">
+          <span className="absolute inset-0 rounded-full bg-primary-400/0 transition-colors group-hover:bg-primary-400/10" />
+          <Plus className="relative h-5 w-5 text-primary-500 transition-transform group-hover:scale-110 dark:text-primary-400" />
+        </div>
+        <div className="h-8" aria-hidden />
+      </motion.button>
+    </motion.div>
+  );
+}
 
 function ParticipantCarouselSlot({
   participant,
@@ -21,6 +83,7 @@ function ParticipantCarouselSlot({
   onTouchEnd,
   showName,
   levelSport,
+  slotIndex = 0,
 }: {
   participant: GameParticipant;
   propUnread?: number;
@@ -36,14 +99,21 @@ function ParticipantCarouselSlot({
   onTouchEnd?: (e: TouchEvent) => void;
   showName?: boolean;
   levelSport?: Sport;
+  slotIndex?: number;
 }) {
   const unreadCount = useUnreadByUserIdBridge(participant.userId, propUnread);
   const isDragged = draggedPlayerId === participant.user.id;
   return (
-    <div
-      className={`flex-shrink-0 w-16 relative pt-2 pb-2 transition-all duration-200 ${
-        isDragged ? 'opacity-0' : draggable ? 'hover:scale-105' : ''
+    <motion.div
+      layout
+      custom={slotIndex}
+      variants={slotVariants}
+      initial="hidden"
+      animate="visible"
+      className={`relative w-16 flex-shrink-0 pt-1 pb-0 ${
+        isDragged ? 'opacity-0' : ''
       }`}
+      whileHover={draggable ? { scale: 1.05 } : undefined}
     >
       <PlayerAvatar
         player={participant.user}
@@ -68,7 +138,7 @@ function ParticipantCarouselSlot({
           </span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
@@ -223,12 +293,16 @@ export const PlayersCarousel = ({
   };
 
   const renderGenderIndicator = (gender: 'MALE' | 'FEMALE') => (
-    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-      gender === 'MALE' 
-        ? 'bg-blue-500 dark:bg-blue-600' 
-        : 'bg-pink-500 dark:bg-pink-600'
-    }`}>
-      <i className={`bi ${gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-white text-[10px]`}></i>
+    <div
+      className={`flex h-7 w-7 items-center justify-center rounded-full shadow-sm ${
+        gender === 'MALE'
+          ? 'bg-blue-500 dark:bg-blue-600'
+          : 'bg-pink-500 dark:bg-pink-600'
+      }`}
+    >
+      <i
+        className={`bi ${gender === 'MALE' ? 'bi-gender-male' : 'bi-gender-female'} text-[11px] text-white`}
+      />
     </div>
   );
 
@@ -254,7 +328,7 @@ export const PlayersCarousel = ({
           onTouchCancel={autoHideNames ? handlePressEnd : undefined}
         >
           <div className="flex gap-2">
-            {participants.map((participant) => (
+            {participants.map((participant, index) => (
               <ParticipantCarouselSlot
                 key={participant.userId}
                 participant={participant}
@@ -271,30 +345,18 @@ export const PlayersCarousel = ({
                 onTouchEnd={onTouchEnd}
                 showName={autoHideNames ? ((isMobile && isScrolling) || isPressed) : undefined}
                 levelSport={levelSport}
+                slotIndex={index}
               />
             ))}
-            {emptySlots > 0 && Array.from({ length: emptySlots }).map((_, i) => (
-              <div key={`empty-${i}`} className="flex-shrink-0 w-16 pt-1.5 pb-3.5">
-                {canInvitePlayers ? (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onShowPlayerList?.(gender);
-                    }}
-                    className="flex flex-col items-center w-full"
-                  >
-                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-primary-400 dark:border-primary-600 bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-colors">
-                      <Plus className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-                    </div>
-                  </button>
-                ) : (
-                  <PlayerAvatar
-                    player={null}
-                    smallLayout={true}
-                  />
-                )}
-              </div>
-            ))}
+            {emptySlots > 0 &&
+              Array.from({ length: emptySlots }).map((_, i) => (
+                <EmptyParticipantSlot
+                  key={`empty-${i}`}
+                  index={participants.length + i}
+                  canInvite={canInvitePlayers}
+                  onInvite={() => onShowPlayerList?.(gender)}
+                />
+              ))}
           </div>
         </div>
         {showLeftFade && (

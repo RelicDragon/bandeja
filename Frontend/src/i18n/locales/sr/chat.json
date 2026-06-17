@@ -184,6 +184,8 @@
       "USER_CHAT_REQUEST": "{{requesterName}} traži da ćaska sa vama",
       "USER_CHAT_ACCEPTED": "{{userName}} je prihvatio zahtev za ćaskanje",
       "USER_CHAT_DECLINED": "{{userName}} je odbio zahtev za ćaskanje",
+      "PARTICIPANTS_ONLY_CHAT_CREATED": "Kreirano je ćaskanje samo za učesnike",
+      "ADMINS_CHAT_CREATED": "Kreirano je ćaskanje za organizatore",
       "actions": {
         "joined": "se pridružio igri",
         "left": "napustio igru"

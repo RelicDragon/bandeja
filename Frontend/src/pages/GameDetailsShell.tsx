@@ -53,7 +53,7 @@ import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { TrainingResultsSection } from '@/components/GameDetails/TrainingResultsSection';
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
 import { BetSection } from '@/components/GameDetails/BetSection';
-import { UserGameNotes } from '@/components/GameDetails/UserGameNotes';
+import { ParticipantsOnlyChatSection } from '@/components/GameDetails/ParticipantsOnlyChatSection';
 import { GameLinkedBookingsSection } from '@/components/GameDetails/GameLinkedBookingsSection';
 import { gamesApi, invitesApi, courtsApi, clubsApi, normalizeGameFromApi } from '@/api';
 import { favoritesApi } from '@/api/favorites';
@@ -1528,9 +1528,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             <BarParticipantsList gameId={game.id} participants={game.participants} />
           )}
 
-          {user && <BetSection game={game} onGameUpdate={setGame} />}
+          {user && <ParticipantsOnlyChatSection game={game} userId={user.id} />}
 
-          {user && <UserGameNotes gameId={game.id} initialContent={game.userNote} />}
+          {user && <BetSection game={game} onGameUpdate={setGame} />}
 
           {user && canViewSettings && !isLeague && (
             <div id="game-settings">

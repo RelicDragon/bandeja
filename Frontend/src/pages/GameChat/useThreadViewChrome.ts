@@ -37,6 +37,7 @@ export interface UseThreadViewChromeParams {
   setIsSwitchingChatType: (v: boolean) => void;
   teardownForChatTypeSwitch: () => void;
   commitChatTypeSwitchPaint: (merged: ChatMessageWithStatus[], targetChatType: ChatType) => void;
+  finishChatTypeSwitch: () => void;
   handleMarkFailed: (tempId: string) => void;
   handleNewMessageRef: React.MutableRefObject<(message: ChatMessage) => string | void>;
   scrollToBottom: () => void;
@@ -81,6 +82,7 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     setIsSwitchingChatType,
     teardownForChatTypeSwitch,
     commitChatTypeSwitchPaint,
+    finishChatTypeSwitch,
     handleMarkFailed,
     handleNewMessageRef,
     scrollToBottom,
@@ -158,6 +160,7 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     setIsSwitchingChatType,
     teardownForChatTypeSwitch,
     commitChatTypeSwitchPaint,
+    finishChatTypeSwitch,
     handleMarkFailed,
     handleNewMessageRef,
     scrollToBottom,

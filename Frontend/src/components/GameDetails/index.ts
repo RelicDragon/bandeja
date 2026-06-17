@@ -14,3 +14,4 @@ export * from './GameWebCamerasSection';
 export * from './EditGameInfoModal';
 export * from './UserGameNoteModal';
 export * from './LeagueSeasonPointsSection';
+export * from './ParticipantsOnlyChatSection';

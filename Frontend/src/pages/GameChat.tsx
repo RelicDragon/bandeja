@@ -43,7 +43,7 @@ const GameChatLayout: React.FC = () => {
     <SportLevelProvider sport={chatLevelSport}>
       <div
         ref={chatContainerRef}
-        className={`chat-container relative bg-gray-50 dark:bg-gray-900 flex flex-col overflow-hidden overflow-x-hidden ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'} ${containerHidden ? 'hidden' : ''}`}
+        className={`chat-container relative bg-gray-50 dark:bg-gray-900 flex flex-col ${isEmbedded ? 'chat-embedded h-full' : 'h-screen'} ${containerHidden ? 'hidden' : ''}`}
       >
         <GameChatHeaderSection />
         <GameChatThreadBody />

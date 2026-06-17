@@ -113,6 +113,13 @@
         "false": "Does not include a social gathering after the training."
       }
     },
+    "participantsOnlyChat": {
+      "title": "Chat solo para participantes",
+      "note": {
+        "false": "Solo estará disponible el chat general después de crear el juego.",
+        "true": "Se crearán los chats de participantes y organizadores al crear el juego."
+      }
+    },
     "hasFixedTeams": {
       "note": {
         "false": "El marcador es individual. Los jugadores jugarán con cualquiera según las reglas.",

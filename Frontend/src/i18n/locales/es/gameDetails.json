@@ -641,6 +641,16 @@
       "openGame": "Abrir partido",
       "mySchedule": "Mi calendario"
     },
+    "participantsOnlyChat": {
+      "title": "Chat solo para participantes",
+      "description": "Crea chats separados para participantes en juego y organizadores.",
+      "enableButton": "Crear chats de participantes",
+      "confirmTitle": "¿Crear chats de participantes?",
+      "confirmMessage": "Se crearán los chats {{participantsChat}} y {{adminsChat}} para este juego.",
+      "confirmButton": "Crear chats",
+      "successToast": "Chats de participantes creados",
+      "errorToast": "No se pudieron crear los chats de participantes"
+    },
     "photoPickFailed": "No se pudieron elegir las fotos",
     "deleteGameGame": "Delete Game",
     "deleteGameTournament": "Delete Tournament",

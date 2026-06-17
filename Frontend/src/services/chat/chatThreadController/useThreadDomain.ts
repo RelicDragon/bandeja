@@ -1,9 +1,10 @@
 import { useEffect, useMemo, type RefObject } from 'react';
-import type { ChatContextType, ChatMessage, ChatMessageWithStatus, GroupChannel, UserChat } from '@/api/chat';
+import type { ChatContextType, ChatMessageWithStatus, GroupChannel, UserChat } from '@/api/chat';
 import type { ChatType, Game } from '@/types';
 import type { MessageListHandle } from '@/components/MessageList';
 import type { TranslationModalAutoTranslateProps } from '@/components/chat/TranslationLanguageModal';
 import { useThreadChannelActivity } from './useThreadChannelActivity';
+import { gameChatChannelIsActive, chatMessageActivatesGameChannel } from '@/utils/gameChatChannelActivity';
 import { useThreadDerived } from './useThreadDerived';
 import { useThreadAutoTranslate } from './useThreadAutoTranslate';
 import { useThreadTranslationLive } from './useThreadTranslationLive';
@@ -81,16 +82,13 @@ export function useThreadDomain(params: UseThreadDomainParams) {
 
   useEffect(() => {
     if (contextType !== 'GAME') return;
-    if (effectiveChatType === 'PRIVATE' || effectiveChatType === 'ADMINS') {
-      const hasUser = messages.some((m) => m.senderId != null);
-      if (hasUser) {
-        noteUserMessage({
-          senderId: user?.id ?? 'probe',
-          chatType: effectiveChatType,
-        } as ChatMessage);
-      }
-    }
-  }, [contextType, effectiveChatType, messages, noteUserMessage, user?.id]);
+    if (effectiveChatType !== 'PRIVATE' && effectiveChatType !== 'ADMINS') return;
+    if (!gameChatChannelIsActive(messages, effectiveChatType)) return;
+    const activating = messages.find(
+      (m) => chatMessageActivatesGameChannel(m) === effectiveChatType
+    );
+    if (activating) noteUserMessage(activating);
+  }, [contextType, effectiveChatType, messages, noteUserMessage]);
 
   const autoTranslate = useThreadAutoTranslate({
     id,

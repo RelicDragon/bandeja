@@ -356,5 +356,12 @@ export const gamesApi = {
       throw err;
     }
   },
+
+  enableParticipantChats: async (gameId: string) => {
+    const response = await api.post<
+      ApiResponse<{ privateEnabled: boolean; adminsEnabled: boolean; created: boolean }>
+    >(`/games/${gameId}/enable-participant-chats`);
+    return response.data;
+  },
 };
 

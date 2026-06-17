@@ -29,6 +29,7 @@ import { GameWorkoutService } from '../services/game/gameWorkout.service';
 import { GameReactionService } from '../services/game/gameReaction.service';
 import { patchMyWatchSession } from '../services/game/watchSession.service';
 import { WorkoutSessionSource } from '@prisma/client';
+import { ParticipantChatsService } from '../services/game/participantChats.service';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const game = await GameService.createGame(req.body, req.userId!, req.user?.isAdmin || false);
@@ -819,4 +820,17 @@ export const removeGameReaction = asyncHandler(async (req: AuthRequest, res: Res
   const reactions = await GameReactionService.removeReaction(gameId, userId);
   await emitGameUpdateWithReactions(gameId, userId);
   res.json({ success: true, data: { reactions } });
+});
+
+export const enableParticipantChats = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id: gameId } = req.params;
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: { id: true },
+  });
+  if (!game) {
+    throw new ApiError(404, 'Game not found');
+  }
+  const data = await ParticipantChatsService.enableParticipantChats(gameId);
+  res.json({ success: true, data });
 });

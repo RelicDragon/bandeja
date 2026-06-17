@@ -580,7 +580,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
           />
           <div
             ref={inputContainerRef}
-            className={`message-input-panel relative min-w-0 w-full max-w-full overflow-visible rounded-[24px] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.14),0_8px_28px_rgba(0,0,0,0.18)] transition-all dark:bg-gray-800 dark:shadow-[0_2px_10px_rgba(0,0,0,0.45),0_10px_32px_rgba(0,0,0,0.42)] ${
+            className={`message-input-panel relative min-w-0 w-full max-w-full overflow-visible rounded-[24px] bg-white transition-all dark:bg-gray-800 ${
               isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
             }`}
           >
@@ -621,7 +621,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                       <button
                         type="submit"
                         disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
-                        className="absolute bottom-0.5 right-[2px] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white shadow-[0_3px_14px_rgba(59,130,246,0.75),0_8px_36px_rgba(37,99,235,0.55)] transition-all duration-200 hover:scale-105 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 hover:shadow-[0_5px_20px_rgba(59,130,246,0.85),0_12px_44px_rgba(37,99,235,0.6)] disabled:cursor-not-allowed disabled:opacity-50"
+                        className="message-input-action-btn absolute bottom-0.5 right-[2px] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white transition-all duration-200 hover:scale-105 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                         aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
                       >
                         {inputBlocked ? (
@@ -689,7 +689,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                         <button
                           type="submit"
                           disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
-                          className="absolute bottom-0.5 right-[2px] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white shadow-[0_3px_14px_rgba(59,130,246,0.75),0_8px_36px_rgba(37,99,235,0.55)] transition-all duration-200 hover:scale-105 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 hover:shadow-[0_5px_20px_rgba(59,130,246,0.85),0_12px_44px_rgba(37,99,235,0.6)] disabled:cursor-not-allowed disabled:opacity-50"
+                          className="message-input-action-btn absolute bottom-0.5 right-[2px] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white transition-all duration-200 hover:scale-105 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:cursor-not-allowed disabled:opacity-50"
                           aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
                         >
                           {inputBlocked ? (

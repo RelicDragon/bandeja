@@ -21,7 +21,9 @@ export enum SystemMessageType {
   GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED',
   USER_CHAT_REQUEST = 'USER_CHAT_REQUEST',
   USER_CHAT_ACCEPTED = 'USER_CHAT_ACCEPTED',
-  USER_CHAT_DECLINED = 'USER_CHAT_DECLINED'
+  USER_CHAT_DECLINED = 'USER_CHAT_DECLINED',
+  PARTICIPANTS_ONLY_CHAT_CREATED = 'PARTICIPANTS_ONLY_CHAT_CREATED',
+  ADMINS_CHAT_CREATED = 'ADMINS_CHAT_CREATED',
 }
 
 export interface SystemMessageTemplate {
@@ -145,7 +147,17 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     type: SystemMessageType.USER_CHAT_DECLINED,
     template: '{{userName}} declined the chat request',
     variables: ['userName']
-  }
+  },
+  [SystemMessageType.PARTICIPANTS_ONLY_CHAT_CREATED]: {
+    type: SystemMessageType.PARTICIPANTS_ONLY_CHAT_CREATED,
+    template: 'Participants-only chat has been created',
+    variables: [],
+  },
+  [SystemMessageType.ADMINS_CHAT_CREATED]: {
+    type: SystemMessageType.ADMINS_CHAT_CREATED,
+    template: 'Admins chat has been created',
+    variables: [],
+  },
 };
 
 export interface SystemMessageData {
