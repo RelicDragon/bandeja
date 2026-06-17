@@ -44,11 +44,18 @@ export function useScrollOverflowEdges({
 
   const update = useCallback(() => {
     if (!enabled) {
-      setEdges({ hasMoreAbove: false, hasMoreBelow: false });
+      setEdges((prev) =>
+        prev.hasMoreAbove || prev.hasMoreBelow
+          ? { hasMoreAbove: false, hasMoreBelow: false }
+          : prev,
+      );
       return;
     }
     const scrollEl = scrollRef?.current ?? null;
-    setEdges(readScrollEdges(scrollEl, edgeThreshold));
+    const next = readScrollEdges(scrollEl, edgeThreshold);
+    setEdges((prev) =>
+      prev.hasMoreAbove === next.hasMoreAbove && prev.hasMoreBelow === next.hasMoreBelow ? prev : next,
+    );
   }, [scrollRef, edgeThreshold, enabled]);
 
   useLayoutEffect(() => {

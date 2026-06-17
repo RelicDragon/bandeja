@@ -265,13 +265,13 @@ export const RoundCard = ({
           >
             <ChevronDown size={16} />
           </motion.span>
-          <span
-            className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold ${toneStyle.badge}`}
-          >
-            {roundIndex + 1}
-          </span>
-          <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-            {roundName}
+          <h3 className="flex items-center gap-1.5 font-semibold text-sm text-gray-900 dark:text-gray-100">
+            {t('gameResults.round')}
+            <span
+              className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold ${toneStyle.badge}`}
+            >
+              {roundIndex + 1}
+            </span>
           </h3>
           {toneStyle.dot && (
             <span className="relative flex h-2 w-2">

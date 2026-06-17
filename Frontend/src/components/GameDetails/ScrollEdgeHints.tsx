@@ -73,20 +73,28 @@ function useBottomHintAnchor(scrollRef?: RefObject<HTMLElement | null>) {
 
   const updateAnchor = useCallback(() => {
     const scrollEl = scrollRef?.current ?? null;
-    if (scrollEl) {
-      const rect = scrollEl.getBoundingClientRect();
-      setAnchorStyle({
-        left: rect.left,
-        width: rect.width,
-        bottom: window.innerHeight - rect.bottom,
-      });
-      return;
-    }
-    setAnchorStyle({
-      left: 0,
-      width: window.innerWidth,
-      bottom: 0,
-    });
+    const next: CSSProperties = scrollEl
+      ? (() => {
+          const rect = scrollEl.getBoundingClientRect();
+          return {
+            left: rect.left,
+            width: rect.width,
+            bottom: window.innerHeight - rect.bottom,
+          };
+        })()
+      : {
+          left: 0,
+          width: window.innerWidth,
+          bottom: 0,
+        };
+    setAnchorStyle((prev) =>
+      prev &&
+      prev.left === next.left &&
+      prev.width === next.width &&
+      prev.bottom === next.bottom
+        ? prev
+        : next,
+    );
   }, [scrollRef]);
 
   useEffect(() => {
@@ -123,20 +131,28 @@ function useTopHintAnchor(scrollRef?: RefObject<HTMLElement | null>) {
 
   const updateAnchor = useCallback(() => {
     const scrollEl = scrollRef?.current ?? null;
-    if (scrollEl) {
-      const rect = scrollEl.getBoundingClientRect();
-      setAnchorStyle({
-        left: rect.left,
-        width: rect.width,
-        top: rect.top,
-      });
-      return;
-    }
-    setAnchorStyle({
-      left: 0,
-      width: window.innerWidth,
-      top: readWindowTopInset(),
-    });
+    const next: CSSProperties = scrollEl
+      ? (() => {
+          const rect = scrollEl.getBoundingClientRect();
+          return {
+            left: rect.left,
+            width: rect.width,
+            top: rect.top,
+          };
+        })()
+      : {
+          left: 0,
+          width: window.innerWidth,
+          top: readWindowTopInset(),
+        };
+    setAnchorStyle((prev) =>
+      prev &&
+      prev.left === next.left &&
+      prev.width === next.width &&
+      prev.top === next.top
+        ? prev
+        : next,
+    );
   }, [scrollRef]);
 
   useEffect(() => {
