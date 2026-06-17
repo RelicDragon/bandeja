@@ -10,8 +10,8 @@ export function useVirtualRowLayoutTransition(
   scrollElementRef: RefObject<HTMLDivElement | null>,
   rows: VirtualItem[],
   enabled: boolean
-): Map<string | number, { transform: string; transition?: string }> {
-  const prevStartByKeyRef = useRef(new Map<string | number, number>());
+): Map<string, { transform: string; transition?: string }> {
+  const prevStartByKeyRef = useRef(new Map<string, number>());
   const scrollingRef = useRef(false);
   const scrollEndTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -37,20 +37,21 @@ export function useVirtualRowLayoutTransition(
 
   const prev = prevStartByKeyRef.current;
   const scrolling = scrollingRef.current;
-  const styles = new Map<string | number, { transform: string; transition?: string }>();
+  const styles = new Map<string, { transform: string; transition?: string }>();
 
   for (const row of rows) {
-    const prevStart = prev.get(row.key);
+    const key = String(row.key);
+    const prevStart = prev.get(key);
     const moved = prevStart !== undefined && prevStart !== row.start;
-    styles.set(row.key, {
+    styles.set(key, {
       transform: `translateY(${row.start}px)`,
       transition: enabled && moved && !scrolling ? POSITION_TRANSITION : undefined,
     });
   }
 
   useLayoutEffect(() => {
-    const next = new Map<string | number, number>();
-    for (const row of rows) next.set(row.key, row.start);
+    const next = new Map<string, number>();
+    for (const row of rows) next.set(String(row.key), row.start);
     prevStartByKeyRef.current = next;
   }, [rows]);
 

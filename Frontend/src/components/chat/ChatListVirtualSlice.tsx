@@ -64,7 +64,7 @@ function ChatListVirtualSliceVirtualized<T>({
       {rows.map((row) => {
         const itemKey = getItemKey(items[row.index]!, row.index);
         const isNew = newKeys.has(itemKey);
-        const style = rowStyles.get(row.key) ?? { transform: `translateY(${row.start}px)` };
+        const style = rowStyles.get(String(row.key)) ?? { transform: `translateY(${row.start}px)` };
         return (
           <div
             key={row.key}

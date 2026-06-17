@@ -8,8 +8,8 @@ const VISIBLE_CLASS = 'message-scroll-target--visible';
 const EXITING_CLASS = 'message-scroll-target--exiting';
 
 type HighlightState = {
-  holdTimer: ReturnType<typeof setTimeout>;
-  exitTimer?: ReturnType<typeof setTimeout>;
+  holdTimer: number;
+  exitTimer?: number;
   onTransitionEnd?: (event: TransitionEvent) => void;
 };
 

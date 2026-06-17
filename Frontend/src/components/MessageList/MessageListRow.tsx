@@ -20,6 +20,7 @@ type MessageListRowProps = {
   isPinned: boolean;
   isNew: boolean;
   staggerIndex: number;
+  fadeDateSeparator?: boolean;
   onScrollToFirstReply: (parentMessageId: string) => void;
   handlers: Pick<
     MessageListProps,
@@ -55,6 +56,7 @@ export const MessageListRow = memo(function MessageListRow({
   isPinned,
   isNew,
   staggerIndex,
+  fadeDateSeparator = false,
   onScrollToFirstReply,
   handlers,
 }: MessageListRowProps) {
@@ -91,7 +93,8 @@ export const MessageListRow = memo(function MessageListRow({
         message={message}
         isNew={isNew}
         staggerIndex={staggerIndex}
-        dateSeparatorLabel={dateSeparatorLabel}
+        dateSeparatorLabel={dateSeparatorLabel ?? undefined}
+        fadeDateSeparator={fadeDateSeparator}
         loadMediaEager={eagerMediaMessageIds.has(message.id)}
         groupPosition={groupPosition}
         onAddReaction={handlers.onAddReaction}
@@ -130,6 +133,7 @@ export const MessageListRow = memo(function MessageListRow({
   if (prev.isPinned !== next.isPinned) return false;
   if (prev.isNew !== next.isNew) return false;
   if (prev.staggerIndex !== next.staggerIndex) return false;
+  if (prev.fadeDateSeparator !== next.fadeDateSeparator) return false;
   if (prev.eagerMediaMessageIds !== next.eagerMediaMessageIds) return false;
   if (prev.handlers !== next.handlers) return false;
   return true;

@@ -21,6 +21,7 @@ import {
 } from './MessageList/messageListContextMenuStore';
 import { MessageListSettlingProvider } from './MessageList/MessageListSettlingProvider';
 import { useMessageListNewKeys } from './MessageList/useMessageListNewKeys';
+import { useMessageListSeenDateSeparators } from './MessageList/useMessageListSeenDateSeparators';
 import { useMessageListScrollAnchor } from './MessageList/useMessageListScrollAnchor';
 import type { MessageListHandle, MessageListProps } from './MessageList/types';
 import {
@@ -52,11 +53,16 @@ import {
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
 import { isThreadMessagesPending } from '@/pages/GameChat/threadViewLoadingState';
 import { WavyDots } from '@/components/WavyDots';
-import { motion } from 'framer-motion';
-import { CHAT_PANEL_TRANSITION } from '@/components/chat/chatListMotion';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  CHAT_LIST_HEIGHT_TRANSITION,
+  CHAT_MESSAGE_ENTER_Y,
+  CHAT_PANEL_TRANSITION,
+} from '@/components/chat/chatListMotion';
 import { useVirtualRowLayoutTransition } from '@/components/chat/useVirtualRowLayoutTransition';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { applyScrollTargetMessageHighlight } from '@/utils/scrollTargetMessageHighlight';
+import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
 
 const OPEN_TAIL_EAGER_MEDIA = 60;
 /** Fixed overscan — velocity-based toggling remounted rows and shifted scroll height. */
@@ -691,6 +697,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
     [messages]
   );
   const newMessageKeys = useMessageListNewKeys(messageRowKeys, threadScrollKey ?? undefined);
+  const consumeDateSeparatorFade = useMessageListSeenDateSeparators(threadScrollKey ?? undefined);
   const newKeyStaggerIndex = useMemo(() => {
     const map = new Map<string, number>();
     let i = 0;
@@ -743,7 +750,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       {showLoading ? (
         <motion.div
           key="thread-loading"
-          className="absolute inset-0 z-[3] flex items-center justify-center bg-gray-50 dark:bg-gray-800"
+          className="absolute inset-0 z-[3] flex items-center justify-center bg-gray-50 dark:bg-gray-800 pointer-events-none"
           initial={{ opacity: 0, y: CHAT_MESSAGE_ENTER_Y }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -CHAT_MESSAGE_ENTER_Y }}
@@ -756,7 +763,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       ) : showEmpty ? (
         <motion.div
           key="thread-empty"
-          className="absolute inset-0 z-[3] flex items-center justify-center bg-gray-50 dark:bg-gray-800"
+          className="absolute inset-0 z-[3] flex items-center justify-center bg-gray-50 dark:bg-gray-800 pointer-events-none"
           initial={{ opacity: 0, y: CHAT_MESSAGE_ENTER_Y, scale: 0.99 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -CHAT_MESSAGE_ENTER_Y }}
@@ -805,12 +812,15 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
             >
               {virtualItems.map((row) => {
                 const message = row.index < messages.length ? messages[row.index] : undefined;
-                const rowKey = message ? getMessageRowKey(message) : row.key;
+                const rowKey = message ? getMessageRowKey(message) : String(row.key);
+                const dateSeparatorLabel = message
+                  ? getChatDateSeparatorLabel(messages, row.index)
+                  : null;
                 return (
                   <MessageListRow
                     key={row.key}
                     row={row}
-                    rowStyle={rowStyles.get(row.key) ?? { transform: `translateY(${row.start}px)` }}
+                    rowStyle={rowStyles.get(String(row.key)) ?? { transform: `translateY(${row.start}px)` }}
                     message={message}
                     messages={messages}
                     rowCount={rowCount}
@@ -820,6 +830,9 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
                     isPinned={message ? pinnedSet.has(message.id) : false}
                     isNew={message ? newMessageKeys.has(rowKey) : false}
                     staggerIndex={message ? (newKeyStaggerIndex.get(rowKey) ?? 0) : 0}
+                    fadeDateSeparator={
+                      dateSeparatorLabel ? consumeDateSeparatorFade(dateSeparatorLabel) : false
+                    }
                     onScrollToFirstReply={onScrollToFirstReply}
                     handlers={rowHandlers}
                   />
