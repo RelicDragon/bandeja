@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
 import { ParticipantRole } from '@prisma/client';
+import { projectGroupChannelEmbeddedUsers } from '../user/projectEmbeddedBasicUsers';
 
 export type GcWithParticipants = Awaited<ReturnType<typeof prisma.groupChannel.findMany>>[number] & {
   participants: Array<{ userId: string; role: ParticipantRole }>;
@@ -39,14 +40,14 @@ export function mapGroupChannelToResponse(gc: GcWithParticipants, userId: string
   const isParticipant = !!userParticipant;
   const pinned = gc.pinnedByUsers && gc.pinnedByUsers.length > 0 ? gc.pinnedByUsers[0] : null;
   const base = withGroupChannelLastMessage(gc as unknown as Record<string, unknown>);
-  return {
+  return projectGroupChannelEmbeddedUsers({
     ...base,
     isParticipant,
     isOwner,
     isPinned: !!pinned,
     pinnedAt: pinned?.pinnedAt?.toISOString() ?? null,
     isMuted,
-  };
+  } as Record<string, unknown>);
 }
 
 export type MappedGroupChannel = ReturnType<typeof mapGroupChannelToResponse>;

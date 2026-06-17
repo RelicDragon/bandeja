@@ -1,7 +1,8 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { SystemMessageType, getUserDisplayName } from '../../utils/systemMessages';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { projectGroupChannelEmbeddedUsers } from '../user/projectEmbeddedBasicUsers';
 import { ChatContextType, ParticipantRole, InviteStatus, ChatType, Prisma, BugStatus, BugType } from '@prisma/client';
 import { MessageService } from './message.service';
 import { SystemMessageService } from './systemMessage.service';
@@ -24,7 +25,7 @@ async function emitPrivateGroupUserJoinedSystemMessage(
   if (meta.isChannel || meta.isCityGroup) return;
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: USER_SELECT_FIELDS,
+    select: USER_SELECT_WITH_SPORT_PROFILES,
   });
   if (!user) return;
   const userName = getUserDisplayName(user.firstName, user.lastName);
@@ -45,7 +46,7 @@ async function emitPrivateGroupUserLeftSystemMessage(
   if (config.cityGroupRefinedSystemMessages && meta.isCityGroup) return;
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: USER_SELECT_FIELDS,
+    select: USER_SELECT_WITH_SPORT_PROFILES,
   });
   if (!user) return;
   const userName = getUserDisplayName(user.firstName, user.lastName);
@@ -66,7 +67,7 @@ export class GroupChannelService {
       },
       include: {
         user: {
-          select: USER_SELECT_FIELDS
+          select: USER_SELECT_WITH_SPORT_PROFILES
         }
       }
     });
@@ -154,21 +155,21 @@ export class GroupChannelService {
       include: {
         bug: {
           include: {
-            sender: { select: USER_SELECT_FIELDS }
+            sender: { select: USER_SELECT_WITH_SPORT_PROFILES }
           }
         },
         marketItem: {
           include: {
-            seller: { select: USER_SELECT_FIELDS },
+            seller: { select: USER_SELECT_WITH_SPORT_PROFILES },
             category: true,
             city: true
           }
         },
-        lastMessageSender: { select: USER_SELECT_FIELDS },
+        lastMessageSender: { select: USER_SELECT_WITH_SPORT_PROFILES },
         participants: {
           include: {
             user: {
-              select: USER_SELECT_FIELDS
+              select: USER_SELECT_WITH_SPORT_PROFILES
             }
           }
         }
@@ -186,12 +187,12 @@ export class GroupChannelService {
       ? await ChatMuteService.isChatMuted(userId, ChatContextType.GROUP, groupChannel.id)
       : false;
 
-    return {
+    return projectGroupChannelEmbeddedUsers({
       ...withGroupChannelLastMessage(groupChannel as unknown as Record<string, unknown>),
       isParticipant,
       isOwner,
       isMuted
-    };
+    } as Record<string, unknown>);
   }
 
   static readonly PAGE_SIZE = 10;
@@ -348,15 +349,15 @@ export class GroupChannelService {
         include: {
           bug: {
             include: {
-              sender: { select: USER_SELECT_FIELDS }
+              sender: { select: USER_SELECT_WITH_SPORT_PROFILES }
             }
           },
-          lastMessageSender: { select: USER_SELECT_FIELDS },
+          lastMessageSender: { select: USER_SELECT_WITH_SPORT_PROFILES },
           participants: {
             where: { userId },
             include: {
               user: {
-                select: USER_SELECT_FIELDS
+                select: USER_SELECT_WITH_SPORT_PROFILES
               }
             }
           },
@@ -371,27 +372,27 @@ export class GroupChannelService {
         include: {
           bug: {
             include: {
-              sender: { select: USER_SELECT_FIELDS }
+              sender: { select: USER_SELECT_WITH_SPORT_PROFILES }
             }
           },
           marketItem: {
             include: {
-              seller: { select: USER_SELECT_FIELDS },
+              seller: { select: USER_SELECT_WITH_SPORT_PROFILES },
               category: true,
               city: true
             }
           },
-          ...(filter === 'market' ? { buyer: { select: USER_SELECT_FIELDS } } : {}),
+          ...(filter === 'market' ? { buyer: { select: USER_SELECT_WITH_SPORT_PROFILES } } : {}),
           participants: {
             where: { userId },
             include: {
               user: {
-                select: USER_SELECT_FIELDS
+                select: USER_SELECT_WITH_SPORT_PROFILES
               }
             }
           },
           pinnedByUsers: { where: { userId }, select: { pinnedAt: true } },
-          lastMessageSender: { select: USER_SELECT_FIELDS }
+          lastMessageSender: { select: USER_SELECT_WITH_SPORT_PROFILES }
         },
         orderBy: {
           updatedAt: 'desc'
@@ -454,7 +455,7 @@ export class GroupChannelService {
         isPublic: true
       },
       include: {
-        lastMessageSender: { select: USER_SELECT_FIELDS },
+        lastMessageSender: { select: USER_SELECT_WITH_SPORT_PROFILES },
         participants: userId ? {
           where: { userId }
         } : undefined
@@ -465,20 +466,24 @@ export class GroupChannelService {
     });
 
     if (!userId || groupChannels.length === 0) {
-      return groupChannels.map((gc) => ({
-        ...withGroupChannelLastMessage(gc as unknown as Record<string, unknown>),
-        isMuted: false
-      }));
+      return groupChannels.map((gc) =>
+        projectGroupChannelEmbeddedUsers({
+          ...withGroupChannelLastMessage(gc as unknown as Record<string, unknown>),
+          isMuted: false
+        } as Record<string, unknown>)
+      );
     }
     const mutedIds = await ChatMuteService.getMutedContextIdSet(
       userId,
       ChatContextType.GROUP,
       groupChannels.map((g) => g.id)
     );
-    return groupChannels.map((gc) => ({
-      ...withGroupChannelLastMessage(gc as unknown as Record<string, unknown>),
-      isMuted: mutedIds.has(gc.id)
-    }));
+    return groupChannels.map((gc) =>
+      projectGroupChannelEmbeddedUsers({
+        ...withGroupChannelLastMessage(gc as unknown as Record<string, unknown>),
+        isMuted: mutedIds.has(gc.id)
+      } as Record<string, unknown>)
+    );
   }
 
   static async pinGroupChannel(userId: string, groupChannelId: string) {
@@ -753,10 +758,10 @@ export class GroupChannelService {
       },
       include: {
         sender: {
-          select: USER_SELECT_FIELDS
+          select: USER_SELECT_WITH_SPORT_PROFILES
         },
         receiver: {
-          select: USER_SELECT_FIELDS
+          select: USER_SELECT_WITH_SPORT_PROFILES
         },
         groupChannel: true
       }
@@ -964,7 +969,7 @@ export class GroupChannelService {
       where: { groupChannelId },
       include: {
         user: {
-          select: USER_SELECT_FIELDS
+          select: USER_SELECT_WITH_SPORT_PROFILES
         }
       },
       orderBy: [
@@ -1005,10 +1010,10 @@ export class GroupChannelService {
       },
       include: {
         sender: {
-          select: USER_SELECT_FIELDS
+          select: USER_SELECT_WITH_SPORT_PROFILES
         },
         receiver: {
-          select: USER_SELECT_FIELDS
+          select: USER_SELECT_WITH_SPORT_PROFILES
         }
       },
       orderBy: {

@@ -157,3 +157,55 @@ export function projectMessagesEmbeddedUsers<T extends MessageWithEmbeddedUsers>
 ): T[] {
   return messages.map((m) => projectMessageEmbeddedUsers(m, sport));
 }
+
+type GroupChannelWithEmbeddedUsers = {
+  bug?: { sender?: UserWithProfiles | null; [key: string]: unknown } | null;
+  marketItem?: { seller?: UserWithProfiles | null; [key: string]: unknown } | null;
+  buyer?: UserWithProfiles | null;
+  lastMessageSender?: UserWithProfiles | null;
+  lastMessage?: {
+    sender?: UserWithProfiles | null;
+    [key: string]: unknown;
+  } | null;
+  participants?: Array<{ user?: UserWithProfiles | null; [key: string]: unknown }> | null;
+  [key: string]: unknown;
+};
+
+/** Legacy clients read top-level `user.level` on bug/market/group channel embeds. */
+export function projectGroupChannelEmbeddedUsers<T extends Record<string, unknown>>(channel: T): T {
+  const project = projectEmbeddedUserByPrimarySport;
+  const bug = channel.bug as GroupChannelWithEmbeddedUsers['bug'];
+  const marketItem = channel.marketItem as GroupChannelWithEmbeddedUsers['marketItem'];
+  const lastMessage = channel.lastMessage as GroupChannelWithEmbeddedUsers['lastMessage'];
+  const buyer = channel.buyer as UserWithProfiles | null | undefined;
+  const lastMessageSender = channel.lastMessageSender as UserWithProfiles | null | undefined;
+  const participants = channel.participants as GroupChannelWithEmbeddedUsers['participants'];
+
+  return {
+    ...channel,
+    bug: bug
+      ? {
+          ...bug,
+          sender: project(bug.sender),
+        }
+      : bug,
+    marketItem: marketItem
+      ? {
+          ...marketItem,
+          seller: project(marketItem.seller),
+        }
+      : marketItem,
+    buyer: project(buyer),
+    lastMessageSender: project(lastMessageSender),
+    lastMessage: lastMessage
+      ? {
+          ...lastMessage,
+          sender: project(lastMessage.sender),
+        }
+      : lastMessage,
+    participants: participants?.map((p) => ({
+      ...p,
+      user: project(p.user),
+    })),
+  };
+}
