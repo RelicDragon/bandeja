@@ -54,7 +54,11 @@ export class ParticipantMessageHelper {
     return null;
   }
 
-  static async sendLeaveMessage(gameId: string, user: BasicUser, messageType: SystemMessageType) {
+  static async sendLeaveMessage(
+    gameId: string,
+    user: Pick<BasicUser, 'firstName' | 'lastName'>,
+    messageType: SystemMessageType,
+  ) {
     if (user) {
       const userName = getUserDisplayName(user.firstName, user.lastName);
       

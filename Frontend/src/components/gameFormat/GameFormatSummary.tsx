@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { MatchGenerationType, ScoringMode, ScoringPreset, WinnerOfGame } from '@/types';
+import { GenderTeam, MatchGenerationType, ScoringMode, ScoringPreset, WinnerOfGame } from '@/types';
 import { matchFormatSummaryPart, summarizeGameFormat } from '@/utils/gameFormat';
+import { genderTeamsSummaryLabelKey } from '@/utils/genderTeamsSummaryLabel';
 
 const SUMMARY_SEP = ' · ';
 
@@ -15,6 +16,7 @@ interface GameFormatSummaryProps {
   winnerOfGame?: WinnerOfGame;
   playersPerMatch?: number;
   sport?: string | null;
+  genderTeams?: GenderTeam;
   className?: string;
   twoRows?: boolean;
 }
@@ -30,6 +32,7 @@ export const GameFormatSummary = ({
   winnerOfGame,
   playersPerMatch,
   sport,
+  genderTeams,
   className,
   twoRows,
 }: GameFormatSummaryProps) => {
@@ -48,19 +51,23 @@ export const GameFormatSummary = ({
     },
     sport,
   );
+  const genderLabelKey = genderTeams ? genderTeamsSummaryLabelKey(genderTeams) : null;
+  const genderLabel = genderLabelKey ? t(genderLabelKey) : null;
+  const summaryWithGender =
+    genderLabel && summary ? `${summary}${SUMMARY_SEP}${genderLabel}` : genderLabel || summary;
   const matchLabel = matchFormatSummaryPart(t, playersPerMatch, sport);
   const withMatch = (line: string) =>
     matchLabel && line ? `${matchLabel}${SUMMARY_SEP}${line}` : matchLabel || line;
 
   if (!twoRows) {
-    return <span className={className}>{withMatch(summary)}</span>;
+    return <span className={className}>{withMatch(summaryWithGender)}</span>;
   }
-  const cut = summary.indexOf(SUMMARY_SEP);
+  const cut = summaryWithGender.indexOf(SUMMARY_SEP);
   if (cut === -1) {
-    return <span className={className}>{withMatch(summary)}</span>;
+    return <span className={className}>{withMatch(summaryWithGender)}</span>;
   }
-  const row1 = summary.slice(0, cut);
-  const row2 = summary.slice(cut + SUMMARY_SEP.length);
+  const row1 = summaryWithGender.slice(0, cut);
+  const row2 = summaryWithGender.slice(cut + SUMMARY_SEP.length);
   return (
     <span className={className}>
       <span className="block truncate">{withMatch(row1)}</span>

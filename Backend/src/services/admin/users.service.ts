@@ -41,12 +41,6 @@ async function applySportProfileLevelUpdates(
         levelSource: SportLevelSource.MANUAL,
       },
     });
-    if (sport === Sport.PADEL) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { level },
-      });
-    }
   }
 }
 
@@ -85,7 +79,6 @@ export class AdminUsersService {
         select: {
           ...PROFILE_SELECT_FIELDS,
           totalPoints: true,
-          gamesPlayed: true,
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -214,7 +207,6 @@ export class AdminUsersService {
         lastName: nameResolved.lastName ?? null,
         nameIsSet: nameResolved.nameIsSet,
         gender,
-        level: level !== undefined ? clampSportLevel(level) : 3.5,
         currentCityId,
         isActive: isActive !== undefined ? isActive : true,
         isAdmin: isAdmin !== undefined ? isAdmin : false,

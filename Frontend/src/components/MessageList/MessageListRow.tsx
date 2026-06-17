@@ -2,14 +2,15 @@ import { memo } from 'react';
 import type { VirtualItem } from '@tanstack/react-virtual';
 import type { ChatMessage } from '@/api/chat';
 import { AnimatedMessageItem } from '@/components/AnimatedMessageItem';
-import { ChatDateSeparator } from '@/components/chat/ChatDateSeparator';
 import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
 import { getMessageGroupPosition } from '@/utils/chatMessageGrouping';
-import { getMessageRowKey } from '@/services/chat/messageRowKey';
 import type { MessageListProps } from './types';
+
+type VirtualRowStyle = { transform: string; transition?: string };
 
 type MessageListRowProps = {
   row: VirtualItem;
+  rowStyle: VirtualRowStyle;
   message?: ChatMessage;
   messages: ChatMessage[];
   rowCount: number;
@@ -17,6 +18,8 @@ type MessageListRowProps = {
   eagerMediaMessageIds: Set<string>;
   replyCount: number;
   isPinned: boolean;
+  isNew: boolean;
+  staggerIndex: number;
   onScrollToFirstReply: (parentMessageId: string) => void;
   handlers: Pick<
     MessageListProps,
@@ -42,6 +45,7 @@ type MessageListRowProps = {
 
 export const MessageListRow = memo(function MessageListRow({
   row,
+  rowStyle,
   message,
   messages,
   rowCount,
@@ -49,6 +53,8 @@ export const MessageListRow = memo(function MessageListRow({
   eagerMediaMessageIds,
   replyCount,
   isPinned,
+  isNew,
+  staggerIndex,
   onScrollToFirstReply,
   handlers,
 }: MessageListRowProps) {
@@ -58,11 +64,8 @@ export const MessageListRow = memo(function MessageListRow({
         key={row.key}
         data-index={row.index}
         ref={measureElement}
-        className="left-0 top-0 w-full"
-        style={{
-          position: 'absolute',
-          transform: `translateY(${row.start}px)`,
-        }}
+        className="absolute left-0 top-0 w-full will-change-transform"
+        style={rowStyle}
         aria-hidden
       >
         <div className="h-32" />
@@ -81,16 +84,14 @@ export const MessageListRow = memo(function MessageListRow({
       data-index={row.index}
       ref={measureElement}
       id={`message-${message.id}`}
-      className="left-0 top-0 w-full"
-      style={{
-        position: 'absolute',
-        transform: `translateY(${row.start}px)`,
-      }}
+      className="absolute left-0 top-0 w-full will-change-transform"
+      style={rowStyle}
     >
-      {dateSeparatorLabel ? <ChatDateSeparator label={dateSeparatorLabel} /> : null}
       <AnimatedMessageItem
         message={message}
-        staggerKey={getMessageRowKey(message)}
+        isNew={isNew}
+        staggerIndex={staggerIndex}
+        dateSeparatorLabel={dateSeparatorLabel}
         loadMediaEager={eagerMediaMessageIds.has(message.id)}
         groupPosition={groupPosition}
         onAddReaction={handlers.onAddReaction}
@@ -119,12 +120,16 @@ export const MessageListRow = memo(function MessageListRow({
 }, (prev, next) => {
   if (prev.row.key !== next.row.key) return false;
   if (prev.row.start !== next.row.start) return false;
+  if (prev.rowStyle.transform !== next.rowStyle.transform) return false;
+  if (prev.rowStyle.transition !== next.rowStyle.transition) return false;
   if (prev.row.index !== next.row.index) return false;
   if (prev.message !== next.message) return false;
   if (prev.messages !== next.messages) return false;
   if (prev.rowCount !== next.rowCount) return false;
   if (prev.replyCount !== next.replyCount) return false;
   if (prev.isPinned !== next.isPinned) return false;
+  if (prev.isNew !== next.isNew) return false;
+  if (prev.staggerIndex !== next.staggerIndex) return false;
   if (prev.eagerMediaMessageIds !== next.eagerMediaMessageIds) return false;
   if (prev.handlers !== next.handlers) return false;
   return true;

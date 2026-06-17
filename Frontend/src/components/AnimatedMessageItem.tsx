@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, memo } from 'react';
+import React, { memo } from 'react';
 import { ChatMessage } from '@/api/chat';
 import { MessageItem } from './MessageItem';
 import { messageRowPropsEqual } from './MessageItem/messageRowPropsEqual';
@@ -9,27 +9,15 @@ import {
   useRowContextMenuState,
 } from './MessageList/messageListContextMenuStore';
 import { useLayoutSettlingForRow } from './MessageList/useMessageListSettling';
-
-function staggerMsForId(id: string): number {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) {
-    h = Math.imul(31, h) + id.charCodeAt(i);
-  }
-  return 20 + (Math.abs(h) % 11) * 10;
-}
-
-const STAGGER_SKIP_AGE_MS = 90_000;
-
-function isRecentMessage(createdAt: string | undefined): boolean {
-  if (!createdAt) return true;
-  const t = Date.parse(createdAt);
-  if (!Number.isFinite(t)) return true;
-  return Date.now() - t < STAGGER_SKIP_AGE_MS;
-}
+import { MessageRowEnterMotion } from './MessageList/MessageRowEnterMotion';
+import { ChatDateSeparator } from '@/components/chat/ChatDateSeparator';
+import { useAuthStore } from '@/store/authStore';
 
 interface AnimatedMessageItemProps {
   message: ChatMessage;
-  staggerKey: string;
+  isNew: boolean;
+  staggerIndex: number;
+  dateSeparatorLabel?: string;
   loadMediaEager?: boolean;
   onAddReaction: (messageId: string, emoji: string) => void;
   onRemoveReaction: (messageId: string) => void;
@@ -56,7 +44,9 @@ interface AnimatedMessageItemProps {
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(function AnimatedMessageItem({
   message,
-  staggerKey,
+  isNew,
+  staggerIndex,
+  dateSeparatorLabel,
   loadMediaEager = false,
   onAddReaction,
   onRemoveReaction,
@@ -82,39 +72,17 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
 }) {
   const { skipStaggerOnOpen, suppressOpenReactionMotion } = useLayoutSettlingForRow();
   const contextMenuState = useRowContextMenuState(message.id);
-
-  const skipStagger = skipStaggerOnOpen || !isRecentMessage(message.createdAt);
-  const [isVisible, setIsVisible] = useState(skipStagger);
-  const revealedRef = useRef(skipStagger);
-
-  useEffect(() => {
-    if (skipStagger || !isRecentMessage(message.createdAt)) {
-      revealedRef.current = true;
-      setIsVisible(true);
-      return;
-    }
-    if (revealedRef.current) {
-      setIsVisible(true);
-      return;
-    }
-    setIsVisible(false);
-    const totalDelay = staggerMsForId(staggerKey);
-    const timer = setTimeout(() => {
-      revealedRef.current = true;
-      setIsVisible(true);
-    }, totalDelay);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [staggerKey, message.createdAt, skipStagger]);
+  const userId = useAuthStore((s) => s.user?.id);
+  const shouldAnimate = isNew && !skipStaggerOnOpen;
+  const isOutgoing = !isChannel && userId != null && message.senderId === userId;
 
   return (
-    <div
-      className={`transition-[opacity,transform] duration-300 ease-out will-change-[opacity,transform] motion-reduce:transition-none motion-reduce:transform-none ${
-        isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-[0.98]'
-      }`}
+    <MessageRowEnterMotion
+      animate={shouldAnimate}
+      staggerIndex={staggerIndex}
+      variant={isOutgoing ? 'outgoing' : 'incoming'}
     >
+      {dateSeparatorLabel ? <ChatDateSeparator label={dateSeparatorLabel} /> : null}
       <MessageItem
         message={message}
         onAddReaction={onAddReaction}
@@ -144,9 +112,12 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
         loadMediaEager={loadMediaEager}
         groupPosition={groupPosition}
       />
-    </div>
+    </MessageRowEnterMotion>
   );
 }, (prev, next) =>
+  prev.isNew === next.isNew &&
+  prev.staggerIndex === next.staggerIndex &&
+  prev.dateSeparatorLabel === next.dateSeparatorLabel &&
   messageRowPropsEqual(
     {
       message: prev.message,

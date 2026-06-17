@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { ClubIntegrationType, EntityType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { GameReadinessService } from './readiness.service';
 import { canAddPlayerToGame } from '../../utils/participantValidation';
 import notificationService from '../notification.service';
@@ -416,7 +416,7 @@ export class GameCreateService {
         participants: {
           include: {
             user: {
-              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+              select: USER_SELECT_WITH_SPORT_PROFILES,
             },
           },
         },
@@ -425,7 +425,7 @@ export class GameCreateService {
             players: {
               include: {
                 user: {
-                  select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+                  select: USER_SELECT_WITH_SPORT_PROFILES,
                 },
               },
             },
@@ -479,7 +479,7 @@ export class GameCreateService {
         participants: {
           include: {
             user: {
-              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+              select: USER_SELECT_WITH_SPORT_PROFILES,
             },
           },
         },
@@ -488,7 +488,7 @@ export class GameCreateService {
             players: {
               include: {
                 user: {
-                  select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+                  select: USER_SELECT_WITH_SPORT_PROFILES,
                 },
               },
             },

@@ -83,6 +83,10 @@ import i18n from './i18n/config';
 import './i18n/config';
 import { parseLiveBoardTheme } from '@/utils/liveScoring';
 import { useUnreadStore } from '@/store/unreadStore';
+import {
+  isTelegramAutoLoginPath,
+  shouldConsumePendingTelegramAuthPath,
+} from '@/utils/telegramAutoLoginPath';
 
 function AppContent() {
   const location = useLocation();
@@ -106,16 +110,17 @@ function AppContent() {
   const setPendingAuthPath = useDeepLinkStore((s) => s.setPendingAuthPath);
   useEffect(() => {
     if (
-      !isAuthenticated &&
-      location.pathname === '/login' &&
-      pendingAuthPath &&
-      pendingAuthPath.startsWith('/login/') &&
-      pendingAuthPath !== '/login/phone' &&
-      pendingAuthPath !== '/login/telegram'
+      !shouldConsumePendingTelegramAuthPath(
+        location.pathname,
+        pendingAuthPath,
+        isAuthenticated
+      )
     ) {
-      setPendingAuthPath(null);
-      navigate(pendingAuthPath, { replace: true });
+      return;
     }
+    const target = pendingAuthPath;
+    setPendingAuthPath(null);
+    navigate(target, { replace: true });
   }, [isAuthenticated, location.pathname, pendingAuthPath, setPendingAuthPath, navigate]);
 
   useEffect(() => {
@@ -338,7 +343,12 @@ function AppContent() {
     }
   }, [versionCheck, showOptionalUpdateModal, dismissedOptionalUpdate]);
 
-  if (isCheckingVersion || isInitializing) {
+  const holdShellForBootstrap =
+    (isCheckingVersion || isInitializing) &&
+    !isTelegramAutoLoginPath(location.pathname) &&
+    !isTelegramAutoLoginPath(pendingAuthPath ?? '');
+
+  if (holdShellForBootstrap) {
     return <AppLoadingScreen isInitializing={isInitializing} />;
   }
 
@@ -374,7 +384,10 @@ function AppContent() {
     isGameBroadcastPage && liveViewSearch.get('transparent') === '1';
   const liveBoardShellTheme = parseLiveBoardTheme(liveViewSearch.get('theme'));
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage =
+    location.pathname === '/login' ||
+    location.pathname === '/register' ||
+    isTelegramAutoLoginPath(location.pathname);
   // Chat threads work offline from the local cache (Dexie) with a queued outbox.
   const isChatPage =
     /^\/(user-chat|group-chat|channel-chat)\/[^/]+$/.test(location.pathname) ||

@@ -559,7 +559,7 @@ Frontend/e2e/
 | GD-23 | Edit level range | Level modal | Min/max saved |
 | GD-24 | Edit max participants | Max participants modal | Capacity updated |
 | GD-25 | Edit game format | Format wizard (pre-results) | Format updated |
-| GD-95 | Format summary for read-only viewer | Open padel game pre-results as participant without format edit rights, or non-participant who can view the game | “What kind of game?” picker hidden; format card shows title + summary; tap help icon expands full format details; no pencil |
+| GD-95 | Format summary for read-only viewer | Open padel game pre-results as participant without format edit rights, or non-participant who can view the game | “What kind of game?” picker hidden; format card shows title + summary (includes gender label when not Any); tap help icon expands full format details; no pencil; no gender row below card |
 | GD-96 | Format picker for editor | Open same game as owner/admin or `resultsByAnyone` playing participant | “What kind of game?” picker shown; can change template / format |
 | GD-82 | Fixed pairs roster section | Open padel game with fixed pairs enabled, 4+ even roster, no results | Standalone Fixed Pairs card below format; team slots editable; no toggle in format card |
 | GD-83 | Fixed pairs section hidden | Same game after results start, or `hasFixedTeams` off, or odd roster | Fixed Pairs card absent |
@@ -620,6 +620,7 @@ Frontend/e2e/
 | GD-60 | Reduce max participants | Edit max → kick overflow users | Capacity enforced |
 | GD-61 | Navigate to parent league | Open league fixture (`parentId`) | Link to season game works |
 | GD-85 | League match settings hidden | Open `LEAGUE` fixture as owner/admin before results | Game Settings section absent; season (`LEAGUE_SEASON`) still shows settings when editable |
+| GD-86 | League season sport levels | Tennis league season; player with padel 4.0 / tennis 2.5 | Standings, bracket, planner, fixture roster show tennis 2.5; Admin game modal shows tennis level for league fixture participants |
 | GD-62 | Pending trainer invite | TRAINING without trainer | Pending trainer row + accept flow |
 | GD-63 | FAQ edit (owner) | Edit game FAQs | Content saved |
 | GD-64 | Announced game results gate | Enter results on ANNOUNCED game | Confirm modal before entry |
@@ -676,6 +677,7 @@ Frontend/e2e/
 |----|------|-------|----------|
 | CH-12 | User DM | Send text | Message appears |
 | CH-13 | Game chat | Open from game | Game context header |
+| CH-69 | Game chat type tab switch | Game with multiple channels (PUBLIC/PHOTOS/etc.) → switch tabs | Message pane slides/fades to new channel; thin loading pulse during fetch; each tab restores its scroll; re-tapping active tab does not animate |
 | CH-14 | Group chat | Open group | Member list accessible |
 | CH-15 | Channel chat | Open channel | Read/post per permissions |
 | CH-16 | Bug chat | `@admin` bug thread | Bug context panel |
@@ -759,15 +761,15 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| M-01 | List loads | Open marketplace | Cards grid/list |
-| M-02 | My listings | `/marketplace/my` | Seller's items only |
-| M-03 | Category filter | Select category | Filtered results |
+| M-01 | List loads | Open marketplace | Shimmer skeleton grid, then cards stagger in |
+| M-02 | My listings | `/marketplace/my` | Seller's items only; horizontal slide transition from Market |
+| M-03 | Category filter | Select category | Pill slides; grid dims then new cards animate in |
 | M-04 | City filter | Change city | Items for city |
 | M-05 | Sport filter | Change sport context | Categories update |
 | M-06 | Search | Text search | Matching items |
-| M-07 | Pagination / infinite scroll | Scroll down | More items load |
+| M-07 | Pagination / infinite scroll | Scroll down / Load more | More items animate in |
 | M-08 | Unread on card | Item with chat unread | Badge shown |
-| M-09 | Empty marketplace | City with no items | Empty state |
+| M-09 | Empty marketplace | City with no items | Empty state card with icon + hint |
 
 ### 12.2 Create / edit listing
 
@@ -789,7 +791,7 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| M-21 | Open item drawer | Tap card | Detail drawer |
+| M-21 | Open item drawer | Tap card | Detail drawer with drag handle; content fades in |
 | M-22 | Deep link item | `/marketplace/:id` | Redirect + drawer |
 | M-23 | Item not found | Invalid id | Not found UI |
 | M-24 | Place bid | `@auction` bid modal | Bid accepted |
@@ -869,6 +871,7 @@ Frontend/e2e/
 | PR-42 | Follow blocked user | `@blocked` target | Action disabled with message |
 | PR-43 | Block user | Block from profile | Confirm → blocked |
 | PR-44 | Unblock user | Blocked users section | User unblocked |
+| PR-63 | Following list primary-sport level | Multi-sport user (tennis primary, padel global level higher) on another user's followers/following list | Level badge shows tennis profile level, not padel `User.level` |
 | PR-45 | Send money from card | Player card → send money | `SendMoneyToUserModal` transfer |
 | PR-46 | Wallet transaction history | Open wallet modal | Balance + history visible |
 | PR-47 | Level history panel | Statistics → level history | Per-sport history chart |

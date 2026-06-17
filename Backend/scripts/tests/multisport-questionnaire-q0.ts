@@ -14,13 +14,22 @@ function assert(condition: boolean, message: string): void {
   }
 }
 
-function testSnapshotNonPadelDefault(): void {
-  const snap = resolveUserSportSnapshot(
+function testSnapshotProfileOnlyDefault(): void {
+  const tennis = resolveUserSportSnapshot(
     { id: 'u', level: 4.5, reliability: 20, gamesPlayed: 10, gamesWon: 5 },
     Sport.TENNIS,
   );
-  assert(snap.level === 1.0, 'non-padel without profile defaults level to 1.0');
-  assert(snap.gamesPlayed === 0, 'non-padel without profile defaults gamesPlayed to 0');
+  assert(tennis.level === 1.0, 'non-padel without profile defaults level to 1.0');
+  assert(tennis.gamesPlayed === 0, 'non-padel without profile defaults gamesPlayed to 0');
+
+  const padel = resolveUserSportSnapshot(
+    { id: 'u', level: 4.5, reliability: 20, gamesPlayed: 10, gamesWon: 5, sportProfiles: [] },
+    Sport.PADEL,
+  );
+  assert(padel.level === 1.0, 'padel without profile defaults level to 1.0');
+  assert(padel.reliability === 0, 'padel without profile defaults reliability to 0');
+  assert(padel.gamesPlayed === 0, 'padel without profile defaults gamesPlayed to 0');
+  assert(padel.gamesWon === 0, 'padel without profile defaults gamesWon to 0');
 }
 
 function testQuestionnaireNeverTouchesSocialLevel(): void {
@@ -85,7 +94,6 @@ async function testAddUserSportInvariants(): Promise<void> {
   const loaded = await prisma.user.findUnique({
     where: { id: user.id },
     select: {
-      level: true,
       sportProfiles: {
         select: { sport: true, level: true, reliability: true, gamesPlayed: true, gamesWon: true },
       },
@@ -100,7 +108,7 @@ async function testAddUserSportInvariants(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  testSnapshotNonPadelDefault();
+  testSnapshotProfileOnlyDefault();
   testQuestionnaireNeverTouchesSocialLevel();
   await testAddUserSportInvariants();
   console.log('multisport-questionnaire-q0: all passed');

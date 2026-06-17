@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { CHAT_PINNED_BAR_TRANSITION } from '@/components/chat/chatListMotion';
 import { PinnedMessagesBar } from '@/components/chat/PinnedMessagesBar';
 import { useThreadChrome, useThreadScroll } from './useThreadView';
 
@@ -51,7 +52,7 @@ export const GameChatPinnedBar: React.FC<GameChatPinnedBarProps> = ({ gameChatTa
             initial={pinnedBarAnimate ? { opacity: 0, maxHeight: 0 } : false}
             animate={{ opacity: 1, maxHeight: pinnedBarAnimate ? 80 : undefined }}
             exit={pinnedBarAnimate ? { opacity: 0, maxHeight: 0 } : undefined}
-            transition={pinnedBarAnimate ? { duration: 0.25, ease: 'easeInOut' } : { duration: 0 }}
+            transition={pinnedBarAnimate ? CHAT_PINNED_BAR_TRANSITION : { duration: 0 }}
             className={`${
               chromeSettling
                 ? `absolute left-0 right-0 z-[2] ${gameChatTabsVisible ? 'top-12' : 'top-0'}`
@@ -75,7 +76,7 @@ export const GameChatPinnedBar: React.FC<GameChatPinnedBarProps> = ({ gameChatTa
             key="pinned-shadow"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={CHAT_PINNED_BAR_TRANSITION}
             className="absolute top-0 left-0 right-0 z-[1] pointer-events-none"
           >
             <div

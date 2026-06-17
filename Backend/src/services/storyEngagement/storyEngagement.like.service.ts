@@ -1,7 +1,8 @@
 import { StorySourceType } from '@prisma/client';
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import type { BasicUser } from '../../types/user.types';
+import { projectEmbeddedUserByPrimarySport } from '../user/projectEmbeddedBasicUsers';
 import { LIKER_PAGE_SIZE } from './storyEngagement.constants';
 import { emitStoryLike } from './storyEngagement.events';
 import { notifyStoryLiked } from './storyEngagement.notifications';
@@ -110,7 +111,7 @@ export class StoryEngagementLikeService {
             }
           : {}),
       },
-      include: { user: { select: USER_SELECT_FIELDS } },
+      include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: LIKER_PAGE_SIZE + 1,
     });
@@ -119,7 +120,7 @@ export class StoryEngagementLikeService {
     const page = hasMore ? rows.slice(0, LIKER_PAGE_SIZE) : rows;
 
     return {
-      users: page.map((r) => toBasicUser(r.user)),
+      users: page.map((r) => toBasicUser(projectEmbeddedUserByPrimarySport(r.user))),
       nextCursor: hasMore ? page[page.length - 1]!.id : null,
     };
   }

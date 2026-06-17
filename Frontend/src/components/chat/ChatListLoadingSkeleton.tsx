@@ -26,7 +26,7 @@ export function ChatListLoadingSkeleton({
         className={isDesktop ? '' : 'space-y-0'}
         style={{
           transform: isDesktop ? 'none' : `translateY(${pullDistance}px)`,
-          transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
+          transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.6s ease-out',
         }}
       >
         {[1, 2, 3, 4, 5].map((i) => (

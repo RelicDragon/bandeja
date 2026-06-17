@@ -9,8 +9,7 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { format, parse, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { MonthCalendar } from '@/components/MonthCalendar';
-import { SelectedDateHeading } from '@/components/SelectedDateHeading';
+import { CalendarSection } from './CalendarSection';
 import { TrainersList } from './TrainersList';
 import { GenderPromptBanner } from './GenderPromptBanner';
 import { CityPromptBanner } from './CityPromptBanner';
@@ -18,6 +17,9 @@ import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFilters
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { FiltersPanel } from './FiltersPanel';
 import { AnimatedGameList } from './AnimatedGameList';
+import { AnimatedLoadingSwap } from '@/components/motion/AnimatedLoadingSwap';
+import { AnimatedMount } from '@/components/motion/AnimatedMount';
+import { TabContentStack } from '@/components/motion/TabContentStack';
 import { EmptyStateCard } from './EmptyStateCard';
 import { GamesLoadingSkeleton } from './GameCardSkeleton';
 import { EntityFilterChips } from './EntityFilterChips';
@@ -583,11 +585,15 @@ export const AvailableGamesSection = ({
   };
 
   const filterBlock = (
-    <div className="mb-4">
-      <GenderPromptBanner />
-      <CityPromptBanner />
+    <>
+      <AnimatedMount layout>
+        <GenderPromptBanner />
+      </AnimatedMount>
+      <AnimatedMount layout>
+        <CityPromptBanner />
+      </AnimatedMount>
       {findSportTabs.length > 0 && (
-        <div className="mb-3 flex justify-center">
+        <AnimatedMount layout className="mb-3 flex justify-center">
           <SegmentedSwitch
             tabs={findSportTabs}
             activeId={filterSportVal}
@@ -596,11 +602,13 @@ export const AvailableGamesSection = ({
             layoutId="find-sport-selector"
             ariaLabel={t('sport.sport', { defaultValue: 'Sport' })}
           />
-        </div>
+        </AnimatedMount>
       )}
+      <div className="mb-4">
       <AnimatePresence initial={false}>
         {!filtersPanelOpenVal && panelFiltersApplied && (
           <motion.div
+            layout
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -646,6 +654,7 @@ export const AvailableGamesSection = ({
       <AnimatePresence initial={false}>
         {filtersPanelOpenVal && (
           <motion.div
+            layout
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -686,7 +695,8 @@ export const AvailableGamesSection = ({
         leaguesActive={leaguesFilterVal}
         onToggle={handleEntityFilterClick}
       />
-    </div>
+      </div>
+    </>
   );
 
   const favoriteTrainerName = useMemo(() => {
@@ -726,6 +736,41 @@ export const AvailableGamesSection = ({
     />
   );
 
+  const initialGamesLoading = Boolean(loading && availableGames.length === 0);
+
+  const calendarSectionProps = {
+    selectedDate,
+    onDateSelect: handleDateSelect,
+    availableGames,
+    userFilter: userFilterVal,
+    gameFilter: gameFilterVal,
+    trainingFilter: trainingFilterVal,
+    tournamentFilter: tournamentFilterVal,
+    leaguesFilter: leaguesFilterVal,
+    favoriteTrainerId: user?.favoriteTrainerId,
+    onMonthChange,
+    onDateRangeChange,
+    panelFilters: panelFilterState,
+    showPrivateGames: showPrivateGamesVal,
+    isAdmin,
+    findDiscoveryEnabled,
+    filterTier: filterTierVal,
+    filterNoRating: filterNoRatingVal,
+  };
+
+  const gamesContent = (
+    <AnimatedLoadingSwap
+      isLoading={initialGamesLoading}
+      loading={<GamesLoadingSkeleton />}
+    >
+      {filteredGames.length === 0 ? (
+        <EmptyStateCard icon={SearchX} title={emptyMessage} />
+      ) : (
+        gamesList
+      )}
+    </AnimatedLoadingSwap>
+  );
+
   const scrollBottomPadding = 'calc(5rem + env(safe-area-inset-bottom, 0px))';
   if (splitView && findViewMode === 'calendar') {
     return (
@@ -738,42 +783,27 @@ export const AvailableGamesSection = ({
           leftPanel={
             <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
               <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-                {filterBlock}
-                <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
-                <MonthCalendar
-                  selectedDate={selectedDate}
-                  onDateSelect={handleDateSelect}
-                  availableGames={availableGames}
-                  userFilter={userFilterVal}
-                  gameFilter={gameFilterVal}
-                  trainingFilter={trainingFilterVal}
-                  tournamentFilter={tournamentFilterVal}
-                  leaguesFilter={leaguesFilterVal}
-                  favoriteTrainerId={user?.favoriteTrainerId}
-                  onMonthChange={onMonthChange}
-                  onDateRangeChange={onDateRangeChange}
-                  panelFilters={panelFilterState}
-                  showPrivateGames={showPrivateGamesVal}
-                  isAdmin={isAdmin}
-                  findDiscoveryEnabled={findDiscoveryEnabled}
-                  filterTier={filterTierVal}
-                  filterNoRating={filterNoRatingVal}
-                />
-                <SelectedDateHeading date={selectedDate} />
+                <TabContentStack id="find-split-left">
+                  {filterBlock}
+                  <AnimatedMount layout show={trainingFilterVal}>
+                    <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
+                  </AnimatedMount>
+                  <AnimatedMount layout>
+                    <CalendarSection {...calendarSectionProps} />
+                  </AnimatedMount>
+                </TabContentStack>
               </div>
             </div>
           }
           rightPanel={
             <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
               <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-                {loading && availableGames.length === 0 ? (
-                  <GamesLoadingSkeleton />
-                ) : filteredGames.length === 0 ? (
-                  <EmptyStateCard icon={SearchX} title={emptyMessage} />
-                ) : (
-                  gamesList
-                )}
-                <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />
+                <TabContentStack id="find-split-right">
+                  <AnimatedMount layout>{gamesContent}</AnimatedMount>
+                  <AnimatedMount layout>
+                    <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />
+                  </AnimatedMount>
+                </TabContentStack>
               </div>
             </div>
           }
@@ -785,61 +815,38 @@ export const AvailableGamesSection = ({
 
   return (
     <SportLevelProvider sport={findLevelSport}>
-    <div className="mt-2">
+    <TabContentStack className="mt-2" id="find-tab-stack">
       {filterBlock}
-      <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
+      <AnimatedMount layout show={trainingFilterVal}>
+        <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
+      </AnimatedMount>
 
       {findViewMode === 'calendar' ? (
         <>
-          <MonthCalendar
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
-            availableGames={availableGames}
-            userFilter={userFilterVal}
-            gameFilter={gameFilterVal}
-            trainingFilter={trainingFilterVal}
-            tournamentFilter={tournamentFilterVal}
-            leaguesFilter={leaguesFilterVal}
-            favoriteTrainerId={user?.favoriteTrainerId}
-            onMonthChange={onMonthChange}
-            onDateRangeChange={onDateRangeChange}
-            panelFilters={panelFilterState}
-            showPrivateGames={showPrivateGamesVal}
-            isAdmin={isAdmin}
-            findDiscoveryEnabled={findDiscoveryEnabled}
-            filterTier={filterTierVal}
-            filterNoRating={filterNoRatingVal}
-          />
-          <SelectedDateHeading date={selectedDate} />
+          <AnimatedMount layout>
+            <CalendarSection {...calendarSectionProps} />
+          </AnimatedMount>
 
-          {loading && availableGames.length === 0 ? (
-            <GamesLoadingSkeleton />
-          ) : filteredGames.length === 0 ? (
-            <EmptyStateCard icon={SearchX} title={emptyMessage} />
-          ) : (
-            gamesList
-          )}
+          <AnimatedMount layout>{gamesContent}</AnimatedMount>
         </>
       ) : (
         <>
-          <WeekRangeNavigator
-            start={getListDateRange().start}
-            end={getListDateRange().end}
-            onNavigate={handleListNavigation}
-          />
+          <AnimatedMount layout>
+            <WeekRangeNavigator
+              start={getListDateRange().start}
+              end={getListDateRange().end}
+              onNavigate={handleListNavigation}
+            />
+          </AnimatedMount>
 
-          {loading && availableGames.length === 0 ? (
-            <GamesLoadingSkeleton />
-          ) : filteredGames.length === 0 ? (
-            <EmptyStateCard icon={SearchX} title={emptyMessage} />
-          ) : (
-            gamesList
-          )}
+          <AnimatedMount layout>{gamesContent}</AnimatedMount>
         </>
       )}
 
-      <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />
-    </div>
+      <AnimatedMount layout>
+        <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />
+      </AnimatedMount>
+    </TabContentStack>
     </SportLevelProvider>
   );
 };

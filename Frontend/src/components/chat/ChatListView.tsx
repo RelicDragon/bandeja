@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { CHAT_LIST_FADE_TRANSITION_S, CHAT_LIST_PULL_TRANSITION_S } from '@/components/chat/chatListMotion';
 import { Package, ShoppingCart, Store } from 'lucide-react';
 import { RefreshIndicator } from '@/components/RefreshIndicator';
 import { ChatListSearchBar } from './ChatListSearchBar';
@@ -127,7 +128,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
         className={isDesktop ? 'h-full bg-white dark:bg-gray-900 flex flex-col min-h-0 overflow-hidden pb-20' : ''}
         style={{
           transform: isDesktop ? 'none' : `translateY(${pullDistance}px)`,
-          transition: pullDistance > 0 && !isRefreshing ? 'none' : 'transform 0.3s ease-out',
+          transition: pullDistance > 0 && !isRefreshing ? 'none' : `transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out`,
         }}
       >
         {(chatsFilter === 'users' || chatsFilter === 'bugs' || chatsFilter === 'channels' || chatsFilter === 'market') && (
@@ -173,7 +174,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
+              transition={{ duration: CHAT_LIST_FADE_TRANSITION_S, ease: 'easeOut' }}
               className="overflow-hidden"
             >
               <BugsFilterPanel />
@@ -201,7 +202,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
           style={{
             opacity: listTransition === 'out' ? 0 : 1,
             transform: listTransition === 'out' ? 'scale(0.98)' : 'scale(1)',
-            transition: 'opacity 0.25s ease-out, transform 0.25s ease-out',
+            transition: `opacity ${CHAT_LIST_FADE_TRANSITION_S}s ease-out, transform ${CHAT_LIST_FADE_TRANSITION_S}s ease-out`,
           }}
         >
           {!isSearchMode && contactsMode && cityUsersLoading ? (

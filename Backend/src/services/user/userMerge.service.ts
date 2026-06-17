@@ -3,7 +3,6 @@ import {
   ChatContextType,
   ParticipantRole,
   Prisma,
-  Sport,
   SportLevelSource,
 } from '@prisma/client';
 import prisma from '../../config/database';
@@ -35,12 +34,8 @@ const survivorSelect = {
   originalAvatar: true,
   passwordHash: true,
   isActive: true,
-  level: true,
   socialLevel: true,
-  reliability: true,
   totalPoints: true,
-  gamesPlayed: true,
-  gamesWon: true,
   wallet: true,
   currentCityId: true,
   lastUserIP: true,
@@ -422,23 +417,6 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
   };
 }
 
-async function syncUserLegacyPadelFromProfile(tx: Tx, userId: string) {
-  const profile = await tx.userSportProfile.findUnique({
-    where: { userId_sport: { userId, sport: Sport.PADEL } },
-    select: { level: true, reliability: true, gamesPlayed: true, gamesWon: true },
-  });
-  if (!profile) return;
-  await tx.user.update({
-    where: { id: userId },
-    data: {
-      level: profile.level,
-      reliability: profile.reliability,
-      gamesPlayed: profile.gamesPlayed,
-      gamesWon: profile.gamesWon,
-    },
-  });
-}
-
 async function recomputeGameStats(tx: Tx, userId: string) {
   const goAgg = await tx.gameOutcome.aggregate({
     where: { userId },
@@ -774,7 +752,6 @@ export class UserMergeService {
         await mergeLundaProfiles(tx, survivorId, sourceId);
 
         await recomputeGameStats(tx, survivorId);
-        await syncUserLegacyPadelFromProfile(tx, survivorId);
 
         await tx.user.update({
           where: { id: survivorId },

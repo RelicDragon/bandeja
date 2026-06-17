@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components';
+import { AnimatedMount } from '@/components/motion/AnimatedMount';
 
 interface SubscriptionsNudgeButtonProps {
   onClick: () => void;
@@ -10,7 +11,7 @@ export const SubscriptionsNudgeButton = ({ onClick }: SubscriptionsNudgeButtonPr
   const { t } = useTranslation();
 
   return (
-    <div className="mt-6 flex justify-center">
+    <AnimatedMount layout className="mt-6 flex justify-center">
       <Button variant="primary" size="sm" onClick={onClick} className="flex items-center gap-2">
         <div className="relative inline-flex items-center justify-center w-4 h-4">
           <Bell className="w-4 h-4 animate-bell-pulse relative z-10" />
@@ -23,6 +24,6 @@ export const SubscriptionsNudgeButton = ({ onClick }: SubscriptionsNudgeButtonPr
           defaultValue: 'Want to be notified when new games are created?',
         })}
       </Button>
-    </div>
+    </AnimatedMount>
   );
 };

@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { getUserGameNote, getUserNotesForGames } from '../userGameNote.service';
 import { InviteService } from '../invite.service';
 import { ReadReceiptService } from '../chat/readReceipt.service';
@@ -244,7 +244,7 @@ const getAvailableGamesInclude = () => ({
   participants: {
     include: {
       user: {
-        select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+        select: USER_SELECT_WITH_SPORT_PROFILES,
       },
     },
   },
@@ -343,7 +343,7 @@ export class GameReadService {
         const cancelledSport = cancelled.sport ?? Sport.PADEL;
         const cancelledByUserRaw = await prisma.user.findUnique({
           where: { id: cancelled.cancelledByUserId },
-          select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+          select: USER_SELECT_WITH_SPORT_PROFILES,
         });
         const cancelledByUser = cancelledByUserRaw
           ? projectUserForSportContext(cancelledByUserRaw, cancelledSport)

@@ -128,7 +128,7 @@ export interface BasicUser {
   lastName?: string;
   avatar?: string | null;
   /**
-   * Competitive level for the current sport context when API-projected; otherwise legacy global padel column.
+   * Competitive level for the current sport context when API-projected; populated from `sportProfiles` on profile payloads.
    * @deprecated Prefer `sportProfiles` for the relevant sport, or `getDisplayLevelForSport`.
    */
   level: number;
@@ -213,12 +213,12 @@ export interface User extends BasicUser {
   originalAvatar?: string | null;
   currentCityId?: string;
   currentCity?: City;
-  /** @deprecated Prefer `sportProfiles` for the relevant sport. */
+  /** @deprecated Prefer `sportProfiles` for the relevant sport; API-populated from primary sport profile. */
   reliability: number;
   totalPoints: number;
-  /** @deprecated Prefer `sportProfiles` for the relevant sport. */
+  /** @deprecated Prefer `sportProfiles` for the relevant sport; API-populated from primary sport profile. */
   gamesPlayed: number;
-  /** @deprecated Prefer `sportProfiles` for the relevant sport. */
+  /** @deprecated Prefer `sportProfiles` for the relevant sport; API-populated from primary sport profile. */
   gamesWon: number;
   approvedById?: string | null;
   approvedWhen?: Date | string | null;

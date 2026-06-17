@@ -72,9 +72,9 @@ function testGameUserSelectIncludesSportsEnabled(): void {
 
   const readService = readFileSync(join(backendSrc, 'services/game/read.service.ts'), 'utf8');
   assert(
-    readService.includes('USER_SELECT_FIELDS_WITH_SPORT_PROFILES') &&
+    readService.includes('USER_SELECT_WITH_SPORT_PROFILES') &&
       !readService.includes('USER_SPORT_PROFILE_SELECT'),
-    'game read uses shared USER_SELECT_FIELDS_WITH_SPORT_PROFILES',
+    'game read uses shared USER_SELECT_WITH_SPORT_PROFILES',
   );
 
   for (const rel of [
@@ -84,7 +84,7 @@ function testGameUserSelectIncludesSportsEnabled(): void {
   ]) {
     const src = readFileSync(join(backendSrc, rel), 'utf8');
     assert(
-      src.includes('USER_SELECT_FIELDS_WITH_SPORT_PROFILES') && !src.includes('USER_SPORT_PROFILE_SELECT'),
+      src.includes('USER_SELECT_WITH_SPORT_PROFILES') && !src.includes('USER_SPORT_PROFILE_SELECT'),
       `${rel} uses shared user select with sportsEnabled`,
     );
   }

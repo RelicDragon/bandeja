@@ -5,7 +5,8 @@ import { ReplyPreview } from '../ReplyPreview';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useThreadScroll } from '@/pages/GameChat/useThreadView';
 import { COMPOSER_ELEVATED_PANEL_SHADOW } from '@/components/chat/composerElevatedPanel';
-import { PANEL_ENTER_Y, PANEL_EXIT_Y, PANEL_TRANSITION } from '../motion/motionTokens';
+import { PANEL_ENTER_Y, PANEL_EXIT_Y } from '../motion/motionTokens';
+import { CHAT_PANEL_TRANSITION } from '@/components/chat/chatListMotion';
 
 const elevatedPreviewClassName = COMPOSER_ELEVATED_PANEL_SHADOW;
 const stripMotionClassName = 'mb-2 overflow-visible px-0.5 pt-1';
@@ -61,7 +62,7 @@ export function MessageInputComposerContextStrip({
           initial={{ opacity: 0, y: PANEL_ENTER_Y }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: PANEL_EXIT_Y }}
-          transition={PANEL_TRANSITION}
+          transition={CHAT_PANEL_TRANSITION}
           className={stripMotionClassName}
         >
           {showEdit ? (

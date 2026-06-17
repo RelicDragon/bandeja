@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
+import { CHAT_OUTBOX_TRANSITION } from '@/components/chat/chatListMotion';
 import type { ChatListOutbox } from '@/utils/chatListSort';
 import { ChatListOutboxLine } from './ChatListOutboxLine';
 
@@ -18,7 +19,7 @@ export function ChatListOutboxAnimated({ listOutbox, onRetry, onDismiss }: Props
           initial={{ opacity: 0, y: 4 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -2 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
+          transition={CHAT_OUTBOX_TRANSITION}
         >
           <ChatListOutboxLine listOutbox={listOutbox} onRetry={onRetry} onDismiss={onDismiss} />
         </motion.div>

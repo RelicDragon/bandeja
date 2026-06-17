@@ -15,6 +15,10 @@ import { validateGameForSport } from '../../utils/validators/validateGameForSpor
 import { resolveLeagueSeasonSportFromInput } from '../../utils/validators/validateLeagueSeasonSport';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
+import {
+  LEAGUE_USER_SELECT,
+  projectLeagueGame,
+} from './leagueSportProjection.util';
 import { getDistinctLeagueGroupColor } from './groupColors';
 import {
   createLeagueGame,
@@ -925,7 +929,7 @@ export class LeagueCreateService {
         participants: {
           include: {
             user: {
-              select: USER_SELECT_FIELDS,
+              select: LEAGUE_USER_SELECT,
             },
           },
         },
@@ -934,7 +938,7 @@ export class LeagueCreateService {
             players: {
               include: {
                 user: {
-                  select: USER_SELECT_FIELDS,
+                  select: LEAGUE_USER_SELECT,
                 },
               },
             },
@@ -958,7 +962,7 @@ export class LeagueCreateService {
       throw new ApiError(500, 'Failed to fetch created game');
     }
 
-    return game;
+    return projectLeagueGame(game, resolveLeagueSeasonSport(round.leagueSeason));
   }
 
   static async createPlayoff(
@@ -1121,7 +1125,10 @@ export class LeagueCreateService {
     const { GameService } = await import('../game/game.service');
     await GameService.updateGameReadiness(game.id);
 
-    return { round, game };
+    return {
+      round,
+      game: projectLeagueGame(game, seasonSport),
+    };
   }
 
   private static async createPlayoffBatch(
@@ -1298,7 +1305,10 @@ export class LeagueCreateService {
       await GameService.updateGameReadiness(game.id);
     }
 
-    return { round, games };
+    return {
+      round,
+      games: games.map((g) => projectLeagueGame(g, seasonSport)),
+    };
   }
 
   static async createLeagueGroups(leagueSeasonId: string, numberOfGroups: number, userId: string) {

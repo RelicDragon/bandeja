@@ -293,6 +293,7 @@ export function useThreadViewController({
     initialScroll: thread.initialScroll,
     openPaintGeneration: thread.openPaintGeneration,
     threadScrollKey,
+    highlightAnchorMessageId: locationState?.anchorMessageId,
     handleAddOptimisticMessage: thread.handleAddOptimisticMessage,
     handleSendQueued: thread.handleSendQueued as (params: SendQueuedParams) => void,
     handleSendFailed: thread.handleSendFailed,

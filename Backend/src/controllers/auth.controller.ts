@@ -12,6 +12,7 @@ import { hashPassword, comparePassword } from '../utils/hash';
 import { NotificationChannelType } from '@prisma/client';
 import { NotificationPreferenceService } from '../services/notificationPreference.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
+import { enrichProfileUser } from '../services/user/userSportProfile.service';
 import { AuthRequest } from '../middleware/auth';
 import { TransactionService } from '../services/transaction.service';
 import { ensureUserCityAssigned } from '../services/user-city-bootstrap.service';
@@ -315,7 +316,7 @@ export const unlinkApple = asyncHandler(async (req: AuthRequest, res: Response) 
 
   res.json({
     success: true,
-    data: { user },
+    data: { user: enrichProfileUser(user) },
   });
 });
 
@@ -361,6 +362,6 @@ export const unlinkGoogle = asyncHandler(async (req: AuthRequest, res: Response)
 
   res.json({
     success: true,
-    data: { user },
+    data: { user: enrichProfileUser(user) },
   });
 });

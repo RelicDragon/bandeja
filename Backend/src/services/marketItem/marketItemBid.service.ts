@@ -1,7 +1,8 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { AuctionType, MarketItemStatus, MarketItemTradeType } from '@prisma/client';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { projectMarketBidEmbeddedUser } from '../user/projectEmbeddedBasicUsers';
 
 const MIN_BID_INCREMENT_CENTS = 50;
 const BID_INCREMENT_PERCENT = 0.01;
@@ -44,7 +45,7 @@ export class MarketItemBidService {
     const bids = await prisma.marketItemBid.findMany({
       where: { marketItemId },
       orderBy: { createdAt: 'desc' },
-      include: { bidder: { select: { ...USER_SELECT_FIELDS } } },
+      include: { bidder: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } } },
     });
 
     const high = await this.getCurrentHighBid(marketItemId);
@@ -52,7 +53,7 @@ export class MarketItemBidService {
     const minNext = high ? this.minNextBidCents(high.amountCents) : startingCents;
 
     return {
-      bids,
+      bids: bids.map(projectMarketBidEmbeddedUser),
       currentHighCents: high?.amountCents ?? null,
       currentHighBidderId: high?.bidderId ?? null,
       minNextBidCents: minNext,
@@ -130,7 +131,7 @@ export class MarketItemBidService {
 
       const bid = await tx.marketItemBid.create({
         data: { marketItemId, bidderId, amountCents },
-        include: { bidder: { select: { ...USER_SELECT_FIELDS } } },
+        include: { bidder: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } } },
       });
 
       if (auctionType === AuctionType.HOLLAND) {
@@ -141,7 +142,7 @@ export class MarketItemBidService {
       }
 
       return {
-        bid,
+        bid: projectMarketBidEmbeddedUser(bid),
         previousHighBidderId: previousHigh?.bidderId ?? null,
         auctionType,
         isHollandWin: auctionType === AuctionType.HOLLAND,

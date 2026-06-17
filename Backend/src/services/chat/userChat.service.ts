@@ -2,8 +2,9 @@ import prisma from '../../config/database';
 import { ChatSyncEventType } from '@bandeja/chat-contract';
 import { ChatContextType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { projectUserByPrimarySport } from '../user/userSportProfile.service';
+import { MessageService } from './message.service';
 import { SystemMessageType, createSystemMessageContent, getUserDisplayName } from '../../utils/systemMessages';
 import { computeContentSearchable } from '../../utils/messageSearchContent';
 import { SystemMessageService } from './systemMessage.service';
@@ -229,12 +230,7 @@ export class UserChatService {
           chatType: 'PUBLIC',
           state: 'SENT'
         },
-        include: {
-          sender: { select: USER_SELECT_FIELDS },
-          replyTo: { select: { id: true, content: true, sender: { select: USER_SELECT_FIELDS } } },
-          reactions: { include: { user: { select: USER_SELECT_FIELDS } } },
-          readReceipts: { include: { user: { select: USER_SELECT_FIELDS } } }
-        }
+        include: MessageService.getMessageInclude(),
       });
       const syncSeq = await ChatSyncEventService.appendEventInTransaction(
         tx,
@@ -249,15 +245,17 @@ export class UserChatService {
       });
       const refreshed = await tx.chatMessage.findUnique({
         where: { id: m.id },
-        include: {
-          sender: { select: USER_SELECT_FIELDS },
-          replyTo: { select: { id: true, content: true, sender: { select: USER_SELECT_FIELDS } } },
-          reactions: { include: { user: { select: USER_SELECT_FIELDS } } },
-          readReceipts: { include: { user: { select: USER_SELECT_FIELDS } } },
-        },
+        include: MessageService.getMessageInclude(),
       });
       return refreshed ?? m;
     });
+    const messageForClient = await MessageService.finalizeMessageForClient(
+      message,
+      'en',
+      ChatContextType.USER,
+      chatId,
+      requesterId,
+    );
     await updateLastMessagePreview(ChatContextType.USER, chatId);
     const socketService = (global as any).socketService;
     if (socketService) {
@@ -265,13 +263,13 @@ export class UserChatService {
         ChatContextType.USER,
         chatId,
         'message',
-        { message },
-        message.id,
-        message.serverSyncSeq ?? undefined,
+        { message: messageForClient },
+        messageForClient.id,
+        messageForClient.serverSyncSeq ?? undefined,
         [chat.user1Id, chat.user2Id]
       );
     }
-    return message;
+    return messageForClient;
   }
 
   static async respondToChatRequest(chatId: string, messageId: string, respondentId: string, accepted: boolean) {

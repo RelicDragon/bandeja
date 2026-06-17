@@ -5,7 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 import { ApiError } from '../utils/ApiError';
 import prisma from '../config/database';
 import { getLevelName } from '../utils/playerLevels';
-import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { ResultsStatus } from '@prisma/client';
 import { calculateRanks } from '../services/ranking.service';
 import {
@@ -97,8 +97,10 @@ const applySocialSportSnapshot = (
     const snapshot = resolveUserSportSnapshot(u, sport);
     return {
       ...u,
+      level: snapshot.level,
       reliability: snapshot.reliability,
       gamesPlayed: snapshot.gamesPlayed,
+      gamesWon: snapshot.gamesWon,
     };
   });
 
@@ -128,7 +130,6 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
     where: { id: currentUser.id },
     select: {
       id: true,
-      level: true,
       socialLevel: true,
       currentCityId: true,
       primarySport: true,
@@ -154,16 +155,9 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
   }
 
   const userSelect = {
-    ...USER_SELECT_FIELDS,
-    reliability: true,
+    ...USER_SELECT_WITH_SPORT_PROFILES,
     totalPoints: true,
-    gamesPlayed: true,
-    gamesWon: true,
     socialLevel: true,
-    primarySport: true,
-    sportProfiles: {
-      select: USER_SPORT_PROFILE_SELECT,
-    },
   };
 
   let allUsers: any[] = [];
@@ -267,15 +261,9 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
     const usersRaw = await prisma.user.findMany({
       where: baseWhere,
       select: {
-        ...USER_SELECT_FIELDS,
-        reliability: true,
+        ...USER_SELECT_WITH_SPORT_PROFILES,
         totalPoints: true,
-        gamesPlayed: true,
-        gamesWon: true,
         socialLevel: true,
-        sportProfiles: {
-          select: USER_SPORT_PROFILE_SELECT,
-        },
       },
     });
 

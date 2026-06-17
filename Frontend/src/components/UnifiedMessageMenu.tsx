@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Keyboard } from '@capacitor/keyboard';
@@ -24,6 +25,14 @@ import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay'
 import { usePlayersStore } from '@/store/playersStore';
 import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
 import type { BasicUser } from '@/types';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import {
+  CHAT_MESSAGE_MENU_BACKDROP,
+  CHAT_MESSAGE_MENU_INNER,
+  CHAT_MESSAGE_MENU_ROOT,
+  CHAT_MESSAGE_MENU_SECTION,
+  CHAT_MESSAGE_MENU_SHELL,
+} from '@/components/chat/chatListMotion';
 
 function mergeBasicUsers(fromMessage: BasicUser | undefined, fromStore: BasicUser | undefined): BasicUser | undefined {
   if (fromMessage && fromStore) {
@@ -94,12 +103,15 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const duplicateRef = useRef<HTMLDivElement>(null);
   const duplicateElRef = useRef<HTMLElement | null>(null);
   const openTimeRef = useRef(0);
+  const [visible, setVisible] = useState(true);
+  const reduceMotion = usePrefersReducedMotion();
+  const instantTransition = reduceMotion ? { duration: 0 } : undefined;
 
   const closeMenu = useCallback(() => {
     setShowDetails(false);
     setDetailsUsersLoading(false);
-    onClose();
-  }, [onClose]);
+    setVisible(false);
+  }, []);
 
   const receiptAndSenderIds = useMemo(() => {
     const ids = new Set<string>();
@@ -447,47 +459,68 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   }, [messageBottomPosition]);
 
   const content = (
-    <>
-      <div
-        className="fixed inset-0 bg-black/30 backdrop-blur-md z-[9998] pointer-events-auto"
-        onClick={handleBackdropClick}
-      />
-
-      <div ref={duplicateRef} />
-
-      {/* Context menu */}
-      <div
-        ref={menuRef}
-        className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-lg z-[9999] min-w-[200px] max-w-[90vw] overflow-hidden pointer-events-auto"
-        style={{
-          left: '50%',
-          top: `${menuTop}px`,
-          transform: 'translateX(-50%)',
-          maxHeight: `${window.innerHeight - 40}px`,
-          height: menuHeight > 0 ? effectiveMenuHeight : undefined,
-          paddingTop: '2px',
-          paddingBottom: '5px',
-          transition: showDetails ? 'height 0.15s ease-in-out' : undefined,
-        }}
-      >
-      <div className="relative flex">
-        {/* Main Menu */}
-        <div 
-          ref={mainMenuRef}
-          className={`w-full transition-transform duration-150 ease-in-out ${showDetails ? '-translate-x-full' : 'translate-x-0'}`}
+    <AnimatePresence onExitComplete={onClose}>
+      {visible ? (
+        <motion.div
+          key="unified-message-menu"
+          className="fixed inset-0 z-[9998] pointer-events-none"
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+          variants={CHAT_MESSAGE_MENU_ROOT}
+          transition={instantTransition}
         >
-          {/* Reactions Section */}
-          <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
-            <EmojiQuickStrip
-              frequentEmojis={frequentMenuEmojis}
-              currentEmoji={currentReaction}
-              onPick={(emoji, source) => handleReactionClick(emoji, source)}
-            />
-          </div>
+          <motion.div
+            className="fixed inset-0 bg-black/30 backdrop-blur-md pointer-events-auto"
+            variants={CHAT_MESSAGE_MENU_BACKDROP}
+            transition={instantTransition}
+            onClick={handleBackdropClick}
+          />
 
-          {/* Context Menu Actions */}
-          <div className="py-1">
-            
+          <div ref={duplicateRef} className="pointer-events-none" style={{ zIndex: 9999 }} />
+
+          <motion.div
+            ref={menuRef}
+            className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-2xl shadow-lg min-w-[200px] max-w-[90vw] overflow-hidden pointer-events-auto"
+            variants={CHAT_MESSAGE_MENU_SHELL}
+            transition={instantTransition}
+            style={{
+              left: '50%',
+              x: '-50%',
+              top: `${menuTop}px`,
+              maxHeight: `${window.innerHeight - 40}px`,
+              height: menuHeight > 0 ? effectiveMenuHeight : undefined,
+              paddingTop: '2px',
+              paddingBottom: '5px',
+              zIndex: 9999,
+              transition: showDetails && !reduceMotion ? 'height 0.15s ease-in-out' : undefined,
+            }}
+          >
+            <div className="relative flex">
+              <div
+                ref={mainMenuRef}
+                className={`w-full transition-transform duration-150 ease-in-out ${showDetails ? '-translate-x-full' : 'translate-x-0'}`}
+              >
+                <motion.div
+                  variants={CHAT_MESSAGE_MENU_INNER}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  transition={instantTransition}
+                >
+                  <motion.div
+                    className="px-3 py-2 border-b border-gray-200 dark:border-gray-600"
+                    variants={CHAT_MESSAGE_MENU_SECTION}
+                    transition={instantTransition}
+                  >
+                    <EmojiQuickStrip
+                      frequentEmojis={frequentMenuEmojis}
+                      currentEmoji={currentReaction}
+                      onPick={(emoji, source) => handleReactionClick(emoji, source)}
+                    />
+                  </motion.div>
+
+                  <motion.div className="py-1" variants={CHAT_MESSAGE_MENU_SECTION} transition={instantTransition}>
              <button
                onClick={handleShowDetails}
                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-between"
@@ -610,14 +643,14 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 <span>{t('chat.contextMenu.delete')}</span>
               </button>
             )}
-          </div>
-        </div>
+                  </motion.div>
+                </motion.div>
+              </div>
 
-        {/* Details View */}
-        <div 
-          ref={detailsRef}
-          className={`absolute top-0 left-0 w-full transition-transform duration-150 ease-in-out ${showDetails ? 'translate-x-0' : 'translate-x-full'}`}
-        >
+              <div
+                ref={detailsRef}
+                className={`absolute top-0 left-0 w-full transition-transform duration-150 ease-in-out ${showDetails ? 'translate-x-0' : 'translate-x-full'}`}
+              >
           {/* Back Button */}
           <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
             <button
@@ -719,10 +752,12 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </div>
             )}
           </div>
-        </div>
-      </div>
-      </div>
-    </>
+              </div>
+            </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 
   return typeof document !== 'undefined' ? createPortal(content, document.body) : content;

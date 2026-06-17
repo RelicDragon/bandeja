@@ -12,6 +12,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { getTrainerChipClassName } from './trainerChipLayout';
 import { formatTrainerDisplayName } from './findTrainerEmptyMessage';
+import { AnimatedMount } from '@/components/motion/AnimatedMount';
 
 interface TrainersListProps {
   show: boolean;
@@ -115,15 +116,8 @@ export const TrainersList = ({ show, availableGames = [], levelSport }: Trainers
   }
 
   return (
-    <div
-      ref={listRef}
-      className={`transition-all duration-300 ease-in-out overflow-hidden scroll-mt-20 ${
-        show
-          ? 'max-h-96 opacity-100 translate-y-0 mb-0'
-          : 'max-h-0 opacity-0 -translate-y-4 mb-0'
-      }`}
-    >
-      <div className="px-4 relative max-w-md mx-auto">
+    <AnimatedMount layout show={show} className="scroll-mt-20">
+      <div ref={listRef} className="px-4 relative max-w-md mx-auto">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
           {t('trainers.ourTrainers', { defaultValue: 'Our trainers' })}
         </h3>
@@ -206,11 +200,7 @@ export const TrainersList = ({ show, availableGames = [], levelSport }: Trainers
           )}
         </div>
         {displayedTrainer && (
-          <div
-            className={`transition-all duration-300 ease-in-out overflow-hidden w-full ${
-              show && selectedTrainer && hintVisible ? 'max-h-24 opacity-100 translate-y-0 -mt-2 mb-2' : 'max-h-0 opacity-0 -translate-y-4 mt-0 mb-0'
-            }`}
-          >
+          <AnimatedMount layout show={show && Boolean(selectedTrainer) && hintVisible} className="-mt-2 mb-2 w-full">
             <div className="w-fit flex items-center gap-2 px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
             <button
               type="button"
@@ -237,9 +227,9 @@ export const TrainersList = ({ show, availableGames = [], levelSport }: Trainers
               </span>
             </div>
             </div>
-          </div>
+          </AnimatedMount>
         )}
       </div>
-    </div>
+    </AnimatedMount>
   );
 };

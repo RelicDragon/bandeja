@@ -1,19 +1,23 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { loadLeagueSeasonSportOrThrow } from '../../utils/validators/validateLeagueSeasonSport';
 import { getDistinctLeagueGroupColor } from './groupColors';
+import {
+  LEAGUE_USER_SELECT,
+  projectLeagueParticipants,
+} from './leagueSportProjection.util';
 
 const participantInclude = {
   user: {
-    select: USER_SELECT_FIELDS,
+    select: LEAGUE_USER_SELECT,
   },
   leagueTeam: {
     include: {
       players: {
         include: {
           user: {
-            select: USER_SELECT_FIELDS,
+            select: LEAGUE_USER_SELECT,
           },
         },
       },
@@ -64,6 +68,7 @@ export class LeagueGroupManagementService {
   }
 
   private static async buildPayload(leagueSeasonId: string) {
+    const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId);
     const allGroups = await prisma.leagueGroup.findMany({
       where: { leagueSeasonId },
       include: {
@@ -96,7 +101,13 @@ export class LeagueGroupManagementService {
       orderBy: participantOrder,
     });
 
-    return { groups, unassignedParticipants };
+    return {
+      groups: groups.map((group) => ({
+        ...group,
+        participants: projectLeagueParticipants(group.participants, seasonSport),
+      })),
+      unassignedParticipants: projectLeagueParticipants(unassignedParticipants, seasonSport),
+    };
   }
 
   static async getGroups(leagueSeasonId: string) {

@@ -37,6 +37,7 @@ export interface MessageListProps {
   onForwardMessage?: (message: ChatMessage) => void;
   threadScrollKey?: string | null;
   initialScroll?: ThreadInitialScroll;
+  highlightAnchorMessageId?: string;
   openPaintGeneration?: number;
   threadLayoutSettling?: boolean;
   onChatScrollNearBottomChange?: (nearBottom: boolean) => void;

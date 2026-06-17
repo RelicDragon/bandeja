@@ -3,7 +3,8 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
+import { projectEmbeddedUserByPrimarySport } from '../services/user/projectEmbeddedBasicUsers';
 
 export const addToFavorites = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { clubId } = req.body;
@@ -194,14 +195,17 @@ export const addUserToFavorites = asyncHandler(async (req: AuthRequest, res: Res
     },
     include: {
       favoriteUser: {
-        select: USER_SELECT_FIELDS,
+        select: USER_SELECT_WITH_SPORT_PROFILES,
       },
     },
   });
 
   res.status(201).json({
     success: true,
-    data: favorite,
+    data: {
+      ...favorite,
+      favoriteUser: projectEmbeddedUserByPrimarySport(favorite.favoriteUser),
+    },
   });
 });
 
@@ -276,13 +280,13 @@ export const getFollowing = asyncHandler(async (req: AuthRequest, res: Response)
   const rows = await prisma.userFavoriteUser.findMany({
     where: { userId: req.userId! },
     include: {
-      favoriteUser: { select: USER_SELECT_FIELDS },
+      favoriteUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
     },
     orderBy: { createdAt: 'desc' },
   });
   res.json({
     success: true,
-    data: rows.map((r) => r.favoriteUser),
+    data: rows.map((r) => projectEmbeddedUserByPrimarySport(r.favoriteUser)),
   });
 });
 
@@ -290,12 +294,12 @@ export const getFollowers = asyncHandler(async (req: AuthRequest, res: Response)
   const rows = await prisma.userFavoriteUser.findMany({
     where: { favoriteUserId: req.userId! },
     include: {
-      user: { select: USER_SELECT_FIELDS },
+      user: { select: USER_SELECT_WITH_SPORT_PROFILES },
     },
     orderBy: { createdAt: 'desc' },
   });
   res.json({
     success: true,
-    data: rows.map((r) => r.user),
+    data: rows.map((r) => projectEmbeddedUserByPrimarySport(r.user)),
   });
 });

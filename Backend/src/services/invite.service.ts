@@ -6,7 +6,7 @@ import {
   upsertGameInviteOutcome,
 } from '../utils/gameInviteOutcome';
 import { createSystemMessage } from '../controllers/chat.controller';
-import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { validatePlayerCanJoinGame, validateGameCanAcceptParticipants } from '../utils/participantValidation';
@@ -109,7 +109,7 @@ export class InviteService {
     const participants = await prisma.gameParticipant.findMany({
       where: { userId, status: 'INVITED' },
       include: {
-        invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+        invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
         game: {
           select: {
             id: true,
@@ -136,8 +136,8 @@ export class InviteService {
             club: { select: { id: true, name: true, avatar: true } },
             participants: {
               include: {
-                user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
-                invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+                user: { select: USER_SELECT_WITH_SPORT_PROFILES },
+                invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
               },
             },
           },
@@ -221,8 +221,8 @@ export class InviteService {
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
       include: {
-        user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
-        invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+        user: { select: USER_SELECT_WITH_SPORT_PROFILES },
+        invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
         game: { include: { participants: true } },
       },
     });
@@ -437,7 +437,7 @@ export class InviteService {
     }
     const participant = await prisma.gameParticipant.findUnique({
       where: { id: participantId },
-      include: { user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES } },
+      include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } },
     });
     if (!participant || participant.status !== 'INVITED') {
       return { success: false, message: 'errors.invites.notFound' };

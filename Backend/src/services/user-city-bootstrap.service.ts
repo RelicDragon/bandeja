@@ -3,6 +3,7 @@ import prisma from '../config/database';
 import { config } from '../config/env';
 import { ApiError } from '../utils/ApiError';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
+import { enrichProfileUser } from './user/userSportProfile.service';
 import { AllIpGeoProvidersFailedError, getClientIp, getLocationByIp, type LocationByIp } from './ipLocation.service';
 import { CityGroupService } from './chat/cityGroup.service';
 
@@ -84,7 +85,7 @@ export async function ensureUserCityAssigned(userId: string, req?: Request) {
       select: PROFILE_SELECT_FIELDS,
     });
     if (!userWithCity) throw new ApiError(404, 'User not found');
-    return userWithCity;
+    return enrichProfileUser(userWithCity);
   }
 
   let latitude = existing.latitudeByIP ?? null;
@@ -180,6 +181,6 @@ export async function ensureUserCityAssigned(userId: string, req?: Request) {
 
   console.log(LOG, 'assigned currentCityId', { userId, currentCityId: city.id });
 
-  return user;
+  return enrichProfileUser(user);
 }
 

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { getHorizontalScrollFadeMaskStyle } from '@/components/HorizontalScrollFadeEdges';
 import { useAuthStore } from '@/store/authStore';
 import { useHorizontalScrollFade } from '@/hooks/useHorizontalScrollFade';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useStoriesFeed } from '@/hooks/useStoriesFeed';
+import { STAGGER_CHILDREN, STAGGER_ITEM_TRANSITION } from '@/components/motion/motionTokens';
 import { StoriesRailBubble } from './StoriesRailBubble';
-import { StoriesRailSkeleton } from './StoriesRailSkeleton';
 import { StoriesViewer } from './StoriesViewer';
 import { StoryCreateSheet } from './create/StoryCreateSheet';
 import { StoryPhotoEditor } from './create/photo/StoryPhotoEditor';
@@ -16,10 +18,24 @@ import type { StoryMediaFile } from './create/types/storyEditor.types';
 import type { StoryMediaFile as PhotoMediaFile } from './create/photo/types';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 
+const bubbleVariants = {
+  hidden: { opacity: 0, scale: 0.88, x: 10 },
+  visible: (index: number) => ({
+    opacity: 1,
+    scale: 1,
+    x: 0,
+    transition: {
+      ...STAGGER_ITEM_TRANSITION,
+      delay: index * STAGGER_CHILDREN,
+    },
+  }),
+};
+
 export function StoriesRail() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
-  const { feed, isLoading, refresh, enabled } = useStoriesFeed();
+  const reduceMotion = usePrefersReducedMotion();
+  const { feed, refresh, enabled } = useStoriesFeed();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<PhotoMediaFile[] | null>(null);
@@ -112,47 +128,80 @@ export function StoriesRail() {
   }, [viewerSegmentKey, viewerBubbles, viewerBubbleIndex]);
 
   if (!enabled || !user) return null;
-  if (isLoading && !feed) return <StoriesRailSkeleton />;
 
-  const onlySelf = serverBubbles.length === 0;
+  const onlySelf = feed != null && serverBubbles.length === 0;
+  const visibleBubbles = bubbles.filter(
+    (bubble) => !(bubble.isSelf && bubble.segments.length === 0),
+  );
 
   return (
     <>
-      <div className="px-4 mb-3 max-w-md mx-auto">
-        {onlySelf ? (
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{t('stories.emptyHint')}</p>
-        ) : null}
+      <div className="px-4 mb-3 max-w-md mx-auto min-h-[5.75rem]">
+        <AnimatePresence initial={false}>
+          {onlySelf ? (
+            <motion.p
+              key="empty-hint"
+              layout
+              initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.24, ease: [0.21, 0.47, 0.32, 0.98] }}
+              className="text-xs text-gray-500 dark:text-gray-400 mb-2 overflow-hidden"
+            >
+              {t('stories.emptyHint')}
+            </motion.p>
+          ) : null}
+        </AnimatePresence>
         <div className="relative -mx-4 px-4">
           <div
             ref={carouselRef}
             style={carouselMaskStyle}
             className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide pb-1 touch-pan-x overscroll-x-contain [-webkit-overflow-scrolling:touch]"
           >
-            <StoriesRailBubble
-              user={user}
-              label={t('stories.yourStory')}
-              hasUnseen={false}
-              isSelf
-              isCreate
-              onClick={handleCreateClick}
-            />
-            {bubbles.map((bubble) => {
-              if (bubble.isSelf && bubble.segments.length === 0) return null;
-              const label = bubble.isSelf
-                ? t('stories.yourStory')
-                : [bubble.user.firstName, bubble.user.lastName].filter(Boolean).join(' ') || '—';
-              return (
-                <StoriesRailBubble
-                  key={bubble.user.id}
-                  user={bubble.user}
-                  label={label}
-                  hasUnseen={bubble.hasUnseen}
-                  previewThumbnailUrl={bubble.previewThumbnailUrl}
-                  isSelf={bubble.isSelf}
-                  onClick={() => handleBubbleClick(bubble.user.id)}
-                />
-              );
-            })}
+            <motion.div
+              custom={0}
+              variants={bubbleVariants}
+              initial={reduceMotion ? false : 'hidden'}
+              animate="visible"
+              className="shrink-0"
+            >
+              <StoriesRailBubble
+                user={user}
+                label={t('stories.yourStory')}
+                hasUnseen={false}
+                isSelf
+                isCreate
+                onClick={handleCreateClick}
+              />
+            </motion.div>
+            <AnimatePresence mode="popLayout">
+              {visibleBubbles.map((bubble, index) => {
+                const label = bubble.isSelf
+                  ? t('stories.yourStory')
+                  : [bubble.user.firstName, bubble.user.lastName].filter(Boolean).join(' ') || '—';
+                return (
+                  <motion.div
+                    key={bubble.user.id}
+                    layout
+                    custom={index + 1}
+                    variants={bubbleVariants}
+                    initial={reduceMotion ? false : 'hidden'}
+                    animate="visible"
+                    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
+                    className="shrink-0"
+                  >
+                    <StoriesRailBubble
+                      user={bubble.user}
+                      label={label}
+                      hasUnseen={bubble.hasUnseen}
+                      previewThumbnailUrl={bubble.previewThumbnailUrl}
+                      isSelf={bubble.isSelf}
+                      onClick={() => handleBubbleClick(bubble.user.id)}
+                    />
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
         </div>
       </div>

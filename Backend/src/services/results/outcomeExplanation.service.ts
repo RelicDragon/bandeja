@@ -166,8 +166,6 @@ export type GameSnapshotForExplanation = GameRulesSource & {
 
 const userSelectForExplanation = {
   ...USER_SELECT_FIELDS,
-  reliability: true,
-  gamesPlayed: true,
   sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
 } as const;
 

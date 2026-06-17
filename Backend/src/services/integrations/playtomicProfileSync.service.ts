@@ -1,4 +1,4 @@
-import { Sport, SportLevelSource } from '@prisma/client';
+import { SportLevelSource } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import {
@@ -38,17 +38,6 @@ export async function syncPlaytomicLevelsToUser(
           ...(row.reliability !== undefined ? { reliability: row.reliability } : {}),
           levelSource: SportLevelSource.PLAYTOMIC,
           externalRatingHint: row.externalHint,
-        },
-      });
-    }
-
-    const padelRow = parsed.find((r) => r.sport === Sport.PADEL);
-    if (padelRow) {
-      await tx.user.update({
-        where: { id: userId },
-        data: {
-          level: padelRow.bandejaLevel,
-          ...(padelRow.reliability !== undefined ? { reliability: padelRow.reliability } : {}),
         },
       });
     }

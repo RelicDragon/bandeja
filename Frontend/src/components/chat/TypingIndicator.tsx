@@ -12,7 +12,8 @@ import {
   type ChatContextUserLookupParams,
 } from '@/utils/chatContextUserLookup';
 import type { BasicUser } from '@/types';
-import { PANEL_ENTER_Y, PANEL_EXIT_Y, PANEL_TRANSITION } from '@/components/motion/motionTokens';
+import { PANEL_ENTER_Y, PANEL_EXIT_Y } from '@/components/motion/motionTokens';
+import { CHAT_PANEL_TRANSITION } from '@/components/chat/chatListMotion';
 
 export interface TypingIndicatorProps extends ChatContextUserLookupParams {
   typingUserIds: string[];
@@ -100,7 +101,7 @@ export const TypingIndicator: React.FC<TypingIndicatorProps> = ({
           initial={{ opacity: 0, y: PANEL_ENTER_Y }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: PANEL_EXIT_Y }}
-          transition={PANEL_TRANSITION}
+          transition={CHAT_PANEL_TRANSITION}
           className="mb-2 overflow-visible px-0.5 pt-1"
         >
           <div className={panelClassName}>

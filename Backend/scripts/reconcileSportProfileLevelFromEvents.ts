@@ -156,32 +156,46 @@ async function applyPatches(patches: ProfilePatch[]): Promise<number> {
     if (patch.reliability != null) data.reliability = patch.reliability;
     if (Object.keys(data).length === 0) continue;
 
-    await prisma.$transaction(async (tx) => {
-      await tx.userSportProfile.update({
-        where: { userId_sport: { userId: patch.userId, sport: patch.sport } },
-        data,
-      });
-
-      if (patch.sport === Sport.PADEL) {
-        const user = await tx.user.findUnique({
-          where: { id: patch.userId },
-          select: { primarySport: true },
-        });
-        if (user?.primarySport === Sport.PADEL) {
-          await tx.user.update({
-            where: { id: patch.userId },
-            data: {
-              ...(patch.level != null ? { level: patch.level } : {}),
-              ...(patch.reliability != null ? { reliability: patch.reliability } : {}),
-            },
-          });
-        }
-      }
+    await prisma.userSportProfile.update({
+      where: { userId_sport: { userId: patch.userId, sport: patch.sport } },
+      data,
     });
     updated += 1;
   }
 
   return updated;
+}
+
+export async function reconcileSportProfilesFromEvents(options: {
+  apply: boolean;
+  limit?: number;
+}): Promise<{ patchCount: number; updated: number }> {
+  const [levelDrifts, reliabilityDrifts] = await Promise.all([
+    findLevelDrifts(options.limit),
+    findReliabilityDrifts(options.limit),
+  ]);
+  const patches = mergePatches(levelDrifts, reliabilityDrifts);
+
+  console.log(
+    options.apply
+      ? `Applying ${patches.length} profile patch(es) (${levelDrifts.length} level, ${reliabilityDrifts.length} reliability)...`
+      : `Dry run: ${patches.length} profile patch(es) — level drift ${levelDrifts.length}, reliability drift ${reliabilityDrifts.length} (pass --apply to write)`,
+  );
+
+  for (const patch of patches) {
+    console.log([patch.userId, patch.sport, ...patch.notes].join(' | '));
+  }
+
+  if (!options.apply) {
+    if (patches.length > 0) {
+      console.log('No changes written. Re-run with --apply');
+    }
+    return { patchCount: patches.length, updated: 0 };
+  }
+
+  const updated = await applyPatches(patches);
+  console.log(`Updated ${updated} profile(s).`);
+  return { patchCount: patches.length, updated };
 }
 
 function parseArgs(argv: string[]) {
@@ -196,32 +210,7 @@ function parseArgs(argv: string[]) {
 
 async function main() {
   const { apply, limit } = parseArgs(process.argv.slice(2));
-
-  const [levelDrifts, reliabilityDrifts] = await Promise.all([
-    findLevelDrifts(limit),
-    findReliabilityDrifts(limit),
-  ]);
-  const patches = mergePatches(levelDrifts, reliabilityDrifts);
-
-  console.log(
-    apply
-      ? `Applying ${patches.length} profile patch(es) (${levelDrifts.length} level, ${reliabilityDrifts.length} reliability)...`
-      : `Dry run: ${patches.length} profile patch(es) — level drift ${levelDrifts.length}, reliability drift ${reliabilityDrifts.length} (pass --apply to write)`,
-  );
-
-  for (const patch of patches) {
-    console.log([patch.userId, patch.sport, ...patch.notes].join(' | '));
-  }
-
-  if (!apply) {
-    if (patches.length > 0) {
-      console.log('No changes written. Re-run with --apply');
-    }
-    return;
-  }
-
-  const updated = await applyPatches(patches);
-  console.log(`Updated ${updated} profile(s).`);
+  await reconcileSportProfilesFromEvents({ apply, limit });
 }
 
 main()

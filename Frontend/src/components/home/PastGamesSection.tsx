@@ -6,6 +6,7 @@ import { Game } from '@/types';
 import { AnimatedGameList } from './AnimatedGameList';
 import { EmptyStateCard } from './EmptyStateCard';
 import { GamesLoadingSkeleton } from './GameCardSkeleton';
+import { AnimatedMount } from '@/components/motion/AnimatedMount';
 
 interface PastGamesSectionProps {
   pastGames: Game[];
@@ -29,7 +30,7 @@ export const PastGamesSection = ({
   const { t } = useTranslation();
 
   return (
-    <div className="space-y-4">
+    <AnimatedMount layout className="space-y-4">
       {pastGames.length === 0 && !loadingPastGames ? (
         <EmptyStateCard icon={History} title={t('home.noPastGames')} />
       ) : (
@@ -62,6 +63,6 @@ export const PastGamesSection = ({
           </motion.button>
         </div>
       )}
-    </div>
+    </AnimatedMount>
   );
 };

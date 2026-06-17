@@ -50,9 +50,6 @@ enum WatchProfileSports {
         if user.sportProfiles == nil {
             return user.level ?? 1.0
         }
-        if sport == .padel || sport == userPrimarySport(user) {
-            return user.level ?? 1.0
-        }
         return 1.0
     }
 }

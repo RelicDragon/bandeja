@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Capacitor } from '@capacitor/core';
@@ -40,7 +40,10 @@ import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { MessageInputScrollFab } from '@/components/chat/MessageInputScrollFab';
 import { useThreadComposer, useThreadMessageActions } from '@/pages/GameChat/useThreadView';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { CHAT_PANEL_TRANSITION } from '@/components/chat/chatListMotion';
+import { PANEL_ENTER_Y, PANEL_EXIT_Y } from '@/components/motion/motionTokens';
 
 export type { SendQueuedParams };
 
@@ -255,13 +258,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
     onStopTyping: stopTyping,
   });
 
-  const imagePreviewUrls = useMemo(() => selectedImages.map((file) => URL.createObjectURL(file)), [selectedImages]);
-
-  useEffect(() => {
-    return () => {
-      imagePreviewUrls.forEach((url) => URL.revokeObjectURL(url));
-    };
-  }, [imagePreviewUrls]);
+  const reduceMotion = usePrefersReducedMotion();
 
   const showMic =
     !message.trim() &&
@@ -511,7 +508,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
         autoTranslate={autoTranslate}
       />
       <MessageInputImagePreviewStrip
-        imagePreviewUrls={imagePreviewUrls}
+        imageFiles={selectedImages}
         onRemove={removeImage}
         failedSlotIndices={imageUploadFailedSlots}
         retryingSlotIndex={retryingImageSlot}
@@ -587,16 +584,17 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
               isDragOver ? 'border-2 border-blue-400 dark:border-blue-500 border-dashed' : 'border border-gray-200 dark:border-gray-700'
             }`}
           >
-              {voice.voiceMode ? (
-                <VoiceRecordingOverlay
-                  durationMs={voiceRecorder.durationMs}
-                  liveLevels={voiceRecorder.liveLevels}
-                  busy={voice.voiceBusy}
-                  onCancel={voice.handleVoiceCancel}
-                  onConfirm={voice.handleVoiceConfirm}
-                />
-              ) : (
-                <>
+              {reduceMotion ? (
+                voice.voiceMode ? (
+                  <VoiceRecordingOverlay
+                    durationMs={voiceRecorder.durationMs}
+                    liveLevels={voiceRecorder.liveLevels}
+                    busy={voice.voiceBusy}
+                    onCancel={voice.handleVoiceCancel}
+                    onConfirm={voice.handleVoiceConfirm}
+                  />
+                ) : (
+                  <>
                     <MentionInput
                       value={message}
                       onChange={handleMessageChange}
@@ -612,30 +610,100 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                       className="w-full"
                       style={{ minHeight: '48px', maxHeight: '120px', paddingLeft: '20px' }}
                     />
-                  {showMic ? (
-                    <VoiceRecordButton
-                      onClick={() => void voice.handleStartVoice()}
-                      disabled={inputBlocked || isDisabled}
-                      title={t('chat.voice.record', { defaultValue: 'Record voice' })}
-                      aria-label={t('chat.voice.record', { defaultValue: 'Record voice message' })}
-                    />
-                  ) : (
-                    <button
-                      type="submit"
-                      disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
-                      className="absolute bottom-0.5 right-[2px] w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white rounded-full flex items-center justify-center hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-[0_3px_14px_rgba(59,130,246,0.75),0_8px_36px_rgba(37,99,235,0.55)] hover:shadow-[0_5px_20px_rgba(59,130,246,0.85),0_12px_44px_rgba(37,99,235,0.6)] hover:scale-105 z-10"
-                      aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
+                    {showMic ? (
+                      <VoiceRecordButton
+                        onClick={() => void voice.handleStartVoice()}
+                        disabled={inputBlocked || isDisabled}
+                        title={t('chat.voice.record', { defaultValue: 'Record voice' })}
+                        aria-label={t('chat.voice.record', { defaultValue: 'Record voice message' })}
+                      />
+                    ) : (
+                      <button
+                        type="submit"
+                        disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
+                        className="absolute bottom-0.5 right-[2px] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white shadow-[0_3px_14px_rgba(59,130,246,0.75),0_8px_36px_rgba(37,99,235,0.55)] transition-all duration-200 hover:scale-105 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 hover:shadow-[0_5px_20px_rgba(59,130,246,0.85),0_12px_44px_rgba(37,99,235,0.6)] disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
+                      >
+                        {inputBlocked ? (
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        ) : (
+                          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+                  </>
+                )
+              ) : (
+                <AnimatePresence initial={false} mode="wait">
+                  {voice.voiceMode ? (
+                    <motion.div
+                      key="voice"
+                      className="w-full"
+                      initial={{ opacity: 0, y: PANEL_ENTER_Y }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: PANEL_EXIT_Y }}
+                      transition={CHAT_PANEL_TRANSITION}
                     >
-                      {inputBlocked ? (
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <VoiceRecordingOverlay
+                        durationMs={voiceRecorder.durationMs}
+                        liveLevels={voiceRecorder.liveLevels}
+                        busy={voice.voiceBusy}
+                        onCancel={voice.handleVoiceCancel}
+                        onConfirm={voice.handleVoiceConfirm}
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="text"
+                      className="relative w-full"
+                      initial={{ opacity: 0, y: PANEL_ENTER_Y }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: PANEL_EXIT_Y }}
+                      transition={CHAT_PANEL_TRANSITION}
+                    >
+                      <MentionInput
+                        value={message}
+                        onChange={handleMessageChange}
+                        placeholder={t('chat.messages.typeMessage')}
+                        disabled={isDisabled || inputBlocked}
+                        game={game}
+                        bug={bug}
+                        groupChannel={groupChannel}
+                        userChatId={userChatId}
+                        contextType={contextType}
+                        chatType={chatType}
+                        onKeyDown={handleKeyDown}
+                        className="w-full"
+                        style={{ minHeight: '48px', maxHeight: '120px', paddingLeft: '20px' }}
+                      />
+                      {showMic ? (
+                        <VoiceRecordButton
+                          onClick={() => void voice.handleStartVoice()}
+                          disabled={inputBlocked || isDisabled}
+                          title={t('chat.voice.record', { defaultValue: 'Record voice' })}
+                          aria-label={t('chat.voice.record', { defaultValue: 'Record voice message' })}
+                        />
                       ) : (
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                        </svg>
+                        <button
+                          type="submit"
+                          disabled={(!message.trim() && selectedImages.length === 0) || inputBlocked || isDisabled}
+                          className="absolute bottom-0.5 right-[2px] z-10 flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 text-white shadow-[0_3px_14px_rgba(59,130,246,0.75),0_8px_36px_rgba(37,99,235,0.55)] transition-all duration-200 hover:scale-105 hover:from-blue-600 hover:via-blue-700 hover:to-blue-800 hover:shadow-[0_5px_20px_rgba(59,130,246,0.85),0_12px_44px_rgba(37,99,235,0.6)] disabled:cursor-not-allowed disabled:opacity-50"
+                          aria-label={inputBlocked ? t('common.sending') : t('chat.messages.sendMessage')}
+                        >
+                          {inputBlocked ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          ) : (
+                            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                          )}
+                        </button>
                       )}
-                    </button>
+                    </motion.div>
                   )}
-                </>
+                </AnimatePresence>
               )}
           </div>
         </div>

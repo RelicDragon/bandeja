@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
 import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import { AnimatedMount } from '@/components/motion/AnimatedMount';
 
 interface InvitesSectionProps {
   invites: Invite[];
@@ -68,8 +69,8 @@ export const InvitesSection = ({
     hidingInvites.has(inviteId) || (decliningInviteIds?.has(inviteId) ?? false);
 
   return (
-    <div className="mb-6">
-      <h2 
+    <AnimatedMount layout className="mb-6">
+      <h2
         className={`text-xl font-semibold text-gray-900 dark:text-white mb-4 ${bounceNotifications ? 'animate-[pulse_0.4s_ease-in-out_3] text-primary-600 dark:text-primary-400' : ''}`}
         onAnimationEnd={handleAnimationEnd}
       >
@@ -170,7 +171,7 @@ export const InvitesSection = ({
           );
         })}
       </div>
-    </div>
+    </AnimatedMount>
   );
 };
 

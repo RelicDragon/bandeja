@@ -4,7 +4,8 @@ import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { hasBlocked } from '../services/social-graph/socialGraph.block';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
+import { projectEmbeddedUserByPrimarySport } from '../services/user/projectEmbeddedBasicUsers';
 
 export const blockUser = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { userId: blockedUserId } = req.body;
@@ -45,14 +46,17 @@ export const blockUser = asyncHandler(async (req: AuthRequest, res: Response) =>
     },
     include: {
       blockedUser: {
-        select: USER_SELECT_FIELDS,
+        select: USER_SELECT_WITH_SPORT_PROFILES,
       },
     },
   });
 
   res.status(201).json({
     success: true,
-    data: block,
+    data: {
+      ...block,
+      blockedUser: projectEmbeddedUserByPrimarySport(block.blockedUser),
+    },
   });
 });
 
@@ -108,7 +112,7 @@ export const getBlockedUsers = asyncHandler(async (req: AuthRequest, res: Respon
     where: { userId: req.userId! },
     include: {
       blockedUser: {
-        select: USER_SELECT_FIELDS,
+        select: USER_SELECT_WITH_SPORT_PROFILES,
       },
     },
     orderBy: {
@@ -118,7 +122,10 @@ export const getBlockedUsers = asyncHandler(async (req: AuthRequest, res: Respon
 
   res.json({
     success: true,
-    data: blockedUsers,
+    data: blockedUsers.map((row) => ({
+      ...row,
+      blockedUser: projectEmbeddedUserByPrimarySport(row.blockedUser),
+    })),
   });
 });
 

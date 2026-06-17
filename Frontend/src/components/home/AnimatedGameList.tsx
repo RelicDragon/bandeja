@@ -1,5 +1,6 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { AnimatePresence, motion, type Variants } from 'framer-motion';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 24, scale: 0.97 },
@@ -29,14 +30,17 @@ export function AnimatedGameList<T>({
   renderItem,
   className = 'space-y-4 pb-8',
 }: AnimatedGameListProps<T>) {
-  const hasShownItemsRef = useRef(false);
-  const shouldAnimateEntrance = hasShownItemsRef.current;
+  const reduceMotion = usePrefersReducedMotion();
 
-  useEffect(() => {
-    if (items.length > 0) {
-      hasShownItemsRef.current = true;
-    }
-  }, [items.length]);
+  if (reduceMotion) {
+    return (
+      <div className={className}>
+        {items.map((item) => (
+          <div key={getKey(item)}>{renderItem(item)}</div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className={className}>
@@ -47,7 +51,7 @@ export function AnimatedGameList<T>({
             layout
             custom={index}
             variants={itemVariants}
-            initial={shouldAnimateEntrance ? 'hidden' : false}
+            initial="hidden"
             animate="visible"
             exit={{ opacity: 0, scale: 0.96, transition: { duration: 0.18 } }}
           >

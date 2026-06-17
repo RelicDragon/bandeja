@@ -307,7 +307,11 @@ export const MonthCalendar = ({
   }
 
   return (
-    <div ref={calendarRef} data-calendar="true" className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 mb-4 max-w-md mx-auto">
+    <div
+      ref={calendarRef}
+      data-calendar="true"
+      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 mb-4 max-w-md mx-auto"
+    >
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={handlePreviousMonth}
@@ -380,6 +384,7 @@ export const MonthCalendar = ({
               onClick={() => handleDateClick(day)}
               className={`
                 relative w-full p-2 rounded-lg text-sm flex flex-col items-center justify-center gap-0.5
+                transition-colors duration-300 ease-out
                 ${isSelected
                   ? 'bg-primary-500 text-white font-semibold scale-[1.1] z-10'
                   : !isCurrentMonth
@@ -413,7 +418,11 @@ export const MonthCalendar = ({
                 />
               )}
               {gameCount > 0 && (
-                <span className={`
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+                  className={`
                   absolute -top-1 -right-1 flex items-center justify-center
                   min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold
                   ${!isCurrentMonth
@@ -424,7 +433,7 @@ export const MonthCalendar = ({
                   }
                 `}>
                   {gameCount}
-                </span>
+                </motion.span>
               )}
               {showTypePill && (
                 <span className={`

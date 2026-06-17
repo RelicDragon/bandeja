@@ -1,14 +1,20 @@
 import { LeagueParticipantType, PlayoffFormat } from '@prisma/client';
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { getUserNotesForGames } from '../userGameNote.service';
+import { loadLeagueSeasonSportOrThrow } from '../../utils/validators/validateLeagueSeasonSport';
 import {
   buildBracketGameSortMetaMap,
   sortBracketRoundGames,
 } from './bracketScheduleListSort.util';
+import {
+  LEAGUE_USER_SELECT,
+  projectLeagueParticipants,
+  projectLeagueRounds,
+} from './leagueSportProjection.util';
 
 export class LeagueReadService {
   static async getLeagueRounds(leagueSeasonId: string, userId?: string) {
+    const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId);
     const rounds = await prisma.leagueRound.findMany({
       where: { leagueSeasonId },
       include: {
@@ -32,7 +38,7 @@ export class LeagueReadService {
             participants: {
               include: {
                 user: {
-                  select: USER_SELECT_FIELDS,
+                  select: LEAGUE_USER_SELECT,
                 },
               },
             },
@@ -41,7 +47,7 @@ export class LeagueReadService {
                 players: {
                   include: {
                     user: {
-                      select: USER_SELECT_FIELDS,
+                      select: LEAGUE_USER_SELECT,
                     },
                   },
                 },
@@ -91,7 +97,7 @@ export class LeagueReadService {
             outcomes: {
               include: {
                 user: {
-                  select: USER_SELECT_FIELDS,
+                  select: LEAGUE_USER_SELECT,
                 },
               },
               orderBy: { position: 'asc' },
@@ -157,20 +163,24 @@ export class LeagueReadService {
         const notesMap = await getUserNotesForGames(userId, allGameIds);
 
         // Attach userNote to each game
-        return rounds.map(round => ({
-          ...round,
-          games: round.games.map(game => ({
-            ...game,
-            userNote: notesMap.get(game.id) || null,
+        return projectLeagueRounds(
+          rounds.map((round) => ({
+            ...round,
+            games: round.games.map((game) => ({
+              ...game,
+              userNote: notesMap.get(game.id) || null,
+            })),
           })),
-        }));
+          seasonSport,
+        );
       }
     }
 
-    return rounds;
+    return projectLeagueRounds(rounds, seasonSport);
   }
 
   static async getLeagueStandings(leagueSeasonId: string) {
+    const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId);
     const season = await prisma.leagueSeason.findUnique({
       where: { id: leagueSeasonId },
       select: { game: { select: { hasFixedTeams: true } } },
@@ -181,14 +191,14 @@ export class LeagueReadService {
       where: { leagueSeasonId },
       include: {
         user: {
-          select: USER_SELECT_FIELDS,
+          select: LEAGUE_USER_SELECT,
         },
         leagueTeam: {
           include: {
             players: {
               include: {
                 user: {
-                  select: USER_SELECT_FIELDS,
+                  select: LEAGUE_USER_SELECT,
                 },
               },
             },
@@ -212,7 +222,10 @@ export class LeagueReadService {
     });
 
     const wantType = hasFixedTeams ? LeagueParticipantType.TEAM : LeagueParticipantType.USER;
-    return participants.filter((p) => p.participantType === wantType);
+    return projectLeagueParticipants(
+      participants.filter((p) => p.participantType === wantType),
+      seasonSport,
+    );
   }
 }
 

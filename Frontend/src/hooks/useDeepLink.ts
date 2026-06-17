@@ -4,6 +4,8 @@ import { App } from '@capacitor/app';
 import { isCapacitor } from '@/utils/capacitor';
 import { navigateWithTracking } from '@/utils/navigation';
 import { useDeepLinkStore } from '@/store/deepLinkStore';
+import { isBandejaDeepLinkHost } from '@/utils/bandejaDeepLinkHost';
+import { isTelegramAutoLoginPath } from '@/utils/telegramAutoLoginPath';
 import { shouldHandleTelegramLoginDeepLink } from '@/utils/telegramDeepLinkDedupe';
 import { appendLevelSportQuery, parseLevelSportQuery } from '@/utils/levelSportQuery';
 import { bumpChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
@@ -16,9 +18,6 @@ function navigateFreshChat(
   navigateWithTracking(navigate, path, { replace: true, state: { forceReload: Date.now() } });
 }
 
-const isTelegramAutoLoginPath = (pathname: string) =>
-  pathname.startsWith('/login/') && pathname !== '/login/phone' && pathname !== '/login/telegram';
-
 export const useDeepLink = () => {
   const navigate = useNavigate();
   const hasHandledLaunchUrl = useRef(false);
@@ -29,7 +28,7 @@ export const useDeepLink = () => {
     const handleDeepLink = (urlString: string) => {
       try {
         const url = new URL(urlString);
-        if (url.hostname !== 'bandeja.me') return;
+        if (!isBandejaDeepLinkHost(url.hostname)) return;
 
         const pathname = url.pathname;
         if (isTelegramAutoLoginPath(pathname)) {

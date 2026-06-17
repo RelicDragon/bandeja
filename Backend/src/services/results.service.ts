@@ -68,7 +68,6 @@ export async function getGameResults(gameId: string) {
           user: {
             select: {
               ...USER_SELECT_WITH_SPORT_PROFILES,
-              reliability: true,
             },
           },
         },

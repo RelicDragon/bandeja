@@ -20,6 +20,7 @@ import {
   resetMessageListContextMenu,
 } from './MessageList/messageListContextMenuStore';
 import { MessageListSettlingProvider } from './MessageList/MessageListSettlingProvider';
+import { useMessageListNewKeys } from './MessageList/useMessageListNewKeys';
 import { useMessageListScrollAnchor } from './MessageList/useMessageListScrollAnchor';
 import type { MessageListHandle, MessageListProps } from './MessageList/types';
 import {
@@ -51,6 +52,11 @@ import {
 import { getMessageRowKey } from '@/services/chat/messageRowKey';
 import { isThreadMessagesPending } from '@/pages/GameChat/threadViewLoadingState';
 import { WavyDots } from '@/components/WavyDots';
+import { motion } from 'framer-motion';
+import { CHAT_PANEL_TRANSITION } from '@/components/chat/chatListMotion';
+import { useVirtualRowLayoutTransition } from '@/components/chat/useVirtualRowLayoutTransition';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { applyScrollTargetMessageHighlight } from '@/utils/scrollTargetMessageHighlight';
 
 const OPEN_TAIL_EAGER_MEDIA = 60;
 /** Fixed overscan — velocity-based toggling remounted rows and shifted scroll height. */
@@ -91,6 +97,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
     onForwardMessage,
     threadScrollKey = null,
     initialScroll = undefined,
+    highlightAnchorMessageId,
     openPaintGeneration = 0,
     threadLayoutSettling = false,
     onChatScrollNearBottomChange,
@@ -98,6 +105,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   ref
 ) {
   const { t } = useTranslation();
+  const reduceMotion = usePrefersReducedMotion();
   const pinnedSet = useMemo(() => new Set(pinnedMessageIds), [pinnedMessageIds]);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const innerListRef = useRef<HTMLDivElement>(null);
@@ -295,19 +303,32 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       if (!anchorId) return;
       const idx = snapshot.findIndex((m) => m.id === anchorId);
       if (idx < 0) return;
+
+      const highlightIfDeepLink = () => {
+        if (highlightAnchorMessageId !== anchorId) return;
+        const anchorEl = messagesContainerRef.current?.querySelector(
+          `#message-${anchorId}`
+        ) as HTMLElement | null;
+        if (anchorEl) {
+          applyScrollTargetMessageHighlight(anchorEl, { reducedMotion: reduceMotion });
+        }
+      };
+
       const anchorEl = messagesContainerRef.current.querySelector(
         `#message-${anchorId}`
       ) as HTMLElement | null;
       if (anchorEl) {
         anchorEl.scrollIntoView({ block: 'start', behavior: 'auto' });
+        requestAnimationFrame(highlightIfDeepLink);
         return;
       }
       scrollVirtualizerToIndex(virtualizerRef.current, idx, {
         align: 'start',
         behavior: 'auto',
       });
+      requestAnimationFrame(highlightIfDeepLink);
     },
-    []
+    [highlightAnchorMessageId, reduceMotion]
   );
 
   useLayoutEffect(() => {
@@ -665,98 +686,150 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
 
   const isMessagesPending = isThreadMessagesPending(isLoadingMessages, isInitialLoad);
 
-  if (messages.length === 0 && isMessagesPending) {
-    return (
-      <div
-        className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800"
-        role="status"
-        aria-label={t('common.loading')}
-      >
-        <WavyDots />
-      </div>
-    );
-  }
-
-  if (messages.length === 0 && !isMessagesPending) {
-    return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg
-              className="w-8 h-8 text-gray-400 dark:text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-          </div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">{t('chat.messages.noMessages')}</h3>
-        </div>
-      </div>
-    );
-  }
+  const messageRowKeys = useMemo(
+    () => messages.map((m) => getMessageRowKey(m)),
+    [messages]
+  );
+  const newMessageKeys = useMessageListNewKeys(messageRowKeys, threadScrollKey ?? undefined);
+  const newKeyStaggerIndex = useMemo(() => {
+    const map = new Map<string, number>();
+    let i = 0;
+    for (const key of messageRowKeys) {
+      if (newMessageKeys.has(key)) map.set(key, i++);
+    }
+    return map;
+  }, [messageRowKeys, newMessageKeys]);
 
   const virtualItems = virtualizer.getVirtualItems();
+  const rowStyles = useVirtualRowLayoutTransition(messagesContainerRef, virtualItems, !reduceMotion);
+  const totalHeight = virtualizer.getTotalSize();
+  const showLoading = messages.length === 0 && isMessagesPending;
+  const showEmpty = messages.length === 0 && !isMessagesPending;
+  const showMessages = messages.length > 0;
+  const panelTransition = reduceMotion ? { duration: 0 } : CHAT_PANEL_TRANSITION;
+  const heightTransition = reduceMotion ? { duration: 0 } : CHAT_LIST_HEIGHT_TRANSITION;
+
+  const emptyStateContent = (
+    <div className="text-center">
+      <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg
+          className="w-8 h-8 text-gray-400 dark:text-gray-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+          />
+        </svg>
+      </div>
+      <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">{t('chat.messages.noMessages')}</h3>
+    </div>
+  );
+
+  const threadStatusLayer = reduceMotion ? (
+    showLoading ? (
+      <div className="absolute inset-0 flex items-center justify-center" role="status" aria-label={t('common.loading')}>
+        <WavyDots />
+      </div>
+    ) : showEmpty ? (
+      <div className="absolute inset-0 flex items-center justify-center">{emptyStateContent}</div>
+    ) : null
+  ) : (
+    <AnimatePresence mode="wait" initial={false}>
+      {showLoading ? (
+        <motion.div
+          key="thread-loading"
+          className="absolute inset-0 z-[3] flex items-center justify-center bg-gray-50 dark:bg-gray-800"
+          initial={{ opacity: 0, y: CHAT_MESSAGE_ENTER_Y }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -CHAT_MESSAGE_ENTER_Y }}
+          transition={panelTransition}
+          role="status"
+          aria-label={t('common.loading')}
+        >
+          <WavyDots />
+        </motion.div>
+      ) : showEmpty ? (
+        <motion.div
+          key="thread-empty"
+          className="absolute inset-0 z-[3] flex items-center justify-center bg-gray-50 dark:bg-gray-800"
+          initial={{ opacity: 0, y: CHAT_MESSAGE_ENTER_Y, scale: 0.99 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -CHAT_MESSAGE_ENTER_Y }}
+          transition={panelTransition}
+        >
+          {emptyStateContent}
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
+  );
 
   return (
     <MessageListSettlingProvider value={settlingRefs}>
-    <div
-      ref={messagesContainerRef}
-      className="relative flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto bg-gray-50 dark:bg-gray-800 p-4 min-h-0 overscroll-contain"
-      style={{ WebkitOverflowScrolling: 'touch' }}
-    >
-      {isSwitchingChatType && messages.length > 0 ? (
-        <div
-          className="pointer-events-none absolute top-0 left-4 right-4 z-[2] h-1 rounded-full bg-primary-400/35 dark:bg-primary-500/25 animate-pulse"
-          aria-hidden
-        />
-      ) : null}
-      {hasContextPanel && <div className="pt-6 flex-shrink-0" />}
-      <div
-        ref={topLoadSentinelRef}
-        className="w-full shrink-0 flex flex-col items-center justify-center min-h-[8px] py-2 pointer-events-none gap-2"
-        aria-hidden
-      >
-        {isLoadingMore && hasMoreMessages ? (
+      <div className="relative flex-1 min-h-0 bg-gray-50 dark:bg-gray-800">
+        {showMessages ? (
           <div
-            className="h-5 w-5 rounded-full border-2 border-gray-300 border-t-blue-500 dark:border-gray-600 dark:border-t-blue-400 animate-spin"
-            role="status"
-          />
+            ref={messagesContainerRef}
+            className="relative flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto p-4 min-h-0 overscroll-contain h-full"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {isSwitchingChatType ? (
+              <div
+                className="pointer-events-none absolute top-0 left-4 right-4 z-[2] h-1 rounded-full bg-primary-400/35 dark:bg-primary-500/25 animate-pulse"
+                aria-hidden
+              />
+            ) : null}
+            {hasContextPanel && <div className="pt-6 flex-shrink-0" />}
+            <div
+              ref={topLoadSentinelRef}
+              className="w-full shrink-0 flex flex-col items-center justify-center min-h-[8px] py-2 pointer-events-none gap-2"
+              aria-hidden
+            >
+              {isLoadingMore && hasMoreMessages ? (
+                <div
+                  className="h-5 w-5 rounded-full border-2 border-gray-300 border-t-blue-500 dark:border-gray-600 dark:border-t-blue-400 animate-spin"
+                  role="status"
+                />
+              ) : null}
+            </div>
+            <motion.div
+              ref={innerListRef}
+              className="space-y-1 relative w-full"
+              initial={false}
+              animate={{ height: totalHeight }}
+              transition={heightTransition}
+            >
+              {virtualItems.map((row) => {
+                const message = row.index < messages.length ? messages[row.index] : undefined;
+                const rowKey = message ? getMessageRowKey(message) : row.key;
+                return (
+                  <MessageListRow
+                    key={row.key}
+                    row={row}
+                    rowStyle={rowStyles.get(row.key) ?? { transform: `translateY(${row.start}px)` }}
+                    message={message}
+                    messages={messages}
+                    rowCount={rowCount}
+                    measureElement={virtualizer.measureElement}
+                    eagerMediaMessageIds={eagerMediaMessageIds}
+                    replyCount={message ? (replyCountMap.get(message.id) ?? 0) : 0}
+                    isPinned={message ? pinnedSet.has(message.id) : false}
+                    isNew={message ? newMessageKeys.has(rowKey) : false}
+                    staggerIndex={message ? (newKeyStaggerIndex.get(rowKey) ?? 0) : 0}
+                    onScrollToFirstReply={onScrollToFirstReply}
+                    handlers={rowHandlers}
+                  />
+                );
+              })}
+            </motion.div>
+          </div>
         ) : null}
+        {threadStatusLayer}
       </div>
-      <div
-        ref={innerListRef}
-        className="space-y-1 relative w-full"
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-        }}
-      >
-        {virtualItems.map((row) => {
-          const message = row.index < messages.length ? messages[row.index] : undefined;
-          return (
-            <MessageListRow
-              key={row.key}
-              row={row}
-              message={message}
-              messages={messages}
-              rowCount={rowCount}
-              measureElement={virtualizer.measureElement}
-              eagerMediaMessageIds={eagerMediaMessageIds}
-              replyCount={message ? (replyCountMap.get(message.id) ?? 0) : 0}
-              isPinned={message ? pinnedSet.has(message.id) : false}
-              onScrollToFirstReply={onScrollToFirstReply}
-              handlers={rowHandlers}
-            />
-          );
-        })}
-      </div>
-    </div>
     </MessageListSettlingProvider>
   );
 });

@@ -2,6 +2,7 @@ import type { Game, GenderTeam } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { parseGameSport } from '@/utils/gameSport';
 import { playersPerMatchOf } from '@/utils/matchFormat';
+import { genderTeamsSummaryLabelKey } from '@/utils/genderTeamsSummaryLabel';
 import {
   gameFormatFixedTeamsToggleVisible,
   gameFormatGenderVisible,
@@ -12,19 +13,6 @@ type ParticipantSetupTag = {
   label: string;
   onClick?: () => void;
 };
-
-function genderLabelKey(gender: GenderTeam): string | null {
-  switch (gender) {
-    case 'MEN':
-      return 'createGame.genderTeams.men';
-    case 'WOMEN':
-      return 'createGame.genderTeams.women';
-    case 'MIX_PAIRS':
-      return 'createGame.genderTeams.mixPairs';
-    default:
-      return null;
-  }
-}
 
 export function buildParticipantSetupTags(
   game: Game,
@@ -53,7 +41,7 @@ export function buildParticipantSetupTags(
   if (gameFormatGenderVisible(game.entityType)) {
     const gender = (game.genderTeams || 'ANY') as GenderTeam;
     if (gender !== 'ANY') {
-      const labelKey = genderLabelKey(gender);
+      const labelKey = genderTeamsSummaryLabelKey(gender);
       if (labelKey) tags.push({ key: 'gender', label: t(labelKey) });
     }
   }

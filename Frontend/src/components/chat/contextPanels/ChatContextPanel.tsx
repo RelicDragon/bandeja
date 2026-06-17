@@ -79,10 +79,10 @@ export const ChatContextPanel = ({
     <div className="absolute top-0 left-0 right-0 z-30 flex justify-center px-4 pointer-events-none">
       <div className="w-full max-w-[90%] pointer-events-auto">
         {/* Unified Panel with Integrated Toggle */}
-        <div className="bg-gradient-to-b from-gray-50/80 to-white/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-sm border-x border-b border-gray-200 dark:border-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.4)] rounded-b-xl transition-all duration-300 ease-in-out">
+        <div className="bg-gradient-to-b from-gray-50/80 to-white/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-sm border-x border-b border-gray-200 dark:border-gray-700 shadow-[0_8px_24px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.4)] rounded-b-xl transition-all duration-[600ms] ease-in-out">
           {/* Panel Content */}
           <div
-            className={`bg-gradient-to-b from-white via-white to-gray-50/90 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900/90 overflow-hidden transition-all duration-300 ease-in-out ${
+            className={`bg-gradient-to-b from-white via-white to-gray-50/90 dark:from-gray-800 dark:via-gray-800 dark:to-gray-900/90 overflow-hidden transition-all duration-[600ms] ease-in-out ${
               isExpanded ? 'max-h-[600px] opacity-100' : 'max-h-0 opacity-0'
             }`}
           >
@@ -94,12 +94,12 @@ export const ChatContextPanel = ({
           {/* Toggle Button (Integrated Handle) */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full px-4 py-2.5 flex items-center justify-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-200 group uppercase tracking-wider"
+            className="w-full px-4 py-2.5 flex items-center justify-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-all duration-[400ms] group uppercase tracking-wider"
           >
             <span>
               {isExpanded ? t('common.hideDetails', { defaultValue: 'Hide Details' }) : t('common.showDetails', { defaultValue: 'Show Details' })}
             </span>
-            <div className="transition-transform duration-200 group-hover:scale-110">
+            <div className="transition-transform duration-[400ms] group-hover:scale-110">
               {isExpanded ? (
                 <ChevronUp size={16} className="transition-transform group-hover:-translate-y-0.5" />
               ) : (

@@ -2,6 +2,7 @@ import { RoundType } from '@prisma/client';
 import prisma from '../../../config/database';
 import type { GameReadinessDb } from '../../game/readiness.service';
 import { ApiError } from '../../../utils/ApiError';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../../utils/constants';
 import { createLeagueGame } from '../gameCreation.util';
 import { pairIndicesForRoundRobinSlot, roundsInSingleRoundRobinCycle } from './fixedTeamsRoundRobin';
 
@@ -73,14 +74,7 @@ export class TeamForRoundGeneration {
             participants: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    avatar: true,
-                    level: true,
-                    gender: true,
-                  },
+                  select: USER_SELECT_WITH_SPORT_PROFILES,
                 },
               },
             },
@@ -89,14 +83,7 @@ export class TeamForRoundGeneration {
                 players: {
                   include: {
                     user: {
-                      select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        avatar: true,
-                        level: true,
-                        gender: true,
-                      },
+                      select: USER_SELECT_WITH_SPORT_PROFILES,
                     },
                   },
                 },
@@ -124,28 +111,14 @@ export class TeamForRoundGeneration {
       },
       include: {
         user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            avatar: true,
-            level: true,
-            gender: true,
-          },
+          select: USER_SELECT_WITH_SPORT_PROFILES,
         },
         leagueTeam: {
           include: {
             players: {
               include: {
                 user: {
-                  select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    avatar: true,
-                    level: true,
-                    gender: true,
-                  },
+                  select: USER_SELECT_WITH_SPORT_PROFILES,
                 },
               },
             },

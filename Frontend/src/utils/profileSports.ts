@@ -64,8 +64,7 @@ function usesProjectedLevelFields(user: User | BasicUser): boolean {
 }
 
 export function gamesPlayedForSport(user: User, sport: Sport): number {
-  const profile = findSportProfile(user, sport);
-  return profile?.gamesPlayed ?? (sport === Sports.PADEL ? (user.gamesPlayed ?? 0) : 0);
+  return findSportProfile(user, sport)?.gamesPlayed ?? 0;
 }
 
 /** Show competitive level for a sport after first rated game or a non-default estimate (> 1.0). */
@@ -74,14 +73,15 @@ export function shouldShowSportLevelBadge(user: User, sport: Sport): boolean {
   return getDisplayLevelForSport(user, sport) > 1.0;
 }
 
+function normalizeLevel(value: unknown, fallback = 1.0): number {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+}
+
 export function getDisplayLevelForSport(user: User | BasicUser, sport: Sport): number {
   const profile = findSportProfile(user, sport);
-  if (profile) return profile.level;
+  if (profile) return normalizeLevel(profile.level);
   if (usesProjectedLevelFields(user)) {
-    return user.level;
-  }
-  if (sport === Sports.PADEL || sport === getUserPrimarySport(user)) {
-    return user.level;
+    return normalizeLevel(user.level);
   }
   return 1.0;
 }
@@ -102,7 +102,8 @@ export function formatSportLevelBadgeDisplay(
   decimals = 1,
 ): string {
   if (!user || !isSportLevelAvailableForDisplay(user, sport)) return '-';
-  return getDisplayLevelForSport(user, sport).toFixed(decimals);
+  const level = getDisplayLevelForSport(user, sport);
+  return Number.isFinite(level) ? level.toFixed(decimals) : '-';
 }
 
 export function getReliabilityForSport(user: User | BasicUser, sport: Sport): number {
@@ -111,7 +112,7 @@ export function getReliabilityForSport(user: User | BasicUser, sport: Sport): nu
   if (usesProjectedLevelFields(user)) {
     return user.reliability ?? 0;
   }
-  return sport === Sports.PADEL ? (user.reliability ?? 0) : 0;
+  return 0;
 }
 
 /** Initial reliability in training edit modal when prior value was below this (not a minimum). */
@@ -155,7 +156,7 @@ export function resolveProfileHeaderLevel(user: User | null | undefined): number
   if (!user) return 1;
   const activePrimary = resolveActivePrimarySport(user);
   if (activePrimary) return getDisplayLevelForSport(user, activePrimary);
-  return user.level;
+  return getDisplayLevelForSport(user, getUserPrimarySport(user));
 }
 
 export function listSelectableSports(): Sport[] {
@@ -174,7 +175,8 @@ export function canEditSportLevel(profile: UserSportProfile | undefined): boolea
 
 export function canRemoveSport(user: User, sport: Sport): boolean {
   if (!isSportEnabled(user, sport)) return false;
-  return listEnabledSports(user).length > 1;
+  if (listEnabledSports(user).length <= 1) return false;
+  return gamesPlayedForSport(user, sport) === 0;
 }
 
 /** After re-adding a sport — only prompt when API says so and profile has no Q/history. */

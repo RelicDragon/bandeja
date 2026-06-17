@@ -5,6 +5,7 @@ import { format, startOfDay } from 'date-fns';
 import { AlertTriangle, Calendar, Check, ChevronDown, MapPin, MessageCircle, Users, Plane } from 'lucide-react';
 import { Card, GameCard } from '@/components';
 import { AnimatedGameList } from '@/components/home/AnimatedGameList';
+import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -161,7 +162,7 @@ export const UpcomingGamesList = ({
   );
 
   return (
-    <div className="space-y-4">
+    <AnimatedMount layout className="space-y-4">
       {upcomingGrouped.length > 0 && (
         <Card className="py-4">
           <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2 px-1">
@@ -253,7 +254,7 @@ export const UpcomingGamesList = ({
           </div>
         </Card>
       )}
-    </div>
+    </AnimatedMount>
   );
 };
 

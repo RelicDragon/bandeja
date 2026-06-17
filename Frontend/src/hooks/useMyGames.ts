@@ -7,26 +7,15 @@ import {
 } from '@/queries/games/useMyGamesQuery';
 import { queryKeys } from '@/queries/queryKeys';
 
-type SkeletonAnimation = {
-  showSkeletonsAnimated: () => void;
-  hideSkeletonsAnimated: () => void;
-};
-
 export const useMyGames = (
   user: { id?: string } | null | undefined,
   onLoading: (loading: boolean) => void,
-  skeletonAnimation?: SkeletonAnimation,
 ) => {
   const userId = user?.id;
   const queryClient = useQueryClient();
   const { data, isPending, refetch } = useMyGamesQuery(userId);
-  const initialLoadDoneRef = useRef(false);
   const onLoadingRef = useRef(onLoading);
   onLoadingRef.current = onLoading;
-  const showSkeletonsRef = useRef(skeletonAnimation?.showSkeletonsAnimated);
-  showSkeletonsRef.current = skeletonAnimation?.showSkeletonsAnimated;
-  const hideSkeletonsRef = useRef(skeletonAnimation?.hideSkeletonsAnimated);
-  hideSkeletonsRef.current = skeletonAnimation?.hideSkeletonsAnimated;
 
   const games = data?.games ?? [];
   const invites = data?.invites ?? [];
@@ -53,18 +42,7 @@ export const useMyGames = (
       onLoadingRef.current(false);
       return;
     }
-    if (isPending && !initialLoadDoneRef.current) {
-      showSkeletonsRef.current?.();
-      onLoadingRef.current(true);
-      return;
-    }
-    if (!isPending) {
-      if (!initialLoadDoneRef.current) {
-        hideSkeletonsRef.current?.();
-        initialLoadDoneRef.current = true;
-      }
-      onLoadingRef.current(false);
-    }
+    onLoadingRef.current(isPending);
   }, [isPending, userId]);
 
   const fetchData = useCallback(

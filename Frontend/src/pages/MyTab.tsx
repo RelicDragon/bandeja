@@ -18,21 +18,23 @@ import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { isHomeHeroAdBlocked } from '@/utils/adHomeHeroVisibility';
 import { getUserPrimarySport } from '@/utils/profileSports';
-import { Button, MainTabFooter, MonthCalendar, SelectedDateHeading } from '@/components';
+import { Button, MainTabFooter } from '@/components';
 import { gamesApi } from '@/api';
 import { useTotalUnreadForMarkAllBanner, useGameUnreadCountsForIds } from '@/hooks/useUnreadBridge';
 import { useUnreadStore } from '@/store/unreadStore';
 import { useAuthStore } from '@/store/authStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
-import { useSkeletonAnimation } from '@/hooks/useSkeletonAnimation';
 import { useMyGames } from '@/hooks/useMyGames';
+import { CalendarSection } from '@/components/home/CalendarSection';
 import { usePastGames } from '@/hooks/usePastGames';
 import { useHomeFromUrl } from '@/hooks/useHomeFromUrl';
 import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { AnimatedMount } from '@/components/motion/AnimatedMount';
+import { TabContentStack } from '@/components/motion/TabContentStack';
 import { useDeclineInvite } from '@/hooks/useDeclineInvite';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
@@ -101,17 +103,12 @@ export const MyTab = () => {
 
   const [loading, setLoading] = useState(true);
 
-  const skeletonAnimation = useSkeletonAnimation();
-
   const {
     games,
     invites,
     setInvites,
     refetch: refetchMyGames,
-  } = useMyGames(user, setLoading, {
-    showSkeletonsAnimated: skeletonAnimation.showSkeletonsAnimated,
-    hideSkeletonsAnimated: skeletonAnimation.hideSkeletonsAnimated,
-  });
+  } = useMyGames(user, setLoading);
 
   const {
     pastGames,
@@ -325,46 +322,61 @@ export const MyTab = () => {
   const calendarContentPanel = (
     <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
       <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-        {user && <StoriesRail />}
-        {user && (
-          <MyTabPanelSwitcher games={games} gamesUnreadCounts={calendarMergedUnreadCounts} />
-        )}
-        {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
-        {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
-        <CityPromptBanner />
-        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${!loading ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-          <InvitesSection
-            invites={invites}
-            onAccept={handleAcceptInvite}
-            onDecline={handleDeclineInvite}
-            decliningInviteIds={decliningInviteIds}
-            onNoteSaved={() => refetchMyGames()}
-          />
-        </div>
-        <MyGamesSection
-          games={myGamesForSelectedDate}
-          user={user}
-          loading={loading || loadingPastInRange}
-          showSkeleton={skeletonAnimation.showSkeleton}
-          skeletonStates={skeletonAnimation.skeletonStates}
-          gamesUnreadCounts={calendarMergedUnreadCounts}
-          onNoteSaved={() => refetchMyGames()}
-          upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
-          onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
-        />
-        <div className={`transition-all duration-500 ease-in-out overflow-hidden ${markAllBannerUnread > 0 ? 'max-h-[100px] opacity-100 mt-4' : 'max-h-0 opacity-0'}`}>
-          <div className="flex items-center justify-center pt-4">
-            <Button
-              onClick={handleMarkAllAsRead}
-              variant="primary"
-              size="sm"
-              disabled={isMarkingAllAsRead || markAllBannerUnread === 0}
-              className="animate-in slide-in-from-top-4 fade-in"
-            >
-              {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
-            </Button>
-          </div>
-        </div>
+        <TabContentStack id="my-tab-desktop-stack">
+          {user && (
+            <AnimatedMount layout>
+              <StoriesRail />
+            </AnimatedMount>
+          )}
+          {user && (
+            <AnimatedMount layout>
+              <MyTabPanelSwitcher games={games} gamesUnreadCounts={calendarMergedUnreadCounts} />
+            </AnimatedMount>
+          )}
+          {!hideHomeHeroAd && user && (
+            <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
+          )}
+          {user && (
+            <AnimatedMount layout>
+              <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />
+            </AnimatedMount>
+          )}
+          <AnimatedMount layout>
+            <CityPromptBanner />
+          </AnimatedMount>
+          {!loading && (
+            <InvitesSection
+              invites={invites}
+              onAccept={handleAcceptInvite}
+              onDecline={handleDeclineInvite}
+              decliningInviteIds={decliningInviteIds}
+              onNoteSaved={() => refetchMyGames()}
+            />
+          )}
+          <AnimatedMount layout>
+            <MyGamesSection
+              games={myGamesForSelectedDate}
+              user={user}
+              loading={loading || loadingPastInRange}
+              gamesUnreadCounts={calendarMergedUnreadCounts}
+              onNoteSaved={() => refetchMyGames()}
+              upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
+              onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
+            />
+          </AnimatedMount>
+          <AnimatedMount show={markAllBannerUnread > 0} className="mb-4">
+            <div className="flex items-center justify-center pt-4">
+              <Button
+                onClick={handleMarkAllAsRead}
+                variant="primary"
+                size="sm"
+                disabled={isMarkingAllAsRead || markAllBannerUnread === 0}
+              >
+                {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
+              </Button>
+            </div>
+          </AnimatedMount>
+        </TabContentStack>
         <MainTabFooter isLoading={loading} />
       </div>
     </div>
@@ -385,7 +397,7 @@ export const MyTab = () => {
     return (
       <>
       <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
-        {hasUpcomingGames ? (
+        {hasUpcomingGames || loading ? (
           <ResizableSplitter
             defaultLeftWidth={35}
             minLeftWidth={280}
@@ -393,13 +405,14 @@ export const MyTab = () => {
             leftPanel={
               <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
                 <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-                  <MonthCalendar
-                    selectedDate={myGamesSelectedDate}
-                    onDateSelect={setMyGamesSelectedDate}
-                    availableGames={calendarMergedGames}
-                    onDateRangeChange={handleCalendarDateRangeChange}
-                  />
-                  <SelectedDateHeading date={myGamesSelectedDate} />
+                  <AnimatedMount layout>
+                    <CalendarSection
+                      selectedDate={myGamesSelectedDate}
+                      onDateSelect={setMyGamesSelectedDate}
+                      availableGames={calendarMergedGames}
+                      onDateRangeChange={handleCalendarDateRangeChange}
+                    />
+                  </AnimatedMount>
                 </div>
               </div>
             }
@@ -423,71 +436,73 @@ export const MyTab = () => {
           renderPastGamesContent(loading || loadingPastGames || isRefreshing)
         ) : (
           <>
-        {user && <StoriesRail />}
-        {user && (
-          <MyTabPanelSwitcher games={games} gamesUnreadCounts={calendarMergedUnreadCounts} />
-        )}
-        {!hideHomeHeroAd && user && <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />}
-        {user && <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />}
-        <CityPromptBanner />
-        <div
-          className={`transition-all duration-500 ease-in-out overflow-hidden ${
-            !loading
-              ? 'max-h-[2000px] opacity-100 translate-y-0'
-              : 'max-h-0 opacity-0 -translate-y-4'
-          }`}
-        >
-          <InvitesSection
-            invites={invites}
-            onAccept={handleAcceptInvite}
-            onDecline={handleDeclineInvite}
-            decliningInviteIds={decliningInviteIds}
-            onNoteSaved={() => refetchMyGames()}
-          />
-        </div>
-
-        <div className="min-h-[100px]">
-          {hasUpcomingGames && (
-            <MonthCalendar
-              selectedDate={myGamesSelectedDate}
-              onDateSelect={setMyGamesSelectedDate}
-              availableGames={calendarMergedGames}
-              onDateRangeChange={handleCalendarDateRangeChange}
+        <TabContentStack id="my-tab-mobile-stack">
+          {user && (
+            <AnimatedMount layout>
+              <StoriesRail />
+            </AnimatedMount>
+          )}
+          {user && (
+            <AnimatedMount layout>
+              <MyTabPanelSwitcher games={games} gamesUnreadCounts={calendarMergedUnreadCounts} />
+            </AnimatedMount>
+          )}
+          {!hideHomeHeroAd && user && (
+            <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
+          )}
+          {user && (
+            <AnimatedMount layout>
+              <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />
+            </AnimatedMount>
+          )}
+          <AnimatedMount layout>
+            <CityPromptBanner />
+          </AnimatedMount>
+          {!loading && (
+            <InvitesSection
+              invites={invites}
+              onAccept={handleAcceptInvite}
+              onDecline={handleDeclineInvite}
+              decliningInviteIds={decliningInviteIds}
+              onNoteSaved={() => refetchMyGames()}
             />
           )}
-          {hasUpcomingGames && <SelectedDateHeading date={myGamesSelectedDate} />}
-          <MyGamesSection
-            games={myGamesForSelectedDate}
-            user={user}
-            loading={loading || loadingPastInRange}
-            showSkeleton={skeletonAnimation.showSkeleton}
-            skeletonStates={skeletonAnimation.skeletonStates}
-            gamesUnreadCounts={calendarMergedUnreadCounts}
-            onNoteSaved={() => refetchMyGames()}
-            upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
-            onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
-          />
-        </div>
 
-        <div
-          className={`transition-all duration-500 ease-in-out overflow-hidden ${
-            markAllBannerUnread > 0
-              ? 'max-h-[100px] opacity-100 translate-y-0 mb-4'
-              : 'max-h-0 opacity-0 -translate-y-4'
-          }`}
-        >
-          <div className="flex items-center justify-center pt-4">
-            <Button
-              onClick={handleMarkAllAsRead}
-              variant="primary"
-              size="sm"
-              disabled={isMarkingAllAsRead || markAllBannerUnread === 0}
-              className="animate-in slide-in-from-top-4 fade-in"
-            >
-              {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
-            </Button>
-          </div>
-        </div>
+          {(loading || hasUpcomingGames) && (
+            <AnimatedMount layout>
+              <CalendarSection
+                selectedDate={myGamesSelectedDate}
+                onDateSelect={setMyGamesSelectedDate}
+                availableGames={calendarMergedGames}
+                onDateRangeChange={handleCalendarDateRangeChange}
+              />
+            </AnimatedMount>
+          )}
+          <AnimatedMount layout>
+            <MyGamesSection
+              games={myGamesForSelectedDate}
+              user={user}
+              loading={loading || loadingPastInRange}
+              gamesUnreadCounts={calendarMergedUnreadCounts}
+              onNoteSaved={() => refetchMyGames()}
+              upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
+              onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
+            />
+          </AnimatedMount>
+
+          <AnimatedMount show={markAllBannerUnread > 0} className="mb-4">
+            <div className="flex items-center justify-center pt-4">
+              <Button
+                onClick={handleMarkAllAsRead}
+                variant="primary"
+                size="sm"
+                disabled={isMarkingAllAsRead || markAllBannerUnread === 0}
+              >
+                {isMarkingAllAsRead ? t('common.loading', { defaultValue: 'Loading...' }) : t('chat.markAllAsRead', { defaultValue: 'Mark all as read' })}
+              </Button>
+            </div>
+          </AnimatedMount>
+        </TabContentStack>
         <MainTabFooter isLoading={loading || isRefreshing} />
           </>
         )}

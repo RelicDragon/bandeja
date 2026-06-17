@@ -24,16 +24,12 @@ model User {
   originalAvatar             String?
   passwordHash               String?
   isActive                   Boolean              @default(true)
-  level                      Float                @default(1.0)
   primarySport               Sport                @default(PADEL)
   sportsEnabled              Sport[]              @default([PADEL])
   lastCreatedSport           Sport?
   socialLevel                Float                @default(1.0)
-  reliability                Float                @default(0)
   reliabilityDecayPostGraceDaysApplied Int         @default(0)
   totalPoints                Int                  @default(0)
-  gamesPlayed                Int                  @default(0)
-  gamesWon                   Int                  @default(0)
   wallet                     Int                  @default(0)
   currentCityId              String?
   lastUserIP                 String?
@@ -180,7 +176,6 @@ model User {
   @@index([phone])
   @@index([telegramId])
   @@index([currentCityId])
-  @@index([level])
   @@index([totalPoints])
   @@index([approvedById])
 }

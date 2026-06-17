@@ -21,11 +21,11 @@ export const CollapsibleSection = ({ title, expanded, onToggle, children, icon: 
       </span>
       <ChevronDown
         size={16}
-        className={`shrink-0 transition-transform duration-200 ${expanded ? '' : '-rotate-90'}`}
+        className={`shrink-0 transition-transform duration-[400ms] ${expanded ? '' : '-rotate-90'}`}
       />
     </button>
     <div
-      className="grid transition-[grid-template-rows] duration-200 ease-out"
+      className="grid transition-[grid-template-rows] duration-[400ms] ease-out"
       style={{ gridTemplateRows: expanded ? '1fr' : '0fr' }}
     >
       <div className="min-h-0 overflow-hidden">{children}</div>

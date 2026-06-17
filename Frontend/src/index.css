@@ -498,19 +498,31 @@ body.capacitor-android #root {
   border-color: #10b981;
 }
 
-.message-highlight {
-  animation: messageHighlight 3s ease-in-out;
+.message-scroll-target {
+  --chat-scroll-highlight-fade-ms: 500ms;
+  border-radius: 0.5rem;
+  transition:
+    background-color var(--chat-scroll-highlight-fade-ms) cubic-bezier(0.21, 0.47, 0.32, 0.98),
+    box-shadow var(--chat-scroll-highlight-fade-ms) cubic-bezier(0.21, 0.47, 0.32, 0.98);
 }
 
-@keyframes messageHighlight {
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.55);
-  }
-  35% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0.12);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+.message-scroll-target--visible {
+  background-color: rgb(239 246 255);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+.dark .message-scroll-target--visible {
+  background-color: rgba(30, 58, 138, 0.2);
+}
+
+.message-scroll-target--exiting {
+  background-color: transparent;
+  box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-scroll-target {
+    transition: none;
   }
 }
 

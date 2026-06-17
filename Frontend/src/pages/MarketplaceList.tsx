@@ -1,15 +1,29 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useSearchParams } from 'react-router-dom';
-import { MapPin, User } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { MapPin, PackageOpen, User } from 'lucide-react';
 import { marketplaceApi, citiesApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { useMarketItemUnread } from '@/hooks/useUnreadBridge';
-import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { MarketItem, MarketItemCategory, City, PriceCurrency } from '@/types';
-import { RefreshIndicator } from '@/components/RefreshIndicator';
-import { Button } from '@/components';
-import { MarketItemCard, MarketplaceFilters, formatPriceDisplay, MarketItemDrawer } from '@/components/marketplace';
+import {
+  AnimatedMarketItemGrid,
+  MarketItemCard,
+  MarketplaceFilters,
+  MarketplaceLoadMore,
+  MarketplaceLoadingSkeleton,
+  MarketplaceRefreshingBar,
+  formatPriceDisplay,
+  MarketItemDrawer,
+} from '@/components/marketplace';
+import { AnimatedLoadingSwap } from '@/components/motion/AnimatedLoadingSwap';
+import { AnimatedMount } from '@/components/motion/AnimatedMount';
+import { TabContentStack } from '@/components/motion/TabContentStack';
+import { PullToRefreshShell } from '@/components/PullToRefreshShell';
+import { PANEL_TRANSITION } from '@/components/motion/motionTokens';
+import { EmptyStateCard } from '@/components/home/EmptyStateCard';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { DEFAULT_CURRENCY } from '@/utils/currency';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
@@ -49,6 +63,7 @@ function MarketplaceListItemCard({
 export const MarketplaceList = () => {
   const { t } = useTranslation();
   const { translateCity } = useTranslatedGeo();
+  const reduceMotion = usePrefersReducedMotion();
   const user = useAuthStore((state) => state.user);
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -193,85 +208,119 @@ export const MarketplaceList = () => {
     AUCTION: t('marketplace.sellingTypeAuction', { defaultValue: 'Auction' }),
   };
 
-  const { isRefreshing, pullDistance, pullProgress } = usePullToRefresh({
-    onRefresh: async () => {
-      pageRef.current = 1;
-      await fetchData(true);
-    },
-    disabled: loading,
-  });
+  const listContentKey = isMyTab ? 'my' : filters.categoryId || 'all';
+  const initialLoading = loading && items.length === 0;
+  const filterRefreshing = loading && items.length > 0;
+  const tabMotionKey = isMyTab ? 'my' : 'market';
+
+  const listBody = (
+    <>
+      <MarketplaceRefreshingBar show={filterRefreshing} />
+      <AnimatedLoadingSwap
+        isLoading={initialLoading}
+        loading={<MarketplaceLoadingSkeleton />}
+      >
+        {items.length === 0 ? (
+          <EmptyStateCard
+            icon={PackageOpen}
+            title={t('marketplace.noItems', { defaultValue: 'No listings found' })}
+            description={
+              isMyTab
+                ? t('marketplace.myListingsEmpty', { defaultValue: 'List something to see it here.' })
+                : t('marketplace.noItemsHint', { defaultValue: 'Try another category or check back later.' })
+            }
+          />
+        ) : (
+          <AnimatedMarketItemGrid
+            key={listContentKey}
+            items={items}
+            getKey={(item) => item.id}
+            dimmed={filterRefreshing}
+            renderItem={(item) => (
+              <MarketplaceListItemCard
+                item={item}
+                formatPrice={formatPrice}
+                tradeTypeLabel={tradeTypeLabels}
+                showLocation={isMyTab}
+                userCurrency={(user?.defaultCurrency as PriceCurrency) || DEFAULT_CURRENCY}
+                onItemClick={openDrawer}
+              />
+            )}
+          />
+        )}
+      </AnimatedLoadingSwap>
+
+      <AnimatedMount layout show={hasMore && items.length > 0} className="mt-6">
+        <MarketplaceLoadMore loading={loadingMore} onClick={loadMore} />
+      </AnimatedMount>
+    </>
+  );
 
   return (
-    <div className="pb-8">
-      <RefreshIndicator isRefreshing={isRefreshing} pullDistance={pullDistance} pullProgress={pullProgress} />
-      {isMyTab ? (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5">
-          <User size={12} />
-          {t('marketplace.myListings', { defaultValue: 'My listings' })}
-        </p>
-      ) : (
-        <div className="mb-6">
-          {cityId && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3 flex items-center gap-1.5">
-              <MapPin size={12} />
-              {t('marketplace.listingsFromCity', {
-                defaultValue: 'Listings from {{city}} are shown',
-                city: (() => {
-                const city = user?.currentCity ?? cities.find((c) => c.id === cityId);
-                return city ? translateCity(city.id, city.name, city.country) : '';
-              })(),
-              })}
-            </p>
-          )}
-          <MarketplaceFilters
-            categoryId={filters.categoryId}
-            categories={categories}
-            onCategoryChange={(v) => setFilters((f) => ({ ...f, categoryId: v }))}
-            labels={{
-              allCategories: t('marketplace.allCategories', { defaultValue: 'All' }),
-            }}
-          />
-        </div>
-      )}
+    <PullToRefreshShell
+      disabled={loading}
+      onRefresh={async () => {
+        pageRef.current = 1;
+        await fetchData(true);
+      }}
+    >
+      {() => (
+        <div className="pb-8">
+          <TabContentStack id="marketplace-tab-stack">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={tabMotionKey}
+                initial={reduceMotion ? false : { opacity: 0, x: isMyTab ? 16 : -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={reduceMotion ? undefined : { opacity: 0, x: isMyTab ? -16 : 16 }}
+                transition={PANEL_TRANSITION}
+              >
+                {isMyTab ? (
+                  <AnimatedMount layout className="mb-3">
+                    <p className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                      <User size={12} />
+                      {t('marketplace.myListings', { defaultValue: 'My listings' })}
+                    </p>
+                  </AnimatedMount>
+                ) : (
+                  <AnimatedMount layout className="mb-6">
+                    {cityId && (
+                      <p className="mb-3 flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+                        <MapPin size={12} />
+                        {t('marketplace.listingsFromCity', {
+                          defaultValue: 'Listings from {{city}} are shown',
+                          city: (() => {
+                            const city = user?.currentCity ?? cities.find((c) => c.id === cityId);
+                            return city ? translateCity(city.id, city.name, city.country) : '';
+                          })(),
+                        })}
+                      </p>
+                    )}
+                    <MarketplaceFilters
+                      categoryId={filters.categoryId}
+                      categories={categories}
+                      onCategoryChange={(v) => setFilters((f) => ({ ...f, categoryId: v }))}
+                      labels={{
+                        allCategories: t('marketplace.allCategories', { defaultValue: 'All' }),
+                      }}
+                    />
+                  </AnimatedMount>
+                )}
+                {listBody}
+              </motion.div>
+            </AnimatePresence>
+          </TabContentStack>
 
-      {loading && items.length === 0 ? (
-        <div className="flex justify-center py-16">
-          <div className="animate-spin h-10 w-10 border-2 border-primary-500 border-t-transparent rounded-full" />
-        </div>
-      ) : items.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-gray-500 dark:text-gray-400">{t('marketplace.noItems', { defaultValue: 'No listings found' })}</p>
-        </div>
-      ) : (
-        <div className="flex flex-wrap gap-2 [&>*]:w-[calc(50%-4px)] sm:[&>*]:w-[calc(33.333%-6px)] sm:[&>*]:max-w-[200px]">
-          {items.map((item) => (
-            <MarketplaceListItemCard
-              key={item.id}
-              item={item}
-              formatPrice={formatPrice}
-              tradeTypeLabel={tradeTypeLabels}
-              showLocation={isMyTab}
-              userCurrency={(user?.defaultCurrency as PriceCurrency) || DEFAULT_CURRENCY}
-              onItemClick={openDrawer}
+          {selectedItem && (
+            <MarketItemDrawer
+              item={selectedItem}
+              isOpen={!!selectedItem}
+              onClose={closeDrawer}
+              onItemUpdate={handleItemUpdate}
             />
-          ))}
+          )}
         </div>
       )}
-      {selectedItem && (
-        <MarketItemDrawer
-          item={selectedItem}
-          isOpen={!!selectedItem}
-          onClose={closeDrawer}
-          onItemUpdate={handleItemUpdate}
-        />
-      )}
-      {hasMore && items.length > 0 && (
-        <div className="mt-6 flex justify-center">
-          <Button variant="secondary" onClick={loadMore} disabled={loadingMore} className="min-w-[140px]">
-            {loadingMore ? t('common.loading', { defaultValue: 'Loading...' }) : t('marketplace.loadMore', { defaultValue: 'Load more' })}
-          </Button>
-        </div>
-      )}
-    </div>
+    </PullToRefreshShell>
   );
 };

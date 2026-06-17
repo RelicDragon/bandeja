@@ -654,7 +654,7 @@ function formatUserSportProfilesSummary(user) {
     if (profiles?.length) {
         return profiles.map((p) => `${p.sport}: ${(p.level ?? 0).toFixed(1)}`).join(', ');
     }
-    return (user?.level ?? 0).toFixed(1);
+    return '—';
 }
 
 function setUserPhoneFieldRequired(required) {
@@ -693,8 +693,8 @@ async function editUserModal(user) {
     const primarySelect = document.getElementById('userPrimarySport');
     if (primarySelect) primarySelect.value = user.primarySport || enabled[0] || 'PADEL';
     const profiles = user.sportProfiles?.length
-        ? user.sportProfiles
-        : [{ sport: 'PADEL', level: user.level ?? 3.5 }];
+        ? user.sportProfiles.filter((p) => enabled.includes(p.sport))
+        : enabled.map((sport) => ({ sport, level: 1.0 }));
     renderUserSportProfilesEditor(profiles);
     document.getElementById('userIsActive').checked = user.isActive;
     document.getElementById('userIsAdmin').checked = user.isAdmin;

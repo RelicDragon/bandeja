@@ -62,14 +62,18 @@ function testRatingHint(): void {
 async function testDbSync(): Promise<void> {
   const user = await prisma.user.findFirst({
     where: { isActive: true },
-    select: { id: true, level: true, sportsEnabled: true },
+    select: { id: true, sportsEnabled: true },
   });
   if (!user) {
     console.log('skip: db sync (no user)');
     return;
   }
 
-  const beforePadel = user.level;
+  const padelBefore = await prisma.userSportProfile.findUnique({
+    where: { userId_sport: { userId: user.id, sport: Sport.PADEL } },
+    select: { level: true },
+  });
+  const beforePadelLevel = padelBefore?.level ?? 1.0;
   const updated = await syncPlaytomicLevelsToUser(user.id, [
     { playtomicSportId: 'PADEL', level: 2.8 },
     { playtomicSportId: 'TENNIS', level: 4.5, reliability: 12 },
@@ -79,15 +83,14 @@ async function testDbSync(): Promise<void> {
   const tennisProfile = updated.sportProfiles?.find((p) => p.sport === Sport.TENNIS);
   assert(padelProfile?.levelSource === SportLevelSource.PLAYTOMIC, 'padel PLAYTOMIC source');
   assert(padelProfile?.externalRatingHint === '2.8', 'padel external hint');
+  assert(padelProfile?.level === mapPlaytomicLevelToBandeja(2.8), 'padel profile level from sync');
   assert(tennisProfile?.sport === Sport.TENNIS, 'tennis profile created');
   assert(updated.sportsEnabled?.includes(Sport.TENNIS), 'tennis enabled on sync');
-  assert(updated.level === padelProfile?.level, 'User.level dual-write padel');
 
   await prisma.userSportProfile.updateMany({
     where: { userId: user.id, sport: { in: [Sport.PADEL, Sport.TENNIS] } },
-    data: { levelSource: SportLevelSource.DEFAULT, externalRatingHint: null },
+    data: { levelSource: SportLevelSource.DEFAULT, externalRatingHint: null, level: beforePadelLevel },
   });
-  await prisma.user.update({ where: { id: user.id }, data: { level: beforePadel } });
   console.log('ok: db playtomic multi-sport sync');
 }
 

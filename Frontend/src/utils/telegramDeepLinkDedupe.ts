@@ -1,9 +1,11 @@
+import { isTelegramAutoLoginPath } from '@/utils/telegramAutoLoginPath';
+
 const DEDUPE_MS = 2500;
 let lastPath: string | null = null;
 let lastAt = 0;
 
 export function shouldHandleTelegramLoginDeepLink(pathname: string): boolean {
-  if (!pathname.startsWith('/login/') || pathname === '/login/phone' || pathname === '/login/telegram') {
+  if (!isTelegramAutoLoginPath(pathname)) {
     return true;
   }
   const now = Date.now();

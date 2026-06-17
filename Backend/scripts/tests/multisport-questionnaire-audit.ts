@@ -32,8 +32,14 @@ async function main() {
   if (tennisGame) {
     const multi = await prisma.user.findFirst({
       where: {
-        level: 4.0,
-        sportProfiles: { some: { sport: Sport.TENNIS, level: { lte: 2.0 } } },
+        sportProfiles: {
+          some: { sport: Sport.PADEL, level: { gte: 3.5 } },
+        },
+        AND: {
+          sportProfiles: {
+            some: { sport: Sport.TENNIS, level: { lte: 2.0 } },
+          },
+        },
       },
       select: { id: true },
     });
@@ -60,12 +66,12 @@ async function main() {
   if (genGame) {
     const mapped = prismaGameToGenGame(genGame);
     assert(mapped.sport === Sport.TENNIS, 'gen game carries sport');
-    const withProfile = genGame.participants.find(
-      (p) => p.user?.sportProfiles?.some((sp) => sp.sport === Sport.TENNIS && sp.level !== p.user?.level),
+    const withTennisProfile = genGame.participants.find((p) =>
+      p.user?.sportProfiles?.some((sp) => sp.sport === Sport.TENNIS),
     );
-    if (withProfile?.user) {
-      const tennisLevel = withProfile.user.sportProfiles!.find((sp) => sp.sport === Sport.TENNIS)!.level;
-      const part = mapped.participants.find((p) => p.userId === withProfile.userId);
+    if (withTennisProfile?.user) {
+      const tennisLevel = withTennisProfile.user.sportProfiles!.find((sp) => sp.sport === Sport.TENNIS)!.level;
+      const part = mapped.participants.find((p) => p.userId === withTennisProfile.userId);
       assert(part?.user.level === tennisLevel, 'round gen maps sport-projected level');
     }
   }

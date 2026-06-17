@@ -6,25 +6,50 @@ import prisma from '../src/config/database';
 import { PADEL_QUESTIONNAIRE_V1 } from '../src/sport/questionnaires/padel';
 import { MIN_SPORT_LEVEL } from '../src/services/user/userSportProfile.service';
 
-/** One-time migration: read legacy `User` columns only; not used at runtime. */
+async function userRatingColumnsExist(): Promise<boolean> {
+  const rows = await prisma.$queryRaw<{ exists: boolean }[]>`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'padelpulse'
+        AND table_name = 'User'
+        AND column_name = 'level'
+    ) AS "exists"
+  `;
+  return rows[0]?.exists === true;
+}
+
+type LegacyUserRow = {
+  id: string;
+  level: number;
+  reliability: number;
+  gamesPlayed: number;
+  gamesWon: number;
+};
+
+/** One-time migration: read legacy `User` columns only; not used at runtime after column drop. */
 async function backfillPadelQuestionnaireFromWelcome(): Promise<number> {
-  const users = await prisma.user.findMany({
-    where: {
-      welcomeScreenPassed: true,
-      OR: [
-        { level: { not: MIN_SPORT_LEVEL } },
-        { reliability: { gt: 0 } },
-        { gamesPlayed: { gt: 0 } },
-      ],
-    },
-    select: {
-      id: true,
-      level: true,
-      reliability: true,
-      gamesPlayed: true,
-      gamesWon: true,
-    },
-  });
+  const legacyColumns = await userRatingColumnsExist();
+  if (!legacyColumns) {
+    console.log('User rating columns already dropped — backfill skipped.');
+    return 0;
+  }
+
+  const users = await prisma.$queryRaw<LegacyUserRow[]>`
+    SELECT
+      u.id,
+      u.level,
+      u.reliability,
+      u."gamesPlayed",
+      u."gamesWon"
+    FROM "User" u
+    WHERE u."welcomeScreenPassed" = true
+      AND (
+        u.level <> ${MIN_SPORT_LEVEL}
+        OR u.reliability > 0
+        OR u."gamesPlayed" > 0
+      )
+  `;
 
   if (users.length === 0) return 0;
 

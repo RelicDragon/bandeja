@@ -178,8 +178,6 @@ export async function validatePlayerCanJoinGame(
       where: { id: userId },
       select: {
         ...USER_SELECT_FIELDS,
-        gamesPlayed: true,
-        gamesWon: true,
         sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
       },
     });

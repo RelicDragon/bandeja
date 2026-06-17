@@ -1,7 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { LeagueParticipantType, Prisma } from '@prisma/client';
+import { resolveLeagueSeasonSport } from '../../utils/validators/validateLeagueSeasonSport';
 import {
   ensureUserLeagueParticipant,
   findOrCreateLeagueTeamByRoster,
@@ -9,6 +9,7 @@ import {
   rostersEqual,
   sortedPlayerKey,
 } from './leagueParticipantResolve';
+import { LEAGUE_USER_SELECT, projectLeagueParticipants } from './leagueSportProjection.util';
 
 type GameTeamWithPlayers = {
   players: { userId: string }[];
@@ -116,7 +117,7 @@ export class LeagueSyncService {
           where: { status: 'PLAYING' },
           include: {
             user: {
-              select: USER_SELECT_FIELDS,
+              select: LEAGUE_USER_SELECT,
             },
           },
         },
@@ -131,6 +132,8 @@ export class LeagueSyncService {
     const desiredTeamPlayerIds = await collectDesiredTeamPlayerIds(leagueSeasonId);
     const useTeamPath = desiredTeamPlayerIds.length > 0;
 
+    const seasonSport = resolveLeagueSeasonSport(leagueSeason);
+
     return prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${leagueSeasonId}::text))`);
 
@@ -138,14 +141,14 @@ export class LeagueSyncService {
         where: { leagueSeasonId },
         include: {
           user: {
-            select: USER_SELECT_FIELDS,
+            select: LEAGUE_USER_SELECT,
           },
           leagueTeam: {
             include: {
               players: {
                 include: {
                   user: {
-                    select: USER_SELECT_FIELDS,
+                    select: LEAGUE_USER_SELECT,
                   },
                 },
               },
@@ -282,18 +285,19 @@ export class LeagueSyncService {
         }
       }
 
-      return tx.leagueParticipant.findMany({
+      return projectLeagueParticipants(
+        await tx.leagueParticipant.findMany({
         where: { leagueSeasonId },
         include: {
           user: {
-            select: USER_SELECT_FIELDS,
+            select: LEAGUE_USER_SELECT,
           },
           leagueTeam: {
             include: {
               players: {
                 include: {
                   user: {
-                    select: USER_SELECT_FIELDS,
+                    select: LEAGUE_USER_SELECT,
                   },
                 },
               },
@@ -301,7 +305,9 @@ export class LeagueSyncService {
           },
         },
         orderBy: [{ points: 'desc' }, { wins: 'desc' }, { scoreDelta: 'desc' }],
-      });
+      }),
+        seasonSport,
+      );
     });
   }
 }

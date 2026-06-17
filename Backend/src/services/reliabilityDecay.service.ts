@@ -97,7 +97,6 @@ function decayPayload(
   return { newRel, newApplied: applied + delta };
 }
 
-/** Dual-write padel profile reliability + legacy User columns during transition. */
 async function tryDecayWrite(
   userId: string,
   expectedUserUpdatedAt: Date,
@@ -109,7 +108,6 @@ async function tryDecayWrite(
     prisma.user.updateMany({
       where: { id: userId, updatedAt: expectedUserUpdatedAt },
       data: {
-        reliability: newRel,
         reliabilityDecayPostGraceDaysApplied: newApplied,
       },
     }),
@@ -158,7 +156,6 @@ export async function runReliabilityIdleDecay(): Promise<number> {
       prisma.user.findUnique({
         where: { id: u.id },
         select: {
-          reliability: true,
           reliabilityDecayPostGraceDaysApplied: true,
           updatedAt: true,
           isActive: true,

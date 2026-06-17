@@ -40,10 +40,10 @@ const buttonTransitionStyle = `
     }
   }
   .button-container-enter {
-    animation: fadeInSlide 0.3s ease-in-out forwards;
+    animation: fadeInSlide 0.6s ease-in-out forwards;
   }
   .button-container-exit {
-    animation: fadeOutSlide 0.3s ease-in-out forwards;
+    animation: fadeOutSlide 0.6s ease-in-out forwards;
   }
 `;
 

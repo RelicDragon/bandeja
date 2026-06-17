@@ -11,6 +11,8 @@ import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/ch
 import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { enqueueChatSyncPull, SYNC_PRIORITY_GAP } from '@/services/chat/chatSyncScheduler';
 import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
+import { CHAT_SCROLL_TARGET_SCROLL_DEFER_MS } from '@/components/chat/chatListMotion';
+import { applyScrollTargetMessageHighlight } from '@/utils/scrollTargetMessageHighlight';
 
 export interface UseThreadPinnedParams {
   id: string | undefined;
@@ -51,10 +53,7 @@ export function useThreadPinned({
   }, [id, contextType, effectiveChatType, canAccessChat]);
 
   const highlightMessageElement = useCallback((messageElement: HTMLElement) => {
-    messageElement.classList.add('message-highlight', 'ring-2', 'ring-blue-500', 'ring-opacity-50', 'bg-blue-50', 'dark:bg-blue-900/20');
-    setTimeout(() => {
-      messageElement.classList.remove('message-highlight', 'ring-2', 'ring-blue-500', 'ring-opacity-50', 'bg-blue-50', 'dark:bg-blue-900/20');
-    }, 3000);
+    applyScrollTargetMessageHighlight(messageElement);
   }, []);
 
   const handleScrollToMessage = useCallback(
@@ -66,7 +65,7 @@ export function useThreadPinned({
           const root = chatContainerRef.current;
           const messageElement = root?.querySelector(`#message-${messageId}`) as HTMLElement | null;
           if (messageElement) highlightMessageElement(messageElement);
-        }, 320);
+        }, CHAT_SCROLL_TARGET_SCROLL_DEFER_MS);
         return;
       }
       if (!chatContainerRef.current) return;
@@ -85,7 +84,9 @@ export function useThreadPinned({
         } else {
           messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-        highlightMessageElement(messageElement);
+        window.setTimeout(() => {
+          highlightMessageElement(messageElement);
+        }, CHAT_SCROLL_TARGET_SCROLL_DEFER_MS);
       }
     },
     [chatContainerRef, messageListRef, highlightMessageElement]

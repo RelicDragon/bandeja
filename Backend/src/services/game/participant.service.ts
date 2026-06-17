@@ -10,7 +10,7 @@ import { addOrUpdateParticipant } from '../../utils/participantOperations';
 import { performPostJoinOperations } from '../../utils/postJoinOperations';
 import { InviteService } from '../invite.service';
 import { deleteGameInviteOutcome, findGameInviteOutcome } from '../../utils/gameInviteOutcome';
-import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { createSystemMessageWithNotification } from '../../utils/systemMessageHelper';
 import { ChatType, GameStatus, ParticipantRole, UserTeamMemberStatus } from '@prisma/client';
 import { BetService } from '../bets/bet.service';
@@ -122,7 +122,7 @@ export class ParticipantService {
       },
       include: {
         user: {
-          select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+          select: USER_SELECT_WITH_SPORT_PROFILES,
         },
       },
     });
@@ -241,7 +241,7 @@ export class ParticipantService {
     const participant = await prisma.gameParticipant.findFirst({
       where: { gameId, userId, status: GUEST_STATUS },
       include: {
-        user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+        user: { select: USER_SELECT_WITH_SPORT_PROFILES },
       },
     });
 
@@ -273,7 +273,7 @@ export class ParticipantService {
       },
       include: {
         user: {
-          select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+          select: USER_SELECT_WITH_SPORT_PROFILES,
         },
       },
     });
@@ -696,8 +696,8 @@ export class ParticipantService {
           inviteUserTeamId: resolvedInviteUserTeamId,
         },
         include: {
-          user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
-          invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+          user: { select: USER_SELECT_WITH_SPORT_PROFILES },
+          invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
           game: {
             select: {
               id: true,

@@ -2,6 +2,7 @@ import { Sport } from '@prisma/client';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
+import { enrichProfileUser } from './user/userSportProfile.service';
 import {
   completeSportQuestionnaire,
   resetSportQuestionnaire,
@@ -15,7 +16,7 @@ export async function completeWelcomeScreen(userId: string, answers: string[]) {
     select: PROFILE_SELECT_FIELDS,
   });
   if (!user) throw new ApiError(404, 'User not found');
-  return user;
+  return enrichProfileUser(user);
 }
 
 export async function resetWelcomeScreen(userId: string) {
@@ -29,5 +30,5 @@ export async function skipWelcomeScreen(userId: string) {
     select: PROFILE_SELECT_FIELDS,
   });
   if (!user) throw new ApiError(404, 'User not found');
-  return user;
+  return enrichProfileUser(user);
 }

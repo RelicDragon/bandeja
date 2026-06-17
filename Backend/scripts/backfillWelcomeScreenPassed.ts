@@ -17,10 +17,6 @@ async function backfill() {
   const users = await prisma.user.findMany({
     select: {
       id: true,
-      level: true,
-      reliability: true,
-      gamesPlayed: true,
-      gamesWon: true,
       sportProfiles: {
         where: { sport: Sport.PADEL },
         select: USER_SPORT_PROFILE_SELECT,

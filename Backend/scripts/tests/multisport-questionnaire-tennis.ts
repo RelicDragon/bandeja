@@ -11,7 +11,6 @@ import { ApiError } from '../../src/utils/ApiError';
 import {
   addUserSport,
   resolveUserSportSnapshot,
-  updateUserSportLevel,
 } from '../../src/services/user/userSportProfile.service';
 import {
   completeSportQuestionnaire,
@@ -45,6 +44,14 @@ function assertApiError(fn: () => Promise<unknown>, code: number, msgPart: strin
   );
 }
 
+async function padelProfileLevel(userId: string): Promise<number> {
+  const profile = await prisma.userSportProfile.findUnique({
+    where: { userId_sport: { userId, sport: Sport.PADEL } },
+    select: { level: true },
+  });
+  return profile?.level ?? 1.0;
+}
+
 function testRegistryAndScoring(): void {
   assert(TENNIS_QUESTIONNAIRE_V1.id === 'tennis-v1', 'tennis-v1 id');
   assert(TENNIS_QUESTIONNAIRE_V1.minQuestions === 5, 'tennis 5 questions');
@@ -72,13 +79,13 @@ function testServiceGuard(): void {
   assert(threw, 'reject socialLevel in body');
 }
 
-async function findUserWithoutTennis(): Promise<{ id: string; level: number; socialLevel: number } | null> {
+async function findUserWithoutTennis(): Promise<{ id: string; socialLevel: number } | null> {
   const user = await prisma.user.findFirst({
     where: {
       isActive: true,
       NOT: { sportsEnabled: { has: Sport.TENNIS } },
     },
-    select: { id: true, level: true, socialLevel: true },
+    select: { id: true, socialLevel: true },
   });
   return user;
 }
@@ -105,10 +112,8 @@ async function testAddTennisSkipQ(): Promise<void> {
     return;
   }
 
-  const padelBefore = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { level: true, socialLevel: true },
-  });
+  const padelLevelBefore = await padelProfileLevel(user.id);
+  const socialBefore = user.socialLevel;
 
   const { user: afterAdd, suggestedQuestionnaire } = await addUserSport(user.id, Sport.TENNIS);
   assert(suggestedQuestionnaire === true, 'addUserSport suggests tennis questionnaire');
@@ -119,13 +124,14 @@ async function testAddTennisSkipQ(): Promise<void> {
   assert(status.skipped && !status.suggested, 'skip marks skipped, not suggested');
   assert(status.level === 1.0, 'skip keeps level 1.0');
 
-  const after = await prisma.user.findUnique({
+  const padelLevelAfter = await padelProfileLevel(user.id);
+  const afterUser = await prisma.user.findUnique({
     where: { id: user.id },
-    select: { level: true, socialLevel: true, sportProfiles: { where: { sport: Sport.TENNIS } } },
+    select: { socialLevel: true, sportProfiles: { where: { sport: Sport.TENNIS } } },
   });
-  assert(after?.level === padelBefore?.level, 'User.level unchanged');
-  assert(after?.socialLevel === padelBefore?.socialLevel, 'socialLevel unchanged');
-  assert(after?.sportProfiles[0]?.level === 1.0, 'tennis profile 1.0');
+  assert(padelLevelAfter === padelLevelBefore, 'padel profile level unchanged');
+  assert(afterUser?.socialLevel === socialBefore, 'socialLevel unchanged');
+  assert(afterUser?.sportProfiles[0]?.level === 1.0, 'tennis profile 1.0');
 
   await resetTennisProfile(user.id);
   console.log('ok: add tennis skip Q — padel/social unchanged');
@@ -139,7 +145,7 @@ async function testCompleteTennisQ(): Promise<void> {
     return;
   }
 
-  const padelLevelBefore = user.level;
+  const padelLevelBefore = await padelProfileLevel(user.id);
   await addUserSport(user.id, Sport.TENNIS);
 
   const answers = ['C', 'C', 'C', 'C', 'C'];
@@ -159,8 +165,8 @@ async function testCompleteTennisQ(): Promise<void> {
   });
   assert(event != null && event.levelAfter === status.level, 'LevelChangeEvent with sport');
 
-  const afterUser = await prisma.user.findUnique({ where: { id: user.id }, select: { level: true } });
-  assert(afterUser?.level === padelLevelBefore, 'padel User.level unchanged');
+  const padelLevelAfter = await padelProfileLevel(user.id);
+  assert(padelLevelAfter === padelLevelBefore, 'padel profile level unchanged');
 
   await assertApiError(
     () => completeSportQuestionnaire(user.id, Sport.TENNIS, answers),
@@ -196,7 +202,7 @@ async function testPadelGamesDoNotBlockTennisQ(): Promise<void> {
   const user = await prisma.user.findFirst({
     where: {
       isActive: true,
-      gamesPlayed: { gt: 0 },
+      sportProfiles: { some: { sport: Sport.PADEL, gamesPlayed: { gt: 0 } } },
       NOT: { sportsEnabled: { has: Sport.TENNIS } },
     },
     select: { id: true },
@@ -232,7 +238,6 @@ async function testSnapshotJoinAtOne(): Promise<void> {
   const loaded = await prisma.user.findUnique({
     where: { id: user.id },
     select: {
-      level: true,
       sportProfiles: { select: { sport: true, level: true, gamesPlayed: true, gamesWon: true, reliability: true } },
     },
   });

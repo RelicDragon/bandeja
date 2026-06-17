@@ -3,7 +3,8 @@ import { ApiError } from '../utils/ApiError';
 import { TransactionType } from '@prisma/client';
 import SocketService from './socket.service';
 import notificationService from './notification.service';
-import { USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
+import { projectTransactionEmbeddedUsers } from './user/projectEmbeddedBasicUsers';
 
 const BANDEJA_BANK_IDENTIFIER = 'BANDEJA_BANK';
 
@@ -144,13 +145,13 @@ export class TransactionService {
           },
           fromUser: {
             select: {
-              ...USER_SELECT_FIELDS,
+              ...USER_SELECT_WITH_SPORT_PROFILES,
               phone: true,
             },
           },
           toUser: {
             select: {
-              ...USER_SELECT_FIELDS,
+              ...USER_SELECT_WITH_SPORT_PROFILES,
               phone: true,
             },
           },
@@ -240,7 +241,7 @@ export class TransactionService {
       console.error('[TransactionService] Failed to send transaction notifications:', error);
     }
 
-    return transaction.transaction;
+    return projectTransactionEmbeddedUsers(transaction.transaction);
   }
 
   static async getUserTransactions(userId: string, page: number = 1, limit: number = 50) {
@@ -261,10 +262,10 @@ export class TransactionService {
             },
           },
           fromUser: {
-            select: USER_SELECT_FIELDS,
+            select: USER_SELECT_WITH_SPORT_PROFILES,
           },
           toUser: {
-            select: USER_SELECT_FIELDS,
+            select: USER_SELECT_WITH_SPORT_PROFILES,
           },
         },
         orderBy: {
@@ -284,7 +285,7 @@ export class TransactionService {
     ]);
 
     return {
-      transactions,
+      transactions: transactions.map(projectTransactionEmbeddedUsers),
       pagination: {
         page,
         limit,
@@ -304,10 +305,10 @@ export class TransactionService {
           },
         },
         fromUser: {
-          select: USER_SELECT_FIELDS,
+          select: USER_SELECT_WITH_SPORT_PROFILES,
         },
         toUser: {
-          select: USER_SELECT_FIELDS,
+          select: USER_SELECT_WITH_SPORT_PROFILES,
         },
       },
     });
@@ -323,7 +324,7 @@ export class TransactionService {
       }
     }
 
-    return transaction;
+    return projectTransactionEmbeddedUsers(transaction);
   }
 
   static async getUserWallet(userId: string) {

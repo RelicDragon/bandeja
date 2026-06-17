@@ -41,20 +41,20 @@ const DELETED_USER: BasicUser = {
   isTrainer: false,
 };
 
-export function mapAuthorToBasicUser(
-  author: {
-    id: string;
-    firstName: string | null;
-    lastName: string | null;
-    avatar: string | null;
-    level: number;
-    socialLevel: number;
-    gender: string;
-    approvedLevel: boolean;
-    isTrainer: boolean;
-    isActive?: boolean;
-  }
-): BasicUser {
+export type StoryCommentAuthorInput = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatar: string | null;
+  level: number;
+  socialLevel: number;
+  gender: string;
+  approvedLevel: boolean;
+  isTrainer: boolean;
+  isActive?: boolean;
+};
+
+export function mapAuthorToBasicUser(author: StoryCommentAuthorInput): BasicUser {
   if (author.isActive === false) {
     return { ...DELETED_USER, id: author.id };
   }
@@ -79,7 +79,7 @@ export function mapCommentToDto(
     deletedAt: Date | null;
     authorId: string;
     parentId?: string | null;
-    author: Parameters<typeof mapAuthorToBasicUser>[0];
+    author: StoryCommentAuthorInput;
   },
   ownerUserId: string,
   likeCount: number,

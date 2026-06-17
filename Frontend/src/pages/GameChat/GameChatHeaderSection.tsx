@@ -5,6 +5,7 @@ import { CloudOff, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { GameChatHeader } from './GameChatHeader';
+import { GameChatStatusBanner } from './GameChatHeaderMotion';
 import { useThreadChrome } from './useThreadView';
 
 /** Header chrome — subscribes only to ThreadChromeContext, not message/scroll seams. */
@@ -130,8 +131,11 @@ export const GameChatHeaderSection: React.FC = () => {
         headerActions={headerActions}
       />
 
-      {!showLoadingHeader && failedMutationCount > 0 && (
-        isNetworkOnline ? (
+      <GameChatStatusBanner
+        show={!showLoadingHeader && failedMutationCount > 0}
+        className="overflow-hidden"
+      >
+        {isNetworkOnline ? (
           <button
             type="button"
             onClick={() => retryMutations()}
@@ -148,8 +152,8 @@ export const GameChatHeaderSection: React.FC = () => {
             <CloudOff size={14} aria-hidden />
             {t('chat.queuedWhileOffline', { defaultValue: 'Queued — will sync when you’re back online' })}
           </div>
-        )
-      )}
+        )}
+      </GameChatStatusBanner>
     </>
   );
 };

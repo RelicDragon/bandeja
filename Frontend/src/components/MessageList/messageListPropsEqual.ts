@@ -52,6 +52,7 @@ export function messageListPropsEqual(prev: MessageListProps, next: MessageListP
   if (prev.userChatUser1Id !== next.userChatUser1Id) return false;
   if (prev.userChatUser2Id !== next.userChatUser2Id) return false;
   if (prev.threadScrollKey !== next.threadScrollKey) return false;
+  if (prev.highlightAnchorMessageId !== next.highlightAnchorMessageId) return false;
   if (prev.openPaintGeneration !== next.openPaintGeneration) return false;
   if (prev.threadLayoutSettling !== next.threadLayoutSettling) return false;
 

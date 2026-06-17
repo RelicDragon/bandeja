@@ -6,12 +6,12 @@ import { isQuestionnaireSuggestedForProfile } from '../../sport/questionnaires/s
 import { getSportConfig } from '../../sport/sportRegistry';
 import type { SportQuestionnaireConfig } from '../../sport/questionnaires/types';
 import { ApiError } from '../../utils/ApiError';
-import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 import { isQuestionnaireEngineEnabled } from '../../utils/multisportQuestionnaireFlags';
 import {
   clampSportLevel,
   MIN_SPORT_LEVEL,
   parseSportParam,
+  loadProfileUser,
   resolveUserSportSnapshot,
 } from './userSportProfile.service';
 import {
@@ -274,7 +274,7 @@ export async function resetSportQuestionnaire(userId: string, sportInput: unknow
     throw new ApiError(400, 'Cannot reset questionnaire after rated games');
   }
 
-  const user = await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
     await revertQuestionnaireEventsForUserSport(userId, sport, tx);
     await tx.userSportProfile.upsert({
       where: { userId_sport: { userId, sport } },
@@ -299,14 +299,7 @@ export async function resetSportQuestionnaire(userId: string, sportInput: unknow
         data: { welcomeScreenPassed: false },
       });
     }
-
-    const u = await tx.user.findUnique({
-      where: { id: userId },
-      select: PROFILE_SELECT_FIELDS,
-    });
-    if (!u) throw new ApiError(404, 'User not found');
-    return u;
   });
 
-  return user;
+  return loadProfileUser(userId);
 }

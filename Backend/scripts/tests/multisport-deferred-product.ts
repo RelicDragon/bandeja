@@ -39,12 +39,16 @@ function testSportsPlayedThreshold(): void {
 function testEnrichProfileUser(): void {
   const enriched = enrichProfileUser({
     id: 'u1',
+    primarySport: Sport.PICKLEBALL,
     sportProfiles: [
-      { sport: Sport.PICKLEBALL, level: 2, reliability: 0, gamesPlayed: 5, gamesWon: 2 },
+      { sport: Sport.PICKLEBALL, level: 2, reliability: 40, gamesPlayed: 5, gamesWon: 2 },
     ],
   });
   assert(enriched.sportsPlayed?.PICKLEBALL === 5, 'enrichProfileUser exposes sportsPlayed');
-  console.log('ok: enrichProfileUser adds sportsPlayed');
+  assert(enriched.level === 2, 'enrichProfileUser projects primary sport level');
+  assert(enriched.reliability === 40, 'enrichProfileUser projects primary sport reliability');
+  assert(enriched.gamesPlayed === 5, 'enrichProfileUser projects primary sport gamesPlayed');
+  console.log('ok: enrichProfileUser projects rating fields + sportsPlayed');
 }
 
 function testSourceWiring(): void {

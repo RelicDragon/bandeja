@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
+import { CHAT_SEARCH_BAR_TRANSITION } from '@/components/chat/chatListMotion';
 import { Search, X, BookUser, Plus, Mail, SlidersHorizontal } from 'lucide-react';
 import { shouldShowChatListUnreadFilter } from '@/components/chat/chatListUnreadFilter';
 
@@ -86,7 +87,7 @@ export const ChatListSearchBar = ({
             opacity: showActionButtons ? 1 : 0,
             marginRight: showActionButtons ? 8 : 0,
           }}
-          transition={{ duration: 0.25, ease: 'easeInOut' }}
+          transition={CHAT_SEARCH_BAR_TRANSITION}
           className="shrink-0 overflow-hidden"
           style={{ pointerEvents: showActionButtons ? 'auto' : 'none' }}
         >

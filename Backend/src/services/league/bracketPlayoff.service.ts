@@ -9,6 +9,11 @@ import {
 } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import {
+  LEAGUE_USER_SELECT,
+  projectBracketPlayoffGroups,
+} from './leagueSportProjection.util';
+import { loadLeagueSeasonSportOrThrow, resolveLeagueSeasonSport } from '../../utils/validators/validateLeagueSeasonSport';
+import {
   buildBracketPlan,
   BracketPlan,
   consolationRoundLabel,
@@ -23,7 +28,6 @@ import {
   PlayoffGameSetupOverrides,
   validatePlayoffGameSetupForSeason,
 } from './gameCreation.util';
-import { resolveLeagueSeasonSport } from '../../utils/validators/validateLeagueSeasonSport';
 import { BracketAdvancementService } from './bracketAdvancement.service';
 import { BracketGameNotificationService } from './bracketGameNotification.service';
 import {
@@ -760,6 +764,7 @@ export class BracketPlayoffService {
     _userId?: string,
     opts?: { roundId?: string; leagueGroupId?: string }
   ) {
+    const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId);
     const round = await prisma.leagueRound.findFirst({
       where: {
         leagueSeasonId,
@@ -782,7 +787,7 @@ export class BracketPlayoffService {
                 fixedTeams: {
                   include: {
                     players: {
-                      include: { user: { select: USER_SELECT_FIELDS } },
+                      include: { user: { select: LEAGUE_USER_SELECT } },
                     },
                   },
                   orderBy: { teamNumber: 'asc' },
@@ -795,7 +800,7 @@ export class BracketPlayoffService {
                 leagueTeam: {
                   include: {
                     players: {
-                      include: { user: { select: USER_SELECT_FIELDS } },
+                      include: { user: { select: LEAGUE_USER_SELECT } },
                     },
                   },
                 },
@@ -943,7 +948,7 @@ export class BracketPlayoffService {
         bracketTemplateVersion: round.bracketTemplateVersion,
         bracketConfig: round.bracketConfig,
       },
-      groups,
+      groups: projectBracketPlayoffGroups(groups, seasonSport),
     };
   }
 

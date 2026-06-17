@@ -6,7 +6,7 @@ import prisma from '../config/database';
 import { ParticipantRole } from '@prisma/client';
 import { createSystemMessage } from './chat.controller';
 import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
-import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
 import { hasParentGamePermission, hasRealParticipantStatus } from '../utils/parentGamePermissions';
@@ -73,8 +73,8 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     const existingInvited = await prisma.gameParticipant.findFirst({
       where: { gameId, userId: receiverId, status: 'INVITED' },
       include: {
-        user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
-        invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+        user: { select: USER_SELECT_WITH_SPORT_PROFILES },
+        invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
         game: {
           select: {
             id: true,
@@ -101,8 +101,8 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
             club: { select: { id: true, name: true, avatar: true } },
             participants: {
               include: {
-                user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
-                invitedByUser: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+                user: { select: USER_SELECT_WITH_SPORT_PROFILES },
+                invitedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
               },
             },
           },

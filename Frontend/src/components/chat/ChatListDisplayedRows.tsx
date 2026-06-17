@@ -1,4 +1,4 @@
-import { type RefObject } from 'react';
+import { type RefObject, useCallback } from 'react';
 import { ChatListItem } from './ChatListItem';
 import { ChatListVirtualSlice } from './ChatListVirtualSlice';
 import { getChatKey } from '@/utils/chatListHelpers';
@@ -65,6 +65,7 @@ function chatListRowProps(chat: ChatItem, p: ChatListDisplayedRowsProps) {
 }
 
 export function ChatListDisplayedRows(p: ChatListDisplayedRowsProps) {
+  const getItemKey = useCallback((chat: ChatItem) => getChatKey(chat), []);
   const loadMoreBlock =
     p.showLoadMoreRow ? (
       <div ref={p.loadMoreSentinelRef} className="py-4 flex justify-center">
@@ -79,8 +80,9 @@ export function ChatListDisplayedRows(p: ChatListDisplayedRowsProps) {
       <ChatListVirtualSlice
         scrollElementRef={p.scrollElementRef}
         items={p.displayedChats}
-        getItemKey={(chat) => getChatKey(chat)}
+        getItemKey={getItemKey}
         estimateSizePx={CHAT_LIST_CHAT_ROW_ESTIMATE_PX}
+        animationResetKey={p.chatsFilter}
         renderItem={(chat) => <ChatListItem {...chatListRowProps(chat, p)} />}
       />
       {loadMoreBlock}

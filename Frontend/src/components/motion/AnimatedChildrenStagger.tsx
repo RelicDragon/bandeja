@@ -51,11 +51,14 @@ export function AnimatedChildrenStagger({ children, contentKey, className }: Ani
       initial="hidden"
       animate="show"
     >
-      {flattenChildren(children).map((child, index) => (
-        <motion.div key={index} variants={itemVariants}>
-          {child}
-        </motion.div>
-      ))}
+      {flattenChildren(children).map((child, index) => {
+        const childKey = isValidElement(child) && child.key != null ? String(child.key) : `stagger-${index}`;
+        return (
+          <motion.div key={childKey} variants={itemVariants}>
+            {child}
+          </motion.div>
+        );
+      })}
     </motion.div>
   );
 }

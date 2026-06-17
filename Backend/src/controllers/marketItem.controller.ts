@@ -7,7 +7,8 @@ import { MarketItemBidService } from '../services/marketItem/marketItemBid.servi
 import { MarketItemParticipantService } from '../services/marketItem/participant.service';
 import { MarketItemStatus, MarketItemTradeType, Sport } from '@prisma/client';
 import prisma from '../config/database';
-import { SUPPORTED_CURRENCIES, USER_SELECT_FIELDS } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../utils/constants';
+import { projectMarketItemEmbeddedUsers } from '../services/user/projectEmbeddedBasicUsers';
 import notificationService from '../services/notification.service';
 import { AdminMarketCategoryService } from '../services/admin/marketCategory.service';
 import {
@@ -308,7 +309,7 @@ export const getBuyerChat = asyncHandler(async (req: AuthRequest, res: Response)
     include: {
       participants: {
         include: {
-          user: { select: USER_SELECT_FIELDS },
+          user: { select: USER_SELECT_WITH_SPORT_PROFILES },
         },
       },
     },
@@ -316,7 +317,7 @@ export const getBuyerChat = asyncHandler(async (req: AuthRequest, res: Response)
 
   res.status(200).json({
     success: true,
-    data: chat || null,
+    data: chat ? projectMarketItemEmbeddedUsers(chat) : null,
   });
 });
 

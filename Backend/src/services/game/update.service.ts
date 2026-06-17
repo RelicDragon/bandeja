@@ -2,7 +2,7 @@ import prisma from '../../config/database';
 import { EntityType, ParticipantRole, Prisma, Sport } from '@prisma/client';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES, SUPPORTED_CURRENCIES } from '../../utils/constants';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { GameReadinessService } from './readiness.service';
 import { GameReadService } from './read.service';
@@ -632,7 +632,7 @@ export class GameUpdateService {
           participants: {
             include: {
               user: {
-                select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+                select: USER_SELECT_WITH_SPORT_PROFILES,
               },
             },
           },
@@ -660,7 +660,7 @@ export class GameUpdateService {
         participants: {
           include: {
             user: {
-              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+              select: USER_SELECT_WITH_SPORT_PROFILES,
             },
           },
         },

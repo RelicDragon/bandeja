@@ -2,13 +2,13 @@ import prisma from '../config/database';
 import { Prisma, Sport } from '@prisma/client';
 import { ApiError } from '../utils/ApiError';
 import { GameService } from './game/game.service';
-import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { LeagueSyncService } from './league/sync.service';
 import { EntityType } from '@prisma/client';
 import { maxFixedTeamSlots } from './results/generation/matchUtils';
 import { projectUserForSportContext } from './user/userSportProfile.service';
 
-const FIXED_TEAM_PLAYER_USER_SELECT = USER_SELECT_FIELDS_WITH_SPORT_PROFILES;
+const FIXED_TEAM_PLAYER_USER_SELECT = USER_SELECT_WITH_SPORT_PROFILES;
 
 function projectFixedTeamsForSport<T extends { players: Array<{ user: unknown }> }>(
   teams: T[],
@@ -170,7 +170,7 @@ export class GameTeamService {
         participants: {
           include: {
             user: {
-              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+              select: USER_SELECT_WITH_SPORT_PROFILES,
             },
           },
         },

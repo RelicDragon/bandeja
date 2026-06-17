@@ -11,7 +11,6 @@ export async function resolveUserLevelForSport(
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-      level: true,
       sportProfiles: {
         select: { sport: true, level: true, reliability: true, gamesPlayed: true, gamesWon: true },
       },

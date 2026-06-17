@@ -329,7 +329,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       {isSystemMessage ? (
         <div
           ref={messageRef}
-          className={`group flex justify-center mb-4 relative transition-all duration-300 ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
+          className={`group flex justify-center mb-4 relative transition-all duration-[600ms] ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
         >
           <div className="relative">
             <SystemMessageBlock
@@ -372,7 +372,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       ) : (
         <div
           ref={messageRef}
-          className={`group flex select-none ${isChannel ? 'justify-start' : isOwnMessage ? 'justify-end' : 'justify-start'} ${isLastInGroup ? 'mb-3.5' : hasReplies() ? 'mb-3' : 'mb-1'} relative transition-all duration-300 ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
+          className={`group flex select-none ${isChannel ? 'justify-start' : isOwnMessage ? 'justify-end' : 'justify-start'} ${isLastInGroup ? 'mb-3.5' : hasReplies() ? 'mb-3' : 'mb-1'} relative transition-all duration-[600ms] ease-out overflow-visible ${isDeleting ? 'opacity-0 scale-75 translate-y-[-20px] transform-gpu' : 'opacity-100 scale-100 translate-y-0'}`}
         >
           <div
             className={`flex ${isChannel ? 'w-full max-w-full' : currentMessage.poll ? 'w-[85%] min-w-[85%] flex-shrink-0' : 'max-w-[85%]'} ${isChannel ? 'flex-row' : isOwnMessage ? 'flex-row-reverse' : 'flex-row'} overflow-visible`}

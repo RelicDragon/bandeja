@@ -16,8 +16,12 @@
     if (typeof formatUserSportLevelsSummary === 'function') {
       return `(${formatUserSportLevelsSummary(u)})`;
     }
-    const lv = u.level != null ? Number(u.level).toFixed(1) : '—';
-    return `(${lv})`;
+    const profiles = u.sportProfiles;
+    if (profiles?.length) {
+      const summary = profiles.map((p) => `${p.sport}: ${(p.level ?? 0).toFixed(1)}`).join(', ');
+      return `(${summary})`;
+    }
+    return '(—)';
   }
 
   function mergeResultLine(u) {

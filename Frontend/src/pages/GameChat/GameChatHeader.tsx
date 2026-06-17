@@ -1,11 +1,15 @@
 import React, { ReactNode, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Bug as BugIcon, Loader2, WifiOff } from 'lucide-react';
+import { ArrowLeft, Bug as BugIcon } from 'lucide-react';
 import { ChatHeaderActions } from '@/components/chat/ChatHeaderActions';
 import type { ChatContextType } from '@/api/chat';
 import type { Game } from '@/types';
 import { useChatOfflineStore } from '@/store/chatOfflineStore';
 import { useChatSyncStore } from '@/store/chatSyncStore';
+import {
+  GameChatHeaderChromeSwap,
+  GameChatHeaderStatusSlot,
+} from './GameChatHeaderMotion';
 
 export interface GameChatHeaderActionsProps {
   showMute: boolean;
@@ -76,26 +80,40 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
       : chatConnectionState === 'SYNCING'
         ? t('chat.syncingBanner', 'Syncing…')
         : undefined;
-  const headerStatusSlot =
-    chatConnectionState === 'OFFLINE' ? (
-      <div
-        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400"
-        role="status"
-        title={paintHint ?? statusTitle}
-        aria-label={statusTitle}
-      >
-        <WifiOff size={22} strokeWidth={2} />
-      </div>
-    ) : chatConnectionState === 'SYNCING' ? (
-      <div
-        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-        role="status"
-        title={paintHint ?? statusTitle}
-        aria-label={statusTitle}
-      >
-        <Loader2 size={22} className="animate-spin" strokeWidth={2} />
-      </div>
+  const headerActionsNode =
+    showHeaderActions && headerActions != null ? (
+      <ChatHeaderActions
+        showMute={headerActions.showMute}
+        showLeave={headerActions.showLeave}
+        showParticipantsButton={headerActions.showParticipantsButton}
+        isMuted={headerActions.isMuted}
+        isTogglingMute={headerActions.isTogglingMute}
+        onToggleMute={headerActions.onToggleMute}
+        onLeaveClick={headerActions.onLeaveClick}
+        leaveTitle={headerActions.leaveTitle}
+        game={headerActions.game}
+        onParticipantsClick={headerActions.onParticipantsClick}
+      />
     ) : null;
+
+  const loadingSkeleton = (
+    <div className="flex w-full items-center gap-3">
+      {chatConnectionState === 'OFFLINE' || chatConnectionState === 'SYNCING' ? (
+        <GameChatHeaderStatusSlot
+          connectionState={chatConnectionState}
+          statusTitle={statusTitle}
+          paintHint={paintHint}
+        />
+      ) : (
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-700" />
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
+        <div className="h-3 w-48 rounded bg-gray-200 dark:bg-gray-700" />
+      </div>
+      {headerActionsNode}
+    </div>
+  );
 
   const backRowSpan =
     subtitle != null ? 4 : titleMetaRow != null ? 3 : 2;
@@ -114,15 +132,12 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
           paddingRight: 'max(1rem, env(safe-area-inset-right))',
         }}
       >
-        {showLoadingHeader ? (
-          <div className="flex w-full items-center gap-3">
-            {headerStatusSlot ?? <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-700" />}
-            <div className="flex-1">
-              <div className="mb-1 h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
-              <div className="h-3 w-48 rounded bg-gray-200 dark:bg-gray-700" />
-            </div>
-          </div>
-        ) : isStructuredTitle ? (
+        <GameChatHeaderChromeSwap
+          showLoading={showLoadingHeader}
+          loading={loadingSkeleton}
+          className="w-full"
+        >
+        {isStructuredTitle ? (
           <div
             className={`grid w-full min-w-0 gap-x-2 gap-y-0.5 ${
               !isEmbedded ? 'grid-cols-[auto_minmax(0,1fr)_auto]' : 'grid-cols-[minmax(0,1fr)_auto]'
@@ -169,22 +184,11 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                 {titleContent}
               </h1>
             </div>
-            {showHeaderActions && headerActions != null && (
+            {headerActionsNode != null && (
               <div
                 className={`row-start-1 row-span-2 self-start ${!isEmbedded ? 'col-start-3' : 'col-start-2'}`}
               >
-                <ChatHeaderActions
-                  showMute={headerActions.showMute}
-                  showLeave={headerActions.showLeave}
-                  showParticipantsButton={headerActions.showParticipantsButton}
-                  isMuted={headerActions.isMuted}
-                  isTogglingMute={headerActions.isTogglingMute}
-                  onToggleMute={headerActions.onToggleMute}
-                  onLeaveClick={headerActions.onLeaveClick}
-                  leaveTitle={headerActions.leaveTitle}
-                  game={headerActions.game}
-                  onParticipantsClick={headerActions.onParticipantsClick}
-                />
+                {headerActionsNode}
               </div>
             )}
             {titleMetaRow != null && (
@@ -213,7 +217,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
             )}
           </div>
         ) : (
-          <>
+          <div className="flex w-full items-center justify-between gap-2">
             <div className="flex min-w-0 flex-1 items-center gap-2">
               {!isEmbedded && (
                 <button
@@ -224,7 +228,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                 </button>
               )}
               {showPanelBack && (
-                <div className="hidden w-auto opacity-100 transition-all duration-300 ease-in-out md:block">
+                <div className="hidden w-auto opacity-100 transition-all duration-[600ms] ease-in-out md:block">
                   <button
                     onClick={onPanelBack}
                     className="flex-shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -238,12 +242,31 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                 onClick={isTitleClickable ? onTitleClick : undefined}
                 role={isTitleClickable ? 'button' : undefined}
               >
-                {!isBugChat && <div className="flex-shrink-0">{headerStatusSlot ?? icon}</div>}
+                {!isBugChat && (
+                  <div className="flex-shrink-0">
+                    {chatConnectionState === 'OFFLINE' || chatConnectionState === 'SYNCING' ? (
+                      <GameChatHeaderStatusSlot
+                        connectionState={chatConnectionState}
+                        statusTitle={statusTitle}
+                        paintHint={paintHint}
+                      />
+                    ) : (
+                      icon
+                    )}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <h1
                     className={`${isBugChat ? 'text-base' : 'text-lg'} flex min-w-0 items-center gap-2 font-semibold text-gray-900 dark:text-white`}
                   >
-                    {isBugChat && headerStatusSlot}
+                    {isBugChat &&
+                      (chatConnectionState === 'OFFLINE' || chatConnectionState === 'SYNCING') && (
+                        <GameChatHeaderStatusSlot
+                          connectionState={chatConnectionState}
+                          statusTitle={statusTitle}
+                          paintHint={paintHint}
+                        />
+                      )}
                     {isBugChat && (
                       <BugIcon size={16} className="flex-shrink-0 text-red-500" />
                     )}
@@ -263,22 +286,10 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                 </div>
               </div>
             </div>
-            {showHeaderActions && headerActions != null && (
-              <ChatHeaderActions
-                showMute={headerActions.showMute}
-                showLeave={headerActions.showLeave}
-                showParticipantsButton={headerActions.showParticipantsButton}
-                isMuted={headerActions.isMuted}
-                isTogglingMute={headerActions.isTogglingMute}
-                onToggleMute={headerActions.onToggleMute}
-                onLeaveClick={headerActions.onLeaveClick}
-                leaveTitle={headerActions.leaveTitle}
-                game={headerActions.game}
-                onParticipantsClick={headerActions.onParticipantsClick}
-              />
-            )}
-          </>
+            {headerActionsNode}
+          </div>
         )}
+        </GameChatHeaderChromeSwap>
       </div>
     </header>
   );

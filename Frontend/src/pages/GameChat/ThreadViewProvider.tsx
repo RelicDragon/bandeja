@@ -99,6 +99,7 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       initialScroll: ctrl.initialScroll,
       openPaintGeneration: ctrl.openPaintGeneration,
       threadScrollKey: ctrl.threadScrollKey,
+      highlightAnchorMessageId: ctrl.highlightAnchorMessageId,
     }),
     [
       ctrl.setChatNearBottom,
@@ -110,6 +111,7 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       ctrl.initialScroll,
       ctrl.openPaintGeneration,
       ctrl.threadScrollKey,
+      ctrl.highlightAnchorMessageId,
     ]
   );
 

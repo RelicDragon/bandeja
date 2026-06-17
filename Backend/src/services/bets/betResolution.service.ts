@@ -6,7 +6,8 @@ import { distributePoolCoins } from './poolCoinDistribution';
 import { TransactionService } from '../transaction.service';
 import notificationService from '../notification.service';
 import { emitBetUpdated } from '../socketEmitFacade';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { BET_WITH_EMBEDDED_USERS_INCLUDE, USER_SELECT_FIELDS } from '../../utils/constants';
+import { projectBetForGameSport } from '../user/projectEmbeddedBasicUsers';
 import {
   executeResolvedBetPayout,
   executeResolvedPoolBetPayout,
@@ -277,14 +278,10 @@ async function runCancelledOpenBetPostTx(c: CancelledOpenBetPostTx): Promise<voi
   }
   const bet = await prisma.bet.findUnique({
     where: { id: c.betId },
-    include: {
-      creator: { select: USER_SELECT_FIELDS },
-      acceptedByUser: { select: USER_SELECT_FIELDS },
-      winner: { select: USER_SELECT_FIELDS }
-    }
+    include: BET_WITH_EMBEDDED_USERS_INCLUDE,
   });
   if (bet) {
-    await emitBetUpdated(c.gameId, bet);
+    await emitBetUpdated(c.gameId, projectBetForGameSport(bet));
   }
 }
 
@@ -394,14 +391,10 @@ async function runVoidedBetPostTx(v: VoidedBetPostTx): Promise<void> {
 
   const bet = await prisma.bet.findUnique({
     where: { id: v.betId },
-    include: {
-      creator: { select: USER_SELECT_FIELDS },
-      acceptedByUser: { select: USER_SELECT_FIELDS },
-      winner: { select: USER_SELECT_FIELDS },
-    },
+    include: BET_WITH_EMBEDDED_USERS_INCLUDE,
   });
   if (bet) {
-    await emitBetUpdated(v.gameId, bet);
+    await emitBetUpdated(v.gameId, projectBetForGameSport(bet));
   }
 }
 

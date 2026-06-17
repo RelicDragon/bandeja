@@ -109,16 +109,16 @@ async function testDbFlow(): Promise<void> {
   await setUserPrimarySport(user.id, user.primarySport);
   await updateUserSportLevel(user.id, target, 2.5);
 
-  const padelBefore = await prisma.user.findUnique({
-    where: { id: user.id },
+  const padelBefore = await prisma.userSportProfile.findUnique({
+    where: { userId_sport: { userId: user.id, sport: Sport.PADEL } },
     select: { level: true },
   });
   await updateUserSportLevel(user.id, target, 3.0);
-  const padelAfter = await prisma.user.findUnique({
-    where: { id: user.id },
+  const padelAfter = await prisma.userSportProfile.findUnique({
+    where: { userId_sport: { userId: user.id, sport: Sport.PADEL } },
     select: { level: true },
   });
-  assert(padelBefore?.level === padelAfter?.level, 'non-padel level update does not touch User.level');
+  assert(padelBefore?.level === padelAfter?.level, 'non-padel level update does not touch padel profile');
 
   console.log('ok: db add sport + level update');
 }

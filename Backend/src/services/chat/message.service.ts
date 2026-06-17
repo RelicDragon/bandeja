@@ -15,7 +15,9 @@ import {
 } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { GameChatContextService } from '../game/gameChatContext.service';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { resolveChatMessageSport } from '../user/userSportProfile.service';
+import { projectMessageEmbeddedUsers, projectMessagesEmbeddedUsers } from '../user/projectEmbeddedBasicUsers';
 import notificationService from '../notification.service';
 import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
@@ -332,7 +334,7 @@ export class MessageService {
   static getMessageInclude() {
     return {
       sender: {
-        select: USER_SELECT_FIELDS
+        select: USER_SELECT_WITH_SPORT_PROFILES
       },
       replyTo: {
         select: {
@@ -343,21 +345,21 @@ export class MessageService {
           audioDurationMs: true,
           videoDurationMs: true,
           sender: {
-            select: USER_SELECT_FIELDS
+            select: USER_SELECT_WITH_SPORT_PROFILES
           }
         }
       },
       reactions: {
         include: {
           user: {
-            select: USER_SELECT_FIELDS
+            select: USER_SELECT_WITH_SPORT_PROFILES
           }
         }
       },
       readReceipts: {
         include: {
           user: {
-            select: USER_SELECT_FIELDS
+            select: USER_SELECT_WITH_SPORT_PROFILES
           }
         }
       },
@@ -367,7 +369,7 @@ export class MessageService {
             include: {
               votes: {
                 include: {
-                  user: { select: USER_SELECT_FIELDS }
+                  user: { select: USER_SELECT_WITH_SPORT_PROFILES }
                 }
               }
             },
@@ -377,12 +379,44 @@ export class MessageService {
           },
           votes: {
             include: {
-              user: { select: USER_SELECT_FIELDS }
+              user: { select: USER_SELECT_WITH_SPORT_PROFILES }
             }
           }
         }
       }
     };
+  }
+
+  static async finalizeMessagesForClient(
+    messages: any[],
+    languageCode: string,
+    chatContextType: ChatContextType,
+    contextId: string,
+    viewerUserId: string,
+  ): Promise<any[]> {
+    if (!messages.length) {
+      return messages;
+    }
+    const sport = await resolveChatMessageSport({ chatContextType, contextId }, viewerUserId);
+    const enriched = await this.enrichMessagesWithTranslations(messages, languageCode);
+    return projectMessagesEmbeddedUsers(enriched, sport);
+  }
+
+  static async finalizeMessageForClient(
+    message: any,
+    languageCode: string,
+    chatContextType: ChatContextType,
+    contextId: string,
+    viewerUserId: string,
+  ): Promise<any> {
+    const [finalized] = await this.finalizeMessagesForClient(
+      [message],
+      languageCode,
+      chatContextType,
+      contextId,
+      viewerUserId,
+    );
+    return finalized;
   }
 
   static async enrichMessagesWithTranslations(
@@ -745,7 +779,11 @@ export class MessageService {
         (existing as { syncSeq?: number; _deduped?: boolean }).syncSeq = orderingSeq;
         (existing as { _deduped?: boolean })._deduped = true;
         MessageService.scheduleSenderContextReadAfterSend(chatContextType, contextId, senderId);
-        return existing as any;
+        const sport = await resolveChatMessageSport(
+          { chatContextType, contextId },
+          senderId,
+        );
+        return projectMessageEmbeddedUsers(existing, sport) as typeof existing;
       }
     }
 
@@ -945,7 +983,8 @@ export class MessageService {
       });
     }
 
-    return message;
+    const sport = await resolveChatMessageSport({ chatContextType, contextId }, senderId);
+    return projectMessageEmbeddedUsers(message, sport);
   }
 
   static async createMessageWithEvent(data: {
@@ -1239,7 +1278,13 @@ export class MessageService {
         orderBy: { createdAt: 'desc' },
         take: Number(limit)
       });
-      const withTranslation = await this.enrichMessagesWithTranslations(messages, languageCode);
+      const withTranslation = await this.finalizeMessagesForClient(
+        messages,
+        languageCode,
+        chatContextType,
+        contextId,
+        userId,
+      );
       return withTranslation.reverse();
     }
 
@@ -1257,7 +1302,13 @@ export class MessageService {
       take: Number(limit)
     });
 
-    const messagesWithTranslation = await this.enrichMessagesWithTranslations(messages, languageCode);
+    const messagesWithTranslation = await this.finalizeMessagesForClient(
+      messages,
+      languageCode,
+      chatContextType,
+      contextId,
+      userId,
+    );
     return messagesWithTranslation.reverse();
   }
 
@@ -1275,8 +1326,13 @@ export class MessageService {
       select: { language: true },
     });
     const languageCode = user ? TranslationService.extractLanguageCode(user.language) : 'en';
-    const [enriched] = await this.enrichMessagesWithTranslations([message], languageCode);
-    return enriched;
+    return this.finalizeMessageForClient(
+      message,
+      languageCode,
+      message.chatContextType,
+      message.contextId,
+      userId,
+    );
   }
 
   /** Latest non-deleted message in context (any `chatType`), for list row previews. */
@@ -1538,29 +1594,15 @@ export class MessageService {
         data: { state },
         include: {
           sender: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-              gender: true,
-            }
+            select: USER_SELECT_WITH_SPORT_PROFILES,
           },
           reactions: {
             include: {
               user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  avatar: true,
-                  level: true,
-                  gender: true
-                }
-              }
-            }
-          }
+                select: USER_SELECT_WITH_SPORT_PROFILES,
+              },
+            },
+          },
         }
       });
       const seq = await ChatSyncEventService.appendEventInTransaction(
@@ -1578,29 +1620,15 @@ export class MessageService {
         where: { id: messageId },
         include: {
           sender: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              avatar: true,
-              level: true,
-              gender: true,
-            }
+            select: USER_SELECT_WITH_SPORT_PROFILES,
           },
           reactions: {
             include: {
               user: {
-                select: {
-                  id: true,
-                  firstName: true,
-                  lastName: true,
-                  avatar: true,
-                  level: true,
-                  gender: true
-                }
-              }
-            }
-          }
+                select: USER_SELECT_WITH_SPORT_PROFILES,
+              },
+            },
+          },
         },
       });
       return { updated: (fresh ?? u) as typeof u, syncSeq: seq };

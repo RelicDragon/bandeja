@@ -419,13 +419,13 @@ export const GroupChannelSettings = ({
                       <div
                         key={participant.id}
                         ref={isSelected ? (el) => { selectedItemRef.current = el; } : null}
-                        className={`transition-all duration-300 ${
+                        className={`transition-all duration-[600ms] ${
                           selectedUserId && !isSelected ? 'blur-sm opacity-50' : ''
                         }`}
                       >
                         <div
                           onClick={() => !isCurrentUser && actions.length > 0 && setSelectedUserId(isSelected ? null : participant.userId)}
-                          className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
+                          className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-[600ms] ${
                             isCurrentUser || actions.length === 0
                               ? ''
                               : 'cursor-pointer'
@@ -474,7 +474,7 @@ export const GroupChannelSettings = ({
                         </div>
 
                         {!isCurrentUser && (
-                          <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                          <div className={`overflow-hidden transition-all duration-[600ms] ease-in-out ${
                             isSelected && actions.length > 0
                               ? 'max-h-96 opacity-100 mt-2'
                               : 'max-h-0 opacity-0 mt-0'

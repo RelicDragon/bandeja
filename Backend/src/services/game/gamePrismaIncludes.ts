@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 import { GAME_INVITE_OUTCOME_INCLUDE } from '../../utils/gameInviteOutcomeInclude';
 import {
   USER_SELECT_FIELDS,
-  USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+  USER_SELECT_WITH_SPORT_PROFILES,
   USER_SPORT_PROFILE_SELECT,
 } from '../../utils/constants';
 
@@ -39,14 +39,12 @@ export const levelProjectionUserSelect = {
 
 const roundGenerationUserSelect = {
   ...USER_SELECT_FIELDS,
-  gamesPlayed: true,
-  gamesWon: true,
   sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
 } as const;
 
 export function participantWithSportUser(
-  userSelect: typeof USER_SELECT_FIELDS_WITH_SPORT_PROFILES | typeof levelProjectionUserSelect,
-  options?: { invitedByUser?: typeof USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+  userSelect: typeof USER_SELECT_WITH_SPORT_PROFILES | typeof levelProjectionUserSelect,
+  options?: { invitedByUser?: typeof USER_SELECT_WITH_SPORT_PROFILES },
 ) {
   return {
     include: {
@@ -60,7 +58,7 @@ export function participantWithSportUser(
 
 type MatchPlayerInclude =
   | { select: { userId: true } }
-  | { include: { user: { select: typeof USER_SELECT_FIELDS_WITH_SPORT_PROFILES | typeof levelProjectionUserSelect } } };
+  | { include: { user: { select: typeof USER_SELECT_WITH_SPORT_PROFILES | typeof levelProjectionUserSelect } } };
 
 export function matchWithTeamsAndSets(playerInclude: MatchPlayerInclude) {
   return {
@@ -124,8 +122,8 @@ export const gameBaseInclude = {
       },
     },
   },
-  participants: participantWithSportUser(USER_SELECT_FIELDS_WITH_SPORT_PROFILES, {
-    invitedByUser: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+  participants: participantWithSportUser(USER_SELECT_WITH_SPORT_PROFILES, {
+    invitedByUser: USER_SELECT_WITH_SPORT_PROFILES,
   }),
   inviteOutcomes: {
     include: GAME_INVITE_OUTCOME_INCLUDE,
@@ -135,7 +133,7 @@ export const gameBaseInclude = {
       players: {
         include: {
           user: {
-            select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+            select: USER_SELECT_WITH_SPORT_PROFILES,
           },
         },
       },
@@ -199,20 +197,20 @@ export const gameWithRoundsAndOutcomes = {
   outcomes: {
     include: {
       user: {
-        select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+        select: USER_SELECT_WITH_SPORT_PROFILES,
       },
     },
     orderBy: { position: 'asc' as const },
   },
   rounds: roundsWithMatches({
     include: {
-      user: { select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES },
+      user: { select: USER_SELECT_WITH_SPORT_PROFILES },
     },
   }),
   gameCourts: gameCourtInclude,
   parent: {
     include: {
-      participants: participantWithSportUser(USER_SELECT_FIELDS_WITH_SPORT_PROFILES),
+      participants: participantWithSportUser(USER_SELECT_WITH_SPORT_PROFILES),
       leagueSeason: {
         include: leagueSeasonInclude,
       },

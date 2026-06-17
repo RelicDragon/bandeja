@@ -2,36 +2,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { AnimatePresence, motion } from 'framer-motion';
+import {
+  CHAT_ATTACH_FLYOUT_CONTAINER,
+  CHAT_ATTACH_FLYOUT_ITEM,
+} from '@/components/chat/chatListMotion';
 import { Paperclip, Image, ListPlus, Video } from 'lucide-react';
 import { isValidVideo } from '@/components/chat/messageInputDraftUtils';
 import { pickImages } from '@/utils/photoCapture';
 import { pickVideo } from '@/utils/videoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 import { isValidImage } from '@/components/chat/messageInputDraftUtils';
-
-const attachFlyoutEase = [0.22, 1, 0.36, 1] as const;
-
-const attachFlyoutContainer = {
-  hidden: {
-    transition: { staggerChildren: 0.05, staggerDirection: -1 },
-  },
-  visible: {
-    transition: { staggerChildren: 0.07, delayChildren: 0.02 },
-  },
-};
-
-const attachFlyoutItem = {
-  hidden: {
-    opacity: 0,
-    y: 14,
-    transition: { duration: 0.18, ease: attachFlyoutEase },
-  },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.24, ease: attachFlyoutEase },
-  },
-};
 
 type MessageInputAttachMenuProps = {
   isDisabled: boolean;
@@ -150,11 +130,11 @@ export function MessageInputAttachMenu({
               initial="hidden"
               animate="visible"
               exit="hidden"
-              variants={attachFlyoutContainer}
+              variants={CHAT_ATTACH_FLYOUT_CONTAINER}
             >
               <motion.button
                 type="button"
-                variants={attachFlyoutItem}
+                variants={CHAT_ATTACH_FLYOUT_ITEM}
                 onClick={() => void handleVideoButtonClick()}
                 disabled={isDisabled || inputBlocked || voiceMode || videoBusy}
                 className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)] hover:scale-105"
@@ -164,7 +144,7 @@ export function MessageInputAttachMenu({
               </motion.button>
               <motion.button
                 type="button"
-                variants={attachFlyoutItem}
+                variants={CHAT_ATTACH_FLYOUT_ITEM}
                 onClick={() => void handleImageButtonClick()}
                 disabled={isDisabled || inputBlocked || voiceMode}
                 className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)] hover:scale-105"
@@ -174,7 +154,7 @@ export function MessageInputAttachMenu({
               </motion.button>
               <motion.button
                 type="button"
-                variants={attachFlyoutItem}
+                variants={CHAT_ATTACH_FLYOUT_ITEM}
                 onClick={handlePollButtonClick}
                 disabled={isDisabled || inputBlocked || voiceMode}
                 className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)] hover:scale-105"

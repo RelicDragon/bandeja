@@ -173,8 +173,14 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   if (req.userId && user.approvedById) {
     approvedByUser = await prisma.user.findUnique({
       where: { id: user.approvedById },
-      select: USER_SELECT_FIELDS,
+      select: {
+        ...USER_SELECT_FIELDS,
+        sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+      },
     });
+    if (approvedByUser) {
+      approvedByUser = projectUserForSportContext(approvedByUser, sport);
+    }
   }
 
   const levelHistory = await prisma.gameOutcome.findMany({

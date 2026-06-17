@@ -484,7 +484,7 @@ function formatUserSportProfilesSummary(user) {
     if (profiles?.length) {
         return profiles.map((p) => `${p.sport}: ${(p.level ?? 0).toFixed(1)}`).join(', ');
     }
-    return (user?.level ?? 0).toFixed(1);
+    return '—';
 }
 
 function formatUserGamesSummary(user) {
@@ -492,7 +492,7 @@ function formatUserGamesSummary(user) {
     if (profiles?.length) {
         return profiles.map((p) => `${p.sport}: ${p.gamesPlayed ?? 0}`).join(', ');
     }
-    return String(user?.gamesPlayed ?? 0);
+    return '—';
 }
 
 function initUsersDataTable() {
@@ -597,9 +597,10 @@ function viewUserDetail(userId) {
 }
 
 function renderUserDetailHtml(user) {
+    const enabled = user.sportsEnabled?.length ? user.sportsEnabled : ['PADEL'];
     const profiles = user.sportProfiles?.length
-        ? user.sportProfiles
-        : [{ sport: 'PADEL', level: user.level ?? 3.5, gamesPlayed: user.gamesPlayed ?? 0 }];
+        ? user.sportProfiles.filter((p) => enabled.includes(p.sport))
+        : enabled.map((sport) => ({ sport, level: 1.0, gamesPlayed: 0, gamesWon: 0 }));
     const profileRows = profiles.map((p) => {
         const resetBtn = p.gamesPlayed > 0
             ? '<span class="text-muted">Reset blocked (rated games)</span>'
@@ -614,9 +615,6 @@ function renderUserDetailHtml(user) {
             <td>${resetBtn}</td>
         </tr>`;
     }).join('');
-    const legacyPadel = user.level != null
-        ? `<p class="text-muted" style="font-size:0.85rem;margin-top:0.5rem">Legacy User.level (padel mirror): ${user.level.toFixed(1)}</p>`
-        : '';
     return `
         <div class="user-detail-grid">
             <div class="form-group"><label>Auth</label><div class="form-readonly">${escapeHtml(getAuthMethodBadges(user, false))}</div></div>
@@ -638,7 +636,6 @@ function renderUserDetailHtml(user) {
                 <tbody>${profileRows}</tbody>
             </table>
         </div>
-        ${legacyPadel}
         <div class="modal-actions" style="margin-top:1rem;padding:0">
             <button type="button" class="btn-small btn-edit" onclick="closeModal('userDetailModal');editUserById('${user.id}')">Edit sport settings</button>
         </div>
@@ -1316,7 +1313,8 @@ function populateGameModal(game) {
     document.getElementById('gameHasResults').textContent = game.resultsStatus !== 'NONE' ? 'Yes' : 'No';
     document.getElementById('gameIsPublic').textContent = game.isPublic ? 'Yes' : 'No';
     const sportEl = document.getElementById('gameSport');
-    if (sportEl) sportEl.textContent = sportLabel(game.sport);
+    const displaySport = gameDisplaySport(game);
+    if (sportEl) sportEl.textContent = sportLabel(displaySport);
     const tierEl = document.getElementById('gamePresetTier');
     if (tierEl) {
         const tier = gamePresetTier(game);
@@ -1352,7 +1350,7 @@ function populateGameModal(game) {
             const c = { PLAYING: 'badge-success', INVITED: 'badge-warning', IN_QUEUE: 'badge-info', GUEST: 'badge-secondary' }[s] || 'badge-secondary';
             return `<span class="badge ${c}">${(s || '-').replace('_', ' ')}</span>`;
         };
-        const gameSport = game.sport || 'PADEL';
+        const gameSport = gameDisplaySport(game);
         participantsList.innerHTML = game.participants.map(p => {
             const name = `${p.user.firstName || ''} ${p.user.lastName || ''}`.trim() || p.user.phone || '-';
             const sportLv = levelForSport(p.user, gameSport);

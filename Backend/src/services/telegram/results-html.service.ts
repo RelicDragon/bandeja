@@ -1,6 +1,6 @@
 import { config } from '../../config/env';
 import { Sport } from '@prisma/client';
-import { projectUserForSportContext } from '../user/userSportProfile.service';
+import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
 
 interface GameOutcome {
   id: string;
@@ -144,19 +144,29 @@ function getTranslations(language: string): Record<string, string> {
   return translations[langCode] || translations.en;
 }
 
-function outcomeUserForSport(
-  user: GameOutcome['user'],
-  sport: Sport,
-): GameOutcome['user'] {
-  if (!user) return user;
-  const withProfiles = user as GameOutcome['user'] & { sportProfiles?: unknown };
-  if (!withProfiles.sportProfiles) {
-    return user;
-  }
-  return projectUserForSportContext(
-    withProfiles as Parameters<typeof projectUserForSportContext>[0],
-    sport,
-  ) as GameOutcome['user'];
+type OutcomeUser = GameOutcome['user'];
+
+type OutcomeUserWithProfiles = OutcomeUser & {
+  sportProfiles?: Array<{
+    sport: Sport;
+    level: number;
+    reliability: number;
+    gamesPlayed: number;
+    gamesWon: number;
+  }>;
+};
+
+function outcomeUserForSport(user: OutcomeUserWithProfiles, sport: Sport): OutcomeUser {
+  if (!user.sportProfiles?.length) return user;
+  const { level } = resolveUserSportSnapshot(user, sport);
+  return {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    avatar: user.avatar,
+    level,
+    gender: user.gender,
+  };
 }
 
 export function generateResultsHTML(game: Game, language: string = 'en-GB'): string {

@@ -2,7 +2,8 @@ import prisma from '../../config/database';
 import { ChatSyncEventType } from '@bandeja/chat-contract';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { resolveChatMessageSport, projectUserForSportContext } from '../user/userSportProfile.service';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { assertValidReactionEmoji, normalizeReactionEmoji } from '../../utils/validateReactionEmoji';
 import { UserReactionEmojiUsageService } from '../user/userReactionEmojiUsage.service';
@@ -54,10 +55,16 @@ export class ReactionService {
         },
         include: {
           user: {
-            select: USER_SELECT_FIELDS,
+            select: USER_SELECT_WITH_SPORT_PROFILES,
           },
         },
       });
+
+      const sport = await resolveChatMessageSport(message, userId);
+      const projectedReaction = {
+        ...reaction,
+        user: projectUserForSportContext(reaction.user, sport),
+      };
 
       const emojiUsage = await UserReactionEmojiUsageService.recordUseIfChanged(tx, {
         userId,
@@ -70,9 +77,9 @@ export class ReactionService {
         message.chatContextType,
         message.contextId,
         ChatSyncEventType.REACTION_ADDED,
-        { reaction }
+        { reaction: projectedReaction }
       );
-      return { reaction, syncSeq, emojiUsage };
+      return { reaction: projectedReaction, syncSeq, emojiUsage };
     });
   }
 

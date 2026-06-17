@@ -9,6 +9,7 @@ import { AppLoadingScreen } from '@/components';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import { verifyTelegramLinkKeySingleflight } from '@/services/telegramLinkVerifySingleflight';
 import { isLegacyAccessJwt } from '@/utils/jwtPayload';
+import { withTelegramVerifyRetries } from '@/utils/telegramVerifyRetry';
 
 export const TelegramAutoLogin = () => {
   const { telegramKey } = useParams<{ telegramKey: string }>();
@@ -38,9 +39,11 @@ export const TelegramAutoLogin = () => {
           }
         }
 
-        const response = await verifyTelegramLinkKeySingleflight(telegramKey, language, {
-          withAuth,
-        });
+        const response = await withTelegramVerifyRetries(() =>
+          verifyTelegramLinkKeySingleflight(telegramKey, language, {
+            withAuth,
+          })
+        );
 
         await setAuth(response.data.user, response.data.token, {
           refreshToken: response.data.refreshToken,

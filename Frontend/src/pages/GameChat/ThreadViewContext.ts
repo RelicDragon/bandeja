@@ -64,6 +64,7 @@ export interface ThreadScrollValue {
   initialScroll: ThreadSessionScroll | undefined;
   openPaintGeneration: number;
   threadScrollKey: string | null;
+  highlightAnchorMessageId?: string;
 }
 
 export interface ThreadComposerValue {

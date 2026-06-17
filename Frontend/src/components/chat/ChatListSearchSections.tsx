@@ -76,6 +76,7 @@ export function ChatListSearchSections(p: ChatListSearchSectionsProps): ReactEle
           items={active}
           getItemKey={(item) => getChatKey(item.data)}
           estimateSizePx={CHAT_LIST_CHAT_ROW_ESTIMATE_PX}
+          animationResetKey={`${p.chatsFilter}-active-${q}`}
           renderItem={(item) => (
             <ChatListItem
               item={item.data}
@@ -112,6 +113,7 @@ export function ChatListSearchSections(p: ChatListSearchSectionsProps): ReactEle
           items={users}
           getItemKey={(item) => `contact-${item.user.id}`}
           estimateSizePx={CHAT_LIST_CONTACT_ROW_ESTIMATE_PX}
+          animationResetKey={`${p.chatsFilter}-users-${q}`}
           renderItem={(item) => (
             <CityUserCard user={item.user} onClick={() => void p.handleContactClick(item.user.id)} />
           )}

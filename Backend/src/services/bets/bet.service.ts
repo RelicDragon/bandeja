@@ -3,7 +3,11 @@ import { ApiError } from '../../utils/ApiError';
 import { Bet, BetType, TransactionType } from '@prisma/client';
 import { BetCondition } from './betConditionEvaluator.service';
 import { TransactionService } from '../transaction.service';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { BET_WITH_EMBEDDED_USERS_INCLUDE } from '../../utils/constants';
+import {
+  projectBetForGameSport,
+  projectBetsForGameSport,
+} from '../user/projectEmbeddedBasicUsers';
 import notificationService from '../notification.service';
 import {
   emitBetCreated,
@@ -13,26 +17,12 @@ import {
 
 export class BetService {
   static async getGameBets(gameId: string) {
-    return await prisma.bet.findMany({
+    const bets = await prisma.bet.findMany({
       where: { gameId },
-      include: {
-        creator: {
-          select: USER_SELECT_FIELDS
-        },
-        acceptedByUser: {
-          select: USER_SELECT_FIELDS
-        },
-        winner: {
-          select: USER_SELECT_FIELDS
-        },
-        participants: {
-          include: {
-            user: { select: USER_SELECT_FIELDS }
-          }
-        }
-      },
+      include: BET_WITH_EMBEDDED_USERS_INCLUDE,
       orderBy: { createdAt: 'desc' }
     });
+    return projectBetsForGameSport(bets);
   }
 
   static async createBet(
@@ -165,14 +155,12 @@ export class BetService {
           });
           return await tx.bet.findUnique({
             where: { id: created.id },
-            include: {
-              creator: { select: USER_SELECT_FIELDS },
-              participants: { include: { user: { select: USER_SELECT_FIELDS } } }
-            }
+            include: BET_WITH_EMBEDDED_USERS_INCLUDE,
           });
         });
-        await emitBetCreated(gameId, bet!);
-        return bet! as Bet;
+        const projected = projectBetForGameSport(bet!);
+        await emitBetCreated(gameId, projected);
+        return projected as Bet;
       }
       const bet = await prisma.bet.create({
         data: {
@@ -188,15 +176,11 @@ export class BetService {
           rewardText,
           status: 'OPEN'
         },
-        include: {
-          creator: { select: USER_SELECT_FIELDS },
-          participants: {
-            include: { user: { select: USER_SELECT_FIELDS } }
-          }
-        }
+        include: BET_WITH_EMBEDDED_USERS_INCLUDE,
       });
-      await emitBetCreated(gameId, bet);
-      return bet as Bet;
+      const projected = projectBetForGameSport(bet);
+      await emitBetCreated(gameId, projected);
+      return projected as Bet;
     } catch (err) {
       if (stakeCharged && stakeType === 'COINS' && stakeCoins && stakeCoins > 0) {
         await TransactionService.createTransaction({
@@ -316,14 +300,11 @@ export class BetService {
       }
       const updated = await prisma.bet.findUnique({
         where: { id: betId },
-        include: {
-          creator: { select: USER_SELECT_FIELDS },
-          acceptedByUser: { select: USER_SELECT_FIELDS },
-          participants: { include: { user: { select: USER_SELECT_FIELDS } } }
-        }
+        include: BET_WITH_EMBEDDED_USERS_INCLUDE,
       });
-      await emitBetUpdated(updated!.gameId, updated!);
-      return updated! as Bet;
+      const projected = projectBetForGameSport(updated!);
+      await emitBetUpdated(projected.gameId, projected);
+      return projected as Bet;
     }
 
     let rewardCharged = false;
@@ -362,14 +343,11 @@ export class BetService {
           acceptedBy: userId,
           acceptedAt: new Date()
         },
-        include: {
-          creator: { select: USER_SELECT_FIELDS },
-          acceptedByUser: { select: USER_SELECT_FIELDS },
-          participants: { include: { user: { select: USER_SELECT_FIELDS } } }
-        }
-      }) as Bet;
-      await emitBetUpdated(accepted.gameId, accepted);
-      return accepted;
+        include: BET_WITH_EMBEDDED_USERS_INCLUDE,
+      });
+      const projected = projectBetForGameSport(accepted);
+      await emitBetUpdated(projected.gameId, projected);
+      return projected as Bet;
     } catch (err) {
       if (rewardCharged && bet.rewardType === 'COINS' && bet.rewardCoins && bet.rewardCoins > 0) {
         await TransactionService.createTransaction({
@@ -457,8 +435,6 @@ export class BetService {
           status: { in: ['OPEN', 'ACCEPTED'] }
         },
         include: {
-          creator: { select: USER_SELECT_FIELDS },
-          acceptedByUser: { select: USER_SELECT_FIELDS },
           participants: true
         }
       }),
@@ -751,16 +727,14 @@ export class BetService {
         where: { id: betId },
         data: updateData,
         include: {
-          creator: {
-            select: USER_SELECT_FIELDS
-          },
-          acceptedByUser: {
-            select: USER_SELECT_FIELDS
-          }
+          creator: BET_WITH_EMBEDDED_USERS_INCLUDE.creator,
+          acceptedByUser: BET_WITH_EMBEDDED_USERS_INCLUDE.acceptedByUser,
+          game: BET_WITH_EMBEDDED_USERS_INCLUDE.game,
         }
       });
-      await emitBetUpdated(updated.gameId, updated);
-      return updated;
+      const projected = projectBetForGameSport(updated);
+      await emitBetUpdated(projected.gameId, projected);
+      return projected as Bet;
     } catch (err) {
       if (stakeCharged > 0) {
         await TransactionService.createTransaction({

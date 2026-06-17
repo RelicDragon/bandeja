@@ -9,7 +9,8 @@ import {
   ParticipantRole,
   PriceCurrency,
 } from '@prisma/client';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { projectMarketItemEmbeddedUsers } from '../user/projectEmbeddedBasicUsers';
 import { MessageService } from '../chat/message.service';
 import {
   SOCIAL_GRAPH_INTERACT_CONTEXT,
@@ -194,7 +195,7 @@ export class MarketItemService {
       return tx.marketItem.findUnique({
         where: { id: item.id },
         include: {
-          seller: { select: { ...USER_SELECT_FIELDS } },
+          seller: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
           category: true,
           city: true,
         },
@@ -209,7 +210,7 @@ export class MarketItemService {
       ).catch((err) => {
         console.error('[MarketItemService] Failed to send new market item notifications:', err);
       });
-      return created;
+      return projectMarketItemEmbeddedUsers(created);
     });
   }
 
@@ -249,7 +250,7 @@ export class MarketItemService {
       prisma.marketItem.findMany({
         where,
         include: {
-          seller: { select: { ...USER_SELECT_FIELDS } },
+          seller: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
           category: true,
           city: true,
           groupChannels: userId ? { select: { id: true, buyerId: true } } : false,
@@ -292,7 +293,7 @@ export class MarketItemService {
       : paginatedItems;
 
     return {
-      data,
+      data: data.map(projectMarketItemEmbeddedUsers),
       pagination: {
         page,
         limit,
@@ -306,7 +307,7 @@ export class MarketItemService {
     const item = await prisma.marketItem.findUnique({
       where: { id },
       include: {
-        seller: { select: { ...USER_SELECT_FIELDS } },
+        seller: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
         category: true,
         city: true,
         groupChannels: userId ? {
@@ -331,7 +332,7 @@ export class MarketItemService {
       });
     }
 
-    return { ...item, buyerChat };
+    return projectMarketItemEmbeddedUsers({ ...item, buyerChat });
   }
 
   static async updateMarketItem(
@@ -469,7 +470,7 @@ export class MarketItemService {
             item.currentPriceCents == null && { currentPriceCents: nextStartPrice }),
         },
         include: {
-          seller: { select: { ...USER_SELECT_FIELDS } },
+          seller: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
           category: true,
           city: true,
           groupChannels: true,
@@ -523,7 +524,7 @@ export class MarketItemService {
         );
       }
 
-      return updated;
+      return projectMarketItemEmbeddedUsers(updated);
     });
   }
 
@@ -616,7 +617,7 @@ export class MarketItemService {
         where: { id },
         data: { status: targetStatus },
         include: {
-          seller: { select: { ...USER_SELECT_FIELDS } },
+          seller: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
           category: true,
           city: true,
           groupChannels: true,
@@ -654,7 +655,7 @@ export class MarketItemService {
         );
       }
 
-      return updated;
+      return projectMarketItemEmbeddedUsers(updated);
     });
   }
 
@@ -682,7 +683,7 @@ export class MarketItemService {
         where: { id },
         data: { status: targetStatus },
         include: {
-          seller: { select: { ...USER_SELECT_FIELDS } },
+          seller: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
           category: true,
           city: true,
           groupChannels: true,
@@ -718,7 +719,7 @@ export class MarketItemService {
         );
       }
 
-      return updated;
+      return projectMarketItemEmbeddedUsers(updated);
     });
   }
 
@@ -726,7 +727,7 @@ export class MarketItemService {
     const item = await prisma.marketItem.findUnique({
       where: { id },
       include: {
-        seller: { select: { ...USER_SELECT_FIELDS, language: true } },
+        seller: { select: { ...USER_SELECT_WITH_SPORT_PROFILES, language: true } },
       },
     });
 
@@ -796,7 +797,7 @@ export class MarketItemService {
       include: {
         participants: {
           include: {
-            user: { select: { ...USER_SELECT_FIELDS } },
+            user: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
           },
         },
       },
@@ -804,7 +805,7 @@ export class MarketItemService {
 
     // If chat exists, return it
     if (chat) {
-      return chat;
+      return projectMarketItemEmbeddedUsers(chat);
     }
 
     // Create new private chat in a transaction
@@ -845,7 +846,7 @@ export class MarketItemService {
         include: {
           participants: {
             include: {
-              user: { select: { ...USER_SELECT_FIELDS } },
+              user: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
             },
           },
         },
@@ -856,7 +857,7 @@ export class MarketItemService {
       throw new ApiError(500, 'Failed to create chat');
     }
 
-    return createdChat;
+    return projectMarketItemEmbeddedUsers(createdChat);
   }
 
   static async getSellerChats(marketItemId: string, sellerId: string) {
@@ -881,10 +882,10 @@ export class MarketItemService {
         buyerId: { not: null },
       },
       include: {
-        buyer: { select: { ...USER_SELECT_FIELDS } },
+        buyer: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
         participants: {
           include: {
-            user: { select: { ...USER_SELECT_FIELDS } },
+            user: { select: { ...USER_SELECT_WITH_SPORT_PROFILES } },
           },
         },
       },
@@ -893,6 +894,6 @@ export class MarketItemService {
       },
     });
 
-    return chats;
+    return chats.map(projectMarketItemEmbeddedUsers);
   }
 }

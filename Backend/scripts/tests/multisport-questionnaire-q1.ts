@@ -52,13 +52,12 @@ async function testPadelQuestionnaireFlow(): Promise<void> {
     where: {
       isActive: true,
       welcomeScreenPassed: false,
-      gamesPlayed: 0,
       OR: [
         { sportProfiles: { none: { sport: Sport.PADEL } } },
         { sportProfiles: { some: { sport: Sport.PADEL, gamesPlayed: 0 } } },
       ],
     },
-    select: { id: true, socialLevel: true, level: true },
+    select: { id: true, socialLevel: true },
   });
   if (!user) {
     console.log('skip: padel questionnaire flow (no eligible user: welcome open + 0 rated padel games)');
@@ -76,7 +75,6 @@ async function testPadelQuestionnaireFlow(): Promise<void> {
   const afterUser = await prisma.user.findUnique({
     where: { id: user.id },
     select: {
-      level: true,
       welcomeScreenPassed: true,
       socialLevel: true,
       sportProfiles: {

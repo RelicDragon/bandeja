@@ -37,6 +37,7 @@
     "backfill:city-is-set": "ts-node scripts/backfillCityIsSet.ts",
     "backfill:padel-questionnaire-from-welcome": "ts-node scripts/backfillPadelQuestionnaireFromWelcome.ts",
     "reconcile:sport-profile-level-from-events": "ts-node scripts/reconcileSportProfileLevelFromEvents.ts",
+    "sunset:user-rating-columns": "ts-node scripts/sunsetUserRatingColumns.ts",
     "backfill:non-rating-game-level-events": "ts-node scripts/backfillNonRatingGameLevelEvents.ts",
     "fix:booktime-game-times": "ts-node scripts/fix-booktime-game-times.ts",
     "backfill:user-avatar-tiny": "ts-node scripts/backfillUserAvatarTiny.ts",

@@ -74,9 +74,11 @@ export const GameFormatCard = ({
   };
 
   const showGender = !omitGender && teams && gameFormatGenderVisible(entityType);
+  const readOnly = !!teams?.readOnly;
+  const showGenderFields = showGender && !readOnly;
+  const genderSummaryTeams = showGender && readOnly ? teams!.genderTeams : undefined;
   const showFixedToggle =
     showFixedTeamsToggle && teams && gameFormatFixedTeamsToggleVisible(entityType, teams.participantCount);
-  const readOnly = !!teams?.readOnly;
 
   const showFixedTeamsPanel =
     !!fixedTeamsPanel &&
@@ -134,6 +136,7 @@ export const GameFormatCard = ({
                 winnerOfGame={format.winnerOfGame}
                 playersPerMatch={playersPerMatch}
                 sport={sport}
+                genderTeams={genderSummaryTeams}
                 twoRows
               />
             </div>
@@ -185,7 +188,7 @@ export const GameFormatCard = ({
         )}
       </AnimatePresence>
 
-      {showGender && (
+      {showGenderFields && (
         <GameFormatGenderFields
           entityType={entityType}
           genderTeams={teams!.genderTeams}

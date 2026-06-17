@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { MarketItem } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { MarketItemEditForm } from './MarketItemEditForm';
 import { MarketItemContextPanel } from '@/components/chat/contextPanels/MarketItemContextPanel';
 import { resolveUserCurrency, DEFAULT_CURRENCY } from '@/utils/currency';
-import { MapPin, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
+import { MapPin, MessageCircle } from 'lucide-react';
 import { useMarketItemChatButton } from '@/components/chat/contextPanels/useMarketItemChatButton';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
+import { MarketItemImageCarousel } from './MarketItemImageCarousel';
+import { AnimatedChildrenStagger } from '@/components/motion/AnimatedChildrenStagger';
+import { AnimatedMount } from '@/components/motion/AnimatedMount';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface MarketItemPanelProps {
   item: MarketItem;
@@ -24,8 +29,8 @@ export const MarketItemPanel = ({
   const location = useLocation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const reduceMotion = usePrefersReducedMotion();
   const listPath = location.pathname === '/marketplace/my' ? '/marketplace/my' : '/marketplace';
-  const [imageIndex, setImageIndex] = useState(0);
   const [localItem, setLocalItem] = useState(item);
   const [isEditing, setIsEditing] = useState(false);
   const [fullscreenImageUrl, setFullscreenImageUrl] = useState<string | null>(null);
@@ -35,7 +40,6 @@ export const MarketItemPanel = ({
   }, [item]);
 
   const mediaUrls = (localItem.mediaUrls ?? []).filter((url): url is string => Boolean(url?.trim()));
-  const hasMultipleImages = mediaUrls.length > 1;
   const hasPhoto = mediaUrls.length > 0;
   const userCurrency = resolveUserCurrency(user?.defaultCurrency) ?? DEFAULT_CURRENCY;
   const { show: showChatButton, chatButtonProps } = useMarketItemChatButton(localItem, { onNavigate: onClose });
@@ -62,7 +66,7 @@ export const MarketItemPanel = ({
   if (isEditing) {
     return (
       <div className="h-full overflow-y-auto bg-transparent">
-        <div className="max-w-2xl mx-auto p-4">
+        <div className="mx-auto max-w-2xl p-4">
           <MarketItemEditForm item={localItem} onSave={handleEditSave} onCancel={() => setIsEditing(false)} />
         </div>
       </div>
@@ -70,86 +74,61 @@ export const MarketItemPanel = ({
   }
 
   const chatButton = showChatButton ? (
-    <button
+    <motion.button
       type="button"
       onClick={chatButtonProps.onClick}
       disabled={chatButtonProps.disabled}
-      className="flex items-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-semibold rounded-lg shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+      whileTap={reduceMotion ? undefined : { scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      className="flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-md hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
     >
       <MessageCircle size={18} />
       <span>{chatButtonProps.label}</span>
-    </button>
+    </motion.button>
   ) : null;
 
+  const detailSections = (
+    <>
+      <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{localItem.title}</h1>
+      {localItem.description && (
+        <p className="mt-4 leading-relaxed text-gray-600 dark:text-gray-300">{localItem.description}</p>
+      )}
+      {localItem.city && (
+        <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+          <MapPin size={16} />
+          {translateCity(localItem.city.id, localItem.city.name, localItem.city.country)}
+        </div>
+      )}
+    </>
+  );
+
   return (
-    <div className="h-full overflow-y-auto bg-transparent relative">
-      <div className="max-w-2xl mx-auto">
+    <div className="relative h-full overflow-y-auto bg-transparent">
+      <div className="mx-auto max-w-2xl">
         {!hasPhoto && chatButton && (
-          <div className="absolute top-3 right-3 z-10 pt-12">{chatButton}</div>
+          <div className="absolute right-3 top-3 z-10 pt-12">{chatButton}</div>
         )}
         {hasPhoto && (
           <div className="relative">
-            <div className="aspect-square bg-transparent relative flex-shrink-0">
-              <img
-                src={mediaUrls[imageIndex]}
-                alt={localItem.title}
-                role="button"
-                tabIndex={0}
-                onClick={() => setFullscreenImageUrl(mediaUrls[imageIndex])}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setFullscreenImageUrl(mediaUrls[imageIndex]);
-                  }
-                }}
-                className="w-full h-full object-cover cursor-zoom-in"
-              />
-              {hasMultipleImages && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => setImageIndex((i) => (i - 1 + mediaUrls.length) % mediaUrls.length)}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setImageIndex((i) => (i + 1) % mediaUrls.length)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/50 text-white hover:bg-black/70"
-                  >
-                    <ChevronRight size={20} />
-                  </button>
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                    {mediaUrls.map((_, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => setImageIndex(i)}
-                        className={`w-2 h-2 rounded-full transition-colors ${i === imageIndex ? 'bg-white' : 'bg-white/50'}`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
+            <MarketItemImageCarousel
+              mediaUrls={mediaUrls}
+              title={localItem.title}
+              onImageClick={setFullscreenImageUrl}
+            />
             {chatButton && (
-              <div className="absolute top-full left-0 right-0 flex justify-end px-4 py-4 z-10 min-h-[2.75rem]">
+              <div className="absolute left-0 right-0 top-full z-10 flex min-h-[2.75rem] justify-end px-4 py-4">
                 {chatButton}
               </div>
             )}
           </div>
         )}
         <div className="p-6">
-          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{localItem.title}</h1>
-          {localItem.description && (
-            <p className="mt-4 text-gray-600 dark:text-gray-300 leading-relaxed">{localItem.description}</p>
-          )}
-          {localItem.city && (
-            <div className="mt-4 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-              <MapPin size={16} />
-              {translateCity(localItem.city.id, localItem.city.name, localItem.city.country)}
-            </div>
+          {reduceMotion ? (
+            detailSections
+          ) : (
+            <AnimatedChildrenStagger contentKey={localItem.id} className="space-y-0">
+              {detailSections}
+            </AnimatedChildrenStagger>
           )}
         </div>
         {fullscreenImageUrl && (
@@ -160,14 +139,16 @@ export const MarketItemPanel = ({
           />
         )}
         <div className="px-6 pb-6">
-          <MarketItemContextPanel
-            marketItem={localItem}
-            userCurrency={userCurrency}
-            onUpdate={handleUpdateAfterRemove}
-            onItemUpdate={handleItemUpdate}
-            onEdit={() => setIsEditing(true)}
-            shouldNavigate={true}
-          />
+          <AnimatedMount delay={reduceMotion ? 0 : 0.08}>
+            <MarketItemContextPanel
+              marketItem={localItem}
+              userCurrency={userCurrency}
+              onUpdate={handleUpdateAfterRemove}
+              onItemUpdate={handleItemUpdate}
+              onEdit={() => setIsEditing(true)}
+              shouldNavigate={true}
+            />
+          </AnimatedMount>
         </div>
       </div>
     </div>

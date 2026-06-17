@@ -176,7 +176,6 @@ export const USER_SELECT_FIELDS = {
   firstName: true,
   lastName: true,
   avatar: true,
-  level: true,
   primarySport: true,
   socialLevel: true,
   gender: true,
@@ -187,7 +186,6 @@ export const USER_SELECT_FIELDS = {
   isPremium: true,
   trainerRating: true,
   trainerReviewCount: true,
-  reliability: true,
   weeklyAvailability: true,
   availabilityBucketBoundaries: true,
 } as const;
@@ -200,15 +198,19 @@ export const USER_SELECT_WITH_SPORT_PROFILES = {
   },
 } as const;
 
-/** Game / invite / socket embeds — same as {@link USER_SELECT_WITH_SPORT_PROFILES}. */
-export const USER_SELECT_FIELDS_WITH_SPORT_PROFILES = USER_SELECT_WITH_SPORT_PROFILES;
+/** Bet API embeds — users + game sport for per-game projection. */
+export const BET_WITH_EMBEDDED_USERS_INCLUDE = {
+  creator: { select: USER_SELECT_WITH_SPORT_PROFILES },
+  acceptedByUser: { select: USER_SELECT_WITH_SPORT_PROFILES },
+  winner: { select: USER_SELECT_WITH_SPORT_PROFILES },
+  participants: { include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } } },
+  game: { select: { sport: true } },
+} as const;
 
 /** Public-safe fields for GET /users/:userId/stats (no phone, email, wallet, notification prefs, etc.) */
 export const USER_STATS_TARGET_SELECT = {
   ...USER_SELECT_FIELDS,
   sportsEnabled: true,
-  gamesPlayed: true,
-  gamesWon: true,
   sportProfiles: {
     select: USER_SPORT_PROFILE_SELECT,
   },
@@ -276,8 +278,6 @@ export const PROFILE_SELECT_FIELDS = {
   appIcon: true,
   wallet: true,
   totalPoints: true,
-  gamesPlayed: true,
-  gamesWon: true,
   currentCityId: true,
   currentCity: {
     select: {

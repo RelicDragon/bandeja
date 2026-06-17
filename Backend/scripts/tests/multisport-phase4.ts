@@ -76,6 +76,12 @@ function testProfileSelectContract(): void {
   assert(src.includes('primarySport: true'), 'USER_SELECT_FIELDS exposes primarySport');
   assert(src.includes('sportsEnabled: true'), 'PROFILE_SELECT_FIELDS exposes sportsEnabled');
   assert(src.includes('sportProfiles:'), 'PROFILE_SELECT_FIELDS exposes sportProfiles');
+  const userSelectBlock = src.match(/export const USER_SELECT_FIELDS = \{([\s\S]*?)\} as const;/)?.[1] ?? '';
+  assert(!userSelectBlock.includes('level: true'), 'USER_SELECT_FIELDS must not select global level');
+  assert(!userSelectBlock.includes('reliability: true'), 'USER_SELECT_FIELDS must not select global reliability');
+  const profileBlock = src.match(/export const PROFILE_SELECT_FIELDS = \{([\s\S]*?)\} as const;/)?.[1] ?? '';
+  assert(!profileBlock.includes('gamesPlayed: true'), 'PROFILE_SELECT_FIELDS must not select global gamesPlayed');
+  assert(!profileBlock.includes('gamesWon: true'), 'PROFILE_SELECT_FIELDS must not select global gamesWon');
   console.log('ok: profile SELECT contract (P0/P4-A read path)');
 }
 

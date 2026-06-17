@@ -11,6 +11,7 @@ import { getClientIp } from '../ipLocation.service';
 import { generateShortAccessToken } from '../../utils/jwt';
 import { jwtPayloadFromAuthUser } from './authIssuance.service';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
+import { enrichProfileUser } from '../user/userSportProfile.service';
 
 export async function createUserRefreshSession(
   userId: string,
@@ -110,7 +111,12 @@ export async function refreshWithRotation(
             data: { revokedAt: new Date(), replacedBySessionId: newRow.id, lastUsedAt: new Date() },
           });
           const token = generateShortAccessToken(jwtPayloadFromAuthUser(user));
-          return { token, refreshToken: newRaw, user, currentSessionId: newRow.id };
+          return {
+            token,
+            refreshToken: newRaw,
+            user: enrichProfileUser(user),
+            currentSessionId: newRow.id,
+          };
         },
         refreshTransactionOptions
       );

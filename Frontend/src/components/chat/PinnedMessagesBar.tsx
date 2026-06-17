@@ -1,5 +1,6 @@
 import React from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { CHAT_PINNED_ITEM_TRANSITION } from '@/components/chat/chatListMotion';
 import { ChatMessage } from '@/api/chat';
 import { Pin } from 'lucide-react';
 import { getUserDisplayName, getMessagePreviewText } from '@/utils/messageMenuUtils';
@@ -46,7 +47,7 @@ export const PinnedMessagesBar: React.FC<PinnedMessagesBarProps> = ({
               initial={{ opacity: 0, x: 24 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.2 }}
+              transition={CHAT_PINNED_ITEM_TRANSITION}
               className="block text-sm text-gray-800 dark:text-gray-200 truncate"
             >
               {loadingScrollTargetId === msg.id ? '…' : getMessagePreviewText(msg)}

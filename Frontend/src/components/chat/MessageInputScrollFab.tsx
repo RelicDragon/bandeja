@@ -2,6 +2,7 @@ import React, { useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { CHAT_FAB_EXIT_TRANSITION, CHAT_FAB_SPRING } from '@/components/chat/chatListMotion';
 import { useThreadScroll } from '@/pages/GameChat/useThreadView';
 import { composerFabButtonClass } from './TranslateToButton';
 
@@ -11,18 +12,13 @@ const scrollToBottomFabMotion = {
     opacity: 1,
     y: 0,
     scale: 1,
-    transition: {
-      type: 'spring' as const,
-      stiffness: 380,
-      damping: 22,
-      mass: 0.75,
-    },
+    transition: CHAT_FAB_SPRING,
   },
   exit: {
     opacity: 0,
     y: 0,
     scale: 1,
-    transition: { duration: 0.34, ease: [0.22, 1, 0.36, 1] as const },
+    transition: CHAT_FAB_EXIT_TRANSITION,
   },
 };
 

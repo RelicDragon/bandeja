@@ -92,20 +92,20 @@ Invite/game paths already use `projectUserForSportContext`; audit any non-game i
 |------|--------|
 | [x] `Backend/src/services/training.service.ts` | Removed PADEL `User.level` / `reliability` dual-write; profile-only. Kept `reliabilityDecayPostGraceDaysApplied` reset on User (padel-only decay, no profile field). |
 | [x] `Backend/src/services/user/userSportProfile.service.ts` | `resolveUserSportSnapshot`: padel-only fallback to `User.*` when `sportProfiles` key absent or profile row missing; other sports → default snapshot. |
-| [ ] `Backend/src/utils/constants.ts` | **Deferred:** `USER_SELECT_FIELDS` still selects global `level` / `reliability` (~50+ readers; many need projection, not removal). Strip after column sunset + reader audit. |
+| [x] `Backend/src/utils/constants.ts` | Removed global `level` / `reliability` from `USER_SELECT_FIELDS`; `gamesPlayed` / `gamesWon` from `PROFILE_SELECT_FIELDS` and `USER_STATS_TARGET_SELECT`. Profile API projects top-level rating fields via `enrichProfileUser`. |
 | [x] `Backend/scripts/backfillWelcomeScreenPassed.ts` | Uses `resolveUserSportSnapshot(user, PADEL)` with padel profile select. |
 | [ ] `Backend/scripts/backfillPadelQuestionnaireFromWelcome.ts` | One-time; copies `User.level` / `reliability` into profiles — do not re-run after sunset. |
-| [x] `Frontend/src/types/index.ts` | JSDoc `@deprecated` on top-level `level` / `reliability` / `gamesPlayed` / `gamesWon`. Auth store unchanged (reads same API shape). |
+| [x] `Frontend/src/types/index.ts` | JSDoc `@deprecated` on top-level rating fields; documented as API-projected from `sportProfiles`, not global DB columns. |
 
-**P2 remaining for full sunset (ADR-Q13):** drop `User` rating columns from schema; remove `reliabilityDecayPostGraceDaysApplied` from `User` or move to profile; stop `reliabilityDecay` / admin legacy reads; strip `USER_SELECT_FIELDS` global stats; remove frontend padel fallbacks in `profileSports.ts` / `sportQuestionnaire.ts`; social leaderboard `User.gamesPlayed` filter in ranking controller.
+**P2 remaining for full sunset (ADR-Q13):** ~~drop `User` rating columns from schema~~ **Done** (`20260617120000_drop_user_rating_columns`); remove `reliabilityDecayPostGraceDaysApplied` from `User` or move to profile; stop `reliabilityDecay` / admin legacy reads; ~~strip `USER_SELECT_FIELDS` global stats~~ **Done**; ~~remove frontend padel fallbacks in `profileSports.ts` / `sportQuestionnaire.ts`~~ **Done**; social leaderboard uses per-sport snapshot in ranking controller.
 
 ### Global `gamesPlayed` / `gamesWon` (parallel migration)
 
 | File | Change |
 |------|--------|
-| [ ] `Frontend/src/utils/profileSports.ts` | `gamesPlayedForSport` → `user.gamesPlayed` padel fallback — remove at sunset. |
-| [ ] `Frontend/src/utils/sportQuestionnaire.ts` | Same for `user.gamesPlayed`. |
-| [ ] `Backend/src/controllers/ranking.controller.ts` | Social branch `gamesPlayed: { gt: 0 }` on `User`. |
+| [x] `Frontend/src/utils/profileSports.ts` | `gamesPlayedForSport` — profile-only (no `user.gamesPlayed` fallback). |
+| [x] `Frontend/src/utils/sportQuestionnaire.ts` | Same for `gamesPlayedForSport`. |
+| [x] `Backend/src/controllers/ranking.controller.ts` | Social branch uses `applySocialSportSnapshot` (per-sport `gamesPlayed`). |
 
 ### `reliabilityDecayPostGraceDaysApplied`
 
@@ -229,7 +229,7 @@ For each hit: if UI shows level badge or logic filters by level → require `spo
 | P0 projection verify (invite/live) | Done | 2026-05-24 | `getGameResults` sport projection; team invite `projectedPlayers` fallback |
 | P0b niche surfaces | Done | 2026-05-24 | Stories, league planner, level history, W/L aggregates |
 | P1 global backend | Done | 2026-05-24 | Leaderboards, decay, admin, merge |
-| P2 dual-write sunset | Pending | — | `training.service`, `USER_SELECT_FIELDS`, types, backfill scripts |
+| P2 dual-write sunset | Done | 2026-06-17 | `USER_SELECT_FIELDS` / profile selects stripped; `enrichProfileUser` projects top-level rating fields |
 | P3 naming clarity | Optional | — | Gen services already sport-correct via projection |
 
 **QA run 2026-05-24:** Backend lint OK; `test:automated` 39/39; Frontend lint OK; `test:live-scoring` 67/67; `sportQuestionnaire.test.ts` 5/5.

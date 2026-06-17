@@ -57,8 +57,25 @@ function levelForSport(user, sport) {
     if (!user || !sport) return null;
     const profile = user.sportProfiles?.find((p) => p.sport === sport);
     if (profile?.level != null) return profile.level;
-    if (sport === 'PADEL' && user.level != null) return user.level;
     return null;
+}
+
+function resolveLeagueSeasonSportFromSource(source) {
+    if (!source) return null;
+    if (source.sport) return source.sport;
+    if (source.game?.sport) return source.game.sport;
+    return null;
+}
+
+function gameDisplaySport(game) {
+    if (!game) return 'PADEL';
+    if (game.entityType === 'LEAGUE' && game.parent?.leagueSeason) {
+        return resolveLeagueSeasonSportFromSource(game.parent.leagueSeason) || game.sport || 'PADEL';
+    }
+    if (game.entityType === 'LEAGUE_SEASON' && game.leagueSeason) {
+        return resolveLeagueSeasonSportFromSource(game.leagueSeason) || game.sport || 'PADEL';
+    }
+    return game.sport || 'PADEL';
 }
 
 function formatGameFormatDisplay(game) {
@@ -103,8 +120,7 @@ function formatUserSportLevelsSummary(user) {
     if (profiles?.length) {
         return profiles.map((p) => `${sportLabel(p.sport)}: ${(p.level ?? 0).toFixed(1)}`).join(', ');
     }
-    const primary = user?.primarySport ? sportLabel(user.primarySport) : 'Padel';
-    return `${primary}: ${(user?.level ?? 0).toFixed(1)}`;
+    return '—';
 }
 
 function formatOnlineUserLevel(user) {

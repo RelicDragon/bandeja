@@ -10,7 +10,7 @@ import { MessageService } from './chat/message.service';
 import { GameReadService } from './game/read.service';
 import { ChatContextType, ChatType, Sport } from '@prisma/client';
 import { presenceService } from './presence.service';
-import { USER_SELECT_FIELDS_WITH_SPORT_PROFILES } from '../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { projectUserForSportContext } from './user/userSportProfile.service';
 
 interface AuthenticatedSocket extends Socket {
@@ -193,7 +193,7 @@ class SocketService {
             const cancelledSport = cancelled.sport ?? Sport.PADEL;
             const cancelledByUserRaw = await prisma.user.findUnique({
               where: { id: cancelled.cancelledByUserId },
-              select: USER_SELECT_FIELDS_WITH_SPORT_PROFILES,
+              select: USER_SELECT_WITH_SPORT_PROFILES,
             });
             const cancelledByUser = cancelledByUserRaw
               ? projectUserForSportContext(cancelledByUserRaw, cancelledSport)

@@ -46,12 +46,12 @@ function testSportSnapshotHelpers(): void {
   assert(tennisDefault.level === 1.0, 'non-padel without profile defaults level to 1.0');
   assert(tennisDefault.gamesPlayed === 0, 'non-padel without profile defaults gamesPlayed to 0');
 
-  const padelFallback = resolveUserSportSnapshot(
+  const padelDefault = resolveUserSportSnapshot(
     { id: 'u2', level: 3.1, reliability: 12, gamesPlayed: 4, gamesWon: 2, sportProfiles: [] },
     Sport.PADEL,
   );
-  assert(padelFallback.level === 3.1, 'padel without profile falls back to User.level');
-  assert(padelFallback.gamesPlayed === 4, 'padel without profile falls back to User.gamesPlayed');
+  assert(padelDefault.level === 1.0, 'padel without profile defaults level to 1.0');
+  assert(padelDefault.gamesPlayed === 0, 'padel without profile defaults gamesPlayed to 0');
 
   const projectedDefault = projectUserForSportContext(
     { id: 'u2', level: 3.1, reliability: 12, gamesPlayed: 4, gamesWon: 2 },

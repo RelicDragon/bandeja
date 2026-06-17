@@ -103,8 +103,6 @@ export async function updateParticipantLevel(
     where: { id: participantUserId },
     select: {
       id: true,
-      level: true,
-      reliability: true,
       sportProfiles: {
         where: { sport: game.sport },
         select: {

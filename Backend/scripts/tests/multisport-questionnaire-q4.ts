@@ -62,13 +62,26 @@ function answersForSport(sport: Sport, letter: 'A' | 'B' | 'C' | 'D'): string[] 
 
 async function findUserWithoutSport(sport: Sport): Promise<{
   id: string;
-  level: number;
+  padelLevel: number;
   socialLevel: number;
 } | null> {
-  return prisma.user.findFirst({
+  const user = await prisma.user.findFirst({
     where: { isActive: true, NOT: { sportsEnabled: { has: sport } } },
-    select: { id: true, level: true, socialLevel: true },
+    select: {
+      id: true,
+      socialLevel: true,
+      sportProfiles: {
+        where: { sport: Sport.PADEL },
+        select: { level: true },
+      },
+    },
   });
+  if (!user) return null;
+  return {
+    id: user.id,
+    padelLevel: user.sportProfiles[0]?.level ?? 1.0,
+    socialLevel: user.socialLevel,
+  };
 }
 
 async function resetSportProfile(userId: string, sport: Sport): Promise<void> {
@@ -92,7 +105,7 @@ async function testCompleteSportQ(sport: Sport): Promise<void> {
     return;
   }
 
-  const padelLevelBefore = user.level;
+  const padelLevelBefore = user.padelLevel;
   const socialBefore = user.socialLevel;
   const { suggestedQuestionnaire } = await addUserSport(user.id, sport);
   assert(suggestedQuestionnaire === true, `${sport} add suggests Q`);
@@ -109,11 +122,15 @@ async function testCompleteSportQ(sport: Sport): Promise<void> {
   assert(profile?.levelSource === SportLevelSource.QUESTIONNAIRE, `${sport} levelSource`);
   assert(profile?.questionnaireVersion === config.id, `${sport} version`);
 
+  const padelProfileAfter = await prisma.userSportProfile.findUnique({
+    where: { userId_sport: { userId: user.id, sport: Sport.PADEL } },
+    select: { level: true },
+  });
   const afterUser = await prisma.user.findUnique({
     where: { id: user.id },
-    select: { level: true, socialLevel: true },
+    select: { socialLevel: true },
   });
-  assert(afterUser?.level === padelLevelBefore, `${sport}: padel User.level unchanged`);
+  assert(padelProfileAfter?.level === padelLevelBefore, `${sport}: padel profile level unchanged`);
   assert(afterUser?.socialLevel === socialBefore, `${sport}: socialLevel unchanged`);
 
   await resetSportProfile(user.id, sport);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
+import { CHAT_LIST_LAYOUT_SPRING } from '@/components/chat/chatListMotion';
 import { Plus, X } from 'lucide-react';
 import { TranslationLanguageModal } from './TranslationLanguageModal';
 import { getTranslationLanguageFlag, getTranslationLanguageByCode } from '@/utils/translationLanguages';
@@ -62,7 +63,7 @@ export const ChatAutoTranslateSlots: React.FC<ChatAutoTranslateSlotsProps> = ({
             'Messages are translated for members whose app language matches a slot below.',
         })}
       </p>
-      <motion.div className="flex flex-wrap justify-center gap-3" layout>
+      <motion.div className="flex flex-wrap justify-center gap-3" layout transition={{ layout: CHAT_LIST_LAYOUT_SPRING }}>
         {slots.map((code, index) => {
           const disabled = index >= maxSlots;
           if (disabled) {
@@ -77,7 +78,7 @@ export const ChatAutoTranslateSlots: React.FC<ChatAutoTranslateSlotsProps> = ({
           if (code) {
             const label = getTranslationLanguageByCode(code)?.label ?? code.toUpperCase();
             return (
-              <motion.div key={`${code}-${index}`} className="flex flex-col items-center gap-1" layout>
+              <motion.div key={`${code}-${index}`} className="flex flex-col items-center gap-1" layout transition={{ layout: CHAT_LIST_LAYOUT_SPRING }}>
                 <button
                   type="button"
                   disabled={!canEdit}

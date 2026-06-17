@@ -1,6 +1,7 @@
-import { StorySourceType } from '@prisma/client';
+import { StorySourceType, Sport } from '@prisma/client';
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { projectUserByPrimarySport } from '../user/userSportProfile.service';
 import { ApiError } from '../../utils/ApiError';
 import {
   COMMENTS_PAGE_SIZE,
@@ -10,7 +11,12 @@ import {
   REPLY_PREVIEW_COUNT,
   STORY_ENGAGEMENT_ERROR,
 } from './storyEngagement.constants';
-import { mapCommentToDto, parseCommentLikeFlags, type StoryCommentDto } from './storyEngagement.dto';
+import {
+  mapCommentToDto,
+  parseCommentLikeFlags,
+  type StoryCommentAuthorInput,
+  type StoryCommentDto,
+} from './storyEngagement.dto';
 import { emitStoryComment, emitStoryCommentDeleted } from './storyEngagement.events';
 import { notifyStoryComment, notifyStoryCommentReply } from './storyEngagement.notifications';
 import {
@@ -20,7 +26,53 @@ import {
 import { assertCanEngage } from './storyEngagement.permissions';
 import { assertCommentRateLimit } from './storyEngagement.rateLimit';
 
-const AUTHOR_SELECT = { ...USER_SELECT_FIELDS, isActive: true };
+const AUTHOR_SELECT = { ...USER_SELECT_WITH_SPORT_PROFILES, isActive: true };
+
+type CommentAuthorFromDb = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  avatar: string | null;
+  primarySport: Sport;
+  socialLevel: number;
+  gender: string;
+  approvedLevel: boolean;
+  isTrainer: boolean;
+  isActive: boolean;
+  sportsEnabled: Sport[];
+  sportProfiles: Array<{
+    sport: Sport;
+    level: number;
+    reliability: number;
+    gamesPlayed: number;
+    gamesWon: number;
+  }>;
+};
+
+function toStoryCommentAuthor(author: CommentAuthorFromDb): StoryCommentAuthorInput {
+  const { level } = projectUserByPrimarySport(author);
+  return {
+    id: author.id,
+    firstName: author.firstName,
+    lastName: author.lastName,
+    avatar: author.avatar,
+    level,
+    socialLevel: author.socialLevel,
+    gender: author.gender,
+    approvedLevel: author.approvedLevel,
+    isTrainer: author.isTrainer,
+    isActive: author.isActive,
+  };
+}
+
+function withProjectedAuthor<T extends { author: CommentAuthorFromDb }>(
+  row: T,
+): Omit<T, 'author'> & { author: StoryCommentAuthorInput } {
+  return {
+    ...row,
+    author: toStoryCommentAuthor(row.author),
+  };
+}
 
 function normalizeBody(body: string): string {
   return body.trim();
@@ -75,7 +127,7 @@ export class StoryEngagementCommentService {
       if (existing) {
         const likeFlags = parseCommentLikeFlags(existing.likes, viewerId, ownerUserId);
         const comment = mapCommentToDto(
-          existing,
+          withProjectedAuthor(existing),
           ownerUserId,
           existing._count.likes,
           likeFlags.viewerHasLiked,
@@ -133,7 +185,7 @@ export class StoryEngagementCommentService {
       include: { author: { select: AUTHOR_SELECT } },
     });
 
-    const dto = mapCommentToDto(created, ownerUserId, 0, false, false, 0);
+    const dto = mapCommentToDto(withProjectedAuthor(created), ownerUserId, 0, false, false, 0);
     emitStoryComment({ comment: dto, commentCount: commentCount + 1, ownerUserId, sourceType, sourceId });
 
     if (parentId && parentAuthorId) {
@@ -239,7 +291,7 @@ export class StoryEngagementCommentService {
       comments: page.map((r) => {
         const likeFlags = parseCommentLikeFlags(r.likes, viewerId, ownerUserId);
         return mapCommentToDto(
-          r,
+          withProjectedAuthor(r),
           ownerUserId,
           r._count.likes,
           likeFlags.viewerHasLiked,
@@ -304,7 +356,7 @@ export class StoryEngagementCommentService {
       replies: page.map((r) => {
         const likeFlags = parseCommentLikeFlags(r.likes, viewerId, parent.ownerUserId);
         return mapCommentToDto(
-          r,
+          withProjectedAuthor(r),
           parent.ownerUserId,
           r._count.likes,
           likeFlags.viewerHasLiked,
@@ -356,7 +408,7 @@ export class StoryEngagementCommentService {
         preview.map((r) => {
           const likeFlags = parseCommentLikeFlags(r.likes, viewerId, ownerUserId);
           return mapCommentToDto(
-            r,
+            withProjectedAuthor(r),
             ownerUserId,
             r._count.likes,
             likeFlags.viewerHasLiked,

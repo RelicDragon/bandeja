@@ -8,8 +8,44 @@ import { undoGameOutcomes } from '../results/outcomes.service';
 import { revertForGame } from '../levelChange';
 import { calculateGameStatus } from '../../utils/gameStatus';
 import { Prisma } from '@prisma/client';
+import { projectUserForSportContext } from '../user/userSportProfile.service';
+import { resolveLeagueSeasonSport } from '../../utils/validators/validateLeagueSeasonSport';
 
 const GAMES_PAGE_SIZE = 50;
+
+function resolveAdminGameSport(game: {
+  entityType: string;
+  sport?: Sport | null;
+  parent?: { leagueSeason?: { sport?: Sport | null; game?: { sport?: Sport | null } | null } | null } | null;
+  leagueSeason?: { sport?: Sport | null; game?: { sport?: Sport | null } | null } | null;
+}): Sport {
+  if (game.entityType === 'LEAGUE' && game.parent?.leagueSeason) {
+    return resolveLeagueSeasonSport(game.parent.leagueSeason);
+  }
+  if (game.entityType === 'LEAGUE_SEASON' && game.leagueSeason) {
+    return resolveLeagueSeasonSport(game.leagueSeason);
+  }
+  return game.sport ?? Sport.PADEL;
+}
+
+function projectAdminGameParticipants<
+  G extends {
+    entityType: string;
+    sport?: Sport | null;
+    parent?: { leagueSeason?: { sport?: Sport | null; game?: { sport?: Sport | null } | null } | null } | null;
+    leagueSeason?: { sport?: Sport | null; game?: { sport?: Sport | null } | null } | null;
+    participants?: Array<{ user?: Parameters<typeof projectUserForSportContext>[0] | null }>;
+  },
+>(game: G): G {
+  const sport = resolveAdminGameSport(game);
+  return {
+    ...game,
+    participants: (game.participants ?? []).map((p) => ({
+      ...p,
+      user: projectUserForSportContext(p.user, sport),
+    })),
+  };
+}
 
 export class AdminGamesService {
   static async getAllGames(params: {
@@ -147,10 +183,28 @@ export class AdminGamesService {
             },
           },
         },
+        parent: {
+          select: {
+            id: true,
+            entityType: true,
+            leagueSeason: {
+              select: {
+                sport: true,
+                game: { select: { sport: true } },
+              },
+            },
+          },
+        },
+        leagueSeason: {
+          select: {
+            sport: true,
+            game: { select: { sport: true } },
+          },
+        },
       },
     });
     if (!game) throw new ApiError(404, 'Game not found');
-    return game;
+    return projectAdminGameParticipants(game);
   }
 
   static async getAllInvites(cityId?: string) {
@@ -164,10 +218,10 @@ export class AdminGamesService {
       },
       include: {
         invitedByUser: {
-          select: { ...USER_SELECT_FIELDS, phone: true },
+          select: { ...USER_SELECT_WITH_SPORT_PROFILES, phone: true },
         },
         user: {
-          select: { ...USER_SELECT_FIELDS, phone: true },
+          select: { ...USER_SELECT_WITH_SPORT_PROFILES, phone: true },
         },
         game: {
           select: {
@@ -198,7 +252,9 @@ export class AdminGamesService {
       },
       orderBy: { joinedAt: 'desc' },
     });
-    return participants.map((p) => ({
+    return participants.map((p) => {
+      const sport = p.game.sport;
+      return {
       id: p.id,
       receiverId: p.userId,
       senderId: p.invitedByUserId,
@@ -207,10 +263,11 @@ export class AdminGamesService {
       message: p.inviteMessage,
       expiresAt: p.inviteExpiresAt,
       createdAt: p.joinedAt,
-      receiver: p.user,
-      sender: p.invitedByUser,
+      receiver: p.user ? projectUserForSportContext(p.user, sport) : p.user,
+      sender: p.invitedByUser ? projectUserForSportContext(p.invitedByUser, sport) : p.invitedByUser,
       game: p.game,
-    }));
+    };
+    });
   }
 
   static async acceptInvite(participantId: string) {
