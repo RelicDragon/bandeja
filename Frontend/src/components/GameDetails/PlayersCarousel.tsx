@@ -33,7 +33,7 @@ function EmptyParticipantSlot({
         variants={slotVariants}
         initial="hidden"
         animate="visible"
-        className="flex-shrink-0 w-16 pt-1 pb-0"
+        className="flex-shrink-0 w-16 pt-1 pb-4"
       >
         <PlayerAvatar player={null} smallLayout={true} />
       </motion.div>
@@ -46,7 +46,7 @@ function EmptyParticipantSlot({
       variants={slotVariants}
       initial="hidden"
       animate="visible"
-      className="flex-shrink-0 w-16 pt-1 pb-0"
+      className="flex-shrink-0 w-16 pt-1 pb-4"
     >
       <motion.button
         type="button"
@@ -110,7 +110,7 @@ function ParticipantCarouselSlot({
       variants={slotVariants}
       initial="hidden"
       animate="visible"
-      className={`relative w-16 flex-shrink-0 pt-1 pb-0 ${
+      className={`relative w-16 flex-shrink-0 pt-1 pb-4 ${
         isDragged ? 'opacity-0' : ''
       }`}
       whileHover={draggable ? { scale: 1.05 } : undefined}

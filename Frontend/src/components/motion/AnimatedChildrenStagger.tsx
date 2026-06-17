@@ -1,4 +1,4 @@
-import { motion, type Variants } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CONTENT_ENTER_Y, STAGGER_CHILDREN, STAGGER_DELAY_CHILDREN, STAGGER_ITEM_TRANSITION } from './motionTokens';
@@ -8,21 +8,6 @@ interface AnimatedChildrenStaggerProps {
   contentKey: string;
   className?: string;
 }
-
-const containerVariants: Variants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: STAGGER_CHILDREN,
-      delayChildren: STAGGER_DELAY_CHILDREN,
-    },
-  },
-};
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: CONTENT_ENTER_Y, scale: 0.99 },
-  show: { opacity: 1, y: 0, scale: 1, transition: STAGGER_ITEM_TRANSITION },
-};
 
 function flattenChildren(children: ReactNode): ReactNode[] {
   const result: ReactNode[] = [];
@@ -43,22 +28,24 @@ export function AnimatedChildrenStagger({ children, contentKey, className }: Ani
     return <div className={className}>{children}</div>;
   }
 
+  const items = flattenChildren(children);
+
   return (
-    <motion.div
-      key={contentKey}
-      className={className}
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-    >
-      {flattenChildren(children).map((child, index) => {
+    <div key={contentKey} className={className}>
+      {items.map((child, index) => {
         const childKey = isValidElement(child) && child.key != null ? String(child.key) : `stagger-${index}`;
+        const delay = STAGGER_DELAY_CHILDREN + index * STAGGER_CHILDREN;
         return (
-          <motion.div key={childKey} variants={itemVariants}>
+          <motion.div
+            key={childKey}
+            initial={{ opacity: 0, y: CONTENT_ENTER_Y, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ ...STAGGER_ITEM_TRANSITION, delay }}
+          >
             {child}
           </motion.div>
         );
       })}
-    </motion.div>
+    </div>
   );
 }

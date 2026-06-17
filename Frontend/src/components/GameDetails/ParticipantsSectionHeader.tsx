@@ -29,6 +29,7 @@ export const ParticipantsSectionHeader = ({
     typeof game.maxLevel === 'number' &&
     game.entityType !== 'BAR';
   const isBar = game.entityType === 'BAR';
+  const isFull = !isBar && maxCount > 0 && playingCount >= maxCount;
   const fillRatio = isBar ? 1 : maxCount > 0 ? Math.min(playingCount / maxCount, 1) : 0;
   const fillPercent = Math.round(fillRatio * 100);
 
@@ -52,7 +53,13 @@ export const ParticipantsSectionHeader = ({
             />
           </div>
           {!isBar && (
-            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+            <p
+              className={`mt-0.5 text-xs ${
+                isFull
+                  ? 'font-medium text-green-600 dark:text-green-400'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
               {playingCount === maxCount
                 ? t('games.participantsFull')
                 : t('games.participantsSpotsLeft', { count: maxCount - playingCount })}
@@ -108,7 +115,11 @@ export const ParticipantsSectionHeader = ({
       {!isBar && maxCount > 0 && (
         <div className="h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-primary-400 to-primary-600 dark:from-primary-500 dark:to-primary-400"
+            className={`h-full rounded-full bg-gradient-to-r ${
+              isFull
+                ? 'from-green-400 to-green-600 dark:from-green-500 dark:to-green-400'
+                : 'from-primary-400 to-primary-600 dark:from-primary-500 dark:to-primary-400'
+            }`}
             initial={false}
             animate={{ width: `${fillPercent}%` }}
             transition={{ type: 'spring', stiffness: 120, damping: 20 }}

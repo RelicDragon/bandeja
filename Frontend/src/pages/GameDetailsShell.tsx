@@ -93,6 +93,7 @@ import {
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 import { AnimatedPresencePanel } from '@/components/motion/AnimatedPresencePanel';
 import { AnimatedChildrenStagger } from '@/components/motion/AnimatedChildrenStagger';
+import { GameDetailsSection } from '@/components/GameDetails/GameDetailsSection';
 
 type GameWithResults = Game & {
   rounds?: Round[];
@@ -185,7 +186,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [tableSetModal, setTableSetModal] = useState<{ roundId: string; matchId: string } | null>(null);
   const [roundAddedForModal, setRoundAddedForModal] = useState<Round | null>(null);
   const [roundAddedModalRoundNumber, setRoundAddedModalRoundNumber] = useState<number | undefined>(undefined);
-  const hasRenderedContentRef = useRef(false);
 
   const engineRounds = useGameResultsStore((s) => s.rounds);
   const engineCanEdit = useGameResultsStore((s) => s.canEdit);
@@ -1265,7 +1265,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   if (loading && !game) {
     return (
-      <AnimatedPresencePanel panelKey="game-details-loading">
+      <AnimatedPresencePanel panelKey={`game-details-loading-${id ?? 'unknown'}`}>
         <GameDetailsSkeleton />
       </AnimatedPresencePanel>
     );
@@ -1393,27 +1393,31 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     if (!isLeagueSeason || activeTab === 'general') {
       return (
         <>
-          {user && isLeague && game.hasFixedTeams && (
-            <LeagueFixedTeamsSection game={game} />
-          )}
+          {user && isLeague && game.hasFixedTeams ? (
+            <div key="league-fixed-teams" className="contents">
+              <LeagueFixedTeamsSection game={game} />
+            </div>
+          ) : null}
 
-          {game.entityType === 'LEAGUE' && game.parentId && (
-            <button
-              type="button"
-              onClick={() => navigate(`/games/${game.parentId}`)}
-              className="group mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-left text-gray-900 dark:text-white shadow-xs transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-950/30 hover:shadow-md active:scale-[0.99]"
-            >
-              <span className="flex items-center gap-3 font-normal">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500 dark:bg-blue-950/40 dark:text-blue-400 transition-transform duration-200 group-hover:scale-105">
-                  <Trophy className="h-5 w-5" />
+          {game.entityType === 'LEAGUE' && game.parentId ? (
+            <div key="league-season-link" className="contents">
+              <button
+                type="button"
+                onClick={() => navigate(`/games/${game.parentId}`)}
+                className="group mb-3 flex w-full items-center justify-between gap-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 text-left text-gray-900 dark:text-white shadow-xs transition-all duration-200 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-primary-50/50 dark:hover:bg-primary-950/30 hover:shadow-md active:scale-[0.99]"
+              >
+                <span className="flex items-center gap-3 font-normal">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-500 dark:bg-blue-950/40 dark:text-blue-400 transition-transform duration-200 group-hover:scale-105">
+                    <Trophy className="h-5 w-5" />
+                  </span>
+                  {t('gameDetails.openLeagueSeason')}
                 </span>
-                {t('gameDetails.openLeagueSeason')}
-              </span>
-              <ChevronRight className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
-            </button>
-          )}
+                <ChevronRight className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:translate-x-1" />
+              </button>
+            </div>
+          ) : null}
 
-          <div className="overflow-visible">
+          <div key="game-info" className="contents overflow-visible">
             <GameInfo
               game={game}
               isOwner={isOwner}
@@ -1438,24 +1442,34 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             />
           </div>
 
-          <GameLinkedBookingsSection game={game} courts={courts} clubs={clubs} onGameUpdate={setGame} />
+          <div key="linked-bookings" className="contents">
+            <GameLinkedBookingsSection game={game} courts={courts} clubs={clubs} onGameUpdate={setGame} />
+          </div>
 
-          {canViewGamePhotos(game, user ? { id: user.id, isAdmin: user.isAdmin } : null) && (
-            <PhotosSection game={game} onGameUpdate={setGame} />
-          )}
+          {canViewGamePhotos(game, user ? { id: user.id, isAdmin: user.isAdmin } : null) ? (
+            <div key="photos" className="contents">
+              <PhotosSection game={game} onGameUpdate={setGame} />
+            </div>
+          ) : null}
 
-          {!user && (
-            <PublicGamePrompt />
-          )}
+          {!user ? (
+            <div key="public-prompt" className="contents">
+              <PublicGamePrompt />
+            </div>
+          ) : null}
 
-          {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' && (
-            <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
-          )}
+          {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' ? (
+            <div key="results-entry" className="contents">
+              <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
+            </div>
+          ) : null}
 
-          <GameWebCamerasSection game={game} courts={courts} />
+          <div key="web-cameras" className="contents">
+            <GameWebCamerasSection game={game} courts={courts} />
+          </div>
 
-          {!isLeague && game.resultsStatus === 'NONE' && (
-            <>
+          {!isLeague && game.resultsStatus === 'NONE' ? (
+            <div key="participants" className="contents">
               <GameParticipants
                 game={game}
                 myInvites={myInvites}
@@ -1486,14 +1500,15 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 onShowManageUsers={() => setShowManageUsers(true)}
                 onEditMaxParticipants={() => setIsEditMaxParticipantsModalOpen(true)}
               />
-            </>
-          )}
+            </div>
+          ) : null}
 
           {user &&
             game.status !== 'ARCHIVED' &&
             game.resultsStatus === 'NONE' &&
             game.entityType !== 'BAR' &&
-            game.entityType !== 'TRAINING' && (
+            game.entityType !== 'TRAINING' ? (
+            <div key="game-format" className="contents">
             <GameFormatSection
               key={game.id}
               game={game}
@@ -1501,18 +1516,24 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               onGameUpdate={setGame}
               suppressAllowMultiToggle={isEditMode && canViewSettings}
             />
-          )}
+            </div>
+          ) : null}
 
-          {fixedTeamsManagementVisible(game, user) && (
-            <FixedTeamsManagement game={game} onGameUpdate={setGame} />
-          )}
+          {fixedTeamsManagementVisible(game, user) ? (
+            <div key="fixed-teams" className="contents">
+              <FixedTeamsManagement game={game} onGameUpdate={setGame} />
+            </div>
+          ) : null}
 
-          {user && game.entityType === 'LEAGUE_SEASON' && (
-            <LeagueSeasonPointsSection game={game} canEdit={canEdit} onGameUpdate={setGame} />
-          )}
+          {user && game.entityType === 'LEAGUE_SEASON' ? (
+            <div key="league-season-points" className="contents">
+              <LeagueSeasonPointsSection game={game} canEdit={canEdit} onGameUpdate={setGame} />
+            </div>
+          ) : null}
 
-          {user && game.entityType === 'TRAINING' && game.resultsStatus === 'FINAL' && (
-            <TrainingResultsSection
+          {user && game.entityType === 'TRAINING' && game.resultsStatus === 'FINAL' ? (
+            <div key="training-results" className="contents">
+              <TrainingResultsSection
               game={game}
               user={user}
               onUpdateParticipantLevel={handleUpdateParticipantLevel}
@@ -1522,18 +1543,29 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 setGame(response.data);
               }}
             />
-          )}
+            </div>
+          ) : null}
 
-          {user && game.entityType === 'BAR' && game.resultsStatus === 'FINAL' && (
-            <BarParticipantsList gameId={game.id} participants={game.participants} />
-          )}
+          {user && game.entityType === 'BAR' && game.resultsStatus === 'FINAL' ? (
+            <div key="bar-participants" className="contents">
+              <BarParticipantsList gameId={game.id} participants={game.participants} />
+            </div>
+          ) : null}
 
-          {user && <ParticipantsOnlyChatSection game={game} userId={user.id} />}
+          {user ? (
+            <div key="participants-chat" className="contents">
+              <ParticipantsOnlyChatSection game={game} userId={user.id} />
+            </div>
+          ) : null}
 
-          {user && <BetSection game={game} onGameUpdate={setGame} />}
+          {user ? (
+            <div key="bets" className="contents">
+              <BetSection game={game} onGameUpdate={setGame} />
+            </div>
+          ) : null}
 
-          {user && canViewSettings && !isLeague && (
-            <div id="game-settings">
+          {user && canViewSettings && !isLeague ? (
+            <div key="game-settings" className="contents" id="game-settings">
               <GameSettings
                 game={game}
                 clubs={clubs}
@@ -1550,17 +1582,20 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 onGameUpdate={(updatedGame) => setGame(updatedGame)}
               />
             </div>
-          )}
+          ) : null}
 
-          {user && isLeagueSeason && canEdit && (
-            <FaqEdit 
-              gameId={game.id} 
-              onFaqsChange={handleFaqsChange}
-            />
-          )}
+          {user && isLeagueSeason && canEdit ? (
+            <div key="faq-edit" className="contents">
+              <FaqEdit 
+                gameId={game.id} 
+                onFaqsChange={handleFaqsChange}
+              />
+            </div>
+          ) : null}
 
-          {user && game.maxParticipants > 4 && game.resultsStatus === 'NONE' && game.entityType !== 'BAR' && (
-            <MultipleCourtsSelector
+          {user && game.maxParticipants > 4 && game.resultsStatus === 'NONE' && game.entityType !== 'BAR' ? (
+            <div key="multiple-courts" className="contents">
+              <MultipleCourtsSelector
               gameId={game.id}
               courts={courts}
               selectedClub={game.clubId || ''}
@@ -1574,9 +1609,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 }
               }}
             />
-          )}
+            </div>
+          ) : null}
 
-          {game.resultsStatus === 'NONE' && game && user && canUserEditResults(game, user) && game.entityType !== 'BAR' && !isLeagueSeason && (
+          {game.resultsStatus === 'NONE' && game && user && canUserEditResults(game, user) && game.entityType !== 'BAR' && !isLeagueSeason ? (
+            <div key="start-results" className="contents">
             <Card className="overflow-hidden">
               <button
                 onClick={game.entityType === 'TRAINING' ? handleFinishTraining : handleStartResultsEntry}
@@ -1588,9 +1625,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
               </button>
             </Card>
-          )}
+            </div>
+          ) : null}
 
-          {user && isParticipant && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && game.resultsStatus !== 'FINAL' && !isGuest && !hasPendingInvite && !isInJoinQueue && (() => {
+          {user && isParticipant && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && game.resultsStatus !== 'FINAL' && !isGuest && !hasPendingInvite && !isInJoinQueue ? (() => {
             const leaveAction = !isUserOwner
               ? isUserPlaying
                 ? { tone: 'danger' as const, buttonLabel: t('common.leave'), onClick: () => setShowLeaveConfirmation(true), hint: undefined }
@@ -1604,6 +1642,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                     hint: t(getOwnerCannotLeaveText(game.entityType)),
                   };
             return (
+              <div key="leave-game" className="contents">
               <GameActionCard
                 icon={LogOut}
                 title={t(getLeaveGameText(game?.entityType || 'GAME'))}
@@ -1613,10 +1652,12 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 disabled={isLeaving}
                 hint={leaveAction.hint}
               />
+              </div>
             );
-          })()}
+          })() : null}
 
-          {user && canEdit && !isLeague && game.resultsStatus !== 'IN_PROGRESS' && (
+          {user && canEdit && !isLeague && game.resultsStatus !== 'IN_PROGRESS' ? (
+            <div key="duplicate-game" className="contents">
             <GameActionCard
               icon={Copy}
               title={t(getDuplicateGameText(game?.entityType || 'GAME'))}
@@ -1642,9 +1683,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
                 doDuplicate();
               }}
             />
-          )}
+            </div>
+          ) : null}
 
-          {user && canDeleteGame() && (
+          {user && canDeleteGame() ? (
+            <div key="delete-game" className="contents">
             <GameActionCard
               icon={Trash2}
               title={t(getDeleteGameText(game?.entityType || 'GAME'))}
@@ -1653,25 +1696,42 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               onClick={() => setShowDeleteConfirmation(true)}
               disabled={isDeleting}
             />
-          )}
+            </div>
+          ) : null}
         </>
       );
     }
 
     if (user && activeTab === 'schedule') {
-      return <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} selectedGameChatId={selectedGameChatId} onChatGameSelect={onChatGameSelect} />;
+      return (
+        <div key="league-schedule" className="contents">
+          <LeagueScheduleTab leagueSeasonId={game.id} canEdit={canEdit} hasFixedTeams={game.hasFixedTeams || false} selectedGameChatId={selectedGameChatId} onChatGameSelect={onChatGameSelect} />
+        </div>
+      );
     }
 
     if (user && isLeagueSeasonParticipant && activeTab === 'planner') {
-      return <LeaguePlannerTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} isVisible />;
+      return (
+        <div key="league-planner" className="contents">
+          <LeaguePlannerTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} isVisible />
+        </div>
+      );
     }
 
     if (user && activeTab === 'standings') {
-      return <LeagueStandingsTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} />;
+      return (
+        <div key="league-standings" className="contents">
+          <LeagueStandingsTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} />
+        </div>
+      );
     }
 
     if (user && activeTab === 'faq') {
-      return <FaqTab gameId={game.id} />;
+      return (
+        <div key="league-faq" className="contents">
+          <FaqTab gameId={game.id} />
+        </div>
+      );
     }
 
     return null;
@@ -1681,16 +1741,13 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   const tabViewKey = isLeagueSeason ? `tab-${activeTab}` : 'tab-general';
   const shellViewKey = effectiveTableView && canViewTournamentTableByAccess(game, user) ? 'table-view' : `content-view-${tabViewKey}`;
-  const shouldAnimateStagger = !hasRenderedContentRef.current;
-  if (!hasRenderedContentRef.current) {
-    hasRenderedContentRef.current = true;
-  }
+  const staggerContentKey = `${id ?? game.id}-${tabViewKey}`;
 
   if (effectiveTableView && canViewTournamentTableByAccess(game, user)) {
     return (
       <SportLevelProvider sport={shellLevelSport}>
       <AnimatedPresencePanel panelKey={shellViewKey}>
-      <>
+      <AnimatedChildrenStagger contentKey={staggerContentKey} className="space-y-4">
           <ResultsTableView
             game={game}
             rounds={engineRounds}
@@ -1720,7 +1777,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
         </div>
         {declineInviteModal}
-      </>
+      </AnimatedChildrenStagger>
       </AnimatedPresencePanel>
       </SportLevelProvider>
     );
@@ -1746,30 +1803,28 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       >
       <div className="max-w-2xl mx-auto space-y-4 overflow-visible">
         {user && isLeagueSeason && leagueSeasonTabs.length > 0 && (
-          <div className="flex justify-center">
-            <SegmentedSwitch
-              tabs={leagueSeasonTabs}
-              activeId={activeTab}
-              onChange={(id) => {
-                if (id === 'general' || id === 'schedule' || id === 'planner' || id === 'standings' || id === 'faq') {
-                  setActiveTab(id);
-                  persistLeagueSeasonTabInUrl(id);
-                }
-              }}
-              showOnlyActiveTabText
-              layoutId={`leagueSeasonTabs-${game.id}`}
-            />
-          </div>
+          <GameDetailsSection key="league-season-tabs">
+            <div className="flex justify-center">
+              <SegmentedSwitch
+                tabs={leagueSeasonTabs}
+                activeId={activeTab}
+                onChange={(tabId) => {
+                  if (tabId === 'general' || tabId === 'schedule' || tabId === 'planner' || tabId === 'standings' || tabId === 'faq') {
+                    setActiveTab(tabId);
+                    persistLeagueSeasonTabInUrl(tabId);
+                  }
+                }}
+                showOnlyActiveTabText
+                layoutId={`leagueSeasonTabs-${game.id}`}
+              />
+            </div>
+          </GameDetailsSection>
         )}
 
       <AnimatedPresencePanel panelKey={shellViewKey} className="space-y-4">
-        {shouldAnimateStagger ? (
-          <AnimatedChildrenStagger contentKey={tabViewKey} className="space-y-4">
-            {renderTabContent()}
-          </AnimatedChildrenStagger>
-        ) : (
-          <div className="space-y-4">{renderTabContent()}</div>
-        )}
+        <AnimatedChildrenStagger contentKey={staggerContentKey} className="space-y-4">
+          {renderTabContent()}
+        </AnimatedChildrenStagger>
       </AnimatedPresencePanel>
 
       {showPlayerList && id && (

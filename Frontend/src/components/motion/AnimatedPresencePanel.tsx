@@ -7,9 +7,16 @@ interface AnimatedPresencePanelProps {
   panelKey: string;
   children: ReactNode;
   className?: string;
+  /** When false, skips enter animation on first mount only. Default: true */
+  initial?: boolean;
 }
 
-export function AnimatedPresencePanel({ panelKey, children, className }: AnimatedPresencePanelProps) {
+export function AnimatedPresencePanel({
+  panelKey,
+  children,
+  className,
+  initial = true,
+}: AnimatedPresencePanelProps) {
   const reduceMotion = usePrefersReducedMotion();
 
   if (reduceMotion) {
@@ -17,7 +24,7 @@ export function AnimatedPresencePanel({ panelKey, children, className }: Animate
   }
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence mode="wait" initial={initial}>
       <motion.div
         key={panelKey}
         className={className}
