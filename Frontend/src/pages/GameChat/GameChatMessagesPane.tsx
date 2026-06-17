@@ -1,9 +1,10 @@
 import React, { useMemo, useRef } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   CHAT_PANE_SLIDE_OFFSET,
   CHAT_PANE_SLIDE_TRANSITION,
 } from '@/components/chat/chatListMotion';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { MessageList } from '@/components/MessageList';
 import { ChatAutoTranslateContext } from '@/contexts/ChatAutoTranslateContext';
 import {
@@ -58,7 +59,7 @@ export const GameChatMessagesPane: React.FC = () => {
     currentChatType,
   } = useThreadChrome();
 
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = usePrefersReducedMotion();
   const availableChatTypes = derived.availableChatTypes;
   const shouldAnimateChatTypeSwitch =
     contextType === 'GAME' && availableChatTypes.length > 1 && !reduceMotion;
@@ -129,9 +130,9 @@ export const GameChatMessagesPane: React.FC = () => {
       className="flex-1 flex flex-col min-h-0"
       animate={{
         opacity: panelOverlayActive ? 0 : 1,
-        x: panelOverlayActive ? '-100%' : 0,
+        x: reduceMotion ? 0 : panelOverlayActive ? '-100%' : 0,
       }}
-      transition={CHAT_PANE_SLIDE_TRANSITION}
+      transition={reduceMotion ? { duration: 0 } : CHAT_PANE_SLIDE_TRANSITION}
     >
       <ChatAutoTranslateContext.Provider value={autoTranslateLanguageCodes}>
         {shouldAnimateChatTypeSwitch ? (

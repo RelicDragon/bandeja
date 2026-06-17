@@ -1,6 +1,6 @@
 import type { Transition } from 'framer-motion';
 
-const EASE = [0.21, 0.47, 0.32, 0.98] as const;
+export const EASE = [0.21, 0.47, 0.32, 0.98] as const;
 
 export const CHAT_LIST_LAYOUT_SPRING = {
   type: 'spring' as const,
@@ -58,10 +58,16 @@ export const CHAT_PANEL_TRANSITION = {
   ease: 'easeOut' as const,
 };
 
+export const CHAT_PANE_SLIDE_DURATION_S = 0.6;
+
 export const CHAT_PANE_SLIDE_TRANSITION = {
-  duration: 0.6,
+  duration: CHAT_PANE_SLIDE_DURATION_S,
   ease: EASE,
 };
+
+export const CHAT_PANE_SLIDE_MS = CHAT_PANE_SLIDE_DURATION_S * 1000;
+
+export const CHAT_PANE_SLIDE_CSS_TRANSITION = `all ${CHAT_PANE_SLIDE_DURATION_S}s cubic-bezier(${EASE.join(', ')})`;
 
 export const CHAT_PANE_SLIDE_OFFSET = 28;
 
@@ -156,6 +162,7 @@ export const CHAT_LIST_FADE_TRANSITION_S = 0.5;
 
 export const CHAT_SCROLL_TARGET_FADE_S = CHAT_LIST_FADE_TRANSITION_S;
 export const CHAT_SCROLL_TARGET_FADE_MS = CHAT_SCROLL_TARGET_FADE_S * 1000;
+export const CHAT_SCROLL_TARGET_HIGHLIGHT_FADE_CSS_VAR = '--chat-scroll-highlight-fade-ms';
 export const CHAT_SCROLL_TARGET_HOLD_MS = 2000;
 export const CHAT_SCROLL_TARGET_SCROLL_DEFER_MS = 320;
 

@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { NavigateFunction } from 'react-router-dom';
+import { CHAT_PANE_SLIDE_MS } from '@/components/chat/chatListMotion';
 import { handleBack } from '@/utils/backNavigation';
 import type { ChatContextType } from '@/api/chat';
 
@@ -27,11 +28,11 @@ export function useGameChatPanels({
 
   const closeItemPage = useCallback(() => {
     setIsItemPageAnimating(true);
-    setTimeout(() => setShowItemPage(false), 300);
+    setTimeout(() => setShowItemPage(false), CHAT_PANE_SLIDE_MS);
   }, []);
   const closeParticipantsPage = useCallback(() => {
     setIsParticipantsPageAnimating(true);
-    setTimeout(() => setShowParticipantsPage(false), 300);
+    setTimeout(() => setShowParticipantsPage(false), CHAT_PANE_SLIDE_MS);
   }, []);
 
   const onOpenItemPage = useCallback(() => {

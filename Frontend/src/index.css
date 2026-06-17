@@ -499,7 +499,6 @@ body.capacitor-android #root {
 }
 
 .message-scroll-target {
-  --chat-scroll-highlight-fade-ms: 500ms;
   border-radius: 0.5rem;
   transition:
     background-color var(--chat-scroll-highlight-fade-ms) cubic-bezier(0.21, 0.47, 0.32, 0.98),

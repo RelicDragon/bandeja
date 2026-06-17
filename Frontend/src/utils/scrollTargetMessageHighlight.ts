@@ -1,5 +1,6 @@
 import {
   CHAT_SCROLL_TARGET_FADE_MS,
+  CHAT_SCROLL_TARGET_HIGHLIGHT_FADE_CSS_VAR,
   CHAT_SCROLL_TARGET_HOLD_MS,
 } from '@/components/chat/chatListMotion';
 
@@ -33,6 +34,7 @@ export function clearScrollTargetMessageHighlight(element: HTMLElement): void {
     highlightStateByElement.delete(element);
   }
   element.classList.remove(TARGET_CLASS, VISIBLE_CLASS, EXITING_CLASS);
+  element.style.removeProperty(CHAT_SCROLL_TARGET_HIGHLIGHT_FADE_CSS_VAR);
 }
 
 export function applyScrollTargetMessageHighlight(
@@ -41,6 +43,10 @@ export function applyScrollTargetMessageHighlight(
 ): void {
   clearScrollTargetMessageHighlight(element);
   element.classList.add(TARGET_CLASS);
+  element.style.setProperty(
+    CHAT_SCROLL_TARGET_HIGHLIGHT_FADE_CSS_VAR,
+    `${CHAT_SCROLL_TARGET_FADE_MS}ms`
+  );
 
   const reducedMotion = options?.reducedMotion ?? prefersReducedMotion();
 

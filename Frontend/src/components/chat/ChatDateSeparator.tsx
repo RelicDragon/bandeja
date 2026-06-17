@@ -1,14 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { CHAT_LIST_FADE_TRANSITION_S } from '@/components/chat/chatListMotion';
+import { CHAT_LIST_FADE_TRANSITION_S, EASE } from '@/components/chat/chatListMotion';
 
 interface ChatDateSeparatorProps {
   label: string;
   fadeIn?: boolean;
 }
-
-const DATE_SEPARATOR_FADE_EASE = [0.21, 0.47, 0.32, 0.98] as const;
 
 export const ChatDateSeparator: React.FC<ChatDateSeparatorProps> = ({ label, fadeIn = false }) => {
   const reduceMotion = usePrefersReducedMotion();
@@ -28,7 +26,7 @@ export const ChatDateSeparator: React.FC<ChatDateSeparatorProps> = ({ label, fad
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: CHAT_LIST_FADE_TRANSITION_S, ease: DATE_SEPARATOR_FADE_EASE }}
+          transition={{ duration: CHAT_LIST_FADE_TRANSITION_S, ease: EASE }}
         >
           {content}
         </motion.div>

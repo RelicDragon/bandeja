@@ -6,6 +6,7 @@ import type { ChatContextType } from '@/api/chat';
 import type { Game } from '@/types';
 import { useChatOfflineStore } from '@/store/chatOfflineStore';
 import { useChatSyncStore } from '@/store/chatSyncStore';
+import { CHAT_PANE_SLIDE_CSS_TRANSITION } from '@/components/chat/chatListMotion';
 import {
   GameChatHeaderChromeSwap,
   GameChatHeaderStatusSlot,
@@ -228,7 +229,10 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                 </button>
               )}
               {showPanelBack && (
-                <div className="hidden w-auto opacity-100 transition-all duration-[600ms] ease-in-out md:block">
+                <div
+                  className="hidden w-auto opacity-100 md:block"
+                  style={{ transition: CHAT_PANE_SLIDE_CSS_TRANSITION }}
+                >
                   <button
                     onClick={onPanelBack}
                     className="flex-shrink-0 rounded-lg p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
