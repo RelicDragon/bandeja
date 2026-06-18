@@ -180,6 +180,33 @@ export async function hydrateBooktimeSession(
 
   const res = await booktimeApi.getSessionToken(clubId);
   if (!res.success || !res.data) {
+    // If backend has no stored tokens (404), check if we have a refreshToken in sessionStorage
+    // that we can use to attempt a direct refresh with Booktime API
+    const fallbackStored = readStoredSession(clubId);
+    if (fallbackStored?.refreshToken && fallbackStored.companyId === companyId) {
+      const client = createClient(clubId, companyId, fallbackStored, clubTimeZone, rateLimitConfig);
+      // Try to refresh using the stored refreshToken
+      const refreshed = await client.refreshAccessToken();
+      if (refreshed) {
+        const newTokens = client.getTokens();
+        if (newTokens.accessToken && newTokens.refreshToken) {
+          const updated: BooktimeStoredSession = {
+            accessToken: newTokens.accessToken,
+            refreshToken: newTokens.refreshToken,
+            externalUserId: fallbackStored.externalUserId,
+            companyId,
+          };
+          writeStoredSession(clubId, updated);
+          // Sync the refreshed tokens to backend
+          void booktimeApi.putAuth(clubId, {
+            accessToken: updated.accessToken,
+            refreshToken: updated.refreshToken,
+            externalUserId: updated.externalUserId,
+          });
+          return true;
+        }
+      }
+    }
     throw new Error(
       formatBooktimeErrorMessage(
         { message: res.message },
