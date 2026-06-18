@@ -1,4 +1,5 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { invitesApi } from '@/api/invites';
@@ -20,8 +21,11 @@ export function useDeclineInvite(options: UseDeclineInviteOptions = {}) {
 
   const [declineInviteId, setDeclineInviteId] = useState<string | null>(null);
   const [isDecliningInvite, setIsDecliningInvite] = useState(false);
+  const declineInviteIdRef = useRef<string | null>(null);
+  declineInviteIdRef.current = declineInviteId;
 
   const openDeclineInviteRef = useRef<(inviteId: string) => void>(() => {});
+  const closeDeclineInvite = useCallback(() => setDeclineInviteId(null), []);
 
   const handleDeclineInvite = useCallback((inviteId: string) => {
     const authUser = useAuthStore.getState().user;
@@ -37,8 +41,8 @@ export function useDeclineInvite(options: UseDeclineInviteOptions = {}) {
   };
 
   const confirmDeclineInvite = useCallback(async (message?: string) => {
-    if (!declineInviteId) return;
-    const inviteId = declineInviteId;
+    const inviteId = declineInviteIdRef.current;
+    if (!inviteId) return;
     optionsRef.current.onDeclineStart?.(inviteId);
     setDeclineInviteId(null);
     setIsDecliningInvite(true);
@@ -58,19 +62,20 @@ export function useDeclineInvite(options: UseDeclineInviteOptions = {}) {
       setIsDecliningInvite(false);
       optionsRef.current.onDeclineEnd?.(inviteId);
     }
-  }, [declineInviteId, t]);
+  }, [t]);
 
-  const declineInviteModal = useMemo(
-    () => (
-      <DeclineInviteModal
-        isOpen={declineInviteId !== null}
-        onClose={() => setDeclineInviteId(null)}
-        onDecline={confirmDeclineInvite}
-        isLoading={isDecliningInvite}
-      />
-    ),
-    [declineInviteId, confirmDeclineInvite, isDecliningInvite],
-  );
+  const declineInviteModal =
+    typeof document === 'undefined'
+      ? null
+      : createPortal(
+          <DeclineInviteModal
+            isOpen={declineInviteId !== null}
+            onClose={closeDeclineInvite}
+            onDecline={confirmDeclineInvite}
+            isLoading={isDecliningInvite}
+          />,
+          document.body,
+        );
 
   return { handleDeclineInvite, declineInviteModal, isDecliningInvite };
 }

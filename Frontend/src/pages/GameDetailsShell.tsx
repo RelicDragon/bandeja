@@ -131,6 +131,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   } = useGameDetailsChromeStore();
 
   const [game, setGame] = useState<Game | null>(null);
+  const gameRef = useRef<Game | null>(null);
+  gameRef.current = game;
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
   const [gameInvites, setGameInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -261,38 +263,36 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     description: '',
   });
 
+  const initialGameId = initialGame?.id;
+  const initialGameSeedRef = useRef(initialGame);
+  if (initialGame?.id === id) {
+    initialGameSeedRef.current = initialGame;
+  }
+
   useEffect(() => {
+    if (!id) return;
+
+    let cancelled = false;
+
+    setMyInvites([]);
+    setGameInvites([]);
+    setCancelledGameInfo(null);
+
+    const seed = initialGameSeedRef.current?.id === id ? initialGameSeedRef.current : null;
+    if (seed) {
+      setGame(seed);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     const fetchGame = async () => {
-      if (!id) return;
-
-      setMyInvites([]);
-      setGameInvites([]);
-      setCancelledGameInfo(null);
-
-      const seed = initialGame && initialGame.id === id ? initialGame : null;
-      if (seed) {
-        setGame(seed);
-        setLoading(false);
-      } else {
-        setLoading(true);
-      }
-
       try {
         const response = await gamesApi.getById(id);
+        if (cancelled) return;
         setGame(response.data);
-
-        if (user?.id) {
-          const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
-          const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
-          setMyInvites(gameMyInvites);
-
-          if (canUserViewGameInvites(response.data.participants, user.id, response.data)) {
-            const gameInvitesResponse = await invitesApi.getGameInvites(id);
-            setGameInvites(gameInvitesResponse.data);
-          }
-        }
-
       } catch (error: unknown) {
+        if (cancelled) return;
         const err = error as { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; sport?: import('@/types').Sport; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } };
         if (err.response?.status === 410 && err.response?.data?.cancelled) {
           const d = err.response.data;
@@ -307,12 +307,51 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           console.error('Failed to fetch game:', error);
         }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
-    fetchGame();
-  }, [id, user?.id, initialGame]);
+    void fetchGame();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, initialGameId]);
+
+  useEffect(() => {
+    if (!id || !user?.id) return;
+
+    let cancelled = false;
+
+    const fetchInvites = async () => {
+      try {
+        const myInvitesResponse = await invitesApi.getMyInvites('PENDING');
+        if (cancelled) return;
+
+        const gameMyInvites = myInvitesResponse.data.filter((inv) => inv.gameId === id);
+        setMyInvites(gameMyInvites);
+
+        const currentGame = gameRef.current;
+        if (
+          currentGame &&
+          canUserViewGameInvites(currentGame.participants, user.id, currentGame)
+        ) {
+          const gameInvitesResponse = await invitesApi.getGameInvites(id);
+          if (!cancelled) setGameInvites(gameInvitesResponse.data);
+        } else {
+          setGameInvites([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch game invites:', error);
+      }
+    };
+
+    void fetchInvites();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, user?.id, game?.id]);
 
   useEffect(() => {
     if (game?.entityType !== 'LEAGUE_SEASON') return;
@@ -1265,42 +1304,51 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   if (loading && !game) {
     return (
-      <AnimatedPresencePanel panelKey={`game-details-loading-${id ?? 'unknown'}`}>
-        <GameDetailsSkeleton />
-      </AnimatedPresencePanel>
+      <>
+        <AnimatedPresencePanel panelKey={`game-details-loading-${id ?? 'unknown'}`}>
+          <GameDetailsSkeleton />
+        </AnimatedPresencePanel>
+        {declineInviteModal}
+      </>
     );
   }
 
   if (!game) {
     if (cancelledGameInfo) {
       return (
-        <AnimatedPresencePanel panelKey="game-details-cancelled">
-          <GameCancelled
-            entityType={cancelledGameInfo.entityType as import('@/types').EntityType}
-            name={cancelledGameInfo.name}
-            cancelledAt={cancelledGameInfo.cancelledAt}
-            cancelledByUser={cancelledGameInfo.cancelledByUser ?? undefined}
-            levelSport={cancelledGameInfo.sport ? parseGameSport(cancelledGameInfo.sport) : undefined}
-          />
-        </AnimatedPresencePanel>
+        <>
+          <AnimatedPresencePanel panelKey="game-details-cancelled">
+            <GameCancelled
+              entityType={cancelledGameInfo.entityType as import('@/types').EntityType}
+              name={cancelledGameInfo.name}
+              cancelledAt={cancelledGameInfo.cancelledAt}
+              cancelledByUser={cancelledGameInfo.cancelledByUser ?? undefined}
+              levelSport={cancelledGameInfo.sport ? parseGameSport(cancelledGameInfo.sport) : undefined}
+            />
+          </AnimatedPresencePanel>
+          {declineInviteModal}
+        </>
       );
     }
     return (
-      <AnimatedPresencePanel panelKey="game-details-not-found">
-        <div className="flex items-center justify-center min-h-[calc(100vh-60px)] p-4">
-          <Card className="text-center py-12">
-            <p className="text-gray-600 dark:text-gray-400">{t('errors.notFound')}</p>
-          </Card>
-        </div>
-      </AnimatedPresencePanel>
+      <>
+        <AnimatedPresencePanel panelKey="game-details-not-found">
+          <div className="flex items-center justify-center min-h-[calc(100vh-60px)] p-4">
+            <Card className="text-center py-12">
+              <p className="text-gray-600 dark:text-gray-400">{t('errors.notFound')}</p>
+            </Card>
+          </div>
+        </AnimatedPresencePanel>
+        {declineInviteModal}
+      </>
     );
   }
 
   if (variant === 'game' && (game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON')) {
-    return null;
+    return declineInviteModal;
   }
   if (variant === 'league' && game.entityType !== 'LEAGUE' && game.entityType !== 'LEAGUE_SEASON') {
-    return null;
+    return declineInviteModal;
   }
 
   const isLeague = game.entityType === 'LEAGUE';
@@ -1776,9 +1824,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         <div className="hidden" aria-hidden="true">
           <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
         </div>
-        {declineInviteModal}
       </AnimatedChildrenStagger>
       </AnimatedPresencePanel>
+      {declineInviteModal}
       </SportLevelProvider>
     );
   }
