@@ -1168,15 +1168,7 @@ body.capacitor-android #root {
   --vv-offset-top: 0px;
 }
 
-body.keyboard-visible {
-  height: auto !important;
-}
-
-body.keyboard-visible #root {
-  min-height: auto !important;
-}
-
-/* Modern keyboard handling for iOS/Android with rounded corners */
+/* Modern keyboard handling for Capacitor iOS/Android (Keyboard.resize: none) */
 body.capacitor-ios.keyboard-visible,
 body.capacitor-android.keyboard-visible {
   height: 100vh;

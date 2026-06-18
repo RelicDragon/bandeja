@@ -36,7 +36,7 @@ export const AuthLayout = ({ children }: AuthLayoutProps) => {
         }
       `}</style>
       <div 
-        className="min-h-screen relative flex items-center justify-center px-4 overflow-y-auto"
+        className="min-h-[100dvh] relative flex items-center justify-center px-4 overflow-y-auto"
         style={{ padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)' }}
       >
       {/* Background */}

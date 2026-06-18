@@ -1075,7 +1075,7 @@ Frontend/e2e/
 | X-53 | Court web camera URL | Platform admin → edit court → Web camera URL → Save | URL persisted; Camera column shows ✓ |
 | X-54 | Open court camera from list | Platform admin court list → click ✓ in Camera column | Opens web camera URL in new tab |
 
-### 18.10 Software keyboard (Capacitor iOS/Android, `@manual`)
+### 18.10 Software keyboard (Capacitor + mobile web, `@manual`)
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
@@ -1088,6 +1088,7 @@ Frontend/e2e/
 | X-50 | Story caption & text edit | Photo story editor → caption drawer / text style panel → focus | Caption drawer and style panel ride above keyboard |
 | X-51 | Story DM bar keyboard (Android) | Story viewer → focus DM input on Android | DM bar lifts by plugin keyboard height (not stuck under keyboard) |
 | X-52 | Keyboard dismiss restores layout | Any of above → dismiss keyboard | Surfaces return to resting position; no leftover bottom padding or shifted dialogs |
+| X-55 | Auth login keyboard (Android web) | Mobile Chrome → `/login` → focus phone field | Form sits directly above keyboard; no dark gray scroll gap between card and keyboard |
 
 ---
 

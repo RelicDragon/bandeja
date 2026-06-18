@@ -3,6 +3,9 @@ import {
   computeKeyboardInsetPx,
   shouldShiftDialogForKeyboard,
   isInsideKeyboardManagedSurface,
+  doesLayoutViewportShrinkWithKeyboard,
+  isKeyboardLikelyVisible,
+  resolveKeyboardLayoutMode,
 } from './keyboardLayout';
 
 describe('computeKeyboardInsetPx', () => {
@@ -51,5 +54,65 @@ describe('shouldShiftDialogForKeyboard', () => {
 describe('isInsideKeyboardManagedSurface', () => {
   it('returns false for null', () => {
     expect(isInsideKeyboardManagedSurface(null)).toBe(false);
+  });
+});
+
+describe('resolveKeyboardLayoutMode', () => {
+  it('returns inactive when keyboard is not likely visible', () => {
+    expect(
+      resolveKeyboardLayoutMode({
+        isCapacitor: false,
+        baselineInnerHeight: 800,
+        currentInnerHeight: 800,
+        keyboardLikelyVisible: false,
+      }),
+    ).toBe('inactive');
+  });
+
+  it('returns manual for Capacitor even when layout viewport shrinks', () => {
+    expect(
+      resolveKeyboardLayoutMode({
+        isCapacitor: true,
+        baselineInnerHeight: 800,
+        currentInnerHeight: 500,
+        keyboardLikelyVisible: true,
+      }),
+    ).toBe('manual');
+  });
+
+  it('returns native-resize when mobile browser shrinks layout viewport', () => {
+    expect(
+      resolveKeyboardLayoutMode({
+        isCapacitor: false,
+        baselineInnerHeight: 800,
+        currentInnerHeight: 500,
+        keyboardLikelyVisible: true,
+      }),
+    ).toBe('native-resize');
+  });
+
+  it('returns manual when visual viewport shrinks but layout viewport does not', () => {
+    expect(
+      resolveKeyboardLayoutMode({
+        isCapacitor: false,
+        baselineInnerHeight: 800,
+        currentInnerHeight: 800,
+        keyboardLikelyVisible: true,
+      }),
+    ).toBe('manual');
+  });
+});
+
+describe('doesLayoutViewportShrinkWithKeyboard', () => {
+  it('detects significant inner height drop', () => {
+    expect(doesLayoutViewportShrinkWithKeyboard(800, 720)).toBe(true);
+    expect(doesLayoutViewportShrinkWithKeyboard(800, 721)).toBe(false);
+  });
+});
+
+describe('isKeyboardLikelyVisible', () => {
+  it('requires shrink above visibility threshold', () => {
+    expect(isKeyboardLikelyVisible(800, 660)).toBe(false);
+    expect(isKeyboardLikelyVisible(800, 649)).toBe(true);
   });
 });

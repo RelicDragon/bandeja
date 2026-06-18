@@ -1,5 +1,42 @@
 const DEFAULT_MAX_KEYBOARD_INSET_RATIO = 0.92;
 export const KEYBOARD_DIALOG_SHIFT_THRESHOLD_PX = 80;
+export const KEYBOARD_VISIBILITY_THRESHOLD_PX = 150;
+export const KEYBOARD_LAYOUT_SHRINK_THRESHOLD_PX = 80;
+
+/** Manual CSS lift (--keyboard-height, keyboard-visible). Native = browser shrinks layout viewport. */
+export type KeyboardLayoutMode = 'manual' | 'native-resize' | 'inactive';
+
+export function doesLayoutViewportShrinkWithKeyboard(
+  baselineInnerHeight: number,
+  currentInnerHeight: number,
+  thresholdPx: number = KEYBOARD_LAYOUT_SHRINK_THRESHOLD_PX,
+): boolean {
+  return baselineInnerHeight - currentInnerHeight >= thresholdPx;
+}
+
+export function isKeyboardLikelyVisible(
+  baselineVvHeight: number,
+  currentVvHeight: number,
+  thresholdPx: number = KEYBOARD_VISIBILITY_THRESHOLD_PX,
+): boolean {
+  return baselineVvHeight - currentVvHeight > thresholdPx;
+}
+
+export function resolveKeyboardLayoutMode(opts: {
+  isCapacitor: boolean;
+  baselineInnerHeight: number;
+  currentInnerHeight: number;
+  keyboardLikelyVisible: boolean;
+}): KeyboardLayoutMode {
+  if (!opts.keyboardLikelyVisible) return 'inactive';
+  if (opts.isCapacitor) return 'manual';
+  if (
+    doesLayoutViewportShrinkWithKeyboard(opts.baselineInnerHeight, opts.currentInnerHeight)
+  ) {
+    return 'native-resize';
+  }
+  return 'manual';
+}
 
 export function computeKeyboardInsetPx(opts: {
   innerHeight: number;

@@ -9,6 +9,8 @@ import { syncApiBaseUrlToNative } from '@/services/authBridge';
 import {
   computeKeyboardInsetPx,
   isInsideKeyboardManagedSurface,
+  isKeyboardLikelyVisible,
+  resolveKeyboardLayoutMode,
 } from './keyboardLayout';
 import { getKeyboardState, publishKeyboardState } from './keyboardState';
 import {
@@ -319,55 +321,76 @@ export const setupCapacitor = async () => {
 };
 
 export const setupBrowserKeyboardDetection = () => {
-  if (isCapacitor()) return () => {}; // Return empty cleanup if in Capacitor
+  if (isCapacitor()) return () => {};
 
-  let initialViewportHeight = window.visualViewport?.height || window.innerHeight;
-  let isKeyboardVisible = false;
-  const KEYBOARD_THRESHOLD = 150; // Consider keyboard visible if viewport shrinks by more than 150px
+  let baselineVvHeight = window.visualViewport?.height ?? window.innerHeight;
+  let baselineInnerHeight = window.innerHeight;
 
-  // Update initial height after a short delay to ensure it's accurate
-  const updateInitialHeight = () => {
-    initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+  const updateBaselines = () => {
+    baselineVvHeight = window.visualViewport?.height ?? window.innerHeight;
+    baselineInnerHeight = window.innerHeight;
   };
 
-  // Set initial height after page load
+  const publishNativeResizeKeyboardHidden = () => {
+    nativeKeyboardVisible = false;
+    applyVisualViewportCssVars();
+    releaseKeyboardScrollAssist();
+    publishKeyboardState({ visible: false, insetPx: 0 });
+  };
+
+  const publishManualKeyboardState = () => {
+    nativeKeyboardVisible = true;
+    syncKeyboardLayoutFromViewport();
+  };
+
   let loadHandler: (() => void) | null = null;
   if (document.readyState === 'complete') {
-    setTimeout(updateInitialHeight, 100);
+    setTimeout(updateBaselines, 100);
   } else {
     loadHandler = () => {
-      setTimeout(updateInitialHeight, 100);
+      setTimeout(updateBaselines, 100);
     };
     window.addEventListener('load', loadHandler);
   }
 
-  // Use Visual Viewport API if available (modern mobile browsers)
   if (window.visualViewport) {
     const handleViewportChange = () => {
       const viewport = window.visualViewport!;
-      const heightDifference = initialViewportHeight - viewport.height;
+      const vvHeight = viewport.height;
+      const innerH = window.innerHeight;
+      const keyboardLikelyVisible = isKeyboardLikelyVisible(baselineVvHeight, vvHeight);
 
-      isKeyboardVisible = heightDifference > KEYBOARD_THRESHOLD;
-      nativeKeyboardVisible = isKeyboardVisible;
+      applyVisualViewportCssVars();
 
-      if (isKeyboardVisible) {
-        syncKeyboardLayoutFromViewport();
-      } else {
-        applyVisualViewportCssVars();
+      if (!keyboardLikelyVisible) {
+        updateBaselines();
+        publishNativeResizeKeyboardHidden();
+        return;
+      }
+
+      const mode = resolveKeyboardLayoutMode({
+        isCapacitor: false,
+        baselineInnerHeight,
+        currentInnerHeight: innerH,
+        keyboardLikelyVisible: true,
+      });
+
+      if (mode === 'native-resize') {
+        nativeKeyboardVisible = false;
         releaseKeyboardScrollAssist();
         publishKeyboardState({ visible: false, insetPx: 0 });
+        return;
       }
+
+      publishManualKeyboardState();
     };
 
     window.visualViewport.addEventListener('resize', handleViewportChange);
     window.visualViewport.addEventListener('scroll', handleViewportChange);
     handleViewportChange();
 
-    // Update initial height when orientation changes
     const handleOrientationChange = () => {
-      setTimeout(() => {
-        updateInitialHeight();
-      }, 100);
+      setTimeout(updateBaselines, 100);
     };
 
     window.addEventListener('orientationchange', handleOrientationChange);
@@ -382,61 +405,54 @@ export const setupBrowserKeyboardDetection = () => {
       window.removeEventListener('orientationchange', handleOrientationChange);
       window.removeEventListener('resize', handleOrientationChange);
     };
-  } else {
-    // Fallback for older browsers - use window resize
-    const updateKeyboardState = () => {
-      const currentHeight = window.innerHeight;
-      const heightDifference = initialViewportHeight - currentHeight;
-
-      isKeyboardVisible = heightDifference > KEYBOARD_THRESHOLD;
-
-      if (isKeyboardVisible) {
-        const innerH = window.innerHeight || 0;
-        const approx = computeKeyboardInsetPx({
-          innerHeight: innerH,
-          vvHeight: innerH - heightDifference,
-          vvOffsetTop: 0,
-          pluginInsetPx: 0,
-        });
-        publishKeyboardState({ visible: true, insetPx: approx });
-      } else {
-        releaseKeyboardScrollAssist();
-        publishKeyboardState({ visible: false, insetPx: 0 });
-      }
-    };
-
-    const handleResize = () => {
-      updateKeyboardState();
-    };
-
-    const handleOrientationChange = () => {
-      setTimeout(() => {
-        updateInitialHeight();
-        updateKeyboardState();
-      }, 100);
-    };
-
-    window.addEventListener('resize', handleResize);
-    window.addEventListener('orientationchange', handleOrientationChange);
-
-    // Also check on input focus/blur as additional triggers
-    const handleFocus = () => {
-      setTimeout(updateKeyboardState, 300);
-    };
-
-    const handleBlur = () => {
-      setTimeout(updateKeyboardState, 300);
-    };
-
-    document.addEventListener('focusin', handleFocus);
-    document.addEventListener('focusout', handleBlur);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      window.removeEventListener('orientationchange', handleOrientationChange);
-      document.removeEventListener('focusin', handleFocus);
-      document.removeEventListener('focusout', handleBlur);
-    };
   }
+
+  const updateKeyboardState = () => {
+    const currentHeight = window.innerHeight;
+    const keyboardLikelyVisible = isKeyboardLikelyVisible(baselineInnerHeight, currentHeight);
+
+    if (!keyboardLikelyVisible) {
+      updateBaselines();
+      publishNativeResizeKeyboardHidden();
+      return;
+    }
+
+    // innerHeight drop without visualViewport API = browser-native layout resize
+    nativeKeyboardVisible = false;
+    releaseKeyboardScrollAssist();
+    publishKeyboardState({ visible: false, insetPx: 0 });
+  };
+
+  const handleResize = () => {
+    updateKeyboardState();
+  };
+
+  const handleOrientationChange = () => {
+    setTimeout(() => {
+      updateBaselines();
+      updateKeyboardState();
+    }, 100);
+  };
+
+  window.addEventListener('resize', handleResize);
+  window.addEventListener('orientationchange', handleOrientationChange);
+
+  const handleFocus = () => {
+    setTimeout(updateKeyboardState, 300);
+  };
+
+  const handleBlur = () => {
+    setTimeout(updateKeyboardState, 300);
+  };
+
+  document.addEventListener('focusin', handleFocus);
+  document.addEventListener('focusout', handleBlur);
+
+  return () => {
+    window.removeEventListener('resize', handleResize);
+    window.removeEventListener('orientationchange', handleOrientationChange);
+    document.removeEventListener('focusin', handleFocus);
+    document.removeEventListener('focusout', handleBlur);
+  };
 };
 
