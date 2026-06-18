@@ -3,6 +3,11 @@ import {
   BOOKTIME_DEFAULT_TIMEZONE,
   booktimeIngestToStoredUtcIso,
 } from '@shared/booktime/localTime';
+import {
+  rateLimitedRequest,
+  clearRateLimitState,
+  type BooktimeRateLimitConfig,
+} from './rateLimiter';
 
 export type BooktimeUser = {
   uuid: string;
@@ -88,12 +93,15 @@ export type BooktimeSessionPayload = {
 
 export type BooktimeClientOptions = {
   companyId: string;
+  clubId?: string;
   accessToken?: string | null;
   refreshToken?: string | null;
   /** Club city IANA timezone for wire-format booking ingest at API boundary. */
   clubTimeZone?: string | null;
   onTokensUpdated?: (tokens: { accessToken: string; refreshToken: string }) => void;
   onSessionExpired?: () => void;
+  /** Rate limiting configuration for this club */
+  rateLimitConfig?: BooktimeRateLimitConfig;
 };
 
 function formatPhone(countryCode: string, phoneNumber: string): string {
@@ -105,19 +113,23 @@ export class BooktimeClient {
   private accessToken: string | null;
   private refreshToken: string | null;
   private companyId: string;
+  private clubId: string | undefined;
   private clubTimeZone: string | null;
   private onTokensUpdated?: (tokens: { accessToken: string; refreshToken: string }) => void;
   private onSessionExpired?: () => void;
   private refreshInFlight: Promise<boolean> | null = null;
   private upcomingInFlight: Promise<BooktimeBookingsPage> | null = null;
+  private rateLimitConfig?: BooktimeRateLimitConfig;
 
   constructor(options: BooktimeClientOptions) {
     this.companyId = options.companyId;
+    this.clubId = options.clubId;
     this.accessToken = options.accessToken ?? null;
     this.refreshToken = options.refreshToken ?? null;
     this.clubTimeZone = options.clubTimeZone ?? null;
     this.onTokensUpdated = options.onTokensUpdated;
     this.onSessionExpired = options.onSessionExpired;
+    this.rateLimitConfig = options.rateLimitConfig;
   }
 
   setClubTimeZone(timeZone: string | null | undefined): void {
@@ -191,6 +203,9 @@ export class BooktimeClient {
 
   expireSession(): void {
     this.clearSession();
+    if (this.clubId) {
+      clearRateLimitState(this.clubId);
+    }
     this.onSessionExpired?.();
   }
 
@@ -225,11 +240,30 @@ export class BooktimeClient {
     options: { method?: string; body?: Record<string, unknown>; auth?: boolean } = {}
   ): Promise<T> {
     const auth = options.auth ?? false;
+
+    // For authenticated requests with a clubId, use rate limiting
+    if (auth && this.clubId) {
+      return rateLimitedRequest(
+        this.clubId,
+        () => this.requestWithTokenRefresh<T>(path, options),
+        this.rateLimitConfig
+      );
+    }
+
+    // Non-auth requests or requests without clubId proceed without rate limiting
+    return this.requestWithTokenRefresh<T>(path, options);
+  }
+
+  private async requestWithTokenRefresh<T>(
+    path: string,
+    options: { method?: string; body?: Record<string, unknown>; auth?: boolean } = {}
+  ): Promise<T> {
     try {
       return await this.requestOnce<T>(path, options);
     } catch (err) {
       const status = err && typeof err === 'object' && 'status' in err ? Number((err as { status: number }).status) : 0;
-      if (auth && status === 401) {
+      // Attempt token refresh on 401 (unauthorized) or 403 (forbidden) - Booktime may return 403 for stale tokens
+      if ((status === 401 || status === 403)) {
         const refreshed = await this.refreshAccessToken();
         if (refreshed) {
           return this.requestOnce<T>(path, options);

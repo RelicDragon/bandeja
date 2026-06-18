@@ -12,6 +12,7 @@ import {
   restoreProactiveBooktimeRefreshForStoredSessions,
   scheduleProactiveBooktimeRefresh,
 } from './proactiveRefresh';
+import { clearRateLimitState, type BooktimeRateLimitConfig } from './rateLimiter';
 
 type SessionEntry = {
   client: BooktimeClient;
@@ -100,12 +101,15 @@ function createClient(
   companyId: string,
   stored: BooktimeStoredSession | null,
   clubTimeZone?: string | null,
+  rateLimitConfig?: BooktimeRateLimitConfig,
 ): BooktimeClient {
   const client = new BooktimeClient({
+    clubId,
     companyId,
     accessToken: stored?.accessToken ?? null,
     refreshToken: stored?.refreshToken ?? null,
     clubTimeZone,
+    rateLimitConfig,
     onTokensUpdated: ({ accessToken, refreshToken }) => {
       const current = readStoredSession(clubId);
       if (!current) return;
@@ -136,6 +140,7 @@ export function getBooktimeClient(
   clubId: string,
   companyId: string,
   clubTimeZone?: string | null,
+  rateLimitConfig?: BooktimeRateLimitConfig,
 ): BooktimeClient {
   const existing = memoryClients.get(clubId);
   if (existing && existing.companyId === companyId) {
@@ -151,6 +156,7 @@ export function getBooktimeClient(
     companyId,
     stored?.companyId === companyId ? stored : null,
     clubTimeZone,
+    rateLimitConfig,
   );
   memoryClients.set(clubId, {
     client,
@@ -164,10 +170,11 @@ export async function hydrateBooktimeSession(
   clubId: string,
   companyId: string,
   clubTimeZone?: string | null,
+  rateLimitConfig?: BooktimeRateLimitConfig,
 ): Promise<boolean> {
   const stored = readStoredSession(clubId);
   if (stored?.companyId === companyId && stored.accessToken && stored.refreshToken) {
-    getBooktimeClient(clubId, companyId, clubTimeZone);
+    getBooktimeClient(clubId, companyId, clubTimeZone, rateLimitConfig);
     return true;
   }
 
@@ -189,7 +196,7 @@ export async function hydrateBooktimeSession(
   };
   writeStoredSession(clubId, session);
   memoryClients.set(clubId, {
-    client: createClient(clubId, companyId, session, clubTimeZone),
+    client: createClient(clubId, companyId, session, clubTimeZone, rateLimitConfig),
     companyId,
     externalUserId: session.externalUserId,
   });
@@ -208,6 +215,7 @@ export async function persistBooktimeSessionAfterConnect(
     lastName?: string | null;
   },
   clubTimeZone?: string | null,
+  rateLimitConfig?: BooktimeRateLimitConfig,
 ): Promise<void> {
   const session: BooktimeStoredSession = {
     accessToken: payload.accessToken,
@@ -217,7 +225,7 @@ export async function persistBooktimeSessionAfterConnect(
   };
   writeStoredSession(clubId, session);
   memoryClients.set(clubId, {
-    client: createClient(clubId, companyId, session, clubTimeZone),
+    client: createClient(clubId, companyId, session, clubTimeZone, rateLimitConfig),
     companyId,
     externalUserId: payload.externalUserId,
   });
@@ -235,21 +243,23 @@ export async function persistBooktimeSessionAfterConnect(
 export async function disconnectBooktimeClub(clubId: string): Promise<void> {
   await booktimeApi.deleteAuth(clubId);
   clearProactiveBooktimeRefresh(clubId);
+  clearRateLimitState(clubId);
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
 }
 
 export function clearBooktimeSessionLocal(clubId: string): void {
   clearProactiveBooktimeRefresh(clubId);
+  clearRateLimitState(clubId);
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
 }
 
-export function ensureBooktimeProactiveRefresh(): void {
+export function ensureBooktimeProactiveRefresh(rateLimitConfig?: BooktimeRateLimitConfig): void {
   restoreProactiveBooktimeRefreshForStoredSessions(listStoredBooktimeClubIds, (clubId) => {
     const stored = readStoredSession(clubId);
     if (!stored?.accessToken || !stored.refreshToken) return null;
-    return getBooktimeClient(clubId, stored.companyId);
+    return getBooktimeClient(clubId, stored.companyId, undefined, rateLimitConfig);
   });
 }
 
