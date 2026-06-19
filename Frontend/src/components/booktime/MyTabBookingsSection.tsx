@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { Settings } from 'lucide-react';
+import { RefreshCw, Settings } from 'lucide-react';
 import type { MyTabBooktimeSnapshot } from '@/hooks/useMyTabBooktime';
 import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsCardsSkeleton } from './BooktimeBookingsCardsSkeleton';
@@ -17,7 +17,7 @@ type Props = {
 export function MyTabBookingsSection({ booktime }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { myClubs, clubs, bookings, bookingsLoading, removeBooking } = booktime;
+  const { myClubs, clubs, bookings, bookingsLoading, reloadBookings, removeBooking } = booktime;
   const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
   const allowedHoursToCancelByClubId = useBooktimeCancelPoliciesForClubs(
     clubs,
@@ -63,14 +63,24 @@ export function MyTabBookingsSection({ booktime }: Props) {
             >
               {t('club.booktime.seeAllBookings')}
             </button>
-            <button
-              type="button"
-              onClick={() => navigate('/profile/connected-clubs?tab=integrations')}
-              className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center p-1 text-primary-600 hover:opacity-80 dark:text-primary-400"
-              aria-label={t('club.booktime.tabIntegrations')}
-            >
-              <Settings size={18} strokeWidth={2} aria-hidden />
-            </button>
+            <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              <button
+                type="button"
+                onClick={() => reloadBookings()}
+                className="flex items-center p-1 text-primary-600 hover:opacity-80 dark:text-primary-400"
+                aria-label="Reload bookings"
+              >
+                <RefreshCw size={18} strokeWidth={2} aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate('/profile/connected-clubs?tab=integrations')}
+                className="flex items-center p-1 text-primary-600 hover:opacity-80 dark:text-primary-400"
+                aria-label={t('club.booktime.tabIntegrations')}
+              >
+                <Settings size={18} strokeWidth={2} aria-hidden />
+              </button>
+            </div>
           </div>
         </>
       )}

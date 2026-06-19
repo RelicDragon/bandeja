@@ -11,7 +11,7 @@ export type AggregatedBooktimeBooking = BooktimeBookingRecord & {
   courts: BooktimeMyClubRow['courts'];
 };
 
-const CACHE_TTL_MS = 15_000;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 let inFlight: Promise<AggregatedBooktimeBooking[]> | null = null;
 let inFlightKey = '';

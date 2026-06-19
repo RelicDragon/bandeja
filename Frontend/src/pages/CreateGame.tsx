@@ -46,6 +46,7 @@ import {
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
 import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
+import { invalidateBooktimeAllUpcomingCache } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
 import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsFields';
 import { gameFormatGenderVisible } from '@/components/gameFormat/gameFormatTeamsVisibility';
@@ -1105,6 +1106,9 @@ export const CreateGame = ({
       }
 
       const gameResponse = await gamesApi.create(gameData);
+
+      // Invalidate booktime cache after creating a game so bookings will be re-read
+      invalidateBooktimeAllUpcomingCache();
 
       if (pendingAvatarFiles && gameResponse.data.id) {
         try {

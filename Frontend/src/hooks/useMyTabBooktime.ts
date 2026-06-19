@@ -10,13 +10,14 @@ export type MyTabBooktimeSnapshot = {
   bookings: AggregatedBooktimeBooking[];
   bookingsLoading: boolean;
   reloadMyClubs: () => Promise<BooktimeMyClubsPayload | null>;
+  reloadBookings: () => Promise<void>;
   removeBooking: (bookingId: string) => void;
 };
 
 export function useMyTabBooktime(refreshKey = 0): MyTabBooktimeSnapshot {
   const { data: myClubs, reload: reloadMyClubs } = useBooktimeMyClubs(true);
   const clubs = useMemo(() => myClubs?.clubs ?? [], [myClubs?.clubs]);
-  const { bookings, loading: bookingsLoading, removeBooking } = useBooktimeAllUpcoming(
+  const { bookings, loading: bookingsLoading, removeBooking, reload: reloadBookings } = useBooktimeAllUpcoming(
     clubs,
     true,
     refreshKey,
@@ -28,6 +29,7 @@ export function useMyTabBooktime(refreshKey = 0): MyTabBooktimeSnapshot {
     bookings,
     bookingsLoading,
     reloadMyClubs,
+    reloadBookings,
     removeBooking,
   };
 }

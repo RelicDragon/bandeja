@@ -8,36 +8,35 @@ import {
 
 export type { AggregatedBooktimeBooking };
 
-type SharedUpcomingState = {
-  connectedKey: string;
+type UpcomingSnapshot = {
   bookings: AggregatedBooktimeBooking[];
   loading: boolean;
-  version: number;
 };
 
-let sharedState: SharedUpcomingState = {
-  connectedKey: '',
-  bookings: [],
-  loading: false,
-  version: 0,
-};
+const EMPTY_SNAPSHOT: UpcomingSnapshot = { bookings: [], loading: false };
+
+const sharedByKey = new Map<string, UpcomingSnapshot>();
+const inFlightByKey = new Map<string, Promise<void>>();
 
 const subscribers = new Set<() => void>();
-let sharedLoadKey = '';
-let sharedLoadPromise: Promise<void> | null = null;
 
 function subscribeShared(listener: () => void): () => void {
   subscribers.add(listener);
   return () => subscribers.delete(listener);
 }
 
-function getSharedVersion(): number {
-  return sharedState.version;
+function getSnapshot(connectedKey: string): UpcomingSnapshot {
+  if (!connectedKey) return EMPTY_SNAPSHOT;
+  return sharedByKey.get(connectedKey) ?? EMPTY_SNAPSHOT;
 }
 
 function notifyShared(): void {
-  sharedState = { ...sharedState, version: sharedState.version + 1 };
   subscribers.forEach((listener) => listener());
+}
+
+function setKeyState(connectedKey: string, next: UpcomingSnapshot): void {
+  sharedByKey.set(connectedKey, next);
+  notifyShared();
 }
 
 function runSharedLoad(
@@ -51,55 +50,32 @@ function runSharedLoad(
   }
 
   if (!enabled || connectedKey.length === 0) {
-    if (sharedState.connectedKey || sharedState.bookings.length > 0 || sharedState.loading) {
-      sharedState = {
-        connectedKey: '',
-        bookings: [],
-        loading: false,
-        version: sharedState.version,
-      };
-      notifyShared();
-    }
     return Promise.resolve();
   }
 
-  if (sharedLoadPromise && sharedLoadKey === connectedKey) {
-    return sharedLoadPromise;
-  }
+  const existingLoad = inFlightByKey.get(connectedKey);
+  if (existingLoad) return existingLoad;
 
-  if (!invalidate && sharedState.connectedKey === connectedKey && !sharedState.loading) {
+  const current = sharedByKey.get(connectedKey);
+  if (!invalidate && current && !current.loading) {
     return Promise.resolve();
   }
 
-  sharedLoadKey = connectedKey;
-  sharedState = {
-    connectedKey,
-    bookings: sharedState.connectedKey === connectedKey ? sharedState.bookings : [],
+  setKeyState(connectedKey, {
+    bookings: current?.bookings ?? [],
     loading: true,
-    version: sharedState.version,
-  };
-  notifyShared();
+  });
 
-  sharedLoadPromise = loadAllBooktimeUpcoming(clubs, enabled)
+  const loadPromise = loadAllBooktimeUpcoming(clubs, enabled)
     .then((bookings) => {
-      if (sharedLoadKey === connectedKey) {
-        sharedState = {
-          connectedKey,
-          bookings,
-          loading: false,
-          version: sharedState.version,
-        };
-        notifyShared();
-      }
+      setKeyState(connectedKey, { bookings, loading: false });
     })
     .finally(() => {
-      if (sharedLoadKey === connectedKey) {
-        sharedLoadPromise = null;
-        sharedLoadKey = '';
-      }
+      inFlightByKey.delete(connectedKey);
     });
 
-  return sharedLoadPromise;
+  inFlightByKey.set(connectedKey, loadPromise);
+  return loadPromise;
 }
 
 export function useBooktimeAllUpcoming(
@@ -124,31 +100,28 @@ export function useBooktimeAllUpcoming(
     void runSharedLoad(clubsRef.current, enabled, connectedKey, refreshKey > 0);
   }, [connectedKey, enabled, refreshKey]);
 
-  useSyncExternalStore(subscribeShared, getSharedVersion, getSharedVersion);
+  const snapshot = useSyncExternalStore(
+    subscribeShared,
+    () => getSnapshot(connectedKey),
+    () => getSnapshot(connectedKey),
+  );
 
   const reload = useCallback(async () => {
     await runSharedLoad(clubsRef.current, enabled, connectedKey, true);
   }, [connectedKey, enabled]);
 
-  const bookings =
-    sharedState.connectedKey === connectedKey ? sharedState.bookings : [];
-  const loading =
-    sharedState.connectedKey === connectedKey ? sharedState.loading : false;
-
   return {
-    bookings,
-    loading,
+    bookings: snapshot.bookings,
+    loading: snapshot.loading,
     reload,
     removeBooking: (bookingId: string) => {
       invalidateBooktimeAllUpcomingCache();
-      if (sharedState.connectedKey === connectedKey) {
-        sharedState = {
-          ...sharedState,
-          bookings: sharedState.bookings.filter((booking) => booking.uuid !== bookingId),
-          version: sharedState.version,
-        };
-        notifyShared();
-      }
+      const current = sharedByKey.get(connectedKey);
+      if (!current) return;
+      setKeyState(connectedKey, {
+        ...current,
+        bookings: current.bookings.filter((booking) => booking.uuid !== bookingId),
+      });
     },
   };
 }

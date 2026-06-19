@@ -20,20 +20,19 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
-  const [localRefreshKey, setLocalRefreshKey] = useState(0);
-  const combinedRefreshKey = refreshKey + localRefreshKey;
+  const [pastRefreshKey, setPastRefreshKey] = useState(0);
   const connectedClubs = useMemo(() => clubs.filter((c) => c.connected && c.companyId), [clubs]);
   const { bookings: upcoming, loading: upcomingLoading, removeBooking } = useBooktimeAllUpcoming(
     clubs,
     true,
-    combinedRefreshKey
+    refreshKey,
   );
   const allowedHoursToCancelByClubId = useBooktimeCancelPoliciesForClubs(clubs, connectedClubs.length > 0);
   const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
 
   const handleCanceled = (bookingId: string) => {
     removeBooking(bookingId);
-    setLocalRefreshKey((k) => k + 1);
+    setPastRefreshKey((k) => k + 1);
     onBookingsChanged();
   };
 
@@ -77,7 +76,7 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged
       <BooktimePastBookingsSection
         clubs={clubs}
         displaySettings={displaySettings}
-        refreshKey={combinedRefreshKey}
+        refreshKey={refreshKey + pastRefreshKey}
         showClubName
       />
     </div>
