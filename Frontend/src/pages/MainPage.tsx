@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useShallow } from 'zustand/react/shallow';
 import { MainLayout } from '@/layouts/MainLayout';
@@ -21,6 +21,7 @@ import { UserTeamPage } from './UserTeamPage';
 import { UserProfilePage } from './UserProfilePage';
 import { useAuthStore } from '@/store/authStore';
 import { hasEnabledSports } from '@/utils/profileSports';
+import { isMainTabRootPath, scrollAppToTop } from '@/utils/appScroll';
 
 function MarketplaceContent() {
   const location = useLocation();
@@ -53,6 +54,11 @@ export const MainPage = () => {
   );
 
   const showGameTabs = hasEnabledSports(user);
+
+  useLayoutEffect(() => {
+    if (!isMainTabRootPath(location.pathname)) return;
+    scrollAppToTop('auto');
+  }, [location.pathname]);
 
   useEffect(() => {
     if (parsed.place !== 'home') return;

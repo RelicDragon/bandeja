@@ -1,3 +1,9 @@
+const MAIN_TAB_ROOT_PATHS = ['/', '/find', '/chats', '/leaderboard', '/marketplace'] as const;
+
+export function isMainTabRootPath(pathname: string): boolean {
+  return MAIN_TAB_ROOT_PATHS.some((root) => pathname === root || pathname === `${root}/`);
+}
+
 /** Scroll container: #root on Capacitor, window/document on web. */
 export function getAppScrollElement(): HTMLElement | null {
   if (!document.body.classList.contains('capacitor-app')) {

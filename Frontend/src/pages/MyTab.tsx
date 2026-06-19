@@ -39,6 +39,7 @@ import { useDeclineInvite } from '@/hooks/useDeclineInvite';
 import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
+import { scrollAppToTop } from '@/utils/appScroll';
 
 const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string; entityType?: string }>(
   list: T[] = [],
@@ -98,7 +99,7 @@ export const MyTab = () => {
   const hideHomeHeroAd = isHomeHeroAdBlocked(user, primarySport, questionnaireStatus);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
+    scrollAppToTop('auto');
   }, [homeTab]);
 
   const [loading, setLoading] = useState(true);
