@@ -293,6 +293,7 @@ export class BooktimeClient {
       return await this.requestOnce<T>(path, options);
     } catch (err) {
       const status = err && typeof err === 'object' && 'status' in err ? Number((err as { status: number }).status) : 0;
+      const auth = options.auth ?? false;
       if (auth && (status === 401 || status === 403)) {
         const refreshed = await this.refreshAccessToken();
         if (refreshed) {
