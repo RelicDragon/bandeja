@@ -102,7 +102,6 @@ export function ConnectedClubsBookingsPage() {
           <ConnectedClubsBookingsTab
             clubs={clubs}
             refreshKey={bookingsRefreshKey}
-            onBookingsChanged={() => setBookingsRefreshKey((k) => k + 1)}
           />
         ) : (
           <ConnectedClubsIntegrationsTab

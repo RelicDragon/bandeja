@@ -87,6 +87,12 @@ function runSharedLoad(
   return loadPromise;
 }
 
+export function resetBooktimeAllUpcomingSharedState(): void {
+  sharedByKey.clear();
+  inFlightByKey.clear();
+  notifyShared();
+}
+
 export function useBooktimeAllUpcoming(
   clubs: BooktimeMyClubRow[],
   enabled: boolean,

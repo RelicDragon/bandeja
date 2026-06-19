@@ -13,10 +13,9 @@ import { useBooktimeCancelPoliciesForClubs } from './useBooktimeCancelPolicy';
 type Props = {
   clubs: BooktimeMyClubRow[];
   refreshKey: number;
-  onBookingsChanged: () => void;
 };
 
-export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged }: Props) {
+export function ConnectedClubsBookingsTab({ clubs, refreshKey }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
@@ -33,7 +32,6 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey, onBookingsChanged
   const handleCanceled = (bookingId: string) => {
     removeBooking(bookingId);
     setPastRefreshKey((k) => k + 1);
-    onBookingsChanged();
   };
 
   if (connectedClubs.length === 0) {

@@ -173,6 +173,7 @@ export function invalidateBooktimeAllUpcomingCache(): void {
   inFlightKey = '';
   companyUpcomingCache.clear();
   companyUpcomingInFlight.clear();
+  persistenceHydrated = false;
   void clearBooktimeUpcomingPersistedCache();
 }
 
