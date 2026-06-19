@@ -470,12 +470,17 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
   const prevChatNearBottomReportedRef = useRef(true);
   /** Snapshot from previous effect — survives post-grow ResizeObserver clearing near-bottom. */
   const wasAtBottomBeforeGrowRef = useRef(true);
+  /** Track if initial smooth scroll to bottom has been performed for current thread. */
+  const initialSmoothScrollDoneRef = useRef(false);
+  const prevIsInitialLoadRef = useRef(isInitialLoad);
+  const prevIsLoadingMessagesRef = useRef(isLoadingMessages);
 
   useLayoutEffect(() => {
     const cb = onChatNearBottomRef.current;
     if (!threadScrollKey || !cb) return;
     prevChatNearBottomReportedRef.current = true;
     wasAtBottomBeforeGrowRef.current = true;
+    initialSmoothScrollDoneRef.current = false;
     cb(true);
   }, [threadScrollKey]);
 
@@ -531,6 +536,52 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
       }, 500);
     }
   }, [isLoadingMore]);
+
+  /** Smooth scroll to bottom after initial load completes, if user hasn't scrolled away. */
+  useEffect(() => {
+    const wasInitialLoad = prevIsInitialLoadRef.current;
+    const wasLoadingMessages = prevIsLoadingMessagesRef.current;
+    const isLoadComplete = wasInitialLoad && !isInitialLoad;
+    const isMessagesLoadComplete = wasLoadingMessages && !isLoadingMessages;
+    const shouldTrigger = isLoadComplete || isMessagesLoadComplete;
+
+    prevIsInitialLoadRef.current = isInitialLoad;
+    prevIsLoadingMessagesRef.current = isLoadingMessages;
+
+    if (!shouldTrigger) return;
+    if (initialSmoothScrollDoneRef.current) return;
+    if (!threadScrollKey) return;
+    if (messages.length === 0) return;
+
+    // Only apply smooth scroll if we were meant to open at bottom
+    const shouldScrollToBottom = openScrollAtBottomRef.current;
+    if (!shouldScrollToBottom) return;
+
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    // Check if user is still near bottom (hasn't manually scrolled away)
+    const threshold = 120;
+    const nearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+
+    if (!nearBottom) {
+      // User scrolled away, don't force scroll
+      initialSmoothScrollDoneRef.current = true;
+      return;
+    }
+
+    // Wait for layout to settle before smooth scrolling
+    const timer = setTimeout(() => {
+      if (layoutSettlingRef.current) {
+        // Still settling, try again later
+        return;
+      }
+      initialSmoothScrollDoneRef.current = true;
+      scrollToBottomSmooth();
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [isInitialLoad, isLoadingMessages, threadScrollKey, messages.length, scrollToBottomSmooth]);
 
   useEffect(() => {
     const container = messagesContainerRef.current;
