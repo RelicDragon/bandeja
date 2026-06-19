@@ -54,8 +54,8 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
     () => resolveClubSportsList(clubSportsProp, courts),
     [clubSportsProp, courts],
   );
-  const showSportTabs = shouldShowCourtSportTabs(clubSportsProp, courts);
   const sportFilter = effectiveCourtSportFilter(clubSportsProp, preferredSport ?? undefined);
+  const showSportTabs = shouldShowCourtSportTabs(clubSportsProp, courts, preferredSport);
   const courtsInClub = useMemo(
     () => filterCourtsByClubSports(courts, clubSportsProp),
     [courts, clubSportsProp],
@@ -67,8 +67,8 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
   const prevGridClubIdRef = useRef(club?.id);
 
   useEffect(() => {
-    if (prevGridClubIdRef.current === club?.id) return;
-    prevGridClubIdRef.current = club?.id;
+    const clubChanged = prevGridClubIdRef.current !== club?.id;
+    if (clubChanged) prevGridClubIdRef.current = club?.id;
     setActiveSportTab(resolveDefaultCourtSportTab(clubSports, sportFilter));
   }, [club?.id, clubSports, sportFilter]);
 

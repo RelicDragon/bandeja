@@ -145,6 +145,25 @@ describe('buildLinkBookingRequest', () => {
     });
   });
 
+  it('derives courtId from booking resource when explicit courtId is omitted', () => {
+    const booking = {
+      uuid: 'booking-1',
+      bookingStart: '2026-06-19T09:00:00.000Z',
+      bookingEnd: '2026-06-19T10:00:00.000Z',
+      bookingResource: { id: 'ext-a' },
+    };
+    const game = {
+      id: 'game-1',
+      timeIsSet: false,
+      clubId: null,
+      courtId: null,
+    };
+    const body = buildLinkBookingRequest(game, booking, club);
+    expect(body.snapshot.courtId).toBe('court-a');
+    expect(body.gamePatch?.courtId).toBe('court-a');
+    expect(body.gamePatch?.clubId).toBe('club-1');
+  });
+
   it('skips datetime patch when requested', () => {
     const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
     const game = {

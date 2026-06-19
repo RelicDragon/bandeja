@@ -405,9 +405,10 @@ Frontend/e2e/
 |----|------|-------|----------|
 | C-13 | Club selection | Pick club | Courts load |
 | C-47 | Club modal sport filter | Create game with sport TENNIS → open club modal | Only clubs with TENNIS in `sports` or matching/null-sport courts listed |
-| C-48 | Court grid sport filter | Pick multi-sport club → view court grid | Only courts for selected sport (+ null-sport courts) shown |
+| C-48 | Court grid sport filter | Pick multi-sport club → view court grid (create-game or game-details edit) | No Padel/Tennis sport switcher tabs; only courts for game sport (+ null-sport courts) shown |
 | C-49 | Sport change clears club | Pick padel-only club → switch sport to TENNIS | Club/court/booking selection cleared; club picker empty |
 | C-50 | Sport change prunes courts | Multi-sport club, padel courts selected → switch to TENNIS | Padel court selections removed; TENNIS courts remain selectable |
+| C-51 | Booktime tennis courts (Elite/KSC) | Create TENNIS game → Elite Padel or KSC | Elite: Tennis Court 1–5 listed; KSC: Tennis Court 1–4 + Betonski teren listed; padel halls (Court 1–7) not shown |
 | C-13a | Club booking connect banner | Open club detail for BOOKTIME club, not connected | Connect banner shown |
 | C-13b | Club booking OTP connect | Phone + OTP (existing account) | Connected chip; GET auth has no tokens |
 | C-13c | Club booking connect hidden | BOOKTIME club already connected | No connect banner |

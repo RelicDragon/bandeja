@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Plus, X, Edit3, Save, Home } from 'lucide-react';
 import { Card } from '@/components';
-import { Court, EntityType } from '@/types';
+import { Court, EntityType, Sport } from '@/types';
 import { gameCourtsApi, GameCourt } from '@/api/gameCourts';
 import { CourtModal } from '@/components/CourtModal';
 
@@ -11,6 +11,8 @@ interface MultipleCourtsSelectorProps {
   courts: Court[];
   selectedClub: string;
   entityType: EntityType;
+  preferredSport?: Court['sport'];
+  clubSports?: Sport[] | null;
   isEditing?: boolean;
   initialGameCourts?: GameCourt[];
   onCourtsChange?: (courtIds: string[]) => void;
@@ -22,6 +24,8 @@ export const MultipleCourtsSelector = ({
   courts,
   selectedClub,
   entityType,
+  preferredSport,
+  clubSports,
   isEditing = true,
   initialGameCourts = [],
   onCourtsChange,
@@ -465,6 +469,8 @@ export const MultipleCourtsSelector = ({
         onSelect={handleAddCourt}
         entityType={entityType}
         showNotBookedOption={false}
+        preferredSport={preferredSport}
+        clubSports={clubSports}
       />
     </>
   );

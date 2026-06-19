@@ -1,15 +1,20 @@
 import { Sport } from '@prisma/client';
 import prisma from '../../config/database';
 import { BOOKING_ERROR_KEYS } from '../../shared/booking/errorKeys';
+import {
+  courtNamesConflictForSport,
+  inferCourtSportFromBooktimeResource,
+  tennisCourtDisplayName,
+  type BooktimeResourceForSport,
+} from '../../shared/booktime/inferCourtSport';
 import { ApiError } from '../../utils/ApiError';
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 import { parseBooktimeIntegrationConfig } from '../../shared/clubIntegration';
 import { syncClubSportsFromCourt } from '../../shared/clubSports';
 
-export type BooktimeCompanyResource = {
+export type BooktimeCompanyResource = BooktimeResourceForSport & {
   uuid?: string;
   bookingResourceId?: string;
-  name?: string;
 };
 
 export type BooktimeCompanyImportPayload = {
@@ -24,6 +29,26 @@ function resourceExternalId(resource: BooktimeCompanyResource): string | null {
 
 function normalizeCourtName(name: string): string {
   return name.trim().toLowerCase();
+}
+
+function resolveImportedCourtName(
+  resourceName: string,
+  inferredSport: Sport | null,
+  courtsByName: Map<string, { id: string; sport: Sport | null }>,
+): string {
+  if (inferredSport === Sport.TENNIS) {
+    const tennisName = tennisCourtDisplayName(resourceName);
+    if (!courtsByName.has(normalizeCourtName(tennisName))) {
+      return tennisName;
+    }
+  }
+
+  const normalizedResourceName = normalizeCourtName(resourceName);
+  const existing = courtsByName.get(normalizedResourceName);
+  if (!existing) return resourceName;
+  if (!courtNamesConflictForSport(existing.sport, inferredSport)) return resourceName;
+  if (inferredSport === Sport.TENNIS) return tennisCourtDisplayName(resourceName);
+  return `${resourceName} (${inferredSport ?? 'Multi'})`;
 }
 
 export class BooktimeImportCourtsService {
@@ -51,10 +76,10 @@ export class BooktimeImportCourtsService {
     const courtsByExternalId = new Map(
       club.courts
         .filter((c) => c.externalCourtId)
-        .map((c) => [c.externalCourtId!, c])
+        .map((c) => [c.externalCourtId!, c]),
     );
     const courtsByName = new Map(
-      club.courts.map((c) => [normalizeCourtName(c.name), c])
+      club.courts.map((c) => [normalizeCourtName(c.name), c]),
     );
 
     let created = 0;
@@ -69,18 +94,24 @@ export class BooktimeImportCourtsService {
         continue;
       }
 
+      const inferredSport = inferCourtSportFromBooktimeResource(resource, defaultSport);
       const byExternal = courtsByExternalId.get(externalCourtId);
       if (byExternal) {
         const needsLink = !byExternal.externalCourtId;
         const needsIntegrationName = byExternal.integrationCourtName !== resourceName;
-        if (needsLink || needsIntegrationName) {
+        const needsSport = byExternal.sport !== inferredSport;
+        if (needsLink || needsIntegrationName || needsSport) {
           await prisma.court.update({
             where: { id: byExternal.id },
             data: {
               ...(needsLink ? { externalCourtId } : {}),
               integrationCourtName: resourceName,
+              ...(needsSport ? { sport: inferredSport } : {}),
             },
           });
+          if (needsSport && inferredSport != null) {
+            await syncClubSportsFromCourt(clubId, inferredSport);
+          }
           updated += 1;
         } else {
           skipped += 1;
@@ -89,29 +120,39 @@ export class BooktimeImportCourtsService {
       }
 
       const byName = courtsByName.get(normalizeCourtName(resourceName));
-      if (byName) {
+      if (byName && !courtNamesConflictForSport(byName.sport, inferredSport)) {
         await prisma.court.update({
           where: { id: byName.id },
-          data: { externalCourtId, integrationCourtName: resourceName },
+          data: {
+            externalCourtId,
+            integrationCourtName: resourceName,
+            sport: inferredSport,
+          },
         });
-        courtsByExternalId.set(externalCourtId, { ...byName, externalCourtId });
+        if (inferredSport != null) {
+          await syncClubSportsFromCourt(clubId, inferredSport);
+        }
+        courtsByExternalId.set(externalCourtId, { ...byName, externalCourtId, sport: inferredSport });
         updated += 1;
         continue;
       }
 
-      await syncClubSportsFromCourt(clubId, defaultSport);
+      const displayName = resolveImportedCourtName(resourceName, inferredSport, courtsByName);
+      if (inferredSport != null) {
+        await syncClubSportsFromCourt(clubId, inferredSport);
+      }
       const court = await prisma.court.create({
         data: {
           clubId,
-          name: resourceName,
+          name: displayName,
           externalCourtId,
           integrationCourtName: resourceName,
-          sport: defaultSport,
+          sport: inferredSport,
           isActive: true,
         },
       });
       courtsByExternalId.set(externalCourtId, court);
-      courtsByName.set(normalizeCourtName(resourceName), court);
+      courtsByName.set(normalizeCourtName(displayName), court);
       created += 1;
     }
 

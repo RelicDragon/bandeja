@@ -46,7 +46,7 @@ export type BooktimeBookingRecord = {
   bookingStart: string;
   bookingEnd: string;
   bookingResourceId?: string;
-  bookingResource?: { uuid?: string; bookingResourceId?: string; name?: string };
+  bookingResource?: { id?: string; uuid?: string; bookingResourceId?: string; name?: string };
   status?: string;
   price?: number;
   isPaid?: boolean;

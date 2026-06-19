@@ -919,6 +919,8 @@ export const EditLeagueGameTeamsModal = ({
             setIsCourtModalOpen(false);
           }}
           entityType={game.entityType}
+          preferredSport={game.sport}
+          clubSports={clubs.find((c) => c.id === selectedClubId)?.sports}
         />
       )}
 

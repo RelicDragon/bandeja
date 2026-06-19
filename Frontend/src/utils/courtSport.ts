@@ -29,7 +29,11 @@ export function resolveClubSportsList(
 export function shouldShowCourtSportTabs(
   clubSports: Sport[] | undefined | null,
   courts: Court[],
+  preferredSport?: Sport | null,
 ): boolean {
+  if (effectiveCourtSportFilter(clubSports, preferredSport ?? undefined)) {
+    return false;
+  }
   return resolveClubSportsList(clubSports, courts).length >= 2;
 }
 

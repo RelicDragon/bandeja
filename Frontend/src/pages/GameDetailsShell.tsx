@@ -1648,6 +1648,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               courts={courts}
               selectedClub={game.clubId || ''}
               entityType={game.entityType}
+              preferredSport={game.sport}
+              clubSports={clubs.find((c) => c.id === game.clubId)?.sports}
               isEditing={canEdit}
               initialGameCourts={game.gameCourts || []}
               onSave={async () => {
@@ -1916,6 +1918,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           selectedId={isEditMode ? editFormData.courtId || 'notBooked' : game.courtId || 'notBooked'}
           onSelect={isEditMode ? (courtId) => handleFormDataChange({courtId: courtId === 'notBooked' ? '' : courtId}) : handleCourtSelect}
           entityType={game.entityType}
+          preferredSport={game.sport}
+          clubSports={clubs.find((c) => c.id === game.clubId)?.sports}
         />
       )}
 

@@ -173,7 +173,12 @@ type BooktimeCourtRef = {
 
 export function bookingResourceExternalId(booking: BooktimeBookingRecord): string | null {
   const nested = booking.bookingResource;
-  for (const candidate of [booking.bookingResourceId, nested?.bookingResourceId, nested?.uuid]) {
+  for (const candidate of [
+    booking.bookingResourceId,
+    nested?.bookingResourceId,
+    nested?.uuid,
+    nested?.id,
+  ]) {
     if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
   }
   return null;

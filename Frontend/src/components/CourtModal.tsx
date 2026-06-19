@@ -49,8 +49,8 @@ export const CourtModal = ({
     () => resolveClubSportsList(clubSportsProp, courts),
     [clubSportsProp, courts],
   );
-  const showSportTabs = shouldShowCourtSportTabs(clubSportsProp, courts);
   const sportFilter = effectiveCourtSportFilter(clubSportsProp, preferredSport ?? undefined);
+  const showSportTabs = shouldShowCourtSportTabs(clubSportsProp, courts, preferredSport);
   const courtsInClub = useMemo(
     () => filterCourtsByClubSports(courts, clubSportsProp),
     [courts, clubSportsProp],

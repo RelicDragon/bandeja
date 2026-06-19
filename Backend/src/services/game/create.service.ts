@@ -140,10 +140,21 @@ export class GameCreateService {
 
     let cityId: string | null = null;
     const createCourtIds = normalizeCreateCourtIds(data);
+    const snapshotCourtIds =
+      createCourtIds ??
+      (Array.isArray(booking.bookingSnapshots)
+        ? Array.from(
+            new Set(
+              booking.bookingSnapshots
+                .map((snap) => snap.courtId)
+                .filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
+            ),
+          )
+        : null);
     const { primaryCourtId, gameCourtIds } = await resolveCreateCourts(
       data.clubId,
       data.courtId,
-      createCourtIds,
+      snapshotCourtIds?.length ? snapshotCourtIds : null,
     );
     data.courtId = primaryCourtId;
 

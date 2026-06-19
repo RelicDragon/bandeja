@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Sport } from '@prisma/client';
+import { generateResultsHTML } from '../../src/services/telegram/results-html.service';
 import { resolveUserSportSnapshot } from '../../src/services/user/userSportProfile.service';
 import { projectEmbeddedUserByPrimarySport } from '../../src/services/user/projectEmbeddedBasicUsers';
 
@@ -302,11 +303,9 @@ function testResolveSnapshotUnit(): void {
   assert(followingListUser.level === 2.5, 'non-game embed uses primary sport profile level not global User.level');
   assert(followingListUser.reliability === 10, 'non-game embed uses primary sport profile reliability');
 
-  const { generateResultsHTML } = require('../../src/services/telegram/results-html.service') as {
-    generateResultsHTML: (game: unknown, lang?: string) => string;
-  };
   const html = generateResultsHTML(
     {
+      id: 'g1',
       sport: Sport.TENNIS,
       affectsRating: true,
       outcomes: [

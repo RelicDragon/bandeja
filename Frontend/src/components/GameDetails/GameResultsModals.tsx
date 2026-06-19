@@ -169,6 +169,7 @@ export const GameResultsModals = ({
         onSelect={onCourtSelect}
         entityType="GAME"
         showNotBookedOption={false}
+        preferredSport={currentGame?.sport}
       />
     );
   }

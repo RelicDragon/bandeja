@@ -519,11 +519,12 @@ export function buildLinkBookingToGameUpdate(
   skipGameDatetimePatch = false,
 ): Partial<LinkBookingGameRef & { hasBookedCourt?: boolean }> {
   const tz = resolveBooktimeClubTimezone({ club, game, explicit: timeZone });
+  const snapshot = buildLinkBookingSnapshot(booking, club, courtId, tz);
+  const resolvedCourtId = courtId ?? snapshot?.courtId;
   const update: Partial<LinkBookingGameRef & { hasBookedCourt?: boolean }> = {
     hasBookedCourt: true,
   };
   if (!skipGameDatetimePatch && gameNeedsDatetimeUpdateForLink(game, booking, tz)) {
-    const snapshot = buildLinkBookingSnapshot(booking, club, courtId, tz);
     update.startTime = snapshot?.bookingStart ?? booking.bookingStart;
     update.endTime = snapshot?.bookingEnd ?? booking.bookingEnd;
     update.timeIsSet = true;
@@ -531,8 +532,8 @@ export function buildLinkBookingToGameUpdate(
   if (club.clubId && game.clubId !== club.clubId) {
     update.clubId = club.clubId;
   }
-  if (courtId && game.courtId !== courtId) {
-    update.courtId = courtId;
+  if (resolvedCourtId && game.courtId !== resolvedCourtId) {
+    update.courtId = resolvedCourtId;
   }
   return update;
 }

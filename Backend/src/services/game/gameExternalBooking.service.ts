@@ -230,11 +230,11 @@ async function syncHasBookedCourtAndTimes(tx: Tx, gameId: string): Promise<void>
   const linkCount = await tx.gameExternalBooking.count({ where: { gameId } });
   const game = await tx.game.findUnique({
     where: { id: gameId },
-    select: { timeOverride: true },
+    select: { timeOverride: true, courtId: true, clubId: true },
   });
   if (!game) throw new ApiError(404, 'Game not found');
 
-  const patch: Prisma.GameUpdateInput = {
+  const patch: Prisma.GameUncheckedUpdateInput = {
     hasBookedCourt: linkCount > 0,
   };
 
@@ -244,6 +244,26 @@ async function syncHasBookedCourtAndTimes(tx: Tx, gameId: string): Promise<void>
       patch.startTime = derived.startTime;
       patch.endTime = derived.endTime;
       patch.timeIsSet = true;
+    }
+  }
+
+  if (!game.courtId && linkCount > 0) {
+    const bookingWithCourt = await tx.gameExternalBooking.findFirst({
+      where: { gameId, courtId: { not: null } },
+      orderBy: { createdAt: 'asc' },
+      select: { courtId: true },
+    });
+    if (bookingWithCourt?.courtId) {
+      patch.courtId = bookingWithCourt.courtId;
+      if (!game.clubId) {
+        const court = await tx.court.findUnique({
+          where: { id: bookingWithCourt.courtId },
+          select: { clubId: true },
+        });
+        if (court?.clubId) {
+          patch.clubId = court.clubId;
+        }
+      }
     }
   }
 

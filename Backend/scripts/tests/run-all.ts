@@ -639,6 +639,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'booktime infer court sport unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'shared', 'booktime', 'inferCourtSport.test.ts'),
+    ],
+  },
+  {
     label: 'booktime no outbound HTTP',
     command: process.execPath,
     args: [

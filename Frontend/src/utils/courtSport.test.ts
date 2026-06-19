@@ -38,6 +38,7 @@ describe('courtSport', () => {
     const courts = [court('a', 'PADEL'), court('b', 'TENNIS')];
     expect(resolveClubSportsList(['PADEL', 'TENNIS'], courts)).toEqual(['PADEL', 'TENNIS']);
     expect(shouldShowCourtSportTabs(['PADEL', 'TENNIS'], courts)).toBe(true);
+    expect(shouldShowCourtSportTabs(['PADEL', 'TENNIS'], courts, 'TENNIS')).toBe(false);
     expect(shouldShowCourtSportTabs(['PADEL'], courts)).toBe(false);
   });
 
