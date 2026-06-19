@@ -1,42 +1,28 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Settings } from 'lucide-react';
-import { useBooktimeMyClubs } from '@/hooks/useBooktimeMyClubs';
-import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
+import type { MyTabBooktimeSnapshot } from '@/hooks/useMyTabBooktime';
 import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsCardsSkeleton } from './BooktimeBookingsCardsSkeleton';
 import { MyTabConnectBanner } from './MyTabConnectBanner';
 import { useBooktimeCancelPoliciesForClubs } from './useBooktimeCancelPolicy';
-import { useShellNavStore } from '@/store/shellNavStore';
 
 const PREVIEW_LIMIT = 3;
 
-export function MyTabBookingsSection() {
+type Props = {
+  booktime: MyTabBooktimeSnapshot;
+};
+
+export function MyTabBookingsSection({ booktime }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const activeTab = useShellNavStore((s) => s.activeTab);
-  const { data: myClubs, reload: reloadMyClubs } = useBooktimeMyClubs(true);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const clubs = useMemo(() => myClubs?.clubs ?? [], [myClubs?.clubs]);
-  const { bookings, loading, removeBooking } = useBooktimeAllUpcoming(clubs, true, refreshKey);
+  const { myClubs, clubs, bookings, bookingsLoading, removeBooking } = booktime;
+  const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
   const allowedHoursToCancelByClubId = useBooktimeCancelPoliciesForClubs(
     clubs,
     myClubs != null && myClubs.connectedCount > 0,
   );
-
-  const prevActiveTab = useRef(activeTab);
-  useEffect(() => {
-    if (activeTab !== 'calendar') {
-      prevActiveTab.current = activeTab;
-      return;
-    }
-    if (prevActiveTab.current !== 'calendar') {
-      setRefreshKey((k) => k + 1);
-      void reloadMyClubs();
-    }
-    prevActiveTab.current = activeTab;
-  }, [activeTab, reloadMyClubs]);
 
   if (!myClubs) {
     return <BooktimeBookingsCardsSkeleton count={PREVIEW_LIMIT} compact />;
@@ -51,11 +37,9 @@ export function MyTabBookingsSection() {
 
   if (myClubs.connectedCount === 0) return null;
 
-  const clubById = new Map(clubs.map((c) => [c.clubId, c]));
-
   return (
     <div className="space-y-3">
-      {loading ? (
+      {bookingsLoading ? (
         <BooktimeBookingsCardsSkeleton count={PREVIEW_LIMIT} compact />
       ) : bookings.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>

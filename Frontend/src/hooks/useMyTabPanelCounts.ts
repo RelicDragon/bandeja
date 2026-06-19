@@ -1,7 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import type { Game, UserTeam, UserTeamMembership } from '@/types';
-import { useBooktimeMyClubs } from '@/hooks/useBooktimeMyClubs';
-import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
+import type { MyTabBooktimeSnapshot } from '@/hooks/useMyTabPanelCounts';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { leagueSeasonHubsFromGames } from '@/utils/leagueSeasonHubsFromGames';
 
@@ -20,10 +19,12 @@ function countUserTeamTiles(teams: UserTeam[], memberships: UserTeamMembership[]
   return teams.length + asParticipant.length + pending.length;
 }
 
-export function useMyTabPanelCounts(games: Game[]): MyTabPanelCounts {
-  const { data: myClubs } = useBooktimeMyClubs(true);
-  const clubs = useMemo(() => myClubs?.clubs ?? [], [myClubs?.clubs]);
-  const { bookings } = useBooktimeAllUpcoming(clubs, true);
+export function useMyTabPanelCounts(
+  games: Game[],
+  booktime: Pick<MyTabBooktimeSnapshot, 'myClubs' | 'bookings'>,
+): MyTabPanelCounts {
+  const { myClubs, bookings } = booktime;
+
   const teams = useUserTeamsStore((s) => s.teams);
   const memberships = useUserTeamsStore((s) => s.memberships);
   const refreshAll = useUserTeamsStore((s) => s.refreshAll);

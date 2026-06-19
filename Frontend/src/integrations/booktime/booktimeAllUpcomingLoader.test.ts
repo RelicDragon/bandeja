@@ -45,4 +45,23 @@ describe('loadAllBooktimeUpcoming', () => {
     await loadAllBooktimeUpcoming([club], true);
     expect(hydrateBooktimeSession).toHaveBeenCalledTimes(1);
   });
+
+  it('fetches get-upcoming once per companyId across connected clubs', async () => {
+    const { getBooktimeClient } = await import('./session');
+    const getUpcomingBookings = vi.fn(async () => ({ bookings: [] }));
+    vi.mocked(getBooktimeClient).mockReturnValue({
+      isAuthenticated: true,
+      getUpcomingBookings,
+    } as never);
+
+    const secondClub: BooktimeMyClubRow = {
+      ...club,
+      clubId: 'club-2',
+      clubName: 'Other court',
+    };
+
+    invalidateBooktimeAllUpcomingCache();
+    await loadAllBooktimeUpcoming([club, secondClub], true);
+    expect(getUpcomingBookings).toHaveBeenCalledTimes(1);
+  });
 });

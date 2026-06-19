@@ -17,6 +17,12 @@ let inFlight: Promise<AggregatedBooktimeBooking[]> | null = null;
 let inFlightKey = '';
 let cached: { key: string; bookings: AggregatedBooktimeBooking[]; at: number } | null = null;
 
+const companyUpcomingCache = new Map<
+  string,
+  { at: number; bookings: BooktimeBookingRecord[] }
+>();
+const companyUpcomingInFlight = new Map<string, Promise<BooktimeBookingRecord[]>>();
+
 function connectedClubsKey(clubs: BooktimeMyClubRow[]): string {
   return clubs
     .filter((club) => club.connected && club.companyId)
@@ -25,31 +31,88 @@ function connectedClubsKey(clubs: BooktimeMyClubRow[]): string {
     .join('|');
 }
 
+function groupConnectedClubsByCompany(
+  connectedClubs: BooktimeMyClubRow[],
+): Map<string, BooktimeMyClubRow[]> {
+  const byCompany = new Map<string, BooktimeMyClubRow[]>();
+  for (const club of connectedClubs) {
+    const companyId = club.companyId!;
+    const group = byCompany.get(companyId);
+    if (group) {
+      group.push(club);
+    } else {
+      byCompany.set(companyId, [club]);
+    }
+  }
+  return byCompany;
+}
+
+async function fetchUpcomingForCompany(
+  representativeClub: BooktimeMyClubRow,
+): Promise<BooktimeBookingRecord[]> {
+  const companyId = representativeClub.companyId!;
+  const now = Date.now();
+  const cachedCompany = companyUpcomingCache.get(companyId);
+  if (cachedCompany && now - cachedCompany.at < CACHE_TTL_MS) {
+    return cachedCompany.bookings;
+  }
+
+  const existing = companyUpcomingInFlight.get(companyId);
+  if (existing) return existing;
+
+  const promise = (async () => {
+    const clubTimeZone = resolveBooktimeMyClubTimezone(representativeClub);
+    await hydrateBooktimeSession(
+      representativeClub.clubId,
+      companyId,
+      clubTimeZone,
+    );
+    const client = getBooktimeClient(
+      representativeClub.clubId,
+      companyId,
+      clubTimeZone,
+    );
+    if (!client.isAuthenticated) return [];
+    const res = await client.getUpcomingBookings(0, 20);
+    const bookings = res.bookings ?? [];
+    companyUpcomingCache.set(companyId, { at: Date.now(), bookings });
+    return bookings;
+  })().finally(() => {
+    companyUpcomingInFlight.delete(companyId);
+  });
+
+  companyUpcomingInFlight.set(companyId, promise);
+  return promise;
+}
+
 async function fetchAllBooktimeUpcoming(
   connectedClubs: BooktimeMyClubRow[],
 ): Promise<AggregatedBooktimeBooking[]> {
   const all: AggregatedBooktimeBooking[] = [];
-  for (const club of connectedClubs) {
+  const byCompany = groupConnectedClubsByCompany(connectedClubs);
+
+  for (const [companyId, companyClubs] of byCompany) {
     try {
-      const clubTimeZone = resolveBooktimeMyClubTimezone(club);
-      await hydrateBooktimeSession(club.clubId, club.companyId!, clubTimeZone);
-      const client = getBooktimeClient(club.clubId, club.companyId!, clubTimeZone);
-      if (!client.isAuthenticated) continue;
-      const res = await client.getUpcomingBookings(0, 20);
-      for (const booking of res.bookings ?? []) {
-        if (!bookingMatchesClubCourts(booking, club.courts)) continue;
-        all.push({
-          ...booking,
-          clubId: club.clubId,
-          clubName: club.clubName,
-          companyId: club.companyId!,
-          courts: club.courts,
-        });
+      const rawBookings = await fetchUpcomingForCompany(companyClubs[0]!);
+      for (const club of companyClubs) {
+        for (const booking of rawBookings) {
+          if (!bookingMatchesClubCourts(booking, club.courts)) continue;
+          all.push({
+            ...booking,
+            clubId: club.clubId,
+            clubName: club.clubName,
+            companyId,
+            courts: club.courts,
+          });
+        }
       }
     } catch (err) {
-      console.error('Club booking upcoming failed for club', club.clubId, err);
+      for (const club of companyClubs) {
+        console.error('Club booking upcoming failed for club', club.clubId, err);
+      }
     }
   }
+
   all.sort((a, b) => booktimeBookingStartMs(a.bookingStart) - booktimeBookingStartMs(b.bookingStart));
   return all;
 }
@@ -58,6 +121,8 @@ export function invalidateBooktimeAllUpcomingCache(): void {
   cached = null;
   inFlight = null;
   inFlightKey = '';
+  companyUpcomingCache.clear();
+  companyUpcomingInFlight.clear();
 }
 
 export async function loadAllBooktimeUpcoming(
