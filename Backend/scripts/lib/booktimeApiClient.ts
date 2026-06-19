@@ -111,8 +111,9 @@ export class BooktimeScriptClient {
         accessToken?: string;
         refreshToken?: string;
       }>('/users/refresh-token', {
-        method: 'PUT',
+        method: 'POST',
         body: { refreshToken: this.refreshToken },
+        auth: true,
       });
       if (!data.accessToken) return false;
       this.accessToken = data.accessToken;

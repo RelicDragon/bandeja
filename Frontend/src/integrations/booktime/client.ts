@@ -215,15 +215,14 @@ export class BooktimeClient {
 
     this.refreshInFlight = (async () => {
       try {
-        // The refresh token endpoint requires the accessToken in the header
-        // Use auth: true to skip /public prefix and send Authorization header
+        // Booktime refresh is POST /users/refresh-token (private); PUT returns 404.
         const data = await this.requestOnce<{
           accessToken?: string;
           refreshToken?: string;
         }>('/users/refresh-token', {
-          method: 'PUT',
+          method: 'POST',
           body: { refreshToken: this.refreshToken! },
-          auth: true, // Use private endpoint (without /public prefix)
+          auth: true,
         });
         if (!data.accessToken) return false;
         this.applyTokens(data.accessToken, data.refreshToken ?? this.refreshToken!);
