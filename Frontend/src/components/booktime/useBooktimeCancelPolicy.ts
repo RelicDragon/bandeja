@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
+import { BooktimeClient } from '@/integrations/booktime/client';
 import { loadBooktimeCompany } from '@/integrations/booktime/bookFlow';
-import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
-import { resolveBooktimeMyClubTimezone } from './booktimeBookingUtils';
 
 export const DEFAULT_BOOKTIME_CANCEL_HOURS = 12;
 
@@ -16,9 +15,7 @@ function resolveAllowedHours(company: { allowedHoursToCancel?: number }): number
 async function loadClubCancelHours(club: BooktimeMyClubRow): Promise<number> {
   if (!club.companyId) return DEFAULT_BOOKTIME_CANCEL_HOURS;
   try {
-    const clubTimeZone = resolveBooktimeMyClubTimezone(club);
-    await hydrateBooktimeSession(club.clubId, club.companyId, clubTimeZone);
-    const client = getBooktimeClient(club.clubId, club.companyId, clubTimeZone);
+    const client = new BooktimeClient({ companyId: club.companyId });
     const company = await loadBooktimeCompany(client, club.companyId);
     return resolveAllowedHours(company);
   } catch {

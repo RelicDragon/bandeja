@@ -14,4 +14,5 @@ export type BooktimeStoredSession = {
   refreshToken: string;
   externalUserId: string;
   companyId: string;
+  expiresAt?: string | null;
 };

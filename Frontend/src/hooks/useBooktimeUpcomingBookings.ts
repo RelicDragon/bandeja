@@ -19,6 +19,7 @@ export function useBooktimeUpcomingBookings(
   connected: boolean,
   enabled: boolean,
   filterCourts?: Court[],
+  refreshKey = 0,
 ) {
   const [bookings, setBookings] = useState<BooktimeBookingRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -73,7 +74,7 @@ export function useBooktimeUpcomingBookings(
 
   useEffect(() => {
     void reload();
-  }, [reload]);
+  }, [reload, refreshKey]);
 
   const removeBooking = useCallback((bookingId: string) => {
     setBookings((prev) => prev.filter((b) => b.uuid !== bookingId));

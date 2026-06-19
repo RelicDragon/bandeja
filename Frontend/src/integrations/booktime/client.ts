@@ -215,15 +215,7 @@ export class BooktimeClient {
 
     this.refreshInFlight = (async () => {
       try {
-        // Booktime refresh is POST /users/refresh-token (private); PUT returns 404.
-        const data = await this.requestOnce<{
-          accessToken?: string;
-          refreshToken?: string;
-        }>('/users/refresh-token', {
-          method: 'POST',
-          body: { refreshToken: this.refreshToken! },
-          auth: true,
-        });
+        const data = await this.refreshRequestOnce();
         if (!data.accessToken) return false;
         this.applyTokens(data.accessToken, data.refreshToken ?? this.refreshToken!);
         return true;
@@ -235,6 +227,43 @@ export class BooktimeClient {
     })();
 
     return this.refreshInFlight;
+  }
+
+  private async refreshRequestOnce(): Promise<{ accessToken?: string; refreshToken?: string }> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (this.accessToken) {
+      headers.Authorization = `Bearer ${this.accessToken}`;
+    }
+
+    const res = await fetch(`${BOOKTIME_API_URL}/users/refresh-token`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        refreshToken: this.refreshToken,
+        companyId: this.companyId,
+      }),
+    });
+
+    const text = await res.text();
+    let data: unknown;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch {
+      data = text;
+    }
+
+    const errBody = data as { errorCode?: string; message?: string; error?: string } | null;
+    const message =
+      (typeof errBody?.message === 'string' && errBody.message) ||
+      (typeof errBody?.error === 'string' && errBody.error) ||
+      (typeof errBody?.errorCode === 'string' && errBody.errorCode) ||
+      res.statusText;
+
+    if (!res.ok) {
+      throw Object.assign(new Error(message), { status: res.status, data });
+    }
+
+    return data as { accessToken?: string; refreshToken?: string };
   }
 
   async request<T>(

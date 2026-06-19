@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club } from '@/types';
 import type { BooktimeMyClubRow } from '@/api/booktime';
@@ -50,12 +50,10 @@ export function BooktimeUpcomingBookings({
     club,
     companyId,
     connected,
-    enabled
+    enabled,
+    undefined,
+    refreshKey,
   );
-
-  useEffect(() => {
-    void reload();
-  }, [refreshKey, reload]);
 
   if (!enabled || !connected) return null;
 
