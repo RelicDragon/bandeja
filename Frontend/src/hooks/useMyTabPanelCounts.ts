@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import type { Game, UserTeam, UserTeamMembership } from '@/types';
-import type { MyTabBooktimeSnapshot } from '@/hooks/useMyTabPanelCounts';
+import type { MyTabBooktimeSnapshot } from '@/hooks/useMyTabBooktime';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { leagueSeasonHubsFromGames } from '@/utils/leagueSeasonHubsFromGames';
 
