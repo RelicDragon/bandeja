@@ -7,6 +7,10 @@ import { es } from 'date-fns/locale/es';
 import { cs } from 'date-fns/locale/cs';
 import { RankingService } from '../ranking.service';
 import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
+import {
+  computeUndoSportStats,
+  resolveRatingStatsAppliedForUndo,
+} from '../results/outcomeStatsSnapshot';
 import { formatSportLabel } from '../shared/notificationSport';
 import { TranslationService } from '../chat/translation.service';
 import { getUserTimezoneFromCityId, formatDateInTimezone, convertToUserTimezone } from '../user-timezone.service';
@@ -39,6 +43,60 @@ function getRelativeDateLabel(date: Date | string, timezone: string, lang: strin
   return format(zonedDate, 'MMM d', { locale });
 }
 
+type OutcomeForSummary = {
+  userId: string;
+  levelBefore: number;
+  levelAfter: number;
+  reliabilityBefore: number;
+  isWinner: boolean;
+  metadata?: unknown;
+};
+
+function formatSportRecord(gamesWon: number, gamesPlayed: number): string {
+  return `${gamesWon}-${gamesPlayed - gamesWon} in ${gamesPlayed} rated games`;
+}
+
+export function resolveParticipantRatingContext(
+  participant: { userId: string; user?: unknown },
+  gameSport: Sport,
+  outcomeByUserId: Map<string, OutcomeForSummary>,
+  gameAffectsRating: boolean,
+): { level: string; reliability: string; sportRecord: string } {
+  const sportSnapshot = participant.user
+    ? resolveUserSportSnapshot(participant.user as Parameters<typeof resolveUserSportSnapshot>[0], gameSport)
+    : null;
+  const outcome = outcomeByUserId.get(participant.userId);
+
+  if (outcome) {
+    const ratingStatsApplied = resolveRatingStatsAppliedForUndo(
+      outcome.metadata as Parameters<typeof resolveRatingStatsAppliedForUndo>[0],
+      gameAffectsRating,
+    );
+    const preGameStats =
+      sportSnapshot != null
+        ? computeUndoSportStats(sportSnapshot, ratingStatsApplied, outcome.isWinner)
+        : null;
+
+    return {
+      level: `${outcome.levelBefore.toFixed(2)} -> ${outcome.levelAfter.toFixed(2)}`,
+      reliability: outcome.reliabilityBefore.toFixed(2),
+      sportRecord:
+        preGameStats != null
+          ? formatSportRecord(preGameStats.gamesWon, preGameStats.gamesPlayed)
+          : 'N/A',
+    };
+  }
+
+  return {
+    level: sportSnapshot != null ? sportSnapshot.level.toFixed(2) : 'N/A',
+    reliability: sportSnapshot != null ? sportSnapshot.reliability.toFixed(2) : 'N/A',
+    sportRecord:
+      sportSnapshot != null
+        ? formatSportRecord(sportSnapshot.gamesWon, sportSnapshot.gamesPlayed)
+        : 'N/A',
+  };
+}
+
 export async function buildResultsSummaryPrompt(
   game: any,
   language: string
@@ -60,20 +118,24 @@ export async function buildResultsSummaryPrompt(
     );
   }
 
+  const outcomeByUserId = new Map<string, OutcomeForSummary>();
+  for (const outcome of game.outcomes ?? []) {
+    outcomeByUserId.set(outcome.userId, outcome);
+  }
+  const gameAffectsRating = Boolean(game.affectsRating);
+
   const participants =
     playingParticipants
       .map((p: any) => {
         const firstName = p.user?.firstName || '';
         const lastName = p.user?.lastName || '';
         const name = `${firstName} ${lastName}`.trim();
-        const sportSnapshot = p.user ? resolveUserSportSnapshot(p.user, gameSport) : null;
-        const level = sportSnapshot != null ? sportSnapshot.level.toFixed(2) : 'N/A';
-        const reliability =
-          sportSnapshot != null ? sportSnapshot.reliability.toFixed(2) : 'N/A';
-        const sportRecord =
-          sportSnapshot != null
-            ? `${sportSnapshot.gamesWon}-${sportSnapshot.gamesPlayed - sportSnapshot.gamesWon} in ${sportSnapshot.gamesPlayed} rated games`
-            : 'N/A';
+        const { level, reliability, sportRecord } = resolveParticipantRatingContext(
+          p,
+          gameSport,
+          outcomeByUserId,
+          gameAffectsRating,
+        );
         const socialLevel = p.user?.socialLevel ? p.user.socialLevel.toFixed(2) : 'N/A';
         const cityRank = cityRankMap.get(p.userId);
         const gamesLast30Days = gamesInLast30DaysMap.get(p.userId) || 0;

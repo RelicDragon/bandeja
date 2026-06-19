@@ -6,7 +6,7 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { refreshClubCourtsCount } from '../utils/refreshClubCourtsCount';
 import { ClubAdminService } from '../services/clubAdmin/clubAdmin.service';
-import { assertCourtSportInClub } from '../shared/clubSports';
+import { assertCourtSportInClub, syncClubSportsFromCourt } from '../shared/clubSports';
 import { normalizeWebCameraUrl } from '../utils/normalizeWebCameraUrl';
 
 async function assertCourtMutationAllowed(req: AuthRequest, clubId: string) {
@@ -102,7 +102,7 @@ export const createCourt = asyncHandler(async (req: AuthRequest, res: Response) 
   if (sport != null && sport !== '' && courtSport === null) {
     throw new ApiError(400, 'Invalid sport');
   }
-  assertCourtSportInClub(club.sports, courtSport);
+  await syncClubSportsFromCourt(clubId, courtSport);
 
   const normalizedWebCameraUrl = normalizeWebCameraUrl(webCameraUrl) ?? null;
 
@@ -138,7 +138,7 @@ export const updateCourt = asyncHandler(async (req: AuthRequest, res: Response) 
 
   const club = await prisma.club.findUnique({
     where: { id: targetClubId },
-    select: { sports: true },
+    select: { id: true },
   });
   if (!club) throw new ApiError(404, 'Club not found');
 
@@ -153,8 +153,8 @@ export const updateCourt = asyncHandler(async (req: AuthRequest, res: Response) 
     if (raw != null && raw !== '' && courtSport == null) {
       throw new ApiError(400, 'Invalid sport');
     }
-    assertCourtSportInClub(club.sports, courtSport);
     updateData.sport = courtSport;
+    await syncClubSportsFromCourt(targetClubId, courtSport);
   }
 
   const court = await prisma.court.update({

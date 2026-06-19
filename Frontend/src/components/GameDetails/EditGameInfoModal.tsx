@@ -39,6 +39,7 @@ import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInli
 import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { shouldUseBooktimeTimeOptions } from '@/hooks/createGameBookingFlow/shouldUseBooktimeTimeOptions';
+import { courtMatchesSportFilter } from '@/utils/courtSport';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price';
 export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
 
@@ -203,6 +204,9 @@ export const EditGameInfoModal = ({
       setHookDuration(whenInitialValues.initialDuration);
       setDisableWhenAutoAdjust(true);
       setModalCourts(game.clubId && courts.length > 0 && courts[0]?.clubId === game.clubId ? courts : []);
+      setSelectedCourtIds(
+        game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : []),
+      );
       setPendingRemoveBookingIds([]);
       setLocationTimeDraft(null);
       setConfirmModalOpen(false);
@@ -258,7 +262,7 @@ export const EditGameInfoModal = ({
     fetchAbortRef.current = ac;
     setIsLoadingCourts(true);
     courtsApi
-      .getByClubId(where.clubId)
+      .getByClubId(where.clubId, { sport: game.sport })
       .then((res) => {
         if (ac.signal.aborted) return;
         setModalCourts(res.data);
@@ -275,7 +279,26 @@ export const EditGameInfoModal = ({
     return () => {
       ac.abort();
     };
-  }, [isOpen, where.clubId, onCourtsChange]);
+  }, [isOpen, where.clubId, game.sport, onCourtsChange]);
+
+  useEffect(() => {
+    if (!isOpen || modalCourts.length === 0) return;
+    setSelectedCourtIds((prev) => {
+      const filtered = prev.filter((id) => {
+        const court = modalCourts.find((c) => c.id === id);
+        return !court || courtMatchesSportFilter(court, game.sport);
+      });
+      return filtered.length === prev.length ? prev : filtered;
+    });
+  }, [isOpen, modalCourts, game.sport]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setWhere((s) => {
+      if (!s.courtId || selectedCourtIds.includes(s.courtId)) return s;
+      return { ...s, courtId: selectedCourtIds[0] ?? '' };
+    });
+  }, [isOpen, selectedCourtIds]);
 
   const selectedClubData = clubs.find((c) => c.id === where.clubId);
   const clubBookingFlowActive =
@@ -578,7 +601,7 @@ export const EditGameInfoModal = ({
       }
 
       if (where.clubId && where.clubId !== game.clubId) {
-        const res = await courtsApi.getByClubId(where.clubId);
+        const res = await courtsApi.getByClubId(where.clubId, { sport: game.sport });
         onCourtsChange?.(res.data);
       }
 

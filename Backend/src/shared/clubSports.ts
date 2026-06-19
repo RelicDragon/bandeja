@@ -1,4 +1,5 @@
 import { Sport } from '@prisma/client';
+import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 
 export const CLUB_SPORT_ORDER: Sport[] = [
@@ -56,4 +57,50 @@ export function assertClubSportsCoverCourtSports(
 export function mergeClubSports(clubSports: Sport[], sport: Sport): Sport[] {
   if (clubSports.includes(sport)) return clubSports;
   return normalizeClubSportsOrder([...clubSports, sport]);
+}
+
+export async function syncClubSportsFromCourt(
+  clubId: string,
+  courtSport: Sport | null | undefined,
+): Promise<void> {
+  if (courtSport == null) return;
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { sports: true },
+  });
+  if (!club) return;
+  const sports = mergeClubSports(club.sports, courtSport);
+  if (sports.length === club.sports.length) return;
+  await prisma.club.update({ where: { id: clubId }, data: { sports } });
+}
+
+export function clubSupportsSport(
+  clubSports: Sport[],
+  courts: Array<{ sport: Sport | null }>,
+  sport: Sport,
+): boolean {
+  if (clubSports.length > 0) {
+    return clubSports.includes(sport);
+  }
+  if (courts.length === 0) return false;
+  return courts.some((court) => court.sport == null || court.sport === sport);
+}
+
+export function assertClubSupportsSport(
+  clubSports: Sport[],
+  courts: Array<{ sport: Sport | null }>,
+  sport: Sport,
+): void {
+  if (!clubSupportsSport(clubSports, courts, sport)) {
+    throw new ApiError(400, `Club does not support sport ${sport}`);
+  }
+}
+
+export function assertCourtMatchesGameSport(
+  courtSport: Sport | null | undefined,
+  gameSport: Sport,
+): void {
+  if (courtSport != null && courtSport !== gameSport) {
+    throw new ApiError(400, `Court sport ${courtSport} does not match game sport ${gameSport}`);
+  }
 }

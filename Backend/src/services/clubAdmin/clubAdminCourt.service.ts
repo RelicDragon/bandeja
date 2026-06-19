@@ -3,7 +3,7 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 import { ClubAdminService } from './clubAdmin.service';
-import { assertCourtSportInClub } from '../../shared/clubSports';
+import { syncClubSportsFromCourt } from '../../shared/clubSports';
 import { normalizeWebCameraUrl } from '../../utils/normalizeWebCameraUrl';
 
 export class ClubAdminCourtService {
@@ -31,10 +31,11 @@ export class ClubAdminCourtService {
     await ClubAdminService.assertClubAdmin(userId, clubId);
     const club = await prisma.club.findUnique({
       where: { id: clubId },
-      select: { sports: true },
+      select: { id: true },
     });
     if (!club) throw new ApiError(404, 'Club not found');
-    assertCourtSportInClub(club.sports, data.sport ?? null);
+    const courtSport = data.sport ?? null;
+    await syncClubSportsFromCourt(clubId, courtSport);
 
     const court = await prisma.court.create({
       data: {
@@ -44,7 +45,7 @@ export class ClubAdminCourtService {
         isIndoor: data.isIndoor ?? false,
         surfaceType: data.surfaceType,
         pricePerHour: data.pricePerHour,
-        sport: data.sport ?? null,
+        sport: courtSport,
         webCameraUrl: normalizeWebCameraUrl(data.webCameraUrl) ?? null,
       },
     });
@@ -59,7 +60,7 @@ export class ClubAdminCourtService {
 
     const club = await prisma.club.findUnique({
       where: { id: court.clubId },
-      select: { sports: true },
+      select: { id: true },
     });
     if (!club) throw new ApiError(404, 'Club not found');
 
@@ -82,8 +83,8 @@ export class ClubAdminCourtService {
       if (raw != null && raw !== '' && courtSport == null) {
         throw new ApiError(400, 'Invalid sport');
       }
-      assertCourtSportInClub(club.sports, courtSport);
       update.sport = courtSport;
+      await syncClubSportsFromCourt(court.clubId, courtSport);
     }
     const updated = await prisma.court.update({ where: { id: courtId }, data: update });
     await refreshClubCourtsCount(court.clubId);

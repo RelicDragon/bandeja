@@ -54,7 +54,7 @@ import { isCapacitor, getAppInfo, isIOS } from '@/utils/capacitor';
 import { openEula } from '@/utils/openEula';
 import { AppleIcon } from '@/components/AppleIcon';
 import { getCurrencyOptions, getCurrencySymbol } from '@/utils/currency';
-import { setNativeAppIcon } from '@/services/appIcon.service';
+import { syncNativeAppIconForUser } from '@/services/appIcon.service';
 import type { AppIconId } from '@/config/appIcons';
 import { config as appConfig } from '@/config/media';
 
@@ -361,8 +361,8 @@ export const ProfileContent = () => {
 
   const handleAppIconChange = (id: AppIconId) => {
     setAppIcon(id);
+    if (user) syncNativeAppIconForUser({ ...user, appIcon: id });
     updateProfile({ appIcon: id });
-    setNativeAppIcon(id).catch(() => {});
   };
 
   const handleAllowMessagesFromNonContactsChange = (value: boolean) => {
@@ -1186,6 +1186,7 @@ export const ProfileContent = () => {
               <AppIconCarousel
                 value={appIcon}
                 onChange={handleAppIconChange}
+                primarySport={resolveActivePrimarySport(user) ?? user?.primarySport}
               />
             </div>
           </div>

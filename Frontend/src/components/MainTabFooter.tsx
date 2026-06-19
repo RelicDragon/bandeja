@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useAuthStore } from '@/store/authStore';
-import { getFooterIconUrl } from '@/config/appIcons';
+import { useBrandingFooterIconUrl } from '@/hooks/useBrandingFooterIconUrl';
 
 interface MainTabFooterProps {
   isLoading?: boolean;
@@ -8,8 +7,7 @@ interface MainTabFooterProps {
 
 export const MainTabFooter = ({ isLoading = false }: MainTabFooterProps) => {
   const [isAnimating, setIsAnimating] = useState(false);
-  const appIconId = useAuthStore((s) => s.user?.appIcon);
-  const footerIconUrl = getFooterIconUrl(appIconId ?? undefined);
+  const footerIconUrl = useBrandingFooterIconUrl();
 
   const handleClick = useCallback(() => {
     if (isAnimating || isLoading) return;

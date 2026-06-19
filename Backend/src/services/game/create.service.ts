@@ -14,7 +14,10 @@ import { projectUserForSportContext, touchLastCreatedSport } from '../user/userS
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
 import { parseBooktimeStoredOrNaiveToDate, BOOKTIME_DEFAULT_TIMEZONE } from '../../shared/booktime/localTime';
 import { resolveBooktimeTimezoneFromCityId } from '../../shared/booktime/resolveClubTimezone';
-import { GameCourtService } from '../gameCourt/gameCourt.service';
+import {
+  assertClubSupportsSport,
+  assertCourtMatchesGameSport,
+} from '../../shared/clubSports';
 import {
   assertNoLegacyExternalBookingId,
   insertJoinRows,
@@ -23,6 +26,7 @@ import {
   gameExternalBookingInclude,
   serializeLinkedBooking,
 } from './gameExternalBooking.service';
+import { GameCourtService } from '../gameCourt/gameCourt.service';
 
 function normalizeCreateCourtIds(data: { courtIds?: unknown }): string[] | null {
   if (!Array.isArray(data.courtIds)) return null;
@@ -297,6 +301,32 @@ export class GameCreateService {
       scoringPreset: isTraining ? undefined : data.scoringPreset,
     });
     const playersPerMatch = playersPerMatchEarly;
+
+    if (data.clubId) {
+      const clubForSport = await prisma.club.findUnique({
+        where: { id: data.clubId },
+        select: {
+          sports: true,
+          courts: { where: { isActive: true }, select: { sport: true } },
+        },
+      });
+      if (!clubForSport) {
+        throw new ApiError(404, 'Club not found');
+      }
+      assertClubSupportsSport(clubForSport.sports, clubForSport.courts, sport);
+    }
+
+    const courtIdsForSportCheck =
+      gameCourtIds?.length ? gameCourtIds : primaryCourtId ? [primaryCourtId] : [];
+    if (courtIdsForSportCheck.length > 0) {
+      const courtsForSport = await prisma.court.findMany({
+        where: { id: { in: courtIdsForSportCheck } },
+        select: { sport: true },
+      });
+      for (const court of courtsForSport) {
+        assertCourtMatchesGameSport(court.sport, sport);
+      }
+    }
 
     const formatNorm = isTraining
       ? {}

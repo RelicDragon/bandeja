@@ -3,6 +3,8 @@ import WebKit
 import Capacitor
 
 final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDelegate {
+    static let brandingSplashLogoKey = "brandingSplashLogoKey"
+
     override public func capacitorDidLoad() {
         bridge?.registerPluginInstance(AuthBridgePlugin())
         bridge?.registerPluginInstance(BandejaPushDelegatePlugin())
@@ -49,7 +51,7 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
         overlay.translatesAutoresizingMaskIntoConstraints = false
         overlay.backgroundColor = UIColor(red: 171/255, green: 222/255, blue: 227/255, alpha: 1)
 
-        let logo = UIImageView(image: UIImage(named: "Logo"))
+        let logo = UIImageView(image: Self.resolveSplashLogoImage())
         logo.translatesAutoresizingMaskIntoConstraints = false
         logo.contentMode = .scaleAspectFit
 
@@ -132,6 +134,42 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
         }
         timeoutWorkItem = item
         DispatchQueue.main.asyncAfter(deadline: .now() + 12.0, execute: item)
+    }
+
+    private static func resolveSplashLogoImage() -> UIImage? {
+        let logoKey = UserDefaults.standard.string(forKey: brandingSplashLogoKey) ?? "padel"
+        let candidates: [String]
+        switch logoKey {
+        case "racket":
+            candidates = ["public/orig_icons/racket-blue/bandeja-blue-flat.png"]
+        case "tennis":
+            candidates = ["public/bandeja2-tennis-white-tr.png"]
+        case "pickleball":
+            candidates = ["public/bandeja2-pickleball-white-tr.png"]
+        case "badminton":
+            candidates = ["public/bandeja2-badminton-white-tr.png"]
+        case "table_tennis":
+            candidates = ["public/bandeja2-table-tennis-white-tr.png"]
+        case "squash":
+            candidates = ["public/bandeja2-squash-white-tr.png"]
+        default:
+            candidates = ["public/bandeja2-white-tr.png"]
+        }
+
+        for relativePath in candidates {
+            let parts = relativePath.split(separator: "/")
+            guard let fileName = parts.last else { continue }
+            let base = (fileName as NSString).deletingPathExtension
+            let ext = (fileName as NSString).pathExtension.isEmpty ? "png" : (fileName as NSString).pathExtension
+            let subdirectory = parts.count > 1 ? parts.dropLast().joined(separator: "/") : nil
+            if let url = Bundle.main.url(forResource: base, withExtension: ext, subdirectory: subdirectory),
+               let data = try? Data(contentsOf: url),
+               let image = UIImage(data: data) {
+                return image
+            }
+        }
+
+        return UIImage(named: "Logo")
     }
 
     private func dismissSplashIfNeeded() {

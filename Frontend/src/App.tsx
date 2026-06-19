@@ -57,6 +57,7 @@ import { useDeepLink } from './hooks/useDeepLink';
 import { useDeepLinkStore } from './store/deepLinkStore';
 import { extractLanguageCode } from './utils/displayPreferences';
 import { syncWatchPreferencesToNative } from './services/authBridge';
+import { syncNativeAppIconForUser } from '@/services/appIcon.service';
 import { Capacitor } from '@capacitor/core';
 import { GeoProvider } from './contexts/GeoProvider';
 import { QueryProvider } from '@/queries/QueryProvider';
@@ -212,6 +213,7 @@ function AppContent() {
     const cleanup = initNetworkListener();
 
     finishInitializing();
+    syncNativeAppIconForUser(useAuthStore.getState().user);
     if (isCapacitor() && useAuthStore.getState().isAuthenticated) {
       void pushNotificationService.ensureTokenSentToBackend();
     }

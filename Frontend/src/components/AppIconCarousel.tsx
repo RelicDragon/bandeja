@@ -1,13 +1,19 @@
 import { useTranslation } from 'react-i18next';
-import { APP_ICONS, type AppIconId } from '@/config/appIcons';
+import {
+  APP_ICONS,
+  getAppIconPreviewUrl,
+  type AppIconId,
+} from '@/config/appIcons';
+import type { Sport } from '@/types';
 
 interface AppIconCarouselProps {
   value: AppIconId | null | undefined;
   onChange: (id: AppIconId) => void;
   disabled?: boolean;
+  primarySport?: Sport | null;
 }
 
-export const AppIconCarousel = ({ value, onChange, disabled }: AppIconCarouselProps) => {
+export const AppIconCarousel = ({ value, onChange, disabled, primarySport }: AppIconCarouselProps) => {
   const { t } = useTranslation();
 
   return (
@@ -15,6 +21,7 @@ export const AppIconCarousel = ({ value, onChange, disabled }: AppIconCarouselPr
       {APP_ICONS.map((icon) => {
         const isSelected = (value || 'tiger') === icon.id;
         const name = t(`profile.${icon.id}`);
+        const previewUrl = getAppIconPreviewUrl(icon.id, primarySport);
         return (
           <button
             key={icon.id}
@@ -30,7 +37,7 @@ export const AppIconCarousel = ({ value, onChange, disabled }: AppIconCarouselPr
             aria-label={t('profile.appIcon') + ': ' + name}
           >
             <img
-              src={icon.previewUrl}
+              src={previewUrl}
               alt={name}
               className="w-14 h-14 object-contain rounded-lg"
             />

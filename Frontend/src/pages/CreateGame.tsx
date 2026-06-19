@@ -46,6 +46,7 @@ import {
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
 import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
+import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
 import { invalidateBooktimeAllUpcomingCache } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
 import { GameFormatGenderFields } from '@/components/gameFormat/GameFormatTeamsFields';
@@ -432,6 +433,26 @@ export const CreateGame = ({
     onDerivedTimeChange,
   } = bookingFlow;
 
+  const clubsForSport = useMemo(
+    () => filterClubsBySport(clubs, selectedSport),
+    [clubs, selectedSport],
+  );
+
+  const prevSelectedSportRef = useRef(selectedSport);
+  useEffect(() => {
+    if (prevSelectedSportRef.current === selectedSport) return;
+    prevSelectedSportRef.current = selectedSport;
+
+    if (!selectedClub) return;
+    const club = clubs.find((c) => c.id === selectedClub);
+    if (club && !clubSupportsSport(club, selectedSport)) {
+      setSelectedClub('');
+      setSelectedCourtIds([]);
+      resetOnClubChange();
+      setHasBookedCourt(false);
+    }
+  }, [selectedSport, selectedClub, clubs, resetOnClubChange, setHasBookedCourt]);
+
   const openFormatWizard = useCallback(() => {
     notifyFormatWizardOpen();
     setIsFormatWizardOpen(true);
@@ -561,7 +582,7 @@ export const CreateGame = ({
         return;
       }
       try {
-        const response = await courtsApi.getByClubId(selectedClub);
+        const response = await courtsApi.getByClubId(selectedClub, { sport: selectedSport });
         setCourts(response.data);
 
         const clubChanged = courtsClubRef.current !== selectedClub;
@@ -583,7 +604,7 @@ export const CreateGame = ({
       }
     };
     void fetchCourts();
-  }, [selectedClub, initialCourtId, initialHasBookedCourt, setHasBookedCourt]);
+  }, [selectedClub, selectedSport, initialCourtId, initialHasBookedCourt, setHasBookedCourt]);
 
   useEffect(() => {
     if (selectedCourt === 'notBooked') return;
@@ -1410,7 +1431,7 @@ export const CreateGame = ({
             {entityType !== 'BAR' && selectedClub && clubBookingFlowActive && selectedClubData ? (
               <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-4">
                 <CreateGameClubSection
-                  clubs={clubs}
+                  clubs={clubsForSport}
                   courts={courts}
                   selectedClub={selectedClub}
                   selectedCourt={selectedCourt}
@@ -1508,7 +1529,7 @@ export const CreateGame = ({
               </div>
             ) : (
               <GameStartSection
-                clubs={clubs}
+                clubs={clubsForSport}
                 courts={courts}
                 isClubModalOpen={isClubModalOpen}
                 onSelectClub={(id: string) => {

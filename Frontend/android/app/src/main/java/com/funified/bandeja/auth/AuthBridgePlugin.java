@@ -86,4 +86,11 @@ public class AuthBridgePlugin extends Plugin {
         result.put("count", AppBadgeStorage.getCount(getContext()));
         call.resolve(result);
     }
+
+    @PluginMethod
+    public void syncBrandingLogo(PluginCall call) {
+        String logoKey = call.getString("logoKey");
+        BrandingLogoStorage.setLogoKey(getContext(), logoKey == null || logoKey.isEmpty() ? "padel" : logoKey);
+        call.resolve();
+    }
 }

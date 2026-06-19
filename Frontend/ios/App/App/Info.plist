@@ -94,6 +94,51 @@
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
+			<key>tennis</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>tennis-1024</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>pickleball</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>pickleball-1024</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>badminton</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>badminton-1024</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>table_tennis</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>table_tennis-1024</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
+			<key>squash</key>
+			<dict>
+				<key>CFBundleIconFiles</key>
+				<array>
+					<string>squash-1024</string>
+				</array>
+				<key>UIPrerenderedIcon</key>
+				<false/>
+			</dict>
 		</dict>
 	</dict>
 	<key>CFBundleURLTypes</key>

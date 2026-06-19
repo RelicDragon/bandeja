@@ -28,6 +28,10 @@ import {
   deriveGameTimesFromJoinRows,
 } from './gameExternalBooking.service';
 import { canConfigureGamePhotosPrivacy } from '../../shared/gamePhotos/permissions';
+import {
+  assertClubSupportsSport,
+  assertCourtMatchesGameSport,
+} from '../../shared/clubSports';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -355,6 +359,31 @@ export class GameUpdateService {
         if (targetClubId && court.clubId !== targetClubId) {
           throw new ApiError(400, 'Court does not belong to the selected club');
         }
+      }
+
+      if (data.clubId !== undefined && newClubId) {
+        const clubForSport = await prisma.club.findUnique({
+          where: { id: newClubId },
+          select: {
+            sports: true,
+            courts: { where: { isActive: true }, select: { sport: true } },
+          },
+        });
+        if (!clubForSport) {
+          throw new ApiError(404, 'Club not found');
+        }
+        assertClubSupportsSport(clubForSport.sports, clubForSport.courts, sportForValidation);
+      }
+
+      if (data.courtId !== undefined && normalizedCourtId) {
+        const courtForSport = await prisma.court.findUnique({
+          where: { id: normalizedCourtId },
+          select: { sport: true },
+        });
+        if (!courtForSport) {
+          throw new ApiError(404, 'Court not found');
+        }
+        assertCourtMatchesGameSport(courtForSport.sport, sportForValidation);
       }
 
       // Calculate cityId based on final clubId and courtId values

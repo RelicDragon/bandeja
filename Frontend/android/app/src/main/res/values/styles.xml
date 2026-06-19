@@ -24,4 +24,28 @@
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
     </style>
+
+    <style name="AppTheme.NoActionBarLaunch.Tennis" parent="AppTheme.NoActionBarLaunch">
+        <item name="android:background">@drawable/splash_tennis</item>
+    </style>
+
+    <style name="AppTheme.NoActionBarLaunch.Pickleball" parent="AppTheme.NoActionBarLaunch">
+        <item name="android:background">@drawable/splash_pickleball</item>
+    </style>
+
+    <style name="AppTheme.NoActionBarLaunch.Badminton" parent="AppTheme.NoActionBarLaunch">
+        <item name="android:background">@drawable/splash_badminton</item>
+    </style>
+
+    <style name="AppTheme.NoActionBarLaunch.TableTennis" parent="AppTheme.NoActionBarLaunch">
+        <item name="android:background">@drawable/splash_table_tennis</item>
+    </style>
+
+    <style name="AppTheme.NoActionBarLaunch.Squash" parent="AppTheme.NoActionBarLaunch">
+        <item name="android:background">@drawable/splash_squash</item>
+    </style>
+
+    <style name="AppTheme.NoActionBarLaunch.Racket" parent="AppTheme.NoActionBarLaunch">
+        <item name="android:background">@drawable/splash_racket</item>
+    </style>
 </resources>

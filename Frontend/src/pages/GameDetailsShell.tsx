@@ -506,7 +506,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       if (!game?.clubId) return;
       
       try {
-        const response = await courtsApi.getByClubId(game.clubId);
+        const response = await courtsApi.getByClubId(game.clubId, { sport: game.sport });
         setCourts(response.data);
       } catch (error) {
         console.error('Failed to fetch courts:', error);
@@ -514,7 +514,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     };
 
     fetchCourts();
-  }, [game?.clubId]);
+  }, [game?.clubId, game?.sport]);
 
   useEffect(() => {
     const fetchClubs = async () => {
@@ -1929,7 +1929,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             if (isEditMode) {
               handleFormDataChange({clubId, courtId: ''});
               if (clubId) {
-                courtsApi.getByClubId(clubId).then(response => {
+                courtsApi.getByClubId(clubId, { sport: game.sport }).then(response => {
                   setCourts(response.data);
                 }).catch(error => {
                   console.error('Failed to fetch courts:', error);

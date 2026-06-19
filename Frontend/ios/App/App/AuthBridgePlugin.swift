@@ -15,7 +15,8 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "setApiBaseUrl", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "syncWatchPreferences", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setAppIconBadgeCount", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "getAppIconBadgeCount", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "getAppIconBadgeCount", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "syncBrandingLogo", returnType: CAPPluginReturnPromise)
     ]
 
     @objc func setToken(_ call: CAPPluginCall) {
@@ -84,5 +85,11 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
             UIApplication.shared.applicationIconBadgeNumber
         }
         call.resolve(["count": max(0, count)])
+    }
+
+    @objc func syncBrandingLogo(_ call: CAPPluginCall) {
+        let logoKey = call.getString("logoKey") ?? "padel"
+        UserDefaults.standard.set(logoKey, forKey: MainViewController.brandingSplashLogoKey)
+        call.resolve()
     }
 }

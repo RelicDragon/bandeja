@@ -404,6 +404,10 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | C-13 | Club selection | Pick club | Courts load |
+| C-47 | Club modal sport filter | Create game with sport TENNIS → open club modal | Only clubs with TENNIS in `sports` or matching/null-sport courts listed |
+| C-48 | Court grid sport filter | Pick multi-sport club → view court grid | Only courts for selected sport (+ null-sport courts) shown |
+| C-49 | Sport change clears club | Pick padel-only club → switch sport to TENNIS | Club/court/booking selection cleared; club picker empty |
+| C-50 | Sport change prunes courts | Multi-sport club, padel courts selected → switch to TENNIS | Padel court selections removed; TENNIS courts remain selectable |
 | C-13a | Club booking connect banner | Open club detail for BOOKTIME club, not connected | Connect banner shown |
 | C-13b | Club booking OTP connect | Phone + OTP (existing account) | Connected chip; GET auth has no tokens |
 | C-13c | Club booking connect hidden | BOOKTIME club already connected | No connect banner |
@@ -561,6 +565,11 @@ Frontend/e2e/
 | GD-20 | Edit location & time tab | Edit modal → Location & time | Single tab replaces Where+When; club picker visible; tab label not truncated; bookings/time slots switch visible on open (no auto-scroll past it) |
 | GD-20b | Edit opt-out full schedule | BOOKTIME game, integrated court, toggle "Don't book real court" ON (or Don't select court) | Full club time grid; red external cells selectable and saveable; same as create-game opt-out |
 | GD-20a | Edit game change club | Edit modal → Location & time → change club | Club modal opens; new club selected; courts refresh for new club |
+| GD-20c | Edit club modal sport filter | TENNIS game → edit Location & time → open club modal | Only TENNIS-capable clubs listed |
+| GD-20d | Edit legacy club kept | TENNIS game at club no longer supporting TENNIS → edit Location & time | Current club still shown in picker; user must change club or pick compatible court |
+| GD-20e | Edit court grid sport filter | TENNIS game at multi-sport club → edit Location & time | Court grid shows TENNIS + null-sport courts only; courts API called with `sport=TENNIS` |
+| GD-20f | Edit prunes incompatible courts | Multi-sport game with padel court saved → club gains sport tags → reopen edit modal | Incompatible court selections cleared when modal opens |
+| GD-20g | Edit sport mismatch rejected | API: update game `clubId` or `courtId` to sport-incompatible venue | 400 with sport mismatch message |
 | GD-21 | Edit with linked bookings | Game with `linkedBookings` | Bookings list only; no time slots switch |
 | GD-22 | Edit unlink last booking | Remove last linked reservation | Dual subtab unlocks; `hasBookedCourt` clears; amber hint that club booking stays active; save asks to confirm unlink without auto-cancel |
 | GD-22a | Edit unlink save confirm | Edit modal → unlink reservation → Save | Confirm modal warns real booking is not cancelled; save unlinks only |
@@ -862,7 +871,9 @@ Frontend/e2e/
 | PR-29 | Link/unlink Google | Same as Apple | |
 | PR-30 | OAuth merge modal | Duplicate account detect | Merge flow |
 | PR-31 | Blocked users section | `@user with blocks` | List + unblock |
-| PR-32 | App icon carousel | Change app icon | `@native` manual |
+| PR-32 | App icon carousel | Change app icon | `@native` manual; tiger uses primary-sport mascot (padel default); racket unchanged |
+| PR-63 | Tiger icon + primary sport | Profile → set primary sport to tennis (tiger icon selected) | Footer mascot + `@native` home-screen icon show tennis tiger; switch primary to padel → padel tiger |
+| PR-64 | Branding on load/splash | User with tennis primary + tiger icon → cold start / pull-to-refresh loading | Tab footer, `AppLoadingScreen`, iOS overlay splash, Android launch splash show tennis mascot |
 | PR-33 | Delete account | Delete → double confirm | Account deleted + logout |
 
 ### 13.3 Other profile routes
@@ -957,6 +968,7 @@ Frontend/e2e/
 | CA-06 | Cancel game from schedule | Cancel sheet | Game cancelled |
 | CA-07 | Reservations page | View reservations | List loads |
 | CA-08 | Courts page | CRUD court | Court saved |
+| CA-17 | Court sport assignment | Club admin → All courts → add or edit court | Sport picker shows only club-enabled sports; saved sport appears on list row with icon and label; legacy courts without sport remain editable |
 | CA-09 | Settings page | Club settings | Updates persist |
 | CA-10 | View as player | Preview modal | Player perspective |
 | CA-11 | Coach marks | First visit | Hints shown once |

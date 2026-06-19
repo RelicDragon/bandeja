@@ -19,6 +19,7 @@ import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBooking
 import { clubHasBookingIntegration, getBooktimeCompanyId } from '@shared/clubIntegration';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
+import { filterClubsBySport } from '@/utils/courtSport';
 import type { RefObject, ReactNode } from 'react';
 import type { BooktimeSnapshotBanner } from '@/hooks/useBooktimeSnapshotRefresh';
 
@@ -106,7 +107,14 @@ export function LocationTimeTab({
   authGateSection,
 }: LocationTimeTabProps) {
   const { t } = useTranslation();
-  const club = clubs.find((c) => c.id === selectedClub);
+  const clubsForSport = useMemo(
+    () =>
+      game.sport
+        ? filterClubsBySport(clubs, game.sport, game.clubId ?? undefined)
+        : clubs,
+    [clubs, game.sport, game.clubId],
+  );
+  const club = clubsForSport.find((c) => c.id === selectedClub) ?? clubs.find((c) => c.id === selectedClub);
   const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(
     selectedClub || undefined,
     supportsClubBookingFlow(entityType, 'edit') && clubHasBookingIntegration(club),
@@ -245,7 +253,7 @@ export function LocationTimeTab({
 
   const courtSection = (
     <CreateGameCourtSection
-      clubs={clubs}
+      clubs={clubsForSport}
       courts={courts}
       selectedClub={selectedClub}
       selectedCourt={selectedCourt}
@@ -257,6 +265,7 @@ export function LocationTimeTab({
       entityType={entityType}
       onSelectCourt={onSelectCourt}
       onToggleHasBookedCourt={onToggleHasBookedCourt}
+      preferredSport={game.sport}
     />
   );
 
@@ -282,7 +291,7 @@ export function LocationTimeTab({
           {t('createGame.club')}
         </label>
         <CreateGameClubSection
-          clubs={clubs}
+          clubs={clubsForSport}
           courts={courts}
           selectedClub={selectedClub}
           selectedCourt={selectedCourt}

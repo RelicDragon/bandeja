@@ -64,7 +64,11 @@ function testSourcePatches(): void {
   const resultsSummaryPrompt = readSrc('services/gameResultsArtifact/resultsSummaryPrompt.util.ts');
   assert(
     resultsSummaryPrompt.includes('resolveUserSportSnapshot'),
-    'results summary prompt uses sport snapshot for participant level',
+    'results summary prompt uses sport snapshot for participant level fallback',
+  );
+  assert(
+    resultsSummaryPrompt.includes('levelBefore') && resultsSummaryPrompt.includes('levelAfter'),
+    'results summary prompt uses outcome level snapshot when available',
   );
   assert(
     resultsSummaryPrompt.includes('getCityLeaderboardRanks(cityId, gameSport)'),

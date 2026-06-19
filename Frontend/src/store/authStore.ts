@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { Capacitor } from '@capacitor/core';
 import { User } from '@/types';
 import i18n from '@/i18n/config';
-import { syncTokenToNative, syncLogoutToNative, syncApiBaseUrlToNative } from '@/services/authBridge';
+import { syncTokenToNative, syncLogoutToNative, syncApiBaseUrlToNative, syncBrandingLogoToNative } from '@/services/authBridge';
 import {
   clearRefreshBundle,
   getRefreshTokenForRequest,
@@ -22,6 +22,10 @@ import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import { registerAuthAccessTokenSink } from '@/store/authAccessSink';
 import { bumpApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
 import { markLoginCompleted } from '@/utils/authLoginGrace';
+import {
+  getNativeAppIconSyncKey,
+  syncNativeAppIconForUser,
+} from '@/services/appIcon.service';
 
 interface AuthState {
   user: User | null;
@@ -145,6 +149,8 @@ export const useAuthStore = create<AuthState>((set, get) => {
       void import('@/store/unreadStore').then(({ useUnreadStore }) => {
         useUnreadStore.getState().refreshAll().catch(() => {});
       });
+
+      syncNativeAppIconForUser(userToSet);
     },
     setToken: (token) => {
       try {
@@ -239,6 +245,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           console.error('[auth:logout] Error clearing auth from localStorage:', error);
         }
         syncLogoutToNative();
+        void syncBrandingLogoToNative('padel');
         bumpApiAuthCredentialGeneration();
         console.info('[auth:logout] execute end');
       };
@@ -252,12 +259,17 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
     updateUser: (user) => {
       try {
+        const prev = get().user;
         localStorage.setItem('user', JSON.stringify(user));
         set({ user });
         
         if (user.language) {
           const langCode = extractLanguageCode(user.language);
           i18n.changeLanguage(langCode);
+        }
+
+        if (getNativeAppIconSyncKey(prev) !== getNativeAppIconSyncKey(user)) {
+          syncNativeAppIconForUser(user);
         }
       } catch (error) {
         console.error('Error updating user in localStorage:', error);

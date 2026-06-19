@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { Card } from '@/components';
 import type { Sport, User } from '@/types';
 import { usersApi } from '@/api';
+import { syncNativeAppIconForUser } from '@/services/appIcon.service';
 import { AddSportQuestionnairePrompt } from '@/components/sportQuestionnaire/AddSportQuestionnairePrompt';
 import { ProfileSportCard } from '@/components/profile/ProfileSportCard';
 import {
@@ -75,6 +76,7 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
     try {
       const res = await fn();
       onUserUpdated(res.data);
+      syncNativeAppIconForUser(res.data);
       toast.success(t('profile.sports.updated'));
       return res;
     } catch (error: unknown) {

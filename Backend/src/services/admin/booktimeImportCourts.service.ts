@@ -4,6 +4,7 @@ import { BOOKING_ERROR_KEYS } from '../../shared/booking/errorKeys';
 import { ApiError } from '../../utils/ApiError';
 import { refreshClubCourtsCount } from '../../utils/refreshClubCourtsCount';
 import { parseBooktimeIntegrationConfig } from '../../shared/clubIntegration';
+import { syncClubSportsFromCourt } from '../../shared/clubSports';
 
 export type BooktimeCompanyResource = {
   uuid?: string;
@@ -98,6 +99,7 @@ export class BooktimeImportCourtsService {
         continue;
       }
 
+      await syncClubSportsFromCourt(clubId, defaultSport);
       const court = await prisma.court.create({
         data: {
           clubId,

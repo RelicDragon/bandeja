@@ -248,3 +248,6 @@ bandeja-release.keystore
 # Vite config TS emit artifacts (tsconfig.node)
 Frontend/vite.config.js
 Frontend/vite.config.d.ts
+
+# Court/club sports backfill rollback snapshots
+Backend/scripts/snapshots/

@@ -1,5 +1,6 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { assertCourtMatchesGameSport } from '../../shared/clubSports';
 
 export class GameCourtService {
   static async getGameCourts(gameId: string) {
@@ -25,6 +26,14 @@ export class GameCourtService {
   }
 
   static async setGameCourts(gameId: string, courtIds: string[]) {
+    const game = await prisma.game.findUnique({
+      where: { id: gameId },
+      select: { sport: true },
+    });
+    if (!game) {
+      throw new ApiError(404, 'Game not found');
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.gameCourt.deleteMany({
         where: { gameId },
@@ -43,6 +52,8 @@ export class GameCourtService {
           if (!court) {
             throw new ApiError(404, `Court ${courtId} not found`);
           }
+
+          assertCourtMatchesGameSport(court.sport, game.sport);
 
           await tx.gameCourt.create({
             data: {

@@ -2,6 +2,8 @@ import { registerPlugin, Capacitor } from '@capacitor/core';
 import type { User } from '@/types';
 import { resolveNativeApiBaseUrl } from '@/api/apiBaseUrl';
 
+import type { BrandingSplashLogoKey } from '@/config/appIcons';
+
 interface AuthBridgePlugin {
   setToken(options: { token: string }): Promise<void>;
   getToken(): Promise<{ token: string | null }>;
@@ -18,6 +20,7 @@ interface AuthBridgePlugin {
   }): Promise<void>;
   setAppIconBadgeCount(options: { count: number }): Promise<void>;
   getAppIconBadgeCount(): Promise<{ count: number }>;
+  syncBrandingLogo(options: { logoKey: string }): Promise<void>;
 }
 
 const AuthBridge = registerPlugin<AuthBridgePlugin>('AuthBridge');
@@ -121,5 +124,14 @@ export async function getAppIconBadgeCountNative(): Promise<number> {
     return Number.isFinite(count) && count > 0 ? Math.floor(count) : 0;
   } catch {
     return 0;
+  }
+}
+
+export async function syncBrandingLogoToNative(logoKey: BrandingSplashLogoKey): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    await AuthBridge.syncBrandingLogo({ logoKey });
+  } catch (error) {
+    console.warn('AuthBridge: failed to sync branding splash logo', error);
   }
 }

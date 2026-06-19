@@ -13,6 +13,7 @@ import androidx.core.view.WindowCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
 import com.funified.bandeja.auth.AuthBridgePlugin;
+import com.funified.bandeja.auth.BrandingLogoStorage;
 import com.funified.bandeja.push.ChatNotificationHelper;
 import ee.forgr.capacitor.social.login.GoogleProvider;
 import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
@@ -36,6 +37,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(AuthBridgePlugin.class);
+        applyBrandingLaunchTheme();
         super.onCreate(savedInstanceState);
         ChatNotificationHelper.ensureChannel(this);
         
@@ -108,6 +110,31 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     public void IHaveModifiedTheMainActivityForTheUseWithSocialLoginPlugin() {}
+
+    private void applyBrandingLaunchTheme() {
+        switch (BrandingLogoStorage.getLogoKey(this)) {
+            case "tennis":
+                setTheme(R.style.AppTheme_NoActionBarLaunch_Tennis);
+                return;
+            case "pickleball":
+                setTheme(R.style.AppTheme_NoActionBarLaunch_Pickleball);
+                return;
+            case "badminton":
+                setTheme(R.style.AppTheme_NoActionBarLaunch_Badminton);
+                return;
+            case "table_tennis":
+                setTheme(R.style.AppTheme_NoActionBarLaunch_TableTennis);
+                return;
+            case "squash":
+                setTheme(R.style.AppTheme_NoActionBarLaunch_Squash);
+                return;
+            case "racket":
+                setTheme(R.style.AppTheme_NoActionBarLaunch_Racket);
+                return;
+            default:
+                return;
+        }
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

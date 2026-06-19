@@ -62,6 +62,76 @@
             </intent-filter>
         </activity-alias>
 
+        <activity-alias
+            android:name=".tennis"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_tennis"
+            android:roundIcon="@drawable/ic_launcher_tennis"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".pickleball"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_pickleball"
+            android:roundIcon="@drawable/ic_launcher_pickleball"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".badminton"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_badminton"
+            android:roundIcon="@drawable/ic_launcher_badminton"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".table_tennis"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_table_tennis"
+            android:roundIcon="@drawable/ic_launcher_table_tennis"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".squash"
+            android:label="@string/app_name"
+            android:icon="@drawable/ic_launcher_squash"
+            android:roundIcon="@drawable/ic_launcher_squash"
+            android:enabled="false"
+            android:exported="true"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -5,6 +5,7 @@ import { Button } from '@/components';
 import { ProfileSportCard } from '@/components/profile/ProfileSportCard';
 import { Dialog, DialogContent } from '@/components/ui/Dialog';
 import { usersApi } from '@/api';
+import { syncNativeAppIconForUser } from '@/services/appIcon.service';
 import { useAuthStore } from '@/store/authStore';
 import { DEFAULT_REGISTRATION_SPORT } from '@/utils/registrationPrimarySport';
 import {
@@ -71,6 +72,7 @@ export function PrimarySportSetModal({ open }: PrimarySportSetModalProps) {
     try {
       const response = await usersApi.confirmPrimarySport(enabledSports, primary);
       updateUser(response.data);
+      syncNativeAppIconForUser(response.data);
     } catch (error: unknown) {
       const err = error as { response?: { data?: { message?: string } } };
       toast.error(err?.response?.data?.message || t('errors.generic'));

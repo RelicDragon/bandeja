@@ -2,7 +2,9 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components';
-import { Court } from '@/types';
+import { Court, Sport } from '@/types';
+import { getSportConfig } from '@/sport/sportRegistry';
+import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +17,7 @@ interface ClubAdminCourtFormProps {
   open: boolean;
   onClose: () => void;
   court?: Court | null;
+  clubSports: Sport[];
   onSubmit: (data: {
     name: string;
     courtType?: string;
@@ -23,6 +26,7 @@ interface ClubAdminCourtFormProps {
     pricePerHour?: number;
     webCameraUrl?: string | null;
     isActive?: boolean;
+    sport?: Sport | null;
   }) => Promise<void>;
 }
 
@@ -44,10 +48,11 @@ function Field({
   );
 }
 
-export function ClubAdminCourtForm({ open, onClose, court, onSubmit }: ClubAdminCourtFormProps) {
+export function ClubAdminCourtForm({ open, onClose, court, clubSports, onSubmit }: ClubAdminCourtFormProps) {
   const { t } = useTranslation();
   const [internalOpen, setInternalOpen] = useState(open);
   const [name, setName] = useState('');
+  const [sport, setSport] = useState<Sport | null>(null);
   const [courtType, setCourtType] = useState('');
   const [surfaceType, setSurfaceType] = useState('');
   const [pricePerHour, setPricePerHour] = useState('');
@@ -60,13 +65,16 @@ export function ClubAdminCourtForm({ open, onClose, court, onSubmit }: ClubAdmin
     if (!open) return;
     setInternalOpen(true);
     setName(court?.name ?? '');
+    setSport(
+      court?.sport ?? (clubSports.length === 1 ? clubSports[0] : null),
+    );
     setCourtType(court?.courtType ?? '');
     setSurfaceType(court?.surfaceType ?? '');
     setPricePerHour(court?.pricePerHour != null ? String(court.pricePerHour) : '');
     setWebCameraUrl(court?.webCameraUrl ?? '');
     setIsIndoor(court?.isIndoor ?? false);
     setIsActive(court?.isActive !== false);
-  }, [open, court]);
+  }, [open, court, clubSports]);
 
   const dismiss = () => {
     setInternalOpen(false);
@@ -89,6 +97,7 @@ export function ClubAdminCourtForm({ open, onClose, court, onSubmit }: ClubAdmin
         isIndoor,
         pricePerHour: pricePerHour ? Number(pricePerHour) : undefined,
         webCameraUrl: court ? (webCameraUrl.trim() || null) : (webCameraUrl.trim() || undefined),
+        sport,
         ...(court ? { isActive } : {}),
       });
       dismiss();
@@ -117,6 +126,40 @@ export function ClubAdminCourtForm({ open, onClose, court, onSubmit }: ClubAdmin
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
               />
+            </Field>
+            <Field label={t('clubAdmin.courtSport')}>
+              <div className="mt-1.5 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className={`rounded-full border px-3 py-1.5 text-xs ${
+                    sport == null
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border text-foreground'
+                  }`}
+                  onClick={() => setSport(null)}
+                >
+                  {t('clubAdmin.unassignedCourt')}
+                </button>
+                {clubSports.map((s) => {
+                  const config = getSportConfig(s);
+                  const selected = sport === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs ${
+                        selected
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border text-foreground'
+                      }`}
+                      onClick={() => setSport(s)}
+                    >
+                      <SportPublicIcon sport={s} className="h-4 w-4 shrink-0 object-contain" />
+                      {t(config.labelKey)}
+                    </button>
+                  );
+                })}
+              </div>
             </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label={t('clubAdmin.courtType')}>

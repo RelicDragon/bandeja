@@ -6,13 +6,14 @@ import { ClubAdminCourtForm } from '@/components/clubAdmin/ClubAdminCourtForm';
 import { ClubAdminCourtRow } from '@/components/clubAdmin/ClubAdminCourtRow';
 import { useClubAdminForbidden } from '@/hooks/useClubAdminForbidden';
 import { useClubAdminScreen } from '@/clubAdmin/useClubAdminShell';
-import { Court } from '@/types';
+import { Court, Sport } from '@/types';
 
 export function ClubCourtsPage() {
   const { clubId } = useParams<{ clubId: string }>();
   const { t } = useTranslation();
   const handleForbidden = useClubAdminForbidden();
   const [courts, setCourts] = useState<Court[]>([]);
+  const [clubSports, setClubSports] = useState<Sport[]>(['PADEL']);
   const [loading, setLoading] = useState(true);
   const [formCourt, setFormCourt] = useState<Court | 'new' | null>(null);
 
@@ -24,9 +25,14 @@ export function ClubCourtsPage() {
   const loadCourts = useCallback(() => {
     if (!clubId) return Promise.resolve();
     setLoading(true);
-    return clubAdminApi
-      .listCourts(clubId)
-      .then(setCourts)
+    return Promise.all([
+      clubAdminApi.listCourts(clubId),
+      clubAdminApi.getClub(clubId),
+    ])
+      .then(([courtList, club]) => {
+        setCourts(courtList);
+        setClubSports(club.sports?.length ? club.sports : (['PADEL'] as Sport[]));
+      })
       .catch(handleForbidden)
       .finally(() => setLoading(false));
   }, [clubId, handleForbidden]);
@@ -52,6 +58,7 @@ export function ClubCourtsPage() {
       <ClubAdminCourtForm
         open={formCourt !== null}
         court={formCourt === 'new' ? null : formCourt}
+        clubSports={clubSports}
         onClose={() => setFormCourt(null)}
         onSubmit={async (data) => {
           if (formCourt === 'new') {

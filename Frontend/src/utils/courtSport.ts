@@ -1,5 +1,9 @@
-import type { Court, Sport } from '@/types';
+import type { Club, Court, Sport } from '@/types';
 import { SPORT_IDS } from '@/sport/sportRegistry';
+
+export type ClubSportFilterInput = Pick<Club, 'sports'> & {
+  courts?: Pick<Court, 'sport'>[];
+};
 
 const SPORT_ORDER: Sport[] = [...SPORT_IDS];
 
@@ -37,6 +41,25 @@ export function courtMatchesSportFilter(court: Court, sport: Sport | undefined):
 export function filterCourtsBySport(courts: Court[], sport: Sport | undefined): Court[] {
   if (!sport) return courts;
   return courts.filter((c) => courtMatchesSportFilter(c, sport));
+}
+
+export function clubSupportsSport(club: ClubSportFilterInput, sport: Sport): boolean {
+  if (club.sports && club.sports.length > 0) {
+    return club.sports.includes(sport);
+  }
+  const courts = club.courts ?? [];
+  if (courts.length === 0) return false;
+  return filterCourtsBySport(courts as Court[], sport).length > 0;
+}
+
+export function filterClubsBySport<T extends ClubSportFilterInput & Pick<Club, 'id'>>(
+  clubs: T[],
+  sport: Sport,
+  keepClubId?: string,
+): T[] {
+  return clubs.filter(
+    (club) => clubSupportsSport(club, sport) || (keepClubId != null && club.id === keepClubId),
+  );
 }
 
 export function filterCourtsByClubSports(courts: Court[], clubSports: Sport[] | undefined | null): Court[] {
