@@ -8,46 +8,59 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 const statusShellClass =
   'flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full';
 
+const statusShellClassCompact =
+  'flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full';
+
 export function GameChatHeaderStatusSlot({
   connectionState,
   statusTitle,
   paintHint,
+  compact = false,
 }: {
   connectionState: string;
   statusTitle?: string;
   paintHint?: string;
+  compact?: boolean;
 }) {
   const reduceMotion = usePrefersReducedMotion();
   const slotKey =
     connectionState === 'OFFLINE' ? 'offline' : connectionState === 'SYNCING' ? 'syncing' : 'none';
 
+  const shellClass = compact ? statusShellClassCompact : statusShellClass;
+  const iconSize = compact ? 12 : 22;
+  const strokeWidth = compact ? 2.5 : 2;
+  const containerSize = compact ? 'h-5 w-5' : 'h-10 w-10';
+  const borderClass = compact
+    ? 'border-2 border-white dark:border-gray-900 shadow-sm'
+    : '';
+
   const node =
     connectionState === 'OFFLINE' ? (
       <div
-        className={`${statusShellClass} bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400`}
+        className={`${shellClass} ${borderClass} bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400`}
         role="status"
         title={paintHint ?? statusTitle}
         aria-label={statusTitle}
       >
-        <WifiOff size={22} strokeWidth={2} />
+        <WifiOff size={iconSize} strokeWidth={strokeWidth} />
       </div>
     ) : connectionState === 'SYNCING' ? (
       <div
-        className={`${statusShellClass} bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300`}
+        className={`${shellClass} ${borderClass} bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300`}
         role="status"
         title={paintHint ?? statusTitle}
         aria-label={statusTitle}
       >
-        <Loader2 size={22} className="animate-spin" strokeWidth={2} />
+        <Loader2 size={iconSize} className="animate-spin" strokeWidth={strokeWidth} />
       </div>
     ) : null;
 
   if (reduceMotion) {
-    return node ?? <div className="h-10 w-10 flex-shrink-0" aria-hidden />;
+    return node ?? <div className={containerSize} aria-hidden />;
   }
 
   return (
-    <div className="relative h-10 w-10 flex-shrink-0">
+    <div className={`relative ${containerSize} flex-shrink-0`}>
       <AnimatePresence initial={false}>
         {node ? (
           <motion.div

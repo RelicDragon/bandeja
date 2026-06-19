@@ -218,15 +218,17 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                 role={isTitleClickable ? 'button' : undefined}
               >
                 {!isBugChat && (
-                  <div className="flex-shrink-0">
-                    {chatConnectionState === 'OFFLINE' || chatConnectionState === 'SYNCING' ? (
-                      <GameChatHeaderStatusSlot
-                        connectionState={chatConnectionState}
-                        statusTitle={statusTitle}
-                        paintHint={paintHint}
-                      />
-                    ) : (
-                      icon
+                  <div className="flex-shrink-0 relative">
+                    {icon}
+                    {(chatConnectionState === 'OFFLINE' || chatConnectionState === 'SYNCING') && (
+                      <div className="absolute -bottom-0.5 -right-0.5">
+                        <GameChatHeaderStatusSlot
+                          connectionState={chatConnectionState}
+                          statusTitle={statusTitle}
+                          paintHint={paintHint}
+                          compact
+                        />
+                      </div>
                     )}
                   </div>
                 )}
