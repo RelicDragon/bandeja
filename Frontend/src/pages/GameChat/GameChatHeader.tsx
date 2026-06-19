@@ -7,10 +7,7 @@ import type { Game } from '@/types';
 import { useChatOfflineStore } from '@/store/chatOfflineStore';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import { CHAT_PANE_SLIDE_CSS_TRANSITION } from '@/components/chat/chatListMotion';
-import {
-  GameChatHeaderChromeSwap,
-  GameChatHeaderStatusSlot,
-} from './GameChatHeaderMotion';
+import { GameChatHeaderStatusSlot } from './GameChatHeaderMotion';
 
 export interface GameChatHeaderActionsProps {
   showMute: boolean;
@@ -27,7 +24,6 @@ export interface GameChatHeaderActionsProps {
 
 export interface GameChatHeaderProps {
   isEmbedded: boolean;
-  showLoadingHeader: boolean;
   contextType: ChatContextType;
   isBugChat: boolean;
   title: string;
@@ -46,7 +42,6 @@ export interface GameChatHeaderProps {
 
 export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
   isEmbedded,
-  showLoadingHeader,
   contextType,
   isBugChat,
   title,
@@ -97,25 +92,6 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
       />
     ) : null;
 
-  const loadingSkeleton = (
-    <div className="flex w-full items-center gap-3">
-      {chatConnectionState === 'OFFLINE' || chatConnectionState === 'SYNCING' ? (
-        <GameChatHeaderStatusSlot
-          connectionState={chatConnectionState}
-          statusTitle={statusTitle}
-          paintHint={paintHint}
-        />
-      ) : (
-        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-gray-200 dark:bg-gray-700" />
-      )}
-      <div className="min-w-0 flex-1">
-        <div className="mb-1 h-4 w-32 rounded bg-gray-200 dark:bg-gray-700" />
-        <div className="h-3 w-48 rounded bg-gray-200 dark:bg-gray-700" />
-      </div>
-      {headerActionsNode}
-    </div>
-  );
-
   const backRowSpan =
     subtitle != null ? 4 : titleMetaRow != null ? 3 : 2;
 
@@ -133,11 +109,6 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
           paddingRight: 'max(1rem, env(safe-area-inset-right))',
         }}
       >
-        <GameChatHeaderChromeSwap
-          showLoading={showLoadingHeader}
-          loading={loadingSkeleton}
-          className="w-full"
-        >
         {isStructuredTitle ? (
           <div
             className={`grid w-full min-w-0 gap-x-2 gap-y-0.5 ${
@@ -293,7 +264,6 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
             {headerActionsNode}
           </div>
         )}
-        </GameChatHeaderChromeSwap>
       </div>
     </header>
   );

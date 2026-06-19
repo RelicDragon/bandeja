@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { GameChatHeader } from './GameChatHeader';
 import { GameChatStatusBanner } from './GameChatHeaderMotion';
+import { GameChatLoadingLine } from './GameChatLoadingLine';
 import { useThreadChrome } from './useThreadView';
 
 /** Header chrome — subscribes only to ThreadChromeContext, not message/scroll seams. */
@@ -106,30 +107,32 @@ export const GameChatHeaderSection: React.FC = () => {
 
   return (
     <>
-      <GameChatHeader
-        isEmbedded={isEmbedded}
-        showLoadingHeader={showLoadingHeader}
-        contextType={contextType}
-        isBugChat={derived.isBugChat}
-        title={title}
-        titleContent={titleContent}
-        titleMetaRow={titleMetaRow}
-        subtitle={subtitle}
-        icon={icon}
-        onBack={panels.handleHeaderBack}
-        showPanelBack={
-          contextType === 'GROUP' &&
-          (panels.showParticipantsPage ||
-            panels.showItemPage ||
-            panels.isParticipantsPageAnimating ||
-            panels.isItemPageAnimating)
-        }
-        onPanelBack={panels.handlePanelBack}
-        isTitleClickable={isTitleClickable}
-        onTitleClick={handleTitleClick}
-        showHeaderActions={derived.showHeaderActions}
-        headerActions={headerActions}
-      />
+      <div className="relative">
+        <GameChatHeader
+          isEmbedded={isEmbedded}
+          contextType={contextType}
+          isBugChat={derived.isBugChat}
+          title={title}
+          titleContent={titleContent}
+          titleMetaRow={titleMetaRow}
+          subtitle={subtitle}
+          icon={icon}
+          onBack={panels.handleHeaderBack}
+          showPanelBack={
+            contextType === 'GROUP' &&
+            (panels.showParticipantsPage ||
+              panels.showItemPage ||
+              panels.isParticipantsPageAnimating ||
+              panels.isItemPageAnimating)
+          }
+          onPanelBack={panels.handlePanelBack}
+          isTitleClickable={isTitleClickable}
+          onTitleClick={handleTitleClick}
+          showHeaderActions={derived.showHeaderActions}
+          headerActions={headerActions}
+        />
+        <GameChatLoadingLine show={showLoadingHeader} />
+      </div>
 
       <GameChatStatusBanner
         show={!showLoadingHeader && failedMutationCount > 0}
