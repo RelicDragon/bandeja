@@ -1107,8 +1107,9 @@ export const CreateGame = ({
 
       const gameResponse = await gamesApi.create(gameData);
 
-      // Invalidate booktime cache after creating a game so bookings will be re-read
-      invalidateBooktimeAllUpcomingCache();
+      if ((bookingFields.externalBookingIds?.length ?? 0) > 0) {
+        invalidateBooktimeAllUpcomingCache();
+      }
 
       if (pendingAvatarFiles && gameResponse.data.id) {
         try {

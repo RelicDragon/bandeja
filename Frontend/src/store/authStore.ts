@@ -214,9 +214,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           const { invalidateBooktimeAllUpcomingCache } = await import(
             '@/integrations/booktime/booktimeAllUpcomingLoader'
           );
-          const { resetBooktimeAllUpcomingSharedState } = await import('@/hooks/useBooktimeAllUpcoming');
           invalidateBooktimeAllUpcomingCache();
-          resetBooktimeAllUpcomingSharedState();
         } catch (e) {
           console.warn('[auth:logout] booktime upcoming cache clear failed', e);
         }

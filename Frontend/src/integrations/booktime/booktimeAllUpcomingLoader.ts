@@ -7,6 +7,7 @@ import {
   readBooktimeUpcomingPersistedCache,
   writeBooktimeUpcomingPersistedCache,
 } from '@/integrations/booktime/booktimeAllUpcomingCacheStorage';
+import { notifyBooktimeAllUpcomingCacheInvalidation } from '@/integrations/booktime/booktimeAllUpcomingCacheInvalidation';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 
 export type AggregatedBooktimeBooking = BooktimeBookingRecord & {
@@ -175,6 +176,7 @@ export function invalidateBooktimeAllUpcomingCache(): void {
   companyUpcomingInFlight.clear();
   persistenceHydrated = false;
   void clearBooktimeUpcomingPersistedCache();
+  notifyBooktimeAllUpcomingCacheInvalidation();
 }
 
 export function setBooktimeAllUpcomingDisplayCache(

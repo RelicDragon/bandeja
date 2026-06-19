@@ -7,6 +7,7 @@ import {
   setBooktimeAllUpcomingDisplayCache,
   type AggregatedBooktimeBooking,
 } from '@/integrations/booktime/booktimeAllUpcomingLoader';
+import { subscribeBooktimeAllUpcomingCacheInvalidation } from '@/integrations/booktime/booktimeAllUpcomingCacheInvalidation';
 
 export type { AggregatedBooktimeBooking };
 
@@ -92,6 +93,8 @@ export function resetBooktimeAllUpcomingSharedState(): void {
   inFlightByKey.clear();
   notifyShared();
 }
+
+subscribeBooktimeAllUpcomingCacheInvalidation(resetBooktimeAllUpcomingSharedState);
 
 export function useBooktimeAllUpcoming(
   clubs: BooktimeMyClubRow[],
