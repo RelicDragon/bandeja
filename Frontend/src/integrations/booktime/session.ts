@@ -278,14 +278,20 @@ async function hydrateBooktimeSessionOnce(
     }
   }
 
-  const res = await booktimeApi.getSessionToken(clubId);
-  if (res.success && res.data) {
+  let sessionRes: Awaited<ReturnType<typeof booktimeApi.getSessionToken>> | null = null;
+  try {
+    sessionRes = await booktimeApi.getSessionToken(clubId);
+  } catch {
+    sessionRes = null;
+  }
+
+  if (sessionRes?.success && sessionRes.data) {
     const session = withSessionExpiry({
-      accessToken: res.data.accessToken,
-      refreshToken: res.data.refreshToken,
-      externalUserId: res.data.externalUserId,
+      accessToken: sessionRes.data.accessToken,
+      refreshToken: sessionRes.data.refreshToken,
+      externalUserId: sessionRes.data.externalUserId,
       companyId,
-      expiresAt: res.data.expiresAt,
+      expiresAt: sessionRes.data.expiresAt,
     });
     writeStoredSession(clubId, session);
     rememberClient(
@@ -306,7 +312,7 @@ async function hydrateBooktimeSessionOnce(
   }
 
   throw new Error(
-    formatBooktimeErrorMessage({ message: res.message }, BOOKING_ERROR_KEYS.sessionExpired),
+    formatBooktimeErrorMessage({ message: sessionRes?.message }, BOOKING_ERROR_KEYS.sessionExpired),
   );
 }
 
@@ -352,6 +358,7 @@ export async function disconnectBooktimeClub(clubId: string): Promise<void> {
   clearRateLimitState(clubId);
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
+  sessionBlockedUntil.delete(clubId);
 }
 
 export function clearBooktimeSessionLocal(clubId: string): void {

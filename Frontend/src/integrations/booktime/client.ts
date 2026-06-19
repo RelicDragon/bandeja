@@ -293,8 +293,7 @@ export class BooktimeClient {
       return await this.requestOnce<T>(path, options);
     } catch (err) {
       const status = err && typeof err === 'object' && 'status' in err ? Number((err as { status: number }).status) : 0;
-      // Attempt token refresh on 401 (unauthorized) or 403 (forbidden) - Booktime may return 403 for stale tokens
-      if ((status === 401 || status === 403)) {
+      if (auth && (status === 401 || status === 403)) {
         const refreshed = await this.refreshAccessToken();
         if (refreshed) {
           return this.requestOnce<T>(path, options);

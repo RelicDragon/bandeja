@@ -1,0 +1,48 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { BooktimeMyClubRow } from '@/api/booktime';
+import {
+  invalidateBooktimeAllUpcomingCache,
+  loadAllBooktimeUpcoming,
+} from './booktimeAllUpcomingLoader';
+
+vi.mock('./session', () => ({
+  hydrateBooktimeSession: vi.fn(async () => true),
+  getBooktimeClient: vi.fn(() => ({
+    isAuthenticated: true,
+    getUpcomingBookings: vi.fn(async () => ({ bookings: [] })),
+  })),
+}));
+
+const club: BooktimeMyClubRow = {
+  clubId: 'club-1',
+  clubName: 'KSC',
+  avatar: null,
+  companyId: 'company-1',
+  connected: true,
+  phoneNumber: null,
+  scoutOptIn: true,
+  cityTimezone: 'Europe/Belgrade',
+  courts: [],
+};
+
+describe('loadAllBooktimeUpcoming', () => {
+  afterEach(() => {
+    invalidateBooktimeAllUpcomingCache();
+    vi.clearAllMocks();
+  });
+
+  it('deduplicates concurrent loads for the same club set', async () => {
+    const { hydrateBooktimeSession } = await import('./session');
+    const first = loadAllBooktimeUpcoming([club], true);
+    const second = loadAllBooktimeUpcoming([club], true);
+    await Promise.all([first, second]);
+    expect(hydrateBooktimeSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('serves cached results within TTL', async () => {
+    const { hydrateBooktimeSession } = await import('./session');
+    await loadAllBooktimeUpcoming([club], true);
+    await loadAllBooktimeUpcoming([club], true);
+    expect(hydrateBooktimeSession).toHaveBeenCalledTimes(1);
+  });
+});
