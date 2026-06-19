@@ -167,6 +167,8 @@ Frontend/e2e/
 | A-07 | Google OAuth error | `?google_error=` | Error shown |
 | A-08 | Telegram auto-login route | `/login/:telegramKey` | Auto login or error |
 | A-09 | EULA link | Open terms | External/legal page opens |
+| A-27 | Android Google login stable session | Capacitor Android: logout → Google sign-in → complete | Lands on My tab; no bounce back to `/login` within 10s |
+| A-28 | Android Telegram login stable session | Capacitor Android: logout → Telegram bot link → open app deep link | Lands on My tab; no bounce back to `/login` within 10s |
 
 ### 5.2 Register (`/register`)
 

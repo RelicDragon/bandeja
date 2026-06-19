@@ -6,6 +6,12 @@ const socialLoginMocks = vi.hoisted(() => ({
   initialize: vi.fn(),
 }));
 
+const authSetStateMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@/store/authStore', () => ({
+  useAuthStore: { setState: authSetStateMock },
+}));
+
 vi.mock('@capgo/capacitor-social-login', () => ({
   SocialLogin: socialLoginMocks,
 }));
@@ -82,6 +88,62 @@ describe('recoverAndroidGoogleLoginFromNative', () => {
     const result = await recoverAndroidGoogleLoginFromNative();
 
     expect(result).toBeNull();
+  });
+});
+
+describe('stripStaleSessionForAndroidGoogleLoginRecovery', () => {
+  const storage = new Map<string, string>();
+
+  beforeEach(() => {
+    storage.clear();
+    authSetStateMock.mockClear();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
+      },
+      clear: () => {
+        storage.clear();
+      },
+    });
+    vi.stubGlobal('sessionStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
+      },
+      clear: () => {
+        storage.clear();
+      },
+    });
+    storage.set('token', 'stale');
+    storage.set('user', '{"id":"u1"}');
+    storage.set('auth_backup', '{"token":"stale","user":"{}","timestamp":1}');
+    storage.set('bandeja_android_google_login_pending', '1');
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('clears stale web session when Android Google login is pending', async () => {
+    const { stripStaleSessionForAndroidGoogleLoginRecovery } = await import('@/services/googleAuth.service');
+    stripStaleSessionForAndroidGoogleLoginRecovery();
+
+    expect(storage.get('token')).toBeUndefined();
+    expect(storage.get('user')).toBeUndefined();
+    expect(storage.get('auth_backup')).toBeUndefined();
+    expect(authSetStateMock).toHaveBeenCalledWith({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+    });
   });
 });
 

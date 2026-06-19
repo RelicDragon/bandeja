@@ -80,9 +80,6 @@ export const useAuthStore = create<AuthState>((set, get) => {
       bumpApiAuthCredentialGeneration();
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
-      set({ user, token, isAuthenticated: true });
-      syncTokenToNative(token);
-      void syncApiBaseUrlToNative();
       if (opts?.refreshToken) {
         await persistRefreshBundle(opts.refreshToken, opts.currentSessionId);
       } else if (opts?.currentSessionId && isWebHttpOnlyRefreshCookie()) {
@@ -90,6 +87,9 @@ export const useAuthStore = create<AuthState>((set, get) => {
       } else {
         await clearRefreshBundle();
       }
+      await syncTokenToNative(token);
+      void syncApiBaseUrlToNative();
+      set({ user, token, isAuthenticated: true });
       scheduleProactiveAccessRefresh(token);
 
       const deviceLocale = navigator.language || 'en-GB';

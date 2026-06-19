@@ -5,6 +5,7 @@ import { authApi } from '@/api';
 import { config } from '@/config/media';
 import { ensureSocialLoginInitialized } from '@/services/socialLoginInit.service';
 import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
+import { useAuthStore } from '@/store/authStore';
 
 export const ANDROID_GOOGLE_LOGIN_PENDING_KEY = 'bandeja_android_google_login_pending';
 
@@ -440,6 +441,23 @@ function hasAndroidGoogleLoginPending(): boolean {
     return sessionStorage.getItem(ANDROID_GOOGLE_LOGIN_PENDING_KEY) === '1';
   } catch {
     return false;
+  }
+}
+
+/** WebView reload during Credential Manager can leave a stale LS session that 401s before native recovery. */
+export function stripStaleSessionForAndroidGoogleLoginRecovery(): void {
+  if (Capacitor.getPlatform() !== 'android' || !hasAndroidGoogleLoginPending()) return;
+  try {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('auth_backup');
+  } catch {
+    /* no-op */
+  }
+  try {
+    useAuthStore.setState({ user: null, token: null, isAuthenticated: false });
+  } catch {
+    /* no-op */
   }
 }
 

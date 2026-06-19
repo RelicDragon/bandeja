@@ -8,11 +8,11 @@ export type HandleApiUnauthorizedOpts = {
 
 export function handleApiUnauthorizedIfNeeded(opts?: HandleApiUnauthorizedOpts): void {
   if (typeof window === 'undefined') return;
-  if (opts?.forceSessionClear) {
-    void useAuthStore.getState().logout();
+  if (isWithinPostLoginGrace()) {
     return;
   }
-  if (isWithinPostLoginGrace()) {
+  if (opts?.forceSessionClear) {
+    void useAuthStore.getState().logout();
     return;
   }
   const path = window.location.pathname;

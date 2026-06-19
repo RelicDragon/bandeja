@@ -33,10 +33,8 @@ export const TelegramAutoLogin = () => {
         const { isAuthenticated, token, logout } = useAuthStore.getState();
         const withAuth = !!(isAuthenticated && token && !isLegacyAccessJwt(token));
 
-        if (!withAuth) {
-          if (isAuthenticated && token && isLegacyAccessJwt(token)) {
-            await logout();
-          }
+        if (!withAuth && isAuthenticated) {
+          await logout();
         }
 
         const response = await withTelegramVerifyRetries(() =>

@@ -52,6 +52,7 @@ import { cleanupCapacitorNetwork } from './utils/capacitorNetwork';
 import { initNetworkListener, useNetworkStore } from './utils/networkStatus';
 import { refreshChatOfflineBanner } from '@/services/chat/chatOfflineBanner';
 import { restoreAuthIfNeeded, monitorAuthPersistence } from './utils/authPersistence';
+import { stripStaleSessionForAndroidGoogleLoginRecovery } from '@/services/googleAuth.service';
 import { useDeepLink } from './hooks/useDeepLink';
 import { useDeepLinkStore } from './store/deepLinkStore';
 import { extractLanguageCode } from './utils/displayPreferences';
@@ -147,13 +148,15 @@ function AppContent() {
 
   useEffect(() => {
     if (isInitializing || !isAuthenticated) return;
+    if (isTelegramAutoLoginPath(location.pathname)) return;
     ensureBooktimeProactiveRefresh();
-  }, [isInitializing, isAuthenticated]);
+  }, [isInitializing, isAuthenticated, location.pathname]);
 
   useEffect(() => {
     if (isInitializing || !isAuthenticated) return;
+    if (isTelegramAutoLoginPath(location.pathname)) return;
     void useUnreadStore.getState().refreshAll();
-  }, [isInitializing, isAuthenticated]);
+  }, [isInitializing, isAuthenticated, location.pathname]);
 
   useEffect(() => {
     if (!isCapacitor()) return;
@@ -189,6 +192,7 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
+    stripStaleSessionForAndroidGoogleLoginRecovery();
     restoreAuthIfNeeded();
     const cleanupAuthPersistence = monitorAuthPersistence();
     
@@ -273,6 +277,7 @@ function AppContent() {
 
   useEffect(() => {
     if (isAuthenticated && !isInitializing) {
+      if (isTelegramAutoLoginPath(location.pathname)) return;
       if (navigator.onLine) {
         usersApi.getProfile()
           .then((response: { data: any }) => {
@@ -300,12 +305,13 @@ function AppContent() {
     } else {
       headerService.stopPolling();
     }
-  }, [isAuthenticated, isInitializing, fetchFavorites]);
+  }, [isAuthenticated, isInitializing, fetchFavorites, location.pathname]);
 
   useEffect(() => {
     if (!isAuthenticated || isInitializing) return;
+    if (isTelegramAutoLoginPath(location.pathname)) return;
     void ensureChatSyncWarmBootstrap();
-  }, [isAuthenticated, isInitializing]);
+  }, [isAuthenticated, isInitializing, location.pathname]);
 
   const initializeSocketEvents = useSocketEventsStore((state) => state.initialize);
   const cleanupSocketEvents = useSocketEventsStore((state) => state.cleanup);
@@ -313,6 +319,7 @@ function AppContent() {
 
   useEffect(() => {
     if (isAuthenticated && !isInitializing) {
+      if (isTelegramAutoLoginPath(location.pathname)) return;
       const timer = setTimeout(() => {
         initializeSocketEvents();
       }, 500);
@@ -332,7 +339,7 @@ function AppContent() {
         socketService.off('wallet-update', handleWalletUpdate);
       };
     }
-  }, [isAuthenticated, isInitializing, initializeSocketEvents, cleanupSocketEvents]);
+  }, [isAuthenticated, isInitializing, initializeSocketEvents, cleanupSocketEvents, location.pathname]);
 
   useEffect(() => {
     if (versionCheck && versionCheck.status === 'optional_update' && !showOptionalUpdateModal) {
