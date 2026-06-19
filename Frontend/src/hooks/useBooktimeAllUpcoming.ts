@@ -96,8 +96,12 @@ export function useBooktimeAllUpcoming(
     [clubs],
   );
 
+  const prevRefreshKeyRef = useRef(refreshKey);
+
   useEffect(() => {
-    void runSharedLoad(clubsRef.current, enabled, connectedKey, refreshKey > 0);
+    const invalidate = refreshKey !== prevRefreshKeyRef.current;
+    prevRefreshKeyRef.current = refreshKey;
+    void runSharedLoad(clubsRef.current, enabled, connectedKey, invalidate);
   }, [connectedKey, enabled, refreshKey]);
 
   const snapshot = useSyncExternalStore(

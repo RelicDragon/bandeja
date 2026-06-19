@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CalendarDays, Trophy, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -9,7 +9,6 @@ import { useMyTabBooktime } from '@/hooks/useMyTabBooktime';
 import { MyTabBookingsSection } from '@/components/booktime/MyTabBookingsSection';
 import { UserTeamsHomeSection } from './UserTeamsHomeSection';
 import { YourLeaguesHomeSection } from './YourLeaguesHomeSection';
-import { useShellNavStore } from '@/store/shellNavStore';
 
 type MyTabPanelId = 'bookings' | 'teams' | 'leagues';
 
@@ -21,28 +20,12 @@ interface MyTabPanelSwitcherProps {
 export function MyTabPanelSwitcher({ games, gamesUnreadCounts = {} }: MyTabPanelSwitcherProps) {
   const { t } = useTranslation();
   const [activePanel, setActivePanel] = useState<MyTabPanelId | null>(null);
-  const activeTab = useShellNavStore((s) => s.activeTab);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const booktime = useMyTabBooktime(refreshKey);
-  const { reloadMyClubs } = booktime;
+  const booktime = useMyTabBooktime();
   const panelCounts = useMyTabPanelCounts(games, booktime);
   const reduceMotion = useReducedMotion();
   const panelTransition = reduceMotion
     ? { duration: 0 }
     : { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
-
-  const prevActiveTab = useRef(activeTab);
-  useEffect(() => {
-    if (activeTab !== 'calendar') {
-      prevActiveTab.current = activeTab;
-      return;
-    }
-    if (prevActiveTab.current !== 'calendar') {
-      setRefreshKey((k) => k + 1);
-      void reloadMyClubs();
-    }
-    prevActiveTab.current = activeTab;
-  }, [activeTab, reloadMyClubs]);
 
   const tabs = useMemo<SegmentedSwitchTab[]>(
     () => [

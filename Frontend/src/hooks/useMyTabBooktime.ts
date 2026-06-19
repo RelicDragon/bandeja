@@ -14,13 +14,12 @@ export type MyTabBooktimeSnapshot = {
   removeBooking: (bookingId: string) => void;
 };
 
-export function useMyTabBooktime(refreshKey = 0): MyTabBooktimeSnapshot {
+export function useMyTabBooktime(): MyTabBooktimeSnapshot {
   const { data: myClubs, reload: reloadMyClubs } = useBooktimeMyClubs(true);
   const clubs = useMemo(() => myClubs?.clubs ?? [], [myClubs?.clubs]);
   const { bookings, loading: bookingsLoading, removeBooking, reload: reloadBookings } = useBooktimeAllUpcoming(
     clubs,
     true,
-    refreshKey,
   );
 
   return {
