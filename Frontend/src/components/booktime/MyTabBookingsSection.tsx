@@ -37,51 +37,59 @@ export function MyTabBookingsSection({ booktime }: Props) {
 
   if (myClubs.connectedCount === 0) return null;
 
+  const actionFooter = (
+    <div className="relative flex items-center justify-center">
+      {bookings.length > 0 ? (
+        <button
+          type="button"
+          onClick={() => navigate('/profile/connected-clubs')}
+          className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+        >
+          {t('club.booktime.seeAllBookings')}
+        </button>
+      ) : null}
+      <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-1">
+        <button
+          type="button"
+          onClick={() => reloadBookings()}
+          className="flex items-center p-1 text-primary-600 hover:opacity-80 dark:text-primary-400"
+          aria-label="Reload bookings"
+        >
+          <RefreshCw size={18} strokeWidth={2} aria-hidden />
+        </button>
+        <button
+          type="button"
+          onClick={() => navigate('/profile/connected-clubs?tab=integrations')}
+          className="flex items-center p-1 text-primary-600 hover:opacity-80 dark:text-primary-400"
+          aria-label={t('club.booktime.tabIntegrations')}
+        >
+          <Settings size={18} strokeWidth={2} aria-hidden />
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-3">
       {bookingsLoading ? (
         <BooktimeBookingsCardsSkeleton count={PREVIEW_LIMIT} compact />
-      ) : bookings.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>
       ) : (
         <>
-          <BooktimeUpcomingBookingsList
-            bookings={bookings}
-            clubById={clubById}
-            showClubName
-            allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
-            compact
-            limit={PREVIEW_LIMIT}
-            animateEntries
-            onCanceled={removeBooking}
-          />
-          <div className="relative flex items-center justify-center">
-            <button
-              type="button"
-              onClick={() => navigate('/profile/connected-clubs')}
-              className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
-            >
-              {t('club.booktime.seeAllBookings')}
-            </button>
-            <div className="absolute right-0 top-1/2 flex -translate-y-1/2 items-center gap-1">
-              <button
-                type="button"
-                onClick={() => reloadBookings()}
-                className="flex items-center p-1 text-primary-600 hover:opacity-80 dark:text-primary-400"
-                aria-label="Reload bookings"
-              >
-                <RefreshCw size={18} strokeWidth={2} aria-hidden />
-              </button>
-              <button
-                type="button"
-                onClick={() => navigate('/profile/connected-clubs?tab=integrations')}
-                className="flex items-center p-1 text-primary-600 hover:opacity-80 dark:text-primary-400"
-                aria-label={t('club.booktime.tabIntegrations')}
-              >
-                <Settings size={18} strokeWidth={2} aria-hidden />
-              </button>
-            </div>
-          </div>
+          {bookings.length === 0 ? (
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t('club.booktime.noUpcomingAny')}</p>
+          ) : (
+            <BooktimeUpcomingBookingsList
+              bookings={bookings}
+              clubById={clubById}
+              showClubName
+              allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
+              compact
+              limit={PREVIEW_LIMIT}
+              animateEntries
+              onCanceled={removeBooking}
+            />
+          )}
+          {actionFooter}
         </>
       )}
     </div>
