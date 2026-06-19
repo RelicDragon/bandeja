@@ -2,6 +2,11 @@ import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { bookingMatchesClubCourts, resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { booktimeBookingStartMs } from '@/integrations/booktime/localTime';
+import {
+  clearBooktimeUpcomingPersistedCache,
+  readBooktimeUpcomingPersistedCache,
+  writeBooktimeUpcomingPersistedCache,
+} from '@/integrations/booktime/booktimeAllUpcomingCacheStorage';
 import { getBooktimeClient, hydrateBooktimeSession } from '@/integrations/booktime/session';
 
 export type AggregatedBooktimeBooking = BooktimeBookingRecord & {
@@ -23,12 +28,56 @@ const companyUpcomingCache = new Map<
 >();
 const companyUpcomingInFlight = new Map<string, Promise<BooktimeBookingRecord[]>>();
 
+let persistenceHydrated = false;
+let persistenceHydratePromise: Promise<void> | null = null;
+
 function connectedClubsKey(clubs: BooktimeMyClubRow[]): string {
   return clubs
     .filter((club) => club.connected && club.companyId)
     .map((club) => club.clubId)
     .sort()
     .join('|');
+}
+
+function isFresh(at: number, now = Date.now()): boolean {
+  return now - at < CACHE_TTL_MS;
+}
+
+function snapshotPersistedCache(): Parameters<typeof writeBooktimeUpcomingPersistedCache>[0] {
+  return {
+    v: 1,
+    aggregated: cached,
+    companies: Object.fromEntries(companyUpcomingCache.entries()),
+  };
+}
+
+function persistCache(): void {
+  void writeBooktimeUpcomingPersistedCache(snapshotPersistedCache());
+}
+
+async function ensurePersistenceHydrated(): Promise<void> {
+  if (persistenceHydrated) return;
+  if (persistenceHydratePromise) return persistenceHydratePromise;
+
+  persistenceHydratePromise = (async () => {
+    const stored = await readBooktimeUpcomingPersistedCache();
+    if (stored) {
+      const now = Date.now();
+      if (stored.aggregated && isFresh(stored.aggregated.at, now)) {
+        cached = stored.aggregated;
+      }
+      for (const [companyId, entry] of Object.entries(stored.companies)) {
+        if (isFresh(entry.at, now)) {
+          companyUpcomingCache.set(companyId, entry);
+        }
+      }
+    }
+    persistenceHydrated = true;
+  })().finally(() => {
+    persistenceHydratePromise = null;
+  });
+
+  return persistenceHydratePromise;
 }
 
 function groupConnectedClubsByCompany(
@@ -53,7 +102,7 @@ async function fetchUpcomingForCompany(
   const companyId = representativeClub.companyId!;
   const now = Date.now();
   const cachedCompany = companyUpcomingCache.get(companyId);
-  if (cachedCompany && now - cachedCompany.at < CACHE_TTL_MS) {
+  if (cachedCompany && isFresh(cachedCompany.at, now)) {
     return cachedCompany.bookings;
   }
 
@@ -76,6 +125,7 @@ async function fetchUpcomingForCompany(
     const res = await client.getUpcomingBookings(0, 20);
     const bookings = res.bookings ?? [];
     companyUpcomingCache.set(companyId, { at: Date.now(), bookings });
+    persistCache();
     return bookings;
   })().finally(() => {
     companyUpcomingInFlight.delete(companyId);
@@ -123,6 +173,39 @@ export function invalidateBooktimeAllUpcomingCache(): void {
   inFlightKey = '';
   companyUpcomingCache.clear();
   companyUpcomingInFlight.clear();
+  void clearBooktimeUpcomingPersistedCache();
+}
+
+export function setBooktimeAllUpcomingDisplayCache(
+  clubs: BooktimeMyClubRow[],
+  bookings: AggregatedBooktimeBooking[],
+): void {
+  const connectedClubs = clubs.filter((club) => club.connected && club.companyId);
+  if (connectedClubs.length === 0) return;
+
+  const key = connectedClubsKey(connectedClubs);
+  cached = { key, bookings, at: Date.now() };
+  companyUpcomingCache.clear();
+  persistCache();
+}
+
+export async function peekCachedBooktimeUpcoming(
+  clubs: BooktimeMyClubRow[],
+  enabled: boolean,
+): Promise<AggregatedBooktimeBooking[] | null> {
+  if (!enabled) return null;
+
+  const connectedClubs = clubs.filter((club) => club.connected && club.companyId);
+  if (connectedClubs.length === 0) return null;
+
+  await ensurePersistenceHydrated();
+
+  const key = connectedClubsKey(connectedClubs);
+  const now = Date.now();
+  if (cached && cached.key === key && isFresh(cached.at, now)) {
+    return cached.bookings;
+  }
+  return null;
 }
 
 export async function loadAllBooktimeUpcoming(
@@ -134,9 +217,11 @@ export async function loadAllBooktimeUpcoming(
   const connectedClubs = clubs.filter((club) => club.connected && club.companyId);
   if (connectedClubs.length === 0) return [];
 
+  await ensurePersistenceHydrated();
+
   const key = connectedClubsKey(connectedClubs);
   const now = Date.now();
-  if (cached && cached.key === key && now - cached.at < CACHE_TTL_MS) {
+  if (cached && cached.key === key && isFresh(cached.at, now)) {
     return cached.bookings;
   }
 
@@ -148,6 +233,7 @@ export async function loadAllBooktimeUpcoming(
   inFlight = fetchAllBooktimeUpcoming(connectedClubs)
     .then((bookings) => {
       cached = { key, bookings, at: Date.now() };
+      persistCache();
       return bookings;
     })
     .finally(() => {

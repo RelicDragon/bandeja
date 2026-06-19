@@ -3,6 +3,8 @@ import type { BooktimeMyClubRow } from '@/api/booktime';
 import {
   invalidateBooktimeAllUpcomingCache,
   loadAllBooktimeUpcoming,
+  peekCachedBooktimeUpcoming,
+  setBooktimeAllUpcomingDisplayCache,
   type AggregatedBooktimeBooking,
 } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 
@@ -61,18 +63,25 @@ function runSharedLoad(
     return Promise.resolve();
   }
 
-  setKeyState(connectedKey, {
-    bookings: current?.bookings ?? [],
-    loading: true,
-  });
+  const loadPromise = (async () => {
+    if (!invalidate) {
+      const cachedBookings = await peekCachedBooktimeUpcoming(clubs, enabled);
+      if (cachedBookings) {
+        setKeyState(connectedKey, { bookings: cachedBookings, loading: false });
+        return;
+      }
+    }
 
-  const loadPromise = loadAllBooktimeUpcoming(clubs, enabled)
-    .then((bookings) => {
-      setKeyState(connectedKey, { bookings, loading: false });
-    })
-    .finally(() => {
-      inFlightByKey.delete(connectedKey);
+    setKeyState(connectedKey, {
+      bookings: current?.bookings ?? [],
+      loading: true,
     });
+
+    const bookings = await loadAllBooktimeUpcoming(clubs, enabled);
+    setKeyState(connectedKey, { bookings, loading: false });
+  })().finally(() => {
+    inFlightByKey.delete(connectedKey);
+  });
 
   inFlightByKey.set(connectedKey, loadPromise);
   return loadPromise;
@@ -119,13 +128,14 @@ export function useBooktimeAllUpcoming(
     loading: snapshot.loading,
     reload,
     removeBooking: (bookingId: string) => {
-      invalidateBooktimeAllUpcomingCache();
       const current = sharedByKey.get(connectedKey);
       if (!current) return;
+      const bookings = current.bookings.filter((booking) => booking.uuid !== bookingId);
       setKeyState(connectedKey, {
         ...current,
-        bookings: current.bookings.filter((booking) => booking.uuid !== bookingId),
+        bookings,
       });
+      setBooktimeAllUpcomingDisplayCache(clubsRef.current, bookings);
     },
   };
 }
