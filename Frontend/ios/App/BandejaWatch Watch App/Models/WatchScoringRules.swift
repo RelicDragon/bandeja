@@ -220,7 +220,7 @@ enum WatchScoringRulebook {
         case .points32:
             return pointsRule(total: 32)
         case .points11:
-            return pointsRule(total: 11)
+            return rallyPointsRule(total: 11)
         case .bestOf3_11:
             return rallyBestOf(sets: 3, pointsPerSet: 11)
         case .bestOf3_15:
@@ -230,11 +230,9 @@ enum WatchScoringRulebook {
         case .bestOf3_21:
             return rallyBestOf(sets: 3, pointsPerSet: 21)
         case .par11:
-            return pointsRule(total: 11)
+            return rallyPointsRule(total: 11)
         case .singleGame21:
-            var r = pointsRule(total: 21)
-            r.winBy = 2
-            return r
+            return rallyPointsRule(total: 21)
         case .timed:
             return pointsRule(total: 0)
         case .custom:
@@ -252,6 +250,13 @@ enum WatchScoringRulebook {
         r.minSetsToWin = (sets / 2) + 1
         r.maxSetsPlayed = sets
         r.winnerOfMatch = .bySets
+        r.winBy = 2
+        return r
+    }
+
+
+    private static func rallyPointsRule(total: Int) -> WatchScoringRules {
+        var r = pointsRule(total: total)
         r.winBy = 2
         return r
     }

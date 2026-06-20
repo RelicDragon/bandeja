@@ -2,7 +2,29 @@ import WatchConnectivity
 import Observation
 
 private enum WatchConnectivityPayload {
+    nonisolated static func relayPayload(from dict: [String: Any]) -> Data? {
+        guard JSONSerialization.isValidJSONObject(dict) else { return nil }
+        return try? JSONSerialization.data(withJSONObject: dict)
+    }
+
     nonisolated static func apply(_ dict: [String: Any]) {
+        if dict["event"] as? String == "liveScoringRelay" {
+            guard let data = relayPayload(from: dict) else { return }
+            Task { @MainActor in
+                guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+                WatchLiveScoringRelayStore.shared.ingest(payload)
+            }
+            return
+        }
+        if dict["event"] as? String == "matchTimerRelay" {
+            guard let data = relayPayload(from: dict) else { return }
+            Task { @MainActor in
+                guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
+                WatchMatchTimerRelayStore.shared.ingest(payload)
+            }
+            return
+        }
+
         let token = dict["token"] as? String
         let isLogout = dict["event"] as? String == "logout"
         let language = dict["language"] as? String
@@ -19,6 +41,7 @@ private enum WatchConnectivityPayload {
                 KeychainHelper.shared.deleteToken()
                 WatchPreferencesStore.shared.clear()
                 ScoringOutbox.shared.clear()
+                LiveScoringOutbox.shared.clear()
                 WatchSessionManager.shared.logoutDidArrive.toggle()
                 return
             }
@@ -47,6 +70,12 @@ private enum WatchConnectivityPayload {
     }
 }
 
+enum WatchConnectivityEvent {
+    static let liveScoringRelay = "liveScoringRelay"
+    static let matchTimerRelay = "matchTimerRelay"
+    static let scoreUpdated = "scoreUpdated"
+}
+
 @Observable
 @MainActor
 final class WatchSessionManager: NSObject {
@@ -68,9 +97,17 @@ final class WatchSessionManager: NSObject {
         }
     }
 
-    func notifyScoreUpdated(gameId: String) {
+    func notifyScoreUpdated(gameId: String, matchId: String, revision: Int? = nil) {
         guard session.activationState == .activated else { return }
-        session.transferUserInfo(["event": "scoreUpdated", "gameId": gameId])
+        var payload: [String: Any] = [
+            "event": WatchConnectivityEvent.scoreUpdated,
+            "gameId": gameId,
+            "matchId": matchId,
+        ]
+        if let revision {
+            payload["revision"] = revision
+        }
+        session.transferUserInfo(payload)
     }
 }
 

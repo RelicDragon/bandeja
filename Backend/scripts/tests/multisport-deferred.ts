@@ -37,6 +37,7 @@ function main(): void {
   runSuite('deferred pickleball', 'multisport-deferred-pickleball.ts');
   runSuite('deferred product', 'multisport-deferred-product.ts', true);
   runSuite('P-W3-WATCH', 'multisport-post-wave2-watch.ts');
+  runSuite('serve guide golden parity', 'watch-serve-guide-parity.ts');
   console.log('multisport-deferred: orchestrator passed');
 }
 

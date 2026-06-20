@@ -34,10 +34,31 @@ final class MatchScoringViewModel {
     /// Rally-cap sports: winner of each point (mirrors FE `pointWinnerLog`).
     var pointWinnerLog: [TeamSide] = []
 
+    var firstServerTeam: TeamSide?
+    var firstServerDoublesPlayerIndex: Int?
+    var pointsServeRotation: String?
+    var matchStartCourtEndsSwapped: Bool?
+    var matchStartTeamASidesMirrored: Bool?
+    var matchStartTeamBSidesMirrored: Bool?
+    var serveGuideSkipped = false
+    /// UI-only; persisted locally for coach toast, not in live PATCH.
+    var showedFirstServeCoachToast = false
+    /// Brief notice when a newer live session revision was written on another device.
+    var showRemoteWriterAttribution = false
+    /// Increments once per remote revision so UI can re-show while a prior toast is visible.
+    var remoteWriterAttributionSignal = 0
+    /// Strict officiating: let replay pending (mirrors FE `officiatingLetPending` in live blob).
+    var officiatingLetPending = false
+
     private let api = APIClient()
     private var liveScoringRevision = 0
+    private var lastAttributedRemoteRevision = 0
+    private var lastAcknowledgedOwnClientMessageId: String?
+    private var suppressRemoteWriterAttribution = false
     private var liveSaveTask: Task<Void, Never>?
     private var remoteLivePollTask: Task<Void, Never>?
+    private var relayObserveTask: Task<Void, Never>?
+    private var lastObservedRelayTick = 0
 
     var rules: WatchScoringRules { WatchScoringRulebook.rules(for: game) }
 
@@ -87,6 +108,7 @@ final class MatchScoringViewModel {
     init(gameId: String, matchId: String) {
         self.gameId = gameId
         self.matchId = matchId
+        LiveScoringOutbox.shared.registerSink(self)
     }
 
     private func splitOfficialSupplementalSets(_ rows: [WatchSetWrite]) -> (official: [WatchSetWrite], supplemental: [WatchSetWrite]) {
@@ -199,6 +221,7 @@ final class MatchScoringViewModel {
         if nonRallyOutcomeBlocksScoring { return true }
         if optionalDeciderChoicePending() { return true }
         if timedClassicSetLocked { return true }
+        if officiatingLetReplayBlocksScoring { return true }
         if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) { return true }
         if isAmericano,
            WatchComputeMatchWinner.isPointsOfficialBudgetExhausted(activeSet: sets[safe: activeSetIndex], rules: rules) {
@@ -213,70 +236,26 @@ final class MatchScoringViewModel {
     }
 
     var classicOfficialScoringLocked: Bool {
-        serveSeedBlocksScoring || (!activeSetIsSupplemental && blocksFurtherOfficialTaps())
+        serveSeedBlocksScoring
+            || strictBadmintonServeBlocksUserScoring
+            || (!activeSetIsSupplemental && blocksFurtherOfficialTaps())
     }
 
     var pointsOfficialIncrementDisabled: Bool {
-        isReadOnly || serveSeedBlocksScoring || (!activeSetIsSupplemental && blocksFurtherOfficialTaps())
+        isReadOnly
+            || serveSeedBlocksScoring
+            || strictBadmintonServeBlocksUserScoring
+            || (!activeSetIsSupplemental && blocksFurtherOfficialTaps())
+    }
+
+    var needsServeSetup: Bool {
+        guard usesTennisStyleServeGuide, !isReadOnly else { return false }
+        return WatchServeSetup.needsServeSetup(state: currentLiveScoringStateSnapshot(), rules: rules)
     }
 
     /// Blocks scoring until first server is chosen (or hints skipped), including mid-match recovery.
     private var serveSeedBlocksScoring: Bool {
-        guard usesTennisStyleServeGuide, !isReadOnly else { return false }
-        let record = WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId) ?? .empty
-        if record.skipped || record.firstServerTeam != nil { return false }
-        if usesBallCapPerSetUI {
-            return isPristinePointsStart || officialSetsHavePlay
-        }
-        if usesTennisSetRules {
-            return isPristineClassicStart || isPristineSuperTieBreakStart || classicActiveSetHasPlay || officialSetsHavePlay
-        }
-        return false
-    }
-
-    private var isPristinePointsStart: Bool {
-        guard usesBallCapPerSetUI, !activeSetIsSupplemental else { return false }
-        let set = sets[safe: activeSetIndex]
-        return (set?.teamA ?? 0) == 0 && (set?.teamB ?? 0) == 0
-    }
-
-    private var officialSetsHavePlay: Bool {
-        sets.contains { $0.resolvedRole == .official && ($0.teamA > 0 || $0.teamB > 0) }
-    }
-
-    private var isPristineClassicStart: Bool {
-        guard usesTennisSetRules, !activeSetIsSupplemental else { return false }
-        let set = sets[safe: activeSetIndex]
-        guard let set, !set.isTieBreak, set.teamA == 0, set.teamB == 0 else { return false }
-        if withinSetTieBreakMode { return false }
-        switch classicPointState {
-        case .regular(let a, let b):
-            return a == .zero && b == .zero && classicPointsPlayedInGame == 0
-        default:
-            return false
-        }
-    }
-
-    private var isPristineSuperTieBreakStart: Bool {
-        guard usesTennisSetRules, !activeSetIsSupplemental, activeSetIsSuperTieBreak else { return false }
-        let set = sets[safe: activeSetIndex]
-        return (set?.teamA ?? 0) == 0 && (set?.teamB ?? 0) == 0
-    }
-
-    private var classicActiveSetHasPlay: Bool {
-        guard usesTennisSetRules, !activeSetIsSupplemental else { return false }
-        let set = sets[safe: activeSetIndex]
-        guard let set else { return false }
-        if set.teamA > 0 || set.teamB > 0 { return true }
-        if withinSetTieBreakMode, tieBreakA > 0 || tieBreakB > 0 { return true }
-        if set.isTieBreak, set.teamA > 0 || set.teamB > 0 { return true }
-        switch classicPointState {
-        case .regular(let a, let b):
-            if a != .zero || b != .zero { return true }
-        default:
-            return true
-        }
-        return classicPointsPlayedInGame > 0
+        needsServeSetup
     }
 
     var pointsOfficialDecrementDisabled: Bool {
@@ -305,6 +284,44 @@ final class MatchScoringViewModel {
 
     var officiatingHintsEnabled: Bool {
         game?.resolvedOfficiatingLevel.showsHonorHints ?? false
+    }
+
+    var officiatingIsStrict: Bool {
+        game?.resolvedOfficiatingLevel.isStrict ?? false
+    }
+
+    private var officiatingLetReplayBlocksScoring: Bool {
+        WatchOfficiatingEnforcement.isLetReplayBlockingScore(
+            letPending: officiatingLetPending,
+            level: game?.resolvedOfficiatingLevel ?? .none
+        )
+    }
+
+    private var strictBadmintonServeBlocksUserScoring: Bool {
+        guard officiatingIsStrict, game?.resolvedSport == .badminton else { return false }
+        let inputs = ServeGuideInputs.from(vm: self, hintsMode: .on)
+        guard let snap = ServeGuideEngine.compute(inputs) else { return false }
+        let set = sets[safe: activeSetIndex]
+        let serverScore = snap.serverTeam == .teamA ? (set?.teamA ?? 0) : (set?.teamB ?? 0)
+        return WatchOfficiatingEnforcement.strictBadmintonServeBlocksUserScoring(
+            level: game?.resolvedOfficiatingLevel ?? .none,
+            sport: game?.resolvedSport,
+            serverScore: serverScore,
+            courtSide: snap.courtSide
+        )
+    }
+
+    var strictOfficiatingActionsDisabled: Bool {
+        if isReadOnly || isSaving { return true }
+        if nonRallyOutcomeBlocksScoring { return true }
+        if optionalDeciderChoicePending() { return true }
+        if timedClassicSetLocked { return true }
+        if serveSeedBlocksScoring { return true }
+        if !activeSetIsSupplemental,
+           WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) {
+            return true
+        }
+        return false
     }
 
     var liveScoringUiId: WatchLiveScoringUiId {
@@ -396,15 +413,19 @@ final class MatchScoringViewModel {
                     activeSetIndex = max(0, min(sets.count - 1, nextEditableSetIndex()))
                     optionalDeciderFormat = nil
                     timedClassicSetLocked = false
+                    officiatingLetPending = false
                     pendingSetFormatChoiceIndex = nil
                     tieBreakA = 0
                     tieBreakB = 0
                     syncWithinSetTieBreakForActiveSet()
                     liveScoringRevision = -1
                     if let live = m.metadata?.liveScoring, live.isSupported {
+                        suppressRemoteWriterAttribution = true
                         applyLiveScoringEnvelopeIfNewer(live)
+                        suppressRemoteWriterAttribution = false
                     } else {
-                        syncClassicPointsPlayedFromState(mergingPersisted: WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId))
+                        hydrateServeSeedFromOfflineCache()
+                        syncClassicPointsPlayedFromState()
                     }
                     normalizeClassicPointStateForGoldenPointRules()
                     return
@@ -437,17 +458,27 @@ final class MatchScoringViewModel {
 
     func flushLiveScoringSnapshot() async {
         guard !isReadOnly else { return }
+        await LiveScoringOutbox.shared.flush(matchId: matchId)
         await saveLiveScoringNow(background: false)
     }
+
+    private static let liveScoringRemotePollIntervalNs: UInt64 = 1_750_000_000
 
     func startLiveScoringRemotePolling() {
         guard !isReadOnly else { return }
         remoteLivePollTask?.cancel()
+        startLiveScoringRelayObserver()
         remoteLivePollTask = Task { [weak self] in
-            await self?.pollLiveScoringEnvelopeFromServer()
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 4_000_000_000)
-                await self?.pollLiveScoringEnvelopeFromServer()
+                guard let self else { return }
+                if !WatchLiveScoringRelayStore.shared.suppressesRemotePoll(
+                    gameId: self.gameId,
+                    matchId: self.matchId,
+                    currentRevision: self.liveScoringRevision
+                ) {
+                    await self.pollLiveScoringEnvelopeFromServer()
+                }
+                try? await Task.sleep(nanoseconds: Self.liveScoringRemotePollIntervalNs)
             }
         }
     }
@@ -455,6 +486,50 @@ final class MatchScoringViewModel {
     func stopLiveScoringRemotePolling() {
         remoteLivePollTask?.cancel()
         remoteLivePollTask = nil
+        relayObserveTask?.cancel()
+        relayObserveTask = nil
+        lastObservedRelayTick = 0
+        LiveScoringOutbox.shared.unregisterSink(gameId: gameId, matchId: matchId)
+    }
+
+    private func startLiveScoringRelayObserver() {
+        relayObserveTask?.cancel()
+        lastObservedRelayTick = WatchLiveScoringRelayStore.shared.tick
+        relayObserveTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 150_000_000)
+                await self?.consumePendingLiveScoringRelayIfNeeded()
+            }
+        }
+    }
+
+    private func consumePendingLiveScoringRelayIfNeeded() {
+        let store = WatchLiveScoringRelayStore.shared
+        guard store.tick != lastObservedRelayTick else { return }
+        lastObservedRelayTick = store.tick
+        guard let message = store.lastMessage else { return }
+        applyLiveScoringRelay(message)
+    }
+
+    func applyLiveScoringRelay(_ message: WatchLiveScoringRelayMessage) {
+        guard message.gameId == gameId, message.matchId == matchId else { return }
+        if message.isExplicitClear {
+            Task { await pollLiveScoringEnvelopeFromServer() }
+            return
+        }
+        if let envelope = message.envelope {
+            applyLiveScoringEnvelopeIfNewer(envelope)
+            WatchLiveScoringRelayStore.shared.markApplied(
+                gameId: gameId,
+                matchId: matchId,
+                revision: envelope.revision
+            )
+            return
+        }
+        let hintRevision = message.revisionHint
+        if hintRevision > liveScoringRevision {
+            Task { await pollLiveScoringEnvelopeFromServer() }
+        }
     }
 
     private func pollLiveScoringEnvelopeFromServer() async {
@@ -476,6 +551,7 @@ final class MatchScoringViewModel {
     func saveCurrentSets() async {
         guard !isReadOnly else { return }
         guard let match else { return }
+        await LiveScoringOutbox.shared.flush(matchId: matchId)
         await saveLiveScoringNow()
         let sortedTeams = match.sortedTeams
         let maxPerTeam = WatchMatchFormat.maxPlayersPerTeam(for: game)
@@ -496,7 +572,10 @@ final class MatchScoringViewModel {
                 sets: sets
             )
             try await api.sendVoid(.updateMatch(gameId: gameId, matchId: match.id), body: body)
-            WatchSessionManager.shared.notifyScoreUpdated(gameId: gameId)
+            WatchSessionManager.shared.notifyScoreUpdated(
+                gameId: gameId,
+                matchId: match.id
+            )
             ScoringOutbox.shared.remove(matchId: match.id)
         } catch {
             if Self.shouldQueueSaveForLater(error) {
@@ -517,16 +596,7 @@ final class MatchScoringViewModel {
     }
 
     private static func shouldQueueSaveForLater(_ error: Error) -> Bool {
-        if let api = error as? APIError {
-            switch api {
-            case .httpError(let code):
-                return APIError.httpStatusWarrantsOutboxRetry(code)
-            case .noToken, .decodingError, .liveScoringRevisionMismatch:
-                return false
-            }
-        }
-        let ns = error as NSError
-        return ns.domain == NSURLErrorDomain
+        APIError.warrantsDeliveryRetry(error)
     }
 
     func incrementAmericanoTeamA() {
@@ -747,18 +817,14 @@ final class MatchScoringViewModel {
                     sets[activeSetIndex].teamA -= 1
                     withinSetTieBreakMode = false
                     WatchScoreHaptics.undo()
-                    syncClassicPointsPlayedFromState(
-                        mergingPersisted: WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId)
-                    )
+                    syncClassicPointsPlayedFromState()
                 } else if side == .teamB, sets[activeSetIndex].teamA == gamesScoreForTieBreak,
                           sets[activeSetIndex].teamB == gamesScoreForTieBreak,
                           sets[activeSetIndex].teamB > 0 {
                     sets[activeSetIndex].teamB -= 1
                     withinSetTieBreakMode = false
                     WatchScoreHaptics.undo()
-                    syncClassicPointsPlayedFromState(
-                        mergingPersisted: WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId)
-                    )
+                    syncClassicPointsPlayedFromState()
                 }
             }
             return
@@ -1220,8 +1286,12 @@ final class MatchScoringViewModel {
 
     func applyLiveScoringEnvelopeIfNewer(_ envelope: WatchLiveScoringEnvelope?) {
         guard let envelope, envelope.isSupported, envelope.revision > liveScoringRevision else { return }
+        guard let state = envelope.state else {
+            liveScoringRevision = envelope.revision
+            return
+        }
+        maybeQueueRemoteWriterAttribution(envelope: envelope)
         liveScoringRevision = envelope.revision
-        guard let state = envelope.state else { return }
 
         sets = state.sets.isEmpty ? [WatchSetWrite(teamA: 0, teamB: 0)] : state.sets
         activeSetIndex = max(0, min(sets.count - 1, state.activeSetIndex))
@@ -1248,18 +1318,148 @@ final class MatchScoringViewModel {
             classicPointsPlayedInGame = 0
         }
 
-        var serveRecord = WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId) ?? .empty
-        if let first = state.firstServerTeam { serveRecord.firstServerTeam = first }
-        if let idx = state.firstServerDoublesPlayerIndex { serveRecord.firstServerDoublesPlayerIndex = idx }
-        if let rot = state.pointsServeRotation { serveRecord.pointsServeRotation = rot }
-        if state.matchStartCourtEndsSwapped == true { serveRecord.matchStartCourtEndsSwapped = true }
-        if state.matchStartTeamASidesMirrored == true { serveRecord.matchStartTeamASidesMirrored = true }
-        if state.matchStartTeamBSidesMirrored == true { serveRecord.matchStartTeamBSidesMirrored = true }
-        if let skipped = state.serveGuideSkipped { serveRecord.skipped = skipped }
+        if state.serveGuideSkipped == true {
+            serveGuideSkipped = true
+            firstServerTeam = nil
+            firstServerDoublesPlayerIndex = nil
+            pointsServeRotation = nil
+            matchStartCourtEndsSwapped = nil
+            matchStartTeamASidesMirrored = nil
+            matchStartTeamBSidesMirrored = nil
+        } else {
+            if let skipped = state.serveGuideSkipped, !skipped {
+                serveGuideSkipped = false
+            }
+            if let first = state.firstServerTeam {
+                firstServerTeam = first
+                serveGuideSkipped = false
+            }
+            if let idx = state.firstServerDoublesPlayerIndex { firstServerDoublesPlayerIndex = idx }
+            if let rot = state.pointsServeRotation { pointsServeRotation = rot }
+            matchStartCourtEndsSwapped = state.matchStartCourtEndsSwapped == true ? true : nil
+            matchStartTeamASidesMirrored = state.matchStartTeamASidesMirrored == true ? true : nil
+            matchStartTeamBSidesMirrored = state.matchStartTeamBSidesMirrored == true ? true : nil
+        }
         pointWinnerLog = state.pointWinnerLog ?? []
-        serveRecord.classicPointsPlayedInGame = classicPointsPlayedInGame
-        WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: serveRecord)
+        officiatingLetPending = state.officiatingLetPending == true
+        cacheServeSeedToOfflineStore()
         normalizeLiveSetsAfterDecisionIfNeeded()
+    }
+
+    func dismissRemoteWriterAttribution() {
+        showRemoteWriterAttribution = false
+    }
+
+    private func maybeQueueRemoteWriterAttribution(envelope: WatchLiveScoringEnvelope) {
+        guard !suppressRemoteWriterAttribution else { return }
+        guard envelope.revision > lastAttributedRemoteRevision else { return }
+        guard envelopeIsFromAnotherWriter(envelope) else { return }
+        lastAttributedRemoteRevision = envelope.revision
+        remoteWriterAttributionSignal += 1
+        showRemoteWriterAttribution = true
+    }
+
+    private func envelopeIsFromAnotherWriter(_ envelope: WatchLiveScoringEnvelope) -> Bool {
+        guard let current = KeychainHelper.shared.readUserId(), !current.isEmpty else { return false }
+        if let writer = envelope.writerUserId, !writer.isEmpty, writer != current {
+            return true
+        }
+        guard let remoteClientMessageId = envelope.lastClientMessageId, !remoteClientMessageId.isEmpty else {
+            return false
+        }
+        if remoteClientMessageId == lastAcknowledgedOwnClientMessageId { return false }
+        if remoteClientMessageId == LiveScoringOutbox.shared.pendingClientMessageId(forMatchId: matchId) {
+            return false
+        }
+        return envelope.writerUserId == current
+    }
+
+    private func noteAcknowledgedOwnClientMessageId(_ envelope: WatchLiveScoringEnvelope?) {
+        guard let clientMessageId = envelope?.lastClientMessageId, !clientMessageId.isEmpty else { return }
+        lastAcknowledgedOwnClientMessageId = clientMessageId
+    }
+
+    func commitServeSetup(
+        team: TeamSide,
+        playerIndex: Int,
+        pointsRotation: String?,
+        courtEndsSwapped: Bool,
+        teamASidesMirrored: Bool,
+        teamBSidesMirrored: Bool
+    ) {
+        firstServerTeam = team
+        firstServerDoublesPlayerIndex = playerIndex
+        pointsServeRotation = pointsRotation
+        matchStartCourtEndsSwapped = courtEndsSwapped ? true : nil
+        matchStartTeamASidesMirrored = teamASidesMirrored ? true : nil
+        matchStartTeamBSidesMirrored = teamBSidesMirrored ? true : nil
+        serveGuideSkipped = false
+        cacheServeSeedToOfflineStore()
+        scheduleLiveScoringSave()
+    }
+
+    func skipServeGuide() {
+        serveGuideSkipped = true
+        firstServerTeam = nil
+        firstServerDoublesPlayerIndex = nil
+        pointsServeRotation = nil
+        matchStartCourtEndsSwapped = nil
+        matchStartTeamASidesMirrored = nil
+        matchStartTeamBSidesMirrored = nil
+        cacheServeSeedToOfflineStore()
+        scheduleLiveScoringSave()
+    }
+
+    func hideServeGuideForMatch() {
+        serveGuideSkipped = true
+        cacheServeSeedToOfflineStore()
+        scheduleLiveScoringSave()
+    }
+
+    func markServeCoachToastShown() {
+        showedFirstServeCoachToast = true
+        cacheServeSeedToOfflineStore()
+    }
+
+    private func hydrateServeSeedFromOfflineCache() {
+        guard let cached = WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId) else { return }
+        firstServerTeam = cached.firstServerTeam
+        firstServerDoublesPlayerIndex = cached.firstServerDoublesPlayerIndex
+        pointsServeRotation = cached.pointsServeRotation
+        matchStartCourtEndsSwapped = cached.matchStartCourtEndsSwapped
+        matchStartTeamASidesMirrored = cached.matchStartTeamASidesMirrored
+        matchStartTeamBSidesMirrored = cached.matchStartTeamBSidesMirrored
+        serveGuideSkipped = cached.skipped
+        showedFirstServeCoachToast = cached.showedFirstServeCoachToast
+        if let cpp = cached.classicPointsPlayedInGame {
+            classicPointsPlayedInGame = cpp
+        }
+    }
+
+    private func cacheServeSeedToOfflineStore() {
+        WatchServeGuideSessionStore.shared.save(
+            gameId: gameId,
+            matchId: matchId,
+            record: offlineServeSeedRecord()
+        )
+    }
+
+    private func offlineServeSeedRecord() -> WatchServeGuideSessionRecord {
+        WatchServeGuideSessionRecord(
+            firstServerTeam: firstServerTeam,
+            firstServerDoublesPlayerIndex: firstServerDoublesPlayerIndex,
+            pointsServeRotation: pointsServeRotation,
+            matchStartCourtEndsSwapped: matchStartCourtEndsSwapped,
+            matchStartTeamASidesMirrored: matchStartTeamASidesMirrored,
+            matchStartTeamBSidesMirrored: matchStartTeamBSidesMirrored,
+            skipped: serveGuideSkipped,
+            classicPointsPlayedInGame: classicPointsPlayedInGame,
+            showedFirstServeCoachToast: showedFirstServeCoachToast
+        )
+    }
+
+    private func currentLiveScoringStateSnapshot() -> WatchLiveScoringState {
+        makeLiveScoringState()
     }
 
     private func scheduleLiveScoringSave() {
@@ -1277,20 +1477,26 @@ final class MatchScoringViewModel {
         guard !openEndedPresetBlocksLivePatch else { return }
         liveSaveTask?.cancel()
         liveSaveTask = nil
+        let body = WatchPatchLiveScoringBody(
+            state: makeLiveScoringState(),
+            baseRevision: liveScoringRevision,
+            clientMessageId: UUID().uuidString,
+            opId: UUID().uuidString
+        )
         do {
-            let body = WatchPatchLiveScoringBody(
-                state: makeLiveScoringState(),
-                baseRevision: liveScoringRevision,
-                clientMessageId: UUID().uuidString,
-                opId: UUID().uuidString
-            )
             let response = try await api.patchMatchLiveScoring(gameId: gameId, matchId: matchId, body: body)
+            LiveScoringOutbox.shared.remove(matchId: matchId)
             if let envelope = response.liveScoring {
+                noteAcknowledgedOwnClientMessageId(envelope)
                 applyLiveScoringEnvelopeIfNewer(envelope)
             } else {
                 liveScoringRevision = response.revision
             }
-            WatchSessionManager.shared.notifyScoreUpdated(gameId: gameId)
+            WatchSessionManager.shared.notifyScoreUpdated(
+                gameId: gameId,
+                matchId: matchId,
+                revision: liveScoringRevision
+            )
         } catch let api as APIError {
             if case .liveScoringRevisionMismatch(_, let serverEnvelope) = api {
                 if let serverEnvelope {
@@ -1298,12 +1504,21 @@ final class MatchScoringViewModel {
                 } else {
                     await pollLiveScoringEnvelopeFromServer()
                 }
+                LiveScoringOutbox.shared.remove(matchId: matchId)
+                return
+            }
+            if APIError.warrantsDeliveryRetry(api) {
+                LiveScoringOutbox.shared.enqueue(gameId: gameId, matchId: matchId, body: body)
                 return
             }
             if !background {
                 self.error = api
             }
         } catch {
+            if APIError.warrantsDeliveryRetry(error) {
+                LiveScoringOutbox.shared.enqueue(gameId: gameId, matchId: matchId, body: body)
+                return
+            }
             if !background {
                 self.error = error
             }
@@ -1311,7 +1526,6 @@ final class MatchScoringViewModel {
     }
 
     private func makeLiveScoringState() -> WatchLiveScoringState {
-        let record = WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId)
         let pointState: WatchLivePointState
         switch classicPointState {
         case .regular(let a, let b):
@@ -1335,17 +1549,66 @@ final class MatchScoringViewModel {
             mode: usesBallCapPerSetUI ? .points : .classic,
             sets: sets,
             classic: usesBallCapPerSetUI ? nil : classic,
-            firstServerTeam: record?.firstServerTeam,
-            firstServerDoublesPlayerIndex: record?.firstServerDoublesPlayerIndex,
-            pointsServeRotation: record?.pointsServeRotation,
-            matchStartCourtEndsSwapped: record?.matchStartCourtEndsSwapped == true ? true : nil,
-            matchStartTeamASidesMirrored: record?.matchStartTeamASidesMirrored == true ? true : nil,
-            matchStartTeamBSidesMirrored: record?.matchStartTeamBSidesMirrored == true ? true : nil,
-            serveGuideSkipped: record?.skipped,
+            firstServerTeam: firstServerTeam,
+            firstServerDoublesPlayerIndex: firstServerDoublesPlayerIndex,
+            pointsServeRotation: pointsServeRotation,
+            matchStartCourtEndsSwapped: matchStartCourtEndsSwapped == true ? true : nil,
+            matchStartTeamASidesMirrored: matchStartTeamASidesMirrored == true ? true : nil,
+            matchStartTeamBSidesMirrored: matchStartTeamBSidesMirrored == true ? true : nil,
+            serveGuideSkipped: serveGuideSkipped ? true : nil,
             optionalDeciderFormat: optionalDeciderFormat,
             timedClassicSetLocked: timedClassicSetLocked ? true : nil,
-            pointWinnerLog: pointWinnerLog.isEmpty ? nil : pointWinnerLog
+            pointWinnerLog: pointWinnerLog.isEmpty ? nil : pointWinnerLog,
+            officiatingLetPending: officiatingLetPending ? true : nil
         )
+    }
+
+    func markLetPending() {
+        guard !isReadOnly, !isSaving, officiatingIsStrict else { return }
+        guard !officiatingLetPending else { return }
+        officiatingLetPending = true
+        scheduleLiveScoringSave()
+    }
+
+    func confirmLetReplay() {
+        guard !isReadOnly, !isSaving else { return }
+        guard officiatingLetPending else { return }
+        officiatingLetPending = false
+        scheduleLiveScoringSave()
+    }
+
+    func kitchenFault(faultingTeam: TeamSide) {
+        guard !isReadOnly, officiatingIsStrict else { return }
+        guard !strictOfficiatingActionsDisabled else { return }
+        let opponent = WatchOfficiatingEnforcement.opponentTeam(faultingTeam)
+        awardStrictOfficiatingPoint(to: opponent)
+    }
+
+    func applyServiceFault() {
+        guard !isReadOnly, officiatingIsStrict else { return }
+        guard !strictOfficiatingActionsDisabled else { return }
+        let server = resolvedServerTeamForOfficiating()
+        awardStrictOfficiatingPoint(to: WatchOfficiatingEnforcement.opponentTeam(server))
+    }
+
+    private func resolvedServerTeamForOfficiating() -> TeamSide {
+        let inputs = ServeGuideInputs.from(vm: self, hintsMode: .on)
+        if let snap = ServeGuideEngine.compute(inputs) {
+            return snap.serverTeam
+        }
+        return firstServerTeam ?? .teamA
+    }
+
+    private func awardStrictOfficiatingPoint(to side: TeamSide) {
+        if usesBallCapPerSetUI {
+            if side == .teamA {
+                incrementAmericanoTeamA()
+            } else {
+                incrementAmericanoTeamB()
+            }
+        } else {
+            scorePoint(side)
+        }
     }
 
     private func applyClassicPointsAfterUserScore() {
@@ -1370,7 +1633,7 @@ final class MatchScoringViewModel {
         }
     }
 
-    func syncClassicPointsPlayedFromState(mergingPersisted record: WatchServeGuideSessionRecord?) {
+    func syncClassicPointsPlayedFromState() {
         guard usesTennisStyleServeGuide, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !activeSetIsSupplemental else {
             classicPointsPlayedInGame = 0
             return
@@ -1379,15 +1642,15 @@ final class MatchScoringViewModel {
         case .regular(let a, let b):
             if a == .zero && b == .zero {
                 classicPointsPlayedInGame = 0
-            } else if let r = record?.classicPointsPlayedInGame, r > 0 {
-                classicPointsPlayedInGame = r
+            } else if classicPointsPlayedInGame > 0 {
+                break
             } else {
                 classicPointsPlayedInGame = Self.minRalliesForRegularScore(a, b)
             }
         case .deuce:
-            classicPointsPlayedInGame = max(6, record?.classicPointsPlayedInGame ?? 6)
+            classicPointsPlayedInGame = max(6, classicPointsPlayedInGame > 0 ? classicPointsPlayedInGame : 6)
         case .advantage:
-            classicPointsPlayedInGame = max(7, record?.classicPointsPlayedInGame ?? 7)
+            classicPointsPlayedInGame = max(7, classicPointsPlayedInGame > 0 ? classicPointsPlayedInGame : 7)
         }
     }
 
@@ -1408,3 +1671,5 @@ final class MatchScoringViewModel {
         return (title, score)
     }
 }
+
+extension MatchScoringViewModel: LiveScoringSessionSink {}

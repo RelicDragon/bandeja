@@ -4,13 +4,12 @@ extension ServeGuideInputs {
     @MainActor
     static func from(
         vm: MatchScoringViewModel,
-        record: WatchServeGuideSessionRecord,
         hintsMode: WatchServeHintsMode
     ) -> ServeGuideInputs {
         ServeGuideInputs(
-            matchFirstServerTeam: record.firstServerTeam,
-            matchFirstDoublesPlayerIndex: record.firstServerDoublesPlayerIndex,
-            seedSkipped: record.skipped,
+            matchFirstServerTeam: vm.firstServerTeam,
+            matchFirstDoublesPlayerIndex: vm.firstServerDoublesPlayerIndex,
+            seedSkipped: vm.serveGuideSkipped,
             hintsMode: hintsMode,
             resolvedSport: vm.game?.resolvedSport,
             usesTennisSetRules: vm.game?.serveGuideUsesClassicSetRules ?? false,
@@ -28,15 +27,15 @@ extension ServeGuideInputs {
             teamAPlayerNames: vm.teamAUsers.map(\.displayName),
             teamBPlayerNames: vm.teamBUsers.map(\.displayName),
             pendingSetFormatChoice: vm.pendingSetFormatChoiceIndex != nil,
-            pointsServeRotation: record.pointsServeRotation,
+            pointsServeRotation: vm.pointsServeRotation,
             usesRallyPointsServeGuide: vm.usesRallyPointsServeGuide,
             rallyPointsSport: vm.usesRallyPointsServeGuide ? vm.game?.resolvedSport : nil,
             rallyPointsPerSet: vm.maxPointsPerSet,
             rallyFixedNumberOfSets: vm.rules.fixedNumberOfSets,
             rallyWinBy: vm.rules.winBy,
-            matchStartCourtEndsSwapped: record.matchStartCourtEndsSwapped == true,
-            matchStartTeamASidesMirrored: record.matchStartTeamASidesMirrored == true,
-            matchStartTeamBSidesMirrored: record.matchStartTeamBSidesMirrored == true,
+            matchStartCourtEndsSwapped: vm.matchStartCourtEndsSwapped == true,
+            matchStartTeamASidesMirrored: vm.matchStartTeamASidesMirrored == true,
+            matchStartTeamBSidesMirrored: vm.matchStartTeamBSidesMirrored == true,
             pointWinnerLog: vm.pointWinnerLog
         )
     }
@@ -44,11 +43,8 @@ extension ServeGuideInputs {
 
 struct ServeCoachStrip: View {
     @Bindable var vm: MatchScoringViewModel
-    @Binding var record: WatchServeGuideSessionRecord
     @Environment(WatchServeHintsSettingsStore.self) private var hintsStore
     let lang: String
-    let gameId: String
-    let matchId: String
 
     @State private var detailSnapshot: ServeGuideSnapshot?
     @State private var lastMotionToken: String = ""
@@ -58,7 +54,7 @@ struct ServeCoachStrip: View {
     private var hintsMode: WatchServeHintsMode { hintsStore.mode }
 
     private var snapshot: ServeGuideSnapshot? {
-        ServeGuideEngine.compute(.from(vm: vm, record: record, hintsMode: hintsMode))
+        ServeGuideEngine.compute(.from(vm: vm, hintsMode: hintsMode))
     }
 
     private func sideLabel(_ side: CourtServeSide) -> String {
@@ -185,11 +181,7 @@ struct ServeCoachStrip: View {
 
     private func hideServeGuideForMatch() {
         WatchScoreHaptics.serveGuideChange()
-        var next = record
-        next.skipped = true
-        record = next
-        WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: next)
-        vm.requestLiveScoringSave()
+        vm.hideServeGuideForMatch()
     }
 
     private func serverUser(_ s: ServeGuideSnapshot) -> WatchUser? {

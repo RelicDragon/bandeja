@@ -94,6 +94,7 @@
       "game": "Game",
       "points": "Points",
       "syncing": "Syncing…",
+      "updatedFromPhone": "Updated from phone",
       "syncedWhenOnline": "Synced when online",
       "confirmGameFor": "Confirm game for {{name}}?",
       "confirmGameWin": "Confirm game win?",

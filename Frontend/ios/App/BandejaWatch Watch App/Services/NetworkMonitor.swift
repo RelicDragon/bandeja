@@ -26,6 +26,7 @@ final class NetworkMonitor {
                 let wasConnected = self.isConnected
                 self.isConnected = connected
                 if connected, !wasConnected {
+                    await LiveScoringOutbox.shared.flush()
                     await ScoringOutbox.shared.flush()
                     await WorkoutSyncOutbox.shared.flush()
                 }

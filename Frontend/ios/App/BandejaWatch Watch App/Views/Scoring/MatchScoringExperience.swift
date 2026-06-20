@@ -9,21 +9,18 @@ struct MatchScoringExperience: View {
 
     @Environment(WatchPreferencesStore.self) private var prefs
 
-    @State private var serveRecord = WatchServeGuideSessionRecord.empty
     @State private var coachToast = false
     @State private var coachToastTaskRunning = false
+    @State private var remoteAttributionDismissTask: Task<Void, Never>?
     @State private var forceServeGate = false
     @State private var showFixServerConfirm = false
 
     private var lang: String { prefs.uiLanguageCode }
 
-    private var normalServeGate: Bool {
-        vm.usesTennisStyleServeGuide && !vm.isReadOnly && vm.match != nil
-            && !serveRecord.skipped && serveRecord.firstServerTeam == nil
-    }
-
     private var showServeOverlay: Bool {
-        vm.usesTennisStyleServeGuide && !vm.isReadOnly && vm.match != nil && (normalServeGate || forceServeGate)
+        guard vm.match != nil, !vm.isReadOnly, vm.usesTennisStyleServeGuide else { return false }
+        if forceServeGate { return true }
+        return vm.needsServeSetup
     }
 
     private var gamesInSet: Int {
@@ -45,7 +42,6 @@ struct MatchScoringExperience: View {
                         vm: vm,
                         gameId: gameId,
                         matchId: matchId,
-                        serveGuideRecord: $serveRecord,
                         onRequestFixStartingServer: requestFixServer,
                         onFinish: onFinish
                     )
@@ -54,7 +50,6 @@ struct MatchScoringExperience: View {
                         vm: vm,
                         gameId: gameId,
                         matchId: matchId,
-                        serveGuideRecord: $serveRecord,
                         onRequestFixStartingServer: requestFixServer,
                         onFinish: onFinish
                     )
@@ -63,7 +58,6 @@ struct MatchScoringExperience: View {
                         vm: vm,
                         gameId: gameId,
                         matchId: matchId,
-                        serveGuideRecord: $serveRecord,
                         onRequestFixStartingServer: requestFixServer,
                         onFinish: onFinish
                     )
@@ -84,16 +78,27 @@ struct MatchScoringExperience: View {
                 .transition(.opacity)
             }
 
+            if vm.showRemoteWriterAttribution {
+                VStack {
+                    Spacer()
+                    Text(WatchCopy.liveScoringUpdatedFromPhone(lang))
+                        .font(.caption2.weight(.medium))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .padding(.bottom, 4)
+                }
+                .transition(.opacity)
+            }
+
             if showServeOverlay {
                 FirstServePickFlow(
-                    record: $serveRecord,
                     vm: vm,
                     lang: lang,
-                    gameId: gameId,
-                    matchId: matchId,
                     onFinished: {
                         forceServeGate = false
-                        reloadServeRecord()
                         vm.requestLiveScoringSave()
                         scheduleCoachToastIfNeeded()
                     }
@@ -102,13 +107,17 @@ struct MatchScoringExperience: View {
             }
         }
         .animation(.easeOut(duration: 0.2), value: coachToast)
+        .animation(.easeOut(duration: 0.2), value: vm.showRemoteWriterAttribution)
         .animation(.easeOut(duration: 0.22), value: showServeOverlay)
+        .onChange(of: vm.remoteWriterAttributionSignal) { _, _ in
+            scheduleRemoteAttributionDismiss()
+        }
         .onAppear {
-            reloadServeRecord()
             vm.startLiveScoringRemotePolling()
             pushWidgetSnapshot()
         }
         .onDisappear {
+            remoteAttributionDismissTask?.cancel()
             vm.stopLiveScoringRemotePolling()
             WatchLiveActiveSnapshotStore.clear()
         }
@@ -118,14 +127,15 @@ struct MatchScoringExperience: View {
         .onChange(of: vm.tieBreakB) { _, _ in pushWidgetSnapshot() }
         .onChange(of: vm.withinSetTieBreakMode) { _, _ in pushWidgetSnapshot() }
         .onChange(of: vm.classicPointState) { _, _ in pushWidgetSnapshot() }
-        .onChange(of: vm.match?.id) { _, _ in reloadServeRecord() }
-        .onChange(of: vm.classicPointsPlayedInGame) { _, v in
-            guard vm.liveScoringUiId == .classicCourt, serveRecord.firstServerTeam != nil else { return }
-            var r = serveRecord
-            r.classicPointsPlayedInGame = v
-            serveRecord = r
-            WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: r)
+        .onChange(of: vm.classicPointsPlayedInGame) { _, _ in
+            guard vm.liveScoringUiId == .classicCourt, vm.firstServerTeam != nil else { return }
             vm.requestLiveScoringSave()
+        }
+        .onChange(of: vm.firstServerTeam) { _, _ in
+            if !vm.needsServeSetup { forceServeGate = false }
+        }
+        .onChange(of: vm.serveGuideSkipped) { _, _ in
+            if !vm.needsServeSetup { forceServeGate = false }
         }
         .confirmationDialog(WatchCopy.fixStartingServer(lang), isPresented: $showFixServerConfirm, titleVisibility: .visible) {
             Button(WatchCopy.confirmAction(lang)) {
@@ -135,10 +145,6 @@ struct MatchScoringExperience: View {
         } message: {
             Text(WatchCopy.fixStartingServerConfirm(lang))
         }
-    }
-
-    private func reloadServeRecord() {
-        serveRecord = WatchServeGuideSessionStore.shared.load(gameId: gameId, matchId: matchId) ?? .empty
     }
 
     private func pushWidgetSnapshot() {
@@ -161,7 +167,7 @@ struct MatchScoringExperience: View {
     }
 
     private func scheduleCoachToastIfNeeded() {
-        guard serveRecord.firstServerTeam != nil, !serveRecord.skipped, !serveRecord.showedFirstServeCoachToast else { return }
+        guard vm.firstServerTeam != nil, !vm.serveGuideSkipped, !vm.showedFirstServeCoachToast else { return }
         guard !coachToastTaskRunning else { return }
         coachToastTaskRunning = true
         Task { @MainActor in
@@ -169,10 +175,16 @@ struct MatchScoringExperience: View {
             coachToast = true
             try? await Task.sleep(for: .seconds(4))
             coachToast = false
-            var r = serveRecord
-            r.showedFirstServeCoachToast = true
-            serveRecord = r
-            WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: r)
+            vm.markServeCoachToastShown()
+        }
+    }
+
+    private func scheduleRemoteAttributionDismiss() {
+        remoteAttributionDismissTask?.cancel()
+        remoteAttributionDismissTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled else { return }
+            vm.dismissRemoteWriterAttribution()
         }
     }
 }

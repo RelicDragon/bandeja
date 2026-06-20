@@ -44,7 +44,7 @@ export const MarketItemDrawer = ({
           initial={reduceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] }}
-          className="min-h-0 flex-1 overflow-hidden"
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
         >
           <MarketItemPanel
             item={localItem}

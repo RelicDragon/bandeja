@@ -101,6 +101,7 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
   const [timerNow, setTimerNow] = useState(() => Date.now());
 
   const lastLive = useSocketEventsStore((s) => s.lastMatchLiveScoringUpdated);
+  const lastWatchHint = useSocketEventsStore((s) => s.lastWatchLiveScoringHint);
   const lastTimer = useSocketEventsStore((s) => s.lastMatchTimerUpdated);
   const rules = useMemo(() => getRules(game), [game]);
   const revisionRef = useRef(0);
@@ -249,6 +250,14 @@ export function useLiveMatchBoardState(gameId: string, matchId: string, options?
       setRevision(env.revision);
     }
   }, [lastLive, gameId, matchId, rawMatch, rules, spectatorToken]);
+
+  useEffect(() => {
+    if (!lastWatchHint || lastWatchHint.gameId !== gameId || lastWatchHint.matchId !== matchId || spectatorToken) {
+      return;
+    }
+    if (lastWatchHint.revision > 0 && lastWatchHint.revision <= revisionRef.current) return;
+    void refreshMatchLiveFromServer();
+  }, [lastWatchHint, gameId, matchId, spectatorToken, refreshMatchLiveFromServer]);
 
   const timerDisplay = useMemo(() => {
     if (!timerSnap || !isGameMatchTimerEnabled(game)) return null;

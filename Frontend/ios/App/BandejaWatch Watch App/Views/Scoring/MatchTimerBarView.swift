@@ -15,6 +15,8 @@ struct MatchTimerBarView: View {
     @State private var tick = 0
     @State private var lastCapNotified = false
     @State private var isBusy = false
+    @State private var lastObservedRelayTick = 0
+    @State private var relayObserveTask: Task<Void, Never>?
 
     private var lang: String { prefs.uiLanguageCode }
 
@@ -24,7 +26,15 @@ struct MatchTimerBarView: View {
                 content
             }
         }
-        .task { await refresh() }
+        .task {
+            startRelayObserver()
+            await refresh()
+        }
+        .onDisappear {
+            relayObserveTask?.cancel()
+            relayObserveTask = nil
+            lastObservedRelayTick = 0
+        }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active, snapshot?.status == "RUNNING" {
                 Task { await refresh() }
@@ -136,11 +146,43 @@ struct MatchTimerBarView: View {
         do {
             let s = try await WatchMatchTimerService.fetchSnapshot(gameId: gameId, matchId: matchId)
             await MainActor.run {
-                handleCapHaptic(s)
-                snapshot = s
+                applySnapshotIfNewer(s)
             }
         } catch {
-            await MainActor.run { snapshot = nil }
+            // Keep any relayed snapshot when HTTP fallback fails.
+        }
+    }
+
+    private func startRelayObserver() {
+        relayObserveTask?.cancel()
+        lastObservedRelayTick = WatchMatchTimerRelayStore.shared.tick
+        relayObserveTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 150_000_000)
+                await MainActor.run {
+                    consumePendingRelayIfNeeded()
+                }
+            }
+        }
+    }
+
+    private func consumePendingRelayIfNeeded() {
+        let store = WatchMatchTimerRelayStore.shared
+        guard store.tick != lastObservedRelayTick else { return }
+        lastObservedRelayTick = store.tick
+        guard let message = store.lastMessage else { return }
+        guard message.gameId == gameId, message.matchId == matchId else { return }
+        guard let relayed = message.snapshot else { return }
+        applySnapshotIfNewer(relayed)
+    }
+
+    private func applySnapshotIfNewer(_ incoming: WatchMatchTimerSnapshot) {
+        guard WatchMatchTimerSnapshotOrdering.isIncomingAtLeastAsNew(incoming, than: snapshot) else { return }
+        let previousStatus = snapshot?.status
+        handleCapHaptic(incoming)
+        snapshot = incoming
+        if incoming.status == "STOPPED", previousStatus != "STOPPED" {
+            onTimerStopped?()
         }
     }
 
@@ -157,11 +199,7 @@ struct MatchTimerBarView: View {
         defer { isBusy = false }
         do {
             let s = try await WatchMatchTimerService.transition(gameId: gameId, matchId: matchId, action: action)
-            handleCapHaptic(s)
-            snapshot = s
-            if action == "stop" {
-                await MainActor.run { onTimerStopped?() }
-            }
+            applySnapshotIfNewer(s)
             if action == "pause" {
                 WorkoutManager.shared.autoPause()
             } else if action == "resume" {

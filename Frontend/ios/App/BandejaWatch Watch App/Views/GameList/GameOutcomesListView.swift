@@ -132,6 +132,7 @@ struct GameOutcomesListView: View {
         }
         .refreshable {
             await vm.refresh()
+            await LiveScoringOutbox.shared.flush()
             await ScoringOutbox.shared.flush()
             await WorkoutSyncOutbox.shared.flush()
         }

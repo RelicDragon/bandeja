@@ -47,7 +47,10 @@ struct SessionRootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase == .active {
                 WidgetCenter.shared.reloadAllTimelines()
-                Task { await session.recoverIfNeeded() }
+                Task {
+                    await LiveScoringOutbox.shared.flush()
+                    await session.recoverIfNeeded()
+                }
             }
         }
     }

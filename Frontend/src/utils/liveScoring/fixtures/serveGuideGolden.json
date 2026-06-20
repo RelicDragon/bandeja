@@ -1,0 +1,466 @@
+[
+  {
+    "name": "classic match start doubles game 1",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "classic",
+      "sets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 0, "teamB": 0 },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 0
+      },
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "serverPlayerIndex": 0,
+      "serverDisplayName": "A1",
+      "courtSide": "rightDeuce",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "courtEndsSwapped": false
+    }
+  },
+  {
+    "name": "classic game 2 change ends before first point",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "classic",
+      "sets": [{ "teamA": 1, "teamB": 0, "isTieBreak": false }],
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 0, "teamB": 0 },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 0
+      },
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "serverTeam": "teamB",
+      "changeEndsBeforeNextPoint": true,
+      "courtEndsSwapped": true,
+      "courtSide": "rightDeuce"
+    }
+  },
+  {
+    "name": "classic deuce at forty-all",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "rules": { "hasGoldenPoint": false },
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "classic",
+      "sets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+      "classic": {
+        "pointState": { "kind": "deuce" },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 4
+      },
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "courtSide": "rightDeuce",
+      "changeEndsBeforeNextPoint": false
+    }
+  },
+  {
+    "name": "classic advantage server on ad court",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "classic",
+      "sets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+      "classic": {
+        "pointState": { "kind": "advantage", "side": "teamA" },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 5
+      },
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "courtSide": "leftAd",
+      "changeEndsBeforeNextPoint": false
+    }
+  },
+  {
+    "name": "classic golden point at deuce",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "rules": { "hasGoldenPoint": true },
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "classic",
+      "sets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 40, "teamB": 40 },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 6
+      },
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "courtSide": "rightDeuce",
+      "changeEndsBeforeNextPoint": false
+    }
+  },
+  {
+    "name": "within-set tie-break 2-1 next server",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "initialSets": [{ "teamA": 6, "teamB": 6, "isTieBreak": false }],
+    "actions": ["teamA", "teamA", "teamB"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "tieBreakServeSlot": "serveOne",
+      "courtSide": "leftAd",
+      "changeEndsBeforeNextPoint": false
+    }
+  },
+  {
+    "name": "within-set tie-break change ends at six points",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "initialSets": [{ "teamA": 6, "teamB": 6, "isTieBreak": false }],
+    "actions": ["teamA", "teamB", "teamA", "teamB", "teamA", "teamB"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "changeEndsBeforeNextPoint": true,
+      "courtEndsSwapped": true
+    }
+  },
+  {
+    "name": "set 2 opener after 7-6 tie-break",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "state": {
+      "activeSetIndex": 1,
+      "mode": "classic",
+      "sets": [
+        { "teamA": 7, "teamB": 6, "isTieBreak": false },
+        { "teamA": 0, "teamB": 0, "isTieBreak": false }
+      ],
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 0, "teamB": 0 },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 0
+      },
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "serverTeam": "teamB",
+      "changeEndsBeforeNextPoint": false,
+      "courtSide": "rightDeuce"
+    }
+  },
+  {
+    "name": "super tie-break opening point",
+    "sport": "PADEL",
+    "preset": "CLASSIC_SUPER_TIEBREAK",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "state": {
+      "activeSetIndex": 2,
+      "mode": "classic",
+      "sets": [
+        { "teamA": 6, "teamB": 4, "isTieBreak": false },
+        { "teamA": 4, "teamB": 6, "isTieBreak": false },
+        { "teamA": 0, "teamB": 0, "isTieBreak": true }
+      ],
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 0, "teamB": 0 },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 0
+      },
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "tieBreakServeSlot": "serveOne",
+      "courtSide": "rightDeuce",
+      "changeEndsBeforeNextPoint": false
+    }
+  },
+  {
+    "name": "super tie-break change ends at 3-3",
+    "sport": "PADEL",
+    "preset": "CLASSIC_SUPER_TIEBREAK",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "state": {
+      "activeSetIndex": 2,
+      "mode": "classic",
+      "sets": [
+        { "teamA": 6, "teamB": 4, "isTieBreak": false },
+        { "teamA": 4, "teamB": 6, "isTieBreak": false },
+        { "teamA": 3, "teamB": 3, "isTieBreak": true }
+      ],
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 0, "teamB": 0 },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 0
+      },
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0
+    },
+    "expected": {
+      "changeEndsBeforeNextPoint": true,
+      "courtEndsSwapped": true
+    }
+  },
+  {
+    "name": "americano official change ends before point 7",
+    "sport": "PADEL",
+    "preset": "POINTS_16",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "initialSets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+    "actions": ["teamA", "teamB", "teamA", "teamB", "teamA", "teamB"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0,
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "changeEndsBeforeNextPoint": true,
+      "courtEndsSwapped": true,
+      "tieBreakServeSlot": "serveTwo"
+    }
+  },
+  {
+    "name": "americano simple rotation after two points",
+    "sport": "PADEL",
+    "preset": "POINTS_16",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "initialSets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+    "actions": ["teamA", "teamB"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0,
+      "pointsServeRotation": "simple"
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "serverPlayerIndex": 1,
+      "serverDisplayName": "A2",
+      "courtSide": "rightDeuce",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false
+    }
+  },
+  {
+    "name": "table tennis deciding game change ends at five",
+    "sport": "TABLE_TENNIS",
+    "preset": "BEST_OF_3_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "state": {
+      "activeSetIndex": 2,
+      "mode": "points",
+      "sets": [
+        { "teamA": 11, "teamB": 5, "isTieBreak": false },
+        { "teamA": 4, "teamB": 11, "isTieBreak": false },
+        { "teamA": 5, "teamB": 0, "isTieBreak": false }
+      ],
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "changeEndsBeforeNextPoint": true,
+      "tieBreakServeSlot": null,
+      "motionTokenPrefix": "tt-"
+    }
+  },
+  {
+    "name": "badminton doubles same server on hold",
+    "sport": "BADMINTON",
+    "preset": "BEST_OF_3_21",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "initialSets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+    "actions": ["teamA"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 1,
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamA",
+      "serverPlayerIndex": 1,
+      "serverDisplayName": "A2",
+      "courtSide": "leftAd",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "motionTokenPrefix": "bd-"
+    }
+  },
+  {
+    "name": "badminton doubles side-out service court",
+    "sport": "BADMINTON",
+    "preset": "BEST_OF_3_21",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "initialSets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+    "actions": ["teamA", "teamA", "teamB"],
+    "serveSeed": {
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 1,
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "serverTeam": "teamB",
+      "serverPlayerIndex": 1,
+      "serverDisplayName": "B2",
+      "courtSide": "leftAd",
+      "tieBreakServeSlot": null,
+      "changeEndsBeforeNextPoint": false,
+      "motionTokenPrefix": "bd-"
+    }
+  },
+  {
+    "name": "badminton interval 11-9 change ends",
+    "sport": "BADMINTON",
+    "preset": "BEST_OF_3_21",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "points",
+      "sets": [{ "teamA": 11, "teamB": 9, "isTieBreak": false }],
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official"
+    },
+    "expected": {
+      "changeEndsBeforeNextPoint": true,
+      "courtSide": "leftAd",
+      "courtEndsSwapped": true,
+      "motionTokenPrefix": "bd-"
+    }
+  },
+  {
+    "name": "pickleball deciding game midpoint change ends",
+    "sport": "PICKLEBALL",
+    "preset": "POINTS_11",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "points",
+      "sets": [{ "teamA": 6, "teamB": 4, "isTieBreak": false }],
+      "firstServerTeam": "teamA",
+      "firstServerDoublesPlayerIndex": 0,
+      "pointsServeRotation": "official",
+      "pointWinnerLog": ["teamA", "teamA", "teamA", "teamA", "teamA", "teamB", "teamB", "teamB", "teamB", "teamB"]
+    },
+    "expected": {
+      "changeEndsBeforeNextPoint": true,
+      "motionTokenPrefix": "pb-"
+    }
+  },
+  {
+    "name": "squash change ends at 11-9",
+    "sport": "SQUASH",
+    "preset": "BEST_OF_5_11",
+    "teamAPlayerNames": ["A1"],
+    "teamBPlayerNames": ["B1"],
+    "matchDoubles": false,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "points",
+      "sets": [{ "teamA": 11, "teamB": 9, "isTieBreak": false }],
+      "firstServerTeam": "teamA",
+      "pointsServeRotation": "official",
+      "pointWinnerLog": ["teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamB", "teamB", "teamB", "teamB", "teamB", "teamB", "teamB", "teamB", "teamB"]
+    },
+    "expected": {
+      "changeEndsBeforeNextPoint": true,
+      "motionTokenPrefix": "sq-"
+    }
+  },
+  {
+    "name": "serve guide hidden when seed skipped",
+    "sport": "PADEL",
+    "preset": "POINTS_16",
+    "teamAPlayerNames": ["A1", "A2"],
+    "teamBPlayerNames": ["B1", "B2"],
+    "matchDoubles": true,
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "points",
+      "sets": [{ "teamA": 2, "teamB": 1, "isTieBreak": false }],
+      "serveGuideSkipped": true
+    },
+    "expectNull": true
+  }
+]

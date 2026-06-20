@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 71;
+	objectVersion = 77;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -20,6 +20,7 @@
 		99AF71D32F744E2000B32563 /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71D12F744E2000B32563 /* WatchSessionManager.swift */; };
 		99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
+		A1B2C3D4E5F60718293A501 /* LiveScoringBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */; };
 		B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */; };
 		B1A2C3D4E5F60718293A3C7 /* BandejaPushDelegatePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */; };
 		B79A10042F7443E0002D7100 /* BandejaWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -112,6 +113,7 @@
 		99AF71D12F744E2000B32563 /* WatchSessionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchSessionManager.swift; sourceTree = "<group>"; };
 		99B2AB672EF1892700E5021A /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		99CD437F2F1BAEE700F7431D /* AppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppDebug.entitlements; sourceTree = "<group>"; };
+		A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveScoringBridgePlugin.swift; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicationNotificationHelper.swift; sourceTree = "<group>"; };
@@ -125,10 +127,50 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		99414BE22F7443DE002D7100 /* BandejaWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "BandejaWatch Watch App"; sourceTree = "<group>"; };
-		B79A10022F7443E0002D7100 /* BandejaWatchWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWidgets; sourceTree = "<group>"; };
-		C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWatchTests; sourceTree = "<group>"; };
-		E14000022F7443E0002D7100 /* NotificationServiceExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = NotificationServiceExtension; sourceTree = "<group>"; };
+		99414BE22F7443DE002D7100 /* BandejaWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "BandejaWatch Watch App";
+			sourceTree = "<group>";
+		};
+		B79A10022F7443E0002D7100 /* BandejaWatchWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = BandejaWatchWidgets;
+			sourceTree = "<group>";
+		};
+		C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = BandejaWatchWatchTests;
+			sourceTree = "<group>";
+		};
+		E14000022F7443E0002D7100 /* NotificationServiceExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = NotificationServiceExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -212,6 +254,7 @@
 			isa = PBXGroup;
 			children = (
 				99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */,
+				A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */,
 				B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */,
 				B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */,
 				99AF71D02F744E2000B32563 /* KeychainHelper.swift */,
@@ -478,12 +521,8 @@
 			);
 			inputFileListPaths = (
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -502,6 +541,7 @@
 				99AF71D22F744E2000B32563 /* KeychainHelper.swift in Sources */,
 				99AF71D32F744E2000B32563 /* WatchSessionManager.swift in Sources */,
 				99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */,
+				A1B2C3D4E5F60718293A501 /* LiveScoringBridgePlugin.swift in Sources */,
 				B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */,
 				B1A2C3D4E5F60718293A3C7 /* BandejaPushDelegatePlugin.swift in Sources */,
 				E140000E2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift in Sources */,
@@ -704,7 +744,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/AppDebug.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 150;
+				CURRENT_PROJECT_VERSION = 151;
 				DEVELOPMENT_TEAM = N9634A623Q;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Bandeja;
@@ -714,7 +754,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.96.36;
+				MARKETING_VERSION = 0.96.37;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -739,7 +779,7 @@
 				CODE_SIGN_ENTITLEMENTS = App/App.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 150;
+				CURRENT_PROJECT_VERSION = 151;
 				DEAD_CODE_STRIPPING = YES;
 				DEPLOYMENT_POSTPROCESSING = YES;
 				DEVELOPMENT_TEAM = N9634A623Q;
@@ -751,7 +791,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 0.96.36;
+				MARKETING_VERSION = 0.96.37;
 				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

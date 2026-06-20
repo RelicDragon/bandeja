@@ -81,6 +81,7 @@
       "game": "Game",
       "points": "Body",
       "syncing": "Synchronizace…",
+      "updatedFromPhone": "Aktualizováno z telefonu",
       "syncedWhenOnline": "Online synchronizováno",
       "confirmGameFor": "Potvrdit game pro {{name}}?",
       "confirmGameWin": "Potvrdit vyhraný game?",

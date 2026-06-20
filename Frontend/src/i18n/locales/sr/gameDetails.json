@@ -81,6 +81,7 @@
       "game": "Gem",
       "points": "Poeni",
       "syncing": "Sinhronizacija…",
+      "updatedFromPhone": "Ažurirano sa telefona",
       "syncedWhenOnline": "Sinhronizovano onlajn",
       "confirmGameFor": "Potvrdi gem za {{name}}?",
       "confirmGameWin": "Potvrdi dobijen gem?",

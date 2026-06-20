@@ -44,4 +44,19 @@ jobs:
       - run: npm run test:chat-open
       - run: npm run test:chat-inbox-feed
       - run: npm run test:queries
+      - run: npm run test:live-scoring
       - run: npm run build
+
+  watch-serve-guide:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: Frontend/package-lock.json
+      - run: npm ci
+        working-directory: Frontend
+      - run: bash ios/scripts/run-watch-serve-guide-golden-tests.sh
+        working-directory: Frontend

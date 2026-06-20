@@ -41,6 +41,20 @@ enum APIError: Error, LocalizedError {
         if (400..<500).contains(statusCode) { return false }
         return true
     }
+
+    /// Transient failures (network / 5xx / rate limit) worth queueing for delivery retry.
+    nonisolated static func warrantsDeliveryRetry(_ error: Error) -> Bool {
+        if let api = error as? APIError {
+            switch api {
+            case .httpError(let code):
+                return httpStatusWarrantsOutboxRetry(code)
+            case .noToken, .decodingError, .liveScoringRevisionMismatch:
+                return false
+            }
+        }
+        let ns = error as NSError
+        return ns.domain == NSURLErrorDomain
+    }
 }
 
 struct APIClient: Sendable {

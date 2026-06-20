@@ -81,6 +81,7 @@
       "game": "Juego",
       "points": "Puntos",
       "syncing": "Sincronizando…",
+      "updatedFromPhone": "Actualizado desde el teléfono",
       "syncedWhenOnline": "Sincronizado en línea",
       "confirmGameFor": "¿Confirmar juego para {{name}}?",
       "confirmGameWin": "¿Confirmar juego ganado?",

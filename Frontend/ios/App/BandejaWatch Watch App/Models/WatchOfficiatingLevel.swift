@@ -9,6 +9,10 @@ enum WatchOfficiatingLevel: String, Sendable {
     var showsHonorHints: Bool {
         self == .hints
     }
+
+    var isStrict: Bool {
+        self == .strict
+    }
 }
 
 enum WatchOfficiatingResolver {
@@ -18,7 +22,19 @@ enum WatchOfficiatingResolver {
     }
 
     static func defaultForTier(_ tier: String) -> WatchOfficiatingLevel {
-        tier == "match" ? .hints : .none
+        tier == "match" ? .strict : .none
+    }
+
+    private static let presetStrictOfficiating: Set<String> = [
+        "CLASSIC_BEST_OF_3",
+        "CLASSIC_BEST_OF_5",
+        "BEST_OF_3_11",
+        "BEST_OF_3_21",
+    ]
+
+    static func presetMetaOfficiating(preset: String?) -> WatchOfficiatingLevel? {
+        guard let preset else { return nil }
+        return presetStrictOfficiating.contains(preset.uppercased()) ? .strict : nil
     }
 
     static func inferTier(preset: String?) -> String {
@@ -32,7 +48,9 @@ enum WatchOfficiatingResolver {
 
     static func resolve(sport: WatchSport, preset: String?, gameMetadata: [String: Any]?) -> WatchOfficiatingLevel {
         if let game = parseGameLevel(metadata: gameMetadata) { return game }
-        if sport == .pickleball { return .hints }
-        return defaultForTier(inferTier(preset: preset?.uppercased()))
+        if let meta = presetMetaOfficiating(preset: preset) { return meta }
+        let tier = inferTier(preset: preset?.uppercased())
+        if sport == .pickleball, tier == "social" { return .hints }
+        return defaultForTier(tier)
     }
 }

@@ -65,7 +65,7 @@ export const MarketItemPanel = ({
 
   if (isEditing) {
     return (
-      <div className="h-full overflow-y-auto bg-transparent">
+      <div className="h-full min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y bg-transparent">
         <div className="mx-auto max-w-2xl p-4">
           <MarketItemEditForm item={localItem} onSave={handleEditSave} onCancel={() => setIsEditing(false)} />
         </div>
@@ -103,7 +103,7 @@ export const MarketItemPanel = ({
   );
 
   return (
-    <div className="relative h-full overflow-y-auto bg-transparent">
+    <div className="relative h-full min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y bg-transparent">
       <div className="mx-auto max-w-2xl">
         {!hasPhoto && chatButton && (
           <div className="absolute right-3 top-3 z-10 pt-12">{chatButton}</div>

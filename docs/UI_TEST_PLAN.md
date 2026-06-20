@@ -97,6 +97,8 @@ Frontend/e2e/
 - `@mobile` — viewport 390×844
 - `@offline` — network disabled
 - `@seed:games` — requires game fixtures
+- `@two devices` — iPhone (Capacitor or web) + paired Apple Watch on same account
+- `@watch` — Apple Watch scoring app (BandejaWatch)
 
 ---
 
@@ -670,6 +672,36 @@ Frontend/e2e/
 | LS-08 | Spectator token | `?spectatorToken=` | View without auth |
 | LS-09 | Keep awake / orientation | Mobile live | Board usable landscape |
 | LS-10 | Socket sync | `@two clients` score on one | Other updates live |
+
+### 10.1 Apple Watch live scoring & serve guide
+
+Server source of truth: live session in `Match.metadata.liveScoring` (revision + serve seed); serve **display** derived on device; match timer in separate `Match.timer*` columns (see LS-25).
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| LS-11 | Unified session — phone serve setup | `@two devices` phone completes first-serve setup while `@watch` scoring open | Watch serve overlay dismisses; serve strip matches phone at same revision |
+| LS-12 | Unified session — hide serve guide | `@two devices` `@watch` long-press hide serve coach | Phone serve strip hides after sync; watch does not re-prompt |
+| LS-13 | Serve setup skip cross-device | `@two devices` phone skips serve setup | Watch scoring opens without serve overlay |
+| LS-14 | Offline live outbox replay | `@two devices` `@offline` score 3+ points on `@watch` → reconnect | Server revision includes all points in order; no duplicates |
+| LS-15 | Offline 409 merge | `@two devices` conflicting score while `@watch` outbox replays | Watch applies server envelope; no duplicate points; no error modal |
+| LS-16 | WC relay phone → watch | `@two devices` score on phone with iPhone nearby | `@watch` updates within ~1s (not poll-only lag) |
+| LS-17 | WC relay watch → phone | `@two devices` score on `@watch` | Phone live board updates via socket/HTTP |
+| LS-18 | Serve guide display parity | `@two devices` after shared points at same revision | Serve strip / court side identical on phone and watch (derived, not stored) |
+| LS-19 | Poll fallback without phone | `@two devices` remote scorer on web; watch without iPhone nearby | `@watch` reflects remote scores within ~2s |
+| LS-20 | Poll skip on fresh relay | `@two devices` score on phone → WC delivers revision | `@watch` does not flash stale score on next poll |
+| LS-21 | Strict kitchen fault sync | `@two devices` strict pickleball — kitchen fault on phone | `@watch` score + serve rotation correct after sync |
+| LS-22 | Strict let blocks scoring | `@two devices` strict badminton — let on phone | `@watch` scoring disabled until replay confirmed |
+| LS-23 | Watch-initiated strict fault | `@two devices` let/fault on `@watch` | Appears on phone live board |
+| LS-24 | Match timer relay | `@two devices` pause/resume timer on phone | `@watch` timer bar reflects within ~1s |
+| LS-25 | Timer vs live scoring domains | `@two devices` pause timer on phone while scoring continues on `@watch` | `Match.timer*` updates separately from `metadata.liveScoring`; both UIs stay consistent |
+| LS-26 | Dual-writer attribution | `@two devices` phone scores while `@watch` scoring open | Brief non-blocking “updated from phone” notice once per remote revision |
+| LS-27 | Attribution silent 409 merge | `@two devices` conflict merge on `@watch` | No attribution toast spam |
+| LS-28 | Fix starting server | `@watch` fix starting server (confirm if games played) | Serve setup overlay; corrected seed syncs to phone |
+| LS-29 | Tie-break change ends | `@two devices` enter in-set tie-break on one device | Other device serve strip shows change-ends cue |
+| LS-30 | Pickleball rally rotation | `@two devices` rally points with `pointWinnerLog` | Serve rotation matches across devices |
+| LS-31 | Table edit clears live session | Edit match results in table while live open on another client | Live session cleared/reconciled; watch/phone reflect final table state |
+| LS-32 | Serve guide golden CI | Run `npm run test:live-scoring` + `ios/scripts/run-watch-serve-guide-golden-tests.sh` | TS `computeServeGuideSnapshot` and Watch `ServeGuideEngine` match shared fixture catalog |
+| LS-33 | Mid-match serve setup gate | `@watch` Open scoring when live envelope has points but no serve seed | Setup overlay blocks scoring until resolved or skipped; matches web `needsServeSetup` (#178 edge) |
 
 ---
 

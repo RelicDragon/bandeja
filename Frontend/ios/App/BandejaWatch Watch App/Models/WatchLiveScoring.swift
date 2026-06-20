@@ -45,6 +45,7 @@ struct WatchLiveScoringState: Codable, Sendable {
     var optionalDeciderFormat: String?
     var timedClassicSetLocked: Bool?
     var pointWinnerLog: [TeamSide]?
+    var officiatingLetPending: Bool?
 }
 
 enum WatchLiveScoringMode: String, Codable, Sendable {
@@ -113,7 +114,7 @@ extension WatchLivePointState {
     }
 }
 
-struct WatchPatchLiveScoringBody: Encodable, Sendable {
+struct WatchPatchLiveScoringBody: Codable, Sendable {
     let state: WatchLiveScoringState
     let baseRevision: Int?
     let clientMessageId: String

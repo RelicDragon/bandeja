@@ -78,6 +78,7 @@ struct WatchServeGuideSessionRecord: Codable, Equatable, Sendable {
     }
 }
 
+/// Offline cache for serve-seed UI flags only. Hot path reads/writes go through `MatchScoringViewModel`.
 @Observable
 @MainActor
 final class WatchServeGuideSessionStore {

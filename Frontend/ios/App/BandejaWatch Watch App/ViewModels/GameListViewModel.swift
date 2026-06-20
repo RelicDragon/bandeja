@@ -28,6 +28,7 @@ final class GameListViewModel {
         error = nil
         GameCache.clear()
         ScoringOutbox.shared.clear()
+        LiveScoringOutbox.shared.clear()
         WidgetCenter.shared.reloadAllTimelines()
     }
 

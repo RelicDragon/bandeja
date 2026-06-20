@@ -78,7 +78,10 @@ final class ScoringOutbox {
             let body = WatchUpdateMatchBody(teamA: entry.teamA, teamB: entry.teamB, sets: entry.sets)
             do {
                 try await api.sendVoid(.updateMatch(gameId: entry.gameId, matchId: entry.matchId), body: body)
-                WatchSessionManager.shared.notifyScoreUpdated(gameId: entry.gameId)
+                WatchSessionManager.shared.notifyScoreUpdated(
+                    gameId: entry.gameId,
+                    matchId: entry.matchId
+                )
                 Self.log.debug("Scoring outbox flushed matchId=\(entry.matchId, privacy: .public)")
             } catch {
                 if Self.shouldDropAfterFailure(error) {
@@ -95,18 +98,6 @@ final class ScoringOutbox {
     }
 
     private static func shouldDropAfterFailure(_ error: Error) -> Bool {
-        if let api = error as? APIError {
-            switch api {
-            case .httpError(let code):
-                return !APIError.httpStatusWarrantsOutboxRetry(code)
-            case .noToken:
-                return true
-            case .decodingError:
-                return true
-            case .liveScoringRevisionMismatch:
-                return true
-            }
-        }
-        return false
+        !APIError.warrantsDeliveryRetry(error)
     }
 }

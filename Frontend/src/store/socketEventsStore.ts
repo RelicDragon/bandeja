@@ -11,6 +11,13 @@ import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.ut
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
 import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
+import {
+  initLiveScoringBridge,
+  relayLiveScoringToWatch,
+  relayMatchTimerToWatch,
+  teardownLiveScoringBridge,
+  type WatchScoreUpdatedEvent,
+} from '@/services/liveScoringBridge';
 
 interface GameUpdateData {
   gameId: string;
@@ -121,6 +128,13 @@ export interface MatchLiveScoringUpdatedData {
   gameId: string;
   matchId: string;
   liveScoring: unknown;
+  receivedAt: number;
+}
+
+export interface WatchLiveScoringHintData {
+  gameId: string;
+  matchId: string;
+  revision: number;
   receivedAt: number;
 }
 
@@ -255,6 +269,7 @@ interface SocketEventsState {
   lastGameResultsUpdated: GameResultsUpdatedData | null;
   lastMatchTimerUpdated: MatchTimerUpdatedData | null;
   lastMatchLiveScoringUpdated: MatchLiveScoringUpdatedData | null;
+  lastWatchLiveScoringHint: WatchLiveScoringHintData | null;
   lastGameCancelled: GameCancelledData | null;
   lastPollVote: PollVoteData | null;
   lastNewBug: NewBugData | null;
@@ -314,6 +329,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     lastGameResultsUpdated: null,
     lastMatchTimerUpdated: null,
     lastMatchLiveScoringUpdated: null,
+    lastWatchLiveScoringHint: null,
     lastGameCancelled: null,
     lastPollVote: null,
     lastNewBug: null,
@@ -603,6 +619,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
             receivedAt: Date.now(),
           },
         });
+        void relayMatchTimerToWatch(data);
       };
 
       const handleMatchLiveScoringUpdated = (data: {
@@ -616,6 +633,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
             receivedAt: Date.now(),
           },
         });
+        void relayLiveScoringToWatch(data);
       };
 
       const handleGameCancelled = (data: GameCancelledData) => {
@@ -773,6 +791,20 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('presence-initial', handlePresenceInitial);
       socketService.on('presence-update', handlePresenceUpdate);
 
+      void initLiveScoringBridge((event: WatchScoreUpdatedEvent) => {
+        if (!event.gameId || !event.matchId) return;
+        set({
+          lastWatchLiveScoringHint: {
+            gameId: event.gameId,
+            matchId: event.matchId,
+            revision: typeof event.revision === 'number' && Number.isFinite(event.revision)
+              ? Math.floor(event.revision)
+              : 0,
+            receivedAt: Date.now(),
+          },
+        });
+      });
+
       unsubscribeHandlers = [
         () => socketService.off('new-invite', handleNewInvite),
         () => socketService.off('invite-deleted', handleInviteDeleted),
@@ -822,6 +854,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     cleanup: () => {
       unsubscribeHandlers.forEach(cleanup => cleanup());
       unsubscribeHandlers = [];
+      void teardownLiveScoringBridge();
       set({
         initialized: false,
         gameUpdates: new Map(),
@@ -844,6 +877,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         lastGameResultsUpdated: null,
         lastMatchTimerUpdated: null,
         lastMatchLiveScoringUpdated: null,
+        lastWatchLiveScoringHint: null,
         lastGameCancelled: null,
         lastPollVote: null,
         lastNewBug: null,

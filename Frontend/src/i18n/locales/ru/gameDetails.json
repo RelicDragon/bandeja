@@ -81,6 +81,7 @@
       "game": "Гейм",
       "points": "Очки",
       "syncing": "Синхронизация…",
+      "updatedFromPhone": "Обновлено с телефона",
       "syncedWhenOnline": "Синхронизируется онлайн",
       "confirmGameFor": "Подтвердить гейм для {{name}}?",
       "confirmGameWin": "Подтвердить выигранный гейм?",

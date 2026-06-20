@@ -1274,6 +1274,16 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func liveScoringUpdatedFromPhone(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Actualizado desde el teléfono"
+        case "ru": return "Обновлено с телефона"
+        case "sr": return "Ажурирано са телефона"
+        case "cs": return "Aktualizováno z telefonu"
+        default: return "Updated from phone"
+        }
+    }
+
     nonisolated static func serveGuideDisclaimer(_ lang: String) -> String {
         switch lang {
         case "es": return "Orientación; no sustituye reglas del club ni árbitro."
@@ -1303,6 +1313,78 @@ enum WatchCopy {
         case "es": return "En tie-break, rotación de dos puntos salvo el primero."
         case "ru": return "В тай-брейке — два очка подряд, кроме первого."
         default: return "In a tie-break, two-point rotations except the first point."
+        }
+    }
+
+    nonisolated static func pickleballKitchenFault(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Falta de cocina"
+        case "ru": return "Ошибка в кухне"
+        case "sr": return "Greška u kuhinji"
+        default: return "Kitchen fault"
+        }
+    }
+
+    nonisolated static func strictKitchenFaultPickTeam(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Falta de cocina — ¿qué equipo?"
+        case "ru": return "Ошибка в кухне — какая команда?"
+        case "sr": return "Greška u kuhinji — koji tim?"
+        default: return "Kitchen fault — which team?"
+        }
+    }
+
+    nonisolated static func teamAFault(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Equipo A"
+        case "ru": return "Команда A"
+        case "sr": return "Tim A"
+        default: return "Team A fault"
+        }
+    }
+
+    nonisolated static func teamBFault(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Equipo B"
+        case "ru": return "Команда B"
+        case "sr": return "Tim B"
+        default: return "Team B fault"
+        }
+    }
+
+    nonisolated static func strictLetPending(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Let — repetid el punto antes de marcar."
+        case "ru": return "Лет — сначала переиграйте розыгрыш."
+        case "sr": return "Let — prvo ponovite poen."
+        default: return "Let called — replay the point before scoring."
+        }
+    }
+
+    nonisolated static func strictLetReplay(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Repetir punto"
+        case "ru": return "Переиграть"
+        case "sr": return "Ponovi poen"
+        default: return "Replay point"
+        }
+    }
+
+    nonisolated static func letCall(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Let"
+        case "ru": return "Лет"
+        case "sr": return "Let"
+        default: return "Let"
+        }
+    }
+
+    nonisolated static func serviceFault(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Falta de saque"
+        case "ru": return "Ошибка подачи"
+        case "sr": return "Greška servisa"
+        default: return "Service fault"
         }
     }
 }

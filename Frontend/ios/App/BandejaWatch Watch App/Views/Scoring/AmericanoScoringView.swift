@@ -4,7 +4,6 @@ struct RallyPointsScoringView: View {
     @Bindable var vm: MatchScoringViewModel
     let gameId: String
     let matchId: String
-    @Binding var serveGuideRecord: WatchServeGuideSessionRecord
     let onRequestFixStartingServer: () -> Void
     let onFinish: () -> Void
     @Environment(WatchPreferencesStore.self) private var prefs
@@ -30,16 +29,16 @@ struct RallyPointsScoringView: View {
             if vm.usesTennisStyleServeGuide {
                 ServeCoachStrip(
                     vm: vm,
-                    record: $serveGuideRecord,
-                    lang: lang,
-                    gameId: gameId,
-                    matchId: matchId
+                    lang: lang
                 )
             }
             if vm.game?.resolvedSport == .pickleball,
                vm.liveScoringUiId == .rallyPointsBoard,
                vm.officiatingHintsEnabled {
                 WatchPickleballCoachButtons(lang: lang)
+            }
+            if vm.officiatingIsStrict {
+                WatchStrictOfficiatingButtons(vm: vm, lang: lang)
             }
             let idx = vm.activeSetIndex
             let aScore = vm.sets[safe: idx]?.teamA ?? 0

@@ -1,11 +1,8 @@
 import SwiftUI
 
 struct FirstServePickFlow: View {
-    @Binding var record: WatchServeGuideSessionRecord
     let vm: MatchScoringViewModel
     let lang: String
-    let gameId: String
-    let matchId: String
     let onFinished: () -> Void
 
     @State private var step: Step = .pickTeam
@@ -343,31 +340,19 @@ struct FirstServePickFlow: View {
     }
 
     private func commitTeam(_ side: TeamSide, playerIndex: Int) {
-        var r = record
-        r.firstServerTeam = side
-        r.firstServerDoublesPlayerIndex = playerIndex
-        r.pointsServeRotation = showRotationStep ? pickedRotation : nil
-        r.matchStartCourtEndsSwapped = courtEndsSwapped ? true : nil
-        r.matchStartTeamASidesMirrored = vm.isDoublesMatch && teamASidesMirrored ? true : nil
-        r.matchStartTeamBSidesMirrored = vm.isDoublesMatch && teamBSidesMirrored ? true : nil
-        r.skipped = false
-        r.classicPointsPlayedInGame = vm.classicPointsPlayedInGame
-        record = r
-        WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: r)
+        vm.commitServeSetup(
+            team: side,
+            playerIndex: playerIndex,
+            pointsRotation: showRotationStep ? pickedRotation : nil,
+            courtEndsSwapped: courtEndsSwapped,
+            teamASidesMirrored: vm.isDoublesMatch && teamASidesMirrored,
+            teamBSidesMirrored: vm.isDoublesMatch && teamBSidesMirrored
+        )
         onFinished()
     }
 
     private func skip() {
-        var r = record
-        r.skipped = true
-        r.firstServerTeam = nil
-        r.firstServerDoublesPlayerIndex = nil
-        r.pointsServeRotation = nil
-        r.matchStartCourtEndsSwapped = nil
-        r.matchStartTeamASidesMirrored = nil
-        r.matchStartTeamBSidesMirrored = nil
-        record = r
-        WatchServeGuideSessionStore.shared.save(gameId: gameId, matchId: matchId, record: r)
+        vm.skipServeGuide()
         onFinished()
     }
 }
