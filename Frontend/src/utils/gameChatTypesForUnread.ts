@@ -24,7 +24,9 @@ export function getGameChatTypesForUnreadAndMarkRead(
 ): ChatType[] {
   const parentAdmin = resolveIsParentGameAdminOrOwner(parentParticipant, isParentGameAdminOrOwner);
   const filter: ChatType[] = ['PUBLIC'];
-  if (participant?.status === 'PLAYING') filter.push('PRIVATE');
+  if (participant?.status === 'PLAYING' || participant?.status === 'NON_PLAYING') {
+    filter.push('PRIVATE');
+  }
   if (
     participant?.role === 'OWNER' ||
     participant?.role === 'ADMIN' ||

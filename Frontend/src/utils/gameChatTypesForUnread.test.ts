@@ -7,7 +7,7 @@ describe('getGameChatTypesForUnreadAndMarkRead', () => {
     expect(getGameChatTypesForUnreadAndMarkRead({ status: 'ANNOUNCED' })).toEqual(['PUBLIC']);
   });
 
-  it('adds PRIVATE only for PLAYING (not NON_PLAYING)', () => {
+  it('adds PRIVATE for PLAYING and NON_PLAYING', () => {
     expect(
       getGameChatTypesForUnreadAndMarkRead(
         { status: 'SCHEDULED' },
@@ -19,7 +19,7 @@ describe('getGameChatTypesForUnreadAndMarkRead', () => {
         { status: 'SCHEDULED' },
         { status: 'NON_PLAYING', role: 'PLAYER' }
       )
-    ).not.toContain('PRIVATE');
+    ).toContain('PRIVATE');
     expect(
       getAvailableGameChatTypes({ status: 'NON_PLAYING', role: 'PLAYER' })
     ).toContain('PRIVATE');

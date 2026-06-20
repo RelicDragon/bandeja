@@ -51,12 +51,12 @@ Until a new message arrives (and P6 does not apply).
 
 ### 2.4 Canonical game chat types (`getGameChatTypesForUnreadAndMarkRead`)
 
-**Do not use** `getAvailableGameChatTypes` for mark-read or unread totals. It differs from the backend today:
+**Do not use** `getAvailableGameChatTypes` for mark-read or unread totals when channel-activity tab hiding applies — use `getGameChatTypesForUnreadAndMarkRead` instead. For PRIVATE access, unread/mark-read/notifications now match API read rules (PLAYING and NON_PLAYING).
 
 | ChatType | `getAvailableGameChatTypes` (UI) | `UnreadCountBatchService.buildGameChatTypeFilter` (server) |
 |----------|----------------------------------|----------------------------------------------------------|
 | PUBLIC | yes | yes |
-| PRIVATE | PLAYING, **NON_PLAYING**, admin/parent | **PLAYING** only (+ admin/parent paths via role) |
+| PRIVATE | PLAYING, NON_PLAYING, admin/parent | PLAYING, NON_PLAYING (+ admin/parent paths via role) |
 | ADMINS | admin/parent | admin/parent |
 
 Game gallery photos use `GamePhoto` / `/games/:id/photos` — **not** a `ChatType` and not included in unread totals (see `PLAN_GAME_PHOTOS_SEPARATE_TABLE.md`).
@@ -526,7 +526,7 @@ After Phase 5: remove bridges and batch unread fetches from list loaders.
 | Mark-read API fails | Badge restores to server count |
 | Muted channel | Never in totals; enter still marks if opened |
 | Open game on PUBLIC tab with unread in PRIVATE | Enter marks all §2.4 types; badge 0 |
-| NON_PLAYING participant PRIVATE | Count/mark match server (PLAYING-only PRIVATE) |
+| NON_PLAYING participant PRIVATE | Unread, mark-read, and push include PRIVATE (same as API/tabs) |
 | Socket `BUG` unread event | Maps to `GROUP:channelId`; totals correct |
 | Chats tab focus after cold start | `refreshAll`; list rows match tab badge |
 | Logout / login as other user | Store cleared; no stale badges |

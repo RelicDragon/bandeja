@@ -8,6 +8,7 @@ import {
   clearRateLimitState,
   type BooktimeRateLimitConfig,
 } from './rateLimiter';
+import { resolveBooktimeSignupPlatform } from './resolveBooktimeSignupPlatform';
 
 export type BooktimeUser = {
   uuid: string;
@@ -356,7 +357,7 @@ export class BooktimeClient {
         email: params.email,
         countryCode: params.countryCode,
         phoneNumber: local,
-        platform: 'web',
+        platform: resolveBooktimeSignupPlatform(),
       },
     });
   }

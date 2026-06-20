@@ -7,8 +7,13 @@ import { verifyToken } from '../utils/jwt';
 type RedisPubSubClient = RedisClientType;
 import prisma from '../config/database';
 import { MessageService } from './chat/message.service';
+import {
+  extractChatTypeFromEmitPayload,
+  resolveGameChatSocketRecipientIds,
+} from './chat/gameChatSocketRecipients';
 import { GameReadService } from './game/read.service';
 import { ChatContextType, ChatType, Sport } from '@prisma/client';
+import { ApiError } from '../utils/ApiError';
 import { presenceService } from './presence.service';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { projectUserForSportContext } from './user/userSportProfile.service';
@@ -211,6 +216,23 @@ class SocketService {
           console.log(`[SocketService] User ${socket.userId} tried to join non-existent game room ${gameId}`);
           socket.emit('error', { message: 'Game not found' });
           return;
+        }
+
+        try {
+          const { isParticipant } = await MessageService.validateGameAccess(gameId, socket.userId);
+          if (!isParticipant) {
+            console.log(
+              `[SocketService] User ${socket.userId} denied game room ${gameId} — not a participant`
+            );
+            socket.emit('error', { message: 'Access denied' });
+            return;
+          }
+        } catch (error) {
+          if (error instanceof ApiError && error.statusCode === 404) {
+            socket.emit('error', { message: 'Game not found' });
+            return;
+          }
+          throw error;
         }
 
         socket.join(`game-${gameId}`);
@@ -729,6 +751,39 @@ class SocketService {
   // ========== UNIFIED CHAT METHODS (NEW) ==========
   // These methods work for all chat context types
 
+  private emitToGameChatRecipients(
+    gameId: string,
+    chatType: ChatType | undefined,
+    eventName: string,
+    payload: Record<string, unknown>
+  ): void {
+    if (!chatType || chatType === ChatType.PUBLIC) {
+      this.io.to(`game-${gameId}`).emit(eventName, payload);
+      return;
+    }
+
+    void resolveGameChatSocketRecipientIds(gameId, chatType).then((recipientIds) => {
+      for (const userId of recipientIds) {
+        this.io.to(`notify-user-${userId}`).emit(eventName, payload);
+      }
+    });
+  }
+
+  private resolveGameChatTypeForEmit(
+    data: unknown,
+    messageId?: string
+  ): Promise<ChatType | undefined> {
+    const fromPayload = extractChatTypeFromEmitPayload(data);
+    if (fromPayload) return Promise.resolve(fromPayload);
+    if (!messageId) return Promise.resolve(undefined);
+    return prisma.chatMessage
+      .findUnique({
+        where: { id: messageId },
+        select: { chatType: true },
+      })
+      .then((row) => row?.chatType);
+  }
+
   /**
    * Get the room name for a chat context
    */
@@ -787,6 +842,13 @@ class SocketService {
       return;
     }
 
+    if (contextType === ChatContextType.GAME) {
+      void this.resolveGameChatTypeForEmit(data, messageId).then((chatType) => {
+        this.emitToGameChatRecipients(contextId, chatType, eventName, payload);
+      });
+      return;
+    }
+
     const room = this.getChatRoomName(contextType, contextId);
     this.io.to(room).emit(eventName, payload);
   }
@@ -798,15 +860,22 @@ class SocketService {
     audioTranscription: { transcription: string; languageCode: string | null },
     syncSeq?: number
   ): void {
-    const room = this.getChatRoomName(contextType, contextId);
-    this.io.to(room).emit('chat:message-transcription', {
+    const emitPayload = {
       contextType,
       contextId,
       messageId,
       audioTranscription,
       timestamp: new Date().toISOString(),
       ...(syncSeq != null ? { syncSeq } : {}),
-    });
+    };
+    if (contextType === ChatContextType.GAME) {
+      void this.resolveGameChatTypeForEmit(undefined, messageId).then((chatType) => {
+        this.emitToGameChatRecipients(contextId, chatType, 'chat:message-transcription', emitPayload);
+      });
+      return;
+    }
+    const room = this.getChatRoomName(contextType, contextId);
+    this.io.to(room).emit('chat:message-transcription', emitPayload);
   }
 
   public emitMessageTranslation(
@@ -816,8 +885,7 @@ class SocketService {
     payload: { languageCode: string; translation: string; removed?: boolean },
     syncSeq?: number
   ): void {
-    const room = this.getChatRoomName(contextType, contextId);
-    this.io.to(room).emit('chat:message-translation', {
+    const emitPayload = {
       contextType,
       contextId,
       messageId,
@@ -826,7 +894,15 @@ class SocketService {
       ...(payload.removed ? { removed: true } : {}),
       timestamp: new Date().toISOString(),
       ...(syncSeq != null ? { syncSeq } : {}),
-    });
+    };
+    if (contextType === ChatContextType.GAME) {
+      void this.resolveGameChatTypeForEmit(undefined, messageId).then((chatType) => {
+        this.emitToGameChatRecipients(contextId, chatType, 'chat:message-translation', emitPayload);
+      });
+      return;
+    }
+    const room = this.getChatRoomName(contextType, contextId);
+    this.io.to(room).emit('chat:message-translation', emitPayload);
   }
 
   public emitAutoTranslateConfigUpdated(
@@ -851,14 +927,24 @@ class SocketService {
     chatType: ChatType,
     syncSeq?: number
   ): void {
-    const room = this.getChatRoomName(contextType, contextId);
-    this.io.to(room).emit('chat:pinned-messages-updated', {
+    const emitPayload = {
       contextType,
       contextId,
       chatType,
       timestamp: new Date().toISOString(),
       ...(syncSeq != null ? { syncSeq } : {}),
-    });
+    };
+    if (contextType === ChatContextType.GAME) {
+      this.emitToGameChatRecipients(
+        contextId,
+        chatType,
+        'chat:pinned-messages-updated',
+        emitPayload
+      );
+      return;
+    }
+    const room = this.getChatRoomName(contextType, contextId);
+    this.io.to(room).emit('chat:pinned-messages-updated', emitPayload);
   }
 
   /**

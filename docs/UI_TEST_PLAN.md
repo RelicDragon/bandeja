@@ -541,6 +541,7 @@ Frontend/e2e/
 | GD-99 | Parent admin enable participant chats | League owner opens child game | Same as GD-98 |
 | GD-100 | Participants chat section hidden | Open game after chats enabled | Section absent |
 | GD-101 | Non-admin no participants chat section | Regular playing participant | Section not shown |
+| GD-102 | NON_PLAYING private chat unread | NON_PLAYING participant; new message in Participants (PRIVATE) tab | Game chat badge increments; push delivered when not viewing chat |
 
 ### 9.2 Participation
 

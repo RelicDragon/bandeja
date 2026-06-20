@@ -7,7 +7,9 @@ export function canParticipantSeeGameChatMessage(
   isParentGameAdminOrOwner = false
 ): boolean {
   if (chatType === ChatType.PUBLIC) return true;
-  if (chatType === ChatType.PRIVATE) return participant?.status === 'PLAYING';
+  if (chatType === ChatType.PRIVATE) {
+    return participant?.status === 'PLAYING' || participant?.status === 'NON_PLAYING';
+  }
   if (chatType === ChatType.ADMINS) return (participant?.role === 'OWNER' || participant?.role === 'ADMIN') || isParentGameAdminOrOwner;
   return false;
 }

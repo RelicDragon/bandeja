@@ -28,6 +28,7 @@ import { MessageSearchService } from '../services/chat/messageSearch.service';
 import { PinnedMessageService } from '../services/chat/pinnedMessage.service';
 import prisma from '../config/database';
 import { ChatSyncEventService } from '../services/chat/chatSyncEvent.service';
+import { getFilteredGameSyncEventsAfter } from '../services/chat/gameChatSyncEventFilter';
 import { ChatSyncAccessService } from '../services/chat/chatSyncAccess.service';
 import { ChatMutationIdempotencyService } from '../services/chat/chatMutationIdempotency.service';
 import { hashChatMutationPayload } from '../utils/chatClientMutationId';
@@ -1577,12 +1578,21 @@ export const getChatSyncEvents = asyncHandler(async (req: AuthRequest, res: Resp
   const oldestRetainedSeq = await ChatSyncEventService.getOldestRetainedSeq(ct, contextId);
   const cursorStale =
     after > 0 && oldestRetainedSeq != null && after < oldestRetainedSeq - 1;
-  const events = await ChatSyncEventService.getEventsAfter(ct, contextId, after, lim);
+  let events: Awaited<ReturnType<typeof ChatSyncEventService.getEventsAfter>>;
+  let hasMore: boolean;
+  if (ct === 'GAME') {
+    const filtered = await getFilteredGameSyncEventsAfter(contextId, after, lim, userId);
+    events = filtered.events;
+    hasMore = filtered.hasMore;
+  } else {
+    events = await ChatSyncEventService.getEventsAfter(ct, contextId, after, lim);
+    hasMore = events.length === lim;
+  }
   res.json({
     success: true,
     data: {
       events,
-      hasMore: events.length === lim,
+      hasMore,
       oldestRetainedSeq,
       cursorStale,
     },

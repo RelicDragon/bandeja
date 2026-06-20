@@ -1383,7 +1383,10 @@ export class MessageService {
       if (gameStatus === 'missing') {
         throw new ApiError(404, 'Game not found');
       }
-      await this.validateGameAccess(contextId, userId);
+      const { participant, game } = await this.validateGameAccess(contextId, userId);
+      if (gameChatType != null) {
+        await this.validateChatTypeAccess(participant, gameChatType, game, userId, contextId, false);
+      }
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {

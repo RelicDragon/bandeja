@@ -8,12 +8,14 @@ import {
   SYNC_PRIORITY_FOREGROUND,
   SYNC_PRIORITY_VIEWING,
 } from '@/services/chat/chatSyncScheduler';
+import {
+  resolveAccessibleGameChatTypes,
+  type GameChatSyncContext,
+} from '@/services/chat/resolveGameChatSyncTypes';
 import { unreadApiEnvelopeData } from '@/services/chat/chatUnreadPayload';
 import { useChatSyncStore, ChatContextType } from '@/store/chatSyncStore';
 import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
-
-const ALL_GAME_CHAT_TYPES: ChatType[] = ['PUBLIC', 'PRIVATE', 'ADMINS'];
 
 /** Wall-clock cap for foreground / post-rejoin bulk sync (GAME = up to 3 pulls per room). */
 const SYNC_ALL_CONTEXTS_WAVE_MS = 28_000;
@@ -30,16 +32,19 @@ export interface ChatRoomRef {
   contextType: ChatContextType;
   contextId: string;
   gameChatType?: ChatType;
+  gameSyncContext?: GameChatSyncContext;
 }
 
 export const chatSyncService = {
   async syncContext(
     contextType: ChatContextType,
     contextId: string,
-    gameChatType?: ChatType
+    gameChatType?: ChatType,
+    options?: { gameSyncContext?: GameChatSyncContext }
   ): Promise<void> {
     if (contextType === 'GAME' && !gameChatType) {
-      for (const ct of ALL_GAME_CHAT_TYPES) {
+      const chatTypes = await resolveAccessibleGameChatTypes(contextId, options?.gameSyncContext);
+      for (const ct of chatTypes) {
         const normalized = normalizeChatType(ct);
         try {
           const messages = await pullMissedAndPersistToDexie({
@@ -100,7 +105,9 @@ export const chatSyncService = {
     try {
       const syncWave = Promise.all(
         rooms.map(async (r) => {
-          await this.syncContext(r.contextType, r.contextId, r.gameChatType);
+          await this.syncContext(r.contextType, r.contextId, r.gameChatType, {
+            gameSyncContext: r.gameSyncContext,
+          });
           const ctxKey = `${r.contextType}:${r.contextId}`;
           const priority = options?.viewingContextKeys?.has(ctxKey)
             ? SYNC_PRIORITY_VIEWING

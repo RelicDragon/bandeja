@@ -15,7 +15,8 @@ export class PinnedMessageService {
     userId: string
   ) {
     if (chatContextType === 'GAME') {
-      await MessageService.validateGameAccess(contextId, userId);
+      const { participant, game } = await MessageService.validateGameAccess(contextId, userId);
+      await MessageService.validateChatTypeAccess(participant, chatType, game, userId, contextId, false);
     } else if (chatContextType === 'BUG') {
       await MessageService.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {

@@ -2,6 +2,7 @@ import type { ChatContextType } from '@/api/chat';
 import type { Game } from '@/types';
 import type { ChatType } from '@/types';
 import type { CoordinatorEnterParams } from '@/services/chat/unreadCoordinator';
+import { registerGameChatSyncContext } from '@/services/chat/resolveGameChatSyncTypes';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
 
@@ -28,6 +29,7 @@ export function buildGameChatMarkReadParams(opts: {
       ) ?? false;
     if (!isParticipant && !hasPendingInvite && !isGuest && !game.isPublic) return null;
     const parentParticipant = game.parent?.participants?.find((p) => p.userId === userId);
+    registerGameChatSyncContext(id, game, userId);
     return {
       contextType: 'GAME',
       contextId: id,

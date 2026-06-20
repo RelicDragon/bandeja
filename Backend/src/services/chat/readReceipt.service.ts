@@ -321,7 +321,10 @@ export class ReadReceiptService {
 
     if (chatTypes.length > 0) {
       chatTypeFilter = [...chatTypes];
-      if (!(participant && participant.status === 'PLAYING') && chatTypeFilter.includes('PRIVATE')) {
+      const canAccessPrivate =
+        participant &&
+        (participant.status === 'PLAYING' || participant.status === 'NON_PLAYING');
+      if (!canAccessPrivate && chatTypeFilter.includes('PRIVATE')) {
         chatTypeFilter = chatTypeFilter.filter((t: string) => t !== 'PRIVATE');
       }
       const canAccessAdmins = (participant && (participant.role === 'OWNER' || participant.role === 'ADMIN')) || isParentGameAdminOrOwner;

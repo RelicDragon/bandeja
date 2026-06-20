@@ -611,6 +611,44 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'game chat read access',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'game-chat-read-access.ts'),
+    ],
+  },
+  {
+    label: 'game chat socket filter',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'game-chat-socket-filter.ts'),
+    ],
+  },
+  {
+    label: 'game chat sync filter',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'game-chat-sync-filter.ts'),
+    ],
+  },
+  {
+    label: 'game chat sync filter unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'chat', 'gameChatSyncEventFilter.test.ts'),
+    ],
+  },
+  {
     label: 'bet payout reconcile',
     command: process.execPath,
     args: [
