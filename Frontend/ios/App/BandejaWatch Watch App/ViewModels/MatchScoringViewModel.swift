@@ -30,6 +30,8 @@ final class MatchScoringViewModel {
 
     /// Points completed in the current classic game (drives serve L/R); persisted for deuce accuracy.
     var classicPointsPlayedInGame = 0
+    /// Returns to 40:40 from advantage in the current game (for golden point threshold).
+    var deuceCount = 0
 
     /// Rally-cap sports: winner of each point (mirrors FE `pointWinnerLog`).
     var pointWinnerLog: [TeamSide] = []
@@ -455,6 +457,7 @@ final class MatchScoringViewModel {
         tieBreakB = 0
         withinSetTieBreakMode = false
         classicPointsPlayedInGame = 0
+        deuceCount = 0
         scheduleLiveScoringSave()
     }
 
@@ -994,9 +997,9 @@ final class MatchScoringViewModel {
         }
     }
 
-    /// Matches `normalizePointState` in `liveScoring/core.ts`: legacy `deuce` is not used when GP is on.
+    /// Matches `normalizePointState` in `liveScoring/core.ts`: legacy `deuce` is not used when GP is active.
     private func normalizeClassicPointStateForGoldenPointRules() {
-        guard rules.hasGoldenPoint, usesTennisSetRules, !usesBallCapPerSetUI else { return }
+        guard rules.isGoldenPointActive(deuceCount: deuceCount), usesTennisSetRules, !usesBallCapPerSetUI else { return }
         if case .deuce = classicPointState {
             classicPointState = .regular(a: .forty, b: .forty)
         }
@@ -1090,7 +1093,7 @@ final class MatchScoringViewModel {
                 if a == .forty && b != .forty {
                     awardGame(.teamA)
                 } else if a == .forty && b == .forty {
-                    if rules.hasGoldenPoint {
+                    if rules.isGoldenPointActive(deuceCount: deuceCount) {
                         awardGame(.teamA)
                     } else {
                         classicPointState = .advantage(.teamA)
@@ -1104,7 +1107,7 @@ final class MatchScoringViewModel {
                 if b == .forty && a != .forty {
                     awardGame(.teamB)
                 } else if a == .forty && b == .forty {
-                    if rules.hasGoldenPoint {
+                    if rules.isGoldenPointActive(deuceCount: deuceCount) {
                         awardGame(.teamB)
                     } else {
                         classicPointState = .advantage(.teamB)
@@ -1116,7 +1119,7 @@ final class MatchScoringViewModel {
                 }
             }
         case .deuce:
-            if rules.hasGoldenPoint {
+            if rules.isGoldenPointActive(deuceCount: deuceCount) {
                 awardGame(side)
             } else {
                 classicPointState = .advantage(side)
@@ -1126,6 +1129,7 @@ final class MatchScoringViewModel {
             if adv == side {
                 awardGame(side)
             } else {
+                deuceCount += 1
                 classicPointState = .regular(a: .forty, b: .forty)
                 WatchScoreHaptics.point()
             }
@@ -1143,6 +1147,7 @@ final class MatchScoringViewModel {
         }
         classicPointState = .regular(a: .zero, b: .zero)
         classicPointsPlayedInGame = 0
+        deuceCount = 0
         WatchScoreHaptics.point()
         if sets[activeSetIndex].teamA == gamesScoreForTieBreak && sets[activeSetIndex].teamB == gamesScoreForTieBreak {
             withinSetTieBreakMode = true
@@ -1299,7 +1304,11 @@ final class MatchScoringViewModel {
         scheduleLiveScoringSave()
     }
 
-    func applyLiveScoringEnvelopeIfNewer(_ envelope: WatchLiveScoringEnvelope?, force: Bool = false) {
+    func applyLiveScoringEnvelopeIfNewer(_ envelope: WatchLiveScoringEnvelope?) {
+        applyLiveScoringEnvelopeIfNewer(envelope, force: false)
+    }
+
+    func applyLiveScoringEnvelopeIfNewer(_ envelope: WatchLiveScoringEnvelope?, force: Bool) {
         guard force || allowsRemoteLiveScoringMerge else { return }
         guard let envelope, envelope.isSupported, envelope.revision > liveScoringRevision else { return }
         guard let state = envelope.state else {
@@ -1325,6 +1334,7 @@ final class MatchScoringViewModel {
             tieBreakA = classic.tieBreakA
             tieBreakB = classic.tieBreakB
             classicPointsPlayedInGame = classic.classicPointsPlayedInGame
+            deuceCount = classic.deuceCount
             normalizeClassicPointStateForGoldenPointRules()
         } else {
             classicPointState = .regular(a: .zero, b: .zero)
@@ -1332,6 +1342,7 @@ final class MatchScoringViewModel {
             tieBreakA = 0
             tieBreakB = 0
             classicPointsPlayedInGame = 0
+            deuceCount = 0
         }
 
         if state.serveGuideSkipped == true {
@@ -1565,7 +1576,8 @@ final class MatchScoringViewModel {
             withinSetTieBreak: withinSetTieBreakMode,
             tieBreakA: tieBreakA,
             tieBreakB: tieBreakB,
-            classicPointsPlayedInGame: classicPointsPlayedInGame
+            classicPointsPlayedInGame: classicPointsPlayedInGame,
+            deuceCount: deuceCount
         )
 
         return WatchLiveScoringState(

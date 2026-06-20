@@ -1,3 +1,4 @@
+import { clampDeucesBeforeGoldenPoint } from '@shared/gameFormat/goldenPoint';
 import { Game, ScoringPreset, WinnerOfMatch } from '@/types';
 import { getOfficiatingLevelForGame, getStrictValidationForPreset, type StrictValidationId } from '@/sport/createFlow';
 import type { OfficiatingLevel } from '@shared/officiatingLevel';
@@ -26,7 +27,7 @@ export interface ScoringRules {
   winnerOfMatch: WinnerOfMatch;
 
   allowDrawPerSet: boolean;
-  hasGoldenPoint: boolean;
+  deucesBeforeGoldenPoint: number | null;
   allowRemoveSet: boolean;
   /** Incomplete regular set games (e.g. at buzzer) when match timer is on or legacy timed preset. */
   allowIncompleteRegularSetGames: boolean;
@@ -37,7 +38,7 @@ export interface ScoringRules {
 type RuleSkeleton = Omit<
   ScoringRules,
   | 'preset'
-  | 'hasGoldenPoint'
+  | 'deucesBeforeGoldenPoint'
   | 'allowDrawPerSet'
   | 'maxPointsPerTeam'
   | 'allowIncompleteRegularSetGames'
@@ -200,7 +201,7 @@ type RulesSource = Pick<
   | 'maxPointsPerTeam'
   | 'winnerOfMatch'
   | 'ballsInGames'
-  | 'hasGoldenPoint'
+  | 'deucesBeforeGoldenPoint'
   | 'pointsPerTie'
   | 'matchTimerEnabled'
   | 'metadata'
@@ -229,9 +230,11 @@ export const getRules = (game: RulesSource): ScoringRules => {
     ...base,
     preset: preset ?? 'DERIVED',
     allowDrawPerSet,
-    hasGoldenPoint:
-      goldenApplies &&
-      (game?.hasGoldenPoint ?? (preset === 'CLASSIC_FAST4' ? true : false)),
+    deucesBeforeGoldenPoint: goldenApplies
+      ? clampDeucesBeforeGoldenPoint(
+          game?.deucesBeforeGoldenPoint ?? (preset === 'CLASSIC_FAST4' ? 0 : null),
+        )
+      : null,
     maxPointsPerTeam: game?.maxPointsPerTeam ?? 0,
     allowIncompleteRegularSetGames,
     strictValidation,

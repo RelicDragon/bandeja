@@ -18,7 +18,7 @@ import {
 const pointsRules = {
   ...getRulesFromPreset('POINTS_16'),
   preset: 'POINTS_16' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: true,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,
@@ -178,7 +178,7 @@ describe('serveGuide points mode', () => {
 const classicRules = {
   ...getRulesFromPreset('CLASSIC_BEST_OF_3'),
   preset: 'CLASSIC_BEST_OF_3' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: false,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,
@@ -323,7 +323,7 @@ describe('serveGuide classic games', () => {
 const superTbRules = {
   ...getRulesFromPreset('CLASSIC_SUPER_TIEBREAK'),
   preset: 'CLASSIC_SUPER_TIEBREAK' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: false,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,

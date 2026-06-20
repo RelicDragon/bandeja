@@ -8,15 +8,20 @@ struct WatchScoringTeamColumn: View {
     var disabled: Bool = false
     var decrementDisabled: Bool = false
     var levelSport: WatchSport?
+    var compact: Bool = false
+
+    private var columnMinHeight: CGFloat { compact ? 96 : 118 }
+    private var scoreFontSize: CGFloat { compact ? 30 : 34 }
+    private var avatarSize: CGFloat { compact ? 20 : 24 }
 
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: compact ? 4 : 8) {
             Button {
                 guard !disabled else { return }
                 WatchScoreHaptics.point()
                 action()
             } label: {
-                VStack(spacing: 6) {
+                VStack(spacing: compact ? 4 : 6) {
                     if users.isEmpty {
                         Text("—")
                             .font(.caption2)
@@ -24,7 +29,7 @@ struct WatchScoringTeamColumn: View {
                     } else {
                         HStack(spacing: 4) {
                             ForEach(users) { user in
-                                WatchPlayerAvatarView(user: user, size: 24, role: nil, levelSport: levelSport)
+                                WatchPlayerAvatarView(user: user, size: avatarSize, role: nil, levelSport: levelSport)
                             }
                         }
 
@@ -39,15 +44,15 @@ struct WatchScoringTeamColumn: View {
                     }
 
                     Text(scoreLabel)
-                        .font(.system(size: 34, weight: .bold, design: .rounded).monospacedDigit())
+                        .font(.system(size: scoreFontSize, weight: .bold, design: .rounded).monospacedDigit())
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .contentTransition(.numericText())
                         .animation(.snappy(duration: 0.2), value: scoreLabel)
                 }
-                .frame(maxWidth: .infinity, minHeight: 118)
+                .frame(maxWidth: .infinity, minHeight: columnMinHeight)
                 .padding(.horizontal, 8)
-                .padding(.vertical, 10)
+                .padding(.vertical, compact ? 6 : 10)
                 .background(
                     LinearGradient(
                         colors: [

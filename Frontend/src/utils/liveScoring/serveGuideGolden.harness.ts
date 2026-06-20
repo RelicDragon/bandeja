@@ -80,7 +80,7 @@ export type ServeGuideGoldenFixture = {
     | 'pointWinnerLog'
   >;
   state?: Partial<LiveScoringState>;
-  rules?: { hasGoldenPoint?: boolean };
+  rules?: { deucesBeforeGoldenPoint?: number | null };
   expectNull?: boolean;
   expected?: ServeGuideGoldenExpected | null;
 };
@@ -105,7 +105,7 @@ export function rulesFromServeGuideFixture(fixture: ServeGuideGoldenFixture): Sc
   return getRules({
     sport: fixture.sport,
     scoringPreset: fixture.preset,
-    hasGoldenPoint: fixture.rules?.hasGoldenPoint,
+    deucesBeforeGoldenPoint: fixture.rules?.deucesBeforeGoldenPoint ?? null,
     matchTimerEnabled: false,
   });
 }

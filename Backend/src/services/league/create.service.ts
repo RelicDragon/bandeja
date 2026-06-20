@@ -316,7 +316,10 @@ export class LeagueCreateService {
         pointsPerTie: gameSeasonData.pointsPerTie ?? 0,
         scoringPreset: gameSeasonData.scoringPreset ?? null,
         scoringMode: gameSeasonData.scoringMode != null ? String(gameSeasonData.scoringMode) : null,
-        hasGoldenPoint: gameSeasonData.hasGoldenPoint ?? false,
+        ...('hasGoldenPoint' in gameSeasonData
+          ? { hasGoldenPoint: (gameSeasonData as { hasGoldenPoint?: boolean }).hasGoldenPoint }
+          : {}),
+        deucesBeforeGoldenPoint: gameSeasonData.deucesBeforeGoldenPoint,
         ballsInGames: gameSeasonData.ballsInGames,
         playersPerMatch: seasonPlayersPerMatch,
         hasFixedTeams: data.hasFixedTeams ?? false,
@@ -384,9 +387,10 @@ export class LeagueCreateService {
         scoringMode:
           (seasonFormatNorm.scoringMode as string | null | undefined) ??
           (gameSeasonData.scoringMode != null ? String(gameSeasonData.scoringMode) : null),
-        hasGoldenPoint: Boolean(
-          seasonFormatNorm.hasGoldenPoint ?? gameSeasonData.hasGoldenPoint ?? false,
-        ),
+        deucesBeforeGoldenPoint:
+          (seasonFormatNorm.deucesBeforeGoldenPoint as number | null | undefined) ??
+          gameSeasonData.deucesBeforeGoldenPoint ??
+          null,
         ballsInGames: Boolean(seasonFormatNorm.ballsInGames),
         hasFixedTeams:
           (seasonFormatNorm.hasFixedTeams as boolean | undefined) ?? data.hasFixedTeams ?? false,

@@ -51,7 +51,7 @@ function initialSetRowsForMatch(
     maxPointsPerTeam: game.maxPointsPerTeam ?? 0,
     winnerOfMatch: game.winnerOfMatch ?? null,
     ballsInGames: game.ballsInGames ?? false,
-    hasGoldenPoint: game.hasGoldenPoint ?? false,
+    deucesBeforeGoldenPoint: game.deucesBeforeGoldenPoint ?? null,
     pointsPerTie: game.pointsPerTie ?? 0,
     matchTimerEnabled: game.matchTimerEnabled ?? false,
   });

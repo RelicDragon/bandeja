@@ -76,7 +76,7 @@ export type CreateTemplate = {
   matchTimedCapMinutes?: number;
   expectedDurationLabelKey?: string;
   /** Classic no-ad (FAST4). Defaults from preset when omitted. */
-  hasGoldenPoint?: boolean;
+  deucesBeforeGoldenPoint?: number | null;
 };
 
 export type SportRatingDisplaySystem =
@@ -475,7 +475,7 @@ export const CREATE_TEMPLATES: Record<CreateTemplateId, CreateTemplate> = {
     suggestedMaxParticipants: 4,
     suggestedCourts: 1,
     affectsRating: false,
-    hasGoldenPoint: true,
+    deucesBeforeGoldenPoint: 0,
     matchTimerEnabled: true,
     matchTimedCapMinutes: 15,
     expectedDurationLabelKey: 'sportRegistry.duration.approx90m',

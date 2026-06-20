@@ -9,7 +9,7 @@ import Foundation
 enum ServeGuideGoldenFixtures {
     struct CatalogEntry: Decodable, Sendable {
         struct RulesOverride: Decodable, Sendable {
-            var hasGoldenPoint: Bool?
+            var deucesBeforeGoldenPoint: Int?
         }
 
         struct ServeSeed: Decodable, Sendable {
@@ -75,7 +75,7 @@ enum ServeGuideGoldenFixtures {
         if let actions = entry.actions, !actions.isEmpty {
             let preset = WatchScoringPreset(rawValue: entry.preset) ?? .classicBo3
             var rules = WatchScoringRulebook.skeleton(for: preset)
-            if entry.rules?.hasGoldenPoint == true { rules.hasGoldenPoint = true }
+            if let gp = entry.rules?.deucesBeforeGoldenPoint { rules.deucesBeforeGoldenPoint = gp }
             var state = WatchLiveScoringEngine.makeInitialState(
                 rules: rules,
                 initialSets: entry.initialSets
@@ -94,7 +94,7 @@ enum ServeGuideGoldenFixtures {
         if let overlay = entry.state {
             let preset = WatchScoringPreset(rawValue: entry.preset) ?? .classicBo3
             var rules = WatchScoringRulebook.skeleton(for: preset)
-            if entry.rules?.hasGoldenPoint == true { rules.hasGoldenPoint = true }
+            if let gp = entry.rules?.deucesBeforeGoldenPoint { rules.deucesBeforeGoldenPoint = gp }
             var state = WatchLiveScoringEngine.parseState(
                 overlay,
                 rules: rules,
@@ -114,7 +114,7 @@ enum ServeGuideGoldenFixtures {
         let sport = WatchSport.resolved(from: entry.sport)
         let preset = WatchScoringPreset(rawValue: entry.preset) ?? .classicBo3
         var rules = WatchScoringRulebook.skeleton(for: preset)
-        if entry.rules?.hasGoldenPoint == true { rules.hasGoldenPoint = true }
+        if let gp = entry.rules?.deucesBeforeGoldenPoint { rules.deucesBeforeGoldenPoint = gp }
 
         let state = try resolvedState(for: entry)
         let usesTennisSetRules = sport == .tennis ? true : rules.ballsInGames
@@ -329,15 +329,34 @@ enum WatchLiveScoringEngine {
                 classic.classicPointsPlayedInGame += 1
                 switch classic.pointState {
                 case .regular(var a, var b):
-                    if side == .teamA {
-                        a = nextPadelPoint(a)
-                    } else {
-                        b = nextPadelPoint(b)
-                    }
-                    if wonClassicGame(a: a, b: b, rules: rules) {
+                    if a == .forty && b == .forty && rules.isGoldenPointActive(deuceCount: classic.deuceCount) {
                         incrementGame(on: &copy, side: side)
                         classic.pointState = .regular(teamA: .zero, teamB: .zero)
                         classic.classicPointsPlayedInGame = 0
+                        classic.deuceCount = 0
+                        classic.tieBreakA = 0
+                        classic.tieBreakB = 0
+                        classic.withinSetTieBreak = tieBreakActive(in: copy.sets, index: copy.activeSetIndex, rules: rules)
+                        break
+                    }
+                    if side == .teamA {
+                        if a == .forty && b == .forty && !rules.isGoldenPointActive(deuceCount: classic.deuceCount) {
+                            classic.pointState = .advantage(.teamA)
+                            break
+                        }
+                        a = nextPadelPoint(a)
+                    } else {
+                        if a == .forty && b == .forty && !rules.isGoldenPointActive(deuceCount: classic.deuceCount) {
+                            classic.pointState = .advantage(.teamB)
+                            break
+                        }
+                        b = nextPadelPoint(b)
+                    }
+                    if wonClassicGame(a: a, b: b, rules: rules, deuceCount: classic.deuceCount) {
+                        incrementGame(on: &copy, side: side)
+                        classic.pointState = .regular(teamA: .zero, teamB: .zero)
+                        classic.classicPointsPlayedInGame = 0
+                        classic.deuceCount = 0
                         classic.tieBreakA = 0
                         classic.tieBreakB = 0
                         classic.withinSetTieBreak = tieBreakActive(in: copy.sets, index: copy.activeSetIndex, rules: rules)
@@ -345,14 +364,23 @@ enum WatchLiveScoringEngine {
                         classic.pointState = .regular(teamA: a, teamB: b)
                     }
                 case .deuce:
-                    classic.pointState = .advantage(side)
+                    if rules.isGoldenPointActive(deuceCount: classic.deuceCount) {
+                        incrementGame(on: &copy, side: side)
+                        classic.pointState = .regular(teamA: .zero, teamB: .zero)
+                        classic.classicPointsPlayedInGame = 0
+                        classic.deuceCount = 0
+                    } else {
+                        classic.pointState = .advantage(side)
+                    }
                 case .advantage(let adv):
                     if adv == side {
                         incrementGame(on: &copy, side: side)
                         classic.pointState = .regular(teamA: .zero, teamB: .zero)
                         classic.classicPointsPlayedInGame = 0
+                        classic.deuceCount = 0
                         classic.withinSetTieBreak = tieBreakActive(in: copy.sets, index: copy.activeSetIndex, rules: rules)
                     } else {
+                        classic.deuceCount += 1
                         classic.pointState = .regular(teamA: .forty, teamB: .forty)
                     }
                 }
@@ -394,8 +422,8 @@ enum WatchLiveScoringEngine {
         }
     }
 
-    private static func wonClassicGame(a: PadelPoint, b: PadelPoint, rules: WatchScoringRules) -> Bool {
-        if rules.hasGoldenPoint, a == .forty, b == .forty { return true }
+    private static func wonClassicGame(a: PadelPoint, b: PadelPoint, rules: WatchScoringRules, deuceCount: Int) -> Bool {
+        if rules.isGoldenPointActive(deuceCount: deuceCount), a == .forty, b == .forty { return true }
         if a == .forty, b.rawValue <= PadelPoint.thirty.rawValue { return true }
         if b == .forty, a.rawValue <= PadelPoint.thirty.rawValue { return true }
         return false

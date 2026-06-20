@@ -493,7 +493,7 @@ model Game {
   ballsInGames           Boolean             @default(false)
   scoringPreset          ScoringPreset?
   scoringMode            String?
-  hasGoldenPoint         Boolean             @default(false)
+  deucesBeforeGoldenPoint Int?
   mediaUrls              String[]
   photosCount            Int                 @default(0)
   forbidOthersPhotosView Boolean             @default(false)

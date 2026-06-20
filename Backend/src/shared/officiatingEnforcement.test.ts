@@ -25,7 +25,7 @@ function testLetBlocksStrictScore(): void {
     maxPointsPerTeam: 0,
     winnerOfMatch: 'BY_SETS',
     ballsInGames: false,
-    hasGoldenPoint: false,
+    deucesBeforeGoldenPoint: null,
     pointsPerTie: 0,
     matchTimerEnabled: false,
     metadata: { officiatingLevel: 'strict' },

@@ -18,7 +18,7 @@ export function LinkedBookingCoverageBadge({ fullyCovered }: LinkedBookingCovera
   }
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+    <span className="inline-flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200">
       <AlertCircle size={12} className="shrink-0" aria-hidden />
       {t('gameDetails.linkedBookings.notFullyCovered')}
     </span>

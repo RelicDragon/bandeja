@@ -5,17 +5,18 @@ import { tGameFormatStepHint, tScoringPresetField } from '@/utils/gameFormat';
 import { FormatOptionCard } from './FormatOptionCard';
 import { GameFormatTimedDuration } from './GameFormatTimedDuration';
 import { ToggleSwitch } from '@/components/ToggleSwitch';
+import { GameFormatGoldenPointPicker } from './GameFormatGoldenPointPicker';
 import { presetTierBadgeClass, presetTierBadgeLabel, resolvePresetTierForSport } from '@/utils/presetTierUi';
 
 interface GameFormatStepSetStructureProps {
   scoringPreset: ScoringPreset;
   allowedPresets?: ScoringPreset[];
   sport?: string | null;
-  hasGoldenPoint: boolean;
+  deucesBeforeGoldenPoint: number | null;
   matchTimerEnabled: boolean;
   matchTimedCapMinutes: number;
   onPresetChange: (preset: ScoringPreset) => void;
-  onGoldenPointChange: (v: boolean) => void;
+  onDeucesBeforeGoldenPointChange: (v: number | null) => void;
   onMatchTimerEnabledChange: (v: boolean) => void;
   onTimedCapMinutesChange: (n: number) => void;
   onSelectAdvance?: () => void;
@@ -35,11 +36,11 @@ export const GameFormatStepSetStructure = ({
   scoringPreset,
   allowedPresets,
   sport,
-  hasGoldenPoint,
+  deucesBeforeGoldenPoint,
   matchTimerEnabled,
   matchTimedCapMinutes,
   onPresetChange,
-  onGoldenPointChange,
+  onDeucesBeforeGoldenPointChange,
   onMatchTimerEnabledChange,
   onTimedCapMinutesChange,
   onSelectAdvance,
@@ -110,15 +111,11 @@ export const GameFormatStepSetStructure = ({
         )}
       </div>
 
-      <div className="mt-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-between">
-          <div className="min-w-0 pr-3">
-            <div className="text-sm font-medium text-gray-900 dark:text-white">{t('gameFormat.goldenPoint.title')}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{t('gameFormat.goldenPoint.description')}</div>
-          </div>
-          <ToggleSwitch checked={hasGoldenPoint} onChange={onGoldenPointChange} />
-        </div>
-      </div>
+      <GameFormatGoldenPointPicker
+        value={deucesBeforeGoldenPoint}
+        onChange={onDeucesBeforeGoldenPointChange}
+        onSelectAdvance={onSelectAdvance}
+      />
     </div>
   );
 };

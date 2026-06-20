@@ -21,6 +21,7 @@ import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerat
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { cleanupInviteParticipantsForEndedGame } from '../../utils/gameInviteCleanup';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
+import { withLegacyGoldenPointField } from '../../shared/gameFormat/goldenPoint';
 import { resolvePlayersPerMatch } from '../../sport/sportRegistry';
 import { BracketAdvancementService } from '../league/bracketAdvancement.service';
 import {
@@ -80,7 +81,7 @@ const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
   'ballsInGames',
   'scoringPreset',
   'scoringMode',
-  'hasGoldenPoint',
+  'deucesBeforeGoldenPoint',
   'mediaUrls',
   'forbidOthersPhotosView',
   'resultsSentToTelegram',
@@ -159,7 +160,7 @@ export class GameUpdateService {
         maxTotalPointsPerSet: true,
         winnerOfMatch: true,
         winnerOfGame: true,
-        hasGoldenPoint: true,
+        deucesBeforeGoldenPoint: true,
         ballsInGames: true,
         parentId: true,
       },
@@ -787,13 +788,13 @@ export class GameUpdateService {
     }
 
     const sport = updatedGame.sport;
-    return {
+    return withLegacyGoldenPointField({
       ...updatedGame,
       participants: updatedGame.participants.map((participant) => ({
         ...participant,
         user: projectUserForSportContext(participant.user, sport),
       })),
-    };
+    });
   }
 }
 

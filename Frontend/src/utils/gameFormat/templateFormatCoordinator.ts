@@ -161,7 +161,7 @@ export function snapshotsEqual(a: FormatSnapshot, b: FormatSnapshot): boolean {
     a.matchTimedCapMinutes === b.matchTimedCapMinutes &&
     a.customPointsTotal === b.customPointsTotal &&
     a.winnerOfGame === b.winnerOfGame &&
-    a.hasGoldenPoint === b.hasGoldenPoint
+    a.deucesBeforeGoldenPoint === b.deucesBeforeGoldenPoint
   );
 }
 

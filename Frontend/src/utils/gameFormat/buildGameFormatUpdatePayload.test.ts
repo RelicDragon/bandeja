@@ -21,7 +21,7 @@ const stubFormat = {
     pointsPerTie: 2,
     ballsInGames: false,
     scoringPreset: 'POINTS_16',
-    hasGoldenPoint: false,
+    deucesBeforeGoldenPoint: null,
   },
 } as unknown as UseGameFormatResult;
 

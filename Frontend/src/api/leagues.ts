@@ -31,7 +31,7 @@ export interface CreateLeagueRequest {
       ballsInGames?: boolean;
       scoringPreset?: string | null;
       scoringMode?: string;
-      hasGoldenPoint?: boolean;
+      deucesBeforeGoldenPoint?: number | null;
       gameType?: string;
     };
   };

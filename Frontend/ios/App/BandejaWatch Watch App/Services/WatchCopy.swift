@@ -1268,9 +1268,33 @@ enum WatchCopy {
 
     nonisolated static func serveCoachToast(_ lang: String) -> String {
         switch lang {
-        case "es": return "En cada punto verás el lado de saque."
-        case "ru": return "На каждом очке покажем сторону подачи."
-        default: return "Each point, we’ll show which side to serve from."
+        case "es": return "Desliza a la derecha para la guía de saque."
+        case "ru": return "Смахните вправо для подсказки подачи."
+        default: return "Swipe right for the serve guide."
+        }
+    }
+
+    nonisolated static func serveGuideUnavailable(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Guía de saque no disponible."
+        case "ru": return "Подсказка подачи недоступна."
+        default: return "Serve guide unavailable."
+        }
+    }
+
+    nonisolated static func serveGuideSwipeHint(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Desliza a la izquierda para volver a puntuar."
+        case "ru": return "Смахните влево, чтобы вернуться к счёту."
+        default: return "Swipe left to return to scoring."
+        }
+    }
+
+    nonisolated static func serveGuideHideHint(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Mantén pulsado para ocultar la guía."
+        case "ru": return "Удерживайте, чтобы скрыть подсказку."
+        default: return "Long press to hide serve guide."
         }
     }
 

@@ -437,8 +437,16 @@
     "goldenPoint": {
       "title": "Golden Point",
       "titleAdvantage": "Advantage scoring",
+      "pickerHint": "How many deuces before the next 40–40 is sudden death.",
+      "optionOff": "Off",
+      "optionImmediate": "At 40–40",
+      "optionAfterDeuces": "After {{count}}",
+      "afterDeucesShort": "GP after {{count}} deuce",
+      "afterDeucesShort_plural": "GP after {{count}} deuces",
+      "descriptionImmediate": "At 40–40 (deuce), the next point wins the game—no advantage scoring.",
+      "descriptionAfterDeuces": "After {{count}} return(s) to deuce from advantage, the next 40–40 is sudden death.",
       "description": "At 40–40 (deuce), the next point wins the game—no advantage scoring.",
-      "descriptionOff": "At deuce (40–40), use standard advantage scoring: one side takes advantage, then must win the next point to take the game; if not, the score returns to deuce—until one side leads by two. (Often called advantage in or advantage out.)"
+      "descriptionOff": "Standard advantage scoring at deuce: one side takes advantage, then must win the next point; if not, back to 40–40—until one side leads by two."
     },
     "timedMatch": {
       "title": "Timed match",

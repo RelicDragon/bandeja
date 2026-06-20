@@ -76,9 +76,9 @@ export function applyCreateTemplate(
     format.setMatchTimerEnabled(false);
   }
 
-  if (template.hasGoldenPoint !== undefined) {
-    format.setHasGoldenPoint(template.hasGoldenPoint);
+  if (template.deucesBeforeGoldenPoint !== undefined) {
+    format.setDeucesBeforeGoldenPoint(template.deucesBeforeGoldenPoint);
   } else if (template.playersPerMatch === 2 && template.scoringPreset !== 'CLASSIC_FAST4') {
-    format.setHasGoldenPoint(false);
+    format.setDeucesBeforeGoldenPoint(null);
   }
 }

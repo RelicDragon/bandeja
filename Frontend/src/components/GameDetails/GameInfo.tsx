@@ -21,6 +21,8 @@ import { isCapacitor } from '@/utils/capacitor';
 import { addToNativeCalendar } from '@/utils/calendar';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
+import { LinkedBookingCoverageBadge } from '@/components/GameDetails/LinkedBookingCoverageBadge';
+import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
 import { InfoIconChip } from './InfoIconChip';
 import { GameInfoUserNote } from './GameInfoUserNote';
 import { Share } from '@capacitor/share';
@@ -92,6 +94,11 @@ export const GameInfo = ({
   const { user } = useAuthStore();
   const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
   const clubTz = getClubTimezone(game);
+  const {
+    hasLinkedBookings,
+    showPublicCoverageBadge,
+    coverage: linkedBookingCoverage,
+  } = useGameLinkedBookingViewer(game);
   const showTags = game.entityType !== 'LEAGUE';
   const getDateLabelResolved = (date: Date | string, includeComma = true) =>
     clubTz
@@ -947,14 +954,18 @@ export const GameInfo = ({
                   </p>
                 )}
                 {/* Show booking status */}
-                {game.court && (
+                {showPublicCoverageBadge ? (
+                  <div className="mt-1">
+                    <LinkedBookingCoverageBadge fullyCovered={linkedBookingCoverage.fullyCovered} />
+                  </div>
+                ) : hasLinkedBookings ? null : game.court ? (
                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                     {game.hasBookedCourt 
                       ? (game.entityType === 'BAR' ? t('createGame.hasBookedHall') : t('createGame.hasBookedCourt'))
                       : t('createGame.notBookedYet')
                     }
                   </p>
-                )}
+                ) : null}
                 <CourtLocationLinks
                   club={game.court?.club || game.club}
                   court={game.court && game.court.id ? game.court : undefined}

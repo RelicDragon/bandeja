@@ -36,7 +36,7 @@ interface SetResultModalProps {
     | 'maxPointsPerTeam'
     | 'winnerOfMatch'
     | 'ballsInGames'
-    | 'hasGoldenPoint'
+    | 'deucesBeforeGoldenPoint'
     | 'pointsPerTie'
     | 'matchTimedCapMinutes'
   > | null;
@@ -83,7 +83,7 @@ export const SetResultModal = ({
         maxPointsPerTeam: maxPointsPerTeam ?? 0,
         winnerOfMatch: ballsInGames ? 'BY_SETS' : 'BY_SCORES',
         ballsInGames,
-        hasGoldenPoint: false,
+        deucesBeforeGoldenPoint: null,
         pointsPerTie: 0,
       } as any
     ),

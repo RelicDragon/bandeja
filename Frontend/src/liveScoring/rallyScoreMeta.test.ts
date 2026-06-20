@@ -8,7 +8,7 @@ describe('rallyScoreMetaForState', () => {
     const rules = {
       ...getRulesFromPreset('POINTS_21'),
       preset: 'POINTS_21' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -21,7 +21,7 @@ describe('rallyScoreMetaForState', () => {
     const rules = {
       ...getRulesFromPreset('BEST_OF_3_21'),
       preset: 'BEST_OF_3_21' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,

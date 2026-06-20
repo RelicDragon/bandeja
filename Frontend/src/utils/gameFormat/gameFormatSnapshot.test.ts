@@ -36,12 +36,12 @@ describe('gameFormatSnapshotFromGame', () => {
     ).toBe(true);
   });
 
-  it('includes hasGoldenPoint in snapshot', () => {
+  it('includes deucesBeforeGoldenPoint in snapshot', () => {
     const snapshot = gameFormatSnapshotFromGame({
-      hasGoldenPoint: true,
+      deucesBeforeGoldenPoint: 0,
       scoringPreset: 'CLASSIC_BEST_OF_3',
       maxParticipants: 4,
     });
-    expect(snapshot.hasGoldenPoint).toBe(true);
+    expect(snapshot.deucesBeforeGoldenPoint).toBe(0);
   });
 });

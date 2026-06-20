@@ -14,7 +14,7 @@ import {
 const classicRules = {
   ...getRulesFromPreset('CLASSIC_BEST_OF_3'),
   preset: 'CLASSIC_BEST_OF_3' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: false,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,
@@ -23,7 +23,7 @@ const classicRules = {
 const pointsRules = {
   ...getRulesFromPreset('POINTS_16'),
   preset: 'POINTS_16' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: true,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,
@@ -32,7 +32,7 @@ const pointsRules = {
 const superTbRules = {
   ...getRulesFromPreset('CLASSIC_SUPER_TIEBREAK'),
   preset: 'CLASSIC_SUPER_TIEBREAK' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: false,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,
@@ -41,7 +41,7 @@ const superTbRules = {
 const points21Rules = {
   ...getRulesFromPreset('POINTS_21'),
   preset: 'POINTS_21' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: false,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,
@@ -225,8 +225,26 @@ describe('live scoring core golden transitions', () => {
     expect(state.sets[3].role).toBe('EXTRA_GAMES');
   });
 
+  it('golden point after two deuces (modern padel)', () => {
+    const gpRules = { ...classicRules, deucesBeforeGoldenPoint: 2 };
+    let state = createInitialLiveScoringState(gpRules);
+    state = play('teamA', 3, state);
+    state = play('teamB', 3, state);
+    state = scoreLivePoint(state, 'teamA', gpRules).state;
+    expect(state.classic?.pointState).toEqual({ kind: 'advantage', side: 'teamA' });
+    state = scoreLivePoint(state, 'teamB', gpRules).state;
+    expect(state.classic?.deuceCount).toBe(1);
+    expect(state.classic?.pointState).toEqual({ kind: 'regular', teamA: 40, teamB: 40 });
+    state = scoreLivePoint(state, 'teamA', gpRules).state;
+    expect(state.classic?.pointState).toEqual({ kind: 'advantage', side: 'teamA' });
+    state = scoreLivePoint(state, 'teamB', gpRules).state;
+    expect(state.classic?.deuceCount).toBe(2);
+    state = scoreLivePoint(state, 'teamA', gpRules).state;
+    expect(state.sets[0]).toMatchObject({ teamA: 1, teamB: 0 });
+  });
+
   it('golden point awards game from 40–40', () => {
-    const gpRules = { ...classicRules, hasGoldenPoint: true };
+    const gpRules = { ...classicRules, deucesBeforeGoldenPoint: 0 };
     let state = createInitialLiveScoringState(gpRules);
     state = play('teamA', 3, state);
     state = play('teamB', 3, state);
@@ -249,7 +267,7 @@ describe('live scoring core golden transitions', () => {
       ...getRulesFromPreset('CLASSIC_BEST_OF_3'),
       preset: 'CLASSIC_BEST_OF_3' as const,
       superTieBreakReplacesDeciderAtIndex: null,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -274,7 +292,7 @@ describe('live scoring core golden transitions', () => {
       ...getRulesFromPreset('CLASSIC_BEST_OF_3'),
       preset: 'CLASSIC_BEST_OF_3' as const,
       allowIncompleteRegularSetGames: true,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
     };

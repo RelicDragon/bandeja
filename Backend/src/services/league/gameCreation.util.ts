@@ -100,6 +100,7 @@ export function resolveLeagueFixtureFormatFields(
     pointsPerTie?: number | null;
     scoringPreset?: string | null;
     scoringMode?: string | null;
+    deucesBeforeGoldenPoint?: number | null;
     hasGoldenPoint?: boolean | null;
     ballsInGames?: boolean | null;
   },
@@ -138,7 +139,10 @@ export function resolveLeagueFixtureFormatFields(
         : seasonGame.scoringMode != null
           ? String(seasonGame.scoringMode)
           : null,
-    hasGoldenPoint: gameSetup?.hasGoldenPoint ?? seasonGame.hasGoldenPoint ?? false,
+    deucesBeforeGoldenPoint: gameSetup?.deucesBeforeGoldenPoint ?? seasonGame.deucesBeforeGoldenPoint ?? null,
+    ...(gameSetup?.hasGoldenPoint !== undefined || seasonGame.hasGoldenPoint !== undefined
+      ? { hasGoldenPoint: gameSetup?.hasGoldenPoint ?? seasonGame.hasGoldenPoint ?? false }
+      : {}),
     ballsInGames: gameSetup?.ballsInGames,
     gameType: options?.gameType ?? seasonGame.gameType ?? 'CLASSIC',
     playersPerMatch: options?.playersPerMatch ?? seasonGame.playersPerMatch ?? 4,
@@ -179,7 +183,8 @@ export function resolveLeagueFixtureFormatFields(
     pointsPerTie: (normalized.pointsPerTie as number | undefined) ?? patch.pointsPerTie,
     scoringPreset: (normalized.scoringPreset as ScoringPreset | null | undefined) ?? patch.scoringPreset,
     scoringMode: (normalized.scoringMode as string | null | undefined) ?? patch.scoringMode,
-    hasGoldenPoint: (normalized.hasGoldenPoint as boolean | undefined) ?? patch.hasGoldenPoint,
+    deucesBeforeGoldenPoint:
+      (normalized.deucesBeforeGoldenPoint as number | null | undefined) ?? patch.deucesBeforeGoldenPoint,
     ballsInGames:
       typeof gameSetup?.ballsInGames === 'boolean'
         ? gameSetup.ballsInGames
@@ -224,6 +229,8 @@ export interface PlayoffGameSetupOverrides {
   pointsPerTie?: number;
   scoringPreset?: string | null;
   scoringMode?: string;
+  deucesBeforeGoldenPoint?: number | null;
+  /** @deprecated Legacy FE — normalized to `deucesBeforeGoldenPoint`. */
   hasGoldenPoint?: boolean;
   ballsInGames?: boolean;
 }

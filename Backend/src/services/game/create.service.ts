@@ -7,6 +7,7 @@ import { canAddPlayerToGame } from '../../utils/participantValidation';
 import notificationService from '../notification.service';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
 import { resolvePlayersPerMatch, resolveSport } from '../../sport/sportRegistry';
+import { clampDeucesBeforeGoldenPoint, deucesFromLegacyHasGoldenPoint, withLegacyGoldenPointField } from '../../shared/gameFormat/goldenPoint';
 import { normalizeGameFormatPatch } from '../../utils/gameFormat/normalizeGameFormatPatch';
 import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerationType';
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
@@ -420,7 +421,13 @@ export class GameCreateService {
         ballsInGames,
         scoringPreset,
         scoringMode: (formatNorm.scoringMode as string | null | undefined) ?? data.scoringMode ?? null,
-        hasGoldenPoint: Boolean(formatNorm.hasGoldenPoint ?? data.hasGoldenPoint),
+        deucesBeforeGoldenPoint: clampDeucesBeforeGoldenPoint(
+          formatNorm.deucesBeforeGoldenPoint ??
+            data.deucesBeforeGoldenPoint ??
+            (Object.prototype.hasOwnProperty.call(data, 'hasGoldenPoint')
+              ? deucesFromLegacyHasGoldenPoint(data.hasGoldenPoint)
+              : undefined),
+        ),
         priceTotal: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : priceTotal,
         priceType: priceType,
         priceCurrency: (priceType === 'NOT_KNOWN' || priceType === 'FREE') ? null : data.priceCurrency,
@@ -566,7 +573,7 @@ export class GameCreateService {
 
     const gameSport = finalGame.sport;
     const { externalBookings, ...gameRest } = finalGame;
-    return {
+    return withLegacyGoldenPointField({
       ...gameRest,
       linkedBookings: externalBookings.map(serializeLinkedBooking),
       participants: finalGame.participants.map((participant) => ({
@@ -580,7 +587,7 @@ export class GameCreateService {
           user: projectUserForSportContext(player.user, gameSport),
         })),
       })),
-    };
+    });
   }
 }
 

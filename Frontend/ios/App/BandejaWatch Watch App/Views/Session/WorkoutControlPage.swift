@@ -9,6 +9,9 @@ enum WorkoutControlMode {
 struct WorkoutControlPage: View {
     let mode: WorkoutControlMode
     let gameId: String
+    var matchId: String? = nil
+    var timerGame: WatchGame? = nil
+    var onMatchTimerStopped: (() -> Void)? = nil
     @Environment(ActiveSessionManager.self) private var session
     @Environment(WatchPreferencesStore.self) private var prefs
     @Bindable private var workout = WorkoutManager.shared
@@ -17,76 +20,90 @@ struct WorkoutControlPage: View {
 
     var body: some View {
         let lang = prefs.uiLanguageCode
-        ScrollView {
-            VStack(spacing: 12) {
-                metricsSection(lang: lang)
+        VStack(spacing: 8) {
+            Spacer(minLength: 0)
+            metricsSection(lang: lang)
 
-                if mode == .gameActive, let err = session.scoringViewModel?.error {
-                    Text(sessionErrorMessage(err, lang: lang))
-                        .font(.caption2)
-                        .foregroundStyle(.red)
-                        .multilineTextAlignment(.center)
-                }
+            if mode == .matchActive,
+               let matchId,
+               let timerGame,
+               timerGame.isMatchTimerEnabled {
+                MatchTimerBarView(
+                    gameId: gameId,
+                    matchId: matchId,
+                    game: timerGame,
+                    onTimerStopped: onMatchTimerStopped
+                )
+                .padding(.horizontal, 2)
+            }
 
-                if mode == .gameActive {
-                    if session.scoringViewModel?.canFinalizeResults == true {
-                        Button {
-                            showFinishGameConfirm = true
-                        } label: {
-                            controlCircle(
-                                systemName: "xmark",
-                                color: .red,
-                                label: WatchCopy.sessionFinishGame(lang)
-                            )
-                        }
-                        .buttonStyle(.plain)
-                    } else {
-                        Text(WatchCopy.sessionNeedScoresToFinalize(lang))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                    }
+            if mode == .gameActive, let err = session.scoringViewModel?.error {
+                Text(sessionErrorMessage(err, lang: lang))
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+            }
 
+            if mode == .gameActive {
+                if session.scoringViewModel?.canFinalizeResults == true {
                     Button {
-                        showExitConfirm = true
+                        showFinishGameConfirm = true
                     } label: {
-                        Text(WatchCopy.sessionExitScoring(lang))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
+                        controlCircle(
+                            systemName: "xmark",
+                            color: .red,
+                            label: WatchCopy.sessionFinishGame(lang)
+                        )
                     }
                     .buttonStyle(.plain)
                 } else {
-                    HStack(spacing: 16) {
-                        if workout.isActive, workout.activeGameId == gameId, !workout.authDenied {
-                            Button {
-                                workout.togglePauseResume()
-                            } label: {
-                                controlCircle(
-                                    systemName: workout.sessionState == .paused ? "play.fill" : "pause.fill",
-                                    color: .yellow,
-                                    label: workout.sessionState == .paused
-                                        ? WatchCopy.workoutResumeA11y(lang)
-                                        : WatchCopy.workoutPauseA11y(lang)
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
+                    Text(WatchCopy.sessionNeedScoresToFinalize(lang))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
 
+                Button {
+                    showExitConfirm = true
+                } label: {
+                    Text(WatchCopy.sessionExitScoring(lang))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            } else {
+                HStack(spacing: 16) {
+                    if workout.isActive, workout.activeGameId == gameId, !workout.authDenied {
                         Button {
-                            session.requestFinishMatchFromControl()
+                            workout.togglePauseResume()
                         } label: {
                             controlCircle(
-                                systemName: "stop.fill",
-                                color: .red,
-                                label: WatchCopy.finishMatch(lang)
+                                systemName: workout.sessionState == .paused ? "play.fill" : "pause.fill",
+                                color: .yellow,
+                                label: workout.sessionState == .paused
+                                    ? WatchCopy.workoutResumeA11y(lang)
+                                    : WatchCopy.workoutPauseA11y(lang)
                             )
                         }
                         .buttonStyle(.plain)
                     }
+
+                    Button {
+                        session.requestFinishMatchFromControl()
+                    } label: {
+                        controlCircle(
+                            systemName: "stop.fill",
+                            color: .red,
+                            label: WatchCopy.finishMatch(lang)
+                        )
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            .padding(.vertical, 8)
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, 4)
         .confirmationDialog(WatchCopy.sessionFinishGame(lang), isPresented: $showFinishGameConfirm, titleVisibility: .visible) {
             Button(WatchCopy.finalizeResults(lang)) {
                 Task { await session.finishGame() }

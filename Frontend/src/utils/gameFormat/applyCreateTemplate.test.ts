@@ -8,7 +8,7 @@ function mockFormat(overrides: Partial<UseGameFormatResult> = {}): UseGameFormat
     scoringMode: 'CLASSIC',
     scoringPreset: 'CLASSIC_BEST_OF_3',
     generationType: 'AUTOMATIC',
-    hasGoldenPoint: false,
+    deucesBeforeGoldenPoint: null,
     pointsPerWin: 0,
     pointsPerLoose: 0,
     pointsPerTie: 0,

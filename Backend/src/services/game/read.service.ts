@@ -19,6 +19,7 @@ import {
   MAIN_PHOTO_RELATION_SELECT,
 } from './gamePrismaIncludes';
 import { serializeLinkedBooking } from './gameExternalBooking.service';
+import { withLegacyGoldenPointField } from '../../shared/gameFormat/goldenPoint';
 import {
   canViewGamePhotos,
   type GamePhotosViewer,
@@ -45,7 +46,7 @@ export function projectGamePhotoPayload(game: any, viewer?: GamePhotosViewer | n
   void _photos;
   void _resultsArtifactJob;
   void _externalBookings;
-  return {
+  return withLegacyGoldenPointField({
     ...rest,
     timeOverride: game.timeOverride ?? false,
     linkedBookings: (game.externalBookings ?? []).map(serializeLinkedBooking),
@@ -66,7 +67,7 @@ export function projectGamePhotoPayload(game: any, viewer?: GamePhotosViewer | n
       },
       getMaxArtifactPhotoGenerations(getOwnerIsPremiumFromGame(game))
     ),
-  };
+  });
 }
 
 export function projectGameUsersForSportContext<T extends { sport?: Sport; [key: string]: any }>(game: T): T {
@@ -281,6 +282,17 @@ const getAvailableGamesInclude = () => ({
       summaryStatus: true,
       photoStatus: true,
       photoGenerationsUsed: true,
+    },
+  },
+  externalBookings: {
+    orderBy: { createdAt: 'asc' as const },
+    select: {
+      id: true,
+      externalBookingId: true,
+      externalBookingProvider: true,
+      courtId: true,
+      bookingStart: true,
+      bookingEnd: true,
     },
   },
 });

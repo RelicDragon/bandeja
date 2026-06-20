@@ -251,7 +251,7 @@ export async function patchMatchLiveScoring(
       maxPointsPerTeam: true,
       winnerOfMatch: true,
       ballsInGames: true,
-      hasGoldenPoint: true,
+      deucesBeforeGoldenPoint: true,
       pointsPerTie: true,
       matchTimerEnabled: true,
     },

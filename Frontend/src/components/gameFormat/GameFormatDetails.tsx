@@ -53,7 +53,7 @@ export const GameFormatDetails = ({
     scoringMode,
     scoringPreset,
     generationType,
-    hasGoldenPoint,
+    deucesBeforeGoldenPoint,
     matchTimerEnabled,
     matchTimedCapMinutes,
     customPointsTotal,
@@ -122,11 +122,26 @@ export const GameFormatDetails = ({
       {isClassic && (
         <DetailRow
           label={
-            hasGoldenPoint
+            deucesBeforeGoldenPoint != null
               ? t('gameFormat.goldenPoint.title')
               : t('gameFormat.goldenPoint.titleAdvantage')
           }
-          note={hasGoldenPoint ? t('gameFormat.goldenPoint.description') : t('gameFormat.goldenPoint.descriptionOff')}
+          value={
+            deucesBeforeGoldenPoint == null
+              ? t('gameFormat.goldenPoint.optionOff')
+              : deucesBeforeGoldenPoint === 0
+                ? t('gameFormat.goldenPoint.optionImmediate')
+                : t('gameFormat.goldenPoint.optionAfterDeuces', { count: deucesBeforeGoldenPoint })
+          }
+          note={
+            deucesBeforeGoldenPoint == null
+              ? t('gameFormat.goldenPoint.descriptionOff')
+              : deucesBeforeGoldenPoint === 0
+                ? t('gameFormat.goldenPoint.descriptionImmediate')
+                : t('gameFormat.goldenPoint.descriptionAfterDeuces', {
+                    count: deucesBeforeGoldenPoint,
+                  })
+          }
         />
       )}
       <DetailRow

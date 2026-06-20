@@ -15,7 +15,7 @@ vi.mock('@/api/results', () => ({
 const pointsRules = {
   ...getRulesFromPreset('POINTS_16'),
   preset: 'POINTS_16' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: true,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,

@@ -37,7 +37,7 @@ interface RoundCardProps {
   courts?: Court[];
   onCourtClick?: (matchId: string) => void;
   fixedNumberOfSets?: number;
-  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'matchTimerEnabled' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'hasGoldenPoint' | 'pointsPerTie' | 'resultsStatus' | 'playersPerMatch' | 'sport'> | null;
+  game?: Pick<Game, 'scoringPreset' | 'matchTimedCapMinutes' | 'matchTimerEnabled' | 'fixedNumberOfSets' | 'maxTotalPointsPerSet' | 'maxPointsPerTeam' | 'winnerOfMatch' | 'ballsInGames' | 'deucesBeforeGoldenPoint' | 'pointsPerTie' | 'resultsStatus' | 'playersPerMatch' | 'sport'> | null;
   gameId?: string;
   onMatchTimerTransition?: (roundId: string, matchId: string, action: import('@/utils/matchTimer').MatchTimerAction) => void | Promise<void>;
 }
@@ -115,7 +115,7 @@ export const RoundCard = ({
             maxPointsPerTeam: 0,
             winnerOfMatch: 'BY_SCORES',
             ballsInGames: false,
-            hasGoldenPoint: false,
+            deucesBeforeGoldenPoint: null,
             pointsPerTie: 0,
             scoringPreset: null,
           } as Game)

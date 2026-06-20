@@ -3,12 +3,13 @@ import scoringPresetsData from '@/config/scoringPresets.json';
 import { deriveGameType, DEFAULT_GENERATION_BY_MODE, DEFAULT_PRESET_BY_MODE } from './scoringCompatibility';
 import { getGameTypeTemplate } from '@/utils/gameTypeTemplates';
 import { deriveBallsInGamesFromScoring, goldenPointAllowedForFormat } from '@shared/gameFormat';
+import { clampDeucesBeforeGoldenPoint } from '@shared/gameFormat/goldenPoint';
 
 export interface GameFormatState {
   scoringMode: ScoringMode;
   scoringPreset: ScoringPreset;
   generationType: MatchGenerationType;
-  hasGoldenPoint: boolean;
+  deucesBeforeGoldenPoint: number | null;
   pointsPerWin: number;
   pointsPerLoose: number;
   pointsPerTie: number;
@@ -39,8 +40,10 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
     : 0;
 
   const goldenAllowed = goldenPointAllowedForFormat(state.scoringMode, state.scoringPreset);
-  const effectiveGolden =
-    goldenAllowed && ((state.overrides?.hasGoldenPoint ?? state.hasGoldenPoint) ?? false);
+  const overrideGolden = state.overrides?.deucesBeforeGoldenPoint;
+  const effectiveGolden: number | null = goldenAllowed
+    ? clampDeucesBeforeGoldenPoint(overrideGolden ?? state.deucesBeforeGoldenPoint)
+    : null;
 
   const base: Omit<GameSetupParams, 'ballsInGames'> = {
     winnerOfMatch: scoring.winnerOfMatch ?? template.winnerOfMatch,
@@ -55,7 +58,7 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
     pointsPerLoose: state.pointsPerLoose ?? template.pointsPerLoose ?? 0,
     pointsPerTie: state.pointsPerTie ?? template.pointsPerTie ?? 0,
     scoringPreset: useCustomPoints ? null : state.scoringPreset,
-    hasGoldenPoint: effectiveGolden,
+    deucesBeforeGoldenPoint: effectiveGolden,
   };
 
   const restOverrides = { ...(state.overrides ?? {}) };
@@ -65,7 +68,7 @@ export const buildSetupFromFormat = (state: GameFormatState): GameSetupParams =>
     ...base,
     ...restOverrides,
     scoringPreset: useCustomPoints ? null : state.scoringPreset,
-    hasGoldenPoint: effectiveGolden,
+    deucesBeforeGoldenPoint: effectiveGolden,
     matchTimerEnabled: state.matchTimerEnabled,
     matchTimedCapMinutes: capMinutes,
   };

@@ -54,11 +54,16 @@ struct WatchScoringRules: Sendable, Equatable {
     var winnerOfMatch: WatchWinnerOfMatch
 
     var allowDrawPerSet: Bool
-    var hasGoldenPoint: Bool
+    var deucesBeforeGoldenPoint: Int?
     var allowRemoveSet: Bool
     var allowIncompleteRegularSetGames: Bool
 
     var isClassic: Bool { ballsInGames && winnerOfMatch == .bySets }
+
+    func isGoldenPointActive(deuceCount: Int) -> Bool {
+        guard let threshold = deucesBeforeGoldenPoint else { return false }
+        return deuceCount >= threshold
+    }
 
     /// Ball-budget Americano (`isPointsRules` in FE `rulebook.ts`).
     var isBallBudgetPoints: Bool {
@@ -150,7 +155,7 @@ enum WatchScoringRulebook {
             maxPointsPerTeam: 0,
             winnerOfMatch: winnerOfMatch,
             allowDrawPerSet: false,
-            hasGoldenPoint: false,
+            deucesBeforeGoldenPoint: nil,
             allowRemoveSet: allowRemoveSet,
             allowIncompleteRegularSetGames: false
         )
@@ -289,7 +294,13 @@ enum WatchScoringRulebook {
         r.maxPointsPerTeam = game?.maxPointsPerTeam ?? 0
         r.allowIncompleteRegularSetGames = (game?.isMatchTimerEnabled ?? false) || preset == .classicTimed
         let goldenApplies = r.ballsInGames && r.winnerOfMatch == .bySets
-        r.hasGoldenPoint = goldenApplies && (game?.hasGoldenPoint ?? false)
+        if goldenApplies, let raw = game?.deucesBeforeGoldenPoint {
+            r.deucesBeforeGoldenPoint = raw
+        } else if goldenApplies, preset == .classicFast4 {
+            r.deucesBeforeGoldenPoint = 0
+        } else {
+            r.deucesBeforeGoldenPoint = nil
+        }
         let ppt = game?.pointsPerTie ?? 0
         if preset == nil {
             r.allowDrawPerSet = ppt > 0

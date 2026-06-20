@@ -42,7 +42,7 @@ export function buildGameFormatUpdatePayload({
     matchGenerationType: setup.matchGenerationType,
     ballsInGames: setup.ballsInGames,
     scoringPreset: setup.scoringPreset,
-    hasGoldenPoint: setup.hasGoldenPoint,
+    deucesBeforeGoldenPoint: setup.deucesBeforeGoldenPoint,
     ...(entityType === 'GAME' || entityType === 'LEAGUE'
       ? playersPerMatch !== undefined
         ? { playersPerMatch }

@@ -110,7 +110,7 @@ export async function createGameViaApi(
       pointsPerTie: 2,
       ballsInGames: false,
       scoringMode: 'POINTS',
-      hasGoldenPoint: true,
+      deucesBeforeGoldenPoint: 0,
     }),
   });
 
@@ -360,7 +360,7 @@ export async function createLeagueSeasonViaApi(
           pointsPerTie: 2,
           ballsInGames: false,
           scoringMode: 'CLASSIC',
-          hasGoldenPoint: true,
+          deucesBeforeGoldenPoint: 0,
           gameType: 'CLASSIC',
         },
       },

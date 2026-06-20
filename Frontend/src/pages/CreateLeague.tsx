@@ -165,7 +165,7 @@ export const CreateLeague = () => {
             ballsInGames: setup.ballsInGames,
             scoringPreset: setup.scoringPreset ?? undefined,
             scoringMode: leagueGameFormat.scoringMode,
-            hasGoldenPoint: setup.hasGoldenPoint ?? false,
+            deucesBeforeGoldenPoint: setup.deucesBeforeGoldenPoint ?? null,
             gameType: leagueGameFormat.gameType,
           },
         },

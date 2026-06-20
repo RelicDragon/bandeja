@@ -16,7 +16,7 @@ export type GameFormatTemplateSnapshot = Pick<
   | 'matchTimedCapMinutes'
   | 'customPointsTotal'
   | 'winnerOfGame'
-  | 'hasGoldenPoint'
+  | 'deucesBeforeGoldenPoint'
 >;
 
 export function gameFormatSnapshotFromFormat(format: UseGameFormatResult): GameFormatTemplateSnapshot {
@@ -28,7 +28,7 @@ export function gameFormatSnapshotFromFormat(format: UseGameFormatResult): GameF
     matchTimedCapMinutes: format.matchTimedCapMinutes,
     customPointsTotal: format.customPointsTotal,
     winnerOfGame: format.winnerOfGame,
-    hasGoldenPoint: format.hasGoldenPoint,
+    deucesBeforeGoldenPoint: format.deucesBeforeGoldenPoint,
   };
 }
 
@@ -48,6 +48,6 @@ export function gameFormatSnapshotFromGame(game: Partial<Game>): GameFormatTempl
     matchTimedCapMinutes: game.matchTimedCapMinutes ?? 15,
     customPointsTotal: null,
     winnerOfGame: game.winnerOfGame ?? 'BY_MATCHES_WON',
-    hasGoldenPoint: Boolean(game.hasGoldenPoint),
+    deucesBeforeGoldenPoint: game.deucesBeforeGoldenPoint ?? null,
   };
 }

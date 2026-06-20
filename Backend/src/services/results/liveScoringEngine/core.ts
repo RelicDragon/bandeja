@@ -1,5 +1,6 @@
 import type { ScoringRules } from './rulebook';
 import { isClassicRules, isRallyGameRules, isRallyPointsRules } from './rulebook';
+import { isGoldenPointActive } from '../../../shared/gameFormat/goldenPoint';
 import { splitOfficialSupplementalLiveSets } from './matchWinner';
 import { getStandingsMatchOutcome } from './matchWinnerLive';
 import type {
@@ -22,6 +23,7 @@ const emptyClassic = (): LiveScoringClassicState => ({
   tieBreakA: 0,
   tieBreakB: 0,
   classicPointsPlayedInGame: 0,
+  deuceCount: 0,
 });
 
 const normalizeSets = (sets: SetResult[] | undefined): SetResult[] => {
@@ -295,7 +297,7 @@ function autoAdvanceCompletedSets(state: LiveScoringState, rules: ScoringRules):
 
 export const getClassicPointLabels = (
   classic?: LiveScoringClassicState,
-  rules?: Pick<ScoringRules, 'hasGoldenPoint'>
+  rules?: Pick<ScoringRules, 'deucesBeforeGoldenPoint'>
 ): { teamA: string; teamB: string; center: string } => {
   if (!classic) return { teamA: '0', teamB: '0', center: '' };
   if (classic.withinSetTieBreak) {
@@ -306,7 +308,12 @@ export const getClassicPointLabels = (
   if (point.kind === 'advantage') {
     return { teamA: point.side === 'teamA' ? 'Ad' : '40', teamB: point.side === 'teamB' ? 'Ad' : '40', center: 'Advantage' };
   }
-  if (rules?.hasGoldenPoint && point.teamA === 40 && point.teamB === 40) {
+  if (
+    rules &&
+    isGoldenPointActive(rules.deucesBeforeGoldenPoint, classic.deuceCount ?? 0) &&
+    point.teamA === 40 &&
+    point.teamB === 40
+  ) {
     return { teamA: '40', teamB: '40', center: 'GP' };
   }
   return { teamA: String(point.teamA), teamB: String(point.teamB), center: '' };
@@ -332,13 +339,15 @@ const normalizeClassic = (
     return syncClassicTieBreakForActiveSet(emptyClassic(), sets, activeSetIndex, rules);
   }
   const o = raw as Partial<LiveScoringClassicState>;
+  const deuceCount = nonNegativeInt(o.deuceCount);
   return syncClassicTieBreakForActiveSet(
     {
-      pointState: normalizePointState(o.pointState, rules),
+      pointState: normalizePointState(o.pointState, rules, deuceCount),
       withinSetTieBreak: typeof o.withinSetTieBreak === 'boolean' ? o.withinSetTieBreak : false,
       tieBreakA: nonNegativeInt(o.tieBreakA),
       tieBreakB: nonNegativeInt(o.tieBreakB),
       classicPointsPlayedInGame: nonNegativeInt(o.classicPointsPlayedInGame),
+      deuceCount,
     },
     sets,
     activeSetIndex,
@@ -346,10 +355,12 @@ const normalizeClassic = (
   );
 };
 
-const normalizePointState = (raw: unknown, rules: ScoringRules): LiveClassicPointState => {
+const normalizePointState = (raw: unknown, rules: ScoringRules, deuceCount = 0): LiveClassicPointState => {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { kind: 'regular', teamA: 0, teamB: 0 };
   const o = raw as Partial<LiveClassicPointState>;
-  if (o.kind === 'deuce' && rules.hasGoldenPoint) return { kind: 'regular', teamA: 40, teamB: 40 };
+  if (o.kind === 'deuce' && isGoldenPointActive(rules.deucesBeforeGoldenPoint, deuceCount)) {
+    return { kind: 'regular', teamA: 40, teamB: 40 };
+  }
   if (o.kind === 'deuce') return { kind: 'deuce' };
   if (o.kind === 'advantage' && (o.side === 'teamA' || o.side === 'teamB')) return { kind: 'advantage', side: o.side };
   if (o.kind === 'regular' && isPoint(o.teamA) && isPoint(o.teamB)) return { kind: 'regular', teamA: o.teamA, teamB: o.teamB };
@@ -421,8 +432,14 @@ const ensureSetExists = (state: LiveScoringState, rules: ScoringRules) => {
 const applyClassicPoint = (state: LiveScoringState, side: LiveTeamSide, rules: ScoringRules) => {
   const classic = state.classic ?? emptyClassic();
   const point = classic.pointState;
+  const deuceCount = classic.deuceCount ?? 0;
 
-  if (point.kind === 'regular' && point.teamA === 40 && point.teamB === 40 && rules.hasGoldenPoint) {
+  if (
+    point.kind === 'regular' &&
+    point.teamA === 40 &&
+    point.teamB === 40 &&
+    isGoldenPointActive(rules.deucesBeforeGoldenPoint, deuceCount)
+  ) {
     awardGame(state, side, rules);
     return;
   }
@@ -431,7 +448,10 @@ const applyClassicPoint = (state: LiveScoringState, side: LiveTeamSide, rules: S
     classic.pointState = { kind: 'advantage', side };
   } else if (point.kind === 'advantage') {
     if (point.side === side) awardGame(state, side, rules);
-    else classic.pointState = { kind: 'regular', teamA: 40, teamB: 40 };
+    else {
+      classic.deuceCount = deuceCount + 1;
+      classic.pointState = { kind: 'regular', teamA: 40, teamB: 40 };
+    }
   } else if (side === 'teamA') {
     if (point.teamA === 40 && point.teamB !== 40) awardGame(state, 'teamA', rules);
     else if (point.teamA === 40 && point.teamB === 40) classic.pointState = { kind: 'advantage', side: 'teamA' };
@@ -452,6 +472,7 @@ const awardGame = (state: LiveScoringState, side: LiveTeamSide, rules: ScoringRu
   set[side] += 1;
   classic.pointState = { kind: 'regular', teamA: 0, teamB: 0 };
   classic.classicPointsPlayedInGame = 0;
+  classic.deuceCount = 0;
   state.classic = classic;
 
   const n = gamesScoreForTieBreak(rules);

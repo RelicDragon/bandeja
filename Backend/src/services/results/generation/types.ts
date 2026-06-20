@@ -89,5 +89,5 @@ export interface GenGame {
   matchTimerEnabled?: boolean | null;
   maxTotalPointsPerSet?: number | null;
   maxPointsPerTeam?: number | null;
-  hasGoldenPoint?: boolean | null;
+  deucesBeforeGoldenPoint?: number | null;
 }

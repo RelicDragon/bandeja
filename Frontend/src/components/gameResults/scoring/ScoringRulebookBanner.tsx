@@ -12,7 +12,7 @@ interface ScoringRulebookBannerProps {
         | 'scoringPreset'
         | 'scoringMode'
         | 'matchGenerationType'
-        | 'hasGoldenPoint'
+        | 'deucesBeforeGoldenPoint'
         | 'matchTimedCapMinutes'
         | 'matchTimerEnabled'
         | 'winnerOfGame'
@@ -35,14 +35,14 @@ export const ScoringRulebookBanner = ({ game }: ScoringRulebookBannerProps) => {
           scoringMode={scoringMode}
           scoringPreset={game.scoringPreset}
           generationType={game.matchGenerationType ?? undefined}
-          hasGoldenPoint={!!game.hasGoldenPoint}
+          deucesBeforeGoldenPoint={game.deucesBeforeGoldenPoint}
           matchTimerEnabled={isGameMatchTimerEnabled(game)}
           matchTimedCapMinutes={game.matchTimedCapMinutes}
           winnerOfGame={game.winnerOfGame}
           playersPerMatch={game.playersPerMatch}
           sport={game.sport}
         />
-        {scoringMode === 'CLASSIC' && !!game.hasGoldenPoint && (
+        {scoringMode === 'CLASSIC' && game.deucesBeforeGoldenPoint != null && (
           <Zap size={12} className="text-yellow-500" />
         )}
       </div>

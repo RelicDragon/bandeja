@@ -109,7 +109,7 @@ export interface GameSetupParams {
   pointsPerTie: number;
   ballsInGames: boolean;
   scoringPreset?: ScoringPreset | null;
-  hasGoldenPoint?: boolean;
+  deucesBeforeGoldenPoint?: number | null;
   /** Stored on `Game` when API supports it (e.g. playoff create); not always set by `buildSetupFromFormat`. */
   scoringMode?: ScoringMode;
 }
@@ -519,7 +519,7 @@ export interface Game {
   ballsInGames?: boolean;
   scoringPreset?: ScoringPreset | null;
   scoringMode?: ScoringMode | null;
-  hasGoldenPoint?: boolean;
+  deucesBeforeGoldenPoint?: number | null;
   forbidOthersPhotosView?: boolean;
   photosCount?: number;
   mainPhotoId?: string | null;

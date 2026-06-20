@@ -25,7 +25,7 @@ const CORE_TEMPLATE_FIELDS = [
   'affectsRating',
   'matchTimerEnabled',
   'matchTimedCapMinutes',
-  'hasGoldenPoint',
+  'deucesBeforeGoldenPoint',
   'expectedDurationLabelKey',
 ] as const;
 

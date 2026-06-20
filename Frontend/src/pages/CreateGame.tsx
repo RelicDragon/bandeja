@@ -1119,7 +1119,7 @@ export const CreateGame = ({
         gameData.ballsInGames = setup.ballsInGames;
         gameData.scoringPreset = setup.scoringPreset;
         gameData.scoringMode = gameFormat.scoringMode;
-        gameData.hasGoldenPoint = setup.hasGoldenPoint;
+        gameData.deucesBeforeGoldenPoint = setup.deucesBeforeGoldenPoint;
       }
 
       if (entityType === 'GAME' || entityType === 'TOURNAMENT' || entityType === 'LEAGUE') {

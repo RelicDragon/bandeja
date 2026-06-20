@@ -33,7 +33,7 @@ function pickNormalizedKeys(obj: Record<string, unknown>): Record<string, unknow
     'matchTimerEnabled',
     'matchTimedCapMinutes',
     'maxTotalPointsPerSet',
-    'hasGoldenPoint',
+    'deucesBeforeGoldenPoint',
     'ballsInGames',
     'playersPerMatch',
     'hasFixedTeams',
@@ -53,7 +53,7 @@ describe('game format normalization contract (FE preview ≡ BE persist)', () =>
       gameType: 'CLASSIC',
       scoringPreset: 'CLASSIC_BEST_OF_3',
       scoringMode: 'CLASSIC',
-      hasGoldenPoint: true,
+      deucesBeforeGoldenPoint: 0,
     };
     expect(pickNormalizedKeys(feCreate(patch))).toEqual(pickNormalizedKeys(beCreate(patch)));
   });
@@ -63,7 +63,7 @@ describe('game format normalization contract (FE preview ≡ BE persist)', () =>
       gameType: 'AMERICANO',
       scoringPreset: 'POINTS_16',
       scoringMode: 'POINTS',
-      hasGoldenPoint: true,
+      deucesBeforeGoldenPoint: 0,
     };
     expect(pickNormalizedKeys(feCreate(patch))).toEqual(pickNormalizedKeys(beCreate(patch)));
   });
@@ -73,7 +73,7 @@ describe('game format normalization contract (FE preview ≡ BE persist)', () =>
       gameType: 'AMERICANO',
       scoringPreset: 'TIMED',
       matchTimedCapMinutes: 0,
-      hasGoldenPoint: true,
+      deucesBeforeGoldenPoint: 0,
     };
     expect(pickNormalizedKeys(feCreate(patch))).toEqual(pickNormalizedKeys(beCreate(patch)));
   });
@@ -129,7 +129,7 @@ describe('game format normalization contract (FE preview ≡ BE persist)', () =>
         pointsPerTie: 2,
         ballsInGames: false,
         scoringPreset: 'POINTS_16',
-        hasGoldenPoint: true,
+        deucesBeforeGoldenPoint: 0,
       },
     } as unknown as UseGameFormatResult;
 

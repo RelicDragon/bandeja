@@ -45,7 +45,7 @@ function testLegacyTimedCreateUpdateParity(): void {
     gameType: 'AMERICANO',
     scoringPreset: ScoringPreset.TIMED,
     matchTimedCapMinutes: 0,
-    hasGoldenPoint: true,
+    deucesBeforeGoldenPoint: 0,
     playersPerMatch: 4,
   };
   const createNorm = normalizeCreateLike(createPatch);
@@ -62,8 +62,8 @@ function testLegacyTimedCreateUpdateParity(): void {
   assert.equal(updateNorm.maxTotalPointsPerSet, 21);
   assert.equal(createNorm.matchTimedCapMinutes, 15);
   assert.equal(updateNorm.matchTimedCapMinutes, 15);
-  assert.equal(createNorm.hasGoldenPoint, false);
-  assert.equal(updateNorm.hasGoldenPoint, false);
+  assert.equal(createNorm.deucesBeforeGoldenPoint, null);
+  assert.equal(updateNorm.deucesBeforeGoldenPoint, null);
   assert.equal(createNorm.ballsInGames, false);
   assert.equal(updateNorm.ballsInGames, false);
 }
@@ -120,10 +120,10 @@ function testBallsInGamesClassicPreset(): void {
   const norm = normalizeCreateLike({
     gameType: 'CLASSIC',
     scoringPreset: ScoringPreset.CLASSIC_BEST_OF_3,
-    hasGoldenPoint: true,
+    deucesBeforeGoldenPoint: 0,
   });
   assert.equal(norm.ballsInGames, true);
-  assert.equal(norm.hasGoldenPoint, true);
+  assert.equal(norm.deucesBeforeGoldenPoint, 0);
 }
 
 function testLeagueSeasonWinnerOfGameRemap(): void {
@@ -141,6 +141,25 @@ function testLeagueSeasonWinnerOfGameRemap(): void {
   assert.equal(norm.winnerOfGame, 'BY_SCORES_DELTA');
 }
 
+function testLegacyHasGoldenPointWrite(): void {
+  const on = normalizeCreateLike({ hasGoldenPoint: true, scoringMode: 'CLASSIC', scoringPreset: 'CLASSIC_BEST_OF_3' });
+  assert.equal(on.deucesBeforeGoldenPoint, 0);
+  const off = normalizeCreateLike({ hasGoldenPoint: false, scoringMode: 'CLASSIC', scoringPreset: 'CLASSIC_BEST_OF_3' });
+  assert.equal(off.deucesBeforeGoldenPoint, null);
+  assert.equal(
+    isGameFormatOnlyUpdate({ hasGoldenPoint: true, scoringPreset: 'CLASSIC_BEST_OF_3' }),
+    true,
+    'legacy hasGoldenPoint counts as format-only update',
+  );
+  const newWins = normalizeCreateLike({
+    hasGoldenPoint: true,
+    deucesBeforeGoldenPoint: 2,
+    scoringMode: 'CLASSIC',
+    scoringPreset: 'CLASSIC_BEST_OF_3',
+  });
+  assert.equal(newWins.deucesBeforeGoldenPoint, 2, 'explicit deucesBeforeGoldenPoint wins over legacy boolean');
+}
+
 function run(): void {
   testLegacyTimedCreateUpdateParity();
   testSinglesClearsFixedTeams();
@@ -149,6 +168,7 @@ function run(): void {
   testAffectsRatingFormatOnlyGate();
   testBallsInGamesClassicPreset();
   testLeagueSeasonWinnerOfGameRemap();
+  testLegacyHasGoldenPointWrite();
   console.log('normalizeGameFormatPatch.test.ts: all passed');
 }
 

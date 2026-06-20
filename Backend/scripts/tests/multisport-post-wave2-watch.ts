@@ -86,13 +86,18 @@ function testWatchRegistryAndViews(): void {
   assert(vmSrc.includes('rules.isBallBudgetPoints'), 'serve guide off for americano ball budget');
   assert(vmSrc.includes('game?.usesRallySetScoring == true'), 'all rally sports use points-cap serve guide');
 
-  const strip = readWatch('Views/Scoring/ServeCoachStrip.swift');
-  assert(strip.includes('next.skipped = true'), 'long-press syncs serveGuideSkipped');
-  assert(!strip.includes('hiddenForMatch'), 'hiddenForMatch removed from strip');
+  const serveGuidePage = readWatch('Views/Scoring/WatchServeGuidePage.swift');
+  assert(serveGuidePage.includes('vm.hideServeGuideForMatch()'), 'long-press hides serve guide for match');
+  assert(!serveGuidePage.includes('hiddenForMatch'), 'hiddenForMatch not in guide page UI');
   assert(engine.includes('finalizeSnapshot'), 'tennis motion token prefix');
   assert(readWatch('Views/Scoring/WatchPickleballCoachButtons.swift').includes('WatchPickleballCoachButtons'), 'pickleball coach');
-  assert(strip.includes('WatchChangeEndsSideTag'), 'change-ends keeps court visible');
-  assert(strip.includes('WatchServeCourtView.coachCourt'), 'unified court router');
+  assert(serveGuidePage.includes('WatchChangeEndsSideTag'), 'change-ends keeps court visible');
+  assert(serveGuidePage.includes('WatchServeCourtView.coachCourt'), 'unified court router');
+
+  const serveIndicator = readWatch('Views/Scoring/WatchServeIndicatorRow.swift');
+  assert(serveIndicator.includes('WatchServeGuideSnapshot.compute'), 'score view serve indicator uses guide snapshot');
+  assert(readWatch('Views/Session/MatchScoringSessionPager.swift').includes('WatchServeGuidePage'), 'session pager includes serve guide page');
+  assert(vmSrc.includes('hideServeGuideForMatch'), 'VM hide serve guide API');
 
   console.log('ok: Watch P-W3-WATCH symbols (registry, views, serve)');
 }

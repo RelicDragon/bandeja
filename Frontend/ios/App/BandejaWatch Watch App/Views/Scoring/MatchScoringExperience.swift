@@ -5,14 +5,15 @@ struct MatchScoringExperience: View {
     let gameId: String
     let matchId: String
     var showMatchTimerBar: Bool = false
-    let onFinish: () -> Void
+    var compactMatchTimerBar: Bool = false
+    var showServeIndicator: Bool = false
+    @Binding var forceServeGate: Bool
 
     @Environment(WatchPreferencesStore.self) private var prefs
 
     @State private var coachToast = false
     @State private var coachToastTaskRunning = false
     @State private var remoteAttributionDismissTask: Task<Void, Never>?
-    @State private var forceServeGate = false
     @State private var showFixServerConfirm = false
 
     private var lang: String { prefs.uiLanguageCode }
@@ -30,39 +31,40 @@ struct MatchScoringExperience: View {
 
     var body: some View {
         ZStack {
-            VStack(spacing: 6) {
+            VStack(spacing: 4) {
                 if showMatchTimerBar, let g = vm.game, g.isMatchTimerEnabled {
-                    MatchTimerBarView(gameId: gameId, matchId: matchId, game: g, onTimerStopped: {
-                        vm.lockTimedSetAtPartialScore()
-                    })
+                    MatchTimerBarView(
+                        gameId: gameId,
+                        matchId: matchId,
+                        game: g,
+                        compact: compactMatchTimerBar,
+                        onTimerStopped: {
+                            vm.lockTimedSetAtPartialScore()
+                        }
+                    )
                 }
                 switch vm.liveScoringUiId {
                 case .tableTennisBoard:
                     TableTennisScoringView(
                         vm: vm,
-                        gameId: gameId,
-                        matchId: matchId,
-                        onRequestFixStartingServer: requestFixServer,
-                        onFinish: onFinish
+                        showServeIndicator: showServeIndicator,
+                        onRequestFixStartingServer: requestFixServer
                     )
                 case .americanoPoints, .rallyPointsBoard:
                     RallyPointsScoringView(
                         vm: vm,
-                        gameId: gameId,
-                        matchId: matchId,
-                        onRequestFixStartingServer: requestFixServer,
-                        onFinish: onFinish
+                        showServeIndicator: showServeIndicator,
+                        onRequestFixStartingServer: requestFixServer
                     )
                 case .classicCourt:
                     ClassicScoringView(
                         vm: vm,
-                        gameId: gameId,
-                        matchId: matchId,
-                        onRequestFixStartingServer: requestFixServer,
-                        onFinish: onFinish
+                        showServeIndicator: showServeIndicator,
+                        onRequestFixStartingServer: requestFixServer
                     )
                 }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             if coachToast {
                 VStack {

@@ -11,7 +11,7 @@ export const GAME_FORMAT_SYNC_KEYS = [
   'winnerOfMatch',
   'winnerOfGame',
   'ballsInGames',
-  'hasGoldenPoint',
+  'deucesBeforeGoldenPoint',
   'pointsPerTie',
   'matchTimerEnabled',
   'matchTimedCapMinutes',

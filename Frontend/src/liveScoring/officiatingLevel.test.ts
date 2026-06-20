@@ -43,7 +43,7 @@ describe('officiating level', () => {
     const rules = {
       ...getRulesFromPreset('POINTS_24'),
       preset: 'POINTS_24' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: true,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -56,7 +56,7 @@ describe('officiating level', () => {
     const rules = {
       ...getRulesFromPreset('BEST_OF_3_11'),
       preset: 'BEST_OF_3_11' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,

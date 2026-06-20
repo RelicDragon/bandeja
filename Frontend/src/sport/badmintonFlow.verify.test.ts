@@ -80,7 +80,7 @@ describe('badminton live scoring + serve guide', () => {
   const bo3Rules = {
     ...getRulesFromPreset('BEST_OF_3_21'),
     preset: 'BEST_OF_3_21' as const,
-    hasGoldenPoint: false,
+    deucesBeforeGoldenPoint: null,
     allowDrawPerSet: false,
     maxPointsPerTeam: 0,
     allowIncompleteRegularSetGames: false,
@@ -149,7 +149,7 @@ describe('badminton live scoring + serve guide', () => {
     const socialRules = {
       ...getRulesFromPreset('POINTS_21'),
       preset: 'POINTS_21' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,

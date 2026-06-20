@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { clampDeucesBeforeGoldenPoint } from '@shared/gameFormat/goldenPoint';
+import type { DeucesBeforeGoldenPoint } from '@shared/gameFormat/goldenPoint';
 import { Game, GameSetupParams, GameType, ScoringMode, ScoringPreset, MatchGenerationType } from '@/types';
 import {
   buildSetupFromFormat,
@@ -34,7 +36,7 @@ export interface UseGameFormatResult {
   scoringMode: ScoringMode;
   scoringPreset: ScoringPreset;
   generationType: MatchGenerationType;
-  hasGoldenPoint: boolean;
+  deucesBeforeGoldenPoint: DeucesBeforeGoldenPoint;
   pointsPerWin: number;
   pointsPerLoose: number;
   pointsPerTie: number;
@@ -48,7 +50,7 @@ export interface UseGameFormatResult {
   setScoringMode: (mode: ScoringMode) => void;
   setScoringPreset: (preset: ScoringPreset) => void;
   setGenerationType: (gen: MatchGenerationType) => void;
-  setHasGoldenPoint: (v: boolean) => void;
+  setDeucesBeforeGoldenPoint: (v: DeucesBeforeGoldenPoint) => void;
   setCustomPointsTotal: (n: number | null) => void;
   setMatchTimerEnabled: (v: boolean) => void;
   setMatchTimedCapMinutes: (n: number) => void;
@@ -82,8 +84,10 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
   const [scoringMode, setScoringModeState] = useState<ScoringMode>(initialMode);
   const [scoringPreset, setScoringPresetState] = useState<ScoringPreset>(initialPreset);
   const [generationType, setGenerationTypeState] = useState<MatchGenerationType>(initialGeneration);
-  const [hasGoldenPoint, setHasGoldenPoint] = useState<boolean>(() =>
-    initialMode === 'POINTS' ? false : Boolean(initial?.hasGoldenPoint),
+  const [deucesBeforeGoldenPoint, setDeucesBeforeGoldenPointState] = useState<DeucesBeforeGoldenPoint>(() =>
+    initialMode === 'POINTS'
+      ? null
+      : clampDeucesBeforeGoldenPoint(initial?.deucesBeforeGoldenPoint ?? null),
   );
   const [customPointsTotal, setCustomPointsTotalState] = useState<number | null>(() =>
     detectInitialCustomPointsTotal(initial)
@@ -95,8 +99,15 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
   }, [skipGenerationParticipantDefaults, maxParticipants, scoringMode]);
 
   useEffect(() => {
-    if (scoringMode === 'POINTS' && hasGoldenPoint) setHasGoldenPoint(false);
-  }, [scoringMode, hasGoldenPoint]);
+    if (scoringMode === 'POINTS' && deucesBeforeGoldenPoint !== null) {
+      setDeucesBeforeGoldenPointState(null);
+    }
+  }, [scoringMode, deucesBeforeGoldenPoint]);
+
+  const setDeucesBeforeGoldenPoint = useCallback((v: DeucesBeforeGoldenPoint) => {
+    setDeucesBeforeGoldenPointState(clampDeucesBeforeGoldenPoint(v));
+    setOverridesState({});
+  }, []);
 
   const derivedGameType = useMemo(
     () => deriveGameType(scoringMode, generationType),
@@ -124,7 +135,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     (mode: ScoringMode) => {
       if (scoringMode === mode) return;
       setScoringModeState(mode);
-      if (mode === 'POINTS') setHasGoldenPoint(false);
+      if (mode === 'POINTS') setDeucesBeforeGoldenPointState(null);
       setScoringPresetState(DEFAULT_PRESET_BY_MODE[mode]);
       setCustomPointsTotalState(null);
       setMatchTimerEnabledState(false);
@@ -228,7 +239,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
       scoringMode,
       scoringPreset,
       generationType,
-      hasGoldenPoint,
+      deucesBeforeGoldenPoint,
       pointsPerWin,
       pointsPerLoose,
       pointsPerTie,
@@ -242,7 +253,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     scoringMode,
     scoringPreset,
     generationType,
-    hasGoldenPoint,
+    deucesBeforeGoldenPoint,
     pointsPerWin,
     pointsPerLoose,
     pointsPerTie,
@@ -257,7 +268,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     scoringMode,
     scoringPreset,
     generationType,
-    hasGoldenPoint,
+    deucesBeforeGoldenPoint,
     pointsPerWin,
     pointsPerLoose,
     pointsPerTie,
@@ -271,7 +282,7 @@ export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOp
     setScoringMode,
     setScoringPreset,
     setGenerationType,
-    setHasGoldenPoint,
+    setDeucesBeforeGoldenPoint,
     setCustomPointsTotal,
     setMatchTimerEnabled,
     setMatchTimedCapMinutes,

@@ -40,7 +40,7 @@ function mockFormat(overrides: Partial<UseGameFormatResult> = {}): UseGameFormat
     scoringMode: 'SETS',
     scoringPreset: 'CLASSIC_BEST_OF_3',
     generationType: 'AUTOMATIC',
-    hasGoldenPoint: false,
+    deucesBeforeGoldenPoint: null,
     pointsPerWin: 0,
     pointsPerLoose: 0,
     pointsPerTie: 0,
@@ -308,7 +308,7 @@ describe('templateFormatCoordinator', () => {
         customPointsTotal: null,
         winnerOfGame: 'BY_SCORES_DELTA' as const,
         generationType: 'AUTOMATIC' as const,
-        hasGoldenPoint: false,
+        deucesBeforeGoldenPoint: null,
         matchTimedCapMinutes: 15,
       };
       expect(formatMatchesCreateTemplate(tpl, { ...base, scoringPreset: 'POINTS_21' }, 4)).toBe(true);
@@ -324,7 +324,7 @@ describe('templateFormatCoordinator', () => {
         matchTimerEnabled: true,
         customPointsTotal: null,
         winnerOfGame: 'BY_MATCHES_WON' as const,
-        hasGoldenPoint: false,
+        deucesBeforeGoldenPoint: null,
       };
       expect(formatMatchesCreateTemplate(tpl, { ...base, matchTimedCapMinutes: 10 }, 4)).toBe(true);
       expect(formatMatchesCreateTemplate(tpl, { ...base, matchTimedCapMinutes: 99 }, 4)).toBe(false);

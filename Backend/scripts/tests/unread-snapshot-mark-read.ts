@@ -46,6 +46,7 @@ async function main() {
     process.exit(0);
   }
 
+  const gameId = game.id;
   const participant = game.participants[0];
   const chatTypes = UnreadCountBatchService.buildGameChatTypeFilter(
     participant,
@@ -53,33 +54,52 @@ async function main() {
   );
   assert(chatTypes.includes('PUBLIC') && chatTypes.includes('PRIVATE'), 'filter includes PUBLIC+PRIVATE');
 
+  await prisma.chatReadCursor.deleteMany({
+    where: {
+      userId: reader.id,
+      chatContextType: 'GAME',
+      contextId: gameId,
+      chatType: { in: chatTypes as ChatType[] },
+    },
+  });
+
+  async function nextSyncSeq(chatType: ChatType): Promise<number> {
+    const max = await prisma.chatMessage.aggregate({
+      where: { chatContextType: 'GAME', contextId: gameId, chatType },
+      _max: { serverSyncSeq: true },
+    });
+    return (max._max.serverSyncSeq ?? 0) + 1;
+  }
+
   const publicMsg = await prisma.chatMessage.create({
     data: {
       chatContextType: 'GAME',
-      contextId: game.id,
+      contextId: gameId,
       chatType: 'PUBLIC',
       senderId: sender.id,
       content: `[unread-test] public ${Date.now()}`,
       messageType: 'TEXT',
+      serverSyncSeq: await nextSyncSeq('PUBLIC'),
     },
   });
   const privateMsg = await prisma.chatMessage.create({
     data: {
       chatContextType: 'GAME',
-      contextId: game.id,
+      contextId: gameId,
       chatType: 'PRIVATE',
       senderId: sender.id,
       content: `[unread-test] private ${Date.now()}`,
       messageType: 'TEXT',
+      serverSyncSeq: await nextSyncSeq('PRIVATE'),
     },
   });
 
   try {
-    const before = await ReadReceiptService.getGameUnreadCount(game.id, reader.id);
+    const before = await ReadReceiptService.getGameUnreadCount(gameId, reader.id);
     assert(before.count >= 2, `expected >=2 unread before mark, got ${before.count}`);
 
     const snapshotBefore = await UnreadSnapshotService.getSnapshot(reader.id);
-    const gameKey = `GAME:${game.id}` as const;
+    const gameKey = `GAME:${gameId}` as const;
     assert(
       (snapshotBefore.byContext[gameKey] ?? 0) >= 2,
       `snapshot byContext game unread >= 2, got ${snapshotBefore.byContext[gameKey]}`
@@ -95,13 +115,13 @@ async function main() {
 
     const markResult = await UnreadSnapshotService.markContextRead(reader.id, {
       contextType: 'GAME',
-      contextId: game.id,
+      contextId: gameId,
       gameChatTypes: chatTypes as ChatType[],
     });
     assert(markResult.unreadCount === 0, 'mark-context unreadCount must be 0');
     assert(markResult.markedCount >= 2, `markedCount >= 2, got ${markResult.markedCount}`);
 
-    const after = await ReadReceiptService.getGameUnreadCount(game.id, reader.id);
+    const after = await ReadReceiptService.getGameUnreadCount(gameId, reader.id);
     assert(after.count === 0, `game unread after mark-context-read must be 0, got ${after.count}`);
 
     const snapshotAfter = await UnreadSnapshotService.getSnapshot(reader.id);
@@ -113,11 +133,12 @@ async function main() {
     const publicMsg2 = await prisma.chatMessage.create({
       data: {
         chatContextType: 'GAME',
-        contextId: game.id,
+        contextId: gameId,
         chatType: 'PUBLIC',
         senderId: sender.id,
         content: `[unread-test] public2 ${Date.now()}`,
         messageType: 'TEXT',
+        serverSyncSeq: await nextSyncSeq('PUBLIC'),
       },
     });
 
@@ -129,7 +150,7 @@ async function main() {
     assert(Object.keys(emptySnapshot.byContext).length === 0, 'mark-all byContext empty');
     assert(emptySnapshot.games.length === 0, 'mark-all games array empty');
 
-    const afterAll = await ReadReceiptService.getGameUnreadCount(game.id, reader.id);
+    const afterAll = await ReadReceiptService.getGameUnreadCount(gameId, reader.id);
     assert(afterAll.count === 0, 'game unread after mark-all must be 0');
 
     const totalsAll = await UnreadSnapshotService.getTotalsAll(reader.id);

@@ -32,10 +32,10 @@ function testFast4Defaults(): void {
     winnerOfMatch: 'BY_SETS',
     fixedNumberOfSets: 3,
   });
-  assert(rules.hasGoldenPoint === true, 'FAST4 defaults no-ad (golden point)');
+  assert(rules.deucesBeforeGoldenPoint === 0, 'FAST4 defaults no-ad (golden point)');
   assert(rules.gamesPerSet === 4 && rules.tieBreakGameFirstTo === 5, 'FAST4 set + TB shape');
   const tpl = CREATE_TEMPLATES.TENNIS_FAST4_SOCIAL;
-  assert(tpl.hasGoldenPoint === true, 'FAST4 template sets golden point');
+  assert(tpl.deucesBeforeGoldenPoint === 0, 'FAST4 template sets golden point');
   console.log('ok: tier-bc FAST4');
 }
 

@@ -1,4 +1,5 @@
 import { deriveBallsInGamesFromScoring } from './deriveBallsInGames';
+import { clampDeucesBeforeGoldenPoint, deucesFromLegacyHasGoldenPoint } from './goldenPoint';
 import { goldenPointAllowedForFormat } from './goldenPointAllowed';
 import { normalizeLegacyTimedScoringPreset } from './legacyTimedPreset';
 import { resolveMatchGenerationType } from './resolveMatchGenerationType';
@@ -18,6 +19,7 @@ export type GameFormatExistingGame = {
   winnerOfMatch?: string | null;
   winnerOfGame?: string | null;
   hasGoldenPoint?: boolean | null;
+  deucesBeforeGoldenPoint?: number | null;
   ballsInGames?: boolean | null;
   fixedNumberOfSets?: number | null;
   maxPointsPerTeam?: number | null;
@@ -169,18 +171,25 @@ export function normalizeGameFormatPatch(params: {
         ? (patch.scoringMode as string | null)
         : (existingGame.scoringMode ?? null);
 
-  const hasGoldenPointInPatch = Object.prototype.hasOwnProperty.call(patch, 'hasGoldenPoint');
+  const deucesBeforeGoldenPointInPatch = Object.prototype.hasOwnProperty.call(
+    patch,
+    'deucesBeforeGoldenPoint',
+  );
+  const hasGoldenPointLegacyInPatch = Object.prototype.hasOwnProperty.call(patch, 'hasGoldenPoint');
   const goldenPointTouched =
     patch.scoringMode !== undefined ||
     patch.scoringPreset !== undefined ||
-    hasGoldenPointInPatch;
+    deucesBeforeGoldenPointInPatch ||
+    hasGoldenPointLegacyInPatch;
 
   if (goldenPointTouched) {
     const allowed = goldenPointAllowedForFormat(scoringMode, effectivePreset);
     if (!allowed) {
-      out.hasGoldenPoint = false;
-    } else if (hasGoldenPointInPatch) {
-      out.hasGoldenPoint = Boolean(patch.hasGoldenPoint);
+      out.deucesBeforeGoldenPoint = null;
+    } else if (deucesBeforeGoldenPointInPatch) {
+      out.deucesBeforeGoldenPoint = clampDeucesBeforeGoldenPoint(patch.deucesBeforeGoldenPoint);
+    } else if (hasGoldenPointLegacyInPatch) {
+      out.deucesBeforeGoldenPoint = deucesFromLegacyHasGoldenPoint(patch.hasGoldenPoint);
     }
   }
 

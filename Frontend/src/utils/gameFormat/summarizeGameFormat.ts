@@ -7,7 +7,7 @@ export interface SummarizeArgs {
   scoringMode: ScoringMode;
   scoringPreset: ScoringPreset;
   generationType?: MatchGenerationType;
-  hasGoldenPoint?: boolean;
+  deucesBeforeGoldenPoint?: number | null;
   matchTimerEnabled?: boolean;
   matchTimedCapMinutes?: number;
   customPointsTotal?: number | null;
@@ -69,7 +69,13 @@ export const summarizeGameFormat = (
   }
 
   const parts: string[] = [scoring];
-  if (args.scoringMode === 'CLASSIC' && args.hasGoldenPoint) parts.push(t('gameFormat.goldenPointShort'));
+  if (args.scoringMode === 'CLASSIC' && args.deucesBeforeGoldenPoint != null) {
+    parts.push(
+      args.deucesBeforeGoldenPoint === 0
+        ? t('gameFormat.goldenPointShort')
+        : t('gameFormat.goldenPoint.afterDeucesShort', { count: args.deucesBeforeGoldenPoint }),
+    );
+  }
   if (args.generationType && args.generationType !== 'HANDMADE') {
     parts.push(t(`gameFormat.generation.${genKey(args.generationType)}.title`));
   }

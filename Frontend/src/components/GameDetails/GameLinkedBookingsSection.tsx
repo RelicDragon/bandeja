@@ -1,12 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarCheck, ChevronDown } from 'lucide-react';
 import { Card } from '@/components';
 import { LinkedBookingsList } from '@/components/gameLocationTime/LinkedBookingsList';
 import { LinkedBookingCoverageBadge } from '@/components/GameDetails/LinkedBookingCoverageBadge';
 import { clubHasBookingIntegration } from '@shared/clubIntegration';
-import { evaluateLinkedBookingCoverage } from '@shared/gameBooking/evaluateLinkedBookingCoverage';
-import { playersPerMatchOf } from '@/utils/matchFormat';
+import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
 import { gamesApi } from '@/api';
 import type { Club, Court, Game } from '@/types';
 
@@ -28,24 +27,10 @@ export function GameLinkedBookingsSection({ game, courts, clubs, onGameUpdate }:
   const club = resolveGameClub(game, clubs);
   const links = game.linkedBookings ?? [];
   const linkCount = links.length;
-
-  const coverage = useMemo(
-    () =>
-      evaluateLinkedBookingCoverage(
-        game.linkedBookings ?? [],
-        {
-          startTime: game.startTime,
-          endTime: game.endTime,
-          maxParticipants: game.maxParticipants,
-          playersPerMatch: playersPerMatchOf(game),
-        },
-        { timeZone: club?.city?.timezone ?? undefined },
-      ),
-    [game, club?.city?.timezone],
-  );
+  const { showOwnerSection, coverage } = useGameLinkedBookingViewer(game);
 
   if (!hasClub || !club || !clubHasBookingIntegration(club)) return null;
-  if (linkCount === 0) return null;
+  if (linkCount === 0 || !showOwnerSection) return null;
 
   return (
     <Card className="!p-0 overflow-hidden">

@@ -14,7 +14,7 @@ import { getRules } from '@/utils/scoring';
 const classicRules = {
   ...getRulesFromPreset('CLASSIC_BEST_OF_3'),
   preset: 'CLASSIC_BEST_OF_3' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: false,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,
@@ -59,7 +59,7 @@ describe('live scoring registry', () => {
     const rules = {
       ...getRulesFromPreset('POINTS_11'),
       preset: 'POINTS_11' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -72,7 +72,7 @@ describe('live scoring registry', () => {
     const rules = {
       ...getRulesFromPreset('POINTS_24'),
       preset: 'POINTS_24' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: true,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -87,7 +87,7 @@ describe('live scoring registry', () => {
     const rules = {
       ...getRulesFromPreset('BEST_OF_5_11'),
       preset: 'BEST_OF_5_11' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -126,7 +126,7 @@ describe('live scoring registry', () => {
     const rules = {
       ...getRulesFromPreset('BEST_OF_3_21'),
       preset: 'BEST_OF_3_21' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -157,7 +157,7 @@ describe('live scoring registry', () => {
       ...getRulesFromPreset('POINTS_11'),
       preset: 'POINTS_11' as const,
       allowDrawPerSet: false,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
     };
@@ -178,7 +178,7 @@ describe('live scoring registry', () => {
     const rules = {
       ...getRulesFromPreset('BEST_OF_5_11'),
       preset: 'BEST_OF_5_11' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -197,7 +197,7 @@ describe('live scoring registry', () => {
     const pointsRules = {
       ...getRulesFromPreset('POINTS_11'),
       preset: 'POINTS_11' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -229,7 +229,7 @@ describe('live scoring registry', () => {
     const bo3Rules = {
       ...getRulesFromPreset('BEST_OF_3_11'),
       preset: 'BEST_OF_3_11' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: false,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,
@@ -248,7 +248,7 @@ describe('live scoring registry', () => {
     const pointsRules = {
       ...getRulesFromPreset('POINTS_32'),
       preset: 'POINTS_32' as const,
-      hasGoldenPoint: false,
+      deucesBeforeGoldenPoint: null,
       allowDrawPerSet: true,
       maxPointsPerTeam: 0,
       allowIncompleteRegularSetGames: false,

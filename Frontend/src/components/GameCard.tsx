@@ -24,8 +24,8 @@ import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import {
-  gameHasConfirmedClubBooking,
-  gameHasLinkedExternalBooking,
+  isExternallyFullyBookedGame,
+  resolveGameBookingBadgeKind,
 } from '@/utils/gameHasConfirmedClubBooking';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
@@ -182,8 +182,9 @@ export const GameCard = ({
     });
   const timeDisplay = getTimeDisplay('time');
   const timeRangeDisplay = getTimeDisplay('timeRange');
-  const linkedExternalBooking = gameHasLinkedExternalBooking(game);
-  const showConfirmedCourtBadge = gameHasConfirmedClubBooking(game) || linkedExternalBooking;
+  const bookingBadgeKind = resolveGameBookingBadgeKind(game);
+  const showConfirmedCourtBadge = bookingBadgeKind !== 'none';
+  const linkedExternalBooking = isExternallyFullyBookedGame(game);
   const infoHintText = timeDisplay.hintText || timeRangeDisplay.hintText;
   const trainerParticipant =
     game.entityType === 'TRAINING' && game.trainerId

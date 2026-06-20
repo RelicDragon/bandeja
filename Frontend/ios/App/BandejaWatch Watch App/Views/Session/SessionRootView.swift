@@ -33,9 +33,9 @@ struct SessionRootView: View {
                     }
                 }
             case .gameActive(let gameId):
-                ScoringSessionHorizontalPager(gameId: gameId, matchId: nil)
+                ScoringSessionHorizontalPager(gameId: gameId)
             case .matchActive(let gameId, let matchId):
-                ScoringSessionHorizontalPager(gameId: gameId, matchId: matchId)
+                MatchScoringSessionPager(gameId: gameId, matchId: matchId)
             }
         }
         .onOpenURL { url in
@@ -80,25 +80,17 @@ struct SessionRootView: View {
     }
 }
 
-/// Workout/metrics on tag 0 (left when paging horizontally). Main matches or scoring on tag 1 (default).
+/// Workout/metrics on tag 0 (left). Game match list on tag 1 (default).
 private struct ScoringSessionHorizontalPager: View {
     let gameId: String
-    let matchId: String?
     @State private var page = 1
 
     var body: some View {
         TabView(selection: $page) {
-            if let matchId {
-                WorkoutControlPage(mode: .matchActive, gameId: gameId)
-                    .tag(0)
-                ActiveMatchPage(gameId: gameId, matchId: matchId)
-                    .tag(1)
-            } else {
-                WorkoutControlPage(mode: .gameActive, gameId: gameId)
-                    .tag(0)
-                ActiveGamePage(gameId: gameId)
-                    .tag(1)
-            }
+            WorkoutControlPage(mode: .gameActive, gameId: gameId)
+                .tag(0)
+            ActiveGamePage(gameId: gameId)
+                .tag(1)
         }
         .tabViewStyle(.page)
     }

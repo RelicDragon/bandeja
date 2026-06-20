@@ -41,7 +41,7 @@ export function buildDuplicateGameInitialData(game: Game): Partial<Game> {
     pointsPerLoose: game.pointsPerLoose,
     pointsPerTie: game.pointsPerTie,
     ballsInGames: game.ballsInGames,
-    hasGoldenPoint: game.hasGoldenPoint,
+    deucesBeforeGoldenPoint: game.deucesBeforeGoldenPoint,
     matchTimerEnabled: game.matchTimerEnabled,
     matchTimedCapMinutes: game.matchTimedCapMinutes,
     gameCourts: game.gameCourts,

@@ -12,7 +12,7 @@ import {
 const ttRules = {
   ...getRulesFromPreset('BEST_OF_3_11'),
   preset: 'BEST_OF_3_11' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: false,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,
@@ -21,7 +21,7 @@ const ttRules = {
 const singleGameRules = {
   ...getRulesFromPreset('POINTS_11'),
   preset: 'POINTS_11' as const,
-  hasGoldenPoint: false,
+  deucesBeforeGoldenPoint: null,
   allowDrawPerSet: false,
   maxPointsPerTeam: 0,
   allowIncompleteRegularSetGames: false,

@@ -31,48 +31,52 @@ struct FirstServePickFlow: View {
     var body: some View {
         ZStack {
             Color.black.opacity(0.5).ignoresSafeArea()
-            ScrollView {
-                VStack(spacing: 14) {
-                    Text(WatchCopy.serveFirstTitle(lang))
-                        .font(.headline.weight(.semibold))
-                        .multilineTextAlignment(.center)
-                    Text(WatchCopy.serveFirstBody(lang))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-
-                    switch step {
-                    case .pickRotation:
-                        rotationPickSection
-                    case .pickTeam:
-                        teamPickSection
-                    case .pickDoublesServer:
-                        doublesPickSection
-                    case .pickCourtEnds:
-                        courtEndsSection
-                    }
-
-                    Button(WatchCopy.skipServeHints(lang)) {
-                        skip()
-                    }
-                    .font(.caption.weight(.medium))
+            VStack(spacing: 6) {
+                Text(WatchCopy.serveFirstTitle(lang))
+                    .font(.caption.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+                Text(WatchCopy.serveFirstBody(lang))
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
-                    .padding(.top, 4)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.75)
+
+                Spacer(minLength: 0)
+
+                switch step {
+                case .pickRotation:
+                    rotationPickSection
+                case .pickTeam:
+                    teamPickSection
+                case .pickDoublesServer:
+                    doublesPickSection
+                case .pickCourtEnds:
+                    courtEndsSection
                 }
-                .padding(.horizontal, 10)
-                .padding(.vertical, 16)
-                .frame(maxWidth: .infinity)
+
+                Spacer(minLength: 0)
+
+                Button(WatchCopy.skipServeHints(lang)) {
+                    skip()
+                }
+                .font(.caption2.weight(.medium))
+                .foregroundStyle(.secondary)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .padding(.horizontal, 6)
+            .padding(.horizontal, 4)
         }
     }
 
     private var rotationPickSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(WatchCopy.serveRotationRulesLabel(lang))
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
             rotationButton(
                 "official",
@@ -90,6 +94,7 @@ struct FirstServePickFlow: View {
                 }
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.mini)
             .frame(maxWidth: .infinity)
         }
     }
@@ -114,18 +119,21 @@ struct FirstServePickFlow: View {
         Button {
             pickedRotation = value
         } label: {
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.caption.weight(.bold))
+                    .font(.caption2.weight(.bold))
+                    .lineLimit(1)
                 Text(desc)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.75)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10)
+            .padding(8)
             .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(pickedRotation == value ? Color.accentColor.opacity(0.35) : Color.secondary.opacity(0.12))
             )
         }
@@ -133,7 +141,7 @@ struct FirstServePickFlow: View {
     }
 
     private var teamPickSection: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 6) {
             teamBigButton(.teamA, title: WatchCopy.teamAShort(lang), users: vm.teamAUsers)
             teamBigButton(.teamB, title: WatchCopy.teamBShort(lang), users: vm.teamBUsers)
         }
@@ -153,28 +161,28 @@ struct FirstServePickFlow: View {
                 finishAfterPlayerPick(side, playerIndex: 0)
             }
         } label: {
-            HStack(spacing: 10) {
-                HStack(spacing: -6) {
+            HStack(spacing: 8) {
+                HStack(spacing: -4) {
                     ForEach(Array(users.prefix(vm.isDoublesMatch ? 2 : 1)), id: \.id) { u in
-                        WatchPlayerAvatarView(user: u, size: 36, role: nil, levelSport: vm.game?.resolvedSport)
+                        WatchPlayerAvatarView(user: u, size: 28, role: nil, levelSport: vm.game?.resolvedSport)
                     }
                 }
                 Text(title)
-                    .font(.body.weight(.semibold))
+                    .font(.caption.weight(.semibold))
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
+                    .font(.caption2.weight(.semibold))
                     .foregroundStyle(.tertiary)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color.accentColor.opacity(0.22))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
             )
         }
@@ -184,11 +192,12 @@ struct FirstServePickFlow: View {
     private var doublesPickSection: some View {
         let side = pickedTeam ?? .teamA
         let users = side == .teamA ? vm.teamAUsers : vm.teamBUsers
-        return VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 6) {
             Text(WatchCopy.whoServesFirstGame(lang))
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
                 .foregroundStyle(.secondary)
-            HStack(spacing: 8) {
+                .lineLimit(1)
+            HStack(spacing: 6) {
                 ForEach(Array(users.enumerated()), id: \.element.id) { idx, u in
                     Button {
                         if idx != pickedPlayerIndex {
@@ -200,17 +209,17 @@ struct FirstServePickFlow: View {
                         }
                         pickedPlayerIndex = idx
                     } label: {
-                        VStack(spacing: 4) {
-                            WatchPlayerAvatarView(user: u, size: 40, role: nil, levelSport: vm.game?.resolvedSport)
+                        VStack(spacing: 3) {
+                            WatchPlayerAvatarView(user: u, size: 32, role: nil, levelSport: vm.game?.resolvedSport)
                             Text(u.displayName)
                                 .font(.caption2.weight(.semibold))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.6)
                         }
-                        .padding(8)
+                        .padding(6)
                         .frame(maxWidth: .infinity)
                         .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .fill(pickedPlayerIndex == idx ? Color.accentColor.opacity(0.35) : Color.secondary.opacity(0.12))
                         )
                     }
@@ -223,6 +232,7 @@ struct FirstServePickFlow: View {
                 }
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.mini)
             .frame(maxWidth: .infinity)
         }
     }
@@ -248,7 +258,7 @@ struct FirstServePickFlow: View {
     }
 
     private var courtEndsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             if let snap = courtEndsSetupSnapshot {
                 Group {
                     if isSquashServeSetup {
@@ -259,12 +269,12 @@ struct FirstServePickFlow: View {
                             teamAUsers: vm.teamAUsers,
                             teamBUsers: vm.teamBUsers,
                             matchDoubles: vm.isDoublesMatch,
-                            compact: false,
+                            compact: true,
                             endsSetup: true,
                             courtAccessibilityLabel: WatchCopy.courtEndsTitle(lang)
                         )
                     } else {
-                        VStack(spacing: 4) {
+                        VStack(spacing: 2) {
                             Text(courtEndsSwapped ? WatchCopy.teamAShort(lang) : WatchCopy.teamBShort(lang))
                                 .font(.caption2.weight(.bold))
                                 .foregroundStyle(.secondary)
@@ -275,7 +285,7 @@ struct FirstServePickFlow: View {
                                 teamAUsers: vm.teamAUsers,
                                 teamBUsers: vm.teamBUsers,
                                 matchDoubles: vm.isDoublesMatch,
-                                compact: false,
+                                compact: true,
                                 endsSetup: true,
                                 courtAccessibilityLabel: WatchCopy.courtEndsTitle(lang)
                             )
@@ -285,7 +295,6 @@ struct FirstServePickFlow: View {
                         }
                     }
                 }
-                .frame(width: 72, height: 120)
                 .frame(maxWidth: .infinity)
             }
             if !isSquashServeSetup {
@@ -297,25 +306,30 @@ struct FirstServePickFlow: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
+                .controlSize(.mini)
             }
             if vm.isDoublesMatch {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Button {
                         flipTeamSides(.teamA)
                     } label: {
-                        Label(WatchCopy.flipTeamASides(lang), systemImage: "arrow.left.arrow.right")
+                        Image(systemName: "arrow.left.arrow.right")
                             .font(.caption2.weight(.semibold))
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .accessibilityLabel(WatchCopy.flipTeamASides(lang))
                     Button {
                         flipTeamSides(.teamB)
                     } label: {
-                        Label(WatchCopy.flipTeamBSides(lang), systemImage: "arrow.left.arrow.right")
+                        Image(systemName: "arrow.left.arrow.right")
                             .font(.caption2.weight(.semibold))
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.bordered)
+                    .controlSize(.mini)
+                    .accessibilityLabel(WatchCopy.flipTeamBSides(lang))
                 }
             }
             Button(WatchCopy.continueAction(lang)) {
@@ -324,6 +338,7 @@ struct FirstServePickFlow: View {
                 }
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.mini)
             .frame(maxWidth: .infinity)
         }
     }

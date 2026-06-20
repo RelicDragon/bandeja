@@ -364,9 +364,9 @@ Frontend/e2e/
 | F-34 | Join blocked wrong gender | User gender incompatible | Error toast / join blocked |
 | F-35 | Level out of range | User level outside game range | Join blocked or warning |
 | F-36 | Confirmed court badge on card | Game with `timeIsSet`, `hasBookedCourt`, club + court, no `externalBookingId` | Blue “Booked” pill (no checkmark) after time on game card |
-| F-39 | Linked booking badge on card | Game with any `linkedBookings` entry | Green “Booked” pill with checkmark after time on game card |
+| F-39 | Linked booking badge on card | Game with `linkedBookings` fully covering game time and courts (Find tab / available games or game details) | Green “Booked” pill with checkmark after time on game card |
 | F-40 | Booking row also-used-in pill | Link same booking to second game | Booking row shows soft pill with other game name(s) |
-| F-41 | Game card badge multi-link | Game with multiple `linkedBookings` | Green check badge when any link exists |
+| F-41 | Game card badge partial external link | Game with `linkedBookings` that do not fully cover courts/time | Blue “Booked” pill (no checkmark) after time on game card |
 
 ---
 
@@ -392,6 +392,7 @@ Frontend/e2e/
 | C-09 | Sport selector | Multi-sport user switches sport | Format limits update |
 | C-10 | Template picker | Select template | Format + rating defaults applied |
 | C-11 | Game format wizard | Open/close wizard | Scoring preset saved |
+| C-47 | Golden point deuce count | Create/edit classic game → Set structure step → pick Off / At 40–40 / After 1–4 deuces | Setting saved on game; live scoring uses advantage until threshold then sudden death at 40–40; watch matches web |
 | C-12 | Rating vs social game | Toggle affects rating | Flag persisted on create |
 | C-40 | Non-default match format | Padel → singles (1v1) or tennis → doubles (2v2) in participants setup | Format card summary shows Singles/Doubles; expanded details show Teams format row with 1v1/2v2 hint |
 | C-41 | Padel singles templates | Create padel game → participants 1v1 → open format templates | Match tab: Best-of-3 (Official) + Single set; Social tab: Singles Americano (24 pts) when roster ≥4 |
@@ -529,9 +530,10 @@ Frontend/e2e/
 | GD-81 | Compact game details back | Narrow viewport; game with sport + format tags and Chat visible | Back shows arrow only (no label) so tags and Chat fit on one row |
 | GD-82 | Game info collapse handle | Open game details; tap chevron strip at bottom edge of info card | Card collapses to compact summary with smooth height animation; chevron rotates |
 | GD-83 | Collapsed info tap-to-expand | Collapse info card; tap anywhere on the collapsed summary | Card expands; detail rows animate in with stagger; action buttons reappear |
-| GD-86 | Linked bookings section | Game with `linkedBookings` at BOOKTIME-integrated club | Collapsible card (collapsed by default) below game info; header shows label, link count, and coverage badge; expand reveals linked reservation rows; hidden when club unset or not integration-enabled |
-| GD-89 | Linked bookings coverage badge | Game with linked bookings where count or booking window does not cover game courts/time | Header shows amber “Not fully booked” badge |
-| GD-90 | Linked bookings fully covered badge | Game with enough linked bookings spanning full `startTime`–`endTime` for required courts | Header shows green check “Fully booked” badge |
+| GD-86 | Linked bookings section | Game with `linkedBookings` at BOOKTIME-integrated club; viewer owns linked reservation in Booktime | Collapsible “From your reservations” card below game info; header shows link count + coverage badge; expand reveals rows; hidden for other viewers, guests, or when club unset / not integration-enabled |
+| GD-89 | Linked bookings coverage badge | Game with linked bookings where count or booking window does not cover game courts/time; viewer owns linked reservation | Section header shows blue “Not fully booked” badge |
+| GD-90 | Linked bookings fully covered badge | Game with enough linked bookings spanning full `startTime`–`endTime` for required courts; viewer owns linked reservation | Section header shows green check “Fully booked” badge |
+| GD-103 | Linked booking status in game info (non-owner) | Game with `linkedBookings`; viewer is not the Booktime reservation owner (participant, guest, or other user) | “From your reservations” section hidden; game info club row shows green “Fully booked” or blue “Not fully booked” badge instead of manual court booked text |
 | GD-87 | Linked booking refresh (owner) | Game details linked booking that exists in viewer's Booktime account | Refresh icon on row; success toast if still active |
 | GD-88 | Linked booking absent unlink | Refresh when booking gone from viewer's Booktime account | Modal explains link removal; game stays; confirm removes link from this game |
 | GD-91 | Delete game with linked bookings | Owner deletes game with `linkedBookings` → confirm → second modal | Lists linked reservations; explains club bookings stay active; "Delete anyway" proceeds |

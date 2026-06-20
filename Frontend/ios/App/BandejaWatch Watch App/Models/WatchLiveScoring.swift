@@ -58,7 +58,48 @@ struct WatchLiveClassicState: Codable, Sendable {
     var withinSetTieBreak: Bool
     var tieBreakA: Int
     var tieBreakB: Int
+    var deuceCount: Int
     var classicPointsPlayedInGame: Int
+
+    init(
+        pointState: WatchLivePointState,
+        withinSetTieBreak: Bool,
+        tieBreakA: Int,
+        tieBreakB: Int,
+        classicPointsPlayedInGame: Int,
+        deuceCount: Int = 0
+    ) {
+        self.pointState = pointState
+        self.withinSetTieBreak = withinSetTieBreak
+        self.tieBreakA = tieBreakA
+        self.tieBreakB = tieBreakB
+        self.classicPointsPlayedInGame = classicPointsPlayedInGame
+        self.deuceCount = deuceCount
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        pointState = try c.decode(WatchLivePointState.self, forKey: .pointState)
+        withinSetTieBreak = try c.decode(Bool.self, forKey: .withinSetTieBreak)
+        tieBreakA = try c.decode(Int.self, forKey: .tieBreakA)
+        tieBreakB = try c.decode(Int.self, forKey: .tieBreakB)
+        classicPointsPlayedInGame = try c.decode(Int.self, forKey: .classicPointsPlayedInGame)
+        deuceCount = try c.decodeIfPresent(Int.self, forKey: .deuceCount) ?? 0
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case pointState, withinSetTieBreak, tieBreakA, tieBreakB, classicPointsPlayedInGame, deuceCount
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(pointState, forKey: .pointState)
+        try c.encode(withinSetTieBreak, forKey: .withinSetTieBreak)
+        try c.encode(tieBreakA, forKey: .tieBreakA)
+        try c.encode(tieBreakB, forKey: .tieBreakB)
+        try c.encode(classicPointsPlayedInGame, forKey: .classicPointsPlayedInGame)
+        try c.encode(deuceCount, forKey: .deuceCount)
+    }
 }
 
 enum WatchLivePointState: Codable, Sendable {

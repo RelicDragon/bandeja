@@ -25,6 +25,8 @@ export type LiveScoringClassicState = {
   tieBreakA: number;
   tieBreakB: number;
   classicPointsPlayedInGame: number;
+  /** Times returned to 40:40 from advantage in the current game (for golden point threshold). */
+  deuceCount: number;
 };
 
 export type LiveScoringState = {

@@ -36,7 +36,7 @@ interface HorizontalScoreEntryModalProps {
     | 'maxPointsPerTeam'
     | 'winnerOfMatch'
     | 'ballsInGames'
-    | 'hasGoldenPoint'
+    | 'deucesBeforeGoldenPoint'
     | 'pointsPerTie'
     | 'matchTimedCapMinutes'
     | 'playersPerMatch'
@@ -85,7 +85,7 @@ export const HorizontalScoreEntryModal = ({
           maxPointsPerTeam: maxPointsPerTeam ?? 0,
           winnerOfMatch: ballsInGames ? 'BY_SETS' : 'BY_SCORES',
           ballsInGames,
-          hasGoldenPoint: false,
+          deucesBeforeGoldenPoint: null,
           pointsPerTie: 0,
         } as any
       ),

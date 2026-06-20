@@ -6,7 +6,7 @@ struct MatchTimerBarView: View {
     let gameId: String
     let matchId: String
     let game: WatchGame
-    /// When the match timer reaches **STOPPED**, mirror web timed classic partial lock (`freezeTimedClassicSetAtPartialScore`).
+    var compact: Bool = false
     var onTimerStopped: (() -> Void)? = nil
     @Environment(WatchPreferencesStore.self) private var prefs
     @Environment(\.scenePhase) private var scenePhase
@@ -44,18 +44,16 @@ struct MatchTimerBarView: View {
 
     @ViewBuilder
     private var content: some View {
+        if compact {
+            compactContent
+        } else {
+            fullContent
+        }
+    }
+
+    private var fullContent: some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(formattedElapsed)
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(overCap ? .orange : .primary)
-                if let cap = snapshot?.capMinutes ?? game.matchTimedCapMinutes, cap > 0 {
-                    Text("/ \(formatCap(cap))")
-                        .font(.caption2.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-            }
+            timerLabelRow
             if snapshot != nil {
                 HStack(spacing: 6) {
                     controlButtons
@@ -63,8 +61,39 @@ struct MatchTimerBarView: View {
             }
         }
         .padding(.vertical, 2)
-        .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { _ in
+        .onReceive(timerPublisher) { _ in
             if snapshot?.status == "RUNNING" { tick += 1 }
+        }
+    }
+
+    private var compactContent: some View {
+        HStack(spacing: 6) {
+            timerLabelRow
+            Spacer(minLength: 0)
+            if snapshot != nil {
+                compactControlButtons
+            }
+        }
+        .padding(.vertical, 1)
+        .onReceive(timerPublisher) { _ in
+            if snapshot?.status == "RUNNING" { tick += 1 }
+        }
+    }
+
+    private var timerPublisher: Publishers.Autoconnect<Timer.TimerPublisher> {
+        Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+    }
+
+    private var timerLabelRow: some View {
+        HStack(spacing: 4) {
+            Text(formattedElapsed)
+                .font(.caption2.monospacedDigit())
+                .foregroundStyle(overCap ? .orange : .primary)
+            if let cap = snapshot?.capMinutes ?? game.matchTimedCapMinutes, cap > 0 {
+                Text("/ \(formatCap(cap))")
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
@@ -112,6 +141,47 @@ struct MatchTimerBarView: View {
                     .controlSize(.mini)
             }
         }
+    }
+
+    @ViewBuilder
+    private var compactControlButtons: some View {
+        let st = snapshot?.status ?? "IDLE"
+        if isBusy {
+            ProgressView().controlSize(.mini)
+        } else {
+            if st == "IDLE" || st == "STOPPED" {
+                timerIconButton("play.fill", label: WatchCopy.matchTimerStart(lang)) {
+                    Task { await run("start") }
+                }
+            }
+            if st == "RUNNING" {
+                timerIconButton("pause.fill", label: WatchCopy.matchTimerPause(lang)) {
+                    Task { await run("pause") }
+                }
+                timerIconButton("stop.fill", label: WatchCopy.matchTimerStop(lang)) {
+                    Task { await run("stop") }
+                }
+            }
+            if st == "PAUSED" {
+                timerIconButton("play.fill", label: WatchCopy.matchTimerResume(lang)) {
+                    Task { await run("resume") }
+                }
+                timerIconButton("stop.fill", label: WatchCopy.matchTimerStop(lang)) {
+                    Task { await run("stop") }
+                }
+            }
+        }
+    }
+
+    private func timerIconButton(_ systemName: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.caption2.weight(.semibold))
+                .frame(width: 26, height: 26)
+        }
+        .buttonStyle(.bordered)
+        .controlSize(.mini)
+        .accessibilityLabel(label)
     }
 
     private var formattedElapsed: String {

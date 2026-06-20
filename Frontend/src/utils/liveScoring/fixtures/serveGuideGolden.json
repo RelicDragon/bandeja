@@ -65,7 +65,7 @@
     "teamAPlayerNames": ["A1", "A2"],
     "teamBPlayerNames": ["B1", "B2"],
     "matchDoubles": true,
-    "rules": { "hasGoldenPoint": false },
+    "rules": { "deucesBeforeGoldenPoint": null },
     "state": {
       "activeSetIndex": 0,
       "mode": "classic",
@@ -120,7 +120,7 @@
     "teamAPlayerNames": ["A1", "A2"],
     "teamBPlayerNames": ["B1", "B2"],
     "matchDoubles": true,
-    "rules": { "hasGoldenPoint": true },
+    "rules": { "deucesBeforeGoldenPoint": 0 },
     "state": {
       "activeSetIndex": 0,
       "mode": "classic",
