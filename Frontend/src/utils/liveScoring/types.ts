@@ -20,6 +20,8 @@ export type LiveScoringClassicState = {
   withinSetTieBreak: boolean;
   tieBreakA: number;
   tieBreakB: number;
+  /** Points completed in the current classic game (resets on game won). */
+  classicPointsPlayedInGame: number;
   deuceCount: number;
 };
 
