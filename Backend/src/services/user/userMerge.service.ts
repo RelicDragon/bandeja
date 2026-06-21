@@ -8,6 +8,7 @@ import {
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ChatSyncEventService } from '../chat/chatSyncEvent.service';
+import { clampSportProfileGameStats } from '../results/outcomeStatsSnapshot';
 import { resolveDisplayNameData } from './userDisplayName.service';
 import {
   mergeDuplicateUserInteractions,
@@ -529,8 +530,10 @@ async function mergeUserSportProfiles(tx: Tx, survivorId: string, sourceId: stri
       data: {
         level: Math.max(surv.level, src.level),
         reliability: Math.max(surv.reliability, src.reliability),
-        gamesPlayed: Math.max(surv.gamesPlayed, src.gamesPlayed),
-        gamesWon: Math.max(surv.gamesWon, src.gamesWon),
+        ...clampSportProfileGameStats(
+          Math.max(surv.gamesPlayed, src.gamesPlayed),
+          Math.max(surv.gamesWon, src.gamesWon),
+        ),
         questionnaireCompletedAt: completedAt,
         questionnaireSkippedAt: surv.questionnaireSkippedAt ?? src.questionnaireSkippedAt,
         questionnaireVersion: version,

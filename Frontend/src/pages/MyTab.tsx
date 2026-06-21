@@ -359,7 +359,6 @@ export const MyTab = () => {
               <MyTabPanelSwitcher
                 games={games}
                 gamesUnreadCounts={calendarMergedUnreadCounts}
-                myGamesViewMode={myGamesViewMode}
                 onMyGamesViewModeChange={setMyGamesViewMode}
               />
             </AnimatedMount>
@@ -478,7 +477,6 @@ export const MyTab = () => {
               <MyTabPanelSwitcher
                 games={games}
                 gamesUnreadCounts={calendarMergedUnreadCounts}
-                myGamesViewMode={myGamesViewMode}
                 onMyGamesViewModeChange={setMyGamesViewMode}
               />
             </AnimatedMount>

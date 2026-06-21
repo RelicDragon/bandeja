@@ -4,6 +4,7 @@ import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
 import { ApiError } from '../../utils/ApiError';
 import { getImplementedSports, getSportConfig, resolveSport } from '../../sport/sportRegistry';
 import { isQuestionnaireSuggestedForProfile } from '../../sport/questionnaires/suggested';
+import { clampSportProfileGameStats } from '../results/outcomeStatsSnapshot';
 
 export const MIN_SPORT_LEVEL = 1.0;
 export const MAX_SPORT_LEVEL = 7.0;
@@ -150,6 +151,10 @@ export function clampSportLevel(level: number): number {
   return Math.max(MIN_SPORT_LEVEL, Math.min(MAX_SPORT_LEVEL, level));
 }
 
+export function clampUserSportProfileGameStats(gamesPlayed: number, gamesWon: number) {
+  return clampSportProfileGameStats(gamesPlayed, gamesWon);
+}
+
 export async function upsertPadelSportProfileFromUser(
   userId: string,
   data: { level?: number; reliability?: number; gamesPlayed?: number; gamesWon?: number },
@@ -159,6 +164,10 @@ export async function upsertPadelSportProfileFromUser(
     select: { level: true, reliability: true, gamesPlayed: true, gamesWon: true },
   });
 
+  const gamesPlayed = data.gamesPlayed ?? existing?.gamesPlayed ?? 0;
+  const gamesWon = data.gamesWon ?? existing?.gamesWon ?? 0;
+  const clampedStats = clampUserSportProfileGameStats(gamesPlayed, gamesWon);
+
   await prisma.userSportProfile.upsert({
     where: { userId_sport: { userId, sport: Sport.PADEL } },
     create: {
@@ -166,14 +175,15 @@ export async function upsertPadelSportProfileFromUser(
       sport: Sport.PADEL,
       level: data.level ?? existing?.level ?? DEFAULT_NEW_SPORT_LEVEL,
       reliability: data.reliability ?? existing?.reliability ?? 0,
-      gamesPlayed: data.gamesPlayed ?? existing?.gamesPlayed ?? 0,
-      gamesWon: data.gamesWon ?? existing?.gamesWon ?? 0,
+      gamesPlayed: clampedStats.gamesPlayed,
+      gamesWon: clampedStats.gamesWon,
     },
     update: {
       ...(data.level !== undefined ? { level: data.level } : {}),
       ...(data.reliability !== undefined ? { reliability: data.reliability } : {}),
-      ...(data.gamesPlayed !== undefined ? { gamesPlayed: data.gamesPlayed } : {}),
-      ...(data.gamesWon !== undefined ? { gamesWon: data.gamesWon } : {}),
+      ...(data.gamesPlayed !== undefined || data.gamesWon !== undefined
+        ? { gamesPlayed: clampedStats.gamesPlayed, gamesWon: clampedStats.gamesWon }
+        : {}),
     },
   });
 }

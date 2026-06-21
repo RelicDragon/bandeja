@@ -1,11 +1,17 @@
 import assert from 'node:assert/strict';
 import {
+  clampSportProfileGameStats,
   computeApplySportStats,
-  computeUndoSportStats,
+  computeSportStatsDeltas,
+  computeUndoSportStatsFromDeltas,
   computeUndoTotalPoints,
   mergeRatingStatsAppliedMetadata,
+  mergeSportStatsDeltasMetadata,
   readRatingStatsAppliedFromMetadata,
+  readSportStatsDeltasFromMetadata,
   resolveRatingStatsAppliedForUndo,
+  resolveSportStatsDeltasForReconcile,
+  resolveSportStatsDeltasForUndo,
   resolveGameLevelChangeEventLevels,
   shouldCreateGameLevelChangeEvent,
 } from './outcomeStatsSnapshot';
@@ -17,6 +23,43 @@ const snap = () => ({
   gamesWon: 2,
 });
 
+function simulateRecalculate(
+  snapshot: ReturnType<typeof snap>,
+  oldMetadata: object | null,
+  oldIsWinner: boolean,
+  newIsWinner: boolean,
+  gameAffectsRating: boolean,
+) {
+  const undoDeltas = resolveSportStatsDeltasForUndo(oldMetadata, oldIsWinner, gameAffectsRating);
+  const afterUndo = computeUndoSportStatsFromDeltas(snapshot, undoDeltas);
+  const applyDeltas = computeSportStatsDeltas(gameAffectsRating, newIsWinner);
+  return clampSportProfileGameStats(
+    afterUndo.gamesPlayed + applyDeltas.gamesPlayedDelta,
+    afterUndo.gamesWon + applyDeltas.gamesWonDelta,
+  );
+}
+
+function simulateRecalculateCycles(
+  snapshot: ReturnType<typeof snap>,
+  metadata: object | null,
+  isWinner: boolean,
+  gameAffectsRating: boolean,
+  cycles: number,
+) {
+  let gamesPlayed = snapshot.gamesPlayed;
+  let gamesWon = snapshot.gamesWon;
+  for (let i = 0; i < cycles; i++) {
+    ({ gamesPlayed, gamesWon } = simulateRecalculate(
+      { ...snapshot, gamesPlayed, gamesWon },
+      metadata,
+      isWinner,
+      isWinner,
+      gameAffectsRating,
+    ));
+  }
+  return { gamesPlayed, gamesWon };
+}
+
 assert.equal(
   readRatingStatsAppliedFromMetadata(
     mergeRatingStatsAppliedMetadata({ wins: 1 }, true) as unknown as object,
@@ -24,12 +67,30 @@ assert.equal(
   true,
 );
 
+assert.deepEqual(readSportStatsDeltasFromMetadata(mergeSportStatsDeltasMetadata(null, { gamesPlayedDelta: 1, gamesWonDelta: 0 }) as object), {
+  gamesPlayedDelta: 1,
+  gamesWonDelta: 0,
+});
+
 assert.equal(resolveRatingStatsAppliedForUndo(null, false), false);
 assert.equal(resolveRatingStatsAppliedForUndo(mergeRatingStatsAppliedMetadata(null, true) as object, false), true);
 
+assert.deepEqual(resolveSportStatsDeltasForUndo(null, true, false), { gamesPlayedDelta: 0, gamesWonDelta: 0 });
+assert.deepEqual(
+  resolveSportStatsDeltasForUndo(mergeRatingStatsAppliedMetadata(null, true) as object, true, false),
+  { gamesPlayedDelta: 1, gamesWonDelta: 1 },
+);
+assert.deepEqual(
+  resolveSportStatsDeltasForUndo(mergeRatingStatsAppliedMetadata(null, false) as object, true, true),
+  { gamesPlayedDelta: 0, gamesWonDelta: 0 },
+);
+
 let gamesWon = 1;
 for (let i = 0; i < 10; i++) {
-  ({ gamesWon } = computeUndoSportStats({ ...snap(), gamesWon }, true, true));
+  ({ gamesWon } = computeUndoSportStatsFromDeltas(
+    { ...snap(), gamesWon },
+    { gamesPlayedDelta: 1, gamesWonDelta: 1 },
+  ));
 }
 assert.equal(gamesWon, 0);
 
@@ -46,14 +107,64 @@ assert.equal(nonRating.gamesWon, 2);
 assert.equal(computeUndoTotalPoints(5, 10, true), 0);
 assert.equal(computeUndoTotalPoints(5, 10, false), 5);
 
-assert.equal(
-  computeUndoSportStats(snap(), true, true).gamesWon,
-  1,
+assert.equal(clampSportProfileGameStats(5, 9).gamesWon, 5);
+assert.equal(clampSportProfileGameStats(3, -2).gamesWon, 0);
+
+const storedMetadata = mergeSportStatsDeltasMetadata(
+  mergeRatingStatsAppliedMetadata(null, true),
+  { gamesPlayedDelta: 1, gamesWonDelta: 1 },
+) as object;
+
+assert.deepEqual(simulateRecalculate(snap(), storedMetadata, true, true, true), {
+  gamesPlayed: snap().gamesPlayed,
+  gamesWon: snap().gamesWon,
+});
+
+assert.deepEqual(simulateRecalculateCycles(snap(), storedMetadata, true, true, 5), {
+  gamesPlayed: snap().gamesPlayed,
+  gamesWon: snap().gamesWon,
+});
+
+assert.deepEqual(simulateRecalculate(snap(), null, true, true, true), {
+  gamesPlayed: snap().gamesPlayed,
+  gamesWon: snap().gamesWon,
+});
+
+assert.deepEqual(simulateRecalculateCycles(snap(), null, true, true, 5), {
+  gamesPlayed: snap().gamesPlayed,
+  gamesWon: snap().gamesWon,
+});
+
+assert.deepEqual(
+  simulateRecalculate(
+    snap(),
+    mergeRatingStatsAppliedMetadata(null, false) as object,
+    true,
+    true,
+    true,
+  ),
+  { gamesPlayed: 4, gamesWon: 3 },
 );
-assert.equal(
-  computeUndoSportStats(snap(), false, true).gamesWon,
-  2,
-);
+
+assert.deepEqual(simulateRecalculate(snap(), storedMetadata, true, false, true), {
+  gamesPlayed: 3,
+  gamesWon: 1,
+});
+
+const loserMetadata = mergeSportStatsDeltasMetadata(
+  mergeRatingStatsAppliedMetadata(null, true),
+  { gamesPlayedDelta: 1, gamesWonDelta: 0 },
+) as object;
+
+assert.deepEqual(simulateRecalculate(snap(), loserMetadata, false, true, true), {
+  gamesPlayed: 3,
+  gamesWon: 3,
+});
+
+assert.deepEqual(resolveSportStatsDeltasForReconcile(null, true, true), {
+  gamesPlayedDelta: 1,
+  gamesWonDelta: 1,
+});
 
 assert.equal(shouldCreateGameLevelChangeEvent(false, 0), true);
 assert.equal(shouldCreateGameLevelChangeEvent(true, 0), false);

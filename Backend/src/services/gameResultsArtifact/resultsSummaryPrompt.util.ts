@@ -8,8 +8,8 @@ import { cs } from 'date-fns/locale/cs';
 import { RankingService } from '../ranking.service';
 import { resolveUserSportSnapshot } from '../user/userSportProfile.service';
 import {
-  computeUndoSportStats,
-  resolveRatingStatsAppliedForUndo,
+  computeUndoSportStatsFromDeltas,
+  resolveSportStatsDeltasForUndo,
 } from '../results/outcomeStatsSnapshot';
 import { formatSportLabel } from '../shared/notificationSport';
 import { TranslationService } from '../chat/translation.service';
@@ -60,7 +60,7 @@ export function resolveParticipantRatingContext(
   participant: { userId: string; user?: unknown },
   gameSport: Sport,
   outcomeByUserId: Map<string, OutcomeForSummary>,
-  gameAffectsRating: boolean,
+  _gameAffectsRating: boolean,
 ): { level: string; reliability: string; sportRecord: string } {
   const sportSnapshot = participant.user
     ? resolveUserSportSnapshot(participant.user as Parameters<typeof resolveUserSportSnapshot>[0], gameSport)
@@ -68,13 +68,14 @@ export function resolveParticipantRatingContext(
   const outcome = outcomeByUserId.get(participant.userId);
 
   if (outcome) {
-    const ratingStatsApplied = resolveRatingStatsAppliedForUndo(
-      outcome.metadata as Parameters<typeof resolveRatingStatsAppliedForUndo>[0],
-      gameAffectsRating,
+    const undoDeltas = resolveSportStatsDeltasForUndo(
+      outcome.metadata as Parameters<typeof resolveSportStatsDeltasForUndo>[0],
+      outcome.isWinner,
+      _gameAffectsRating,
     );
     const preGameStats =
       sportSnapshot != null
-        ? computeUndoSportStats(sportSnapshot, ratingStatsApplied, outcome.isWinner)
+        ? computeUndoSportStatsFromDeltas(sportSnapshot, undoDeltas)
         : null;
 
     return {

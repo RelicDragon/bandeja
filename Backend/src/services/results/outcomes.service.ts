@@ -28,10 +28,13 @@ import {
   clampSportLevel,
   computeApplySportStats,
   computeLevelAfter,
-  computeUndoSportStats,
+  computeSportStatsDeltas,
+  computeUndoSportStatsFromDeltas,
   computeUndoTotalPoints,
   mergeRatingStatsAppliedMetadata,
+  mergeSportStatsDeltasMetadata,
   resolveRatingStatsAppliedForUndo,
+  resolveSportStatsDeltasForUndo,
 } from './outcomeStatsSnapshot';
 import { createGameEvent, revertForGame } from '../levelChange';
 import { isOfficialMatchSetRole } from './matchSetRole';
@@ -274,11 +277,9 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     if (!user) continue;
 
     const undoSnapshot = resolveUserSportSnapshot(user, game.sport);
-    const ratingStatsApplied = resolveRatingStatsAppliedForUndo(
-      outcome.metadata,
-      game.affectsRating,
-    );
-    const undoStats = computeUndoSportStats(undoSnapshot, ratingStatsApplied, outcome.isWinner);
+    const ratingStatsApplied = resolveRatingStatsAppliedForUndo(outcome.metadata, game.affectsRating);
+    const undoDeltas = resolveSportStatsDeltasForUndo(outcome.metadata, outcome.isWinner, game.affectsRating);
+    const undoStats = computeUndoSportStatsFromDeltas(undoSnapshot, undoDeltas);
 
     await tx.userSportProfile.upsert({
       where: { userId_sport: { userId: outcome.userId, sport: game.sport } },
@@ -416,13 +417,17 @@ export async function applyGameOutcomes(
     const reliabilityAfter = clampReliability(reliabilityBefore + outcome.reliabilityChange);
     const actualLevelChange = levelAfter - levelBefore;
     const actualReliabilityChange = reliabilityAfter - reliabilityBefore;
-
-    const mergedMetadata = mergeRatingStatsAppliedMetadata(
-      mergePlacementRatingFloorMetadata(undefined, uncappedLevelByUser.get(outcome.userId)),
-      ratingStatsApplied,
-    );
     const storedPosition = outcome.position ?? null;
     const isWinner = outcome.isWinner ?? false;
+
+    const sportStatsDeltas = computeSportStatsDeltas(ratingStatsApplied, isWinner);
+    const mergedMetadata = mergeSportStatsDeltasMetadata(
+      mergeRatingStatsAppliedMetadata(
+        mergePlacementRatingFloorMetadata(undefined, uncappedLevelByUser.get(outcome.userId)),
+        ratingStatsApplied,
+      ),
+      sportStatsDeltas,
+    );
 
     await tx.gameOutcome.upsert({
       where: {
