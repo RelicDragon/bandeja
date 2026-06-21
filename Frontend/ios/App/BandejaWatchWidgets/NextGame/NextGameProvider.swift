@@ -1,4 +1,3 @@
-import RelevanceKit
 import WidgetKit
 
 struct NextGameProvider: TimelineProvider {
@@ -23,6 +22,18 @@ struct NextGameProvider: TimelineProvider {
         completion(Timeline(entries: [entry], policy: .after(refresh)))
     }
 
+    private func makeEntry(reference: Date) -> NextGameEntry {
+        let isAuth = WidgetKeychain.readToken() != nil
+        let game = WidgetGameCache.nextDisplayableGame(reference: reference)
+        return NextGameEntry(date: reference, game: game, isAuthenticated: isAuth)
+    }
+}
+
+#if canImport(RelevanceKit)
+import RelevanceKit
+
+@available(watchOS 11.0, *)
+extension NextGameProvider {
     func relevance() async -> WidgetRelevance<Void> {
         let games = WidgetGameCache.read()
         let now = Date.now
@@ -37,10 +48,5 @@ struct NextGameProvider: TimelineProvider {
         }
         return WidgetRelevance(attributes)
     }
-
-    private func makeEntry(reference: Date) -> NextGameEntry {
-        let isAuth = WidgetKeychain.readToken() != nil
-        let game = WidgetGameCache.nextDisplayableGame(reference: reference)
-        return NextGameEntry(date: reference, game: game, isAuthenticated: isAuth)
-    }
 }
+#endif
