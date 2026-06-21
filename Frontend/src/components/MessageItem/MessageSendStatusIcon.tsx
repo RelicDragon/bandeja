@@ -5,6 +5,7 @@ import { DoubleTickIcon } from '../DoubleTickIcon';
 import { TFunction } from 'i18next';
 import type { ChatMessage } from '@/api/chat';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { readReceiptsFromOthers } from '@/services/chat/messageTickState';
 
 const statusTransition = { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const };
 
@@ -57,6 +58,7 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
 }) => {
   const isNetworkOnline = useNetworkStore((s) => s.isOnline);
   const statusKey = resolveStatusKey(isSending, isFailed, tickRead, tickDelivered, isNetworkOnline);
+  const readByOthersCount = readReceiptsFromOthers(message.readReceipts, message.senderId).length;
 
   return (
     <span className="relative inline-flex h-[14px] w-[14px] shrink-0 items-center" style={iconStyle}>
@@ -142,8 +144,8 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
             <span
               className="text-purple-200 inline-flex"
               title={
-                (message.readReceipts?.length ?? 0) > 0
-                  ? `Read by ${message.readReceipts!.length} ${message.readReceipts!.length === 1 ? 'person' : 'people'}`
+                readByOthersCount > 0
+                  ? `Read by ${readByOthersCount} ${readByOthersCount === 1 ? 'person' : 'people'}`
                   : t('chat.tickRead', { defaultValue: 'Read' })
               }
             >

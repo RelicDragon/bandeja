@@ -43,7 +43,7 @@ extension NextGameProvider {
             let to = game.startTime.addingTimeInterval(3600)
             guard to > now else { continue }
             let startRelevance = max(from, now)
-            let ctx = RelevantContext.date(range: startRelevance...to, kind: .scheduled)
+            let ctx = RelevantContext.date(from: startRelevance, to: to)
             attributes.append(WidgetRelevanceAttribute(context: ctx))
         }
         return WidgetRelevance(attributes)

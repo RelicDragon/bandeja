@@ -207,7 +207,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     if (nextDetailsHeight > 10) {
       setDetailsHeight((prev) => (prev === nextDetailsHeight ? prev : nextDetailsHeight));
     }
-  }, [showDetails, message.readReceipts, message.reactions, detailsUsersLoading]);
+  }, [showDetails, otherReadReceipts, message.reactions, detailsUsersLoading]);
 
   const handleReply = () => {
     onReply(message);
@@ -320,7 +320,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     if (!showDetails) return;
     let cancelled = false;
 
-    const hasReceipts = (message.readReceipts?.length ?? 0) > 0;
+    const hasReceipts = otherReadReceipts.length > 0;
     const needsSender = Boolean(message.senderId && !message.sender);
 
     if (!hasReceipts && !needsSender) {
@@ -333,7 +333,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     const run = async () => {
       const idSet = new Set<string>();
       if (hasReceipts) {
-        for (const r of message.readReceipts ?? []) {
+        for (const r of otherReadReceipts) {
           if (r.userId) idSet.add(r.userId);
         }
       }
@@ -343,7 +343,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       const missing: string[] = [];
       for (const id of idSet) {
         const embedded =
-          id === message.senderId ? message.sender : message.readReceipts?.find((r) => r.userId === id)?.user;
+          id === message.senderId ? message.sender : otherReadReceipts.find((r) => r.userId === id)?.user;
         if (embedded) continue;
         if (!store.getUser(id)) missing.push(id);
       }
@@ -370,7 +370,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [showDetails, message.id, message.senderId, message.readReceipts, message.sender, t]);
+  }, [showDetails, message.id, message.senderId, otherReadReceipts, message.sender, t]);
 
   const handleBackdropClick = () => {
     if (Date.now() - openTimeRef.current < 400) return;
@@ -378,10 +378,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   };
 
   const getReadReceiptsWithReactions = () => {
-    const readReceipts = message.readReceipts || [];
     const reactions = message.reactions || [];
-    
-    return readReceipts.map((receipt, index) => {
+    return otherReadReceipts.map((receipt, index) => {
       const userReaction = reactions.find(r => r.userId === receipt.userId);
       return {
         ...receipt,
@@ -709,12 +707,12 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
           {/* Read Receipts */}
           <div className="px-3 py-2">
-            {(message.readReceipts?.length ?? 0) > 0 && (
+            {otherReadReceipts.length > 0 && (
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                <div className="font-medium">{t('chat.contextMenu.readBy')} ({message.readReceipts.length})</div>
+                <div className="font-medium">{t('chat.contextMenu.readBy')} ({otherReadReceipts.length})</div>
               </div>
             )}
-            {message.readReceipts && message.readReceipts.length > 0 ? (
+            {otherReadReceipts.length > 0 ? (
               detailsUsersLoading ? (
                 <div className="flex justify-center py-8 max-h-48">
                   <Loader2 className="w-6 h-6 animate-spin text-gray-400" aria-hidden />

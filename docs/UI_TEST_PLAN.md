@@ -769,6 +769,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-37 | Offline send queue | `@offline` send | Queued state + retry on online |
 | CH-38 | Failed send retry | Force failure → resend | Message sends |
 | CH-39 | Read receipts | Open thread | Unread clears |
+| CH-70 | Own message read tick vs details | Group chat → send message → long-press → Details before anyone reads | Bubble shows single tick (or blue delivered, not purple read); Details shows “Not read yet” |
+| CH-71 | Own message read tick after peer reads | Two users in group; B reads A's message | A sees purple double tick; Details lists B with read time |
 | CH-40 | Scroll to replied | Tap reply preview | Scrolls to original |
 | CH-41 | Load older messages | Scroll up | Pagination loads history |
 | CH-42 | Jump to pinned | Tap pinned bar | Scrolls to message |
