@@ -39,6 +39,10 @@ Set `FALLBACK_CITY_ID` in `Backend/.env` and seed at least one City row for regi
 - Frontend tests: `cd Frontend && npm run test:live-scoring`
 - Backend automated tests: `cd Backend && npm run test:automated`
 
+### Production (deploy, SSH tunnels, prod DB)
+
+See **`docs/PRODUCTION.md`**: `./upd.sh`, `Admin/run-ssh.sh` (ports 15432 / 9000), MCP `bandeja-prod-pg`, admin UI, `sync-db-from-prod.sh`.
+
 ## Agent skills
 
 ### Issue tracker
