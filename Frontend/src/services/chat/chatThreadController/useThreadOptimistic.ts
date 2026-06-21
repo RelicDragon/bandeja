@@ -18,6 +18,7 @@ import {
 } from '@/services/chat/storyDmApply';
 import { usePlayersStore } from '@/store/playersStore';
 import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
+import { donateOutgoingChatIntent } from '@/services/chat/chatIntentDonation';
 import { reconcileOptimisticMessages } from '@/services/chat/optimisticReconcile';
 import {
   CHAT_OUTBOX_FAILED_EVENT,
@@ -177,6 +178,7 @@ export function useThreadOptimistic({
         return result.messages;
       });
       void applyThreadEvent({ kind: 'sendSuccess', message: serverMessage }).catch(() => {});
+      donateOutgoingChatIntent(serverMessage);
       if (id) {
         messageQueueStorage.remove(optimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
       }

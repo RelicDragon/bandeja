@@ -19,6 +19,7 @@ import {
 import { chatApi } from '@/api/chat';
 import { restoreAuthIfNeeded } from '@/utils/authPersistence';
 import { getTokenNative } from '@/services/authBridge';
+import { setPushReplyJsReadyNative } from '@/services/push/pushDelegateBridge';
 
 interface NotificationData {
   type: string;
@@ -126,6 +127,10 @@ class PushNotificationService {
         await this.handleNotificationAction(action);
       }
     );
+
+    if (Capacitor.getPlatform() === 'ios') {
+      await setPushReplyJsReadyNative(true);
+    }
   }
 
   private async registerTokenWithBackend(token: string) {

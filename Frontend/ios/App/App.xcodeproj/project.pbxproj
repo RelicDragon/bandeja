@@ -21,12 +21,19 @@
 		99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		A1B2C3D4E5F60718293A501 /* LiveScoringBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */; };
+		C2A3B4D5E6F708192A3B5A1 /* ChatIntentBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A3B4D5E6F708192A3B5A0 /* ChatIntentBridgePlugin.swift */; };
 		B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */; };
 		B1A2C3D4E5F60718293A3C7 /* BandejaPushDelegatePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */; };
 		B79A10042F7443E0002D7100 /* BandejaWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C1A2B3C4D5E6F708192A3B57 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */; };
 		E14000042F7443E0002D7100 /* NotificationServiceExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E140000E2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */; };
+		F14800012F7443E0002D7100 /* NativeApiConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800102F7443E0002D7100 /* NativeApiConfig.swift */; };
+		F14800022F7443E0002D7100 /* ChatPushData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800112F7443E0002D7100 /* ChatPushData.swift */; };
+		F14800032F7443E0002D7100 /* ChatReplyApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */; };
+		F14800042F7443E0002D7100 /* ChatReplyHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800132F7443E0002D7100 /* ChatReplyHandler.swift */; };
+		F14800052F7443E0002D7100 /* BandejaPushNotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800142F7443E0002D7100 /* BandejaPushNotificationDelegate.swift */; };
+		F14800062F7443E0002D7100 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F14800152F7443E0002D7100 /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -114,6 +121,7 @@
 		99B2AB672EF1892700E5021A /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		99CD437F2F1BAEE700F7431D /* AppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppDebug.entitlements; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveScoringBridgePlugin.swift; sourceTree = "<group>"; };
+		C2A3B4D5E6F708192A3B5A0 /* ChatIntentBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatIntentBridgePlugin.swift; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicationNotificationHelper.swift; sourceTree = "<group>"; };
@@ -123,6 +131,16 @@
 		C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/WatchOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
 		E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ChatCommunicationIntentBuilder.swift; path = NotificationServiceExtension/ChatCommunicationIntentBuilder.swift; sourceTree = "<group>"; };
+		F14800102F7443E0002D7100 /* NativeApiConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeApiConfig.swift; sourceTree = "<group>"; };
+		F14800112F7443E0002D7100 /* ChatPushData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatPushData.swift; sourceTree = "<group>"; };
+		F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyApiClient.swift; sourceTree = "<group>"; };
+		F14800132F7443E0002D7100 /* ChatReplyHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyHandler.swift; sourceTree = "<group>"; };
+		F14800142F7443E0002D7100 /* BandejaPushNotificationDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaPushNotificationDelegate.swift; sourceTree = "<group>"; };
+		F14800162F7443E0002D7100 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F14800172F7443E0002D7100 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F14800182F7443E0002D7100 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = cs.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F14800192F7443E0002D7100 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F148001A2F7443E0002D7100 /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -215,7 +233,13 @@
 			children = (
 				99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */,
 				A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */,
+				C2A3B4D5E6F708192A3B5A0 /* ChatIntentBridgePlugin.swift */,
 				B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */,
+				F14800142F7443E0002D7100 /* BandejaPushNotificationDelegate.swift */,
+				F14800132F7443E0002D7100 /* ChatReplyHandler.swift */,
+				F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */,
+				F14800112F7443E0002D7100 /* ChatPushData.swift */,
+				F14800102F7443E0002D7100 /* NativeApiConfig.swift */,
 				B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */,
 				99AF71D02F744E2000B32563 /* KeychainHelper.swift */,
 				99AF71D12F744E2000B32563 /* WatchSessionManager.swift */,
@@ -228,6 +252,7 @@
 				504EC30E1FED79650016851F /* Assets.xcassets */,
 				504EC3101FED79650016851F /* LaunchScreen.storyboard */,
 				504EC3131FED79650016851F /* Info.plist */,
+				F14800152F7443E0002D7100 /* Localizable.strings */,
 				2FAD9762203C412B000D30F8 /* config.xml */,
 				50B271D01FEDC1A000F3C39B /* public */,
 			);
@@ -421,6 +446,7 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+				F14800062F7443E0002D7100 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -506,8 +532,14 @@
 				99AF71D32F744E2000B32563 /* WatchSessionManager.swift in Sources */,
 				99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */,
 				A1B2C3D4E5F60718293A501 /* LiveScoringBridgePlugin.swift in Sources */,
+				C2A3B4D5E6F708192A3B5A1 /* ChatIntentBridgePlugin.swift in Sources */,
 				B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */,
 				B1A2C3D4E5F60718293A3C7 /* BandejaPushDelegatePlugin.swift in Sources */,
+				F14800052F7443E0002D7100 /* BandejaPushNotificationDelegate.swift in Sources */,
+				F14800042F7443E0002D7100 /* ChatReplyHandler.swift in Sources */,
+				F14800032F7443E0002D7100 /* ChatReplyApiClient.swift in Sources */,
+				F14800022F7443E0002D7100 /* ChatPushData.swift in Sources */,
+				F14800012F7443E0002D7100 /* NativeApiConfig.swift in Sources */,
 				E140000E2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -566,6 +598,18 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		F14800152F7443E0002D7100 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F14800162F7443E0002D7100 /* en */,
+				F14800172F7443E0002D7100 /* es */,
+				F14800182F7443E0002D7100 /* cs */,
+				F14800192F7443E0002D7100 /* ru */,
+				F148001A2F7443E0002D7100 /* sr */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
 			isa = PBXVariantGroup;
 			children = (

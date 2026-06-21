@@ -6,6 +6,11 @@ import {
 } from './chatOutboxEvents';
 import type { ChatMessage } from '@/api/chat';
 
+const donateOutgoingChatIntent = vi.fn();
+vi.mock('@/services/chat/chatIntentDonation', () => ({
+  donateOutgoingChatIntent: (...args: unknown[]) => donateOutgoingChatIntent(...args),
+}));
+
 function serverMessage(id: string): ChatMessage {
   return {
     id,
@@ -44,6 +49,7 @@ describe('dispatchChatOutboxSuccess', () => {
 
   afterEach(() => {
     listeners.clear();
+    donateOutgoingChatIntent.mockClear();
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
@@ -60,6 +66,7 @@ describe('dispatchChatOutboxSuccess', () => {
     };
     dispatchChatOutboxSuccess(detail);
 
+    expect(donateOutgoingChatIntent).toHaveBeenCalledWith(detail.message);
     expect(handler).toHaveBeenCalledOnce();
     const ev = handler.mock.calls[0]![0] as CustomEvent<ChatOutboxSuccessDetail>;
     expect(ev.detail).toEqual(detail);

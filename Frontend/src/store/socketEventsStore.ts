@@ -18,6 +18,8 @@ import {
   teardownLiveScoringBridge,
   type WatchScoreUpdatedEvent,
 } from '@/services/liveScoringBridge';
+import type { ChatMessage } from '@/api/chat';
+import { donateIncomingChatIntent } from '@/services/chat/chatIntentDonation';
 
 interface GameUpdateData {
   gameId: string;
@@ -425,6 +427,11 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
           void import('@/services/chat/chatSendSocketAck').then((m) =>
             m.deliverChatSendSocketAck(data.contextType, data.contextId, data.message)
           );
+          const message = data.message as ChatMessage;
+          const selfId = useAuthStore.getState().user?.id;
+          if (selfId && message.senderId !== selfId) {
+            donateIncomingChatIntent(message);
+          }
         }
         const rk = chatRoomKey(data.contextType, data.contextId);
         set((s) => {

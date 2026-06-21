@@ -89,12 +89,55 @@ enum ChatCommunicationIntentBuilder {
         )
     }
 
+    static func makeIntentFromDonationParams(
+        conversationIdentifier: String,
+        messageBody: String,
+        senderId: String,
+        senderName: String,
+        senderAvatarUrl: String?
+    ) -> INSendMessageIntent {
+        let resolvedSenderImage: INImage?
+        if let senderAvatarUrl, let url = URL(string: senderAvatarUrl) {
+            resolvedSenderImage = INImage(url: url)
+        } else {
+            resolvedSenderImage = nil
+        }
+
+        let sender = INPerson(
+            personHandle: INPersonHandle(value: senderId, type: .unknown),
+            nameComponents: nil,
+            displayName: senderName,
+            image: resolvedSenderImage,
+            contactIdentifier: nil,
+            customIdentifier: senderId
+        )
+
+        return INSendMessageIntent(
+            recipients: nil,
+            outgoingMessageType: .outgoingMessageText,
+            content: messageBody,
+            speakableGroupName: nil,
+            conversationIdentifier: conversationIdentifier,
+            serviceName: nil,
+            sender: sender,
+            attachments: nil
+        )
+    }
+
     static func donateIncomingInteraction(_ intent: INSendMessageIntent) {
+        donateInteraction(intent, direction: .incoming)
+    }
+
+    static func donateOutgoingInteraction(_ intent: INSendMessageIntent) {
+        donateInteraction(intent, direction: .outgoing)
+    }
+
+    private static func donateInteraction(_ intent: INSendMessageIntent, direction: INInteractionDirection) {
         let interaction = INInteraction(intent: intent, response: nil)
-        interaction.direction = .incoming
+        interaction.direction = direction
         interaction.donate { error in
             if let error = error {
-                NSLog("[push-reply] communication intent donate failed: %@", error.localizedDescription)
+                NSLog("[chat-intent] communication intent donate failed: %@", error.localizedDescription)
             }
         }
     }

@@ -9,6 +9,7 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
         bridge?.registerPluginInstance(AuthBridgePlugin())
         bridge?.registerPluginInstance(LiveScoringBridgePlugin())
         bridge?.registerPluginInstance(BandejaPushDelegatePlugin())
+        bridge?.registerPluginInstance(ChatIntentBridgePlugin())
     }
 
     override public func webViewConfiguration(for instanceConfiguration: InstanceConfiguration) -> WKWebViewConfiguration {

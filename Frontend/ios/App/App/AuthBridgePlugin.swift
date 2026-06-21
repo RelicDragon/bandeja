@@ -59,6 +59,10 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
     }
 
     @objc func setApiBaseUrl(_ call: CAPPluginCall) {
+        guard let apiBaseUrl = call.getString("apiBaseUrl") else {
+            return call.reject("Missing apiBaseUrl")
+        }
+        NativeApiConfig.setApiBaseUrl(apiBaseUrl)
         call.resolve()
     }
 
