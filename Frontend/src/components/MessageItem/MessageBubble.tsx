@@ -99,8 +99,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     ? ({ filter: 'drop-shadow(0 0 2px #000) drop-shadow(0 0 4px #000) drop-shadow(1px 1px 2px #000) drop-shadow(-1px -1px 2px #000)' } as const)
     : undefined;
   const variant: ContentVariant = isChannel ? 'channel' : isOwnMessage ? 'own' : 'other';
-  const tickRead = message.state === 'READ' || (message.readReceipts?.length ?? 0) > 0;
-  const tickDelivered = message.state === 'DELIVERED' && !tickRead;
+  const { tickRead, tickDelivered } = resolveOwnMessageTicks(message);
   const contentVariantForTranslation = isOwnMessage ? 'own' : 'other';
   const hasMediaOrVoice = isVoice || isVideo || hasMedia;
   const paddingClass = hasTranslation
