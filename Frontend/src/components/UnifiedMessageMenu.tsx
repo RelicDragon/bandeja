@@ -25,6 +25,7 @@ import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay'
 import { usePlayersStore } from '@/store/playersStore';
 import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
 import type { BasicUser } from '@/types';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { readReceiptsFromOthers } from '@/services/chat/messageTickState';
 import {
   CHAT_MESSAGE_MENU_BACKDROP,
