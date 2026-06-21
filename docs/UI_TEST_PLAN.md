@@ -213,7 +213,7 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | H-01 | Calendar view | Open My tab | Calendar + games render; Bookings / Teams / Leagues switch row below stories |
-| H-54 | My tab panel switcher | Logged in → My tab below stories | Three toggles: Bookings, Teams, Leagues; none selected by default |
+| H-54 | My tab panel switcher | Logged in → My tab below stories | Three toggles: Bookings (ticket icon), Teams, Leagues; none selected by default |
 | H-55 | My tab panel single select | Tap Bookings then Teams | Bookings panel animates out; Teams panel animates in; only Teams highlighted |
 | H-57 | My tab panel switcher counts | User with bookings, teams, and leagues | Bookings / Teams / Leagues buttons show matching counts; hidden when zero |
 | H-02 | Calendar date select | Pick date on calendar | Games for that day |
@@ -299,6 +299,8 @@ Frontend/e2e/
 | H-38f | Standalone booking card actions (My tab) | Connected user with at least one non-grouped upcoming booking | Tap standalone card → link/create/cancel actions animate in and card highlights; tap another standalone card → first collapses, second expands; tap same card again → actions collapse |
 | H-38k | Grouped booking card actions (My tab) | Connected user with adjacent same-court upcoming slots | Tap grouped card → per-slot rows animate in with link/create/cancel; only one card expanded at a time; tap again collapses |
 | H-38l | Bookings integrations shortcut (My tab) | Connected user with upcoming bookings on My tab | Gear icon beside "See all" → `/profile/connected-clubs?tab=integrations` with Integrations subtab active; "See all" still opens Bookings subtab |
+| H-58 | My tab games list view | My tab → tap List below panel switcher | Games calendar animates out; upcoming + finished game sections; preference persists after reload |
+| H-59 | My tab games calendar view | From list view tap Calendar | Month calendar animates in; games for selected day; preference persists after reload |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
 ---

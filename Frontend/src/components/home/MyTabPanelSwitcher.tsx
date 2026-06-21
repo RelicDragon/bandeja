@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { CalendarDays, Trophy, Users } from 'lucide-react';
+import { Ticket, Trophy, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { Game } from '@/types';
@@ -7,17 +7,26 @@ import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/Segmented
 import { useMyTabPanelCounts } from '@/hooks/useMyTabPanelCounts';
 import { useMyTabBooktime } from '@/hooks/useMyTabBooktime';
 import { MyTabBookingsSection } from '@/components/booktime/MyTabBookingsSection';
+import { MyGamesViewModeSwitch } from '@/components/home/MyGamesViewModeSwitch';
 import { UserTeamsHomeSection } from './UserTeamsHomeSection';
 import { YourLeaguesHomeSection } from './YourLeaguesHomeSection';
+import type { MyGamesViewMode } from '@/utils/myGamesViewStorage';
 
 type MyTabPanelId = 'bookings' | 'teams' | 'leagues';
 
 interface MyTabPanelSwitcherProps {
   games: Game[];
   gamesUnreadCounts?: Record<string, number>;
+  myGamesViewMode: MyGamesViewMode;
+  onMyGamesViewModeChange: (mode: MyGamesViewMode) => void;
 }
 
-export function MyTabPanelSwitcher({ games, gamesUnreadCounts = {} }: MyTabPanelSwitcherProps) {
+export function MyTabPanelSwitcher({
+  games,
+  gamesUnreadCounts = {},
+  myGamesViewMode,
+  onMyGamesViewModeChange,
+}: MyTabPanelSwitcherProps) {
   const { t } = useTranslation();
   const [activePanel, setActivePanel] = useState<MyTabPanelId | null>(null);
   const booktime = useMyTabBooktime();
@@ -32,7 +41,7 @@ export function MyTabPanelSwitcher({ games, gamesUnreadCounts = {} }: MyTabPanel
       {
         id: 'bookings',
         label: t('club.booktime.tabBookings'),
-        icon: CalendarDays,
+        icon: Ticket,
         badge: panelCounts.bookings,
       },
       {
@@ -53,7 +62,7 @@ export function MyTabPanelSwitcher({ games, gamesUnreadCounts = {} }: MyTabPanel
 
   return (
     <div className="mb-3 max-w-md mx-auto md:-mx-4 md:max-w-none">
-      <div className="flex justify-center">
+      <div className="flex flex-col items-center gap-2">
         <SegmentedSwitch
           tabs={tabs}
           activeId={activePanel}
@@ -71,6 +80,7 @@ export function MyTabPanelSwitcher({ games, gamesUnreadCounts = {} }: MyTabPanel
           activeLabelMaxWidth={120}
           ariaLabel={t('home.myTabPanels', { defaultValue: 'Bookings, teams, and leagues' })}
         />
+        <MyGamesViewModeSwitch mode={myGamesViewMode} onChange={onMyGamesViewModeChange} />
       </div>
 
       <AnimatePresence mode="wait" initial={false}>

@@ -40,6 +40,7 @@ import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { scrollAppToTop } from '@/utils/appScroll';
+import { readMyGamesViewMode, writeMyGamesViewMode } from '@/utils/myGamesViewStorage';
 
 const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string; entityType?: string }>(
   list: T[] = [],
@@ -98,6 +99,11 @@ export const MyTab = () => {
   useRegisterAdSportContext(AD_PLACEMENTS.HOME_HERO, primarySport);
   const hideHomeHeroAd = isHomeHeroAdBlocked(user, primarySport, questionnaireStatus);
 
+  const [myGamesViewMode, setMyGamesViewMode] = useState(() => readMyGamesViewMode());
+  useEffect(() => {
+    writeMyGamesViewMode(myGamesViewMode);
+  }, [myGamesViewMode]);
+
   useEffect(() => {
     scrollAppToTop('auto');
   }, [homeTab]);
@@ -155,11 +161,11 @@ export const MyTab = () => {
   }, [myGamesCalendarDateAfterCreate, setMyGamesCalendarDateAfterCreate, setMyGamesSelectedDay]);
   useEffect(() => {
     if (isCalendarTab) {
-      setCreateGameInitialDate(myGamesSelectedDate);
+      setCreateGameInitialDate(myGamesViewMode === 'list' ? null : myGamesSelectedDate);
     } else {
       setCreateGameInitialDate(null);
     }
-  }, [isCalendarTab, myGamesSelectedDate, setCreateGameInitialDate]);
+  }, [isCalendarTab, myGamesSelectedDate, myGamesViewMode, setCreateGameInitialDate]);
   const [loadingPastInRange, setLoadingPastInRange] = useState(false);
   const calendarMergedGames = useMemo(() => {
     const noSeason = (g: (typeof filteredMyGames)[0]) => g.entityType !== 'LEAGUE_SEASON';
@@ -193,6 +199,25 @@ export const MyTab = () => {
       })
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   }, [myGamesSelectedDate, calendarMergedGames]);
+  const listModeGames = useMemo(
+    () =>
+      sortMyGamesByStatusAndDateTime(
+        calendarMergedGames.filter((g) => g.entityType !== 'LEAGUE_SEASON'),
+        calendarMergedUnreadCounts,
+      ),
+    [calendarMergedGames, calendarMergedUnreadCounts],
+  );
+  const showGamesCalendar = myGamesViewMode === 'calendar' && (loading || hasUpcomingGames);
+  const gamesSectionGames = myGamesViewMode === 'list' ? listModeGames : myGamesForSelectedDate;
+  const gamesSectionUpcoming =
+    myGamesViewMode === 'list'
+      ? undefined
+      : myGamesSelectedDate
+        ? undefined
+        : upcomingGamesForCalendar;
+  const gamesSectionLoading =
+    loading || (myGamesViewMode === 'calendar' && loadingPastInRange);
+  const useDesktopCalendarSplit = (hasUpcomingGames || loading) && myGamesViewMode === 'calendar';
   const handleCalendarDateRangeChange = useCallback(
     async (start: Date, end: Date) => {
       const today = startOfDay(new Date());
@@ -331,7 +356,12 @@ export const MyTab = () => {
           )}
           {user && (
             <AnimatedMount layout>
-              <MyTabPanelSwitcher games={games} gamesUnreadCounts={calendarMergedUnreadCounts} />
+              <MyTabPanelSwitcher
+                games={games}
+                gamesUnreadCounts={calendarMergedUnreadCounts}
+                myGamesViewMode={myGamesViewMode}
+                onMyGamesViewModeChange={setMyGamesViewMode}
+              />
             </AnimatedMount>
           )}
           {!hideHomeHeroAd && user && (
@@ -356,12 +386,12 @@ export const MyTab = () => {
           )}
           <AnimatedMount layout>
             <MyGamesSection
-              games={myGamesForSelectedDate}
+              games={gamesSectionGames}
               user={user}
-              loading={loading || loadingPastInRange}
+              loading={gamesSectionLoading}
               gamesUnreadCounts={calendarMergedUnreadCounts}
               onNoteSaved={() => refetchMyGames()}
-              upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
+              upcomingGames={gamesSectionUpcoming}
               onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
             />
           </AnimatedMount>
@@ -398,7 +428,7 @@ export const MyTab = () => {
     return (
       <>
       <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
-        {hasUpcomingGames || loading ? (
+        {useDesktopCalendarSplit ? (
           <ResizableSplitter
             defaultLeftWidth={35}
             minLeftWidth={280}
@@ -445,7 +475,12 @@ export const MyTab = () => {
           )}
           {user && (
             <AnimatedMount layout>
-              <MyTabPanelSwitcher games={games} gamesUnreadCounts={calendarMergedUnreadCounts} />
+              <MyTabPanelSwitcher
+                games={games}
+                gamesUnreadCounts={calendarMergedUnreadCounts}
+                myGamesViewMode={myGamesViewMode}
+                onMyGamesViewModeChange={setMyGamesViewMode}
+              />
             </AnimatedMount>
           )}
           {!hideHomeHeroAd && user && (
@@ -470,7 +505,7 @@ export const MyTab = () => {
           )}
 
           {(loading || hasUpcomingGames) && (
-            <AnimatedMount layout>
+            <AnimatedMount layout show={showGamesCalendar}>
               <CalendarSection
                 selectedDate={myGamesSelectedDate}
                 onDateSelect={setMyGamesSelectedDate}
@@ -481,12 +516,12 @@ export const MyTab = () => {
           )}
           <AnimatedMount layout>
             <MyGamesSection
-              games={myGamesForSelectedDate}
+              games={gamesSectionGames}
               user={user}
-              loading={loading || loadingPastInRange}
+              loading={gamesSectionLoading}
               gamesUnreadCounts={calendarMergedUnreadCounts}
               onNoteSaved={() => refetchMyGames()}
-              upcomingGames={myGamesSelectedDate ? undefined : upcomingGamesForCalendar}
+              upcomingGames={gamesSectionUpcoming}
               onSwitchToSearch={!hasUpcomingGames ? () => navigationService.navigateToFind() : undefined}
             />
           </AnimatedMount>
