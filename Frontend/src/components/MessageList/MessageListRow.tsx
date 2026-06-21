@@ -42,6 +42,7 @@ type MessageListRowProps = {
     | 'showReply'
     | 'onForwardMessage'
   >;
+  entityType?: string | null;
 };
 
 export const MessageListRow = memo(function MessageListRow({
@@ -59,6 +60,7 @@ export const MessageListRow = memo(function MessageListRow({
   fadeDateSeparator = false,
   onScrollToFirstReply,
   handlers,
+  entityType,
 }: MessageListRowProps) {
   if (row.index === rowCount - 1) {
     return (
@@ -117,6 +119,7 @@ export const MessageListRow = memo(function MessageListRow({
         onUnpin={handlers.onUnpin}
         showReply={handlers.showReply}
         onForwardMessage={handlers.onForwardMessage}
+        entityType={entityType}
       />
     </div>
   );

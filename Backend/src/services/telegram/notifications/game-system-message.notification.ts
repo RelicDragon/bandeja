@@ -4,7 +4,6 @@ import { ChatType, ChatContextType } from '@prisma/client';
 import { NotificationPreferenceService } from '../../notificationPreference.service';
 import { NotificationChannelType } from '@prisma/client';
 import { PreferenceKey } from '../../../types/notifications.types';
-import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId, trimTextForTelegram } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
 import {
@@ -12,49 +11,13 @@ import {
   formatGameInfoForUser,
   getEntityTypeLabel,
   getShowEntityButtonText,
-  resolveGameClubPlace,
 } from '../../shared/notification-base';
 import { appendTelegramGameScheduleExtras } from '../../shared/notificationSport';
 import { ChatMuteService } from '../../chat/chatMute.service';
 import { canParticipantSeeGameChatMessage } from '../../chat/gameChatVisibility';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { guardedTelegramSendMessage } from '../guardedTelegramSend';
-
-function translateSystemMessage(message: any, lang: string): string {
-  let messageData: any = null;
-  let messageContent = '';
-  try {
-    messageData = JSON.parse(message.content);
-    messageContent = messageData.text || message.content;
-  } catch {
-    messageContent = message.content || '';
-  }
-
-  if (messageData && messageData.type && messageData.variables) {
-    const translationKey = `chat.systemMessages.${messageData.type}`;
-    let template = t(translationKey, lang);
-
-    if (template === translationKey) {
-      template = messageData.text || messageContent;
-    } else {
-      const variables = { ...messageData.variables } as Record<string, string>;
-      if (messageData.type === 'GAME_CLUB_CHANGED' && !variables.clubName?.trim()) {
-        variables.clubName = resolveGameClubPlace({}, lang);
-      }
-      if (messageData.type === 'GAME_DATE_TIME_CHANGED' && !variables.dateTime?.trim()) {
-        const datetimeKey = 'games.datetimeNotSet';
-        variables.dateTime =
-          t(datetimeKey, lang) !== datetimeKey ? t(datetimeKey, lang) : 'Time is not set yet';
-      }
-      for (const [key, value] of Object.entries(variables)) {
-        template = template.replace(new RegExp(`{{${key}}}`, 'g'), String(value || ''));
-      }
-      messageContent = template;
-    }
-  }
-
-  return messageContent;
-}
+import { translateSystemMessageContent } from '../../../utils/translateSystemMessageContent';
 
 export async function sendGameSystemMessageNotification(
   api: Api,
@@ -95,7 +58,7 @@ export async function sendGameSystemMessageNotification(
       try {
         const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);
         const gameInfo = await formatGameInfoForUser(game, user.currentCityId, lang);
-        const translatedContent = translateSystemMessage(message, lang);
+        const translatedContent = translateSystemMessageContent(message, lang, game.entityType);
         const entityLabel = getEntityTypeLabel(game.entityType, lang);
         const showButtonText = getShowEntityButtonText(game.entityType, lang);
 

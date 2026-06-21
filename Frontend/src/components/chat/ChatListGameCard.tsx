@@ -195,7 +195,7 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 min-w-0 flex-1">
                   {isLastMessagePreview(lastMessage) ? (
                     lastMessage.preview?.trim() ? (
-                      <ChatListPreviewContent preview={lastMessage.preview} t={t} />
+                      <ChatListPreviewContent preview={lastMessage.preview} t={t} entityType={game.entityType} />
                     ) : (
                       t('chat.noMessage', { defaultValue: 'No message' })
                     )
@@ -204,7 +204,7 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
                       const full = lastMessage as ChatMessage;
                       const text = full.senderId
                         ? full.content || ''
-                        : formatSystemMessageForDisplay(full.content || '', t);
+                        : formatSystemMessageForDisplay(full.content || '', t, game.entityType);
                       return text?.trim() ? (
                         <ChatListPreviewText text={text} />
                       ) : (

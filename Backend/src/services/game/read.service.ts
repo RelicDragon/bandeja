@@ -190,9 +190,12 @@ const getGamesCourtInclude = () => ({
           name: true,
           avatar: true,
           address: true,
+          integrationType: true,
+          integrationConfig: true,
           city: {
             select: {
               name: true,
+              timezone: true,
             },
           },
         },
@@ -228,6 +231,13 @@ const getAvailableGamesInclude = () => ({
       avatar: true,
       address: true,
       cityId: true,
+      integrationType: true,
+      integrationConfig: true,
+      city: {
+        select: {
+          timezone: true,
+        },
+      },
     },
   },
   court: {
@@ -238,6 +248,14 @@ const getAvailableGamesInclude = () => ({
           name: true,
           avatar: true,
           address: true,
+          integrationType: true,
+          integrationConfig: true,
+          city: {
+            select: {
+              name: true,
+              timezone: true,
+            },
+          },
         },
       },
     },
@@ -282,17 +300,6 @@ const getAvailableGamesInclude = () => ({
       summaryStatus: true,
       photoStatus: true,
       photoGenerationsUsed: true,
-    },
-  },
-  externalBookings: {
-    orderBy: { createdAt: 'asc' as const },
-    select: {
-      id: true,
-      externalBookingId: true,
-      externalBookingProvider: true,
-      courtId: true,
-      bookingStart: true,
-      bookingEnd: true,
     },
   },
 });

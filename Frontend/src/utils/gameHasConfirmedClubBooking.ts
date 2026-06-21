@@ -1,5 +1,8 @@
 import type { Game } from '@/types';
-import { clubHasBookingIntegration } from '@shared/clubIntegration';
+import {
+  gameBookingStatusToBadgeKind,
+  type GameBookingStatus,
+} from '@shared/gameBooking/computeGameBookingStatus';
 import {
   evaluateLinkedBookingCoverage,
   type LinkedBookingCoverageResult,
@@ -16,13 +19,17 @@ export function gameHasConfirmedClubBooking(game: Game): boolean {
 }
 
 export function gameHasLinkedExternalBooking(game: Game): boolean {
-  return (game.linkedBookings?.length ?? 0) > 0;
+  return (
+    game.bookingStatus === 'EXTERNAL_PARTIAL' ||
+    game.bookingStatus === 'EXTERNAL_FULL' ||
+    (game.linkedBookings?.length ?? 0) > 0
+  );
 }
 
 export function evaluateGameLinkedBookingCoverage(game: Game): LinkedBookingCoverageResult | null {
   const club = game.court?.club ?? game.club;
   const links = game.linkedBookings ?? [];
-  if (links.length === 0 || !clubHasBookingIntegration(club)) return null;
+  if (links.length === 0) return null;
 
   return evaluateLinkedBookingCoverage(
     links,
@@ -32,11 +39,15 @@ export function evaluateGameLinkedBookingCoverage(game: Game): LinkedBookingCove
       maxParticipants: game.maxParticipants,
       playersPerMatch: playersPerMatchOf(game),
     },
-    { timeZone: club?.city?.timezone ?? undefined },
+    { timeZone: club?.city?.timezone ?? game.city?.timezone ?? undefined },
   );
 }
 
 export function resolveGameBookingBadgeKind(game: Game): GameBookingBadgeKind {
+  if (game.bookingStatus) {
+    return gameBookingStatusToBadgeKind(game.bookingStatus as GameBookingStatus);
+  }
+
   const coverage = evaluateGameLinkedBookingCoverage(game);
   if (coverage) {
     return coverage.fullyCovered ? 'external_full' : 'external_partial';
@@ -47,4 +58,10 @@ export function resolveGameBookingBadgeKind(game: Game): GameBookingBadgeKind {
 
 export function isExternallyFullyBookedGame(game: Game): boolean {
   return resolveGameBookingBadgeKind(game) === 'external_full';
+}
+
+export function isLinkedBookingFullyCovered(game: Game): boolean {
+  if (game.bookingStatus === 'EXTERNAL_FULL') return true;
+  if (game.bookingStatus === 'EXTERNAL_PARTIAL') return false;
+  return evaluateGameLinkedBookingCoverage(game)?.fullyCovered ?? false;
 }

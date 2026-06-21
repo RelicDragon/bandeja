@@ -186,6 +186,61 @@
       "USER_CHAT_DECLINED": "{{userName}} отклонил запрос на чат",
       "PARTICIPANTS_ONLY_CHAT_CREATED": "Создан чат только для участников",
       "ADMINS_CHAT_CREATED": "Создан чат организаторов",
+      "BAR": {
+        "USER_JOINED_GAME": "{{userName}} присоединился к бару",
+        "USER_LEFT_GAME": "{{userName}} покинул бар",
+        "USER_ACCEPTED_INVITE": "{{userName}} присоединился к бару",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} запросил присоединение к бару",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} присоединился к бару",
+        "USER_KICKED": "{{userName}} был исключён из бара",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец бара",
+        "GAME_CLUB_CHANGED": "Место бара изменено на {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Дата/время бара изменено на {{dateTime}}"
+      },
+      "TRAINING": {
+        "USER_JOINED_GAME": "{{userName}} присоединился к тренировке",
+        "USER_LEFT_GAME": "{{userName}} покинул тренировку",
+        "USER_ACCEPTED_INVITE": "{{userName}} присоединился к тренировке",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} запросил присоединение к тренировке",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} присоединился к тренировке",
+        "USER_KICKED": "{{userName}} был исключён с тренировки",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец тренировки",
+        "GAME_CLUB_CHANGED": "Место тренировки изменено на {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Дата/время тренировки изменено на {{dateTime}}"
+      },
+      "TOURNAMENT": {
+        "USER_JOINED_GAME": "{{userName}} присоединился к турниру",
+        "USER_LEFT_GAME": "{{userName}} покинул турнир",
+        "USER_ACCEPTED_INVITE": "{{userName}} присоединился к турниру",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} запросил присоединение к турниру",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} присоединился к турниру",
+        "USER_KICKED": "{{userName}} был исключён с турнира",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец турнира",
+        "GAME_CLUB_CHANGED": "Место турнира изменено на {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Дата/время турнира изменено на {{dateTime}}"
+      },
+      "LEAGUE": {
+        "USER_JOINED_GAME": "{{userName}} присоединился к лиге",
+        "USER_LEFT_GAME": "{{userName}} покинул лигу",
+        "USER_ACCEPTED_INVITE": "{{userName}} присоединился к лиге",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} запросил присоединение к лиге",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} присоединился к лиге",
+        "USER_KICKED": "{{userName}} был исключён из лиги",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец лиги",
+        "GAME_CLUB_CHANGED": "Место лиги изменено на {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Дата/время лиги изменено на {{dateTime}}"
+      },
+      "LEAGUE_SEASON": {
+        "USER_JOINED_GAME": "{{userName}} присоединился к сезону лиги",
+        "USER_LEFT_GAME": "{{userName}} покинул сезон лиги",
+        "USER_ACCEPTED_INVITE": "{{userName}} присоединился к сезону лиги",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} запросил присоединение к сезону лиги",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} присоединился к сезону лиги",
+        "USER_KICKED": "{{userName}} был исключён из сезона лиги",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец сезона лиги",
+        "GAME_CLUB_CHANGED": "Место сезона лиги изменено на {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Дата/время сезона лиги изменено на {{dateTime}}"
+      },
       "actions": {
         "joined": "присоединился к игре",
         "left": "покинул игру"

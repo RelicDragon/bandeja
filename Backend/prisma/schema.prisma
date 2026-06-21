@@ -469,6 +469,7 @@ model Game {
   resultsByAnyone        Boolean             @default(false)
   allowDirectJoin        Boolean             @default(false)
   hasBookedCourt         Boolean             @default(false)
+  bookingStatus          GameBookingStatus   @default(NONE)
   afterGameGoToBar       Boolean             @default(false)
   hasFixedTeams          Boolean             @default(false)
   allowUserInMultipleTeams Boolean           @default(false)
@@ -1990,6 +1991,13 @@ enum GameStatus {
   STARTED
   FINISHED
   ARCHIVED
+}
+
+enum GameBookingStatus {
+  NONE
+  MANUAL
+  EXTERNAL_PARTIAL
+  EXTERNAL_FULL
 }
 
 enum ResultsStatus {

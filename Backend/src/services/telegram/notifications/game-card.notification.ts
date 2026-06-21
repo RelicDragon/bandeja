@@ -4,7 +4,7 @@ import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
 import { escapeMarkdown, getUserLanguageFromTelegramId } from '../utils';
 import { buildMessageWithButtons } from '../shared/message-builder';
-import { formatGameInfoForUser, formatGameScheduleLine, resolveGameClubPlace } from '../../shared/notification-base';
+import { formatGameInfoForUser, formatGameScheduleLine, formatGameBookingStatusLabel, resolveGameClubPlace } from '../../shared/notification-base';
 import { collectTelegramGameScheduleExtras } from '../../shared/notificationSport';
 
 export async function sendGameCard(
@@ -146,12 +146,9 @@ export async function sendGameCard(
   }
 
   if (game.court) {
-    const bookingStatus = game.hasBookedCourt
-      ? (game.entityType === 'BAR' ? t('createGame.hasBookedHall', userLang) : t('createGame.hasBookedCourt', userLang))
-      : t('createGame.notBookedYet', userLang);
-    locationLine += `\n   ${escapeMarkdown(bookingStatus)}`;
+    locationLine += `\n   ${escapeMarkdown(formatGameBookingStatusLabel(game, userLang))}`;
   } else if (game.club) {
-    locationLine += `\n   ${escapeMarkdown(t('createGame.notBookedYet', userLang))}`;
+    locationLine += `\n   ${escapeMarkdown(formatGameBookingStatusLabel(game, userLang))}`;
   }
 
   let participantsLine = '';

@@ -35,6 +35,7 @@ export interface MessageItemProps {
   suppressOpenReactionMotion?: boolean;
   loadMediaEager?: boolean;
   groupPosition?: MessageGroupPosition;
+  entityType?: string | null;
 }
 
 export type ParsedContentPart =

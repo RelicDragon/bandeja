@@ -4,6 +4,7 @@ import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
 import { cs } from 'date-fns/locale/cs';
+import { systemMessageTranslations } from './systemMessageTranslations';
 
 const localeMap: Record<string, Locale> = {
   en: enGB,
@@ -55,6 +56,8 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Not booked yet',
     'createGame.hasBookedCourt': 'Court booked',
     'createGame.hasBookedHall': 'Hall booked',
+    'gameDetails.linkedBookings.fullyCovered': 'Fully booked',
+    'gameDetails.linkedBookings.notFullyCovered': 'Not fully booked',
     'createGame.clubCancellationNotice': 'Cancellation notice: at least {{hours}} hours before your slot.',
     'createGame.clubPolicyTitle': 'Club policies',
     'clubAdmin.dm.courtCancelled':
@@ -314,6 +317,8 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Еще не забронировано',
     'createGame.hasBookedCourt': 'Корт забронирован',
     'createGame.hasBookedHall': 'Зал забронирован',
+    'gameDetails.linkedBookings.fullyCovered': 'Полностью забронировано',
+    'gameDetails.linkedBookings.notFullyCovered': 'Забронировано не полностью',
     'createGame.clubCancellationNotice': 'Уведомление об отмене: не менее чем за {{hours}} ч до слота.',
     'createGame.clubPolicyTitle': 'Правила клуба',
     'clubAdmin.dm.courtCancelled':
@@ -572,6 +577,8 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Još nije rezervisano',
     'createGame.hasBookedCourt': 'Teren rezervisan',
     'createGame.hasBookedHall': 'Sala rezervisana',
+    'gameDetails.linkedBookings.fullyCovered': 'Potpuno rezervisano',
+    'gameDetails.linkedBookings.notFullyCovered': 'Nije potpuno rezervisano',
     'createGame.clubCancellationNotice': 'Obaveštenje o otkazivanju: najmanje {{hours}} sati pre termina.',
     'createGame.clubPolicyTitle': 'Pravila kluba',
     'clubAdmin.dm.courtCancelled':
@@ -830,6 +837,8 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Aún no reservado',
     'createGame.hasBookedCourt': 'Pista reservada',
     'createGame.hasBookedHall': 'Salón reservado',
+    'gameDetails.linkedBookings.fullyCovered': 'Completamente reservado',
+    'gameDetails.linkedBookings.notFullyCovered': 'No completamente reservado',
     'createGame.clubCancellationNotice': 'Aviso de cancelación: al menos {{hours}} horas antes de tu franja.',
     'createGame.clubPolicyTitle': 'Normas del club',
     'clubAdmin.dm.courtCancelled':
@@ -1088,6 +1097,8 @@ const translations: Record<string, Record<string, string>> = {
     'createGame.notBookedYet': 'Ještě neobjednáno',
     'createGame.hasBookedCourt': 'Kurt objednán',
     'createGame.hasBookedHall': 'Sál objednán',
+    'gameDetails.linkedBookings.fullyCovered': 'Plně rezervováno',
+    'gameDetails.linkedBookings.notFullyCovered': 'Není plně rezervováno',
     'createGame.clubCancellationNotice': 'Storno podmínky: alespoň {{hours}} hodin před termínem.',
     'createGame.clubPolicyTitle': 'Pravidla klubu',
     'clubAdmin.dm.courtCancelled':
@@ -1308,7 +1319,13 @@ const translations: Record<string, Record<string, string>> = {
 };
 
 export const t = (key: string, lang: string = 'en'): string => {
-  return translations[lang]?.[key] || translations.en[key] || key;
+  return (
+    translations[lang]?.[key] ||
+    systemMessageTranslations[lang]?.[key] ||
+    translations.en[key] ||
+    systemMessageTranslations.en?.[key] ||
+    key
+  );
 };
 
 export const formatDate = (date: Date | string, formatStr: string, lang: string = 'en'): string => {

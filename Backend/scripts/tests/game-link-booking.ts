@@ -67,10 +67,17 @@ async function main() {
 
     const linkedGame = await prisma.game.findUnique({
       where: { id: game!.id },
-      select: { hasBookedCourt: true, startTime: true, endTime: true, timeIsSet: true },
+      select: {
+        hasBookedCourt: true,
+        bookingStatus: true,
+        startTime: true,
+        endTime: true,
+        timeIsSet: true,
+      },
     });
     assert.ok(linkedGame);
     assert.equal(linkedGame!.hasBookedCourt, true);
+    assert.equal(linkedGame!.bookingStatus, 'EXTERNAL_FULL');
     assert.equal(linkedGame!.timeIsSet, true);
     assert.equal(linkedGame!.startTime.toISOString(), start.toISOString());
     assert.equal(linkedGame!.endTime.toISOString(), end.toISOString());

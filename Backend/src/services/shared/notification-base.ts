@@ -46,6 +46,32 @@ export function resolveGameClubPlace(
   return label !== key ? label : 'Club is not set';
 }
 
+export function formatGameBookingStatusLabel(
+  game: {
+    bookingStatus?: string | null;
+    hasBookedCourt?: boolean | null;
+    entityType?: string | null;
+  },
+  lang: string,
+): string {
+  const isBar = game.entityType === 'BAR';
+  switch (game.bookingStatus) {
+    case 'EXTERNAL_FULL':
+      return t('gameDetails.linkedBookings.fullyCovered', lang);
+    case 'EXTERNAL_PARTIAL':
+      return t('gameDetails.linkedBookings.notFullyCovered', lang);
+    case 'MANUAL':
+      return isBar ? t('createGame.hasBookedHall', lang) : t('createGame.hasBookedCourt', lang);
+    case 'NONE':
+      return t('createGame.notBookedYet', lang);
+    default:
+      if (game.hasBookedCourt) {
+        return isBar ? t('createGame.hasBookedHall', lang) : t('createGame.hasBookedCourt', lang);
+      }
+      return t('createGame.notBookedYet', lang);
+  }
+}
+
 export function formatGameScheduleLine(
   gameInfo: FormattedGameInfo,
   options: { includeDuration?: boolean } = {},

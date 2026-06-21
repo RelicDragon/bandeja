@@ -66,6 +66,7 @@ async function main() {
   assert.ok(game0);
   assert.equal(game0!.linkedBookings.length, 0);
   assert.equal(game0!.hasBookedCourt, false);
+  assert.equal(game0!.bookingStatus, 'NONE');
 
   const game1 = await GameCreateService.createGame(
     {
@@ -87,6 +88,7 @@ async function main() {
   assert.ok(game1);
   assert.equal(game1!.linkedBookings.length, 1);
   assert.equal(game1!.hasBookedCourt, true);
+  assert.equal(game1!.bookingStatus, 'EXTERNAL_FULL');
   assert.equal(game1!.linkedBookings[0].externalBookingId, bookingA);
 
   const game2 = await GameCreateService.createGame(
@@ -144,9 +146,10 @@ async function main() {
   await patchGameBookings(game1!.id, user.id, false, { remove: [bookingA, bookingB] });
   const cleared = await prisma.game.findUnique({
     where: { id: game1!.id },
-    select: { hasBookedCourt: true },
+    select: { hasBookedCourt: true, bookingStatus: true },
   });
   assert.equal(cleared!.hasBookedCourt, false);
+  assert.equal(cleared!.bookingStatus, 'NONE');
 
   await cleanupGame(game0!.id);
   await cleanupGame(game1!.id);

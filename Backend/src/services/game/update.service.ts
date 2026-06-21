@@ -27,6 +27,8 @@ import { BracketAdvancementService } from '../league/bracketAdvancement.service'
 import {
   assertNoLegacyExternalBookingFieldsOnUpdate,
   deriveGameTimesFromJoinRows,
+  syncGameBookingState,
+  gamePatchAffectsBookingStatus,
 } from './gameExternalBooking.service';
 import { canConfigureGamePhotosPrivacy } from '../../shared/gamePhotos/permissions';
 import {
@@ -668,6 +670,13 @@ export class GameUpdateService {
           },
         },
       });
+
+      if (
+        gamePatchAffectsBookingStatus(data) ||
+        gamePatchAffectsBookingStatus(updateData as Record<string, unknown>)
+      ) {
+        await syncGameBookingState(tx, id);
+      }
     });
 
     await GameReadinessService.updateGameReadiness(id);

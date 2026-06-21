@@ -488,6 +488,7 @@ export interface Game {
   resultsByAnyone?: boolean;
   allowDirectJoin: boolean;
   hasBookedCourt?: boolean;
+  bookingStatus?: 'NONE' | 'MANUAL' | 'EXTERNAL_PARTIAL' | 'EXTERNAL_FULL';
   timeOverride?: boolean;
   linkedBookings?: Array<{
     id: string;

@@ -15,7 +15,7 @@ import { ClubIntegrationType, Prisma } from '@prisma/client';
 import prisma from '../src/config/database';
 import { parseBooktimeIntegrationConfig } from '../src/shared/clubIntegration';
 import { BOOKTIME_DEFAULT_TIMEZONE } from '../src/shared/booktime/localTime';
-import { deriveGameTimesFromJoinRows } from '../src/services/game/gameExternalBooking.service';
+import { deriveGameTimesFromJoinRows, syncGameBookingState } from '../src/services/game/gameExternalBooking.service';
 import { deriveGameTimeFromBookings } from '../src/shared/gameBooking/deriveGameTimeFromBookings';
 import { decryptToken, encryptToken } from '../src/utils/tokenEncryption';
 import { BooktimeScriptClient } from './lib/booktimeApiClient';
@@ -291,6 +291,8 @@ async function applyGameFixes(
           `source=${fix.source} start ${fix.oldStart} -> ${fix.newStart} end ${fix.oldEnd} -> ${fix.newEnd}`,
       );
     }
+
+    await syncGameBookingState(tx, group.game.id);
   });
 
   stats.gamesUpdated += 1;

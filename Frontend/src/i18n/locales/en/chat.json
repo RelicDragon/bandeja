@@ -182,6 +182,61 @@
       "USER_CHAT_DECLINED": "{{userName}} declined the chat request",
       "PARTICIPANTS_ONLY_CHAT_CREATED": "Participants-only chat has been created",
       "ADMINS_CHAT_CREATED": "Admins chat has been created",
+      "BAR": {
+        "USER_JOINED_GAME": "{{userName}} joined the bar",
+        "USER_LEFT_GAME": "{{userName}} left the bar",
+        "USER_ACCEPTED_INVITE": "{{userName}} joined the bar",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} requested to join the bar",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} joined the bar",
+        "USER_KICKED": "{{userName}} was kicked from the bar",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the bar",
+        "GAME_CLUB_CHANGED": "Bar location changed to {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Bar date/time changed to {{dateTime}}"
+      },
+      "TRAINING": {
+        "USER_JOINED_GAME": "{{userName}} joined the training",
+        "USER_LEFT_GAME": "{{userName}} left the training",
+        "USER_ACCEPTED_INVITE": "{{userName}} joined the training",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} requested to join the training",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} joined the training",
+        "USER_KICKED": "{{userName}} was kicked from the training",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the training",
+        "GAME_CLUB_CHANGED": "Training location changed to {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Training date/time changed to {{dateTime}}"
+      },
+      "TOURNAMENT": {
+        "USER_JOINED_GAME": "{{userName}} joined the tournament",
+        "USER_LEFT_GAME": "{{userName}} left the tournament",
+        "USER_ACCEPTED_INVITE": "{{userName}} joined the tournament",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} requested to join the tournament",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} joined the tournament",
+        "USER_KICKED": "{{userName}} was kicked from the tournament",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the tournament",
+        "GAME_CLUB_CHANGED": "Tournament location changed to {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Tournament date/time changed to {{dateTime}}"
+      },
+      "LEAGUE": {
+        "USER_JOINED_GAME": "{{userName}} joined the league",
+        "USER_LEFT_GAME": "{{userName}} left the league",
+        "USER_ACCEPTED_INVITE": "{{userName}} joined the league",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} requested to join the league",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} joined the league",
+        "USER_KICKED": "{{userName}} was kicked from the league",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the league",
+        "GAME_CLUB_CHANGED": "League location changed to {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "League date/time changed to {{dateTime}}"
+      },
+      "LEAGUE_SEASON": {
+        "USER_JOINED_GAME": "{{userName}} joined the league season",
+        "USER_LEFT_GAME": "{{userName}} left the league season",
+        "USER_ACCEPTED_INVITE": "{{userName}} joined the league season",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} requested to join the league season",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} joined the league season",
+        "USER_KICKED": "{{userName}} was kicked from the league season",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the league season",
+        "GAME_CLUB_CHANGED": "League season location changed to {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "League season date/time changed to {{dateTime}}"
+      },
       "actions": {
         "joined": "joined the game",
         "left": "left the game"

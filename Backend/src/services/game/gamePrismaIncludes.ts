@@ -174,6 +174,9 @@ export const gameBaseInclude = {
       photoGenerationsUsed: true,
     },
   },
+} satisfies Prisma.GameInclude;
+
+export const gameDetailExternalBookingsInclude = {
   externalBookings: {
     orderBy: { createdAt: 'asc' as const },
     select: {
@@ -189,6 +192,7 @@ export const gameBaseInclude = {
 
 export const gameWithRoundsAndOutcomes = {
   ...gameBaseInclude,
+  ...gameDetailExternalBookingsInclude,
   court: {
     include: {
       club: true,

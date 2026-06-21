@@ -1,6 +1,7 @@
-import { ClubIntegrationType, Prisma } from '@prisma/client';
+import { ClubIntegrationType, GameBookingStatus, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
+import { computeGameBookingStatus } from '@bandeja/shared/gameBooking/computeGameBookingStatus';
 import { ApiError } from '../../utils/ApiError';
 import { ingestBookingSnapshotTimes } from '../../shared/booktime/ingest';
 import { parseBooktimeStoredOrNaiveToDate } from '../../shared/booktime/localTime';
@@ -15,6 +16,35 @@ import {
 import { canMutateGameBookings } from '../../shared/gameBooking/bookingLinkAuthorization';
 
 type Tx = Prisma.TransactionClient;
+
+/** Game PATCH fields that can change computed bookingStatus (keep in sync with update/create flows). */
+export const BOOKING_STATUS_AFFECTING_GAME_FIELDS = [
+  'hasBookedCourt',
+  'startTime',
+  'endTime',
+  'timeIsSet',
+  'timeOverride',
+  'maxParticipants',
+  'playersPerMatch',
+  'courtId',
+  'clubId',
+] as const;
+
+export function gamePatchAffectsBookingStatus(patch: Record<string, unknown>): boolean {
+  return BOOKING_STATUS_AFFECTING_GAME_FIELDS.some((key) =>
+    Object.prototype.hasOwnProperty.call(patch, key),
+  );
+}
+
+/**
+ * Booking status sync entry points (must all call syncGameBookingState):
+ * - POST /games (create) — create.service transaction
+ * - PATCH /games/:id — update.service transaction (when patch affects status fields)
+ * - PATCH /games/:id/bookings — patchGameBookings
+ * - POST /games/:id/link-booking — linkBookingToGame
+ * - PUT /games/:id/booking-snapshots — putGameBookingSnapshots
+ * - scripts/fix-booktime-game-times — maintenance batch fix
+ */
 
 export function assertNoLegacyExternalBookingId(data: Record<string, unknown>): void {
   if (Object.prototype.hasOwnProperty.call(data, 'externalBookingId')) {
@@ -226,19 +256,71 @@ export async function deriveGameTimesFromJoinRows(
   return { startTime: new Date(derived.startTime), endTime: new Date(derived.endTime) };
 }
 
-async function syncHasBookedCourtAndTimes(tx: Tx, gameId: string): Promise<void> {
-  const linkCount = await tx.gameExternalBooking.count({ where: { gameId } });
+async function syncGameBookingState(
+  tx: Tx,
+  gameId: string,
+  options?: { clearBookedCourtWhenUnlinked?: boolean },
+): Promise<void> {
   const game = await tx.game.findUnique({
     where: { id: gameId },
-    select: { timeOverride: true, courtId: true, clubId: true },
+    select: {
+      timeOverride: true,
+      courtId: true,
+      clubId: true,
+      hasBookedCourt: true,
+      timeIsSet: true,
+      startTime: true,
+      endTime: true,
+      maxParticipants: true,
+      playersPerMatch: true,
+    },
   });
   if (!game) throw new ApiError(404, 'Game not found');
 
+  const bookingRows = await tx.gameExternalBooking.findMany({
+    where: { gameId },
+    orderBy: { createdAt: 'asc' },
+    select: {
+      bookingStart: true,
+      bookingEnd: true,
+    },
+  });
+
+  const timeZone = await resolveBooktimeTimezoneForGame(gameId);
+  const effectiveHasBookedCourt =
+    bookingRows.length > 0
+      ? true
+      : options?.clearBookedCourtWhenUnlinked
+        ? false
+        : game.hasBookedCourt;
+
+  const bookingStatus = computeGameBookingStatus({
+    linkedBookings: bookingRows.map((row) => ({
+      bookingStart: row.bookingStart?.toISOString() ?? null,
+      bookingEnd: row.bookingEnd?.toISOString() ?? null,
+    })),
+    hasBookedCourt: effectiveHasBookedCourt,
+    timeIsSet: game.timeIsSet,
+    startTime: game.startTime.toISOString(),
+    endTime: game.endTime.toISOString(),
+    maxParticipants: game.maxParticipants,
+    playersPerMatch: game.playersPerMatch,
+    courtId: game.courtId,
+    clubId: game.clubId,
+    timeZone,
+  }) as GameBookingStatus;
+
   const patch: Prisma.GameUncheckedUpdateInput = {
-    hasBookedCourt: linkCount > 0,
+    bookingStatus,
   };
 
-  if (!game.timeOverride && linkCount > 0) {
+  if (bookingRows.length > 0) {
+    patch.hasBookedCourt = true;
+  } else if (options?.clearBookedCourtWhenUnlinked) {
+    patch.hasBookedCourt = false;
+  }
+
+  if (!game.timeOverride && bookingRows.length > 0) {
     const derived = await deriveGameTimesFromJoinRows(gameId, tx);
     if (derived) {
       patch.startTime = derived.startTime;
@@ -247,7 +329,7 @@ async function syncHasBookedCourtAndTimes(tx: Tx, gameId: string): Promise<void>
     }
   }
 
-  if (!game.courtId && linkCount > 0) {
+  if (!game.courtId && bookingRows.length > 0) {
     const bookingWithCourt = await tx.gameExternalBooking.findFirst({
       where: { gameId, courtId: { not: null } },
       orderBy: { createdAt: 'asc' },
@@ -268,6 +350,14 @@ async function syncHasBookedCourtAndTimes(tx: Tx, gameId: string): Promise<void>
   }
 
   await tx.game.update({ where: { id: gameId }, data: patch });
+}
+
+export { syncGameBookingState };
+
+export async function recomputeGameBookingStatusForGame(gameId: string): Promise<void> {
+  await prisma.$transaction(async (tx) => {
+    await syncGameBookingState(tx, gameId);
+  });
 }
 
 export async function patchGameBookings(
@@ -329,7 +419,7 @@ export async function patchGameBookings(
       });
     }
 
-    await syncHasBookedCourtAndTimes(tx, gameId);
+    await syncGameBookingState(tx, gameId, { clearBookedCourtWhenUnlinked: true });
   });
 
   return prisma.gameExternalBooking.findMany({
@@ -389,6 +479,8 @@ export async function putGameBookingSnapshots(
         });
       }
     }
+
+    await syncGameBookingState(tx, gameId);
   });
 
   return prisma.gameExternalBooking.findMany({
@@ -463,7 +555,7 @@ export async function linkBookingToGame(
       },
     });
 
-    await syncHasBookedCourtAndTimes(tx, gameId);
+    await syncGameBookingState(tx, gameId);
   });
 
   return prisma.gameExternalBooking.findMany({

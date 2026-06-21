@@ -364,9 +364,9 @@ Frontend/e2e/
 | F-34 | Join blocked wrong gender | User gender incompatible | Error toast / join blocked |
 | F-35 | Level out of range | User level outside game range | Join blocked or warning |
 | F-36 | Confirmed court badge on card | Game with `timeIsSet`, `hasBookedCourt`, club + court, no `externalBookingId` | Blue “Booked” pill (no checkmark) after time on game card |
-| F-39 | Linked booking badge on card | Game with `linkedBookings` fully covering game time and courts (Find tab / available games or game details) | Green “Booked” pill with checkmark after time on game card |
+| F-39 | Linked booking badge on card | Game with `bookingStatus=EXTERNAL_FULL` (Find tab / available games or game details) | Green “Booked” pill with checkmark after time on game card |
 | F-40 | Booking row also-used-in pill | Link same booking to second game | Booking row shows soft pill with other game name(s) |
-| F-41 | Game card badge partial external link | Game with `linkedBookings` that do not fully cover courts/time | Blue “Booked” pill (no checkmark) after time on game card |
+| F-41 | Game card badge partial external link | Game with `bookingStatus=EXTERNAL_PARTIAL` | Blue “Booked” pill (no checkmark) after time on game card |
 
 ---
 

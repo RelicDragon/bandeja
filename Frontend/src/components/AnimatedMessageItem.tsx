@@ -41,6 +41,7 @@ interface AnimatedMessageItemProps {
   showReply?: boolean;
   onForwardMessage?: (message: ChatMessage) => void;
   groupPosition?: MessageGroupPosition;
+  entityType?: string | null;
 }
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(function AnimatedMessageItem({
@@ -71,6 +72,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
   showReply = true,
   onForwardMessage,
   groupPosition = 'single',
+  entityType,
 }) {
   const { skipStaggerOnOpen, suppressOpenReactionMotion } = useLayoutSettlingForRow();
   const contextMenuState = useRowContextMenuState(message.id);
@@ -115,6 +117,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
         suppressOpenReactionMotion={suppressOpenReactionMotion}
         loadMediaEager={loadMediaEager}
         groupPosition={groupPosition}
+        entityType={entityType}
       />
     </MessageRowEnterMotion>
   );

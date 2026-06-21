@@ -22,6 +22,7 @@ import {
 import {
   assertNoLegacyExternalBookingId,
   insertJoinRows,
+  syncGameBookingState,
   parseBookingSnapshots,
   parseExternalBookingIds,
   gameExternalBookingInclude,
@@ -493,6 +494,8 @@ export class GameCreateService {
           booktimeTimeZone ?? BOOKTIME_DEFAULT_TIMEZONE,
         );
       }
+
+      await syncGameBookingState(tx, game.id);
 
       return game;
     });

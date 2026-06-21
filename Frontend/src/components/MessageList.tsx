@@ -107,6 +107,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
     openPaintGeneration = 0,
     threadLayoutSettling = false,
     onChatScrollNearBottomChange,
+    entityType,
   },
   ref
 ) {
@@ -889,6 +890,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
                     }
                     onScrollToFirstReply={onScrollToFirstReply}
                     handlers={rowHandlers}
+                    entityType={entityType}
                   />
                 );
               })}

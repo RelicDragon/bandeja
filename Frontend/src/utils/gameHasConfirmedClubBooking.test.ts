@@ -67,6 +67,17 @@ describe('resolveGameBookingBadgeKind', () => {
     expect(isExternallyFullyBookedGame(game)).toBe(false);
   });
 
+  it('prefers bookingStatus from API over linkedBookings computation', () => {
+    const game = {
+      ...baseGame,
+      bookingStatus: 'EXTERNAL_FULL',
+      linkedBookings: [],
+    } as Game;
+
+    expect(resolveGameBookingBadgeKind(game)).toBe('external_full');
+    expect(isExternallyFullyBookedGame(game)).toBe(true);
+  });
+
   it('returns none when court is not marked booked and there are no linked bookings', () => {
     expect(
       resolveGameBookingBadgeKind({
@@ -78,15 +89,15 @@ describe('resolveGameBookingBadgeKind', () => {
 });
 
 describe('evaluateGameLinkedBookingCoverage', () => {
-  it('returns null when club has no booking integration', () => {
+  it('evaluates coverage from linked bookings even when club integration fields are omitted from list payloads', () => {
     const game = {
       ...baseGame,
       court: {
         ...baseGame.court!,
         club: {
-          ...baseGame.court!.club!,
-          integrationType: null,
-          integrationConfig: null,
+          id: 'club1',
+          name: 'Club',
+          city: { timezone: 'Europe/Belgrade' },
         },
       },
       linkedBookings: [
@@ -94,11 +105,38 @@ describe('evaluateGameLinkedBookingCoverage', () => {
           id: 'l1',
           externalBookingId: 'b1',
           externalBookingProvider: 'BOOKTIME',
+          bookingStart: baseGame.startTime,
+          bookingEnd: baseGame.endTime,
         },
       ],
     } as Game;
 
-    expect(evaluateGameLinkedBookingCoverage(game)).toBeNull();
-    expect(resolveGameBookingBadgeKind(game)).toBe('manual');
+    expect(evaluateGameLinkedBookingCoverage(game)?.fullyCovered).toBe(true);
+    expect(resolveGameBookingBadgeKind(game)).toBe('external_full');
+  });
+
+  it('falls back to game city timezone when club timezone is missing', () => {
+    const game = {
+      ...baseGame,
+      city: { id: 'city1', name: 'City', timezone: 'Europe/Belgrade' },
+      court: {
+        ...baseGame.court!,
+        club: {
+          id: 'club1',
+          name: 'Club',
+        },
+      },
+      linkedBookings: [
+        {
+          id: 'l1',
+          externalBookingId: 'b1',
+          externalBookingProvider: 'BOOKTIME',
+          bookingStart: baseGame.startTime,
+          bookingEnd: baseGame.endTime,
+        },
+      ],
+    } as Game;
+
+    expect(resolveGameBookingBadgeKind(game)).toBe('external_full');
   });
 });

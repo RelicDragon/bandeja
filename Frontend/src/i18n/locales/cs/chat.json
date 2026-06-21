@@ -182,6 +182,61 @@
       "USER_CHAT_DECLINED": "{{userName}} odmítl žádost o chat",
       "PARTICIPANTS_ONLY_CHAT_CREATED": "Chat pouze pro účastníky byl vytvořen",
       "ADMINS_CHAT_CREATED": "Chat organizátorů byl vytvořen",
+      "BAR": {
+        "USER_JOINED_GAME": "{{userName}} se připojil k baru",
+        "USER_LEFT_GAME": "{{userName}} opustil bar",
+        "USER_ACCEPTED_INVITE": "{{userName}} se připojil k baru",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} požádal o připojení k baru",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} se připojil k baru",
+        "USER_KICKED": "{{userName}} byl vyhozen z baru",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem baru",
+        "GAME_CLUB_CHANGED": "Místo baru změněno na {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Datum/čas baru změněn na {{dateTime}}"
+      },
+      "TRAINING": {
+        "USER_JOINED_GAME": "{{userName}} se připojil k tréninku",
+        "USER_LEFT_GAME": "{{userName}} opustil trénink",
+        "USER_ACCEPTED_INVITE": "{{userName}} se připojil k tréninku",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} požádal o připojení k tréninku",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} se připojil k tréninku",
+        "USER_KICKED": "{{userName}} byl vyhozen z tréninku",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem tréninku",
+        "GAME_CLUB_CHANGED": "Místo tréninku změněno na {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Datum/čas tréninku změněn na {{dateTime}}"
+      },
+      "TOURNAMENT": {
+        "USER_JOINED_GAME": "{{userName}} se připojil k turnaji",
+        "USER_LEFT_GAME": "{{userName}} opustil turnaj",
+        "USER_ACCEPTED_INVITE": "{{userName}} se připojil k turnaji",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} požádal o připojení k turnaji",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} se připojil k turnaji",
+        "USER_KICKED": "{{userName}} byl vyhozen z turnaje",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem turnaje",
+        "GAME_CLUB_CHANGED": "Místo turnaje změněno na {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Datum/čas turnaje změněn na {{dateTime}}"
+      },
+      "LEAGUE": {
+        "USER_JOINED_GAME": "{{userName}} se připojil k lize",
+        "USER_LEFT_GAME": "{{userName}} opustil ligu",
+        "USER_ACCEPTED_INVITE": "{{userName}} se připojil k lize",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} požádal o připojení k lize",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} se připojil k lize",
+        "USER_KICKED": "{{userName}} byl vyhozen z ligy",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem ligy",
+        "GAME_CLUB_CHANGED": "Místo ligy změněno na {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Datum/čas ligy změněn na {{dateTime}}"
+      },
+      "LEAGUE_SEASON": {
+        "USER_JOINED_GAME": "{{userName}} se připojil k sezóně ligy",
+        "USER_LEFT_GAME": "{{userName}} opustil sezónu ligy",
+        "USER_ACCEPTED_INVITE": "{{userName}} se připojil k sezóně ligy",
+        "USER_JOINED_JOIN_QUEUE": "{{userName}} požádal o připojení k sezóně ligy",
+        "USER_ACCEPTED_JOIN_QUEUE": "{{userName}} se připojil k sezóně ligy",
+        "USER_KICKED": "{{userName}} byl vyhozen ze sezóny ligy",
+        "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je nyní vlastníkem sezóny ligy",
+        "GAME_CLUB_CHANGED": "Místo sezóny ligy změněno na {{clubName}}",
+        "GAME_DATE_TIME_CHANGED": "Datum/čas sezóny ligy změněn na {{dateTime}}"
+      },
       "actions": {
         "joined": "se připojil k zápasu",
         "left": "opustil zápas"

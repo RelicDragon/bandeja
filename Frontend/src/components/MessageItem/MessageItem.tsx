@@ -60,6 +60,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   suppressOpenReactionMotion = false,
   loadMediaEager = false,
   groupPosition = 'single',
+  entityType,
 }) {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -140,7 +141,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
 
   const voiceTxRaw = currentMessage.audioTranscription?.transcription;
   const displayContent = isSystemMessage
-    ? formatSystemMessageForDisplay(currentMessage.content, t)
+    ? formatSystemMessageForDisplay(currentMessage.content, t, entityType)
     : currentMessage.messageType === 'VOICE' && voiceTxRaw?.trim()
       ? formatVoiceTranscriptionForDisplay(voiceTxRaw, t)
       : currentMessage.content;
@@ -266,7 +267,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const handleCopyMessage = (msg: ChatMessage) => {
     let text: string;
     if (!msg.senderId) {
-      text = formatSystemMessageForDisplay(msg.content, t);
+      text = formatSystemMessageForDisplay(msg.content, t, entityType);
     } else if (msg.messageType === 'VOICE' && msg.audioTranscription?.transcription?.trim()) {
       text = formatVoiceTranscriptionForDisplay(msg.audioTranscription.transcription, t);
     } else {

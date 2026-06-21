@@ -12,8 +12,11 @@ function resolveGameClub(game: Game): Club | undefined {
 export function useGameLinkedBookingViewer(game: Game) {
   const club = resolveGameClub(game);
   const links = useMemo(() => game.linkedBookings ?? [], [game.linkedBookings]);
+  const hasLinkedBookings =
+    links.length > 0 ||
+    game.bookingStatus === 'EXTERNAL_PARTIAL' ||
+    game.bookingStatus === 'EXTERNAL_FULL';
   const hasIntegration = clubHasBookingIntegration(club);
-  const hasLinkedBookings = links.length > 0 && hasIntegration;
   const booktimeClub = useMemo(
     () => (club && hasIntegration ? clubToBooktimeRow(club) : null),
     [club, hasIntegration],
@@ -22,7 +25,7 @@ export function useGameLinkedBookingViewer(game: Game) {
   const { isOwner, loading } = useBooktimeUserBookingIds(
     booktimeClub?.clubId,
     booktimeClub?.companyId,
-    hasLinkedBookings && Boolean(booktimeClub?.companyId),
+    hasLinkedBookings && hasIntegration && Boolean(booktimeClub?.companyId),
   );
 
   const ownsAnyLinkedBooking = useMemo(
@@ -30,23 +33,41 @@ export function useGameLinkedBookingViewer(game: Game) {
     [links, isOwner],
   );
 
-  const coverage = useMemo(
-    () =>
+  const coverage = useMemo(() => {
+    if (game.bookingStatus === 'EXTERNAL_FULL') {
+      return {
+        courtCountMet: true,
+        timeCoverageMet: true,
+        fullyCovered: true,
+        requiredBookingCount: 0,
+      };
+    }
+    if (game.bookingStatus === 'EXTERNAL_PARTIAL') {
+      return {
+        courtCountMet: false,
+        timeCoverageMet: false,
+        fullyCovered: false,
+        requiredBookingCount: 0,
+      };
+    }
+
+    return (
       evaluateGameLinkedBookingCoverage(game) ?? {
         courtCountMet: false,
         timeCoverageMet: false,
         fullyCovered: false,
         requiredBookingCount: 0,
-      },
-    [game],
-  );
+      }
+    );
+  }, [game]);
 
   const ownershipResolved = !loading || !hasLinkedBookings;
 
   return {
     hasLinkedBookings,
     coverage,
-    showOwnerSection: hasLinkedBookings && ownershipResolved && ownsAnyLinkedBooking,
-    showPublicCoverageBadge: hasLinkedBookings && ownershipResolved && !ownsAnyLinkedBooking,
+    showOwnerSection: hasLinkedBookings && hasIntegration && ownershipResolved && ownsAnyLinkedBooking,
+    showPublicCoverageBadge:
+      hasLinkedBookings && ownershipResolved && !ownsAnyLinkedBooking,
   };
 }

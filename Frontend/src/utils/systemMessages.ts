@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { resolveSystemMessageTranslationKey } from '@shared/systemMessages/resolveSystemMessageTranslationKey';
 
 export enum SystemMessageType {
   USER_JOINED_GAME = 'USER_JOINED_GAME',
@@ -87,7 +88,8 @@ const parsePriorityVariable = (v: string): number => {
 
 const translateSystemMessageData = (
   messageData: SystemMessageData,
-  translateFn: (key: string, options?: { defaultValue?: string }) => string
+  translateFn: (key: string, options?: { defaultValue?: string }) => string,
+  entityType?: string | null,
 ): string => {
   const { type, variables } = messageData;
   
@@ -120,7 +122,13 @@ const translateSystemMessageData = (
     };
   }
 
-  const template = translateFn(`chat.systemMessages.${type}`, { defaultValue: '' });
+  const entityKey = resolveSystemMessageTranslationKey(type, entityType);
+  let template = translateFn(entityKey, { defaultValue: '' });
+
+  if (!template || typeof template !== 'string') {
+    const baseKey = resolveSystemMessageTranslationKey(type);
+    template = translateFn(baseKey, { defaultValue: '' });
+  }
   
   if (!template || typeof template !== 'string') {
     const fallbackTemplate = FALLBACK_TEMPLATES[type] || '';
@@ -130,11 +138,11 @@ const translateSystemMessageData = (
   return interpolateTemplate(template, safeVariables);
 };
 
-export const useSystemMessageTranslation = () => {
+export const useSystemMessageTranslation = (entityType?: string | null) => {
   const { t } = useTranslation();
 
   const translateSystemMessage = (messageData: SystemMessageData): string => {
-    return translateSystemMessageData(messageData, t);
+    return translateSystemMessageData(messageData, t, entityType);
   };
 
   return { translateSystemMessage };
@@ -173,7 +181,8 @@ export const getSystemMessageText = (content: string): string => {
 
 export const formatSystemMessageForDisplay = (
   content: string,
-  translateFn: (key: string, options?: { defaultValue?: string }) => string
+  translateFn: (key: string, options?: { defaultValue?: string }) => string,
+  entityType?: string | null,
 ): string => {
   const systemMessageData = parseSystemMessage(content);
   
@@ -185,5 +194,5 @@ export const formatSystemMessageForDisplay = (
     return content;
   }
   
-  return translateSystemMessageData(systemMessageData, translateFn);
+  return translateSystemMessageData(systemMessageData, translateFn, entityType);
 };

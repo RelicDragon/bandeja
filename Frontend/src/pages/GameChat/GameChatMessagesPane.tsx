@@ -57,6 +57,7 @@ export const GameChatMessagesPane: React.FC = () => {
     panels,
     autoTranslateLanguageCodes,
     currentChatType,
+    game,
   } = useThreadChrome();
 
   const reduceMotion = usePrefersReducedMotion();
@@ -122,6 +123,7 @@ export const GameChatMessagesPane: React.FC = () => {
       highlightAnchorMessageId={highlightAnchorMessageId}
       openPaintGeneration={openPaintGeneration}
       threadLayoutSettling={isThreadOpenSettling || isSwitchingChatType || initialScroll === undefined}
+      entityType={contextType === 'GAME' ? game?.entityType : undefined}
     />
   );
 

@@ -4,7 +4,7 @@ import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
 import { ChatListPreviewText } from './ChatListPreviewText';
 
-type Props = { preview: string; t: TFunction };
+type Props = { preview: string; t: TFunction; entityType?: string | null };
 
 export function ChatListGenericMediaRow({ t }: { t: TFunction }) {
   return (
@@ -39,7 +39,7 @@ export function ChatListVideoRow({
   );
 }
 
-export function ChatListPreviewContent({ preview, t }: Props) {
+export function ChatListPreviewContent({ preview, t, entityType }: Props) {
   if (!preview) return null;
 
   if (preview === '[TYPE:MEDIA]') {
@@ -91,7 +91,7 @@ export function ChatListPreviewContent({ preview, t }: Props) {
     try {
       const parsed = JSON.parse(jsonStr);
       if (parsed.type && parsed.variables) {
-        return <>{formatSystemMessageForDisplay(jsonStr, t)}</>;
+        return <>{formatSystemMessageForDisplay(jsonStr, t, entityType)}</>;
       }
       if (parsed.type && parsed.text) {
         return <>{parsed.text}</>;

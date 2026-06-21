@@ -792,6 +792,24 @@ const suites: Suite[] = [
       path.join(backendRoot, 'scripts', 'tests', 'game-link-booking.ts'),
     ],
   },
+  {
+    label: 'game booking status fields',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'game-booking-status-fields.ts'),
+    ],
+  },
+  {
+    label: 'game booking status sync',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'game-booking-status-sync.ts'),
+    ],
+  },
 ];
 
 function parseSuiteIndexArg(prefix: string): number | null {
