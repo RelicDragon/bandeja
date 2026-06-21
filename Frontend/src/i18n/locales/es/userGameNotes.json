@@ -2,7 +2,7 @@
   "userGameNotes": {
     "title": "Mis Notas",
     "privacyHint": "Notas privadas - solo tú puedes verlas",
-    "placeholder": "Añade tus notas...",
+    "placeholder": "Añade una nota para ti",
     "noNotes": "Sin notas aún"
   }
 }

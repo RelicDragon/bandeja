@@ -32,4 +32,8 @@ export const queryKeys = {
     available: (filterHash: string) => ['games', 'available', filterHash] as const,
     past: (userId: string) => ['games', 'past', userId] as const,
   },
+  userGameNotes: {
+    all: ['userGameNotes'] as const,
+    detail: (gameId: string) => ['userGameNotes', gameId] as const,
+  },
 };
