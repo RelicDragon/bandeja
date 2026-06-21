@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { List, Ticket, Trophy, Users } from 'lucide-react';
+import { Calendar, Ticket, Trophy, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { Game } from '@/types';
@@ -51,8 +51,8 @@ export function MyTabPanelSwitcher({
       },
       {
         id: 'list',
-        label: t('games.listView'),
-        icon: List,
+        label: t('home.upcomings'),
+        icon: Calendar,
       },
       {
         id: 'teams',
