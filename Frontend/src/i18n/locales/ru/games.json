@@ -50,6 +50,13 @@
     "noLeaguesFound": "Лиги не найдены",
     "suitableGamesForMe": "Подходящие игры для меня",
     "haveAvailableSlots": "С доступными местами",
+    "haveAvailableSlotsHint": "Скрыть заполненные игры, к которым нельзя присоединиться",
+    "suitableRating": "Подходящий рейтинг",
+    "suitableRatingHint": "Скрыть игры вне вашего уровня",
+    "hideBarGames": "Скрыть барные игры",
+    "hideBarGamesHint": "Скрыть барные игры и фильтр баров",
+    "showPrivateGames": "Показывать приватные игры",
+    "showPrivateGamesHint": "Включает непубличные игры, в которых вы не участвуете",
     "showArchived": "Показать архивированные",
     "switchCityInProfile": "Вы можете изменить город в своем профиле",
     "calendar": "Календарь",
@@ -229,8 +236,6 @@
     "trainerSet": "Trainer set successfully",
     "trainerRemoved": "Trainer removed successfully",
     "ownershipTransferred": "Ownership transferred successfully",
-    "showPrivateGames": "Show private games",
-    "showPrivateGamesHint": "Includes non-public games you are not in",
     "gamesCount_other": "{{count}} games"
   }
 }

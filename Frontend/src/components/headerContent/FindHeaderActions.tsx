@@ -19,13 +19,15 @@ export const FindHeaderActions = ({ user, filters, onFiltersChange }: FindHeader
   const filtersControlActive = useMemo(() => {
     return (
       Boolean(filters.filtersPanelOpen) ||
+      Boolean(filters.filterAvailableSlots) ||
+      Boolean(filters.filterSuitableRating) ||
+      Boolean(filters.hideBarGames) ||
       Boolean(filters.userFilter) ||
       (filters.filterClubIds?.length ?? 0) > 0 ||
       filters.filterTimeStart !== '00:00' ||
       filters.filterTimeEnd !== '24:00' ||
       (filters.filterLevelMin ?? 1.0) > 1.0 + 1e-6 ||
       (filters.filterLevelMax ?? 7.0) < 7.0 - 1e-6 ||
-      filters.filterTier != null ||
       Boolean(filters.filterNoRating) ||
       (Boolean(user?.isAdmin) && Boolean(filters.showPrivateGames))
     );

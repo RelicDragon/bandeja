@@ -50,6 +50,13 @@
     "noLeaguesFound": "Lige nisu pronađene",
     "suitableGamesForMe": "Pogodne igre za mene",
     "haveAvailableSlots": "Sa slobodnim mestom",
+    "haveAvailableSlotsHint": "Sakrij popunjene igre kojima se ne možete pridružiti",
+    "suitableRating": "Odgovarajući rejting",
+    "suitableRatingHint": "Sakrij igre van vašeg nivoa",
+    "hideBarGames": "Sakrij bar igre",
+    "hideBarGamesHint": "Sakrij bar igre i filter barova",
+    "showPrivateGames": "Prikaži privatne igre",
+    "showPrivateGamesHint": "Uključuje nejavne igre u kojima niste učesnik",
     "showArchived": "Prikaži arhivirane",
     "switchCityInProfile": "Možeš promeniti grad u svom profilu",
     "calendar": "Kalendar",
@@ -228,8 +235,6 @@
     "trainerSet": "Trainer set successfully",
     "trainerRemoved": "Trainer removed successfully",
     "ownershipTransferred": "Ownership transferred successfully",
-    "showPrivateGames": "Show private games",
-    "showPrivateGamesHint": "Includes non-public games you are not in",
     "gamesCount_other": "{{count}} games"
   }
 }

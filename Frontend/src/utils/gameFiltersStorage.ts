@@ -8,7 +8,11 @@ export type FindSportFilterValue = 'primary' | 'all' | Sport;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 export interface GameFilters {
-  userFilter: boolean;
+  /** @deprecated Use filterAvailableSlots and filterSuitableRating. */
+  userFilter?: boolean;
+  filterAvailableSlots?: boolean;
+  filterSuitableRating?: boolean;
+  hideBarGames?: boolean;
   gameFilter?: boolean;
   trainingFilter: boolean;
   tournamentFilter: boolean;
@@ -24,8 +28,6 @@ export interface GameFilters {
   filterLevelMin?: number;
   filterLevelMax?: number;
   filterSport?: FindSportFilterValue;
-  /** Social vs match discovery (multisport Find only). */
-  filterTier?: 'social' | 'match';
   /** When true, only games with affectsRating === false. */
   filterNoRating?: boolean;
   /** Admin Find: include non-public games the viewer is not in. */
@@ -33,7 +35,9 @@ export interface GameFilters {
 }
 
 const DEFAULT_FILTERS: GameFilters = {
-  userFilter: false,
+  filterAvailableSlots: false,
+  filterSuitableRating: false,
+  hideBarGames: false,
   gameFilter: false,
   trainingFilter: false,
   tournamentFilter: false,
@@ -47,21 +51,28 @@ const DEFAULT_FILTERS: GameFilters = {
   filterLevelMax: 7.0,
 };
 
+function normalizeStoredFilters(filters: GameFilters | undefined): GameFilters {
+  const merged = { ...DEFAULT_FILTERS, ...filters };
+  if (filters?.userFilter && !filters.filterAvailableSlots && !filters.filterSuitableRating) {
+    merged.filterAvailableSlots = true;
+    merged.filterSuitableRating = true;
+  }
+  return merged;
+}
+
 export const getGameFilters = async (): Promise<GameFilters> => {
   const filters = await get<GameFilters>(GAME_FILTERS_KEY);
   const now = Date.now();
   
   if (filters?.dateSavedAt && (now - filters.dateSavedAt) < ONE_HOUR_MS) {
     return {
-      ...DEFAULT_FILTERS,
-      ...filters,
+      ...normalizeStoredFilters(filters),
       activeTab: filters?.activeTab || 'calendar',
     };
   }
   
   return {
-    ...DEFAULT_FILTERS,
-    ...filters,
+    ...normalizeStoredFilters(filters),
     activeTab: filters?.activeTab || 'calendar',
     listViewStartDate: undefined,
     calendarSelectedDate: undefined,

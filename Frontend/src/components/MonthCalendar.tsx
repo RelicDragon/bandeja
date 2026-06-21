@@ -7,20 +7,18 @@ import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import {
-  passesAvailableGamePanelFilters,
+import { passesAvailableGamePanelFilters,
   DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
   type AvailableGamePanelFilterState,
 } from '@/utils/availableGamePanelFilters';
-import { getDisplayLevelForSport } from '@/utils/profileSports';
-import { parseGameSport } from '@/utils/gameSport';
 import { useUnreadStore } from '@/store/unreadStore';
 import { gameUnreadCountsMap } from '@/utils/unreadCountsFromStore';
+import { passesFindNoRatingFilter } from '@/utils/findDiscovery';
 import {
-  passesFindNoRatingFilter,
-  passesFindTierFilter,
-  type FindTierFilter,
-} from '@/utils/findDiscovery';
+  passesFindAvailableSlotsFilter,
+  passesFindHideBarGamesFilter,
+  passesFindSuitableRatingFilter,
+} from '@/utils/findAvailabilityFilters';
 
 type DisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
 
@@ -50,7 +48,9 @@ export interface MonthCalendarProps {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
   availableGames: Game[];
-  userFilter?: boolean;
+  filterAvailableSlots?: boolean;
+  filterSuitableRating?: boolean;
+  hideBarGames?: boolean;
   gameFilter?: boolean;
   trainingFilter?: boolean;
   tournamentFilter?: boolean;
@@ -62,7 +62,6 @@ export interface MonthCalendarProps {
   showPrivateGames?: boolean;
   isAdmin?: boolean;
   findDiscoveryEnabled?: boolean;
-  filterTier?: FindTierFilter;
   filterNoRating?: boolean;
 }
 
@@ -78,7 +77,9 @@ export const MonthCalendar = ({
   selectedDate,
   onDateSelect,
   availableGames,
-  userFilter = false,
+  filterAvailableSlots = false,
+  filterSuitableRating = false,
+  hideBarGames = false,
   gameFilter = false,
   trainingFilter = false,
   tournamentFilter = false,
@@ -90,7 +91,6 @@ export const MonthCalendar = ({
   showPrivateGames = false,
   isAdmin = false,
   findDiscoveryEnabled = false,
-  filterTier,
   filterNoRating = false,
 }: MonthCalendarProps) => {
   const { user } = useAuthStore();
@@ -140,9 +140,10 @@ export const MonthCalendar = ({
       if (!passesAvailableGamePanelFilters(game, panelFilters)) return;
 
       if (findDiscoveryEnabled) {
-        if (!passesFindTierFilter(game, filterTier)) return;
         if (!passesFindNoRatingFilter(game, filterNoRating)) return;
       }
+
+      if (!passesFindHideBarGamesFilter(game, hideBarGames)) return;
 
       const organizer = game.entityType === 'TRAINING'
         ? (game.trainerId ? game.participants?.find((p: any) => p.userId === game.trainerId) : null) || game.participants?.find((p: any) => p.role === 'OWNER')
@@ -165,22 +166,12 @@ export const MonthCalendar = ({
         dataMap.set(gameDate, existing);
       }
 
-      if (userFilter) {
-        const slotCount = game.participants?.filter((p: any) => p.status === 'PLAYING').length ?? 0;
-        if (slotCount >= game.maxParticipants) {
-          return;
-        }
+      if (filterAvailableSlots && !passesFindAvailableSlotsFilter(game, user)) {
+        return;
+      }
 
-        if (user) {
-          const gameSport = parseGameSport(game.sport);
-          const userLevel = getDisplayLevelForSport(user, gameSport);
-          const minLevel = game.minLevel || 0;
-          const maxLevel = game.maxLevel || 10;
-
-          if (userLevel < minLevel || userLevel > maxLevel) {
-            return;
-          }
-        }
+      if (filterSuitableRating && !passesFindSuitableRatingFilter(game, user)) {
+        return;
       }
 
       if (gameFilter && game.entityType !== 'GAME') {
@@ -226,7 +217,7 @@ export const MonthCalendar = ({
     });
 
     return dataMap;
-  }, [availableGames, userFilter, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user, panelFilters, showPrivateGames, isAdmin, gamesUnreadCounts, findDiscoveryEnabled, filterTier, filterNoRating]);
+  }, [availableGames, filterAvailableSlots, filterSuitableRating, hideBarGames, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user, panelFilters, showPrivateGames, isAdmin, gamesUnreadCounts, findDiscoveryEnabled, filterNoRating]);
 
   const handlePreviousMonth = () => {
     isNavigatingRef.current = true;

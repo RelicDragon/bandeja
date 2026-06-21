@@ -1,17 +1,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RotateCcw, Sparkles, Star, Users } from 'lucide-react';
+import { RotateCcw, Star } from 'lucide-react';
 import { ToggleSwitch, RangeSlider } from '@/components';
 import { TimeRangeSlider } from '@/components/TimeRangeSlider';
 import { clubsApi } from '@/api/clubs';
 import { favoritesApi } from '@/api/favorites';
 import type { Club } from '@/types';
-import type { FindTierFilter } from '@/utils/findDiscovery';
+import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
+import { clubMatchesFindSportFilter } from '@/utils/findAvailabilityFilters';
+import type { Sport } from '@shared/sport';
 
 interface FiltersPanelProps {
   cityId?: string;
-  userFilter: boolean;
-  onUserFilterChange: (v: boolean) => void;
+  filterAvailableSlots: boolean;
+  onFilterAvailableSlotsChange: (v: boolean) => void;
+  filterSuitableRating: boolean;
+  onFilterSuitableRatingChange: (v: boolean) => void;
+  hideBarGames: boolean;
+  onHideBarGamesChange: (v: boolean) => void;
+  filterSport: FindSportFilterValue;
+  viewerPrimarySport: Sport;
   clubIds: string[];
   onClubIdsChange: (ids: string[]) => void;
   timeRange: [string, string];
@@ -25,16 +33,39 @@ interface FiltersPanelProps {
   showPrivateGames?: boolean;
   onShowPrivateGamesChange?: (v: boolean) => void;
   showDiscoveryFilters?: boolean;
-  filterTier?: FindTierFilter;
-  onFilterTierChange?: (value: FindTierFilter | undefined) => void;
   filterNoRating?: boolean;
   onFilterNoRatingChange?: (v: boolean) => void;
 }
 
+interface FilterSwitchRowProps {
+  label: string;
+  hint: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+}
+
+function FilterSwitchRow({ label, hint, checked, onChange }: FilterSwitchRowProps) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">{label}</span>
+        <p className="m-0 mt-0.5 text-[11px] leading-snug text-gray-500 dark:text-gray-400">{hint}</p>
+      </div>
+      <ToggleSwitch checked={checked} onChange={onChange} />
+    </div>
+  );
+}
+
 export const FiltersPanel = ({
   cityId,
-  userFilter,
-  onUserFilterChange,
+  filterAvailableSlots,
+  onFilterAvailableSlotsChange,
+  filterSuitableRating,
+  onFilterSuitableRatingChange,
+  hideBarGames,
+  onHideBarGamesChange,
+  filterSport,
+  viewerPrimarySport,
   clubIds,
   onClubIdsChange,
   timeRange,
@@ -48,8 +79,6 @@ export const FiltersPanel = ({
   showPrivateGames = false,
   onShowPrivateGamesChange,
   showDiscoveryFilters = false,
-  filterTier,
-  onFilterTierChange,
   filterNoRating = false,
   onFilterNoRatingChange,
 }: FiltersPanelProps) => {
@@ -109,6 +138,7 @@ export const FiltersPanel = ({
   const sortedVenueClubs = useMemo(() => {
     return [...clubs]
       .filter((c) => !barIdSet.has(c.id))
+      .filter((c) => clubMatchesFindSportFilter(c, filterSport, viewerPrimarySport))
       .sort((a, b) => {
         const af = favoriteClubIds.includes(a.id);
         const bf = favoriteClubIds.includes(b.id);
@@ -116,7 +146,7 @@ export const FiltersPanel = ({
         if (!af && bf) return 1;
         return a.name.localeCompare(b.name);
       });
-  }, [clubs, barIdSet, favoriteClubIds]);
+  }, [clubs, barIdSet, favoriteClubIds, filterSport, viewerPrimarySport]);
 
   const sortedBars = useMemo(() => {
     return [...barsInCity].sort((a, b) => {
@@ -132,9 +162,17 @@ export const FiltersPanel = ({
 
   const anyVenueClubSelected = useMemo(
     () => clubIds.some((id) => venueIdSet.has(id)),
-    [clubIds, venueIdSet]
+    [clubIds, venueIdSet],
   );
   const anyBarSelected = useMemo(() => clubIds.some((id) => barIdSet.has(id)), [clubIds, barIdSet]);
+
+  useEffect(() => {
+    const allowedIds = new Set([...sortedVenueClubs.map((c) => c.id), ...(hideBarGames ? [] : sortedBars.map((c) => c.id))]);
+    const next = clubIds.filter((id) => allowedIds.has(id));
+    if (next.length !== clubIds.length) {
+      onClubIdsChange(next);
+    }
+  }, [clubIds, hideBarGames, onClubIdsChange, sortedBars, sortedVenueClubs]);
 
   const toggleId = (id: string) => {
     onClubIdsChange(clubIds.includes(id) ? clubIds.filter((x) => x !== id) : [...clubIds, id]);
@@ -153,6 +191,13 @@ export const FiltersPanel = ({
     else toggleId(id);
   };
 
+  const handleHideBarGamesChange = (value: boolean) => {
+    onHideBarGamesChange(value);
+    if (value) {
+      onClubIdsChange(clubIds.filter((id) => !barIdSet.has(id)));
+    }
+  };
+
   const chipClass = (active: boolean) =>
     `inline-flex items-center gap-1 shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
       active
@@ -162,81 +207,43 @@ export const FiltersPanel = ({
 
   return (
     <div className="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-gradient-to-b from-white to-gray-50/80 dark:from-gray-900 dark:to-gray-900/95 shadow-sm p-4 space-y-5">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-          {t('games.availableForMe', { defaultValue: 'Available for me' })}
-        </span>
-        <ToggleSwitch checked={userFilter} onChange={onUserFilterChange} />
-      </div>
-      {userFilter && (
-        <p className="text-xs text-primary-700/90 dark:text-primary-300/90 -mt-2">
-          {t('games.availableForMeHint', { defaultValue: 'Showing games with available slots and suitable level limits' })}
-        </p>
+      <FilterSwitchRow
+        label={t('games.haveAvailableSlots')}
+        hint={t('games.haveAvailableSlotsHint')}
+        checked={filterAvailableSlots}
+        onChange={onFilterAvailableSlotsChange}
+      />
+
+      <FilterSwitchRow
+        label={t('games.suitableRating')}
+        hint={t('games.suitableRatingHint')}
+        checked={filterSuitableRating}
+        onChange={onFilterSuitableRatingChange}
+      />
+
+      <FilterSwitchRow
+        label={t('games.hideBarGames')}
+        hint={t('games.hideBarGamesHint')}
+        checked={hideBarGames}
+        onChange={handleHideBarGamesChange}
+      />
+
+      {showDiscoveryFilters && onFilterNoRatingChange && (
+        <FilterSwitchRow
+          label={t('games.findDiscovery.noRatingOnly')}
+          hint={t('games.findDiscovery.noRatingHint')}
+          checked={filterNoRating}
+          onChange={onFilterNoRatingChange}
+        />
       )}
 
       {isAdmin && onShowPrivateGamesChange && (
-        <>
-          <div className="flex items-center justify-between gap-3">
-            <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-              {t('games.showPrivateGames', { defaultValue: 'Show private games' })}
-            </span>
-            <ToggleSwitch checked={showPrivateGames} onChange={onShowPrivateGamesChange} />
-          </div>
-          {showPrivateGames && (
-            <p className="text-xs text-primary-700/90 dark:text-primary-300/90 -mt-2">
-              {t('games.showPrivateGamesHint', { defaultValue: 'Includes non-public games you are not in' })}
-            </p>
-          )}
-        </>
-      )}
-
-      {showDiscoveryFilters && onFilterTierChange && (
-        <div className="space-y-2 rounded-xl border border-gray-200/80 bg-white/70 p-3 dark:border-gray-700/80 dark:bg-gray-950/30">
-          <p className="m-0 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-            {t('games.findDiscovery.tierSection')}
-          </p>
-          <div className="flex flex-wrap gap-2 py-0.5 pr-0.5">
-            <button
-              type="button"
-              onClick={() => onFilterTierChange(undefined)}
-              className={chipClass(!filterTier)}
-            >
-              {t('common.all')}
-            </button>
-            <button
-              type="button"
-              onClick={() => onFilterTierChange('social')}
-              className={chipClass(filterTier === 'social')}
-            >
-              <Users size={12} aria-hidden />
-              {t('createGame.intent.social.title')}
-            </button>
-            <button
-              type="button"
-              onClick={() => onFilterTierChange('match')}
-              className={chipClass(filterTier === 'match')}
-            >
-              <Sparkles size={12} aria-hidden />
-              {t('createGame.intent.match.title')}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showDiscoveryFilters && onFilterNoRatingChange && (
-        <div className="rounded-xl border border-gray-200/80 bg-white/70 p-3 dark:border-gray-700/80 dark:bg-gray-950/30">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-100">
-                {t('games.findDiscovery.noRatingOnly')}
-              </span>
-              <p className="m-0 mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
-                {t('games.findDiscovery.noRatingHint')}
-              </p>
-            </div>
-            <ToggleSwitch checked={filterNoRating} onChange={onFilterNoRatingChange} />
-          </div>
-        </div>
+        <FilterSwitchRow
+          label={t('games.showPrivateGames')}
+          hint={t('games.showPrivateGamesHint')}
+          checked={showPrivateGames}
+          onChange={onShowPrivateGamesChange}
+        />
       )}
 
       <div className="space-y-2">
@@ -271,7 +278,7 @@ export const FiltersPanel = ({
         )}
       </div>
 
-      {cityId && barsInCity.length > 0 && (
+      {!hideBarGames && cityId && sortedBars.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             {t('games.bars')}

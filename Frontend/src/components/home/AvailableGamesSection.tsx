@@ -26,10 +26,9 @@ import { EntityFilterChips } from './EntityFilterChips';
 import { WeekRangeNavigator } from './WeekRangeNavigator';
 import { SubscriptionsNudgeButton } from './SubscriptionsNudgeButton';
 import { passesAvailableGamePanelFilters } from '@/utils/availableGamePanelFilters';
-import { parseGameSport } from '@/utils/gameSport';
 import { getViewerPrimarySport, resolveFindLevelFilterSport } from '@/utils/findSportFilter';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
-import { getDisplayLevelForSport, listEnabledSports } from '@/utils/profileSports';
+import { listEnabledSports } from '@/utils/profileSports';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { getSportConfig } from '@/sport/sportRegistry';
@@ -37,8 +36,12 @@ import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
 import {
   isFindDiscoveryEnabled,
   passesFindNoRatingFilter,
-  passesFindTierFilter,
 } from '@/utils/findDiscovery';
+import {
+  passesFindAvailableSlotsFilter,
+  passesFindHideBarGamesFilter,
+  passesFindSuitableRatingFilter,
+} from '@/utils/findAvailabilityFilters';
 import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
 import { usePlayersStore } from '@/store/playersStore';
 import { formatTrainerDisplayName, resolveFindEmptyMessage } from './findTrainerEmptyMessage';
@@ -97,7 +100,9 @@ export const AvailableGamesSection = ({
     }
     return startOfDay(new Date());
   }, [findListWeekStartDay]);
-  const [userFilter, setUserFilter] = useState(false);
+  const [filterAvailableSlots, setFilterAvailableSlots] = useState(false);
+  const [filterSuitableRating, setFilterSuitableRating] = useState(false);
+  const [hideBarGames, setHideBarGames] = useState(false);
   const [gameFilter, setGameFilter] = useState(false);
   const [trainingFilter, setTrainingFilter] = useState(false);
   const [tournamentFilter, setTournamentFilter] = useState(false);
@@ -110,11 +115,12 @@ export const AvailableGamesSection = ({
   const [filterLevelMin, setFilterLevelMin] = useState(1.0);
   const [filterLevelMax, setFilterLevelMax] = useState(7.0);
   const [filterSport, setFilterSport] = useState<FindSportFilterValue>('primary');
-  const [filterTier, setFilterTier] = useState<'social' | 'match' | undefined>(undefined);
   const [filterNoRating, setFilterNoRating] = useState(false);
   const [showPrivateGames, setShowPrivateGames] = useState(false);
 
-  const userFilterVal = externalFilters?.userFilter ?? userFilter;
+  const filterAvailableSlotsVal = externalFilters?.filterAvailableSlots ?? filterAvailableSlots;
+  const filterSuitableRatingVal = externalFilters?.filterSuitableRating ?? filterSuitableRating;
+  const hideBarGamesVal = externalFilters?.hideBarGames ?? hideBarGames;
   const gameFilterVal = externalFilters?.gameFilter ?? gameFilter;
   const trainingFilterVal = externalFilters?.trainingFilter ?? trainingFilter;
   const tournamentFilterVal = externalFilters?.tournamentFilter ?? tournamentFilter;
@@ -126,7 +132,6 @@ export const AvailableGamesSection = ({
   const filterLevelMinVal = externalFilters?.filterLevelMin ?? filterLevelMin;
   const filterLevelMaxVal = externalFilters?.filterLevelMax ?? filterLevelMax;
   const filterSportVal = externalFilters?.filterSport ?? filterSport;
-  const filterTierVal = externalFilters?.filterTier ?? filterTier;
   const filterNoRatingVal = externalFilters?.filterNoRating ?? filterNoRating;
   const showPrivateGamesVal = externalFilters?.showPrivateGames ?? showPrivateGames;
   const findDiscoveryEnabled = isFindDiscoveryEnabled();
@@ -146,7 +151,7 @@ export const AvailableGamesSection = ({
       filterTimeEndVal !== '24:00' ||
       filterLevelMinVal > 1.0 + 1e-6 ||
       filterLevelMaxVal < 7.0 - 1e-6 ||
-      (findDiscoveryEnabled && filterTierVal != null) ||
+      hideBarGamesVal ||
       (findDiscoveryEnabled && filterNoRatingVal) ||
       (isAdmin && showPrivateGamesVal)
     );
@@ -156,45 +161,55 @@ export const AvailableGamesSection = ({
     filterTimeEndVal,
     filterLevelMinVal,
     filterLevelMaxVal,
+    hideBarGamesVal,
     findDiscoveryEnabled,
-    filterTierVal,
     filterNoRatingVal,
     isAdmin,
     showPrivateGamesVal,
   ]);
 
-  const panelFiltersApplied = userFilterVal || panelCriteriaActive;
+  const panelFiltersApplied =
+    filterAvailableSlotsVal || filterSuitableRatingVal || hideBarGamesVal || panelCriteriaActive;
 
-  const setUserFilterVal = (v: boolean) => (onFilterChange ? onFilterChange('userFilter', v) : setUserFilter(v));
+  const setFilterAvailableSlotsVal = (v: boolean) =>
+    onFilterChange ? onFilterChange('filterAvailableSlots', v) : setFilterAvailableSlots(v);
+  const setFilterSuitableRatingVal = (v: boolean) =>
+    onFilterChange ? onFilterChange('filterSuitableRating', v) : setFilterSuitableRating(v);
+  const setHideBarGamesVal = (v: boolean) =>
+    onFilterChange ? onFilterChange('hideBarGames', v) : setHideBarGames(v);
   const setShowPrivateGamesVal = (v: boolean) =>
     onFilterChange ? onFilterChange('showPrivateGames', v) : setShowPrivateGames(v);
 
   const resetPanelFilters = () => {
     if (onFiltersChange) {
       onFiltersChange({
-        userFilter: false,
+        filterAvailableSlots: false,
+        filterSuitableRating: false,
+        hideBarGames: false,
         filterClubIds: [],
         filterTimeStart: '00:00',
         filterTimeEnd: '24:00',
         filterLevelMin: 1.0,
         filterLevelMax: 7.0,
-        filterTier: undefined,
         filterNoRating: false,
         showPrivateGames: false,
       });
     } else {
-      setUserFilter(false);
+      setFilterAvailableSlots(false);
+      setFilterSuitableRating(false);
+      setHideBarGames(false);
       setFilterClubIds([]);
       setFilterTimeStart('00:00');
       setFilterTimeEnd('24:00');
       setFilterLevelMin(1.0);
       setFilterLevelMax(7.0);
-      setFilterTier(undefined);
       setFilterNoRating(false);
       setShowPrivateGames(false);
     }
     if (onFilterChange && !onFiltersChange) {
-      onFilterChange('userFilter', false);
+      onFilterChange('filterAvailableSlots', false);
+      onFilterChange('filterSuitableRating', false);
+      onFilterChange('hideBarGames', false);
     }
   };
 
@@ -207,8 +222,10 @@ export const AvailableGamesSection = ({
       if (updates.filterLevelMin !== undefined) setFilterLevelMin(updates.filterLevelMin);
       if (updates.filterLevelMax !== undefined) setFilterLevelMax(updates.filterLevelMax);
       if (updates.filterSport !== undefined) setFilterSport(updates.filterSport);
-      if ('filterTier' in updates) setFilterTier(updates.filterTier);
       if (updates.filterNoRating !== undefined) setFilterNoRating(updates.filterNoRating);
+      if (updates.filterAvailableSlots !== undefined) setFilterAvailableSlots(updates.filterAvailableSlots);
+      if (updates.filterSuitableRating !== undefined) setFilterSuitableRating(updates.filterSuitableRating);
+      if (updates.hideBarGames !== undefined) setHideBarGames(updates.hideBarGames);
     }
   };
 
@@ -260,7 +277,9 @@ export const AvailableGamesSection = ({
     const loadFilters = async () => {
       const filters = await getGameFilters();
       if (!externalFilters) {
-        setUserFilter(filters.userFilter);
+        setFilterAvailableSlots(filters.filterAvailableSlots ?? filters.userFilter ?? false);
+        setFilterSuitableRating(filters.filterSuitableRating ?? filters.userFilter ?? false);
+        setHideBarGames(filters.hideBarGames ?? false);
         setGameFilter(filters.gameFilter ?? false);
         setTrainingFilter(filters.trainingFilter);
         setTournamentFilter(filters.tournamentFilter ?? false);
@@ -272,7 +291,6 @@ export const AvailableGamesSection = ({
         setFilterLevelMin(filters.filterLevelMin ?? 1.0);
         setFilterLevelMax(filters.filterLevelMax ?? 7.0);
         setFilterSport(filters.filterSport ?? 'primary');
-        setFilterTier(filters.filterTier);
         setFilterNoRating(filters.filterNoRating ?? false);
         setShowPrivateGames(filters.showPrivateGames ?? false);
       }
@@ -306,7 +324,9 @@ export const AvailableGamesSection = ({
 
     const saveFilters = async () => {
       await setGameFilters({
-        userFilter: userFilterVal,
+        filterAvailableSlots: filterAvailableSlotsVal,
+        filterSuitableRating: filterSuitableRatingVal,
+        hideBarGames: hideBarGamesVal,
         gameFilter: gameFilterVal,
         trainingFilter: trainingFilterVal,
         tournamentFilter: tournamentFilterVal,
@@ -321,7 +341,6 @@ export const AvailableGamesSection = ({
         filterLevelMin: filterLevelMinVal,
         filterLevelMax: filterLevelMaxVal,
         filterSport: filterSportVal,
-        filterTier: filterTierVal,
         filterNoRating: filterNoRatingVal,
         showPrivateGames: showPrivateGamesVal,
       });
@@ -330,7 +349,9 @@ export const AvailableGamesSection = ({
   }, [
     isInitialized,
     onFilterChange,
-    userFilterVal,
+    filterAvailableSlotsVal,
+    filterSuitableRatingVal,
+    hideBarGamesVal,
     gameFilterVal,
     trainingFilterVal,
     tournamentFilterVal,
@@ -345,7 +366,6 @@ export const AvailableGamesSection = ({
     filterLevelMinVal,
     filterLevelMaxVal,
     filterSportVal,
-    filterTierVal,
     filterNoRatingVal,
     showPrivateGamesVal,
   ]);
@@ -435,12 +455,13 @@ export const AvailableGamesSection = ({
     }
 
     if (findDiscoveryEnabled) {
-      if (!passesFindTierFilter(game, filterTierVal)) {
-        return false;
-      }
       if (!passesFindNoRatingFilter(game, filterNoRatingVal)) {
         return false;
       }
+    }
+
+    if (!passesFindHideBarGamesFilter(game, hideBarGamesVal)) {
+      return false;
     }
 
     const organizer = game.entityType === 'TRAINING'
@@ -464,37 +485,12 @@ export const AvailableGamesSection = ({
       return false;
     }
 
-    if (userFilterVal) {
-      const slotCount = game.participants.filter((p: any) => p.status === 'PLAYING').length;
-      if (slotCount >= game.maxParticipants) {
-        return false;
-      }
+    if (filterAvailableSlotsVal && !passesFindAvailableSlotsFilter(game, user)) {
+      return false;
+    }
 
-      if (user) {
-        const gameSport = parseGameSport(game.sport);
-        const userLevel = getDisplayLevelForSport(user, gameSport);
-        const minLevel = game.minLevel || 0;
-        const maxLevel = game.maxLevel || 10;
-
-        if (userLevel < minLevel || userLevel > maxLevel) {
-          return false;
-        }
-      }
-
-      if (genderTeams !== 'ANY' && user?.gender) {
-        if (user.gender === 'PREFER_NOT_TO_SAY') {
-          return false;
-        }
-        if (genderTeams === 'MEN' && user.gender !== 'MALE') return false;
-        if (genderTeams === 'WOMEN' && user.gender !== 'FEMALE') return false;
-        if (genderTeams === 'MIX_PAIRS') {
-          if (user.gender !== 'MALE' && user.gender !== 'FEMALE') return false;
-          const playing = game.participants?.filter((p: any) => p.status === 'PLAYING') ?? [];
-          const maxPerGender = Math.floor((game.maxParticipants || 0) / 2);
-          const sameGenderCount = playing.filter((p: any) => p.user?.gender === user.gender).length;
-          if (sameGenderCount >= maxPerGender) return false;
-        }
-      }
+    if (filterSuitableRatingVal && !passesFindSuitableRatingFilter(game, user)) {
+      return false;
     }
 
     if (gameFilterVal && game.entityType !== 'GAME') {
@@ -664,8 +660,14 @@ export const AvailableGamesSection = ({
             <div className="pb-1">
               <FiltersPanel
                 cityId={user?.currentCity?.id}
-                userFilter={userFilterVal}
-                onUserFilterChange={setUserFilterVal}
+                filterAvailableSlots={filterAvailableSlotsVal}
+                onFilterAvailableSlotsChange={setFilterAvailableSlotsVal}
+                filterSuitableRating={filterSuitableRatingVal}
+                onFilterSuitableRatingChange={setFilterSuitableRatingVal}
+                hideBarGames={hideBarGamesVal}
+                onHideBarGamesChange={setHideBarGamesVal}
+                filterSport={filterSportVal}
+                viewerPrimarySport={viewerPrimarySport}
                 clubIds={filterClubIdsVal}
                 onClubIdsChange={(ids) => patchPanelFields({ filterClubIds: ids })}
                 timeRange={[filterTimeStartVal, filterTimeEndVal]}
@@ -676,8 +678,6 @@ export const AvailableGamesSection = ({
                 onResetFilters={resetPanelFilters}
                 showResetFooter={panelFiltersApplied}
                 showDiscoveryFilters={findDiscoveryEnabled}
-                filterTier={filterTierVal}
-                onFilterTierChange={(value) => patchPanelFields({ filterTier: value })}
                 filterNoRating={filterNoRatingVal}
                 onFilterNoRatingChange={(v) => patchPanelFields({ filterNoRating: v })}
                 isAdmin={isAdmin}
@@ -742,7 +742,9 @@ export const AvailableGamesSection = ({
     selectedDate,
     onDateSelect: handleDateSelect,
     availableGames,
-    userFilter: userFilterVal,
+    filterAvailableSlots: filterAvailableSlotsVal,
+    filterSuitableRating: filterSuitableRatingVal,
+    hideBarGames: hideBarGamesVal,
     gameFilter: gameFilterVal,
     trainingFilter: trainingFilterVal,
     tournamentFilter: tournamentFilterVal,
@@ -754,7 +756,6 @@ export const AvailableGamesSection = ({
     showPrivateGames: showPrivateGamesVal,
     isAdmin,
     findDiscoveryEnabled,
-    filterTier: filterTierVal,
     filterNoRating: filterNoRatingVal,
   };
 

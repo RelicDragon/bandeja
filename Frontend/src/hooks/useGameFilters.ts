@@ -4,7 +4,9 @@ import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFilters
 import { useShellNavStore } from '@/store/shellNavStore';
 
 const DEFAULT_FILTERS: GameFilters = {
-  userFilter: false,
+  filterAvailableSlots: false,
+  filterSuitableRating: false,
+  hideBarGames: false,
   gameFilter: false,
   trainingFilter: false,
   tournamentFilter: false,
@@ -17,7 +19,6 @@ const DEFAULT_FILTERS: GameFilters = {
   filterLevelMin: 1.0,
   filterLevelMax: 7.0,
   filterSport: 'primary',
-  filterTier: undefined,
   filterNoRating: false,
   showPrivateGames: false,
 };

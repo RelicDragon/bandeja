@@ -6,6 +6,10 @@ type EntityFilter = 'game' | 'training' | 'tournament' | 'leagues';
 
 type GameFilterSeed = {
   activeTab?: 'calendar' | 'list';
+  filterAvailableSlots?: boolean;
+  filterSuitableRating?: boolean;
+  hideBarGames?: boolean;
+  /** @deprecated */
   userFilter?: boolean;
   gameFilter?: boolean;
   trainingFilter?: boolean;
@@ -19,7 +23,6 @@ type GameFilterSeed = {
   filterLevelMax?: number;
   filterSport?: string;
   filterNoRating?: boolean;
-  filterTier?: 'social' | 'match';
   showPrivateGames?: boolean;
 };
 
@@ -140,7 +143,7 @@ export class FindPage {
   }
 
   filtersPanel(): Locator {
-    return this.page.getByText(/^available for me$/i);
+    return this.page.getByText(/^have available slots$/i);
   }
 
   resetFiltersButton(): Locator {
@@ -212,12 +215,27 @@ export class FindPage {
     }
   }
 
-  async setUserFilter(enabled: boolean) {
-    const toggle = this.filtersPanel().locator('..').getByRole('switch').first();
-    const checked = await toggle.getAttribute('aria-checked');
-    if ((checked === 'true') !== enabled) {
-      await toggle.click();
+  async setAvailabilityFilters(options: { availableSlots?: boolean; suitableRating?: boolean }) {
+    const panel = this.filtersPanel().locator('..');
+    const switches = panel.getByRole('switch');
+    if (options.availableSlots !== undefined) {
+      const toggle = switches.nth(0);
+      const checked = await toggle.getAttribute('aria-checked');
+      if ((checked === 'true') !== options.availableSlots) {
+        await toggle.click();
+      }
     }
+    if (options.suitableRating !== undefined) {
+      const toggle = switches.nth(1);
+      const checked = await toggle.getAttribute('aria-checked');
+      if ((checked === 'true') !== options.suitableRating) {
+        await toggle.click();
+      }
+    }
+  }
+
+  async setUserFilter(enabled: boolean) {
+    await this.setAvailabilityFilters({ availableSlots: enabled, suitableRating: enabled });
   }
 
   async selectClubChip(clubName: string) {
@@ -267,7 +285,9 @@ export class FindPage {
 
   async seedImpossibleLevelFilters() {
     await this.seedGameFilters({
-      userFilter: false,
+      filterAvailableSlots: false,
+      filterSuitableRating: false,
+      hideBarGames: false,
       gameFilter: false,
       trainingFilter: false,
       tournamentFilter: false,

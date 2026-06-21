@@ -338,12 +338,14 @@ Frontend/e2e/
 | F-15 | Favorite clubs shortcut | Use favorites in panel | Clubs pre-selected |
 | F-16 | Time range filter | Set start/end time | Games outside range hidden |
 | F-17 | Level range filter | Adjust min/max level | Out-of-range hidden |
-| F-18 | Sport filter | Switch primary/all sport | API refetch with sport |
-| F-19 | Social vs match tier | `@multisport` tier toggle | Correct tier games |
+| F-18 | Sport filter | Switch primary/all sport | API refetch with sport; club list matches sport |
 | F-20 | No-rating filter | Enable no-rating | Only casual games |
 | F-21 | Show private games | `@admin` toggle | Private games appear |
 | F-22 | Reset filters | Reset button | Defaults restored |
 | F-23 | Filter persistence | Set filters → reload | Filters restored from storage |
+| F-42 | Available slots filter | Enable available slots toggle | Full games hidden |
+| F-43 | Suitable rating filter | Enable suitable rating toggle | Out-of-band level games hidden |
+| F-44 | Hide bar games | Enable hide bar games toggle | Bars section hidden; bar games excluded |
 
 ### 7.4 Game discovery actions
 
