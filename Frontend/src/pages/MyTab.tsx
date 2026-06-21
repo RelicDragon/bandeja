@@ -182,39 +182,32 @@ export const MyTab = () => {
     );
   }, [myGamesSelectedDate, calendarMergedGames, calendarMergedUnreadCounts]);
 
-  const upcomingGamesForCalendar = useMemo(() => {
+  const upcomingGamesUndated = useMemo(() => {
     const base = calendarMergedGames.filter((g) => {
       if (g.timeIsSet === false) return false;
       const status = g.status;
       return status === 'ANNOUNCED' || status === 'STARTED' || status === 'FINISHED';
     });
+    return base.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  }, [calendarMergedGames]);
+
+  const upcomingGamesForCalendar = useMemo(() => {
     if (!myGamesSelectedDate) {
-      return base.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+      return upcomingGamesUndated;
     }
     const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
-    return base
+    return upcomingGamesUndated
       .filter((g) => {
         const gameStr = format(startOfDay(new Date(g.startTime)), 'yyyy-MM-dd');
         return gameStr !== selectedStr;
-      })
-      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
-  }, [myGamesSelectedDate, calendarMergedGames]);
-  const listModeGames = useMemo(
-    () =>
-      sortMyGamesByStatusAndDateTime(
-        calendarMergedGames.filter((g) => g.entityType !== 'LEAGUE_SEASON'),
-        calendarMergedUnreadCounts,
-      ),
-    [calendarMergedGames, calendarMergedUnreadCounts],
-  );
+      });
+  }, [myGamesSelectedDate, upcomingGamesUndated]);
   const showGamesCalendar = myGamesViewMode === 'calendar' && (loading || hasUpcomingGames);
-  const gamesSectionGames = myGamesViewMode === 'list' ? listModeGames : myGamesForSelectedDate;
+  const gamesSectionGames = myGamesViewMode === 'list' ? [] : myGamesForSelectedDate;
   const gamesSectionUpcoming =
-    myGamesViewMode === 'list'
-      ? undefined
-      : myGamesSelectedDate
-        ? undefined
-        : upcomingGamesForCalendar;
+    myGamesViewMode === 'list' || !myGamesSelectedDate
+      ? upcomingGamesUndated
+      : upcomingGamesForCalendar;
   const gamesSectionLoading =
     loading || (myGamesViewMode === 'calendar' && loadingPastInRange);
   const useDesktopCalendarSplit = (hasUpcomingGames || loading) && myGamesViewMode === 'calendar';
