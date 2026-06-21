@@ -25,7 +25,7 @@ import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay'
 import { usePlayersStore } from '@/store/playersStore';
 import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
 import type { BasicUser } from '@/types';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { readReceiptsFromOthers } from '@/services/chat/messageTickState';
 import {
   CHAT_MESSAGE_MENU_BACKDROP,
   CHAT_MESSAGE_MENU_INNER,
@@ -114,14 +114,19 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     setVisible(false);
   }, []);
 
+  const otherReadReceipts = useMemo(
+    () => readReceiptsFromOthers(message.readReceipts, message.senderId),
+    [message.readReceipts, message.senderId]
+  );
+
   const receiptAndSenderIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const r of message.readReceipts ?? []) {
+    for (const r of otherReadReceipts) {
       if (r.userId) ids.add(r.userId);
     }
     if (message.senderId) ids.add(message.senderId);
     return [...ids];
-  }, [message.readReceipts, message.senderId]);
+  }, [otherReadReceipts, message.senderId]);
 
   const usersById = usePlayersStore(
     useShallow((s) => {

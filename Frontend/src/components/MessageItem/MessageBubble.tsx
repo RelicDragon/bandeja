@@ -11,6 +11,7 @@ import { ChatVideoBubble } from './ChatVideoBubble';
 import { ParsedContentPart } from './types';
 import { Pencil } from 'lucide-react';
 import { MessageSendStatusIcon } from './MessageSendStatusIcon';
+import { resolveOwnMessageTicks } from '@/services/chat/messageTickState';
 import { TFunction } from 'i18next';
 import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 
