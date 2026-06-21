@@ -192,7 +192,7 @@ struct APIClient: Sendable {
 
 private struct OptionalBody: Codable, Sendable {}
 
-private struct BandejaApiEnvelope<T: Decodable>: Decodable, Sendable {
+private struct BandejaApiEnvelope<T: Decodable>: Decodable {
     let success: Bool?
     let data: T?
 }
