@@ -268,9 +268,9 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
   if (useMotionShell) {
     return (
       <motion.div
-        layoutRoot={isDesktop}
+        layoutRoot={isDesktop && !containerPosition}
         layoutScroll={false}
-        layoutId={isDesktop ? 'bottom-tab-bar' : undefined}
+        layoutId={isDesktop && !containerPosition ? 'bottom-tab-bar' : undefined}
         className={`${shellPositionClass} transform-gpu`}
         style={{ paddingBottom: shellPaddingBottom }}
         initial={animateEntry ? { y: '100%' } : false}

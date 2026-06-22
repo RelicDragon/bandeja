@@ -15,6 +15,7 @@ import { ChatListLoadingSkeleton } from '@/components/chat/ChatListLoadingSkelet
 import { ChatListEmptyPanel } from '@/components/chat/ChatListEmptyPanel';
 import { ChatListSearchSections, type ChatListSearchSectionsSharedProps } from './ChatListSearchSections';
 import type { ChatListViewModel } from './chatListViewModel.types';
+import { DESKTOP_CHAT_LIST_SCROLL_BOTTOM_PAD } from '@/utils/chatListConstants';
 
 export type { ChatListViewModel };
 
@@ -125,7 +126,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
         />
       )}
       <div
-        className={isDesktop ? 'h-full bg-white dark:bg-gray-900 flex flex-col min-h-0 overflow-hidden pb-20' : ''}
+        className={isDesktop ? 'flex h-full min-h-0 flex-col overflow-hidden bg-white dark:bg-gray-900' : ''}
         style={{
           transform: isDesktop ? 'none' : `translateY(${pullDistance}px)`,
           transition: pullDistance > 0 && !isRefreshing ? 'none' : `transform ${CHAT_LIST_PULL_TRANSITION_S}s ease-out`,
@@ -203,6 +204,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             opacity: listTransition === 'out' ? 0 : 1,
             transform: listTransition === 'out' ? 'scale(0.98)' : 'scale(1)',
             transition: `opacity ${CHAT_LIST_FADE_TRANSITION_S}s ease-out, transform ${CHAT_LIST_FADE_TRANSITION_S}s ease-out`,
+            ...(isDesktop ? { paddingBottom: DESKTOP_CHAT_LIST_SCROLL_BOTTOM_PAD } : {}),
           }}
         >
           {!isSearchMode && contactsMode && cityUsersLoading ? (

@@ -199,7 +199,7 @@ export const ChatsTab = () => {
 
   if (isDesktop) {
     return (
-      <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
+      <div className="fixed inset-x-0 bottom-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
         <ResizableSplitter
           defaultLeftWidth={40}
           minLeftWidth={250}

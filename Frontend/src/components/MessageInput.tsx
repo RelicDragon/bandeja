@@ -29,6 +29,7 @@ import { useAudioRecorder } from './audio/useAudioRecorder';
 import { isValidImage } from '@/components/chat/messageInputDraftUtils';
 import { MessageInputImagePreviewStrip } from '@/components/chat/MessageInputImagePreviewStrip';
 import { MessageInputAttachMenu } from '@/components/chat/MessageInputAttachMenu';
+import { MessageInputSearchToggle } from '@/components/chat/MessageInputSearchToggle';
 import { useMessageInputDraftSync } from '@/components/chat/useMessageInputDraftSync';
 import { useMessageInputMultiline } from '@/components/chat/useMessageInputMultiline';
 import { useMessageInputTranslation } from '@/components/chat/useMessageInputTranslation';
@@ -40,9 +41,9 @@ import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { MessageInputScrollFab } from '@/components/chat/MessageInputScrollFab';
 import { useThreadComposer, useThreadMessageActions } from '@/pages/GameChat/useThreadView';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { CHAT_PANEL_TRANSITION } from '@/components/chat/chatListMotion';
+import { CHAT_PANEL_TRANSITION, COMPOSER_TOOLBAR_SPRING } from '@/components/chat/chatListMotion';
 import { PANEL_ENTER_Y, PANEL_EXIT_Y } from '@/components/motion/motionTokens';
 
 export type { SendQueuedParams };
@@ -123,6 +124,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   const [retryingImageSlot, setRetryingImageSlot] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
+  const [isComposerSearchExpanded, setIsComposerSearchExpanded] = useState(false);
   const voiceRecorder = useAudioRecorder();
   const lastAppliedEditIdRef = useRef<string | null>(null);
   const queueSendRef = useRef(false);
@@ -259,6 +261,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   });
 
   const reduceMotion = usePrefersReducedMotion();
+  const toolbarTransition = reduceMotion ? { duration: 0 } : COMPOSER_TOOLBAR_SPRING;
 
   const showMic =
     !message.trim() &&
@@ -517,49 +520,89 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
       <form onSubmit={handleSubmit} className="relative overflow-visible">
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="mb-1 flex min-w-0 items-end justify-between gap-2 overflow-visible">
-            <div className="flex min-w-0 flex-1 flex-row flex-wrap items-end gap-2 overflow-visible">
-              <MessageInputAttachMenu
-                isDisabled={isDisabled}
-                inputBlocked={inputBlocked}
-                voiceMode={voice.voiceMode}
-                videoBusy={video.videoBusy}
-                onAddImages={(files) => setSelectedImages((prev) => [...prev, ...files])}
-                onAddVideo={(file) => void video.handleVideoFile(file)}
-                onOpenPoll={() => setIsPollModalOpen(true)}
-              />
+            <LayoutGroup id="composer-toolbar">
               <motion.div
                 layout
-                transition={{ type: 'spring', stiffness: 420, damping: 34, mass: 0.85 }}
-                className={translationBlockStackClassName}
+                transition={toolbarTransition}
+                className="relative flex min-w-0 flex-1 flex-row flex-wrap items-end gap-2 overflow-visible"
               >
-                <TranslateToButton
-                  translateToLanguage={translateToLanguage}
-                  isTranslating={translation.isTranslating}
-                  disabled={isDisabled || inputBlocked}
-                  translateDisabled={!message.trim()}
-                  onOpenModal={() => translation.setTranslationModalOpen(true)}
-                  onTranslate={translation.handleTranslateButtonClick}
-                />
-                {translation.originalMessageBeforeTranslate != null && (
-                  <UndoTranslateButton
-                    onClick={translation.handleUndoTranslate}
-                    disabled={isDisabled || inputBlocked || translation.isTranslating}
+                <motion.div
+                  layout={!isComposerSearchExpanded}
+                  initial={false}
+                  animate={{
+                    opacity: isComposerSearchExpanded ? 0 : 1,
+                    scale: isComposerSearchExpanded ? 0.88 : 1,
+                  }}
+                  transition={toolbarTransition}
+                  className="shrink-0 overflow-visible"
+                  style={{
+                    pointerEvents: isComposerSearchExpanded ? 'none' : 'auto',
+                    position: isComposerSearchExpanded ? 'absolute' : 'relative',
+                  }}
+                >
+                  <MessageInputAttachMenu
+                    isDisabled={isDisabled}
+                    inputBlocked={inputBlocked}
+                    voiceMode={voice.voiceMode}
+                    videoBusy={video.videoBusy}
+                    onAddImages={(files) => setSelectedImages((prev) => [...prev, ...files])}
+                    onAddVideo={(file) => void video.handleVideoFile(file)}
+                    onOpenPoll={() => setIsPollModalOpen(true)}
                   />
-                )}
-                {translateToLanguage ? (
-                  <button
-                    type="button"
-                    onClick={() => void translation.handleRemoveTranslateLanguage()}
-                    disabled={isDisabled || inputBlocked || translation.isTranslating}
-                    className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                    title={t('chat.clearTranslationLanguage', { defaultValue: 'Clear translation language' })}
-                    aria-label={t('chat.clearTranslationLanguage', { defaultValue: 'Clear translation language' })}
+                </motion.div>
+                <MessageInputSearchToggle
+                  disabled={isDisabled || inputBlocked || voice.voiceMode}
+                  onExpandedChange={setIsComposerSearchExpanded}
+                />
+                <motion.div
+                  layout={!isComposerSearchExpanded}
+                  initial={false}
+                  animate={{
+                    opacity: isComposerSearchExpanded ? 0 : 1,
+                    scale: isComposerSearchExpanded ? 0.88 : 1,
+                  }}
+                  transition={toolbarTransition}
+                  className="overflow-visible"
+                  style={{
+                    pointerEvents: isComposerSearchExpanded ? 'none' : 'auto',
+                    position: isComposerSearchExpanded ? 'absolute' : 'relative',
+                  }}
+                >
+                  <motion.div
+                    layout
+                    transition={toolbarTransition}
+                    className={translationBlockStackClassName}
                   >
-                    <X size={11} strokeWidth={2.75} aria-hidden />
-                  </button>
-                ) : null}
+                    <TranslateToButton
+                      translateToLanguage={translateToLanguage}
+                      isTranslating={translation.isTranslating}
+                      disabled={isDisabled || inputBlocked}
+                      translateDisabled={!message.trim()}
+                      onOpenModal={() => translation.setTranslationModalOpen(true)}
+                      onTranslate={translation.handleTranslateButtonClick}
+                    />
+                    {translation.originalMessageBeforeTranslate != null && (
+                      <UndoTranslateButton
+                        onClick={translation.handleUndoTranslate}
+                        disabled={isDisabled || inputBlocked || translation.isTranslating}
+                      />
+                    )}
+                    {translateToLanguage ? (
+                      <button
+                        type="button"
+                        onClick={() => void translation.handleRemoveTranslateLanguage()}
+                        disabled={isDisabled || inputBlocked || translation.isTranslating}
+                        className="absolute -right-1 -top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        title={t('chat.clearTranslationLanguage', { defaultValue: 'Clear translation language' })}
+                        aria-label={t('chat.clearTranslationLanguage', { defaultValue: 'Clear translation language' })}
+                      >
+                        <X size={11} strokeWidth={2.75} aria-hidden />
+                      </button>
+                    ) : null}
+                  </motion.div>
+                </motion.div>
               </motion.div>
-            </div>
+            </LayoutGroup>
             <MessageInputScrollFab />
           </div>
           <TypingIndicator

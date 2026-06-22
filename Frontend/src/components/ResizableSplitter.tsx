@@ -62,7 +62,7 @@ export const ResizableSplitter = ({
   return (
     <div ref={containerRef} className="flex h-full w-full relative min-h-0">
       <div
-        className="flex-shrink-0 overflow-hidden min-h-0 flex flex-col"
+        className="flex h-full min-h-0 flex-shrink-0 flex-col overflow-hidden"
         style={{
           width: `${leftWidth}%`,
           minWidth: `${minLeftWidth}px`,

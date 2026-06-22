@@ -181,6 +181,13 @@ export const CHAT_SEARCH_BAR_TRANSITION = {
   ease: 'easeInOut' as const,
 };
 
+export const COMPOSER_TOOLBAR_SPRING: Transition = {
+  type: 'spring',
+  stiffness: 380,
+  damping: 32,
+  mass: 0.9,
+};
+
 export const CHAT_TAIL_ENTER_MAX_STAGGER_INDEX = Math.floor(
   CHAT_ROW_STAGGER_MAX_S / CHAT_ROW_STAGGER_STEP_S
 );
