@@ -5,6 +5,7 @@ export type ResolveCreateGameBookingActionInput = {
   needsBooktimeAuth: boolean;
   locationTimeMode: LocationTimeMode;
   selectedBookingCount: number;
+  selectedBookingRecordsCount: number;
   bookingSelectionMin: number;
   willBookOnCreate: boolean;
   integratedCourtCount: number;
@@ -22,6 +23,9 @@ export function resolveCreateGameBookingAction(
 
   if (input.locationTimeMode === 'bookings') {
     if (input.selectedBookingCount < input.bookingSelectionMin) {
+      return { status: 'abort' };
+    }
+    if (input.selectedBookingRecordsCount < input.selectedBookingCount) {
       return { status: 'abort' };
     }
     return { status: 'proceed' };

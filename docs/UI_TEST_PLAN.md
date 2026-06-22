@@ -431,7 +431,7 @@ Frontend/e2e/
 | C-13k | Club booking slot taken | _(club-detail book removed)_ | N/A — slot-taken handled on create-game confirm step 1 |
 | C-13l | Club booking cancel | Connected user → upcoming list → cancel | Policy confirm modal; booking removed; snapshot refreshes |
 | C-13m | Club slot → create-game prefill | Tap slot on availability grid | Create-game opens with club/court/time; reservation ON if integrated + live API |
-| C-13n | Club booking create game soft link | Create game from booking row (`locationTimeMode=bookings&bookingIds=…`) | Bookings tab active; game saved with `hasBookedCourt: true` and `linkedBookings` |
+| C-13n | Club booking create game soft link | Create game from booking row (`bookingIds=…` or legacy `locationTimeMode=bookings&bookingIds=…`) | Unified location & time surface; reservation card pre-selected; game saved with `hasBookedCourt: true` and linked bookings |
 | C-13o | Club booking cancel linked game warn | Cancel booking that has linked game | Success + non-blocking "Your game is still on the calendar" + Open game |
 | C-13q | Club booking signup connect | ConnectClubSheet → new user signup + OTP | Account created; connected chip shown |
 | C-13r | Club booking create-game grid refresh | Open create-game for BOOKTIME club with stale snapshot | Banner then red external cells after snapshot PUT |
@@ -439,7 +439,7 @@ Frontend/e2e/
 | C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
 | C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club + integrated court | Single location & start card: club → date → court → reservation card → auth or duration → time |
-| C-13x | Integrated court opt-out toggle | BOOKTIME club, pick integrated court(s) on Time slots tab | "Don't book real court" switch + hint animate in; OFF by default (will reserve); ON skips real booking and shows full club time grid (not API-only slots); red external cells selectable; deselect integrated court or pick non-integrated court only → switch animates out |
+| C-13x | Integrated court opt-out toggle | BOOKTIME club, pick integrated court(s) on unified location & time panel | "Don't book real court" switch + hint animate in; OFF by default (will reserve); ON skips real booking and shows full club time grid (not API-only slots); red external cells selectable; deselect integrated court or pick non-integrated court only → switch animates out |
 | C-14p | Don't select court time grid | BOOKTIME club, tap "Don't select court" | Full club schedule; red external cells selectable and saveable; no bookable-days strip |
 | C-14q | Opt-out save on external overlap | Don't book real court ON; pick slot overlapping red external booking | Save succeeds (info banner ok); no hard-block toast |
 | C-13y | Create-game reserve CTA | Pick integrated court(s), connected, live API, opt-out OFF | CTA "Create game & reserve court" |
@@ -450,7 +450,7 @@ Frontend/e2e/
 | C-14d | Create-game slot taken on confirm | Slot taken between confirm and API | Step 1 error; dialog closes to time grid |
 | C-14e | Create-game snapshot block | Reservation ON, `noSyncToday` banner | Confirm disabled until snapshot usable |
 | C-14r | Create-game sync banner false positive | BOOKTIME club, user connected (bookings visible on My bookings); open create-game and select club | No amber "sync isn't active" banner while availability loads; banner only if snapshot refresh actually fails |
-| C-14f | bookingIds deep link | Open create-game from booking row (`locationTimeMode=bookings&bookingIds=…`) | Bookings tab active; row pre-selected; preselected banner; no book confirm |
+| C-14f | bookingIds deep link | Open create-game from booking row (`bookingIds=…` or legacy `locationTimeMode=bookings&bookingIds=…`) | Unified location & time; reservation card + green grid pre-selected; preselected banner; create succeeds without book confirm |
 | C-14g | Create-game confirm closes on edit | Open confirm; change time/court/date | Dialog closes automatically |
 | C-14h | Create-game !liveApiEnabled | BOOKTIME club without scout/connection | No reservation UI; generic time grid |
 | C-14i | Create-game rollback on create fail | Reservation ON; force game create API error after successful book | Confirm shows create-failed copy; court reservation rolled back (or rollback-failed message if cancel fails) |
@@ -463,15 +463,20 @@ Frontend/e2e/
 | C-14 | Court not booked | Select "Don't book court" | Allowed |
 | C-15 | Court booked | Pick court | Overlap warning if conflict |
 | C-16 | Mark court booked modal | Confirm booking | Court marked |
-| C-17 | Segmented switch (integrated club) | Pick BOOKTIME club on create | "Pick a time" \| "Bookings" labels visible on both tabs |
-| C-18 | Time slots + integrated court | Select integrated court on Time slots tab | Opt-out toggle; default reserves on create; toggle ON creates game only with full schedule and selectable red cells |
-| C-19 | Bookings tab multi-select | Bookings tab; select N reservations | Derived min–max window; live counter |
-| C-19a | Bookings tab club TZ display | Create-game Bookings tab at club whose city TZ ≠ Europe/Belgrade | Booking row wall-clock matches My bookings for same reservation |
-| C-20 | Override time on Bookings tab | Toggle adjust game time | Expand animates; create uses shorter window |
+| C-17 | Unified location-time panel (integrated club) | Pick BOOKTIME club on create | Single scheduling surface (date, courts, duration, time grid); no "Pick a time" \| "Bookings" segmented switch |
+| C-18 | Integrated court book-on-create | Select integrated court on unified location & time panel | Opt-out toggle; default reserves on create; toggle ON creates game only with full schedule and selectable red cells |
+| C-19 | Reservations strip multi-select | Connected user at BOOKTIME club; reservations on selected date | Court-labeled cards above time grid; live min–max counter; select N per format; linked-game labels informational only |
+| C-19a | Reservations strip club TZ display | Create-game at club whose city TZ ≠ Europe/Belgrade | Reservation row wall-clock matches My bookings for same reservation |
+| C-19b | Reservations strip date filter | User has bookings on multiple days; change date on create | Strip shows only reservations for selected date; empty dashed hint when none on that date (no tab-switch CTA) |
+| C-19c | Reservations strip adjacent group | 2+ consecutive same-court slots on selected date | Grouped card; tap selects/deselects all; different courts never group |
+| C-19d | Reservation grid overlay sync | Connected user; reservations on selected date | Green cells on grid for reservation windows; selected reservations stronger green + check; legend under time label; tap unambiguous green cell toggles matching card; tap ambiguous green cell (2+ courts) highlights cards without auto-select; tap free gray cell clears linked selections and sets manual time |
+| C-19e | Booking link hint card | Select 1+ reservations on unified panel | Green hint card below time grid lists each court + window; confirms game will link; shared-reservation game names shown without blocking |
+| C-19f | Schedule sync from reservations | Select reservation(s) | Form date, time, duration, and court chips update from booking union; book-on-create hint hidden |
+| C-19g | Multi-court link create | Select 2 reservations on different courts; create | Game persists 2 linked bookings and both court IDs; no book confirm modal |
+| C-20 | Override time when linking | Select reservation(s); toggle adjust game time | Expand animates; form duration/time update; create uses shorter window within reservation bounds |
 | C-21 | Multi-court confirm 2 steps | 2 integrated courts → Create | Stepper: 2 reserve steps + create; rollback on fail |
-| C-22 | Deep link bookingIds | `?locationTimeMode=bookings&bookingIds=uuid` | Bookings tab; row selected; preselected banner |
-| C-22a | Adjacent bookings picker group | Create game → Bookings tab with 2+ consecutive same-court slots | Adjacent slots shown as one grouped card; tap selects all slots and reveals per-slot rows; deselect respects min selection |
-| C-23 | Tab switch discard | Dirty selection on tab → switch | Confirm discard modal |
+| C-22 | Deep link bookingIds | `?bookingIds=uuid` (legacy `locationTimeMode=bookings` OK) | Unified surface; reservation card + grid selected; preselected banner; correct date |
+| C-22a | Adjacent reservations strip group | Create game with 2+ consecutive same-court slots in reservations strip | Adjacent slots shown as one grouped card; tap selects all slots and reveals per-slot rows; deselect respects min selection |
 | C-24 | Date/time | Change start + duration | End time updates |
 | C-25 | Level range slider | Adjust range | Min ≤ max |
 | C-26 | Max participants | Change count | Roster options update |
@@ -573,7 +578,7 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | GD-19 | Edit general info | Edit modal → general tab | Name/description updated |
-| GD-20 | Edit location & time tab | Edit modal → Location & time | Single tab replaces Where+When; club picker visible; tab label not truncated; bookings/time slots switch visible on open (no auto-scroll past it) |
+| GD-20 | Edit location & time tab | Edit modal → Location & time | Single tab replaces Where+When; club picker visible; one scheduling panel (date, courts, time grid); no bookings/time segmented switch |
 | GD-20b | Edit opt-out full schedule | BOOKTIME game, integrated court, toggle "Don't book real court" ON (or Don't select court) | Full club time grid; red external cells selectable and saveable; same as create-game opt-out |
 | GD-20a | Edit game change club | Edit modal → Location & time → change club | Club modal opens; new club selected; courts refresh for new club |
 | GD-20c | Edit club modal sport filter | TENNIS game → edit Location & time → open club modal | Only TENNIS-capable clubs listed |
@@ -581,8 +586,11 @@ Frontend/e2e/
 | GD-20e | Edit court grid sport filter | TENNIS game at multi-sport club → edit Location & time | Court grid shows TENNIS + null-sport courts only; courts API called with `sport=TENNIS` |
 | GD-20f | Edit prunes incompatible courts | Multi-sport game with padel court saved → club gains sport tags → reopen edit modal | Incompatible court selections cleared when modal opens |
 | GD-20g | Edit sport mismatch rejected | API: update game `clubId` or `courtId` to sport-incompatible venue | 400 with sport mismatch message |
-| GD-21 | Edit with linked bookings | Game with `linkedBookings` | Bookings list only; no time slots switch |
-| GD-22 | Edit unlink last booking | Remove last linked reservation | Dual subtab unlocks; `hasBookedCourt` clears; amber hint that club booking stays active; save asks to confirm unlink without auto-cancel |
+| GD-21 | Edit with linked bookings | Game with 2 linked courts at BOOKTIME club → edit Location & time | Unified surface: reservations strip + green grid; both links pre-selected; link hint lists both courts |
+| GD-21a | Edit add booking link | Edit game with 0 links → select reservation card | Link hint appears; schedule syncs from booking; save links game |
+| GD-21b | Edit partial unlink | Game with 2 linked courts → deselect one card → Save → confirm | Pending unlink hint; only deselected link removed; other link and courts preserved |
+| GD-21c | Edit shared reservation | Reservation card shows other linked games | Informational only; user can still link this game |
+| GD-22 | Edit unlink last booking | Deselect last linked reservation card | Pending unlink hint; after save manual time grid available; amber hint that club booking stays active; save asks confirm unlink |
 | GD-22a | Edit unlink save confirm | Edit modal → unlink reservation → Save | Confirm modal warns real booking is not cancelled; save unlinks only |
 | GD-23 | Edit price | Price tab | Price fields updated |
 | GD-23 | Edit level range | Level modal | Min/max saved |

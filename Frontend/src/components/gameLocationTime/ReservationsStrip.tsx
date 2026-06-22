@@ -1,43 +1,39 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { buildSelectedBookingRecordsSyncKey } from '@/components/gameLocationTime/locationTimeDraft';
 import { motion } from 'framer-motion';
 import { CalendarX2 } from 'lucide-react';
-import toast from 'react-hot-toast';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import type { BookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
-import { useBooktimeUpcomingBookings } from '@/hooks/useBooktimeUpcomingBookings';
-import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
 import { useBooktimeLinkedGames } from '@/hooks/useBooktimeLinkedGames';
-import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
 import { BooktimeAdjacentBookingGroup } from '@/components/booktime/BooktimeAdjacentBookingGroup';
 import { groupAdjacentBooktimeBookings } from '@/components/booktime/groupAdjacentBooktimeBookings';
 import { booktimeRowToClub } from '@/components/booktime/booktimeBookingUtils';
-import { BookingTimeOverrideSection } from './BookingTimeOverrideSection';
-type BookingsPickerPanelProps = {
+import { buildSelectedBookingRecordsSyncKey } from '@/components/gameLocationTime/locationTimeDraft';
+import { resolveBookingSelectionAfterDeselect } from '@/components/gameLocationTime/resolveBookingSelectionAfterDeselect';
+import { useReservationGridSync } from '@/components/gameLocationTime/useReservationGridSync';
+
+type ReservationsStripProps = {
   club: Club;
   courts: Court[];
   bookingMatchCourts?: Court[];
   companyId: string;
-  enabled: boolean;
+  clubTimezone: string;
+  dateBookings: BooktimeBookingRecord[];
+  bookings: BooktimeBookingRecord[];
+  loading: boolean;
   selectedBookingIds: string[];
   onSelectedBookingIdsChange: (ids: string[], records: BooktimeBookingRecord[]) => void;
+  onToggleBooking: (bookingId: string) => void;
   selectionLimits: BookingSelectionLimits;
-  timeOverride: boolean;
-  onTimeOverrideChange: (value: boolean) => void;
-  overrideStartTime?: string;
-  overrideEndTime?: string;
-  onOverrideTimesChange: (start: string, end: string) => void;
-  onSwitchToTimeSlots: () => void;
   onDerivedTimeChange?: (start: string | null, end: string | null) => void;
 };
 
-function BookingRowWithLinkedGames({
+function ReservationRowWithLinkedGames({
   booking,
   club,
   selected,
@@ -46,6 +42,8 @@ function BookingRowWithLinkedGames({
   disableDeselect,
   onToggle,
   clubTimezone,
+  highlighted,
+  cardRef,
 }: {
   booking: BooktimeBookingRecord;
   club: ReturnType<typeof booktimeRowToClub>;
@@ -55,66 +53,69 @@ function BookingRowWithLinkedGames({
   disableDeselect: boolean;
   onToggle: () => void;
   clubTimezone: string;
+  highlighted: boolean;
+  cardRef: (el: HTMLElement | null) => void;
 }) {
   const { linkedGames } = useBooktimeLinkedGames(booking.uuid);
   return (
-    <BooktimeBookingRow
-      booking={booking}
-      club={{
-        clubId: club.id,
-        clubName: club.name,
-        avatar: null,
-        companyId: club.integrationConfig?.companyId ?? null,
-        connected: true,
-        phoneNumber: null,
-        scoutOptIn: false,
-        cityTimezone: clubTimezone,
-        courts: (club.courts ?? []).map((c) => ({
-          id: c.id,
-          name: c.name,
-          externalCourtId: c.externalCourtId ?? null,
-          integrationCourtName: c.integrationCourtName ?? null,
-        })),
-      }}
-      selectable={selectable}
-      selected={selected}
-      dimmed={dimmed}
-      disableDeselect={disableDeselect}
-      linkedGames={linkedGames}
-      onToggleSelect={onToggle}
-      clubTimezone={clubTimezone}
-      compact
-    />
+    <li
+      ref={cardRef}
+      data-booking-id={booking.uuid}
+      className={
+        highlighted
+          ? 'rounded-xl ring-2 ring-primary-400 dark:ring-primary-500 transition-shadow'
+          : undefined
+      }
+    >
+      <BooktimeBookingRow
+        booking={booking}
+        club={{
+          clubId: club.id,
+          clubName: club.name,
+          avatar: null,
+          companyId: club.integrationConfig?.companyId ?? null,
+          connected: true,
+          phoneNumber: null,
+          scoutOptIn: false,
+          cityTimezone: clubTimezone,
+          courts: (club.courts ?? []).map((c) => ({
+            id: c.id,
+            name: c.name,
+            externalCourtId: c.externalCourtId ?? null,
+            integrationCourtName: c.integrationCourtName ?? null,
+          })),
+        }}
+        selectable={selectable}
+        selected={selected}
+        dimmed={dimmed}
+        disableDeselect={disableDeselect}
+        linkedGames={linkedGames}
+        onToggleSelect={onToggle}
+        clubTimezone={clubTimezone}
+        compact
+      />
+    </li>
   );
 }
 
-export function BookingsPickerPanel({
+export function ReservationsStrip({
   club,
   courts,
   bookingMatchCourts,
   companyId,
-  enabled,
+  clubTimezone,
+  dateBookings,
+  bookings,
+  loading,
   selectedBookingIds,
   onSelectedBookingIdsChange,
+  onToggleBooking,
   selectionLimits,
-  timeOverride,
-  onTimeOverrideChange,
-  overrideStartTime,
-  overrideEndTime,
-  onOverrideTimesChange,
-  onSwitchToTimeSlots,
   onDerivedTimeChange,
-}: BookingsPickerPanelProps) {
+}: ReservationsStripProps) {
   const { t } = useTranslation();
+  const gridSync = useReservationGridSync();
   const matchCourts = bookingMatchCourts ?? courts;
-  const { status: auth, loading: authLoading } = useBooktimeClubAuth(club.id, enabled);
-  const { bookings, loading } = useBooktimeUpcomingBookings(
-    club,
-    companyId,
-    Boolean(auth?.connected),
-    enabled,
-    matchCourts,
-  );
 
   const selectedBookings = useMemo(
     () => bookings.filter((b) => selectedBookingIds.includes(b.uuid)),
@@ -129,9 +130,11 @@ export function BookingsPickerPanel({
 
   const derived = useMemo(() => {
     if (selectedBookings.length === 0) return { startTime: null, endTime: null };
-    const snapshots = buildBookingSnapshots(selectedBookings, matchCourts);
-    return deriveGameTimeFromBookings(snapshots);
-  }, [selectedBookings, matchCourts]);
+    const snapshots = buildBookingSnapshots(selectedBookings, matchCourts, {
+      timeZone: clubTimezone,
+    });
+    return deriveGameTimeFromBookings(snapshots, { timeZone: clubTimezone });
+  }, [selectedBookings, matchCourts, clubTimezone]);
 
   useEffect(() => {
     onDerivedTimeChangeRef.current?.(derived.startTime, derived.endTime);
@@ -151,7 +154,11 @@ export function BookingsPickerPanel({
   }, [bookings, selectedBookingIds]);
 
   const atMax = selectedBookingIds.length >= selectionLimits.max;
-  const clubTimezone = getClubTimezone(club);
+  const highlightedSet = useMemo(
+    () => new Set(gridSync?.highlightedBookingIds ?? []),
+    [gridSync?.highlightedBookingIds],
+  );
+
   const booktimeMyClubRow: BooktimeMyClubRow = {
     clubId: club.id,
     clubName: club.name,
@@ -170,24 +177,14 @@ export function BookingsPickerPanel({
   };
   const clubRow = booktimeRowToClub(booktimeMyClubRow);
 
-  const handleToggle = (bookingId: string) => {
-    const isSelected = selectedBookingIds.includes(bookingId);
-    if (isSelected) {
-      if (selectedBookingIds.length <= selectionLimits.min) return;
-      const nextIds = selectedBookingIds.filter((id) => id !== bookingId);
-      onSelectedBookingIdsChange(nextIds, bookings.filter((b) => nextIds.includes(b.uuid)));
-      return;
-    }
-    if (atMax) return;
-    const nextIds = [...selectedBookingIds, bookingId];
-    onSelectedBookingIdsChange(nextIds, bookings.filter((b) => nextIds.includes(b.uuid)));
-  };
-
   const handleGroupToggle = (groupIds: string[]) => {
     const groupSelected = groupIds.every((id) => selectedBookingIds.includes(id));
     if (groupSelected) {
-      const nextIds = selectedBookingIds.filter((id) => !groupIds.includes(id));
-      if (nextIds.length < selectionLimits.min) return;
+      const nextIds = resolveBookingSelectionAfterDeselect(
+        selectedBookingIds,
+        groupIds,
+        selectionLimits,
+      );
       onSelectedBookingIdsChange(nextIds, bookings.filter((b) => nextIds.includes(b.uuid)));
       return;
     }
@@ -198,49 +195,38 @@ export function BookingsPickerPanel({
 
   const bookingEntries = useMemo(
     () =>
-      groupAdjacentBooktimeBookings(bookings, {
+      groupAdjacentBooktimeBookings(dateBookings, {
         timeZone: clubTimezone,
       }),
-    [bookings, clubTimezone],
+    [dateBookings, clubTimezone],
   );
 
-  const handleOverrideChange = (value: boolean) => {
-    if (!value && timeOverride) {
-      toast(t('createGame.locationTime.overrideResetToast'));
-    }
-    onTimeOverrideChange(value);
-    if (value && derived.startTime && derived.endTime) {
-      onOverrideTimesChange(derived.startTime, derived.endTime);
-    }
-  };
+  const registerCardRef = useCallback(
+    (bookingId: string) => (el: HTMLElement | null) => {
+      gridSync?.registerCardRef(bookingId, el);
+    },
+    [gridSync],
+  );
 
-  if (authLoading || loading) {
-    return <p className="text-sm text-gray-500 dark:text-gray-400 py-4">{t('common.loading')}</p>;
+  if (loading) {
+    return (
+      <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+        {t('common.loading')}
+      </p>
+    );
   }
 
-  if (bookings.length === 0) {
+  if (dateBookings.length === 0) {
     return (
-      <div className="flex flex-col items-center text-center py-8 px-4 space-y-3">
-        <CalendarX2 size={40} className="text-gray-300 dark:text-gray-600" />
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          {t('createGame.locationTime.emptyBookings')}
-        </p>
-        <button
-          type="button"
-          onClick={onSwitchToTimeSlots}
-          className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline"
-        >
-          {t('createGame.locationTime.emptyBookingsCta')}
-        </button>
+      <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400">
+        <CalendarX2 size={18} className="shrink-0 text-gray-300 dark:text-gray-600" />
+        <span>{t('createGame.locationTime.emptyBookingsOnDate')}</span>
       </div>
     );
   }
 
-  const effectiveStart = timeOverride && overrideStartTime ? overrideStartTime : derived.startTime;
-  const effectiveEnd = timeOverride && overrideEndTime ? overrideEndTime : derived.endTime;
-
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 pb-3 border-b border-gray-100 dark:border-gray-800">
       <motion.p
         key={selectedBookingIds.length}
         initial={{ scale: 0.96 }}
@@ -261,55 +247,43 @@ export function BookingsPickerPanel({
             const groupSelected = groupIds.every((id) => selectedBookingIds.includes(id));
             const slotsToAdd = groupIds.filter((id) => !selectedBookingIds.includes(id)).length;
             const dimmed = !groupSelected && selectedBookingIds.length + slotsToAdd > selectionLimits.max;
-            const disableDeselect =
-              groupSelected && selectedBookingIds.length - groupIds.length < selectionLimits.min;
             return (
-              <BooktimeAdjacentBookingGroup
-                key={groupIds.join('-')}
-                bookings={entry.bookings}
-                club={booktimeMyClubRow}
-                compact
-                clubTimezone={clubTimezone}
-                selectable
-                selected={groupSelected}
-                dimmed={dimmed}
-                disableDeselect={disableDeselect}
-                onToggleSelect={() => handleGroupToggle(groupIds)}
-              />
+              <li key={groupIds.join('-')} ref={registerCardRef(groupIds[0]!)}>
+                <BooktimeAdjacentBookingGroup
+                  bookings={entry.bookings}
+                  club={booktimeMyClubRow}
+                  compact
+                  clubTimezone={clubTimezone}
+                  selectable
+                  selected={groupSelected}
+                  dimmed={dimmed}
+                  disableDeselect={false}
+                  onToggleSelect={() => handleGroupToggle(groupIds)}
+                />
+              </li>
             );
           }
 
           const booking = entry.booking;
           const selected = selectedBookingIds.includes(booking.uuid);
           const dimmed = !selected && atMax;
-          const atMinSelection = selected && selectedBookingIds.length <= selectionLimits.min;
           return (
-            <BookingRowWithLinkedGames
+            <ReservationRowWithLinkedGames
               key={booking.uuid}
               booking={booking}
               club={clubRow}
               selected={selected}
-              selectable={!atMinSelection}
+              selectable
               dimmed={dimmed}
-              disableDeselect={atMinSelection}
-              onToggle={() => handleToggle(booking.uuid)}
+              disableDeselect={false}
+              onToggle={() => onToggleBooking(booking.uuid)}
               clubTimezone={clubTimezone}
+              highlighted={highlightedSet.has(booking.uuid)}
+              cardRef={registerCardRef(booking.uuid)}
             />
           );
         })}
       </ul>
-      {selectedBookings.length > 0 && derived.startTime && derived.endTime ? (
-        <BookingTimeOverrideSection
-          enabled={timeOverride}
-          onEnabledChange={handleOverrideChange}
-          startTime={effectiveStart ?? derived.startTime}
-          endTime={effectiveEnd ?? derived.endTime}
-          onStartTimeChange={(v) => onOverrideTimesChange(v, effectiveEnd ?? derived.endTime!)}
-          onEndTimeChange={(v) => onOverrideTimesChange(effectiveStart ?? derived.startTime!, v)}
-          minStart={derived.startTime}
-          maxEnd={derived.endTime}
-        />
-      ) : null}
     </div>
   );
 }

@@ -40,6 +40,7 @@ import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClu
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { shouldUseBooktimeTimeOptions } from '@/hooks/createGameBookingFlow/shouldUseBooktimeTimeOptions';
 import { courtMatchesSportFilter } from '@/utils/courtSport';
+import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price';
 export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
 
@@ -393,6 +394,37 @@ export const EditGameInfoModal = ({
     setHookDate,
     setHookTime,
   ]);
+  const multiCourtMode = game.maxParticipants > 4;
+
+  const handleEditCourtSelect = useCallback(
+    (id: string) => {
+      if (id === 'notBooked') {
+        setSelectedCourtIds([]);
+        setWhere((s) => ({ ...s, courtId: '' }));
+        return;
+      }
+      if (!multiCourtMode) {
+        setSelectedCourtIds([id]);
+        setWhere((s) => ({ ...s, courtId: id }));
+        return;
+      }
+      setSelectedCourtIds((prev) => {
+        const existing = prev.indexOf(id);
+        const next = existing >= 0 ? prev.filter((courtId) => courtId !== id) : [...prev, id];
+        const max = computeMaxSelectableCourts(game.maxParticipants, modalCourts.length);
+        const capped = next.length > max ? next.slice(0, max) : next;
+        setWhere((s) => ({ ...s, courtId: capped[0] ?? '' }));
+        return capped;
+      });
+    },
+    [multiCourtMode, game.maxParticipants, modalCourts.length],
+  );
+
+  const handleEditCourtIdsSync = useCallback((ids: string[]) => {
+    setSelectedCourtIds(ids);
+    setWhere((s) => ({ ...s, courtId: ids[0] ?? '' }));
+  }, []);
+
   const integratedCourtsForConfirm = useMemo(
     () =>
       (locationTimeDraft?.integratedCourtIds ?? [])
@@ -400,7 +432,6 @@ export const EditGameInfoModal = ({
         .filter((court): court is Court => court != null),
     [locationTimeDraft?.integratedCourtIds, modalCourts],
   );
-
 
   const editSnapshotOverlayEnabled =
     (willBookOnEdit || bookingsModeActive) &&
@@ -684,15 +715,8 @@ export const EditGameInfoModal = ({
                 setWhere((s) => ({ ...s, clubId: id, courtId: '' }));
                 setSelectedCourtIds([]);
               }}
-              onSelectCourt={(id) => {
-                if (id === 'notBooked') {
-                  setSelectedCourtIds([]);
-                  setWhere((s) => ({ ...s, courtId: '' }));
-                  return;
-                }
-                setSelectedCourtIds([id]);
-                setWhere((s) => ({ ...s, courtId: id }));
-              }}
+              onSelectCourt={handleEditCourtSelect}
+              onSelectCourtIds={handleEditCourtIdsSync}
               onToggleHasBookedCourt={(checked) => setWhere((s) => ({ ...s, hasBookedCourt: checked }))}
               selectedDate={whenSelectedDate}
               selectedTime={whenSelectedTime}
@@ -718,13 +742,11 @@ export const EditGameInfoModal = ({
               getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
               isSlotHighlighted={resolvedIsSlotHighlighted}
               dateInputRef={{ current: null }}
-              onUnlinkBooking={(externalBookingId) =>
-                setPendingRemoveBookingIds((prev) =>
-                  prev.includes(externalBookingId) ? prev : [...prev, externalBookingId],
-                )
-              }
               pendingRemoveBookingIds={pendingRemoveBookingIds}
               onDraftChange={handleLocationTimeDraftChange}
+              clubBookingFlowActive={clubBookingFlowActive}
+              booktimeCompanyId={booktimeIntegrationConfig?.companyId ?? null}
+              booktimeConnected={Boolean(booktimeAuth?.connected)}
               snapshotOverlayEnabled={editSnapshotOverlayEnabled}
               snapshotLoading={isRefreshingSnapshot}
               snapshotBannerState={snapshotBanner}

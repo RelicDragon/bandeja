@@ -4,12 +4,12 @@ import type { TFunction } from 'i18next';
 import toast from 'react-hot-toast';
 import type { Club, Court, EntityType } from '@/types';
 import type { Sport } from '@shared/sport';
-import type { LocationTimeMode } from '@/components/gameLocationTime/LocationTimeMode';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import type { SummaryChipItem } from '@/components/createGame/summaryHeader/CreateGameSummaryBar';
 import { useGameLocationTimeState } from '@/components/gameLocationTime/useGameLocationTimeState';
+import { syncFormScheduleFromBookings } from '@/components/gameLocationTime/syncFormScheduleFromBookings';
 import {
   areBookingRecordsEqual,
   areStringArraysEqual,
@@ -23,6 +23,7 @@ import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBooking
 import { clubHasBookingIntegration, parseBooktimeIntegrationConfig } from '@shared/clubIntegration';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
+import { usePreselectedBookingHydration } from './usePreselectedBookingHydration';
 import { assembleCreateGameBookingFields } from './assembleCreateGameBookingFields';
 import { resolveCreateButtonLabel } from './resolveCreateButtonLabel';
 import { resolveCreateGameBookingAction } from './resolveCreateGameBookingAction';
@@ -56,6 +57,8 @@ export type UseCreateGameBookingFlowArgs = {
   selectedTime: string;
   setSelectedTime: (time: string) => void;
   duration: number;
+  setDuration: (duration: number) => void;
+  setSelectedCourtIds: (ids: string[] | ((prev: string[]) => string[])) => void;
   courts: Court[];
   bookingMatchCourts?: Court[];
   clubs: Club[];
@@ -64,7 +67,6 @@ export type UseCreateGameBookingFlowArgs = {
   playersPerMatch: number;
   liveApiEnabledFromPanel?: boolean;
   initialHasBookedCourt?: boolean;
-  initialLocationTimeMode?: LocationTimeMode;
   initialBookingIds?: string[];
   storedInitialDate: Date;
   hasInitialStartTime?: boolean;
@@ -87,6 +89,8 @@ export function useCreateGameBookingFlow({
   selectedTime,
   setSelectedTime,
   duration,
+  setDuration,
+  setSelectedCourtIds,
   courts,
   bookingMatchCourts,
   clubs,
@@ -94,7 +98,6 @@ export function useCreateGameBookingFlow({
   maxParticipants,
   playersPerMatch,
   initialHasBookedCourt = false,
-  initialLocationTimeMode,
   initialBookingIds = [],
   storedInitialDate,
   hasInitialStartTime = false,
@@ -141,15 +144,12 @@ export function useCreateGameBookingFlow({
     selectedTime,
     duration,
     hasBookedCourt,
-    initialLocationTimeMode: initialLocationTimeMode ?? (preselectedBookings ? 'bookings' : undefined),
     initialSelectedBookingIds: initialBookingIds,
     createDateFromSelection,
   });
 
   const {
     locationTimeMode,
-    setLocationTimeMode,
-    showSegmentedSwitch,
     willBookOnCreate,
     skipRealCourtBooking,
     setSkipRealCourtBooking,
@@ -231,13 +231,6 @@ export function useCreateGameBookingFlow({
   const snapshotBlocked =
     createGameSnapshotBanner === 'noSyncToday' ||
     (createGameSnapshotBanner === 'scoutPoolEmpty' && !snapshotLastFetchedAt);
-
-  const derivedBookingWindowLabel = useMemo(() => {
-    if (!derivedBookingSummary.startTime || !derivedBookingSummary.endTime) return null;
-    const start = new Date(derivedBookingSummary.startTime);
-    const end = new Date(derivedBookingSummary.endTime);
-    return `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-  }, [derivedBookingSummary.startTime, derivedBookingSummary.endTime]);
 
   const createButtonLabel = resolveCreateButtonLabel({
     t,
@@ -365,6 +358,7 @@ export function useCreateGameBookingFlow({
       needsBooktimeAuth,
       locationTimeMode,
       selectedBookingCount: selectedBookingIds.length,
+      selectedBookingRecordsCount: selectedBookingRecords.length,
       bookingSelectionMin: bookingSelectionLimits.min,
       willBookOnCreate,
       integratedCourtCount: integratedCourtIds.length,
@@ -377,6 +371,7 @@ export function useCreateGameBookingFlow({
     needsBooktimeAuth,
     locationTimeMode,
     selectedBookingIds.length,
+    selectedBookingRecords.length,
     bookingSelectionLimits.min,
     willBookOnCreate,
     integratedCourtIds.length,
@@ -580,6 +575,17 @@ export function useCreateGameBookingFlow({
     [setSelectedBookingIds],
   );
 
+  const { hydrating: preselectedBookingsHydrating } = usePreselectedBookingHydration({
+    initialBookingIds,
+    selectedBookingIds,
+    selectedBookingRecords,
+    club: selectedClubData,
+    companyId: booktimeIntegrationConfig?.companyId,
+    matchCourts: bookingMatchCourts ?? courts,
+    enabled: clubBookingFlowActive && preselectedBookings,
+    onHydrated: handleSelectedBookingIdsChange,
+  });
+
   const handleDerivedTimeChange = useCallback(
     (start: string | null, end: string | null) => {
       setDerivedBookingSummary((prev) => {
@@ -594,13 +600,101 @@ export function useCreateGameBookingFlow({
     [],
   );
 
+  const lastSyncedScheduleKeyRef = useRef('');
+  useEffect(() => {
+    if (selectedBookingIds.length === 0) {
+      if (timeOverride) {
+        setTimeOverride(false);
+      }
+      lastSyncedScheduleKeyRef.current = '';
+      return;
+    }
+    if (locationTimeMode !== 'bookings' || selectedBookingRecords.length === 0) {
+      lastSyncedScheduleKeyRef.current = '';
+      return;
+    }
+
+    const matchCourts = bookingMatchCourts ?? courts;
+    const schedule = syncFormScheduleFromBookings({
+      selectedBookings: selectedBookingRecords,
+      courts: matchCourts,
+      club: selectedClubData,
+      timeOverride,
+      overrideStartTime,
+      overrideEndTime,
+    });
+    if (!schedule) return;
+
+    const syncKey = [
+      selectedBookingIds.join(','),
+      schedule.selectedTime,
+      schedule.durationHours,
+      schedule.courtIds.join(','),
+      timeOverride,
+      overrideStartTime,
+      overrideEndTime,
+    ].join('|');
+    if (lastSyncedScheduleKeyRef.current === syncKey) return;
+    lastSyncedScheduleKeyRef.current = syncKey;
+
+    setSelectedDate(schedule.selectedDate);
+    setSelectedTime(schedule.selectedTime);
+    setDuration(schedule.durationHours);
+    if (schedule.courtIds.length > 0) {
+      setSelectedCourtIds(schedule.courtIds);
+    }
+  }, [
+    locationTimeMode,
+    selectedBookingRecords,
+    selectedBookingIds,
+    bookingMatchCourts,
+    courts,
+    selectedClubData,
+    timeOverride,
+    overrideStartTime,
+    overrideEndTime,
+    setSelectedDate,
+    setSelectedTime,
+    setDuration,
+    setSelectedCourtIds,
+    setTimeOverride,
+  ]);
+
+  const panelDerivedSummary = useMemo(() => {
+    if (
+      timeOverride &&
+      overrideStartTime &&
+      overrideEndTime &&
+      derivedBookingSummary.count > 0
+    ) {
+      return {
+        ...derivedBookingSummary,
+        startTime: overrideStartTime,
+        endTime: overrideEndTime,
+      };
+    }
+    return derivedBookingSummary;
+  }, [
+    timeOverride,
+    overrideStartTime,
+    overrideEndTime,
+    derivedBookingSummary,
+  ]);
+
+  const derivedBookingWindowLabel = useMemo(() => {
+    const start = panelDerivedSummary.startTime;
+    const end = panelDerivedSummary.endTime;
+    if (!start || !end) return null;
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    return `${startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} – ${endDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }, [panelDerivedSummary.startTime, panelDerivedSummary.endTime]);
+
   return {
     clubBookingFlowActive,
     hasBookedCourt,
     setHasBookedCourt,
     locationTimeMode,
-    setLocationTimeMode,
-    showSegmentedSwitch,
     willBookOnCreate,
     skipRealCourtBooking,
     setSkipRealCourtBooking,
@@ -617,6 +711,7 @@ export function useCreateGameBookingFlow({
     dirtyFlags,
     derivedBookingSummary,
     setDerivedBookingSummary,
+    effectiveDerivedSummary: panelDerivedSummary,
     derivedBookingWindowLabel,
     needsBooktimeAuth,
     booktimeAuth,
@@ -638,6 +733,7 @@ export function useCreateGameBookingFlow({
     createButtonLabel,
     createDisabledByAuth: needsBooktimeAuth,
     preselectedBookings,
+    preselectedBookingsHydrating,
     resetOnClubChange,
     handleCreateAttempt,
     prepareBookingFields,
@@ -650,7 +746,6 @@ export function useCreateGameBookingFlow({
     getConfirmModalProps,
     handleCourtSelectForAuthSkip: () => {
       handleCourtSelect('notBooked');
-      setLocationTimeMode('timeSlots');
     },
     handleAuthConnected: () => {
       void refreshBooktimeAuth();

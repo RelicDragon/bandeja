@@ -1,14 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club, Court, EntityType, Game } from '@/types';
-import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
 import { useGameLocationTimeState } from '@/components/gameLocationTime/useGameLocationTimeState';
+import { useEditGameLocationTimeBookingSync } from '@/components/gameLocationTime/useEditGameLocationTimeBookingSync';
 import type { EditLocationTimeDraft } from '@/components/gameLocationTime/locationTimeDraft';
-import {
-  areBookingRecordsEqual,
-  areStringArraysEqual,
-} from '@/components/gameLocationTime/locationTimeDraft';
 import { linkedBookingToRecord } from '@/components/booktime/booktimeBookingUtils';
 import { GameStartSection } from '@/components/createGame/GameStartSection';
 import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
@@ -16,7 +12,7 @@ import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtS
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
-import { clubHasBookingIntegration, getBooktimeCompanyId } from '@shared/clubIntegration';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
 import { filterClubsBySport } from '@/utils/courtSport';
@@ -34,6 +30,7 @@ type LocationTimeTabProps = {
   hasBookedCourt: boolean;
   onSelectClub?: (id: string) => void;
   onSelectCourt: (id: string) => void;
+  onSelectCourtIds?: (ids: string[]) => void;
   onToggleHasBookedCourt: (value: boolean) => void;
   selectedDate: Date;
   selectedTime: string;
@@ -50,7 +47,6 @@ type LocationTimeTabProps = {
   getTimeSlotsForDuration: (startTime: string, duration: number) => string[];
   isSlotHighlighted: (time: string) => boolean;
   dateInputRef: RefObject<HTMLInputElement | null>;
-  onUnlinkBooking: (externalBookingId: string) => void;
   pendingRemoveBookingIds: string[];
   onDraftChange: (draft: EditLocationTimeDraft) => void;
   snapshotOverlayEnabled?: boolean;
@@ -63,6 +59,9 @@ type LocationTimeTabProps = {
   connectedPhone?: string | null;
   bookableDaysHint?: number | null;
   authGateSection?: ReactNode;
+  clubBookingFlowActive?: boolean;
+  booktimeCompanyId?: string | null;
+  booktimeConnected?: boolean;
 };
 
 export function LocationTimeTab({
@@ -76,6 +75,7 @@ export function LocationTimeTab({
   hasBookedCourt,
   onSelectClub,
   onSelectCourt,
+  onSelectCourtIds,
   onToggleHasBookedCourt,
   selectedDate,
   selectedTime,
@@ -92,7 +92,6 @@ export function LocationTimeTab({
   getTimeSlotsForDuration,
   isSlotHighlighted,
   dateInputRef,
-  onUnlinkBooking,
   pendingRemoveBookingIds,
   onDraftChange,
   snapshotOverlayEnabled = false,
@@ -105,6 +104,9 @@ export function LocationTimeTab({
   connectedPhone = null,
   bookableDaysHint = null,
   authGateSection,
+  clubBookingFlowActive = false,
+  booktimeCompanyId = null,
+  booktimeConnected = false,
 }: LocationTimeTabProps) {
   const { t } = useTranslation();
   const clubsForSport = useMemo(
@@ -119,10 +121,12 @@ export function LocationTimeTab({
     selectedClub || undefined,
     supportsClubBookingFlow(entityType, 'edit') && clubHasBookingIntegration(club),
   );
-  const [selectedBookingRecords, setSelectedBookingRecords] = useState<BooktimeBookingRecord[]>(() =>
-    (game.linkedBookings ?? []).map(linkedBookingToRecord),
-  );
   const [isClubModalOpen, setIsClubModalOpen] = useState(false);
+
+  const initialLinkedBookingRecords = useMemo(
+    () => (game.linkedBookings ?? []).map(linkedBookingToRecord),
+    [game.linkedBookings],
+  );
 
   const createDateFromSelection = () => {
     const start = new Date(selectedDate);
@@ -170,9 +174,6 @@ export function LocationTimeTab({
 
   const {
     locationTimeMode,
-    setLocationTimeMode,
-    showSegmentedSwitch,
-    showBookingsOnly,
     willBookOnCreate,
     skipRealCourtBooking,
     setSkipRealCourtBooking,
@@ -184,9 +185,57 @@ export function LocationTimeTab({
     overrideEndTime,
     setOverrideTimes,
     bookingSelectionLimits,
-    dirtyFlags,
     integratedCourtIds,
   } = locationTimeState;
+
+  const handleScheduleSync = useCallback(
+    (schedule: {
+      selectedDate: Date;
+      selectedTime: string;
+      durationHours: number;
+      courtIds: string[];
+    }) => {
+      onDateChange(schedule.selectedDate);
+      onTimeChange(schedule.selectedTime);
+      onDurationChange(schedule.durationHours);
+      if (schedule.courtIds.length > 0) {
+        onSelectCourtIds?.(schedule.courtIds);
+      }
+    },
+    [onDateChange, onTimeChange, onDurationChange, onSelectCourtIds],
+  );
+
+  const resetBookingSelection = useCallback(() => {
+    setTimeOverride(false);
+  }, [setTimeOverride]);
+
+  const {
+    selectedBookingRecords,
+    handleSelectedBookingIdsChange,
+    handleDerivedTimeChange,
+    effectiveDerivedSummary,
+    linkedBookingsHydrating,
+    fallbackSelectedBookings,
+  } = useEditGameLocationTimeBookingSync({
+    club,
+    courts,
+    bookingMatchCourts: courts,
+    companyId: booktimeCompanyId,
+    clubBookingFlowActive,
+    initialLinkedBookingIds,
+    locationTimeMode,
+    selectedBookingIds,
+    setSelectedBookingIds,
+    initialSelectedBookingRecords: initialLinkedBookingRecords,
+    timeOverride,
+    setTimeOverride,
+    overrideStartTime,
+    overrideEndTime,
+    onScheduleSync: handleScheduleSync,
+    resetBookingSelection,
+    selectedClubId: selectedClub,
+    initialClubId: game.clubId ?? '',
+  });
 
   const pendingUnlinkIds = useMemo(
     () =>
@@ -197,24 +246,6 @@ export function LocationTimeTab({
         locationTimeMode === 'bookings',
       ),
     [initialLinkedBookingIds, pendingRemoveBookingIds, selectedBookingIds, locationTimeMode],
-  );
-
-  const handleUnlinkBooking = useCallback(
-    (externalBookingId: string) => {
-      setSelectedBookingIds((prev) => prev.filter((id) => id !== externalBookingId));
-      onUnlinkBooking(externalBookingId);
-    },
-    [setSelectedBookingIds, onUnlinkBooking],
-  );
-
-  const handleSelectedBookingIdsChange = useCallback(
-    (ids: string[], records?: BooktimeBookingRecord[]) => {
-      setSelectedBookingIds((prev) => (areStringArraysEqual(prev, ids) ? prev : ids));
-      if (records) {
-        setSelectedBookingRecords((prev) => (areBookingRecordsEqual(prev, records) ? prev : records));
-      }
-    },
-    [setSelectedBookingIds],
   );
 
   const draftPayload = useMemo(
@@ -244,12 +275,11 @@ export function LocationTimeTab({
     onDraftChange(draftPayload);
   }, [draftPayload, onDraftChange]);
 
-  const linkedGame: Game = {
-    ...game,
-    linkedBookings: (game.linkedBookings ?? []).filter(
-      (b) => !pendingRemoveBookingIds.includes(b.externalBookingId),
-    ),
-  };
+  const reservationsActive =
+    clubBookingFlowActive &&
+    Boolean(booktimeCompanyId) &&
+    booktimeConnected &&
+    !needsBooktimeAuth;
 
   const courtSection = (
     <CreateGameCourtSection
@@ -301,75 +331,84 @@ export function LocationTimeTab({
           onCloseClubModal={() => setIsClubModalOpen(false)}
         />
       </div>
-    <GameLocationTimePanel
-      mode="edit"
-      entityType={entityType}
-      club={club}
-      game={linkedGame}
-      locationTimeMode={locationTimeMode}
-      onLocationTimeModeChange={setLocationTimeMode}
-      showSegmentedSwitch={showSegmentedSwitch}
-      showBookingsOnly={showBookingsOnly}
-      skipRealCourtBooking={skipRealCourtBooking}
-      onSkipRealCourtBookingChange={setSkipRealCourtBooking}
-      selectedCourtIds={selectedCourtIds}
-      courts={courts}
-      selectedBookingIds={selectedBookingIds}
-      onSelectedBookingIdsChange={handleSelectedBookingIdsChange}
-      bookingSelectionLimits={bookingSelectionLimits}
-      timeOverride={timeOverride}
-      onTimeOverrideChange={setTimeOverride}
-      overrideStartTime={overrideStartTime}
-      overrideEndTime={overrideEndTime}
-      onOverrideTimesChange={setOverrideTimes}
-      dirtyFlags={dirtyFlags}
-      companyId={getBooktimeCompanyId(club) ?? undefined}
-      bookingsPanelEnabled
-      needsBooktimeAuth={needsBooktimeAuth}
-      authGateSection={authGateSection}
-      onUnlinkBooking={handleUnlinkBooking}
-      dateSection={dateSection}
-      courtSection={courtSection}
-      timeSlotsChildren={
-        <GameStartSection
-          selectedDate={selectedDate}
-          selectedTime={selectedTime}
-          duration={duration}
-          showDatePicker={showDatePicker}
-          selectedClub={selectedClub}
-          selectedCourt={selectedCourt}
-          club={club}
-          generateTimeOptions={generateTimeOptions}
-          generateTimeOptionsForDate={generateTimeOptionsForDate}
-          canAccommodateDuration={canAccommodateDuration}
-          getAdjustedStartTime={getAdjustedStartTime}
-          getTimeSlotsForDuration={getTimeSlotsForDuration}
-          isSlotHighlighted={isSlotHighlighted}
-          getDurationLabel={getDurationLabel}
-          onDateSelect={onDateChange}
-          onCalendarClick={() => onShowDatePickerChange(true)}
-          onCloseDatePicker={() => onShowDatePickerChange(false)}
-          onTimeSelect={onTimeChange}
-          onDurationChange={onDurationChange}
-          entityType={entityType}
-          dateInputRef={dateInputRef}
-          panelMode="edit"
-          bookCourtEnabled={willBookOnCreateProp}
-          hideOccupancyOverlay={willBookOnCreateProp}
-          needsBooktimeAuth={needsBooktimeAuth}
-          dateFixedDates={booktimeFixedDates}
-          hideCalendar={willBookOnCreateProp}
-          bookableDaysHint={bookableDaysHint}
-          connectedPhone={connectedPhone}
-          slotsLoading={slotsLoading}
-          snapshotOverlayEnabled={snapshotOverlayEnabled}
-          snapshotLoading={snapshotLoading}
-          snapshotBannerState={snapshotBannerState}
-          compact
-          hideDateSection
-        />
-      }
-    />
+      <GameLocationTimePanel
+        mode="edit"
+        entityType={entityType}
+        club={club}
+        locationTimeMode={locationTimeMode}
+        skipRealCourtBooking={skipRealCourtBooking}
+        onSkipRealCourtBookingChange={setSkipRealCourtBooking}
+        selectedCourtIds={selectedCourtIds}
+        courts={courts}
+        bookingMatchCourts={courts}
+        selectedDate={selectedDate}
+        selectedBookingIds={selectedBookingIds}
+        fallbackSelectedBookings={fallbackSelectedBookings}
+        onSelectedBookingIdsChange={
+          reservationsActive ? handleSelectedBookingIdsChange : undefined
+        }
+        bookingSelectionLimits={reservationsActive ? bookingSelectionLimits : undefined}
+        companyId={reservationsActive ? (booktimeCompanyId ?? undefined) : undefined}
+        booktimeConnected={reservationsActive ? booktimeConnected : false}
+        onDerivedTimeChange={reservationsActive ? handleDerivedTimeChange : undefined}
+        timeOverride={timeOverride}
+        onTimeOverrideChange={setTimeOverride}
+        overrideStartTime={overrideStartTime}
+        overrideEndTime={overrideEndTime}
+        onOverrideTimesChange={setOverrideTimes}
+        derivedSummary={
+          locationTimeMode === 'bookings'
+            ? {
+                startTime: effectiveDerivedSummary.startTime,
+                endTime: effectiveDerivedSummary.endTime,
+                count: effectiveDerivedSummary.count,
+              }
+            : undefined
+        }
+        needsBooktimeAuth={needsBooktimeAuth}
+        authGateSection={authGateSection}
+        dateSection={dateSection}
+        courtSection={courtSection}
+        timeSlotsChildren={
+          <GameStartSection
+            selectedDate={selectedDate}
+            selectedTime={selectedTime}
+            duration={duration}
+            showDatePicker={showDatePicker}
+            selectedClub={selectedClub}
+            selectedCourt={selectedCourt}
+            club={club}
+            generateTimeOptions={generateTimeOptions}
+            generateTimeOptionsForDate={generateTimeOptionsForDate}
+            canAccommodateDuration={canAccommodateDuration}
+            getAdjustedStartTime={getAdjustedStartTime}
+            getTimeSlotsForDuration={getTimeSlotsForDuration}
+            isSlotHighlighted={isSlotHighlighted}
+            getDurationLabel={getDurationLabel}
+            onDateSelect={onDateChange}
+            onCalendarClick={() => onShowDatePickerChange(true)}
+            onCloseDatePicker={() => onShowDatePickerChange(false)}
+            onTimeSelect={onTimeChange}
+            onDurationChange={onDurationChange}
+            entityType={entityType}
+            dateInputRef={dateInputRef}
+            panelMode="edit"
+            bookCourtEnabled={willBookOnCreateProp}
+            hideOccupancyOverlay={willBookOnCreateProp}
+            needsBooktimeAuth={needsBooktimeAuth}
+            dateFixedDates={booktimeFixedDates}
+            hideCalendar={willBookOnCreateProp}
+            bookableDaysHint={bookableDaysHint}
+            connectedPhone={connectedPhone}
+            slotsLoading={slotsLoading || linkedBookingsHydrating}
+            snapshotOverlayEnabled={snapshotOverlayEnabled}
+            snapshotLoading={snapshotLoading}
+            snapshotBannerState={snapshotBannerState}
+            compact
+            hideDateSection
+          />
+        }
+      />
     </div>
   );
 }

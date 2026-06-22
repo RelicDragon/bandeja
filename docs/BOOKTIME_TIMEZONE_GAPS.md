@@ -132,7 +132,7 @@ Resolved `city.timezone` from club/city on create, link, put-snapshots, and patc
 
 | Location | Issue |
 |----------|--------|
-| `BookingsPickerPanel` | `BooktimeBookingRow` without `clubTimezone` → defaults to `Europe/Belgrade` |
+| `ReservationsStrip` | `BooktimeBookingRow` without `clubTimezone` → defaults to `Europe/Belgrade` |
 | `ConnectedClubsBookingsTab` / `MyTabBookingsSection` | No per-club `clubTimezone` passed to list |
 | `BooktimePastBookingRow` | `timezone: null` → same default |
 

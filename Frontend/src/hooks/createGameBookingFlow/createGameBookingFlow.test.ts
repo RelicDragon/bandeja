@@ -12,6 +12,7 @@ describe('resolveCreateGameBookingAction', () => {
     needsBooktimeAuth: false,
     locationTimeMode: 'timeSlots' as const,
     selectedBookingCount: 0,
+    selectedBookingRecordsCount: 0,
     bookingSelectionMin: 1,
     willBookOnCreate: false,
     integratedCourtCount: 0,
@@ -40,9 +41,22 @@ describe('resolveCreateGameBookingAction', () => {
         ...base,
         locationTimeMode: 'bookings',
         selectedBookingCount: 2,
+        selectedBookingRecordsCount: 2,
         bookingSelectionMin: 1,
       }),
     ).toEqual({ status: 'proceed' });
+  });
+
+  it('link-existing bookings aborts while records are still loading', () => {
+    expect(
+      resolveCreateGameBookingAction({
+        ...base,
+        locationTimeMode: 'bookings',
+        selectedBookingCount: 1,
+        selectedBookingRecordsCount: 0,
+        bookingSelectionMin: 1,
+      }),
+    ).toEqual({ status: 'abort' });
   });
 
   it('skip-real-court proceeds like manual create', () => {

@@ -433,6 +433,15 @@ describe('buildCreateGameDeepLinkParams', () => {
     expect(params.startTime).toBe('2026-06-15T16:00:00.000Z');
     expect(params.endTime).toBe('2026-06-15T18:00:00.000Z');
   });
+
+  it('joins multiple booking ids for multi-court deep link', () => {
+    const first = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
+    const second = { ...first, uuid: 'booking-2', bookingStart: '2026-06-19T09:00:00.000Z', bookingEnd: '2026-06-19T10:00:00.000Z' };
+    const params = buildCreateGameDeepLinkParams('club-1', [first, second], 'court-a');
+    expect(params.bookingIds).toBe('booking-1,booking-2');
+    expect(params.startTime).toBeTruthy();
+    expect(params.endTime).toBeTruthy();
+  });
 });
 
 describe('buildLinkBookingRequest afternoon stored UTC', () => {

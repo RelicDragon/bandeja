@@ -4,6 +4,7 @@ import {
   storedUtcIsoToInstant,
 } from '../booktime/localTime';
 import { buildBookingSnapshots } from './buildBookingSnapshots';
+import { deriveGameTimeFromBookings } from './deriveGameTimeFromBookings';
 import type { BookingSnapshotInput, LinkBookingToGameBody } from './contracts';
 
 export type LinkBookingGameRef = {
@@ -573,18 +574,28 @@ export function buildLinkBookingRequest(
 
 export function buildCreateGameDeepLinkParams(
   clubId: string,
-  booking: LinkBookingRecord,
+  booking: LinkBookingRecord | readonly LinkBookingRecord[],
   courtId?: string,
   timeZone?: string | null,
 ): Record<string, string> {
+  const bookings = Array.isArray(booking) ? [...booking] : [booking];
+  const primary = bookings[0];
+  if (!primary) {
+    return { clubId, hasBookedCourt: '1' };
+  }
+
   const tz = resolveBooktimeClubTimezone({ explicit: timeZone });
-  const snapshot = buildLinkBookingSnapshot(booking, { clubId, courts: [] }, courtId, tz);
-  const startTime = snapshot?.bookingStart ?? booking.bookingStart;
-  const endTime = snapshot?.bookingEnd ?? booking.bookingEnd;
+  const snapshots = buildBookingSnapshots(bookings, [], { timeZone: tz });
+  const derived = deriveGameTimeFromBookings(snapshots, { timeZone: tz });
+  const primarySnapshot = buildLinkBookingSnapshot(primary, { clubId, courts: [] }, courtId, tz);
+  const startTime =
+    derived.startTime ?? primarySnapshot?.bookingStart ?? primary.bookingStart;
+  const endTime = derived.endTime ?? primarySnapshot?.bookingEnd ?? primary.bookingEnd;
+
   const params: Record<string, string> = {
     clubId,
     locationTimeMode: 'bookings',
-    bookingIds: booking.uuid,
+    bookingIds: bookings.map((entry) => entry.uuid).join(','),
     hasBookedCourt: '1',
     startTime,
     endTime,

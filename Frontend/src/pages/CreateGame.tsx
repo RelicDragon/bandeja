@@ -18,7 +18,6 @@ import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
 import { resolveUserCurrency } from '@/utils/currency';
 import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
-import type { LocationTimeMode } from '@/components/gameLocationTime/LocationTimeMode';
 import type { CreateGameBookingOverrides } from '@/hooks/createGameBookingFlow';
 import { useCreateGameBookingFlow } from '@/hooks/createGameBookingFlow';
 import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
@@ -68,7 +67,6 @@ interface CreateGameProps {
   initialGameData?: Partial<Game>;
   initialCreateIntent?: CreateFlowIntent;
   initialTemplateId?: CreateTemplateId;
-  initialLocationTimeMode?: LocationTimeMode;
   initialBookingIds?: string[];
 }
 
@@ -87,7 +85,6 @@ export const CreateGame = ({
   initialGameData,
   initialCreateIntent,
   initialTemplateId,
-  initialLocationTimeMode,
   initialBookingIds = [],
 }: CreateGameProps) => {
   const { t } = useTranslation();
@@ -357,6 +354,8 @@ export const CreateGame = ({
     selectedTime,
     setSelectedTime,
     duration,
+    setDuration,
+    setSelectedCourtIds,
     courts,
     bookingMatchCourts: allClubCourts.length > 0 ? allClubCourts : courts,
     clubs,
@@ -364,7 +363,6 @@ export const CreateGame = ({
     maxParticipants,
     playersPerMatch,
     initialHasBookedCourt: initialGameData?.hasBookedCourt ?? false,
-    initialLocationTimeMode,
     initialBookingIds,
     storedInitialDate,
     hasInitialStartTime: Boolean(initialGameData?.startTime),
@@ -387,24 +385,23 @@ export const CreateGame = ({
     hasBookedCourt,
     setHasBookedCourt,
     locationTimeMode,
-    setLocationTimeMode,
-    showSegmentedSwitch,
     willBookOnCreate,
     skipRealCourtBooking,
     setSkipRealCourtBooking,
     selectedBookingIds,
     bookingSelectionLimits,
+    onSelectedBookingIdsChange,
+    onDerivedTimeChange,
+    derivedBookingWindowLabel,
+    effectiveDerivedSummary,
+    needsBooktimeAuth,
+    booktimeAuth,
+    booktimeIntegrationConfig,
     timeOverride,
     setTimeOverride,
     overrideStartTime,
     overrideEndTime,
     setOverrideTimes,
-    dirtyFlags,
-    derivedBookingWindowLabel,
-    derivedBookingSummary,
-    needsBooktimeAuth,
-    booktimeAuth,
-    booktimeIntegrationConfig,
     booktimeCompanyMeta,
     booktimeFixedDates,
     createGameSnapshotBanner,
@@ -419,6 +416,7 @@ export const CreateGame = ({
     createButtonLabel,
     createDisabledByAuth,
     preselectedBookings,
+    preselectedBookingsHydrating,
     resetOnClubChange,
     handleCreateAttempt,
     prepareBookingFields,
@@ -431,8 +429,6 @@ export const CreateGame = ({
     getConfirmModalProps,
     handleCourtSelectForAuthSkip,
     handleAuthConnected,
-    onSelectedBookingIdsChange,
-    onDerivedTimeChange,
   } = bookingFlow;
 
   const clubsForSport = useMemo(
@@ -1032,13 +1028,23 @@ export const CreateGame = ({
     }
 
     if (!selectedTime || selectedTime === '') {
-      scrollToAndHighlightError(locationTimeSectionRef);
-      return;
+      const hasLinkedBookings =
+        locationTimeMode === 'bookings' &&
+        selectedBookingIds.length >= bookingSelectionLimits.min;
+      if (!hasLinkedBookings) {
+        scrollToAndHighlightError(locationTimeSectionRef);
+        return;
+      }
     }
 
     if (!duration) {
-      scrollToAndHighlightError(durationSectionRef);
-      return;
+      const hasLinkedBookings =
+        locationTimeMode === 'bookings' &&
+        selectedBookingIds.length >= bookingSelectionLimits.min;
+      if (!hasLinkedBookings) {
+        scrollToAndHighlightError(durationSectionRef);
+        return;
+      }
     }
 
     if (needsBooktimeAuth) {
@@ -1458,32 +1464,29 @@ export const CreateGame = ({
                   entityType={entityType}
                   club={selectedClubData}
                   locationTimeMode={locationTimeMode}
-                  onLocationTimeModeChange={setLocationTimeMode}
-                  showSegmentedSwitch={showSegmentedSwitch}
-                  showBookingsOnly={false}
                   skipRealCourtBooking={skipRealCourtBooking}
                   onSkipRealCourtBookingChange={setSkipRealCourtBooking}
                   selectedCourtIds={selectedCourtIds}
                   courts={courts}
                   bookingMatchCourts={allClubCourts.length > 0 ? allClubCourts : courts}
+                  selectedDate={selectedDate}
                   selectedBookingIds={selectedBookingIds}
                   onSelectedBookingIdsChange={onSelectedBookingIdsChange}
                   bookingSelectionLimits={bookingSelectionLimits}
+                  companyId={booktimeIntegrationConfig?.companyId}
+                  booktimeConnected={Boolean(booktimeAuth?.connected)}
+                  onDerivedTimeChange={onDerivedTimeChange}
+                  preselectedBanner={preselectedBookings}
+                  derivedSummary={{
+                    startTime: effectiveDerivedSummary.startTime,
+                    endTime: effectiveDerivedSummary.endTime,
+                    count: effectiveDerivedSummary.count,
+                  }}
                   timeOverride={timeOverride}
                   onTimeOverrideChange={setTimeOverride}
                   overrideStartTime={overrideStartTime}
                   overrideEndTime={overrideEndTime}
                   onOverrideTimesChange={setOverrideTimes}
-                  dirtyFlags={dirtyFlags}
-                  companyId={booktimeIntegrationConfig?.companyId}
-                  bookingsPanelEnabled
-                  preselectedBanner={preselectedBookings}
-                  derivedSummary={{
-                    startTime: derivedBookingSummary.startTime,
-                    endTime: derivedBookingSummary.endTime,
-                    count: derivedBookingSummary.count,
-                  }}
-                  onDerivedTimeChange={onDerivedTimeChange}
                   needsBooktimeAuth={needsBooktimeAuth}
                   dateSection={dateSection}
                   courtSection={courtSection}
@@ -1659,7 +1662,7 @@ export const CreateGame = ({
 
         <Button
           onClick={handleCreateGame}
-          disabled={loading || createDisabledByAuth}
+          disabled={loading || createDisabledByAuth || preselectedBookingsHydrating}
           className="w-full py-3 text-base font-semibold mt-4 flex items-center justify-center gap-2"
           size="lg"
         >

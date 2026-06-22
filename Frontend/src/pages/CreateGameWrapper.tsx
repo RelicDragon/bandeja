@@ -3,44 +3,9 @@ import { useLocation, Navigate, useNavigate } from 'react-router-dom';
 import { CreateGame } from './CreateGame';
 import { EntityType, Game } from '@/types';
 import type { CreateFlowIntent, CreateTemplateId } from '@/sport/createFlow';
-import type { LocationTimeMode } from '@/components/gameLocationTime/LocationTimeMode';
+import { createGameDataFromDeepLinkSearch } from '@shared/gameBooking/parseCreateGameDeepLinkSearch';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
-
-function initialGameDataFromSearch(search: string): {
-  gameData: Partial<Game>;
-  locationTimeMode?: LocationTimeMode;
-  bookingIds: string[];
-} {
-  const params = new URLSearchParams(search);
-  const clubId = params.get('clubId');
-  const gameData: Partial<Game> = {};
-  if (clubId) gameData.clubId = clubId;
-  const courtId = params.get('courtId');
-  if (courtId) gameData.courtId = courtId;
-  const startTime = params.get('startTime');
-  const endTime = params.get('endTime');
-  if (startTime) gameData.startTime = startTime;
-  if (endTime) gameData.endTime = endTime;
-  if (params.get('hasBookedCourt') === '1') gameData.hasBookedCourt = true;
-
-  const locationTimeMode = params.get('locationTimeMode');
-  const bookingIdsRaw = params.get('bookingIds');
-  const bookingIds = bookingIdsRaw
-    ? bookingIdsRaw.split(',').map((id) => id.trim()).filter(Boolean)
-    : [];
-
-  return {
-    gameData,
-    locationTimeMode:
-      locationTimeMode === 'bookings' || locationTimeMode === 'timeSlots'
-        ? locationTimeMode
-        : bookingIds.length > 0
-          ? 'bookings'
-          : undefined,
-    bookingIds,
-  };
-}
 
 export const CreateGameWrapper = () => {
   const location = useLocation();
@@ -52,7 +17,7 @@ export const CreateGameWrapper = () => {
     selectedTemplateId?: CreateTemplateId;
   };
   const queryInitial = useMemo(
-    () => initialGameDataFromSearch(location.search),
+    () => createGameDataFromDeepLinkSearch(location.search),
     [location.search],
   );
   const entityType =
@@ -89,7 +54,6 @@ export const CreateGameWrapper = () => {
       initialGameData={initialGameData}
       initialCreateIntent={initialCreateIntent}
       initialTemplateId={initialTemplateId}
-      initialLocationTimeMode={queryInitial.locationTimeMode}
       initialBookingIds={queryInitial.bookingIds}
     />
   );

@@ -6,8 +6,7 @@ import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots
 import { computeBookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
-import type { LocationTimeMode } from './LocationTimeMode';
-import { resolveLocationTimeUiMode } from './resolveLocationTimeUiMode';
+import { deriveLocationTimeMode } from './LocationTimeMode';
 
 type UseGameLocationTimeStateArgs = {
   entityType: EntityType;
@@ -23,7 +22,6 @@ type UseGameLocationTimeStateArgs = {
   selectedTime: string;
   duration: number;
   hasBookedCourt: boolean;
-  initialLocationTimeMode?: LocationTimeMode;
   initialSelectedBookingIds?: string[];
   initialTimeOverride?: boolean;
   game?: Game;
@@ -31,12 +29,12 @@ type UseGameLocationTimeStateArgs = {
 };
 
 export function useGameLocationTimeState({
-  entityType,
-  panelMode,
+  entityType: _entityType,
+  panelMode: _panelMode,
   club,
   courts,
   bookingMatchCourts,
-  liveApiEnabled,
+  liveApiEnabled: _liveApiEnabled,
   maxParticipants,
   playersPerMatch,
   selectedCourtIds,
@@ -44,23 +42,11 @@ export function useGameLocationTimeState({
   selectedTime,
   duration,
   hasBookedCourt,
-  initialLocationTimeMode,
   initialSelectedBookingIds = [],
   initialTimeOverride = false,
-  game,
+  game: _game,
   createDateFromSelection,
 }: UseGameLocationTimeStateArgs) {
-  const uiMode = resolveLocationTimeUiMode({
-    entityType,
-    panelMode,
-    club,
-    liveApiEnabled,
-    game,
-  });
-
-  const [locationTimeMode, setLocationTimeMode] = useState<LocationTimeMode>(
-    initialLocationTimeMode ?? uiMode.defaultTab,
-  );
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>(initialSelectedBookingIds);
   const [timeOverride, setTimeOverride] = useState(initialTimeOverride);
   const [overrideStartTime, setOverrideStartTime] = useState<string | undefined>();
@@ -69,6 +55,8 @@ export function useGameLocationTimeState({
   const [initialBookingIds] = useState(initialSelectedBookingIds);
   const [initialCourtIds] = useState(selectedCourtIds);
   const [initialTime] = useState({ date: selectedDate, time: selectedTime, duration });
+
+  const locationTimeMode = deriveLocationTimeMode(selectedBookingIds);
 
   const integratedCourtIds = useMemo(
     () =>
@@ -94,11 +82,6 @@ export function useGameLocationTimeState({
     () => computeBookingSelectionLimits(maxParticipants, playersPerMatch),
     [maxParticipants, playersPerMatch],
   );
-
-  const derivedTime = useMemo(() => {
-    if (locationTimeMode !== 'bookings' || selectedBookingIds.length === 0) return null;
-    return null;
-  }, [locationTimeMode, selectedBookingIds]);
 
   const dirtyFlags = useMemo(() => {
     const bookingsDirty =
@@ -143,12 +126,13 @@ export function useGameLocationTimeState({
       hasBookedCourt: boolean;
     } => {
       if (locationTimeMode === 'bookings' && selectedBookings.length > 0) {
+        const clubTimezone = club?.city?.timezone ?? undefined;
         const matchCourts = bookingMatchCourts ?? courts;
         const snapshots = applyCourtIdsToBookingSnapshots(
-          buildBookingSnapshots(selectedBookings, matchCourts),
+          buildBookingSnapshots(selectedBookings, matchCourts, { timeZone: clubTimezone }),
           selectedCourtIds,
         );
-        const derived = deriveGameTimeFromBookings(snapshots);
+        const derived = deriveGameTimeFromBookings(snapshots, { timeZone: clubTimezone });
         const slotTimes = timeOverride && overrideStartTime && overrideEndTime
           ? { startTime: overrideStartTime, endTime: overrideEndTime }
           : derived;
@@ -181,6 +165,7 @@ export function useGameLocationTimeState({
     },
     [
       locationTimeMode,
+      club,
       courts,
       bookingMatchCourts,
       selectedCourtIds,
@@ -195,13 +180,9 @@ export function useGameLocationTimeState({
 
   return {
     locationTimeMode,
-    setLocationTimeMode,
-    showSegmentedSwitch: uiMode.showSegmentedSwitch,
-    showBookingsOnly: uiMode.showBookingsOnly,
     willBookOnCreate,
     skipRealCourtBooking,
     setSkipRealCourtBooking,
-    derivedTime,
     selectedBookingIds,
     setSelectedBookingIds,
     timeOverride,
