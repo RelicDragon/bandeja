@@ -23,6 +23,11 @@ upd_git_sync='cd ~/src && git fetch origin && git reset --hard origin/master'
 upd_use_node24='export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 24'
 
 deploy_be() {
+  if [[ "${UPD_BE_HOST}" == "local" ]]; then
+    echo "→ backend local"
+    bash -c "${upd_git_sync}; ~/src/scripts/deploy-backend.sh"
+    return
+  fi
   echo "→ backend ${UPD_BE_HOST}"
   upd_ssh "${UPD_BE_HOST}" "${upd_use_node24}; ${upd_git_sync}; ~/src/scripts/deploy-backend.sh"
 }
@@ -43,6 +48,10 @@ maybe_push() {
 }
 
 server_commit_be() {
+  if [[ "${UPD_BE_HOST}" == "local" ]]; then
+    git -C ~/src rev-parse HEAD
+    return
+  fi
   upd_ssh "${UPD_BE_HOST}" 'cd ~/src && git rev-parse HEAD'
 }
 

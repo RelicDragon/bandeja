@@ -52,6 +52,9 @@ jobs:
     needs: [backend, frontend]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     runs-on: [self-hosted, linux, production]
+    env:
+      UPD_BE_HOST: local
+      UPD_FE_HOST: relic@10.0.0.2
     concurrency:
       group: production-deploy
       cancel-in-progress: false
@@ -71,9 +74,9 @@ jobs:
           chmod 700 ~/.ssh
           printf '%s\n' "${DEPLOY_SSH_KEY}" | tr -d '\r' > ~/.ssh/id_hetzner
           chmod 600 ~/.ssh/id_hetzner
-          ssh-keyscan -4 -H back.bandeja.com front.bandeja.com >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@back.bandeja.com 'echo backend-ssh-ok'
-          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@front.bandeja.com 'echo frontend-ssh-ok'
+          ssh-keyscan -4 -H 127.0.0.1 10.0.0.2 >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@127.0.0.1 'echo backend-ssh-ok'
+          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@10.0.0.2 'echo frontend-ssh-ok'
       - name: Deploy (auto BE/FE from diff)
         env:
           UPD_SSH_KEY: ~/.ssh/id_hetzner
