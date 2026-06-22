@@ -7,12 +7,19 @@ import {
   ThreadMessagesContext,
   ThreadMessagesDataContext,
   ThreadScrollContext,
+  ThreadSearchContext,
 } from './ThreadViewContext';
 import { useThreadViewController } from './useThreadViewController';
 import { isThreadComposerInitializing } from './threadViewLoadingState';
+import { useThreadSearch } from './useThreadSearch';
 
 export function ThreadViewProvider({ children, ...props }: GameChatProps & { children: ReactNode }) {
   const ctrl = useThreadViewController(props);
+  const threadSearch = useThreadSearch({
+    contextType: ctrl.contextType,
+    contextId: ctrl.id,
+    currentChatType: ctrl.currentChatType,
+  });
 
   const messageActions = useMemo(
     (): import('./ThreadViewContext').ThreadMessageActionsValue => ({
@@ -95,6 +102,7 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       getChatNearBottom: ctrl.getChatNearBottom,
       scrollToBottomSmooth: ctrl.scrollToBottomSmooth,
       handleScrollToMessage: ctrl.handleScrollToMessage,
+      scrollToMessageId: ctrl.scrollToMessageId,
       messageListRef: ctrl.messageListRef,
       initialScroll: ctrl.initialScroll,
       openPaintGeneration: ctrl.openPaintGeneration,
@@ -107,6 +115,7 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
       ctrl.getChatNearBottom,
       ctrl.scrollToBottomSmooth,
       ctrl.handleScrollToMessage,
+      ctrl.scrollToMessageId,
       ctrl.messageListRef,
       ctrl.initialScroll,
       ctrl.openPaintGeneration,
@@ -295,7 +304,9 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
         <ThreadMessagesContext.Provider value={messages}>
           <ThreadScrollContext.Provider value={scroll}>
             <ThreadComposerContext.Provider value={composer}>
-              <ThreadChromeContext.Provider value={chrome}>{children}</ThreadChromeContext.Provider>
+              <ThreadChromeContext.Provider value={chrome}>
+                <ThreadSearchContext.Provider value={threadSearch}>{children}</ThreadSearchContext.Provider>
+              </ThreadChromeContext.Provider>
             </ThreadComposerContext.Provider>
           </ThreadScrollContext.Provider>
         </ThreadMessagesContext.Provider>

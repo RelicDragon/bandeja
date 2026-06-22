@@ -319,6 +319,7 @@ export function useThreadViewController({
     getChatNearBottom,
     scrollToBottomSmooth,
     handleScrollToMessage: thread.handleScrollToMessage,
+    scrollToMessageId: thread.scrollToMessageId,
     pinnedMessages: thread.pinnedMessages,
     pinnedMessagesOrdered: thread.pinnedMessagesOrdered,
     pinnedBarTopIndex: thread.pinnedBarTopIndex,

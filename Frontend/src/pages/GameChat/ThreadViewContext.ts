@@ -11,6 +11,7 @@ import type { useGameChatPanels } from './useGameChatPanels';
 import type { LoadContextOptions } from './useGameChatContext';
 import type { GameChatFooterVariant } from './GameChatFooter';
 import type { ThreadSessionScroll } from '@/services/chat/threadSession';
+import type { ThreadSearchValue } from './useThreadSearch';
 
 /** Stable handlers — omit message array so composer does not re-render on row patches. */
 export interface ThreadMessageActionsValue {
@@ -60,6 +61,7 @@ export interface ThreadScrollValue {
   getChatNearBottom: () => boolean;
   scrollToBottomSmooth: () => void;
   handleScrollToMessage: (messageId: string) => void;
+  scrollToMessageId: (messageId: string) => Promise<void>;
   messageListRef: RefObject<MessageListHandle | null>;
   initialScroll: ThreadSessionScroll | undefined;
   openPaintGeneration: number;
@@ -162,3 +164,4 @@ export const ThreadMessagesContext = createContext<ThreadMessagesValue | null>(n
 export const ThreadScrollContext = createContext<ThreadScrollValue | null>(null);
 export const ThreadComposerContext = createContext<ThreadComposerValue | null>(null);
 export const ThreadChromeContext = createContext<ThreadChromeValue | null>(null);
+export const ThreadSearchContext = createContext<ThreadSearchValue | null>(null);

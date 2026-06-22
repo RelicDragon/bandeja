@@ -166,6 +166,9 @@ export const CHAT_SCROLL_TARGET_HIGHLIGHT_FADE_CSS_VAR = '--chat-scroll-highligh
 export const CHAT_SCROLL_TARGET_HOLD_MS = 2000;
 export const CHAT_SCROLL_TARGET_SCROLL_DEFER_MS = 320;
 
+export const THREAD_SEARCH_DISMISS_SCROLL_DEFER_MS = 200;
+export const THREAD_SEARCH_RESULTS_CLEAR_MS = 520;
+
 export const CHAT_OUTBOX_TRANSITION = {
   duration: 0.4,
   ease: 'easeOut' as const,
