@@ -18,7 +18,7 @@ export function ThreadViewProvider({ children, ...props }: GameChatProps & { chi
   const threadSearch = useThreadSearch({
     contextType: ctrl.contextType,
     contextId: ctrl.id,
-    currentChatType: ctrl.currentChatType,
+    searchChatType: ctrl.effectiveChatType,
   });
 
   const messageActions = useMemo(

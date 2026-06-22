@@ -28,7 +28,14 @@ export async function searchLocalThreadMessages(
   const rows = await chatLocalDb.messages
     .where('[contextType+contextId+chatType]')
     .equals([contextType, contextId, ct])
-    .filter((r) => r.deletedAt == null && !!r.searchText && r.searchText.includes(needle))
+    .filter(
+      (r) =>
+        r.deletedAt == null &&
+        normalizeChatType(r.chatType) === ct &&
+        normalizeChatType(r.payload.chatType) === ct &&
+        !!r.searchText &&
+        r.searchText.includes(needle)
+    )
     .toArray();
 
   rows.sort((a, b) => b.createdAt - a.createdAt);

@@ -12,10 +12,11 @@ const SEARCH_DEBOUNCE_MS = 300;
 type UseThreadSearchArgs = {
   contextType: ChatContextType;
   contextId: string | undefined;
-  currentChatType: ChatType;
+  /** Active thread tab — PUBLIC / PRIVATE / ADMINS for games; PUBLIC elsewhere. */
+  searchChatType: ChatType;
 };
 
-export function useThreadSearch({ contextType, contextId, currentChatType }: UseThreadSearchArgs) {
+export function useThreadSearch({ contextType, contextId, searchChatType }: UseThreadSearchArgs) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [results, setResults] = useState<ChatMessage[]>([]);
@@ -23,6 +24,7 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
   const [searchGeneration, setSearchGeneration] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const resultLimitRef = useRef(THREAD_SEARCH_PAGE_SIZE);
+  const prevDebouncedQueryRef = useRef('');
 
   const debouncedSearchQuery = useDebounce(searchQuery, SEARCH_DEBOUNCE_MS);
   const trimmedQuery = searchQuery.trim();
@@ -42,6 +44,7 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
     setResults([]);
     setHasMoreResults(false);
     resultLimitRef.current = THREAD_SEARCH_PAGE_SIZE;
+    prevDebouncedQueryRef.current = '';
     setIsSearching(false);
   }, [dismissSearch]);
 
@@ -53,7 +56,15 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
 
   useEffect(() => {
     clearSearch();
-  }, [contextId, contextType, currentChatType, clearSearch]);
+  }, [contextId, contextType, clearSearch]);
+
+  useEffect(() => {
+    resultLimitRef.current = THREAD_SEARCH_PAGE_SIZE;
+    prevDebouncedQueryRef.current = '';
+    setResults([]);
+    setHasMoreResults(false);
+    setSearchGeneration((n) => n + 1);
+  }, [searchChatType]);
 
   useEffect(() => {
     if (isSearchActive) return;
@@ -63,7 +74,7 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
 
   useEffect(() => {
     resultLimitRef.current = THREAD_SEARCH_PAGE_SIZE;
-  }, [trimmedDebouncedQuery, contextType, contextId, currentChatType]);
+  }, [trimmedDebouncedQuery, contextType, contextId, searchChatType]);
 
   useEffect(() => {
     if (!isSearchActive) {
@@ -79,11 +90,17 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
     }
 
     let cancelled = false;
+    const queryChanged = prevDebouncedQueryRef.current !== trimmedDebouncedQuery;
+    prevDebouncedQueryRef.current = trimmedDebouncedQuery;
+    if (queryChanged) {
+      setResults([]);
+      setHasMoreResults(false);
+    }
     setIsSearching(true);
     void searchLocalThreadMessages(
       contextType,
       contextId,
-      currentChatType,
+      searchChatType,
       trimmedDebouncedQuery,
       resultLimitRef.current
     )
@@ -105,11 +122,16 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
     isSearchActive,
     contextType,
     contextId,
-    currentChatType,
+    searchChatType,
     searchGeneration,
   ]);
 
   const resultCount = results.length;
+  const displayResults = useMemo(
+    () => (isQueryPending ? [] : results),
+    [isQueryPending, results]
+  );
+  const displayHasMoreResults = isQueryPending ? false : hasMoreResults;
   const showResultsPanel = isSearchActive && trimmedQuery.length >= 2;
 
   return useMemo(
@@ -120,8 +142,10 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
       isSearchActive,
       setIsSearchActive,
       results,
+      displayResults,
       resultCount,
       hasMoreResults,
+      displayHasMoreResults,
       isSearching,
       isQueryPending,
       isLoadingResults,
@@ -135,8 +159,10 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
       debouncedSearchQuery,
       isSearchActive,
       results,
+      displayResults,
       resultCount,
       hasMoreResults,
+      displayHasMoreResults,
       isSearching,
       isQueryPending,
       isLoadingResults,
