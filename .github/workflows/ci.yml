@@ -89,9 +89,9 @@ jobs:
           chmod 700 ~/.ssh
           printf '%s\n' "${DEPLOY_SSH_KEY}" | tr -d '\r' > ~/.ssh/id_hetzner
           chmod 600 ~/.ssh/id_hetzner
-          ssh-keyscan -H back.bandeja.com front.bandeja.com >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@back.bandeja.com 'echo backend-ssh-ok'
-          ssh -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@front.bandeja.com 'echo frontend-ssh-ok'
+          ssh-keyscan -4 -H back.bandeja.com front.bandeja.com >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@back.bandeja.com 'echo backend-ssh-ok'
+          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@front.bandeja.com 'echo frontend-ssh-ok'
       - name: Deploy (auto BE/FE from diff)
         env:
           UPD_SSH_KEY: ~/.ssh/id_hetzner

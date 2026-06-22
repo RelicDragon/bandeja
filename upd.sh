@@ -12,6 +12,7 @@ upd_ssh() {
   ssh \
     -o IdentitiesOnly=yes \
     -o IdentityFile="${UPD_SSH_KEY}" \
+    -o AddressFamily=inet \
     -o StrictHostKeyChecking=accept-new \
     -o ServerAliveInterval=60 \
     -o ServerAliveCountMax=3 \
