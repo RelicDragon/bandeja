@@ -17,9 +17,22 @@ export function parseBookingIdsParam(raw: string | null): string[] {
     .filter(Boolean);
 }
 
+function getSearchParam(search: string, key: string): string | null {
+  const query = search.startsWith('?') ? search.slice(1) : search;
+  if (!query) return null;
+  for (const part of query.split('&')) {
+    if (!part) continue;
+    const eq = part.indexOf('=');
+    const rawKey = eq === -1 ? part : part.slice(0, eq);
+    if (decodeURIComponent(rawKey.replace(/\+/g, ' ')) !== key) continue;
+    if (eq === -1) return '';
+    return decodeURIComponent(part.slice(eq + 1).replace(/\+/g, ' '));
+  }
+  return null;
+}
+
 export function parseCreateGameDeepLinkSearch(search: string): CreateGameDeepLinkSearch {
-  const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
-  const locationTimeModeRaw = params.get('locationTimeMode');
+  const locationTimeModeRaw = getSearchParam(search, 'locationTimeMode');
   const locationTimeMode =
     locationTimeModeRaw === 'bookings'
       ? 'bookings'
@@ -28,12 +41,12 @@ export function parseCreateGameDeepLinkSearch(search: string): CreateGameDeepLin
         : undefined;
 
   return {
-    clubId: params.get('clubId') ?? undefined,
-    courtId: params.get('courtId') ?? undefined,
-    startTime: params.get('startTime') ?? undefined,
-    endTime: params.get('endTime') ?? undefined,
-    hasBookedCourt: params.get('hasBookedCourt') === '1',
-    bookingIds: parseBookingIdsParam(params.get('bookingIds')),
+    clubId: getSearchParam(search, 'clubId') ?? undefined,
+    courtId: getSearchParam(search, 'courtId') ?? undefined,
+    startTime: getSearchParam(search, 'startTime') ?? undefined,
+    endTime: getSearchParam(search, 'endTime') ?? undefined,
+    hasBookedCourt: getSearchParam(search, 'hasBookedCourt') === '1',
+    bookingIds: parseBookingIdsParam(getSearchParam(search, 'bookingIds')),
     locationTimeMode,
   };
 }
