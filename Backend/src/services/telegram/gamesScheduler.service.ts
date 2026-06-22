@@ -2,8 +2,7 @@ import * as cron from 'node-cron';
 import { Api } from 'grammy';
 import prisma from '../../config/database';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
-import { gameWithRoundsAndOutcomes } from '../game/gamePrismaIncludes';
-import { buildGamesMessage } from './commands/games.command';
+import { buildPinnedCityGamesMessage } from './cityGamesStats.service';
 import { getUserLanguage } from './utils';
 import telegramBotService from './bot.service';
 import { expireStories } from '../story/story.expire.service';
@@ -90,19 +89,7 @@ export class TelegramGamesScheduler {
     const timezone = await getUserTimezoneFromCityId(city.id);
     const lang = getUserLanguage(city.telegramPinnedLanguage || 'en-GB', undefined);
 
-    const games = await prisma.game.findMany({
-      where: {
-        cityId: city.id,
-        status: 'ANNOUNCED',
-        isPublic: true,
-      },
-      include: gameWithRoundsAndOutcomes,
-      orderBy: {
-        startTime: 'asc',
-      },
-    });
-
-    const message = await buildGamesMessage(city, games, timezone, lang, 4096);
+    const message = await buildPinnedCityGamesMessage(city, timezone, lang);
 
     if (message) {
       if (city.telegramPinnedMessageId) {

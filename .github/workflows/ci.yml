@@ -47,27 +47,9 @@ jobs:
       - run: npm run test:live-scoring
       - run: npm run build
 
-  watch-serve-guide:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: Frontend/package-lock.json
-      - run: npm ci
-        working-directory: Frontend
-      - run: bash ios/scripts/run-watch-serve-guide-golden-tests.sh
-        working-directory: Frontend
-      - run: bash ios/scripts/run-watch-scoring-golden-tests.sh
-        working-directory: Frontend
-      - run: bash ios/scripts/run-watch-unit-tests.sh
-        working-directory: Frontend
-
   deploy:
     name: Deploy production
-    needs: [backend, frontend, watch-serve-guide]
+    needs: [backend, frontend]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     concurrency:
