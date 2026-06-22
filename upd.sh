@@ -12,6 +12,7 @@ upd_ssh() {
   ssh \
     -o IdentitiesOnly=yes \
     -o IdentityFile="${UPD_SSH_KEY}" \
+    -o StrictHostKeyChecking=accept-new \
     -o ServerAliveInterval=60 \
     -o ServerAliveCountMax=3 \
     "${host}" "$@"
@@ -40,13 +41,18 @@ maybe_push() {
   fi
 }
 
-server_commit() {
+server_commit_be() {
   upd_ssh "${UPD_BE_HOST}" 'cd ~/src && git rev-parse HEAD'
+}
+
+server_commit_fe() {
+  upd_ssh "${UPD_FE_HOST}" 'cd ~/src && git rev-parse HEAD'
 }
 
 path_needs_be() {
   case "$1" in
     Backend/*|scripts/deploy-backend.sh) return 0 ;;
+    Frontend/shared/*) return 0 ;;
     packages/chat-contract/*) return 0 ;;
     *) return 1 ;;
   esac
@@ -60,24 +66,34 @@ path_needs_fe() {
   esac
 }
 
+diff_needs_deploy() {
+  local from_sha="$1"
+  local to_sha="$2"
+  local checker="$3"
+  local path
+
+  [[ "${from_sha}" == "${to_sha}" ]] && return 1
+
+  while IFS= read -r path; do
+    [[ -z "${path}" ]] && continue
+    if "${checker}" "${path}"; then
+      return 0
+    fi
+  done < <(git -C "$ROOT" diff --name-only "${from_sha}" "${to_sha}")
+
+  return 1
+}
+
 detect_deploy_target() {
   git -C "$ROOT" fetch origin master
 
-  local deploy_ref server_sha
+  local deploy_ref be_sha fe_sha need_be=0 need_fe=0
   deploy_ref="$(git -C "$ROOT" rev-parse origin/master)"
-  server_sha="$(server_commit)"
+  be_sha="$(server_commit_be)"
+  fe_sha="$(server_commit_fe)"
 
-  if [[ "${server_sha}" == "${deploy_ref}" ]]; then
-    echo "none"
-    return
-  fi
-
-  local need_be=0 need_fe=0 path
-  while IFS= read -r path; do
-    [[ -z "${path}" ]] && continue
-    path_needs_be "${path}" && need_be=1
-    path_needs_fe "${path}" && need_fe=1
-  done < <(git -C "$ROOT" diff --name-only "${server_sha}" "${deploy_ref}")
+  diff_needs_deploy "${be_sha}" "${deploy_ref}" path_needs_be && need_be=1
+  diff_needs_deploy "${fe_sha}" "${deploy_ref}" path_needs_fe && need_fe=1
 
   if [[ "${need_be}" -eq 1 && "${need_fe}" -eq 1 ]]; then
     echo "all"
@@ -91,21 +107,26 @@ detect_deploy_target() {
 }
 
 resolve_auto_target() {
-  local detected changed_files
+  local detected deploy_ref be_sha fe_sha
+  deploy_ref="$(git -C "$ROOT" rev-parse origin/master)"
+  be_sha="$(server_commit_be)"
+  fe_sha="$(server_commit_fe)"
   detected="$(detect_deploy_target)"
+
   case "${detected}" in
     none)
-      if [[ "$(server_commit)" == "$(git -C "$ROOT" rev-parse origin/master)" ]]; then
-        echo "deploy: servers already at origin/master" >&2
+      if [[ "${be_sha}" == "${deploy_ref}" && "${fe_sha}" == "${deploy_ref}" ]]; then
+        echo "deploy: both servers already at origin/master" >&2
       else
-        changed_files="$(git -C "$ROOT" diff --name-only "$(server_commit)" origin/master | tr '\n' ' ')"
-        echo "deploy: no Backend/ or Frontend/ changes (${changed_files:-metadata only}); skipping" >&2
+        echo "deploy: no deployable changes for servers behind master (be=${be_sha:0:7} fe=${fe_sha:0:7} → ${deploy_ref:0:7})" >&2
       fi
       exit 0
       ;;
-    be) echo "deploy: Backend/ changed → backend only" >&2 ;;
-    fe) echo "deploy: Frontend/ changed → frontend only" >&2 ;;
-    all) echo "deploy: Backend/ and Frontend/ changed → both" >&2 ;;
+    be) echo "deploy: backend needs update (${be_sha:0:7} → ${deploy_ref:0:7})" >&2 ;;
+    fe) echo "deploy: frontend needs update (${fe_sha:0:7} → ${deploy_ref:0:7})" >&2 ;;
+    all)
+      echo "deploy: backend (${be_sha:0:7} → ${deploy_ref:0:7}) and frontend (${fe_sha:0:7} → ${deploy_ref:0:7})" >&2
+      ;;
   esac
   echo "${detected}"
 }
