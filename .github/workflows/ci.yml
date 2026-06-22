@@ -60,3 +60,5 @@ jobs:
         working-directory: Frontend
       - run: bash ios/scripts/run-watch-serve-guide-golden-tests.sh
         working-directory: Frontend
+      - run: bash ios/scripts/run-watch-scoring-golden-tests.sh
+        working-directory: Frontend

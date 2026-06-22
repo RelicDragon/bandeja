@@ -40,17 +40,90 @@ maybe_push() {
   fi
 }
 
-TARGET=all
+server_commit() {
+  upd_ssh "${UPD_BE_HOST}" 'cd ~/src && git rev-parse HEAD'
+}
+
+path_needs_be() {
+  case "$1" in
+    Backend/*|scripts/deploy-backend.sh) return 0 ;;
+    packages/chat-contract/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+path_needs_fe() {
+  case "$1" in
+    Frontend/*|scripts/deploy-frontend.sh) return 0 ;;
+    packages/chat-contract/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+detect_deploy_target() {
+  git -C "$ROOT" fetch origin master
+
+  local deploy_ref server_sha
+  deploy_ref="$(git -C "$ROOT" rev-parse origin/master)"
+  server_sha="$(server_commit)"
+
+  if [[ "${server_sha}" == "${deploy_ref}" ]]; then
+    echo "none"
+    return
+  fi
+
+  local need_be=0 need_fe=0 path
+  while IFS= read -r path; do
+    [[ -z "${path}" ]] && continue
+    path_needs_be "${path}" && need_be=1
+    path_needs_fe "${path}" && need_fe=1
+  done < <(git -C "$ROOT" diff --name-only "${server_sha}" "${deploy_ref}")
+
+  if [[ "${need_be}" -eq 1 && "${need_fe}" -eq 1 ]]; then
+    echo "all"
+  elif [[ "${need_be}" -eq 1 ]]; then
+    echo "be"
+  elif [[ "${need_fe}" -eq 1 ]]; then
+    echo "fe"
+  else
+    echo "none"
+  fi
+}
+
+resolve_auto_target() {
+  local detected changed_files
+  detected="$(detect_deploy_target)"
+  case "${detected}" in
+    none)
+      if [[ "$(server_commit)" == "$(git -C "$ROOT" rev-parse origin/master)" ]]; then
+        echo "deploy: servers already at origin/master" >&2
+      else
+        changed_files="$(git -C "$ROOT" diff --name-only "$(server_commit)" origin/master | tr '\n' ' ')"
+        echo "deploy: no Backend/ or Frontend/ changes (${changed_files:-metadata only}); skipping" >&2
+      fi
+      exit 0
+      ;;
+    be) echo "deploy: Backend/ changed → backend only" >&2 ;;
+    fe) echo "deploy: Frontend/ changed → frontend only" >&2 ;;
+    all) echo "deploy: Backend/ and Frontend/ changed → both" >&2 ;;
+  esac
+  echo "${detected}"
+}
+
+TARGET=auto
 DO_PUSH=0
 
 for arg in "$@"; do
   case "$arg" in
-    all) TARGET=all ;;
+    all) TARGET=auto ;;
+    both) TARGET=all ;;
     fe|frontend) TARGET=fe ;;
     be|backend) TARGET=be ;;
     push) DO_PUSH=1 ;;
     *)
-      echo "usage: upd.sh [all|fe|be] [push]" >&2
+      echo "usage: upd.sh [all|fe|be|both] [push]" >&2
+      echo "  all     auto-detect from server..origin/master diff (default)" >&2
+      echo "  both    force backend + frontend" >&2
       exit 1
       ;;
   esac
@@ -58,6 +131,10 @@ done
 
 if [[ "$DO_PUSH" -eq 1 ]]; then
   maybe_push
+fi
+
+if [[ "$TARGET" == "auto" ]]; then
+  TARGET="$(resolve_auto_target)"
 fi
 
 case "$TARGET" in
