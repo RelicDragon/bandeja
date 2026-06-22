@@ -23,6 +23,10 @@ class NavigationService {
     this.navigate = navigate;
   }
 
+  isReady(): boolean {
+    return this.navigate != null;
+  }
+
   private ensureInitialized() {
     if (!this.navigate) {
       console.error('NavigationService not initialized. Call initialize() first.');

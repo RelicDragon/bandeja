@@ -62,3 +62,31 @@ export function scrollVirtualizerToIndex(
     } as NonNullable<Parameters<MessageListVirtualizer['scrollToOffset']>[1]>);
   }
 }
+
+const SCROLL_TARGET_CENTER_TOLERANCE_PX = 100;
+
+/** True when any part of the message row intersects the scroll container viewport. */
+export function isMessageElementVisibleInScrollContainer(
+  container: HTMLElement,
+  messageElement: HTMLElement
+): boolean {
+  const containerRect = container.getBoundingClientRect();
+  const messageRect = messageElement.getBoundingClientRect();
+  return messageRect.bottom > containerRect.top && messageRect.top < containerRect.bottom;
+}
+
+/** True when the message row is visible and near the vertical center of the scroll container. */
+export function isMessageElementCenteredInScrollContainer(
+  container: HTMLElement,
+  messageElement: HTMLElement,
+  tolerancePx = SCROLL_TARGET_CENTER_TOLERANCE_PX
+): boolean {
+  const containerRect = container.getBoundingClientRect();
+  const messageRect = messageElement.getBoundingClientRect();
+  if (!isMessageElementVisibleInScrollContainer(container, messageElement)) {
+    return false;
+  }
+  const messageMid = messageRect.top + messageRect.height / 2;
+  const viewportMid = containerRect.top + containerRect.height / 2;
+  return Math.abs(messageMid - viewportMid) <= tolerancePx;
+}

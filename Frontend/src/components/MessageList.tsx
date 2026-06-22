@@ -57,6 +57,9 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
     threadLayoutSettling = false,
     onChatScrollNearBottomChange,
     scrollTargetMessageId = null,
+    loadingScrollTargetId = null,
+    onScrollTargetReached,
+    threadSearchOutlineQuery = null,
     entityType,
   },
   ref
@@ -219,6 +222,8 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
           isLoadingMessages={isLoadingMessages}
           isSwitchingChatType={isSwitchingChatType}
           scrollTargetMessageId={scrollTargetMessageId}
+          loadingScrollTargetId={loadingScrollTargetId}
+          onScrollTargetReached={onScrollTargetReached}
           hasContextPanel={hasContextPanel}
           reduceMotion={reduceMotion}
         >
@@ -249,6 +254,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
                   onScrollToFirstReply={onScrollToFirstReply}
                   handlers={rowHandlers}
                   entityType={entityType}
+                  threadSearchOutlineQuery={threadSearchOutlineQuery}
                 />
               );
             })

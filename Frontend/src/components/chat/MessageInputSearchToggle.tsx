@@ -26,10 +26,19 @@ export function MessageInputSearchToggle({ disabled = false, onExpandedChange }:
     resultCount,
     isLoadingResults,
     clearSearch,
+    registerSearchInputBlur,
+    showSearchResults,
   } = useThreadSearch();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const transition = reduceMotion ? { duration: 0 } : COMPOSER_TOOLBAR_SPRING;
+
+  useEffect(() => {
+    registerSearchInputBlur(() => {
+      inputRef.current?.blur();
+    });
+    return () => registerSearchInputBlur(null);
+  }, [registerSearchInputBlur]);
 
   useEffect(() => {
     onExpandedChange?.(isSearchActive);
@@ -89,6 +98,7 @@ export function MessageInputSearchToggle({ disabled = false, onExpandedChange }:
             enterKeyHint="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={() => showSearchResults()}
             onKeyDown={(e) => {
               if (e.key === 'Escape') {
                 e.preventDefault();

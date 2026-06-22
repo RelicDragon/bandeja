@@ -116,6 +116,8 @@ export interface ThreadChromeValue {
   pinnedMessagesOrdered: ChatMessage[];
   pinnedBarTopIndex: number;
   loadingScrollTargetId: string | null;
+  scrollTargetMessageId: string | null;
+  handleScrollTargetReached: (messageId: string) => void;
   handlePinnedBarClick: (messageId: string) => void;
   derived: ReturnType<typeof useThreadDerived>;
   footerVariant: GameChatFooterVariant | null;

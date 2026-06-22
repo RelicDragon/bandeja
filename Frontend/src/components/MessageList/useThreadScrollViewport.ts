@@ -66,8 +66,11 @@ export function useThreadScrollViewport({
   isLoadingMessages = false,
   isSwitchingChatType = false,
   scrollTargetMessageId = null,
+  loadingScrollTargetId = null,
+  onScrollTargetReached,
   reduceMotion,
 }: ThreadScrollViewportInput): ThreadScrollViewportResult {
+  const scrollTargetLockId = loadingScrollTargetId ?? scrollTargetMessageId ?? null;
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const innerListRef = useRef<HTMLDivElement>(null);
   const topLoadSentinelRef = useRef<HTMLDivElement>(null);
@@ -196,7 +199,7 @@ export function useThreadScrollViewport({
     layoutSettlingForBottomPin,
     wasAtBottomBeforeGrowRef,
     isNearBottomRef,
-    scrollTargetMessageId,
+    scrollTargetLockId,
   });
 
   useMessageListScrollTarget({
@@ -208,6 +211,7 @@ export function useThreadScrollViewport({
     wasAtBottomBeforeGrowRef,
     virtualMeasureKey,
     reduceMotion,
+    onScrollTargetReached,
   });
 
   useMessageListScrollAnchor({
@@ -223,7 +227,7 @@ export function useThreadScrollViewport({
   const pinBottomRafRef = useRef<number | null>(null);
 
   const schedulePinToBottom = useCallback(() => {
-    if (scrollTargetMessageId) return;
+    if (scrollTargetLockId) return;
     if (pinBottomRafRef.current != null) return;
     pinBottomRafRef.current = requestAnimationFrame(() => {
       pinBottomRafRef.current = null;
@@ -241,7 +245,7 @@ export function useThreadScrollViewport({
       if (isMessageListNearBottom(el, gapPx)) return;
       pinMessageListContainerToBottom(el);
     });
-  }, [scrollTargetMessageId]);
+  }, [scrollTargetLockId]);
 
   const prevThreadScrollKeyRef = useRef<string | null | undefined>(undefined);
   const lastOpenPaintGenerationRef = useRef(0);
@@ -257,7 +261,10 @@ export function useThreadScrollViewport({
       const anchorId = 'anchorMessageId' in decision ? decision.anchorMessageId : undefined;
       if (!anchorId) return;
       const idx = snapshot.findIndex((m) => m.id === anchorId);
-      if (idx < 0) return;
+      if (idx < 0) {
+        pinMessageListContainerToBottomAfterLayout(() => messagesContainerRef.current, 3);
+        return;
+      }
 
       const highlightIfDeepLink = () => {
         if (highlightAnchorMessageId !== anchorId) return;
@@ -322,13 +329,21 @@ export function useThreadScrollViewport({
     applyOpenScrollFromDecision,
   ]);
 
+  const scrollToBottomAlign = useCallback(() => {
+    pinMessageListContainerToBottomAfterLayout(() => messagesContainerRef.current, 3);
+  }, []);
+
+  const scrollToBottomSmooth = useCallback(() => {
+    pinMessageListContainerToBottom(messagesContainerRef.current, { behavior: 'smooth' });
+  }, []);
+
   useLayoutEffect(() => {
     if (
       !layoutSettlingForBottomPin ||
       messages.length === 0 ||
       initialScroll === undefined ||
       !openScrollAtBottomRef.current ||
-      scrollTargetMessageId
+      scrollTargetLockId
     )
       return;
     const inner = innerListRef.current;
@@ -352,7 +367,22 @@ export function useThreadScrollViewport({
         pinBottomRafRef.current = null;
       }
     };
-  }, [layoutSettlingForBottomPin, messages.length, threadScrollKey, initialScroll, schedulePinToBottom, scrollTargetMessageId]);
+  }, [layoutSettlingForBottomPin, messages.length, threadScrollKey, initialScroll, schedulePinToBottom, scrollTargetLockId]);
+
+  useLayoutEffect(() => {
+    if (!openScrollAtBottomRef.current || scrollTargetLockId) return;
+    if (!layoutSettlingForBottomPin) return;
+    schedulePinToBottom();
+  }, [virtualMeasureKey, layoutSettlingForBottomPin, schedulePinToBottom, scrollTargetLockId]);
+
+  const prevLayoutSettlingRef = useRef(layoutSettlingForBottomPin);
+  useLayoutEffect(() => {
+    const wasSettling = prevLayoutSettlingRef.current;
+    prevLayoutSettlingRef.current = layoutSettlingForBottomPin;
+    if (wasSettling && !layoutSettlingForBottomPin && openScrollAtBottomRef.current && !scrollTargetLockId) {
+      scrollToBottomAlign();
+    }
+  }, [layoutSettlingForBottomPin, scrollTargetLockId, scrollToBottomAlign]);
 
   useEffect(() => {
     if (!threadScrollKey) return;
@@ -362,8 +392,8 @@ export function useThreadScrollViewport({
       if (threadScrollKey && restoredScrollThreadRef.current !== threadScrollKey) return;
       const el = messagesContainerRef.current;
       if (!el) return;
+      if (layoutSettlingForBottomPin) return;
       const nearBottom = isMessageListNearBottom(el, MESSAGE_LIST_NEAR_BOTTOM_PX);
-      if (layoutSettlingForBottomPin && nearBottom) return;
       const items = virtualizerRef.current.getVirtualItems();
       let anchorMessageId: string | null = null;
       for (const vi of items) {
@@ -398,14 +428,6 @@ export function useThreadScrollViewport({
     return containerEvents.subscribe(handleMessageListContextMenuScrollStart);
   }, [containerEvents]);
 
-  const scrollToBottomAlign = useCallback(() => {
-    pinMessageListContainerToBottomAfterLayout(() => messagesContainerRef.current, 3);
-  }, []);
-
-  const scrollToBottomSmooth = useCallback(() => {
-    pinMessageListContainerToBottom(messagesContainerRef.current, { behavior: 'smooth' });
-  }, []);
-
   const scrollToMessageById = useCallback(
     (messageId: string) => {
       const idx = messages.findIndex(
@@ -426,7 +448,7 @@ export function useThreadScrollViewport({
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
-      scrollVirtualizerToIndex(virtualizer, idx, { align: 'center', behavior: 'smooth' });
+      scrollVirtualizerToIndex(virtualizer, idx, { align: 'center', behavior: 'auto' });
     },
     [messages, virtualizer]
   );
@@ -452,28 +474,31 @@ export function useThreadScrollViewport({
 
     if (!shouldTrigger) return;
     if (initialSmoothScrollDoneRef.current) return;
-    if (scrollTargetMessageId) return;
+    if (scrollTargetLockId) return;
     if (!threadScrollKey) return;
     if (messages.length === 0) return;
-    if (!openScrollAtBottomRef.current) return;
-
-    const container = messagesContainerRef.current;
-    if (!container) return;
-
-    const nearBottom = isMessageListNearBottom(container, MESSAGE_LIST_NEAR_BOTTOM_PX);
-    if (!nearBottom) {
+    if (!openScrollAtBottomRef.current) {
       initialSmoothScrollDoneRef.current = true;
       return;
     }
 
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
     const timer = setTimeout(() => {
-      if (layoutSettlingRef.current) return;
       initialSmoothScrollDoneRef.current = true;
-      scrollToBottomSmooth();
+      const el = messagesContainerRef.current;
+      if (!el) return;
+      const nearBottom = isMessageListNearBottom(el, MESSAGE_LIST_NEAR_BOTTOM_PX);
+      if (nearBottom) {
+        scrollToBottomSmooth();
+      } else {
+        scrollToBottomAlign();
+      }
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [isInitialLoad, isLoadingMessages, threadScrollKey, messages.length, scrollToBottomSmooth, scrollTargetMessageId]);
+  }, [isInitialLoad, isLoadingMessages, threadScrollKey, messages.length, scrollToBottomSmooth, scrollToBottomAlign, scrollTargetLockId]);
 
   const loadMoreBlockedRef = useRef(false);
   loadMoreBlockedRef.current =

@@ -57,6 +57,8 @@ export interface MessageRowMemoProps {
   showReply: boolean;
   isChannel: boolean;
   groupPosition: MessageGroupPosition;
+  isThreadSearchOutline: boolean;
+  threadSearchHighlightQuery: string | null;
 }
 
 export function messageRowPropsEqual(prev: MessageRowMemoProps, next: MessageRowMemoProps): boolean {
@@ -67,5 +69,7 @@ export function messageRowPropsEqual(prev: MessageRowMemoProps, next: MessageRow
   if (prev.showReply !== next.showReply) return false;
   if (prev.isChannel !== next.isChannel) return false;
   if (prev.groupPosition !== next.groupPosition) return false;
+  if (prev.isThreadSearchOutline !== next.isThreadSearchOutline) return false;
+  if (prev.threadSearchHighlightQuery !== next.threadSearchHighlightQuery) return false;
   return true;
 }

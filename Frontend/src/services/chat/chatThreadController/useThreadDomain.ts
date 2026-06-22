@@ -30,6 +30,8 @@ export interface UseThreadDomainParams {
   chatContainerRef: RefObject<HTMLDivElement | null>;
   messageListRef: RefObject<MessageListHandle | null>;
   loadMessagesBeforeMessageId: (messageId: string) => Promise<boolean>;
+  beginScrollTargetSession: (messageId: string) => void;
+  endScrollTargetSession: (messageId?: string) => void;
   isBlockedByUser: boolean;
   isJoiningAsGuest: boolean;
   socketHandlersRef: React.MutableRefObject<ChatThreadSocketHandlers | null>;
@@ -53,6 +55,8 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     chatContainerRef,
     messageListRef,
     loadMessagesBeforeMessageId,
+    beginScrollTargetSession,
+    endScrollTargetSession,
     isBlockedByUser,
     isJoiningAsGuest,
     socketHandlersRef,
@@ -137,6 +141,8 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     pinnedMessagesOrdered,
     pinnedBarTopIndex,
     loadingScrollTargetId,
+    scrollTargetMessageId,
+    handleScrollTargetReached,
     fetchPinnedMessages,
     handleScrollToMessage,
     scrollToMessageId,
@@ -152,6 +158,8 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     messageListRef,
     loadMessagesBeforeMessageId,
     messagesRef,
+    beginScrollTargetSession,
+    endScrollTargetSession,
   });
 
   socketHandlersRef.current = {
@@ -208,6 +216,8 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     pinnedMessagesOrdered,
     pinnedBarTopIndex,
     loadingScrollTargetId,
+    scrollTargetMessageId,
+    handleScrollTargetReached,
     handleScrollToMessage,
     scrollToMessageId,
     handlePinnedBarClick,

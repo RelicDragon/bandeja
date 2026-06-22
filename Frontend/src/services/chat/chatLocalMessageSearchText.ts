@@ -59,3 +59,70 @@ export function computeChatLocalSearchText(m: ChatMessage): string | null {
 export function normalizeChatLocalSearchQuery(q: string): string | null {
   return normalizeForSearch(q.trim());
 }
+
+export function messageMatchesThreadSearchQuery(message: ChatMessage, query: string): boolean {
+  const needle = normalizeChatLocalSearchQuery(query);
+  if (!needle || needle.length < 2) return false;
+  const haystack = computeChatLocalSearchText(message);
+  return haystack != null && haystack.includes(needle);
+}
+
+function normalizeSearchSlice(text: string): string {
+  try {
+    return transliterate(text).toLowerCase();
+  } catch {
+    return text.toLowerCase();
+  }
+}
+
+export type ThreadSearchTextSegment = { text: string; highlight: boolean };
+
+export function splitTextForThreadSearchHighlight(
+  text: string,
+  query: string | null | undefined
+): ThreadSearchTextSegment[] {
+  if (!text) return [{ text: '', highlight: false }];
+  const needle = normalizeChatLocalSearchQuery(query ?? '');
+  if (!needle || needle.length < 2) return [{ text, highlight: false }];
+
+  const haystack = normalizeSearchSlice(text);
+  if (!haystack.includes(needle)) return [{ text, highlight: false }];
+
+  const highlighted = new Array<boolean>(text.length).fill(false);
+  let index = 0;
+  while (index < text.length) {
+    let matchEnd = -1;
+    for (let end = index + 1; end <= text.length; end++) {
+      const sliceNorm = normalizeSearchSlice(text.slice(index, end));
+      if (sliceNorm === needle) {
+        matchEnd = end;
+      } else if (sliceNorm.length > needle.length) {
+        break;
+      }
+    }
+    if (matchEnd > index) {
+      for (let charIndex = index; charIndex < matchEnd; charIndex++) {
+        highlighted[charIndex] = true;
+      }
+      index = matchEnd;
+      continue;
+    }
+    index += 1;
+  }
+
+  const segments: ThreadSearchTextSegment[] = [];
+  let segmentStart = 0;
+  let segmentHighlight = highlighted[0] ?? false;
+  for (let charIndex = 1; charIndex <= text.length; charIndex++) {
+    const nextHighlight = charIndex < text.length ? highlighted[charIndex] : !segmentHighlight;
+    if (charIndex === text.length || nextHighlight !== segmentHighlight) {
+      segments.push({
+        text: text.slice(segmentStart, charIndex),
+        highlight: segmentHighlight,
+      });
+      segmentStart = charIndex;
+      if (charIndex < text.length) segmentHighlight = highlighted[charIndex];
+    }
+  }
+  return segments.length > 0 ? segments : [{ text, highlight: false }];
+}

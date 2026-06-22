@@ -168,6 +168,8 @@ export const CHAT_SCROLL_TARGET_SCROLL_DEFER_MS = 320;
 
 export const THREAD_SEARCH_DISMISS_SCROLL_DEFER_MS = 200;
 export const THREAD_SEARCH_RESULTS_CLEAR_MS = 520;
+/** In-thread search hits panel — ~45% of viewport; message list stays visible below. */
+export const THREAD_SEARCH_PANEL_MAX_HEIGHT = '45dvh';
 
 export const CHAT_OUTBOX_TRANSITION = {
   duration: 0.4,

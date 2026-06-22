@@ -136,6 +136,7 @@ function AppContent() {
   useEffect(() => {
     navigationService.initialize(navigate);
     backButtonService.setNavigate(navigate);
+    pushNotificationService.flushPendingNotificationTap();
   }, [navigate]);
 
   useEffect(() => {

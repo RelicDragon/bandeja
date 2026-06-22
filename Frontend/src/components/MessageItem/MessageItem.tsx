@@ -63,6 +63,8 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   loadMediaEager = false,
   groupPosition = 'single',
   entityType,
+  isThreadSearchOutline = false,
+  threadSearchHighlightQuery = null,
 }) {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -370,6 +372,8 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                 createdAt={currentMessage.createdAt}
                 formatMessageTime={formatMessageTime}
                 t={t}
+                isThreadSearchOutline={isThreadSearchOutline}
+                threadSearchHighlightQuery={threadSearchHighlightQuery}
                 cornerSlot={
                   !isOffline && !hasSystemReactions ? (
                     <SystemMessageReactionMotion
@@ -500,6 +504,8 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                       firstExternalHttpUrl={!isOffline ? firstExternalHttpUrl : null}
                       loadMediaEager={loadMediaEager}
                       t={t}
+                      isThreadSearchOutline={isThreadSearchOutline}
+                      threadSearchHighlightQuery={threadSearchHighlightQuery}
                     />
 
                     {!isOffline && hasReplies() && (
@@ -619,6 +625,8 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       showReply: prev.showReply ?? true,
       isChannel: prev.isChannel ?? false,
       groupPosition: prev.groupPosition ?? 'single',
+      isThreadSearchOutline: prev.isThreadSearchOutline ?? false,
+      threadSearchHighlightQuery: prev.threadSearchHighlightQuery ?? null,
     },
     {
       message: next.message,
@@ -628,6 +636,8 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       showReply: next.showReply ?? true,
       isChannel: next.isChannel ?? false,
       groupPosition: next.groupPosition ?? 'single',
+      isThreadSearchOutline: next.isThreadSearchOutline ?? false,
+      threadSearchHighlightQuery: next.threadSearchHighlightQuery ?? null,
     }
   );
 })

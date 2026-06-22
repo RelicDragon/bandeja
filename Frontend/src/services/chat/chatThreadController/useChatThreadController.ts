@@ -129,6 +129,8 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     chatContainerRef,
     messageListRef,
     loadMessagesBeforeMessageId: session.loadMessagesBeforeMessageId,
+    beginScrollTargetSession: session.beginScrollTargetSession,
+    endScrollTargetSession: session.endScrollTargetSession,
     isBlockedByUser,
     isJoiningAsGuest,
     socketHandlersRef,

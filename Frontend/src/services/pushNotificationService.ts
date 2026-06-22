@@ -48,6 +48,8 @@ class PushNotificationService {
   private isInitialized = false;
   private lastReceivedToken: string | null = null;
   private lastTokenSentToBackend: string | null = null;
+  private pendingNotificationTap: { data: NotificationData; rawData: unknown } | null = null;
+  private pendingTapRetryTimer: ReturnType<typeof setTimeout> | null = null;
 
   async initialize() {
     if (!Capacitor.isNativePlatform() || this.isInitialized) {
@@ -79,6 +81,39 @@ class PushNotificationService {
 
   private async register() {
     await PushNotifications.register();
+  }
+
+  flushPendingNotificationTap() {
+    void this.dispatchNotificationTap();
+  }
+
+  private clearPendingTapRetry() {
+    if (this.pendingTapRetryTimer) {
+      clearTimeout(this.pendingTapRetryTimer);
+      this.pendingTapRetryTimer = null;
+    }
+  }
+
+  private schedulePendingTapRetry() {
+    if (this.pendingTapRetryTimer || !this.pendingNotificationTap) return;
+    this.pendingTapRetryTimer = setTimeout(() => {
+      this.pendingTapRetryTimer = null;
+      void this.dispatchNotificationTap();
+    }, 250);
+  }
+
+  private async dispatchNotificationTap() {
+    const pending = this.pendingNotificationTap;
+    if (!pending) return;
+
+    if (!navigationService.isReady()) {
+      this.schedulePendingTapRetry();
+      return;
+    }
+
+    this.clearPendingTapRetry();
+    this.pendingNotificationTap = null;
+    await this.handleNotificationTap(pending.data, pending.rawData);
   }
 
   async ensureTokenSentToBackend() {
@@ -239,7 +274,8 @@ class PushNotificationService {
     }
 
     if (actionId === 'tap') {
-      await this.handleNotificationTap(normalizedData, notification.data);
+      this.pendingNotificationTap = { data: normalizedData, rawData: notification.data };
+      await this.dispatchNotificationTap();
     } else if (actionId === PUSH_ACTION_ACCEPT) {
       if (normalizedData.type === 'TEAM_INVITE') {
         await this.handleAcceptTeamInvite(normalizedData);

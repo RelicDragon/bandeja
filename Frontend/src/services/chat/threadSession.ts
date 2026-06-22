@@ -62,8 +62,34 @@ export function resolveThreadKeyFromOpen(opts: ThreadOpenOptions): ThreadSession
   return resolveThreadKey(opts.contextType, opts.contextId, opts.chatType);
 }
 
-export function shouldForceFreshOpen(forceReloadSignal = 0, pushNonce = peekChatFreshOpenNonce()): boolean {
-  return forceReloadSignal > 0 || pushNonce > 0;
+export function isDocumentReload(): boolean {
+  if (typeof performance === 'undefined') return false;
+  const nav = performance.getEntriesByType('navigation')[0];
+  if (nav && 'type' in nav) {
+    return (nav as PerformanceNavigationTiming).type === 'reload';
+  }
+  return false;
+}
+
+/** Thread that was active in the URL when the user hard-refreshed — only it skips stored scroll. */
+let reloadForceFreshThreadKey: string | null = null;
+
+export function shouldForceFreshOpen(
+  forceReloadSignal = 0,
+  pushNonce = peekChatFreshOpenNonce(),
+  threadKey: string | null = null
+): boolean {
+  if (forceReloadSignal > 0 || pushNonce > 0) return true;
+  if (threadKey && isDocumentReload()) {
+    if (reloadForceFreshThreadKey === null) reloadForceFreshThreadKey = threadKey;
+    return reloadForceFreshThreadKey === threadKey;
+  }
+  return false;
+}
+
+/** Test-only reset for reload scroll policy. */
+export function resetReloadForceFreshThreadKeyForTests(): void {
+  reloadForceFreshThreadKey = null;
 }
 
 export function shouldSkipLayoutSeed(

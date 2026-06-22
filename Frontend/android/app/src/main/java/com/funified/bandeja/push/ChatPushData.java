@@ -30,6 +30,7 @@ public final class ChatPushData {
     public final String gameId;
     public final String groupChannelId;
     public final String bugId;
+    public final String marketItemId;
     public final String replyToken;
     public final String previewImageUrl;
     public final String previewMediaType;
@@ -48,6 +49,7 @@ public final class ChatPushData {
         String gameId,
         String groupChannelId,
         String bugId,
+        String marketItemId,
         String replyToken,
         String previewImageUrl,
         String previewMediaType
@@ -65,6 +67,7 @@ public final class ChatPushData {
         this.gameId = gameId;
         this.groupChannelId = groupChannelId;
         this.bugId = bugId;
+        this.marketItemId = marketItemId;
         this.replyToken = replyToken;
         this.previewImageUrl = previewImageUrl;
         this.previewMediaType = previewMediaType;
@@ -104,6 +107,7 @@ public final class ChatPushData {
             trim(data.get("gameId")),
             trim(data.get("groupChannelId")),
             trim(data.get("bugId")),
+            trim(data.get("marketItemId")),
             trim(data.get("replyToken")),
             trim(data.get("previewImageUrl")),
             trim(data.get("previewMediaType"))
@@ -128,6 +132,7 @@ public final class ChatPushData {
             trim(extras.getString("gameId")),
             trim(extras.getString("groupChannelId")),
             trim(extras.getString("bugId")),
+            trim(extras.getString("marketItemId")),
             trim(extras.getString("replyToken")),
             trim(extras.getString("previewImageUrl")),
             trim(extras.getString("previewMediaType"))

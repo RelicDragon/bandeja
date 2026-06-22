@@ -2,6 +2,8 @@ import { chatLocalDb, type ThreadScrollRow } from '@/services/chat/chatLocalDb';
 
 export type { ThreadScrollRow };
 
+export type ThreadScrollPosition = Pick<ThreadScrollRow, 'atBottom' | 'anchorMessageId'>;
+
 const SAVE_DEBOUNCE_MS = 380;
 const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const pendingByKey = new Map<string, ThreadScrollRow>();

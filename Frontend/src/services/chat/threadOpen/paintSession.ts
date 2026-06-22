@@ -1,7 +1,7 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react';
 import type { ChatContextType, ChatMessageWithStatus } from '@/api/chat';
 import type { ChatType } from '@/types';
-import type { ThreadScrollRow } from '@/services/chat/chatThreadScroll';
+import type { ThreadScrollPosition } from '@/services/chat/chatThreadScroll';
 import {
   applyThreadEvent,
   loadLocalThreadBootstrap,
@@ -33,7 +33,7 @@ export type ThreadOpenReconcileParams = {
   currentIdRef: RefObject<string | undefined>;
   messagesRef: RefObject<ChatMessageWithStatus[]>;
   setMessages: Dispatch<SetStateAction<ChatMessageWithStatus[]>>;
-  scrollRow?: ThreadScrollRow;
+  scrollRow?: ThreadScrollPosition;
 };
 
 export type ThreadOpenReconcileResult = {
@@ -47,7 +47,7 @@ type ThreadOpenPaintSession = {
   paintGeneration: number;
   paintCommittedAt: number | null;
   settling: boolean;
-  scrollRow: ThreadScrollRow | undefined;
+  scrollRow: ThreadScrollPosition | undefined;
 };
 
 let paintSession: ThreadOpenPaintSession | null = null;
@@ -79,7 +79,7 @@ export function isThreadOpenSettling(): boolean {
   return paintSession?.settling ?? true;
 }
 
-export function commitThreadOpenPaint(threadKey: string, scrollRow?: ThreadScrollRow): number {
+export function commitThreadOpenPaint(threadKey: string, scrollRow?: ThreadScrollPosition): number {
   const nextGen = (paintSession?.threadKey === threadKey ? paintSession.paintGeneration : 0) + 1;
   paintSession = {
     threadKey,
@@ -120,12 +120,12 @@ export function shouldDeferOpenReload(): boolean {
   return elapsed != null && elapsed < THREAD_OPEN_SOCKET_GUARD_MS;
 }
 
-export function getThreadOpenScrollRow(): ThreadScrollRow | undefined {
+export function getThreadOpenScrollRow(): ThreadScrollPosition | undefined {
   return paintSession?.scrollRow;
 }
 
 function resolvePinAfterReconcile(
-  scrollRow: ThreadScrollRow | undefined,
+  scrollRow: ThreadScrollPosition | undefined,
   before: readonly ChatMessageWithStatus[],
   after: readonly ChatMessageWithStatus[]
 ): boolean {

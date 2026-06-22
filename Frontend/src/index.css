@@ -1346,7 +1346,7 @@ body.keyboard-visible .chat-container {
   max-height: 100dvh;
 }
 
-body.keyboard-visible .chat-container main .overflow-y-auto {
+body.keyboard-visible .chat-container main .thread-message-scroll {
   max-height: calc(100vh - var(--keyboard-height, 0px));
   max-height: calc(100dvh - var(--keyboard-height, 0px));
 }

@@ -144,6 +144,9 @@ public final class ChatNotificationHelper {
         if (pushData.bugId != null) {
             extras.putString("bugId", pushData.bugId);
         }
+        if (pushData.marketItemId != null) {
+            extras.putString("marketItemId", pushData.marketItemId);
+        }
         if (pushData.previewImageUrl != null) {
             extras.putString("previewImageUrl", pushData.previewImageUrl);
         }
@@ -206,6 +209,9 @@ public final class ChatNotificationHelper {
         Intent tapIntent = new Intent(context, MainActivity.class);
         tapIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         tapIntent.putExtras(replyExtras(pushData));
+        // Capacitor PushNotificationsPlugin.handleOnNewIntent only forwards taps when
+        // google.message_id is present; custom MessagingStyle notifications must set it.
+        tapIntent.putExtra("google.message_id", pushData.messageId);
 
         PendingIntent contentIntent = PendingIntent.getActivity(
             context,

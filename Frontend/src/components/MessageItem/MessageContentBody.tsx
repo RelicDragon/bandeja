@@ -1,7 +1,29 @@
 import React from 'react';
 import { ParsedContentPart } from './types';
+import { splitTextForThreadSearchHighlight } from '@/services/chat/chatLocalMessageSearchText';
+import { getThreadSearchTextHighlightClass } from './threadSearchHighlightStyles';
 
 export type ContentVariant = 'channel' | 'own' | 'other';
+
+function renderThreadSearchHighlightedText(
+  text: string,
+  threadSearchHighlightQuery: string | null | undefined,
+  variant: ContentVariant
+): React.ReactNode {
+  if (!threadSearchHighlightQuery) return text;
+  const segments = splitTextForThreadSearchHighlight(text, threadSearchHighlightQuery);
+  if (segments.length === 1 && !segments[0].highlight) return text;
+  const highlightClassName = getThreadSearchTextHighlightClass(variant);
+  return segments.map((segment, index) =>
+    segment.highlight ? (
+      <mark key={index} className={highlightClassName}>
+        {segment.text}
+      </mark>
+    ) : (
+      <React.Fragment key={index}>{segment.text}</React.Fragment>
+    )
+  );
+}
 
 function getMentionClassName(variant: ContentVariant, isMentioned: boolean): string {
   const base = 'font-semibold cursor-pointer hover:underline ';
@@ -35,6 +57,7 @@ interface MessageContentBodyProps {
   onMentionClick: (userId: string) => void;
   onUrlClick: (url: string, e: React.MouseEvent) => void;
   className?: string;
+  threadSearchHighlightQuery?: string | null;
 }
 
 export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
@@ -46,6 +69,7 @@ export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
   onMentionClick,
   onUrlClick,
   className = '',
+  threadSearchHighlightQuery = null,
 }) => {
   const paragraphClass = 'text-sm whitespace-pre-wrap break-words break-all overflow-visible';
   const style = { wordBreak: 'break-word' as const, overflowWrap: 'break-word' as const };
@@ -84,14 +108,26 @@ export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
                 className={isAppLink ? getAppLinkClassName(variant) : getUrlClassName(variant)}
               >
                 {isAppLink && <span aria-hidden className="opacity-90">↗</span>}
-                {part.displayText || part.content}
+                {renderThreadSearchHighlightedText(
+                  part.displayText || part.content,
+                  threadSearchHighlightQuery,
+                  variant
+                )}
               </a>
             );
           }
-          return <span key={index}>{part.content}</span>;
+          return (
+            <span key={index}>
+              {renderThreadSearchHighlightedText(part.content, threadSearchHighlightQuery, variant)}
+            </span>
+          );
         })
       ) : (
-        <span>{fallbackContent}</span>
+        <span>
+          {typeof fallbackContent === 'string'
+            ? renderThreadSearchHighlightedText(fallbackContent, threadSearchHighlightQuery, variant)
+            : fallbackContent}
+        </span>
       )}
     </p>
   );

@@ -56,6 +56,9 @@ export function messageListPropsEqual(prev: MessageListProps, next: MessageListP
   if (prev.openPaintGeneration !== next.openPaintGeneration) return false;
   if (prev.threadLayoutSettling !== next.threadLayoutSettling) return false;
   if (prev.scrollTargetMessageId !== next.scrollTargetMessageId) return false;
+  if (prev.loadingScrollTargetId !== next.loadingScrollTargetId) return false;
+  if (prev.onScrollTargetReached !== next.onScrollTargetReached) return false;
+  if (prev.threadSearchOutlineQuery !== next.threadSearchOutlineQuery) return false;
 
   if (!pinnedIdsEqual(prev.pinnedMessageIds, next.pinnedMessageIds)) return false;
   if (!initialScrollEqual(prev.initialScroll, next.initialScroll)) return false;

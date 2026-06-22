@@ -1,4 +1,4 @@
-import { format as dateFnsFormat, formatDistanceToNow, isToday, isYesterday, differenceInHours, differenceInDays, getYear, Locale } from 'date-fns';
+import { format as dateFnsFormat, formatDistanceToNow, isToday, isTomorrow, isYesterday, differenceInHours, differenceInDays, getYear, Locale } from 'date-fns';
 import { enGB } from 'date-fns/locale/en-GB';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
@@ -67,6 +67,22 @@ export const formatRelativeTime = (date: Date | string): string => {
     locale: currentLocale 
   });
 };
+
+/** Search result timestamps: today/yesterday/tomorrow labels, else short weekday + short date (like GameCard). */
+export function formatSearchResultDate(date: Date | string, t: (key: string) => string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isToday(dateObj)) return t('createGame.today');
+  if (isTomorrow(dateObj)) return t('createGame.tomorrow');
+  if (isYesterday(dateObj)) return t('createGame.yesterday');
+  const intlLocale = resolveAppLocale(i18n.language);
+  const sameYear = getYear(dateObj) === getYear(new Date());
+  return new Intl.DateTimeFormat(intlLocale, {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  }).format(dateObj);
+}
 
 export const formatSmartRelativeTime = (date: Date | string, t?: (key: string) => string): string => {
   const currentLocale = localeMap[extractLanguageCode(i18n.language)] || enGB;

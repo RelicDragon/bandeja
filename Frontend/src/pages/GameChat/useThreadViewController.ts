@@ -324,6 +324,8 @@ export function useThreadViewController({
     pinnedMessagesOrdered: thread.pinnedMessagesOrdered,
     pinnedBarTopIndex: thread.pinnedBarTopIndex,
     loadingScrollTargetId: thread.loadingScrollTargetId,
+    scrollTargetMessageId: thread.scrollTargetMessageId,
+    handleScrollTargetReached: thread.handleScrollTargetReached,
     handlePinnedBarClick: thread.handlePinnedBarClick,
     handlePinMessage: thread.handlePinMessage,
     handleUnpinMessage: thread.handleUnpinMessage,

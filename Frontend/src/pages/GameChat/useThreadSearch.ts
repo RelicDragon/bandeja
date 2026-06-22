@@ -19,12 +19,16 @@ type UseThreadSearchArgs = {
 export function useThreadSearch({ contextType, contextId, searchChatType }: UseThreadSearchArgs) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
+  const [isResultsPanelVisible, setIsResultsPanelVisible] = useState(true);
   const [results, setResults] = useState<ChatMessage[]>([]);
   const [hasMoreResults, setHasMoreResults] = useState(false);
   const [searchGeneration, setSearchGeneration] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
+  const [lastSelectedResultId, setLastSelectedResultId] = useState<string | null>(null);
   const resultLimitRef = useRef(THREAD_SEARCH_PAGE_SIZE);
   const prevDebouncedQueryRef = useRef('');
+  const lastSelectedResultQueryRef = useRef('');
+  const blurSearchInputRef = useRef<(() => void) | null>(null);
 
   const debouncedSearchQuery = useDebounce(searchQuery, SEARCH_DEBOUNCE_MS);
   const trimmedQuery = searchQuery.trim();
@@ -34,9 +38,33 @@ export function useThreadSearch({ contextType, contextId, searchChatType }: UseT
     isSearchActive && trimmedQuery.length >= 2 && trimmedQuery !== trimmedDebouncedQuery;
   const isLoadingResults = isQueryPending || isSearching;
 
+  const registerSearchInputBlur = useCallback((blur: (() => void) | null) => {
+    blurSearchInputRef.current = blur;
+  }, []);
+
+  const showSearchResults = useCallback(() => {
+    setIsResultsPanelVisible(true);
+  }, []);
+
+  const hideSearchResults = useCallback(() => {
+    setIsResultsPanelVisible(false);
+    blurSearchInputRef.current?.();
+  }, []);
+
+  const markSearchResultSelected = useCallback(
+    (messageId: string) => {
+      lastSelectedResultQueryRef.current = trimmedQuery;
+      setLastSelectedResultId(messageId);
+    },
+    [trimmedQuery]
+  );
+
   const dismissSearch = useCallback(() => {
     setIsSearchActive(false);
     setSearchQuery('');
+    setIsResultsPanelVisible(true);
+    setLastSelectedResultId(null);
+    lastSelectedResultQueryRef.current = '';
   }, []);
 
   const clearSearch = useCallback(() => {
@@ -65,6 +93,16 @@ export function useThreadSearch({ contextType, contextId, searchChatType }: UseT
     setHasMoreResults(false);
     setSearchGeneration((n) => n + 1);
   }, [searchChatType]);
+
+  useEffect(() => {
+    if (
+      lastSelectedResultQueryRef.current &&
+      trimmedDebouncedQuery !== lastSelectedResultQueryRef.current
+    ) {
+      setLastSelectedResultId(null);
+      lastSelectedResultQueryRef.current = '';
+    }
+  }, [trimmedDebouncedQuery]);
 
   useEffect(() => {
     if (isSearchActive) return;
@@ -132,7 +170,10 @@ export function useThreadSearch({ contextType, contextId, searchChatType }: UseT
     [isQueryPending, results]
   );
   const displayHasMoreResults = isQueryPending ? false : hasMoreResults;
-  const showResultsPanel = isSearchActive && trimmedQuery.length >= 2;
+  const showResultsPanel =
+    isSearchActive && isResultsPanelVisible && trimmedQuery.length >= 2;
+  const threadSearchOutlineQuery =
+    isSearchActive && trimmedQuery.length >= 2 ? trimmedQuery : null;
 
   return useMemo(
     () => ({
@@ -141,6 +182,7 @@ export function useThreadSearch({ contextType, contextId, searchChatType }: UseT
       debouncedSearchQuery,
       isSearchActive,
       setIsSearchActive,
+      isResultsPanelVisible,
       results,
       displayResults,
       resultCount,
@@ -150,7 +192,13 @@ export function useThreadSearch({ contextType, contextId, searchChatType }: UseT
       isQueryPending,
       isLoadingResults,
       showResultsPanel,
+      threadSearchOutlineQuery,
       loadMoreResults,
+      registerSearchInputBlur,
+      showSearchResults,
+      hideSearchResults,
+      markSearchResultSelected,
+      lastSelectedResultId,
       dismissSearch,
       clearSearch,
     }),
@@ -158,6 +206,7 @@ export function useThreadSearch({ contextType, contextId, searchChatType }: UseT
       searchQuery,
       debouncedSearchQuery,
       isSearchActive,
+      isResultsPanelVisible,
       results,
       displayResults,
       resultCount,
@@ -167,7 +216,13 @@ export function useThreadSearch({ contextType, contextId, searchChatType }: UseT
       isQueryPending,
       isLoadingResults,
       showResultsPanel,
+      threadSearchOutlineQuery,
       loadMoreResults,
+      registerSearchInputBlur,
+      showSearchResults,
+      hideSearchResults,
+      markSearchResultSelected,
+      lastSelectedResultId,
       dismissSearch,
       clearSearch,
     ]

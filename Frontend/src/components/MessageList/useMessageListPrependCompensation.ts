@@ -18,7 +18,7 @@ type UseMessageListPrependCompensationParams = {
   layoutSettlingForBottomPin: boolean;
   wasAtBottomBeforeGrowRef: RefObject<boolean>;
   isNearBottomRef: RefObject<boolean>;
-  scrollTargetMessageId?: string | null;
+  scrollTargetLockId?: string | null;
 };
 
 type UseMessageListPrependCompensationResult = {
@@ -39,7 +39,7 @@ export function useMessageListPrependCompensation({
   layoutSettlingForBottomPin,
   wasAtBottomBeforeGrowRef,
   isNearBottomRef,
-  scrollTargetMessageId = null,
+  scrollTargetLockId = null,
 }: UseMessageListPrependCompensationParams): UseMessageListPrependCompensationResult {
   const previousMessageCountRef = useRef(0);
   const previousFirstMessageIdRef = useRef<string | undefined>(undefined);
@@ -109,11 +109,11 @@ export function useMessageListPrependCompensation({
       justLoadedOlder,
       isPrependReconcile,
       layoutSettlingForBottomPin,
-      wasAtBottom: scrollTargetMessageId ? false : wasAtBottomBeforeGrowRef.current,
+      wasAtBottom: scrollTargetLockId ? false : wasAtBottomBeforeGrowRef.current,
     });
 
     if (scrollDecision.kind === 'prepend-compensate') {
-      if (!scrollTargetMessageId) {
+      if (!scrollTargetLockId) {
         const snapshot =
           prependSnapshotRef.current ?? capturePrependScrollSnapshot(container);
         applyPrependScrollCompensation(container, snapshot);
@@ -123,7 +123,7 @@ export function useMessageListPrependCompensation({
     } else if (
       scrollDecision.kind === 'append-pin-if-at-bottom' &&
       messages.length > 0 &&
-      !scrollTargetMessageId
+      !scrollTargetLockId
     ) {
       pinMessageListContainerToBottom(container);
     }
@@ -149,7 +149,7 @@ export function useMessageListPrependCompensation({
     isLoadingMoreRef,
     wasAtBottomBeforeGrowRef,
     isNearBottomRef,
-    scrollTargetMessageId,
+    scrollTargetLockId,
   ]);
 
   return { justLoadedOlderMessagesRef, prependCompensationEpochRef };

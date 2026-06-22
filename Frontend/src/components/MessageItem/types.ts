@@ -36,6 +36,8 @@ export interface MessageItemProps {
   loadMediaEager?: boolean;
   groupPosition?: MessageGroupPosition;
   entityType?: string | null;
+  isThreadSearchOutline?: boolean;
+  threadSearchHighlightQuery?: string | null;
 }
 
 export type ParsedContentPart =

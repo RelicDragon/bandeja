@@ -35,7 +35,7 @@ import {
   flushChatThreadL1DebouncedPut,
   peekChatThreadMemory,
 } from '@/services/chat/chatThreadMemoryCache';
-import type { ThreadScrollRow } from '@/services/chat/chatThreadScroll';
+import type { ThreadScrollPosition, ThreadScrollRow } from '@/services/chat/chatThreadScroll';
 import {
   commitChatOpenMessages,
   createTracedSetMessages,
@@ -105,7 +105,7 @@ export function useThreadMessages({
   const isLoadingRef = useRef(false);
   const pendingHistoryBackfillRef = useRef(false);
   const seededThreadKeyRef = useRef<string | null>(null);
-  const openScrollRef = useRef<ThreadScrollRow | undefined>(undefined);
+  const openScrollRef = useRef<ThreadScrollPosition | undefined>(undefined);
   const openScrollThreadKeyRef = useRef<string | null>(null);
   const openScrollReadyKeyRef = useRef<string | null>(null);
   const openPaintCommittedRef = useRef(false);
@@ -274,15 +274,15 @@ export function useThreadMessages({
   /** ThreadSession layout seed: warm L1 in messagesRef; first visible paint is bootstrap commit. */
   useLayoutEffect(() => {
     const pushFreshNonce = peekChatFreshOpenNonce();
-    const forceFreshOpen = shouldForceFreshOpen(freshOpenSignal, pushFreshNonce);
-    forceFreshOpenRef.current = forceFreshOpen;
-    if (pushFreshNonce > 0) consumeChatFreshOpenNonce(pushFreshNonce);
-
     const key = resolveThreadKey(
       contextType,
       id,
       contextType === 'GAME' ? effectiveChatType : undefined
     );
+    const forceFreshOpen = shouldForceFreshOpen(freshOpenSignal, pushFreshNonce, key);
+    forceFreshOpenRef.current = forceFreshOpen;
+    if (pushFreshNonce > 0) consumeChatFreshOpenNonce(pushFreshNonce);
+
     const previousKey = seededThreadKeyRef.current;
 
     if (!key) {
@@ -366,7 +366,21 @@ export function useThreadMessages({
     applyThreadTeardown,
   ]);
 
+  const scrollTargetActiveRef = useRef<string | null>(null);
+
+  const beginScrollTargetSession = useCallback((messageId: string) => {
+    scrollTargetActiveRef.current = messageId;
+    openScrollRef.current = { anchorMessageId: messageId, atBottom: false };
+  }, []);
+
+  const endScrollTargetSession = useCallback((messageId?: string) => {
+    if (messageId == null || scrollTargetActiveRef.current === messageId) {
+      scrollTargetActiveRef.current = null;
+    }
+  }, []);
+
   const scrollToBottom = useCallback(() => {
+    if (scrollTargetActiveRef.current) return;
     try {
       messageListRef.current?.scrollToBottomAlign();
     } catch {
@@ -375,6 +389,7 @@ export function useThreadMessages({
   }, [messageListRef]);
 
   const pinAfterSocketMergeIfAllowed = useCallback(() => {
+    if (scrollTargetActiveRef.current) return;
     if (threadOpenSettlingRef.current) return;
     if (!openPaintCommittedRef.current) return;
     const decision = decideReconcilePinApply({
@@ -715,7 +730,6 @@ export function useThreadMessages({
 
       let acc = mergeChatMessagesAscending(messagesRef.current, [anchor]);
       messagesRef.current = acc;
-      setMessagesTagged('anchor-load', acc);
       void persistChatMessagesFromApi([anchor]).catch(() => {});
 
       let cursor = messageId;
@@ -725,13 +739,17 @@ export function useThreadMessages({
         void persistChatMessagesFromApi(batch).catch(() => {});
         acc = mergeChatMessagesAscending(acc, batch);
         messagesRef.current = acc;
-        setMessagesTagged('anchor-load', acc);
         if (batch.length < PAGE_SIZE) break;
         cursor = batch[0].id;
       }
 
       if (currentIdRef.current !== id) return acc.some((m) => m.id === messageId);
+
+      setMessagesTagged('anchor-load', acc);
+
       const mk = chatSyncTailKey(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined);
+      const scrollRow: ThreadScrollPosition = { anchorMessageId: messageId, atBottom: false };
+      openScrollRef.current = scrollRow;
       await reconcileAfterPaint({
         threadKey: mk,
         contextType,
@@ -740,6 +758,7 @@ export function useThreadMessages({
         currentIdRef,
         messagesRef,
         setMessages,
+        scrollRow,
       });
       if (currentIdRef.current === id) {
         void applyThreadL1Put({
@@ -783,6 +802,8 @@ export function useThreadMessages({
     hasLoadedRef,
     isLoadingRef,
     scrollToBottom,
+    beginScrollTargetSession,
+    endScrollTargetSession,
     loadMessages,
     loadMoreMessages,
     loadMessagesBeforeMessageId,

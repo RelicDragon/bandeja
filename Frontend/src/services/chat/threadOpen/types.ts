@@ -1,5 +1,5 @@
 import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
-import type { ThreadScrollRow } from '@/services/chat/chatThreadScroll';
+import type { ThreadScrollPosition } from '@/services/chat/chatThreadScroll';
 import type { ChatOpenSetMessagesSource } from '@/services/chat/chatOpenTrace';
 
 /**
@@ -27,7 +27,7 @@ export type OpenThreadPlan = {
   threadKey: string;
   messages: ChatMessageWithStatus[];
   scroll: OpenThreadScroll;
-  scrollRow: ThreadScrollRow | undefined;
+  scrollRow: ThreadScrollPosition | undefined;
   paintSource: OpenThreadPaintSource;
   deferSync: boolean;
 };
@@ -44,7 +44,7 @@ export type ThreadOpenInputs = {
 
 export type ThreadOpenScrollPlan = {
   scroll: OpenThreadScroll;
-  scrollRow: ThreadScrollRow | undefined;
+  scrollRow: ThreadScrollPosition | undefined;
 };
 
 export type ThreadOpenPlanResult =

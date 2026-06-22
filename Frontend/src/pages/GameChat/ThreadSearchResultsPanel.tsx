@@ -1,12 +1,16 @@
-import { useCallback } from 'react';
+import { useCallback, useLayoutEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { ChatMessage } from '@/api/chat';
-import { CHAT_PANEL_TRANSITION, chatListRowEnterDelay } from '@/components/chat/chatListMotion';
+import {
+  CHAT_PANEL_TRANSITION,
+  THREAD_SEARCH_PANEL_MAX_HEIGHT,
+  chatListRowEnterDelay,
+} from '@/components/chat/chatListMotion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useAuthStore } from '@/store/authStore';
-import { formatRelativeTime } from '@/utils/dateFormat';
+import { formatSearchResultDate } from '@/utils/dateFormat';
 import { getThreadSearchPreviewLine, getThreadSearchSenderLabel } from './threadSearchPreview';
 import { ThreadSearchResultAvatar } from './ThreadSearchResultAvatar';
 import { useThreadScroll, useThreadSearch } from './useThreadView';
@@ -27,6 +31,9 @@ function ThreadSearchLoadingSpinner() {
   );
 }
 
+const SELECTED_RESULT_CLASS =
+  'bg-blue-50 ring-2 ring-inset ring-blue-500/45 dark:bg-blue-950/35 dark:ring-blue-400/40';
+
 export function ThreadSearchResultsPanel({
   visible,
   results,
@@ -38,19 +45,37 @@ export function ThreadSearchResultsPanel({
   const currentUserId = useAuthStore((s) => s.user?.id);
   const currentUser = useAuthStore((s) => s.user);
   const reduceMotion = usePrefersReducedMotion();
+  const listRef = useRef<HTMLUListElement>(null);
   const { scrollToMessageId } = useThreadScroll();
-  const { dismissSearch } = useThreadSearch();
+  const { hideSearchResults, markSearchResultSelected, lastSelectedResultId } = useThreadSearch();
 
   const transition = reduceMotion ? { duration: 0 } : CHAT_PANEL_TRANSITION;
   const showInitialLoading = isLoadingResults && results.length === 0;
   const showRefreshing = isLoadingResults && results.length > 0;
 
+  const scrollSelectedIntoView = useCallback(() => {
+    if (!lastSelectedResultId) return;
+    const row = listRef.current?.querySelector<HTMLElement>(
+      `[data-search-result-id="${lastSelectedResultId}"]`
+    );
+    row?.scrollIntoView({ block: 'nearest' });
+  }, [lastSelectedResultId]);
+
+  useLayoutEffect(() => {
+    if (!visible || !lastSelectedResultId) return;
+    if (!results.some((message) => message.id === lastSelectedResultId)) return;
+    scrollSelectedIntoView();
+    const frame = window.requestAnimationFrame(scrollSelectedIntoView);
+    return () => window.cancelAnimationFrame(frame);
+  }, [visible, lastSelectedResultId, results, scrollSelectedIntoView]);
+
   const handleResultClick = useCallback(
     (messageId: string) => {
+      markSearchResultSelected(messageId);
       void scrollToMessageId(messageId);
-      dismissSearch();
+      hideSearchResults();
     },
-    [dismissSearch, scrollToMessageId]
+    [hideSearchResults, markSearchResultSelected, scrollToMessageId]
   );
 
   return (
@@ -59,7 +84,7 @@ export function ThreadSearchResultsPanel({
         <motion.div
           key="thread-search-results"
           initial={reduceMotion ? false : { opacity: 0, maxHeight: 0 }}
-          animate={{ opacity: 1, maxHeight: 'min(40dvh, 280px)' }}
+          animate={{ opacity: 1, maxHeight: THREAD_SEARCH_PANEL_MAX_HEIGHT }}
           exit={reduceMotion ? undefined : { opacity: 0, maxHeight: 0 }}
           transition={transition}
           className="relative flex min-h-0 shrink-0 flex-col overflow-hidden border-b border-gray-200 bg-white/95 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/95"
@@ -80,7 +105,7 @@ export function ThreadSearchResultsPanel({
               ) : null}
             </motion.div>
           ) : null}
-          <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-0 max-h-full flex-1 flex-col">
             {showInitialLoading ? (
               <ThreadSearchLoadingSpinner />
             ) : results.length === 0 ? (
@@ -90,11 +115,13 @@ export function ThreadSearchResultsPanel({
             ) : (
               <>
                 <ul
-                  className={`overflow-y-auto overscroll-contain pb-2 transition-opacity duration-200 ${hasMoreResults ? 'max-h-[min(calc(40dvh-2.5rem),244px)]' : 'max-h-[min(40dvh,280px)]'} ${showRefreshing ? 'opacity-60' : 'opacity-100'}`}
+                  ref={listRef}
+                  className={`min-h-0 flex-1 overflow-y-auto overscroll-contain pb-3 transition-opacity duration-200 ${showRefreshing ? 'opacity-60' : 'opacity-100'}`}
                 >
                   {results.map((message, index) => {
                     const preview = getThreadSearchPreviewLine(message, t);
                     const senderLabel = getThreadSearchSenderLabel(message, currentUserId, t);
+                    const isSelected = message.id === lastSelectedResultId;
                     return (
                       <motion.li
                         key={message.id}
@@ -107,9 +134,15 @@ export function ThreadSearchResultsPanel({
                       >
                         <button
                           type="button"
+                          data-search-result-id={message.id}
                           onClick={() => handleResultClick(message.id)}
                           disabled={showRefreshing}
-                          className="flex w-full min-w-0 flex-col gap-0.5 border-b border-gray-100 px-2 py-1 text-left last:border-b-0 hover:bg-gray-50 disabled:pointer-events-none dark:border-gray-800 dark:hover:bg-gray-800/60"
+                          aria-current={isSelected ? 'true' : undefined}
+                          className={`flex w-full min-w-0 flex-col gap-0.5 border-b border-gray-100 px-2 py-1 text-left last:border-b-0 disabled:pointer-events-none dark:border-gray-800 ${
+                            isSelected
+                              ? SELECTED_RESULT_CLASS
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
+                          }`}
                         >
                           <div className="flex min-w-0 items-center gap-1.5">
                             <ThreadSearchResultAvatar
@@ -121,7 +154,7 @@ export function ThreadSearchResultsPanel({
                               {senderLabel}
                             </span>
                             <span className="shrink-0 text-[10px] leading-none tabular-nums text-gray-500 dark:text-gray-400">
-                              {formatRelativeTime(message.createdAt)}
+                              {formatSearchResultDate(message.createdAt, t)}
                             </span>
                           </div>
                           <span className="min-w-0 truncate text-[11px] leading-tight text-gray-900 dark:text-gray-100">

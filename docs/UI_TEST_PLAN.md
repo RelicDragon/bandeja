@@ -791,7 +791,13 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-65 | Offline thread access | Go offline → open previously visited chat thread | Cached history renders (no full-page No Internet screen); composer queues sends |
 | CH-66 | New message entry animation | Receive/send message near bottom | Message fades + slides in smoothly; no scroll jump |
 | CH-67 | Date separator pill | Scroll across day boundary | Rounded pill date label (Today/Yesterday/date) centered between days |
-| CH-72 | In-thread message search | Open any chat → tap composer search → type 2+ chars matching a message → tap a result | Debounced panel scoped to active tab (PRIVATE/PUBLIC/ADMINS); avatar + name/time row, preview below; loading spinner while debouncing/searching; count when settled; load-more when >50 local hits; tap scrolls to message (loads history if needed) |
+| CH-72 | In-thread message search | Open any chat → tap composer search → type 2+ chars matching a message → tap a result | Debounced panel ~45% viewport above message list (not full-screen); scoped to active tab; avatar + name/time row, preview below; loading spinner while debouncing/searching; count when settled; load-more when >50 local hits; tap scrolls to message (loads history if needed); search field stays open with query; results panel animates closed and input blurs |
+| CH-76 | In-thread search refocus results | After CH-72 result tap → tap search field again (same query) | Same results reappear; list scrolls to previously tapped hit; that row stays highlighted |
+| CH-74 | In-thread search last result visible | With keyboard open, search until many hits → scroll to bottom of results panel | Last result and load-more (if shown) fully visible inside panel scroll; message list still visible below panel |
+| CH-75 | In-thread search scroll to old message | Search → tap result from 2+ months ago (not in loaded window) | Message list fades + spinner only while history loads; lands on target with highlight |
+| CH-77 | In-thread search scroll in-window | Search → tap result already in loaded messages | No fade/spinner; direct scroll + highlight; can scroll away immediately without snap-back |
+| CH-78 | In-thread search message outlines | Open search → type 2+ chars matching loaded messages | Matching message bubbles (not avatar/name row) show blue ring and yellow highlight on matched text inside the bubble; outlines/highlights clear when search closes |
+| CH-75 | Open thread at latest messages | Hard-refresh any chat with 20+ messages (or open after prior failed pin) | Message list lands at bottom; newest messages visible; no “scroll to latest” FAB |
 | CH-73 | In-thread search empty | Search for text not in thread | Panel shows no results; count hidden |
 
 ### 11.4 Group/channel settings
@@ -1111,6 +1117,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 |----|------|----------|
 | X-33 | Tap game invite push | Routes to `/games/:id` |
 | X-34 | Tap game chat push | Routes to `/games/:id/chat` |
+| X-38 | Tap group chat push (Android) | Group message push with app backgrounded/killed → tap | Routes to `/group-chat/:id` |
+| X-39 | Tap bug chat push (Android) | Bug thread message push → tap | Routes to `/bugs/:groupChannelId` |
 | X-35 | Tap bracket schedule push | Routes to league schedule/bracket tab |
 | X-36 | Tap DM push | Routes to `/user-chat/:id` |
 | X-37 | Permission prompt | First launch push permission | `@manual` |

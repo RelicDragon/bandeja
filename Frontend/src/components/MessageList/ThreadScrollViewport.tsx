@@ -40,7 +40,7 @@ export const ThreadScrollViewport = forwardRef<MessageListHandle, ThreadScrollVi
       <MessageListSettlingProvider value={viewport.settlingRefs}>
         <div
           ref={containerRef}
-          className="relative flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto p-4 min-h-0 overscroll-contain h-full"
+          className="thread-message-scroll relative flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto p-4 min-h-0 overscroll-contain h-full"
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
         {isSwitchingChatType ? (

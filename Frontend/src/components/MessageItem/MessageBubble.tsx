@@ -8,12 +8,13 @@ import { MessageExternalLinkPreview } from './MessageExternalLinkPreview';
 import { MessageMediaGrid } from './MessageMediaGrid';
 import { AudioMessageBubble } from '../audio/AudioMessageBubble';
 import { ChatVideoBubble } from './ChatVideoBubble';
-import { ParsedContentPart } from './types';
+import { getThreadSearchBubbleRingClass } from './threadSearchHighlightStyles';
 import { Pencil } from 'lucide-react';
 import { MessageSendStatusIcon } from './MessageSendStatusIcon';
 import { resolveOwnMessageTicks } from '@/services/chat/messageTickState';
 import { TFunction } from 'i18next';
 import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
+import type { ParsedContentPart } from './types';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -50,6 +51,8 @@ interface MessageBubbleProps {
   inlineVideoPlaybackPaused?: boolean;
   loadMediaEager?: boolean;
   t: TFunction;
+  isThreadSearchOutline?: boolean;
+  threadSearchHighlightQuery?: string | null;
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -87,6 +90,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   inlineVideoPlaybackPaused = false,
   loadMediaEager = false,
   t,
+  isThreadSearchOutline = false,
+  threadSearchHighlightQuery = null,
 }) => {
   const isVoice = message.messageType === 'VOICE';
   const isVideo = message.messageType === 'VIDEO';
@@ -132,7 +137,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           : groupPosition === 'last'
             ? 'rounded-tl-md'
             : '';
-  const bubbleClass = `${hasMediaOrVoice ? '' : 'px-4'} ${paddingClass} rounded-2xl ${groupedCornerClass} shadow-sm relative min-w-[120px] ${isVoice ? 'overflow-visible' : hasMedia ? 'overflow-hidden' : 'overflow-visible'} ${message.poll ? 'flex-1 min-w-0' : ''} ${isChannel || message.poll ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200' : isOwnMessage ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-900/10 dark:from-blue-600 dark:to-blue-700' : 'bg-white dark:bg-gray-700 border border-gray-200/80 dark:border-gray-600/60 text-gray-800 dark:text-gray-200'}`;
+  const bubbleClass = `${hasMediaOrVoice ? '' : 'px-4'} ${paddingClass} rounded-2xl ${groupedCornerClass} shadow-sm relative min-w-[120px] ${isVoice ? 'overflow-visible' : hasMedia ? 'overflow-hidden' : 'overflow-visible'} ${message.poll ? 'flex-1 min-w-0' : ''} ${isChannel || message.poll ? 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-800 dark:text-gray-200' : isOwnMessage ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-blue-900/10 dark:from-blue-600 dark:to-blue-700' : 'bg-white dark:bg-gray-700 border border-gray-200/80 dark:border-gray-600/60 text-gray-800 dark:text-gray-200'} ${isThreadSearchOutline ? getThreadSearchBubbleRingClass(isOwnMessage, isChannel) : ''}`;
   const timeRowClass = `${hasMediaOnly ? 'absolute bottom-1 right-2' : 'flex justify-end mt-0.5'} ${hasMediaAndContent ? 'px-4' : ''} ${isVoice ? 'px-3' : ''} ${isChannel ? 'text-gray-400 dark:text-gray-500' : isOwnMessage ? 'text-blue-100' : 'text-gray-400 dark:text-gray-500'} ${hasMediaOnly ? 'drop-shadow-[0_0_3px_rgba(0,0,0,1)] drop-shadow-[0_0_6px_rgba(0,0,0,0.9)] drop-shadow-[0_1px_1px_rgba(0,0,0,1)]' : ''}`;
   const timeSpanStyle = hasMediaOnly ? { textShadow: '0 0 2px #000, 0 0 4px #000, 1px 1px 2px #000, -1px -1px 2px #000, 0 1px 2px #000, 1px 0 2px #000, -1px 0 2px #000, 0 -1px 2px #000' } : undefined;
 
@@ -200,6 +205,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   currentUserId={currentUserId}
                   onMentionClick={onMentionClick}
                   onUrlClick={onUrlClick}
+                  threadSearchHighlightQuery={threadSearchHighlightQuery}
                 />
               </div>
               <motion.div
@@ -234,6 +240,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 currentUserId={currentUserId}
                 onMentionClick={onMentionClick}
                 onUrlClick={onUrlClick}
+                threadSearchHighlightQuery={threadSearchHighlightQuery}
               />
               <p className="text-xs italic opacity-80">
                 {t('chat.translating', { defaultValue: 'Translating…' })}
@@ -248,6 +255,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               currentUserId={currentUserId}
               onMentionClick={onMentionClick}
               onUrlClick={onUrlClick}
+              threadSearchHighlightQuery={threadSearchHighlightQuery}
             />
           )}
           {firstExternalHttpUrl && <MessageExternalLinkPreview url={firstExternalHttpUrl} variant={variant} />}

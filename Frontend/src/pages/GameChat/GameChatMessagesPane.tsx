@@ -7,12 +7,8 @@ import {
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { MessageList } from '@/components/MessageList';
 import { ChatAutoTranslateContext } from '@/contexts/ChatAutoTranslateContext';
-import {
-  useThreadChrome,
-  useThreadMessageActions,
-  useThreadMessagesData,
-  useThreadScroll,
-} from './useThreadView';
+import { useThreadChrome, useThreadMessageActions, useThreadMessagesData, useThreadScroll, useThreadSearch } from './useThreadView';
+import { ThreadScrollTargetOverlay } from './ThreadScrollTargetOverlay';
 
 /** Message list shell — subscribes to message data, actions, and scroll seams. */
 export const GameChatMessagesPane: React.FC = () => {
@@ -58,8 +54,11 @@ export const GameChatMessagesPane: React.FC = () => {
     autoTranslateLanguageCodes,
     currentChatType,
     game,
+    scrollTargetMessageId,
+    handleScrollTargetReached,
     loadingScrollTargetId,
   } = useThreadChrome();
+  const { threadSearchOutlineQuery } = useThreadSearch();
 
   const reduceMotion = usePrefersReducedMotion();
   const availableChatTypes = derived.availableChatTypes;
@@ -81,6 +80,7 @@ export const GameChatMessagesPane: React.FC = () => {
   const exitX = -slideDirection * CHAT_PANE_SLIDE_OFFSET;
 
   const pinnedBarIds = useMemo(() => pinnedMessages.map((m) => m.id), [pinnedMessages]);
+  const scrollTargetSessionActive = loadingScrollTargetId != null;
   const panelOverlayActive =
     panels.showParticipantsPage ||
     panels.showItemPage ||
@@ -124,9 +124,25 @@ export const GameChatMessagesPane: React.FC = () => {
       highlightAnchorMessageId={highlightAnchorMessageId}
       openPaintGeneration={openPaintGeneration}
       threadLayoutSettling={isThreadOpenSettling || isSwitchingChatType || initialScroll === undefined}
-      scrollTargetMessageId={loadingScrollTargetId}
+      scrollTargetMessageId={scrollTargetMessageId}
+      loadingScrollTargetId={loadingScrollTargetId}
+      onScrollTargetReached={handleScrollTargetReached}
+      threadSearchOutlineQuery={threadSearchOutlineQuery}
       entityType={contextType === 'GAME' ? game?.entityType : undefined}
     />
+  );
+
+  const messageListWithScrollOverlay = (
+    <div className="relative flex flex-1 flex-col min-h-0">
+      <div
+        className={`flex flex-1 flex-col min-h-0 transition-opacity duration-200 ${
+          scrollTargetSessionActive ? 'pointer-events-none opacity-35' : 'opacity-100'
+        }`}
+      >
+        {messageList}
+      </div>
+      <ThreadScrollTargetOverlay active={scrollTargetSessionActive} />
+    </div>
   );
 
   return (
@@ -149,11 +165,11 @@ export const GameChatMessagesPane: React.FC = () => {
               exit={{ opacity: 0, x: exitX }}
               transition={CHAT_PANE_SLIDE_TRANSITION}
             >
-              {messageList}
+              {messageListWithScrollOverlay}
             </motion.div>
           </AnimatePresence>
         ) : (
-          messageList
+          messageListWithScrollOverlay
         )}
       </ChatAutoTranslateContext.Provider>
     </motion.div>

@@ -50,6 +50,8 @@ export type ThreadScrollViewportInput = {
   isLoadingMessages?: boolean;
   isSwitchingChatType?: boolean;
   scrollTargetMessageId?: string | null;
+  loadingScrollTargetId?: string | null;
+  onScrollTargetReached?: (messageId: string) => void;
   hasContextPanel?: boolean;
   reduceMotion: boolean;
 };

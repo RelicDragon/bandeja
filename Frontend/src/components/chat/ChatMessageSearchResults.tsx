@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useReducer, type ReactNode, type 
 import { useTranslation } from 'react-i18next';
 import { chatApi, SearchMessageResult, ChatMessage, getLastMessageText } from '@/api/chat';
 import { getSystemMessageText } from '@/utils/systemMessages';
-import { formatRelativeTime, formatDate } from '@/utils/dateFormat';
+import { formatSearchResultDate, formatDate } from '@/utils/dateFormat';
 import { MessageCircle, Gamepad2, Swords, Trophy, Dumbbell, Beer, Bug, User, ShoppingBag, Hash } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
 import { useNetworkStore } from '@/utils/networkStatus';
@@ -138,7 +138,7 @@ function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultC
             {r.message.chatContextType === 'GAME' && r.context && ('club' in r.context || 'city' in r.context)
               ? [ctxLabel, getGameLocationAndTime(r.context as Parameters<typeof getGameLocationAndTime>[0], t)].filter(Boolean).join(' · ') + ' · '
               : ctxLabel + ' · '}
-            {formatRelativeTime(r.message.createdAt)}
+            {formatSearchResultDate(r.message.createdAt, t)}
           </span>
         </span>
       </div>

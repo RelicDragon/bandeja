@@ -42,5 +42,8 @@ export interface MessageListProps {
   threadLayoutSettling?: boolean;
   onChatScrollNearBottomChange?: (nearBottom: boolean) => void;
   scrollTargetMessageId?: string | null;
+  loadingScrollTargetId?: string | null;
+  onScrollTargetReached?: (messageId: string) => void;
+  threadSearchOutlineQuery?: string | null;
   entityType?: string | null;
 }

@@ -14,7 +14,7 @@ import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 import { CHAT_SCROLL_TARGET_SCROLL_DEFER_MS } from '@/components/chat/chatListMotion';
 import { applyScrollTargetMessageHighlight } from '@/utils/scrollTargetMessageHighlight';
 
-const SCROLL_TARGET_CLEAR_MS = CHAT_SCROLL_TARGET_SCROLL_DEFER_MS + 1800;
+const SCROLL_TARGET_FAIL_CLEAR_MS = CHAT_SCROLL_TARGET_SCROLL_DEFER_MS + 4000;
 
 export interface UseThreadPinnedParams {
   id: string | undefined;
@@ -25,6 +25,8 @@ export interface UseThreadPinnedParams {
   messageListRef?: RefObject<MessageListHandle | null>;
   loadMessagesBeforeMessageId: (messageId: string) => Promise<boolean>;
   messagesRef: React.MutableRefObject<{ id: string }[]>;
+  beginScrollTargetSession: (messageId: string) => void;
+  endScrollTargetSession: (messageId?: string) => void;
 }
 
 export function useThreadPinned({
@@ -36,11 +38,14 @@ export function useThreadPinned({
   messageListRef,
   loadMessagesBeforeMessageId,
   messagesRef,
+  beginScrollTargetSession,
+  endScrollTargetSession,
 }: UseThreadPinnedParams) {
   const { t } = useTranslation();
   const [pinnedMessages, setPinnedMessages] = useState<ChatMessage[]>([]);
   const [pinnedBarTopIndex, setPinnedBarTopIndex] = useState(0);
   const [loadingScrollTargetId, setLoadingScrollTargetId] = useState<string | null>(null);
+  const [scrollTargetMessageId, setScrollTargetMessageId] = useState<string | null>(null);
 
   const fetchPinnedMessages = useCallback(async () => {
     if (!id || !canAccessChat) return;
@@ -57,6 +62,22 @@ export function useThreadPinned({
   const highlightMessageElement = useCallback((messageElement: HTMLElement) => {
     applyScrollTargetMessageHighlight(messageElement);
   }, []);
+
+  const clearScrollTarget = useCallback(
+    (messageId: string) => {
+      setLoadingScrollTargetId((current) => (current === messageId ? null : current));
+      setScrollTargetMessageId((current) => (current === messageId ? null : current));
+      endScrollTargetSession(messageId);
+    },
+    [endScrollTargetSession]
+  );
+
+  const handleScrollTargetReached = useCallback(
+    (messageId: string) => {
+      clearScrollTarget(messageId);
+    },
+    [clearScrollTarget]
+  );
 
   const handleScrollToMessage = useCallback(
     (messageId: string) => {
@@ -96,30 +117,46 @@ export function useThreadPinned({
 
   const scrollToMessageId = useCallback(
     async (messageId: string) => {
+      beginScrollTargetSession(messageId);
+
+      const inList = messagesRef.current.some((m) => m.id === messageId);
+      if (inList) {
+        setScrollTargetMessageId(messageId);
+        return;
+      }
+
       setLoadingScrollTargetId(messageId);
-      const clearTargetLater = () => {
-        window.setTimeout(() => {
-          setLoadingScrollTargetId((current) => (current === messageId ? null : current));
-        }, SCROLL_TARGET_CLEAR_MS);
-      };
+      setScrollTargetMessageId(null);
 
       try {
-        const inList = messagesRef.current.some((m) => m.id === messageId);
-        if (!inList) {
-          const found = await loadMessagesBeforeMessageId(messageId);
-          if (!found) {
-            toast.error(t('chat.pinnedMessageNotFound', { defaultValue: 'Message no longer available' }));
-            setLoadingScrollTargetId(null);
-            return;
-          }
+        const found = await loadMessagesBeforeMessageId(messageId);
+        if (!found) {
+          toast.error(t('chat.pinnedMessageNotFound', { defaultValue: 'Message no longer available' }));
+          clearScrollTarget(messageId);
+          return;
         }
-        clearTargetLater();
+        setScrollTargetMessageId(messageId);
       } catch {
-        setLoadingScrollTargetId(null);
+        clearScrollTarget(messageId);
       }
     },
-    [loadMessagesBeforeMessageId, t, messagesRef]
+    [
+      beginScrollTargetSession,
+      clearScrollTarget,
+      loadMessagesBeforeMessageId,
+      messagesRef,
+      t,
+    ]
   );
+
+  useEffect(() => {
+    if (!scrollTargetMessageId) return;
+    const messageId = scrollTargetMessageId;
+    const timer = window.setTimeout(() => {
+      clearScrollTarget(messageId);
+    }, SCROLL_TARGET_FAIL_CLEAR_MS);
+    return () => window.clearTimeout(timer);
+  }, [scrollTargetMessageId, clearScrollTarget]);
 
   const pinnedMessagesOrdered = useMemo(() => {
     const n = pinnedMessages.length;
@@ -268,6 +305,8 @@ export function useThreadPinned({
     pinnedMessagesOrdered,
     pinnedBarTopIndex,
     loadingScrollTargetId,
+    scrollTargetMessageId,
+    handleScrollTargetReached,
     fetchPinnedMessages,
     handleScrollToMessage,
     scrollToMessageId,

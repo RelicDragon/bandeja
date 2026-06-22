@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, afterEach, vi } from 'vitest';
 import type { ChatMessageWithStatus } from '@/api/chat';
 import {
   mergeChatTypeSwitchPaint,
@@ -11,6 +11,8 @@ import {
   resolveSessionScroll,
   resolveThreadKey,
   isGameChatTypeOnlyChange,
+  isDocumentReload,
+  resetReloadForceFreshThreadKeyForTests,
   shouldForceFreshOpen,
   shouldSkipLayoutSeed,
 } from '../threadSession';
@@ -99,6 +101,30 @@ describe('planLayoutSeed — open/bootstrap', () => {
     });
     expect(plan.clearVisible).toBe(true);
     expect(plan.deleteWarmCache).toBe(true);
+  });
+});
+
+describe('shouldForceFreshOpen — document reload', () => {
+  afterEach(() => {
+    resetReloadForceFreshThreadKeyForTests();
+    vi.restoreAllMocks();
+  });
+
+  it('forces fresh scroll only for the reloaded thread key', () => {
+    vi.spyOn(performance, 'getEntriesByType').mockReturnValue([
+      { type: 'reload' } as PerformanceNavigationTiming,
+    ]);
+    expect(isDocumentReload()).toBe(true);
+    expect(shouldForceFreshOpen(0, 0, 'GROUP:g1')).toBe(true);
+    expect(shouldForceFreshOpen(0, 0, 'GROUP:g1')).toBe(true);
+    expect(shouldForceFreshOpen(0, 0, 'GROUP:g2')).toBe(false);
+  });
+
+  it('does not force fresh on normal navigation', () => {
+    vi.spyOn(performance, 'getEntriesByType').mockReturnValue([
+      { type: 'navigate' } as PerformanceNavigationTiming,
+    ]);
+    expect(shouldForceFreshOpen(0, 0, 'GROUP:g1')).toBe(false);
   });
 });
 

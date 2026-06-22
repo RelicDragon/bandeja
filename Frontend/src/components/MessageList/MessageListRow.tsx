@@ -4,6 +4,7 @@ import type { ChatMessage } from '@/api/chat';
 import { AnimatedMessageItem } from '@/components/AnimatedMessageItem';
 import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
 import { getMessageGroupPosition } from '@/utils/chatMessageGrouping';
+import { messageMatchesThreadSearchQuery } from '@/services/chat/chatLocalMessageSearchText';
 import type { MessageListProps } from './types';
 
 type VirtualRowStyle = { transform: string; transition?: string };
@@ -43,6 +44,7 @@ type MessageListRowProps = {
     | 'onForwardMessage'
   >;
   entityType?: string | null;
+  threadSearchOutlineQuery?: string | null;
 };
 
 export const MessageListRow = memo(function MessageListRow({
@@ -61,6 +63,7 @@ export const MessageListRow = memo(function MessageListRow({
   onScrollToFirstReply,
   handlers,
   entityType,
+  threadSearchOutlineQuery = null,
 }: MessageListRowProps) {
   if (row.index === rowCount - 1) {
     return (
@@ -81,6 +84,10 @@ export const MessageListRow = memo(function MessageListRow({
 
   const dateSeparatorLabel = getChatDateSeparatorLabel(messages, row.index);
   const groupPosition = getMessageGroupPosition(messages, row.index);
+  const isThreadSearchOutline =
+    threadSearchOutlineQuery != null &&
+    messageMatchesThreadSearchQuery(message, threadSearchOutlineQuery);
+  const threadSearchHighlightQuery = isThreadSearchOutline ? threadSearchOutlineQuery : null;
 
   return (
     <div
@@ -120,6 +127,8 @@ export const MessageListRow = memo(function MessageListRow({
         showReply={handlers.showReply}
         onForwardMessage={handlers.onForwardMessage}
         entityType={entityType}
+        isThreadSearchOutline={isThreadSearchOutline}
+        threadSearchHighlightQuery={threadSearchHighlightQuery}
       />
     </div>
   );
@@ -139,5 +148,6 @@ export const MessageListRow = memo(function MessageListRow({
   if (prev.fadeDateSeparator !== next.fadeDateSeparator) return false;
   if (prev.eagerMediaMessageIds !== next.eagerMediaMessageIds) return false;
   if (prev.handlers !== next.handlers) return false;
+  if (prev.threadSearchOutlineQuery !== next.threadSearchOutlineQuery) return false;
   return true;
 });

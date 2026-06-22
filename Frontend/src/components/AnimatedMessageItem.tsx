@@ -42,6 +42,8 @@ interface AnimatedMessageItemProps {
   onForwardMessage?: (message: ChatMessage) => void;
   groupPosition?: MessageGroupPosition;
   entityType?: string | null;
+  isThreadSearchOutline?: boolean;
+  threadSearchHighlightQuery?: string | null;
 }
 
 export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(function AnimatedMessageItem({
@@ -73,6 +75,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
   onForwardMessage,
   groupPosition = 'single',
   entityType,
+  isThreadSearchOutline = false,
+  threadSearchHighlightQuery = null,
 }) {
   const { skipStaggerOnOpen, suppressOpenReactionMotion } = useLayoutSettlingForRow();
   const contextMenuState = useRowContextMenuState(message.id);
@@ -118,6 +122,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
         loadMediaEager={loadMediaEager}
         groupPosition={groupPosition}
         entityType={entityType}
+        isThreadSearchOutline={isThreadSearchOutline}
+        threadSearchHighlightQuery={threadSearchHighlightQuery}
       />
     </MessageRowEnterMotion>
   );
@@ -126,6 +132,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
   prev.staggerIndex === next.staggerIndex &&
   prev.dateSeparatorLabel === next.dateSeparatorLabel &&
   prev.fadeDateSeparator === next.fadeDateSeparator &&
+  prev.isThreadSearchOutline === next.isThreadSearchOutline &&
+  prev.threadSearchHighlightQuery === next.threadSearchHighlightQuery &&
   messageRowPropsEqual(
     {
       message: prev.message,
@@ -135,6 +143,8 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
       showReply: prev.showReply ?? true,
       isChannel: prev.isChannel ?? false,
       groupPosition: prev.groupPosition ?? 'single',
+      isThreadSearchOutline: prev.isThreadSearchOutline ?? false,
+      threadSearchHighlightQuery: prev.threadSearchHighlightQuery ?? null,
     },
     {
       message: next.message,
@@ -144,5 +154,7 @@ export const AnimatedMessageItem: React.FC<AnimatedMessageItemProps> = memo(func
       showReply: next.showReply ?? true,
       isChannel: next.isChannel ?? false,
       groupPosition: next.groupPosition ?? 'single',
+      isThreadSearchOutline: next.isThreadSearchOutline ?? false,
+      threadSearchHighlightQuery: next.threadSearchHighlightQuery ?? null,
     }
   ));
