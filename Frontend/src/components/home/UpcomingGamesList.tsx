@@ -6,6 +6,7 @@ import { AlertTriangle, Calendar, Check, ChevronDown, MapPin, MessageCircle, Use
 import { Card, GameCard } from '@/components';
 import { AnimatedGameList } from '@/components/home/AnimatedGameList';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
+import { GamesDateGroupHeading } from '@/components/home/GamesDateGroupHeading';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -121,9 +122,7 @@ export const UpcomingGamesList = ({
 
   const renderStaleGroup = (group: DateGroup) => (
     <div key={`stale-${group.dateStr}`}>
-      <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-1.5 px-1">
-        {group.label}
-      </p>
+      <GamesDateGroupHeading label={group.label} className="mb-1.5" />
       <div className="space-y-1.5">
         {group.games.map((game) => (
           <StaleScheduledGameRow
@@ -142,9 +141,7 @@ export const UpcomingGamesList = ({
 
   const renderGameCardGroup = (group: DateGroup, keyPrefix: string) => (
     <div key={`${keyPrefix}-${group.dateStr}`}>
-      <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-2 px-1">
-        {group.label}
-      </p>
+      <GamesDateGroupHeading label={group.label} />
       <AnimatedGameList
         items={group.games}
         getKey={(game) => game.id}

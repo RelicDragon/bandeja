@@ -64,3 +64,32 @@ jobs:
         working-directory: Frontend
       - run: bash ios/scripts/run-watch-unit-tests.sh
         working-directory: Frontend
+
+  deploy:
+    name: Deploy production
+    needs: [backend, frontend, watch-serve-guide]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Configure SSH
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          if [[ -z "${DEPLOY_SSH_KEY}" ]]; then
+            echo "DEPLOY_SSH_KEY secret is not set — add deploy key in repo Settings → Secrets" >&2
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/id_hetzner
+          chmod 600 ~/.ssh/id_hetzner
+          ssh-keyscan -H back.bandeja.com front.bandeja.com >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Deploy (auto BE/FE from diff)
+        env:
+          UPD_SSH_KEY: ~/.ssh/id_hetzner
+        run: ./upd.sh

@@ -4,17 +4,17 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 DEV_BRANCH="${DEV_BRANCH:-dev}"
 MASTER_BRANCH="${MASTER_BRANCH:-master}"
-DO_DEPLOY=1
+DO_DEPLOY=0
 
 usage() {
-  echo "usage: ship-master.sh [--no-deploy]" >&2
-  echo "  merge ${DEV_BRANCH} → ${MASTER_BRANCH}, push, deploy, return to ${DEV_BRANCH}" >&2
+  echo "usage: ship-master.sh [--deploy]" >&2
+  echo "  merge ${DEV_BRANCH} → ${MASTER_BRANCH}, push; deploy runs in GitHub Actions after CI" >&2
 }
 
 for arg in "$@"; do
   case "$arg" in
-    --no-deploy) DO_DEPLOY=0 ;;
     --deploy) DO_DEPLOY=1 ;;
+    --no-deploy) DO_DEPLOY=0 ;;
     -h|--help) usage; exit 0 ;;
     *)
       usage
@@ -61,7 +61,7 @@ else
 fi
 
 if [[ "${DO_DEPLOY}" -eq 1 ]]; then
-  "${ROOT}/upd.sh" push
+  "${ROOT}/upd.sh"
 fi
 
 git -C "$ROOT" checkout "${START_BRANCH}"

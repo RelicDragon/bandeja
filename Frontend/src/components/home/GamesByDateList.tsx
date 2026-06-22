@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { GameCard } from '@/components';
 import { AnimatedGameList } from '@/components/home/AnimatedGameList';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
+import { GamesDateGroupHeading } from '@/components/home/GamesDateGroupHeading';
 import type { Game } from '@/types';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { groupGamesByDate } from '@/utils/groupGamesByDate';
@@ -41,9 +42,7 @@ export function GamesByDateList({
     <AnimatedMount layout className="space-y-4 pb-8">
       {grouped.map((group) => (
         <div key={group.dateStr}>
-          <p className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-            {group.label}
-          </p>
+          <GamesDateGroupHeading label={group.label} />
           <AnimatedGameList
             items={group.games}
             getKey={(game) => game.id}
