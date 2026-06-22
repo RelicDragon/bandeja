@@ -96,7 +96,12 @@ function testWatchRegistryAndViews(): void {
 
   const serveIndicator = readWatch('Views/Scoring/WatchServeIndicatorRow.swift');
   assert(serveIndicator.includes('WatchServeGuideSnapshot.compute'), 'score view serve indicator uses guide snapshot');
-  assert(readWatch('Views/Session/MatchScoringSessionPager.swift').includes('WatchServeGuidePage'), 'session pager includes serve guide page');
+  const scoringShell = readWatch('Views/Scoring/MatchScoringShell.swift');
+  assert(scoringShell.includes('WatchServeGuidePage'), 'match scoring shell includes serve guide page');
+  assert(
+    readWatch('Views/Session/MatchScoringSessionPager.swift').includes('MatchScoringShell'),
+    'session pager delegates to unified shell',
+  );
   assert(vmSrc.includes('hideServeGuideForMatch'), 'VM hide serve guide API');
 
   console.log('ok: Watch P-W3-WATCH symbols (registry, views, serve)');
