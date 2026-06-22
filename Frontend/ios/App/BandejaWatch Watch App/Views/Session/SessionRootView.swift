@@ -48,7 +48,7 @@ struct SessionRootView: View {
             if phase == .active {
                 WidgetCenter.shared.reloadAllTimelines()
                 Task {
-                    await LiveScoringOutbox.shared.flush()
+                    await NetworkDeliveryOutbox.shared.flush()
                     await session.recoverIfNeeded()
                 }
             }

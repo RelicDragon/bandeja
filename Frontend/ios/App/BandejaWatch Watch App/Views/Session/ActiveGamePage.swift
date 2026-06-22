@@ -5,7 +5,7 @@ struct ActiveGamePage: View {
     @Environment(ActiveSessionManager.self) private var session
     @Environment(WatchPreferencesStore.self) private var prefs
     @Bindable private var workoutOutbox = WorkoutSyncOutbox.shared
-    @Bindable private var scoringOutbox = ScoringOutbox.shared
+    @Bindable private var deliveryOutbox = NetworkDeliveryOutbox.shared
 
     var body: some View {
         let lang = prefs.uiLanguageCode
@@ -52,7 +52,7 @@ struct ActiveGamePage: View {
                     .foregroundStyle(.orange)
                     .listRowBackground(Color.clear)
             }
-            if scoringOutbox.hasPending(forGameId: gameId) {
+            if deliveryOutbox.hasPending(forGameId: gameId) {
                 Text(WatchCopy.scoresSyncPending(lang))
                     .font(.caption2)
                     .foregroundStyle(.orange)
@@ -132,8 +132,7 @@ struct ActiveGamePage: View {
         }
         .refreshable {
             await vm.refresh()
-            await LiveScoringOutbox.shared.flush()
-            await ScoringOutbox.shared.flush()
+            await NetworkDeliveryOutbox.shared.flush()
             await WorkoutSyncOutbox.shared.flush()
         }
     }

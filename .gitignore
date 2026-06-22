@@ -129,6 +129,10 @@ local.properties
 *.dSYM.zip
 *.dSYM
 
+# Swift Package Manager
+.build/
+.swiftpm/
+
 # Xcode
 *.pbxuser
 *.mode1v3

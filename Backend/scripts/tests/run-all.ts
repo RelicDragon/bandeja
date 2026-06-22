@@ -417,6 +417,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'watch scoring parity',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'watch-scoring-parity.ts'),
+    ],
+  },
+  {
     label: 'multisport deferred',
     command: process.execPath,
     args: [
@@ -474,6 +482,16 @@ const suites: Suite[] = [
     args: [
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'scripts', 'qa-matchLiveScoring.ts'),
+    ],
+  },
+  {
+    label: 'watch session activeMatchId',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'game', 'watchSession.service.test.ts'),
     ],
   },
   {

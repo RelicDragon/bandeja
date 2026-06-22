@@ -1,26 +1,36 @@
 import Foundation
 
 enum NativeApiConfig {
-    private static let defaultsKey = "bandeja_native_api_base_url"
+    static let appGroupSuiteName = "group.com.funified.bandeja"
+    static let defaultsKey = "bandeja_native_api_base_url"
     private static let defaultApiBaseUrl = "https://bandeja.me/api"
 
     static func setApiBaseUrl(_ apiBaseUrl: String) {
+        guard let normalized = normalizeApiBaseUrl(apiBaseUrl) else { return }
+        UserDefaults.standard.set(normalized, forKey: defaultsKey)
+        UserDefaults(suiteName: appGroupSuiteName)?.set(normalized, forKey: defaultsKey)
+    }
+
+    static func getApiBaseUrl() -> String {
+        storedApiBaseUrl(from: UserDefaults.standard) ?? defaultApiBaseUrl
+    }
+
+    static func normalizeApiBaseUrl(_ apiBaseUrl: String) -> String? {
         let trimmed = apiBaseUrl.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        let normalized = trimmed.replacingOccurrences(
+        guard !trimmed.isEmpty else { return nil }
+        return trimmed.replacingOccurrences(
             of: "/+$",
             with: "",
             options: .regularExpression
         )
-        UserDefaults.standard.set(normalized, forKey: defaultsKey)
     }
 
-    static func getApiBaseUrl() -> String {
-        if let stored = UserDefaults.standard.string(forKey: defaultsKey)?
+    static func storedApiBaseUrl(from defaults: UserDefaults?) -> String? {
+        guard let stored = defaults?.string(forKey: defaultsKey)?
             .trimmingCharacters(in: .whitespacesAndNewlines),
-           !stored.isEmpty {
-            return stored
+           !stored.isEmpty else {
+            return nil
         }
-        return defaultApiBaseUrl
+        return stored
     }
 }

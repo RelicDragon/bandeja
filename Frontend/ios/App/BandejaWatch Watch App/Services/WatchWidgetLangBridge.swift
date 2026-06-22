@@ -1,12 +1,10 @@
 import Foundation
+import BandejaWatchShared
 
 enum WatchWidgetLangBridge {
-    nonisolated static let appGroupSuiteName = "group.com.funified.bandeja"
-    nonisolated static let uiLanguageDefaultsKey = "bandeja.widget.uiLanguage.v1"
-
     nonisolated static func normalizedFromStorageOrDevice() -> String {
         let fallback = Locale.current.language.languageCode?.identifier ?? "en"
-        let raw = UserDefaults(suiteName: appGroupSuiteName)?.string(forKey: uiLanguageDefaultsKey)
+        let raw = AppGroupStorage.suite?.string(forKey: AppGroupStorage.Keys.uiLanguage)
         let id: String
         if let r = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !r.isEmpty {
             id = r

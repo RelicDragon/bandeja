@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import WidgetKit
+import BandejaWatchShared
 
 @Observable
 @MainActor
@@ -26,16 +27,15 @@ final class GameListViewModel {
         isAuthenticated = false
         currentUserId = nil
         error = nil
-        GameCache.clear()
-        ScoringOutbox.shared.clear()
-        LiveScoringOutbox.shared.clear()
+        NextGamesCache.clear()
+        NetworkDeliveryOutbox.shared.clear()
         WidgetCenter.shared.reloadAllTimelines()
     }
 
     func loadGames() async {
         refreshAuthState()
         guard isAuthenticated else {
-            GameCache.clear()
+            NextGamesCache.clear()
             WidgetCenter.shared.reloadAllTimelines()
             return
         }
@@ -45,12 +45,12 @@ final class GameListViewModel {
         defer { isLoading = false }
         do {
             games = try await api.fetch(.myGames)
-            GameCache.write(games.map { CachedNextGame(from: $0) })
+            NextGamesCache.write(games.map { CachedNextGame(from: $0) })
             WidgetCenter.shared.reloadAllTimelines()
         } catch {
             self.error = error
             if let apiErr = error as? APIError, case .httpError(let code) = apiErr, code == 401 {
-                GameCache.clear()
+                NextGamesCache.clear()
                 WidgetCenter.shared.reloadAllTimelines()
             }
         }

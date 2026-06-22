@@ -1,4 +1,6 @@
 App/build
+.build/
+.swiftpm/
 App/Pods
 App/output
 App/App/public

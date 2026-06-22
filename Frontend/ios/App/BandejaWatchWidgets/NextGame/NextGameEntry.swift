@@ -1,4 +1,5 @@
 import WidgetKit
+import BandejaWatchShared
 
 struct NextGameEntry: TimelineEntry {
     let date: Date

@@ -1,4 +1,5 @@
 import WidgetKit
+import BandejaWatchShared
 
 struct LiveActiveMatchProvider: TimelineProvider {
     func placeholder(in context: Context) -> LiveActiveMatchEntry {
@@ -16,17 +17,14 @@ struct LiveActiveMatchProvider: TimelineProvider {
     }
 
     private func makeEntry() -> LiveActiveMatchEntry {
-        let suite = UserDefaults(suiteName: "group.com.funified.bandeja")
-        let key = "watchLiveActiveScoringV1"
-        struct Payload: Decodable {
-            let titleLine: String
-            let scoreLine: String
-        }
-        guard let data = suite?.data(forKey: key),
-              let p = try? JSONDecoder().decode(Payload.self, from: data)
-        else {
+        guard let payload = LiveActiveSnapshotStore.read() else {
             return LiveActiveMatchEntry(date: .now, title: "Bandeja", score: "—", active: false)
         }
-        return LiveActiveMatchEntry(date: .now, title: p.titleLine, score: p.scoreLine, active: true)
+        return LiveActiveMatchEntry(
+            date: .now,
+            title: payload.titleLine,
+            score: payload.scoreLine,
+            active: true
+        )
     }
 }

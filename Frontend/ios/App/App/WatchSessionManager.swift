@@ -1,16 +1,10 @@
 import Foundation
 import WatchConnectivity
-
-enum WatchConnectivityEvent {
-    static let liveScoringRelay = "liveScoringRelay"
-    static let matchTimerRelay = "matchTimerRelay"
-    static let scoreUpdated = "scoreUpdated"
-}
+import BandejaWatchShared
 
 final class WatchSessionManager: NSObject {
     static let shared = WatchSessionManager()
 
-    private static let keychainAccessGroup = "group.com.funified.bandeja"
     private static let prefsStorageKey = "bandeja.watch.preferenceFields"
 
     private let session = WCSession.default
@@ -30,7 +24,7 @@ final class WatchSessionManager: NSObject {
     }
 
     func resyncTokenFromKeychainToWatch() {
-        guard let token = KeychainHelper.shared.readToken(accessGroup: Self.keychainAccessGroup) else { return }
+        guard let token = KeychainHelper.shared.readToken(accessGroup: AppGroupStorage.suiteName) else { return }
         sendToken(token)
     }
 
@@ -62,8 +56,9 @@ final class WatchSessionManager: NSObject {
         UserDefaults.standard.removeObject(forKey: Self.prefsStorageKey)
         guard session.activationState == .activated else { return }
         guard shouldAttemptWatchSync else { return }
-        session.transferUserInfo(["event": "logout"])
-        try? session.updateApplicationContext(["event": "logout"])
+        let payload = WatchAuthSyncPayload.logoutPayload()
+        session.transferUserInfo(payload)
+        try? session.updateApplicationContext(payload)
     }
 
     private var shouldAttemptWatchSync: Bool {
@@ -76,17 +71,21 @@ final class WatchSessionManager: NSObject {
 
     private func currentTokenForSync() -> String? {
         if let t = lastToken, !t.isEmpty { return t }
-        return KeychainHelper.shared.readToken(accessGroup: Self.keychainAccessGroup)
+        return KeychainHelper.shared.readToken(accessGroup: AppGroupStorage.suiteName)
     }
 
     private func buildSyncDictionary() -> [String: Any] {
-        var payload = UserDefaults.standard.dictionary(forKey: Self.prefsStorageKey) ?? [:]
-        payload.removeValue(forKey: "token")
-        payload.removeValue(forKey: "event")
-        if let token = currentTokenForSync(), !token.isEmpty {
-            payload["token"] = token
-        }
-        return payload
+        let fields = UserDefaults.standard.dictionary(forKey: Self.prefsStorageKey) ?? [:]
+        let payload = WatchAuthSyncPayload(
+            token: currentTokenForSync(),
+            language: fields["language"] as? String,
+            weekStart: fields["weekStart"] as? String,
+            defaultCurrency: fields["defaultCurrency"] as? String,
+            timeFormat: fields["timeFormat"] as? String,
+            prefsVersion: (fields["prefsVersion"] as? Double)
+                ?? (fields["prefsVersion"] as? Int).map { Double($0) }
+        )
+        return payload.encode()
     }
 
     private func flushSyncPayloadIfPossible() {
@@ -106,20 +105,14 @@ final class WatchSessionManager: NSObject {
         guard session.activationState == .activated else { return }
         guard shouldAttemptWatchSync else { return }
 
-        let revision = Self.parseRevision(from: liveScoring)
-        var payload: [String: Any] = [
-            "event": WatchConnectivityEvent.liveScoringRelay,
-            "gameId": gameId,
-            "matchId": matchId,
-            "revision": revision,
-        ]
-        if let liveScoring {
-            payload["liveScoring"] = liveScoring
-        } else {
-            payload["liveScoring"] = NSNull()
-        }
+        var payload = LiveScoringRelayPayload(
+            gameId: gameId,
+            matchId: matchId,
+            revision: LiveScoringRelayPayload.parseRevision(from: liveScoring),
+            liveScoring: liveScoring
+        ).encode()
 
-        if Self.payloadExceedsRelayLimit(payload) {
+        if WatchConnectivityRelayLimits.exceedsLimit(payload) {
             payload.removeValue(forKey: "liveScoring")
         }
 
@@ -130,46 +123,21 @@ final class WatchSessionManager: NSObject {
         guard session.activationState == .activated else { return }
         guard shouldAttemptWatchSync else { return }
 
-        let payload: [String: Any] = [
-            "event": WatchConnectivityEvent.matchTimerRelay,
-            "gameId": gameId,
-            "matchId": matchId,
-            "snapshot": snapshot,
-        ]
+        let payload = MatchTimerRelayPayload(
+            gameId: gameId,
+            matchId: matchId,
+            snapshot: snapshot
+        ).encode()
         session.transferUserInfo(payload)
     }
 
-    private static func parseRevision(from liveScoring: [String: Any]?) -> Int {
-        guard let liveScoring else { return 0 }
-        if let revision = liveScoring["revision"] as? Int { return revision }
-        if let revision = liveScoring["revision"] as? Double { return Int(revision) }
-        return 0
-    }
-
-    private static let relayPayloadLimitBytes = 60_000
-
-    private static func payloadExceedsRelayLimit(_ payload: [String: Any]) -> Bool {
-        guard JSONSerialization.isValidJSONObject(payload),
-              let data = try? JSONSerialization.data(withJSONObject: payload) else {
-            return true
-        }
-        return data.count > relayPayloadLimitBytes
-    }
-
     private func handleIncomingUserInfo(_ userInfo: [String: Any]) {
-        guard userInfo["event"] as? String == WatchConnectivityEvent.scoreUpdated else { return }
-        guard let gameId = userInfo["gameId"] as? String,
-              let matchId = userInfo["matchId"] as? String else { return }
-        var payload: [String: Any] = [
-            "gameId": gameId,
-            "matchId": matchId,
-        ]
-        if let revision = userInfo["revision"] as? Int {
-            payload["revision"] = revision
-        } else if let revision = userInfo["revision"] as? Double {
-            payload["revision"] = Int(revision)
-        }
-        NotificationCenter.default.post(name: .watchScoreUpdated, object: nil, userInfo: payload)
+        guard let score = ScoreUpdatedPayload(decode: userInfo) else { return }
+        NotificationCenter.default.post(
+            name: .watchScoreUpdated,
+            object: nil,
+            userInfo: score.notificationUserInfo
+        )
     }
 }
 

@@ -4,7 +4,7 @@ struct GameOutcomesListView: View {
     let gameId: String
     @State private var vm: ScoringViewModel
     @Bindable private var workoutOutbox = WorkoutSyncOutbox.shared
-    @Bindable private var scoringOutbox = ScoringOutbox.shared
+    @Bindable private var deliveryOutbox = NetworkDeliveryOutbox.shared
     @Environment(Router.self) private var router
     @Environment(WatchPreferencesStore.self) private var prefs
 
@@ -55,7 +55,7 @@ struct GameOutcomesListView: View {
                     .foregroundStyle(.orange)
                     .listRowBackground(Color.clear)
             }
-            if scoringOutbox.hasPending(forGameId: gameId) {
+            if deliveryOutbox.hasPending(forGameId: gameId) {
                 Text(WatchCopy.scoresSyncPending(prefs.uiLanguageCode))
                     .font(.caption2)
                     .foregroundStyle(.orange)
@@ -132,8 +132,7 @@ struct GameOutcomesListView: View {
         }
         .refreshable {
             await vm.refresh()
-            await LiveScoringOutbox.shared.flush()
-            await ScoringOutbox.shared.flush()
+            await NetworkDeliveryOutbox.shared.flush()
             await WorkoutSyncOutbox.shared.flush()
         }
     }

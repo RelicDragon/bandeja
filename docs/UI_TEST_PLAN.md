@@ -709,6 +709,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | LS-32 | Serve guide golden CI | Run `npm run test:live-scoring` + `ios/scripts/run-watch-serve-guide-golden-tests.sh` | TS `computeServeGuideSnapshot` and Watch `ServeGuideEngine` match shared fixture catalog |
 | LS-33 | Mid-match serve setup gate | `@watch` Open scoring when live envelope has points but no serve seed | Setup overlay blocks scoring until resolved or skipped; matches web `needsServeSetup` (#178 edge) |
 | LS-34 | Finish match persists score | `@watch` Score several games → Finish Match → confirm on review (optional: `@two devices` phone on same live game) | Review and saved results match scored sets; no reset to 0–0 during review/save |
+| LS-35 | Watch dev/staging API host | Build iPhone app with non-prod `VITE_API_BASE_URL` → open app (login if needed) → open `@watch` game list / score a point | Watch REST calls hit same host as phone (not hardcoded prod); avatars load from that host; prod build unchanged |
 
 ---
 

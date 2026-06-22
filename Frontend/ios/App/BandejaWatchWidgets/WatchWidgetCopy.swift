@@ -1,12 +1,10 @@
 import Foundation
+import BandejaWatchShared
 
 enum WatchWidgetCopy {
-    private static let appGroupSuite = "group.com.funified.bandeja"
-    private static let uiLanguageKey = "bandeja.widget.uiLanguage.v1"
-
     nonisolated static func widgetLang() -> String {
         let fallback = Locale.current.language.languageCode?.identifier ?? "en"
-        let raw = UserDefaults(suiteName: appGroupSuite)?.string(forKey: uiLanguageKey)
+        let raw = AppGroupStorage.suite?.string(forKey: AppGroupStorage.Keys.uiLanguage)
         let id: String
         if let r = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !r.isEmpty {
             id = r

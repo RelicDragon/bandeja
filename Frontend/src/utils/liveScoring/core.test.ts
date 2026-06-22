@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { computeMatchWinner, getRulesFromPreset, isOfficialPointsBallBudgetExhausted } from '@/utils/scoring';
-import goldenFixtures from './fixtures/golden.json';
 import {
   advanceLiveSet,
   applyOptionalDeciderFormat,
@@ -154,16 +153,6 @@ describe('live scoring core golden transitions', () => {
     expect(state.mode).toBe('points');
     expect(state.classic).toBeUndefined();
     expect(state.sets[0]).toMatchObject({ teamA: 0, teamB: 1 });
-  });
-
-  it.each(goldenFixtures)('matches golden fixture: $name', (fixture) => {
-    let state = createInitialLiveScoringState(classicRules, fixture.initialSets);
-    for (const side of fixture.actions) {
-      state = scoreLivePoint(state, side as 'teamA' | 'teamB', classicRules).state;
-    }
-
-    expect(state.sets).toMatchObject(fixture.expected.sets);
-    expect(state.classic).toMatchObject(fixture.expected.classic);
   });
 
   it('Bo3 2–0 does not keep a phantom third official row or advance activeSetIndex past last played set', () => {

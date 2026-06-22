@@ -58,17 +58,13 @@ enum APIError: Error, LocalizedError {
 }
 
 struct APIClient: Sendable {
-    static let baseURL = URL(string: "https://bandeja.me/api")!
+    static var baseURL: URL {
+        WatchApiConfig.apiBaseURL()
+    }
 
     /// Host root for relative `avatar` paths from the API (e.g. `https://bandeja.me`).
     static var mediaOrigin: String {
-        var s = Self.baseURL.absoluteString
-        if s.hasSuffix("/api/") {
-            s.removeLast(5)
-        } else if s.hasSuffix("/api") {
-            s.removeLast(4)
-        }
-        return s.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        WatchApiConfig.mediaOrigin()
     }
 
     private static let decoder: JSONDecoder = {

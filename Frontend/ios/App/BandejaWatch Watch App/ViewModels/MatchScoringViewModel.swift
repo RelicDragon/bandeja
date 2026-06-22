@@ -74,28 +74,6 @@ final class MatchScoringViewModel {
         return max(r.maxPointsPerTeam, 1)
     }
 
-    private var withinSetTieBreakTarget: Int {
-        let r = rules
-        if r.tieBreakGameFirstTo > 0 { return r.tieBreakGameFirstTo }
-        let t = game?.maxTotalPointsPerSet ?? 0
-        return t > 0 ? t : 7
-    }
-
-    private var withinSetTieBreakWinBy: Int { max(rules.tieBreakGameWinBy, 1) }
-
-    private var superTieBreakTarget: Int {
-        let r = rules
-        if r.superTieBreakFirstTo > 0 { return r.superTieBreakFirstTo }
-        let t = game?.maxTotalPointsPerSet ?? 0
-        return t > 0 ? t : 10
-    }
-
-    private var superTieBreakWinBy: Int { max(rules.superTieBreakWinBy, 1) }
-
-    private var regularSetGamesTarget: Int { max(rules.gamesPerSet, 1) }
-
-    private var regularSetWinBy: Int { max(rules.winBy, 1) }
-
     var rawFixedNumberOfSets: Int {
         game?.fixedNumberOfSets ?? 0
     }
@@ -112,7 +90,7 @@ final class MatchScoringViewModel {
     init(gameId: String, matchId: String) {
         self.gameId = gameId
         self.matchId = matchId
-        LiveScoringOutbox.shared.registerSink(self)
+        NetworkDeliveryOutbox.shared.registerSink(self)
     }
 
     private func splitOfficialSupplementalSets(_ rows: [WatchSetWrite]) -> (official: [WatchSetWrite], supplemental: [WatchSetWrite]) {
@@ -128,30 +106,10 @@ final class MatchScoringViewModel {
         return official.count - 1
     }
 
-    private func isOptionalDeciderContext() -> Bool {
-        guard rules.superTieBreakReplacesDeciderAtIndex == nil else { return false }
-        guard usesTennisSetRules, !usesBallCapPerSetUI else { return false }
-        guard rules.fixedNumberOfSets >= 3, rules.maxSetsPlayed >= 3 else { return false }
-        let (official, _) = splitOfficialSupplementalSets(sets)
-        guard official.count >= 3 else { return false }
-        let prev = Array(official.dropLast())
-        for s in prev {
-            if s.isTieBreak {
-                if !superTieBreakPointRaceCompleted(teamA: s.teamA, teamB: s.teamB) { return false }
-            } else if !classicSetCompleted(teamA: s.teamA, teamB: s.teamB, timedLocked: false) {
-                return false
-            }
-        }
-        let decider = official[official.count - 1]
-        if decider.teamA > 0 || decider.teamB > 0 { return false }
-        let deciderIdx = official.count - 1
-        guard activeSetIndex == deciderIdx else { return false }
-        let won = WatchValidateSet.countSetsWonOfficial(prev)
-        return won.a == 1 && won.b == 1
-    }
-
     private func deciderRowPristineForOptionalChoice(deciderIdx: Int) -> Bool {
-        guard isOptionalDeciderContext() else { return false }
+        guard WatchLiveScoringEngine.optionalDeciderChoicePending(state: liveScoringEngineState(), rules: rules) else {
+            return false
+        }
         guard let row = sets[safe: deciderIdx] else { return false }
         if row.teamA > 0 || row.teamB > 0 { return false }
         if row.isTieBreak { return true }
@@ -165,9 +123,7 @@ final class MatchScoringViewModel {
     }
 
     private func optionalDeciderChoicePending() -> Bool {
-        guard optionalDeciderFormat == nil else { return false }
-        guard let decIdx = officialDeciderIndex() else { return false }
-        return isOptionalDeciderContext() && deciderRowPristineForOptionalChoice(deciderIdx: decIdx)
+        WatchLiveScoringEngine.optionalDeciderChoicePending(state: liveScoringEngineState(), rules: rules)
     }
 
     private func syncOptionalDeciderPendingAfterEnvelopeMerge() {
@@ -176,7 +132,6 @@ final class MatchScoringViewModel {
             return
         }
         guard let decIdx = officialDeciderIndex(),
-              isOptionalDeciderContext(),
               deciderRowPristineForOptionalChoice(deciderIdx: decIdx) else {
             pendingSetFormatChoiceIndex = nil
             return
@@ -186,28 +141,11 @@ final class MatchScoringViewModel {
 
     private func normalizeLiveSetsAfterDecisionIfNeeded() {
         guard usesTennisSetRules, !isAmericano else { return }
-        let (official, supplemental) = splitOfficialSupplementalSets(sets)
-        guard WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: official, rules: rules) else { return }
-        let trimmedOfficial = official.filter { $0.teamA > 0 || $0.teamB > 0 }
-        let officialOut = trimmedOfficial.isEmpty ? official : trimmedOfficial
-        sets = officialOut + supplemental
-        var lastScored = 0
-        for (i, s) in officialOut.enumerated() where s.teamA > 0 || s.teamB > 0 {
-            lastScored = i
-        }
-        activeSetIndex = min(activeSetIndex, lastScored)
-    }
-
-    private func classicSetCompleted(teamA: Int, teamB: Int, timedLocked: Bool) -> Bool {
-        if timedLocked && rules.allowIncompleteRegularSetGames {
-            return teamA > 0 || teamB > 0
-        }
-        let hi = max(teamA, teamB)
-        let lo = min(teamA, teamB)
-        let tbAt = gamesScoreForTieBreak
-        if hi == tbAt && lo == tbAt { return false }
-        if hi == tbAt + 1 && lo == tbAt { return true }
-        return hi >= regularSetGamesTarget && hi - lo >= regularSetWinBy
+        let normalized = WatchLiveScoringEngine.normalizeLiveSetsAfterDecision(
+            state: liveScoringEngineState(),
+            rules: rules
+        )
+        applyLiveScoringEngineState(normalized)
     }
 
     var isAmericano: Bool {
@@ -463,7 +401,7 @@ final class MatchScoringViewModel {
 
     func flushLiveScoringSnapshot() async {
         guard !isReadOnly else { return }
-        await LiveScoringOutbox.shared.flush(matchId: matchId)
+        await NetworkDeliveryOutbox.shared.flush(matchId: matchId)
         await saveLiveScoringNow(background: false)
     }
 
@@ -472,7 +410,7 @@ final class MatchScoringViewModel {
     func startLiveScoringRemotePolling() {
         guard !isReadOnly else { return }
         allowsRemoteLiveScoringMerge = true
-        LiveScoringOutbox.shared.registerSink(self)
+        NetworkDeliveryOutbox.shared.registerSink(self)
         remoteLivePollTask?.cancel()
         startLiveScoringRelayObserver()
         remoteLivePollTask = Task { [weak self] in
@@ -499,7 +437,7 @@ final class MatchScoringViewModel {
         relayObserveTask?.cancel()
         relayObserveTask = nil
         lastObservedRelayTick = 0
-        LiveScoringOutbox.shared.unregisterSink(gameId: gameId, matchId: matchId)
+        NetworkDeliveryOutbox.shared.unregisterSink(gameId: gameId, matchId: matchId)
     }
 
     private func startLiveScoringRelayObserver() {
@@ -567,7 +505,7 @@ final class MatchScoringViewModel {
         allowsRemoteLiveScoringMerge = false
         liveSaveTask?.cancel()
         liveSaveTask = nil
-        await LiveScoringOutbox.shared.flush(matchId: matchId)
+        await NetworkDeliveryOutbox.shared.flush(matchId: matchId)
         await saveLiveScoringNow(applyEnvelope: false)
         let sortedTeams = match.sortedTeams
         let maxPerTeam = WatchMatchFormat.maxPlayersPerTeam(for: game)
@@ -593,18 +531,15 @@ final class MatchScoringViewModel {
                 gameId: gameId,
                 matchId: match.id
             )
-            ScoringOutbox.shared.remove(matchId: match.id)
+            NetworkDeliveryOutbox.shared.removeMatchPut(matchId: match.id)
         } catch {
             if Self.shouldQueueSaveForLater(error) {
-                ScoringOutbox.shared.enqueue(
-                    ScoringOutbox.Entry(
-                        gameId: gameId,
-                        matchId: match.id,
-                        teamA: teamAIds,
-                        teamB: teamBIds,
-                        sets: persistedSets,
-                        enqueuedAt: Date()
-                    )
+                NetworkDeliveryOutbox.shared.enqueueMatchPut(
+                    gameId: gameId,
+                    matchId: match.id,
+                    teamA: teamAIds,
+                    teamB: teamBIds,
+                    sets: persistedSets
                 )
             } else {
                 self.error = error
@@ -752,46 +687,13 @@ final class MatchScoringViewModel {
 
     func canUnscore(_ side: TeamSide) -> Bool {
         guard !isReadOnly, !usesBallCapPerSetUI else { return false }
-        if usesTennisSetRules, !activeSetIsSupplemental, timedClassicSetLocked { return false }
-        if !activeSetIsSupplemental, WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) { return false }
-        if activeSetIsSupplemental {
-            ensureSetExists(activeSetIndex)
-            if side == .teamA { return sets[activeSetIndex].teamA > 0 }
-            return sets[activeSetIndex].teamB > 0
-        }
-        if activeSetIsSuperTieBreak {
-            ensureSetExists(activeSetIndex)
-            if side == .teamA { return sets[activeSetIndex].teamA > 0 }
-            return sets[activeSetIndex].teamB > 0
-        }
-        if withinSetTieBreakMode {
-            if side == .teamA, tieBreakA > 0 { return true }
-            if side == .teamB, tieBreakB > 0 { return true }
-            if tieBreakA == 0, tieBreakB == 0 {
-                let s = sets[safe: activeSetIndex]
-                guard let s else { return false }
-                return s.teamA == gamesScoreForTieBreak && s.teamB == gamesScoreForTieBreak
-                    && (side == .teamA ? s.teamA > 0 : s.teamB > 0)
-            }
-            return false
-        }
-        switch classicPointState {
-        case .advantage, .deuce:
-            return true
-        case .regular(let a, let b):
-            if side == .teamA {
-                if a != .zero { return true }
-                return (sets[safe: activeSetIndex]?.teamA ?? 0) > 0
-            }
-            if b != .zero { return true }
-            return (sets[safe: activeSetIndex]?.teamB ?? 0) > 0
-        }
+        return WatchLiveScoringEngine.canUnscore(state: liveScoringEngineState(), side: side, rules: rules)
     }
 
     func unscorePoint(_ side: TeamSide) {
         guard !isReadOnly, !usesBallCapPerSetUI else { return }
-        if usesTennisSetRules, !activeSetIsSupplemental, timedClassicSetLocked { return }
-        if !activeSetIsSupplemental, WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) { return }
+        let engineState = liveScoringEngineState()
+        guard WatchLiveScoringEngine.canUnscore(state: engineState, side: side, rules: rules) else { return }
         defer { scheduleLiveScoringSave() }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -804,84 +706,10 @@ final class MatchScoringViewModel {
             }
             return
         }
-        if activeSetIsSuperTieBreak {
-            ensureSetExists(activeSetIndex)
-            if side == .teamA, sets[activeSetIndex].teamA > 0 {
-                sets[activeSetIndex].teamA -= 1
-                WatchScoreHaptics.undo()
-            } else if side == .teamB, sets[activeSetIndex].teamB > 0 {
-                sets[activeSetIndex].teamB -= 1
-                WatchScoreHaptics.undo()
-            }
-            return
-        }
-        if withinSetTieBreakMode {
-            if side == .teamA, tieBreakA > 0 {
-                tieBreakA -= 1
-                WatchScoreHaptics.undo()
-                return
-            }
-            if side == .teamB, tieBreakB > 0 {
-                tieBreakB -= 1
-                WatchScoreHaptics.undo()
-                return
-            }
-            if tieBreakA == 0, tieBreakB == 0 {
-                ensureSetExists(activeSetIndex)
-                if side == .teamA, sets[activeSetIndex].teamA == gamesScoreForTieBreak,
-                   sets[activeSetIndex].teamB == gamesScoreForTieBreak,
-                   sets[activeSetIndex].teamA > 0 {
-                    sets[activeSetIndex].teamA -= 1
-                    withinSetTieBreakMode = false
-                    WatchScoreHaptics.undo()
-                    syncClassicPointsPlayedFromState()
-                } else if side == .teamB, sets[activeSetIndex].teamA == gamesScoreForTieBreak,
-                          sets[activeSetIndex].teamB == gamesScoreForTieBreak,
-                          sets[activeSetIndex].teamB > 0 {
-                    sets[activeSetIndex].teamB -= 1
-                    withinSetTieBreakMode = false
-                    WatchScoreHaptics.undo()
-                    syncClassicPointsPlayedFromState()
-                }
-            }
-            return
-        }
-
-        let normalizedRegular: (a: PadelPoint, b: PadelPoint)
-        switch classicPointState {
-        case .advantage:
-            classicPointState = .regular(a: .forty, b: .forty)
-            WatchScoreHaptics.undo()
-            applyClassicPointsAfterUnscore()
-            return
-        case .deuce:
-            normalizedRegular = (.forty, .forty)
-        case .regular(let a, let b):
-            normalizedRegular = (a, b)
-        }
-
-        let a = normalizedRegular.a
-        let b = normalizedRegular.b
-        if side == .teamA {
-            if let p = a.previous {
-                classicPointState = .regular(a: p, b: b)
-                WatchScoreHaptics.undo()
-            } else if sets[safe: activeSetIndex]?.teamA ?? 0 > 0 {
-                ensureSetExists(activeSetIndex)
-                sets[activeSetIndex].teamA -= 1
-                classicPointState = .regular(a: .forty, b: .forty)
-                WatchScoreHaptics.undo()
-            }
-        } else if let p = b.previous {
-            classicPointState = .regular(a: a, b: p)
-            WatchScoreHaptics.undo()
-        } else if sets[safe: activeSetIndex]?.teamB ?? 0 > 0 {
-            ensureSetExists(activeSetIndex)
-            sets[activeSetIndex].teamB -= 1
-            classicPointState = .regular(a: .forty, b: .forty)
-            WatchScoreHaptics.undo()
-        }
-        applyClassicPointsAfterUnscore()
+        let result = WatchLiveScoringEngine.unscorePoint(state: engineState, side: side, rules: rules)
+        guard result.changed else { return }
+        applyLiveScoringEngineState(result.state)
+        WatchScoreHaptics.undo()
     }
 
     /// Clears modal scoring state before the review screen.
@@ -1047,6 +875,70 @@ final class MatchScoringViewModel {
         return aWins == bWins && aWins > 0
     }
 
+    private func liveScoringEngineState() -> WatchLiveScoringState {
+        let pointState: WatchLivePointState
+        switch classicPointState {
+        case .regular(let a, let b):
+            pointState = .regular(teamA: a, teamB: b)
+        case .deuce:
+            pointState = .deuce
+        case .advantage(let side):
+            pointState = .advantage(side)
+        }
+
+        let classic = WatchLiveClassicState(
+            pointState: pointState,
+            withinSetTieBreak: withinSetTieBreakMode,
+            tieBreakA: tieBreakA,
+            tieBreakB: tieBreakB,
+            classicPointsPlayedInGame: classicPointsPlayedInGame,
+            deuceCount: deuceCount
+        )
+
+        return WatchLiveScoringState(
+            activeSetIndex: activeSetIndex,
+            mode: usesBallCapPerSetUI ? .points : .classic,
+            sets: sets,
+            classic: usesBallCapPerSetUI ? nil : classic,
+            firstServerTeam: firstServerTeam,
+            firstServerDoublesPlayerIndex: firstServerDoublesPlayerIndex,
+            pointsServeRotation: pointsServeRotation,
+            matchStartCourtEndsSwapped: matchStartCourtEndsSwapped == true ? true : nil,
+            matchStartTeamASidesMirrored: matchStartTeamASidesMirrored == true ? true : nil,
+            matchStartTeamBSidesMirrored: matchStartTeamBSidesMirrored == true ? true : nil,
+            serveGuideSkipped: serveGuideSkipped ? true : nil,
+            optionalDeciderFormat: optionalDeciderFormat,
+            timedClassicSetLocked: timedClassicSetLocked ? true : nil,
+            pointWinnerLog: pointWinnerLog.isEmpty ? nil : pointWinnerLog,
+            officiatingLetPending: officiatingLetPending ? true : nil
+        )
+    }
+
+    private func applyLiveScoringEngineState(_ state: WatchLiveScoringState) {
+        sets = state.sets
+        activeSetIndex = state.activeSetIndex
+        optionalDeciderFormat = state.optionalDeciderFormat
+        timedClassicSetLocked = state.timedClassicSetLocked == true
+        pointWinnerLog = state.pointWinnerLog ?? []
+
+        if let classic = state.classic {
+            classicPointState = classic.pointState.padelPointState
+            withinSetTieBreakMode = classic.withinSetTieBreak
+            tieBreakA = classic.tieBreakA
+            tieBreakB = classic.tieBreakB
+            classicPointsPlayedInGame = classic.classicPointsPlayedInGame
+            deuceCount = classic.deuceCount
+            normalizeClassicPointStateForGoldenPointRules()
+        } else {
+            classicPointState = .regular(a: .zero, b: .zero)
+            withinSetTieBreakMode = false
+            tieBreakA = 0
+            tieBreakB = 0
+            classicPointsPlayedInGame = 0
+            deuceCount = 0
+        }
+    }
+
     func scorePoint(_ side: TeamSide) {
         guard !isReadOnly else { return }
         if usesTennisSetRules, !activeSetIsSupplemental, optionalDeciderChoicePending() { return }
@@ -1063,150 +955,15 @@ final class MatchScoringViewModel {
             WatchScoreHaptics.point()
             return
         }
-        if activeSetIsSuperTieBreak {
-            ensureSetExists(activeSetIndex)
-            let a = sets[activeSetIndex].teamA
-            let b = sets[activeSetIndex].teamB
-            guard !superTieBreakPointRaceCompleted(teamA: a, teamB: b) else { return }
-            if side == .teamA {
-                sets[activeSetIndex].teamA += 1
-            } else {
-                sets[activeSetIndex].teamB += 1
-            }
-            WatchScoreHaptics.point()
-            autoAdvanceCompletedSets()
-            return
-        }
-        if withinSetTieBreakMode {
-            if side == .teamA { tieBreakA += 1 } else { tieBreakB += 1 }
-            if withinSetTieBreakPointRaceCompleted() {
-                finishWithinSetTieBreakAsGames()
-            }
-            WatchScoreHaptics.point()
-            autoAdvanceCompletedSets()
-            return
-        }
-
-        switch classicPointState {
-        case .regular(let a, let b):
-            if side == .teamA {
-                if a == .forty && b != .forty {
-                    awardGame(.teamA)
-                } else if a == .forty && b == .forty {
-                    if rules.isGoldenPointActive(deuceCount: deuceCount) {
-                        awardGame(.teamA)
-                    } else {
-                        classicPointState = .advantage(.teamA)
-                        WatchScoreHaptics.point()
-                    }
-                } else {
-                    classicPointState = .regular(a: a.next ?? .forty, b: b)
-                    WatchScoreHaptics.point()
-                }
-            } else {
-                if b == .forty && a != .forty {
-                    awardGame(.teamB)
-                } else if a == .forty && b == .forty {
-                    if rules.isGoldenPointActive(deuceCount: deuceCount) {
-                        awardGame(.teamB)
-                    } else {
-                        classicPointState = .advantage(.teamB)
-                        WatchScoreHaptics.point()
-                    }
-                } else {
-                    classicPointState = .regular(a: a, b: b.next ?? .forty)
-                    WatchScoreHaptics.point()
-                }
-            }
-        case .deuce:
-            if rules.isGoldenPointActive(deuceCount: deuceCount) {
-                awardGame(side)
-            } else {
-                classicPointState = .advantage(side)
-                WatchScoreHaptics.point()
-            }
-        case .advantage(let adv):
-            if adv == side {
-                awardGame(side)
-            } else {
-                deuceCount += 1
-                classicPointState = .regular(a: .forty, b: .forty)
-                WatchScoreHaptics.point()
-            }
-        }
-        applyClassicPointsAfterUserScore()
-        autoAdvanceCompletedSets()
-    }
-
-    private func awardGame(_ side: TeamSide) {
-        ensureSetExists(activeSetIndex)
-        if side == .teamA {
-            sets[activeSetIndex].teamA += 1
-        } else {
-            sets[activeSetIndex].teamB += 1
-        }
-        classicPointState = .regular(a: .zero, b: .zero)
-        classicPointsPlayedInGame = 0
-        deuceCount = 0
+        let result = WatchLiveScoringEngine.scorePoint(
+            state: liveScoringEngineState(),
+            side: side,
+            rules: rules
+        )
+        guard result.changed else { return }
+        applyLiveScoringEngineState(result.state)
         WatchScoreHaptics.point()
-        if sets[activeSetIndex].teamA == gamesScoreForTieBreak && sets[activeSetIndex].teamB == gamesScoreForTieBreak {
-            withinSetTieBreakMode = true
-            tieBreakA = 0
-            tieBreakB = 0
-            return
-        }
-        if setCompleted(teamA: sets[activeSetIndex].teamA, teamB: sets[activeSetIndex].teamB) {
-            commitSet(teamA: sets[activeSetIndex].teamA, teamB: sets[activeSetIndex].teamB, isTieBreak: false)
-        }
-    }
-
-    private func commitSet(teamA: Int, teamB: Int, isTieBreak: Bool) {
-        ensureSetExists(activeSetIndex)
-        sets[activeSetIndex].teamA = teamA
-        sets[activeSetIndex].teamB = teamB
-        sets[activeSetIndex].isTieBreak = isTieBreak
-        withinSetTieBreakMode = false
-    }
-
-    private func withinSetTieBreakPointRaceCompleted() -> Bool {
-        let target = withinSetTieBreakTarget
-        let winner = max(tieBreakA, tieBreakB)
-        let loser = min(tieBreakA, tieBreakB)
-        return winner >= target && (winner - loser) >= withinSetTieBreakWinBy
-    }
-
-    private func finishWithinSetTieBreakAsGames() {
-        let n = gamesScoreForTieBreak
-        let aWon = tieBreakA > tieBreakB
-        tieBreakA = 0
-        tieBreakB = 0
-        withinSetTieBreakMode = false
-        if aWon {
-            commitSet(teamA: n + 1, teamB: n, isTieBreak: false)
-        } else {
-            commitSet(teamA: n, teamB: n + 1, isTieBreak: false)
-        }
-    }
-
-    private func superTieBreakPointRaceCompleted(teamA: Int, teamB: Int) -> Bool {
-        let target = superTieBreakTarget
-        let winner = max(teamA, teamB)
-        let loser = min(teamA, teamB)
-        return winner >= target && (winner - loser) >= superTieBreakWinBy
-    }
-
-    private func setCompleted(teamA: Int, teamB: Int) -> Bool {
-        let r = rules
-        if r.isClassic {
-            return classicSetCompleted(teamA: teamA, teamB: teamB, timedLocked: timedClassicSetLocked)
-        }
-        if r.usesRallyPointCap {
-            return r.pointRaceCompleted(teamA: teamA, teamB: teamB)
-        }
-        let winner = max(teamA, teamB)
-        let loser = min(teamA, teamB)
-        let need = max(r.maxPointsPerTeam, 1)
-        return winner >= need && (winner - loser) >= max(r.winBy, 1)
+        autoAdvanceCompletedSets()
     }
 
     func nextSet() {
@@ -1230,21 +987,17 @@ final class MatchScoringViewModel {
 
     /// Mirrors `canAdvanceLiveSet` from `core.ts`. Validates the active set is actually finished.
     private func activeSetIsCompleted() -> Bool {
-        guard let set = sets[safe: activeSetIndex] else { return false }
         if isAmericano {
-            return WatchComputeMatchWinner.isPointsOfficialBudgetExhausted(activeSet: set, rules: rules)
+            return WatchComputeMatchWinner.isPointsOfficialBudgetExhausted(
+                activeSet: sets[safe: activeSetIndex],
+                rules: rules
+            )
         }
         if usesBallCapPerSetUI, rules.isOpenEndedPointsPreset {
+            guard let set = sets[safe: activeSetIndex] else { return false }
             return timedClassicSetLocked && (set.teamA > 0 || set.teamB > 0)
         }
-        if rules.usesRallyPointCap {
-            return setCompleted(teamA: set.teamA, teamB: set.teamB)
-        }
-        if set.isTieBreak {
-            return superTieBreakPointRaceCompleted(teamA: set.teamA, teamB: set.teamB)
-        }
-        if withinSetTieBreakMode { return false }
-        return setCompleted(teamA: set.teamA, teamB: set.teamB)
+        return WatchLiveScoringEngine.activeSetIsCompleted(state: liveScoringEngineState(), rules: rules)
     }
 
     /// Mirrors `autoAdvanceCompletedSets` from `core.ts`: walks forward through any sets
@@ -1395,7 +1148,7 @@ final class MatchScoringViewModel {
             return false
         }
         if remoteClientMessageId == lastAcknowledgedOwnClientMessageId { return false }
-        if remoteClientMessageId == LiveScoringOutbox.shared.pendingClientMessageId(forMatchId: matchId) {
+        if remoteClientMessageId == NetworkDeliveryOutbox.shared.pendingClientMessageId(forMatchId: matchId) {
             return false
         }
         return envelope.writerUserId == current
@@ -1512,7 +1265,7 @@ final class MatchScoringViewModel {
         )
         do {
             let response = try await api.patchMatchLiveScoring(gameId: gameId, matchId: matchId, body: body)
-            LiveScoringOutbox.shared.remove(matchId: matchId)
+            NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
             if let envelope = response.liveScoring {
                 noteAcknowledgedOwnClientMessageId(envelope)
                 if applyEnvelope {
@@ -1539,11 +1292,11 @@ final class MatchScoringViewModel {
                 } else if let serverEnvelope {
                     liveScoringRevision = max(liveScoringRevision, serverEnvelope.revision)
                 }
-                LiveScoringOutbox.shared.remove(matchId: matchId)
+                NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
                 return
             }
             if APIError.warrantsDeliveryRetry(api) {
-                LiveScoringOutbox.shared.enqueue(gameId: gameId, matchId: matchId, body: body)
+                NetworkDeliveryOutbox.shared.enqueueLivePatch(gameId: gameId, matchId: matchId, body: body)
                 return
             }
             if !background {
@@ -1551,7 +1304,7 @@ final class MatchScoringViewModel {
             }
         } catch {
             if APIError.warrantsDeliveryRetry(error) {
-                LiveScoringOutbox.shared.enqueue(gameId: gameId, matchId: matchId, body: body)
+                NetworkDeliveryOutbox.shared.enqueueLivePatch(gameId: gameId, matchId: matchId, body: body)
                 return
             }
             if !background {
@@ -1561,42 +1314,7 @@ final class MatchScoringViewModel {
     }
 
     private func makeLiveScoringState() -> WatchLiveScoringState {
-        let pointState: WatchLivePointState
-        switch classicPointState {
-        case .regular(let a, let b):
-            pointState = .regular(teamA: a, teamB: b)
-        case .deuce:
-            pointState = .deuce
-        case .advantage(let side):
-            pointState = .advantage(side)
-        }
-
-        let classic = WatchLiveClassicState(
-            pointState: pointState,
-            withinSetTieBreak: withinSetTieBreakMode,
-            tieBreakA: tieBreakA,
-            tieBreakB: tieBreakB,
-            classicPointsPlayedInGame: classicPointsPlayedInGame,
-            deuceCount: deuceCount
-        )
-
-        return WatchLiveScoringState(
-            activeSetIndex: activeSetIndex,
-            mode: usesBallCapPerSetUI ? .points : .classic,
-            sets: sets,
-            classic: usesBallCapPerSetUI ? nil : classic,
-            firstServerTeam: firstServerTeam,
-            firstServerDoublesPlayerIndex: firstServerDoublesPlayerIndex,
-            pointsServeRotation: pointsServeRotation,
-            matchStartCourtEndsSwapped: matchStartCourtEndsSwapped == true ? true : nil,
-            matchStartTeamASidesMirrored: matchStartTeamASidesMirrored == true ? true : nil,
-            matchStartTeamBSidesMirrored: matchStartTeamBSidesMirrored == true ? true : nil,
-            serveGuideSkipped: serveGuideSkipped ? true : nil,
-            optionalDeciderFormat: optionalDeciderFormat,
-            timedClassicSetLocked: timedClassicSetLocked ? true : nil,
-            pointWinnerLog: pointWinnerLog.isEmpty ? nil : pointWinnerLog,
-            officiatingLetPending: officiatingLetPending ? true : nil
-        )
+        liveScoringEngineState()
     }
 
     func markLetPending() {
@@ -1644,28 +1362,6 @@ final class MatchScoringViewModel {
             }
         } else {
             scorePoint(side)
-        }
-    }
-
-    private func applyClassicPointsAfterUserScore() {
-        guard usesTennisStyleServeGuide, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !activeSetIsSupplemental else { return }
-        switch classicPointState {
-        case .regular(let a, let b) where a == .zero && b == .zero:
-            classicPointsPlayedInGame = 0
-        default:
-            classicPointsPlayedInGame += 1
-        }
-    }
-
-    private func applyClassicPointsAfterUnscore() {
-        guard usesTennisStyleServeGuide, !withinSetTieBreakMode, !activeSetIsSuperTieBreak, !activeSetIsSupplemental else { return }
-        switch classicPointState {
-        case .regular(let a, let b) where a == .zero && b == .zero:
-            classicPointsPlayedInGame = 0
-        case .regular(let a, let b) where a == .forty && b == .forty:
-            classicPointsPlayedInGame = max(8, classicPointsPlayedInGame - 1)
-        default:
-            classicPointsPlayedInGame = max(0, classicPointsPlayedInGame - 1)
         }
     }
 

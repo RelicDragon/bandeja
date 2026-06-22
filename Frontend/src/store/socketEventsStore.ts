@@ -11,13 +11,7 @@ import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.ut
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
 import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
-import {
-  initLiveScoringBridge,
-  relayLiveScoringToWatch,
-  relayMatchTimerToWatch,
-  teardownLiveScoringBridge,
-  type WatchScoreUpdatedEvent,
-} from '@/services/liveScoringBridge';
+import { initWatchBridge, teardownWatchBridge } from '@/services/watchBridgeInit';
 import type { ChatMessage } from '@/api/chat';
 import { donateIncomingChatIntent } from '@/services/chat/chatIntentDonation';
 
@@ -626,7 +620,6 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
             receivedAt: Date.now(),
           },
         });
-        void relayMatchTimerToWatch(data);
       };
 
       const handleMatchLiveScoringUpdated = (data: {
@@ -640,7 +633,6 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
             receivedAt: Date.now(),
           },
         });
-        void relayLiveScoringToWatch(data);
       };
 
       const handleGameCancelled = (data: GameCancelledData) => {
@@ -798,19 +790,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('presence-initial', handlePresenceInitial);
       socketService.on('presence-update', handlePresenceUpdate);
 
-      void initLiveScoringBridge((event: WatchScoreUpdatedEvent) => {
-        if (!event.gameId || !event.matchId) return;
-        set({
-          lastWatchLiveScoringHint: {
-            gameId: event.gameId,
-            matchId: event.matchId,
-            revision: typeof event.revision === 'number' && Number.isFinite(event.revision)
-              ? Math.floor(event.revision)
-              : 0,
-            receivedAt: Date.now(),
-          },
-        });
-      });
+      void initWatchBridge();
 
       unsubscribeHandlers = [
         () => socketService.off('new-invite', handleNewInvite),
@@ -861,7 +841,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     cleanup: () => {
       unsubscribeHandlers.forEach(cleanup => cleanup());
       unsubscribeHandlers = [];
-      void teardownLiveScoringBridge();
+      void teardownWatchBridge();
       set({
         initialized: false,
         gameUpdates: new Map(),

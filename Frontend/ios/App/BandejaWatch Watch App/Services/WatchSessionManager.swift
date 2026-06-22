@@ -1,5 +1,6 @@
 import WatchConnectivity
 import Observation
+import BandejaWatchShared
 
 private enum WatchConnectivityPayload {
     nonisolated static func relayPayload(from dict: [String: Any]) -> Data? {
@@ -8,7 +9,8 @@ private enum WatchConnectivityPayload {
     }
 
     nonisolated static func apply(_ dict: [String: Any]) {
-        if dict["event"] as? String == "liveScoringRelay" {
+        if dict["event"] as? String == WatchConnectivityEvent.liveScoringRelay {
+            guard LiveScoringRelayPayload(decode: dict) != nil else { return }
             guard let data = relayPayload(from: dict) else { return }
             Task { @MainActor in
                 guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
@@ -16,7 +18,8 @@ private enum WatchConnectivityPayload {
             }
             return
         }
-        if dict["event"] as? String == "matchTimerRelay" {
+        if dict["event"] as? String == WatchConnectivityEvent.matchTimerRelay {
+            guard MatchTimerRelayPayload(decode: dict) != nil else { return }
             guard let data = relayPayload(from: dict) else { return }
             Task { @MainActor in
                 guard let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
@@ -25,55 +28,39 @@ private enum WatchConnectivityPayload {
             return
         }
 
-        let token = dict["token"] as? String
-        let isLogout = dict["event"] as? String == "logout"
-        let language = dict["language"] as? String
-        let weekStart = dict["weekStart"] as? String
-        let defaultCurrency = dict["defaultCurrency"] as? String
-        let timeFormat = dict["timeFormat"] as? String
-        let prefsVersion = dict["prefsVersion"] as? Double
-            ?? (dict["prefsVersion"] as? Int).map { Double($0) }
-        let hasPrefs = language != nil || weekStart != nil || defaultCurrency != nil
-            || timeFormat != nil || prefsVersion != nil
+        guard let auth = WatchAuthSyncPayload(decode: dict) else { return }
 
         Task { @MainActor in
-            if isLogout {
+            if auth.isLogout {
                 KeychainHelper.shared.deleteToken()
                 WatchPreferencesStore.shared.clear()
-                ScoringOutbox.shared.clear()
-                LiveScoringOutbox.shared.clear()
+                NetworkDeliveryOutbox.shared.clear()
                 WatchSessionManager.shared.logoutDidArrive.toggle()
                 return
             }
-            if let token, !token.isEmpty {
+            if let token = auth.token, !token.isEmpty {
                 KeychainHelper.shared.write(token: token)
-                if hasPrefs {
+                if auth.hasPreferences {
                     WatchPreferencesStore.shared.applyFromPhone(
-                        language: language,
-                        weekStart: weekStart,
-                        defaultCurrency: defaultCurrency,
-                        timeFormat: timeFormat,
-                        prefsVersion: prefsVersion
+                        language: auth.language,
+                        weekStart: auth.weekStart,
+                        defaultCurrency: auth.defaultCurrency,
+                        timeFormat: auth.timeFormat,
+                        prefsVersion: auth.prefsVersion
                     )
                 }
                 WatchSessionManager.shared.tokenDidArrive.toggle()
-            } else if hasPrefs {
+            } else if auth.hasPreferences {
                 WatchPreferencesStore.shared.applyFromPhone(
-                    language: language,
-                    weekStart: weekStart,
-                    defaultCurrency: defaultCurrency,
-                    timeFormat: timeFormat,
-                    prefsVersion: prefsVersion
+                    language: auth.language,
+                    weekStart: auth.weekStart,
+                    defaultCurrency: auth.defaultCurrency,
+                    timeFormat: auth.timeFormat,
+                    prefsVersion: auth.prefsVersion
                 )
             }
         }
     }
-}
-
-enum WatchConnectivityEvent {
-    static let liveScoringRelay = "liveScoringRelay"
-    static let matchTimerRelay = "matchTimerRelay"
-    static let scoreUpdated = "scoreUpdated"
 }
 
 @Observable
@@ -99,14 +86,11 @@ final class WatchSessionManager: NSObject {
 
     func notifyScoreUpdated(gameId: String, matchId: String, revision: Int? = nil) {
         guard session.activationState == .activated else { return }
-        var payload: [String: Any] = [
-            "event": WatchConnectivityEvent.scoreUpdated,
-            "gameId": gameId,
-            "matchId": matchId,
-        ]
-        if let revision {
-            payload["revision"] = revision
-        }
+        let payload = ScoreUpdatedPayload(
+            gameId: gameId,
+            matchId: matchId,
+            revision: revision
+        ).encode()
         session.transferUserInfo(payload)
     }
 }

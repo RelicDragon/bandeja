@@ -298,6 +298,9 @@
 				E14000052F7443E0002D7100 /* PBXTargetDependency */,
 			);
 			name = App;
+			packageProductDependencies = (
+				D1A2B3C4E5F60718293A602 /* BandejaWatchShared */,
+			);
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
@@ -320,6 +323,9 @@
 				99414BE22F7443DE002D7100 /* BandejaWatch Watch App */,
 			);
 			name = "BandejaWatch Watch App";
+			packageProductDependencies = (
+				D1A2B3C4E5F60718293A602 /* BandejaWatchShared */,
+			);
 			productName = "BandejaWatch Watch App";
 			productReference = 99414BE12F7443DE002D7100 /* BandejaWatch Watch App.app */;
 			productType = "com.apple.product-type.application";
@@ -340,6 +346,9 @@
 				B79A10022F7443E0002D7100 /* BandejaWatchWidgets */,
 			);
 			name = BandejaWatchWidgets;
+			packageProductDependencies = (
+				D1A2B3C4E5F60718293A602 /* BandejaWatchShared */,
+			);
 			productName = BandejaWatchWidgets;
 			productReference = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -422,6 +431,9 @@
 				Base,
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
+			packageReferences = (
+				D1A2B3C4E5F60718293A601 /* XCLocalSwiftPackageReference "BandejaWatchShared" */,
+			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -1171,6 +1183,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D1A2B3C4E5F60718293A601 /* XCLocalSwiftPackageReference "BandejaWatchShared" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = BandejaWatchShared;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D1A2B3C4E5F60718293A602 /* BandejaWatchShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BandejaWatchShared;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 504EC2FC1FED79650016851F /* Project object */;
 }

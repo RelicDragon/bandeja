@@ -1,0 +1,180 @@
+[
+  {
+    "name": "classic raw point count",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "actions": ["teamA", "teamB", "teamA"],
+    "expected": {
+      "changed": true,
+      "sets": [{ "teamA": 0, "teamB": 0, "isTieBreak": false }],
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 30, "teamB": 15 },
+        "classicPointsPlayedInGame": 3
+      }
+    }
+  },
+  {
+    "name": "deuce to advantage from 40-40",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "actions": ["teamA", "teamB", "teamA", "teamB", "teamA", "teamB", "teamA"],
+    "expected": {
+      "changed": true,
+      "sets": [{ "teamA": 0, "teamB": 0 }],
+      "classic": {
+        "pointState": { "kind": "advantage", "side": "teamA" }
+      }
+    }
+  },
+  {
+    "name": "golden point awards game from 40-40",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "rules": { "deucesBeforeGoldenPoint": 0 },
+    "actions": ["teamA", "teamB", "teamA", "teamB", "teamA", "teamB", "teamA"],
+    "expected": {
+      "changed": true,
+      "sets": [{ "teamA": 1, "teamB": 0 }],
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 0, "teamB": 0 },
+        "deuceCount": 0
+      }
+    }
+  },
+  {
+    "name": "tie-break win-by race holds at 7-6",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "initialSets": [{ "teamA": 6, "teamB": 6, "isTieBreak": false }],
+    "actions": ["teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamB", "teamB", "teamB", "teamB", "teamB", "teamB", "teamA"],
+    "expected": {
+      "changed": true,
+      "sets": [{ "teamA": 6, "teamB": 6, "isTieBreak": false }],
+      "classic": {
+        "withinSetTieBreak": true,
+        "tieBreakA": 7,
+        "tieBreakB": 6
+      },
+      "canAdvanceLiveSet": false
+    }
+  },
+  {
+    "name": "tie-break completes at 8-6 and auto-advances",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "initialSets": [{ "teamA": 6, "teamB": 6, "isTieBreak": false }, { "teamA": 0, "teamB": 0, "isTieBreak": false }],
+    "actions": ["teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamB", "teamB", "teamB", "teamB", "teamB", "teamB", "teamA", "teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 1,
+      "sets": [
+        { "teamA": 7, "teamB": 6, "isTieBreak": false },
+        { "teamA": 0, "teamB": 0, "isTieBreak": false }
+      ],
+      "classic": {
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0
+      }
+    }
+  },
+  {
+    "name": "auto-advance when game point completes set",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "initialSets": [
+      { "teamA": 6, "teamB": 5, "isTieBreak": false },
+      { "teamA": 0, "teamB": 0, "isTieBreak": false }
+    ],
+    "state": {
+      "activeSetIndex": 0,
+      "mode": "classic",
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 40, "teamB": 0 },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 3,
+        "deuceCount": 0
+      }
+    },
+    "actions": ["teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 1,
+      "sets": [
+        { "teamA": 7, "teamB": 5, "isTieBreak": false },
+        { "teamA": 0, "teamB": 0, "isTieBreak": false }
+      ],
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 0, "teamB": 0 }
+      }
+    }
+  },
+  {
+    "name": "optional decider blocks scoring until format chosen",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "rules": { "superTieBreakReplacesDeciderAtIndex": null },
+    "initialSets": [
+      { "teamA": 6, "teamB": 4, "isTieBreak": false },
+      { "teamA": 4, "teamB": 6, "isTieBreak": false },
+      { "teamA": 0, "teamB": 0, "isTieBreak": false }
+    ],
+    "state": {
+      "activeSetIndex": 2,
+      "mode": "classic",
+      "classic": {
+        "pointState": { "kind": "regular", "teamA": 0, "teamB": 0 },
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0,
+        "classicPointsPlayedInGame": 0,
+        "deuceCount": 0
+      }
+    },
+    "actions": ["teamA"],
+    "expected": {
+      "changed": false,
+      "optionalDeciderChoicePending": true,
+      "sets": [
+        { "teamA": 6, "teamB": 4 },
+        { "teamA": 4, "teamB": 6 },
+        { "teamA": 0, "teamB": 0 }
+      ]
+    }
+  },
+  {
+    "name": "cannot advance while active set is incomplete",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "initialSets": [{ "teamA": 3, "teamB": 2, "isTieBreak": false }],
+    "actions": ["teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 0,
+      "sets": [{ "teamA": 3, "teamB": 2 }],
+      "canAdvanceLiveSet": false
+    }
+  },
+  {
+    "name": "within set tie-break finish 7-0",
+    "sport": "PADEL",
+    "preset": "CLASSIC_BEST_OF_3",
+    "initialSets": [{ "teamA": 6, "teamB": 6, "isTieBreak": false }],
+    "actions": ["teamA", "teamA", "teamA", "teamA", "teamA", "teamA", "teamA"],
+    "expected": {
+      "changed": true,
+      "activeSetIndex": 1,
+      "sets": [
+        { "teamA": 7, "teamB": 6, "isTieBreak": false },
+        { "teamA": 0, "teamB": 0 }
+      ],
+      "classic": {
+        "withinSetTieBreak": false,
+        "tieBreakA": 0,
+        "tieBreakB": 0
+      }
+    }
+  }
+]

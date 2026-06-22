@@ -31,8 +31,7 @@ struct BandejaWatchApp: App {
                     .task {
                         await WorkoutManager.shared.recoverIfNeeded()
                         await ActiveSessionManager.shared.recoverIfNeeded()
-                        await LiveScoringOutbox.shared.flush()
-                        await ScoringOutbox.shared.flush()
+                        await NetworkDeliveryOutbox.shared.flush()
                         await WorkoutSyncOutbox.shared.flush()
                     }
             }

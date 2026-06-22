@@ -1,4 +1,5 @@
 import WidgetKit
+import BandejaWatchShared
 
 struct NextGameProvider: TimelineProvider {
     func placeholder(in context: Context) -> NextGameEntry {
