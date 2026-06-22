@@ -1072,6 +1072,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-19 | City selector map view | `CityMap` renders clubs/markers |
 | X-20 | Map ↔ list toggle | Switch views without crash |
 | X-21 | Select city from map | Tap marker → city selected |
+| X-22 | City selector clubs tab | Clubs list shows avatar, name, address; info (i) opens club detail; tap card selects club's city |
 
 ### 18.6 Ads & sponsored content
 

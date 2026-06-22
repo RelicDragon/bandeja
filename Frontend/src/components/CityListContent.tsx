@@ -28,6 +28,8 @@ import {
 } from '@/utils/citySearchHelpers';
 import { appApi } from '@/api/app';
 import { clubsApi, type ClubMapItem } from '@/api/clubs';
+import type { Club } from '@/types';
+import { ClubInfoDialog } from '@/components/ClubInfoDialog';
 
 type UnifiedSearchRow =
   | { kind: 'country'; group: CountryWithClubs }
@@ -111,6 +113,7 @@ export const CityListContent = ({
   const [scrollToClubId, setScrollToClubId] = useState<string | null>(null);
   const [nearestCityIdInList, setNearestCityIdInList] = useState<string | null>(null);
   const [nearestClubCityIdInList, setNearestClubCityIdInList] = useState<string | null>(null);
+  const [infoClub, setInfoClub] = useState<Club | null>(null);
   const [userLocationTarget, setUserLocationTarget] = useState<{ latitude: number; longitude: number } | null>(null);
   userLocationTargetRef.current = userLocationTarget;
   const [userLocationIsApproximate, setUserLocationIsApproximate] = useState(false);
@@ -427,9 +430,21 @@ export const CityListContent = ({
     },
     [onCityClick, setSearch]
   );
+  const onClubInfoClick = useCallback((club: ClubMapItem) => {
+    setInfoClub({
+      id: club.id,
+      name: club.name,
+      avatar: club.avatar ?? null,
+      address: club.address ?? '',
+      cityId: club.cityId,
+      phone: club.phone ?? undefined,
+      website: club.website ?? undefined,
+    });
+  }, []);
 
   return (
     <div className={`space-y-2 p-1 pt-2 min-h-0 flex flex-col flex-1 overflow-hidden min-w-0 ${className}`}>
+      <ClubInfoDialog club={infoClub} onClose={() => setInfoClub(null)} />
       {showError && error && (
         <div className="shrink-0 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm">
           {error}
@@ -585,6 +600,7 @@ export const CityListContent = ({
                           isSelected={row.club.cityId === selectedCityId}
                           isNearest={row.club.cityId === nearestClubCityIdInList}
                           onSelect={onCityClickAndClearSearch}
+                          onInfoClick={onClubInfoClick}
                           scrollTargetRef={row.club.id === scrollToClubId ? scrollTargetClubRef : undefined}
                         />
                       );
@@ -695,6 +711,7 @@ export const CityListContent = ({
                               isSelected={club.cityId === selectedCityId}
                               isNearest={club.cityId === nearestClubCityIdInList}
                               onSelect={onCityClickAndClearSearch}
+                              onInfoClick={onClubInfoClick}
                               scrollTargetRef={club.id === scrollToClubId ? scrollTargetClubRef : undefined}
                             />
                           )}
@@ -708,6 +725,7 @@ export const CityListContent = ({
                               isSelected={club.cityId === selectedCityId}
                               isNearest={club.cityId === nearestClubCityIdInList}
                               onSelect={onCityClickAndClearSearch}
+                              onInfoClick={onClubInfoClick}
                               scrollTargetRef={club.id === scrollToClubId ? scrollTargetClubRef : undefined}
                             />
                           ))}

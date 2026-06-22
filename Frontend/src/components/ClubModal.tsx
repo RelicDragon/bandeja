@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Info } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Club } from '@/types';
 import { clubsApi } from '@/api/clubs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
-import { ClubAvatar } from '@/components/ClubAvatar';
 import { FullscreenImageViewer } from '@/components/FullscreenImageViewer';
 import { ClubDetailPanel } from '@/components/ClubDetailPanel';
+import { ClubSelectorCard } from '@/components/ClubSelectorCard';
 
 interface ClubModalProps {
   isOpen: boolean;
@@ -170,56 +170,13 @@ export const ClubModal = ({ isOpen, onClose, clubs, selectedId, onSelect }: Club
                       <p className="text-center text-gray-500 dark:text-gray-400 py-4">{t('common.noResults')}</p>
                     ) : (
                       filteredClubs.map((club) => (
-                        <div
+                        <ClubSelectorCard
                           key={club.id}
-                          className={`flex items-stretch overflow-hidden rounded-lg transition-all ${
-                            selectedId === club.id
-                              ? 'bg-primary-500 text-white'
-                              : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white'
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => handleSelect(club.id)}
-                            className={`flex-1 min-w-0 text-left flex items-stretch rounded-lg ${
-                              selectedId === club.id
-                                ? ''
-                                : 'hover:bg-gray-100 dark:hover:bg-gray-700/80'
-                            }`}
-                          >
-                            <div
-                              className={`relative w-[4.125rem] shrink-0 self-stretch ${
-                                selectedId === club.id ? 'bg-primary-600' : 'bg-gray-200 dark:bg-gray-700'
-                              }`}
-                            >
-                              <ClubAvatar
-                                club={club}
-                                variant="tile"
-                                className={selectedId === club.id ? 'ring-2 ring-inset ring-white/40' : ''}
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1 py-3 pr-3 pl-3 flex flex-col justify-center">
-                              <div className="font-medium truncate">{club.name}</div>
-                              {club.address ? (
-                                <div className={`text-sm mt-0.5 truncate ${selectedId === club.id ? 'opacity-90' : 'opacity-80'}`}>
-                                  {club.address}
-                                </div>
-                              ) : null}
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => openDetail(club, e)}
-                            className={`shrink-0 px-3 flex items-center justify-center rounded-r-lg border-l ${
-                              selectedId === club.id
-                                ? 'border-white/20 text-white hover:bg-white/10'
-                                : 'border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }`}
-                            aria-label={t('createGame.clubInfo')}
-                          >
-                            <Info size={20} />
-                          </button>
-                        </div>
+                          club={club}
+                          isSelected={selectedId === club.id}
+                          onSelect={() => handleSelect(club.id)}
+                          onInfoClick={(e) => openDetail(club, e)}
+                        />
                       ))
                     )}
                   </>
