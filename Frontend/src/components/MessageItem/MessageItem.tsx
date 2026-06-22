@@ -22,6 +22,7 @@ import { MessageItemProps } from './types';
 import { parseContentWithMentionsAndUrls, formatMessageTime as formatMessageTimeUtil } from './utils';
 import { formatVoiceTranscriptionForDisplay, isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 import { SystemMessageBlock } from './SystemMessageBlock';
+import { SystemMessageReactionMotion } from './SystemMessageReactionMotion';
 import { MessageBubble } from './MessageBubble';
 import { useOptimisticSendSlowHint } from './useOptimisticSendSlowHint';
 import { getMessageSendState } from '@/services/chat/messageSendState';
@@ -31,6 +32,7 @@ import { useMessageReactions } from './useMessageReactions';
 import { MessageItemReactionStrip, MESSAGE_REACTION_GUTTER_CLASS } from './MessageItemReactionStrip';
 import { messageRowPropsEqual } from './messageRowPropsEqual';
 import { MessageRowDeleteMotion } from './MessageRowDeleteMotion';
+import { LayoutGroup } from 'framer-motion';
 
 export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem({
   message,
@@ -326,6 +328,19 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const showAcceptDecline =
     !!parsedRequest && !!responderId && user?.id === responderId && !!onChatRequestRespond;
 
+  const hasSystemReactions = currentMessage.reactions.length > 0;
+  const systemReactionStrip = (
+    <MessageItemReactionStrip
+      isOwnMessage={false}
+      isChannel={false}
+      activeEmoji={getCurrentUserReaction()}
+      reactionCounts={getReactionCounts()}
+      pending={isReactionPending()}
+      onQuickReaction={handleQuickReaction}
+      suppressOpenReactionMotion={suppressOpenReactionMotion}
+    />
+  );
+
   return (
     <>
       {isSystemMessage ? (
@@ -334,43 +349,50 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
           messageRef={messageRef}
           className="group flex justify-center mb-4 relative overflow-visible"
         >
-          <div className="relative">
-            <SystemMessageBlock
-              displayContent={displayContent}
-              showAcceptDecline={showAcceptDecline}
-              onAccept={() => {
-                if (respondingToRequest) return;
-                setRespondingToRequest(true);
-                onChatRequestRespond!(currentMessage.id, true);
-                setRespondingToRequest(false);
-              }}
-              onDecline={() => {
-                if (respondingToRequest) return;
-                setRespondingToRequest(true);
-                onChatRequestRespond!(currentMessage.id, false);
-                setRespondingToRequest(false);
-              }}
-              respondingToRequest={respondingToRequest}
-              createdAt={currentMessage.createdAt}
-              formatMessageTime={formatMessageTime}
-              t={t}
-            />
-            {!isOffline && (
-              <div className="pointer-events-none absolute left-full top-1/2 z-10 flex -translate-y-1/2 items-center pl-2">
-                <div className="pointer-events-auto">
-                  <MessageItemReactionStrip
-                    isOwnMessage={false}
-                    isChannel={false}
-                    activeEmoji={getCurrentUserReaction()}
-                    reactionCounts={getReactionCounts()}
-                    pending={isReactionPending()}
-                    onQuickReaction={handleQuickReaction}
-                    suppressOpenReactionMotion={suppressOpenReactionMotion}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          <LayoutGroup id={`system-reactions-${currentMessage.id}`}>
+            <div className="flex flex-col items-center">
+              <SystemMessageBlock
+                displayContent={displayContent}
+                showAcceptDecline={showAcceptDecline}
+                onAccept={() => {
+                  if (respondingToRequest) return;
+                  setRespondingToRequest(true);
+                  onChatRequestRespond!(currentMessage.id, true);
+                  setRespondingToRequest(false);
+                }}
+                onDecline={() => {
+                  if (respondingToRequest) return;
+                  setRespondingToRequest(true);
+                  onChatRequestRespond!(currentMessage.id, false);
+                  setRespondingToRequest(false);
+                }}
+                respondingToRequest={respondingToRequest}
+                createdAt={currentMessage.createdAt}
+                formatMessageTime={formatMessageTime}
+                t={t}
+                cornerSlot={
+                  !isOffline && !hasSystemReactions ? (
+                    <SystemMessageReactionMotion
+                      messageId={currentMessage.id}
+                      className="absolute bottom-0.5 right-0.5 z-10"
+                      suppressLayoutMotion={suppressOpenReactionMotion}
+                    >
+                      {systemReactionStrip}
+                    </SystemMessageReactionMotion>
+                  ) : null
+                }
+              />
+              {!isOffline && hasSystemReactions && (
+                <SystemMessageReactionMotion
+                  messageId={currentMessage.id}
+                  className="mt-0.5 flex justify-center"
+                  suppressLayoutMotion={suppressOpenReactionMotion}
+                >
+                  {systemReactionStrip}
+                </SystemMessageReactionMotion>
+              )}
+            </div>
+          </LayoutGroup>
         </MessageRowDeleteMotion>
       ) : (
         <MessageRowDeleteMotion

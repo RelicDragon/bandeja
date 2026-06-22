@@ -10,6 +10,7 @@ interface SystemMessageBlockProps {
   createdAt: string;
   formatMessageTime: (dateString: string) => string;
   t: TFunction;
+  cornerSlot?: React.ReactNode;
 }
 
 export const SystemMessageBlock: React.FC<SystemMessageBlockProps> = ({
@@ -21,9 +22,10 @@ export const SystemMessageBlock: React.FC<SystemMessageBlockProps> = ({
   createdAt,
   formatMessageTime,
   t,
+  cornerSlot,
 }) => (
   <div className="flex justify-center">
-    <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl px-3 py-2 max-w-[80%]">
+    <div className="relative bg-gray-100 dark:bg-gray-700 rounded-2xl px-3 py-2 max-w-[80%]">
       <div data-message-bubble="true" className="select-none">
         <p className="text-xs text-gray-600 dark:text-gray-300 text-center whitespace-pre-wrap break-words break-all overflow-visible" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
           {displayContent}
@@ -50,6 +52,7 @@ export const SystemMessageBlock: React.FC<SystemMessageBlockProps> = ({
       <span className="text-[10px] text-gray-400 dark:text-gray-500 block text-center mt-1">
         {formatMessageTime(createdAt)}
       </span>
+      {cornerSlot}
     </div>
   </div>
 );
