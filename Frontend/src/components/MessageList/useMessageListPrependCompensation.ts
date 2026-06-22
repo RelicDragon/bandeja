@@ -18,6 +18,7 @@ type UseMessageListPrependCompensationParams = {
   layoutSettlingForBottomPin: boolean;
   wasAtBottomBeforeGrowRef: RefObject<boolean>;
   isNearBottomRef: RefObject<boolean>;
+  scrollTargetMessageId?: string | null;
 };
 
 type UseMessageListPrependCompensationResult = {
@@ -38,6 +39,7 @@ export function useMessageListPrependCompensation({
   layoutSettlingForBottomPin,
   wasAtBottomBeforeGrowRef,
   isNearBottomRef,
+  scrollTargetMessageId = null,
 }: UseMessageListPrependCompensationParams): UseMessageListPrependCompensationResult {
   const previousMessageCountRef = useRef(0);
   const previousFirstMessageIdRef = useRef<string | undefined>(undefined);
@@ -107,16 +109,22 @@ export function useMessageListPrependCompensation({
       justLoadedOlder,
       isPrependReconcile,
       layoutSettlingForBottomPin,
-      wasAtBottom: wasAtBottomBeforeGrowRef.current,
+      wasAtBottom: scrollTargetMessageId ? false : wasAtBottomBeforeGrowRef.current,
     });
 
     if (scrollDecision.kind === 'prepend-compensate') {
-      const snapshot =
-        prependSnapshotRef.current ?? capturePrependScrollSnapshot(container);
-      applyPrependScrollCompensation(container, snapshot);
-      prependCompensationEpochRef.current += 1;
-      prependSnapshotRef.current = capturePrependScrollSnapshot(container);
-    } else if (scrollDecision.kind === 'append-pin-if-at-bottom' && messages.length > 0) {
+      if (!scrollTargetMessageId) {
+        const snapshot =
+          prependSnapshotRef.current ?? capturePrependScrollSnapshot(container);
+        applyPrependScrollCompensation(container, snapshot);
+        prependCompensationEpochRef.current += 1;
+        prependSnapshotRef.current = capturePrependScrollSnapshot(container);
+      }
+    } else if (
+      scrollDecision.kind === 'append-pin-if-at-bottom' &&
+      messages.length > 0 &&
+      !scrollTargetMessageId
+    ) {
       pinMessageListContainerToBottom(container);
     }
 
@@ -141,6 +149,7 @@ export function useMessageListPrependCompensation({
     isLoadingMoreRef,
     wasAtBottomBeforeGrowRef,
     isNearBottomRef,
+    scrollTargetMessageId,
   ]);
 
   return { justLoadedOlderMessagesRef, prependCompensationEpochRef };

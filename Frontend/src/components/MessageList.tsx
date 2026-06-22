@@ -56,6 +56,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
     openPaintGeneration = 0,
     threadLayoutSettling = false,
     onChatScrollNearBottomChange,
+    scrollTargetMessageId = null,
     entityType,
   },
   ref
@@ -217,6 +218,7 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
           isInitialLoad={isInitialLoad}
           isLoadingMessages={isLoadingMessages}
           isSwitchingChatType={isSwitchingChatType}
+          scrollTargetMessageId={scrollTargetMessageId}
           hasContextPanel={hasContextPanel}
           reduceMotion={reduceMotion}
         >

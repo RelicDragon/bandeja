@@ -55,6 +55,7 @@ export function messageListPropsEqual(prev: MessageListProps, next: MessageListP
   if (prev.highlightAnchorMessageId !== next.highlightAnchorMessageId) return false;
   if (prev.openPaintGeneration !== next.openPaintGeneration) return false;
   if (prev.threadLayoutSettling !== next.threadLayoutSettling) return false;
+  if (prev.scrollTargetMessageId !== next.scrollTargetMessageId) return false;
 
   if (!pinnedIdsEqual(prev.pinnedMessageIds, next.pinnedMessageIds)) return false;
   if (!initialScrollEqual(prev.initialScroll, next.initialScroll)) return false;

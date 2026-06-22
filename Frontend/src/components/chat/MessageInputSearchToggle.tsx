@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { Search, X } from 'lucide-react';
+import { Loader2, Search, X } from 'lucide-react';
 import { COMPOSER_TOOLBAR_SPRING } from '@/components/chat/chatListMotion';
 import { composerFabButtonClass } from '@/components/chat/TranslateToButton';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -24,7 +24,7 @@ export function MessageInputSearchToggle({ disabled = false, onExpandedChange }:
     isSearchActive,
     setIsSearchActive,
     resultCount,
-    isSearching,
+    isLoadingResults,
     clearSearch,
   } = useThreadSearch();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -50,7 +50,8 @@ export function MessageInputSearchToggle({ disabled = false, onExpandedChange }:
     return () => window.clearTimeout(id);
   }, [isSearchActive, reduceMotion]);
 
-  const showCount = resultCount > 0 && !isSearching;
+  const showCount = resultCount > 0 && !isLoadingResults;
+  const showLoadingIndicator = isLoadingResults && searchQuery.trim().length >= 2;
 
   return (
     <motion.div
@@ -98,10 +99,18 @@ export function MessageInputSearchToggle({ disabled = false, onExpandedChange }:
             animate={{ opacity: 1 }}
             transition={{ duration: reduceMotion ? 0 : 0.22, delay: reduceMotion ? 0 : 0.1 }}
             placeholder={t('chat.searchInConversation', { defaultValue: 'Search in conversation' })}
-            className={`h-full w-full rounded-full border-0 bg-transparent pl-9 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:ring-blue-400 ${showCount ? 'pr-[4.75rem]' : 'pr-10'}`}
+            className={`h-full w-full rounded-full border-0 bg-transparent pl-9 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:text-gray-100 dark:placeholder-gray-400 dark:focus:ring-blue-400 ${showCount || showLoadingIndicator ? 'pr-[4.75rem]' : 'pr-10'}`}
             aria-label={t('chat.searchInConversation', { defaultValue: 'Search in conversation' })}
           />
-          {showCount ? (
+          {showLoadingIndicator ? (
+            <span
+              className="pointer-events-none absolute right-10 top-1/2 -translate-y-1/2"
+              aria-live="polite"
+              aria-label={t('common.loading', { defaultValue: 'Loading...' })}
+            >
+              <Loader2 size={14} className="animate-spin text-blue-600 dark:text-blue-400" aria-hidden />
+            </span>
+          ) : showCount ? (
             <span
               className="pointer-events-none absolute right-10 top-1/2 -translate-y-1/2 text-xs font-medium tabular-nums text-blue-600 dark:text-blue-400"
               aria-live="polite"

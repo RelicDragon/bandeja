@@ -37,6 +37,7 @@ import { resolveMessageListLayoutMotion } from './messageListLayoutMotion';
 import { useMessageListNearBottom } from './useMessageListNearBottom';
 import { useMessageListPrependCompensation } from './useMessageListPrependCompensation';
 import { useMessageListScrollAnchor } from './useMessageListScrollAnchor';
+import { useMessageListScrollTarget } from './useMessageListScrollTarget';
 import { useMessageListTailHeightPreload } from './useMessageListTailHeightPreload';
 import { useThreadScrollContainerEvents } from './useThreadScrollContainerEvents';
 import type {
@@ -64,6 +65,7 @@ export function useThreadScrollViewport({
   isInitialLoad = false,
   isLoadingMessages = false,
   isSwitchingChatType = false,
+  scrollTargetMessageId = null,
   reduceMotion,
 }: ThreadScrollViewportInput): ThreadScrollViewportResult {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -194,6 +196,18 @@ export function useThreadScrollViewport({
     layoutSettlingForBottomPin,
     wasAtBottomBeforeGrowRef,
     isNearBottomRef,
+    scrollTargetMessageId,
+  });
+
+  useMessageListScrollTarget({
+    scrollTargetMessageId,
+    messages,
+    containerRef: messagesContainerRef,
+    virtualizer,
+    openScrollAtBottomRef,
+    wasAtBottomBeforeGrowRef,
+    virtualMeasureKey,
+    reduceMotion,
   });
 
   useMessageListScrollAnchor({
@@ -209,6 +223,7 @@ export function useThreadScrollViewport({
   const pinBottomRafRef = useRef<number | null>(null);
 
   const schedulePinToBottom = useCallback(() => {
+    if (scrollTargetMessageId) return;
     if (pinBottomRafRef.current != null) return;
     pinBottomRafRef.current = requestAnimationFrame(() => {
       pinBottomRafRef.current = null;
@@ -226,7 +241,7 @@ export function useThreadScrollViewport({
       if (isMessageListNearBottom(el, gapPx)) return;
       pinMessageListContainerToBottom(el);
     });
-  }, []);
+  }, [scrollTargetMessageId]);
 
   const prevThreadScrollKeyRef = useRef<string | null | undefined>(undefined);
   const lastOpenPaintGenerationRef = useRef(0);
@@ -312,7 +327,8 @@ export function useThreadScrollViewport({
       !layoutSettlingForBottomPin ||
       messages.length === 0 ||
       initialScroll === undefined ||
-      !openScrollAtBottomRef.current
+      !openScrollAtBottomRef.current ||
+      scrollTargetMessageId
     )
       return;
     const inner = innerListRef.current;
@@ -336,7 +352,7 @@ export function useThreadScrollViewport({
         pinBottomRafRef.current = null;
       }
     };
-  }, [layoutSettlingForBottomPin, messages.length, threadScrollKey, initialScroll, schedulePinToBottom]);
+  }, [layoutSettlingForBottomPin, messages.length, threadScrollKey, initialScroll, schedulePinToBottom, scrollTargetMessageId]);
 
   useEffect(() => {
     if (!threadScrollKey) return;
@@ -436,6 +452,7 @@ export function useThreadScrollViewport({
 
     if (!shouldTrigger) return;
     if (initialSmoothScrollDoneRef.current) return;
+    if (scrollTargetMessageId) return;
     if (!threadScrollKey) return;
     if (messages.length === 0) return;
     if (!openScrollAtBottomRef.current) return;
@@ -456,7 +473,7 @@ export function useThreadScrollViewport({
     }, 100);
 
     return () => clearTimeout(timer);
-  }, [isInitialLoad, isLoadingMessages, threadScrollKey, messages.length, scrollToBottomSmooth]);
+  }, [isInitialLoad, isLoadingMessages, threadScrollKey, messages.length, scrollToBottomSmooth, scrollTargetMessageId]);
 
   const loadMoreBlockedRef = useRef(false);
   loadMoreBlockedRef.current =

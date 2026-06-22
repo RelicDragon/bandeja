@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChatContextType, ChatMessage, ChatType } from '@/api/chat';
 import { useDebounce } from '@/components/CityMap/useDebounce';
 import { THREAD_SEARCH_RESULTS_CLEAR_MS } from '@/components/chat/chatListMotion';
-import { searchLocalThreadMessages } from '@/services/chat/chatLocalThreadMessageSearch';
+import {
+  searchLocalThreadMessages,
+  THREAD_SEARCH_PAGE_SIZE,
+} from '@/services/chat/chatLocalThreadMessageSearch';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -16,9 +19,18 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [results, setResults] = useState<ChatMessage[]>([]);
+  const [hasMoreResults, setHasMoreResults] = useState(false);
+  const [searchGeneration, setSearchGeneration] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
+  const resultLimitRef = useRef(THREAD_SEARCH_PAGE_SIZE);
 
   const debouncedSearchQuery = useDebounce(searchQuery, SEARCH_DEBOUNCE_MS);
+  const trimmedQuery = searchQuery.trim();
+  const trimmedDebouncedQuery = debouncedSearchQuery.trim();
+
+  const isQueryPending =
+    isSearchActive && trimmedQuery.length >= 2 && trimmedQuery !== trimmedDebouncedQuery;
+  const isLoadingResults = isQueryPending || isSearching;
 
   const dismissSearch = useCallback(() => {
     setIsSearchActive(false);
@@ -28,8 +40,16 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
   const clearSearch = useCallback(() => {
     dismissSearch();
     setResults([]);
+    setHasMoreResults(false);
+    resultLimitRef.current = THREAD_SEARCH_PAGE_SIZE;
     setIsSearching(false);
   }, [dismissSearch]);
+
+  const loadMoreResults = useCallback(() => {
+    if (!hasMoreResults || isSearching) return;
+    resultLimitRef.current += THREAD_SEARCH_PAGE_SIZE;
+    setSearchGeneration((n) => n + 1);
+  }, [hasMoreResults, isSearching]);
 
   useEffect(() => {
     clearSearch();
@@ -42,18 +62,36 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
   }, [isSearchActive]);
 
   useEffect(() => {
-    const trimmed = debouncedSearchQuery.trim();
-    if (!isSearchActive || trimmed.length < 2 || !contextId) {
+    resultLimitRef.current = THREAD_SEARCH_PAGE_SIZE;
+  }, [trimmedDebouncedQuery, contextType, contextId, currentChatType]);
+
+  useEffect(() => {
+    if (!isSearchActive) {
+      setIsSearching(false);
+      return;
+    }
+
+    if (trimmedDebouncedQuery.length < 2 || !contextId) {
       setResults([]);
+      setHasMoreResults(false);
       setIsSearching(false);
       return;
     }
 
     let cancelled = false;
     setIsSearching(true);
-    void searchLocalThreadMessages(contextType, contextId, currentChatType, trimmed)
-      .then((hits) => {
-        if (!cancelled) setResults(hits);
+    void searchLocalThreadMessages(
+      contextType,
+      contextId,
+      currentChatType,
+      trimmedDebouncedQuery,
+      resultLimitRef.current
+    )
+      .then(({ messages, hasMore }) => {
+        if (!cancelled) {
+          setResults(messages);
+          setHasMoreResults(hasMore);
+        }
       })
       .finally(() => {
         if (!cancelled) setIsSearching(false);
@@ -62,10 +100,17 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
     return () => {
       cancelled = true;
     };
-  }, [debouncedSearchQuery, isSearchActive, contextType, contextId, currentChatType]);
+  }, [
+    trimmedDebouncedQuery,
+    isSearchActive,
+    contextType,
+    contextId,
+    currentChatType,
+    searchGeneration,
+  ]);
 
   const resultCount = results.length;
-  const showResultsPanel = isSearchActive && debouncedSearchQuery.trim().length >= 2;
+  const showResultsPanel = isSearchActive && trimmedQuery.length >= 2;
 
   return useMemo(
     () => ({
@@ -76,8 +121,12 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
       setIsSearchActive,
       results,
       resultCount,
+      hasMoreResults,
       isSearching,
+      isQueryPending,
+      isLoadingResults,
       showResultsPanel,
+      loadMoreResults,
       dismissSearch,
       clearSearch,
     }),
@@ -87,8 +136,12 @@ export function useThreadSearch({ contextType, contextId, currentChatType }: Use
       isSearchActive,
       results,
       resultCount,
+      hasMoreResults,
       isSearching,
+      isQueryPending,
+      isLoadingResults,
       showResultsPanel,
+      loadMoreResults,
       dismissSearch,
       clearSearch,
     ]

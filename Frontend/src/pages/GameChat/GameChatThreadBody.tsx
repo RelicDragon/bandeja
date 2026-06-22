@@ -9,7 +9,8 @@ import { useThreadChrome, useThreadSearch } from './useThreadView';
 /** Main thread column — chrome orchestration; message list in isolated pane. */
 export const GameChatThreadBody: React.FC = () => {
   const { contextType, game, derived, showLoadingHeader } = useThreadChrome();
-  const { showResultsPanel, results, isSearching } = useThreadSearch();
+  const { showResultsPanel, results, isLoadingResults, hasMoreResults, loadMoreResults } =
+    useThreadSearch();
 
   const showGameChatTabs =
     !showLoadingHeader &&
@@ -25,7 +26,13 @@ export const GameChatThreadBody: React.FC = () => {
         <GameChatTabsSection />
         <GameChatPinnedBar gameChatTabsVisible={gameChatTabsVisible} />
         <GameChatContextArea />
-        <ThreadSearchResultsPanel visible={showResultsPanel} results={results} isSearching={isSearching} />
+        <ThreadSearchResultsPanel
+          visible={showResultsPanel}
+          results={results}
+          isLoadingResults={isLoadingResults}
+          hasMoreResults={hasMoreResults}
+          onLoadMore={loadMoreResults}
+        />
         <GameChatMessagesPane />
       </div>
     </main>

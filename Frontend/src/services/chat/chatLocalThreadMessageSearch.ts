@@ -3,17 +3,27 @@ import { normalizeChatType } from '@/utils/chatType';
 import { chatLocalDb } from './chatLocalDb';
 import { normalizeChatLocalSearchQuery } from './chatLocalMessageSearchText';
 
-const THREAD_SEARCH_MAX = 200;
+export const THREAD_SEARCH_MAX = 200;
+export const THREAD_SEARCH_PAGE_SIZE = 50;
+
+export type LocalThreadSearchResult = {
+  messages: ChatMessage[];
+  hasMore: boolean;
+};
 
 export async function searchLocalThreadMessages(
   contextType: ChatContextType,
   contextId: string,
   chatType: ChatType,
-  query: string
-): Promise<ChatMessage[]> {
+  query: string,
+  limit = THREAD_SEARCH_PAGE_SIZE
+): Promise<LocalThreadSearchResult> {
   const needle = normalizeChatLocalSearchQuery(query);
-  if (!needle || needle.length < 2 || !contextId) return [];
+  if (!needle || needle.length < 2 || !contextId) {
+    return { messages: [], hasMore: false };
+  }
 
+  const cappedLimit = Math.min(Math.max(limit, 1), THREAD_SEARCH_MAX);
   const ct = normalizeChatType(chatType);
   const rows = await chatLocalDb.messages
     .where('[contextType+contextId+chatType]')
@@ -22,5 +32,8 @@ export async function searchLocalThreadMessages(
     .toArray();
 
   rows.sort((a, b) => b.createdAt - a.createdAt);
-  return rows.slice(0, THREAD_SEARCH_MAX).map((r) => r.payload);
+  return {
+    messages: rows.slice(0, cappedLimit).map((r) => r.payload),
+    hasMore: rows.length > cappedLimit,
+  };
 }

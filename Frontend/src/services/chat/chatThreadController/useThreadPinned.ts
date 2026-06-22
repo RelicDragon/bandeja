@@ -14,6 +14,8 @@ import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 import { CHAT_SCROLL_TARGET_SCROLL_DEFER_MS } from '@/components/chat/chatListMotion';
 import { applyScrollTargetMessageHighlight } from '@/utils/scrollTargetMessageHighlight';
 
+const SCROLL_TARGET_CLEAR_MS = CHAT_SCROLL_TARGET_SCROLL_DEFER_MS + 1800;
+
 export interface UseThreadPinnedParams {
   id: string | undefined;
   contextType: ChatContextType;
@@ -94,24 +96,29 @@ export function useThreadPinned({
 
   const scrollToMessageId = useCallback(
     async (messageId: string) => {
-      const inList = messagesRef.current.some((m) => m.id === messageId);
-      if (inList) {
-        handleScrollToMessage(messageId);
-        return;
-      }
       setLoadingScrollTargetId(messageId);
+      const clearTargetLater = () => {
+        window.setTimeout(() => {
+          setLoadingScrollTargetId((current) => (current === messageId ? null : current));
+        }, SCROLL_TARGET_CLEAR_MS);
+      };
+
       try {
-        const found = await loadMessagesBeforeMessageId(messageId);
-        if (found) {
-          handleScrollToMessage(messageId);
-        } else {
-          toast.error(t('chat.pinnedMessageNotFound', { defaultValue: 'Message no longer available' }));
+        const inList = messagesRef.current.some((m) => m.id === messageId);
+        if (!inList) {
+          const found = await loadMessagesBeforeMessageId(messageId);
+          if (!found) {
+            toast.error(t('chat.pinnedMessageNotFound', { defaultValue: 'Message no longer available' }));
+            setLoadingScrollTargetId(null);
+            return;
+          }
         }
-      } finally {
+        clearTargetLater();
+      } catch {
         setLoadingScrollTargetId(null);
       }
     },
-    [handleScrollToMessage, loadMessagesBeforeMessageId, t, messagesRef]
+    [loadMessagesBeforeMessageId, t, messagesRef]
   );
 
   const pinnedMessagesOrdered = useMemo(() => {

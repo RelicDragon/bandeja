@@ -49,6 +49,7 @@ export type ThreadScrollViewportInput = {
   isInitialLoad?: boolean;
   isLoadingMessages?: boolean;
   isSwitchingChatType?: boolean;
+  scrollTargetMessageId?: string | null;
   hasContextPanel?: boolean;
   reduceMotion: boolean;
 };

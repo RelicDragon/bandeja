@@ -41,5 +41,6 @@ export interface MessageListProps {
   openPaintGeneration?: number;
   threadLayoutSettling?: boolean;
   onChatScrollNearBottomChange?: (nearBottom: boolean) => void;
+  scrollTargetMessageId?: string | null;
   entityType?: string | null;
 }

@@ -791,7 +791,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-65 | Offline thread access | Go offline → open previously visited chat thread | Cached history renders (no full-page No Internet screen); composer queues sends |
 | CH-66 | New message entry animation | Receive/send message near bottom | Message fades + slides in smoothly; no scroll jump |
 | CH-67 | Date separator pill | Scroll across day boundary | Rounded pill date label (Today/Yesterday/date) centered between days |
-| CH-72 | In-thread message search | Open any chat → tap composer search → type 2+ chars matching a message → tap a result | Debounced results panel (max ~40% height) with sender/time + preview rows; count on search field; tap animates panel closed then smooth-scrolls to message (loads history if needed) |
+| CH-72 | In-thread message search | Open any chat → tap composer search → type 2+ chars matching a message → tap a result | Debounced results panel (max ~40% height) with sender/time + preview rows; loading spinner while debouncing/searching; count on search field when settled; load-more when >50 local hits; tap scrolls to message (loads history if needed) |
 | CH-73 | In-thread search empty | Search for text not in thread | Panel shows no results; count hidden |
 
 ### 11.4 Group/channel settings
