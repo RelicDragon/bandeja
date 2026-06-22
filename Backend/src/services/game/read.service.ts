@@ -786,5 +786,106 @@ export class GameReadService {
 
     return games;
   }
+
+  static async getAvailableUpcomingGames(
+    userId: string,
+    userCityId?: string,
+    includeLeagues?: boolean,
+    sportQuery?: unknown,
+    primarySport?: Sport | string | null,
+    showPrivateGames?: boolean,
+    isAdmin?: boolean,
+  ) {
+    if (!userId) {
+      throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
+    }
+
+    let viewerPrimarySport = primarySport;
+    if (viewerPrimarySport === undefined) {
+      const viewer = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { primarySport: true },
+      });
+      viewerPrimarySport = viewer?.primarySport;
+    }
+    const sportFilter = resolvePublicGamesSportFilter(sportQuery, viewerPrimarySport);
+
+    const includeAllPrivate = Boolean(showPrivateGames && isAdmin);
+    const visibilityOr: any[] = [{ isPublic: true }];
+    if (includeAllPrivate) {
+      visibilityOr.push({ isPublic: false });
+    } else {
+      visibilityOr.push({
+        isPublic: false,
+        participants: {
+          some: { userId },
+        },
+      });
+    }
+    if (includeLeagues) {
+      visibilityOr.push({ entityType: 'LEAGUE' }, { entityType: 'LEAGUE_SEASON' });
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const horizon = new Date(today);
+    horizon.setFullYear(horizon.getFullYear() + 1);
+    horizon.setHours(23, 59, 59, 999);
+
+    const where: any = {
+      OR: visibilityOr,
+      status: { not: 'ARCHIVED' },
+      AND: [
+        {
+          OR: [
+            { entityType: 'LEAGUE_SEASON' },
+            { startTime: { gte: today, lte: horizon } },
+          ],
+        },
+      ],
+    };
+
+    const cityIdToFilter = userCityId;
+    if (cityIdToFilter) {
+      where.cityId = cityIdToFilter;
+    } else {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { currentCityId: true, isAdmin: true },
+      });
+      if (user?.currentCityId) {
+        where.cityId = user.currentCityId;
+      }
+    }
+
+    if (sportFilter.mode === 'single') {
+      where.sport = sportFilter.sport;
+    }
+
+    const photoViewer = buildPhotoViewer(userId, isAdmin ?? false);
+
+    const gamesRaw = await prisma.game.findMany({
+      where,
+      include: getAvailableGamesInclude() as any,
+      orderBy: { startTime: 'asc' },
+      take: 300,
+    });
+    const games = gamesRaw.map((g) =>
+      projectGamePhotoPayload(projectGameUsersForSportContext(g), photoViewer),
+    );
+
+    if (games.length === 0) {
+      return games;
+    }
+
+    const gameIds = games.map((g) => g.id);
+    const notesMap = await getUserNotesForGames(userId, gameIds);
+    const withNotes = games.map((game) => ({
+      ...game,
+      userNote: notesMap.get(game.id) || null,
+    }));
+    const reactionsMap = await fetchReactionsByGameIds(gameIds);
+    return attachReactionsToGames(withNotes, reactionsMap);
+  }
 }
 

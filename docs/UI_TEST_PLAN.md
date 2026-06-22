@@ -313,8 +313,8 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | F-01 | Calendar view default | Open Find | Calendar + games |
-| F-02 | List view | Switch to list | Scrollable list |
-| F-03 | Date prev/next | Chevron navigation | Games update |
+| F-02 | List view | Tap List in Find calendar header | Calendar collapses; upcoming games from today grouped by date |
+| F-03 | List → calendar | Tap Calendar in collapsed header | Calendar expands; day-filtered games |
 | F-04 | Month calendar expand | Open month picker | Range changes |
 | F-05 | Go to today | Header action | Jumps to current date |
 | F-06 | Desktop calendar split | `@desktop` | Split layout |

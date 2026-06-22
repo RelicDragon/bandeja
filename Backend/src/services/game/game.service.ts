@@ -81,6 +81,26 @@ export class GameService {
     );
   }
 
+  static async getAvailableUpcomingGames(
+    userId: string,
+    userCityId?: string,
+    includeLeagues?: boolean,
+    sportQuery?: unknown,
+    primarySport?: Sport | string | null,
+    showPrivateGames?: boolean,
+    isAdmin?: boolean,
+  ) {
+    return GameReadService.getAvailableUpcomingGames(
+      userId,
+      userCityId,
+      includeLeagues,
+      sportQuery,
+      primarySport,
+      showPrivateGames,
+      isAdmin,
+    );
+  }
+
   static async updateGame(id: string, data: any, userId: string, isAdmin: boolean) {
     return GameUpdateService.updateGame(id, data, userId, isAdmin);
   }

@@ -106,7 +106,12 @@ export class FindPage {
 
   async waitForAvailableGamesLoaded() {
     await this.page
-      .waitForResponse((res) => res.url().includes('/games/available') && res.ok(), { timeout: 30_000 })
+      .waitForResponse(
+        (res) =>
+          (res.url().includes('/games/available/upcoming') || res.url().includes('/games/available'))
+          && res.ok(),
+        { timeout: 30_000 },
+      )
       .catch(async () => {
         await this.page.waitForLoadState('domcontentloaded');
       });
@@ -114,6 +119,10 @@ export class FindPage {
 
   calendar(): Locator {
     return this.page.locator('[data-calendar="true"]');
+  }
+
+  listToggleButton(): Locator {
+    return this.calendar().getByRole('button', { name: /^(list|calendar|список|календарь|lista|seznam)/i });
   }
 
   listWeekRangeLabel(): Locator {

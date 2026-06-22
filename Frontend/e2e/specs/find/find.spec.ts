@@ -16,22 +16,20 @@ test.describe('find views @auth', () => {
 
   test('F-02 list view', async ({ page }) => {
     const find = new FindPage(page);
-    await find.gotoListView();
+    await find.goto();
     await find.waitForAvailableGamesLoaded();
+    await find.listToggleButton().click();
     await expect(page).toHaveURL(/\?view=list/);
-    await expect(find.calendar()).toHaveCount(0);
-    await expect(find.listWeekRangeLabel()).toBeVisible();
+    await expect(find.calendar()).toBeVisible();
+    await expect(find.listToggleButton()).toBeVisible();
   });
 
-  test('F-03 date prev next in list view', async ({ page }) => {
+  test('F-03 list to calendar', async ({ page }) => {
     const find = new FindPage(page);
     await find.gotoListView();
     await find.waitForAvailableGamesLoaded();
-    const before = await find.listWeekRangeLabel().textContent();
-    await find.listDateNext().click();
-    await expect(find.listWeekRangeLabel()).not.toHaveText(before ?? '');
-    await find.listDatePrev().click();
-    await expect(find.listWeekRangeLabel()).toHaveText(before ?? '');
+    await find.listToggleButton().click();
+    await expect(page).toHaveURL(/\/find(?:\?view=calendar|$)/);
   });
 
   test('F-04 month calendar navigation', async ({ page }) => {
@@ -47,13 +45,10 @@ test.describe('find views @auth', () => {
     const find = new FindPage(page);
     await find.gotoListView();
     await find.waitForAvailableGamesLoaded();
-    await find.listDateNext().click();
     await find.goToTodayViaFindTab();
     await find.waitForAvailableGamesLoaded();
-    const today = new Date();
-    await expect(find.listWeekRangeLabel()).toContainText(
-      `${String(today.getDate()).padStart(2, '0')}.${String(today.getMonth() + 1).padStart(2, '0')}.${today.getFullYear()}`.slice(0, 6),
-    );
+    await expect(page).toHaveURL(/\/find(?:\?view=calendar|$)/);
+    await expect(find.calendar()).toBeVisible();
   });
 
   test('F-06 desktop calendar split @desktop', async () => {

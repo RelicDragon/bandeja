@@ -12,6 +12,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
+import { useAvailableUpcomingGames } from '@/hooks/useAvailableUpcomingGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
 import { findSportFilterToApiParam, getViewerPrimarySport } from '@/utils/findSportFilter';
 import type { Sport } from '@/types';
@@ -97,13 +98,15 @@ export const FindTab = () => {
   useRegisterAdSportContext(AD_PLACEMENTS.FIND_TOP, findSportApiParam as Sport | undefined);
   const queryEnabled = isFindGamesQueryReady({
     isHydrated,
-    calendarRangeReady,
+    calendarRangeReady: findViewMode === 'calendar' ? calendarRangeReady : true,
     userId: user?.id,
   });
+  const calendarQueryEnabled = queryEnabled && findViewMode === 'calendar';
+  const listQueryEnabled = queryEnabled && findViewMode === 'list';
   const {
-    availableGames,
-    loading: loadingAvailableGames,
-    refetch: refetchAvailableGames,
+    availableGames: calendarGames,
+    loading: loadingCalendarGames,
+    refetch: refetchCalendarGames,
   } = useAvailableGames(
     user,
     queryDateRange.startDate,
@@ -111,15 +114,34 @@ export const FindTab = () => {
     true,
     findSportApiParam,
     filters.showPrivateGames,
-    queryEnabled,
+    calendarQueryEnabled,
   );
+  const {
+    availableGames: upcomingGames,
+    loading: loadingUpcomingGames,
+    refetch: refetchUpcomingGames,
+  } = useAvailableUpcomingGames(
+    user,
+    true,
+    findSportApiParam,
+    filters.showPrivateGames,
+    listQueryEnabled,
+  );
+
+  const loadingAvailableGames = findViewMode === 'list' ? loadingUpcomingGames : loadingCalendarGames;
+  const filteredAvailableGames = useMemo(() => {
+    const source = findViewMode === 'list' ? upcomingGames : calendarGames;
+    return findViewMode === 'list' ? source : sortGamesByStatusAndDateTime(source);
+  }, [findViewMode, upcomingGames, calendarGames]);
+
+  const refetchAvailableGames = useCallback(async () => {
+    await Promise.all([refetchCalendarGames(), refetchUpcomingGames()]);
+  }, [refetchCalendarGames, refetchUpcomingGames]);
 
   const handleDateRangeChange = useCallback((startDate: Date, endDate: Date) => {
     setDateRange({ startDate, endDate });
     setCalendarRangeReady(true);
   }, []);
-
-  const filteredAvailableGames = useMemo(() => sortGamesByStatusAndDateTime(availableGames), [availableGames]);
 
   const handleJoinGame = async (gameId: string, e: React.MouseEvent) => {
     e.stopPropagation();

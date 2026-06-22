@@ -288,6 +288,32 @@ export const getPastGames = asyncHandler(async (req: AuthRequest, res: Response)
   });
 });
 
+export const getAvailableUpcomingGames = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const includeLeagues = req.query.includeLeagues === 'true';
+  const sport = req.query.sport as string | undefined;
+  const showPrivateGames = req.query.showPrivateGames === 'true';
+
+  const games = await GameService.getAvailableUpcomingGames(
+    req.userId,
+    req.user?.currentCityId,
+    includeLeagues,
+    sport,
+    req.user?.primarySport,
+    showPrivateGames,
+    req.user?.isAdmin,
+  );
+
+  res.json({
+    success: true,
+    data: games,
+    serverTime: new Date().toISOString(),
+  });
+});
+
 export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Response) => {
   if (!req.userId) {
     throw new ApiError(401, 'Unauthorized');

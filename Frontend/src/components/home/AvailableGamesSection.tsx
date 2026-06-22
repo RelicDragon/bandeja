@@ -7,7 +7,7 @@ import { Game } from '@/types';
 import { Filter, ChevronRight, RotateCcw, Grid3X3, Star, SearchX } from 'lucide-react';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
-import { format, parse, startOfDay, addDays, subDays, startOfWeek } from 'date-fns';
+import { format, parse, startOfDay } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { CalendarSection } from './CalendarSection';
 import { TrainersList } from './TrainersList';
@@ -23,9 +23,10 @@ import { TabContentStack } from '@/components/motion/TabContentStack';
 import { EmptyStateCard } from './EmptyStateCard';
 import { GamesLoadingSkeleton } from './GameCardSkeleton';
 import { EntityFilterChips } from './EntityFilterChips';
-import { WeekRangeNavigator } from './WeekRangeNavigator';
 import { SubscriptionsNudgeButton } from './SubscriptionsNudgeButton';
+import { GamesByDateList } from './GamesByDateList';
 import { passesAvailableGamePanelFilters } from '@/utils/availableGamePanelFilters';
+import { navigationService } from '@/services/navigationService';
 import { getViewerPrimarySport, resolveFindLevelFilterSport } from '@/utils/findSportFilter';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { listEnabledSports } from '@/utils/profileSports';
@@ -82,9 +83,7 @@ export const AvailableGamesSection = ({
   const setFindViewMode = useShellNavStore((s) => s.setFindViewMode);
   const setRequestFindGoToCurrent = useShellNavStore((s) => s.setRequestFindGoToCurrent);
   const findSelectedDay = useShellNavStore((s) => s.findSelectedDay);
-  const findListWeekStartDay = useShellNavStore((s) => s.findListWeekStartDay);
   const setFindSelectedDay = useShellNavStore((s) => s.setFindSelectedDay);
-  const setFindListWeekStartDay = useShellNavStore((s) => s.setFindListWeekStartDay);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
   const selectedDate = useMemo(() => {
     if (findSelectedDay) {
@@ -93,13 +92,6 @@ export const AvailableGamesSection = ({
     }
     return startOfDay(new Date());
   }, [findSelectedDay]);
-  const listViewStartDate = useMemo(() => {
-    if (findListWeekStartDay) {
-      const d = parse(findListWeekStartDay, 'yyyy-MM-dd', new Date());
-      return isNaN(d.getTime()) ? startOfDay(new Date()) : startOfDay(d);
-    }
-    return startOfDay(new Date());
-  }, [findListWeekStartDay]);
   const [filterAvailableSlots, setFilterAvailableSlots] = useState(false);
   const [filterSuitableRating, setFilterSuitableRating] = useState(false);
   const [hideBarGames, setHideBarGames] = useState(false);
@@ -265,7 +257,6 @@ export const AvailableGamesSection = ({
       setEntityFilters(false, false, false, !leaguesFilterVal);
     }
   };
-  const lastDateRangeRef = useRef<{ start: string; end: string } | null>(null);
   const hydratedViewPeriodFromStorageRef = useRef(false);
 
   useEffect(() => {
@@ -300,12 +291,6 @@ export const AvailableGamesSection = ({
           setFindViewMode(filters.activeTab);
         }
         const nav = useShellNavStore.getState();
-        if (filters.listViewStartDate && nav.findListWeekStartDay == null) {
-          const restoredDate = new Date(filters.listViewStartDate);
-          if (!isNaN(restoredDate.getTime())) {
-            nav.setFindListWeekStartDay(format(startOfDay(restoredDate), 'yyyy-MM-dd'));
-          }
-        }
         if (filters.calendarSelectedDate && nav.findSelectedDay == null) {
           const restoredDate = new Date(filters.calendarSelectedDate);
           if (!isNaN(restoredDate.getTime())) {
@@ -332,7 +317,7 @@ export const AvailableGamesSection = ({
         tournamentFilter: tournamentFilterVal,
         leaguesFilter: leaguesFilterVal,
         activeTab: findViewMode,
-        listViewStartDate: findViewMode === 'list' ? listViewStartDate.toISOString() : undefined,
+        listViewStartDate: undefined,
         calendarSelectedDate: findViewMode === 'calendar' ? selectedDate.toISOString() : undefined,
         filtersPanelOpen: filtersPanelOpenVal,
         filterClubIds: filterClubIdsVal,
@@ -357,7 +342,6 @@ export const AvailableGamesSection = ({
     tournamentFilterVal,
     leaguesFilterVal,
     findViewMode,
-    listViewStartDate,
     selectedDate,
     filtersPanelOpenVal,
     filterClubIdsVal,
@@ -385,17 +369,6 @@ export const AvailableGamesSection = ({
     [setFindSelectedDay]
   );
 
-  const handleListNavigation = (direction: 'left' | 'right') => {
-    const next = direction === 'left' ? subDays(listViewStartDate, 7) : addDays(listViewStartDate, 7);
-    setFindListWeekStartDay(format(startOfDay(next), 'yyyy-MM-dd'));
-  };
-
-  const getListDateRange = () => {
-    const start = startOfDay(listViewStartDate);
-    const end = startOfDay(addDays(listViewStartDate, 6));
-    return { start, end };
-  };
-
   useEffect(() => {
     if (!requestFindGoToCurrent) return;
     const mode = requestFindGoToCurrent;
@@ -407,32 +380,11 @@ export const AvailableGamesSection = ({
         el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     } else {
-      const displaySettings = user ? resolveDisplaySettings(user) : resolveDisplaySettings(null);
-      const wk = startOfWeek(new Date(), { weekStartsOn: displaySettings.weekStart });
-      setFindListWeekStartDay(format(startOfDay(wk), 'yyyy-MM-dd'));
+      setFindViewMode('calendar');
+      setFindSelectedDay(format(startOfDay(new Date()), 'yyyy-MM-dd'));
+      navigationService.navigateToFind({ view: 'calendar' });
     }
-  }, [requestFindGoToCurrent, setRequestFindGoToCurrent, user, setFindSelectedDay, setFindListWeekStartDay]);
-
-  useEffect(() => {
-    if (!isInitialized || findViewMode !== 'list' || !onDateRangeChange) {
-      if (findViewMode === 'calendar') {
-        lastDateRangeRef.current = null;
-      }
-      return;
-    }
-    
-    const start = startOfDay(listViewStartDate);
-    const end = startOfDay(addDays(listViewStartDate, 6));
-    const startStr = format(start, 'yyyy-MM-dd');
-    const endStr = format(end, 'yyyy-MM-dd');
-    
-    if (!lastDateRangeRef.current || 
-        lastDateRangeRef.current.start !== startStr || 
-        lastDateRangeRef.current.end !== endStr) {
-      lastDateRangeRef.current = { start: startStr, end: endStr };
-      onDateRangeChange(start, end);
-    }
-  }, [isInitialized, findViewMode, listViewStartDate, onDateRangeChange]);
+  }, [requestFindGoToCurrent, setRequestFindGoToCurrent, setFindSelectedDay, setFindViewMode]);
 
   const panelFilterState = useMemo(
     () => ({
@@ -520,21 +472,16 @@ export const AvailableGamesSection = ({
   const getFilteredGames = () => {
     if (findViewMode === 'calendar') {
       return filterGamesForCalendarDay(availableGames, selectedDate).filter(applyCommonFilters);
-    } else {
-      const { start, end } = getListDateRange();
-      return availableGames.filter((game) => {
-        const gameDate = startOfDay(new Date(game.startTime));
-        const gameDateStr = format(gameDate, 'yyyy-MM-dd');
-        const startStr = format(start, 'yyyy-MM-dd');
-        const endStr = format(end, 'yyyy-MM-dd');
-
-        if (gameDateStr < startStr || gameDateStr > endStr) {
-          return false;
-        }
-
-        return applyCommonFilters(game);
-      });
     }
+    const today = startOfDay(new Date());
+    return availableGames.filter((game) => {
+      if (game.status === 'ARCHIVED') return false;
+      if (game.timeIsSet !== false) {
+        const gameDate = startOfDay(new Date(game.startTime));
+        if (gameDate < today) return false;
+      }
+      return applyCommonFilters(game);
+    });
   };
 
   const filteredGames = getFilteredGames();
@@ -738,6 +685,13 @@ export const AvailableGamesSection = ({
 
   const initialGamesLoading = Boolean(loading && availableGames.length === 0);
 
+  const findListCollapsed = findViewMode === 'list';
+  const handleFindListToggle = useCallback(() => {
+    const next = findViewMode === 'list' ? 'calendar' : 'list';
+    setFindViewMode(next);
+    navigationService.navigateToFind({ view: next });
+  }, [findViewMode, setFindViewMode]);
+
   const calendarSectionProps = {
     selectedDate,
     onDateSelect: handleDateSelect,
@@ -757,6 +711,12 @@ export const AvailableGamesSection = ({
     isAdmin,
     findDiscoveryEnabled,
     filterNoRating: filterNoRatingVal,
+    collapsed: findListCollapsed,
+    upcomingsToggle: {
+      active: findListCollapsed,
+      onClick: handleFindListToggle,
+      label: t('games.list'),
+    },
   };
 
   const gamesContent = (
@@ -766,6 +726,14 @@ export const AvailableGamesSection = ({
     >
       {filteredGames.length === 0 ? (
         <EmptyStateCard icon={SearchX} title={emptyMessage} />
+      ) : findViewMode === 'list' ? (
+        <GamesByDateList
+          games={filteredGames}
+          user={user}
+          onJoin={onJoin}
+          onNoteSaved={onNoteSaved}
+          findFilterSport={findFilterSport}
+        />
       ) : (
         gamesList
       )}
@@ -822,27 +790,11 @@ export const AvailableGamesSection = ({
         <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
       </AnimatedMount>
 
-      {findViewMode === 'calendar' ? (
-        <>
-          <AnimatedMount layout>
-            <CalendarSection {...calendarSectionProps} />
-          </AnimatedMount>
+      <AnimatedMount layout>
+        <CalendarSection {...calendarSectionProps} />
+      </AnimatedMount>
 
-          <AnimatedMount layout>{gamesContent}</AnimatedMount>
-        </>
-      ) : (
-        <>
-          <AnimatedMount layout>
-            <WeekRangeNavigator
-              start={getListDateRange().start}
-              end={getListDateRange().end}
-              onNavigate={handleListNavigation}
-            />
-          </AnimatedMount>
-
-          <AnimatedMount layout>{gamesContent}</AnimatedMount>
-        </>
-      )}
+      <AnimatedMount layout>{gamesContent}</AnimatedMount>
 
       <AnimatedMount layout>
         <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />

@@ -23,6 +23,14 @@ export function buildAvailableGamesFilterHash(params: AvailableGamesFilterParams
   return `${cityId}-${includeLeagues}-${sport}-${privateFlag}`;
 }
 
+export function buildAvailableUpcomingFilterHash(params: Omit<AvailableGamesFilterParams, 'startDate' | 'endDate'>): string {
+  const privateFlag = params.isAdmin && params.showPrivateGames ? '1' : '0';
+  const sport = params.sport ?? 'primary';
+  const cityId = params.cityId ?? 'no-city';
+  const includeLeagues = String(!!params.includeLeagues);
+  return `upcoming-${cityId}-${includeLeagues}-${sport}-${privateFlag}`;
+}
+
 export const queryKeys = {
   userStats: (userId: string, sport?: Sport) =>
     ['users', 'stats', userId, sport ?? 'default'] as const,
@@ -30,6 +38,7 @@ export const queryKeys = {
     all: ['games'] as const,
     my: (userId: string) => ['games', 'my', userId] as const,
     available: (filterHash: string) => ['games', 'available', filterHash] as const,
+    availableUpcoming: (filterHash: string) => ['games', 'availableUpcoming', filterHash] as const,
     past: (userId: string) => ['games', 'past', userId] as const,
   },
   userGameNotes: {
