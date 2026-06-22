@@ -30,6 +30,7 @@ export type GameLocationTimePanelProps = {
   onSkipRealCourtBookingChange: (value: boolean) => void;
   selectedCourtIds: string[];
   courts: Court[];
+  bookingMatchCourts?: Court[];
   selectedBookingIds: string[];
   onSelectedBookingIdsChange: (ids: string[], records?: import('@/integrations/booktime/client').BooktimeBookingRecord[]) => void;
   bookingSelectionLimits: BookingSelectionLimits;
@@ -65,6 +66,7 @@ export function GameLocationTimePanel({
   onSkipRealCourtBookingChange,
   selectedCourtIds,
   courts,
+  bookingMatchCourts,
   selectedBookingIds,
   onSelectedBookingIdsChange,
   bookingSelectionLimits,
@@ -171,6 +173,7 @@ export function GameLocationTimePanel({
               <BookingsPickerPanel
                 club={club}
                 courts={courts}
+                bookingMatchCourts={bookingMatchCourts}
                 companyId={companyId}
                 enabled={bookingsPanelEnabled}
                 selectedBookingIds={selectedBookingIds}
@@ -197,6 +200,7 @@ export function GameLocationTimePanel({
             <BookingsPickerPanel
               club={club}
               courts={courts}
+              bookingMatchCourts={bookingMatchCourts}
               companyId={companyId}
               enabled={bookingsPanelEnabled}
               selectedBookingIds={selectedBookingIds}

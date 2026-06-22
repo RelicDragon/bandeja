@@ -195,6 +195,8 @@
     "notificationSettings": "Configuración de notificaciones",
     "notificationSettingsSaved": "Configuración de notificaciones guardada exitosamente",
     "notificationSettingsSaveError": "Error al guardar la configuración de notificaciones",
+    "notificationStillOnInChannel": "Sigue activo en {{channel}} — toca para cambiar",
+    "notificationStillOffInChannel": "Desactivado en {{channel}} — toca para cambiar",
     "controlNotifications": "Controlar notificaciones",
     "allowMessagesFromNonContacts": "Permitir mensajes de no contactos",
     "allowMessagesFromNonContactsDescription": "Permitir que cualquiera en tu ciudad te envíe mensajes directos. Desactiva para recibir mensajes solo de contactos.",

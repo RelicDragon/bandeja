@@ -77,6 +77,36 @@ describe('resolveCreateGameBookingAction', () => {
 });
 
 describe('assembleCreateGameBookingFields', () => {
+  it('uses selected court ids when booking snapshots omit court', () => {
+    const fields = assembleCreateGameBookingFields({
+      locationTimeMode: 'bookings',
+      selectedBookingRecords: [{ uuid: 'b1' } as never],
+      buildCreatePayload: () => ({
+        externalBookingIds: ['b1'],
+        externalBookingProvider: 'BOOKTIME',
+        bookingSnapshots: [{ externalBookingId: 'b1' }],
+        startTime: '2026-06-13T10:00:00.000Z',
+        endTime: '2026-06-13T11:00:00.000Z',
+        timeOverride: false,
+        hasBookedCourt: true,
+      }),
+      createDateFromSelection: () => ({
+        startTime: 'ignored',
+        endTime: 'ignored',
+      }),
+      multiCourtMode: false,
+      selectedCourt: 'court-from-link',
+      selectedCourtIds: ['court-from-link'],
+      hasBookedCourt: false,
+    });
+
+    expect(fields.courtIds).toEqual(['court-from-link']);
+    expect(fields.courtId).toBe('court-from-link');
+    expect(fields.bookingSnapshots).toEqual([
+      { externalBookingId: 'b1', courtId: 'court-from-link' },
+    ]);
+  });
+
   it('link-existing uses booking payload fields', () => {
     const fields = assembleCreateGameBookingFields({
       locationTimeMode: 'bookings',

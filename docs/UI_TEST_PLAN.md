@@ -909,6 +909,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-22 | Theme selector | Light/dark/system | Theme applied |
 | PR-23 | Online status toggle | Show/hide online | Preference saved |
 | PR-24 | Notification settings modal | Open + toggle prefs | Saved |
+| PR-63 | Notification cross-channel hint | Push off for a type, Telegram still on → red hint under toggle; tap hint | Switches to Telegram tab; row pulses/highlighted |
 | PR-25 | Wallet modal | Tap wallet badge | Balance + actions |
 | PR-26 | Send money to user | From wallet/user profile | Transfer flow |
 | PR-27 | Link Apple account | OAuth link | Linked state |

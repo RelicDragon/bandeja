@@ -6,6 +6,7 @@ import { usePlayersStore } from '@/store/playersStore';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { putLocalMessage } from '@/services/chat/chatLocalApply';
+import { mergeReadReceiptSync } from '@/services/chat/chatSyncEventsToPatches';
 import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 
@@ -291,11 +292,19 @@ export function useThreadReactions({
       setMessages((prev) => {
         const idx = prev.findIndex((m) => m.id === updated.id);
         if (idx < 0) return prev;
+        const prevRow = prev[idx]!;
+        let readReceipts = prevRow.readReceipts ?? [];
+        for (const r of updated.readReceipts ?? []) {
+          readReceipts = mergeReadReceiptSync(readReceipts, r.userId, r);
+        }
         const next = [...prev];
         next[idx] = {
+          ...prevRow,
           ...updated,
-          _status: prev[idx]._status,
-          _optimisticId: (prev[idx] as ChatMessageWithStatus)._optimisticId,
+          senderId: updated.senderId ?? prevRow.senderId,
+          readReceipts,
+          _status: prevRow._status,
+          _optimisticId: prevRow._optimisticId,
           translation: undefined,
           translations: undefined,
         } as ChatMessageWithStatus;

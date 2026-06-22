@@ -124,6 +124,8 @@
     "notificationSettings": "Notification Settings",
     "notificationSettingsSaved": "Notification settings saved successfully",
     "notificationSettingsSaveError": "Failed to save notification settings",
+    "notificationStillOnInChannel": "Still on in {{channel}} — tap to switch",
+    "notificationStillOffInChannel": "Off in {{channel}} — tap to switch",
     "controlNotifications": "Control Notifications",
     "allowMessagesFromNonContacts": "Allow messages from non-contacts",
     "allowMessagesFromNonContactsDescription": "Let anyone in your city send you direct messages. Turn off to receive messages only from contacts.",

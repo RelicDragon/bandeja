@@ -523,6 +523,10 @@ export async function linkBookingToGame(
 
   const { externalBookingId, snapshot, gamePatch } = parseLinkBookingToGameBody(body);
   const timeZone = await resolveBooktimeTimezoneForGame(gameId);
+  const resolvedSnapshot = { ...snapshot };
+  if (!resolvedSnapshot.courtId && gamePatch?.courtId) {
+    resolvedSnapshot.courtId = gamePatch.courtId;
+  }
 
   await prisma.$transaction(async (tx) => {
     const game = await tx.game.findUnique({
@@ -551,7 +555,7 @@ export async function linkBookingToGame(
         gameId,
         externalBookingId,
         externalBookingProvider: ClubIntegrationType.BOOKTIME,
-        ...snapshotToRowData(snapshot, timeZone),
+        ...snapshotToRowData(resolvedSnapshot, timeZone),
       },
     });
 

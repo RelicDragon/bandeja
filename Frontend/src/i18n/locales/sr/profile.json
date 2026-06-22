@@ -195,6 +195,8 @@
     "notificationSettings": "Podešavanja obaveštenja",
     "notificationSettingsSaved": "Podešavanja obaveštenja su uspešno sačuvana",
     "notificationSettingsSaveError": "Neuspešno čuvanje podešavanja obaveštenja",
+    "notificationStillOnInChannel": "Još uključeno u {{channel}} — dodirni za prelazak",
+    "notificationStillOffInChannel": "Isključeno u {{channel}} — dodirni za prelazak",
     "controlNotifications": "Kontrola obaveštenja",
     "allowMessagesFromNonContacts": "Dozvoli poruke od nekontakata",
     "allowMessagesFromNonContactsDescription": "Dozvoli bilo kome u vašem gradu da vam šalje direktne poruke. Isključite da biste primali poruke samo od kontakata.",

@@ -36,6 +36,15 @@ describe('readReceiptsFromOthers', () => {
     expect(receipts).toHaveLength(1);
     expect(receipts[0]!.userId).toBe('other');
   });
+
+  it('excludes viewer receipts when senderId is missing', () => {
+    const receipts = readReceiptsFromOthers(
+      [{ id: 'r1', messageId: 'm1', userId: 'me', readAt: '2026-01-01T01:00:00.000Z' }],
+      null,
+      'me'
+    );
+    expect(receipts).toHaveLength(0);
+  });
 });
 
 describe('resolveOwnMessageTicks', () => {
@@ -61,6 +70,17 @@ describe('resolveOwnMessageTicks', () => {
     expect(ticks).toEqual({ tickRead: true, tickDelivered: false });
   });
 
+  it('ignores viewer self receipt when senderId is missing', () => {
+    const ticks = resolveOwnMessageTicks(
+      msg({
+        senderId: null,
+        readReceipts: [{ id: 'r1', messageId: 'm1', userId: 'me', readAt: '2026-01-01T01:00:00.000Z' }],
+      }),
+      'me'
+    );
+    expect(ticks.tickRead).toBe(false);
+  });
+
   it('ignores message.state READ without other receipts', () => {
     const ticks = resolveOwnMessageTicks(msg({ state: 'READ' }));
     expect(ticks.tickRead).toBe(false);
@@ -79,5 +99,18 @@ describe('resolveOwnMessageTicks', () => {
       })
     );
     expect(ticks).toEqual({ tickRead: true, tickDelivered: false });
+  });
+
+  it('image-only delivered without receipts is not read', () => {
+    const ticks = resolveOwnMessageTicks(
+      msg({
+        messageType: 'IMAGE',
+        content: '',
+        mediaUrls: ['https://cdn.example/photo.jpg'],
+        state: 'DELIVERED',
+      }),
+      'sender'
+    );
+    expect(ticks).toEqual({ tickRead: false, tickDelivered: true });
   });
 });

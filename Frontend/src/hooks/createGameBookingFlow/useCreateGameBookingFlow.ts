@@ -57,6 +57,7 @@ export type UseCreateGameBookingFlowArgs = {
   setSelectedTime: (time: string) => void;
   duration: number;
   courts: Court[];
+  bookingMatchCourts?: Court[];
   clubs: Club[];
   multiCourtMode: boolean;
   maxParticipants: number;
@@ -87,6 +88,7 @@ export function useCreateGameBookingFlow({
   setSelectedTime,
   duration,
   courts,
+  bookingMatchCourts,
   clubs,
   multiCourtMode,
   maxParticipants,
@@ -130,6 +132,7 @@ export function useCreateGameBookingFlow({
     panelMode: 'create',
     club: selectedClubData,
     courts,
+    bookingMatchCourts,
     liveApiEnabled,
     maxParticipants,
     playersPerMatch,

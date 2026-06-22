@@ -13,6 +13,7 @@ import { resolveMatchGenerationType } from '../../utils/game/resolveMatchGenerat
 import { assertMaxParticipantsWithinUserCap } from '../../utils/game/userMaxParticipantsCap';
 import { projectUserForSportContext, touchLastCreatedSport } from '../user/userSportProfile.service';
 import { BOOKING_ERROR_KEYS } from '@bandeja/shared/booking/errorKeys';
+import { applyCourtIdsToBookingSnapshots } from '@bandeja/shared/gameBooking/applyCourtIdsToBookingSnapshots';
 import { parseBooktimeStoredOrNaiveToDate, BOOKTIME_DEFAULT_TIMEZONE } from '../../shared/booktime/localTime';
 import { resolveBooktimeTimezoneFromCityId } from '../../shared/booktime/resolveClubTimezone';
 import {
@@ -485,12 +486,25 @@ export class GameCreateService {
     });
 
       if (booking.externalBookingIds.length > 0 && booking.externalBookingProvider) {
+        const snapshotCourtIds = Array.from(
+          new Set(
+            [
+              ...(createCourtIds ?? []),
+              ...(typeof data.courtId === 'string' ? [data.courtId] : []),
+              ...(typeof primaryCourtId === 'string' ? [primaryCourtId] : []),
+            ].filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
+          ),
+        );
+        const bookingSnapshots = applyCourtIdsToBookingSnapshots(
+          booking.bookingSnapshots,
+          snapshotCourtIds,
+        );
         await insertJoinRows(
           tx,
           game.id,
           booking.externalBookingIds,
           booking.externalBookingProvider,
-          booking.bookingSnapshots,
+          bookingSnapshots,
           booktimeTimeZone ?? BOOKTIME_DEFAULT_TIMEZONE,
         );
       }

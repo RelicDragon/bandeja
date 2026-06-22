@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Club, Court, EntityType, Game } from '@/types';
 import type { CreateGameBookingFields } from '@shared/gameBooking/contracts';
+import { applyCourtIdsToBookingSnapshots } from '@shared/gameBooking/applyCourtIdsToBookingSnapshots';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import { computeBookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
@@ -13,6 +14,7 @@ type UseGameLocationTimeStateArgs = {
   panelMode: 'create' | 'edit';
   club: Club | undefined;
   courts: Court[];
+  bookingMatchCourts?: Court[];
   liveApiEnabled: boolean;
   maxParticipants: number;
   playersPerMatch: number;
@@ -33,6 +35,7 @@ export function useGameLocationTimeState({
   panelMode,
   club,
   courts,
+  bookingMatchCourts,
   liveApiEnabled,
   maxParticipants,
   playersPerMatch,
@@ -140,12 +143,21 @@ export function useGameLocationTimeState({
       hasBookedCourt: boolean;
     } => {
       if (locationTimeMode === 'bookings' && selectedBookings.length > 0) {
-        const snapshots = buildBookingSnapshots(selectedBookings, courts);
+        const matchCourts = bookingMatchCourts ?? courts;
+        const snapshots = applyCourtIdsToBookingSnapshots(
+          buildBookingSnapshots(selectedBookings, matchCourts),
+          selectedCourtIds,
+        );
         const derived = deriveGameTimeFromBookings(snapshots);
         const slotTimes = timeOverride && overrideStartTime && overrideEndTime
           ? { startTime: overrideStartTime, endTime: overrideEndTime }
           : derived;
-        const uniqueCourtIds = [...new Set(snapshots.map((s) => s.courtId).filter(Boolean))] as string[];
+        const uniqueCourtIds = [
+          ...new Set([
+            ...snapshots.map((s) => s.courtId).filter(Boolean),
+            ...selectedCourtIds,
+          ]),
+        ] as string[];
         return {
           externalBookingIds: selectedBookings.map((b) => b.uuid),
           externalBookingProvider: 'BOOKTIME',
@@ -170,13 +182,14 @@ export function useGameLocationTimeState({
     [
       locationTimeMode,
       courts,
+      bookingMatchCourts,
+      selectedCourtIds,
       timeOverride,
       overrideStartTime,
       overrideEndTime,
       createDateFromSelection,
       willBookOnCreate,
       hasBookedCourt,
-      selectedCourtIds,
     ],
   );
 

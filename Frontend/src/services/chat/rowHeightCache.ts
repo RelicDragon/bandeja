@@ -34,6 +34,8 @@ export interface RowHeightPreloadParams {
   messages: ChatMessage[];
   threadKey: string | null;
   limit?: number;
+  /** When provided, skip estimate bumps if false after async IndexedDB read (mid-history race). */
+  shouldApply?: () => boolean;
 }
 
 const MATERIAL_DELTA_PX = 4;
@@ -89,6 +91,7 @@ export async function rowHeightCachePreloadTail(params: RowHeightPreloadParams):
   const ids = tail.map((m) => m.id).filter(Boolean) as string[];
   if (ids.length === 0) return false;
   await preloadMessageRowHeights(ids);
+  if (params.shouldApply && !params.shouldApply()) return false;
   const seeded = rowHeightCacheSeedTailHeuristics(tail, limit);
   maybeBump(seeded);
   return seeded;

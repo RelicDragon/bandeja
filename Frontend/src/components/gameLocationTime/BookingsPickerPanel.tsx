@@ -22,6 +22,7 @@ import { BookingTimeOverrideSection } from './BookingTimeOverrideSection';
 type BookingsPickerPanelProps = {
   club: Club;
   courts: Court[];
+  bookingMatchCourts?: Court[];
   companyId: string;
   enabled: boolean;
   selectedBookingIds: string[];
@@ -90,6 +91,7 @@ function BookingRowWithLinkedGames({
 export function BookingsPickerPanel({
   club,
   courts,
+  bookingMatchCourts,
   companyId,
   enabled,
   selectedBookingIds,
@@ -104,13 +106,14 @@ export function BookingsPickerPanel({
   onDerivedTimeChange,
 }: BookingsPickerPanelProps) {
   const { t } = useTranslation();
+  const matchCourts = bookingMatchCourts ?? courts;
   const { status: auth, loading: authLoading } = useBooktimeClubAuth(club.id, enabled);
   const { bookings, loading } = useBooktimeUpcomingBookings(
     club,
     companyId,
     Boolean(auth?.connected),
     enabled,
-    courts,
+    matchCourts,
   );
 
   const selectedBookings = useMemo(
@@ -126,9 +129,9 @@ export function BookingsPickerPanel({
 
   const derived = useMemo(() => {
     if (selectedBookings.length === 0) return { startTime: null, endTime: null };
-    const snapshots = buildBookingSnapshots(selectedBookings, courts);
+    const snapshots = buildBookingSnapshots(selectedBookings, matchCourts);
     return deriveGameTimeFromBookings(snapshots);
-  }, [selectedBookings, courts]);
+  }, [selectedBookings, matchCourts]);
 
   useEffect(() => {
     onDerivedTimeChangeRef.current?.(derived.startTime, derived.endTime);

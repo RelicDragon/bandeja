@@ -9,7 +9,8 @@ const SCROLL_SETTLE_MS = 120;
 export function useVirtualRowLayoutTransition(
   scrollElementRef: RefObject<HTMLDivElement | null>,
   rows: VirtualItem[],
-  enabled: boolean
+  enabled: boolean,
+  subscribeScroll?: (listener: () => void) => () => void
 ): Map<string, { transform: string; transition?: string }> {
   const prevStartByKeyRef = useRef(new Map<string, number>());
   const scrollingRef = useRef(false);
@@ -17,8 +18,6 @@ export function useVirtualRowLayoutTransition(
 
   useEffect(() => {
     if (!enabled) return;
-    const el = scrollElementRef.current;
-    if (!el) return;
 
     const onScroll = () => {
       scrollingRef.current = true;
@@ -28,12 +27,19 @@ export function useVirtualRowLayoutTransition(
       }, SCROLL_SETTLE_MS);
     };
 
+    if (subscribeScroll) {
+      return subscribeScroll(onScroll);
+    }
+
+    const el = scrollElementRef.current;
+    if (!el) return;
+
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => {
       el.removeEventListener('scroll', onScroll);
       if (scrollEndTimerRef.current) clearTimeout(scrollEndTimerRef.current);
     };
-  }, [scrollElementRef, enabled]);
+  }, [scrollElementRef, enabled, subscribeScroll]);
 
   const prev = prevStartByKeyRef.current;
   const scrolling = scrollingRef.current;

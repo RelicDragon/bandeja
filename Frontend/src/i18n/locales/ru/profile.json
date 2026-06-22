@@ -124,6 +124,8 @@
     "notificationSettings": "Настройки уведомлений",
     "notificationSettingsSaved": "Настройки уведомлений успешно сохранены",
     "notificationSettingsSaveError": "Не удалось сохранить настройки уведомлений",
+    "notificationStillOnInChannel": "Всё ещё включено в {{channel}} — нажмите для перехода",
+    "notificationStillOffInChannel": "Выключено в {{channel}} — нажмите для перехода",
     "controlNotifications": "Управление уведомлениями",
     "allowMessagesFromNonContacts": "Разрешить сообщения от незнакомцев",
     "allowMessagesFromNonContactsDescription": "Позволить любому в вашем городе отправлять вам личные сообщения. Отключите, чтобы получать сообщения только от контактов.",

@@ -100,7 +100,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     ? ({ filter: 'drop-shadow(0 0 2px #000) drop-shadow(0 0 4px #000) drop-shadow(1px 1px 2px #000) drop-shadow(-1px -1px 2px #000)' } as const)
     : undefined;
   const variant: ContentVariant = isChannel ? 'channel' : isOwnMessage ? 'own' : 'other';
-  const { tickRead, tickDelivered } = resolveOwnMessageTicks(message);
+  const { tickRead, tickDelivered } = resolveOwnMessageTicks(message, currentUserId);
   const contentVariantForTranslation = isOwnMessage ? 'own' : 'other';
   const hasMediaOrVoice = isVoice || isVideo || hasMedia;
   const paddingClass = hasTranslation
@@ -276,6 +276,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               onResendQueued={onResendQueued}
               onRemoveFromQueue={onRemoveFromQueue}
               iconStyle={mediaOnlyIconStyle}
+              tickSurface={hasMediaOnly ? 'media' : 'bubble'}
+              viewerUserId={currentUserId}
               t={t}
             />
           )}

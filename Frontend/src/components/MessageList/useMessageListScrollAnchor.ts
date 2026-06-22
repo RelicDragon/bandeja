@@ -1,44 +1,54 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 import type { Virtualizer } from '@tanstack/react-virtual';
-import { isMessageListNearBottom } from '@/utils/messageListScroll';
+import { isMessageListNearBottom, MESSAGE_LIST_NEAR_BOTTOM_PX } from '@/utils/messageListScroll';
 import {
   snapshotMeasurements,
   sumSizeDeltaAboveScrollTop,
   type MeasurementSnapshot,
 } from '@/utils/messageListScrollAnchor';
 
-const NEAR_BOTTOM_PX = 120;
-
 type UseMessageListScrollAnchorParams = {
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  containerRef: RefObject<HTMLDivElement | null>;
   virtualizer: Virtualizer<HTMLDivElement, Element>;
-  isLoadingMoreRef: React.RefObject<boolean>;
+  isLoadingMoreRef: RefObject<boolean>;
+  justLoadedOlderMessagesRef: RefObject<boolean>;
+  prependCompensationEpochRef: RefObject<number>;
   threadScrollKey: string | null;
   measurementRevision: number;
 };
 
 /**
  * When row heights change (measure or estimate), preserve scroll for rows above the viewport.
- * Uses per-row deltas — not total list height — so tail-only growth does not yank mid-history readers.
+ * Skips prepend events — unified prepend compensation owns scrollTop for those.
  */
 export function useMessageListScrollAnchor({
   containerRef,
   virtualizer,
   isLoadingMoreRef,
+  justLoadedOlderMessagesRef,
+  prependCompensationEpochRef,
   threadScrollKey,
   measurementRevision,
 }: UseMessageListScrollAnchorParams): void {
   const prevMeasurementsRef = useRef<MeasurementSnapshot | null>(null);
+  const lastPrependEpochRef = useRef(0);
 
   useLayoutEffect(() => {
     prevMeasurementsRef.current = null;
-  }, [threadScrollKey]);
+    lastPrependEpochRef.current = prependCompensationEpochRef.current;
+  }, [threadScrollKey, prependCompensationEpochRef]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
     if (!container || isLoadingMoreRef.current) return;
+    if (justLoadedOlderMessagesRef.current) return;
+    if (prependCompensationEpochRef.current !== lastPrependEpochRef.current) {
+      lastPrependEpochRef.current = prependCompensationEpochRef.current;
+      prevMeasurementsRef.current = snapshotMeasurements(virtualizer.measurementsCache);
+      return;
+    }
     if (container.scrollTop <= 0) return;
-    if (isMessageListNearBottom(container, NEAR_BOTTOM_PX)) return;
+    if (isMessageListNearBottom(container, MESSAGE_LIST_NEAR_BOTTOM_PX)) return;
 
     const measurements = virtualizer.measurementsCache;
     const next = snapshotMeasurements(measurements);
@@ -46,11 +56,21 @@ export function useMessageListScrollAnchor({
     prevMeasurementsRef.current = next;
 
     if (!prev || prev.length === 0) return;
+    if (prev.length !== next.length) {
+      return;
+    }
 
     const scrollTop = container.scrollTop;
     const delta = sumSizeDeltaAboveScrollTop(prev, next, scrollTop);
     if (delta === 0) return;
 
     container.scrollTop = Math.max(0, scrollTop + delta);
-  }, [virtualizer, containerRef, isLoadingMoreRef, measurementRevision]);
+  }, [
+    virtualizer,
+    containerRef,
+    isLoadingMoreRef,
+    justLoadedOlderMessagesRef,
+    prependCompensationEpochRef,
+    measurementRevision,
+  ]);
 }

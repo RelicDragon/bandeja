@@ -4,6 +4,7 @@ export * from './booktimeSnapshotFreshness';
 export * from './deriveGameTimeFromBookings';
 export * from './computeBookingSelectionLimits';
 export * from './buildBookingSnapshots';
+export * from './applyCourtIdsToBookingSnapshots';
 export * from './evaluateLinkedBookingCoverage';
 export * from './computeGameBookingStatus';
 export * from './linkBookingToGame';

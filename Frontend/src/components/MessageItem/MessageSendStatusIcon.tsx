@@ -24,6 +24,8 @@ interface MessageSendStatusIconProps {
   onResendQueued?: (tempId: string) => void;
   onRemoveFromQueue?: (tempId: string) => void;
   iconStyle?: React.CSSProperties;
+  tickSurface?: 'bubble' | 'media';
+  viewerUserId?: string | null;
   t: TFunction;
 }
 
@@ -54,11 +56,18 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
   onResendQueued,
   onRemoveFromQueue,
   iconStyle,
+  tickSurface = 'bubble',
+  viewerUserId,
   t,
 }) => {
   const isNetworkOnline = useNetworkStore((s) => s.isOnline);
   const statusKey = resolveStatusKey(isSending, isFailed, tickRead, tickDelivered, isNetworkOnline);
-  const readByOthersCount = readReceiptsFromOthers(message.readReceipts, message.senderId).length;
+  const readByOthersCount = readReceiptsFromOthers(
+    message.readReceipts,
+    message.senderId,
+    viewerUserId
+  ).length;
+  const onMedia = tickSurface === 'media';
 
   return (
     <span className="relative inline-flex h-[14px] w-[14px] shrink-0 items-center" style={iconStyle}>
@@ -142,7 +151,7 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
 
           {statusKey === 'read' && (
             <span
-              className="text-purple-200 inline-flex"
+              className={onMedia ? 'text-violet-300 inline-flex' : 'text-purple-200 inline-flex'}
               title={
                 readByOthersCount > 0
                   ? `Read by ${readByOthersCount} ${readByOthersCount === 1 ? 'person' : 'people'}`
@@ -155,15 +164,18 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
 
           {statusKey === 'delivered' && (
             <span
-              className="text-blue-100/90 inline-flex"
+              className={onMedia ? 'text-white/80 inline-flex' : 'text-blue-100/90 inline-flex'}
               title={t('chat.tickDelivered', { defaultValue: 'Delivered' })}
             >
-              <DoubleTickIcon size={14} variant="double" className="opacity-85" />
+              <DoubleTickIcon size={14} variant="double" className={onMedia ? 'opacity-90' : 'opacity-85'} />
             </span>
           )}
 
           {statusKey === 'sent' && (
-            <span className="text-blue-100 inline-flex" title={t('chat.tickSent', { defaultValue: 'Sent' })}>
+            <span
+              className={onMedia ? 'text-white/70 inline-flex' : 'text-blue-100 inline-flex'}
+              title={t('chat.tickSent', { defaultValue: 'Sent' })}
+            >
               <DoubleTickIcon size={14} variant="single" />
             </span>
           )}

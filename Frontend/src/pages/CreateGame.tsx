@@ -102,6 +102,7 @@ export const CreateGame = ({
 
   const [clubs, setClubs] = useState<Club[]>([]);
   const [courts, setCourts] = useState<Court[]>([]);
+  const [allClubCourts, setAllClubCourts] = useState<Court[]>([]);
   const [selectedClub, setSelectedClub] = useState<string>(() => initialGameData?.clubId || '');
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() => {
     const fromGameCourts = initialGameData?.gameCourts?.map((gc) => gc.courtId) || [];
@@ -357,6 +358,7 @@ export const CreateGame = ({
     setSelectedTime,
     duration,
     courts,
+    bookingMatchCourts: allClubCourts.length > 0 ? allClubCourts : courts,
     clubs,
     multiCourtMode,
     maxParticipants,
@@ -572,6 +574,7 @@ export const CreateGame = ({
     const fetchCourts = async () => {
       if (!selectedClub) {
         setCourts([]);
+        setAllClubCourts([]);
         courtsClubRef.current = null;
         if (!initialCourtId) {
           setSelectedCourtIds([]);
@@ -582,18 +585,24 @@ export const CreateGame = ({
         return;
       }
       try {
-        const response = await courtsApi.getByClubId(selectedClub, { sport: selectedSport });
-        setCourts(response.data);
+        const [sportFilteredRes, allCourtsRes] = await Promise.all([
+          courtsApi.getByClubId(selectedClub, { sport: selectedSport }),
+          courtsApi.getByClubId(selectedClub),
+        ]);
+        const sportCourts = sportFilteredRes.data;
+        const clubCourts = allCourtsRes.data;
+        setCourts(sportCourts);
+        setAllClubCourts(clubCourts);
 
         const clubChanged = courtsClubRef.current !== selectedClub;
         courtsClubRef.current = selectedClub;
         if (!clubChanged) return;
 
-        if (initialCourtId && response.data.some((c) => c.id === initialCourtId)) {
+        if (initialCourtId && clubCourts.some((c) => c.id === initialCourtId)) {
           setSelectedCourtIds([initialCourtId]);
           setHasBookedCourt(initialHasBookedCourt);
-        } else if (response.data.length === 1) {
-          setSelectedCourtIds([response.data[0].id]);
+        } else if (sportCourts.length === 1) {
+          setSelectedCourtIds([sportCourts[0].id]);
           setHasBookedCourt(false);
         } else {
           setSelectedCourtIds([]);
@@ -1456,6 +1465,7 @@ export const CreateGame = ({
                   onSkipRealCourtBookingChange={setSkipRealCourtBooking}
                   selectedCourtIds={selectedCourtIds}
                   courts={courts}
+                  bookingMatchCourts={allClubCourts.length > 0 ? allClubCourts : courts}
                   selectedBookingIds={selectedBookingIds}
                   onSelectedBookingIdsChange={onSelectedBookingIdsChange}
                   bookingSelectionLimits={bookingSelectionLimits}

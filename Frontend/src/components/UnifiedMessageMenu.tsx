@@ -116,8 +116,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   }, []);
 
   const otherReadReceipts = useMemo(
-    () => readReceiptsFromOthers(message.readReceipts, message.senderId),
-    [message.readReceipts, message.senderId]
+    () => readReceiptsFromOthers(message.readReceipts, message.senderId, user?.id),
+    [message.readReceipts, message.senderId, user?.id]
   );
 
   const receiptAndSenderIds = useMemo(() => {

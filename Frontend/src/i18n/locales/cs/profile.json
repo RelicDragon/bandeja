@@ -195,6 +195,8 @@
     "notificationSettings": "Nastavení notifikací",
     "notificationSettingsSaved": "Nastavení notifikací bylo uloženo",
     "notificationSettingsSaveError": "Nepodařilo se uložit nastavení notifikací",
+    "notificationStillOnInChannel": "Stále zapnuto v {{channel}} — klepněte pro přepnutí",
+    "notificationStillOffInChannel": "Vypnuto v {{channel}} — klepněte pro přepnutí",
     "controlNotifications": "Ovládání notifikací",
     "allowMessagesFromNonContacts": "Povolit zprávy od nekontaktů",
     "allowMessagesFromNonContactsDescription": "Umožněte komukoliv ve vašem městě posílat přímé zprávy. Vypněte pro zprávy jen od kontaktů.",

@@ -1,5 +1,8 @@
 import type { Virtualizer } from '@tanstack/react-virtual';
 
+/** Gap from visual bottom below which tail pin / layout motion applies. */
+export const MESSAGE_LIST_NEAR_BOTTOM_PX = 120;
+
 /**
  * Bottom-pin via scrollTop — avoids @tanstack/virtual scrollToIndex, which can throw when
  * targetWindow is cleared during React re-layout (null.requestAnimationFrame).
@@ -31,7 +34,10 @@ export function pinMessageListContainerToBottomAfterLayout(
   });
 }
 
-export function isMessageListNearBottom(container: HTMLElement | null, gapPx = 20): boolean {
+export function isMessageListNearBottom(
+  container: HTMLElement | null,
+  gapPx = MESSAGE_LIST_NEAR_BOTTOM_PX
+): boolean {
   if (!container) return true;
   return container.scrollHeight - container.scrollTop - container.clientHeight <= gapPx;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ToggleSwitch, Button } from '@/components';
 import { TelegramIcon } from '@/components/TelegramIcon';
@@ -48,6 +48,12 @@ export const NotificationSettingsModal = ({
   const TOGGLE_KEYS: (keyof NotificationPreference)[] = ['sendMessages', 'sendInvites', 'sendDirectMessages', 'sendReminders', 'sendWalletNotifications', 'sendMarketplaceNotifications', 'sendTeamNotifications'];
   const [isSaving, setIsSaving] = useState(false);
   const [localPrefs, setLocalPrefs] = useState<Record<string, NotificationPreference>>({});
+  const [highlightedToggle, setHighlightedToggle] = useState<{
+    channel: NotificationChannelType;
+    key: keyof NotificationPreference;
+  } | null>(null);
+  const toggleRowRefs = useRef<Partial<Record<string, HTMLDivElement | null>>>({});
+  const channelTabRefs = useRef<Partial<Record<NotificationChannelType, HTMLButtonElement | null>>>({});
 
   useEffect(() => {
     if (isOpen && preferences.length > 0) {
@@ -57,6 +63,7 @@ export const NotificationSettingsModal = ({
       }
       setLocalPrefs(map);
       setActiveChannel(preferences[0].channelType);
+      setHighlightedToggle(null);
     }
   }, [isOpen, preferences]);
 
@@ -128,21 +135,116 @@ export const NotificationSettingsModal = ({
     });
   };
 
+  const getChannelLabel = useCallback(
+    (channelType: NotificationChannelType) =>
+      t(CHANNEL_LABELS[channelType]) || CHANNEL_LABELS[channelType],
+    [t],
+  );
+
+  const getCrossChannelHints = (
+    channelType: NotificationChannelType,
+    key: keyof NotificationPreference,
+  ): { channel: NotificationChannelType; enabled: boolean }[] => {
+    const currentValue = localPrefs[channelType]?.[key] as boolean | undefined;
+    if (currentValue === undefined) return [];
+
+    return preferences
+      .map((p) => p.channelType)
+      .filter((other) => other !== channelType)
+      .filter((other) => {
+        const otherValue = localPrefs[other]?.[key] as boolean | undefined;
+        return otherValue !== undefined && otherValue !== currentValue;
+      })
+      .map((other) => ({
+        channel: other,
+        enabled: localPrefs[other]![key] as boolean,
+      }));
+  };
+
+  const toggleRowKey = (channel: NotificationChannelType, key: keyof NotificationPreference) =>
+    `${channel}:${String(key)}`;
+
+  const focusCrossChannelSetting = (
+    targetChannel: NotificationChannelType,
+    key: keyof NotificationPreference,
+  ) => {
+    setActiveChannel(targetChannel);
+    setHighlightedToggle({ channel: targetChannel, key });
+  };
+
+  useLayoutEffect(() => {
+    if (!highlightedToggle) return;
+
+    const scrollToTarget = () => {
+      channelTabRefs.current[highlightedToggle.channel]?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'center',
+      });
+
+      const rowKey = toggleRowKey(highlightedToggle.channel, highlightedToggle.key);
+      const row = toggleRowRefs.current[rowKey];
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return true;
+      }
+      return false;
+    };
+
+    if (!scrollToTarget()) {
+      requestAnimationFrame(scrollToTarget);
+    }
+
+    const timer = window.setTimeout(() => setHighlightedToggle(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [highlightedToggle]);
+
   const NotificationToggle = ({
+    toggleKey,
+    channelType,
     label,
     description,
     checked,
     onChange,
+    crossChannelHints,
+    isHighlighted,
   }: {
+    toggleKey: keyof NotificationPreference;
+    channelType: NotificationChannelType;
     label: string;
     description: string;
     checked: boolean;
     onChange: (checked: boolean) => void;
+    crossChannelHints: { channel: NotificationChannelType; enabled: boolean }[];
+    isHighlighted: boolean;
   }) => (
-    <div className="flex items-start justify-between gap-4 py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+    <div
+      ref={(el) => {
+        toggleRowRefs.current[toggleRowKey(channelType, toggleKey)] = el;
+      }}
+      className={`flex items-start justify-between gap-4 py-3 border-b border-gray-200 dark:border-gray-700 last:border-b-0 rounded-lg transition-all duration-300 ${
+        isHighlighted ? 'bg-red-50 dark:bg-red-950/40 ring-2 ring-red-500 animate-pulse' : ''
+      }`}
+    >
       <div className="flex-1 min-w-0">
         <label className="text-sm font-medium text-gray-900 dark:text-white block mb-1">{label}</label>
         <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+        {crossChannelHints.length > 0 && (
+          <div className="mt-1 space-y-0.5">
+            {crossChannelHints.map(({ channel, enabled }) => (
+              <button
+                key={channel}
+                type="button"
+                onClick={() => focusCrossChannelSetting(channel, toggleKey)}
+                className="block text-left text-[11px] leading-snug text-red-600 dark:text-red-400 hover:underline"
+              >
+                {enabled
+                  ? t('profile.notificationStillOnInChannel', { channel: getChannelLabel(channel) })
+                  : t('profile.notificationStillOffInChannel', { channel: getChannelLabel(channel) })}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div className="flex-shrink-0 pt-1">
         <ToggleSwitch checked={checked} onChange={onChange} />
@@ -173,8 +275,18 @@ export const NotificationSettingsModal = ({
           {preferences.map((p) => (
             <button
               key={p.channelType}
-              onClick={() => setActiveChannel(p.channelType)}
+              ref={(el) => {
+                channelTabRefs.current[p.channelType] = el;
+              }}
+              onClick={() => {
+                setHighlightedToggle(null);
+                setActiveChannel(p.channelType);
+              }}
               className={`flex-1 px-4 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 border-b-2 ${
+                highlightedToggle?.channel === p.channelType
+                  ? 'animate-pulse ring-2 ring-inset ring-red-500/60'
+                  : ''
+              } ${
                 activeChannel === p.channelType
                   ? p.channelType === 'PUSH'
                     ? 'border-primary-600 text-primary-600 dark:text-primary-400'
@@ -222,10 +334,16 @@ export const NotificationSettingsModal = ({
                 return (
                   <NotificationToggle
                     key={key}
+                    toggleKey={key}
+                    channelType={activeChannel}
                     label={t(label)}
                     description={t(desc)}
                     checked={localPrefs[activeChannel][key] as boolean}
                     onChange={(v) => updatePref(activeChannel, key, v)}
+                    crossChannelHints={getCrossChannelHints(activeChannel, key)}
+                    isHighlighted={
+                      highlightedToggle?.channel === activeChannel && highlightedToggle.key === key
+                    }
                   />
                 );
               })}
