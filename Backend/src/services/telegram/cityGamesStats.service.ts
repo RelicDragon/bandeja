@@ -104,7 +104,6 @@ export async function getCityGamesStats(
     prisma.gameParticipant.findMany({
       where: {
         status: 'PLAYING',
-        userId: { not: null },
         game: {
           ...publicCityGameWhere,
           status: 'FINISHED',
