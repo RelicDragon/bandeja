@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format, addDays, isToday, isTomorrow } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
+import { formatShortWeekday } from '@/utils/dateFormat';
 import { Game, User } from '@/types';
 import { CalendarComponent } from '@/components/Calendar';
 import { userLevelMatchesGameBand } from '@/utils/profileSports';
@@ -107,7 +108,7 @@ export const DateSelectorWithCount = ({
   const getDateLabel = (date: Date) => {
     if (isToday(date)) return t('createGame.today');
     if (isTomorrow(date)) return t('createGame.tomorrow');
-    return format(date, 'EEEE', { locale }).slice(0, 3);
+    return formatShortWeekday(date, i18n.language);
   };
 
   const getGameCountForDate = (date: Date) => {

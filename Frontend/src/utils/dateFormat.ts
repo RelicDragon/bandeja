@@ -1,11 +1,11 @@
-import { format as dateFnsFormat, formatDistanceToNow, isToday, isYesterday, differenceInHours, differenceInDays, Locale } from 'date-fns';
+import { format as dateFnsFormat, formatDistanceToNow, isToday, isYesterday, differenceInHours, differenceInDays, getYear, Locale } from 'date-fns';
 import { enGB } from 'date-fns/locale/en-GB';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
 import { es } from 'date-fns/locale/es';
 import { cs } from 'date-fns/locale/cs';
 import i18n from '@/i18n/config';
-import { extractLanguageCode } from '@/utils/displayPreferences';
+import { extractLanguageCode, resolveAppLocale } from '@/utils/displayPreferences';
 
 const localeMap: Record<string, Locale> = {
   en: enGB,
@@ -25,6 +25,21 @@ export const formatDate = (date: Date | string, formatStr: string): string => {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
   return dateFnsFormat(dateObj, formatStr, { locale: currentLocale });
 };
+
+/** Short month for calendar nav (e.g. "Jun", "Май"; adds year when not current). */
+export function formatCompactMonthHeader(date: Date | string, languageOrLocale?: string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const locale = getAppDateFnsLocale(languageOrLocale);
+  const pattern = getYear(dateObj) === getYear(new Date()) ? 'LLL' : 'LLL yy';
+  return dateFnsFormat(dateObj, pattern, { locale });
+}
+
+/** Locale-aware short weekday (2–3 letters, e.g. ru "пн", en "Mon"). */
+export function formatShortWeekday(date: Date | string, languageOrLocale?: string): string {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  const intlLocale = resolveAppLocale(languageOrLocale ?? i18n.language);
+  return new Intl.DateTimeFormat(intlLocale, { weekday: 'short' }).format(dateObj);
+}
 
 /** Compact relative time for social feeds (e.g. 5m, 15h, 3d). */
 export const formatShortRelativeTime = (date: Date | string): string => {

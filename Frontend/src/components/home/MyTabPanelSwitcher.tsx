@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Calendar, Ticket, Trophy, Users } from 'lucide-react';
+import { Ticket, Trophy, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { Game } from '@/types';
@@ -9,31 +9,20 @@ import { useMyTabBooktime } from '@/hooks/useMyTabBooktime';
 import { MyTabBookingsSection } from '@/components/booktime/MyTabBookingsSection';
 import { UserTeamsHomeSection } from './UserTeamsHomeSection';
 import { YourLeaguesHomeSection } from './YourLeaguesHomeSection';
-import { readMyGamesViewMode } from '@/utils/myGamesViewStorage';
-import type { MyGamesViewMode } from '@/utils/myGamesViewStorage';
 
-type MyTabSwitchId = 'bookings' | 'list' | 'teams' | 'leagues';
 type MyTabPanelId = 'bookings' | 'teams' | 'leagues';
 
 interface MyTabPanelSwitcherProps {
   games: Game[];
   gamesUnreadCounts?: Record<string, number>;
-  onMyGamesViewModeChange: (mode: MyGamesViewMode) => void;
-}
-
-function isPanelId(id: MyTabSwitchId): id is MyTabPanelId {
-  return id === 'bookings' || id === 'teams' || id === 'leagues';
 }
 
 export function MyTabPanelSwitcher({
   games,
   gamesUnreadCounts = {},
-  onMyGamesViewModeChange,
 }: MyTabPanelSwitcherProps) {
   const { t } = useTranslation();
-  const [activeSwitch, setActiveSwitch] = useState<MyTabSwitchId | null>(() =>
-    readMyGamesViewMode() === 'list' ? 'list' : null,
-  );
+  const [activeSwitch, setActiveSwitch] = useState<MyTabPanelId | null>(null);
   const booktime = useMyTabBooktime();
   const panelCounts = useMyTabPanelCounts(games, booktime);
   const reduceMotion = useReducedMotion();
@@ -48,11 +37,6 @@ export function MyTabPanelSwitcher({
         label: t('club.booktime.tabBookings'),
         icon: Ticket,
         badge: panelCounts.bookings,
-      },
-      {
-        id: 'list',
-        label: t('home.upcomings'),
-        icon: Calendar,
       },
       {
         id: 'teams',
@@ -70,16 +54,12 @@ export function MyTabPanelSwitcher({
     [panelCounts.bookings, panelCounts.leagues, panelCounts.teams, t],
   );
 
-  const activePanel = activeSwitch && isPanelId(activeSwitch) ? activeSwitch : null;
-
   const handleSwitchChange = (id: string | null) => {
-    if (id === 'bookings' || id === 'teams' || id === 'leagues' || id === 'list') {
+    if (id === 'bookings' || id === 'teams' || id === 'leagues') {
       setActiveSwitch(id);
-      onMyGamesViewModeChange(id === 'list' ? 'list' : 'calendar');
       return;
     }
     setActiveSwitch(null);
-    onMyGamesViewModeChange('calendar');
   };
 
   return (
@@ -94,23 +74,23 @@ export function MyTabPanelSwitcher({
           badgeStyle="inline"
           layoutId="myTabPanelSwitcher"
           activeLabelMaxWidth={120}
-          ariaLabel={t('home.myTabPanels', { defaultValue: 'Bookings, list, teams, and leagues' })}
+          ariaLabel={t('home.myTabPanels', { defaultValue: 'Bookings, teams, and leagues' })}
         />
       </div>
 
       <AnimatePresence mode="wait" initial={false}>
-        {activePanel ? (
+        {activeSwitch ? (
           <motion.div
-            key={activePanel}
+            key={activeSwitch}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={panelTransition}
           >
             <div className="pt-3">
-              {activePanel === 'bookings' ? (
+              {activeSwitch === 'bookings' ? (
                 <MyTabBookingsSection booktime={booktime} />
-              ) : activePanel === 'teams' ? (
+              ) : activeSwitch === 'teams' ? (
                 <UserTeamsHomeSection embedded />
               ) : (
                 <YourLeaguesHomeSection

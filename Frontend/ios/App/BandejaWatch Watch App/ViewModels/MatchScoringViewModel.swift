@@ -742,7 +742,11 @@ final class MatchScoringViewModel {
         guard !isReadOnly else { return }
         guard canAdvanceToNextSet() else { return }
         let next = activeSetIndex + 1
-        if shouldOfferSuperTieBreakChoice(nextIndex: next) {
+        if WatchLiveScoringEngine.shouldPromptOptionalDeciderBeforeAdvancing(
+            to: next,
+            state: liveScoringEngineState(),
+            rules: rules
+        ) {
             pendingSetFormatChoiceIndex = next
         } else {
             advanceToSet(index: next, superTieBreak: ruleMandatesSuperTieBreak(nextIndex: next))
@@ -833,17 +837,6 @@ final class MatchScoringViewModel {
         }
     }
 
-    private func shouldOfferSuperTieBreakChoice(nextIndex: Int) -> Bool {
-        guard optionalDeciderFormat == nil else { return false }
-        guard usesTennisSetRules, !usesBallCapPerSetUI else { return false }
-        if sets[safe: nextIndex].map({ $0.resolvedRole != .official }) ?? false { return false }
-        let r = rules
-        if r.superTieBreakReplacesDeciderAtIndex != nil { return false }
-        guard arePreviousSetsTiedForSuper(nextIndex: nextIndex) else { return false }
-        let deciderIndex = max(0, r.maxSetsPlayed - 1)
-        return nextIndex == deciderIndex
-    }
-
     /// True when the rule mandates a super-TB decider at `nextIndex` and the prerequisite
     /// (previous official sets tied with > 0 wins) is met — no user prompt needed.
     private func ruleMandatesSuperTieBreak(nextIndex: Int) -> Bool {
@@ -852,27 +845,10 @@ final class MatchScoringViewModel {
         guard let mandated = rules.superTieBreakReplacesDeciderAtIndex, mandated == nextIndex else {
             return false
         }
-        return arePreviousSetsTiedForSuper(nextIndex: nextIndex)
-    }
-
-    private func arePreviousSetsTiedForSuper(nextIndex: Int) -> Bool {
-        guard nextIndex >= 2 else { return false }
-        var aWins = 0
-        var bWins = 0
-        for i in 0..<nextIndex {
-            guard let s = sets[safe: i] else { continue }
-            guard s.resolvedRole == .official else { continue }
-            guard s.teamA > 0 || s.teamB > 0 else { continue }
-            guard s.teamA != s.teamB else { continue }
-            if s.isTieBreak {
-                if s.teamA > s.teamB { aWins += 1 } else { bWins += 1 }
-            } else if s.teamA > s.teamB {
-                aWins += 1
-            } else {
-                bWins += 1
-            }
-        }
-        return aWins == bWins && aWins > 0
+        return WatchLiveScoringEngine.previousOfficialSetsTiedBeforeIndex(
+            nextIndex,
+            state: liveScoringEngineState()
+        )
     }
 
     private func liveScoringEngineState() -> WatchLiveScoringState {
@@ -963,7 +939,7 @@ final class MatchScoringViewModel {
         guard result.changed else { return }
         applyLiveScoringEngineState(result.state)
         WatchScoreHaptics.point()
-        autoAdvanceCompletedSets()
+        applyEngineAutoAdvanceAfterMutation()
     }
 
     func nextSet() {
@@ -1000,31 +976,17 @@ final class MatchScoringViewModel {
         return WatchLiveScoringEngine.activeSetIsCompleted(state: liveScoringEngineState(), rules: rules)
     }
 
-    /// Mirrors `autoAdvanceCompletedSets` from `core.ts`: walks forward through any sets
-    /// that have already been finalized so the user lands on the next editable row.
-    /// Honors the Watch-specific super-TB decider prompt — stops at a set that needs the
-    /// user's choice and surfaces `pendingSetFormatChoiceIndex` instead of auto-picking.
-    /// Grows `sets` lazily up to `rules.maxSetsPlayed` (matches `core.ts`).
-    private func autoAdvanceCompletedSets() {
+    private func applyEngineAutoAdvanceAfterMutation() {
         guard usesTennisSetRules, !isAmericano else { return }
-        let cap = max(rules.maxSetsPlayed, 1)
-        while activeSetIndex + 1 < cap {
-            if WatchComputeMatchWinner.isMatchDecidedForLiveScoring(sets: sets, rules: rules) { return }
-            let row = sets[safe: activeSetIndex]
-            let supplemental = row.map { $0.resolvedRole != .official } ?? false
-            if supplemental { return }
-            if !activeSetIsCompleted() { return }
-            let next = activeSetIndex + 1
-            if rawFixedNumberOfSets > 0, next >= rawFixedNumberOfSets {
-                if sets[safe: next].map({ $0.resolvedRole == .official }) ?? true { return }
-            }
-            if shouldOfferSuperTieBreakChoice(nextIndex: next) {
-                pendingSetFormatChoiceIndex = next
-                return
-            }
-            advanceToSet(index: next, superTieBreak: ruleMandatesSuperTieBreak(nextIndex: next))
+        if sets[safe: activeSetIndex].map({ $0.resolvedRole != .official }) ?? false { return }
+        let outcome = WatchLiveScoringEngine.autoAdvanceCompletedSetsAllowingOptionalDeciderPrompt(
+            state: liveScoringEngineState(),
+            rules: rules
+        )
+        applyLiveScoringEngineState(outcome.state)
+        if let idx = outcome.pendingOptionalDeciderAtSetIndex {
+            pendingSetFormatChoiceIndex = idx
         }
-        normalizeLiveSetsAfterDecisionIfNeeded()
     }
 
     private func nextEditableSetIndex() -> Int {

@@ -419,15 +419,66 @@ enum WatchLiveScoringEngine {
 
     // MARK: - Post-mutation (FE parity)
 
+    struct AutoAdvanceResult {
+        let state: WatchLiveScoringState
+        /// When set, the caller must show the super-TB decider choice UI before advancing to this set index.
+        let pendingOptionalDeciderAtSetIndex: Int?
+    }
+
     static func autoAdvanceCompletedSets(state: WatchLiveScoringState, rules: WatchScoringRules) -> WatchLiveScoringState {
         guard rules.isClassic else { return state }
         var s = state
         while canAdvanceLiveSet(state: s, rules: rules) {
-            let next = advanceLiveSet(state: s, rules: rules, superTieBreak: mandatedSuperTieBreak(at: s.activeSetIndex + 1, rules: rules))
+            let next = advanceLiveSet(
+                state: s,
+                rules: rules,
+                superTieBreak: mandatedSuperTieBreak(at: s.activeSetIndex + 1, rules: rules)
+            )
             if !next.changed { break }
             s = next.state
         }
         return normalizeLiveSetsAfterDecision(state: s, rules: rules)
+    }
+
+    /// Walks forward through completed sets. Stops before advancing into an optional super-TB decider
+    /// so the UI can prompt the user (Watch-specific; golden harness uses `autoAdvanceCompletedSets` instead).
+    static func autoAdvanceCompletedSetsAllowingOptionalDeciderPrompt(
+        state: WatchLiveScoringState,
+        rules: WatchScoringRules
+    ) -> AutoAdvanceResult {
+        guard rules.isClassic else {
+            return AutoAdvanceResult(state: state, pendingOptionalDeciderAtSetIndex: nil)
+        }
+        var s = state
+        while canAdvanceLiveSet(state: s, rules: rules) {
+            let nextIndex = s.activeSetIndex + 1
+            if shouldPromptOptionalDeciderBeforeAdvancing(to: nextIndex, state: s, rules: rules) {
+                return AutoAdvanceResult(state: s, pendingOptionalDeciderAtSetIndex: nextIndex)
+            }
+            let next = advanceLiveSet(
+                state: s,
+                rules: rules,
+                superTieBreak: mandatedSuperTieBreak(at: nextIndex, rules: rules)
+            )
+            if !next.changed { break }
+            s = next.state
+        }
+        let normalized = normalizeLiveSetsAfterDecision(state: s, rules: rules)
+        return AutoAdvanceResult(state: normalized, pendingOptionalDeciderAtSetIndex: nil)
+    }
+
+    static func shouldPromptOptionalDeciderBeforeAdvancing(
+        to nextIndex: Int,
+        state: WatchLiveScoringState,
+        rules: WatchScoringRules
+    ) -> Bool {
+        if state.optionalDeciderFormat != nil { return false }
+        guard rules.isClassic, !rules.isBallBudgetPoints else { return false }
+        if rules.superTieBreakReplacesDeciderAtIndex != nil { return false }
+        if state.sets[safe: nextIndex].map({ $0.resolvedRole != .official }) ?? false { return false }
+        let deciderIndex = max(0, rules.maxSetsPlayed - 1)
+        guard nextIndex == deciderIndex else { return false }
+        return previousOfficialSetsTiedBeforeIndex(nextIndex, state: state)
     }
 
     static func normalizeLiveSetsAfterDecision(state: WatchLiveScoringState, rules: WatchScoringRules) -> WatchLiveScoringState {
@@ -453,6 +504,25 @@ enum WatchLiveScoringEngine {
 
     private static func mandatedSuperTieBreak(at index: Int, rules: WatchScoringRules) -> Bool {
         rules.superTieBreakReplacesDeciderAtIndex == index
+    }
+
+    static func previousOfficialSetsTiedBeforeIndex(_ nextIndex: Int, state: WatchLiveScoringState) -> Bool {
+        guard nextIndex >= 2 else { return false }
+        var aWins = 0
+        var bWins = 0
+        for i in 0..<nextIndex {
+            guard let s = state.sets[safe: i], s.resolvedRole == .official else { continue }
+            guard s.teamA > 0 || s.teamB > 0 else { continue }
+            guard s.teamA != s.teamB else { continue }
+            if s.isTieBreak {
+                if s.teamA > s.teamB { aWins += 1 } else { bWins += 1 }
+            } else if s.teamA > s.teamB {
+                aWins += 1
+            } else {
+                bWins += 1
+            }
+        }
+        return aWins == bWins && aWins > 0
     }
 
     private static func applyClassicPointsAfterUserScore(state: inout WatchLiveScoringState, classic: inout WatchLiveClassicState) {

@@ -202,7 +202,8 @@ export const MyTab = () => {
         return gameStr !== selectedStr;
       });
   }, [myGamesSelectedDate, upcomingGamesUndated]);
-  const showGamesCalendar = myGamesViewMode === 'calendar' && (loading || hasUpcomingGames);
+  const upcomingsCollapsed = myGamesViewMode === 'list';
+  const showGamesCalendar = loading || hasUpcomingGames;
   const gamesSectionGames = myGamesViewMode === 'list' ? [] : myGamesForSelectedDate;
   const gamesSectionUpcoming =
     myGamesViewMode === 'list' || !myGamesSelectedDate
@@ -210,7 +211,7 @@ export const MyTab = () => {
       : upcomingGamesForCalendar;
   const gamesSectionLoading =
     loading || (myGamesViewMode === 'calendar' && loadingPastInRange);
-  const useDesktopCalendarSplit = (hasUpcomingGames || loading) && myGamesViewMode === 'calendar';
+  const useDesktopCalendarSplit = hasUpcomingGames || loading;
   const handleCalendarDateRangeChange = useCallback(
     async (start: Date, end: Date) => {
       const today = startOfDay(new Date());
@@ -240,6 +241,21 @@ export const MyTab = () => {
     },
     []
   );
+  const handleUpcomingsToggle = useCallback(() => {
+    setMyGamesViewMode((prev) => (prev === 'list' ? 'calendar' : 'list'));
+  }, []);
+  const myTabCalendarProps = {
+    selectedDate: myGamesSelectedDate,
+    onDateSelect: setMyGamesSelectedDate,
+    availableGames: calendarMergedGames,
+    onDateRangeChange: handleCalendarDateRangeChange,
+    collapsed: upcomingsCollapsed,
+    upcomingsToggle: {
+      active: upcomingsCollapsed,
+      onClick: handleUpcomingsToggle,
+      label: t('games.list'),
+    },
+  };
   const filteredPastGames = useMemo(() => {
     const list = pastGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
     return sortMyGamesByStatusAndDateTime(list, gameUnreadForSort);
@@ -352,7 +368,6 @@ export const MyTab = () => {
               <MyTabPanelSwitcher
                 games={games}
                 gamesUnreadCounts={calendarMergedUnreadCounts}
-                onMyGamesViewModeChange={setMyGamesViewMode}
               />
             </AnimatedMount>
           )}
@@ -428,14 +443,7 @@ export const MyTab = () => {
             leftPanel={
               <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
                 <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-                  <AnimatedMount layout>
-                    <CalendarSection
-                      selectedDate={myGamesSelectedDate}
-                      onDateSelect={setMyGamesSelectedDate}
-                      availableGames={calendarMergedGames}
-                      onDateRangeChange={handleCalendarDateRangeChange}
-                    />
-                  </AnimatedMount>
+                  <CalendarSection {...myTabCalendarProps} />
                 </div>
               </div>
             }
@@ -470,7 +478,6 @@ export const MyTab = () => {
               <MyTabPanelSwitcher
                 games={games}
                 gamesUnreadCounts={calendarMergedUnreadCounts}
-                onMyGamesViewModeChange={setMyGamesViewMode}
               />
             </AnimatedMount>
           )}
@@ -496,13 +503,8 @@ export const MyTab = () => {
           )}
 
           {(loading || hasUpcomingGames) && (
-            <AnimatedMount layout show={showGamesCalendar}>
-              <CalendarSection
-                selectedDate={myGamesSelectedDate}
-                onDateSelect={setMyGamesSelectedDate}
-                availableGames={calendarMergedGames}
-                onDateRangeChange={handleCalendarDateRangeChange}
-              />
+            <AnimatedMount show={showGamesCalendar}>
+              <CalendarSection {...myTabCalendarProps} />
             </AnimatedMount>
           )}
           <AnimatedMount layout>

@@ -59,4 +59,37 @@ final class WatchLiveScoringEngineTests: XCTestCase {
         let result = WatchLiveScoringEngine.scorePoint(state: state, side: .teamA, rules: rules)
         XCTAssertFalse(result.changed)
     }
+
+    func testAutoAdvanceStopsBeforeOptionalDeciderPrompt() {
+        let rules = WatchScoringRulebook.skeleton(for: .classicBo3)
+        var state = WatchLiveScoringEngine.makeInitialState(
+            rules: rules,
+            initialSets: [
+                WatchSetWrite(teamA: 6, teamB: 4, isTieBreak: false),
+                WatchSetWrite(teamA: 4, teamB: 6, isTieBreak: false),
+                WatchSetWrite(teamA: 0, teamB: 0, isTieBreak: false),
+            ]
+        )
+        state.activeSetIndex = 1
+        state.classic = WatchLiveClassicState(
+            pointState: .regular(teamA: .zero, teamB: .zero),
+            withinSetTieBreak: false,
+            tieBreakA: 0,
+            tieBreakB: 0,
+            classicPointsPlayedInGame: 0
+        )
+        XCTAssertTrue(
+            WatchLiveScoringEngine.shouldPromptOptionalDeciderBeforeAdvancing(
+                to: 2,
+                state: state,
+                rules: rules
+            )
+        )
+        let outcome = WatchLiveScoringEngine.autoAdvanceCompletedSetsAllowingOptionalDeciderPrompt(
+            state: state,
+            rules: rules
+        )
+        XCTAssertEqual(outcome.pendingOptionalDeciderAtSetIndex, 2)
+        XCTAssertEqual(outcome.state.activeSetIndex, 1)
+    }
 }

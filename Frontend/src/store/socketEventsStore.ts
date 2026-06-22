@@ -11,7 +11,7 @@ import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.ut
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
 import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
-import { initWatchBridge, teardownWatchBridge } from '@/services/watchBridgeInit';
+import { teardownWatchBridge } from '@/services/watchBridgeInit';
 import type { ChatMessage } from '@/api/chat';
 import { donateIncomingChatIntent } from '@/services/chat/chatIntentDonation';
 
@@ -789,8 +789,6 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('user-team:deleted', handleUserTeamDeleted);
       socketService.on('presence-initial', handlePresenceInitial);
       socketService.on('presence-update', handlePresenceUpdate);
-
-      void initWatchBridge();
 
       unsubscribeHandlers = [
         () => socketService.off('new-invite', handleNewInvite),

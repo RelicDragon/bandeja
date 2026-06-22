@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ChevronLeft, ChevronRight, Calendar, List, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
 import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { formatShortWeekday, formatCompactMonthHeader } from '@/utils/dateFormat';
 import { passesAvailableGamePanelFilters,
   DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
   type AvailableGamePanelFilterState,
@@ -63,6 +64,12 @@ export interface MonthCalendarProps {
   isAdmin?: boolean;
   findDiscoveryEnabled?: boolean;
   filterNoRating?: boolean;
+  collapsed?: boolean;
+  upcomingsToggle?: {
+    active: boolean;
+    onClick: () => void;
+    label: string;
+  };
 }
 
 const localeMap = {
@@ -92,9 +99,15 @@ export const MonthCalendar = ({
   isAdmin = false,
   findDiscoveryEnabled = false,
   filterNoRating = false,
+  collapsed = false,
+  upcomingsToggle,
 }: MonthCalendarProps) => {
   const { user } = useAuthStore();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const reduceMotion = useReducedMotion();
+  const headerTransition = reduceMotion
+    ? { duration: 0 }
+    : { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
   const [slideDirection, setSlideDirection] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
@@ -111,6 +124,10 @@ export const MonthCalendar = ({
     return localeMap[i18n.language as keyof typeof localeMap] || enGB;
   }, [i18n.language]);
   const weekStartsOn = useMemo(() => displaySettings.weekStart, [displaySettings.weekStart]);
+  const monthHeaderLabel = useMemo(
+    () => formatCompactMonthHeader(currentMonth, i18n.language),
+    [currentMonth, i18n.language],
+  );
 
   useEffect(() => {
     if (!isNavigatingRef.current && selectedDate) {
@@ -294,66 +311,198 @@ export const MonthCalendar = ({
 
   const weekDays = [];
   for (let i = 0; i < 7; i++) {
-    weekDays.push(format(addDays(startDate, i), 'EEEE', { locale }).slice(0, 3));
+    weekDays.push(formatShortWeekday(addDays(startDate, i), displaySettings.locale));
   }
 
+  const isCompactUpcomings = collapsed && Boolean(upcomingsToggle);
+
   return (
-    <div
+    <motion.div
+      layout={Boolean(upcomingsToggle)}
+      transition={headerTransition}
       ref={calendarRef}
       data-calendar="true"
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 mb-4 max-w-md mx-auto"
+      className={`mx-auto max-w-md rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 transition-[padding,margin,box-shadow] duration-300 ease-in-out motion-reduce:transition-none ${
+        isCompactUpcomings ? 'mb-4 px-2 py-0 shadow-sm' : 'mb-4 p-4 shadow-lg'
+      }`}
     >
-      <div className="flex items-center justify-between mb-4">
-        <button
-          onClick={handlePreviousMonth}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-        >
-          <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
-        </button>
-        <div className="relative overflow-hidden text-center">
-          <AnimatePresence mode="popLayout" initial={false}>
-            <motion.h3
-              key={format(currentMonth, 'yyyy-MM')}
-              initial={{ x: slideDirection * 32, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: slideDirection * -32, opacity: 0 }}
-              transition={{ duration: 0.22, ease: 'easeOut' }}
-              className="text-lg font-semibold text-gray-900 dark:text-white capitalize"
-            >
-              {format(currentMonth, 'LLLL yyyy', { locale })}
-            </motion.h3>
+      <motion.div
+        layout
+        transition={headerTransition}
+        className={`flex items-center transition-[margin,padding] duration-300 ease-in-out motion-reduce:transition-none ${
+          upcomingsToggle
+            ? collapsed
+              ? 'justify-center'
+              : 'mb-4 justify-between gap-3'
+            : 'mb-4 justify-between'
+        }`}
+      >
+        {upcomingsToggle ? (
+          <AnimatePresence initial={false} mode="popLayout">
+            {!collapsed ? (
+              <motion.div
+                key="month-nav"
+                layout
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={headerTransition}
+                className="flex min-w-0 items-center gap-0.5"
+              >
+                <button
+                  type="button"
+                  onClick={handlePreviousMonth}
+                  className="shrink-0 rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  aria-label="Previous month"
+                >
+                  <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
+                </button>
+                <div className="relative min-w-0 overflow-hidden">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.h3
+                      key={format(currentMonth, 'yyyy-MM')}
+                      initial={{ x: slideDirection * 32, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      exit={{ x: slideDirection * -32, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: 'easeOut' }}
+                      className="truncate text-lg font-semibold capitalize text-gray-900 dark:text-white"
+                    >
+                      {monthHeaderLabel}
+                    </motion.h3>
+                  </AnimatePresence>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleNextMonth}
+                  className="shrink-0 rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  aria-label="Next month"
+                >
+                  <ChevronRight size={20} className="text-gray-700 dark:text-gray-300" />
+                </button>
+              </motion.div>
+            ) : null}
           </AnimatePresence>
-        </div>
-        <button
-          onClick={handleNextMonth}
-          className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-        >
-          <ChevronRight size={20} className="text-gray-700 dark:text-gray-300" />
-        </button>
-      </div>
-
-      <div className="grid grid-cols-7 gap-1">
-        {weekDays.map((day, index) => (
-          <div
-            key={index}
-            className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2"
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={handlePreviousMonth}
+              className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <ChevronLeft size={20} className="text-gray-700 dark:text-gray-300" />
+            </button>
+            <div className="relative overflow-hidden text-center">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.h3
+                  key={format(currentMonth, 'yyyy-MM')}
+                  initial={{ x: slideDirection * 32, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: slideDirection * -32, opacity: 0 }}
+                  transition={{ duration: 0.22, ease: 'easeOut' }}
+                  className="text-lg font-semibold capitalize text-gray-900 dark:text-white"
+                >
+                  {monthHeaderLabel}
+                </motion.h3>
+              </AnimatePresence>
+            </div>
+            <button
+              type="button"
+              onClick={handleNextMonth}
+              className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              <ChevronRight size={20} className="text-gray-700 dark:text-gray-300" />
+            </button>
+          </>
+        )}
+        {upcomingsToggle ? (
+          <motion.button
+            layout
+            type="button"
+            onClick={upcomingsToggle.onClick}
+            aria-label={
+              upcomingsToggle.active
+                ? t('games.calendar')
+                : upcomingsToggle.label
+            }
+            transition={headerTransition}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
+              isCompactUpcomings ? 'px-3 py-1' : 'px-2.5 py-1.5'
+            }`}
           >
-            {day}
-          </div>
-        ))}
-      </div>
+            <span className="relative inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={upcomingsToggle.active ? 'calendar-icon' : 'list-icon'}
+                  initial={{ opacity: 0, scale: 0.85, y: 3 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.85, y: -3 }}
+                  transition={headerTransition}
+                  className="absolute inset-0 flex items-center justify-center"
+                >
+                  {upcomingsToggle.active ? (
+                    <Calendar size={18} strokeWidth={2} aria-hidden />
+                  ) : (
+                    <List size={18} strokeWidth={2} aria-hidden />
+                  )}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+            <span className="relative min-w-0 overflow-hidden">
+              <AnimatePresence mode="popLayout" initial={false}>
+                <motion.span
+                  key={upcomingsToggle.active ? 'calendar-label' : 'upcomings-label'}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  transition={headerTransition}
+                  className="flex items-center gap-1"
+                >
+                  {upcomingsToggle.active
+                    ? t('games.calendar')
+                    : upcomingsToggle.label}
+                  {upcomingsToggle.active ? (
+                    <ChevronRight size={16} strokeWidth={2} aria-hidden />
+                  ) : null}
+                </motion.span>
+              </AnimatePresence>
+            </span>
+          </motion.button>
+        ) : null}
+      </motion.div>
 
-      <div className={`relative -m-2 ${isSliding ? 'overflow-hidden' : 'overflow-visible'}`}>
-        <AnimatePresence mode="popLayout" initial={false}>
+      <AnimatePresence initial={false}>
+        {(!upcomingsToggle || !isCompactUpcomings) ? (
           <motion.div
-            key={format(currentMonth, 'yyyy-MM')}
-            initial={{ x: slideDirection * 56, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: slideDirection * -56, opacity: 0 }}
-            transition={{ duration: 0.24, ease: 'easeOut' }}
-            onAnimationComplete={() => setIsSliding(false)}
-            className="grid grid-cols-7 gap-1 p-2"
+            key="calendar-body"
+            layout={Boolean(upcomingsToggle)}
+            initial={upcomingsToggle ? { height: 0, opacity: 0 } : false}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={upcomingsToggle ? { height: 0, opacity: 0 } : undefined}
+            transition={headerTransition}
+            className="overflow-hidden"
           >
+          <div className="grid grid-cols-7 gap-1">
+            {weekDays.map((day, index) => (
+              <div
+                key={index}
+                className="py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400"
+              >
+                {day}
+              </div>
+            ))}
+          </div>
+
+          <div className={`relative -m-2 ${isSliding ? 'overflow-hidden' : 'overflow-visible'}`}>
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.div
+                key={format(currentMonth, 'yyyy-MM')}
+                initial={{ x: slideDirection * 56, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: slideDirection * -56, opacity: 0 }}
+                transition={{ duration: 0.24, ease: 'easeOut' }}
+                onAnimationComplete={() => setIsSliding(false)}
+                className="grid grid-cols-7 gap-1 p-2"
+              >
         {calendarDays.map((day, index) => {
           const isCurrentMonth = isSameMonth(day, currentMonth);
           const isSelected = selectedDate != null && isSameDay(day, selectedDate);
@@ -463,9 +612,12 @@ export const MonthCalendar = ({
             </button>
           );
         })}
+              </motion.div>
+            </AnimatePresence>
+          </div>
           </motion.div>
-        </AnimatePresence>
-      </div>
-    </div>
+        ) : null}
+      </AnimatePresence>
+    </motion.div>
   );
 };
