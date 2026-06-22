@@ -8,6 +8,7 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useAuthStore } from '@/store/authStore';
 import { formatRelativeTime } from '@/utils/dateFormat';
 import { getThreadSearchPreviewLine, getThreadSearchSenderLabel } from './threadSearchPreview';
+import { ThreadSearchResultAvatar } from './ThreadSearchResultAvatar';
 import { useThreadScroll, useThreadSearch } from './useThreadView';
 
 type ThreadSearchResultsPanelProps = {
@@ -35,6 +36,7 @@ export function ThreadSearchResultsPanel({
 }: ThreadSearchResultsPanelProps) {
   const { t } = useTranslation();
   const currentUserId = useAuthStore((s) => s.user?.id);
+  const currentUser = useAuthStore((s) => s.user);
   const reduceMotion = usePrefersReducedMotion();
   const { scrollToMessageId } = useThreadScroll();
   const { dismissSearch } = useThreadSearch();
@@ -57,10 +59,10 @@ export function ThreadSearchResultsPanel({
         <motion.div
           key="thread-search-results"
           initial={reduceMotion ? false : { opacity: 0, maxHeight: 0 }}
-          animate={{ opacity: 1, maxHeight: '40%' }}
+          animate={{ opacity: 1, maxHeight: 'min(40dvh, 280px)' }}
           exit={reduceMotion ? undefined : { opacity: 0, maxHeight: 0 }}
           transition={transition}
-          className="relative flex-shrink-0 overflow-hidden border-b border-gray-200 bg-white/95 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/95"
+          className="relative flex min-h-0 shrink-0 flex-col overflow-hidden border-b border-gray-200 bg-white/95 backdrop-blur-sm dark:border-gray-700 dark:bg-gray-900/95"
         >
           {showRefreshing ? (
             <motion.div
@@ -78,7 +80,7 @@ export function ThreadSearchResultsPanel({
               ) : null}
             </motion.div>
           ) : null}
-          <div className="flex max-h-[min(40vh,280px)] min-h-0 flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             {showInitialLoading ? (
               <ThreadSearchLoadingSpinner />
             ) : results.length === 0 ? (
@@ -88,7 +90,7 @@ export function ThreadSearchResultsPanel({
             ) : (
               <>
                 <ul
-                  className={`min-h-0 flex-1 overflow-y-auto overscroll-contain transition-opacity duration-200 ${showRefreshing ? 'opacity-60' : 'opacity-100'}`}
+                  className={`overflow-y-auto overscroll-contain pb-2 transition-opacity duration-200 ${hasMoreResults ? 'max-h-[min(calc(40dvh-2.5rem),244px)]' : 'max-h-[min(40dvh,280px)]'} ${showRefreshing ? 'opacity-60' : 'opacity-100'}`}
                 >
                   {results.map((message, index) => {
                     const preview = getThreadSearchPreviewLine(message, t);
@@ -107,11 +109,20 @@ export function ThreadSearchResultsPanel({
                           type="button"
                           onClick={() => handleResultClick(message.id)}
                           disabled={showRefreshing}
-                          className="flex w-full min-w-0 flex-col gap-px border-b border-gray-100 px-3 py-1.5 text-left last:border-b-0 hover:bg-gray-50 disabled:pointer-events-none dark:border-gray-800 dark:hover:bg-gray-800/60"
+                          className="flex w-full min-w-0 flex-col gap-0.5 border-b border-gray-100 px-2 py-1 text-left last:border-b-0 hover:bg-gray-50 disabled:pointer-events-none dark:border-gray-800 dark:hover:bg-gray-800/60"
                         >
-                          <div className="flex min-w-0 items-center justify-between gap-2 text-[10px] leading-tight text-gray-500 dark:text-gray-400">
-                            <span className="min-w-0 truncate">{senderLabel}</span>
-                            <span className="shrink-0 tabular-nums">{formatRelativeTime(message.createdAt)}</span>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <ThreadSearchResultAvatar
+                              message={message}
+                              currentUserId={currentUserId}
+                              currentUser={currentUser}
+                            />
+                            <span className="min-w-0 flex-1 truncate text-[10px] leading-none text-gray-500 dark:text-gray-400">
+                              {senderLabel}
+                            </span>
+                            <span className="shrink-0 text-[10px] leading-none tabular-nums text-gray-500 dark:text-gray-400">
+                              {formatRelativeTime(message.createdAt)}
+                            </span>
                           </div>
                           <span className="min-w-0 truncate text-[11px] leading-tight text-gray-900 dark:text-gray-100">
                             {preview}

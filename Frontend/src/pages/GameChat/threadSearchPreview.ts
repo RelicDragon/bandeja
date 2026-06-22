@@ -4,12 +4,16 @@ import { parseMessagePreview } from '@/utils/messagePreview';
 import { getSystemMessageText } from '@/utils/systemMessages';
 import type { TFunction } from 'i18next';
 
+export function isThreadSearchSystemMessage(message: ChatMessage): boolean {
+  return message.content?.trim().startsWith('{') ?? false;
+}
+
 export function getThreadSearchSenderLabel(
   message: ChatMessage,
   currentUserId: string | undefined,
   t: TFunction
 ): string {
-  if (message.content?.trim().startsWith('{')) {
+  if (isThreadSearchSystemMessage(message)) {
     return t('chat.system', { defaultValue: 'System' });
   }
   if (message.senderId && currentUserId && message.senderId === currentUserId) {
@@ -25,7 +29,7 @@ export function getThreadSearchSenderLabel(
 }
 
 export function getThreadSearchPreviewLine(message: ChatMessage, t: TFunction): string {
-  if (message.content?.trim().startsWith('{')) {
+  if (isThreadSearchSystemMessage(message)) {
     const text = getSystemMessageText(message.content);
     if (text) return text;
   }
