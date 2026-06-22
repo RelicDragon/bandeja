@@ -100,6 +100,40 @@ Workflow: **Actions → Prisma migrate deploy → Run workflow**
 
 Uses secret `DATABASE_URL`. Use when you need migrations without a full backend deploy.
 
+## Mobile app store releases
+
+Web deploy (CI / `upd.sh`) does **not** ship Android or iOS. Native apps are built locally and submitted to Google Play and App Store separately.
+
+### Baseline marker
+
+After each store release, record the version-bump commit as the baseline:
+
+| File | Purpose |
+|------|---------|
+| `docs/APP_RELEASE.md` | Version, build, date, history table |
+| `docs/app-release-baseline.txt` | One line: full commit SHA of last shipped release |
+
+Current baseline: see **`docs/APP_RELEASE.md`**.
+
+### Before the next store submission
+
+1. List changes since baseline (for **What's new** copy):
+
+   ```bash
+   ./scripts/app-release-changes.sh
+   ./scripts/app-release-changes.sh --full   # include commit bodies
+   ```
+
+2. Bump versions:
+   - Android: `Frontend/android/app/build.gradle` (`versionName`, `versionCode`)
+   - iOS: `Frontend/ios/App/App.xcodeproj/project.pbxproj` + related Podfile if needed
+
+3. Commit the version bump (and any last-minute fixes), submit to stores.
+
+4. **After approval / release:** update `docs/app-release-baseline.txt` and the table in `docs/APP_RELEASE.md` to that commit. It becomes the new baseline for the next cycle.
+
+Pushing to `master` still updates the web app immediately; mobile users get new features on their next app update from the stores.
+
 ## SSH tunnels: `Admin/run-ssh.sh`
 
 Production DB and admin API are not exposed publicly. Use local port forwards.
@@ -213,6 +247,8 @@ Non-production blocks push/Telegram to real users unless whitelisted (`TEST_USER
 |------|--------|
 | Deploy fix | Commit → push/merge to `master` → CI deploy job (do not run `./upd.sh` unless CI is down) |
 | Manual deploy | `./upd.sh` or `./upd.sh be` / `fe` — only when CI unavailable |
+| Draft app What's new | `./scripts/app-release-changes.sh` → see `docs/APP_RELEASE.md` |
+| Ship mobile app update | Bump Android/iOS versions → submit to stores → update baseline in `docs/APP_RELEASE.md` |
 | Read prod DB | `./Admin/run-ssh.sh &` → MCP `bandeja-prod-pg` |
 | Run admin action | Tunnels up → `Admin/index.html` → localhost:9000 |
 | Debug backend logs | `ssh relic@back.bandeja.com` → `pm2 logs backend` |

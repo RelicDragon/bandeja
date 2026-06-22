@@ -43,6 +43,17 @@ Set `FALLBACK_CITY_ID` in `Backend/.env` and seed at least one City row for regi
 
 See **`docs/PRODUCTION.md`**: CI deploys on push to `master` (no local `./upd.sh` needed); manual `./upd.sh` only as fallback. Also: `Admin/run-ssh.sh` (ports 15432 / 9000), MCP `bandeja-prod-pg`, admin UI, `sync-db-from-prod.sh`.
 
+### Mobile app store releases (Android / iOS)
+
+Separate from web deploy — native builds are submitted manually to Google Play and App Store.
+
+- Baseline marker: **`docs/APP_RELEASE.md`** + **`docs/app-release-baseline.txt`** (last shipped commit)
+- Draft **What's new**: `./scripts/app-release-changes.sh` (commits since baseline)
+- Version bumps: `Frontend/android/app/build.gradle`, iOS project in `Frontend/ios/App/`
+- After each store release: update baseline file + history table in `APP_RELEASE.md`
+
+Full workflow: **`docs/PRODUCTION.md`** → *Mobile app store releases*.
+
 ## Agent skills
 
 ### Issue tracker
