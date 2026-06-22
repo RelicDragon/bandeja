@@ -51,7 +51,7 @@ jobs:
     name: Deploy production
     needs: [backend, frontend]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, production]
     concurrency:
       group: production-deploy
       cancel-in-progress: false
