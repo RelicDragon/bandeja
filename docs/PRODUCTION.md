@@ -19,7 +19,32 @@ Node **24** on servers (`nvm use 24`).
 
 - SSH key: `~/.ssh/id_hetzner` (passphrase-protected)
 - Git remote: `origin/master` is what production tracks
-- Local commits must be **pushed** before deploy (servers `git reset --hard origin/master`)
+- Commits must be on **`origin/master`** before production updates (servers `git reset --hard origin/master`)
+
+## Deploy
+
+### CI deploy (default)
+
+**Pushing to `master` deploys production automatically.** You do not need to run `./upd.sh` locally after a normal merge/push.
+
+Workflow: [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)
+
+1. **On every push/PR to `master`:** `backend` and `frontend` jobs — lint, build, and targeted tests.
+2. **On push to `master` only:** `deploy` job runs after both pass.
+3. **Deploy runner:** self-hosted (`runs-on: [self-hosted, linux, production]`).
+4. **What it runs:** `./upd.sh` with auto-detect (`UPD_BE_HOST=local`, `UPD_FE_HOST=relic@10.0.0.2` over the private network).
+
+**Agent / human flow for a production fix:**
+
+```bash
+git push origin master   # enough — wait for CI deploy job
+```
+
+Check **Actions → CI → Deploy production**. Do **not** also run `./upd.sh` from your laptop unless CI is down or you are doing an intentional manual deploy.
+
+### Manual deploy: `upd.sh` (escape hatch)
+
+Use only when CI deploy is unavailable, you need a hotfix without waiting for CI, or you are debugging the deploy scripts themselves. Running `./upd.sh` locally while CI is also deploying the same commit causes a **duplicate deploy**.
 
 Override deploy targets if needed:
 
@@ -30,15 +55,13 @@ UPD_SSH_KEY=$HOME/.ssh/id_hetzner \
 ./upd.sh
 ```
 
-## Deploy: `upd.sh`
-
 From repo root:
 
 ```bash
-./upd.sh              # backend + frontend
+./upd.sh              # auto-detect backend and/or frontend from server..origin/master diff
 ./upd.sh be           # backend only
 ./upd.sh fe           # frontend only
-./upd.sh push         # git push (if ahead) + backend + frontend
+./upd.sh push         # git push (if ahead) + auto deploy
 ./upd.sh be push      # push + backend only
 ```
 
@@ -188,7 +211,8 @@ Non-production blocks push/Telegram to real users unless whitelisted (`TEST_USER
 
 | Task | Steps |
 |------|--------|
-| Deploy fix | Commit → `./upd.sh push` (or `be` / `fe`) |
+| Deploy fix | Commit → push/merge to `master` → CI deploy job (do not run `./upd.sh` unless CI is down) |
+| Manual deploy | `./upd.sh` or `./upd.sh be` / `fe` — only when CI unavailable |
 | Read prod DB | `./Admin/run-ssh.sh &` → MCP `bandeja-prod-pg` |
 | Run admin action | Tunnels up → `Admin/index.html` → localhost:9000 |
 | Debug backend logs | `ssh relic@back.bandeja.com` → `pm2 logs backend` |
@@ -201,6 +225,6 @@ Non-production blocks push/Telegram to real users unless whitelisted (`TEST_USER
 |---------|-----|
 | MCP prod query fails | Start `Admin/run-ssh.sh`; verify `lsof -iTCP:15432 -sTCP:LISTEN` |
 | Tunnel exits immediately | Check key: `ssh-add -l`; re-run script to unlock |
-| Deploy didn't pick up commit | `./upd.sh push` or push manually first |
+| Deploy didn't pick up commit | Confirm push reached `origin/master`; check Actions → CI → Deploy production; manual fallback: `./upd.sh` |
 | Backend 502 after deploy | SSH to back → `pm2 logs backend`; check migrate/build errors |
 | Admin login fails | Confirm tunnel on 9000; API URL = `http://localhost:9000/api` |

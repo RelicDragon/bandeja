@@ -41,7 +41,7 @@ Set `FALLBACK_CITY_ID` in `Backend/.env` and seed at least one City row for regi
 
 ### Production (deploy, SSH tunnels, prod DB)
 
-See **`docs/PRODUCTION.md`**: `./upd.sh`, `Admin/run-ssh.sh` (ports 15432 / 9000), MCP `bandeja-prod-pg`, admin UI, `sync-db-from-prod.sh`.
+See **`docs/PRODUCTION.md`**: CI deploys on push to `master` (no local `./upd.sh` needed); manual `./upd.sh` only as fallback. Also: `Admin/run-ssh.sh` (ports 15432 / 9000), MCP `bandeja-prod-pg`, admin UI, `sync-db-from-prod.sh`.
 
 ## Agent skills
 
