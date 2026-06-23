@@ -19,16 +19,34 @@ const nativeVersionSchema = z.object({
   build: z.number().int().nonnegative(),
 });
 
+const artifactsSchema = z
+  .object({
+    aab: z.string().min(1).optional(),
+    ipa: z.string().min(1).optional(),
+  })
+  .default({});
+
+const storeSchema = z
+  .object({
+    androidTrack: z.string().min(1).optional(),
+    iosSubmitForReview: z.boolean().optional(),
+  })
+  .default({});
+
 export const releaseSessionSchema = z.object({
   baselineSha: z.string().min(1),
   headSha: z.string().min(1),
   current: nativeVersionSchema,
   planned: nativeVersionSchema,
   notes: releaseNotesSchema.nullable(),
+  artifacts: artifactsSchema,
+  store: storeSchema,
 });
 
 export type ReleaseNotesSource = z.infer<typeof notesSourceSchema>;
 export type ReleaseNotes = z.infer<typeof releaseNotesSchema>;
+export type ReleaseArtifacts = z.infer<typeof artifactsSchema>;
+export type ReleaseStoreConfig = z.infer<typeof storeSchema>;
 export type ReleaseSession = z.infer<typeof releaseSessionSchema>;
 
 export function loadSession(): ReleaseSession | null {

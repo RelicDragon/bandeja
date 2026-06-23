@@ -56,6 +56,8 @@ export function createReleaseSession(headRef = 'HEAD'): ReleaseSession {
     current,
     planned,
     notes: null,
+    artifacts: {},
+    store: {},
   };
 }
 

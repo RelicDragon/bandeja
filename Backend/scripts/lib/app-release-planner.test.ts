@@ -64,12 +64,16 @@ process.env.APP_RELEASE_DRY_RUN = dryRunWas;
 const sessionWithNotes = {
   ...session,
   notes: buildReleaseNotes('• Saved notes', 'custom'),
+  artifacts: {},
+  store: {},
 };
 saveSession(sessionWithNotes);
 const resumed = loadSession();
 assert(resumed?.headSha === session.headSha, 'session resume preserves frozen headSha');
 assert(resumed?.planned.version === session.planned.version, 'session resume preserves planned version');
 assert(resumed?.notes?.main === '• Saved notes', 'session resume preserves notes');
+assert(resumed?.artifacts !== undefined, 'session resume includes artifacts');
+assert(resumed?.store !== undefined, 'session resume includes store');
 clearSession();
 assert(loadSession() === null, 'clearSession removes persisted session');
 

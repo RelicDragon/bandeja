@@ -18,6 +18,7 @@ import {
   runPreflight,
   shouldResumeSession,
 } from './lib/app-release-planner';
+import { ReleaseBuildError, runBuildPreflight, runReleaseBuild } from './lib/app-release-build';
 import { clearSession, loadSession, saveSession, type ReleaseSession } from './lib/app-release-session';
 
 function handleCancel<T>(value: T | symbol): T {
@@ -269,8 +270,63 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
     notes.main,
     notes.short ? `\n---SHORT---\n${notes.short}` : '',
     '',
-    dryRun ? 'Dry run: native project files will not be modified.' : 'Confirm will write Android Gradle and iOS App target versions.',
+    dryRun
+      ? 'Dry run: native project files will not be modified. Build phase will be skipped.'
+      : 'Confirm will write Android Gradle and iOS App target versions, then build signed AAB and IPA.',
   ].join('\n');
+}
+
+async function runBuildPhase(session: ReleaseSession): Promise<ReleaseSession> {
+  const preflight = runBuildPreflight();
+  if (!preflight.ok) {
+    clack.note(preflight.issues.join('\n'), 'Build preflight');
+    clack.log.error('Fix the issues above before building release binaries.');
+    process.exit(1);
+  }
+
+  let current = session;
+
+  for (;;) {
+    persist(current);
+
+    try {
+      const artifacts = await runReleaseBuild(current);
+      current = {
+        ...current,
+        artifacts: {
+          aab: artifacts.aab,
+          ipa: artifacts.ipa,
+        },
+      };
+      persist(current);
+      return current;
+    } catch (error) {
+      const buildError = error instanceof ReleaseBuildError ? error : new ReleaseBuildError(
+        error instanceof Error ? error.message : String(error),
+        '',
+      );
+
+      clack.log.error(buildError.message);
+      if (buildError.logTail) {
+        clack.note(buildError.logTail, 'Last build output');
+      }
+
+      const decision = handleCancel(
+        await clack.select({
+          message: 'Build failed — what next?',
+          options: [
+            { value: 'retry', label: 'Retry build' },
+            { value: 'abort', label: 'Abort (session saved for resume)' },
+          ],
+        }),
+      );
+
+      if (decision === 'abort') {
+        clack.outro('Build aborted. Resume later with APP_RELEASE_RESUME=1.');
+        process.exit(1);
+      }
+    }
+  }
 }
 
 async function confirmAndApply(session: ReleaseSession): Promise<void> {
@@ -279,7 +335,7 @@ async function confirmAndApply(session: ReleaseSession): Promise<void> {
 
   const confirmed = handleCancel(
     await clack.confirm({
-      message: dryRun ? 'Finish dry-run planner?' : 'Apply native version bump?',
+      message: dryRun ? 'Finish dry-run planner?' : 'Apply version bump and build release binaries?',
       initialValue: true,
     }),
   );
@@ -294,13 +350,20 @@ async function confirmAndApply(session: ReleaseSession): Promise<void> {
 
   if (dryRun) {
     clearSession();
-    clack.outro('Dry run complete — native project files were not modified.');
+    clack.outro('Dry run complete — native project files were not modified. Build phase skipped.');
     return;
   }
 
-  clearSession();
+  clack.log.step('Starting release build pipeline…');
+  const built = await runBuildPhase(session);
+
+  clack.note(
+    [`AAB: ${built.artifacts.aab ?? '(missing)'}`, `IPA: ${built.artifacts.ipa ?? '(missing)'}`].join('\n'),
+    'Build artifacts',
+  );
+
   clack.outro(
-    `Updated native versions to ${session.planned.version} (${session.planned.build}). Build and upload are not part of Phase A.`,
+    `Built ${built.planned.version} (${built.planned.build}). Session saved for store upload.`,
   );
 }
 
@@ -341,9 +404,13 @@ async function resolveSession(): Promise<ReleaseSession> {
   return createReleaseSession();
 }
 
+function sessionReadyToConfirm(session: ReleaseSession): boolean {
+  return Boolean(session.notes) && !session.artifacts?.aab && !session.artifacts?.ipa;
+}
+
 async function main(): Promise<void> {
   const dryRun = isDryRun();
-  clack.intro(dryRun ? 'Bandeja app release planner (dry run)' : 'Bandeja app release planner');
+  clack.intro(dryRun ? 'Bandeja app release (dry run)' : 'Bandeja app release');
 
   let session = await resolveSession();
   const preflight = runPreflight(session);
@@ -351,6 +418,12 @@ async function main(): Promise<void> {
 
   session = { ...session, current: preflight.current };
   persist(session);
+
+  if (shouldResumeSession() && sessionReadyToConfirm(session)) {
+    clack.log.info('Resuming planned release — skipping notes loop.');
+    await confirmAndApply(session);
+    return;
+  }
 
   session = await releaseNotesLoop(session);
   await confirmAndApply(session);
