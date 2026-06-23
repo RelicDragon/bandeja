@@ -26,6 +26,17 @@ function disableNamesForTarget(targetName: string): string[] {
   return ANDROID_LAUNCHER_ALIASES.filter((name) => name !== targetName);
 }
 
+export function nativeAppIconMatchesTarget(
+  targetName: string,
+  currentName: string | null | undefined,
+): boolean {
+  if (isIOS()) {
+    if (targetName === 'tiger') return currentName == null;
+    return currentName === targetName;
+  }
+  return currentName === targetName;
+}
+
 export function resolveAppIconSport(user: User | null | undefined): Sport {
   return resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
 }
@@ -60,6 +71,9 @@ export async function setNativeAppIcon(
     if (!supported?.value && isIOS()) return;
 
     const targetName = resolveNativeAppIconName(appIconId, primarySport);
+    const { value: currentName } = await AppIcon.getName();
+    if (nativeAppIconMatchesTarget(targetName, currentName)) return;
+
     const disable = disableNamesForTarget(targetName);
 
     if (isIOS() && targetName === 'tiger') {
