@@ -8,6 +8,11 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 
 @CapacitorPlugin(name = "AuthBridge")
 public class AuthBridgePlugin extends Plugin {
+    private static volatile boolean appShellReady = false;
+
+    public static boolean isAppShellReady() {
+        return appShellReady;
+    }
 
     @PluginMethod
     public void setToken(PluginCall call) {
@@ -91,6 +96,12 @@ public class AuthBridgePlugin extends Plugin {
     public void syncBrandingLogo(PluginCall call) {
         String logoKey = call.getString("logoKey");
         BrandingLogoStorage.setLogoKey(getContext(), logoKey == null || logoKey.isEmpty() ? "padel" : logoKey);
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void notifyAppShellReady(PluginCall call) {
+        appShellReady = true;
         call.resolve();
     }
 }

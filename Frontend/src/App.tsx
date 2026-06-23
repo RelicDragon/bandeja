@@ -89,6 +89,7 @@ import {
   isTelegramAutoLoginPath,
   shouldConsumePendingTelegramAuthPath,
 } from '@/utils/telegramAutoLoginPath';
+import { dismissHtmlBootSplash, markAppReady, notifyShellPainted } from '@/utils/bootSplash';
 
 function AppContent() {
   const location = useLocation();
@@ -358,8 +359,15 @@ function AppContent() {
     !isTelegramAutoLoginPath(location.pathname) &&
     !isTelegramAutoLoginPath(pendingAuthPath ?? '');
 
+  useEffect(() => {
+    if (holdShellForBootstrap) return;
+    markAppReady();
+    dismissHtmlBootSplash();
+    notifyShellPainted();
+  }, [holdShellForBootstrap]);
+
   if (holdShellForBootstrap) {
-    return <AppLoadingScreen isInitializing={isInitializing} />;
+    return <AppLoadingScreen isInitializing />;
   }
 
   if (versionCheck && versionCheck.status === 'blocking_update') {

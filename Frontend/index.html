@@ -28,8 +28,53 @@
     <meta name="twitter:description" content="Ultimate Padel game management and social platform">
     <meta name="twitter:image" content="/bandeja2-blue-45-icon.png">
 
+    <link rel="preload" href="/bandeja2-white-tr.png" as="image" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background-color: #abdee3;
+      }
+
+      html.app-ready,
+      html.app-ready body {
+        background-color: #f9fafb;
+      }
+
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #abdee3;
+      }
+
+      #boot-splash img {
+        width: 220px;
+        height: 220px;
+        object-fit: contain;
+        animation: bootLogoRotate 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite;
+      }
+
+      @keyframes bootLogoRotate {
+        0% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(45deg);
+        }
+        100% {
+          transform: rotate(0deg);
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot-splash" aria-hidden="true">
+      <img src="/bandeja2-white-tr.png" alt="" width="220" height="220" />
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

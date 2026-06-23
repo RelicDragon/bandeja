@@ -39,6 +39,20 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
         startObservingWebViewLoadState()
         scheduleFallbackDismiss()
         installSwipeBackGestureIfNeeded()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleAppShellReady),
+            name: .bandejaAppShellReady,
+            object: nil
+        )
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
+    @objc private func handleAppShellReady() {
+        dismissSplashIfNeeded()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -107,11 +121,6 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
 
             if webView.isLoading {
                 self.didStartAnyLoad = true
-                return
-            }
-
-            if self.didStartAnyLoad {
-                self.dismissSplashIfNeeded()
             }
         }
 
@@ -121,11 +130,12 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
             if webView.estimatedProgress > 0 {
                 self.didStartAnyLoad = true
             }
-
-            if !webView.isLoading && webView.estimatedProgress >= 0.95 {
-                self.dismissSplashIfNeeded()
-            }
         }
+
+        let splashBg = UIColor(red: 171/255, green: 222/255, blue: 227/255, alpha: 1)
+        webView.isOpaque = true
+        webView.backgroundColor = splashBg
+        webView.scrollView.backgroundColor = splashBg
     }
 
     private func scheduleFallbackDismiss() {

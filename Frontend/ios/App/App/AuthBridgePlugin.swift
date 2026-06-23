@@ -1,6 +1,10 @@
 import UIKit
 import Capacitor
 
+extension Notification.Name {
+    static let bandejaAppShellReady = Notification.Name("bandejaAppShellReady")
+}
+
 @objc(AuthBridgePlugin)
 public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "AuthBridgePlugin"
@@ -16,7 +20,8 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "syncWatchPreferences", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "setAppIconBadgeCount", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getAppIconBadgeCount", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "syncBrandingLogo", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "syncBrandingLogo", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "notifyAppShellReady", returnType: CAPPluginReturnPromise)
     ]
 
     @objc func setToken(_ call: CAPPluginCall) {
@@ -94,6 +99,13 @@ public class AuthBridgePlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func syncBrandingLogo(_ call: CAPPluginCall) {
         let logoKey = call.getString("logoKey") ?? "padel"
         UserDefaults.standard.set(logoKey, forKey: MainViewController.brandingSplashLogoKey)
+        call.resolve()
+    }
+
+    @objc func notifyAppShellReady(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: .bandejaAppShellReady, object: nil)
+        }
         call.resolve()
     }
 }

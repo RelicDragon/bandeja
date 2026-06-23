@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsetsController;
+import androidx.core.splashscreen.SplashScreen;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import com.getcapacitor.BridgeActivity;
@@ -38,6 +39,8 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(AuthBridgePlugin.class);
         applyBrandingLaunchTheme();
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+        splashScreen.setKeepOnScreenCondition(() -> !AuthBridgePlugin.isAppShellReady());
         super.onCreate(savedInstanceState);
         ChatNotificationHelper.ensureChannel(this);
         

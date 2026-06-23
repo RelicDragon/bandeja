@@ -18,7 +18,7 @@ const config: CapacitorConfig = {
   },
   android: {
     allowMixedContent: false,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#abdee3',
     minWebViewVersion: 60
   },
   plugins: {

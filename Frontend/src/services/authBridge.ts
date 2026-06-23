@@ -21,6 +21,7 @@ interface AuthBridgePlugin {
   setAppIconBadgeCount(options: { count: number }): Promise<void>;
   getAppIconBadgeCount(): Promise<{ count: number }>;
   syncBrandingLogo(options: { logoKey: string }): Promise<void>;
+  notifyAppShellReady(): Promise<void>;
 }
 
 const AuthBridge = registerPlugin<AuthBridgePlugin>('AuthBridge');
@@ -133,5 +134,14 @@ export async function syncBrandingLogoToNative(logoKey: BrandingSplashLogoKey): 
     await AuthBridge.syncBrandingLogo({ logoKey });
   } catch (error) {
     console.warn('AuthBridge: failed to sync branding splash logo', error);
+  }
+}
+
+export async function notifyAppShellReadyToNative(): Promise<void> {
+  if (!Capacitor.isNativePlatform()) return;
+  try {
+    await AuthBridge.notifyAppShellReady();
+  } catch (error) {
+    console.warn('AuthBridge: failed to notify app shell ready', error);
   }
 }
