@@ -19,6 +19,8 @@ import {
   parseVersionInput,
   runPreflight,
   shouldResumeSession,
+  shouldStartFreshSession,
+  shouldCleanBuildArtifacts,
   storeConfigComplete,
 } from './lib/app-release-planner';
 import { ReleaseBuildError, runBuildPreflight, runReleaseBuild } from './lib/app-release-build';
@@ -34,7 +36,15 @@ import {
   runIosUpload,
   runUploadPreflight,
 } from './lib/app-release-upload';
-import { clearSession, loadSession, saveSession, type ReleaseSession } from './lib/app-release-session';
+import {
+  cleanReleaseWorkspace,
+  clearSession,
+  hasSavedSession,
+  loadSession,
+  tryLoadSession,
+  saveSession,
+  type ReleaseSession,
+} from './lib/app-release-session';
 
 function handleCancel<T>(value: T | symbol): T {
   if (clack.isCancel(value)) {
@@ -566,46 +576,143 @@ function renderPreflight(preflight: ReturnType<typeof runPreflight>): void {
   );
 }
 
-async function resolveSession(): Promise<ReleaseSession> {
+function sessionPhaseLabel(session: ReleaseSession): string {
+  const phase = getSessionPhase(session);
+  if (phase === 'ready-to-apply') {
+    return 'version bump';
+  }
+  if (phase === 'ready-to-build') {
+    return 'build';
+  }
+  if (phase === 'ready-to-upload') {
+    return 'store upload';
+  }
+  return 'planner';
+}
+
+type SessionResolution = {
+  session: ReleaseSession;
+  resume: boolean;
+};
+
+function renderSavedSessionSummary(session: ReleaseSession): string {
+  const notesStatus = session.notes ? `set (${session.notes.source})` : 'not set';
+  const artifactStatus =
+    session.artifacts?.aab && session.artifacts?.ipa
+      ? 'AAB + IPA ready'
+      : session.artifacts?.aab || session.artifacts?.ipa
+        ? 'partial'
+        : 'none';
+  return [
+    `Planned: ${session.planned.version} (${session.planned.build})`,
+    `Frozen HEAD: ${session.headSha.slice(0, 7)}`,
+    `Phase: ${sessionPhaseLabel(session)}`,
+    `Notes: ${notesStatus}`,
+    `Build artifacts: ${artifactStatus}`,
+  ].join('\n');
+}
+
+async function resolveSession(): Promise<SessionResolution> {
   if (shouldResumeSession()) {
-    const existing = loadSession();
+    const existing = tryLoadSession();
     if (existing) {
       clack.log.info(`Resuming session frozen at HEAD ${existing.headSha.slice(0, 7)}`);
-      return existing;
+      return { session: existing, resume: true };
     }
     clack.log.warn('APP_RELEASE_RESUME=1 set but no session found — starting a new session.');
+    return { session: createReleaseSession(), resume: false };
   }
 
-  return createReleaseSession();
+  if (hasSavedSession()) {
+    if (shouldStartFreshSession()) {
+      const cleanArtifacts = shouldCleanBuildArtifacts();
+      cleanReleaseWorkspace({ buildArtifacts: cleanArtifacts });
+      clack.log.info(
+        cleanArtifacts
+          ? 'Saved session and build outputs removed — starting fresh.'
+          : 'Saved session discarded — starting fresh.',
+      );
+      return { session: createReleaseSession(), resume: false };
+    }
+
+    const existing = tryLoadSession();
+    if (!existing) {
+      clack.log.warn('Saved session file is unreadable — removing it and starting fresh.');
+      cleanReleaseWorkspace({ buildArtifacts: false });
+      return { session: createReleaseSession(), resume: false };
+    }
+
+    clack.note(renderSavedSessionSummary(existing), 'Saved session');
+
+    const phaseLabel = sessionPhaseLabel(existing);
+    const decision = handleCancel(
+      await clack.select({
+        message: 'Saved release session found — what next?',
+        options: [
+          {
+            value: 'resume',
+            label: 'Resume saved session',
+            hint: `Continue at ${phaseLabel} phase`,
+          },
+          {
+            value: 'fresh',
+            label: 'Start fresh',
+            hint: 'Discard session; keep .app-release/ios and upload cache',
+          },
+          {
+            value: 'fresh-clean',
+            label: 'Start fresh and clean build outputs',
+            hint: 'Discard session and remove .app-release/ios + upload cache',
+          },
+        ],
+      }),
+    );
+
+    if (decision === 'resume') {
+      clack.log.info(`Resuming session frozen at HEAD ${existing.headSha.slice(0, 7)}`);
+      return { session: existing, resume: true };
+    }
+
+    const cleanArtifacts = decision === 'fresh-clean';
+    cleanReleaseWorkspace({ buildArtifacts: cleanArtifacts });
+    clack.log.info(
+      cleanArtifacts
+        ? 'Saved session and build outputs removed.'
+        : 'Saved session discarded.',
+    );
+  }
+
+  return { session: createReleaseSession(), resume: false };
 }
 
 async function main(): Promise<void> {
   const dryRun = isDryRun();
+  const { session, resume } = await resolveSession();
+
   clack.intro(dryRun ? 'Bandeja app release (dry run)' : 'Bandeja app release');
 
-  let session = await resolveSession();
-  const preflight = runPreflight(session);
+  let current = session;
+  const preflight = runPreflight(current);
   renderPreflight(preflight);
 
-  session = { ...session, current: preflight.current };
-  persist(session);
+  current = { ...current, current: preflight.current };
+  persist(current);
 
-  const phase = getSessionPhase(session);
+  const phase = getSessionPhase(current);
 
-  if (shouldResumeSession() && phase !== 'planning') {
-    const phaseLabel =
-      phase === 'ready-to-apply'
-        ? 'version bump'
-        : phase === 'ready-to-build'
-          ? 'build'
-          : 'store upload';
+  if (resume && phase !== 'planning') {
+    const phaseLabel = sessionPhaseLabel(current);
     clack.log.info(`Resuming at ${phaseLabel} phase.`);
-    await executeRelease(session);
+    await executeRelease(current);
     return;
   }
 
-  session = await releaseNotesLoop(session);
-  await executeRelease(session);
+  if (resume && phase === 'planning') {
+    clack.log.info('Resuming saved session — release notes still need to be chosen.');
+  }
+
+  current = await releaseNotesLoop(current);
+  await executeRelease(current);
 }
 
 main().catch((error: unknown) => {

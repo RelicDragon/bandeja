@@ -58,6 +58,14 @@ export function loadSession(): ReleaseSession | null {
   return releaseSessionSchema.parse(raw);
 }
 
+export function tryLoadSession(): ReleaseSession | null {
+  try {
+    return loadSession();
+  } catch {
+    return null;
+  }
+}
+
 export function saveSession(session: ReleaseSession): void {
   fs.mkdirSync(SESSION_DIR, { recursive: true });
   fs.writeFileSync(SESSION_FILE, `${JSON.stringify(session, null, 2)}\n`, 'utf-8');
@@ -66,5 +74,23 @@ export function saveSession(session: ReleaseSession): void {
 export function clearSession(): void {
   if (fs.existsSync(SESSION_FILE)) {
     fs.unlinkSync(SESSION_FILE);
+  }
+}
+
+export function hasSavedSession(): boolean {
+  return fs.existsSync(SESSION_FILE);
+}
+
+export function cleanReleaseWorkspace(options?: { buildArtifacts?: boolean }): void {
+  clearSession();
+  if (!options?.buildArtifacts) {
+    return;
+  }
+
+  for (const subdir of ['ios', 'upload']) {
+    const target = path.join(SESSION_DIR, subdir);
+    if (fs.existsSync(target)) {
+      fs.rmSync(target, { recursive: true, force: true });
+    }
   }
 }

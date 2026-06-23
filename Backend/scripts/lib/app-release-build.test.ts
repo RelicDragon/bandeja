@@ -8,9 +8,11 @@ import {
   IOS_ARCHIVE_DESTINATION,
   IOS_ARCHIVE_PATH,
   PRODUCTION_VITE_ENV,
+  XCODE_PATH_PREFIX,
   buildIosArchiveArgs,
   resolveIpaOutputPath,
   runBuildPreflight,
+  xcodeBuildEnv,
 } from './app-release-build';
 
 function assert(cond: boolean, msg: string): void {
@@ -37,6 +39,10 @@ assert(
   'iOS archive targets generic iOS device',
 );
 assert(archiveArgs.includes('-allowProvisioningUpdates'), 'iOS archive allows provisioning updates');
+
+const xcodeEnv = xcodeBuildEnv({ PATH: '/opt/homebrew/bin:/usr/bin', HOME: '/tmp/test' });
+assert(xcodeEnv.PATH === XCODE_PATH_PREFIX, 'xcode env excludes Homebrew rsync');
+assert(xcodeEnv.HOME === '/tmp/test', 'xcode env keeps other variables');
 
 const preflight = runBuildPreflight();
 assert(Array.isArray(preflight.issues), 'preflight returns issues array');

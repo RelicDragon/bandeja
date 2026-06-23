@@ -32,6 +32,20 @@ const DEFAULT_JAVA_HOME = '/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Cont
 const LOG_TAIL_LINES = 40;
 export const IOS_ARCHIVE_DESTINATION = 'generic/platform=iOS';
 
+/** Homebrew rsync 3.x breaks xcodebuild export when it wins over /usr/bin/openrsync. */
+export const XCODE_PATH_PREFIX = [
+  '/usr/bin',
+  '/bin',
+  '/usr/sbin',
+  '/sbin',
+  '/Applications/Xcode.app/Contents/Developer/usr/bin',
+].join(':');
+
+/** xcodebuild must not see Homebrew rsync — use system openrsync only. */
+export function xcodeBuildEnv(baseEnv: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  return { ...baseEnv, PATH: XCODE_PATH_PREFIX };
+}
+
 export function buildIosArchiveArgs(archivePath: string): string[] {
   return [
     'archive',
@@ -171,7 +185,8 @@ function tailLog(output: string, lineCount = LOG_TAIL_LINES): string {
   const lines = output.split('\n').filter((line) => line.trim().length > 0);
   const withoutSimulatorNoise = lines.filter((line) => !isSimulatorDestinationLine(line));
 
-  const errorPattern = /(?:\berror:|\bfatal error:|\*\* ARCHIVE FAILED \*\*|The following build commands failed:)/i;
+  const errorPattern =
+    /(?:\berror:|\bfatal error:|\*\* (?:ARCHIVE|EXPORT) FAILED \*\*|The following build commands failed:|rsync error:|rsync\(.*\): error:)/i;
   const errorIndexes = withoutSimulatorNoise
     .map((line, index) => (errorPattern.test(line) ? index : -1))
     .filter((index) => index >= 0);
@@ -198,7 +213,11 @@ function formatExecError(error: unknown): ReleaseBuildError {
   if (error && typeof error === 'object' && 'stdout' in error && 'stderr' in error) {
     const execError = error as { shortMessage?: string; stdout?: string; stderr?: string };
     const combined = [execError.stdout ?? '', execError.stderr ?? ''].join('\n').trim();
-    const message = execError.shortMessage ?? 'Release build command failed';
+    let message = execError.shortMessage ?? 'Release build command failed';
+    if (/rsync error:|--extended-attributes: unknown option/i.test(combined)) {
+      message +=
+        ' (Homebrew rsync conflicts with Xcode export — the release CLI uses system PATH for xcodebuild; retry after updating the script)';
+    }
     return new ReleaseBuildError(message, tailLog(combined));
   }
 
@@ -262,6 +281,7 @@ export async function runReleaseBuild(_session: ReleaseSession): Promise<BuildAr
     ...PRODUCTION_VITE_ENV,
     ...(javaHome ? { JAVA_HOME: javaHome } : {}),
   };
+  const iosEnv = xcodeBuildEnv(sharedEnv);
 
   const tasks = new Listr(
     [
@@ -301,7 +321,7 @@ export async function runReleaseBuild(_session: ReleaseSession): Promise<BuildAr
 
           await runCommand('xcodebuild', buildIosArchiveArgs(IOS_ARCHIVE_PATH), {
             cwd: ROOT,
-            env: sharedEnv,
+            env: iosEnv,
           });
 
           await runCommand(
@@ -315,7 +335,7 @@ export async function runReleaseBuild(_session: ReleaseSession): Promise<BuildAr
               '-exportOptionsPlist',
               EXPORT_OPTIONS_PLIST,
             ],
-            { cwd: ROOT, env: sharedEnv },
+            { cwd: ROOT, env: iosEnv },
           );
         },
       },

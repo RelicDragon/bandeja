@@ -44,6 +44,14 @@ export function shouldResumeSession(): boolean {
   return process.env.APP_RELEASE_RESUME === '1';
 }
 
+export function shouldStartFreshSession(): boolean {
+  return process.env.APP_RELEASE_FRESH === '1';
+}
+
+export function shouldCleanBuildArtifacts(): boolean {
+  return process.env.APP_RELEASE_CLEAN === '1';
+}
+
 export function createReleaseSession(headRef = 'HEAD'): ReleaseSession {
   const baselineSha = readBaseline();
   const headSha = getHeadCommit(headRef).sha;

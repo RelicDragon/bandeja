@@ -13,7 +13,9 @@ import {
   parseReleaseNotesOutput,
   derivePlayShortDescription,
 } from './app-release-notes';
-import { clearSession, loadSession, saveSession } from './app-release-session';
+import { cleanReleaseWorkspace, clearSession, hasSavedSession, loadSession, saveSession, SESSION_DIR } from './app-release-session';
+import * as fs from 'fs';
+import * as path from 'path';
 
 function assert(cond: boolean, msg: string): void {
   if (!cond) {
@@ -83,5 +85,21 @@ assert(
 );
 clearSession();
 assert(loadSession() === null, 'clearSession removes persisted session');
+assert(!hasSavedSession(), 'hasSavedSession false after clear');
+
+saveSession(sessionWithNotes);
+assert(hasSavedSession(), 'hasSavedSession true when file exists');
+
+const iosDir = path.join(SESSION_DIR, 'ios');
+const uploadDir = path.join(SESSION_DIR, 'upload');
+fs.mkdirSync(iosDir, { recursive: true });
+fs.mkdirSync(uploadDir, { recursive: true });
+fs.writeFileSync(path.join(iosDir, 'marker.txt'), 'test');
+fs.writeFileSync(path.join(uploadDir, 'marker.txt'), 'test');
+
+cleanReleaseWorkspace({ buildArtifacts: true });
+assert(loadSession() === null, 'cleanReleaseWorkspace clears session');
+assert(!fs.existsSync(iosDir), 'cleanReleaseWorkspace removes ios dir');
+assert(!fs.existsSync(uploadDir), 'cleanReleaseWorkspace removes upload dir');
 
 console.log('app-release-planner tests: OK');
