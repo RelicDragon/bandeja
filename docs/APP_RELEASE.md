@@ -50,6 +50,24 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
 4. Commit the version bump (and any last-minute fixes).
 
+### Android CLI release signing
+
+Headless `bundleRelease` uses the same upload keystore as Android Studio.
+
+- Keystore at repo root: `bandeja-release.keystore` (gitignored).
+- Copy `Frontend/android/keystore.properties.example` → `Frontend/android/keystore.properties` (gitignored) and fill in alias/passwords.
+- Or set env vars: `ANDROID_KEYSTORE_FILE`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
+
+Build signed AAB:
+
+```bash
+cd Frontend/android && ./gradlew bundleRelease
+```
+
+Output: `Frontend/android/app/build/outputs/bundle/release/app-release.aab`
+
+If signing is missing, Gradle logs a message and `bundleRelease` produces an **unsigned** release bundle (Play upload will fail).
+
 5. Submit to stores.
 
 6. **Mark as shipped** (updates baseline from native version files + current `HEAD` — no manual editing):

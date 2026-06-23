@@ -1,5 +1,36 @@
 apply plugin: 'com.android.application'
 
+def releaseKeystoreProperties = new Properties()
+def releaseKeystorePropertiesFile = rootProject.file('keystore.properties')
+if (releaseKeystorePropertiesFile.exists()) {
+    releaseKeystoreProperties.load(new FileInputStream(releaseKeystorePropertiesFile))
+}
+
+def resolveReleaseKeystorePath = {
+    def fromEnv = System.getenv('ANDROID_KEYSTORE_FILE')
+    if (fromEnv) {
+        return file(fromEnv)
+    }
+    def fromProps = releaseKeystoreProperties['storeFile']
+    if (fromProps) {
+        return file(fromProps)
+    }
+    return null
+}
+
+def resolveReleaseKeystoreValue = { String propKey, String envKey ->
+    def fromEnv = System.getenv(envKey)
+    if (fromEnv) {
+        return fromEnv
+    }
+    return releaseKeystoreProperties[propKey]
+}
+
+def releaseKeystoreFile = resolveReleaseKeystorePath()
+def releaseStorePassword = resolveReleaseKeystoreValue('storePassword', 'ANDROID_KEYSTORE_PASSWORD')
+def releaseKeyAlias = resolveReleaseKeystoreValue('keyAlias', 'ANDROID_KEY_ALIAS')
+def releaseKeyPassword = resolveReleaseKeystoreValue('keyPassword', 'ANDROID_KEY_PASSWORD')
+
 android {
     namespace = "com.funified.bandeja"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -16,11 +47,30 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (releaseKeystoreFile != null && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                storeFile releaseKeystoreFile
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (releaseKeystoreFile != null && releaseStorePassword && releaseKeyAlias && releaseKeyPassword) {
+                signingConfig signingConfigs.release
+            } else {
+                logger.lifecycle(
+                    'Release signing not configured. Create Frontend/android/keystore.properties ' +
+                    '(see keystore.properties.example) or set ANDROID_KEYSTORE_* env vars.'
+                )
+            }
             ndk {
                 debugSymbolLevel 'FULL'
             }

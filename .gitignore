@@ -248,6 +248,7 @@ $RECYCLE.BIN/
 google-services.json
 Frontend/android/app/google-services.json
 bandeja-release.keystore
+Frontend/android/keystore.properties
 
 # Vite config TS emit artifacts (tsconfig.node)
 Frontend/vite.config.js
