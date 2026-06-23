@@ -28,9 +28,9 @@ export class ReleaseProgressTimer {
     this.startedAt = startedAt;
   }
 
-  formatTitle(baseTitle: string): string {
-    const total = formatReleaseElapsed(Date.now() - this.startedAt);
-    const stepMs = this.stepStartedAt ? Date.now() - this.stepStartedAt : 0;
+  formatTitle(baseTitle: string, at = Date.now(), stepStartedAt = this.stepStartedAt): string {
+    const total = formatReleaseElapsed(at - this.startedAt);
+    const stepMs = stepStartedAt ? at - stepStartedAt : 0;
     const step = formatReleaseElapsed(stepMs);
     return `${baseTitle} (step ${step} · total ${total})`;
   }
@@ -60,8 +60,13 @@ export class ReleaseProgressTimer {
 
   private stopStep(): void {
     this.stopInterval();
-    if (this.activeTask) {
-      this.activeTask.title = this.stepBaseTitle;
+    if (this.activeTask && this.stepStartedAt) {
+      const finishedAt = Date.now();
+      this.activeTask.title = this.formatTitle(
+        this.stepBaseTitle,
+        finishedAt,
+        this.stepStartedAt,
+      );
     }
     this.activeTask = null;
     this.stepStartedAt = null;

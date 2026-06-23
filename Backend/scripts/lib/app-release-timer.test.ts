@@ -26,8 +26,12 @@ try {
   const task = { title: 'Upload Android AAB to Google Play' };
   const stop = timer.trackStep(task, 'Upload Android AAB to Google Play');
   assert(task.title === 'Upload Android AAB to Google Play (step 0s · total 5s)', 'tracked task title');
+  Date.now = () => 13_000;
   stop();
-  assert(task.title === 'Upload Android AAB to Google Play', 'restores base title after stop');
+  assert(
+    task.title === 'Upload Android AAB to Google Play (step 3s · total 8s)',
+    'keeps final step and total timers on completed row',
+  );
 } finally {
   Date.now = originalNow;
 }
