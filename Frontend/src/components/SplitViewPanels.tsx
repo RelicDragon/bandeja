@@ -8,12 +8,12 @@ interface SplitViewLeftPanelProps {
 
 export const SplitViewLeftPanel = ({ children, bottomTabsVisible }: SplitViewLeftPanelProps) => (
   <div className="relative h-full min-h-0 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
-    <div className="absolute inset-0 flex min-h-0 flex-col overflow-hidden">
+    <div className="absolute inset-0 z-0 flex min-h-0 flex-col overflow-hidden">
       {children}
     </div>
     <div
-      className={`pointer-events-none absolute inset-x-0 bottom-0 z-50 flex justify-center transition-opacity duration-150 ${
-        bottomTabsVisible ? 'pointer-events-auto opacity-100' : 'opacity-0'
+      className={`absolute inset-x-0 bottom-0 z-50 flex justify-center transition-opacity duration-150 ${
+        bottomTabsVisible ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
       }`}
       aria-hidden={!bottomTabsVisible}
     >

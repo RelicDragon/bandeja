@@ -9,6 +9,12 @@ export const ANDROID_GRADLE = path.join(ROOT, 'Frontend/android/app/build.gradle
 export const IOS_PBX = path.join(ROOT, 'Frontend/ios/App/App.xcodeproj/project.pbxproj');
 const MAIN_IOS_BUNDLE_LINE = 'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;';
 
+/** Main app + embedded extensions; watch targets stay on their own versioning. */
+const IOS_VERSION_BUMP_BUNDLE_LINES = new Set([
+  'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;',
+  'PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.NotificationServiceExtension;',
+]);
+
 export interface NativeVersion {
   version: string;
   build: number;
@@ -172,7 +178,7 @@ export function writeIosVersionContent(pbx: string, version: NativeVersion): str
   let updated = 0;
 
   for (let i = 0; i < lines.length; i += 1) {
-    if (lines[i].trim() !== MAIN_IOS_BUNDLE_LINE) continue;
+    if (!IOS_VERSION_BUMP_BUNDLE_LINES.has(lines[i].trim())) continue;
     for (let j = Math.max(0, i - 30); j < Math.min(lines.length, i + 5); j += 1) {
       const marketing = lines[j].match(/^(\s*)MARKETING_VERSION = (.+);$/);
       if (marketing) {

@@ -100,7 +100,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
 
   const shellPositionClass =
     containerPosition && shouldAnimateToLeft
-      ? 'absolute bottom-0 left-0 right-0 z-50'
+      ? 'relative w-full pointer-events-auto'
       : 'fixed bottom-0 left-0 right-0 z-50';
   const shellPaddingBottom = `max(${isDesktop ? '1rem' : '0.5rem'}, env(safe-area-inset-bottom))`;
   const useMotionShell = animateEntry || isDesktop;

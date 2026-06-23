@@ -30,6 +30,25 @@ export const PRODUCTION_VITE_ENV: Record<string, string> = {
 
 const DEFAULT_JAVA_HOME = '/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home';
 const LOG_TAIL_LINES = 40;
+export const IOS_ARCHIVE_DESTINATION = 'generic/platform=iOS';
+
+export function buildIosArchiveArgs(archivePath: string): string[] {
+  return [
+    'archive',
+    '-workspace',
+    IOS_WORKSPACE,
+    '-scheme',
+    'App',
+    '-configuration',
+    'Release',
+    '-destination',
+    IOS_ARCHIVE_DESTINATION,
+    '-archivePath',
+    archivePath,
+    'CODE_SIGN_STYLE=Automatic',
+    '-allowProvisioningUpdates',
+  ];
+}
 
 export interface BuildArtifacts {
   aab: string;
@@ -144,12 +163,31 @@ export function runBuildPreflight(): BuildPreflight {
   return { ok: issues.length === 0, issues };
 }
 
+function isSimulatorDestinationLine(line: string): boolean {
+  return /\{ platform:(iOS|watchOS|tvOS|visionOS) Simulator/.test(line);
+}
+
 function tailLog(output: string, lineCount = LOG_TAIL_LINES): string {
   const lines = output.split('\n').filter((line) => line.trim().length > 0);
-  if (lines.length <= lineCount) {
-    return lines.join('\n');
+  const withoutSimulatorNoise = lines.filter((line) => !isSimulatorDestinationLine(line));
+
+  const errorPattern = /(?:\berror:|\bfatal error:|\*\* ARCHIVE FAILED \*\*|The following build commands failed:)/i;
+  const errorIndexes = withoutSimulatorNoise
+    .map((line, index) => (errorPattern.test(line) ? index : -1))
+    .filter((index) => index >= 0);
+
+  if (errorIndexes.length > 0) {
+    const firstError = errorIndexes[0];
+    const start = Math.max(0, firstError - 5);
+    const end = Math.min(withoutSimulatorNoise.length, firstError + lineCount);
+    return withoutSimulatorNoise.slice(start, end).join('\n');
   }
-  return lines.slice(-lineCount).join('\n');
+
+  const source = withoutSimulatorNoise.length > 0 ? withoutSimulatorNoise : lines;
+  if (source.length <= lineCount) {
+    return source.join('\n');
+  }
+  return source.slice(-lineCount).join('\n');
 }
 
 function formatExecError(error: unknown): ReleaseBuildError {
@@ -261,22 +299,10 @@ export async function runReleaseBuild(_session: ReleaseSession): Promise<BuildAr
           }
           fs.mkdirSync(IOS_EXPORT_DIR, { recursive: true });
 
-          await runCommand(
-            'xcodebuild',
-            [
-              'archive',
-              '-workspace',
-              IOS_WORKSPACE,
-              '-scheme',
-              'App',
-              '-configuration',
-              'Release',
-              '-archivePath',
-              IOS_ARCHIVE_PATH,
-              'CODE_SIGN_STYLE=Automatic',
-            ],
-            { cwd: ROOT, env: sharedEnv },
-          );
+          await runCommand('xcodebuild', buildIosArchiveArgs(IOS_ARCHIVE_PATH), {
+            cwd: ROOT,
+            env: sharedEnv,
+          });
 
           await runCommand(
             'xcodebuild',

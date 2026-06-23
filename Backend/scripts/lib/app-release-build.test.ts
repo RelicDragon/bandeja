@@ -5,7 +5,10 @@ import {
   AAB_OUTPUT,
   EXPORT_OPTIONS_PLIST,
   FRONTEND_DIR,
+  IOS_ARCHIVE_DESTINATION,
+  IOS_ARCHIVE_PATH,
   PRODUCTION_VITE_ENV,
+  buildIosArchiveArgs,
   resolveIpaOutputPath,
   runBuildPreflight,
 } from './app-release-build';
@@ -26,6 +29,14 @@ assert(AAB_OUTPUT.endsWith('app-release.aab'), 'AAB output filename');
 
 assert(fs.existsSync(FRONTEND_DIR), 'Frontend directory exists');
 assert(fs.existsSync(EXPORT_OPTIONS_PLIST), 'iOS export plist exists');
+
+const archiveArgs = buildIosArchiveArgs(IOS_ARCHIVE_PATH);
+assert(archiveArgs.includes('-destination'), 'iOS archive args include destination');
+assert(
+  archiveArgs.includes(IOS_ARCHIVE_DESTINATION),
+  'iOS archive targets generic iOS device',
+);
+assert(archiveArgs.includes('-allowProvisioningUpdates'), 'iOS archive allows provisioning updates');
 
 const preflight = runBuildPreflight();
 assert(Array.isArray(preflight.issues), 'preflight returns issues array');
