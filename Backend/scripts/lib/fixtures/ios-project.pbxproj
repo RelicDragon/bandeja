@@ -1,0 +1,24 @@
+/* Debug main app */
+		504EC3171FED79650016851F /* Debug */ = {
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 154;
+				MARKETING_VERSION = 0.96.40;
+				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;
+			};
+		};
+/* Release main app */
+		504EC3181FED79650016851F /* Release */ = {
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 154;
+				MARKETING_VERSION = 0.96.40;
+				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja;
+			};
+		};
+/* Watch — must not change */
+		99414BED2F7443E0002D7100 /* Debug */ = {
+			buildSettings = {
+				CURRENT_PROJECT_VERSION = 2;
+				MARKETING_VERSION = 0.51;
+				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.watchkitapp;
+			};
+		};

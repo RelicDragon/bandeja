@@ -56,18 +56,74 @@ export function gatherCommitLog(baseline: string, ref = 'HEAD'): string {
   ).toString();
 }
 
-export function readAndroidVersion(): NativeVersion {
-  const gradle = fs.readFileSync(ANDROID_GRADLE, 'utf-8');
+export function bumpVersion(version: string): string {
+  const trimmed = version.trim();
+  if (!trimmed) {
+    throw new Error('Version is empty');
+  }
+  const parts = trimmed.split('.');
+  if (parts.some((part) => part === '')) {
+    throw new Error(`Invalid version: ${version}`);
+  }
+  const last = parts[parts.length - 1];
+  const num = Number.parseInt(last, 10);
+  if (!Number.isFinite(num) || String(num) !== last) {
+    throw new Error(`Invalid version segment in ${version}`);
+  }
+  parts[parts.length - 1] = String(num + 1);
+  return parts.join('.');
+}
+
+export function bumpBuild(build: number): number {
+  if (!Number.isInteger(build) || build < 0) {
+    throw new Error(`Invalid build number: ${build}`);
+  }
+  return build + 1;
+}
+
+export function proposeNextRelease(current: NativeVersion): NativeVersion {
+  return {
+    version: bumpVersion(current.version),
+    build: bumpBuild(current.build),
+  };
+}
+
+function assertValidNativeVersion(version: NativeVersion): void {
+  const trimmed = version.version.trim();
+  if (!trimmed) {
+    throw new Error('Version is empty');
+  }
+  const parts = trimmed.split('.');
+  if (parts.some((part) => part === '')) {
+    throw new Error(`Invalid version: ${version.version}`);
+  }
+  for (const part of parts) {
+    const num = Number.parseInt(part, 10);
+    if (!Number.isFinite(num) || String(num) !== part) {
+      throw new Error(`Invalid version for native write: ${version.version}`);
+    }
+  }
+  if (!Number.isInteger(version.build) || version.build < 0) {
+    throw new Error(`Invalid build number: ${version.build}`);
+  }
+}
+
+export function readAndroidVersion(gradlePath = ANDROID_GRADLE): NativeVersion {
+  const gradle = fs.readFileSync(gradlePath, 'utf-8');
   const version = gradle.match(/versionName\s+"([^"]+)"/)?.[1];
   const buildRaw = gradle.match(/versionCode\s+(\d+)/)?.[1];
   if (!version || !buildRaw) {
-    throw new Error(`Could not parse version from ${ANDROID_GRADLE}`);
+    throw new Error(`Could not parse version from ${gradlePath}`);
   }
-  return { version, build: Number.parseInt(buildRaw, 10) };
+  const build = Number.parseInt(buildRaw, 10);
+  if (!Number.isInteger(build) || build < 0) {
+    throw new Error(`Invalid versionCode in ${gradlePath}`);
+  }
+  return { version, build };
 }
 
-export function readIosVersion(): NativeVersion {
-  const lines = fs.readFileSync(IOS_PBX, 'utf-8').split('\n');
+export function readIosVersion(pbxPath = IOS_PBX): NativeVersion {
+  const lines = fs.readFileSync(pbxPath, 'utf-8').split('\n');
   for (let i = 0; i < lines.length; i += 1) {
     if (lines[i].trim() !== MAIN_IOS_BUNDLE_LINE) continue;
     let version: string | null = null;
@@ -82,18 +138,96 @@ export function readIosVersion(): NativeVersion {
       return { version, build: Number.parseInt(build, 10) };
     }
   }
-  throw new Error(`Could not parse iOS version for ${MAIN_IOS_BUNDLE_LINE} in ${IOS_PBX}`);
+  throw new Error(`Could not parse iOS version for ${MAIN_IOS_BUNDLE_LINE} in ${pbxPath}`);
 }
 
-export function readNativeVersions(): NativeVersion {
-  const android = readAndroidVersion();
-  const ios = readIosVersion();
+export function readNativeVersions(paths?: { android?: string; ios?: string }): NativeVersion {
+  const android = readAndroidVersion(paths?.android);
+  const ios = readIosVersion(paths?.ios);
   if (android.version !== ios.version || android.build !== ios.build) {
     throw new Error(
       `Android (${android.version} / ${android.build}) and iOS (${ios.version} / ${ios.build}) versions do not match`,
     );
   }
   return android;
+}
+
+export function writeAndroidVersionContent(gradle: string, version: NativeVersion): string {
+  assertValidNativeVersion(version);
+  if (!/versionName\s+"[^"]+"/.test(gradle)) {
+    throw new Error('Could not find versionName in Gradle content');
+  }
+  if (!/versionCode\s+\d+/.test(gradle)) {
+    throw new Error('Could not find versionCode in Gradle content');
+  }
+  return gradle
+    .replace(/versionName\s+"[^"]+"/, `versionName "${version.version}"`)
+    .replace(/versionCode\s+\d+/, `versionCode ${version.build}`);
+}
+
+export function writeIosVersionContent(pbx: string, version: NativeVersion): string {
+  assertValidNativeVersion(version);
+  const lines = pbx.split('\n');
+  const result = [...lines];
+  let updated = 0;
+
+  for (let i = 0; i < lines.length; i += 1) {
+    if (lines[i].trim() !== MAIN_IOS_BUNDLE_LINE) continue;
+    for (let j = Math.max(0, i - 30); j < Math.min(lines.length, i + 5); j += 1) {
+      const marketing = lines[j].match(/^(\s*)MARKETING_VERSION = (.+);$/);
+      if (marketing) {
+        result[j] = `${marketing[1]}MARKETING_VERSION = ${version.version};`;
+        updated += 1;
+      }
+      const project = lines[j].match(/^(\s*)CURRENT_PROJECT_VERSION = (.+);$/);
+      if (project) {
+        result[j] = `${project[1]}CURRENT_PROJECT_VERSION = ${version.build};`;
+        updated += 1;
+      }
+    }
+  }
+
+  if (updated === 0) {
+    throw new Error(`Could not find iOS version fields for ${MAIN_IOS_BUNDLE_LINE}`);
+  }
+
+  return result.join('\n');
+}
+
+export function writeAndroidVersion(version: NativeVersion, gradlePath = ANDROID_GRADLE): void {
+  const gradle = fs.readFileSync(gradlePath, 'utf-8');
+  fs.writeFileSync(gradlePath, writeAndroidVersionContent(gradle, version), 'utf-8');
+}
+
+export function writeIosVersion(version: NativeVersion, pbxPath = IOS_PBX): void {
+  const pbx = fs.readFileSync(pbxPath, 'utf-8');
+  fs.writeFileSync(pbxPath, writeIosVersionContent(pbx, version), 'utf-8');
+}
+
+export function writeNativeVersions(
+  version: NativeVersion,
+  paths?: { android?: string; ios?: string },
+): void {
+  assertValidNativeVersion(version);
+  const androidPath = paths?.android ?? ANDROID_GRADLE;
+  const iosPath = paths?.ios ?? IOS_PBX;
+  const androidBackup = fs.readFileSync(androidPath, 'utf-8');
+  const iosBackup = fs.readFileSync(iosPath, 'utf-8');
+
+  try {
+    writeAndroidVersion(version, androidPath);
+    writeIosVersion(version, iosPath);
+    const readBack = readNativeVersions({ android: androidPath, ios: iosPath });
+    if (readBack.version !== version.version || readBack.build !== version.build) {
+      throw new Error(
+        `Post-write version mismatch: expected ${version.version}/${version.build}, got ${readBack.version}/${readBack.build}`,
+      );
+    }
+  } catch (error) {
+    fs.writeFileSync(androidPath, androidBackup, 'utf-8');
+    fs.writeFileSync(iosPath, iosBackup, 'utf-8');
+    throw error;
+  }
 }
 
 export function getHeadCommit(ref = 'HEAD'): HeadCommit {

@@ -1,0 +1,10 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace = "com.funified.bandeja"
+    defaultConfig {
+        applicationId "com.funified.bandeja"
+        versionCode 154
+        versionName "0.96.40"
+    }
+}
