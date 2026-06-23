@@ -1,12 +1,4 @@
-import { execFileSync } from 'child_process';
-import {
-  BASELINE_FILE,
-  APP_RELEASE_MD,
-  readBaseline,
-  readNativeVersions,
-  getHeadCommit,
-  writeBaseline,
-} from './lib/app-release';
+import { markReleaseAsShipped } from './lib/app-release-finalize';
 
 function usage(): never {
   console.error(`Usage: app-release-mark-shipped.ts [--commit] [--dry-run]
@@ -34,39 +26,26 @@ function parseArgs(argv: string[]): { commit: boolean; dryRun: boolean } {
 
 function main(): void {
   const { commit, dryRun } = parseArgs(process.argv.slice(2));
-  const version = readNativeVersions();
-  const head = getHeadCommit();
 
-  let currentBaseline: string | null = null;
-  try {
-    currentBaseline = readBaseline();
-  } catch {
-    currentBaseline = null;
-  }
+  console.log('Mark shipped: reading native versions…');
+  const result = markReleaseAsShipped({ dryRun, commitBaseline: commit });
 
-  if (currentBaseline === head.sha) {
-    console.log(`Baseline already at HEAD (${head.short}) — ${version.version} (build ${version.build})`);
+  if (!result.baselineUpdated) {
+    console.log(
+      `Baseline already at HEAD (${result.head.short}) — ${result.version.version} (build ${result.version.build})`,
+    );
     return;
   }
 
-  console.log(`Mark shipped: ${version.version} (build ${version.build})`);
-  console.log(`Commit: ${head.short} — ${head.subject}`);
+  console.log(`Mark shipped: ${result.version.version} (build ${result.version.build})`);
+  console.log(`Commit: ${result.head.short} — ${result.head.subject}`);
 
   if (dryRun) {
-    console.log('\nDry run — would update:');
-    console.log(`  ${BASELINE_FILE}`);
-    console.log(`  ${APP_RELEASE_MD}`);
+    console.log('\nDry run — no files were modified.');
     return;
   }
 
-  writeBaseline(head, version);
-  console.log(`Updated ${BASELINE_FILE} and ${APP_RELEASE_MD}`);
-
-  if (commit) {
-    execFileSync('git', ['add', BASELINE_FILE, APP_RELEASE_MD], { stdio: 'inherit' });
-    const message = `Mark app release ${version.version} (build ${version.build}) as shipped baseline`;
-    execFileSync('git', ['commit', '-m', message], { stdio: 'inherit' });
-  }
+  console.log('Updated docs/app-release-baseline.txt and docs/APP_RELEASE.md');
 }
 
 main();

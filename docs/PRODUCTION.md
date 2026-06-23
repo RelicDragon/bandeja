@@ -104,9 +104,21 @@ Uses secret `DATABASE_URL`. Use when you need migrations without a full backend 
 
 Web deploy (CI / `upd.sh`) does **not** ship Android or iOS. Native apps are built locally and submitted to Google Play and App Store separately.
 
+### Unified CLI (recommended)
+
+```bash
+./scripts/app-release.sh
+```
+
+Interactive flow: propose version/build, draft What's new (AI, custom, or template), build signed AAB + IPA, upload to both stores, update baseline. Resume with `APP_RELEASE_RESUME=1` after failures. Planner-only rehearsal: `APP_RELEASE_DRY_RUN=1`.
+
+Store credentials (`Backend/.env` or shell): `PLAY_STORE_JSON_KEY_PATH` (or `GOOGLE_PLAY_JSON_KEY`), `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`. Fastlane: `cd Frontend && bundle install`.
+
+Full reference, signing setup, and internal-track smoke test: **`docs/APP_RELEASE.md`**.
+
 ### Baseline marker
 
-After each store release, the baseline is updated automatically from native version files + `HEAD`:
+After each store release, the baseline is updated automatically from native version files + `HEAD` (by the CLI after upload, or manually via mark-shipped):
 
 | File | Purpose |
 |------|---------|
@@ -115,30 +127,12 @@ After each store release, the baseline is updated automatically from native vers
 
 Current baseline: see **`docs/APP_RELEASE.md`**.
 
-### Before the next store submission
+### Headless fallback
 
-1. Generate **What's new** from commits since baseline (LLM):
-
-   ```bash
-   ./scripts/app-release-whats-new.sh
-   ./scripts/app-release-whats-new.sh --save release-notes.txt
-   ```
-
-   Raw commit list: `./scripts/app-release-changes.sh` / `--full`. Needs `Backend/.env` AI keys.
-
-2. Bump versions:
-   - Android: `Frontend/android/app/build.gradle` (`versionName`, `versionCode`)
-   - iOS: `Frontend/ios/App/App.xcodeproj/project.pbxproj` + related Podfile if needed
-
-3. Commit the version bump (and any last-minute fixes), submit to stores.
-
-4. **Mark as shipped** (no manual baseline editing):
-
-   ```bash
-   ./scripts/app-release-mark-shipped.sh --commit
-   ```
-
-   Reads matching version/build from Gradle + Xcode, sets baseline to current `HEAD`, updates `docs/APP_RELEASE.md` history.
+1. `./scripts/app-release-whats-new.sh` — draft What's new
+2. Bump versions in Gradle + Xcode, commit
+3. Build and submit manually
+4. `./scripts/app-release-mark-shipped.sh --commit`
 
 Pushing to `master` still updates the web app immediately; mobile users get new features on their next app update from the stores.
 
@@ -256,7 +250,7 @@ Non-production blocks push/Telegram to real users unless whitelisted (`TEST_USER
 | Deploy fix | Commit → push/merge to `master` → CI deploy job (do not run `./upd.sh` unless CI is down) |
 | Manual deploy | `./upd.sh` or `./upd.sh be` / `fe` — only when CI unavailable |
 | Draft app What's new | `./scripts/app-release-whats-new.sh` → see `docs/APP_RELEASE.md` |
-| Ship mobile app update | Bump versions → submit → `./scripts/app-release-mark-shipped.sh --commit` |
+| Ship mobile app update | `./scripts/app-release.sh` (or headless: bump → submit → `./scripts/app-release-mark-shipped.sh --commit`) |
 | Read prod DB | `./Admin/run-ssh.sh &` → MCP `bandeja-prod-pg` |
 | Run admin action | Tunnels up → `Admin/index.html` → localhost:9000 |
 | Debug backend logs | `ssh relic@back.bandeja.com` → `pm2 logs backend` |

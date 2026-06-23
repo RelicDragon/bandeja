@@ -852,6 +852,22 @@ const suites: Suite[] = [
       path.join(backendRoot, 'scripts', 'lib', 'app-release-build.test.ts'),
     ],
   },
+  {
+    label: 'app release upload',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'lib', 'app-release-upload.test.ts'),
+    ],
+  },
+  {
+    label: 'app release finalize',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'lib', 'app-release-finalize.test.ts'),
+    ],
+  },
 ];
 
 function parseSuiteIndexArg(prefix: string): number | null {

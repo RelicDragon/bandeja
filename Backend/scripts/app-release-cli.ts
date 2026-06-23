@@ -3,6 +3,7 @@ dotenv.config();
 
 import * as readline from 'readline';
 import * as clack from '@clack/prompts';
+import { Listr } from 'listr2';
 import {
   buildReleaseNotes,
   generateAiReleaseNotes,
@@ -12,18 +13,32 @@ import {
   applyPlannedVersions,
   createReleaseSession,
   formatCommitPreview,
+  getSessionPhase,
   isDryRun,
   parseBuildInput,
   parseVersionInput,
   runPreflight,
   shouldResumeSession,
+  storeConfigComplete,
 } from './lib/app-release-planner';
 import { ReleaseBuildError, runBuildPreflight, runReleaseBuild } from './lib/app-release-build';
+import {
+  commitVersionBump,
+  markReleaseAsShipped,
+  versionBumpFilesChanged,
+} from './lib/app-release-finalize';
+import {
+  PLAY_TRACKS,
+  ReleaseUploadError,
+  runAndroidUpload,
+  runIosUpload,
+  runUploadPreflight,
+} from './lib/app-release-upload';
 import { clearSession, loadSession, saveSession, type ReleaseSession } from './lib/app-release-session';
 
 function handleCancel<T>(value: T | symbol): T {
   if (clack.isCancel(value)) {
-    clack.cancel('Release planner cancelled — no changes were made.');
+    clack.cancel('Release cancelled — no further changes were made.');
     process.exit(0);
   }
   return value;
@@ -200,7 +215,7 @@ async function releaseNotesLoop(session: ReleaseSession): Promise<ReleaseSession
     ];
 
     if (current.notes) {
-      options.push({ value: 'continue', label: 'Continue to summary' });
+      options.push({ value: 'continue', label: 'Continue to store settings' });
     }
 
     options.push({ value: 'cancel', label: 'Cancel' });
@@ -213,7 +228,7 @@ async function releaseNotesLoop(session: ReleaseSession): Promise<ReleaseSession
     );
 
     if (choice === 'cancel') {
-      clack.cancel('Release planner cancelled — no changes were made.');
+      clack.cancel('Release cancelled — no changes were made.');
       process.exit(0);
     }
 
@@ -254,10 +269,75 @@ async function releaseNotesLoop(session: ReleaseSession): Promise<ReleaseSession
   }
 }
 
+async function promptStoreConfig(session: ReleaseSession): Promise<ReleaseSession> {
+  if (storeConfigComplete(session.store)) {
+    return session;
+  }
+
+  const androidTrack = handleCancel(
+    await clack.select({
+      message: 'Google Play track',
+      options: [
+        { value: 'internal', label: 'Internal testing', hint: 'Recommended for smoke tests' },
+        { value: 'closed', label: 'Closed testing (alpha/beta)' },
+        { value: 'production', label: 'Production' },
+      ],
+      initialValue: session.store.androidTrack ?? 'internal',
+    }),
+  );
+
+  if (!PLAY_TRACKS.includes(androidTrack as (typeof PLAY_TRACKS)[number])) {
+    throw new Error(`Invalid Play track: ${androidTrack}`);
+  }
+
+  const iosMode = handleCancel(
+    await clack.select({
+      message: 'App Store Connect',
+      options: [
+        { value: 'upload', label: 'Upload only (do not submit for review)' },
+        { value: 'submit', label: 'Upload and submit for review' },
+      ],
+      initialValue: session.store.iosSubmitForReview ? 'submit' : 'upload',
+    }),
+  );
+
+  let autoCommit = session.autoCommit;
+  if (autoCommit === undefined) {
+    autoCommit = handleCancel(
+      await clack.confirm({
+        message: 'Auto-commit version bump and baseline updates when done?',
+        initialValue: false,
+      }),
+    );
+  }
+
+  return {
+    ...session,
+    autoCommit,
+    store: {
+      androidTrack,
+      iosSubmitForReview: iosMode === 'submit',
+    },
+  };
+}
+
 function renderSummary(session: ReleaseSession, dryRun: boolean): string {
   const notes = session.notes;
   if (!notes) {
     throw new Error('Summary requested without release notes');
+  }
+
+  const storeLines: string[] = [];
+  if (session.store.androidTrack) {
+    storeLines.push(`Play track: ${session.store.androidTrack}`);
+  }
+  if (session.store.iosSubmitForReview !== undefined) {
+    storeLines.push(
+      `App Store: ${session.store.iosSubmitForReview ? 'upload + submit for review' : 'upload only'}`,
+    );
+  }
+  if (session.autoCommit !== undefined) {
+    storeLines.push(`Auto-commit: ${session.autoCommit ? 'yes' : 'no'}`);
   }
 
   return [
@@ -266,13 +346,14 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
     `Baseline: ${session.baselineSha.slice(0, 7)}`,
     `What's new range: ${session.baselineSha.slice(0, 7)}..${session.headSha.slice(0, 7)} (frozen at session start)`,
     `Notes source: ${notes.source}`,
+    ...storeLines,
     '',
     notes.main,
     notes.short ? `\n---SHORT---\n${notes.short}` : '',
     '',
     dryRun
-      ? 'Dry run: native project files will not be modified. Build phase will be skipped.'
-      : 'Confirm will write Android Gradle and iOS App target versions, then build signed AAB and IPA.',
+      ? 'Dry run: native project files, builds, uploads, and baseline will not be modified.'
+      : 'Confirm will bump versions, build signed AAB/IPA, upload to both stores, and update the shipped baseline.',
   ].join('\n');
 }
 
@@ -329,42 +410,136 @@ async function runBuildPhase(session: ReleaseSession): Promise<ReleaseSession> {
   }
 }
 
-async function confirmAndApply(session: ReleaseSession): Promise<void> {
+async function runUploadPhase(session: ReleaseSession): Promise<ReleaseSession> {
+  const preflight = runUploadPreflight(session);
+  if (!preflight.ok) {
+    clack.note(preflight.issues.join('\n'), 'Upload preflight');
+    clack.log.error('Fix the issues above before uploading to the stores.');
+    process.exit(1);
+  }
+
+  let current = session;
+
+  for (;;) {
+    persist(current);
+
+    try {
+      const tasks = new Listr(
+        [
+          {
+            title: 'Upload Android AAB to Google Play',
+            task: async () => {
+              await runAndroidUpload(current);
+            },
+          },
+          {
+            title: 'Upload iOS IPA to App Store Connect',
+            task: async () => {
+              await runIosUpload(current);
+            },
+          },
+        ],
+        { concurrent: false, exitOnError: true },
+      );
+
+      await tasks.run();
+      return current;
+    } catch (error) {
+      const uploadError = error instanceof ReleaseUploadError ? error : new ReleaseUploadError(
+        error instanceof Error ? error.message : String(error),
+        '',
+      );
+
+      clack.log.error(uploadError.message);
+      if (uploadError.logTail) {
+        clack.note(uploadError.logTail, 'Last upload output');
+      }
+
+      const decision = handleCancel(
+        await clack.select({
+          message: 'Upload failed — what next?',
+          options: [
+            { value: 'retry', label: 'Retry upload' },
+            { value: 'abort', label: 'Abort (session saved for resume)' },
+          ],
+        }),
+      );
+
+      if (decision === 'abort') {
+        clack.outro('Upload aborted. Resume later with APP_RELEASE_RESUME=1.');
+        process.exit(1);
+      }
+    }
+  }
+}
+
+async function finalizeRelease(session: ReleaseSession): Promise<void> {
+  const result = markReleaseAsShipped({ commitBaseline: session.autoCommit === true });
+  clearSession();
+
+  if (!result.baselineUpdated) {
+    clack.log.warn(
+      `Baseline was already at HEAD (${result.head.short}) — docs were not changed.`,
+    );
+  } else {
+    clack.log.success(
+      `Baseline updated to ${result.version.version} (${result.version.build}) at ${result.head.short}`,
+    );
+  }
+
+  clack.outro(
+    `Shipped ${result.version.version} (${result.version.build}) to Google Play and App Store Connect.`,
+  );
+}
+
+async function executeRelease(session: ReleaseSession): Promise<void> {
   const dryRun = isDryRun();
-  clack.note(renderSummary(session, dryRun), 'Release summary');
+  const withStore = await promptStoreConfig(session);
+  clack.note(renderSummary(withStore, dryRun), 'Release summary');
 
   const confirmed = handleCancel(
     await clack.confirm({
-      message: dryRun ? 'Finish dry-run planner?' : 'Apply version bump and build release binaries?',
+      message: dryRun ? 'Finish dry-run planner?' : 'Run full release (bump, build, upload, baseline)?',
       initialValue: true,
     }),
   );
 
   if (!confirmed) {
-    clack.cancel('Release planner cancelled — no changes were made.');
+    clack.cancel('Release cancelled — no changes were made.');
     process.exit(0);
   }
 
-  persist(session);
-  applyPlannedVersions(session, { dryRun });
+  persist(withStore);
 
   if (dryRun) {
     clearSession();
-    clack.outro('Dry run complete — native project files were not modified. Build phase skipped.');
+    clack.outro('Dry run complete — no files, builds, uploads, or baseline changes were made.');
     return;
   }
 
-  clack.log.step('Starting release build pipeline…');
-  const built = await runBuildPhase(session);
+  const phase = getSessionPhase(withStore);
 
-  clack.note(
-    [`AAB: ${built.artifacts.aab ?? '(missing)'}`, `IPA: ${built.artifacts.ipa ?? '(missing)'}`].join('\n'),
-    'Build artifacts',
-  );
+  if (phase === 'ready-to-apply' || phase === 'planning') {
+    applyPlannedVersions(withStore, { dryRun: false });
+    if (withStore.autoCommit && versionBumpFilesChanged()) {
+      clack.log.step('Committing version bump…');
+      commitVersionBump(withStore.planned);
+    }
+  }
 
-  clack.outro(
-    `Built ${built.planned.version} (${built.planned.build}). Session saved for store upload.`,
-  );
+  let built = withStore;
+  if (getSessionPhase(built) === 'ready-to-build') {
+    clack.log.step('Starting release build pipeline…');
+    built = await runBuildPhase(built);
+    clack.note(
+      [`AAB: ${built.artifacts.aab ?? '(missing)'}`, `IPA: ${built.artifacts.ipa ?? '(missing)'}`].join('\n'),
+      'Build artifacts',
+    );
+  }
+
+  clack.log.step('Uploading to Google Play and App Store Connect…');
+  await runUploadPhase(built);
+  await finalizeRelease(built);
 }
 
 function renderPreflight(preflight: ReturnType<typeof runPreflight>): void {
@@ -404,10 +579,6 @@ async function resolveSession(): Promise<ReleaseSession> {
   return createReleaseSession();
 }
 
-function sessionReadyToConfirm(session: ReleaseSession): boolean {
-  return Boolean(session.notes) && !session.artifacts?.aab && !session.artifacts?.ipa;
-}
-
 async function main(): Promise<void> {
   const dryRun = isDryRun();
   clack.intro(dryRun ? 'Bandeja app release (dry run)' : 'Bandeja app release');
@@ -419,14 +590,22 @@ async function main(): Promise<void> {
   session = { ...session, current: preflight.current };
   persist(session);
 
-  if (shouldResumeSession() && sessionReadyToConfirm(session)) {
-    clack.log.info('Resuming planned release — skipping notes loop.');
-    await confirmAndApply(session);
+  const phase = getSessionPhase(session);
+
+  if (shouldResumeSession() && phase !== 'planning') {
+    const phaseLabel =
+      phase === 'ready-to-apply'
+        ? 'version bump'
+        : phase === 'ready-to-build'
+          ? 'build'
+          : 'store upload';
+    clack.log.info(`Resuming at ${phaseLabel} phase.`);
+    await executeRelease(session);
     return;
   }
 
   session = await releaseNotesLoop(session);
-  await confirmAndApply(session);
+  await executeRelease(session);
 }
 
 main().catch((error: unknown) => {

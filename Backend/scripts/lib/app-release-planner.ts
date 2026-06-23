@@ -58,6 +58,7 @@ export function createReleaseSession(headRef = 'HEAD'): ReleaseSession {
     notes: null,
     artifacts: {},
     store: {},
+    autoCommit: undefined,
   };
 }
 
@@ -101,6 +102,36 @@ export function nativeProjectFilesMatch(
   after: { android: string; ios: string },
 ): boolean {
   return before.android === after.android && before.ios === after.ios;
+}
+
+export type ReleaseSessionPhase = 'planning' | 'ready-to-apply' | 'ready-to-build' | 'ready-to-upload';
+
+export function getSessionPhase(session: ReleaseSession): ReleaseSessionPhase {
+  if (!session.notes) {
+    return 'planning';
+  }
+
+  try {
+    const native = readNativeVersions();
+    const versionsApplied =
+      native.version === session.planned.version && native.build === session.planned.build;
+    if (!versionsApplied) {
+      return 'ready-to-apply';
+    }
+  } catch {
+    return 'ready-to-apply';
+  }
+
+  const hasArtifacts = Boolean(session.artifacts?.aab && session.artifacts?.ipa);
+  if (!hasArtifacts) {
+    return 'ready-to-build';
+  }
+
+  return 'ready-to-upload';
+}
+
+export function storeConfigComplete(store: ReleaseSession['store']): boolean {
+  return Boolean(store.androidTrack) && store.iosSubmitForReview !== undefined;
 }
 
 export function formatCommitPreview(baselineSha: string, headSha: string, limit = 8): string {

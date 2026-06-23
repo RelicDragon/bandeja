@@ -264,7 +264,19 @@ export function prependHistoryRow(history: HistoryRow[], row: HistoryRow): Histo
   return [row, ...history];
 }
 
-const WORKFLOW_SECTION = `1. Generate **What's new** (LLM summarizes commits since baseline):
+const WORKFLOW_SECTION = `### Unified release CLI (recommended)
+
+\`\`\`bash
+./scripts/app-release.sh
+\`\`\`
+
+Dry-run planner: \`APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh\`. Resume after failure: \`APP_RELEASE_RESUME=1 ./scripts/app-release.sh\`.
+
+See this file for store API credentials, Android signing, and internal-track smoke test steps.
+
+### Headless scripts
+
+Generate **What's new** (LLM summarizes commits since baseline):
 
    \`\`\`bash
    ./scripts/app-release-whats-new.sh
@@ -291,15 +303,7 @@ const WORKFLOW_SECTION = `1. Generate **What's new** (LLM summarizes commits sin
    ./scripts/app-release-changes.sh --full
    \`\`\`
 
-2. Paste the main section into App Store Connect and Google Play; use the \`---SHORT---\` paragraph for Play if needed.
-
-3. Bump \`versionName\` / \`versionCode\` (Android) and iOS project version + build.
-
-4. Commit the version bump (and any last-minute fixes).
-
-5. Submit to stores.
-
-6. **Mark as shipped** (updates baseline from native version files + current \`HEAD\` — no manual editing):
+**Mark as shipped** (manual fallback after store submission):
 
    \`\`\`bash
    ./scripts/app-release-mark-shipped.sh --commit

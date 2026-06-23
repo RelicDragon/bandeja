@@ -41,6 +41,7 @@ export const releaseSessionSchema = z.object({
   notes: releaseNotesSchema.nullable(),
   artifacts: artifactsSchema,
   store: storeSchema,
+  autoCommit: z.boolean().optional(),
 });
 
 export type ReleaseNotesSource = z.infer<typeof notesSourceSchema>;

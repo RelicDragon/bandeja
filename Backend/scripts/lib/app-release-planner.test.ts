@@ -1,9 +1,11 @@
 import {
   applyPlannedVersions,
   createReleaseSession,
+  getSessionPhase,
   isDryRun,
   nativeProjectFilesMatch,
   snapshotNativeProjectFiles,
+  storeConfigComplete,
 } from './app-release-planner';
 import { proposeNextRelease } from './app-release';
 import {
@@ -74,6 +76,11 @@ assert(resumed?.planned.version === session.planned.version, 'session resume pre
 assert(resumed?.notes?.main === '• Saved notes', 'session resume preserves notes');
 assert(resumed?.artifacts !== undefined, 'session resume includes artifacts');
 assert(resumed?.store !== undefined, 'session resume includes store');
+assert(getSessionPhase(sessionWithNotes) === 'ready-to-apply', 'session with notes is ready-to-apply');
+assert(
+  storeConfigComplete({ androidTrack: 'internal', iosSubmitForReview: false }),
+  'storeConfigComplete accepts full store config',
+);
 clearSession();
 assert(loadSession() === null, 'clearSession removes persisted session');
 

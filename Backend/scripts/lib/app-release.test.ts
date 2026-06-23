@@ -79,8 +79,8 @@ const rendered = renderAppReleaseMd(
 assert(rendered.includes('**Version** | 0.96.40'), 'render current version');
 assert(rendered.includes('`109da47b0a2c3a0cf59fcf86c00cf63e92315a2e`'), 'render full sha');
 assert(rendered.includes('| 0.96.39 | 153 | `abc12345` | 2026-06-20 |'), 'render history row');
-assert(rendered.includes('./scripts/app-release-whats-new.sh'), 'render workflow whats-new');
-assert(rendered.includes('./scripts/app-release-mark-shipped.sh'), 'render workflow mark-shipped');
+assert(rendered.includes('./scripts/app-release.sh'), 'render workflow unified CLI');
+assert(rendered.includes('./scripts/app-release-mark-shipped.sh'), 'render workflow mark-shipped fallback');
 
 const withNew = prependHistoryRow(history, {
   version: '0.96.40',

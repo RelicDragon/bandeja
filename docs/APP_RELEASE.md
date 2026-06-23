@@ -15,42 +15,46 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
-## Before the next store release
+## Unified release CLI (recommended)
 
-1. Generate **What's new** (LLM summarizes commits since baseline):
+Run the full interactive flow (version bump → build → store upload → baseline update):
 
-   ```bash
-   ./scripts/app-release-whats-new.sh
-   ```
+```bash
+./scripts/app-release.sh
+```
 
-   Preview prompt without calling the API:
+Dry-run planner only (no file writes, builds, uploads, or baseline changes):
 
-   ```bash
-   ./scripts/app-release-whats-new.sh --dry-run
-   ```
+```bash
+APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh
+```
 
-   Save to a file:
+Resume after a build or upload failure:
 
-   ```bash
-   ./scripts/app-release-whats-new.sh --save release-notes.txt
-   ```
+```bash
+APP_RELEASE_RESUME=1 ./scripts/app-release.sh
+```
 
-   Requires `AI_PROVIDER` + `OPENAI_API_KEY` or `DEEPSEEK_API_KEY` in `Backend/.env`.
+The CLI freezes the What's new commit range at session start (before the version bump), builds signed AAB/IPA locally, uploads to both stores with your release notes, and updates the baseline only after both uploads succeed.
 
-   Raw commit list (no LLM):
+### Store API credentials
 
-   ```bash
-   ./scripts/app-release-changes.sh
-   ./scripts/app-release-changes.sh --full
-   ```
+Set these in `Backend/.env` (or export in your shell) before running the upload phase:
 
-2. Paste the main section into App Store Connect and Google Play; use the `---SHORT---` paragraph for Play if needed.
+| Variable | Purpose |
+|----------|---------|
+| `PLAY_STORE_JSON_KEY_PATH` or `GOOGLE_PLAY_JSON_KEY` | Path to Google Play Console service account JSON (Play Developer API enabled, release manager access) |
+| `ASC_KEY_ID` | App Store Connect API key ID |
+| `ASC_ISSUER_ID` | App Store Connect issuer ID |
+| `ASC_KEY_PATH` | Path to the `.p8` API key file |
 
-3. Bump `versionName` / `versionCode` (Android) and iOS project version + build.
+Install Fastlane once:
 
-4. Commit the version bump (and any last-minute fixes).
+```bash
+cd Frontend && bundle install
+```
 
-### Android CLI release signing
+### Android release signing
 
 Headless `bundleRelease` uses the same upload keystore as Android Studio.
 
@@ -58,7 +62,38 @@ Headless `bundleRelease` uses the same upload keystore as Android Studio.
 - Copy `Frontend/android/keystore.properties.example` → `Frontend/android/keystore.properties` (gitignored) and fill in alias/passwords.
 - Or set env vars: `ANDROID_KEYSTORE_FILE`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`.
 
-Build signed AAB:
+### Manual smoke test (internal track)
+
+1. Configure Play + ASC credentials and Android signing (above).
+2. Run `./scripts/app-release.sh`.
+3. At store settings, choose **Internal testing** for Google Play and **Upload only** for App Store Connect.
+4. Confirm the summary, let the CLI build and upload.
+5. In Play Console → Internal testing: verify the new build and What's new text.
+6. In App Store Connect → TestFlight: verify the uploaded build and release notes.
+7. If satisfied, ship the next production release with track **Production** (or promote from internal).
+
+Baseline and `docs/APP_RELEASE.md` history update automatically after both uploads succeed. Optional auto-commit creates separate git commits for the version bump and baseline update.
+
+## Headless scripts (automation / partial steps)
+
+Generate **What's new** (LLM summarizes commits since baseline):
+
+```bash
+./scripts/app-release-whats-new.sh
+./scripts/app-release-whats-new.sh --dry-run
+./scripts/app-release-whats-new.sh --save release-notes.txt
+```
+
+Requires `AI_PROVIDER` + `OPENAI_API_KEY` or `DEEPSEEK_API_KEY` in `Backend/.env`.
+
+Raw commit list (no LLM):
+
+```bash
+./scripts/app-release-changes.sh
+./scripts/app-release-changes.sh --full
+```
+
+Build signed AAB manually:
 
 ```bash
 cd Frontend/android && ./gradlew bundleRelease
@@ -66,17 +101,11 @@ cd Frontend/android && ./gradlew bundleRelease
 
 Output: `Frontend/android/app/build/outputs/bundle/release/app-release.aab`
 
-If signing is missing, Gradle logs a message and `bundleRelease` produces an **unsigned** release bundle (Play upload will fail).
+Mark as shipped without the CLI (after manual store submission):
 
-5. Submit to stores.
-
-6. **Mark as shipped** (updates baseline from native version files + current `HEAD` — no manual editing):
-
-   ```bash
-   ./scripts/app-release-mark-shipped.sh --commit
-   ```
-
-   Run on the branch/commit you shipped (usually right after the version-bump commit). Uses `baseline..HEAD` for the next cycle's What's new.
+```bash
+./scripts/app-release-mark-shipped.sh --commit
+```
 
 ## History
 
