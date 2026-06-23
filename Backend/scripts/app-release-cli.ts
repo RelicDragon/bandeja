@@ -45,6 +45,7 @@ import {
   saveSession,
   type ReleaseSession,
 } from './lib/app-release-session';
+import { ReleaseProgressTimer, timedListrTask } from './lib/app-release-timer';
 
 function handleCancel<T>(value: T | symbol): T {
   if (clack.isCancel(value)) {
@@ -367,7 +368,10 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
   ].join('\n');
 }
 
-async function runBuildPhase(session: ReleaseSession): Promise<ReleaseSession> {
+async function runBuildPhase(
+  session: ReleaseSession,
+  timer: ReleaseProgressTimer,
+): Promise<ReleaseSession> {
   const preflight = runBuildPreflight();
   if (!preflight.ok) {
     clack.note(preflight.issues.join('\n'), 'Build preflight');
@@ -381,7 +385,7 @@ async function runBuildPhase(session: ReleaseSession): Promise<ReleaseSession> {
     persist(current);
 
     try {
-      const artifacts = await runReleaseBuild(current);
+      const artifacts = await runReleaseBuild(current, timer);
       current = {
         ...current,
         artifacts: {
@@ -420,7 +424,10 @@ async function runBuildPhase(session: ReleaseSession): Promise<ReleaseSession> {
   }
 }
 
-async function runUploadPhase(session: ReleaseSession): Promise<ReleaseSession> {
+async function runUploadPhase(
+  session: ReleaseSession,
+  timer: ReleaseProgressTimer,
+): Promise<ReleaseSession> {
   const preflight = runUploadPreflight(session);
   if (!preflight.ok) {
     clack.note(preflight.issues.join('\n'), 'Upload preflight');
@@ -436,18 +443,12 @@ async function runUploadPhase(session: ReleaseSession): Promise<ReleaseSession> 
     try {
       const tasks = new Listr(
         [
-          {
-            title: 'Upload Android AAB to Google Play',
-            task: async () => {
-              await runAndroidUpload(current);
-            },
-          },
-          {
-            title: 'Upload iOS IPA to App Store Connect',
-            task: async () => {
-              await runIosUpload(current);
-            },
-          },
+          timedListrTask(timer, 'Upload Android AAB to Google Play', async () => {
+            await runAndroidUpload(current);
+          }),
+          timedListrTask(timer, 'Upload iOS IPA to App Store Connect', async () => {
+            await runIosUpload(current);
+          }),
         ],
         { concurrent: false, exitOnError: true },
       );
@@ -527,6 +528,7 @@ async function executeRelease(session: ReleaseSession): Promise<void> {
     return;
   }
 
+  const releaseTimer = new ReleaseProgressTimer();
   const phase = getSessionPhase(withStore);
 
   if (phase === 'ready-to-apply' || phase === 'planning') {
@@ -540,15 +542,18 @@ async function executeRelease(session: ReleaseSession): Promise<void> {
   let built = withStore;
   if (getSessionPhase(built) === 'ready-to-build') {
     clack.log.step('Starting release build pipeline…');
-    built = await runBuildPhase(built);
+    built = await runBuildPhase(built, releaseTimer);
     clack.note(
       [`AAB: ${built.artifacts.aab ?? '(missing)'}`, `IPA: ${built.artifacts.ipa ?? '(missing)'}`].join('\n'),
       'Build artifacts',
     );
+    clack.log.info(`Build finished in ${releaseTimer.totalElapsedLabel}.`);
   }
 
   clack.log.step('Uploading to Google Play and App Store Connect…');
-  await runUploadPhase(built);
+  await runUploadPhase(built, releaseTimer);
+  clack.log.info(`Upload finished — release pipeline total ${releaseTimer.totalElapsedLabel}.`);
+  releaseTimer.dispose();
   await finalizeRelease(built);
 }
 

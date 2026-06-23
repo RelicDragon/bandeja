@@ -5,6 +5,7 @@ import * as path from 'path';
 import { Listr } from 'listr2';
 import { ROOT } from './app-release';
 import type { ReleaseSession } from './app-release-session';
+import { ReleaseProgressTimer, timedListrTask } from './app-release-timer';
 
 export const FRONTEND_DIR = path.join(ROOT, 'Frontend');
 export const ANDROID_DIR = path.join(FRONTEND_DIR, 'android');
@@ -267,7 +268,10 @@ function assertArtifactExists(filePath: string, label: string): string {
   return absolutePath;
 }
 
-export async function runReleaseBuild(_session: ReleaseSession): Promise<BuildArtifacts> {
+export async function runReleaseBuild(
+  _session: ReleaseSession,
+  timer: ReleaseProgressTimer = new ReleaseProgressTimer(),
+): Promise<BuildArtifacts> {
   const preflight = runBuildPreflight();
   if (!preflight.ok) {
     throw new ReleaseBuildError('Build preflight failed', preflight.issues.join('\n'));
@@ -285,60 +289,48 @@ export async function runReleaseBuild(_session: ReleaseSession): Promise<BuildAr
 
   const tasks = new Listr(
     [
-      {
-        title: 'Production frontend build',
-        task: async () => {
-          await runCommand('npm', ['run', 'build'], { cwd: FRONTEND_DIR, env: sharedEnv });
-          await runBashFunction('scripts/verify-capacitor-bundle.sh', 'verify_capacitor_bundle');
-        },
-      },
-      {
-        title: 'Capacitor sync (Android + iOS)',
-        task: async () => {
-          await runBashFunction('scripts/ensure-cocoapods.sh', 'ensure_cocoapods');
-          await runBashFunction('scripts/fix-ios-pbx-object-version.sh', 'fix_ios_pbx_object_version');
-          await runCommand('npx', ['cap', 'sync'], { cwd: FRONTEND_DIR, env: sharedEnv });
-          await runBashFunction('scripts/fix-ios-pbx-object-version.sh', 'fix_ios_pbx_object_version');
-          await runCommand('pod', ['install'], { cwd: IOS_APP_DIR, env: sharedEnv });
-        },
-      },
-      {
-        title: 'Android bundleRelease (AAB)',
-        task: async () => {
-          await runCommand('./gradlew', ['bundleRelease'], { cwd: ANDROID_DIR, env: sharedEnv });
-        },
-      },
-      {
-        title: 'iOS archive + export (IPA)',
-        task: async () => {
-          if (fs.existsSync(IOS_ARCHIVE_PATH)) {
-            fs.rmSync(IOS_ARCHIVE_PATH, { recursive: true, force: true });
-          }
-          if (fs.existsSync(IOS_EXPORT_DIR)) {
-            fs.rmSync(IOS_EXPORT_DIR, { recursive: true, force: true });
-          }
-          fs.mkdirSync(IOS_EXPORT_DIR, { recursive: true });
+      timedListrTask(timer, 'Production frontend build', async () => {
+        await runCommand('npm', ['run', 'build'], { cwd: FRONTEND_DIR, env: sharedEnv });
+        await runBashFunction('scripts/verify-capacitor-bundle.sh', 'verify_capacitor_bundle');
+      }),
+      timedListrTask(timer, 'Capacitor sync (Android + iOS)', async () => {
+        await runBashFunction('scripts/ensure-cocoapods.sh', 'ensure_cocoapods');
+        await runBashFunction('scripts/fix-ios-pbx-object-version.sh', 'fix_ios_pbx_object_version');
+        await runCommand('npx', ['cap', 'sync'], { cwd: FRONTEND_DIR, env: sharedEnv });
+        await runBashFunction('scripts/fix-ios-pbx-object-version.sh', 'fix_ios_pbx_object_version');
+        await runCommand('pod', ['install'], { cwd: IOS_APP_DIR, env: sharedEnv });
+      }),
+      timedListrTask(timer, 'Android bundleRelease (AAB)', async () => {
+        await runCommand('./gradlew', ['bundleRelease'], { cwd: ANDROID_DIR, env: sharedEnv });
+      }),
+      timedListrTask(timer, 'iOS archive + export (IPA)', async () => {
+        if (fs.existsSync(IOS_ARCHIVE_PATH)) {
+          fs.rmSync(IOS_ARCHIVE_PATH, { recursive: true, force: true });
+        }
+        if (fs.existsSync(IOS_EXPORT_DIR)) {
+          fs.rmSync(IOS_EXPORT_DIR, { recursive: true, force: true });
+        }
+        fs.mkdirSync(IOS_EXPORT_DIR, { recursive: true });
 
-          await runCommand('xcodebuild', buildIosArchiveArgs(IOS_ARCHIVE_PATH), {
-            cwd: ROOT,
-            env: iosEnv,
-          });
+        await runCommand('xcodebuild', buildIosArchiveArgs(IOS_ARCHIVE_PATH), {
+          cwd: ROOT,
+          env: iosEnv,
+        });
 
-          await runCommand(
-            'xcodebuild',
-            [
-              '-exportArchive',
-              '-archivePath',
-              IOS_ARCHIVE_PATH,
-              '-exportPath',
-              IOS_EXPORT_DIR,
-              '-exportOptionsPlist',
-              EXPORT_OPTIONS_PLIST,
-            ],
-            { cwd: ROOT, env: iosEnv },
-          );
-        },
-      },
+        await runCommand(
+          'xcodebuild',
+          [
+            '-exportArchive',
+            '-archivePath',
+            IOS_ARCHIVE_PATH,
+            '-exportPath',
+            IOS_EXPORT_DIR,
+            '-exportOptionsPlist',
+            EXPORT_OPTIONS_PLIST,
+          ],
+          { cwd: ROOT, env: iosEnv },
+        );
+      }),
     ],
     { concurrent: false, exitOnError: true },
   );

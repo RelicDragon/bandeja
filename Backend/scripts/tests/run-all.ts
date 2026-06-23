@@ -853,6 +853,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'app release timer',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'lib', 'app-release-timer.test.ts'),
+    ],
+  },
+  {
     label: 'app release upload',
     command: process.execPath,
     args: [
