@@ -828,6 +828,14 @@ const suites: Suite[] = [
       path.join(backendRoot, 'scripts', 'tests', 'game-booking-status-sync.ts'),
     ],
   },
+  {
+    label: 'app release baseline lib',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'lib', 'app-release.test.ts'),
+    ],
+  },
 ];
 
 function parseSuiteIndexArg(prefix: string): number | null {

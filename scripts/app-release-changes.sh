@@ -26,7 +26,8 @@ for arg in "$@"; do
     --full) FULL=true ;;
     -h|--help)
       echo "Usage: $0 [--full]"
-      echo "  Lists commits after docs/app-release-baseline.txt (for What's new drafts)."
+      echo "  Lists commits after docs/app-release-baseline.txt."
+      echo "  LLM release notes: ./scripts/app-release-whats-new.sh"
       exit 0
       ;;
     *)

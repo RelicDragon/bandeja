@@ -17,19 +17,34 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
 ## Before the next store release
 
-1. List changes since baseline:
+1. Generate **What's new** (LLM summarizes commits since baseline):
+
+   ```bash
+   ./scripts/app-release-whats-new.sh
+   ```
+
+   Preview prompt without calling the API:
+
+   ```bash
+   ./scripts/app-release-whats-new.sh --dry-run
+   ```
+
+   Save to a file:
+
+   ```bash
+   ./scripts/app-release-whats-new.sh --save release-notes.txt
+   ```
+
+   Requires `AI_PROVIDER` + `OPENAI_API_KEY` or `DEEPSEEK_API_KEY` in `Backend/.env`.
+
+   Raw commit list (no LLM):
 
    ```bash
    ./scripts/app-release-changes.sh
-   ```
-
-   Or with full messages:
-
-   ```bash
    ./scripts/app-release-changes.sh --full
    ```
 
-2. Turn commit subjects (and linked PRs/issues) into store **What's new** copy.
+2. Paste the main section into App Store Connect and Google Play; use the `---SHORT---` paragraph for Play if needed.
 
 3. Bump `versionName` / `versionCode` (Android) and iOS project version + build.
 
@@ -37,7 +52,13 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
 5. Submit to stores.
 
-6. **After approval / release:** update this file and `docs/app-release-baseline.txt` to that commit's full SHA, version, build, and date. That commit becomes the new baseline.
+6. **Mark as shipped** (updates baseline from native version files + current `HEAD` — no manual editing):
+
+   ```bash
+   ./scripts/app-release-mark-shipped.sh --commit
+   ```
+
+   Run on the branch/commit you shipped (usually right after the version-bump commit). Uses `baseline..HEAD` for the next cycle's What's new.
 
 ## History
 

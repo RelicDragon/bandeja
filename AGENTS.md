@@ -48,9 +48,9 @@ See **`docs/PRODUCTION.md`**: CI deploys on push to `master` (no local `./upd.sh
 Separate from web deploy — native builds are submitted manually to Google Play and App Store.
 
 - Baseline marker: **`docs/APP_RELEASE.md`** + **`docs/app-release-baseline.txt`** (last shipped commit)
-- Draft **What's new**: `./scripts/app-release-changes.sh` (commits since baseline)
+- Draft **What's new**: `./scripts/app-release-whats-new.sh` (LLM from commits since baseline; raw list: `./scripts/app-release-changes.sh`)
 - Version bumps: `Frontend/android/app/build.gradle`, iOS project in `Frontend/ios/App/`
-- After each store release: update baseline file + history table in `APP_RELEASE.md`
+- After each store release: `./scripts/app-release-mark-shipped.sh --commit` (reads Gradle + Xcode versions, sets baseline to `HEAD`)
 
 Full workflow: **`docs/PRODUCTION.md`** → *Mobile app store releases*.
 

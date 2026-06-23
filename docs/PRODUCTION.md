@@ -106,7 +106,7 @@ Web deploy (CI / `upd.sh`) does **not** ship Android or iOS. Native apps are bui
 
 ### Baseline marker
 
-After each store release, record the version-bump commit as the baseline:
+After each store release, the baseline is updated automatically from native version files + `HEAD`:
 
 | File | Purpose |
 |------|---------|
@@ -117,12 +117,14 @@ Current baseline: see **`docs/APP_RELEASE.md`**.
 
 ### Before the next store submission
 
-1. List changes since baseline (for **What's new** copy):
+1. Generate **What's new** from commits since baseline (LLM):
 
    ```bash
-   ./scripts/app-release-changes.sh
-   ./scripts/app-release-changes.sh --full   # include commit bodies
+   ./scripts/app-release-whats-new.sh
+   ./scripts/app-release-whats-new.sh --save release-notes.txt
    ```
+
+   Raw commit list: `./scripts/app-release-changes.sh` / `--full`. Needs `Backend/.env` AI keys.
 
 2. Bump versions:
    - Android: `Frontend/android/app/build.gradle` (`versionName`, `versionCode`)
@@ -130,7 +132,13 @@ Current baseline: see **`docs/APP_RELEASE.md`**.
 
 3. Commit the version bump (and any last-minute fixes), submit to stores.
 
-4. **After approval / release:** update `docs/app-release-baseline.txt` and the table in `docs/APP_RELEASE.md` to that commit. It becomes the new baseline for the next cycle.
+4. **Mark as shipped** (no manual baseline editing):
+
+   ```bash
+   ./scripts/app-release-mark-shipped.sh --commit
+   ```
+
+   Reads matching version/build from Gradle + Xcode, sets baseline to current `HEAD`, updates `docs/APP_RELEASE.md` history.
 
 Pushing to `master` still updates the web app immediately; mobile users get new features on their next app update from the stores.
 
@@ -247,8 +255,8 @@ Non-production blocks push/Telegram to real users unless whitelisted (`TEST_USER
 |------|--------|
 | Deploy fix | Commit → push/merge to `master` → CI deploy job (do not run `./upd.sh` unless CI is down) |
 | Manual deploy | `./upd.sh` or `./upd.sh be` / `fe` — only when CI unavailable |
-| Draft app What's new | `./scripts/app-release-changes.sh` → see `docs/APP_RELEASE.md` |
-| Ship mobile app update | Bump Android/iOS versions → submit to stores → update baseline in `docs/APP_RELEASE.md` |
+| Draft app What's new | `./scripts/app-release-whats-new.sh` → see `docs/APP_RELEASE.md` |
+| Ship mobile app update | Bump versions → submit → `./scripts/app-release-mark-shipped.sh --commit` |
 | Read prod DB | `./Admin/run-ssh.sh &` → MCP `bandeja-prod-pg` |
 | Run admin action | Tunnels up → `Admin/index.html` → localhost:9000 |
 | Debug backend logs | `ssh relic@back.bandeja.com` → `pm2 logs backend` |
