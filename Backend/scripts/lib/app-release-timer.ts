@@ -35,6 +35,10 @@ export class ReleaseProgressTimer {
     return `${baseTitle} (step ${step} · total ${total})`;
   }
 
+  formatCompletedTitle(baseTitle: string, stepMs: number): string {
+    return `${baseTitle} · step ${formatReleaseElapsed(stepMs)}`;
+  }
+
   trackStep(task: ListrTitleTask, baseTitle: string): () => void {
     this.stopInterval();
     this.stepStartedAt = Date.now();
@@ -62,10 +66,9 @@ export class ReleaseProgressTimer {
     this.stopInterval();
     if (this.activeTask && this.stepStartedAt) {
       const finishedAt = Date.now();
-      this.activeTask.title = this.formatTitle(
+      this.activeTask.title = this.formatCompletedTitle(
         this.stepBaseTitle,
-        finishedAt,
-        this.stepStartedAt,
+        finishedAt - this.stepStartedAt,
       );
     }
     this.activeTask = null;

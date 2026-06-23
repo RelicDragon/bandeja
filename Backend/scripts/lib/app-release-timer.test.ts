@@ -29,8 +29,8 @@ try {
   Date.now = () => 13_000;
   stop();
   assert(
-    task.title === 'Upload Android AAB to Google Play (step 3s · total 8s)',
-    'keeps final step and total timers on completed row',
+    task.title === 'Upload Android AAB to Google Play · step 3s',
+    'completed row shows step duration only',
   );
 } finally {
   Date.now = originalNow;
