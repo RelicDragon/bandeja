@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { chatApi, type GroupChannel } from '@/api/chat';
-import { usersApi } from '@/api/users';
-import { usePresenceSubscription } from '@/hooks/usePresenceSubscription';
-import { usePresenceStore } from '@/store/presenceStore';
-import { useAuthStore } from '@/store/authStore';
+import { useParticipantsOnlineCount } from '@/hooks/useParticipantsOnlineCount';
 
 function collectParticipantIds(groupChannel: GroupChannel | null): string[] | null {
   const list = groupChannel?.participants;
@@ -12,7 +9,6 @@ function collectParticipantIds(groupChannel: GroupChannel | null): string[] | nu
 }
 
 export function useGroupChannelOnlineCount(groupChannel: GroupChannel | null, enabled: boolean) {
-  const showOnlineStatus = useAuthStore((s) => s.user?.showOnlineStatus !== false);
   const embeddedIds = useMemo(() => collectParticipantIds(groupChannel), [groupChannel]);
   const [fetchedIds, setFetchedIds] = useState<string[]>([]);
 
@@ -38,25 +34,7 @@ export function useGroupChannelOnlineCount(groupChannel: GroupChannel | null, en
   }, [enabled, groupChannel?.id, embeddedIds]);
 
   const participantIds = embeddedIds?.length ? embeddedIds : fetchedIds;
-  const participantIdsKey = participantIds.join(',');
   const presenceKey = groupChannel?.id ? `group-chat-header:${groupChannel.id}` : 'group-chat-header:none';
 
-  usePresenceSubscription(
-    showOnlineStatus && enabled ? presenceKey : `${presenceKey}:off`,
-    showOnlineStatus && enabled ? participantIds : [],
-  );
-
-  useEffect(() => {
-    if (!showOnlineStatus || !enabled || participantIds.length === 0) return;
-    usersApi.getPresence(participantIds).then((data) => {
-      if (Object.keys(data).length > 0) usePresenceStore.getState().setPresenceInitial(data);
-    }).catch(() => {});
-  }, [showOnlineStatus, enabled, participantIdsKey, participantIds]);
-
-  const onlineCount = usePresenceStore((s) => {
-    if (!showOnlineStatus || !enabled || participantIds.length === 0) return null;
-    return participantIds.reduce((count, id) => count + (s.isOnline(id) ? 1 : 0), 0);
-  });
-
-  return onlineCount;
+  return useParticipantsOnlineCount(participantIds, presenceKey, enabled);
 }

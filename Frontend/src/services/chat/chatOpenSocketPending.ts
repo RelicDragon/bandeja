@@ -14,6 +14,10 @@ export function takeChatRoomPending(roomKey: string): ChatRoomEvent[] {
   return out;
 }
 
+export function peekChatRoomPending(roomKey: string): readonly ChatRoomEvent[] {
+  return pendingByRoom.get(roomKey) ?? [];
+}
+
 export function clearChatRoomPending(roomKey: string): void {
   pendingByRoom.delete(roomKey);
 }

@@ -22,7 +22,7 @@ import {
 import { scheduleAfterThreadPaint, scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 import { logChatSyncStale } from '@/services/chat/chatOpenTrace';
 import {
-  canFlushSocketBacklog,
+  canFlushLiveSocketEvents,
   reconcileAfterPaint,
   shouldDeferOpenReload,
 } from '@/services/chat/threadOpen';
@@ -48,6 +48,8 @@ export interface UseThreadSocketParams {
   handleMessageUpdated: (updated: import('@/api/chat').ChatMessage) => void;
   reloadMessagesFirstPage: () => void | Promise<void>;
   onAfterSocketBatch?: () => void;
+  /** Bumps when open paint commits — re-flush pending socket batches queued before paint. */
+  openPaintGeneration?: number;
 }
 
 export function useThreadSocket({
@@ -67,6 +69,7 @@ export function useThreadSocket({
   handleMessageUpdated,
   reloadMessagesFirstPage,
   onAfterSocketBatch,
+  openPaintGeneration = 0,
 }: UseThreadSocketParams) {
   const snapshotRevision = useThreadSnapshotRevision(contextType, id);
   const roomKey = useMemo(
@@ -153,7 +156,7 @@ export function useThreadSocket({
     );
     const flush = () => {
       if (currentIdRef.current !== id) return;
-      if (!canFlushSocketBacklog(tailKey)) {
+      if (!canFlushLiveSocketEvents(tailKey)) {
         scheduleAfterThreadPaint(flush);
         return;
       }
@@ -163,7 +166,17 @@ export function useThreadSocket({
       onAfterSocketBatch?.();
     };
     scheduleAfterThreadPaint(flush);
-  }, [roomKey, id, roomPushSeq, roomProcessorCtx, currentIdRef, onAfterSocketBatch, contextType, effectiveChatType]);
+  }, [
+    roomKey,
+    id,
+    roomPushSeq,
+    openPaintGeneration,
+    roomProcessorCtx,
+    currentIdRef,
+    onAfterSocketBatch,
+    contextType,
+    effectiveChatType,
+  ]);
 
   useEffect(() => {
     syncEpochBaselineRef.current = null;

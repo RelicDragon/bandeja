@@ -210,6 +210,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     handleMessageUpdated: (m) => socketHandlersRef.current?.handleMessageUpdated(m) ?? noopUpdated(m),
     reloadMessagesFirstPage,
     onAfterSocketBatch: session.pinAfterSocketMergeIfAllowed,
+    openPaintGeneration: session.openPaintGeneration,
   });
 
   useLayoutEffect(() => {

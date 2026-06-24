@@ -1,5 +1,5 @@
 import type { ChatMessageWithStatus, MessageReadReceipt } from '@/api/chat';
-import { mergeReadReceiptSync } from './chatSyncEventsToPatches';
+import { mergeReadReceipts } from './mergeReadReceipts';
 
 function readReceiptsEqual(a: MessageReadReceipt[], b: MessageReadReceipt[]): boolean {
   if (a.length !== b.length) return false;
@@ -9,6 +9,32 @@ function readReceiptsEqual(a: MessageReadReceipt[], b: MessageReadReceipt[]): bo
     if (x.userId !== y.userId || x.readAt !== y.readAt) return false;
   }
   return true;
+}
+
+export function applyAllReadToOwnVisibleMessages(
+  prev: ChatMessageWithStatus[],
+  readerUserId: string,
+  readAt: string,
+  viewerUserId: string
+): { next: ChatMessageWithStatus[]; changed: boolean; messageIds: string[] } {
+  let changed = false;
+  const messageIds: string[] = [];
+  const next = prev.map((message) => {
+    if (message.senderId !== viewerUserId) return message;
+    const receipt: MessageReadReceipt = {
+      id: `allread-${message.id}-${readerUserId}`,
+      messageId: message.id,
+      userId: readerUserId,
+      readAt,
+    };
+    const prevReceipts = message.readReceipts ?? [];
+    const merged = mergeReadReceipts(prevReceipts, receipt);
+    if (readReceiptsEqual(prevReceipts, merged)) return message;
+    changed = true;
+    messageIds.push(message.id);
+    return { ...message, readReceipts: merged };
+  });
+  return { next, changed, messageIds };
 }
 
 export function applySyncReadBatchToMessages(
@@ -28,7 +54,7 @@ export function applySyncReadBatchToMessages(
       readAt,
     };
     const prevReceipts = message.readReceipts ?? [];
-    const merged = mergeReadReceiptSync(prevReceipts, userId, receipt);
+    const merged = mergeReadReceipts(prevReceipts, receipt);
     if (readReceiptsEqual(prevReceipts, merged)) return message;
     changed = true;
     return { ...message, readReceipts: merged };

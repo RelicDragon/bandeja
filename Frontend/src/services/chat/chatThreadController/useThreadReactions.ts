@@ -6,7 +6,8 @@ import { usePlayersStore } from '@/store/playersStore';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { putLocalMessage } from '@/services/chat/chatLocalApply';
-import { mergeReadReceiptSync } from '@/services/chat/chatSyncEventsToPatches';
+import { mergeReadReceipts } from '@/services/chat/mergeReadReceipts';
+import { readReceiptsFingerprint } from '@/services/chat/readReceiptsFingerprint';
 import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 
@@ -293,10 +294,7 @@ export function useThreadReactions({
         const idx = prev.findIndex((m) => m.id === updated.id);
         if (idx < 0) return prev;
         const prevRow = prev[idx]!;
-        let readReceipts = prevRow.readReceipts ?? [];
-        for (const r of updated.readReceipts ?? []) {
-          readReceipts = mergeReadReceiptSync(readReceipts, r.userId, r);
-        }
+        const readReceipts = mergeReadReceipts(prevRow.readReceipts ?? [], updated.readReceipts ?? []);
         const next = [...prev];
         next[idx] = {
           ...prevRow,
@@ -345,18 +343,18 @@ export function useThreadReactions({
   );
 
   const handleReadReceipt = useCallback(
-    (readReceipt: any) => {
+    (readReceipt: import('@/api/chat').MessageReadReceipt) => {
       setMessages((prev) => {
         let changed = false;
         const newMessages = prev.map((message) => {
-          if (message.id === readReceipt.messageId) {
-            const existing = message.readReceipts.find((r) => r.userId === readReceipt.userId);
-            if (!existing) {
-              changed = true;
-              return { ...message, readReceipts: [...message.readReceipts, readReceipt] };
-            }
+          if (message.id !== readReceipt.messageId) return message;
+          const prevReceipts = message.readReceipts ?? [];
+          const merged = mergeReadReceipts(prevReceipts, readReceipt);
+          if (readReceiptsFingerprint(merged) === readReceiptsFingerprint(prevReceipts)) {
+            return message;
           }
-          return message;
+          changed = true;
+          return { ...message, readReceipts: merged };
         });
         if (!changed) return prev;
         messagesRef.current = newMessages;

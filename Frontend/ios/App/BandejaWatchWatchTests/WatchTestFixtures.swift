@@ -24,7 +24,7 @@ enum WatchTestFixtures {
         participantIds: [String]
     ) -> String {
         let ppmField = playersPerMatch.map { "\"playersPerMatch\":\($0)," } ?? ""
-        let participants = participantIds.map(participant).joined(separator: ",")
+        let participants = participantIds.map { participant(id: $0) }.joined(separator: ",")
         return """
         {
           "id":"game-1",

@@ -2,6 +2,7 @@ import type { ChatMessage, MessageReaction, MessageReadReceipt } from '@/api/cha
 import { chatLocalDb } from './chatLocalDb';
 import { enqueueChatLocalContextApply } from './chatLocalApplyQueue';
 import { mergeReactionListSync } from '@/services/chat/chatSyncEventsToPatches';
+import { mergeReadReceipts } from '@/services/chat/mergeReadReceipts';
 import { rowFromMessage } from '@/services/chat/chatSyncRowUtils';
 import { putChatLocalRowsWithSearchTokens } from './chatLocalApplyWrite';
 
@@ -75,14 +76,14 @@ export async function patchLocalReadReceiptDirect(readReceipt: {
   const row = await chatLocalDb.messages.get(readReceipt.messageId);
   if (!row) return;
   const receipts = row.payload.readReceipts ?? [];
-  const others = receipts.filter((r) => r.userId !== readReceipt.userId);
   const next: MessageReadReceipt = {
     id: `sock-${readReceipt.messageId}-${readReceipt.userId}`,
     messageId: readReceipt.messageId,
     userId: readReceipt.userId,
     readAt: readReceipt.readAt,
   };
-  await putChatLocalRowsWithSearchTokens([rowFromMessage({ ...row.payload, readReceipts: [...others, next] })]);
+  const merged = mergeReadReceipts(receipts, next);
+  await putChatLocalRowsWithSearchTokens([rowFromMessage({ ...row.payload, readReceipts: merged })]);
 }
 
 export async function patchLocalReadReceipt(readReceipt: {

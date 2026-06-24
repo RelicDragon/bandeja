@@ -1,21 +1,10 @@
-import type { ChatMessage, ChatMessageWithStatus, MessageReadReceipt } from '@/api/chat';
+import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
 import { readReceiptsFingerprint } from '@/services/chat/readReceiptsFingerprint';
-import { mergeReadReceiptSync } from '@/services/chat/chatSyncEventsToPatches';
+import { mergeReadReceipts } from '@/services/chat/mergeReadReceipts';
 import { stripPendingOptimisticsMatchedByServer } from '@/services/chat/optimisticReconcile';
 import { compareChatMessagesAscending } from '@/utils/chatMessageCompare';
 
 export { compareChatMessagesAscending, computeMessageSortKey } from '@/utils/chatMessageCompare';
-
-function mergeMessageReadReceipts(
-  base: MessageReadReceipt[],
-  overlay: MessageReadReceipt[]
-): MessageReadReceipt[] {
-  let merged = base;
-  for (const receipt of overlay) {
-    merged = mergeReadReceiptSync(merged, receipt.userId, receipt);
-  }
-  return merged;
-}
 
 function shouldPreferIncomingMessage(
   existing: ChatMessageWithStatus,
@@ -34,10 +23,10 @@ export function mergeChatMessagesAscending(
     const cur = map.get(m.id);
     if (!cur) map.set(m.id, m as ChatMessageWithStatus);
     else if (shouldPreferIncomingMessage(cur, m)) {
-      const readReceipts = mergeMessageReadReceipts(cur.readReceipts ?? [], m.readReceipts ?? []);
+      const readReceipts = mergeReadReceipts(cur.readReceipts ?? [], m.readReceipts ?? []);
       map.set(m.id, { ...cur, ...m, readReceipts } as ChatMessageWithStatus);
     } else {
-      const readReceipts = mergeMessageReadReceipts(cur.readReceipts ?? [], m.readReceipts ?? []);
+      const readReceipts = mergeReadReceipts(cur.readReceipts ?? [], m.readReceipts ?? []);
       if (readReceiptsFingerprint(readReceipts) !== readReceiptsFingerprint(cur.readReceipts)) {
         map.set(m.id, { ...cur, readReceipts } as ChatMessageWithStatus);
       }

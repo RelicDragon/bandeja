@@ -783,6 +783,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-39 | Read receipts | Open thread | Unread clears |
 | CH-70 | Own message read tick vs details | Group chat → send message → long-press → Details before anyone reads | Bubble shows single tick (or blue delivered, not purple read); Details shows “Not read yet” |
 | CH-71 | Own message read tick after peer reads | Two users in group; B reads A's message | A sees purple double tick; Details lists B with read time |
+| CH-80 | Bulk mark-read updates all own ticks | Two-user DM or game chat: A sends two messages with thread open; B opens chat (bulk mark-read) | Both of A's messages show read ticks and Details read state without A refreshing |
 | CH-40 | Scroll to replied | Tap reply preview | Scrolls to original |
 | CH-41 | Load older messages | Scroll up | Pagination loads history |
 | CH-42 | Jump to pinned | Tap pinned bar | Scrolls to message |

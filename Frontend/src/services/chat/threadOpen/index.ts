@@ -33,6 +33,7 @@ export { openThread } from '@/services/chat/threadOpen/openThread';
 export {
   THREAD_OPEN_SOCKET_GUARD_MS,
   beginThreadOpenSettling,
+  canFlushLiveSocketEvents,
   canFlushSocketBacklog,
   commitThreadOpenPaint,
   endThreadOpenSettling,

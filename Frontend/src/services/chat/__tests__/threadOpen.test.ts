@@ -3,6 +3,7 @@ import type { ChatMessageWithStatus } from '@/api/chat';
 import {
   THREAD_OPEN_SOCKET_GUARD_MS,
   beginThreadOpenSettling,
+  canFlushLiveSocketEvents,
   canFlushSocketBacklog,
   commitThreadOpenPaint,
   endThreadOpenSettling,
@@ -90,31 +91,37 @@ describe('threadOpen paint gating', () => {
     vi.useRealTimers();
   });
 
-  it('blocks socket flush until paint commits, settling ends, and guard elapses', () => {
-    expect(canFlushSocketBacklog(KEY)).toBe(false);
+  it('blocks live socket flush until paint commits', () => {
+    expect(canFlushLiveSocketEvents(KEY)).toBe(false);
     commitThreadOpenPaint(KEY);
     expect(isThreadOpenPaintCommitted(KEY)).toBe(true);
-    expect(canFlushSocketBacklog(KEY)).toBe(false);
-    endThreadOpenSettling();
-    expect(canFlushSocketBacklog(KEY)).toBe(false);
-    vi.advanceTimersByTime(THREAD_OPEN_SOCKET_GUARD_MS);
-    expect(canFlushSocketBacklog(KEY)).toBe(true);
+    expect(canFlushLiveSocketEvents(KEY)).toBe(true);
   });
 
-  it('blocks socket flush while settling even after guard elapses', () => {
+  it('allows live socket flush immediately after paint commit without guard or settling wait', () => {
     commitThreadOpenPaint(KEY);
     beginThreadOpenSettling();
-    vi.advanceTimersByTime(THREAD_OPEN_SOCKET_GUARD_MS + 50);
-    expect(canFlushSocketBacklog(KEY)).toBe(false);
-    endThreadOpenSettling();
+    expect(canFlushLiveSocketEvents(KEY)).toBe(true);
     expect(canFlushSocketBacklog(KEY)).toBe(true);
+    vi.advanceTimersByTime(0);
+    expect(canFlushLiveSocketEvents(KEY)).toBe(true);
   });
 
-  it('defers open reload within guard window after paint', () => {
+  it('live flush is not delayed by THREAD_OPEN_SOCKET_GUARD_MS', () => {
+    commitThreadOpenPaint(KEY);
+    endThreadOpenSettling();
+    expect(canFlushLiveSocketEvents(KEY)).toBe(true);
+    vi.advanceTimersByTime(THREAD_OPEN_SOCKET_GUARD_MS - 1);
+    expect(canFlushLiveSocketEvents(KEY)).toBe(true);
+  });
+
+  it('defers scroll-affecting open reload within guard window after paint', () => {
     expect(shouldDeferOpenReload()).toBe(false);
     commitThreadOpenPaint(KEY);
     expect(shouldDeferOpenReload()).toBe(true);
-    vi.advanceTimersByTime(THREAD_OPEN_SOCKET_GUARD_MS);
+    vi.advanceTimersByTime(THREAD_OPEN_SOCKET_GUARD_MS - 1);
+    expect(shouldDeferOpenReload()).toBe(true);
+    vi.advanceTimersByTime(1);
     expect(shouldDeferOpenReload()).toBe(false);
   });
 

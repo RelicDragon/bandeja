@@ -4,6 +4,11 @@ import type { ChatRoomEvent } from '@/store/socketEventsStore';
 
 const persistSocketInboundMessage = vi.fn<() => Promise<number>>();
 const dispatchChatSyncStale = vi.fn();
+const pullAndApplyChatSyncEventsDirect = vi.fn(async () => ({
+  repairedStaleCursor: false,
+  threadInvalidated: false,
+  eventsApplied: 1,
+}));
 vi.mock('@/utils/chatSyncStaleEvents', () => ({
   BANDEJA_CHAT_SYNC_STALE: 'bandeja:chat-sync-stale',
   dispatchChatSyncStale: (...args: unknown[]) => dispatchChatSyncStale(...args),
@@ -46,6 +51,11 @@ vi.mock('@/utils/chatScrollHelpers', () => ({
   scrollChatToBottomIfNearBottom: vi.fn(),
 }));
 
+vi.mock('@/services/chat/chatLocalApplyPull', () => ({
+  pullAndApplyChatSyncEventsDirect: (...args: unknown[]) => pullAndApplyChatSyncEventsDirect(...args),
+}));
+
+import { resolveOwnMessageTicks } from '@/services/chat/messageTickState';
 import { processChatRoomBatch, type ProcessChatRoomBatchCtx } from '../processChatRoomBatch';
 
 function inboundMessage(id: string, senderId = 'other-user'): ChatMessage {
@@ -193,5 +203,49 @@ describe('processChatRoomBatch inbound message', () => {
 
     expect(callOrder[0]).toBe('ui');
     expect(callOrder).toContain('persist');
+  });
+});
+
+describe('processChatRoomBatch allRead read receipt', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('updates all own message ticks on bulk mark-read without per-message ids', () => {
+    const own = (id: string): ChatMessageWithStatus => ({
+      ...inboundMessage(id, 'sender-a'),
+      status: 'sent',
+    });
+    const ctx = makeCtx({ userId: 'sender-a' });
+    ctx.setMessages([own('m1'), own('m2'), { ...inboundMessage('m3', 'other-b'), status: 'sent' }]);
+
+    processChatRoomBatch(
+      [
+        {
+          kind: 'readReceipt',
+          data: {
+            contextType: 'USER',
+            contextId: 'thread-1',
+            readReceipt: {
+              userId: 'reader-b',
+              readAt: '2026-01-01T01:00:00.000Z',
+              allRead: true,
+            },
+            syncSeq: 50,
+          },
+        },
+      ],
+      ctx
+    );
+
+    expect(resolveOwnMessageTicks(ctx.messagesRef.current[0]!)).toEqual({
+      tickRead: true,
+      tickDelivered: false,
+    });
+    expect(resolveOwnMessageTicks(ctx.messagesRef.current[1]!)).toEqual({
+      tickRead: true,
+      tickDelivered: false,
+    });
+    expect(pullAndApplyChatSyncEventsDirect).toHaveBeenCalledWith('USER', 'thread-1');
   });
 });

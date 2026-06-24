@@ -5,7 +5,8 @@ import { BANDEJA_CHAT_PINS_UPDATED } from '@/utils/chatPinsEvents';
 import { dispatchChatReadBatchApplied } from '@/utils/chatReadBatchEvents';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
 import type { ChatSyncPatch } from './chatSyncEventsToPatches';
-import { mergeReactionListSync, mergeReadReceiptSync } from './chatSyncEventsToPatches';
+import { mergeReactionListSync } from './chatSyncEventsToPatches';
+import { mergeReadReceipts } from './mergeReadReceipts';
 import { rowFromMessage } from './chatSyncRowUtils';
 import { putChatLocalRowsWithSearchTokens } from './chatLocalApplyWrite';
 
@@ -121,7 +122,7 @@ export async function applyChatSyncPatchesInSlice(
             userId: p.userId,
             readAt: p.readAt,
           };
-          const merged = mergeReadReceiptSync(receipts, p.userId, next);
+          const merged = mergeReadReceipts(receipts, next);
           writeRow({
             ...r,
             payload: { ...r.payload, readReceipts: merged },
@@ -147,7 +148,7 @@ export async function applyChatSyncPatchesInSlice(
           userId,
           readAt,
         };
-        const merged = mergeReadReceiptSync(receipts, userId, next);
+        const merged = mergeReadReceipts(receipts, next);
         writeRow({
           ...r,
           payload: { ...r.payload, readReceipts: merged },

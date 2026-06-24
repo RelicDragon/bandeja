@@ -105,12 +105,17 @@ export function msSinceThreadOpenPaintCommit(): number | null {
   return Date.now() - paintSession.paintCommittedAt;
 }
 
-/** Socket room backlog may flush after open paint commits, settling ends, and guard elapses. */
+/** Live tail socket events (messages, receipts, reactions) apply once open paint commits. */
+export function canFlushLiveSocketEvents(threadKey: string): boolean {
+  return isThreadOpenPaintCommitted(threadKey);
+}
+
+/**
+ * Full socket backlog flush — kept for tests documenting the scroll-reload guard split.
+ * Live events use {@link canFlushLiveSocketEvents}; reload paths use {@link shouldDeferOpenReload}.
+ */
 export function canFlushSocketBacklog(threadKey: string): boolean {
-  if (!isThreadOpenPaintCommitted(threadKey)) return false;
-  if (paintSession?.settling) return false;
-  const elapsed = msSinceThreadOpenPaintCommit();
-  return elapsed != null && elapsed >= THREAD_OPEN_SOCKET_GUARD_MS;
+  return canFlushLiveSocketEvents(threadKey);
 }
 
 /** Block full first-page reload briefly after open paint to avoid scroll flash. */

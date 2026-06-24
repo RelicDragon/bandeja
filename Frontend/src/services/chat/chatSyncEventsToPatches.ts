@@ -1,5 +1,5 @@
 import { ChatSyncEventType } from '@bandeja/chat-contract';
-import type { ChatMessage, MessageReaction, MessageReadReceipt } from '@/api/chat';
+import type { ChatMessage, MessageReaction } from '@/api/chat';
 import type { ChatSyncEventDTO } from './chatSyncEventTypes';
 
 export type ChatSyncPatch =
@@ -140,11 +140,3 @@ export function mergeReactionListSync(existing: MessageReaction[], reaction: Mes
   return [...others, reaction];
 }
 
-export function mergeReadReceiptSync(
-  receipts: MessageReadReceipt[],
-  userId: string,
-  next: MessageReadReceipt
-): MessageReadReceipt[] {
-  const others = receipts.filter((r) => r.userId !== userId);
-  return [...others, next];
-}
