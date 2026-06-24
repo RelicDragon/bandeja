@@ -510,8 +510,10 @@ function reduceMessageUpdated(
   event: MessageUpdatedEvent
 ): void {
   let changed = false;
+  let found = false;
   const next = state.messages.map((message) => {
     if (message.id !== event.messageId) return message;
+    found = true;
     const patch = event.message
       ? {
           ...event.message,
@@ -532,6 +534,10 @@ function reduceMessageUpdated(
     return updated;
   });
 
+  if (!found) {
+    state.effects.push({ type: 'persist', event });
+    return;
+  }
   if (!changed) return;
   state.messages = next;
   state.changed = true;
