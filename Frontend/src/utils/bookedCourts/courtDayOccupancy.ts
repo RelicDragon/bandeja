@@ -49,9 +49,10 @@ export function computeCourtDayOccupancy(
   bookings: BookedCourtSlot[],
   club: Club | undefined,
   selectedDate: Date,
+  referenceNow: Date = new Date(),
 ): Map<string, CourtDayOccupancy> {
   const stepMinutes = resolveSlotMinutes(club?.defaultSlotMinutes);
-  const availableSlots = getAvailableDaySlots(club, selectedDate);
+  const availableSlots = getAvailableDaySlots(club, selectedDate, referenceNow);
   const totalSlots = availableSlots.length;
   const availableSet = new Set(availableSlots);
   const result = new Map<string, CourtDayOccupancy>();

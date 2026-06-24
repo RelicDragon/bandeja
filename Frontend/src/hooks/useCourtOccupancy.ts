@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { gamesApi } from '@/api';
-import { Club, BookedCourtSlot } from '@/types';
+import { Club, Court, BookedCourtSlot } from '@/types';
 import { getClubTimezone, createDateFromClubTime } from './useGameTimeDuration';
 import {
   useBooktimeSnapshotRefresh,
@@ -8,12 +8,20 @@ import {
 } from './useBooktimeSnapshotRefresh';
 import { useAuthStore } from '@/store/authStore';
 import { bookedCourtsEqual } from '@/utils/bookedCourts/bookedCourtsEqual';
+import {
+  areAggregateSlotsUnconfirmed,
+  buildCourtTimeSlotMap,
+  filterBookingsByCourts,
+  isAggregateTimeBooked,
+  isAggregateTimeFullyExternallyBlocked,
+} from '@/utils/bookedCourts/aggregateSportCourtOccupancy';
 
 interface UseCourtOccupancyProps {
   clubId: string | null;
   selectedDate: Date;
   selectedCourt: string | null;
   club?: Club;
+  occupancyCourts?: Court[];
   snapshotRefreshEnabled?: boolean;
   enabled?: boolean;
 }
@@ -33,6 +41,7 @@ export const useCourtOccupancy = ({
   selectedDate,
   selectedCourt,
   club,
+  occupancyCourts,
   snapshotRefreshEnabled = true,
   enabled = true,
 }: UseCourtOccupancyProps) => {
@@ -145,10 +154,40 @@ export const useCourtOccupancy = ({
     void fetchBookedCourts();
   }, [fetchBookedCourts]);
 
+  const isAggregateOccupancy =
+    (!selectedCourt || selectedCourt === 'notBooked') &&
+    occupancyCourts != null &&
+    occupancyCourts.length > 0;
+
+  const relevantBookedCourts = useMemo(() => {
+    if (!isAggregateOccupancy || !occupancyCourts) return bookedCourts;
+    return filterBookingsByCourts(bookedCourts, occupancyCourts);
+  }, [bookedCourts, isAggregateOccupancy, occupancyCourts]);
+
+  const courtTimeMap = useMemo(() => {
+    if (!isAggregateOccupancy) return null;
+    return buildCourtTimeSlotMap(relevantBookedCourts, club, formatTimeInClubTimezone);
+  }, [relevantBookedCourts, isAggregateOccupancy, club]);
+
   const bookedSlots = useMemo(() => {
+    if (isAggregateOccupancy && courtTimeMap && occupancyCourts) {
+      const slotsMap = new Map<string, BookedSlotInfo[]>();
+      for (const [key, info] of courtTimeMap) {
+        const time = key.slice(key.indexOf(':') + 1);
+        const { courtId: _courtId, ...slotInfo } = info;
+        const existing = slotsMap.get(time);
+        if (existing) {
+          existing.push(slotInfo);
+        } else {
+          slotsMap.set(time, [slotInfo]);
+        }
+      }
+      return slotsMap;
+    }
+
     const slotsMap = new Map<string, BookedSlotInfo[]>();
 
-    bookedCourts.forEach((booking) => {
+    relevantBookedCourts.forEach((booking) => {
       const startDate = new Date(booking.startTime);
       const endDate = new Date(booking.endTime);
 
@@ -182,11 +221,14 @@ export const useCourtOccupancy = ({
     });
 
     return slotsMap;
-  }, [bookedCourts, club]);
+  }, [relevantBookedCourts, club, isAggregateOccupancy, courtTimeMap, occupancyCourts]);
 
   const isSlotBooked = useCallback((time: string): boolean => {
+    if (isAggregateOccupancy && courtTimeMap && occupancyCourts) {
+      return isAggregateTimeBooked(time, occupancyCourts, courtTimeMap);
+    }
     return bookedSlots.has(time);
-  }, [bookedSlots]);
+  }, [bookedSlots, isAggregateOccupancy, courtTimeMap, occupancyCourts]);
 
   const getBookedSlotInfo = useCallback((time: string): BookedSlotInfo[] | null => {
     return bookedSlots.get(time) || null;
@@ -201,7 +243,7 @@ export const useCourtOccupancy = ({
 
     const overlapping: BookedSlotInfo[] = [];
 
-    bookedCourts.forEach((booking) => {
+    relevantBookedCourts.forEach((booking) => {
       const bookingStartDate = new Date(booking.startTime);
       const bookingEndDate = new Date(booking.endTime);
 
@@ -228,25 +270,34 @@ export const useCourtOccupancy = ({
     });
 
     return overlapping;
-  }, [bookedCourts, club]);
+  }, [relevantBookedCourts, club]);
 
   const areAllSlotsUnconfirmed = useCallback((time: string): boolean => {
+    if (isAggregateOccupancy && courtTimeMap && occupancyCourts) {
+      return areAggregateSlotsUnconfirmed(time, occupancyCourts, courtTimeMap);
+    }
     const slots = bookedSlots.get(time);
     if (!slots || slots.length === 0) return false;
     return slots.every(slot => !slot.hasBookedCourt);
-  }, [bookedSlots]);
+  }, [bookedSlots, isAggregateOccupancy, courtTimeMap, occupancyCourts]);
 
   const hasExternallyBookedSlot = useCallback((time: string): boolean => {
+    if (isAggregateOccupancy && courtTimeMap && occupancyCourts) {
+      return isAggregateTimeFullyExternallyBlocked(time, occupancyCourts, courtTimeMap);
+    }
     const slots = bookedSlots.get(time);
     if (!slots || slots.length === 0) return false;
     return slots.some((slot) => slot.clubBooked || slot.holdBlocked);
-  }, [bookedSlots]);
+  }, [bookedSlots, isAggregateOccupancy, courtTimeMap, occupancyCourts]);
 
   const isSlotHardBlocked = useCallback((time: string): boolean => {
+    if (isAggregateOccupancy && courtTimeMap && occupancyCourts) {
+      return isAggregateTimeFullyExternallyBlocked(time, occupancyCourts, courtTimeMap);
+    }
     const slots = bookedSlots.get(time);
     if (!slots || slots.length === 0) return false;
     return slots.some((slot) => slot.clubBooked || slot.holdBlocked);
-  }, [bookedSlots]);
+  }, [bookedSlots, isAggregateOccupancy, courtTimeMap, occupancyCourts]);
 
   const externalSlotsLoading =
     isRefreshingSnapshot || loading || (isLoadingExternalSlots && liveApiLoading);

@@ -1,3 +1,4 @@
+import type { EntityType } from '@/types';
 import type { BooktimeCompany } from './client';
 
 export const DEFAULT_GAME_DURATIONS_HOURS = [1, 1.5, 2] as const;
@@ -7,6 +8,10 @@ export const BOOKTIME_FALLBACK_DURATIONS_MINUTES = [60, 120] as const;
 export function minutesToDurationHours(minutes: number): number {
   return minutes / 60;
 }
+
+export const BOOKTIME_FALLBACK_DURATIONS_HOURS = BOOKTIME_FALLBACK_DURATIONS_MINUTES.map(
+  minutesToDurationHours,
+);
 
 export function resolveBooktimeDurationsMinutes(company?: BooktimeCompany | null): number[] {
   const fromApi = company?.bookingDurations?.filter((m) => Number.isFinite(m) && m > 0);
@@ -26,4 +31,24 @@ export function pickClosestDurationOption(current: number, options: number[]): n
   const sorted = [...options].sort((a, b) => a - b);
   const lowerOrEqual = sorted.filter((d) => d <= current);
   return lowerOrEqual.length > 0 ? lowerOrEqual[lowerOrEqual.length - 1]! : sorted[0]!;
+}
+
+export function defaultDurationOptionsHours(entityType: EntityType): number[] {
+  if (entityType === 'TOURNAMENT') return [...DEFAULT_TOURNAMENT_DURATIONS_HOURS];
+  return [...DEFAULT_GAME_DURATIONS_HOURS];
+}
+
+export function resolveClubDurationOptions(params: {
+  entityType: EntityType;
+  useBooktimeCompanyDurations: boolean;
+  integrationDurationsHours: number[] | null;
+}): number[] {
+  const { entityType, useBooktimeCompanyDurations, integrationDurationsHours } = params;
+  if (!useBooktimeCompanyDurations) {
+    return defaultDurationOptionsHours(entityType);
+  }
+  if (integrationDurationsHours) {
+    return integrationDurationsHours;
+  }
+  return resolveBooktimeDurationsHours(null);
 }

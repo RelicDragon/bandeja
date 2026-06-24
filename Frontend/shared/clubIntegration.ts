@@ -15,6 +15,7 @@ export type ClubIntegrationRef = {
 };
 
 export type CourtIntegrationRef = {
+  id?: string;
   externalCourtId?: string | null;
 };
 
@@ -59,4 +60,19 @@ export function courtHasActiveBookingIntegration(
   if (!clubHasBookingIntegration(club)) return false;
   if (!court) return false;
   return Boolean(court.externalCourtId?.trim());
+}
+
+/** Booktime company durations apply when club is integrated and court selection still uses external booking. */
+export function shouldUseBooktimeCompanyDurations(
+  club: ClubIntegrationRef | undefined,
+  selectedCourtId: string | null | undefined,
+  courts: CourtIntegrationRef[] | undefined,
+): boolean {
+  if (!clubHasBookingIntegration(club)) return false;
+  if (selectedCourtId === 'notBooked') return false;
+  if (selectedCourtId) {
+    const court = courts?.find((c) => c.id === selectedCourtId);
+    return courtHasActiveBookingIntegration(club, court);
+  }
+  return true;
 }

@@ -19,19 +19,7 @@ type BooktimeConnectFormProps = {
   variant?: 'inline' | 'dialog';
 };
 
-function parseProfilePhone(phone: string | null | undefined): { countryCode: string; local: string } {
-  const digits = (phone ?? '').replace(/\D/g, '');
-  if (digits.startsWith('381')) {
-    return { countryCode: '+381', local: digits.slice(3) };
-  }
-  if (digits.startsWith('387')) {
-    return { countryCode: '+387', local: digits.slice(3) };
-  }
-  if (digits.length >= 9) {
-    return { countryCode: '+381', local: digits.slice(-9) };
-  }
-  return { countryCode: '+381', local: digits };
-}
+const DEFAULT_BOOKTIME_COUNTRY_CODE = '+381';
 
 export function BooktimeConnectForm({
   club,
@@ -40,12 +28,10 @@ export function BooktimeConnectForm({
   variant = 'dialog',
 }: BooktimeConnectFormProps) {
   const { t, i18n } = useTranslation();
-  const profilePhone = useAuthStore((s) => s.user?.phone);
-  const prefilled = useMemo(() => parseProfilePhone(profilePhone), [profilePhone]);
 
   const [step, setStep] = useState<ConnectStep>('phone');
-  const [countryCode, setCountryCode] = useState(prefilled.countryCode);
-  const [localPhone, setLocalPhone] = useState(prefilled.local);
+  const [countryCode, setCountryCode] = useState(DEFAULT_BOOKTIME_COUNTRY_CODE);
+  const [localPhone, setLocalPhone] = useState('');
   const [formattedPhone, setFormattedPhone] = useState('');
   const [firstName, setFirstName] = useState(useAuthStore.getState().user?.firstName ?? '');
   const [lastName, setLastName] = useState(useAuthStore.getState().user?.lastName ?? '');
@@ -63,13 +49,13 @@ export function BooktimeConnectForm({
 
   useEffect(() => {
     setStep('phone');
-    setCountryCode(prefilled.countryCode);
-    setLocalPhone(prefilled.local);
+    setCountryCode(DEFAULT_BOOKTIME_COUNTRY_CODE);
+    setLocalPhone('');
     setOtp('');
     setIsNewUser(false);
     setError(null);
     setBusy(false);
-  }, [club.id, prefilled.countryCode, prefilled.local]);
+  }, [club.id]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;

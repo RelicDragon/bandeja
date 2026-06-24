@@ -479,9 +479,9 @@ export const MonthCalendar = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={upcomingsToggle ? { height: 0, opacity: 0 } : undefined}
             transition={headerTransition}
-            className="overflow-hidden"
+            className={isCompactUpcomings ? 'overflow-hidden' : 'overflow-visible'}
           >
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-1 px-1.5">
             {weekDays.map((day, index) => (
               <div
                 key={index}
@@ -492,7 +492,7 @@ export const MonthCalendar = ({
             ))}
           </div>
 
-          <div className={`relative -m-2 ${isSliding ? 'overflow-hidden' : 'overflow-visible'}`}>
+          <div className={`relative ${isSliding ? 'overflow-hidden' : 'overflow-visible'}`}>
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={format(currentMonth, 'yyyy-MM')}
@@ -501,7 +501,7 @@ export const MonthCalendar = ({
                 exit={{ x: slideDirection * -56, opacity: 0 }}
                 transition={{ duration: 0.24, ease: 'easeOut' }}
                 onAnimationComplete={() => setIsSliding(false)}
-                className="grid grid-cols-7 gap-1 p-2"
+                className="grid grid-cols-7 gap-1 px-1.5 pt-1.5 pb-3"
               >
         {calendarDays.map((day, index) => {
           const isCurrentMonth = isSameMonth(day, currentMonth);

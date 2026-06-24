@@ -2,20 +2,27 @@ import type { Club } from '@/types';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { generateTimeSlots, resolveSlotMinutes } from './timeSlots';
 
-function getCurrentTimeInTimezone(timezone: string): { hour: number; minute: number } {
+function getCurrentTimeInTimezone(
+  timezone: string,
+  referenceNow: Date = new Date(),
+): { hour: number; minute: number } {
   const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: timezone,
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
   });
-  const parts = formatter.formatToParts(new Date());
+  const parts = formatter.formatToParts(referenceNow);
   const hour = parseInt(parts.find((p) => p.type === 'hour')?.value || '0', 10);
   const minute = parseInt(parts.find((p) => p.type === 'minute')?.value || '0', 10);
   return { hour, minute };
 }
 
-function isSameDateInTimezone(date1: Date, date2: Date, timezone: string): boolean {
+export function isSameCalendarDayInTimezone(
+  date1: Date,
+  date2: Date,
+  timezone: string,
+): boolean {
   const formatter = new Intl.DateTimeFormat('en-GB', {
     timeZone: timezone,
     year: 'numeric',
@@ -25,14 +32,22 @@ function isSameDateInTimezone(date1: Date, date2: Date, timezone: string): boole
   return formatter.format(date1) === formatter.format(date2);
 }
 
-export function getAvailableDaySlots(club: Club | undefined, date: Date): string[] {
+function isSameDateInTimezone(date1: Date, date2: Date, timezone: string): boolean {
+  return isSameCalendarDayInTimezone(date1, date2, timezone);
+}
+
+export function getAvailableDaySlots(
+  club: Club | undefined,
+  date: Date,
+  referenceNow: Date = new Date(),
+): string[] {
   const step = resolveSlotMinutes(club?.defaultSlotMinutes);
   const allSlots = generateTimeSlots(club?.openingTime, club?.closingTime, step);
   const clubTimezone = getClubTimezone(club);
-  const isToday = isSameDateInTimezone(date, new Date(), clubTimezone);
+  const isToday = isSameDateInTimezone(date, referenceNow, clubTimezone);
   if (!isToday) return allSlots;
 
-  const { hour, minute } = getCurrentTimeInTimezone(clubTimezone);
+  const { hour, minute } = getCurrentTimeInTimezone(clubTimezone, referenceNow);
   const nowMinutes = hour * 60 + minute;
   return allSlots.filter((time) => {
     const [h, m] = time.split(':').map(Number);

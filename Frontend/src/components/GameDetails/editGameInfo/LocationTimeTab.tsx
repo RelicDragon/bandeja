@@ -16,6 +16,7 @@ import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
 import { filterClubsBySport } from '@/utils/courtSport';
+import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import type { RefObject, ReactNode } from 'react';
 import type { BooktimeSnapshotBanner } from '@/hooks/useBooktimeSnapshotRefresh';
 
@@ -56,6 +57,7 @@ type LocationTimeTabProps = {
   needsBooktimeAuth?: boolean;
   booktimeFixedDates?: Date[];
   slotsLoading?: boolean;
+  booktimeSlotsActive?: boolean;
   connectedPhone?: string | null;
   bookableDaysHint?: number | null;
   authGateSection?: ReactNode;
@@ -101,6 +103,7 @@ export function LocationTimeTab({
   needsBooktimeAuth = false,
   booktimeFixedDates,
   slotsLoading = false,
+  booktimeSlotsActive = false,
   connectedPhone = null,
   bookableDaysHint = null,
   authGateSection,
@@ -137,14 +140,7 @@ export function LocationTimeTab({
   };
 
   const getDurationLabel = useCallback(
-    (dur: number) => {
-      if (dur === Math.floor(dur)) {
-        return t('createGame.hours', { count: dur });
-      }
-      const hours = Math.floor(dur);
-      const minutes = (dur % 1) * 60;
-      return t('createGame.hoursMinutes', { hours, minutes });
-    },
+    (dur: number) => formatGameDurationLabel(dur, t),
     [t],
   );
 
@@ -378,6 +374,8 @@ export function LocationTimeTab({
             selectedClub={selectedClub}
             selectedCourt={selectedCourt}
             club={club}
+            courts={courts}
+            preferredSport={game.sport}
             generateTimeOptions={generateTimeOptions}
             generateTimeOptionsForDate={generateTimeOptionsForDate}
             canAccommodateDuration={canAccommodateDuration}
@@ -401,6 +399,7 @@ export function LocationTimeTab({
             bookableDaysHint={bookableDaysHint}
             connectedPhone={connectedPhone}
             slotsLoading={slotsLoading || linkedBookingsHydrating}
+            booktimeSlotsActive={booktimeSlotsActive}
             snapshotOverlayEnabled={snapshotOverlayEnabled}
             snapshotLoading={snapshotLoading}
             snapshotBannerState={snapshotBannerState}

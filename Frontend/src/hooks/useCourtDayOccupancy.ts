@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { gamesApi } from '@/api';
 import type { BookedCourtSlot, Club, Court } from '@/types';
-import { createDateFromClubTime } from '@/hooks/useGameTimeDuration';
+import { createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { bookedCourtsEqual } from '@/utils/bookedCourts/bookedCourtsEqual';
 import { computeCourtDayOccupancy, type CourtDayOccupancy } from '@/utils/bookedCourts/courtDayOccupancy';
+import { isSameCalendarDayInTimezone } from '@/utils/clubSchedule/daySlots';
 
 interface UseCourtDayOccupancyProps {
   clubId: string | null;
@@ -23,6 +24,19 @@ export function useCourtDayOccupancy({
   const [bookings, setBookings] = useState<BookedCourtSlot[]>([]);
   const [loading, setLoading] = useState(false);
   const hasFetchedRef = useRef(false);
+  const [referenceNow, setReferenceNow] = useState(() => new Date());
+
+  const isSelectedClubToday = useMemo(() => {
+    if (!club) return false;
+    return isSameCalendarDayInTimezone(selectedDate, referenceNow, getClubTimezone(club));
+  }, [club, selectedDate, referenceNow]);
+
+  useEffect(() => {
+    if (!enabled || !isSelectedClubToday) return;
+    setReferenceNow(new Date());
+    const intervalId = window.setInterval(() => setReferenceNow(new Date()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, [enabled, isSelectedClubToday, selectedDate, club?.id]);
 
   const startOfDay = useMemo(() => {
     if (!clubId) return null;
@@ -80,8 +94,8 @@ export function useCourtDayOccupancy({
 
   const occupancyByCourtId = useMemo(
     (): Map<string, CourtDayOccupancy> =>
-      computeCourtDayOccupancy(courts, bookings, club, selectedDate),
-    [courts, bookings, club, selectedDate],
+      computeCourtDayOccupancy(courts, bookings, club, selectedDate, referenceNow),
+    [courts, bookings, club, selectedDate, referenceNow],
   );
 
   return { occupancyByCourtId, loading };

@@ -12,7 +12,7 @@ import { addHours, differenceInHours } from 'date-fns';
 import { createDateFromClubTime, formatTimeInClubTimezone } from '@/hooks/useGameTimeDuration';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
-import { isParticipantPlaying } from '@/utils/participantStatus';
+import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
@@ -266,15 +266,10 @@ export const EditLeagueGameTeamsModal = ({
     }
   }, [selectedClubId, activeTab, areTeamsFull]);
 
-  const getDurationLabel = useCallback((dur: number) => {
-    if (dur === Math.floor(dur)) {
-      return t('createGame.hours', { count: dur });
-    } else {
-      const hours = Math.floor(dur);
-      const minutes = (dur % 1) * 60;
-      return t('createGame.hoursMinutes', { hours, minutes });
-    }
-  }, [t]);
+  const getDurationLabel = useCallback(
+    (dur: number) => formatGameDurationLabel(dur, t),
+    [t],
+  );
 
   const handleClose = () => {
     onClose();

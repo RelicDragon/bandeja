@@ -398,6 +398,9 @@ export const EditGameInfoModal = ({
 
   const handleEditCourtSelect = useCallback(
     (id: string) => {
+      setWhenSelectedTime('');
+      setHookTime('');
+
       if (id === 'notBooked') {
         setSelectedCourtIds([]);
         setWhere((s) => ({ ...s, courtId: '' }));
@@ -417,7 +420,7 @@ export const EditGameInfoModal = ({
         return capped;
       });
     },
-    [multiCourtMode, game.maxParticipants, modalCourts.length],
+    [multiCourtMode, game.maxParticipants, modalCourts.length, setHookTime],
   );
 
   const handleEditCourtIdsSync = useCallback((ids: string[]) => {
@@ -754,6 +757,7 @@ export const EditGameInfoModal = ({
               needsBooktimeAuth={needsBooktimeAuth}
               booktimeFixedDates={willBookOnEdit ? booktimeFixedDates : undefined}
               slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
+              booktimeSlotsActive={booktimeTimeOptions.active}
               connectedPhone={booktimeAuth?.phoneNumber ?? null}
               bookableDaysHint={willBookOnEdit ? booktimeCompanyMeta.bookableDays : null}
               authGateSection={

@@ -7,8 +7,13 @@ import { SelectedTimeSummary } from '@/components/createGame/SelectedTimeSummary
 import { useReservationGridSync } from '@/components/gameLocationTime/useReservationGridSync';
 import {
   mapBookingsToTimeGridCells,
-  type TimeGridCellReservationState,
 } from '@shared/gameBooking/mapBookingsToTimeGridCells';
+import {
+  resolveOccupancyCellClasses,
+  resolveSelectionCellClasses,
+  SELECTION_TINT_OVERLAY_CLASS,
+  shouldShowGameTimeSelectionCheck,
+} from '@/components/createGame/timeSlotCellStyles';
 
 interface BookedSlotInfo {
   courtName: string | null;
@@ -91,48 +96,6 @@ function groupBookedSlots(bookedSlotInfo: BookedSlotInfo[]) {
   }
 
   return grouped;
-}
-
-function resolveSlotButtonClasses(args: {
-  isSelected: boolean;
-  isHighlighted: boolean;
-  isBooked: boolean;
-  allUnconfirmed: boolean;
-  isExternallyBooked: boolean;
-  reservationCell: TimeGridCellReservationState | null;
-}): string {
-  const {
-    isSelected,
-    isHighlighted,
-    isBooked,
-    allUnconfirmed,
-    isExternallyBooked,
-    reservationCell,
-  } = args;
-
-  if (reservationCell?.hasSelectedReservation) {
-    return 'bg-emerald-200 dark:bg-emerald-900/40 text-emerald-950 dark:text-emerald-50 border-2 border-emerald-500 dark:border-emerald-400 ring-1 ring-emerald-400/70';
-  }
-  if (isSelected && !reservationCell?.hasReservation) {
-    return 'bg-primary-500 text-white';
-  }
-  if (reservationCell?.hasReservation) {
-    return 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-200/80 dark:hover:bg-emerald-900/50';
-  }
-  if (isHighlighted) {
-    return 'bg-primary-200 dark:bg-primary-800 text-primary-800 dark:text-primary-200 border border-primary-400 dark:border-primary-600';
-  }
-  if (isBooked) {
-    if (isExternallyBooked) {
-      return allUnconfirmed
-        ? 'bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-500 border border-red-200 dark:border-red-900/30'
-        : 'bg-red-200 dark:bg-red-900/30 text-red-800 dark:text-red-300 border border-red-400 dark:border-red-700';
-    }
-    return allUnconfirmed
-      ? 'bg-yellow-50 dark:bg-yellow-900/10 text-yellow-600 dark:text-yellow-500 border border-yellow-200 dark:border-yellow-900/30'
-      : 'bg-yellow-200 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-400 dark:border-yellow-700';
-  }
-  return 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700';
 }
 
 export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
@@ -225,6 +188,13 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                 const reservationCell = reservationCellMap?.[time] ?? null;
 
                 const blockHardBookedSlot = hideOccupancyOverlay && isHardBlocked;
+                const isInSelectedRange =
+                  Boolean(selectedTime) &&
+                  (entityType === 'BAR' ? isSelected : isHighlighted);
+                const showGameTimeSelection = shouldShowGameTimeSelectionCheck({
+                  isInSelectedRange,
+                  reservationCell,
+                });
 
                 const handleTimeClick = () => {
                   if (entityType !== 'BAR' && blockHardBookedSlot) return;
@@ -256,26 +226,35 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                     type="button"
                     disabled={entityType !== 'BAR' && blockHardBookedSlot}
                     onClick={handleTimeClick}
-                    className={`relative w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${resolveSlotButtonClasses(
+                    className={`relative overflow-hidden w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${resolveOccupancyCellClasses(
                       {
-                        isSelected,
-                        isHighlighted,
                         isBooked,
                         allUnconfirmed,
                         isExternallyBooked,
                         reservationCell,
                       },
-                    )}`}
+                    )} ${resolveSelectionCellClasses(showGameTimeSelection)}`}
                   >
+                    {showGameTimeSelection ? (
+                      <span className={SELECTION_TINT_OVERLAY_CLASS} aria-hidden />
+                    ) : null}
+                    {showGameTimeSelection ? (
+                      <span
+                        className="absolute top-0.5 right-0.5 z-[1] flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary-500 text-white shadow-sm dark:bg-primary-400 dark:text-gray-900"
+                        aria-hidden
+                      >
+                        <Check size={9} strokeWidth={3} />
+                      </span>
+                    ) : null}
                     {reservationCell?.hasSelectedReservation ? (
-                      <Check size={12} className="absolute top-1 right-1 text-emerald-700 dark:text-emerald-200" />
+                      <Check size={12} className="absolute top-1 right-1 z-[1] text-emerald-700 dark:text-emerald-200" />
                     ) : null}
                     {reservationCell?.isAmbiguous ? (
-                      <span className="absolute top-0.5 left-0.5 min-w-[14px] h-[14px] px-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold leading-[14px]">
+                      <span className="absolute top-0.5 left-0.5 z-[1] min-w-[14px] h-[14px] px-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-bold leading-[14px]">
                         {reservationCell.coveringBookingIds.length}
                       </span>
                     ) : null}
-                    {time}
+                    <span className="relative z-[1]">{time}</span>
                   </button>
                 );
               })}
@@ -298,7 +277,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
       </div>
       {!slotsLoading ? (
         <SelectedTimeSummary
-          selectedTime={selectedTime}
+          selectedTime={selectedTime && times.includes(selectedTime) ? selectedTime : ''}
           duration={duration}
           durationLabel={entityType !== 'BAR' && duration ? getDurationLabel(duration) : undefined}
           entityType={entityType}
@@ -306,7 +285,9 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
       ) : null}
       {!hideOccupancyOverlay && groupedBookedSlots.length > 0 ? (
         (() => {
-          const hasExternalBooking = groupedBookedSlots.some((info) => info.clubBooked);
+          const hasExternalBooking = selectedTime
+            ? hasExternallyBookedSlot(selectedTime)
+            : groupedBookedSlots.some((info) => info.clubBooked);
           const bgColor = hasExternalBooking
             ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
             : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';

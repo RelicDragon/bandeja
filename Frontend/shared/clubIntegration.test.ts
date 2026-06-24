@@ -5,6 +5,7 @@ import {
   getBooktimeCompanyId,
   isBooktimeClub,
   parseBooktimeIntegrationConfig,
+  shouldUseBooktimeCompanyDurations,
 } from './clubIntegration';
 
 describe('parseBooktimeIntegrationConfig', () => {
@@ -69,5 +70,43 @@ describe('club integration predicates', () => {
     expect(courtHasActiveBookingIntegration(integratedClub, {})).toBe(false);
     expect(courtHasActiveBookingIntegration(integratedClub, undefined)).toBe(false);
     expect(clubHasBookingIntegration(integratedClub)).toBe(true);
+  });
+});
+
+describe('shouldUseBooktimeCompanyDurations', () => {
+  const integratedClub = {
+    integrationType: 'BOOKTIME' as const,
+    integrationConfig: { companyId: 'company-1' },
+  };
+  const mappedCourt = { id: 'court-1', externalCourtId: 'ext-1' };
+  const unmappedCourt = { id: 'court-2', externalCourtId: '' };
+
+  it('uses company durations when club is integrated and no court is selected', () => {
+    expect(shouldUseBooktimeCompanyDurations(integratedClub, null, [mappedCourt])).toBe(true);
+    expect(shouldUseBooktimeCompanyDurations(integratedClub, undefined, [mappedCourt])).toBe(true);
+  });
+
+  it('uses defaults when user opts out of court booking', () => {
+    expect(shouldUseBooktimeCompanyDurations(integratedClub, 'notBooked', [mappedCourt])).toBe(false);
+  });
+
+  it('uses company durations only for mapped courts', () => {
+    expect(shouldUseBooktimeCompanyDurations(integratedClub, 'court-1', [mappedCourt, unmappedCourt])).toBe(
+      true,
+    );
+    expect(shouldUseBooktimeCompanyDurations(integratedClub, 'court-2', [mappedCourt, unmappedCourt])).toBe(
+      false,
+    );
+  });
+
+  it('uses defaults when club has no external booking', () => {
+    expect(shouldUseBooktimeCompanyDurations(undefined, 'court-1', [mappedCourt])).toBe(false);
+    expect(
+      shouldUseBooktimeCompanyDurations(
+        { integrationType: 'BOOKTIME', integrationConfig: { companyId: ' ' } },
+        'court-1',
+        [mappedCourt],
+      ),
+    ).toBe(false);
   });
 });

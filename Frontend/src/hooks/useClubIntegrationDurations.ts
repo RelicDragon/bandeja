@@ -1,24 +1,31 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { Club, EntityType } from '@/types';
+import type { Club, Court, EntityType } from '@/types';
 import { BooktimeClient } from '@/integrations/booktime/client';
 import { loadBooktimeCompany } from '@/integrations/booktime/bookFlow';
-import {
-  DEFAULT_GAME_DURATIONS_HOURS,
-  DEFAULT_TOURNAMENT_DURATIONS_HOURS,
-  resolveBooktimeDurationsHours,
-} from '@/integrations/booktime/durations';
-import { getBooktimeCompanyId } from '@shared/clubIntegration';
+import { resolveBooktimeDurationsHours, resolveClubDurationOptions } from '@/integrations/booktime/durations';
+import { getBooktimeCompanyId, shouldUseBooktimeCompanyDurations } from '@shared/clubIntegration';
 
-function defaultDurationOptions(entityType: EntityType): number[] {
-  if (entityType === 'TOURNAMENT') return [...DEFAULT_TOURNAMENT_DURATIONS_HOURS];
-  return [...DEFAULT_GAME_DURATIONS_HOURS];
-}
+export type ClubIntegrationDurationsContext = {
+  selectedCourtId?: string | null;
+  courts?: Court[];
+};
 
-export function useClubIntegrationDurations(club: Club | undefined, entityType: EntityType) {
+export function useClubIntegrationDurations(
+  club: Club | undefined,
+  entityType: EntityType,
+  context?: ClubIntegrationDurationsContext,
+) {
   const [integrationDurationsHours, setIntegrationDurationsHours] = useState<number[] | null>(null);
   const [loading, setLoading] = useState(false);
 
   const companyId = getBooktimeCompanyId(club) ?? undefined;
+  const selectedCourtId = context?.selectedCourtId;
+  const courts = context?.courts;
+
+  const useBooktimeCompanyDurations = useMemo(
+    () => shouldUseBooktimeCompanyDurations(club, selectedCourtId, courts),
+    [club, selectedCourtId, courts],
+  );
 
   useEffect(() => {
     if (!companyId) {
@@ -51,12 +58,22 @@ export function useClubIntegrationDurations(club: Club | undefined, entityType: 
     };
   }, [club?.id, companyId]);
 
-  const durationOptions = useMemo(() => {
-    if (integrationDurationsHours) return integrationDurationsHours;
-    return defaultDurationOptions(entityType);
-  }, [integrationDurationsHours, entityType]);
+  const durationOptions = useMemo(
+    () =>
+      resolveClubDurationOptions({
+        entityType,
+        useBooktimeCompanyDurations,
+        integrationDurationsHours,
+      }),
+    [entityType, useBooktimeCompanyDurations, integrationDurationsHours],
+  );
 
-  const usesIntegrationDurations = !!integrationDurationsHours;
+  const usesIntegrationDurations =
+    useBooktimeCompanyDurations && (loading || integrationDurationsHours !== null);
 
-  return { durationOptions, loading, usesIntegrationDurations };
+  return {
+    durationOptions,
+    loading: useBooktimeCompanyDurations && loading,
+    usesIntegrationDurations,
+  };
 }

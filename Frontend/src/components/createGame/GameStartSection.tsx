@@ -3,15 +3,21 @@ import { useTranslation } from 'react-i18next';
 import { useEffect, useMemo, RefObject, type ReactNode } from 'react';
 import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
+import { CreateGameDurationSelector } from '@/components/createGame/CreateGameDurationSelector';
 import { CreateGameTimeSlots } from '@/components/createGame/CreateGameTimeSlots';
 import { AnimatePresence, motion } from 'framer-motion';
-import { EntityType, Club, Court } from '@/types';
+import { EntityType, Club, Court, Sport } from '@/types';
 import { getTimezoneOffsetString, isTimezoneDifferent } from '@/hooks/useGameTimeDuration';
 import { useCourtOccupancy } from '@/hooks/useCourtOccupancy';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { useClubIntegrationDurations } from '@/hooks/useClubIntegrationDurations';
 import { pickClosestDurationOption } from '@/integrations/booktime/durations';
 import type { BooktimeSnapshotBanner } from '@/hooks/useBooktimeSnapshotRefresh';
+import {
+  effectiveCourtSportFilter,
+  filterCourtsByClubSports,
+  filterCourtsBySport,
+} from '@/utils/courtSport';
 
 interface GameStartSectionProps {
   selectedDate: Date;
@@ -48,6 +54,7 @@ interface GameStartSectionProps {
   bookableDaysHint?: number | null;
   connectedPhone?: string | null;
   slotsLoading?: boolean;
+  booktimeSlotsActive?: boolean;
   existingBookingBanner?: ReactNode;
   snapshotOverlayEnabled?: boolean;
   snapshotLoading?: boolean;
@@ -55,6 +62,7 @@ interface GameStartSectionProps {
   panelMode?: 'create' | 'edit';
   clubs?: Club[];
   courts?: Court[];
+  preferredSport?: Sport | null;
   isClubModalOpen?: boolean;
   onSelectClub?: (id: string) => void;
   onOpenClubModal?: () => void;
@@ -95,6 +103,7 @@ export const GameStartSection = ({
   bookableDaysHint,
   connectedPhone,
   slotsLoading = false,
+  booktimeSlotsActive = false,
   existingBookingBanner,
   snapshotOverlayEnabled = false,
   snapshotLoading = false,
@@ -102,13 +111,17 @@ export const GameStartSection = ({
   panelMode = 'create',
   clubs,
   courts,
+  preferredSport,
   isClubModalOpen = false,
   onSelectClub,
   onOpenClubModal,
   onCloseClubModal,
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
-  const { durationOptions } = useClubIntegrationDurations(club, entityType);
+  const { durationOptions } = useClubIntegrationDurations(club, entityType, {
+    selectedCourtId: selectedCourt,
+    courts,
+  });
 
   useEffect(() => {
     if (entityType === 'BAR' || durationOptions.length === 0) return;
@@ -118,11 +131,20 @@ export const GameStartSection = ({
 
   const bookedCourtsEnabled = !hideOccupancyOverlay && !needsBooktimeAuth;
 
+  const occupancyCourts = useMemo(() => {
+    if (!courts?.length) return undefined;
+    if (selectedCourt && selectedCourt !== 'notBooked') return undefined;
+    const sportFilter = effectiveCourtSportFilter(club?.sports, preferredSport ?? undefined);
+    const clubCourts = filterCourtsByClubSports(courts, club?.sports);
+    return filterCourtsBySport(clubCourts, sportFilter);
+  }, [courts, club?.sports, preferredSport, selectedCourt]);
+
   const { isSlotBooked, getBookedSlotInfo, getOverlappingBookings, areAllSlotsUnconfirmed, hasExternallyBookedSlot, isSlotHardBlocked, isLoadingExternalSlots, snapshotBanner: bookedCourtsBanner, refetch } = useCourtOccupancy({
     clubId: bookedCourtsEnabled ? selectedClub || null : null,
     selectedDate,
     selectedCourt: selectedCourt || null,
     club,
+    occupancyCourts,
     snapshotRefreshEnabled: !bookCourtEnabled,
     enabled: bookedCourtsEnabled,
   });
@@ -138,6 +160,40 @@ export const GameStartSection = ({
   }, [selectedTime, duration, entityType, getOverlappingBookings, getBookedSlotInfo, hideOccupancyOverlay]);
 
   const timeOptions = useMemo(() => generateTimeOptions(), [generateTimeOptions]);
+  const hasTimeSlots = timeOptions.length > 0;
+  const showDurationPicker =
+    entityType !== 'BAR' &&
+    durationOptions.length > 0 &&
+    (slotsLoading || hasTimeSlots || booktimeSlotsActive);
+  const showTimePicker = slotsLoading || hasTimeSlots;
+
+  useEffect(() => {
+    if (slotsLoading || needsBooktimeAuth) return;
+    if (!selectedTime) return;
+
+    if (!hasTimeSlots) {
+      onTimeSelect('');
+      return;
+    }
+
+    const isValidSelection = booktimeSlotsActive
+      ? canAccommodateDuration(selectedTime, duration)
+      : timeOptions.includes(selectedTime);
+
+    if (!isValidSelection) {
+      onTimeSelect('');
+    }
+  }, [
+    slotsLoading,
+    needsBooktimeAuth,
+    hasTimeSlots,
+    selectedTime,
+    onTimeSelect,
+    timeOptions,
+    booktimeSlotsActive,
+    canAccommodateDuration,
+    duration,
+  ]);
 
   useEffect(() => {
     if (showDatePicker && dateInputRef.current) {
@@ -230,58 +286,48 @@ export const GameStartSection = ({
 
   const timeSlotsSection = (
     <>
-      {entityType !== 'BAR' && (
-        <div>
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400">
-              {t('createGame.duration')}
-            </label>
-            {connectedPhone ? (
-              <span className="text-[10px] font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/40 px-2 py-0.5 rounded-full">
-                {t('createGame.booktime.connectedChip', { phone: connectedPhone })}
-              </span>
-            ) : null}
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {durationOptions.map((dur) => (
-              <button
-                key={dur}
-                type="button"
-                onClick={() => onDurationChange(dur)}
-                className={`h-10 rounded-lg font-semibold text-sm transition-all ${
-                  duration === dur
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-              >
-                {getDurationLabel(dur)}
-              </button>
-            ))}
-          </div>
+      {showDurationPicker ? (
+        <CreateGameDurationSelector
+          duration={duration}
+          durationOptions={durationOptions}
+          getDurationLabel={getDurationLabel}
+          onDurationChange={onDurationChange}
+          connectedPhone={connectedPhone}
+        />
+      ) : null}
+      {!needsBooktimeAuth && !slotsLoading && !hasTimeSlots ? (
+        <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400">
+          {t(
+            booktimeSlotsActive
+              ? 'createGame.noTimeSlotsForDuration'
+              : 'createGame.noTimeSlotsForDate',
+          )}
         </div>
-      )}
-      <CreateGameTimeSlots
-        times={timeOptions}
-        selectedTime={selectedTime}
-        duration={duration}
-        entityType={entityType}
-        club={club}
-        hideOccupancyOverlay={hideOccupancyOverlay}
-        slotsLoading={slotsLoading}
-        timezoneLabel={showTimezone && timezoneString ? timezoneString : undefined}
-        isSlotBooked={isSlotBooked}
-        areAllSlotsUnconfirmed={areAllSlotsUnconfirmed}
-        hasExternallyBookedSlot={hasExternallyBookedSlot}
-        isSlotHardBlocked={isSlotHardBlocked}
-        canAccommodateDuration={canAccommodateDuration}
-        getAdjustedStartTime={getAdjustedStartTime}
-        isSlotHighlighted={isSlotHighlighted}
-        onTimeSelect={onTimeSelect}
-        bookedSlotInfo={bookedSlotInfo}
-        getDurationLabel={getDurationLabel}
-        availabilityOverlay={availabilityOverlay}
-        availabilityOverlayLoading={availabilityOverlayLoading}
-      />
+      ) : null}
+      {showTimePicker ? (
+        <CreateGameTimeSlots
+          times={timeOptions}
+          selectedTime={selectedTime}
+          duration={duration}
+          entityType={entityType}
+          club={club}
+          hideOccupancyOverlay={hideOccupancyOverlay}
+          slotsLoading={slotsLoading}
+          timezoneLabel={showTimezone && timezoneString ? timezoneString : undefined}
+          isSlotBooked={isSlotBooked}
+          areAllSlotsUnconfirmed={areAllSlotsUnconfirmed}
+          hasExternallyBookedSlot={hasExternallyBookedSlot}
+          isSlotHardBlocked={isSlotHardBlocked}
+          canAccommodateDuration={canAccommodateDuration}
+          getAdjustedStartTime={getAdjustedStartTime}
+          isSlotHighlighted={isSlotHighlighted}
+          onTimeSelect={onTimeSelect}
+          bookedSlotInfo={bookedSlotInfo}
+          getDurationLabel={getDurationLabel}
+          availabilityOverlay={availabilityOverlay}
+          availabilityOverlayLoading={availabilityOverlayLoading}
+        />
+      ) : null}
     </>
   );
 

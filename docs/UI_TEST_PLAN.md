@@ -459,7 +459,9 @@ Frontend/e2e/
 | C-14l | Create-game multi-court selection | Set max participants > 4; open court grid | Hint shows required court count; tap toggles courts up to min(ceil(participants/4), club courts); numbered badges on selected cards |
 | C-14m | Create-game multi-court create | Create game with 2+ courts selected | Game created with `courtIds`; primary `courtId` is first; gameCourts populated |
 | C-14n | Create-game selected time summary | Pick club + date + duration; tap a time slot | Below time grid, card shows selected start → end and duration badge; updates when time or duration changes |
+| C-14p | Create-game no time slots | Pick club/court/date with zero available slots (or late day with no times left) | No time grid or duration (except BOOKTIME: duration stays to try another length); dashed hint explains no times; no stale selected-slot summary |
 | C-14o | Create-game direct create overlay | Create without reservation pipeline (no integrated book confirm) | Page fades; fullscreen creating overlay; brief success; navigates to calendar |
+| C-14s | Create-game no court camera link | Select court with `webCameraUrl` on create-game | No “watch live” / web camera card below court grid; cameras remain on game details after create |
 | C-14 | Court not booked | Select "Don't book court" | Allowed |
 | C-15 | Court booked | Pick court | Overlap warning if conflict |
 | C-16 | Mark court booked modal | Confirm booking | Court marked |

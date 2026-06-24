@@ -17,6 +17,7 @@ import { useGameFormat } from '@/hooks/useGameFormat';
 import { useClampGameFormatToSport } from '@/hooks/useSportGameFormatLimits';
 import { resolveUserCurrency } from '@/utils/currency';
 import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
+import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
 import type { CreateGameBookingOverrides } from '@/hooks/createGameBookingFlow';
 import { useCreateGameBookingFlow } from '@/hooks/createGameBookingFlow';
@@ -321,6 +322,8 @@ export const CreateGame = ({
 
   const handleCourtSelect = useCallback(
     (id: string) => {
+      setSelectedTime('');
+
       if (id === 'notBooked') {
         setSelectedCourtIds([]);
         return;
@@ -339,7 +342,7 @@ export const CreateGame = ({
         return [...prev, id];
       });
     },
-    [multiCourtMode, maxParticipants, courts.length],
+    [multiCourtMode, maxParticipants, courts.length, setSelectedTime],
   );
 
   const bookingFlow = useCreateGameBookingFlow({
@@ -850,15 +853,7 @@ export const CreateGame = ({
   }, [pendingAvatarFiles]);
 
   const getDurationLabel = useCallback(
-    (dur: number) => {
-      if (dur === Math.floor(dur)) {
-        return t('createGame.hours', { count: dur });
-      } else {
-        const hours = Math.floor(dur);
-        const minutes = (dur % 1) * 60;
-        return t('createGame.hoursMinutes', { hours, minutes });
-      }
-    },
+    (dur: number) => formatGameDurationLabel(dur, t),
     [t],
   );
 
@@ -1511,6 +1506,8 @@ export const CreateGame = ({
                       selectedClub={selectedClub}
                       selectedCourt={selectedCourt}
                       club={selectedClubData}
+                      courts={courts}
+                      preferredSport={selectedSport}
                       generateTimeOptions={resolvedGenerateTimeOptions}
                       generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
                       canAccommodateDuration={resolvedCanAccommodateDuration}
@@ -1533,6 +1530,7 @@ export const CreateGame = ({
                       bookableDaysHint={willBookOnCreate ? booktimeCompanyMeta.bookableDays : null}
                       connectedPhone={booktimeAuth?.phoneNumber ?? null}
                       slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
+                      booktimeSlotsActive={booktimeTimeOptions.active}
                       snapshotOverlayEnabled={willBookOnCreate && !needsBooktimeAuth}
                       snapshotLoading={isRefreshingSnapshot}
                       snapshotBannerState={createGameSnapshotBanner}
@@ -1546,6 +1544,7 @@ export const CreateGame = ({
               <GameStartSection
                 clubs={clubsForSport}
                 courts={courts}
+                preferredSport={selectedSport}
                 isClubModalOpen={isClubModalOpen}
                 onSelectClub={(id: string) => {
                   setSelectedClub(id);
@@ -1575,6 +1574,8 @@ export const CreateGame = ({
                 entityType={entityType}
                 dateInputRef={dateInputRef}
                 courtSection={courtSection}
+                slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
+                booktimeSlotsActive={booktimeTimeOptions.active}
               />
             )}
           </div>
