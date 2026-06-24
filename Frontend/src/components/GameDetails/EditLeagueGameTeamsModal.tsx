@@ -16,6 +16,7 @@ import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
+import { isParticipantPlaying } from '@/utils/participantStatus';
 
 interface EditLeagueGameTeamsModalProps {
   isOpen: boolean;
