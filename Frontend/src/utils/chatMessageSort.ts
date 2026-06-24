@@ -1,4 +1,5 @@
 import type { ChatMessage, ChatMessageWithStatus, MessageReadReceipt } from '@/api/chat';
+import { readReceiptsFingerprint } from '@/services/chat/readReceiptsFingerprint';
 import { mergeReadReceiptSync } from '@/services/chat/chatSyncEventsToPatches';
 import { stripPendingOptimisticsMatchedByServer } from '@/services/chat/optimisticReconcile';
 import { compareChatMessagesAscending } from '@/utils/chatMessageCompare';
@@ -35,6 +36,11 @@ export function mergeChatMessagesAscending(
     else if (shouldPreferIncomingMessage(cur, m)) {
       const readReceipts = mergeMessageReadReceipts(cur.readReceipts ?? [], m.readReceipts ?? []);
       map.set(m.id, { ...cur, ...m, readReceipts } as ChatMessageWithStatus);
+    } else {
+      const readReceipts = mergeMessageReadReceipts(cur.readReceipts ?? [], m.readReceipts ?? []);
+      if (readReceiptsFingerprint(readReceipts) !== readReceiptsFingerprint(cur.readReceipts)) {
+        map.set(m.id, { ...cur, readReceipts } as ChatMessageWithStatus);
+      }
     }
   }
   const merged = Array.from(map.values()).sort(compareChatMessagesAscending);

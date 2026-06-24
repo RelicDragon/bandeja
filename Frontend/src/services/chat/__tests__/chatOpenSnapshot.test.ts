@@ -24,6 +24,23 @@ describe('chatOpenMessagesSnapshotEqual', () => {
     const b = [{ id: '1', updatedAt: '2020-01-02' }] as const;
     expect(chatOpenMessagesSnapshotEqual(a, b)).toBe(false);
   });
+
+  it('detects read-receipt-only changes with same ids and updatedAt', () => {
+    const receipt = {
+      id: 'rr1',
+      messageId: '1',
+      userId: 'u2',
+      readAt: '2020-01-01T12:00:00.000Z',
+    };
+    const base = {
+      id: '1',
+      updatedAt: '2020-01-01',
+      readReceipts: [],
+    };
+    const a = [base] as const;
+    const b = [{ ...base, readReceipts: [receipt] }] as const;
+    expect(chatOpenMessagesSnapshotEqual(a, b)).toBe(false);
+  });
 });
 
 describe('chatOpenLikelyHasOlderMessages', () => {

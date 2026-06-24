@@ -60,4 +60,32 @@ describe('mergeChatMessagesAscending', () => {
     expect(merged[0]!.content).toBe('prev');
     expect(merged[0]!.readReceipts).toEqual([receipt]);
   });
+
+  it('merges Dexie read receipts when in-memory row wins on sort key', () => {
+    const prevReceipt = {
+      id: 'rr1',
+      messageId: 'm1',
+      userId: 'u2',
+      readAt: '2026-01-01T01:00:00.000Z',
+    };
+    const dexieReceipt = {
+      id: 'rr2',
+      messageId: 'm1',
+      userId: 'u3',
+      readAt: '2026-01-01T02:00:00.000Z',
+    };
+    const prev = [msg('m1', { readReceipts: [prevReceipt], content: 'live' })];
+    const incoming = [
+      msg('m1', {
+        readReceipts: [dexieReceipt],
+        content: 'dexie',
+      }),
+    ];
+    const merged = mergeChatMessagesAscending(prev, incoming);
+    expect(merged[0]!.content).toBe('live');
+    expect(merged[0]!.readReceipts).toEqual(
+      expect.arrayContaining([prevReceipt, dexieReceipt])
+    );
+    expect(merged[0]!.readReceipts).toHaveLength(2);
+  });
 });

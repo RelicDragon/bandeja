@@ -1,4 +1,5 @@
 import type { ChatMessage, ChatMessageWithStatus } from '@/api/chat';
+import { readReceiptsFingerprint } from '@/services/chat/readReceiptsFingerprint';
 import {
   mergeChatMessagesAscending,
   mergeServerPageWithPendingOptimistics,
@@ -153,7 +154,7 @@ export function chatOpenMessageIdsEqual(
   return true;
 }
 
-/** Id + updatedAt — reconcile may refresh bodies without changing row count. */
+/** Id + updatedAt + read receipts — reconcile may refresh bodies/receipts without changing row count. */
 export function chatOpenMessagesSnapshotEqual(
   a: readonly ChatMessageWithStatus[],
   b: readonly ChatMessageWithStatus[]
@@ -161,6 +162,9 @@ export function chatOpenMessagesSnapshotEqual(
   if (!chatOpenMessageIdsEqual(a, b)) return false;
   for (let i = 0; i < a.length; i++) {
     if (a[i]!.updatedAt !== b[i]!.updatedAt) return false;
+    if (readReceiptsFingerprint(a[i]!.readReceipts) !== readReceiptsFingerprint(b[i]!.readReceipts)) {
+      return false;
+    }
   }
   return true;
 }
