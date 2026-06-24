@@ -148,8 +148,12 @@ export interface AllReadEvent {
 export interface MessageUpdatedEvent {
   readonly type: 'messageUpdated';
   readonly messageId: string;
-  readonly content: string;
-  readonly updatedAt: string;
+  readonly syncSeq?: number;
+  readonly content?: string;
+  readonly updatedAt?: string;
+  readonly message?: ChatMessage;
+  readonly audioTranscription?: ChatMessage['audioTranscription'];
+  readonly poll?: ChatMessage['poll'];
 }
 
 /**
@@ -159,6 +163,7 @@ export interface MessageUpdatedEvent {
 export interface MessageDeletedEvent {
   readonly type: 'messageDeleted';
   readonly messageId: string;
+  readonly syncSeq?: number;
   readonly deletedAt: string;
 }
 
@@ -170,6 +175,7 @@ export interface ReactionEvent {
   readonly type: 'reaction';
   readonly messageId: string;
   readonly reaction: MessageReaction;
+  readonly syncSeq?: number;
   readonly removed?: boolean;
 }
 
@@ -506,18 +512,24 @@ function reduceMessageUpdated(
   let changed = false;
   const next = state.messages.map((message) => {
     if (message.id !== event.messageId) return message;
-    if (message.content === event.content && message.updatedAt === event.updatedAt) {
+    const patch = event.message
+      ? {
+          ...event.message,
+          translation: undefined,
+          translations: undefined,
+        }
+      : {
+          ...(event.content !== undefined ? { content: event.content } : {}),
+          ...(event.updatedAt !== undefined ? { updatedAt: event.updatedAt, editedAt: event.updatedAt } : {}),
+          ...(event.audioTranscription !== undefined ? { audioTranscription: event.audioTranscription } : {}),
+          ...(event.poll !== undefined ? { poll: event.poll } : {}),
+        };
+    const updated = { ...message, ...patch };
+    if (projectionMessagesEqual([message], [updated])) {
       return message;
     }
     changed = true;
-    return {
-      ...message,
-      content: event.content,
-      updatedAt: event.updatedAt,
-      editedAt: event.updatedAt,
-      translation: undefined,
-      translations: undefined,
-    };
+    return updated;
   });
 
   if (!changed) return;
@@ -532,7 +544,10 @@ function reduceMessageDeleted(
   event: MessageDeletedEvent
 ): void {
   const next = state.messages.filter((message) => message.id !== event.messageId);
-  if (next.length === state.messages.length) return;
+  if (next.length === state.messages.length) {
+    state.effects.push({ type: 'persist', event });
+    return;
+  }
   state.messages = next;
   state.changed = true;
   state.effects.push({ type: 'persist', event });
@@ -544,8 +559,10 @@ function reduceReaction(
   event: ReactionEvent
 ): void {
   let changed = false;
+  let found = false;
   const next = state.messages.map((message) => {
     if (message.id !== event.messageId) return message;
+    found = true;
     const withoutUserReaction = message.reactions.filter((reaction) => reaction.userId !== event.reaction.userId);
     const reactions = event.removed ? withoutUserReaction : [...withoutUserReaction, event.reaction];
     if (reactionsFingerprint(message.reactions) === reactionsFingerprint(reactions)) {
@@ -555,6 +572,10 @@ function reduceReaction(
     return { ...message, reactions };
   });
 
+  if (!found) {
+    state.effects.push({ type: 'persist', event });
+    return;
+  }
   if (!changed) return;
   state.messages = next;
   state.changed = true;
@@ -717,6 +738,12 @@ function projectionMessagesEqual(
     if (left.deletedAt !== right.deletedAt) return false;
     if (left.state !== right.state) return false;
     if (left.content !== right.content) return false;
+    if (JSON.stringify(left.audioTranscription ?? null) !== JSON.stringify(right.audioTranscription ?? null)) {
+      return false;
+    }
+    if (JSON.stringify(left.poll ?? null) !== JSON.stringify(right.poll ?? null)) {
+      return false;
+    }
     if (left._status !== right._status) return false;
     if (reactionsFingerprint(left.reactions) !== reactionsFingerprint(right.reactions)) {
       return false;

@@ -21,7 +21,6 @@ import {
   type ProcessChatRoomBatchCtx,
 } from '@/services/chat/chatThreadController/processChatRoomBatch';
 import type { ThreadLiveConfig } from '@/services/chat/threadLiveProjection';
-import type { ChatRoomEvent } from '@/store/socketEventsStore';
 
 export interface UseThreadSocketParams {
   id: string | undefined;
@@ -31,11 +30,7 @@ export interface UseThreadSocketParams {
   userId: string | undefined;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
-  chatContainerRef: RefObject<HTMLDivElement | null>;
   onInboundMessage?: (message: import('@/api/chat').ChatMessage) => void;
-  handleMessageReaction: (reaction: any) => void;
-  handleMessageDeleted: (data: { messageId: string }) => void;
-  handleMessageUpdated: (updated: import('@/api/chat').ChatMessage) => void;
   reloadMessagesFirstPage: () => void | Promise<void>;
   onAfterSocketBatch?: () => void;
   /** Bumps when open paint commits — re-flush pending socket batches queued before paint. */
@@ -50,11 +45,7 @@ export function useThreadSocket({
   userId,
   setMessages,
   messagesRef,
-  chatContainerRef,
   onInboundMessage,
-  handleMessageReaction,
-  handleMessageDeleted,
-  handleMessageUpdated,
   reloadMessagesFirstPage,
   onAfterSocketBatch,
   openPaintGeneration = 0,
@@ -68,7 +59,6 @@ export function useThreadSocket({
   const syncRequiredEpoch = useSocketEventsStore((s) => s.syncRequiredEpoch);
   const lastSyncRequired = useSocketEventsStore((s) => s.lastSyncRequired);
   const syncEpochBaselineRef = useRef<number | null>(null);
-  const pendingSocketEventsRef = useRef<ChatRoomEvent[]>([]);
   const roomProcessorCtx = useMemo(
     (): ProcessChatRoomBatchCtx => {
       const threadLiveConfig: ThreadLiveConfig | undefined = id
@@ -85,13 +75,9 @@ export function useThreadSocket({
         contextType,
         effectiveChatType,
         userId,
-        chatContainerRef,
         setMessages,
         messagesRef,
         onInboundMessage,
-        handleMessageReaction,
-        handleMessageDeleted,
-        handleMessageUpdated,
         threadLiveConfig: threadLiveConfig!,
       };
     },
@@ -100,13 +86,9 @@ export function useThreadSocket({
       contextType,
       effectiveChatType,
       userId,
-      chatContainerRef,
       setMessages,
       messagesRef,
       onInboundMessage,
-      handleMessageReaction,
-      handleMessageDeleted,
-      handleMessageUpdated,
     ]
   );
 
@@ -118,7 +100,6 @@ export function useThreadSocket({
     setupSocket();
     return () => {
       socketService.leaveChatRoom(contextType, id);
-      pendingSocketEventsRef.current = [];
     };
   }, [id, contextType]);
 
@@ -139,15 +120,6 @@ export function useThreadSocket({
 
   useEffect(() => {
     if (!roomKey || !id) return;
-
-    const batch = useSocketEventsStore.getState().takeChatRoomQueue(roomKey);
-    if (batch.length > 0) {
-      pendingSocketEventsRef.current = pendingSocketEventsRef.current.concat(batch);
-    }
-  }, [roomPushSeq, roomKey, id]);
-
-  useEffect(() => {
-    if (!roomKey || !id) return;
     const tailKey = chatSyncTailKey(
       contextType,
       id,
@@ -159,8 +131,7 @@ export function useThreadSocket({
         scheduleAfterThreadPaint(flush);
         return;
       }
-      const batch = pendingSocketEventsRef.current;
-      pendingSocketEventsRef.current = [];
+      const batch = useSocketEventsStore.getState().takeChatRoomQueue(roomKey);
       if (batch.length === 0) return;
       processChatRoomBatch(batch, roomProcessorCtx);
       onAfterSocketBatch?.();

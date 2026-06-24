@@ -4,6 +4,9 @@ import type { ChatRoomEvent } from '@/store/socketEventsStore';
 
 const persistSocketInboundMessage = vi.fn<() => Promise<number>>();
 const dispatchChatSyncStale = vi.fn();
+const persistReactionSocketPayload = vi.fn(async () => {});
+const markLocalMessageDeleted = vi.fn(async () => {});
+const onSocketSyncSeq = vi.fn(async () => {});
 const pullAndApplyChatSyncEventsDirect = vi.fn(async () => ({
   repairedStaleCursor: false,
   threadInvalidated: false,
@@ -21,10 +24,10 @@ vi.mock('@/services/chat/chatLocalApply', async (importOriginal) => {
     persistSocketInboundMessage: (...args: unknown[]) => persistSocketInboundMessage(...args),
     applyThreadEvent: vi.fn(async () => 0),
     applyThreadL1Put: vi.fn(async () => 0),
-    persistReactionSocketPayload: vi.fn(async () => {}),
-    onSocketSyncSeq: vi.fn(async () => {}),
+    persistReactionSocketPayload: (...args: unknown[]) => persistReactionSocketPayload(...args),
+    onSocketSyncSeq: (...args: unknown[]) => onSocketSyncSeq(...args),
     patchLocalReadReceipt: vi.fn(async () => {}),
-    markLocalMessageDeleted: vi.fn(async () => {}),
+    markLocalMessageDeleted: (...args: unknown[]) => markLocalMessageDeleted(...args),
     persistSocketTranscriptionAndSyncSeq: vi.fn(async () => {}),
     persistSocketPollVoteAndSyncSeq: vi.fn(async () => {}),
   };
@@ -87,13 +90,9 @@ function makeCtx(
     contextType: 'USER',
     effectiveChatType: 'PUBLIC',
     userId: 'viewer-user',
-    chatContainerRef: { current: null },
     setMessages,
     messagesRef,
     onInboundMessage: vi.fn(),
-    handleMessageReaction: vi.fn(),
-    handleMessageDeleted: vi.fn(),
-    handleMessageUpdated: vi.fn(),
     threadLiveConfig: {
       contextType: 'USER',
       contextId: 'thread-1',
@@ -374,7 +373,7 @@ describe('processChatRoomBatch with Thread Live Projection (Phase 2)', () => {
     expect(ctx.messagesRef.current[0]?.readReceipts[0]?.userId).toBe('reader-b');
   });
 
-  it('handles stub events (reaction, deleted, messageUpdated) via legacy handlers regardless of config', () => {
+  it('routes reaction and deleted socket events through the projection', () => {
     const ctx = makeCtx({
       threadLiveConfig: {
         contextType: 'USER',
@@ -413,8 +412,12 @@ describe('processChatRoomBatch with Thread Live Projection (Phase 2)', () => {
       ctx
     );
 
-    // Legacy handlers should be called for stub events
-    expect(ctx.handleMessageReaction).toHaveBeenCalled();
-    expect(ctx.handleMessageDeleted).toHaveBeenCalledWith({ messageId: 'm1' });
+    expect(ctx.messagesRef.current).toHaveLength(0);
+    expect(persistReactionSocketPayload).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'm1', userId: 'user-1', emoji: '👍' })
+    );
+    expect(markLocalMessageDeleted).toHaveBeenCalledWith('m1', expect.any(String));
+    expect(onSocketSyncSeq).toHaveBeenCalledWith('USER', 'thread-1', 52);
+    expect(onSocketSyncSeq).toHaveBeenCalledWith('USER', 'thread-1', 53);
   });
 });
