@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import type { ChatMessage, UserChat } from '@/api/chat';
+import type { UserChat } from '@/api/chat';
 import { logReloadMessagesFirstPage } from '@/services/chat/chatOpenTrace';
 import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
@@ -7,17 +7,8 @@ import { ChatThreadController } from './ChatThreadController';
 import { useThreadMessages, type UseThreadMessagesParams } from './useThreadMessages';
 import { useThreadOptimistic } from './useThreadOptimistic';
 import { useThreadOpenEffects } from './useThreadOpenEffects';
-import { useThreadSocket, type UseThreadSocketParams } from './useThreadSocket';
+import { useThreadSocket } from './useThreadSocket';
 import { useThreadDomain } from './useThreadDomain';
-
-export type ChatThreadSocketHandlers = Pick<
-  UseThreadSocketParams,
-  | 'handleMessageReaction'
-  | 'handleReadReceipt'
-  | 'handleMessageDeleted'
-  | 'fetchPinnedMessages'
-  | 'handleMessageUpdated'
->;
 
 export type UseChatThreadControllerParams = UseThreadMessagesParams & {
   user: { id: string; language?: string | null; isAdmin?: boolean | null } | null;
@@ -38,7 +29,6 @@ export type UseChatThreadControllerParams = UseThreadMessagesParams & {
   setIsLoadingContext: (v: boolean) => void;
   isBlockedByUser: boolean;
   isJoiningAsGuest: boolean;
-  socketHandlersRef: React.MutableRefObject<ChatThreadSocketHandlers | null>;
 };
 
 export function useChatThreadController(params: UseChatThreadControllerParams) {
@@ -59,7 +49,6 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     setIsLoadingContext,
     isBlockedByUser,
     isJoiningAsGuest,
-    socketHandlersRef,
     id,
     contextType,
     effectiveChatType,
@@ -99,7 +88,6 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     handleRemoveFromQueue,
     handleSendFailed,
     handleReplaceOptimisticWithServerMessage,
-    handleNewMessage: handleNewMessageFromOptimistic,
     handleNewMessageRef,
   } = useThreadOptimistic({
     id,
@@ -133,34 +121,13 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     endScrollTargetSession: session.endScrollTargetSession,
     isBlockedByUser,
     isJoiningAsGuest,
-    socketHandlersRef,
   });
-
-  const onInboundRef = useRef(domain.onInboundMessage);
-  onInboundRef.current = domain.onInboundMessage;
-
-  const handleNewMessage = useCallback(
-    (message: ChatMessage) => {
-      onInboundRef.current?.(message);
-      return handleNewMessageFromOptimistic(message);
-    },
-    [handleNewMessageFromOptimistic]
-  );
-
-  useEffect(() => {
-    handleNewMessageRef.current = handleNewMessage;
-  }, [handleNewMessage, handleNewMessageRef]);
 
   const reloadMessagesFirstPage = useCallback(async () => {
     if (!id) return;
     logReloadMessagesFirstPage(contextType, id);
     await loadMessages(false, contextType === 'GAME' ? effectiveChatType : undefined);
   }, [id, contextType, effectiveChatType, loadMessages]);
-
-  const noopReaction = useCallback(() => {}, []);
-  const noopDeleted = useCallback((_data: { messageId: string }) => {}, []);
-  const noopUpdated = useCallback((_updated: ChatMessage) => {}, []);
-  const noopFetchPinned = useCallback(() => {}, []);
 
   useThreadOpenEffects({
     id,
@@ -202,12 +169,10 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     setMessages: session.setMessages,
     messagesRef: session.messagesRef,
     chatContainerRef,
-    handleNewMessage,
-    handleMessageReaction: (r) => socketHandlersRef.current?.handleMessageReaction(r) ?? noopReaction(),
-    handleReadReceipt: (r) => socketHandlersRef.current?.handleReadReceipt(r) ?? noopReaction(),
-    handleMessageDeleted: (d) => socketHandlersRef.current?.handleMessageDeleted(d) ?? noopDeleted(d),
-    fetchPinnedMessages: () => socketHandlersRef.current?.fetchPinnedMessages() ?? noopFetchPinned(),
-    handleMessageUpdated: (m) => socketHandlersRef.current?.handleMessageUpdated(m) ?? noopUpdated(m),
+    onInboundMessage: domain.onInboundMessage,
+    handleMessageReaction: domain.handleMessageReaction,
+    handleMessageDeleted: domain.handleMessageDeleted,
+    handleMessageUpdated: domain.handleMessageUpdated,
     reloadMessagesFirstPage,
     onAfterSocketBatch: session.pinAfterSocketMergeIfAllowed,
     openPaintGeneration: session.openPaintGeneration,
@@ -283,7 +248,6 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     handleRemoveFromQueue,
     handleSendFailed,
     handleReplaceOptimisticWithServerMessage,
-    handleNewMessage,
     handleNewMessageRef,
     reloadMessagesFirstPage,
   };

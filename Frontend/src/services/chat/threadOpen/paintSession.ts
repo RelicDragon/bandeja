@@ -20,6 +20,7 @@ import {
 import { decideReconcilePinApply } from '@/services/chat/threadScrollPolicy';
 import { commitChatOpenMessages, traceChatOpenLength } from '@/services/chat/chatOpenTrace';
 import { consumeOpenThreadNetworkPrefetch } from '@/services/chat/openThreadNetworkPrefetch';
+import { reduceThreadLiveSnapshot } from '@/services/chat/threadLiveProjection';
 
 /** Socket backlog + open reload guard after first paint commit. */
 export const THREAD_OPEN_SOCKET_GUARD_MS = 300;
@@ -223,10 +224,20 @@ export async function reconcileAfterPaint(
       if (dexieTail.length > 0) {
         next = mergeOpenSnapshot(next, dexieTail, []);
       }
+      const projected = reduceThreadLiveSnapshot(
+        messagesRef.current,
+        [{ type: 'hydrateSnapshot', messages: next }],
+        {
+          contextType,
+          contextId,
+          viewerUserId: '',
+          gameChatTypeFilter: contextType === 'GAME' ? gameChatType : undefined,
+        }
+      ).next;
 
-      if (!chatOpenMessagesSnapshotEqual(messagesRef.current, next)) {
-        commitChatOpenMessages(messagesRef, (v) => setMessages(v), next, 'reconcile-batched');
-        traceChatOpenLength('afterReconcile', next.length);
+      if (!chatOpenMessagesSnapshotEqual(messagesRef.current, projected)) {
+        commitChatOpenMessages(messagesRef, (v) => setMessages(v), projected, 'reconcile-batched');
+        traceChatOpenLength('afterReconcile', projected.length);
         await applyThreadEvent({ kind: 'syncTailsFromHeads', contextType, contextId });
         committedRows = true;
       }

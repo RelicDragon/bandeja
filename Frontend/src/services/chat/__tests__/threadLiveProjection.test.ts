@@ -139,7 +139,7 @@ describe('reduceThreadLiveSnapshot', () => {
       });
       const teamMessage = createMessage({
         id: 'msg-2',
-        chatType: 'TEAM',
+        chatType: 'PRIVATE',
         senderId: 'other-user',
       });
       const events: InboundMessageEvent[] = [
@@ -415,8 +415,8 @@ describe('reduceThreadLiveSnapshot', () => {
     });
   });
 
-  describe('stub events', () => {
-    it('marks changed for stub events (messageUpdated, messageDeleted, reaction)', () => {
+  describe('message mutation events', () => {
+    it('applies messageUpdated and messageDeleted events', () => {
       const prev = [createMessage({ id: 'msg-1' })];
 
       const updatedResult = reduceThreadLiveSnapshot(
@@ -425,7 +425,8 @@ describe('reduceThreadLiveSnapshot', () => {
         USER_CONFIG
       );
       expect(updatedResult.changed).toBe(true);
-      expect(updatedResult.effects).toHaveLength(1); // persist
+      expect(updatedResult.next[0].content).toBe('Updated');
+      expect(updatedResult.effects.map((effect) => effect.type)).toEqual(['persist', 'l1Put']);
 
       const deletedResult = reduceThreadLiveSnapshot(
         prev,
@@ -433,7 +434,223 @@ describe('reduceThreadLiveSnapshot', () => {
         USER_CONFIG
       );
       expect(deletedResult.changed).toBe(true);
-      expect(deletedResult.effects).toHaveLength(1); // persist
+      expect(deletedResult.next).toHaveLength(0);
+      expect(deletedResult.effects.map((effect) => effect.type)).toEqual(['persist', 'l1Put']);
+    });
+
+    it('applies reaction events', () => {
+      const prev = [createMessage({ id: 'msg-1' })];
+
+      const addedResult = reduceThreadLiveSnapshot(
+        prev,
+        [
+          {
+            type: 'reaction',
+            messageId: 'msg-1',
+            reaction: {
+              id: 'reaction-1',
+              messageId: 'msg-1',
+              userId: 'reader-1',
+              emoji: ':thumbsup:',
+              createdAt: '2026-01-01T01:00:00.000Z',
+              user: { id: 'reader-1', firstName: 'Reader' },
+            },
+          },
+        ],
+        USER_CONFIG
+      );
+      expect(addedResult.changed).toBe(true);
+      expect(addedResult.next[0].reactions).toHaveLength(1);
+
+      const removedResult = reduceThreadLiveSnapshot(
+        addedResult.next,
+        [
+          {
+            type: 'reaction',
+            messageId: 'msg-1',
+            removed: true,
+            reaction: addedResult.next[0].reactions[0]!,
+          },
+        ],
+        USER_CONFIG
+      );
+      expect(removedResult.changed).toBe(true);
+      expect(removedResult.next[0].reactions).toHaveLength(0);
+    });
+  });
+
+  describe('Phase 3: Optimistic Send/ACK', () => {
+    it('optimisticSend adds message with SENDING status', () => {
+      const prev: ChatMessageWithStatus[] = [];
+      const optimisticMsg = createMessage({
+        id: 'temp-1',
+        senderId: 'viewer-1',
+        clientMutationId: 'c1',
+      });
+
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [{ type: 'optimisticSend', message: optimisticMsg }],
+        USER_CONFIG
+      );
+
+      expect(result.next).toHaveLength(1);
+      expect(result.next[0]._status).toBe('SENDING');
+      expect(result.next[0].id).toBe('temp-1');
+      expect(result.changed).toBe(true);
+      expect(result.effects).toContainEqual({ type: 'l1Put', messages: result.next });
+    });
+
+    it('messageAck replaces optimistic message with server message', () => {
+      const optimisticMsg = createMessage({
+        id: 'temp-1',
+        senderId: 'viewer-1',
+        clientMutationId: 'c1',
+        _status: 'SENDING',
+      });
+      const prev = [optimisticMsg];
+
+      const serverMsg = { ...optimisticMsg, id: 'real-1', _status: undefined };
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [{ type: 'messageAck', clientId: 'c1', message: serverMsg }],
+        USER_CONFIG
+      );
+
+      expect(result.next).toHaveLength(1);
+      expect(result.next[0].id).toBe('real-1');
+      expect(result.next[0]._status).toBeUndefined();
+      expect(result.changed).toBe(true);
+    });
+
+    it('messageAck falls back to inbound if clientId not found', () => {
+      const prev: ChatMessageWithStatus[] = [];
+      const serverMsg = createMessage({ id: 'real-1' });
+
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [{ type: 'messageAck', clientId: 'missing', message: serverMsg }],
+        USER_CONFIG
+      );
+
+      expect(result.next).toHaveLength(1);
+      expect(result.next[0].id).toBe('real-1');
+      expect(result.changed).toBe(true);
+    });
+  });
+
+  describe('Phase 3: Reconcile Hydrate', () => {
+    it('hydrateSnapshot merges with current live state', () => {
+      const liveMsg = createMessage({ id: 'live-1', createdAt: '2026-01-01T00:01:00.000Z' });
+      const prev = [liveMsg];
+
+      const hydratedMsgs = [
+        createMessage({ id: 'old-1', createdAt: '2026-01-01T00:00:00.000Z' }),
+        createMessage({ id: 'live-1', createdAt: '2026-01-01T00:01:00.000Z' }), // Duplicate
+      ];
+
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [{ type: 'hydrateSnapshot', messages: hydratedMsgs }],
+        USER_CONFIG
+      );
+
+      expect(result.next).toHaveLength(2);
+      expect(result.next.map((m) => m.id)).toEqual(['old-1', 'live-1']);
+      expect(result.changed).toBe(true);
+    });
+
+    it('hydrateSnapshot preserves pending optimistic messages', () => {
+      const optimisticMsg = createMessage({ id: 'temp-1', _status: 'SENDING', createdAt: '2026-01-01T00:02:00.000Z' });
+      const prev = [optimisticMsg];
+
+      const hydratedMsgs = [createMessage({ id: 'old-1', createdAt: '2026-01-01T00:00:00.000Z' })];
+
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [{ type: 'hydrateSnapshot', messages: hydratedMsgs }],
+        USER_CONFIG
+      );
+
+      expect(result.next).toHaveLength(2);
+      expect(result.next.find((m) => m.id === 'temp-1')).toBeDefined();
+      expect(result.next.find((m) => m.id === 'temp-1')?._status).toBe('SENDING');
+    });
+
+    it('hydrateSnapshot updates read receipts when message ids are unchanged', () => {
+      const prev = [
+        createMessage({
+          id: 'msg-1',
+          senderId: 'viewer-1',
+          readReceipts: [],
+        }),
+      ];
+      const hydratedMsgs = [
+        createMessage({
+          id: 'msg-1',
+          senderId: 'viewer-1',
+          readReceipts: [
+            {
+              id: 'receipt-msg-1-reader-1',
+              messageId: 'msg-1',
+              userId: 'reader-1',
+              readAt: '2026-01-01T00:05:00.000Z',
+            },
+          ],
+        }),
+      ];
+
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [{ type: 'hydrateSnapshot', messages: hydratedMsgs }],
+        USER_CONFIG
+      );
+
+      expect(result.changed).toBe(true);
+      expect(result.next).toHaveLength(1);
+      expect(result.next[0].readReceipts).toHaveLength(1);
+      expect(result.next[0].readReceipts?.[0]?.userId).toBe('reader-1');
+      expect(result.effects).toContainEqual({ type: 'l1Put', messages: result.next });
+    });
+
+    it('hydrateSnapshot applies newer message fields when ids are unchanged', () => {
+      const prev = [
+        createMessage({
+          id: 'msg-1',
+          content: 'Before edit',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        }),
+      ];
+      const hydratedMsgs = [
+        createMessage({
+          id: 'msg-1',
+          content: 'After edit',
+          updatedAt: '2026-01-01T00:10:00.000Z',
+        }),
+      ];
+
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [{ type: 'hydrateSnapshot', messages: hydratedMsgs }],
+        USER_CONFIG
+      );
+
+      expect(result.changed).toBe(true);
+      expect(result.next[0].content).toBe('After edit');
+      expect(result.next[0].updatedAt).toBe('2026-01-01T00:10:00.000Z');
+    });
+
+    it('is idempotent if hydrated snapshot matches current exactly', () => {
+      const msg1 = createMessage({ id: 'msg-1' });
+      const prev = [msg1];
+
+      const result = reduceThreadLiveSnapshot(
+        prev,
+        [{ type: 'hydrateSnapshot', messages: [msg1] }],
+        USER_CONFIG
+      );
+
+      expect(result.changed).toBe(false);
     });
   });
 });

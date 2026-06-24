@@ -90,14 +90,15 @@ function makeCtx(
     chatContainerRef: { current: null },
     setMessages,
     messagesRef,
-    handleNewMessage: vi.fn((message: ChatMessage) => {
-      setMessages((prev) => [...prev, { ...message, status: 'sent' as const }]);
-    }),
+    onInboundMessage: vi.fn(),
     handleMessageReaction: vi.fn(),
-    handleReadReceipt: vi.fn(),
     handleMessageDeleted: vi.fn(),
-    fetchPinnedMessages: vi.fn(),
     handleMessageUpdated: vi.fn(),
+    threadLiveConfig: {
+      contextType: 'USER',
+      contextId: 'thread-1',
+      viewerUserId: 'viewer-user',
+    },
     ...overrides,
   };
 }
@@ -173,7 +174,7 @@ describe('processChatRoomBatch inbound message', () => {
     });
   });
 
-  it('calls handleNewMessage synchronously without waiting on persist', () => {
+  it('calls onInboundMessage synchronously without waiting on persist', () => {
     const callOrder: string[] = [];
     persistSocketInboundMessage.mockImplementation(async () => {
       callOrder.push('persist');
@@ -181,7 +182,7 @@ describe('processChatRoomBatch inbound message', () => {
     });
 
     const ctx = makeCtx({
-      handleNewMessage: vi.fn(() => {
+      onInboundMessage: vi.fn(() => {
         callOrder.push('ui');
       }),
     });
@@ -217,6 +218,11 @@ describe('processChatRoomBatch allRead read receipt', () => {
       status: 'sent',
     });
     const ctx = makeCtx({ userId: 'sender-a' });
+    ctx.threadLiveConfig = {
+      contextType: 'USER',
+      contextId: 'thread-1',
+      viewerUserId: 'sender-a',
+    };
     ctx.setMessages([own('m1'), own('m2'), { ...inboundMessage('m3', 'other-b'), status: 'sent' }]);
 
     processChatRoomBatch(
@@ -247,5 +253,168 @@ describe('processChatRoomBatch allRead read receipt', () => {
       tickDelivered: false,
     });
     expect(pullAndApplyChatSyncEventsDirect).toHaveBeenCalledWith('USER', 'thread-1');
+  });
+});
+
+describe('processChatRoomBatch with Thread Live Projection (Phase 2)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    persistSocketInboundMessage.mockResolvedValue(1);
+  });
+
+  it('routes inbound message through reducer when threadLiveConfig is provided', async () => {
+    const ctx = makeCtx({
+      threadLiveConfig: {
+        contextType: 'USER',
+        contextId: 'thread-1',
+        viewerUserId: 'viewer-user',
+      },
+    });
+
+    processChatRoomBatch(
+      [
+        {
+          kind: 'message',
+          data: {
+            contextType: 'USER',
+            contextId: 'thread-1',
+            message: inboundMessage('m1', 'other-user'),
+            messageId: 'm1',
+            syncSeq: 42,
+          },
+        },
+      ],
+      ctx
+    );
+
+    expect(ctx.messagesRef.current.some((m) => m.id === 'm1')).toBe(true);
+    expect(persistSocketInboundMessage).toHaveBeenCalled();
+    expect(ctx.onInboundMessage).toHaveBeenCalledWith(expect.objectContaining({ id: 'm1' }));
+  });
+
+  it('routes readReceipt with allRead through reducer', async () => {
+    const own = (id: string): ChatMessageWithStatus => ({
+      ...inboundMessage(id, 'sender-a'),
+      status: 'sent',
+    });
+    const ctx = makeCtx({
+      userId: 'sender-a',
+      threadLiveConfig: {
+        contextType: 'USER',
+        contextId: 'thread-1',
+        viewerUserId: 'sender-a',
+      },
+    });
+    ctx.setMessages([own('m1'), own('m2'), { ...inboundMessage('m3', 'other-b'), status: 'sent' }]);
+
+    processChatRoomBatch(
+      [
+        {
+          kind: 'readReceipt',
+          data: {
+            contextType: 'USER',
+            contextId: 'thread-1',
+            readReceipt: {
+              userId: 'reader-b',
+              readAt: '2026-01-01T01:00:00.000Z',
+              allRead: true,
+            },
+            syncSeq: 50,
+          },
+        },
+      ],
+      ctx
+    );
+
+    // Reducer should have applied read receipts to own messages
+    expect(resolveOwnMessageTicks(ctx.messagesRef.current[0]!)).toEqual({
+      tickRead: true,
+      tickDelivered: false,
+    });
+    expect(resolveOwnMessageTicks(ctx.messagesRef.current[1]!)).toEqual({
+      tickRead: true,
+      tickDelivered: false,
+    });
+    // Third message (not own) should not have read receipt
+    expect(ctx.messagesRef.current[2]?.readReceipts).toHaveLength(0);
+
+    expect(pullAndApplyChatSyncEventsDirect).toHaveBeenCalledWith('USER', 'thread-1');
+  });
+
+  it('routes single-message readReceipt through reducer', async () => {
+    const ctx = makeCtx({
+      threadLiveConfig: {
+        contextType: 'USER',
+        contextId: 'thread-1',
+        viewerUserId: 'viewer-user',
+      },
+    });
+    ctx.setMessages([{ ...inboundMessage('m1', 'viewer-user'), status: 'sent' }]);
+
+    processChatRoomBatch(
+      [
+        {
+          kind: 'readReceipt',
+          data: {
+            contextType: 'USER',
+            contextId: 'thread-1',
+            readReceipt: {
+              userId: 'reader-b',
+              readAt: '2026-01-01T01:00:00.000Z',
+              messageId: 'm1',
+            },
+            syncSeq: 51,
+          },
+        },
+      ],
+      ctx
+    );
+
+    expect(ctx.messagesRef.current[0]?.readReceipts).toHaveLength(1);
+    expect(ctx.messagesRef.current[0]?.readReceipts[0]?.userId).toBe('reader-b');
+  });
+
+  it('handles stub events (reaction, deleted, messageUpdated) via legacy handlers regardless of config', () => {
+    const ctx = makeCtx({
+      threadLiveConfig: {
+        contextType: 'USER',
+        contextId: 'thread-1',
+        viewerUserId: 'viewer-user',
+      },
+    });
+    ctx.setMessages([{ ...inboundMessage('m1'), status: 'sent' }]);
+
+    processChatRoomBatch(
+      [
+        {
+          kind: 'reaction',
+          data: {
+            contextType: 'USER',
+            contextId: 'thread-1',
+            reaction: {
+              messageId: 'm1',
+              userId: 'user-1',
+              emoji: '👍',
+              createdAt: '2026-01-01T01:00:00.000Z',
+            },
+            syncSeq: 52,
+          },
+        },
+        {
+          kind: 'deleted',
+          data: {
+            contextType: 'USER',
+            contextId: 'thread-1',
+            messageId: 'm1',
+            syncSeq: 53,
+          },
+        },
+      ],
+      ctx
+    );
+
+    // Legacy handlers should be called for stub events
+    expect(ctx.handleMessageReaction).toHaveBeenCalled();
+    expect(ctx.handleMessageDeleted).toHaveBeenCalledWith({ messageId: 'm1' });
   });
 });

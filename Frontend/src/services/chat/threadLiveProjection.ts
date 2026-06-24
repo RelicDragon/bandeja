@@ -17,6 +17,7 @@ import type {
   MessageReaction,
   ChatContextType,
 } from '@/api/chat';
+import type { ChatType } from '@/types';
 import { mergeChatMessagesAscending } from '@/utils/chatMessageSort';
 import { mergeReadReceipts } from './mergeReadReceipts';
 import { readReceiptsFingerprint } from './readReceiptsFingerprint';
@@ -36,8 +37,8 @@ export interface ThreadLiveConfig {
   readonly contextId: string;
   /** Current viewer's user ID — used for filtering own messages, etc. */
   readonly viewerUserId: string;
-  /** For GAME chats, whether to filter by chatType (PUBLIC/TEAM) */
-  readonly gameChatTypeFilter?: 'PUBLIC' | 'TEAM';
+  /** For GAME chats, whether to filter by chatType (PUBLIC/PRIVATE) */
+  readonly gameChatTypeFilter?: ChatType;
 }
 
 /**
@@ -58,15 +59,49 @@ export type ThreadLiveEvent =
   | AllReadEvent
   | MessageUpdatedEvent
   | MessageDeletedEvent
-  | ReactionEvent;
+  | ReactionEvent
+  | OptimisticSendEvent
+  | MessageAckEvent
+  | HydrateSnapshotEvent;
 
 /**
- * New message arriving while thread is open (socket inbound / optimistic).
+ * New message arriving while thread is open (socket inbound).
  */
 export interface InboundMessageEvent {
   readonly type: 'inboundMessage';
   /** Message to merge into thread */
   readonly message: ChatMessage;
+}
+
+/**
+ * Optimistic message send by the viewer.
+ */
+export interface OptimisticSendEvent {
+  readonly type: 'optimisticSend';
+  /** Message to add to thread with _status: 'SENDING' */
+  readonly message: ChatMessageWithStatus;
+}
+
+/**
+ * Server acknowledgment for an optimistic message.
+ * Replaces the optimistic placeholder with the real server message.
+ */
+export interface MessageAckEvent {
+  readonly type: 'messageAck';
+  /** The optimistic ID or clientMutationId to match */
+  readonly clientId: string;
+  /** The real server message */
+  readonly message: ChatMessage;
+}
+
+/**
+ * Reconcile live state with a hydrated snapshot from Dexie/L1.
+ * Ensures we don't lose live events or optimistic messages.
+ */
+export interface HydrateSnapshotEvent {
+  readonly type: 'hydrateSnapshot';
+  /** Messages from the hydrated snapshot */
+  readonly messages: ChatMessageWithStatus[];
 }
 
 /**
@@ -150,7 +185,18 @@ export type ThreadLiveEffect =
   | SyncPullEffect
   | ClearUnreadEffect
   | L1PutEffect
-  | ScrollEffect;
+  | ScrollEffect
+  | ReconcileAckEffect;
+
+/**
+ * Reconcile an optimistic message with a server ACK in persistence.
+ * Deletes the temp ID and puts the real message.
+ */
+export interface ReconcileAckEffect {
+  readonly type: 'reconcileAck';
+  readonly tempId: string;
+  readonly message: ChatMessage;
+}
 
 /**
  * Persist changed state to Dexie for durability.
@@ -288,12 +334,23 @@ function reduceSingleEvent(
     case 'allRead':
       reduceAllRead(state, event, config);
       break;
+    case 'optimisticSend':
+      reduceOptimisticSend(state, event, config);
+      break;
+    case 'messageAck':
+      reduceMessageAck(state, event, config);
+      break;
+    case 'hydrateSnapshot':
+      reduceHydrateSnapshot(state, event, config);
+      break;
     case 'messageUpdated':
+      reduceMessageUpdated(state, event);
+      break;
     case 'messageDeleted':
+      reduceMessageDeleted(state, event);
+      break;
     case 'reaction':
-      // Phase 1: Stubs — mark changed but don't transform yet
-      state.effects.push({ type: 'persist', event });
-      state.changed = true;
+      reduceReaction(state, event);
       break;
     default: {
       const _exhaustive: never = event;
@@ -440,6 +497,244 @@ function reduceAllRead(
       reason: 'allRead',
     });
   }
+}
+
+function reduceMessageUpdated(
+  state: ReductionState,
+  event: MessageUpdatedEvent
+): void {
+  let changed = false;
+  const next = state.messages.map((message) => {
+    if (message.id !== event.messageId) return message;
+    if (message.content === event.content && message.updatedAt === event.updatedAt) {
+      return message;
+    }
+    changed = true;
+    return {
+      ...message,
+      content: event.content,
+      updatedAt: event.updatedAt,
+      editedAt: event.updatedAt,
+      translation: undefined,
+      translations: undefined,
+    };
+  });
+
+  if (!changed) return;
+  state.messages = next;
+  state.changed = true;
+  state.effects.push({ type: 'persist', event });
+  state.effects.push({ type: 'l1Put', messages: next });
+}
+
+function reduceMessageDeleted(
+  state: ReductionState,
+  event: MessageDeletedEvent
+): void {
+  const next = state.messages.filter((message) => message.id !== event.messageId);
+  if (next.length === state.messages.length) return;
+  state.messages = next;
+  state.changed = true;
+  state.effects.push({ type: 'persist', event });
+  state.effects.push({ type: 'l1Put', messages: next });
+}
+
+function reduceReaction(
+  state: ReductionState,
+  event: ReactionEvent
+): void {
+  let changed = false;
+  const next = state.messages.map((message) => {
+    if (message.id !== event.messageId) return message;
+    const withoutUserReaction = message.reactions.filter((reaction) => reaction.userId !== event.reaction.userId);
+    const reactions = event.removed ? withoutUserReaction : [...withoutUserReaction, event.reaction];
+    if (reactionsFingerprint(message.reactions) === reactionsFingerprint(reactions)) {
+      return message;
+    }
+    changed = true;
+    return { ...message, reactions };
+  });
+
+  if (!changed) return;
+  state.messages = next;
+  state.changed = true;
+  state.effects.push({ type: 'persist', event });
+  state.effects.push({ type: 'l1Put', messages: next });
+}
+
+/**
+ * Handle optimistic send event.
+ */
+function reduceOptimisticSend(
+  state: ReductionState,
+  event: OptimisticSendEvent,
+  config: ThreadLiveConfig
+): void {
+  const message = { ...event.message, _status: 'SENDING' as const };
+  // Filter by chatType for GAME chats if configured
+  if (config.contextType === 'GAME' && config.gameChatTypeFilter) {
+    if (message.chatType !== config.gameChatTypeFilter) {
+      return;
+    }
+  }
+
+  // We don't use mergeChatMessagesAscending here because it would trigger
+  // stripPendingOptimisticsMatchedByServer and remove the message we just added
+  // (since it has a clientMutationId but is marked SENDING).
+  const map = new Map<string, ChatMessageWithStatus>();
+  for (const m of state.messages) map.set(m.id, m);
+  map.set(message.id, message);
+
+  const merged = Array.from(map.values()).sort((a, b) => {
+    const aDate = new Date(a.createdAt).getTime();
+    const bDate = new Date(b.createdAt).getTime();
+    return aDate - bDate || a.id.localeCompare(b.id);
+  });
+
+  state.messages = merged;
+  state.changed = true;
+  state.effects.push({ type: 'persist', event });
+  state.effects.push({ type: 'l1Put', messages: merged });
+}
+
+/**
+ * Handle message acknowledgment from server.
+ */
+function reduceMessageAck(
+  state: ReductionState,
+  event: MessageAckEvent,
+  config: ThreadLiveConfig
+): void {
+  const prevMessages = state.messages;
+  let matchedTempId: string | undefined;
+
+  const nextMessages = prevMessages.map((m) => {
+    const isMatch =
+      m.clientMutationId === event.clientId ||
+      m._optimisticId === event.clientId ||
+      m.id === event.clientId;
+
+    if (isMatch) {
+      matchedTempId = m.id;
+      // Merge server message over optimistic one, removing _status
+      const { _status: _, _optimisticId: __, ...realRest } = m as any;
+      return { ...realRest, ...event.message };
+    }
+    return m;
+  });
+
+  if (matchedTempId) {
+    // If ID changed (temp -> real), re-sort to be safe
+    const sorted = mergeChatMessagesAscending(nextMessages, []);
+    state.messages = sorted;
+    state.changed = true;
+    state.effects.push({
+      type: 'reconcileAck',
+      tempId: matchedTempId,
+      message: event.message,
+    });
+    state.effects.push({ type: 'l1Put', messages: sorted });
+  } else {
+    // If not found in current UI state, treat as a normal inbound
+    reduceInboundMessage(state, { type: 'inboundMessage', message: event.message }, config);
+  }
+}
+
+/**
+ * Reconcile live state with a hydrated snapshot.
+ */
+function reduceHydrateSnapshot(
+  state: ReductionState,
+  event: HydrateSnapshotEvent,
+  _config: ThreadLiveConfig
+): void {
+  const currentMessages = state.messages;
+  const hydratedMessages = event.messages;
+
+  const merged = mergeHydratedSnapshot(currentMessages, hydratedMessages);
+
+  if (!projectionMessagesEqual(currentMessages, merged)) {
+    state.messages = merged;
+    state.changed = true;
+    // No persist effect here - hydration comes FROM persistence
+    state.effects.push({ type: 'l1Put', messages: merged });
+  }
+}
+
+function mergeHydratedSnapshot(
+  currentMessages: readonly ChatMessageWithStatus[],
+  hydratedMessages: readonly ChatMessageWithStatus[]
+): ChatMessageWithStatus[] {
+  const byId = new Map<string, ChatMessageWithStatus>();
+
+  for (const message of currentMessages) {
+    byId.set(message.id, message);
+  }
+
+  for (const hydrated of hydratedMessages) {
+    const current = byId.get(hydrated.id);
+    if (!current) {
+      byId.set(hydrated.id, hydrated);
+      continue;
+    }
+
+    const readReceipts = mergeReadReceipts(
+      current.readReceipts ?? [],
+      hydrated.readReceipts ?? []
+    );
+    const currentUpdatedAt = Date.parse(current.updatedAt ?? current.createdAt);
+    const hydratedUpdatedAt = Date.parse(hydrated.updatedAt ?? hydrated.createdAt);
+    const hydrateIsNewer =
+      Number.isFinite(hydratedUpdatedAt) &&
+      (!Number.isFinite(currentUpdatedAt) || hydratedUpdatedAt > currentUpdatedAt);
+
+    byId.set(
+      hydrated.id,
+      hydrateIsNewer
+        ? { ...current, ...hydrated, readReceipts }
+        : { ...hydrated, ...current, readReceipts }
+    );
+  }
+
+  return Array.from(byId.values()).sort((a, b) => {
+    const aDate = new Date(a.createdAt).getTime();
+    const bDate = new Date(b.createdAt).getTime();
+    return aDate - bDate || a.id.localeCompare(b.id);
+  });
+}
+
+function projectionMessagesEqual(
+  a: readonly ChatMessageWithStatus[],
+  b: readonly ChatMessageWithStatus[]
+): boolean {
+  if (a.length !== b.length) return false;
+
+  for (let i = 0; i < a.length; i++) {
+    const left = a[i]!;
+    const right = b[i]!;
+    if (left.id !== right.id) return false;
+    if (left.updatedAt !== right.updatedAt) return false;
+    if (left.deletedAt !== right.deletedAt) return false;
+    if (left.state !== right.state) return false;
+    if (left.content !== right.content) return false;
+    if (left._status !== right._status) return false;
+    if (reactionsFingerprint(left.reactions) !== reactionsFingerprint(right.reactions)) {
+      return false;
+    }
+    if (readReceiptsFingerprint(left.readReceipts) !== readReceiptsFingerprint(right.readReceipts)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function reactionsFingerprint(reactions: readonly MessageReaction[] | undefined): string {
+  if (!reactions?.length) return '';
+  return reactions
+    .map((reaction) => `${reaction.userId}:${reaction.emoji}:${reaction.id}:${reaction.createdAt}`)
+    .sort()
+    .join('|');
 }
 
 /**

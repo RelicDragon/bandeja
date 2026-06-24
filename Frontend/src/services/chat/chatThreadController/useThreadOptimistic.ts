@@ -19,7 +19,6 @@ import {
 import { usePlayersStore } from '@/store/playersStore';
 import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
 import { donateOutgoingChatIntent } from '@/services/chat/chatIntentDonation';
-import { reconcileOptimisticMessages } from '@/services/chat/optimisticReconcile';
 import {
   CHAT_OUTBOX_FAILED_EVENT,
   CHAT_OUTBOX_REMOVED_EVENT,
@@ -28,6 +27,11 @@ import {
 import { revokeChatBlobUrls } from '@/utils/chatBlobUrls';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { shouldApplyGameChatMessageDespiteTabMismatch } from '@/pages/GameChat/chatOptimisticMatch';
+import {
+  reduceThreadLiveSnapshot,
+  type ThreadLiveConfig,
+  type ThreadLiveEvent,
+} from '@/services/chat/threadLiveProjection';
 
 function revokeReconciledOptimisticBlobs(
   prev: readonly ChatMessageWithStatus[],
@@ -38,6 +42,23 @@ function revokeReconciledOptimisticBlobs(
     const row = prev.find((m) => m._optimisticId === optId);
     if (row) revokeChatBlobUrls(row);
   }
+}
+
+function findOptimisticMatch(
+  messages: readonly ChatMessageWithStatus[],
+  message: ChatMessage,
+  optimisticIdHint?: string
+): ChatMessageWithStatus | undefined {
+  const clientMutationId = message.clientMutationId?.trim();
+  return messages.find((m) => {
+    const optimisticId = m._optimisticId;
+    const optimisticClientId = m._clientMutationId?.trim();
+    return (
+      (optimisticIdHint != null && (optimisticId === optimisticIdHint || m.id === optimisticIdHint)) ||
+      (clientMutationId != null && clientMutationId !== '' && optimisticClientId === clientMutationId) ||
+      m.id === message.id
+    );
+  });
 }
 
 export interface UseThreadOptimisticParams {
@@ -62,6 +83,51 @@ export function useThreadOptimistic({
   setUserChat,
 }: UseThreadOptimisticParams) {
   const handleNewMessageRef = useRef<(message: ChatMessage) => string | void>(() => {});
+
+  const buildLiveConfig = useCallback(
+    (gameChatTypeFilter?: ChatType): ThreadLiveConfig | null => {
+      if (!id) return null;
+      return {
+        contextType,
+        contextId: id,
+        viewerUserId: user?.id ?? '',
+        gameChatTypeFilter:
+          contextType === 'GAME'
+            ? gameChatTypeFilter ?? normalizeChatType(currentChatType)
+            : undefined,
+      };
+    },
+    [contextType, currentChatType, id, user?.id]
+  );
+
+  const applyLiveEvent = useCallback(
+    (
+      event: ThreadLiveEvent,
+      options: { gameChatTypeFilter?: ChatType } = {}
+    ): { changed: boolean; previous: ChatMessageWithStatus[]; next: ChatMessageWithStatus[] } => {
+      const config = buildLiveConfig(options.gameChatTypeFilter);
+      if (!config) {
+        return { changed: false, previous: messagesRef.current, next: messagesRef.current };
+      }
+      let previousSnapshot = messagesRef.current;
+      let nextSnapshot = messagesRef.current;
+      let changed = false;
+      setMessages((prev) => {
+        previousSnapshot = prev;
+        const result = reduceThreadLiveSnapshot(prev, [event], config);
+        if (!result.changed) {
+          nextSnapshot = prev;
+          return prev;
+        }
+        changed = true;
+        nextSnapshot = result.next;
+        messagesRef.current = result.next;
+        return result.next;
+      });
+      return { changed, previous: previousSnapshot, next: nextSnapshot };
+    },
+    [buildLiveConfig, messagesRef, setMessages]
+  );
 
   const handleAddOptimisticMessage = useCallback(
     (
@@ -111,11 +177,7 @@ export function useThreadOptimistic({
         pendingVoiceBlob != null || pendingVideoBlob != null
           ? { ...payload, mediaUrls: [], thumbnailUrls: [] }
           : payload;
-      setMessages((prev) => {
-        const next = [...prev, optimistic];
-        messagesRef.current = next;
-        return next;
-      });
+      applyLiveEvent({ type: 'optimisticSend', message: optimistic });
       void OfflineIntent.enqueue({
         kind: 'send',
         queued: {
@@ -147,7 +209,7 @@ export function useThreadOptimistic({
       });
       return tempId;
     },
-    [contextType, id, user, scrollToBottom, setMessages, messagesRef]
+    [contextType, id, user, scrollToBottom, applyLiveEvent]
   );
 
   const handleMarkFailed = useCallback(
@@ -165,18 +227,16 @@ export function useThreadOptimistic({
 
   const handleReplaceOptimisticWithServerMessage = useCallback(
     (optimisticId: string, serverMessage: ChatMessage) => {
-      setMessages((prev) => {
-        const result = reconcileOptimisticMessages({
-          messages: prev,
-          incoming: [serverMessage],
-          userId: user?.id,
-          optimisticIdHint: optimisticId,
-        });
-        if (result.actions[0] === 'noop') return prev;
-        revokeReconciledOptimisticBlobs(prev, result.replacedOptimisticIds, result.removedOptimisticIds);
-        messagesRef.current = result.messages;
-        return result.messages;
+      const matched = findOptimisticMatch(messagesRef.current, serverMessage, optimisticId);
+      const clientId = matched?._optimisticId ?? matched?._clientMutationId ?? optimisticId;
+      const result = applyLiveEvent({
+        type: 'messageAck',
+        clientId,
+        message: serverMessage,
       });
+      if (result.changed) {
+        revokeReconciledOptimisticBlobs(result.previous, [matched?._optimisticId ?? matched?.id ?? optimisticId], []);
+      }
       void applyThreadEvent({ kind: 'sendSuccess', message: serverMessage }).catch(() => {});
       donateOutgoingChatIntent(serverMessage);
       if (id) {
@@ -184,7 +244,7 @@ export function useThreadOptimistic({
       }
       cancelSend(optimisticId);
     },
-    [contextType, id, user?.id, setMessages, messagesRef]
+    [contextType, id, applyLiveEvent, messagesRef]
   );
 
   const finishQueuedSendSuccess = useCallback(
@@ -313,28 +373,30 @@ export function useThreadOptimistic({
 
       let effectPack: { replacedOptimisticId?: string; lastMessageId: string } | undefined;
       let shortCircuitDuplicateId = false;
+      const pendingMatch = findOptimisticMatch(messagesRef.current, message);
 
-      setMessages((prev) => {
-        const result = reconcileOptimisticMessages({
-          messages: prev,
-          incoming: [message],
-          userId: user?.id,
-        });
-        const action = result.actions[0] ?? 'noop';
-
-        if (action === 'noop' && prev.some((msg) => msg.id === message.id)) {
-          shortCircuitDuplicateId = true;
-          return prev;
+      const projectionResult = applyLiveEvent(
+        pendingMatch
+          ? {
+              type: 'messageAck',
+              clientId: pendingMatch._optimisticId ?? pendingMatch._clientMutationId ?? pendingMatch.id,
+              message,
+            }
+          : { type: 'inboundMessage', message },
+        {
+          gameChatTypeFilter: bypassGameTabFilter ? undefined : normalizedCurrentChatType,
         }
-        if (action === 'noop') return prev;
+      );
 
-        revokeReconciledOptimisticBlobs(prev, result.replacedOptimisticIds, result.removedOptimisticIds);
-        messagesRef.current = result.messages;
-        const replacedOptimisticId =
-          result.replacedOptimisticIds[0] ?? result.removedOptimisticIds[0];
+      if (!projectionResult.changed && messagesRef.current.some((msg) => msg.id === message.id)) {
+        shortCircuitDuplicateId = true;
+      } else if (projectionResult.changed) {
+        const replacedOptimisticId = pendingMatch?._optimisticId ?? pendingMatch?.id;
+        if (replacedOptimisticId) {
+          revokeReconciledOptimisticBlobs(projectionResult.previous, [replacedOptimisticId], []);
+        }
         effectPack = { replacedOptimisticId, lastMessageId: message.id };
-        return result.messages;
-      });
+      }
 
       if (shortCircuitDuplicateId && id && message.senderId === user?.id) {
         const cid = message.clientMutationId?.trim();
@@ -368,7 +430,7 @@ export function useThreadOptimistic({
         return effectPack.replacedOptimisticId;
       }
     },
-    [contextType, currentChatType, id, user?.id, setUserChat, setMessages, messagesRef]
+    [contextType, currentChatType, id, user?.id, setUserChat, messagesRef, applyLiveEvent]
   );
   handleNewMessageRef.current = handleNewMessage;
 
@@ -434,12 +496,8 @@ export function useThreadOptimistic({
         _optimisticId: d.tempId,
         _clientMutationId: d.clientMutationId,
       };
-      setMessages((prev) => {
-        if (prev.some((m) => (m as ChatMessageWithStatus)._optimisticId === d.tempId)) return prev;
-        const next = [...prev, optimistic];
-        messagesRef.current = next;
-        return next;
-      });
+      if (messagesRef.current.some((m) => (m as ChatMessageWithStatus)._optimisticId === d.tempId)) return;
+      applyLiveEvent({ type: 'optimisticSend', message: optimistic });
       requestAnimationFrame(() => {
         try {
           scrollToBottom();
@@ -482,6 +540,7 @@ export function useThreadOptimistic({
     scrollToBottom,
     setMessages,
     messagesRef,
+    applyLiveEvent,
   ]);
 
   return {

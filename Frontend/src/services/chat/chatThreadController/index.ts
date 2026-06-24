@@ -6,6 +6,6 @@ export type {
   ChatThreadOpenContext,
 } from './ChatThreadController';
 export { useChatThreadController } from './useChatThreadController';
-export type { ChatThreadSocketHandlers, UseChatThreadControllerParams } from './useChatThreadController';
+export type { UseChatThreadControllerParams } from './useChatThreadController';
 export { useThreadDomain } from './useThreadDomain';
 export { useThreadDerived } from './useThreadDerived';

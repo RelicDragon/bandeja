@@ -11,7 +11,6 @@ import { useThreadTranslationLive } from './useThreadTranslationLive';
 import { useThreadPinned } from './useThreadPinned';
 import { useThreadReactions } from './useThreadReactions';
 import { useThreadFooterVariant } from './useThreadFooterVariant';
-import type { ChatThreadSocketHandlers } from './useChatThreadController';
 
 export interface UseThreadDomainParams {
   id: string | undefined;
@@ -34,7 +33,6 @@ export interface UseThreadDomainParams {
   endScrollTargetSession: (messageId?: string) => void;
   isBlockedByUser: boolean;
   isJoiningAsGuest: boolean;
-  socketHandlersRef: React.MutableRefObject<ChatThreadSocketHandlers | null>;
 }
 
 export function useThreadDomain(params: UseThreadDomainParams) {
@@ -59,7 +57,6 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     endScrollTargetSession,
     isBlockedByUser,
     isJoiningAsGuest,
-    socketHandlersRef,
   } = params;
 
   const { channelActivity, channelActivityResolved, noteUserMessage } = useThreadChannelActivity(
@@ -131,10 +128,9 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     handleCancelEdit,
     handleMessageUpdated,
     handleMessageReaction,
-    handleReadReceipt,
     handleMessageDeleted,
     handleChatRequestRespond,
-  } = useThreadReactions({ id, contextType, user, setMessages, messagesRef, setUserChat });
+  } = useThreadReactions({ id, contextType, effectiveChatType, user, setMessages, messagesRef, setUserChat });
 
   const {
     pinnedMessages,
@@ -143,7 +139,6 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     loadingScrollTargetId,
     scrollTargetMessageId,
     handleScrollTargetReached,
-    fetchPinnedMessages,
     handleScrollToMessage,
     scrollToMessageId,
     handlePinnedBarClick,
@@ -161,14 +156,6 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     beginScrollTargetSession,
     endScrollTargetSession,
   });
-
-  socketHandlersRef.current = {
-    handleMessageReaction,
-    handleReadReceipt,
-    handleMessageDeleted,
-    fetchPinnedMessages,
-    handleMessageUpdated,
-  };
 
   const footerVariant = useThreadFooterVariant({
     id,
@@ -236,6 +223,8 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     handleEditMessage,
     handleCancelEdit,
     handleMessageUpdated,
+    handleMessageReaction,
+    handleMessageDeleted,
     handleChatRequestRespond,
     onInboundMessage: contextType === 'GAME' ? noteUserMessage : undefined,
   };

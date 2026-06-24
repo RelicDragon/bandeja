@@ -6,14 +6,17 @@ import { usePlayersStore } from '@/store/playersStore';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { putLocalMessage } from '@/services/chat/chatLocalApply';
-import { mergeReadReceipts } from '@/services/chat/mergeReadReceipts';
-import { readReceiptsFingerprint } from '@/services/chat/readReceiptsFingerprint';
-import { compareChatMessagesAscending } from '@/utils/chatMessageSort';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
+import {
+  reduceThreadLiveSnapshot,
+  type ThreadLiveConfig,
+  type ThreadLiveEvent,
+} from '@/services/chat/threadLiveProjection';
 
 export interface UseThreadReactionsParams {
   id: string | undefined;
   contextType: ChatContextType;
+  effectiveChatType: import('@/types').ChatType;
   user: { id: string } | null;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
@@ -27,6 +30,7 @@ function isQueuedSendMessageId(messageId: string): boolean {
 export function useThreadReactions({
   id,
   contextType,
+  effectiveChatType,
   user,
   setMessages,
   messagesRef,
@@ -35,6 +39,25 @@ export function useThreadReactions({
   const { t } = useTranslation();
   const [replyTo, setReplyTo] = useState<ChatMessage | null>(null);
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(null);
+
+  const applyLiveEvent = useCallback(
+    (event: ThreadLiveEvent): void => {
+      if (!id) return;
+      const config: ThreadLiveConfig = {
+        contextType,
+        contextId: id,
+        viewerUserId: user?.id ?? '',
+        gameChatTypeFilter: contextType === 'GAME' ? effectiveChatType : undefined,
+      };
+      setMessages((prev) => {
+        const result = reduceThreadLiveSnapshot(prev, [event], config);
+        if (!result.changed) return prev;
+        messagesRef.current = result.next;
+        return result.next;
+      });
+    },
+    [contextType, effectiveChatType, id, messagesRef, setMessages, user?.id]
+  );
 
   const handleAddReaction = useCallback(
     async (messageId: string, emoji: string) => {
@@ -53,12 +76,10 @@ export function useThreadReactions({
       const nextReactions = prevMsg
         ? [...prevMsg.reactions.filter((r) => r.userId !== user.id), optimisticReaction as (typeof prevMsg.reactions)[0]]
         : [];
-      setMessages((prev) => {
-        const next = prev.map((m) =>
-          m.id === messageId ? { ...m, reactions: [...m.reactions.filter((r) => r.userId !== user.id), optimisticReaction] } : m
-        );
-        messagesRef.current = next;
-        return next;
+      applyLiveEvent({
+        type: 'reaction',
+        messageId,
+        reaction: optimisticReaction,
       });
       if (shouldQueueChatMutation() && id) {
         try {
@@ -73,19 +94,11 @@ export function useThreadReactions({
           });
         } catch (e) {
           console.error('enqueue reaction', e);
-          setMessages((prev) => {
-            const next = prev.map((m) =>
-              m.id === messageId
-                ? {
-                    ...m,
-                    reactions: m.reactions.filter(
-                      (r) => !(r.userId === user.id && (r as { _pending?: boolean })._pending)
-                    ),
-                  }
-                : m
-            );
-            messagesRef.current = next;
-            return next;
+          applyLiveEvent({
+            type: 'reaction',
+            messageId,
+            reaction: optimisticReaction,
+            removed: true,
           });
         }
         return;
@@ -93,12 +106,10 @@ export function useThreadReactions({
       try {
         const { reaction, emojiUsage } = await chatApi.addReaction(messageId, { emoji });
         useReactionEmojiUsageStore.getState().applyFromMutation(emojiUsage);
-        setMessages((prev) => {
-          const next = prev.map((m) =>
-            m.id === messageId ? { ...m, reactions: [...m.reactions.filter((r) => r.userId !== reaction.userId), reaction] } : m
-          );
-          messagesRef.current = next;
-          return next;
+        applyLiveEvent({
+          type: 'reaction',
+          messageId,
+          reaction,
         });
       } catch (error) {
         console.error('Failed to add reaction:', error);
@@ -119,33 +130,24 @@ export function useThreadReactions({
             });
           } catch (e) {
             console.error('enqueue reaction', e);
-            setMessages((prev) => {
-              const next = prev.map((m) =>
-                m.id === messageId
-                  ? {
-                      ...m,
-                      reactions: m.reactions.filter(
-                        (r) => !(r.userId === user.id && (r as { _pending?: boolean })._pending)
-                      ),
-                    }
-                  : m
-              );
-              messagesRef.current = next;
-              return next;
+            applyLiveEvent({
+              type: 'reaction',
+              messageId,
+              reaction: optimisticReaction,
+              removed: true,
             });
           }
           return;
         }
-        setMessages((prev) => {
-          const next = prev.map((m) =>
-            m.id === messageId ? { ...m, reactions: m.reactions.filter((r) => !(r.userId === user.id && (r as { _pending?: boolean })._pending)) } : m
-          );
-          messagesRef.current = next;
-          return next;
+        applyLiveEvent({
+          type: 'reaction',
+          messageId,
+          reaction: optimisticReaction,
+          removed: true,
         });
       }
     },
-    [user, id, contextType, setMessages, messagesRef, t]
+    [user, id, contextType, messagesRef, t, applyLiveEvent]
   );
 
   const handleRemoveReaction = useCallback(
@@ -155,11 +157,9 @@ export function useThreadReactions({
       const message = messagesRef.current.find((m) => m.id === messageId);
       const removedReactions = message?.reactions.filter((r) => r.userId === user.id) ?? [];
       const nextReactions = message?.reactions.filter((r) => r.userId !== user.id) ?? [];
-      setMessages((prev) => {
-        const next = prev.map((m) => (m.id === messageId ? { ...m, reactions: m.reactions.filter((r) => r.userId !== user.id) } : m));
-        messagesRef.current = next;
-        return next;
-      });
+      for (const reaction of removedReactions) {
+        applyLiveEvent({ type: 'reaction', messageId, reaction, removed: true });
+      }
       if (shouldQueueChatMutation() && id) {
         try {
           await OfflineIntent.enqueue({
@@ -172,13 +172,9 @@ export function useThreadReactions({
           });
         } catch (e) {
           console.error('enqueue reaction remove', e);
-          setMessages((prev) => {
-            const next = prev.map((m) =>
-              m.id === messageId ? { ...m, reactions: [...m.reactions, ...removedReactions] } : m
-            );
-            messagesRef.current = next;
-            return next;
-          });
+          for (const reaction of removedReactions) {
+            applyLiveEvent({ type: 'reaction', messageId, reaction });
+          }
         }
         return;
       }
@@ -198,24 +194,18 @@ export function useThreadReactions({
             });
           } catch (e) {
             console.error('enqueue reaction remove', e);
-            setMessages((prev) => {
-              const next = prev.map((m) =>
-                m.id === messageId ? { ...m, reactions: [...m.reactions, ...removedReactions] } : m
-              );
-              messagesRef.current = next;
-              return next;
-            });
+            for (const reaction of removedReactions) {
+              applyLiveEvent({ type: 'reaction', messageId, reaction });
+            }
           }
           return;
         }
-        setMessages((prev) => {
-          const next = prev.map((m) => (m.id === messageId ? { ...m, reactions: [...m.reactions, ...removedReactions] } : m));
-          messagesRef.current = next;
-          return next;
-        });
+        for (const reaction of removedReactions) {
+          applyLiveEvent({ type: 'reaction', messageId, reaction });
+        }
       }
     },
-    [user?.id, id, contextType, setMessages, messagesRef]
+    [user?.id, id, contextType, messagesRef, applyLiveEvent]
   );
 
   const handlePollUpdated = useCallback(
@@ -232,27 +222,25 @@ export function useThreadReactions({
   const handleDeleteMessage = useCallback(
     async (messageId: string) => {
       if (isQueuedSendMessageId(messageId)) {
-        setMessages((prevMessages) => {
-          const newMessages = prevMessages.filter((m) => m.id !== messageId);
-          messagesRef.current = newMessages;
-          return newMessages;
+        applyLiveEvent({
+          type: 'messageDeleted',
+          messageId,
+          deletedAt: new Date().toISOString(),
         });
         return;
       }
       const removedSnapshot = messagesRef.current.find((m) => m.id === messageId);
       const restoreRemoved = () => {
         if (!removedSnapshot) return;
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === messageId)) return prev;
-          const next = [...prev, removedSnapshot as ChatMessageWithStatus].sort(compareChatMessagesAscending);
-          messagesRef.current = next;
-          return next;
+        applyLiveEvent({
+          type: 'hydrateSnapshot',
+          messages: [removedSnapshot as ChatMessageWithStatus],
         });
       };
-      setMessages((prevMessages) => {
-        const newMessages = prevMessages.filter((m) => m.id !== messageId);
-        messagesRef.current = newMessages;
-        return newMessages;
+      applyLiveEvent({
+        type: 'messageDeleted',
+        messageId,
+        deletedAt: new Date().toISOString(),
       });
       if (shouldQueueChatMutation() && id) {
         try {
@@ -279,7 +267,7 @@ export function useThreadReactions({
         }
       }
     },
-    [id, contextType, setMessages, messagesRef]
+    [id, contextType, messagesRef, applyLiveEvent]
   );
 
   const handleReplyMessage = useCallback((message: ChatMessage) => setReplyTo(message), []);
@@ -290,90 +278,48 @@ export function useThreadReactions({
   const handleMessageUpdated = useCallback(
     (updated: ChatMessage) => {
       void putLocalMessage(updated);
-      setMessages((prev) => {
-        const idx = prev.findIndex((m) => m.id === updated.id);
-        if (idx < 0) return prev;
-        const prevRow = prev[idx]!;
-        const readReceipts = mergeReadReceipts(prevRow.readReceipts ?? [], updated.readReceipts ?? []);
-        const next = [...prev];
-        next[idx] = {
-          ...prevRow,
-          ...updated,
-          senderId: updated.senderId ?? prevRow.senderId,
-          readReceipts,
-          _status: prevRow._status,
-          _optimisticId: prevRow._optimisticId,
-          translation: undefined,
-          translations: undefined,
-        } as ChatMessageWithStatus;
-        messagesRef.current = next;
-        return next;
+      applyLiveEvent({
+        type: 'hydrateSnapshot',
+        messages: [updated as ChatMessageWithStatus],
       });
       setEditingMessage(null);
     },
-    [setMessages, messagesRef]
+    [applyLiveEvent]
   );
 
   const handleMessageReaction = useCallback(
     (reaction: any) => {
-      if (reaction.action === 'removed') {
-        setMessages((prev) => {
-          const newMessages = prev.map((message) =>
-            message.id === reaction.messageId ? { ...message, reactions: message.reactions.filter((r) => r.userId !== reaction.userId) } : message
-          );
-          messagesRef.current = newMessages;
-          return newMessages;
-        });
-      } else {
-        setMessages((prev) => {
-          const newMessages = prev.map((message) => {
-            if (message.id !== reaction.messageId) return message;
-            const existing = message.reactions.find((r) => r.userId === reaction.userId);
-            if (existing) {
-              return { ...message, reactions: message.reactions.map((r) => (r.userId === reaction.userId ? { ...r, emoji: reaction.emoji } : r)) };
-            }
-            return { ...message, reactions: [...message.reactions, reaction] };
-          });
-          messagesRef.current = newMessages;
-          return newMessages;
-        });
-      }
+      applyLiveEvent({
+        type: 'reaction',
+        messageId: reaction.messageId,
+        reaction,
+        removed: reaction.action === 'removed',
+      });
     },
-    [setMessages, messagesRef]
+    [applyLiveEvent]
   );
 
   const handleReadReceipt = useCallback(
     (readReceipt: import('@/api/chat').MessageReadReceipt) => {
-      setMessages((prev) => {
-        let changed = false;
-        const newMessages = prev.map((message) => {
-          if (message.id !== readReceipt.messageId) return message;
-          const prevReceipts = message.readReceipts ?? [];
-          const merged = mergeReadReceipts(prevReceipts, readReceipt);
-          if (readReceiptsFingerprint(merged) === readReceiptsFingerprint(prevReceipts)) {
-            return message;
-          }
-          changed = true;
-          return { ...message, readReceipts: merged };
-        });
-        if (!changed) return prev;
-        messagesRef.current = newMessages;
-        return newMessages;
+      applyLiveEvent({
+        type: 'readReceipt',
+        messageId: readReceipt.messageId,
+        receipt: readReceipt,
       });
     },
-    [setMessages, messagesRef]
+    [applyLiveEvent]
   );
 
   const handleMessageDeleted = useCallback(
     (data: { messageId: string }) => {
-      setMessages((prev) => {
-        const newMessages = prev.filter((m) => m.id !== data.messageId);
-        messagesRef.current = newMessages;
-        return newMessages;
+      applyLiveEvent({
+        type: 'messageDeleted',
+        messageId: data.messageId,
+        deletedAt: new Date().toISOString(),
       });
       setEditingMessage((prev) => (prev?.id === data.messageId ? null : prev));
     },
-    [setMessages, messagesRef]
+    [applyLiveEvent]
   );
 
   const handleChatRequestRespond = useCallback(

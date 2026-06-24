@@ -8,17 +8,7 @@ import type { ChatMessageWithStatus } from '@/api/chat';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { useThreadSnapshotRevision } from '@/services/chat/chatThreadController/useThreadSnapshotRevision';
 import { BANDEJA_CHAT_SYNC_STALE, type ChatSyncStaleDetail } from '@/utils/chatSyncStaleEvents';
-import {
-  BANDEJA_CHAT_READ_BATCH_APPLIED,
-  type ChatReadBatchAppliedDetail,
-} from '@/utils/chatReadBatchEvents';
-import { applySyncReadBatchToMessages } from '@/services/chat/chatSyncReadBatchReact';
 import type { ChatType } from '@/types';
-import {
-  appendChatRoomPending,
-  clearChatRoomPending,
-  takeChatRoomPending,
-} from '@/services/chat/chatOpenSocketPending';
 import { scheduleAfterThreadPaint, scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 import { logChatSyncStale } from '@/services/chat/chatOpenTrace';
 import {
@@ -30,6 +20,8 @@ import {
   processChatRoomBatch,
   type ProcessChatRoomBatchCtx,
 } from '@/services/chat/chatThreadController/processChatRoomBatch';
+import type { ThreadLiveConfig } from '@/services/chat/threadLiveProjection';
+import type { ChatRoomEvent } from '@/store/socketEventsStore';
 
 export interface UseThreadSocketParams {
   id: string | undefined;
@@ -40,11 +32,9 @@ export interface UseThreadSocketParams {
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   chatContainerRef: RefObject<HTMLDivElement | null>;
-  handleNewMessage: (message: import('@/api/chat').ChatMessage) => string | void;
+  onInboundMessage?: (message: import('@/api/chat').ChatMessage) => void;
   handleMessageReaction: (reaction: any) => void;
-  handleReadReceipt: (readReceipt: any) => void;
   handleMessageDeleted: (data: { messageId: string }) => void;
-  fetchPinnedMessages: () => void;
   handleMessageUpdated: (updated: import('@/api/chat').ChatMessage) => void;
   reloadMessagesFirstPage: () => void | Promise<void>;
   onAfterSocketBatch?: () => void;
@@ -61,11 +51,9 @@ export function useThreadSocket({
   setMessages,
   messagesRef,
   chatContainerRef,
-  handleNewMessage,
+  onInboundMessage,
   handleMessageReaction,
-  handleReadReceipt,
   handleMessageDeleted,
-  fetchPinnedMessages,
   handleMessageUpdated,
   reloadMessagesFirstPage,
   onAfterSocketBatch,
@@ -80,22 +68,33 @@ export function useThreadSocket({
   const syncRequiredEpoch = useSocketEventsStore((s) => s.syncRequiredEpoch);
   const lastSyncRequired = useSocketEventsStore((s) => s.lastSyncRequired);
   const syncEpochBaselineRef = useRef<number | null>(null);
+  const pendingSocketEventsRef = useRef<ChatRoomEvent[]>([]);
   const roomProcessorCtx = useMemo(
-    (): ProcessChatRoomBatchCtx => ({
-      id,
-      contextType,
-      effectiveChatType,
-      userId,
-      chatContainerRef,
-      setMessages,
-      messagesRef,
-      handleNewMessage,
-      handleMessageReaction,
-      handleReadReceipt,
-      handleMessageDeleted,
-      fetchPinnedMessages,
-      handleMessageUpdated,
-    }),
+    (): ProcessChatRoomBatchCtx => {
+      const threadLiveConfig: ThreadLiveConfig | undefined = id
+        ? {
+            contextType,
+            contextId: id,
+            viewerUserId: userId ?? '',
+            gameChatTypeFilter: contextType === 'GAME' ? effectiveChatType : undefined,
+          }
+        : undefined;
+
+      return {
+        id,
+        contextType,
+        effectiveChatType,
+        userId,
+        chatContainerRef,
+        setMessages,
+        messagesRef,
+        onInboundMessage,
+        handleMessageReaction,
+        handleMessageDeleted,
+        handleMessageUpdated,
+        threadLiveConfig: threadLiveConfig!,
+      };
+    },
     [
       id,
       contextType,
@@ -104,11 +103,9 @@ export function useThreadSocket({
       chatContainerRef,
       setMessages,
       messagesRef,
-      handleNewMessage,
+      onInboundMessage,
       handleMessageReaction,
-      handleReadReceipt,
       handleMessageDeleted,
-      fetchPinnedMessages,
       handleMessageUpdated,
     ]
   );
@@ -121,9 +118,9 @@ export function useThreadSocket({
     setupSocket();
     return () => {
       socketService.leaveChatRoom(contextType, id);
-      if (roomKey) clearChatRoomPending(roomKey);
+      pendingSocketEventsRef.current = [];
     };
-  }, [id, contextType, roomKey]);
+  }, [id, contextType]);
 
   useEffect(() => {
     if (contextType === 'GROUP' && id) {
@@ -144,7 +141,9 @@ export function useThreadSocket({
     if (!roomKey || !id) return;
 
     const batch = useSocketEventsStore.getState().takeChatRoomQueue(roomKey);
-    if (batch.length > 0) appendChatRoomPending(roomKey, batch);
+    if (batch.length > 0) {
+      pendingSocketEventsRef.current = pendingSocketEventsRef.current.concat(batch);
+    }
   }, [roomPushSeq, roomKey, id]);
 
   useEffect(() => {
@@ -160,7 +159,8 @@ export function useThreadSocket({
         scheduleAfterThreadPaint(flush);
         return;
       }
-      const batch = takeChatRoomPending(roomKey);
+      const batch = pendingSocketEventsRef.current;
+      pendingSocketEventsRef.current = [];
       if (batch.length === 0) return;
       processChatRoomBatch(batch, roomProcessorCtx);
       onAfterSocketBatch?.();
@@ -274,21 +274,4 @@ export function useThreadSocket({
     messagesRef,
     setMessages,
   ]);
-
-  useEffect(() => {
-    if (!id) return;
-    const onReadBatch = (ev: Event) => {
-      const d = (ev as CustomEvent<ChatReadBatchAppliedDetail>).detail;
-      if (!d || d.contextType !== contextType || d.contextId !== id) return;
-      if (currentIdRef.current !== id) return;
-      setMessages((prev) => {
-        const { next, changed } = applySyncReadBatchToMessages(prev, d.userId, d.readAt, d.messageIds);
-        if (!changed) return prev;
-        messagesRef.current = next;
-        return next;
-      });
-    };
-    window.addEventListener(BANDEJA_CHAT_READ_BATCH_APPLIED, onReadBatch);
-    return () => window.removeEventListener(BANDEJA_CHAT_READ_BATCH_APPLIED, onReadBatch);
-  }, [id, contextType, setMessages, messagesRef, currentIdRef]);
 }

@@ -41,7 +41,6 @@ export function useThreadViewController({
   const previousIdRef = useRef<string | undefined>(id);
   const currentIdRef = useRef<string | undefined>(id);
   currentIdRef.current = id;
-  const socketHandlersRef = useRef<import('@/services/chat/chatThreadController/useChatThreadController').ChatThreadSocketHandlers | null>(null);
 
   const [currentChatType, setCurrentChatType] = useState<ChatType>(initialChatType ?? 'PUBLIC');
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
@@ -156,7 +155,6 @@ export function useThreadViewController({
     setIsLoadingContext,
     isBlockedByUser,
     isJoiningAsGuest,
-    socketHandlersRef,
   });
 
   const { setPage, setHasMoreMessages, setReplyTo, setEditingMessage } = thread;
