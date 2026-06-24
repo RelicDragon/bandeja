@@ -254,6 +254,8 @@
     "participants": "Participantes",
     "participants_one": "{{count}} Participante",
     "participants_other": "{{count}} Participantes",
+    "onlineCount_one": "{{count}} en línea",
+    "onlineCount_other": "{{count}} en línea",
     "participant": "Participante",
     "invited": "Invitado",
     "guest": "Invitado",

@@ -15,6 +15,7 @@ import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 import type { ChatContextType, UserChat, GroupChannel } from '@/api/chat';
 import type { Game, Bug } from '@/types';
+import { useGroupChannelOnlineCount } from './useGroupChannelOnlineCount';
 
 export interface UseGameChatDisplayParams {
   contextType: ChatContextType;
@@ -46,6 +47,10 @@ export function useGameChatDisplay({
   onOpenParticipantsPage,
 }: UseGameChatDisplayParams) {
   const { t } = useTranslation();
+  const groupOnlineCount = useGroupChannelOnlineCount(
+    groupChannel,
+    contextType === 'GROUP' && !!groupChannel,
+  );
 
   const structuredHeaderParts = useMemo(() => {
     if (contextType !== 'GAME' || !game) return null;
@@ -83,7 +88,11 @@ export function useGameChatDisplay({
       return `${longDateD.primaryText} • ${timeRangeD.primaryText}`;
     }
     if (isBugChat && bug) return `${formatDate(bug.createdAt, 'PPP')} • ${t(`bug.types.${bug.bugType}`)} • ${t(`bug.statuses.${bug.status}`)}`;
-    if (contextType === 'GROUP' && groupChannel) return t('chat.participants', { count: groupChannelParticipantsCount });
+    if (contextType === 'GROUP' && groupChannel) {
+      const participantsLabel = t('chat.participants', { count: groupChannelParticipantsCount });
+      if (groupOnlineCount == null) return participantsLabel;
+      return `${participantsLabel} · ${t('chat.onlineCount', { count: groupOnlineCount })}`;
+    }
     return null;
   })();
 

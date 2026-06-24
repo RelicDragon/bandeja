@@ -254,6 +254,8 @@
     "participants": "Účastníci",
     "participants_one": "{{count}} účastník",
     "participants_other": "{{count}} účastníků",
+    "onlineCount_one": "{{count}} online",
+    "onlineCount_other": "{{count}} online",
     "participant": "Účastník",
     "invited": "Pozván",
     "guest": "Host",
