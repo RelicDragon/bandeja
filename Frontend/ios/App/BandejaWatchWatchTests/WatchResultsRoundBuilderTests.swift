@@ -84,4 +84,31 @@ final class WatchResultsRoundBuilderTests: XCTestCase {
             XCTAssertEqual(error as? WatchResultsStartError, .invalidPlayerCount)
         }
     }
+
+    func testNonPlayingParticipantsExcludedFromFixedTeams() throws {
+        let fixedTeams = """
+        [
+          {"teamNumber":1,"players":[{"userId":"a"},{"userId":"spectator"}]},
+          {"teamNumber":2,"players":[{"userId":"b"}]}
+        ]
+        """
+        let participants = [
+            WatchTestFixtures.participant(id: "a"),
+            WatchTestFixtures.participant(id: "b"),
+            WatchTestFixtures.participant(id: "spectator", status: "NON_PLAYING"),
+        ].joined(separator: ",")
+        let json = WatchTestFixtures.baseGame(
+            sport: "TENNIS",
+            playersPerMatch: 2,
+            maxParticipants: 2,
+            hasFixedTeams: true,
+            fixedTeamsJSON: fixedTeams,
+            participantIds: []
+        ).replacingOccurrences(of: "\"participants\":[]", with: "\"participants\":[\(participants)]")
+        let game = try WatchTestFixtures.decodeGame(json)
+        let round = try WatchResultsRoundBuilder.firstRound(for: game)
+        XCTAssertEqual(round.matches.count, 1)
+        XCTAssertEqual(round.matches[0].teamA, ["a"])
+        XCTAssertEqual(round.matches[0].teamB, ["b"])
+    }
 }

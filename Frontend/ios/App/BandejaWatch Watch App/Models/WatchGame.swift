@@ -58,7 +58,9 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         return club?.name ?? gameType.capitalized
     }
 
-    var participantCount: Int { participants.filter(\.isPlaying).count }
+    nonisolated var playingParticipants: [WatchParticipant] { participants.filter(\.isPlaying) }
+
+    nonisolated var participantCount: Int { playingParticipants.count }
 
     var participantCountLabel: String {
         let n = participantCount

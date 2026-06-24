@@ -7,9 +7,9 @@ enum WatchTestFixtures {
         return try JSONDecoder().decode(WatchGame.self, from: data)
     }
 
-    static func participant(id: String) -> String {
+    static func participant(id: String, status: String = "PLAYING") -> String {
         """
-        {"userId":"\(id)","role":"PLAYER","status":"PLAYING","user":{"id":"\(id)","firstName":"P\(id.suffix(1))"}}
+        {"userId":"\(id)","role":"PLAYER","status":"\(status)","user":{"id":"\(id)","firstName":"P\(id.suffix(1))"}}
         """
     }
 

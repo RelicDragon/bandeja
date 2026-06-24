@@ -100,7 +100,7 @@ struct GameDetailView: View {
                 .foregroundStyle(.secondary)
             let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 3)
             LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
-                ForEach(game.participants) { participant in
+                ForEach(game.playingParticipants) { participant in
                     ParticipantChipView(participant: participant, levelSport: game.resolvedSport)
                 }
             }

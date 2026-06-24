@@ -207,7 +207,15 @@ export function buildOpponentCounts(rounds: Round[]): Map<string, number> {
 
 export function getFilteredFixedTeams(game: Game): string[][] {
   const minPerTeam = Math.max(1, playersPerTeamOf(game));
-  const teams = (game.fixedTeams || []).filter(t => t.players.length >= minPerTeam);
+  const playingIds = new Set(
+    game.participants.filter(p => p.status === 'PLAYING').map(p => p.userId)
+  );
+  const teams = (game.fixedTeams || [])
+    .map(t => ({
+      ...t,
+      players: t.players.filter(p => playingIds.has(p.userId)),
+    }))
+    .filter(t => t.players.length >= minPerTeam);
 
   if (game.genderTeams === 'MEN') {
     return teams

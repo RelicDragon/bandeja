@@ -134,8 +134,12 @@ export class RoundGenerator {
       return null;
     }
 
-    const teamAIds = team1.players.map((p) => p.userId);
-    const teamBIds = team2.players.map((p) => p.userId);
+    const playingIds = new Set(playingParticipants.map((p) => p.userId));
+    const teamAIds = team1.players.map((p) => p.userId).filter((id) => playingIds.has(id));
+    const teamBIds = team2.players.map((p) => p.userId).filter((id) => playingIds.has(id));
+    if (teamAIds.length === 0 || teamBIds.length === 0) {
+      return null;
+    }
     if (game.allowUserInMultipleTeams) {
       const sideA = new Set(teamAIds);
       if (teamBIds.some((id) => sideA.has(id))) {

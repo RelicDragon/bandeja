@@ -47,8 +47,9 @@ enum WatchResultsRoundBuilder {
         if game.hasFixedTeams == true {
             guard game.teamsReady else { throw WatchResultsStartError.notReady }
         }
-        let playing = game.participants.filter(\.isPlaying)
+        let playing = game.playingParticipants
         let playingCount = playing.count
+        let playingIds = Set(playing.map(\.userId))
         guard WatchMatchFormat.isPresetResultsRoster(playingCount: playingCount) else {
             throw WatchResultsStartError.invalidPlayerCount
         }
@@ -64,8 +65,14 @@ enum WatchResultsRoundBuilder {
         if game.hasFixedTeams == true, let teams = game.fixedTeams {
             let t1 = teams.first { $0.teamNumber == 1 }
             let t2 = teams.first { $0.teamNumber == 2 }
-            let a = WatchMatchFormat.capUserIds(t1?.players.map(\.userId) ?? [], max: ppt)
-            let b = WatchMatchFormat.capUserIds(t2?.players.map(\.userId) ?? [], max: ppt)
+            let a = WatchMatchFormat.capUserIds(
+                (t1?.players.map(\.userId) ?? []).filter { playingIds.contains($0) },
+                max: ppt
+            )
+            let b = WatchMatchFormat.capUserIds(
+                (t2?.players.map(\.userId) ?? []).filter { playingIds.contains($0) },
+                max: ppt
+            )
             if a.count == ppt, b.count == ppt {
                 let match = WatchSyncMatchBody(
                     id: UUID().uuidString,
