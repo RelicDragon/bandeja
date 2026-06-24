@@ -1445,20 +1445,6 @@ export const CreateGame = ({
           <div ref={durationSectionRef}>
             {entityType !== 'BAR' && selectedClub && clubBookingFlowActive && selectedClubData ? (
               <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-4">
-                <CreateGameClubSection
-                  clubs={clubsForSport}
-                  courts={courts}
-                  selectedClub={selectedClub}
-                  selectedCourt={selectedCourt}
-                  isClubModalOpen={isClubModalOpen}
-                  onSelectClub={(id: string) => {
-                    setSelectedClub(id);
-                    setSelectedCourtIds([]);
-                    resetOnClubChange();
-                  }}
-                  onOpenClubModal={() => setIsClubModalOpen(true)}
-                  onCloseClubModal={() => setIsClubModalOpen(false)}
-                />
                 <GameLocationTimePanel
                   mode="create"
                   entityType={entityType}
@@ -1489,6 +1475,22 @@ export const CreateGame = ({
                   onOverrideTimesChange={setOverrideTimes}
                   needsBooktimeAuth={needsBooktimeAuth}
                   dateSection={dateSection}
+                  clubSection={
+                    <CreateGameClubSection
+                      clubs={clubsForSport}
+                      courts={courts}
+                      selectedClub={selectedClub}
+                      selectedCourt={selectedCourt}
+                      isClubModalOpen={isClubModalOpen}
+                      onSelectClub={(id: string) => {
+                        setSelectedClub(id);
+                        setSelectedCourtIds([]);
+                        resetOnClubChange();
+                      }}
+                      onOpenClubModal={() => setIsClubModalOpen(true)}
+                      onCloseClubModal={() => setIsClubModalOpen(false)}
+                    />
+                  }
                   courtSection={courtSection}
                   authGateSection={
                     needsBooktimeAuth && booktimeIntegrationConfig ? (

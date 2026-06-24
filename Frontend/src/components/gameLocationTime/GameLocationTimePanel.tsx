@@ -39,6 +39,7 @@ export type GameLocationTimePanelProps = {
   onDerivedTimeChange?: (start: string | null, end: string | null) => void;
   timeSlotsChildren: ReactNode;
   dateSection: ReactNode;
+  clubSection?: ReactNode;
   courtSection: ReactNode;
   authGateSection?: ReactNode;
   needsBooktimeAuth?: boolean;
@@ -71,6 +72,7 @@ export function GameLocationTimePanel({
   onDerivedTimeChange,
   timeSlotsChildren,
   dateSection,
+  clubSection,
   courtSection,
   authGateSection,
   needsBooktimeAuth,
@@ -259,6 +261,7 @@ export function GameLocationTimePanel({
 
       <TimeSlotsPanel
         dateSection={dateSection}
+        clubSection={clubSection}
         courtSection={courtSection}
         timeSlotsChildren={timeSlotsChildren}
         needsBooktimeAuth={needsBooktimeAuth}

@@ -285,10 +285,22 @@ export const GameStartSection = ({
     </>
   );
 
-  const schedulingContent = (
+  const clubPickerSection = showClubPicker ? (
+    <CreateGameClubSection
+      clubs={clubs}
+      courts={courts}
+      selectedClub={selectedClub}
+      selectedCourt={selectedCourt ?? 'notBooked'}
+      isClubModalOpen={isClubModalOpen}
+      onSelectClub={onSelectClub}
+      onOpenClubModal={onOpenClubModal}
+      onCloseClubModal={onCloseClubModal}
+    />
+  ) : null;
+
+  const afterClubScheduling = (
     <>
       {schedulingBanners}
-      {dateSection}
       {courtSection}
       {reservationSection}
       {existingBookingBanner}
@@ -321,26 +333,14 @@ export const GameStartSection = ({
 
   const content = (
     <div className={compact ? 'space-y-4' : 'space-y-4'}>
-      {showClubPicker ? (
-        <CreateGameClubSection
-          clubs={clubs}
-          courts={courts}
-          selectedClub={selectedClub}
-          selectedCourt={selectedCourt ?? 'notBooked'}
-          isClubModalOpen={isClubModalOpen}
-          onSelectClub={onSelectClub}
-          onOpenClubModal={onOpenClubModal}
-          onCloseClubModal={onCloseClubModal}
-        />
-      ) : null}
-      {!selectedClub ? (
+      {dateSection}
+      {clubPickerSection}
+      {showClubPicker && !selectedClub ? (
         <div className="px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm text-center">
           {t('createGame.selectClubFirst')}
         </div>
-      ) : showClubPicker ? (
-        <div className="space-y-4">{schedulingContent}</div>
       ) : (
-        schedulingContent
+        afterClubScheduling
       )}
     </div>
   );

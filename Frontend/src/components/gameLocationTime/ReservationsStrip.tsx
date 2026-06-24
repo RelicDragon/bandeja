@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
-import { CalendarX2 } from 'lucide-react';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
@@ -217,12 +216,7 @@ export function ReservationsStrip({
   }
 
   if (dateBookings.length === 0) {
-    return (
-      <div className="flex items-center gap-2 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400">
-        <CalendarX2 size={18} className="shrink-0 text-gray-300 dark:text-gray-600" />
-        <span>{t('createGame.locationTime.emptyBookingsOnDate')}</span>
-      </div>
-    );
+    return null;
   }
 
   return (
