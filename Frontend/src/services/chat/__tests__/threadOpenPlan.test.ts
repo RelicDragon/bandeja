@@ -43,7 +43,7 @@ describe('mergeThreadOpenRows', () => {
     });
     expect(merged.paintGeneration).toBe(1);
     expect(merged.paintSource).toBe('l1');
-    expect(merged.rows.map((m) => m.id)).toEqual(['l1', 'opt']);
+    expect(merged.rows.map((m) => m.id)).toEqual(['d0', 'l1', 'opt']);
   });
 
   it('strips L1 optimistics; outbox still merged (A2.4)', () => {
@@ -74,7 +74,7 @@ describe('mergeThreadOpenRows', () => {
     expect(merged.paintSource).toBe('dexie-tail');
   });
 
-  it('prefers fresh L1 over Dexie tail (gameChatOpenPerformance parity)', () => {
+  it('merges fresh L1 with Dexie tail (gameChatOpenPerformance parity)', () => {
     const l1 = [msg('l1', '2026-01-03T10:00:00Z')];
     const dexieTail = [msg('d1', '2026-01-03T09:00:00Z')];
     const merged = mergeThreadOpenRows({
@@ -84,7 +84,7 @@ describe('mergeThreadOpenRows', () => {
       prev: [],
       l1Fresh: true,
     });
-    expect(merged.rows.map((m) => m.id)).toEqual(['l1']);
+    expect(merged.rows.map((m) => m.id)).toEqual(['d1', 'l1']);
     expect(merged.paintSource).toBe('l1');
   });
 

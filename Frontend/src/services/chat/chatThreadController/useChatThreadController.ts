@@ -61,6 +61,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     ...rest
   } = params;
 
+  const viewerUserId = user?.id ?? '';
   const controllerRef = useRef(new ChatThreadController());
   const prevIdRef = useRef<string | undefined>(id);
   const prevContextTypeRef = useRef<ChatContextType | undefined>(contextType);
@@ -75,6 +76,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     currentIdRef,
     freshOpenSignal,
     openAnchorMessageId,
+    viewerUserId,
     ...rest,
   });
 

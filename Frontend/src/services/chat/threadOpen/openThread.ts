@@ -54,17 +54,17 @@ async function planDexieTailFallback(
   );
   if (!lastId) return null;
 
-  const { messages: dexieTail } = await loadLocalThreadBootstrap(
+  const bootstrap = await loadLocalThreadBootstrap(
     request.contextType,
     request.contextId,
     request.chatType
   );
-  if (dexieTail.length === 0) return null;
+  if (bootstrap.messages.length === 0) return null;
 
   const result = await planThreadOpen(request.threadKey, {
     peekL1: () => [],
     peekPrev: request.peekPrev ?? (() => mergedPrev),
-    loadBootstrap: async () => ({ messages: dexieTail }),
+    loadBootstrap: async () => bootstrap,
     forceFreshOpen: request.forceFreshOpen,
     openAnchorMessageId: request.openAnchorMessageId,
   });

@@ -30,13 +30,14 @@ export type OpenThreadPlan = {
   scrollRow: ThreadScrollPosition | undefined;
   paintSource: OpenThreadPaintSource;
   deferSync: boolean;
+  hasOlderInDexie?: boolean;
 };
 
 export type ThreadOpenInputs = {
   peekL1: () => readonly ChatMessageWithStatus[];
   /** Read after async loads so sends during bootstrap stay in the snapshot. */
   peekPrev: () => readonly ChatMessageWithStatus[];
-  loadBootstrap: () => Promise<{ messages: ChatMessage[] }>;
+  loadBootstrap: () => Promise<{ messages: ChatMessage[]; hasOlderInDexie?: boolean }>;
   loadOutboxOptimistics?: () => Promise<readonly ChatMessageWithStatus[]>;
   forceFreshOpen?: boolean;
   openAnchorMessageId?: string;

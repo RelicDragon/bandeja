@@ -236,6 +236,28 @@ describe('reconcileAfterPaint', () => {
     expect(result.pinToBottom).toBe(false);
   });
 
+  it('does not shrink scrolled history when Dexie tail is shorter than live rows', async () => {
+    const { loadLocalThreadBootstrap } = await import('@/services/chat/chatLocalApply');
+    messagesRef.current = [msg('m1'), msg('m2'), msg('m3'), msg('m4')];
+    vi.mocked(loadLocalThreadBootstrap).mockResolvedValueOnce({
+      messages: [msg('m3'), msg('m4')],
+      hasOlderInDexie: false,
+    });
+    commitThreadOpenPaint(KEY, { atBottom: false });
+    await reconcileAfterPaint({
+      threadKey: KEY,
+      paintGeneration: getThreadOpenPaintGeneration(KEY),
+      contextType: 'GAME',
+      contextId: 'g1',
+      gameChatType: 'PUBLIC',
+      currentIdRef,
+      messagesRef,
+      setMessages,
+      scrollRow: { atBottom: false },
+    });
+    expect(messagesRef.current.map((m) => m.id)).toEqual(['m1', 'm2', 'm3', 'm4']);
+  });
+
   it('does not restore SENDING optimistic after send-success updated live rows during pull', async () => {
     const { loadLocalThreadBootstrap } = await import('@/services/chat/chatLocalApply');
     const optimistic = {

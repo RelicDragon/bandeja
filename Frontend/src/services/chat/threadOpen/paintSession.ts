@@ -224,7 +224,7 @@ export async function reconcileAfterPaint(
       if (dexieTail.length > 0) {
         next = mergeOpenSnapshot(next, dexieTail, []);
       }
-      const projected = reduceThreadLiveSnapshot(
+      let projected = reduceThreadLiveSnapshot(
         messagesRef.current,
         [{ type: 'hydrateSnapshot', messages: next }],
         {
@@ -234,6 +234,10 @@ export async function reconcileAfterPaint(
           gameChatTypeFilter: contextType === 'GAME' ? gameChatType : undefined,
         }
       ).next;
+
+      if (projected.length < messagesRef.current.length) {
+        projected = mergeOpenSnapshot(messagesRef.current, projected, []);
+      }
 
       if (!chatOpenMessagesSnapshotEqual(messagesRef.current, projected)) {
         commitChatOpenMessages(messagesRef, (v) => setMessages(v), projected, 'reconcile-batched');

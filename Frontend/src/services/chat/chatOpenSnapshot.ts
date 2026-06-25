@@ -46,14 +46,18 @@ function filterL1ForOpen(rows: readonly ChatMessageWithStatus[], includeOptimist
   return rows.filter((m) => !isExcludedFromL1(m));
 }
 
-/** Pick base rows for first paint: fresh L1 → else Dexie tail → else empty. */
+/** Pick base rows for first paint: fresh L1 merged with Dexie tail → else Dexie tail → else empty. */
 export function pickOpenBaseMessages(sources: Pick<OpenSnapshotSources, 'l1' | 'dexieTail' | 'l1Fresh' | 'includeL1Optimistics'>): ChatMessageWithStatus[] {
   const includeOptimistics = sources.includeL1Optimistics === true;
   const l1 = filterL1ForOpen(sources.l1, includeOptimistics);
-  if (sources.l1Fresh && l1.length > 0) return l1;
-  if (sources.dexieTail.length > 0) {
-    return sources.dexieTail.map((m) => ({ ...m })) as ChatMessageWithStatus[];
+  const dexie =
+    sources.dexieTail.length > 0
+      ? (sources.dexieTail.map((m) => ({ ...m })) as ChatMessageWithStatus[])
+      : [];
+  if (sources.l1Fresh && l1.length > 0) {
+    return dexie.length > 0 ? mergeServerPageWithPendingOptimistics(l1, dexie) : l1;
   }
+  if (dexie.length > 0) return dexie;
   return [];
 }
 
@@ -169,9 +173,13 @@ export function chatOpenMessagesSnapshotEqual(
   return true;
 }
 
-/** Full local tail loaded — unlikely older pages exist unless backfill says otherwise. */
-export function chatOpenLikelyHasOlderMessages(paintedCount: number, pageSize: number): boolean {
-  return paintedCount >= pageSize;
+/** Older pages likely exist when Dexie reports history or the painted window fills a page. */
+export function chatOpenLikelyHasOlderMessages(
+  paintedCount: number,
+  pageSize: number,
+  hasOlderInDexie = false
+): boolean {
+  return hasOlderInDexie || paintedCount >= pageSize;
 }
 
 export function reconcileOpenDelta(

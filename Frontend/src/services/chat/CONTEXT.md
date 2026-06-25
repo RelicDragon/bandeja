@@ -13,3 +13,7 @@ The projection is intentionally separate from durability. `threadLiveProjection.
 `applyThreadEvent` is the durability/event-application path for Dexie and cross-surface local state. It persists and indexes chat changes, but it is not the live UI writer for an already-open thread.
 
 For open-thread reliability, prefer routing new live message/read state through Thread Live Projection first, then persist through emitted effects or `applyThreadEvent`. Avoid adding window events or module-level queues as bridges between sync/socket code and open-thread UI state.
+
+## Thread Health Watchdog
+
+`threadHealthWatchdog.ts` is a belt-and-suspenders safety net while a thread is open. Every few seconds it compares the live React snapshot against the Dexie tail using the same projection path as `reconcileAfterPaint`. On divergence it logs a structured diff and triggers reconcile so unknown race classes self-heal without user refresh. It does not replace Thread Live Projection or socket ingress — it only detects and repairs drift.

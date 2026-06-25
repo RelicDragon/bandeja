@@ -66,7 +66,9 @@ export async function planThreadOpen(
   inputs: ThreadOpenInputs
 ): Promise<ThreadOpenPlanResult> {
   const l1 = [...inputs.peekL1()];
-  const { messages: dexieTail } = await inputs.loadBootstrap();
+  const bootstrap = await inputs.loadBootstrap();
+  const dexieTail = bootstrap.messages;
+  const hasOlderInDexie = bootstrap.hasOlderInDexie ?? false;
   const outbox = inputs.loadOutboxOptimistics
     ? [...(await inputs.loadOutboxOptimistics())]
     : [];
@@ -100,6 +102,7 @@ export async function planThreadOpen(
       scrollRow: scrollPlan.scrollRow,
       paintSource: merged.paintSource,
       deferSync: true,
+      hasOlderInDexie,
     },
   };
 }

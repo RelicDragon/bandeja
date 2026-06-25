@@ -58,6 +58,7 @@ import {
   mergeOpenPaintWithLivePending,
 } from '@/services/chat/chatOpenSnapshot';
 import { decideReconcilePinApply } from '@/services/chat/threadScrollPolicy';
+import { useThreadHealthWatchdog } from '@/services/chat/chatThreadController/useThreadHealthWatchdog';
 const PAGE_SIZE = 50;
 
 export interface UseThreadMessagesParams {
@@ -72,6 +73,7 @@ export interface UseThreadMessagesParams {
   freshOpenSignal?: number;
   /** Push/deep-link: scroll to this message after open paint when present in snapshot. */
   openAnchorMessageId?: string;
+  viewerUserId?: string;
 }
 
 function tailMessageId(messages: ChatMessage[]): string | null {
@@ -89,6 +91,7 @@ export function useThreadMessages({
   currentIdRef,
   freshOpenSignal = 0,
   openAnchorMessageId,
+  viewerUserId = '',
 }: UseThreadMessagesParams) {
   const [messages, setMessages] = useState<ChatMessageWithStatus[]>([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -142,7 +145,7 @@ export function useThreadMessages({
 
   const commitOpenThreadPaint = useCallback(
     (
-      plan: Pick<OpenThreadPlan, 'messages' | 'scroll' | 'scrollRow'>,
+      plan: Pick<OpenThreadPlan, 'messages' | 'scroll' | 'scrollRow' | 'hasOlderInDexie'>,
       threadKey: string,
       source: ChatOpenSetMessagesSource = 'bootstrap-snapshot',
       scrollOverride?: Pick<OpenThreadPlan, 'scroll' | 'scrollRow'>
@@ -155,7 +158,9 @@ export function useThreadMessages({
         chatOpenMessageIdsEqual(messagesRef.current, paintMessages);
       if (duplicatePaint) {
         commitChatOpenMessages(messagesRef, setMessages, paintMessages, source);
-        setHasMoreMessages(chatOpenLikelyHasOlderMessages(paintMessages.length, PAGE_SIZE));
+        setHasMoreMessages(
+          chatOpenLikelyHasOlderMessages(paintMessages.length, PAGE_SIZE, plan.hasOlderInDexie)
+        );
         setIsLoadingMessages(false);
         setIsInitialLoad(false);
         return;
@@ -164,7 +169,9 @@ export function useThreadMessages({
       commitChatOpenMessages(messagesRef, setMessages, paintMessages, source);
       openPaintCommittedRef.current = true;
       setOpenPaintGeneration(commitThreadOpenPaintModule(threadKey, scrollPlan.scrollRow));
-      setHasMoreMessages(chatOpenLikelyHasOlderMessages(paintMessages.length, PAGE_SIZE));
+      setHasMoreMessages(
+        chatOpenLikelyHasOlderMessages(paintMessages.length, PAGE_SIZE, plan.hasOlderInDexie)
+      );
       setPage(1);
       setIsLoadingMessages(false);
       setIsInitialLoad(false);
@@ -434,6 +441,24 @@ export function useThreadMessages({
     scrollToBottom,
   ]);
 
+  const getOpenScrollRow = useCallback(() => openScrollRef.current, []);
+
+  useThreadHealthWatchdog({
+    enabled: !!id,
+    threadKey: id
+      ? chatSyncTailKey(contextType, id, contextType === 'GAME' ? effectiveChatType : undefined)
+      : '',
+    contextType,
+    contextId: id,
+    gameChatType: effectiveChatType,
+    viewerUserId,
+    messagesRef,
+    currentIdRef,
+    openPaintCommittedRef,
+    getScrollRow: getOpenScrollRow,
+    setMessages,
+  });
+
   const reconcileThreadOpenAndPinIfAtBottom = useCallback(
     async (requestId: string, effectiveType: ChatType, threadKey: string) => {
       if (currentIdRef.current !== requestId) return;
@@ -665,7 +690,6 @@ export function useThreadMessages({
           messagesRef.current = merged;
           return merged;
         });
-        setHasMoreMessages(true);
         void applyThreadL1Put({
           contextType,
           contextId: id,
@@ -673,12 +697,20 @@ export function useThreadMessages({
           readRows: () => messagesRef.current,
           verify: () => currentIdRef.current === id,
         });
-        return;
+        if (olderLocal.length === PAGE_SIZE) {
+          setHasMoreMessages(true);
+          return;
+        }
       }
 
+      const networkOldest = messagesRef.current[0];
+      if (!networkOldest) {
+        setHasMoreMessages(false);
+        return;
+      }
       const response = await fetchMessagesPage({
         append: true,
-        oldestMessageId: oldest.id,
+        oldestMessageId: networkOldest.id,
         chatTypeOverride: currentChatType,
       });
       if (currentIdRef.current !== id) return;
