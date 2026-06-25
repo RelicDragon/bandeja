@@ -44,12 +44,12 @@ function optimistic(id: string, createdAt: string): ChatMessageWithStatus {
 }
 
 describe('buildOpenSnapshot / pickOpenBaseMessages', () => {
-  it('merges fresh L1 with Dexie tail for a complete open window', () => {
+  it('prefers fresh L1 over Dexie tail', () => {
     const l1 = [msg('l1', '2026-01-03T10:00:00Z')];
     const dexieTail = [msg('d1', '2026-01-03T09:00:00Z')];
-    expect(pickOpenBaseMessages({ l1, dexieTail, l1Fresh: true }).map((m) => m.id)).toEqual(['d1', 'l1']);
+    expect(pickOpenBaseMessages({ l1, dexieTail, l1Fresh: true })).toEqual(l1);
     const snap = buildOpenSnapshot({ l1, dexieTail, outbox: [], l1Fresh: true });
-    expect(snap.map((m) => m.id)).toEqual(['d1', 'l1']);
+    expect(snap.map((m) => m.id)).toEqual(['l1']);
   });
 
   it('uses Dexie tail when L1 empty or stale', () => {
@@ -164,7 +164,7 @@ describe('planOpenBootstrapPaints', () => {
       coalesceBootstrap: true,
     });
     expect(plan.paintCount).toBe(1);
-    expect(plan.snapshot.map((m) => m.id)).toEqual(['d0', 'l1', 'opt']);
+    expect(plan.snapshot.map((m) => m.id)).toEqual(['l1', 'opt']);
   });
 
   it('uncoalesced bootstrap reports multiple paints (internal only)', () => {
