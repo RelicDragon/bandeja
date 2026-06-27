@@ -9,6 +9,7 @@ import {
   USER_STATS_TARGET_SELECT,
 } from '../../utils/constants';
 import { getUserGameOutcomeAggregates } from '../../services/user/userGameOutcomeStats.service';
+import { getUserPerformanceInsights } from '../../services/user/userPerformanceInsights.service';
 import {
   parseSportParam,
   projectUserForSportContext,
@@ -197,9 +198,10 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     },
   });
 
-  const [{ gamesLast30Days, gamesStats }, allSportsAggregates] = await Promise.all([
+  const [{ gamesLast30Days, gamesStats }, allSportsAggregates, performanceInsights] = await Promise.all([
     getUserGameOutcomeAggregates(userId, sport),
     explicitSport ? null : getUserGameOutcomeAggregates(userId),
+    getUserPerformanceInsights(userId, sport),
   ]);
 
   const isFavorite = req.userId ? await prisma.userFavoriteUser.findUnique({
@@ -243,6 +245,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
       followersCount,
       followingCount,
       gamesStats,
+      performanceInsights,
       ...(allSportsAggregates
         ? {
             gamesStatsAllSports: allSportsAggregates.gamesStats,
@@ -521,4 +524,3 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
     },
   });
 });
-

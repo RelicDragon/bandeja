@@ -148,6 +148,8 @@ function getSortValue(
       return stats.wins * pointsPerWin + stats.ties * pointsPerTie + stats.losses * pointsPerLoose;
     case 'BY_SCORES_DELTA':
       return stats.scoresDelta;
+    case 'BY_SCORES_MADE':
+      return stats.scoresMade;
     case 'PLAYOFF_FINALS':
       return 0;
     default:
@@ -165,6 +167,10 @@ function compareTies(aStats: PlayerStats, bStats: PlayerStats): number {
 
 function compareScoresDelta(aStats: PlayerStats, bStats: PlayerStats): number {
   return bStats.scoresDelta - aStats.scoresDelta;
+}
+
+function compareScoresMade(aStats: PlayerStats, bStats: PlayerStats): number {
+  return bStats.scoresMade - aStats.scoresMade;
 }
 
 function compareLevelAtStart(aUser: BasicUser, bUser: BasicUser): number {
@@ -286,6 +292,13 @@ function arePlayersTied(
     }
   }
 
+  // Check scores made (for BY_SCORES_MADE mode)
+  if (winnerOfGame === 'BY_SCORES_MADE') {
+    if (aStats.scoresMade !== bStats.scoresMade) {
+      return false;
+    }
+  }
+
   // Check head-to-head
   const h2h = h2hMap.get(a.user.id)?.get(b.user.id);
   if (h2h !== null && h2h !== 'tie' && h2h !== undefined) {
@@ -357,6 +370,25 @@ function compareStandings(
 
     const tiesDiff = compareTies(aStats, bStats);
     if (tiesDiff !== 0) return tiesDiff;
+
+    const h2hDiff = compareHeadToHead(a, b, h2hMap);
+    if (h2hDiff !== 0) return h2hDiff;
+
+    return compareLevelAtStart(a.user, b.user);
+  }
+
+  if (winnerOfGame === 'BY_SCORES_MADE') {
+    const scoresMadeDiff = compareScoresMade(aStats, bStats);
+    if (scoresMadeDiff !== 0) return scoresMadeDiff;
+
+    const matchesDiff = compareMatchesWon(aStats, bStats);
+    if (matchesDiff !== 0) return matchesDiff;
+
+    const tiesDiff = compareTies(aStats, bStats);
+    if (tiesDiff !== 0) return tiesDiff;
+
+    const scoresDiff = compareScoresDelta(aStats, bStats);
+    if (scoresDiff !== 0) return scoresDiff;
 
     const h2hDiff = compareHeadToHead(a, b, h2hMap);
     if (h2hDiff !== 0) return h2hDiff;
@@ -620,16 +652,32 @@ export function calculateGameStandings(
         case 'BY_SCORES_DELTA': {
           const deltasDiff = b.scoresDelta - a.scoresDelta;
           if (deltasDiff !== 0) return deltasDiff;
-          
+
           const matchesDiff3 = b.matchesWon - a.matchesWon;
           if (matchesDiff3 !== 0) return matchesDiff3;
-          
+
           const tiesDiff3 = b.ties - a.ties;
           if (tiesDiff3 !== 0) return tiesDiff3;
-          
+
           return 0;
         }
-        
+
+        case 'BY_SCORES_MADE': {
+          const scoresMadeDiff = b.totalPoints - a.totalPoints;
+          if (scoresMadeDiff !== 0) return scoresMadeDiff;
+
+          const matchesDiff4 = b.matchesWon - a.matchesWon;
+          if (matchesDiff4 !== 0) return matchesDiff4;
+
+          const tiesDiff4 = b.ties - a.ties;
+          if (tiesDiff4 !== 0) return tiesDiff4;
+
+          const scoresDeltaDiff4 = b.scoresDelta - a.scoresDelta;
+          if (scoresDeltaDiff4 !== 0) return scoresDeltaDiff4;
+
+          return 0;
+        }
+
         default: {
           const defaultDiff = b.matchesWon - a.matchesWon;
           if (defaultDiff !== 0) return defaultDiff;
@@ -651,6 +699,12 @@ export function calculateGameStandings(
 
       if (winnerOfGame === 'BY_POINTS') {
         if (a.pointsEarned !== b.pointsEarned) {
+          return false;
+        }
+      }
+
+      if (winnerOfGame === 'BY_SCORES_MADE') {
+        if (a.totalPoints !== b.totalPoints) {
           return false;
         }
       }

@@ -17,6 +17,7 @@ import { LevelHistoryLevelPanel } from './LevelHistoryLevelPanel';
 import { GamesStatsSection } from './GamesStatsSection';
 import { LevelHistoryProfileStatsSection } from './LevelHistoryProfileStatsSection';
 import { PlayerItemsToSell } from './PlayerItemsToSell';
+import { ProfilePerformanceInsights } from './ProfilePerformanceInsights';
 import { MarketItem } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
@@ -26,6 +27,7 @@ interface LevelHistoryViewProps {
   padding?: string;
   tabDarkBgClass?: string;
   hideUserCard?: boolean;
+  content?: 'all' | 'statistics' | 'levels';
   onOpenGame?: () => void;
   showItemsToSell?: boolean;
   onMarketItemClick?: (item: MarketItem) => void;
@@ -33,7 +35,7 @@ interface LevelHistoryViewProps {
   onStatsRefresh?: (stats: UserStats) => void;
 }
 
-export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, onOpenGame, showItemsToSell = false, onMarketItemClick, onStatsRefresh }: LevelHistoryViewProps) => {
+export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, content = 'all', onOpenGame, showItemsToSell = false, onMarketItemClick, onStatsRefresh }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = stats;
@@ -157,6 +159,8 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
       affectsRating: item.affectsRating,
     }));
   }, [currentHistory]);
+  const showStatisticsContent = content === 'all' || content === 'statistics';
+  const showLevelsContent = content === 'all' || content === 'levels';
 
   const getScrollParent = (el: HTMLElement | null): HTMLElement | null => {
     if (!el) return null;
@@ -208,35 +212,45 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
 
   return (
     <div className={`${padding} space-y-3`}>
-      <LevelHistoryLevelPanel
-        user={user}
-        sports={selectorSports}
-        selection={selection}
-        onChange={setSelection}
-        variant={hideUserCard ? 'compact' : 'hero'}
-      />
-
-      <LevelHistoryProfileStatsSection
-        user={user}
-        followersCount={stats.followersCount}
-        followingCount={stats.followingCount}
-      />
-
-
-      {showItemsToSell && (
-        <PlayerItemsToSell userId={user.id} onItemClick={onMarketItemClick} />
-      )}
-
-      {gamesStatsForView?.length > 0 && (
-        <GamesStatsSection
-          stats={gamesStatsForView}
-          activeTab={gamesStatsTab}
-          onTabChange={setGamesStatsTab}
-          darkBgClass={tabDarkBgClass}
+      {showLevelsContent && (
+        <LevelHistoryLevelPanel
+          user={user}
+          sports={selectorSports}
+          selection={selection}
+          onChange={setSelection}
+          variant={hideUserCard ? 'compact' : 'hero'}
         />
       )}
 
-      {currentHistory.length > 0 ? (
+      {showStatisticsContent && (
+        <>
+          <LevelHistoryProfileStatsSection
+            user={user}
+            followersCount={stats.followersCount}
+            followingCount={stats.followingCount}
+          />
+
+          {showItemsToSell && (
+            <PlayerItemsToSell userId={user.id} onItemClick={onMarketItemClick} />
+          )}
+
+          {gamesStatsForView?.length > 0 && (
+            <GamesStatsSection
+              stats={gamesStatsForView}
+              activeTab={gamesStatsTab}
+              onTabChange={setGamesStatsTab}
+              darkBgClass={tabDarkBgClass}
+            />
+          )}
+
+          <ProfilePerformanceInsights
+            insights={sportScopedStats?.performanceInsights ?? stats.performanceInsights}
+            darkBgClass={tabDarkBgClass}
+          />
+        </>
+      )}
+
+      {showLevelsContent && currentHistory.length > 0 ? (
         <>
           <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-3">
             <div className="relative h-48 select-none" style={{ userSelect: 'none', WebkitUserSelect: 'none' }} onClick={() => setActiveChartIndex(null)}>
@@ -555,12 +569,11 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
             })}
           </div>
         </>
-      ) : (
+      ) : showLevelsContent ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           {showSocialLevel ? t('playerCard.noSocialLevelHistory') : t('playerCard.noLevelHistory')}
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
-

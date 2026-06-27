@@ -12,7 +12,7 @@ import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePresenceStore } from '@/store/presenceStore';
 import { MarketItem } from '@/types';
 
-export type PlayerCardProfileTab = 'statistics' | 'groups';
+export type PlayerCardProfileTab = 'statistics' | 'levels' | 'groups';
 
 export interface PlayerCardProfileBodyProps {
   stats: UserStats;
@@ -60,6 +60,7 @@ export const PlayerCardProfileBody = ({
   const profileTabs = useMemo<SegmentedSwitchTab[]>(
     () => [
       { id: 'statistics', label: t('playerCard.statistics'), icon: BarChart3 },
+      { id: 'levels', label: t('playerCard.levels'), icon: Dumbbell },
       { id: 'groups', label: t('playerCard.groups'), icon: Users },
     ],
     [t],
@@ -174,7 +175,17 @@ export const PlayerCardProfileBody = ({
         </motion.div>
       ) : (
         <motion.div variants={itemVariants}>
-          <LevelHistoryView stats={stats} padding="p-0" tabDarkBgClass="dark:bg-gray-700/50" hideUserCard onOpenGame={onOpenGame} showItemsToSell onMarketItemClick={onMarketItemClick} onStatsRefresh={onStatsRefresh} />
+          <LevelHistoryView
+            stats={stats}
+            padding="p-0"
+            tabDarkBgClass="dark:bg-gray-700/50"
+            hideUserCard
+            content={showProfileTabs && activeProfileTab === 'levels' ? 'levels' : showProfileTabs ? 'statistics' : 'all'}
+            onOpenGame={onOpenGame}
+            showItemsToSell
+            onMarketItemClick={onMarketItemClick}
+            onStatsRefresh={onStatsRefresh}
+          />
         </motion.div>
       )}
     </motion.div>

@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { ChatMessage } from '@/api/chat';
 import { ThreadScrollViewport } from './ThreadScrollViewport';
+import type { ThreadScrollViewportInput } from './threadScrollViewportTypes';
 
 const mockViewport = {
   containerRef: { current: null },
@@ -21,10 +22,10 @@ const mockViewport = {
   imperativeHandle: { scrollToMessageById: () => {}, scrollToBottomAlign: () => {}, scrollToBottomSmooth: () => {} },
 };
 
-const useThreadScrollViewport = vi.fn(() => mockViewport);
+const useThreadScrollViewport = vi.fn((_input: ThreadScrollViewportInput) => mockViewport);
 
 vi.mock('./useThreadScrollViewport', () => ({
-  useThreadScrollViewport: (...args: unknown[]) => useThreadScrollViewport(...args),
+  useThreadScrollViewport: (input: ThreadScrollViewportInput) => useThreadScrollViewport(input),
 }));
 
 vi.mock('framer-motion', () => ({

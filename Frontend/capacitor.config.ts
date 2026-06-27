@@ -32,7 +32,9 @@ const config: CapacitorConfig = {
     Keyboard: {
       resize: 'none',
       style: 'dark',
-      resizeOnFullScreen: true
+      // Android uses the app's JS/CSS keyboard lift. Letting the plugin resize
+      // the WebView as well makes focused inputs jump by roughly 2x the keyboard.
+      resizeOnFullScreen: false
     }
   }
 };

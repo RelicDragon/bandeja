@@ -17,6 +17,10 @@ export function isScoresDeltaFormat(winnerOfGame?: WinnerOfGame | null): boolean
   return winnerOfGame === 'BY_SCORES_DELTA';
 }
 
+export function isScoresMadeFormat(winnerOfGame?: WinnerOfGame | null): boolean {
+  return winnerOfGame === 'BY_SCORES_MADE';
+}
+
 export function isPointsFormat(winnerOfGame?: WinnerOfGame | null): boolean {
   return winnerOfGame === 'BY_POINTS';
 }

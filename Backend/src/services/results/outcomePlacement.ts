@@ -63,6 +63,15 @@ function compareTeams(a: TeamScore, b: TeamScore, winnerOfGame: WinnerOfGame): n
       if (matchesDiff !== 0) return matchesDiff;
       return b.ties - a.ties;
     }
+    case WinnerOfGame.BY_SCORES_MADE: {
+      const scoresMadeDiff = b.totalPoints - a.totalPoints;
+      if (scoresMadeDiff !== 0) return scoresMadeDiff;
+      const matchesDiff = b.matchesWon - a.matchesWon;
+      if (matchesDiff !== 0) return matchesDiff;
+      const tiesDiff = b.ties - a.ties;
+      if (tiesDiff !== 0) return tiesDiff;
+      return b.scoresDelta - a.scoresDelta;
+    }
     default:
       return b.matchesWon - a.matchesWon || b.scoresDelta - a.scoresDelta;
   }
@@ -79,6 +88,9 @@ function areTeamsTied(a: TeamScore, b: TeamScore, winnerOfGame: WinnerOfGame): b
     return false;
   }
   if (winnerOfGame === WinnerOfGame.BY_POINTS && a.pointsEarned !== b.pointsEarned) {
+    return false;
+  }
+  if (winnerOfGame === WinnerOfGame.BY_SCORES_MADE && a.totalPoints !== b.totalPoints) {
     return false;
   }
   return true;

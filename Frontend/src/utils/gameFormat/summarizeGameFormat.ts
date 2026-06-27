@@ -19,6 +19,7 @@ function winnerOfGameSummaryPart(t: TFunction, w: WinnerOfGame | undefined): str
   if (w === 'BY_POINTS') return t('gameResults.byPoints');
   if (w === 'BY_MATCHES_WON') return t('gameResults.byMatchesWon');
   if (w === 'BY_SCORES_DELTA') return t('gameResults.byScoresDelta');
+  if (w === 'BY_SCORES_MADE') return t('gameResults.byScoresMade');
   return null;
 }
 

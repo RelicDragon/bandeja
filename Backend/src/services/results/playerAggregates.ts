@@ -206,6 +206,19 @@ export function comparePlayerAggregates(
       if (h2hResult === 'B') return 1;
       return a.level - b.level;
     }
+    case WinnerOfGame.BY_SCORES_MADE: {
+      const scoresMadeDiff = b.totalPoints - a.totalPoints;
+      if (scoresMadeDiff !== 0) return scoresMadeDiff;
+      const matchesDiff = b.matchesWon - a.matchesWon;
+      if (matchesDiff !== 0) return matchesDiff;
+      const tiesDiff = b.ties - a.ties;
+      if (tiesDiff !== 0) return tiesDiff;
+      const scoresDeltaDiff = b.scoresDelta - a.scoresDelta;
+      if (scoresDeltaDiff !== 0) return scoresDeltaDiff;
+      if (h2hResult === 'A') return -1;
+      if (h2hResult === 'B') return 1;
+      return a.level - b.level;
+    }
     case WinnerOfGame.PLAYOFF_FINALS:
       return 0;
     default: {
@@ -260,6 +273,9 @@ export function arePlayerAggregatesTied(
     const aPoints = calculatePointsEarnedFromAggregate(a, pointsPerWin, pointsPerTie, pointsPerLoose);
     const bPoints = calculatePointsEarnedFromAggregate(b, pointsPerWin, pointsPerTie, pointsPerLoose);
     if (aPoints !== bPoints) return false;
+  }
+  if (winnerOfGame === WinnerOfGame.BY_SCORES_MADE) {
+    if (a.totalPoints !== b.totalPoints) return false;
   }
   const h2h = h2hMap.get(a.userId)?.get(b.userId);
   if (h2h !== null && h2h !== 'tie' && h2h !== undefined) return false;
@@ -331,6 +347,8 @@ export function determineWinnerUserIds(
         );
       case WinnerOfGame.BY_SCORES_DELTA:
         return sortedPlayers[0].scoresDelta;
+      case WinnerOfGame.BY_SCORES_MADE:
+        return sortedPlayers[0].totalPoints;
       default:
         return sortedPlayers[0].matchesWon;
     }
@@ -347,6 +365,8 @@ export function determineWinnerUserIds(
         );
       case WinnerOfGame.BY_SCORES_DELTA:
         return p.scoresDelta === topValue;
+      case WinnerOfGame.BY_SCORES_MADE:
+        return p.totalPoints === topValue;
       default:
         return p.matchesWon === topValue;
     }

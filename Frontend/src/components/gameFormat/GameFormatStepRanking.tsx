@@ -51,6 +51,7 @@ const Stepper = ({
 const DEFAULT_STANDING_POINTS = { pointsPerWin: 3, pointsPerTie: 1, pointsPerLoose: 0 } as const;
 
 const RANKING_OPTION_ORDER: GameSetupParams['winnerOfGame'][] = [
+  'BY_SCORES_MADE',
   'BY_SCORES_DELTA',
   'BY_POINTS',
   'BY_MATCHES_WON',
@@ -124,7 +125,9 @@ export const GameFormatStepRanking = ({
                 ? t('gameResults.byPoints')
                 : key === 'BY_MATCHES_WON'
                   ? t('gameResults.byMatchesWon')
-                  : t('gameResults.byScoresDelta');
+                  : key === 'BY_SCORES_MADE'
+                    ? t('gameResults.byScoresMade')
+                    : t('gameResults.byScoresDelta');
             const selected = selectedWinner === key;
             return (
               <button

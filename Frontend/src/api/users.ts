@@ -39,6 +39,37 @@ export interface GamesStat {
   totalMatches: number;
 }
 
+export type StreakResult = 'win' | 'loss' | 'tie';
+
+export interface PerformanceRelationshipEntry {
+  user: BasicUser;
+  wins: number;
+  losses: number;
+  ties: number;
+  totalMatches: number;
+  winRate: string;
+}
+
+export interface UserPerformanceInsights {
+  streaks: {
+    recentGames: StreakResult[];
+    current: {
+      result: StreakResult;
+      count: number;
+    } | null;
+    longestWin: number;
+    longestLoss: number;
+  };
+  relationships: {
+    bestPartner: PerformanceRelationshipEntry | null;
+    worstPartner: PerformanceRelationshipEntry | null;
+    bestPartnerByCount?: PerformanceRelationshipEntry | null;
+    worstPartnerByCount?: PerformanceRelationshipEntry | null;
+    favoriteTarget: PerformanceRelationshipEntry | null;
+    nemesis: PerformanceRelationshipEntry | null;
+  };
+}
+
 export interface UserStats {
   user: User & { isFavorite?: boolean };
   sport?: Sport;
@@ -50,6 +81,7 @@ export interface UserStats {
   followingCount: number;
   gamesStats: GamesStat[];
   gamesStatsAllSports?: GamesStat[];
+  performanceInsights?: UserPerformanceInsights;
 }
 
 export interface PlayerComparison {
@@ -399,4 +431,3 @@ export const usersApi = {
     return response.data;
   },
 };
-
