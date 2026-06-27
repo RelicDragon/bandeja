@@ -23,7 +23,9 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 ./scripts/app-release.sh
 ```
 
-Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
+Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure or after App Store Connect is still processing an uploaded iOS build: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
+
+The store phase is staged: upload Android and iOS binaries, wait until App Store Connect exposes the processed build, update App Store metadata with What's New, optionally submit for review, then verify both Google Play and App Store Connect before updating the shipped baseline. If Apple processing times out, the saved session keeps the uploaded-binary checkpoint so the next resume skips the IPA upload.
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
 

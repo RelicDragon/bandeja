@@ -110,7 +110,7 @@ Web deploy (CI / `upd.sh`) does **not** ship Android or iOS. Native apps are bui
 ./scripts/app-release.sh
 ```
 
-Interactive flow: propose version/build, draft What's new (AI, custom, or template), build signed AAB + IPA, upload to both stores, update baseline. Resume with `APP_RELEASE_RESUME=1` after failures. Planner-only rehearsal: `APP_RELEASE_DRY_RUN=1`.
+Interactive flow: propose version/build, draft What's new (AI, custom, or template), build signed AAB + IPA, upload to both stores, verify both stores, then update baseline. The iOS upload waits for App Store Connect processing before it writes What's New metadata and optionally submits for review; if Apple is still processing, resume later with `APP_RELEASE_RESUME=1`. Planner-only rehearsal: `APP_RELEASE_DRY_RUN=1`.
 
 Store credentials (`Backend/.env` or shell): `PLAY_STORE_JSON_KEY_PATH` (or `GOOGLE_PLAY_JSON_KEY`), `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`. Fastlane: `cd Frontend && bundle install`.
 
@@ -118,7 +118,7 @@ Full reference, signing setup, and internal-track smoke test: **`docs/APP_RELEAS
 
 ### Baseline marker
 
-After each store release, the baseline is updated automatically from native version files + `HEAD` (by the CLI after upload, or manually via mark-shipped):
+After each store release, the baseline is updated automatically from native version files + `HEAD` (by the CLI after store verification, or manually via mark-shipped):
 
 | File | Purpose |
 |------|---------|

@@ -17,6 +17,8 @@ const baseSession: ReleaseSession = {
   notes: null,
   artifacts: {},
   store: {},
+  uploads: {},
+  iosAppStoreConnect: {},
 };
 
 assert(getSessionPhase(baseSession) === 'planning', 'planning without notes');

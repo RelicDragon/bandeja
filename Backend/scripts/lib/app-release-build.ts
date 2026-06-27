@@ -12,7 +12,10 @@ export const ANDROID_DIR = path.join(FRONTEND_DIR, 'android');
 export const IOS_APP_DIR = path.join(FRONTEND_DIR, 'ios/App');
 export const IOS_WORKSPACE = path.join(IOS_APP_DIR, 'App.xcworkspace');
 export const EXPORT_OPTIONS_PLIST = path.join(FRONTEND_DIR, 'ios/ExportOptions-app-store.plist');
-export const AAB_OUTPUT = path.join(ANDROID_DIR, 'app/build/outputs/bundle/release/app-release.aab');
+export const AAB_OUTPUT = path.join(
+  ANDROID_DIR,
+  'app/build/outputs/bundle/release/app-release.aab',
+);
 export const RELEASE_BUILD_DIR = path.join(ROOT, '.app-release');
 export const IOS_ARCHIVE_PATH = path.join(RELEASE_BUILD_DIR, 'ios/App.xcarchive');
 export const IOS_EXPORT_DIR = path.join(RELEASE_BUILD_DIR, 'ios/export');
@@ -30,6 +33,7 @@ export const PRODUCTION_VITE_ENV: Record<string, string> = {
 };
 
 const DEFAULT_JAVA_HOME = '/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home';
+const REQUIRED_ANDROID_TOOLCHAIN_VERSION = 21;
 const LOG_TAIL_LINES = 40;
 export const IOS_ARCHIVE_DESTINATION = 'generic/platform=iOS';
 
@@ -65,6 +69,10 @@ export function buildIosArchiveArgs(archivePath: string): string[] {
   ];
 }
 
+export function buildIosCleanArgs(): string[] {
+  return ['clean', '-workspace', IOS_WORKSPACE, '-scheme', 'App', '-configuration', 'Release'];
+}
+
 export interface BuildArtifacts {
   aab: string;
   ipa: string;
@@ -85,14 +93,79 @@ export class ReleaseBuildError extends Error {
   }
 }
 
+export function parseJavaMajorVersion(versionOutput: string): number | undefined {
+  const quotedVersion = versionOutput.match(/version "([^"]+)"/)?.[1];
+  if (!quotedVersion) {
+    return undefined;
+  }
+  const legacyMatch = quotedVersion.match(/^1\.(\d+)/);
+  if (legacyMatch) {
+    return Number(legacyMatch[1]);
+  }
+  const majorMatch = quotedVersion.match(/^(\d+)/);
+  return majorMatch ? Number(majorMatch[1]) : undefined;
+}
+
+function javaVersionForHome(javaHome: string): number | undefined {
+  const javaExecutable = path.join(javaHome, 'bin', 'java');
+  if (!fs.existsSync(javaExecutable)) {
+    return undefined;
+  }
+
+  try {
+    const result = execaSync(javaExecutable, ['-version']);
+    return parseJavaMajorVersion([result.stdout, result.stderr].join('\n'));
+  } catch {
+    return undefined;
+  }
+}
+
+function javaHomeFromMacVersion(version: number): string | undefined {
+  if (os.platform() !== 'darwin') {
+    return undefined;
+  }
+
+  try {
+    return execaSync('/usr/libexec/java_home', ['-v', String(version)]).stdout.trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function currentJavaVersion(): number | undefined {
+  try {
+    const result = execaSync('java', ['-version']);
+    return parseJavaMajorVersion([result.stdout, result.stderr].join('\n'));
+  } catch {
+    return undefined;
+  }
+}
+
+function uniqueDefined(values: Array<string | undefined>): string[] {
+  return Array.from(new Set(values.filter((value): value is string => Boolean(value))));
+}
+
+export function selectJavaHomeForVersion(
+  candidates: string[],
+  version: number,
+  versionForHome: (javaHome: string) => number | undefined,
+): string | undefined {
+  return candidates.find((candidate) => versionForHome(candidate) === version);
+}
+
+function findJavaHomeForVersion(version: number): string | undefined {
+  const candidates = uniqueDefined([
+    process.env.JAVA_HOME_21,
+    DEFAULT_JAVA_HOME,
+    javaHomeFromMacVersion(version),
+    process.env.JAVA_HOME,
+  ]);
+
+  return selectJavaHomeForVersion(candidates, version, javaVersionForHome);
+}
+
 function resolveJavaHome(): string | undefined {
-  if (process.env.JAVA_HOME) {
-    return process.env.JAVA_HOME;
-  }
-  if (fs.existsSync(DEFAULT_JAVA_HOME)) {
-    return DEFAULT_JAVA_HOME;
-  }
-  return undefined;
+  return findJavaHomeForVersion(REQUIRED_ANDROID_TOOLCHAIN_VERSION);
 }
 
 function androidSigningConfigured(): boolean {
@@ -102,9 +175,9 @@ function androidSigningConfigured(): boolean {
   }
   return Boolean(
     process.env.ANDROID_KEYSTORE_FILE &&
-      process.env.ANDROID_KEYSTORE_PASSWORD &&
-      process.env.ANDROID_KEY_ALIAS &&
-      process.env.ANDROID_KEY_PASSWORD,
+    process.env.ANDROID_KEYSTORE_PASSWORD &&
+    process.env.ANDROID_KEY_ALIAS &&
+    process.env.ANDROID_KEY_PASSWORD,
   );
 }
 
@@ -142,8 +215,15 @@ export function runBuildPreflight(): BuildPreflight {
     issues.push('Android Gradle wrapper missing — run Capacitor sync first.');
   }
 
-  if (!resolveJavaHome()) {
-    issues.push('JAVA_HOME is not set and Homebrew OpenJDK 21 was not found.');
+  const releaseJavaHome = resolveJavaHome();
+  if (!releaseJavaHome) {
+    const activeJava = currentJavaVersion();
+    issues.push(
+      `Java ${REQUIRED_ANDROID_TOOLCHAIN_VERSION} is required for Android release builds. ` +
+        `Install OpenJDK ${REQUIRED_ANDROID_TOOLCHAIN_VERSION} (for example: brew install openjdk@21) ` +
+        `or set JAVA_HOME_21/JAVA_HOME to a JDK ${REQUIRED_ANDROID_TOOLCHAIN_VERSION} installation.` +
+        (activeJava ? ` Current java is ${activeJava}.` : ''),
+    );
   }
 
   if (!process.env.ANDROID_HOME && !process.env.ANDROID_SDK_ROOT) {
@@ -212,7 +292,11 @@ function formatExecError(error: unknown): ReleaseBuildError {
   }
 
   if (error && typeof error === 'object' && 'stdout' in error && 'stderr' in error) {
-    const execError = error as { shortMessage?: string; stdout?: string; stderr?: string };
+    const execError = error as {
+      shortMessage?: string;
+      stdout?: string;
+      stderr?: string;
+    };
     const combined = [execError.stdout ?? '', execError.stderr ?? ''].join('\n').trim();
     let message = execError.shortMessage ?? 'Release build command failed';
     if (/rsync error:|--extended-attributes: unknown option/i.test(combined)) {
@@ -231,7 +315,10 @@ async function runBashFunction(scriptRelativePath: string, functionName: string)
   try {
     await execa(
       'bash',
-      ['-lc', `set -euo pipefail; SCRIPT_DIR="${FRONTEND_DIR}"; source "${scriptPath}"; ${functionName}`],
+      [
+        '-lc',
+        `set -euo pipefail; SCRIPT_DIR="${FRONTEND_DIR}"; source "${scriptPath}"; ${functionName}`,
+      ],
       { cwd: FRONTEND_DIR, stdio: 'pipe' },
     );
   } catch (error) {
@@ -252,6 +339,44 @@ async function runCommand(
     });
   } catch (error) {
     throw formatExecError(error);
+  }
+}
+
+async function runIosArchiveWithCleanRetry(env: NodeJS.ProcessEnv): Promise<void> {
+  try {
+    await runCommand('xcodebuild', buildIosArchiveArgs(IOS_ARCHIVE_PATH), {
+      cwd: ROOT,
+      env,
+    });
+    return;
+  } catch (firstError) {
+    const firstBuildError = formatExecError(firstError);
+
+    if (fs.existsSync(IOS_ARCHIVE_PATH)) {
+      fs.rmSync(IOS_ARCHIVE_PATH, { recursive: true, force: true });
+    }
+
+    try {
+      await runCommand('xcodebuild', buildIosCleanArgs(), {
+        cwd: ROOT,
+        env,
+      });
+    } catch {
+      throw firstBuildError;
+    }
+
+    try {
+      await runCommand('xcodebuild', buildIosArchiveArgs(IOS_ARCHIVE_PATH), {
+        cwd: ROOT,
+        env,
+      });
+    } catch (retryError) {
+      const retryBuildError = formatExecError(retryError);
+      throw new ReleaseBuildError(
+        `${retryBuildError.message} (after cleaning the iOS build state and retrying archive)`,
+        retryBuildError.logTail || firstBuildError.logTail,
+      );
+    }
   }
 }
 
@@ -290,18 +415,36 @@ export async function runReleaseBuild(
   const tasks = new Listr(
     [
       timedListrTask(timer, 'Production frontend build', async () => {
-        await runCommand('npm', ['run', 'build'], { cwd: FRONTEND_DIR, env: sharedEnv });
+        await runCommand('npm', ['run', 'build'], {
+          cwd: FRONTEND_DIR,
+          env: sharedEnv,
+        });
         await runBashFunction('scripts/verify-capacitor-bundle.sh', 'verify_capacitor_bundle');
       }),
       timedListrTask(timer, 'Capacitor sync (Android + iOS)', async () => {
         await runBashFunction('scripts/ensure-cocoapods.sh', 'ensure_cocoapods');
-        await runBashFunction('scripts/fix-ios-pbx-object-version.sh', 'fix_ios_pbx_object_version');
-        await runCommand('npx', ['cap', 'sync'], { cwd: FRONTEND_DIR, env: sharedEnv });
-        await runBashFunction('scripts/fix-ios-pbx-object-version.sh', 'fix_ios_pbx_object_version');
-        await runCommand('pod', ['install'], { cwd: IOS_APP_DIR, env: sharedEnv });
+        await runBashFunction(
+          'scripts/fix-ios-pbx-object-version.sh',
+          'fix_ios_pbx_object_version',
+        );
+        await runCommand('npx', ['cap', 'sync'], {
+          cwd: FRONTEND_DIR,
+          env: sharedEnv,
+        });
+        await runBashFunction(
+          'scripts/fix-ios-pbx-object-version.sh',
+          'fix_ios_pbx_object_version',
+        );
+        await runCommand('pod', ['install'], {
+          cwd: IOS_APP_DIR,
+          env: sharedEnv,
+        });
       }),
       timedListrTask(timer, 'Android bundleRelease (AAB)', async () => {
-        await runCommand('./gradlew', ['bundleRelease'], { cwd: ANDROID_DIR, env: sharedEnv });
+        await runCommand('./gradlew', ['bundleRelease'], {
+          cwd: ANDROID_DIR,
+          env: sharedEnv,
+        });
       }),
       timedListrTask(timer, 'iOS archive + export (IPA)', async () => {
         if (fs.existsSync(IOS_ARCHIVE_PATH)) {
@@ -312,10 +455,7 @@ export async function runReleaseBuild(
         }
         fs.mkdirSync(IOS_EXPORT_DIR, { recursive: true });
 
-        await runCommand('xcodebuild', buildIosArchiveArgs(IOS_ARCHIVE_PATH), {
-          cwd: ROOT,
-          env: iosEnv,
-        });
+        await runIosArchiveWithCleanRetry(iosEnv);
 
         await runCommand(
           'xcodebuild',

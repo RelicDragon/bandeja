@@ -66,6 +66,8 @@ export function createReleaseSession(headRef = 'HEAD'): ReleaseSession {
     notes: null,
     artifacts: {},
     store: {},
+    uploads: {},
+    iosAppStoreConnect: {},
     autoCommit: undefined,
   };
 }
@@ -90,7 +92,10 @@ export function parseBuildInput(value: string): number {
   return buildInputSchema.parse(value);
 }
 
-export function applyPlannedVersions(session: ReleaseSession, options?: { dryRun?: boolean }): void {
+export function applyPlannedVersions(
+  session: ReleaseSession,
+  options?: { dryRun?: boolean },
+): void {
   const dryRun = options?.dryRun ?? isDryRun();
   if (dryRun) {
     return;
@@ -112,7 +117,8 @@ export function nativeProjectFilesMatch(
   return before.android === after.android && before.ios === after.ios;
 }
 
-export type ReleaseSessionPhase = 'planning' | 'ready-to-apply' | 'ready-to-build' | 'ready-to-upload';
+export type ReleaseSessionPhase =
+  'planning' | 'ready-to-apply' | 'ready-to-build' | 'ready-to-upload';
 
 export function getSessionPhase(session: ReleaseSession): ReleaseSessionPhase {
   if (!session.notes) {
@@ -143,10 +149,10 @@ export function storeConfigComplete(store: ReleaseSession['store']): boolean {
 }
 
 export function formatCommitPreview(baselineSha: string, headSha: string, limit = 8): string {
-  const out = execSync(
-    `git log ${baselineSha}..${headSha} --reverse --format='%h %s'`,
-    { cwd: ROOT, maxBuffer: 1024 * 1024 },
-  )
+  const out = execSync(`git log ${baselineSha}..${headSha} --reverse --format='%h %s'`, {
+    cwd: ROOT,
+    maxBuffer: 1024 * 1024,
+  })
     .toString()
     .trim();
   if (!out) {

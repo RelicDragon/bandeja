@@ -13,7 +13,15 @@ import {
   parseReleaseNotesOutput,
   derivePlayShortDescription,
 } from './app-release-notes';
-import { cleanReleaseWorkspace, clearSession, hasSavedSession, loadSession, saveSession, SESSION_DIR } from './app-release-session';
+import {
+  cleanReleaseWorkspace,
+  clearSession,
+  hasSavedSession,
+  loadSession,
+  saveSession,
+  SESSION_DIR,
+  SESSION_FILE,
+} from './app-release-session';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -70,15 +78,84 @@ const sessionWithNotes = {
   notes: buildReleaseNotes('• Saved notes', 'custom'),
   artifacts: {},
   store: {},
+  uploads: {
+    android: true,
+    androidStoreVerified: true,
+    iosBinary: true,
+    iosBuildProcessed: true,
+    iosStoreVersion: true,
+    iosStoreVersionVerified: true,
+    storesVerified: true,
+    androidStoreVerifiedAt: '2026-06-28T12:20:00.000Z',
+    iosBinaryUploadedAt: '2026-06-28T12:00:00.000Z',
+    iosStoreVersionVerifiedAt: '2026-06-28T12:30:00.000Z',
+    storesVerifiedAt: '2026-06-28T12:40:00.000Z',
+  },
+  iosAppStoreConnect: {
+    appStoreVersionId: 'version-1',
+    buildId: 'build-1',
+    lastObservedProcessingStatus: 'VALID',
+    metadataUpdatedAt: '2026-06-28T12:30:00.000Z',
+    submissionId: 'submission-1',
+  },
 };
 saveSession(sessionWithNotes);
 const resumed = loadSession();
 assert(resumed?.headSha === session.headSha, 'session resume preserves frozen headSha');
-assert(resumed?.planned.version === session.planned.version, 'session resume preserves planned version');
+assert(
+  resumed?.planned.version === session.planned.version,
+  'session resume preserves planned version',
+);
 assert(resumed?.notes?.main === '• Saved notes', 'session resume preserves notes');
 assert(resumed?.artifacts !== undefined, 'session resume includes artifacts');
 assert(resumed?.store !== undefined, 'session resume includes store');
-assert(getSessionPhase(sessionWithNotes) === 'ready-to-apply', 'session with notes is ready-to-apply');
+assert(resumed?.uploads !== undefined, 'session resume includes uploads');
+assert(
+  resumed?.iosAppStoreConnect.appStoreVersionId === 'version-1',
+  'session resume preserves App Store version id',
+);
+assert(
+  resumed?.iosAppStoreConnect.buildId === 'build-1',
+  'session resume preserves App Store build id',
+);
+assert(
+  resumed?.iosAppStoreConnect.lastObservedProcessingStatus === 'VALID',
+  'session resume preserves App Store processing status',
+);
+assert(
+  resumed?.iosAppStoreConnect.metadataUpdatedAt === '2026-06-28T12:30:00.000Z',
+  'session resume preserves App Store metadata timestamp',
+);
+assert(
+  resumed?.iosAppStoreConnect.submissionId === 'submission-1',
+  'session resume preserves App Store submission id',
+);
+assert(resumed?.uploads.iosBinary === true, 'session resume preserves iOS binary checkpoint');
+assert(
+  resumed?.uploads.iosBuildProcessed === true,
+  'session resume preserves iOS processing checkpoint',
+);
+assert(
+  resumed?.uploads.iosStoreVersionVerified === true,
+  'session resume preserves iOS metadata verification checkpoint',
+);
+assert(
+  resumed?.uploads.storesVerified === true,
+  'session resume preserves final store verification checkpoint',
+);
+const legacySession = { ...sessionWithNotes };
+delete (legacySession as Partial<typeof legacySession>).uploads;
+delete (legacySession as Partial<typeof legacySession>).iosAppStoreConnect;
+fs.writeFileSync(SESSION_FILE, `${JSON.stringify(legacySession, null, 2)}\n`, 'utf-8');
+assert(loadSession()?.uploads !== undefined, 'legacy session resume defaults uploads');
+assert(
+  loadSession()?.iosAppStoreConnect !== undefined,
+  'legacy session resume defaults App Store Connect state',
+);
+assert(
+  getSessionPhase(sessionWithNotes) === 'ready-to-apply',
+  'session with notes is ready-to-apply',
+);
 assert(
   storeConfigComplete({ androidTrack: 'internal', iosSubmitForReview: false }),
   'storeConfigComplete accepts full store config',

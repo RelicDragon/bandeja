@@ -3,12 +3,58 @@
 default_platform(:android)
 
 ANDROID_PACKAGE = "com.funified.bandeja"
+IOS_APP_IDENTIFIER = "com.funified.bandeja"
 
 def play_json_key_path
   path = ENV["PLAY_STORE_JSON_KEY_PATH"] || ENV["GOOGLE_PLAY_JSON_KEY"]
   UI.user_error!("Set PLAY_STORE_JSON_KEY_PATH or GOOGLE_PLAY_JSON_KEY to your Play service account JSON file") if path.nil? || path.empty?
   UI.user_error!("Play service account JSON not found at #{path}") unless File.exist?(path)
   path
+end
+
+def play_supply_config(track)
+  require "supply"
+  require "supply/options"
+
+  FastlaneCore::Configuration.create(
+    Supply::Options.available_options,
+    {
+      package_name: ANDROID_PACKAGE,
+      track: track,
+      json_key: play_json_key_path
+    }
+  )
+end
+
+def verify_play_release!(track, version_code, expected_changelog)
+  require "supply/reader"
+
+  Supply.config = play_supply_config(track)
+  version_codes = Supply::Reader.new.track_version_codes.map(&:to_s)
+  unless version_codes.include?(version_code)
+    UI.user_error!(
+      "Google Play track #{track} does not include version code #{version_code}; " \
+      "found #{version_codes.empty? ? 'none' : version_codes.join(', ')}"
+    )
+  end
+
+  Supply.config = play_supply_config(track)
+  track_meta = Supply::Reader.new.track_meta
+  release = track_meta&.releases&.find do |candidate|
+    Array(candidate.version_codes).map(&:to_s).include?(version_code)
+  end
+  UI.user_error!("Google Play track #{track} has no release for version code #{version_code}") unless release
+
+  notes = Array(release.release_notes).find do |note|
+    note.language == "en-US"
+  end
+  UI.user_error!("Google Play release #{version_code} is missing en-US release notes") unless notes
+
+  if !expected_changelog.to_s.strip.empty? && notes.text.to_s.strip != expected_changelog.to_s.strip
+    UI.user_error!("Google Play en-US release notes do not match the planned changelog")
+  end
+
+  UI.success("Verified Google Play #{track} release #{version_code}: version code and en-US notes match")
 end
 
 def asc_api_key
@@ -23,6 +69,151 @@ def asc_api_key
     key_filepath: key_path,
     duration: 1200,
     in_house: false
+  )
+end
+
+def emit_ios_release_state(state)
+  require "json"
+
+  UI.message("APP_RELEASE_IOS_STATE_JSON:#{JSON.generate(state.compact)}")
+end
+
+def ios_release_state(app_store_version: nil, build: nil, last_observed_processing_status: nil, metadata_updated_at: nil)
+  submission = app_store_version&.app_store_version_submission
+  {
+    "appStoreVersionId" => app_store_version&.id,
+    "buildId" => build&.id,
+    "lastObservedProcessingStatus" => last_observed_processing_status || build&.processing_state,
+    "metadataUpdatedAt" => metadata_updated_at,
+    "submissionId" => submission&.id
+  }
+end
+
+def ios_binary_already_uploaded?(error)
+  message = error.to_s
+  message.match?(/already (been )?uploaded/i) ||
+    message.match?(/binary.*already exists/i) ||
+    message.match?(/redundant binary upload/i) ||
+    message.match?(/build.*already exists/i) ||
+    message.match?(/already uploaded a build/i) ||
+    message.match?(/build number.*already/i) ||
+    message.match?(/uploaded.*build.*already/i)
+end
+
+def find_ios_app_store_build(app_version, build_number)
+  asc_api_key
+  app = Spaceship::ConnectAPI::App.find(IOS_APP_IDENTIFIER)
+  UI.user_error!("Could not find App Store Connect app #{IOS_APP_IDENTIFIER}") unless app
+
+  platform = Spaceship::ConnectAPI::Platform.map("ios")
+  builds = Spaceship::ConnectAPI::Build.all(
+    app_id: app.id,
+    version: app_version,
+    build_number: build_number,
+    platform: platform,
+    processing_states: "PROCESSING,FAILED,INVALID,VALID",
+    sort: "-uploadedDate",
+    limit: 10
+  )
+
+  builds.find do |build|
+    build.app_version == app_version && build.version.to_s == build_number
+  end
+end
+
+def exact_ios_build_selectable?(build)
+  build&.processing_state == Spaceship::ConnectAPI::Build::ProcessingState::VALID
+end
+
+def assert_exact_ios_build_selectable!(app_version, build_number)
+  build = find_ios_app_store_build(app_version, build_number)
+  UI.user_error!("Exact App Store Connect build #{app_version} (#{build_number}) is not visible yet.") unless build
+
+  return build if exact_ios_build_selectable?(build)
+
+  UI.user_error!(
+    "Exact App Store Connect build #{app_version} (#{build_number}) is #{build.processing_state}; " \
+    "cannot continue until that build is VALID and selectable."
+  )
+end
+
+def find_ios_app_store_version(app_version)
+  asc_api_key
+  app = Spaceship::ConnectAPI::App.find(IOS_APP_IDENTIFIER)
+  UI.user_error!("Could not find App Store Connect app #{IOS_APP_IDENTIFIER}") unless app
+
+  platform = Spaceship::ConnectAPI::Platform.map("ios")
+  versions = app.get_app_store_versions(
+    filter: {
+      versionString: app_version,
+      platform: platform
+    },
+    includes: "appStoreVersionLocalizations,appStoreVersionSubmission",
+    limit: 10
+  )
+
+  versions.find do |version|
+    version.version_string == app_version
+  end
+end
+
+def ios_app_store_version_submitted?(app_store_version)
+  submitted_states = [
+    Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::WAITING_FOR_EXPORT_COMPLIANCE,
+    Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::WAITING_FOR_REVIEW,
+    Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::IN_REVIEW,
+    Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::PENDING_APPLE_RELEASE,
+    Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::PENDING_DEVELOPER_RELEASE
+  ]
+
+  !app_store_version.app_store_version_submission.nil? ||
+    submitted_states.include?(app_store_version.app_version_state)
+end
+
+def verify_ios_store_version_metadata!(app_version, build_number, expected_release_notes, expected_submit_for_review)
+  app_store_version = find_ios_app_store_version(app_version)
+  UI.user_error!("Could not find App Store Connect version #{app_version} for #{IOS_APP_IDENTIFIER}") unless app_store_version
+
+  localizations = app_store_version.get_app_store_version_localizations
+  en_us = localizations.find do |localization|
+    localization.locale == "en-US"
+  end
+
+  UI.user_error!("App Store Connect version #{app_version} is missing en-US localization") unless en_us
+  UI.user_error!("App Store Connect version #{app_version} is missing en-US whatsNew") if en_us.whats_new.to_s.strip.empty?
+
+  if !expected_release_notes.to_s.strip.empty? && en_us.whats_new.to_s.strip != expected_release_notes.to_s.strip
+    UI.user_error!("App Store Connect en-US whatsNew does not match the planned release notes")
+  end
+
+  selected_build = app_store_version.get_build
+  UI.user_error!("App Store Connect version #{app_version} has no selected build") unless selected_build
+
+  if selected_build.version.to_s != build_number
+    UI.user_error!(
+      "App Store Connect selected build is #{selected_build.version}; expected #{build_number}"
+    )
+  end
+
+  submitted = ios_app_store_version_submitted?(app_store_version)
+  if expected_submit_for_review && !submitted
+    UI.user_error!("App Store Connect submit-for-review was requested but is not visible after finalizing")
+  end
+
+  if !expected_submit_for_review && submitted
+    UI.user_error!("App Store Connect version appears submitted for review, but prepare-without-submit mode was selected")
+  end
+
+  emit_ios_release_state(
+    ios_release_state(
+      app_store_version: app_store_version,
+      build: selected_build
+    )
+  )
+
+  UI.success(
+    "Verified App Store Connect metadata for #{app_version} (#{build_number}): " \
+    "en-US whatsNew present, selected build matches, submit-for-review=#{submitted}"
   )
 end
 
@@ -50,34 +241,185 @@ platform :android do
       metadata_path: metadata_path
     )
   end
+
+  desc "Verify Google Play release after upload"
+  lane :verify_release do |options|
+    track = options[:track] || "internal"
+    version_code = options[:version_code].to_s
+    changelog_path = options[:changelog_path]
+
+    UI.user_error!("version_code is required") if version_code.empty?
+    UI.user_error!("changelog_path is required") if changelog_path.nil? || changelog_path.empty?
+    UI.user_error!("Google Play changelog not found at #{changelog_path}") unless File.exist?(changelog_path)
+
+    verify_play_release!(track, version_code, File.read(changelog_path))
+  end
 end
 
 platform :ios do
-  desc "Upload IPA to App Store Connect with en-US release notes"
-  lane :upload_release do |options|
+  desc "Upload IPA binary to App Store Connect"
+  lane :upload_binary do |options|
     ipa = options[:ipa]
-    release_notes_path = options[:release_notes_path]
-    submit_for_review = options[:submit_for_review].to_s == "true"
 
     UI.user_error!("ipa path is required") if ipa.nil? || ipa.empty?
-    UI.user_error!("release_notes_path is required") if release_notes_path.nil? || release_notes_path.empty?
     UI.user_error!("IPA not found at #{ipa}") unless File.exist?(ipa)
+
+    base_options = {
+      api_key: asc_api_key,
+      skip_screenshots: true,
+      force: true,
+      precheck_include_in_app_purchases: false
+    }
+
+    begin
+      upload_to_app_store(
+        **base_options,
+        ipa: ipa,
+        skip_metadata: true,
+        skip_binary_upload: false,
+        submit_for_review: false
+      )
+    rescue => error
+      raise error unless ios_binary_already_uploaded?(error)
+
+      UI.important("IPA already appears to be uploaded; continuing with App Store processing wait")
+    end
+  end
+
+  desc "Wait until App Store Connect has processed the exact uploaded iOS build"
+  lane :wait_for_processed_ios_build do |options|
+    app_version = options[:app_version].to_s
+    build_number = options[:build_number].to_s
+    interval_seconds = (options[:interval_seconds] || ENV["APP_RELEASE_IOS_WAIT_INTERVAL"] || "60").to_i
+    timeout_seconds = (options[:timeout_seconds] || ENV["APP_RELEASE_IOS_WAIT_TIMEOUT"] || "1800").to_i
+    deadline = Time.now + timeout_seconds
+
+    UI.user_error!("app_version is required") if app_version.empty?
+    UI.user_error!("build_number is required") if build_number.empty?
+
+    loop do
+      build = find_ios_app_store_build(app_version, build_number)
+      observed_state = build ? build.processing_state : "not visible"
+      emit_ios_release_state(
+        ios_release_state(
+          build: build,
+          last_observed_processing_status: observed_state
+        )
+      )
+
+      if exact_ios_build_selectable?(build)
+        UI.success("App Store Connect build #{app_version} (#{build_number}) is processed and selectable")
+        break
+      end
+
+      if build && [Spaceship::ConnectAPI::Build::ProcessingState::FAILED, Spaceship::ConnectAPI::Build::ProcessingState::INVALID].include?(build.processing_state)
+        UI.user_error!(
+          "Exact App Store Connect build #{app_version} (#{build_number}) is #{build.processing_state}; " \
+          "cannot continue with this build."
+        )
+      end
+
+      if Time.now >= deadline
+        UI.user_error!(
+          "IPA upload completed, but App Store Connect has not made exact build " \
+          "#{app_version} (#{build_number}) selectable yet. Current state: #{observed_state}. " \
+          "Resume later with APP_RELEASE_RESUME=1 ./scripts/app-release.sh; resume will skip " \
+          "IPA upload and continue with metadata/submission."
+        )
+      end
+
+      UI.message(
+        "Waiting for exact App Store Connect build #{app_version} (#{build_number}) to become selectable; " \
+        "current state is #{observed_state}. Checking again in #{interval_seconds}s."
+      )
+      sleep(interval_seconds)
+    end
+  end
+
+  desc "Update App Store version metadata and optionally submit for review"
+  lane :finalize_store_version do |options|
+    release_notes_path = options[:release_notes_path]
+    app_version = options[:app_version].to_s
+    build_number = options[:build_number].to_s
+    submit_for_review = options[:submit_for_review].to_s == "true"
+
+    UI.user_error!("release_notes_path is required") if release_notes_path.nil? || release_notes_path.empty?
+    UI.user_error!("app_version is required") if app_version.empty?
+    UI.user_error!("build_number is required") if build_number.empty?
     UI.user_error!("Release notes file not found at #{release_notes_path}") unless File.exist?(release_notes_path)
 
+    assert_exact_ios_build_selectable!(app_version, build_number)
     release_notes = File.read(release_notes_path)
 
     upload_to_app_store(
       api_key: asc_api_key,
-      ipa: ipa,
-      skip_metadata: true,
+      app_version: app_version,
+      build_number: build_number,
+      skip_metadata: false,
       skip_screenshots: true,
-      skip_binary_upload: false,
+      skip_binary_upload: true,
       submit_for_review: submit_for_review,
       force: true,
       precheck_include_in_app_purchases: false,
       release_notes: {
+        "default" => release_notes,
         "en-US" => release_notes
       }
+    )
+
+    require "time"
+    app_store_version = find_ios_app_store_version(app_version)
+    selected_build = app_store_version&.get_build
+    emit_ios_release_state(
+      ios_release_state(
+        app_store_version: app_store_version,
+        build: selected_build,
+        metadata_updated_at: Time.now.utc.iso8601
+      )
+    )
+  end
+
+  desc "Verify App Store version metadata after finalizing"
+  lane :verify_store_version do |options|
+    release_notes_path = options[:release_notes_path]
+    app_version = options[:app_version].to_s
+    build_number = options[:build_number].to_s
+    expected_submit_for_review = options[:expected_submit_for_review].to_s == "true"
+
+    UI.user_error!("release_notes_path is required") if release_notes_path.nil? || release_notes_path.empty?
+    UI.user_error!("app_version is required") if app_version.empty?
+    UI.user_error!("build_number is required") if build_number.empty?
+    UI.user_error!("Release notes file not found at #{release_notes_path}") unless File.exist?(release_notes_path)
+
+    verify_ios_store_version_metadata!(
+      app_version,
+      build_number,
+      File.read(release_notes_path),
+      expected_submit_for_review
+    )
+  end
+
+  desc "Upload IPA, wait for processing, update metadata, and optionally submit for review"
+  lane :upload_release do |options|
+    ipa = options[:ipa]
+    release_notes_path = options[:release_notes_path]
+    app_version = options[:app_version]
+    build_number = options[:build_number]
+    submit_for_review = options[:submit_for_review]
+
+    upload_binary(ipa: ipa)
+    wait_for_processed_ios_build(app_version: app_version, build_number: build_number)
+    finalize_store_version(
+      release_notes_path: release_notes_path,
+      app_version: app_version,
+      build_number: build_number,
+      submit_for_review: submit_for_review
+    )
+    verify_store_version(
+      release_notes_path: release_notes_path,
+      app_version: app_version,
+      build_number: build_number,
+      expected_submit_for_review: submit_for_review
     )
   end
 end

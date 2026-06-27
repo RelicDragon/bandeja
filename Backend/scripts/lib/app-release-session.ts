@@ -33,6 +33,35 @@ const storeSchema = z
   })
   .default({});
 
+const uploadStatusSchema = z
+  .object({
+    android: z.boolean().optional(),
+    androidStoreVerified: z.boolean().optional(),
+    ios: z.boolean().optional(),
+    iosBinary: z.boolean().optional(),
+    iosBuildProcessed: z.boolean().optional(),
+    iosStoreVersion: z.boolean().optional(),
+    iosStoreVersionVerified: z.boolean().optional(),
+    storesVerified: z.boolean().optional(),
+    androidStoreVerifiedAt: z.string().min(1).optional(),
+    iosBinaryUploadedAt: z.string().min(1).optional(),
+    iosBuildProcessedAt: z.string().min(1).optional(),
+    iosStoreVersionUpdatedAt: z.string().min(1).optional(),
+    iosStoreVersionVerifiedAt: z.string().min(1).optional(),
+    storesVerifiedAt: z.string().min(1).optional(),
+  })
+  .default({});
+
+const iosAppStoreConnectStateSchema = z
+  .object({
+    appStoreVersionId: z.string().min(1).optional(),
+    buildId: z.string().min(1).optional(),
+    lastObservedProcessingStatus: z.string().min(1).optional(),
+    metadataUpdatedAt: z.string().min(1).optional(),
+    submissionId: z.string().min(1).optional(),
+  })
+  .default({});
+
 export const releaseSessionSchema = z.object({
   baselineSha: z.string().min(1),
   headSha: z.string().min(1),
@@ -41,6 +70,8 @@ export const releaseSessionSchema = z.object({
   notes: releaseNotesSchema.nullable(),
   artifacts: artifactsSchema,
   store: storeSchema,
+  uploads: uploadStatusSchema,
+  iosAppStoreConnect: iosAppStoreConnectStateSchema,
   autoCommit: z.boolean().optional(),
 });
 
@@ -48,6 +79,8 @@ export type ReleaseNotesSource = z.infer<typeof notesSourceSchema>;
 export type ReleaseNotes = z.infer<typeof releaseNotesSchema>;
 export type ReleaseArtifacts = z.infer<typeof artifactsSchema>;
 export type ReleaseStoreConfig = z.infer<typeof storeSchema>;
+export type ReleaseUploadStatus = z.infer<typeof uploadStatusSchema>;
+export type IosAppStoreConnectState = z.infer<typeof iosAppStoreConnectStateSchema>;
 export type ReleaseSession = z.infer<typeof releaseSessionSchema>;
 
 export function loadSession(): ReleaseSession | null {

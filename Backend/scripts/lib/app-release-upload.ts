@@ -4,7 +4,7 @@ import * as path from 'path';
 import { derivePlayShortDescription } from './app-release-notes';
 import { ROOT } from './app-release';
 import { FRONTEND_DIR } from './app-release-build';
-import type { ReleaseSession } from './app-release-session';
+import type { IosAppStoreConnectState, ReleaseSession } from './app-release-session';
 
 export const UPLOAD_DIR = path.join(ROOT, '.app-release/upload');
 export const PLAY_METADATA_DIR = path.join(UPLOAD_DIR, 'android');
@@ -14,6 +14,7 @@ export const PLAY_TRACKS = ['internal', 'closed', 'production'] as const;
 export type PlayTrack = (typeof PLAY_TRACKS)[number];
 
 const LOG_TAIL_LINES = 40;
+const IOS_STATE_PREFIX = 'APP_RELEASE_IOS_STATE_JSON:';
 
 export interface UploadPreflight {
   ok: boolean;
@@ -27,12 +28,27 @@ export interface UploadMetadataPaths {
 
 export class ReleaseUploadError extends Error {
   readonly logTail: string;
+  readonly output: string;
+  readonly iosState: IosAppStoreConnectState;
 
-  constructor(message: string, logTail: string) {
+  constructor(
+    message: string,
+    logTail: string,
+    options?: { output?: string; iosState?: IosAppStoreConnectState },
+  ) {
     super(message);
     this.name = 'ReleaseUploadError';
     this.logTail = logTail;
+    this.output = options?.output ?? '';
+    this.iosState = options?.iosState ?? {};
   }
+}
+
+export function isAndroidAlreadyUploadedError(error: ReleaseUploadError): boolean {
+  const text = `${error.message}\n${error.logTail}`;
+  return /version code .*already (?:been )?(?:used|uploaded)|apk specifies a version code that has already been used|aab specifies a version code that has already been used|artifact .*already exists/i.test(
+    text,
+  );
 }
 
 function commandExists(command: string): boolean {
@@ -61,12 +77,77 @@ function resolveFastlaneInvocation(): { command: string; prefix: string[] } {
   return { command: 'fastlane', prefix: [] };
 }
 
-function tailLog(output: string, lineCount = LOG_TAIL_LINES): string {
+export function tailUploadLog(output: string, lineCount = LOG_TAIL_LINES): string {
   const lines = output.split('\n').filter((line) => line.trim().length > 0);
+  const usefulErrorPattern =
+    /(?:Google Api Error|App Store Connect|appStoreVersions|The provided entity|missing a required attribute|whatsNew|Version code .*already|already been used|already uploaded|Cannot submit for review|selected build|submit-for-review|ERROR \[|^\[.*\]: \[!]|\[!] )/i;
+  const usefulErrors = lines.filter(
+    (line) => usefulErrorPattern.test(line) && !/^\s*from .*fastlane.* in /.test(line),
+  );
+  if (usefulErrors.length > 0) {
+    return usefulErrors.slice(-lineCount).join('\n');
+  }
   if (lines.length <= lineCount) {
     return lines.join('\n');
   }
   return lines.slice(-lineCount).join('\n');
+}
+
+function mergeIosState(
+  current: IosAppStoreConnectState,
+  next: IosAppStoreConnectState,
+): IosAppStoreConnectState {
+  return {
+    ...current,
+    ...Object.fromEntries(
+      Object.entries(next).filter(([, value]) => typeof value === 'string' && value.length > 0),
+    ),
+  };
+}
+
+export function parseIosAppStoreConnectState(output: string): IosAppStoreConnectState {
+  let state: IosAppStoreConnectState = {};
+  for (const line of output.split(/\r?\n/)) {
+    const markerIndex = line.indexOf(IOS_STATE_PREFIX);
+    if (markerIndex < 0) {
+      continue;
+    }
+
+    const raw = line.slice(markerIndex + IOS_STATE_PREFIX.length).trim();
+    try {
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      state = mergeIosState(state, {
+        appStoreVersionId:
+          typeof parsed.appStoreVersionId === 'string' ? parsed.appStoreVersionId : undefined,
+        buildId: typeof parsed.buildId === 'string' ? parsed.buildId : undefined,
+        lastObservedProcessingStatus:
+          typeof parsed.lastObservedProcessingStatus === 'string'
+            ? parsed.lastObservedProcessingStatus
+            : undefined,
+        metadataUpdatedAt:
+          typeof parsed.metadataUpdatedAt === 'string' ? parsed.metadataUpdatedAt : undefined,
+        submissionId: typeof parsed.submissionId === 'string' ? parsed.submissionId : undefined,
+      });
+    } catch {
+      // Ignore non-JSON marker lines; the human-readable Fastlane output is still preserved.
+    }
+  }
+  return state;
+}
+
+function addFastlaneIssue(issues: string[]): void {
+  const fastlane = resolveFastlaneInvocation();
+  if (fastlane.command === 'bundle' && !commandExists('bundle')) {
+    issues.push(
+      'Bundler is not installed — run: gem install bundler && cd Frontend && bundle install',
+    );
+  } else if (!commandExists(fastlane.command)) {
+    issues.push(
+      fastlane.command === 'bundle'
+        ? 'Fastlane is not available via Bundler — run: cd Frontend && bundle install'
+        : 'Fastlane is not installed — run: cd Frontend && bundle install, or brew install fastlane',
+    );
+  }
 }
 
 function formatExecError(error: unknown): ReleaseUploadError {
@@ -78,7 +159,10 @@ function formatExecError(error: unknown): ReleaseUploadError {
     const execError = error as { shortMessage?: string; stdout?: string; stderr?: string };
     const combined = [execError.stdout ?? '', execError.stderr ?? ''].join('\n').trim();
     const message = execError.shortMessage ?? 'Store upload command failed';
-    return new ReleaseUploadError(message, tailLog(combined));
+    return new ReleaseUploadError(message, tailUploadLog(combined), {
+      output: combined,
+      iosState: parseIosAppStoreConnectState(combined),
+    });
   }
 
   const message = error instanceof Error ? error.message : String(error);
@@ -115,73 +199,131 @@ export function prepareUploadMetadata(session: ReleaseSession): UploadMetadataPa
 
 export function runUploadPreflight(session: ReleaseSession): UploadPreflight {
   const issues: string[] = [];
+  const androidPending = session.uploads?.android !== true;
+  const iosPending = session.uploads?.ios !== true;
+  const iosBinaryPending = iosPending && session.uploads?.iosBinary !== true;
+
+  if (!androidPending && !iosPending) {
+    return { ok: true, issues };
+  }
 
   if (!session.notes) {
     issues.push('Release notes are missing from the session.');
   }
 
-  if (!session.artifacts?.aab || !fs.existsSync(session.artifacts.aab)) {
+  if (androidPending && (!session.artifacts?.aab || !fs.existsSync(session.artifacts.aab))) {
     issues.push('Android AAB artifact is missing — run the build phase first.');
   }
 
-  if (!session.artifacts?.ipa || !fs.existsSync(session.artifacts.ipa)) {
+  if (iosBinaryPending && (!session.artifacts?.ipa || !fs.existsSync(session.artifacts.ipa))) {
     issues.push('iOS IPA artifact is missing — run the build phase first.');
   }
 
-  if (!session.store.androidTrack) {
+  if (androidPending && !session.store.androidTrack) {
     issues.push('Google Play track is not set (internal, closed, or production).');
   }
 
-  if (session.store.iosSubmitForReview === undefined) {
-    issues.push('iOS upload mode is not set (upload-only or submit-for-review).');
+  if (iosPending && session.store.iosSubmitForReview === undefined) {
+    issues.push('iOS App Store mode is not set (prepare-without-submit or submit-for-review).');
   }
 
-  const playKey = resolvePlayJsonKeyPath();
-  if (!playKey) {
+  const playKey = androidPending ? resolvePlayJsonKeyPath() : undefined;
+  if (androidPending && !playKey) {
     issues.push(
       'Set PLAY_STORE_JSON_KEY_PATH or GOOGLE_PLAY_JSON_KEY to your Play Console service account JSON file.',
     );
   }
 
-  const ascKeyId = process.env.ASC_KEY_ID?.trim();
-  const ascIssuerId = process.env.ASC_ISSUER_ID?.trim();
-  const ascKeyPath = process.env.ASC_KEY_PATH?.trim();
-  if (!ascKeyId || !ascIssuerId || !ascKeyPath) {
-    issues.push('Set ASC_KEY_ID, ASC_ISSUER_ID, and ASC_KEY_PATH for App Store Connect API access.');
-  } else if (!fs.existsSync(path.resolve(ascKeyPath))) {
+  const ascKeyId = iosPending ? process.env.ASC_KEY_ID?.trim() : undefined;
+  const ascIssuerId = iosPending ? process.env.ASC_ISSUER_ID?.trim() : undefined;
+  const ascKeyPath = iosPending ? process.env.ASC_KEY_PATH?.trim() : undefined;
+  if (iosPending && (!ascKeyId || !ascIssuerId || !ascKeyPath)) {
+    issues.push(
+      'Set ASC_KEY_ID, ASC_ISSUER_ID, and ASC_KEY_PATH for App Store Connect API access.',
+    );
+  } else if (iosPending && !fs.existsSync(path.resolve(ascKeyPath!))) {
     issues.push(`App Store Connect API key not found at ${ascKeyPath}`);
   }
 
-  const fastlane = resolveFastlaneInvocation();
-  if (fastlane.command === 'bundle' && !commandExists('bundle')) {
-    issues.push('Bundler is not installed — run: gem install bundler && cd Frontend && bundle install');
-  } else if (!commandExists(fastlane.command)) {
+  addFastlaneIssue(issues);
+
+  return { ok: issues.length === 0, issues };
+}
+
+export function runStoreVerificationPreflight(session: ReleaseSession): UploadPreflight {
+  const issues: string[] = [];
+  const androidPending = session.uploads?.androidStoreVerified !== true;
+  const iosPending = session.uploads?.iosStoreVersionVerified !== true;
+
+  if (!androidPending && !iosPending) {
+    return { ok: true, issues };
+  }
+
+  if (!session.notes) {
+    issues.push('Release notes are missing from the session.');
+  }
+
+  if (androidPending && session.uploads?.android !== true) {
+    issues.push('Android upload is not complete yet.');
+  }
+
+  if (iosPending && session.uploads?.iosStoreVersion !== true && session.uploads?.ios !== true) {
+    issues.push('App Store metadata has not been finalized yet.');
+  }
+
+  if (androidPending && !session.store.androidTrack) {
+    issues.push('Google Play track is not set (internal, closed, or production).');
+  }
+
+  if (iosPending && session.store.iosSubmitForReview === undefined) {
+    issues.push('iOS App Store mode is not set (prepare-without-submit or submit-for-review).');
+  }
+
+  const playKey = androidPending ? resolvePlayJsonKeyPath() : undefined;
+  if (androidPending && !playKey) {
     issues.push(
-      fastlane.command === 'bundle'
-        ? 'Fastlane is not available via Bundler — run: cd Frontend && bundle install'
-        : 'Fastlane is not installed — run: cd Frontend && bundle install, or brew install fastlane',
+      'Set PLAY_STORE_JSON_KEY_PATH or GOOGLE_PLAY_JSON_KEY to your Play Console service account JSON file.',
     );
   }
+
+  const ascKeyId = iosPending ? process.env.ASC_KEY_ID?.trim() : undefined;
+  const ascIssuerId = iosPending ? process.env.ASC_ISSUER_ID?.trim() : undefined;
+  const ascKeyPath = iosPending ? process.env.ASC_KEY_PATH?.trim() : undefined;
+  if (iosPending && (!ascKeyId || !ascIssuerId || !ascKeyPath)) {
+    issues.push(
+      'Set ASC_KEY_ID, ASC_ISSUER_ID, and ASC_KEY_PATH for App Store Connect API access.',
+    );
+  } else if (iosPending && !fs.existsSync(path.resolve(ascKeyPath!))) {
+    issues.push(`App Store Connect API key not found at ${ascKeyPath}`);
+  }
+
+  addFastlaneIssue(issues);
 
   return { ok: issues.length === 0, issues };
 }
 
 async function runFastlaneLane(
   platform: 'android' | 'ios',
+  lane: string,
   params: Record<string, string>,
-): Promise<void> {
+): Promise<{ output: string; iosState: IosAppStoreConnectState }> {
   const { command, prefix } = resolveFastlaneInvocation();
-  const args = [...prefix, platform, 'upload_release'];
+  const args = [...prefix, platform, lane];
   for (const [key, value] of Object.entries(params)) {
     args.push(`${key}:${value}`);
   }
 
   try {
-    await execa(command, args, {
+    const result = await execa(command, args, {
       cwd: FRONTEND_DIR,
       env: process.env,
       stdio: 'pipe',
     });
+    const output = [result.stdout, result.stderr].join('\n').trim();
+    return {
+      output,
+      iosState: parseIosAppStoreConnectState(output),
+    };
   } catch (error) {
     throw formatExecError(error);
   }
@@ -202,8 +344,8 @@ function resolveUploadInputs(session: ReleaseSession): {
   const metadata = prepareUploadMetadata(session);
   return {
     metadata,
-    aab: path.resolve(session.artifacts!.aab!),
-    ipa: path.resolve(session.artifacts!.ipa!),
+    aab: session.artifacts?.aab ? path.resolve(session.artifacts.aab) : '',
+    ipa: session.artifacts?.ipa ? path.resolve(session.artifacts.ipa) : '',
     track: session.store.androidTrack!,
     submitForReview: session.store.iosSubmitForReview === true,
   };
@@ -211,20 +353,81 @@ function resolveUploadInputs(session: ReleaseSession): {
 
 export async function runAndroidUpload(session: ReleaseSession): Promise<void> {
   const { metadata, aab, track } = resolveUploadInputs(session);
-  await runFastlaneLane('android', {
+  await runFastlaneLane('android', 'upload_release', {
     aab,
     track,
     metadata_path: metadata.playMetadataPath,
   });
 }
 
-export async function runIosUpload(session: ReleaseSession): Promise<void> {
-  const { metadata, ipa, submitForReview } = resolveUploadInputs(session);
-  await runFastlaneLane('ios', {
+export async function runAndroidStoreVerification(session: ReleaseSession): Promise<void> {
+  const preflight = runStoreVerificationPreflight(session);
+  if (!preflight.ok) {
+    throw new ReleaseUploadError('Store verification preflight failed', preflight.issues.join('\n'));
+  }
+
+  const metadata = prepareUploadMetadata(session);
+  const changelogPath = path.join(
+    metadata.playMetadataPath,
+    'en-US/changelogs',
+    `${session.planned.build}.txt`,
+  );
+
+  await runFastlaneLane('android', 'verify_release', {
+    track: session.store.androidTrack!,
+    version_code: String(session.planned.build),
+    changelog_path: changelogPath,
+  });
+}
+
+export async function runIosBinaryUpload(session: ReleaseSession): Promise<void> {
+  const { ipa } = resolveUploadInputs(session);
+  await runFastlaneLane('ios', 'upload_binary', {
     ipa,
+  });
+}
+
+export async function runIosProcessedBuildWait(
+  session: ReleaseSession,
+): Promise<IosAppStoreConnectState> {
+  const result = await runFastlaneLane('ios', 'wait_for_processed_ios_build', {
+    app_version: session.planned.version,
+    build_number: String(session.planned.build),
+  });
+  return result.iosState;
+}
+
+export async function runIosStoreVersionFinalize(
+  session: ReleaseSession,
+): Promise<IosAppStoreConnectState> {
+  const { metadata, submitForReview } = resolveUploadInputs(session);
+  const result = await runFastlaneLane('ios', 'finalize_store_version', {
     release_notes_path: metadata.iosReleaseNotesPath,
+    app_version: session.planned.version,
+    build_number: String(session.planned.build),
     submit_for_review: String(submitForReview),
   });
+  return result.iosState;
+}
+
+export async function runIosStoreVersionVerification(
+  session: ReleaseSession,
+): Promise<IosAppStoreConnectState> {
+  const { metadata, submitForReview } = resolveUploadInputs(session);
+  const result = await runFastlaneLane('ios', 'verify_store_version', {
+    release_notes_path: metadata.iosReleaseNotesPath,
+    app_version: session.planned.version,
+    build_number: String(session.planned.build),
+    expected_submit_for_review: String(submitForReview),
+  });
+  return result.iosState;
+}
+
+export async function runIosUpload(session: ReleaseSession): Promise<void> {
+  await runIosBinaryUpload(session);
+  await runIosProcessedBuildWait(session);
+  await runIosStoreVersionFinalize(session);
+  await runIosStoreVersionVerification(session);
 }
 
 export async function runReleaseUpload(session: ReleaseSession): Promise<void> {
