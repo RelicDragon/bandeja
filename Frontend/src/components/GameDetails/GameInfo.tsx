@@ -21,6 +21,8 @@ import { isCapacitor } from '@/utils/capacitor';
 import { addToNativeCalendar } from '@/utils/calendar';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
+import { GameCardWeatherTag } from '@/components/gameCard/GameCardWeatherTag';
+import { GameWeatherDialog } from '@/components/weather/GameWeatherDialog';
 import { LinkedBookingCoverageBadge } from '@/components/GameDetails/LinkedBookingCoverageBadge';
 import { useGameLinkedBookingViewer } from '@/hooks/useGameLinkedBookingViewer';
 import { InfoIconChip } from './InfoIconChip';
@@ -146,6 +148,7 @@ export const GameInfo = ({
   const [shareData, setShareData] = useState({ url: '' });
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showAddToCalendarModal, setShowAddToCalendarModal] = useState(false);
+  const [showWeatherModal, setShowWeatherModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(collapsedByDefault);
   const reduceMotion = usePrefersReducedMotion();
   const prevResultsStatusRef = useRef(game.resultsStatus);
@@ -873,6 +876,14 @@ export const GameInfo = ({
                       </span>
                     )}
                   </div>
+                  {game.weatherSummary ? (
+                    <GameCardWeatherTag
+                      entityType={game.entityType}
+                      summary={game.weatherSummary}
+                      locale={displaySettings.locale}
+                      onClick={() => setShowWeatherModal(true)}
+                    />
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -1174,6 +1185,15 @@ export const GameInfo = ({
           filename={`game-${game.id}.ics`}
         />
       )}
+      {game.weatherSummary ? (
+        <GameWeatherDialog
+          game={game}
+          open={showWeatherModal}
+          onClose={() => setShowWeatherModal(false)}
+          locale={displaySettings.locale}
+          hour12={displaySettings.hour12}
+        />
+      ) : null}
       {showFullscreenAvatar && (game.originalAvatar || game.avatar) && (
         <FullscreenImageViewer
           imageUrl={game.originalAvatar?.trim() || game.avatar?.trim() || ''}

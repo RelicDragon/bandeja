@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
 import { Calendar, MapPin, Users, Plane, Check } from 'lucide-react';
-import { GameCardConfirmedCourtBadge } from '@/components/GameCardConfirmedCourtBadge';
 import type { Game, GameParticipant } from '@/types';
 
 interface GameCardInfoRowsProps {
@@ -8,8 +7,6 @@ interface GameCardInfoRowsProps {
   participants: GameParticipant[];
   dateText: string;
   hintText?: string | null;
-  showConfirmedCourtBadge: boolean;
-  linkedExternalBooking?: boolean;
   className?: string;
 }
 
@@ -38,8 +35,6 @@ export const GameCardInfoRows = ({
   participants,
   dateText,
   hintText,
-  showConfirmedCourtBadge,
-  linkedExternalBooking = false,
   className = '',
 }: GameCardInfoRowsProps) => {
   const { t } = useTranslation();
@@ -61,9 +56,6 @@ export const GameCardInfoRows = ({
         ) : (
           <span className="inline-flex flex-wrap items-center gap-1.5">
             <span>{dateText}</span>
-            {showConfirmedCourtBadge ? (
-              <GameCardConfirmedCourtBadge linkedExternalBooking={linkedExternalBooking} />
-            ) : null}
           </span>
         )}
       </div>

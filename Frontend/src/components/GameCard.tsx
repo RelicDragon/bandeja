@@ -9,6 +9,7 @@ import { GameCardTrainerBadge } from '@/components/gameCard/GameCardTrainerBadge
 import { GameCardInfoRows } from '@/components/gameCard/GameCardInfoRows';
 import { GameCardHeaderTags } from '@/components/gameCard/GameCardHeaderTags';
 import { GameCardWeatherTag } from '@/components/gameCard/GameCardWeatherTag';
+import { GameCardBookedTag } from '@/components/gameCard/GameCardBookedTag';
 import { Game } from '@/types';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { getGameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
@@ -393,6 +394,9 @@ export const GameCard = ({
             onClick={handleWeatherClick}
           />
         ) : null}
+        {showConfirmedCourtBadge ? (
+          <GameCardBookedTag linkedExternalBooking={linkedExternalBooking} />
+        ) : null}
         {showChatIndicator && (
           <button
             type="button"
@@ -557,8 +561,6 @@ export const GameCard = ({
                 participants={participants}
                 dateText={infoDateText}
                 hintText={infoHintText}
-                showConfirmedCourtBadge={showConfirmedCourtBadge}
-                linkedExternalBooking={linkedExternalBooking}
                 className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400 justify-center min-h-0"
               />
             )}
@@ -572,8 +574,6 @@ export const GameCard = ({
                 participants={participants}
                 dateText={infoDateText}
                 hintText={infoHintText}
-                showConfirmedCourtBadge={showConfirmedCourtBadge}
-                linkedExternalBooking={linkedExternalBooking}
                 className="space-y-2 flex-1"
               />
             )}
