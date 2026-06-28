@@ -49,6 +49,13 @@ describe('isLegalSetScore with preset meta', () => {
     expect(isLegalSetScore(12, 8, rules, 0, emptySets).ok).toBe(false);
   });
 
+  it('timed americano allows partial scores up to the point budget', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'POINTS_24', matchTimerEnabled: true } as never);
+    expect(isLegalSetScore(8, 5, rules, 0, emptySets).ok).toBe(true);
+    expect(isLegalSetScore(12, 12, rules, 0, emptySets).ok).toBe(true);
+    expect(isLegalSetScore(13, 12, rules, 0, emptySets).ok).toBe(false);
+  });
+
   it('PICKLEBALL_RALLY_11 on pickleball BEST_OF_3_11', () => {
     const rules = getRules({ sport: Sports.PICKLEBALL, scoringPreset: 'BEST_OF_3_11' } as never);
     expect(rules.strictValidation).toBe('PICKLEBALL_RALLY_11');

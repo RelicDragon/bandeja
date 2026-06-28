@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { GameOutcome } from '@/types';
+import { GameOutcome, WinnerOfGame } from '@/types';
 import { Trophy, TrendingUp, TrendingDown, Award, HelpCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { getOutcomeExplanation } from '@/api/results';
@@ -13,15 +13,17 @@ interface OutcomesDisplayProps {
   onExplanationClick: (explanation: any, playerName: string, levelBefore: number) => void;
   hasFixedTeams: boolean;
   genderTeams: 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS';
+  winnerOfGame?: WinnerOfGame | null;
 }
 
 type DisplayMode = 'ratings' | 'stats';
 
-export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanationClick, hasFixedTeams, genderTeams }: OutcomesDisplayProps) => {
+export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanationClick, hasFixedTeams, genderTeams, winnerOfGame }: OutcomesDisplayProps) => {
   const { t } = useTranslation();
   const [mode, setMode] = useState<DisplayMode>('ratings');
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
   const [showAwardIcons, setShowAwardIcons] = useState(false);
+  const isScoresMadeBased = winnerOfGame === 'BY_SCORES_MADE';
 
   useEffect(() => {
     const interval = setInterval(() => setShowAwardIcons((prev) => !prev), 1500);
@@ -283,13 +285,30 @@ export const OutcomesDisplay = ({ outcomes, affectsRating, gameId, onExplanation
                               </span>
                             </div>
                             <div className="flex items-center gap-2 text-sm flex-wrap">
-                              <span className="text-gray-600 dark:text-gray-400">
-                                {t('gameResults.scores')}: {outcome.scoresMade}-{outcome.scoresLost}
-                              </span>
-                              <span className={`flex items-center gap-1 font-semibold ${getLevelChangeColor(scoresDelta(outcome.scoresMade, outcome.scoresLost))}`}>
-                                {getScoresDeltaIcon(scoresDelta(outcome.scoresMade, outcome.scoresLost))}
-                                {formatScoresDelta(scoresDelta(outcome.scoresMade, outcome.scoresLost))}
-                              </span>
+                              {isScoresMadeBased ? (
+                                <>
+                                  <span className="text-gray-600 dark:text-gray-400">
+                                    {t('gameResults.byScoresMade')}:{' '}
+                                    <span className="font-bold text-gray-900 dark:text-gray-100">{outcome.scoresMade}</span>
+                                  </span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {outcome.scoresMade}-{outcome.scoresLost}
+                                  </span>
+                                  <span className="text-xs text-gray-400 dark:text-gray-500">
+                                    Δ {formatScoresDelta(scoresDelta(outcome.scoresMade, outcome.scoresLost))}
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="text-gray-600 dark:text-gray-400">
+                                    {t('gameResults.scores')}: {outcome.scoresMade}-{outcome.scoresLost}
+                                  </span>
+                                  <span className={`flex items-center gap-1 font-semibold ${getLevelChangeColor(scoresDelta(outcome.scoresMade, outcome.scoresLost))}`}>
+                                    {getScoresDeltaIcon(scoresDelta(outcome.scoresMade, outcome.scoresLost))}
+                                    {formatScoresDelta(scoresDelta(outcome.scoresMade, outcome.scoresLost))}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </motion.div>
                         )}

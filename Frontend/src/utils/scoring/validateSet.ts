@@ -135,7 +135,10 @@ export const validatePointsSet = (a: number, b: number, rules: ScoringRules): Va
   if (isRallyGameRules(rules) || isRallyPointsRules(rules)) {
     return validateRallyPointGame(a, b, rules);
   }
-  if (rules.totalPointsPerSet > 0 && a + b !== rules.totalPointsPerSet) {
+  if (rules.totalPointsPerSet > 0 && rules.allowIncompleteRegularSetGames && a + b > rules.totalPointsPerSet) {
+    return fail('EXCEEDS_TOTAL', { total: rules.totalPointsPerSet });
+  }
+  if (rules.totalPointsPerSet > 0 && !rules.allowIncompleteRegularSetGames && a + b !== rules.totalPointsPerSet) {
     return fail('TOTAL_MISMATCH', { total: rules.totalPointsPerSet });
   }
   if (!rules.allowDrawPerSet && a === b && a > 0) {

@@ -12,6 +12,7 @@ import { recordPresenceActivity } from './middleware/recordPresenceActivity';
 import { e2eTestContextMiddleware } from './middleware/e2eTestContext';
 import { config } from './config/env';
 import { buildHealthPayload } from './utils/healthInfo';
+import { getResponseBodySize } from './utils/responseSize';
 
 const app: Application = express();
 
@@ -91,7 +92,7 @@ app.use(
 app.use((req, res, next) => {
   const originalSend = res.send;
   res.send = function (data: any) {
-    const size = Buffer.byteLength(data, 'utf8');
+    const size = getResponseBodySize(data);
     res.setHeader('X-Response-Size', String(size));
     return originalSend.call(this, data);
   };

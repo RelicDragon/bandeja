@@ -76,4 +76,15 @@ assert.equal(
   true
 );
 
+assert.equal(
+  isAllowedStoryReplyAttachmentUrl(
+    'https://d1afylun4w6qxe.cloudfront.net/uploads/avatars/circular/player_avatar.jpg'
+  ),
+  true
+);
+assert.equal(
+  isAllowedStoryReplyAttachmentUrl('/uploads/avatars/originals/player.jpg'),
+  true
+);
+
 console.log('ok: storyReplySanitize.test.ts');

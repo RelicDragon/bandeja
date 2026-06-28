@@ -20,7 +20,8 @@ const MAX_URL_LENGTH = 2048;
 
 const GAME_MEDIA_KEY_RE =
   /^uploads\/games\/(originals|thumbnails)\/[a-zA-Z0-9._-]+$/;
-const AVATAR_KEY_RE = /^uploads\/avatars\/[a-zA-Z0-9._-]+$/;
+const AVATAR_KEY_RE =
+  /^uploads\/avatars\/(originals\/|circular\/)?[a-zA-Z0-9._-]+$/;
 
 function cloudFrontHostMatches(url: string): boolean {
   if (!url.startsWith('http://') && !url.startsWith('https://')) return true;

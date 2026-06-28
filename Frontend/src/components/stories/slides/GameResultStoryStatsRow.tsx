@@ -5,6 +5,7 @@ import {
   isMatchWinFormat,
   isPointsFormat,
   isScoresDeltaFormat,
+  isScoresMadeFormat,
 } from './storyResultStats';
 
 type GameResultStoryStatsRowProps = {
@@ -45,7 +46,15 @@ export function GameResultStoryStatsRow({ result }: GameResultStoryStatsRowProps
   let secondarySecondary: string | null = null;
   let secondaryGradient: string | null = null;
 
-  if (isScoresDeltaFormat(result.winnerOfGame)) {
+  if (isScoresMadeFormat(result.winnerOfGame)) {
+    const hasScore = result.scoresMade > 0 || result.scoresLost > 0;
+    if (hasScore) {
+      secondaryLabel = t('gameResults.byScoresMade');
+      secondaryPrimary = String(result.scoresMade);
+      secondarySecondary = `${result.scoresMade}:${result.scoresLost} (${formatDelta(result.scoresMade, result.scoresLost)})`;
+      secondaryGradient = scoreGradientClass(result.isWinner, result.scoresMade, result.scoresLost);
+    }
+  } else if (isScoresDeltaFormat(result.winnerOfGame)) {
     const hasScore = result.scoresMade > 0 || result.scoresLost > 0;
     if (hasScore) {
       secondaryLabel = t('stories.statsScoreDelta');

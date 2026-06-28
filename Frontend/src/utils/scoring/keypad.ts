@@ -52,6 +52,9 @@ export const getKeypadOptions = (
 
   if (isPointsRules(rules) && kind !== 'SUPER_TIEBREAK' && kind !== 'TIEBREAK_GAME') {
     const total = rules.totalPointsPerSet;
+    if (rules.allowIncompleteRegularSetGames) {
+      return { values: range(total), mode: 'FREE', max: total, kind: 'POINTS' };
+    }
     return {
       values: range(total),
       mode: 'PAIRED',

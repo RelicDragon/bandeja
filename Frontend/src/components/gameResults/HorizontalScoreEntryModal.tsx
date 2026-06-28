@@ -39,6 +39,7 @@ interface HorizontalScoreEntryModalProps {
     | 'deucesBeforeGoldenPoint'
     | 'pointsPerTie'
     | 'matchTimedCapMinutes'
+    | 'matchTimerEnabled'
     | 'playersPerMatch'
     | 'sport'
   > | null;

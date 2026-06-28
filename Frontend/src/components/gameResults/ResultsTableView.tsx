@@ -67,6 +67,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
   const { t } = useTranslation();
   const isLandscape = useIsLandscape();
   const [roundIdToDelete, setRoundIdToDelete] = useState<string | null>(null);
+  const isScoresMadeBased = game?.winnerOfGame === 'BY_SCORES_MADE';
   const { width: nameColWidth, isDragging, splitterProps } = useColumnResize({
     initialWidth: 120,
     minWidth: 50,
@@ -231,7 +232,7 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
                 {t('gameResults.games', { defaultValue: 'Games' })}
               </th>
               <th className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 min-w-[48px]">
-                {t('gameResults.total')}
+                {isScoresMadeBased ? (t('gameResults.byScoresMade') || 'By Balls Won') : t('gameResults.total')}
               </th>
               <th className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-800 px-1 py-2 text-center text-xs font-bold text-gray-700 dark:text-gray-200 min-w-[40px]" title={t('gameResults.scoreDelta', { defaultValue: 'Score difference' })}>
                 Δ
@@ -300,7 +301,15 @@ export const ResultsTableView = ({ game, rounds, players, isEditing, onAddRound,
                   </span>
                 </td>
                 <td className="px-1 py-2 text-center">
-                  <span className={`inline-flex items-center justify-center min-w-[36px] h-7 rounded text-sm font-semibold ${row.delta > 0 ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200' : row.delta < 0 ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'}`}>
+                  <span className={`inline-flex items-center justify-center min-w-[36px] h-7 rounded text-sm font-semibold ${
+                    isScoresMadeBased
+                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                      : row.delta > 0
+                        ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200'
+                        : row.delta < 0
+                          ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300'
+                  }`}>
                     {row.delta > 0 ? '+' : ''}{row.delta}
                   </span>
                 </td>

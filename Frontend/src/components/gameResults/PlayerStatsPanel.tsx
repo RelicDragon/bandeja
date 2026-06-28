@@ -40,6 +40,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
 
   const isFinalWithOutcomes = game?.resultsStatus === 'FINAL' && game?.outcomes && game.outcomes.length > 0;
   const isPointsBased = game?.winnerOfGame === 'BY_POINTS';
+  const isScoresMadeBased = game?.winnerOfGame === 'BY_SCORES_MADE';
 
   const standings = useMemo(() => {
     if (!game) return [];
@@ -146,7 +147,9 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
     },
     {
       key: 'scores',
-      header: t('gameResults.scores') || 'Scores',
+      header: isScoresMadeBased
+        ? (t('gameResults.byScoresMade') || 'By Balls Won')
+        : (t('gameResults.scores') || 'Scores'),
       className: 'text-right'
     },
     ...(isPointsBased ? [{
@@ -232,15 +235,23 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
                     </div>
                     <div className="text-right leading-tight tabular-nums py-0.5">
                       <div className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-none">
-                        {standing.scoresMade}-{standing.scoresLost}
+                        {isScoresMadeBased ? (
+                          <>
+                            <span className="font-bold">{standing.scoresMade}</span>-{standing.scoresLost}
+                          </>
+                        ) : (
+                          <>{standing.scoresMade}-{standing.scoresLost}</>
+                        )}
                       </div>
                       <div
                         className={`text-[10px] leading-none mt-0.5 ${
-                          standing.scoresDelta > 0
-                            ? 'text-green-600 dark:text-green-400'
-                            : standing.scoresDelta < 0
-                              ? 'text-red-600 dark:text-red-400'
-                              : 'text-gray-400 dark:text-gray-500'
+                          isScoresMadeBased
+                            ? 'text-gray-400 dark:text-gray-500'
+                            : standing.scoresDelta > 0
+                              ? 'text-green-600 dark:text-green-400'
+                              : standing.scoresDelta < 0
+                                ? 'text-red-600 dark:text-red-400'
+                                : 'text-gray-400 dark:text-gray-500'
                         }`}
                       >
                         {standing.scoresDelta > 0 ? '+' : ''}

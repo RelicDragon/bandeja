@@ -1261,12 +1261,13 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
           <div className="w-full">
             <GameResultsShareCard game={currentGame} />
             <div className="[&>div]:mx-0 [&>div]:max-w-none [&>div]:px-0">
-              <OutcomesDisplay 
-                outcomes={currentGame.outcomes || []} 
-                affectsRating={currentGame.affectsRating} 
+              <OutcomesDisplay
+                outcomes={currentGame.outcomes || []}
+                affectsRating={currentGame.affectsRating}
                 gameId={currentGame.id}
                 hasFixedTeams={currentGame.hasFixedTeams || false}
                 genderTeams={(currentGame.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'}
+                winnerOfGame={currentGame.winnerOfGame}
                 onExplanationClick={(explanation, playerName, levelBefore) => {
                   openModal({ type: 'explanation', explanation, playerName, levelBefore });
                 }}

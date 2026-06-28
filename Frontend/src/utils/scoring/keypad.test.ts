@@ -122,6 +122,14 @@ describe('getKeypadOptions americano matrix', () => {
     expect(keypad.mode).toBe('PAIRED');
     expect(keypad.pairedTotal).toBe(total);
   });
+
+  it('timed americano uses FREE mode so partial buzzer scores can be entered', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'POINTS_24', matchTimerEnabled: true } as never);
+    const keypad = getKeypadOptions(rules, 0, emptySets);
+    expect(keypad.mode).toBe('FREE');
+    expect(keypad.pairedTotal).toBeUndefined();
+    expect(keypad.max).toBe(24);
+  });
 });
 
 describe('validateSetScores multisport matrix', () => {

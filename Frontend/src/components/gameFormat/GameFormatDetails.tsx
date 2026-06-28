@@ -86,9 +86,11 @@ export const GameFormatDetails = ({
       ? t('gameResults.byMatchesWon')
       : winnerOfGame === 'BY_SCORES_DELTA'
         ? t('gameResults.byScoresDelta')
-        : winnerOfGame === 'BY_POINTS'
-          ? t('gameResults.byPoints')
-          : String(winnerOfGame);
+        : winnerOfGame === 'BY_SCORES_MADE'
+          ? t('gameResults.byScoresMade')
+          : winnerOfGame === 'BY_POINTS'
+            ? t('gameResults.byPoints')
+            : String(winnerOfGame);
 
   const showRankingPoints = winnerOfGame === 'BY_POINTS';
 
