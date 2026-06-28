@@ -38,6 +38,7 @@ import clubAdminRoutes from './clubAdmin.routes';
 import storyRoutes from './story.routes';
 import adRoutes from './ad.routes';
 import booktimeRoutes from './booktime.routes';
+import meRoutes from './me.routes';
 import { buildHealthPayload } from '../utils/healthInfo';
 
 const router = Router();
@@ -47,6 +48,7 @@ router.get('/health', (_req, res) => {
 });
 
 router.use('/app', appRoutes);
+router.use('/me', meRoutes);
 router.use('/auth', authRoutes);
 router.use('/telegram', telegramAuthRoutes);
 router.use('/users', userRoutes);

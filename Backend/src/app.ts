@@ -61,7 +61,36 @@ app.use(
 
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
-app.use(compression());
+
+// Optimized compression middleware for API responses
+// Only compress JSON responses > 1KB with level 6 (balance speed/size)
+app.use(
+  compression({
+    filter: (req, res) => {
+      if (req.headers['x-no-compression']) {
+        return false;
+      }
+
+      // Only compress API JSON responses
+      const contentType = res.getHeader('Content-Type');
+      return contentType?.toString().includes('application/json') || false;
+    },
+    threshold: 1024, // Only compress responses > 1KB
+    level: 6, // Balance between speed and compression (default is 6)
+  })
+);
+
+// Add response size header for monitoring
+app.use((req, res, next) => {
+  const originalSend = res.send;
+  res.send = function (data: any) {
+    const size = Buffer.byteLength(data, 'utf8');
+    res.setHeader('X-Response-Size', String(size));
+    return originalSend.call(this, data);
+  };
+  next();
+});
+
 app.use(e2eTestContextMiddleware);
 
 if (config.nodeEnv === 'development') {

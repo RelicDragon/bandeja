@@ -108,6 +108,7 @@ export default defineConfig(({ command }) => {
     copyPublicDir: true,
   },
   define: {
+    'process.env.NODE_ENV': JSON.stringify(isDevServer ? 'development' : 'production'),
     'import.meta.env.VITE_MEDIA_BASE_URL': JSON.stringify(process.env.VITE_MEDIA_BASE_URL || defaultMediaBaseUrl),
     'import.meta.env.VITE_API_BASE_URL': JSON.stringify(process.env.VITE_API_BASE_URL || defaultApiBaseUrl),
     'import.meta.env.VITE_APP_SEMVER': JSON.stringify(appSemver),

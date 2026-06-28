@@ -40,11 +40,43 @@ export const useDeepLink = () => {
           const parts = pathname.split('/').filter(Boolean);
           if (parts.length >= 2) {
             const gameId = parts[1];
-            if (parts.length === 3 && parts[2] === 'chat') {
+            // Handle chat routes
+            if (parts.length >= 3 && parts[2] === 'chat') {
               navigateFreshChat(navigate, `/games/${gameId}/chat`);
-            } else {
-              navigateWithTracking(navigate, `/games/${gameId}`, { replace: true });
+              return;
             }
+            // Handle live/tv routes
+            if (parts.length >= 5 && parts[2] === 'live' && parts[3] === 'tv') {
+              navigateWithTracking(navigate, `/games/${gameId}/live/tv`, { replace: true });
+              return;
+            }
+            // Handle live/broadcast routes
+            if (parts.length >= 5 && parts[2] === 'live' && parts[3] === 'broadcast') {
+              navigateWithTracking(navigate, `/games/${gameId}/live/broadcast`, { replace: true });
+              return;
+            }
+            // Handle broadcast routes
+            if (parts.length >= 4 && parts[2] === 'broadcast') {
+              navigateWithTracking(navigate, `/games/${gameId}/broadcast`, { replace: true });
+              return;
+            }
+            // Handle live routes
+            if (parts.length >= 4 && parts[2] === 'live') {
+              navigateWithTracking(navigate, `/games/${gameId}/live`, { replace: true });
+              return;
+            }
+            // Handle league-table routes
+            if (parts.length >= 4 && parts[2] === 'league-table') {
+              navigateWithTracking(navigate, `/games/${gameId}/league-table`, { replace: true });
+              return;
+            }
+            // Handle league-bracket routes
+            if (parts.length >= 4 && parts[2] === 'league-bracket') {
+              navigateWithTracking(navigate, `/games/${gameId}/league-bracket`, { replace: true });
+              return;
+            }
+            // Default game detail route
+            navigateWithTracking(navigate, `/games/${gameId}`, { replace: true });
             return;
           }
         }
@@ -103,7 +135,21 @@ export const useDeepLink = () => {
         }
 
 
-        if (pathname === '/marketplace' || pathname === '/marketplace/my') {
+        if (pathname === '/marketplace' || pathname === '/marketplace/my' || pathname === '/marketplace/create') {
+          const search = url.search || '';
+          navigateWithTracking(navigate, `${pathname}${search}`, { replace: true });
+          return;
+        }
+
+        // Marketplace item edit routes
+        if (pathname.startsWith('/marketplace/') && pathname.endsWith('/edit')) {
+          const search = url.search || '';
+          navigateWithTracking(navigate, `${pathname}${search}`, { replace: true });
+          return;
+        }
+
+        // Marketplace item detail routes
+        if (pathname.startsWith('/marketplace/')) {
           const search = url.search || '';
           navigateWithTracking(navigate, `${pathname}${search}`, { replace: true });
           return;
@@ -130,17 +176,23 @@ export const useDeepLink = () => {
           '/select-city': '/select-city',
           '/': '/'
         };
+
+        // Routes with search parameters
+        const routesWithSearchParams: string[] = ['/login'];
         
         if (simpleRoutes[pathname]) {
           const target = simpleRoutes[pathname];
-          if (
-            pathname === '/login' &&
-            (url.searchParams.has('google_code') || url.searchParams.has('google_error'))
-          ) {
+          if (routesWithSearchParams.includes(pathname) && url.search) {
             navigateWithTracking(navigate, `${target}${url.search}`, { replace: true });
             return;
           }
           navigateWithTracking(navigate, target, { replace: true });
+          return;
+        }
+
+        // My-clubs routes (wildcard route)
+        if (pathname.startsWith('/my-clubs/')) {
+          navigateWithTracking(navigate, pathname, { replace: true });
           return;
         }
       } catch (error) {

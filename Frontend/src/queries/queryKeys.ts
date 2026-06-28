@@ -45,4 +45,8 @@ export const queryKeys = {
     all: ['userGameNotes'] as const,
     detail: (gameId: string) => ['userGameNotes', gameId] as const,
   },
+  me: {
+    myTabData: (options?: { includeStories?: boolean; includeBooktime?: boolean }) =>
+      ['me', 'myTabData', options ?? {}] as const,
+  },
 };
