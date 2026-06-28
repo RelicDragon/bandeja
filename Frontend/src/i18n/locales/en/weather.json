@@ -1,0 +1,36 @@
+{
+  "weather": {
+    "forecastTitle": "Game weather",
+    "openForecast": "Open weather forecast: {{temperature}}, {{condition}}",
+    "loading": "Loading forecast",
+    "loadingShort": "Loading",
+    "showFullDay": "Show full day",
+    "unavailable": "Weather forecast is not available for this game time yet.",
+    "unavailableShort": "Forecast is not available for this time yet.",
+    "missingCityCoordinates": "Weather is unavailable because this city has no coordinates yet.",
+    "attribution": "Weather data by Open-Meteo",
+    "beforeGame": "Before",
+    "gameTime": "Game",
+    "afterGame": "After",
+    "stale": "stale",
+    "updatedUnknown": "Forecast updated recently",
+    "updatedNow": "Updated just now",
+    "updatedMinutes": "Updated {{count}} min ago",
+    "updatedHours": "Updated {{count}} hr ago",
+    "windSpeed": "{{speed}} km/h",
+    "conditions": {
+      "clear": "Clear",
+      "mainly_clear": "Mostly clear",
+      "partly_cloudy": "Partly cloudy",
+      "cloudy": "Cloudy",
+      "fog": "Fog",
+      "drizzle": "Drizzle",
+      "rain": "Rain",
+      "freezing_rain": "Freezing rain",
+      "snow": "Snow",
+      "showers": "Showers",
+      "thunderstorm": "Thunderstorm",
+      "unknown": "Weather"
+    }
+  }
+}

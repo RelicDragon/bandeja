@@ -45,6 +45,11 @@ export const queryKeys = {
     all: ['userGameNotes'] as const,
     detail: (gameId: string) => ['userGameNotes', gameId] as const,
   },
+  weather: {
+    game: (gameId: string, scope = 'game') => ['weather', 'game', gameId, scope] as const,
+    preview: (cityId: string, startTime: string, endTime: string, scope = 'game') =>
+      ['weather', 'preview', cityId, startTime, endTime, scope] as const,
+  },
   me: {
     myTabData: (options?: { includeStories?: boolean; includeBooktime?: boolean }) =>
       ['me', 'myTabData', options ?? {}] as const,

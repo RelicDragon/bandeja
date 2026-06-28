@@ -22,7 +22,7 @@ export * from './transactions';
 export * from './ranking';
 export * from './userGameNotes';
 export * from './currency';
+export * from './weather';
 export * from './userTeams';
 export * from './sponsorPlacements';
 export { default as api } from './axios';
-

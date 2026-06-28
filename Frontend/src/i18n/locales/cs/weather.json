@@ -1,0 +1,36 @@
+{
+  "weather": {
+    "forecastTitle": "Počasí na hru",
+    "openForecast": "Otevřít předpověď počasí: {{temperature}}, {{condition}}",
+    "loading": "Načítání předpovědi",
+    "loadingShort": "Načítání",
+    "showFullDay": "Zobrazit celý den",
+    "unavailable": "Předpověď počasí zatím není pro čas této hry dostupná.",
+    "unavailableShort": "Předpověď zatím není pro tento čas dostupná.",
+    "missingCityCoordinates": "Počasí není dostupné, protože toto město zatím nemá souřadnice.",
+    "attribution": "Data o počasí od Open-Meteo",
+    "beforeGame": "Před",
+    "gameTime": "Hra",
+    "afterGame": "Po",
+    "stale": "zastaralé",
+    "updatedUnknown": "Předpověď byla nedávno aktualizována",
+    "updatedNow": "Aktualizováno právě teď",
+    "updatedMinutes": "Aktualizováno před {{count}} min",
+    "updatedHours": "Aktualizováno před {{count}} h",
+    "windSpeed": "{{speed}} km/h",
+    "conditions": {
+      "clear": "Jasno",
+      "mainly_clear": "Většinou jasno",
+      "partly_cloudy": "Polojasno",
+      "cloudy": "Zataženo",
+      "fog": "Mlha",
+      "drizzle": "Mrholení",
+      "rain": "Déšť",
+      "freezing_rain": "Mrznoucí déšť",
+      "snow": "Sníh",
+      "showers": "Přeháňky",
+      "thunderstorm": "Bouřka",
+      "unknown": "Počasí"
+    }
+  }
+}

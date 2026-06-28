@@ -72,12 +72,25 @@ public final class InviteNotificationHelper {
 
         Intent tapIntent = new Intent(context, MainActivity.class);
         tapIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        tapIntent.putExtra("type", invite.type);
+        if (invite.title != null) {
+            tapIntent.putExtra("title", invite.title);
+        }
+        if (invite.body != null) {
+            tapIntent.putExtra("body", invite.body);
+        }
+        if (invite.inviteId != null) {
+            tapIntent.putExtra("inviteId", invite.inviteId);
+        }
         if (invite.gameId != null) {
             tapIntent.putExtra("gameId", invite.gameId);
         }
         if (invite.teamId != null) {
             tapIntent.putExtra("teamId", invite.teamId);
         }
+        // Capacitor forwards Android notification taps to JS only when a
+        // Firebase message id is present on the launch intent.
+        tapIntent.putExtra("google.message_id", invite.messageId());
         PendingIntent contentIntent = PendingIntent.getActivity(
             context,
             invite.notificationId() + 2,

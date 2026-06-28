@@ -35,6 +35,7 @@ import { useContextUnread } from '@/hooks/useUnreadBridge';
 import { UserGameNoteModal } from '@/components/GameDetails/UserGameNoteModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { GameCardReactions } from '@/components/GameCardReactions';
+import { GameWeatherDialog } from '@/components/weather/GameWeatherDialog';
 import { Users, MessageCircle, Dumbbell, Beer, Swords, Trophy, Plane, Bookmark } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -70,6 +71,7 @@ export const GameCard = ({
   const effectiveUser = user || authUser;
   const expandedContentRef = useRef<HTMLDivElement>(null);
   const [showNoteModal, setShowNoteModal] = useState(false);
+  const [showWeatherModal, setShowWeatherModal] = useState(false);
   const [showJoinConfirm, setShowJoinConfirm] = useState(false);
   const [joinAction, setJoinAction] = useState<'game' | 'queue' | null>(null);
   const [reactions, setReactions] = useState(() => game.reactions ?? []);
@@ -195,6 +197,12 @@ export const GameCard = ({
     e.stopPropagation();
     e.preventDefault();
     navigate(`/games/${game.id}/chat`);
+  };
+
+  const handleWeatherClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setShowWeatherModal(true);
   };
 
   const handleCardClick = () => {
@@ -537,6 +545,8 @@ export const GameCard = ({
                 hintText={infoHintText}
                 showConfirmedCourtBadge={showConfirmedCourtBadge}
                 linkedExternalBooking={linkedExternalBooking}
+                weatherLocale={displaySettings.locale}
+                onWeatherClick={handleWeatherClick}
                 className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400 justify-center min-h-0"
               />
             )}
@@ -552,6 +562,8 @@ export const GameCard = ({
                 hintText={infoHintText}
                 showConfirmedCourtBadge={showConfirmedCourtBadge}
                 linkedExternalBooking={linkedExternalBooking}
+                weatherLocale={displaySettings.locale}
+                onWeatherClick={handleWeatherClick}
                 className="space-y-2 flex-1"
               />
             )}
@@ -610,6 +622,15 @@ export const GameCard = ({
           gameId={game.id}
           initialContent={userNoteDisplay}
           onSaved={handleNoteSaved}
+        />
+      )}
+      {showWeatherModal && (
+        <GameWeatherDialog
+          game={game}
+          open={showWeatherModal}
+          onClose={() => setShowWeatherModal(false)}
+          locale={displaySettings.locale}
+          hour12={displaySettings.hour12}
         />
       )}
       {showJoinConfirm && joinAction && (

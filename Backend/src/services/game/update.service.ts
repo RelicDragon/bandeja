@@ -35,6 +35,7 @@ import {
   assertClubSupportsSport,
   assertCourtMatchesGameSport,
 } from '../../shared/clubSports';
+import { WeatherForecastService } from '../weatherForecast.service';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -680,6 +681,13 @@ export class GameUpdateService {
     });
 
     await GameReadinessService.updateGameReadiness(id);
+    const weatherScheduleChanged =
+      data.startTime !== undefined ||
+      data.endTime !== undefined ||
+      data.timeIsSet !== undefined ||
+      data.cityId !== undefined ||
+      data.clubId !== undefined ||
+      data.courtId !== undefined;
 
     if (
       data.affectsRating !== undefined &&
@@ -714,6 +722,16 @@ export class GameUpdateService {
 
     if (!updatedGame) {
       throw new ApiError(404, 'Game not found after update');
+    }
+
+    if (updatedGame.timeIsSet && weatherScheduleChanged) {
+      WeatherForecastService.warmCityForecast(updatedGame.cityId).catch((error) => {
+        console.warn('[GameUpdateService] Failed to warm weather forecast', {
+          gameId: updatedGame.id,
+          cityId: updatedGame.cityId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
     }
 
     if (
@@ -797,8 +815,19 @@ export class GameUpdateService {
     }
 
     const sport = updatedGame.sport;
+    const weatherSummary = updatedGame.timeIsSet
+      ? await WeatherForecastService.getSummaryForGame(updatedGame).catch((error) => {
+          console.warn('[GameUpdateService] Failed to attach weather summary to response', {
+            gameId: updatedGame.id,
+            cityId: updatedGame.cityId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          return null;
+        })
+      : null;
     return withLegacyGoldenPointField({
       ...updatedGame,
+      weatherSummary,
       participants: updatedGame.participants.map((participant) => ({
         ...participant,
         user: projectUserForSportContext(participant.user, sport),
@@ -806,4 +835,3 @@ export class GameUpdateService {
     });
   }
 }
-

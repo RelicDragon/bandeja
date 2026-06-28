@@ -249,9 +249,29 @@ model City {
   groupChannels          GroupChannel[] @relation("GroupChannelCity")
   marketItems            MarketItem[]
   cancelledGames         CancelledGame[]
+  weatherForecastCaches  WeatherForecastCache[]
 
   @@index([isActive])
   @@index([clubsCount])
+}
+
+model WeatherForecastCache {
+  id            String   @id @default(cuid())
+  cityId        String
+  provider      String   @default("open-meteo")
+  forecastStart DateTime
+  forecastEnd   DateTime
+  fetchedAt     DateTime
+  expiresAt     DateTime
+  payload       Json
+  lastError     String?  @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  city          City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@unique([cityId, provider])
+  @@index([cityId])
+  @@index([expiresAt])
 }
 
 model Club {
@@ -1182,6 +1202,7 @@ model ChatMessage {
   @@index([chatContextType, contextId])
   @@index([chatContextType, contextId, serverSyncSeq])
   @@index([gameId])
+  @@index([gameId, createdAt(sort: Desc)], map: "idx_ChatMessage_gameId_createdAt")
   @@index([senderId])
   @@index([createdAt])
   @@index([state])
@@ -1438,6 +1459,7 @@ model ChatReadCursor {
 
   @@unique([userId, chatContextType, contextId, chatType])
   @@index([userId])
+  @@index([userId, chatContextType, contextId], map: "idx_ChatReadCursor_userId_contextType_contextId")
 }
 
 model MessageReaction {

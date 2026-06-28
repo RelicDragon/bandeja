@@ -461,6 +461,53 @@ export interface GameResultsArtifacts {
   readyAt: string | null;
 }
 
+export type WeatherConditionKey =
+  | 'clear'
+  | 'mainly_clear'
+  | 'partly_cloudy'
+  | 'cloudy'
+  | 'fog'
+  | 'drizzle'
+  | 'rain'
+  | 'freezing_rain'
+  | 'snow'
+  | 'showers'
+  | 'thunderstorm'
+  | 'unknown';
+
+export interface WeatherHourlyPoint {
+  time: string;
+  temperatureC: number;
+  temperatureF: number;
+  weatherCode: number;
+  conditionKey: WeatherConditionKey;
+  precipitationProbability: number | null;
+  precipitationMm: number | null;
+  windSpeedKmh: number | null;
+  relativeHumidity: number | null;
+  isDay: boolean | null;
+}
+
+export interface WeatherSummary extends WeatherHourlyPoint {
+  provider: 'open-meteo';
+  fetchedAt: string;
+  stale: boolean;
+}
+
+export interface WeatherWindow {
+  provider: 'open-meteo';
+  cityId: string;
+  cityName: string;
+  cityTimezone: string;
+  fetchedAt: string;
+  stale: boolean;
+  available: boolean;
+  summary: WeatherSummary | null;
+  hours: WeatherHourlyPoint[];
+  attribution: 'Open-Meteo';
+  unavailableReason?: 'missing_city_coordinates' | 'out_of_range' | 'not_scheduled';
+}
+
 export interface Game {
   id: string;
   entityType: EntityType;
@@ -533,6 +580,7 @@ export interface Game {
   resultsSentToTelegram?: boolean;
   resultsSummaryText?: string | null;
   resultsArtifacts?: GameResultsArtifacts;
+  weatherSummary?: WeatherSummary | null;
   isClubFavorite?: boolean;
   priceTotal?: number | null;
   priceType?: PriceType;

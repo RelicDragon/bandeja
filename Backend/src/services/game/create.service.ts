@@ -20,6 +20,7 @@ import {
   assertClubSupportsSport,
   assertCourtMatchesGameSport,
 } from '../../shared/clubSports';
+import { WeatherForecastService } from '../weatherForecast.service';
 import {
   assertNoLegacyExternalBookingId,
   insertJoinRows,
@@ -516,6 +517,15 @@ export class GameCreateService {
 
     await GameReadinessService.updateGameReadiness(createdGame.id);
     await touchLastCreatedSport(userId, sport);
+    if (createdGame.timeIsSet) {
+      WeatherForecastService.warmCityForecast(createdGame.cityId).catch((error) => {
+        console.warn('[GameCreateService] Failed to warm weather forecast', {
+          gameId: createdGame.id,
+          cityId: createdGame.cityId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }
 
     if (gameCourtIds?.length) {
       await GameCourtService.setGameCourts(createdGame.id, gameCourtIds);
@@ -607,4 +617,3 @@ export class GameCreateService {
     });
   }
 }
-

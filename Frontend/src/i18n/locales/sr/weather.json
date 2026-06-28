@@ -1,0 +1,36 @@
+{
+  "weather": {
+    "forecastTitle": "Vremenska prognoza za igru",
+    "openForecast": "Otvori vremensku prognozu: {{temperature}}, {{condition}}",
+    "loading": "Učitavanje prognoze",
+    "loadingShort": "Učitavanje",
+    "showFullDay": "Prikaži ceo dan",
+    "unavailable": "Vremenska prognoza još nije dostupna za termin ove igre.",
+    "unavailableShort": "Prognoza još nije dostupna za ovaj termin.",
+    "missingCityCoordinates": "Vreme nije dostupno jer ovaj grad još nema koordinate.",
+    "attribution": "Podaci o vremenu: Open-Meteo",
+    "beforeGame": "Pre igre",
+    "gameTime": "Igra",
+    "afterGame": "Posle",
+    "stale": "zastarelo",
+    "updatedUnknown": "Prognoza je nedavno ažurirana",
+    "updatedNow": "Ažurirano upravo sada",
+    "updatedMinutes": "Ažurirano pre {{count}} min",
+    "updatedHours": "Ažurirano pre {{count}} h",
+    "windSpeed": "{{speed}} km/h",
+    "conditions": {
+      "clear": "Vedro",
+      "mainly_clear": "Uglavnom vedro",
+      "partly_cloudy": "Delimično oblačno",
+      "cloudy": "Oblačno",
+      "fog": "Magla",
+      "drizzle": "Rosulja",
+      "rain": "Kiša",
+      "freezing_rain": "Ledena kiša",
+      "snow": "Sneg",
+      "showers": "Pljuskovi",
+      "thunderstorm": "Grmljavina",
+      "unknown": "Vreme"
+    }
+  }
+}

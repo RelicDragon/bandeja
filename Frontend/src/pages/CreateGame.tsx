@@ -62,6 +62,8 @@ import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSec
 import { CreateGameSummaryBar } from '@/components/createGame/summaryHeader/CreateGameSummaryBar';
 import { useScrolledPastSections } from '@/components/createGame/summaryHeader/useScrolledPastSections';
 import { useCreateGameSummaryChips } from '@/components/createGame/summaryHeader/useCreateGameSummaryChips';
+import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
 
 interface CreateGameProps {
   entityType: EntityType;
@@ -91,6 +93,7 @@ export const CreateGame = ({
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const { setIsAnimating, setActiveTab, setMyGamesCalendarDateAfterCreate } = useShellNavStore();
 
   useBackButtonHandler(() => {
@@ -433,6 +436,30 @@ export const CreateGame = ({
     handleCourtSelectForAuthSkip,
     handleAuthConnected,
   } = bookingFlow;
+
+  const weatherPreviewTiming = useMemo(() => {
+    if (!selectedClubData?.cityId) return null;
+    if (effectiveDerivedSummary.startTime && effectiveDerivedSummary.endTime) {
+      return {
+        cityId: selectedClubData.cityId,
+        startTime: effectiveDerivedSummary.startTime,
+        endTime: effectiveDerivedSummary.endTime,
+      };
+    }
+    if (!selectedTime) return null;
+    const manual = createDateFromSelection();
+    return {
+      cityId: selectedClubData.cityId,
+      startTime: manual.startTime,
+      endTime: manual.endTime,
+    };
+  }, [
+    createDateFromSelection,
+    effectiveDerivedSummary.endTime,
+    effectiveDerivedSummary.startTime,
+    selectedClubData?.cityId,
+    selectedTime,
+  ]);
 
   const clubsForSport = useMemo(
     () => filterClubsBySport(clubs, selectedSport),
@@ -1539,44 +1566,64 @@ export const CreateGame = ({
                     />
                   }
                 />
+                <WeatherPreviewCard
+                  cityId={weatherPreviewTiming?.cityId}
+                  startTime={weatherPreviewTiming?.startTime}
+                  endTime={weatherPreviewTiming?.endTime}
+                  enabled
+                  locale={displaySettings.locale}
+                  hour12={displaySettings.hour12}
+                />
               </div>
             ) : (
-              <GameStartSection
-                clubs={clubsForSport}
-                courts={courts}
-                preferredSport={selectedSport}
-                isClubModalOpen={isClubModalOpen}
-                onSelectClub={(id: string) => {
-                  setSelectedClub(id);
-                  setSelectedCourtIds([]);
-                }}
-                onOpenClubModal={() => setIsClubModalOpen(true)}
-                onCloseClubModal={() => setIsClubModalOpen(false)}
-                selectedDate={selectedDate}
-                selectedTime={selectedTime}
-                duration={duration}
-                showDatePicker={showDatePicker}
-                selectedClub={selectedClub}
-                selectedCourt={selectedCourt}
-                club={selectedClubData}
-                generateTimeOptions={resolvedGenerateTimeOptions}
-                generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
-                canAccommodateDuration={resolvedCanAccommodateDuration}
-                getAdjustedStartTime={resolvedGetAdjustedStartTime}
-                getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
-                isSlotHighlighted={resolvedIsSlotHighlighted}
-                getDurationLabel={getDurationLabel}
-                onDateSelect={setSelectedDate}
-                onCalendarClick={() => setShowDatePicker(true)}
-                onCloseDatePicker={() => setShowDatePicker(false)}
-                onTimeSelect={setSelectedTime}
-                onDurationChange={setDuration}
-                entityType={entityType}
-                dateInputRef={dateInputRef}
-                courtSection={courtSection}
-                slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
-                booktimeSlotsActive={booktimeTimeOptions.active}
-              />
+              <>
+                <GameStartSection
+                  clubs={clubsForSport}
+                  courts={courts}
+                  preferredSport={selectedSport}
+                  isClubModalOpen={isClubModalOpen}
+                  onSelectClub={(id: string) => {
+                    setSelectedClub(id);
+                    setSelectedCourtIds([]);
+                  }}
+                  onOpenClubModal={() => setIsClubModalOpen(true)}
+                  onCloseClubModal={() => setIsClubModalOpen(false)}
+                  selectedDate={selectedDate}
+                  selectedTime={selectedTime}
+                  duration={duration}
+                  showDatePicker={showDatePicker}
+                  selectedClub={selectedClub}
+                  selectedCourt={selectedCourt}
+                  club={selectedClubData}
+                  generateTimeOptions={resolvedGenerateTimeOptions}
+                  generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
+                  canAccommodateDuration={resolvedCanAccommodateDuration}
+                  getAdjustedStartTime={resolvedGetAdjustedStartTime}
+                  getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
+                  isSlotHighlighted={resolvedIsSlotHighlighted}
+                  getDurationLabel={getDurationLabel}
+                  onDateSelect={setSelectedDate}
+                  onCalendarClick={() => setShowDatePicker(true)}
+                  onCloseDatePicker={() => setShowDatePicker(false)}
+                  onTimeSelect={setSelectedTime}
+                  onDurationChange={setDuration}
+                  entityType={entityType}
+                  dateInputRef={dateInputRef}
+                  courtSection={courtSection}
+                  slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
+                  booktimeSlotsActive={booktimeTimeOptions.active}
+                />
+                <div className="mt-3">
+                  <WeatherPreviewCard
+                    cityId={weatherPreviewTiming?.cityId}
+                    startTime={weatherPreviewTiming?.startTime}
+                    endTime={weatherPreviewTiming?.endTime}
+                    enabled={entityType !== 'BAR'}
+                    locale={displaySettings.locale}
+                    hour12={displaySettings.hour12}
+                  />
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -1776,6 +1823,3 @@ export const CreateGame = ({
     </SportLevelProvider>
   );
 };
-
-
-

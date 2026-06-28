@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { format } from 'date-fns';
+import { addHours, format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
 import { Save, Edit3, CalendarClock, Banknote, Loader2 } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
@@ -25,7 +25,7 @@ import {
   type EditLocationTimeDraft,
 } from '@/components/gameLocationTime/locationTimeDraft';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
-import { useGameTimeDuration } from '@/hooks/useGameTimeDuration';
+import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
@@ -41,6 +41,8 @@ import { computePendingBookingUnlinks } from '@/components/gameLocationTime/comp
 import { shouldUseBooktimeTimeOptions } from '@/hooks/createGameBookingFlow/shouldUseBooktimeTimeOptions';
 import { courtMatchesSportFilter } from '@/utils/courtSport';
 import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
+import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price';
 export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
 
@@ -100,6 +102,7 @@ export const EditGameInfoModal = ({
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const userCurrency = resolveUserCurrency(user?.defaultCurrency);
+  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
   const initialTab: EditGameInfoTabId =
     initialTabProp === 'where' || initialTabProp === 'when' ? 'locationTime' : initialTabProp;
@@ -302,6 +305,16 @@ export const EditGameInfoModal = ({
   }, [isOpen, selectedCourtIds]);
 
   const selectedClubData = clubs.find((c) => c.id === where.clubId);
+  const weatherPreviewTiming = useMemo(() => {
+    if (!selectedClubData?.cityId || !whenSelectedTime) return null;
+    const start = createDateFromClubTime(whenSelectedDate, whenSelectedTime, selectedClubData);
+    const end = addHours(start, whenDuration);
+    return {
+      cityId: selectedClubData.cityId,
+      startTime: start.toISOString(),
+      endTime: end.toISOString(),
+    };
+  }, [selectedClubData, whenDuration, whenSelectedDate, whenSelectedTime]);
   const clubBookingFlowActive =
     supportsClubBookingFlow(game.entityType, 'edit') && clubHasBookingIntegration(selectedClubData);
   const willBookOnEdit =
@@ -705,72 +718,82 @@ export const EditGameInfoModal = ({
             />
           )}
           {activeTab === 'locationTime' && (
-            <LocationTimeTab
-              game={game}
-              entityType={game.entityType}
-              clubs={clubs}
-              courts={modalCourts}
-              selectedClub={where.clubId}
-              selectedCourtIds={selectedCourtIds}
-              selectedCourt={where.courtId || selectedCourtIds[0] || 'notBooked'}
-              hasBookedCourt={where.hasBookedCourt}
-              onSelectClub={(id) => {
-                setWhere((s) => ({ ...s, clubId: id, courtId: '' }));
-                setSelectedCourtIds([]);
-              }}
-              onSelectCourt={handleEditCourtSelect}
-              onSelectCourtIds={handleEditCourtIdsSync}
-              onToggleHasBookedCourt={(checked) => setWhere((s) => ({ ...s, hasBookedCourt: checked }))}
-              selectedDate={whenSelectedDate}
-              selectedTime={whenSelectedTime}
-              duration={whenDuration}
-              showDatePicker={whenShowDatePicker}
-              onDateChange={(d) => {
-                setWhenSelectedDate(d);
-                setHookDate(d);
-              }}
-              onTimeChange={(timeValue) => {
-                setWhenSelectedTime(timeValue);
-                setHookTime(timeValue);
-              }}
-              onDurationChange={(d) => {
-                setWhenDuration(d);
-                setHookDuration(d);
-              }}
-              onShowDatePickerChange={setWhenShowDatePicker}
-              generateTimeOptions={resolvedGenerateTimeOptions}
-              generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
-              canAccommodateDuration={resolvedCanAccommodateDuration}
-              getAdjustedStartTime={resolvedGetAdjustedStartTime}
-              getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
-              isSlotHighlighted={resolvedIsSlotHighlighted}
-              dateInputRef={{ current: null }}
-              pendingRemoveBookingIds={pendingRemoveBookingIds}
-              onDraftChange={handleLocationTimeDraftChange}
-              clubBookingFlowActive={clubBookingFlowActive}
-              booktimeCompanyId={booktimeIntegrationConfig?.companyId ?? null}
-              booktimeConnected={Boolean(booktimeAuth?.connected)}
-              snapshotOverlayEnabled={editSnapshotOverlayEnabled}
-              snapshotLoading={isRefreshingSnapshot}
-              snapshotBannerState={snapshotBanner}
-              willBookOnCreate={willBookOnEdit}
-              needsBooktimeAuth={needsBooktimeAuth}
-              booktimeFixedDates={willBookOnEdit ? booktimeFixedDates : undefined}
-              slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
-              booktimeSlotsActive={booktimeTimeOptions.active}
-              connectedPhone={booktimeAuth?.phoneNumber ?? null}
-              bookableDaysHint={willBookOnEdit ? booktimeCompanyMeta.bookableDays : null}
-              authGateSection={
-                needsBooktimeAuth && selectedClubData && booktimeIntegrationConfig ? (
-                  <BooktimeConnectInline
-                    club={selectedClubData}
-                    integrationConfig={booktimeIntegrationConfig}
-                    onConnected={() => void refreshBooktimeAuth()}
-                    onSkip={() => setActiveTab('locationTime')}
-                  />
-                ) : null
-              }
-            />
+            <div className="space-y-4">
+              <LocationTimeTab
+                game={game}
+                entityType={game.entityType}
+                clubs={clubs}
+                courts={modalCourts}
+                selectedClub={where.clubId}
+                selectedCourtIds={selectedCourtIds}
+                selectedCourt={where.courtId || selectedCourtIds[0] || 'notBooked'}
+                hasBookedCourt={where.hasBookedCourt}
+                onSelectClub={(id) => {
+                  setWhere((s) => ({ ...s, clubId: id, courtId: '' }));
+                  setSelectedCourtIds([]);
+                }}
+                onSelectCourt={handleEditCourtSelect}
+                onSelectCourtIds={handleEditCourtIdsSync}
+                onToggleHasBookedCourt={(checked) => setWhere((s) => ({ ...s, hasBookedCourt: checked }))}
+                selectedDate={whenSelectedDate}
+                selectedTime={whenSelectedTime}
+                duration={whenDuration}
+                showDatePicker={whenShowDatePicker}
+                onDateChange={(d) => {
+                  setWhenSelectedDate(d);
+                  setHookDate(d);
+                }}
+                onTimeChange={(timeValue) => {
+                  setWhenSelectedTime(timeValue);
+                  setHookTime(timeValue);
+                }}
+                onDurationChange={(d) => {
+                  setWhenDuration(d);
+                  setHookDuration(d);
+                }}
+                onShowDatePickerChange={setWhenShowDatePicker}
+                generateTimeOptions={resolvedGenerateTimeOptions}
+                generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
+                canAccommodateDuration={resolvedCanAccommodateDuration}
+                getAdjustedStartTime={resolvedGetAdjustedStartTime}
+                getTimeSlotsForDuration={resolvedGetTimeSlotsForDuration}
+                isSlotHighlighted={resolvedIsSlotHighlighted}
+                dateInputRef={{ current: null }}
+                pendingRemoveBookingIds={pendingRemoveBookingIds}
+                onDraftChange={handleLocationTimeDraftChange}
+                clubBookingFlowActive={clubBookingFlowActive}
+                booktimeCompanyId={booktimeIntegrationConfig?.companyId ?? null}
+                booktimeConnected={Boolean(booktimeAuth?.connected)}
+                snapshotOverlayEnabled={editSnapshotOverlayEnabled}
+                snapshotLoading={isRefreshingSnapshot}
+                snapshotBannerState={snapshotBanner}
+                willBookOnCreate={willBookOnEdit}
+                needsBooktimeAuth={needsBooktimeAuth}
+                booktimeFixedDates={willBookOnEdit ? booktimeFixedDates : undefined}
+                slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
+                booktimeSlotsActive={booktimeTimeOptions.active}
+                connectedPhone={booktimeAuth?.phoneNumber ?? null}
+                bookableDaysHint={willBookOnEdit ? booktimeCompanyMeta.bookableDays : null}
+                authGateSection={
+                  needsBooktimeAuth && selectedClubData && booktimeIntegrationConfig ? (
+                    <BooktimeConnectInline
+                      club={selectedClubData}
+                      integrationConfig={booktimeIntegrationConfig}
+                      onConnected={() => void refreshBooktimeAuth()}
+                      onSkip={() => setActiveTab('locationTime')}
+                    />
+                  ) : null
+                }
+              />
+              <WeatherPreviewCard
+                cityId={weatherPreviewTiming?.cityId}
+                startTime={weatherPreviewTiming?.startTime}
+                endTime={weatherPreviewTiming?.endTime}
+                enabled={game.entityType !== 'BAR'}
+                locale={displaySettings.locale}
+                hour12={displaySettings.hour12}
+              />
+            </div>
           )}
           {activeTab === 'price' && (
             <PriceTab state={price} onChange={(patch) => setPrice((s) => ({ ...s, ...patch }))} />

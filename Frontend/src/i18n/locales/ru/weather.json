@@ -1,0 +1,36 @@
+{
+  "weather": {
+    "forecastTitle": "Погода на игру",
+    "openForecast": "Открыть прогноз погоды: {{temperature}}, {{condition}}",
+    "loading": "Загружаем прогноз",
+    "loadingShort": "Загрузка",
+    "showFullDay": "Показать весь день",
+    "unavailable": "Прогноз погоды пока недоступен для времени этой игры.",
+    "unavailableShort": "Прогноз пока недоступен для этого времени.",
+    "missingCityCoordinates": "Погода недоступна, потому что у этого города пока нет координат.",
+    "attribution": "Данные о погоде: Open-Meteo",
+    "beforeGame": "До игры",
+    "gameTime": "Игра",
+    "afterGame": "После",
+    "stale": "устарело",
+    "updatedUnknown": "Прогноз недавно обновлен",
+    "updatedNow": "Обновлено только что",
+    "updatedMinutes": "Обновлено {{count}} мин назад",
+    "updatedHours": "Обновлено {{count}} ч назад",
+    "windSpeed": "{{speed}} км/ч",
+    "conditions": {
+      "clear": "Ясно",
+      "mainly_clear": "Преимущественно ясно",
+      "partly_cloudy": "Переменная облачность",
+      "cloudy": "Облачно",
+      "fog": "Туман",
+      "drizzle": "Морось",
+      "rain": "Дождь",
+      "freezing_rain": "Ледяной дождь",
+      "snow": "Снег",
+      "showers": "Ливни",
+      "thunderstorm": "Гроза",
+      "unknown": "Погода"
+    }
+  }
+}

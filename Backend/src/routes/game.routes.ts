@@ -14,6 +14,7 @@ import {
 } from '../middleware/auth';
 import { ParticipantRole } from '@prisma/client';
 import * as gameController from '../controllers/game.controller';
+import { getGameWeather } from '../controllers/weather.controller';
 import gamePhotoRoutes from './gamePhoto.routes';
 import { rateLimitKeyFromRequest } from '../utils/rateLimitClientKey';
 
@@ -79,6 +80,8 @@ router.get(
   canAccessGameIncludingArchived,
   gameController.getResultsArtifactsStatus
 );
+
+router.get('/:id/weather', authenticate, canAccessGameIncludingArchived, getGameWeather);
 
 router.post(
   '/:id/prepare-results-artifacts/summary',
@@ -265,4 +268,3 @@ router.patch(
 );
 
 export default router;
-

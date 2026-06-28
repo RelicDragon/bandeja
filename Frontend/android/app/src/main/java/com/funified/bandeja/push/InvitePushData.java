@@ -76,6 +76,10 @@ public final class InvitePushData {
         return Math.abs(key.hashCode());
     }
 
+    public String messageId() {
+        return type + ":" + (inviteId != null ? inviteId : teamId);
+    }
+
     public boolean isTeamInvite() {
         return "TEAM_INVITE".equals(type);
     }

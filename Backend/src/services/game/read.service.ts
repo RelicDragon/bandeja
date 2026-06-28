@@ -24,6 +24,7 @@ import {
   canViewGamePhotos,
   type GamePhotosViewer,
 } from '../../shared/gamePhotos/permissions';
+import { WeatherForecastService } from '../weatherForecast.service';
 
 export { MAIN_PHOTO_RELATION_SELECT };
 
@@ -433,8 +434,9 @@ export class GameReadService {
       userNote,
       joinQueues: computeJoinQueuesFromParticipants(gameWithSportLevels),
     };
+    const [baseWithWeather] = await WeatherForecastService.attachSummariesToGames([base]);
     const reactionsMap = await fetchReactionsByGameIds([id]);
-    return attachReactionsToGames([base], reactionsMap)[0];
+    return attachReactionsToGames([baseWithWeather], reactionsMap)[0];
   }
 
   static async getGames(filters: any, userId?: string, userCityId?: string) {
@@ -527,12 +529,14 @@ export class GameReadService {
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
+      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
       const reactionsMap = await fetchReactionsByGameIds(gameIds);
-      return attachReactionsToGames(withNotes, reactionsMap);
+      return attachReactionsToGames(withWeather, reactionsMap);
     }
 
+    const withWeather = await WeatherForecastService.attachSummariesToGames(games);
     const reactionsMap = await fetchReactionsByGameIds(games.map((g) => g.id));
-    return attachReactionsToGames(games, reactionsMap);
+    return attachReactionsToGames(withWeather, reactionsMap);
   }
 
   static async getMyGames(userId: string, _userCityId?: string) {
@@ -581,11 +585,12 @@ export class GameReadService {
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
+      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
       const reactionsMap = await fetchReactionsByGameIds(gameIds);
-      return attachReactionsToGames(withNotes, reactionsMap);
+      return attachReactionsToGames(withWeather, reactionsMap);
     }
 
-    return games;
+    return WeatherForecastService.attachSummariesToGames(games);
   }
 
   static async getMyGamesWithUnread(userId: string, userCityId?: string) {
@@ -668,11 +673,12 @@ export class GameReadService {
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
+      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
       const reactionsMap = await fetchReactionsByGameIds(gameIds);
-      return attachReactionsToGames(withNotes, reactionsMap);
+      return attachReactionsToGames(withWeather, reactionsMap);
     }
 
-    return games;
+    return WeatherForecastService.attachSummariesToGames(games);
   }
 
   static async getAvailableGames(
@@ -780,11 +786,12 @@ export class GameReadService {
         ...game,
         userNote: notesMap.get(game.id) || null,
       }));
+      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
       const reactionsMap = await fetchReactionsByGameIds(gameIds);
-      return attachReactionsToGames(withNotes, reactionsMap);
+      return attachReactionsToGames(withWeather, reactionsMap);
     }
 
-    return games;
+    return WeatherForecastService.attachSummariesToGames(games);
   }
 
   static async getAvailableUpcomingGames(
@@ -884,8 +891,8 @@ export class GameReadService {
       ...game,
       userNote: notesMap.get(game.id) || null,
     }));
+    const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
     const reactionsMap = await fetchReactionsByGameIds(gameIds);
-    return attachReactionsToGames(withNotes, reactionsMap);
+    return attachReactionsToGames(withWeather, reactionsMap);
   }
 }
-
