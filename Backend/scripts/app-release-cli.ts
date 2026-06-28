@@ -46,10 +46,14 @@ import {
   cleanReleaseWorkspace,
   clearSession,
   hasSavedSession,
+  includesAndroid,
+  includesIos,
   loadSession,
+  releasePlatformLabel,
   tryLoadSession,
   saveSession,
   type IosAppStoreConnectState,
+  type ReleasePlatform,
   type ReleaseSession,
 } from './lib/app-release-session';
 import { ReleaseProgressTimer, timedListrTask } from './lib/app-release-timer';
@@ -64,6 +68,76 @@ function handleCancel<T>(value: T | symbol): T {
 
 function persist(session: ReleaseSession): void {
   saveSession(session);
+}
+
+function parseReleasePlatform(value: string): ReleasePlatform {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'android' || normalized === 'a') {
+    return 'android';
+  }
+  if (normalized === 'ios' || normalized === 'i') {
+    return 'ios';
+  }
+  if (normalized === 'both' || normalized === 'all' || normalized === 'b') {
+    return 'both';
+  }
+  throw new Error(`Unknown release platform "${value}" — use android, ios, or both.`);
+}
+
+function requestedReleasePlatform(): ReleasePlatform | undefined {
+  const fromEnv = process.env.APP_RELEASE_PLATFORM?.trim();
+  if (fromEnv) {
+    return parseReleasePlatform(fromEnv);
+  }
+
+  const args = process.argv.slice(2);
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === '--android') {
+      return 'android';
+    }
+    if (arg === '--ios') {
+      return 'ios';
+    }
+    if (arg === '--both') {
+      return 'both';
+    }
+    if (arg === '--platform' || arg === '-p') {
+      const value = args[index + 1];
+      if (!value) {
+        throw new Error(`${arg} requires android, ios, or both.`);
+      }
+      return parseReleasePlatform(value);
+    }
+    const inlineMatch = arg.match(/^--platform=(.+)$/);
+    if (inlineMatch) {
+      return parseReleasePlatform(inlineMatch[1]);
+    }
+    if (!arg.startsWith('-')) {
+      return parseReleasePlatform(arg);
+    }
+  }
+
+  return undefined;
+}
+
+async function promptReleasePlatform(session: ReleaseSession): Promise<ReleaseSession> {
+  const targetPlatform = handleCancel(
+    await clack.select({
+      message: 'Release target',
+      options: [
+        { value: 'both', label: 'Both', hint: 'Google Play + App Store Connect' },
+        { value: 'android', label: 'Android', hint: 'Google Play only' },
+        { value: 'ios', label: 'iOS', hint: 'App Store Connect only' },
+      ],
+      initialValue: session.targetPlatform ?? 'both',
+    }),
+  ) as ReleasePlatform;
+
+  return {
+    ...session,
+    targetPlatform,
+  };
 }
 
 function hasIosAppStoreConnectState(state: IosAppStoreConnectState | undefined): boolean {
@@ -330,36 +404,43 @@ async function releaseNotesLoop(session: ReleaseSession): Promise<ReleaseSession
 }
 
 async function promptStoreConfig(session: ReleaseSession): Promise<ReleaseSession> {
-  if (storeConfigComplete(session.store)) {
+  if (storeConfigComplete(session.store, session.targetPlatform) && session.autoCommit !== undefined) {
     return session;
   }
 
-  const androidTrack = handleCancel(
-    await clack.select({
-      message: 'Google Play track',
-      options: [
-        { value: 'internal', label: 'Internal testing', hint: 'Recommended for smoke tests' },
-        { value: 'closed', label: 'Closed testing (alpha/beta)' },
-        { value: 'production', label: 'Production' },
-      ],
-      initialValue: session.store.androidTrack ?? 'internal',
-    }),
-  );
+  let androidTrack = session.store.androidTrack;
+  if (includesAndroid(session.targetPlatform) && !androidTrack) {
+    androidTrack = handleCancel(
+      await clack.select({
+        message: 'Google Play track',
+        options: [
+          { value: 'internal', label: 'Internal testing', hint: 'Recommended for smoke tests' },
+          { value: 'closed', label: 'Closed testing (alpha/beta)' },
+          { value: 'production', label: 'Production' },
+        ],
+        initialValue: session.store.androidTrack ?? 'internal',
+      }),
+    );
 
-  if (!PLAY_TRACKS.includes(androidTrack as (typeof PLAY_TRACKS)[number])) {
+  }
+  if (androidTrack && !PLAY_TRACKS.includes(androidTrack as (typeof PLAY_TRACKS)[number])) {
     throw new Error(`Invalid Play track: ${androidTrack}`);
   }
 
-  const iosMode = handleCancel(
-    await clack.select({
-      message: 'App Store Connect',
-      options: [
-        { value: 'upload', label: 'Prepare App Store version, do not submit' },
-        { value: 'submit', label: 'Upload and submit for review' },
-      ],
-      initialValue: session.store.iosSubmitForReview ? 'submit' : 'upload',
-    }),
-  );
+  let iosSubmitForReview = session.store.iosSubmitForReview;
+  if (includesIos(session.targetPlatform) && iosSubmitForReview === undefined) {
+    const iosMode = handleCancel(
+      await clack.select({
+        message: 'App Store Connect',
+        options: [
+          { value: 'upload', label: 'Prepare App Store version, do not submit' },
+          { value: 'submit', label: 'Upload and submit for review' },
+        ],
+        initialValue: session.store.iosSubmitForReview ? 'submit' : 'upload',
+      }),
+    );
+    iosSubmitForReview = iosMode === 'submit';
+  }
 
   let autoCommit = session.autoCommit;
   if (autoCommit === undefined) {
@@ -375,8 +456,9 @@ async function promptStoreConfig(session: ReleaseSession): Promise<ReleaseSessio
     ...session,
     autoCommit,
     store: {
+      ...session.store,
       androidTrack,
-      iosSubmitForReview: iosMode === 'submit',
+      iosSubmitForReview,
     },
   };
 }
@@ -388,10 +470,11 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
   }
 
   const storeLines: string[] = [];
-  if (session.store.androidTrack) {
+  storeLines.push(`Target: ${releasePlatformLabel(session.targetPlatform)}`);
+  if (includesAndroid(session.targetPlatform) && session.store.androidTrack) {
     storeLines.push(`Play track: ${session.store.androidTrack}`);
   }
-  if (session.store.iosSubmitForReview !== undefined) {
+  if (includesIos(session.targetPlatform) && session.store.iosSubmitForReview !== undefined) {
     storeLines.push(
       `App Store: ${
         session.store.iosSubmitForReview
@@ -415,14 +498,28 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
   ) {
     storeLines.push(
       [
-        `Uploaded: Android ${session.uploads.android ? 'yes' : 'no'}`,
-        `Android verified ${session.uploads.androidStoreVerified ? 'yes' : 'no'}`,
-        `iOS binary ${session.uploads.iosBinary ? 'yes' : 'no'}`,
-        `iOS processed ${session.uploads.iosBuildProcessed ? 'yes' : 'no'}`,
-        `iOS metadata ${session.uploads.iosStoreVersion ? 'yes' : 'no'}`,
-        `iOS verified ${session.uploads.iosStoreVersionVerified ? 'yes' : 'no'}`,
+        includesAndroid(session.targetPlatform)
+          ? `Uploaded: Android ${session.uploads.android ? 'yes' : 'no'}`
+          : null,
+        includesAndroid(session.targetPlatform)
+          ? `Android verified ${session.uploads.androidStoreVerified ? 'yes' : 'no'}`
+          : null,
+        includesIos(session.targetPlatform)
+          ? `iOS binary ${session.uploads.iosBinary ? 'yes' : 'no'}`
+          : null,
+        includesIos(session.targetPlatform)
+          ? `iOS processed ${session.uploads.iosBuildProcessed ? 'yes' : 'no'}`
+          : null,
+        includesIos(session.targetPlatform)
+          ? `iOS metadata ${session.uploads.iosStoreVersion ? 'yes' : 'no'}`
+          : null,
+        includesIos(session.targetPlatform)
+          ? `iOS verified ${session.uploads.iosStoreVersionVerified ? 'yes' : 'no'}`
+          : null,
         `Stores verified ${session.uploads.storesVerified ? 'yes' : 'no'}`,
-      ].join(', '),
+      ]
+        .filter(Boolean)
+        .join(', '),
     );
   }
   const iosState = formatIosAppStoreConnectState(session);
@@ -443,7 +540,13 @@ function renderSummary(session: ReleaseSession, dryRun: boolean): string {
     '',
     dryRun
       ? 'Dry run: native project files, builds, uploads, and baseline will not be modified.'
-      : 'Confirm will bump versions, build signed AAB/IPA, upload to both stores, verify both stores, and update the shipped baseline.',
+      : `Confirm will bump versions, build signed ${
+          includesAndroid(session.targetPlatform) && includesIos(session.targetPlatform)
+            ? 'AAB/IPA'
+            : includesAndroid(session.targetPlatform)
+              ? 'AAB'
+              : 'IPA'
+        }, upload to ${releasePlatformLabel(session.targetPlatform)}, verify store state, and update the shipped baseline.`,
   ].join('\n');
 }
 
@@ -451,7 +554,7 @@ async function runBuildPhase(
   session: ReleaseSession,
   timer: ReleaseProgressTimer,
 ): Promise<ReleaseSession> {
-  const preflight = runBuildPreflight();
+  const preflight = runBuildPreflight(session.targetPlatform);
   if (!preflight.ok) {
     clack.note(preflight.issues.join('\n'), 'Build preflight');
     clack.log.error('Fix the issues above before building release binaries.');
@@ -520,12 +623,14 @@ async function runUploadPhase(
     persist(current);
 
     try {
-      if (current.uploads?.android && current.uploads?.ios) {
+      const androidDone = !includesAndroid(current.targetPlatform) || current.uploads?.android;
+      const iosDone = !includesIos(current.targetPlatform) || current.uploads?.ios;
+      if (androidDone && iosDone) {
         return current;
       }
 
       const uploadTasks = [];
-      if (!current.uploads?.android) {
+      if (includesAndroid(current.targetPlatform) && !current.uploads?.android) {
         uploadTasks.push(
           timedListrTask(timer, 'Upload Android AAB to Google Play', async () => {
             try {
@@ -557,7 +662,11 @@ async function runUploadPhase(
         );
       }
 
-      if (!current.uploads?.ios && !current.uploads?.iosBinary) {
+      if (
+        includesIos(current.targetPlatform) &&
+        !current.uploads?.ios &&
+        !current.uploads?.iosBinary
+      ) {
         uploadTasks.push(
           timedListrTask(timer, 'Upload iOS IPA to App Store Connect', async () => {
             await runIosBinaryUpload(current);
@@ -574,7 +683,11 @@ async function runUploadPhase(
         );
       }
 
-      if (!current.uploads?.ios && !current.uploads?.iosBuildProcessed) {
+      if (
+        includesIos(current.targetPlatform) &&
+        !current.uploads?.ios &&
+        !current.uploads?.iosBuildProcessed
+      ) {
         uploadTasks.push(
           timedListrTask(timer, 'Wait for processed App Store Connect build', async () => {
             const iosState = await runIosProcessedBuildWait(current);
@@ -593,7 +706,11 @@ async function runUploadPhase(
         );
       }
 
-      if (!current.uploads?.ios && !current.uploads?.iosStoreVersion) {
+      if (
+        includesIos(current.targetPlatform) &&
+        !current.uploads?.ios &&
+        !current.uploads?.iosStoreVersion
+      ) {
         uploadTasks.push(
           timedListrTask(
             timer,
@@ -676,7 +793,7 @@ async function runStoreVerificationPhase(
       }
 
       const verificationTasks = [];
-      if (!current.uploads?.androidStoreVerified) {
+      if (includesAndroid(current.targetPlatform) && !current.uploads?.androidStoreVerified) {
         verificationTasks.push(
           timedListrTask(timer, 'Verify Google Play release', async () => {
             await runAndroidStoreVerification(current);
@@ -694,7 +811,7 @@ async function runStoreVerificationPhase(
         );
       }
 
-      if (!current.uploads?.iosStoreVersionVerified) {
+      if (includesIos(current.targetPlatform) && !current.uploads?.iosStoreVersionVerified) {
         verificationTasks.push(
           timedListrTask(
             timer,
@@ -729,9 +846,12 @@ async function runStoreVerificationPhase(
         ...current,
         uploads: {
           ...current.uploads,
-          androidStoreVerified: true,
-          iosStoreVersionVerified: true,
-          ios: true,
+          ...(includesAndroid(current.targetPlatform)
+            ? { android: true, androidStoreVerified: true }
+            : {}),
+          ...(includesIos(current.targetPlatform)
+            ? { iosStoreVersionVerified: true, ios: true }
+            : {}),
           storesVerified: true,
           storesVerifiedAt: new Date().toISOString(),
         },
@@ -787,7 +907,9 @@ async function finalizeRelease(session: ReleaseSession): Promise<void> {
   }
 
   clack.outro(
-    `Shipped ${result.version.version} (${result.version.build}) to Google Play and App Store Connect.`,
+    `Shipped ${result.version.version} (${result.version.build}) to ${releasePlatformLabel(
+      session.targetPlatform,
+    )}.`,
   );
 }
 
@@ -835,15 +957,17 @@ async function executeRelease(session: ReleaseSession): Promise<void> {
     built = await runBuildPhase(built, releaseTimer);
     clack.note(
       [
-        `AAB: ${built.artifacts.aab ?? '(missing)'}`,
-        `IPA: ${built.artifacts.ipa ?? '(missing)'}`,
-      ].join('\n'),
+        includesAndroid(built.targetPlatform) ? `AAB: ${built.artifacts.aab ?? '(missing)'}` : null,
+        includesIos(built.targetPlatform) ? `IPA: ${built.artifacts.ipa ?? '(missing)'}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n'),
       'Build artifacts',
     );
     clack.log.info(`Build finished in ${releaseTimer.totalElapsedLabel}.`);
   }
 
-  clack.log.step('Uploading to Google Play and App Store Connect…');
+  clack.log.step(`Uploading to ${releasePlatformLabel(built.targetPlatform)}…`);
   const uploaded = await runUploadPhase(built, releaseTimer);
   clack.log.info(`Upload finished — release pipeline total ${releaseTimer.totalElapsedLabel}.`);
   clack.log.step('Verifying final store state…');
@@ -898,12 +1022,13 @@ type SessionResolution = {
 
 function renderSavedSessionSummary(session: ReleaseSession): string {
   const notesStatus = session.notes ? `set (${session.notes.source})` : 'not set';
-  const artifactStatus =
-    session.artifacts?.aab && session.artifacts?.ipa
-      ? 'AAB + IPA ready'
-      : session.artifacts?.aab || session.artifacts?.ipa
-        ? 'partial'
-        : 'none';
+  const artifactParts = [
+    includesAndroid(session.targetPlatform)
+      ? `AAB ${session.artifacts?.aab ? 'ready' : 'pending'}`
+      : null,
+    includesIos(session.targetPlatform) ? `IPA ${session.artifacts?.ipa ? 'ready' : 'pending'}` : null,
+  ].filter(Boolean);
+  const artifactStatus = artifactParts.length > 0 ? artifactParts.join(', ') : 'none';
   const uploadStatus =
     session.uploads?.android ||
     session.uploads?.androidStoreVerified ||
@@ -914,18 +1039,33 @@ function renderSavedSessionSummary(session: ReleaseSession): string {
     session.uploads?.ios ||
     session.uploads?.storesVerified
       ? [
-          `Android ${session.uploads.android ? 'done' : 'pending'}`,
-          `Android verification ${session.uploads.androidStoreVerified ? 'done' : 'pending'}`,
-          `iOS binary ${session.uploads.iosBinary ? 'done' : 'pending'}`,
-          `iOS processing ${session.uploads.iosBuildProcessed ? 'done' : 'pending'}`,
-          `iOS metadata ${session.uploads.iosStoreVersion ? 'done' : 'pending'}`,
-          `iOS verification ${session.uploads.iosStoreVersionVerified ? 'done' : 'pending'}`,
+          includesAndroid(session.targetPlatform)
+            ? `Android ${session.uploads.android ? 'done' : 'pending'}`
+            : null,
+          includesAndroid(session.targetPlatform)
+            ? `Android verification ${session.uploads.androidStoreVerified ? 'done' : 'pending'}`
+            : null,
+          includesIos(session.targetPlatform)
+            ? `iOS binary ${session.uploads.iosBinary ? 'done' : 'pending'}`
+            : null,
+          includesIos(session.targetPlatform)
+            ? `iOS processing ${session.uploads.iosBuildProcessed ? 'done' : 'pending'}`
+            : null,
+          includesIos(session.targetPlatform)
+            ? `iOS metadata ${session.uploads.iosStoreVersion ? 'done' : 'pending'}`
+            : null,
+          includesIos(session.targetPlatform)
+            ? `iOS verification ${session.uploads.iosStoreVersionVerified ? 'done' : 'pending'}`
+            : null,
           `Stores ${session.uploads.storesVerified ? 'verified' : 'pending'}`,
-        ].join(', ')
+        ]
+          .filter(Boolean)
+          .join(', ')
       : 'none';
   const iosState = formatIosAppStoreConnectState(session);
   return [
     `Planned: ${session.planned.version} (${session.planned.build})`,
+    `Target: ${releasePlatformLabel(session.targetPlatform)}`,
     `Frozen HEAD: ${session.headSha.slice(0, 7)}`,
     `Phase: ${sessionPhaseLabel(session)}`,
     `Notes: ${notesStatus}`,
@@ -1008,15 +1148,25 @@ async function resolveSession(): Promise<SessionResolution> {
 
 async function main(): Promise<void> {
   const dryRun = isDryRun();
+  const requestedPlatform = requestedReleasePlatform();
   const { session, resume } = await resolveSession();
 
   clack.intro(dryRun ? 'Bandeja app release (dry run)' : 'Bandeja app release');
 
-  let current = session;
+  let current = requestedPlatform ? { ...session, targetPlatform: requestedPlatform } : session;
+  if (requestedPlatform) {
+    clack.log.info(`Release target: ${releasePlatformLabel(requestedPlatform)}`);
+  }
+
   const preflight = runPreflight(current);
   renderPreflight(preflight);
 
   current = { ...current, current: preflight.current };
+
+  if (!resume && !requestedPlatform) {
+    current = await promptReleasePlatform(current);
+  }
+
   persist(current);
 
   const phase = getSessionPhase(current);

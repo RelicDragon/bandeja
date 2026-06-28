@@ -23,6 +23,8 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 ./scripts/app-release.sh
 ```
 
+The CLI asks whether to release **Both** stores (default), **Android**, or **iOS**. You can also choose non-interactively: `./scripts/app-release.sh --platform android`, `./scripts/app-release.sh --platform ios`, or `./scripts/app-release.sh --platform both`.
+
 Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.

@@ -7,6 +7,7 @@ export const SESSION_DIR = path.join(ROOT, '.app-release');
 export const SESSION_FILE = path.join(SESSION_DIR, 'session.json');
 
 const notesSourceSchema = z.enum(['ai', 'custom', 'template']);
+const releasePlatformSchema = z.enum(['android', 'ios', 'both']);
 
 const releaseNotesSchema = z.object({
   main: z.string().min(1),
@@ -65,6 +66,7 @@ const iosAppStoreConnectStateSchema = z
 export const releaseSessionSchema = z.object({
   baselineSha: z.string().min(1),
   headSha: z.string().min(1),
+  targetPlatform: releasePlatformSchema.default('both'),
   current: nativeVersionSchema,
   planned: nativeVersionSchema,
   notes: releaseNotesSchema.nullable(),
@@ -76,12 +78,31 @@ export const releaseSessionSchema = z.object({
 });
 
 export type ReleaseNotesSource = z.infer<typeof notesSourceSchema>;
+export type ReleasePlatform = z.infer<typeof releasePlatformSchema>;
 export type ReleaseNotes = z.infer<typeof releaseNotesSchema>;
 export type ReleaseArtifacts = z.infer<typeof artifactsSchema>;
 export type ReleaseStoreConfig = z.infer<typeof storeSchema>;
 export type ReleaseUploadStatus = z.infer<typeof uploadStatusSchema>;
 export type IosAppStoreConnectState = z.infer<typeof iosAppStoreConnectStateSchema>;
 export type ReleaseSession = z.infer<typeof releaseSessionSchema>;
+
+export function includesAndroid(platform: ReleasePlatform | undefined): boolean {
+  return platform === undefined || platform === 'both' || platform === 'android';
+}
+
+export function includesIos(platform: ReleasePlatform | undefined): boolean {
+  return platform === undefined || platform === 'both' || platform === 'ios';
+}
+
+export function releasePlatformLabel(platform: ReleasePlatform | undefined): string {
+  if (platform === 'android') {
+    return 'Android';
+  }
+  if (platform === 'ios') {
+    return 'iOS';
+  }
+  return 'Android + iOS';
+}
 
 export function loadSession(): ReleaseSession | null {
   if (!fs.existsSync(SESSION_FILE)) {

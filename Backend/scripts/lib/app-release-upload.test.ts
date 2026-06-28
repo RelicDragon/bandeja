@@ -52,6 +52,7 @@ function withoutStoreCredentials(fn: () => void): void {
 const baseSession: ReleaseSession = {
   baselineSha: 'a'.repeat(40),
   headSha: 'b'.repeat(40),
+  targetPlatform: 'both',
   current: { version: '0.96.40', build: 154 },
   planned: { version: '0.96.41', build: 155 },
   notes: buildReleaseNotes('• One improvement', 'custom', 'Short Play copy'),
@@ -137,9 +138,10 @@ assert(
 
 const iosOnlyPreflight = runUploadPreflight({
   ...sessionWithArtifacts,
+  targetPlatform: 'ios',
   artifacts: { ipa: tempIpa },
   store: { iosSubmitForReview: false },
-  uploads: { android: true },
+  uploads: {},
 });
 assert(
   !iosOnlyPreflight.issues.some((issue) => issue.includes('Android AAB')),
@@ -152,9 +154,10 @@ assert(
 
 const iosFinalizeOnlyPreflight = runUploadPreflight({
   ...sessionWithArtifacts,
+  targetPlatform: 'ios',
   artifacts: {},
   store: { iosSubmitForReview: false },
-  uploads: { android: true, iosBinary: true },
+  uploads: { iosBinary: true },
 });
 assert(
   !iosFinalizeOnlyPreflight.issues.some((issue) => issue.includes('iOS IPA')),
@@ -163,10 +166,10 @@ assert(
 
 const iosVerifyOnlyPreflight = runUploadPreflight({
   ...sessionWithArtifacts,
+  targetPlatform: 'ios',
   artifacts: {},
   store: { iosSubmitForReview: false },
   uploads: {
-    android: true,
     iosBinary: true,
     iosBuildProcessed: true,
     iosStoreVersion: true,
@@ -175,6 +178,22 @@ const iosVerifyOnlyPreflight = runUploadPreflight({
 assert(
   !iosVerifyOnlyPreflight.issues.some((issue) => issue.includes('iOS IPA')),
   'iOS verification preflight does not require IPA after metadata update',
+);
+
+const androidOnlyPreflight = runUploadPreflight({
+  ...sessionWithArtifacts,
+  targetPlatform: 'android',
+  artifacts: { aab: tempAab },
+  store: { androidTrack: 'internal' },
+  uploads: {},
+});
+assert(
+  !androidOnlyPreflight.issues.some((issue) => issue.includes('iOS IPA')),
+  'Android-only preflight does not require IPA',
+);
+assert(
+  !androidOnlyPreflight.issues.some((issue) => issue.includes('ASC_KEY_ID')),
+  'Android-only preflight does not require App Store credentials',
 );
 assert(
   !iosVerifyOnlyPreflight.issues.some((issue) => issue.includes('Google Play track')),
@@ -192,6 +211,7 @@ assert(uploadedPreflight.ok, 'upload preflight passes when both uploads are comp
 withoutStoreCredentials(() => {
   const storeVerificationMissing = runStoreVerificationPreflight({
     ...sessionWithArtifacts,
+    targetPlatform: 'both',
     artifacts: {},
     uploads: { android: true, iosStoreVersion: true },
   });

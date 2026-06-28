@@ -12,6 +12,7 @@ function assert(cond: boolean, msg: string): void {
 const baseSession: ReleaseSession = {
   baselineSha: 'a'.repeat(40),
   headSha: 'b'.repeat(40),
+  targetPlatform: 'both',
   current: { version: '0.96.40', build: 154 },
   planned: { version: '0.96.41', build: 155 },
   notes: null,
@@ -37,6 +38,14 @@ assert(
 assert(
   !storeConfigComplete({ androidTrack: 'internal' }),
   'store config incomplete without ios mode',
+);
+assert(
+  storeConfigComplete({ androidTrack: 'internal' }, 'android'),
+  'Android-only store config complete with Play track',
+);
+assert(
+  storeConfigComplete({ iosSubmitForReview: false }, 'ios'),
+  'iOS-only store config complete with App Store mode',
 );
 
 console.log('app-release-finalize tests: OK');

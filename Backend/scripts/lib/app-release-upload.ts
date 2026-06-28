@@ -4,7 +4,12 @@ import * as path from 'path';
 import { derivePlayShortDescription } from './app-release-notes';
 import { ROOT } from './app-release';
 import { FRONTEND_DIR } from './app-release-build';
-import type { IosAppStoreConnectState, ReleaseSession } from './app-release-session';
+import {
+  includesAndroid,
+  includesIos,
+  type IosAppStoreConnectState,
+  type ReleaseSession,
+} from './app-release-session';
 
 export const UPLOAD_DIR = path.join(ROOT, '.app-release/upload');
 export const PLAY_METADATA_DIR = path.join(UPLOAD_DIR, 'android');
@@ -199,8 +204,8 @@ export function prepareUploadMetadata(session: ReleaseSession): UploadMetadataPa
 
 export function runUploadPreflight(session: ReleaseSession): UploadPreflight {
   const issues: string[] = [];
-  const androidPending = session.uploads?.android !== true;
-  const iosPending = session.uploads?.ios !== true;
+  const androidPending = includesAndroid(session.targetPlatform) && session.uploads?.android !== true;
+  const iosPending = includesIos(session.targetPlatform) && session.uploads?.ios !== true;
   const iosBinaryPending = iosPending && session.uploads?.iosBinary !== true;
 
   if (!androidPending && !iosPending) {
@@ -245,15 +250,19 @@ export function runUploadPreflight(session: ReleaseSession): UploadPreflight {
     issues.push(`App Store Connect API key not found at ${ascKeyPath}`);
   }
 
-  addFastlaneIssue(issues);
+  if (androidPending || iosPending) {
+    addFastlaneIssue(issues);
+  }
 
   return { ok: issues.length === 0, issues };
 }
 
 export function runStoreVerificationPreflight(session: ReleaseSession): UploadPreflight {
   const issues: string[] = [];
-  const androidPending = session.uploads?.androidStoreVerified !== true;
-  const iosPending = session.uploads?.iosStoreVersionVerified !== true;
+  const androidPending =
+    includesAndroid(session.targetPlatform) && session.uploads?.androidStoreVerified !== true;
+  const iosPending =
+    includesIos(session.targetPlatform) && session.uploads?.iosStoreVersionVerified !== true;
 
   if (!androidPending && !iosPending) {
     return { ok: true, issues };
@@ -297,7 +306,9 @@ export function runStoreVerificationPreflight(session: ReleaseSession): UploadPr
     issues.push(`App Store Connect API key not found at ${ascKeyPath}`);
   }
 
-  addFastlaneIssue(issues);
+  if (androidPending || iosPending) {
+    addFastlaneIssue(issues);
+  }
 
   return { ok: issues.length === 0, issues };
 }

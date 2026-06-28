@@ -14,7 +14,12 @@ import {
   writeNativeVersions,
   type NativeVersion,
 } from './app-release';
-import type { ReleaseSession } from './app-release-session';
+import {
+  includesAndroid,
+  includesIos,
+  type ReleasePlatform,
+  type ReleaseSession,
+} from './app-release-session';
 
 export interface PreflightInfo {
   baselineSha: string;
@@ -61,6 +66,7 @@ export function createReleaseSession(headRef = 'HEAD'): ReleaseSession {
   return {
     baselineSha,
     headSha,
+    targetPlatform: 'both',
     current,
     planned,
     notes: null,
@@ -136,7 +142,11 @@ export function getSessionPhase(session: ReleaseSession): ReleaseSessionPhase {
     return 'ready-to-apply';
   }
 
-  const hasArtifacts = Boolean(session.artifacts?.aab && session.artifacts?.ipa);
+  const needsAndroid = includesAndroid(session.targetPlatform);
+  const needsIos = includesIos(session.targetPlatform);
+  const hasArtifacts = Boolean(
+    (!needsAndroid || session.artifacts?.aab) && (!needsIos || session.artifacts?.ipa),
+  );
   if (!hasArtifacts) {
     return 'ready-to-build';
   }
@@ -144,8 +154,14 @@ export function getSessionPhase(session: ReleaseSession): ReleaseSessionPhase {
   return 'ready-to-upload';
 }
 
-export function storeConfigComplete(store: ReleaseSession['store']): boolean {
-  return Boolean(store.androidTrack) && store.iosSubmitForReview !== undefined;
+export function storeConfigComplete(
+  store: ReleaseSession['store'],
+  platform: ReleasePlatform = 'both',
+): boolean {
+  return (
+    (!includesAndroid(platform) || Boolean(store.androidTrack)) &&
+    (!includesIos(platform) || store.iosSubmitForReview !== undefined)
+  );
 }
 
 export function formatCommitPreview(baselineSha: string, headSha: string, limit = 8): string {
