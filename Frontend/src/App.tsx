@@ -74,6 +74,7 @@ import { markNavigation, setupPopstateFallback } from './utils/navigation';
 import { ensureAuthBroadcastListener, scheduleProactiveAccessRefresh } from '@/api/authRefresh';
 import { ensureBooktimeProactiveRefresh } from '@/integrations/booktime/session';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
+import { useMyTabPrefetch } from './hooks/useMyTabPrefetch';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
 import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
 import { AdPlacementsBootstrap } from './components/sponsorSlots/AdPlacementsBootstrap';
@@ -108,6 +109,7 @@ function AppContent() {
   
   useDeepLink();
   useUrlStoreSync();
+  useMyTabPrefetch();
 
   const pendingAuthPath = useDeepLinkStore((s) => s.pendingAuthPath);
   const setPendingAuthPath = useDeepLinkStore((s) => s.setPendingAuthPath);
@@ -849,4 +851,3 @@ function App() {
 }
 
 export default App;
-

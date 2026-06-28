@@ -4,6 +4,10 @@
 **Focus:** API loading speed optimization while maintaining 100% functionality and reliability
 **Goal:** Blazing fast loading speed without compromising data integrity or user experience
 
+> **Implementation status:** The first optimization layer has been implemented and verified. See
+> `docs/my-tab-optimization-implementation-summary.md` for the current source of truth, including what shipped and what remains.
+> The implemented version prioritizes compatibility by reusing the existing My games payload shape, so the aggressive payload-projection sections below remain planned work rather than shipped behavior.
+
 ---
 
 ## Table of Contents

@@ -1,6 +1,6 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import { gamesApi } from '@/api';
 import type { Game, Invite } from '@/types';
+import { getMyTabData } from '@/api/me';
 import { queryKeys } from '../queryKeys';
 import { GAMES_LIST_STALE_TIME } from './constants';
 import { sortGames } from './sortGames';
@@ -15,8 +15,7 @@ export function myGamesQueryOptions(userId: string | undefined, enabled = true) 
   return queryOptions({
     queryKey: queryKeys.games.my(userId ?? ''),
     queryFn: async (): Promise<MyGamesData> => {
-      const response = await gamesApi.getMyGamesWithUnread();
-      const { games: myGames, invites: invitesData } = response.data;
+      const { games: myGames, invites: invitesData } = await getMyTabData({ useCache: true });
       return {
         games: sortGames([...(myGames || [])]),
         invites: invitesData ?? [],

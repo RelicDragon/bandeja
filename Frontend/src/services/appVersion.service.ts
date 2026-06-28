@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { App } from '@capacitor/app';
 import { isCapacitor, getCapacitorPlatform } from '@/utils/capacitor';
-
-const API_BASE_URL = import.meta.env.PROD ? 'https://bandeja.me/api' : '/api';
+import { resolveNativeApiBaseUrl } from '@/api/apiBaseUrl';
 
 export type VersionCheckStatus = 'ok' | 'optional_update' | 'blocking_update';
 
@@ -62,7 +61,7 @@ export class AppVersionService {
 
     try {
       const response = await axios.get<{ success: boolean; data: VersionCheckResult }>(
-        `${API_BASE_URL}/app/version-check`,
+        `${resolveNativeApiBaseUrl()}/app/version-check`,
         {
           params: {
             platform: appInfo.platform,

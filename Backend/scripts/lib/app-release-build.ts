@@ -21,6 +21,7 @@ export const IOS_ARCHIVE_PATH = path.join(RELEASE_BUILD_DIR, 'ios/App.xcarchive'
 export const IOS_EXPORT_DIR = path.join(RELEASE_BUILD_DIR, 'ios/export');
 
 export const PRODUCTION_VITE_ENV: Record<string, string> = {
+  NODE_ENV: 'production',
   VITE_TELEGRAM_BOT_URL: 'https://t.me/bandeja_padel_bot',
   VITE_MEDIA_BASE_URL: 'https://bandeja.me',
   VITE_API_BASE_URL: 'https://bandeja.me/api',

@@ -2,14 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { QueryClient } from '@tanstack/react-query';
 import type { Game, Invite } from '@/types';
 
-const { getMyGamesWithUnread } = vi.hoisted(() => ({
-  getMyGamesWithUnread: vi.fn(),
+const { getMyTabData } = vi.hoisted(() => ({
+  getMyTabData: vi.fn(),
 }));
 
-vi.mock('@/api', () => ({
-  gamesApi: {
-    getMyGamesWithUnread: (...args: unknown[]) => getMyGamesWithUnread(...args),
-  },
+vi.mock('@/api/me', () => ({
+  getMyTabData: (...args: unknown[]) => getMyTabData(...args),
 }));
 
 import { myGamesQueryOptions } from './useMyGamesQuery';
@@ -33,12 +31,12 @@ function createTestClient() {
 
 describe('useMyGamesQuery', () => {
   beforeEach(() => {
-    getMyGamesWithUnread.mockReset();
-    getMyGamesWithUnread.mockResolvedValue({
-      data: {
-        games: [sampleGame('g2', '2026-06-02'), sampleGame('g1', '2026-06-01')],
-        invites: [sampleInvite('inv-1')],
-      },
+    getMyTabData.mockReset();
+    getMyTabData.mockResolvedValue({
+      games: [sampleGame('g2', '2026-06-02'), sampleGame('g1', '2026-06-01')],
+      invites: [sampleInvite('inv-1')],
+      teams: [],
+      unreadCounts: {},
     });
   });
 
@@ -54,7 +52,7 @@ describe('useMyGamesQuery', () => {
     await client.fetchQuery(options);
     await client.fetchQuery(options);
 
-    expect(getMyGamesWithUnread).toHaveBeenCalledTimes(1);
+    expect(getMyTabData).toHaveBeenCalledTimes(1);
   });
 
   it('returns sorted games and invites', async () => {

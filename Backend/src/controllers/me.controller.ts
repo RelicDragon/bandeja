@@ -40,7 +40,11 @@ export class MeController {
       };
 
       // Fetch data
-      const data = await MyTabDataService.getMyTabData({ userId, options });
+      const data = await MyTabDataService.getMyTabData({
+        userId,
+        userCityId: req.user?.currentCityId,
+        options,
+      });
 
       // Generate ETag
       const etag = MyTabDataService.generateETag(data);

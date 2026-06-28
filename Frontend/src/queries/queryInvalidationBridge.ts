@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { clearMyTabCache } from '@/api/me';
 import { queryKeys } from './queryKeys';
 
 let initialized = false;
@@ -8,7 +9,9 @@ let unsubscribe: (() => void) | null = null;
 
 function invalidateGamesQueries(queryClient: QueryClient): void {
   if (!useNetworkStore.getState().isOnline) return;
+  clearMyTabCache();
   void queryClient.invalidateQueries({ queryKey: queryKeys.games.all });
+  void queryClient.invalidateQueries({ queryKey: queryKeys.me.myTabData() });
 }
 
 export function setupQueryInvalidationBridge(queryClient: QueryClient): void {

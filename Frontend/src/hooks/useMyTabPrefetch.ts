@@ -3,6 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { queryKeys } from '@/queries/queryKeys';
 import { getMyTabData } from '@/api/me';
+import { myGamesQueryOptions } from '@/queries/games/useMyGamesQuery';
 import { pastGamesInfiniteQueryOptions } from '@/queries/games/usePastGamesQuery';
 
 /**
@@ -36,8 +37,7 @@ export function useMyTabPrefetch() {
     hasPrefetchedCore.current = true;
 
     queryClient.prefetchQuery({
-      queryKey: queryKeys.me.myTabData(),
-      queryFn: () => getMyTabData({ useCache: true }),
+      ...myGamesQueryOptions(user.id),
       staleTime: 2 * 60 * 1000, // 2 minutes
     }).finally(() => {
       isPrefetching.current = false;

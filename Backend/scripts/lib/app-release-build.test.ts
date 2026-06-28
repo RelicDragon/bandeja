@@ -27,6 +27,7 @@ function assert(cond: boolean, msg: string): void {
 
 assert(PRODUCTION_VITE_ENV.VITE_API_BASE_URL === 'https://bandeja.me/api', 'production API URL');
 assert(PRODUCTION_VITE_ENV.VITE_MEDIA_BASE_URL === 'https://bandeja.me', 'production media URL');
+assert(PRODUCTION_VITE_ENV.NODE_ENV === 'production', 'release build forces production NODE_ENV');
 assert(
   !PRODUCTION_VITE_ENV.VITE_API_BASE_URL.includes('localhost'),
   'production env avoids localhost',

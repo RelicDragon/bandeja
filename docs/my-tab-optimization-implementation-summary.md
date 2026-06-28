@@ -1,253 +1,202 @@
 # My Tab API Optimization - Implementation Summary
 
 **Date:** 2026-06-28  
-**Status:** Core optimizations implemented, ready for gradual rollout
+**Status:** Implemented and reverified
 
-## Completed Implementations
+## Implemented
 
-### 1. Database Indexes (High Priority) ✅
+### 1. Aggregated My Tab Endpoint ✅
+
+**Files:**
+- `Backend/src/services/me/myTabData.service.ts`
+- `Backend/src/controllers/me.controller.ts`
+- `Backend/src/routes/me.routes.ts`
+- `Backend/src/routes/index.ts`
+
+Implemented `GET /me/my-tab-data` behind normal authentication.
+
+Current behavior:
+- Aggregates My tab games, invites, unread counts, teams, optional stories count, and optional Booktime connection status.
+- Uses `Promise.allSettled` so optional parts can fail without breaking the core response.
+- Returns `503` for core aggregate failure so the frontend can fall back to legacy endpoints.
+- Reuses the existing `GameReadService.getMyGamesWithUnread` payload for games and invites.
+
+Important note: the endpoint intentionally preserves the existing My tab game/invite shape instead of using aggressive minimal projections. This keeps `GameCard`, invites, notes, reactions, photos, league metadata, and unread behavior compatible with the old endpoint.
+
+### 2. ETag and Conditional Requests ✅
+
+**Files:**
+- `Backend/src/services/me/myTabData.service.ts`
+- `Backend/src/controllers/me.controller.ts`
+- `Frontend/src/api/me.ts`
+- `Backend/src/app.ts`
+
+Implemented conditional caching:
+- Backend generates an ETag for the aggregate response.
+- Backend returns `304 Not Modified` when `If-None-Match` matches.
+- Frontend stores cached aggregate data in `localStorage`.
+- Frontend sends `If-None-Match` only when the local cache is still fresh.
+- CORS now allows `If-None-Match` and exposes `ETag`.
+
+The ETag includes games, invites, teams, participants, and unread counts so visible My tab changes invalidate correctly.
+
+### 3. Frontend Integration ✅
+
+**Files:**
+- `Frontend/src/api/me.ts`
+- `Frontend/src/queries/games/useMyGamesQuery.ts`
+- `Frontend/src/hooks/useMyTabPrefetch.ts`
+- `Frontend/src/App.tsx`
+- `Frontend/src/queries/queryInvalidationBridge.ts`
+- `Frontend/src/queries/games/useMyGamesQuery.test.ts`
+
+The live My tab path now uses the aggregate endpoint:
+- `useMyGamesQuery` calls `getMyTabData({ useCache: true })`.
+- Existing `MyTab.tsx` behavior is preserved because the query still returns `{ games, invites }`.
+- `useMyTabPrefetch` is mounted in `App.tsx`.
+- Core prefetch now warms the same React Query key that My tab reads.
+- Socket-driven game/invite invalidation clears the aggregate local cache.
+- Frontend fallback calls the legacy `gamesApi.getMyGamesWithUnread()` and `userTeamsApi.getMine()` if the aggregate endpoint returns `503`.
+
+### 4. Response Compression and Monitoring Headers ✅
+
+**File:** `Backend/src/app.ts`
+
+Implemented:
+- Compression threshold of 1KB.
+- Compression level 6.
+- Normal Express compression negotiation, avoiding the earlier bug where JSON compression could be skipped before `Content-Type` was set.
+- `X-Response-Size` header for response-size visibility.
+
+### 5. Database Indexes ✅
 
 **File:** `Backend/prisma/migrations/20260628010417_add_my_tab_optimized_indexes/migration.sql`
 
-Created optimized indexes for:
-- `idx_GameParticipant_userId_status` - User's games by status
-- `idx_Game_startTime_status` - Games ordering by start time
-- `idx_Game_clubId_active` - Active games by club
-- `idx_Game_courtId_active` - Active games by court
-- `idx_GameParticipant_userId_gameId_status` - Composite user/game index
-- `idx_ChatMessage_gameId_createdAt` - Messages for unread counts
-- `idx_ChatReadCursor_userId_contextType_contextId` - Read cursor lookups
+Added indexes for:
+- User game-participant lookups by status.
+- Game start-time/status ordering.
+- Active games by club/court.
+- Composite participant user/game/status lookup.
+- Chat message lookup by game and creation time.
+- Chat read cursor lookup by user/context.
 
-**Impact:** 20-40% faster backend response times
+These support the My tab games/unread path and related active-game lookups.
 
-### 2. MyTabDataService (High Priority) ✅
+### 6. Query Support Utilities ✅
 
-**File:** `Backend/src/services/me/myTabData.service.ts`
+**Files:**
+- `Frontend/src/queries/me/useMyTabDataQuery.ts`
+- `Frontend/src/queries/queryKeys.ts`
 
-Created unified service that:
-- Fetches all My Tab data in parallel using Promise.allSettled
-- Uses minimal field projection to reduce payload size
-- Implements graceful degradation with fallback support
-- Includes performance logging
-- Generates ETags for conditional requests
+Added reusable `me.myTabData` query keys and a direct aggregate query hook. The currently active My tab screen reads through `useMyGamesQuery`, while this hook remains available for future UI that wants the full aggregate payload.
 
-**Key Methods:**
-- `getMyTabData()` - Main aggregation method
-- `fetchCoreGames()` - Games with minimal projection
-- `fetchPendingInvites()` - Pending invites
-- `fetchUserTeams()` - User teams
-- `fetchUnreadCounts()` - Unread message counts
-- `generateETag()` - ETag generation for caching
+## Verified
 
-### 3. Controller and Routes (High Priority) ✅
+Latest reverify passed:
+- `git diff --check`
+- `npm run lint --prefix Backend`
+- `npm run lint --prefix Frontend`
+- `npm run build --prefix Backend`
+- `npm run build --prefix Frontend`
+- `npm run test:queries --prefix Frontend`
 
-**Files:** 
-- `Backend/src/controllers/me.controller.ts`
-- `Backend/src/routes/me.routes.ts`
-- `Backend/src/routes/index.ts` (updated)
+Frontend query test result:
+- 7 test files passed.
+- 28 tests passed.
 
-Created:
-- `GET /me/my-tab-data` endpoint
-- ETag support with If-None-Match handling
-- Cache-Control headers
-- Query parameters: `includeStories`, `includeBooktime`, `pastGamesLimit`
+## What Changed From The Original Plan
 
-### 4. Frontend API Client (High Priority) ✅
+The original plan proposed heavy payload projection for the My tab game data. During verification, that approach was found to be risky because the existing My tab cards read a broad game shape: notes, reactions, photo metadata, league metadata, booking state, timing flags, participant roles, and more.
 
-**File:** `Frontend/src/api/me.ts`
+The implemented version chooses compatibility first:
+- It reduces frontend round trips by aggregating through one My tab endpoint.
+- It adds conditional caching, prefetch, compression, and invalidation.
+- It does not yet aggressively shrink the core game payload.
 
-Created API client that:
-- Uses ETag for conditional requests
-- Implements localStorage caching
-- Provides automatic fallback to individual endpoints on 503
-- Includes cache invalidation support
+This is the safer foundation: faster perceived loading without silently removing fields the UI depends on.
 
-### 5. React Query Hook (Medium Priority) ✅
+## Left From The Optimization Plan
 
-**File:** `Frontend/src/queries/me/useMyTabDataQuery.ts`
+### 1. Safe Payload Reduction
 
-Created hook with:
-- Extended stale time (2 minutes)
-- Automatic cache invalidation on Socket.IO events
-- Retry configuration
-- Prefetch helpers
-- Cache management utilities
+Still left:
+- Design a dedicated `MyTabGameListItem` contract.
+- Audit every field used by `GameCard`, calendar grouping, invites, notes, reactions, photos, league display, and booking badges.
+- Add contract tests that compare the projected payload against required UI fields.
+- Only then replace the compatibility payload with a smaller projection.
 
-**Updated:** `Frontend/src/queries/queryKeys.ts` - Added query keys for me endpoint
+This is the main remaining performance opportunity.
 
-### 6. Prefetch Hook (Medium Priority) ✅
+### 2. Manual Endpoint Verification
 
-**File:** `Frontend/src/hooks/useMyTabPrefetch.ts`
+Still left:
+- Test `GET /me/my-tab-data` against a seeded local database.
+- Confirm `304 Not Modified` behavior with real auth headers.
+- Inspect actual response size before and after compression.
+- Compare aggregate response data against legacy `/games/my-games-with-unread` for the same user.
 
-Implements multi-stage prefetching:
-- App launch prefetching (core data)
-- Idle time prefetching (extras)
-- Navigation hover/tap prefetching
-- Tab activation prefetching
+Builds and unit/query tests pass, but this manual data parity check is still useful.
 
-Uses `requestIdleCallback` when available with timeout fallback.
+### 3. Full Backend Automated QA
 
-### 7. Response Compression (Medium Priority) ✅
+Still left:
+- Run `cd Backend && npm run test:automated` with seeded data.
 
-**File:** `Backend/src/app.ts` (updated)
+Repo notes say some automated suites need specific fixtures, including 4+ users for live scoring. This was not run in the latest verification.
 
-Optimized compression middleware:
-- Filter for JSON responses only
-- Threshold: 1KB
-- Compression level: 6
-- Added X-Response-Size header for monitoring
+### 4. Production Metrics and Alerts
 
-**Impact:** 60-80% reduction in response size
+Still left:
+- Track aggregate endpoint latency.
+- Track response size.
+- Track ETag hit/304 rate.
+- Track fallback usage.
+- Add alerts for error rate, latency regression, and oversized payloads.
 
-## Architecture Overview
+The code logs basic success/error timing, but no dashboard or alerting was added.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  Frontend (React)                                          │
-│                                                            │
-│  ┌──────────────────────────────────────────────────────┐ │
-│  │ useMyTabPrefetch Hook                                │ │
-│  │  - App launch prefetch                               │ │
-│  │  - Idle time prefetch                                │ │
-│  │  - Navigation intent prefetch                        │ │
-│  └──────────────────────────────────────────────────────┘ │
-│                          │                                  │
-│                          ▼                                  │
-│  ┌──────────────────────────────────────────────────────┐ │
-│  │ useMyTabDataQuery Hook                               │ │
-│  │  - 2min stale time                                   │ │
-│  │  - ETag support                                      │ │
-│  │  - Auto fallback on error                           │ │
-│  └──────────────────────────────────────────────────────┘ │
-│                          │                                  │
-│                          ▼                                  │
-│  ┌──────────────────────────────────────────────────────┐ │
-│  │ getMyTabData API Client                              │ │
-│  │  - ETag conditional requests                         │ │
-│  │  - LocalStorage caching                              │ │
-│  │  - Fallback to individual endpoints                  │ │
-│  └──────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            │ Single Request
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│  Backend (Express)                                          │
-│                                                            │
-│  ┌──────────────────────────────────────────────────────┐ │
-│  │ GET /me/my-tab-data                                  │ │
-│  │  - ETag validation                                   │ │
-│  │  - Compression filter                                │ │
-│  │  - Response size monitoring                          │ │
-│  └──────────────────────────────────────────────────────┘ │
-│                          │                                  │
-│                          ▼                                  │
-│  ┌──────────────────────────────────────────────────────┐ │
-│  │ MyTabDataService                                    │ │
-│  │  - Parallel queries (Promise.allSettled)            │ │
-│  │  - Minimal field projection                         │ │
-│  │  - Graceful degradation                             │ │
-│  │  - Performance logging                              │ │
-│  └──────────────────────────────────────────────────────┘ │
-│                          │                                  │
-│          ┌───────────────┼───────────────┐                 │
-│          ▼               ▼               ▼                 │
-│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐           │
-│  │ Games       │ │ Invites     │ │ Teams       │           │
-│  │ Service     │ │ Service     │ │ Service     │           │
-│  └─────────────┘ └─────────────┘ └─────────────┘           │
-│          └───────────────┴───────────────┘                 │
-│                          │                                  │
-│                          ▼                                  │
-│  ┌──────────────────────────────────────────────────────┐ │
-│  │ PostgreSQL Database                                  │ │
-│  │  - Optimized indexes                                │ │
-│  │  - Query performance monitoring                     │ │
-│  └──────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
+### 5. Feature Flag / Gradual Rollout
 
-## Expected Performance Improvements
+Still left:
+- Add a runtime feature flag if a staged production rollout is required.
+- Add per-user or percentage rollout logic.
+- Add an emergency kill switch that sends the frontend back to legacy endpoints.
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| API calls on load | 7 | 1 | 85% reduction |
-| Total payload size | ~200KB | ~50KB | 75% reduction |
-| Backend response time | ~300ms | <100ms | 66% faster |
-| Compressed response | N/A | ~15KB | 90% smaller |
+Current implementation is directly wired into `useMyGamesQuery`; rollback is currently a code revert, not a runtime flag.
 
-## Next Steps for Rollout
+### 6. Enhanced Progressive Loading
 
-### Phase 1: Internal Testing
-1. Test the new endpoint manually
-2. Verify ETag caching works
-3. Test fallback mechanism
-4. Monitor performance metrics
+Still left:
+- Split visible UI into explicitly staged core/enhanced/extras sections if needed.
+- Load stories, Booktime, questionnaire, and other non-core panels only when visible or idle.
+- Measure whether this improves real user experience before adding complexity.
 
-### Phase 2: Feature Flag Rollout
-1. Add feature flag to enable aggregated endpoint
-2. Roll out to 10% of users
-3. Monitor error rates and performance
-4. Gradually increase to 100%
+Current implementation keeps existing My tab behavior and adds app-start/idle prefetch.
 
-### Phase 3: Frontend Integration
-1. Update `MyTab.tsx` to use `useMyTabDataQuery` hook
-2. Add prefetch hook to `App.tsx`
-3. Test progressive loading
-4. A/B test against current implementation
+### 7. Service Worker / Offline Caching
 
-### Phase 4: Monitoring
-1. Set up metrics dashboard
-2. Configure alerts for regressions
-3. Track cache hit rates
-4. Monitor fallback usage
+Still left:
+- Cache My tab aggregate responses through the service worker.
+- Define offline stale-data rules.
+- Make cache invalidation consistent with socket and mutation events.
 
-## Fallback Strategy
+The current implementation uses React Query plus `localStorage` ETag cache only.
 
-If the aggregated endpoint fails:
-1. Frontend automatically calls individual endpoints
-2. Error is logged for monitoring
-3. User sees no interruption in functionality
+### 8. Load Testing
 
-Emergency rollback:
-```bash
-curl -X POST https://api.example.com/admin/feature-flags \
-  -H "Authorization: Bearer $ADMIN_TOKEN" \
-  -d '{"EMERGENCY_MODE": true}'
-```
+Still left:
+- Run load tests against `/me/my-tab-data`.
+- Verify database index usage under realistic user/game/chat volumes.
+- Confirm the endpoint stays within latency targets at higher concurrency.
 
-## Files Modified
+## Current Practical Outcome
 
-### Backend
-- `Backend/prisma/migrations/20260628010417_add_my_tab_optimized_indexes/migration.sql` (new)
-- `Backend/src/services/me/myTabData.service.ts` (new)
-- `Backend/src/controllers/me.controller.ts` (new)
-- `Backend/src/routes/me.routes.ts` (new)
-- `Backend/src/routes/index.ts` (modified)
-- `Backend/src/app.ts` (modified)
+The My tab now has a solid first optimization layer:
+- One aggregate endpoint for the active My games path.
+- Compatible data shape.
+- Prefetch into the live query cache.
+- Conditional caching with ETags.
+- Compression and response-size visibility.
+- Passing frontend/backend builds and lint.
 
-### Frontend
-- `Frontend/src/api/me.ts` (new)
-- `Frontend/src/queries/me/useMyTabDataQuery.ts` (new)
-- `Frontend/src/hooks/useMyTabPrefetch.ts` (new)
-- `Frontend/src/queries/queryKeys.ts` (modified)
-
-## Testing Checklist
-
-- [ ] Database indexes created and verified
-- [ ] Backend endpoint returns correct data
-- [ ] ETag caching works (304 responses)
-- [ ] Compression reduces payload size
-- [ ] Frontend client handles errors gracefully
-- [ ] Fallback to individual endpoints works
-- [ ] Prefetch hook fires at app launch
-- [ ] Idle time prefetch works
-- [ ] React Query caching behaves correctly
-- [ ] No regressions in existing functionality
-
-## Notes
-
-- All optimizations maintain 100% data integrity
-- Feature flags allow instant rollback
-- Graceful degradation ensures no functionality loss
-- Monitoring in place for early issue detection
+The biggest remaining work is measured payload reduction, but it should be done with contract tests so speed does not come at the cost of missing UI data.

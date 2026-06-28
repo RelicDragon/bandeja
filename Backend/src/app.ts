@@ -50,10 +50,12 @@ app.use(
       'Pragma',
       'Expires',
       'Accept',
+      'If-None-Match',
       'X-Client-Version',
       'X-Client-Platform',
       'X-E2E-Test',
     ],
+    exposedHeaders: ['ETag', 'X-Response-Size'],
     preflightContinue: false,
     optionsSuccessStatus: 200,
   })
@@ -71,9 +73,14 @@ app.use(
         return false;
       }
 
-      // Only compress API JSON responses
+      // Compress normal JSON responses; the content type is usually not set yet
+      // when the compression filter runs, so keep Express' default negotiation.
       const contentType = res.getHeader('Content-Type');
-      return contentType?.toString().includes('application/json') || false;
+      if (contentType?.toString().includes('application/json')) {
+        return true;
+      }
+
+      return compression.filter(req, res);
     },
     threshold: 1024, // Only compress responses > 1KB
     level: 6, // Balance between speed and compression (default is 6)
@@ -135,4 +142,3 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 export default app;
-

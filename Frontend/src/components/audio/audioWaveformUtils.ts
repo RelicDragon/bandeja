@@ -1,5 +1,8 @@
+import { isCapacitor } from '@/utils/capacitor';
+
 export const DEFAULT_WAVEFORM_BARS = 60;
 export const MAX_WAVEFORM_BARS = 80;
+export const DEFAULT_MEDIA_BASE_URL = 'https://bandeja.me';
 
 /** Must match server `MessageService` voice duration cap */
 export const VOICE_MESSAGE_MAX_MS = 30 * 60 * 1000;
@@ -40,7 +43,11 @@ export async function extractWaveformPeaksFromBlob(blob: Blob, barCount = DEFAUL
 export function resolveChatMediaUrl(pathOrUrl: string): string {
   if (!pathOrUrl) return '';
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl;
-  const base = import.meta.env.VITE_MEDIA_BASE_URL || '';
+  const configuredBase = import.meta.env.VITE_MEDIA_BASE_URL || '';
+  const base =
+    isCapacitor() && /localhost|127\.0\.0\.1/i.test(configuredBase)
+      ? DEFAULT_MEDIA_BASE_URL
+      : configuredBase;
   if (!base) return pathOrUrl;
   return `${base.replace(/\/$/, '')}/${pathOrUrl.replace(/^\//, '')}`;
 }

@@ -1,9 +1,8 @@
+import { createHash } from 'crypto';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
-import { InviteService } from '../invite.service';
-import { ReadReceiptService } from '../chat/readReceipt.service';
-import { projectUserForSportContext } from '../user/userSportProfile.service';
+import { GameReadService } from '../game/read.service';
 
 export interface MyTabDataOptions {
   includeStories?: boolean;
@@ -13,6 +12,7 @@ export interface MyTabDataOptions {
 
 export interface MyTabDataInput {
   userId: string;
+  userCityId?: string;
   options?: MyTabDataOptions;
 }
 
@@ -26,40 +26,6 @@ export interface MyTabDataOutput {
   _meta?: {
     etag?: string;
     timestamp: string;
-  };
-}
-
-// Minimal game type for list view
-interface MinimalGame {
-  id: string;
-  status: string;
-  startTime: Date;
-  endTime: Date;
-  sport: string;
-  gameType: string;
-  entityType: string;
-  clubId: string | null;
-  courtId: string | null;
-  club: {
-    id: string;
-    name: string;
-    avatar: string | null;
-  } | null;
-  court: {
-    id: string;
-    name: string;
-  } | null;
-  participants: Array<{
-    userId: string;
-    status: string;
-    user: {
-      id: string;
-      name: string;
-      avatar: string | null;
-    };
-  }>;
-  _count?: {
-    messages?: number;
   };
 }
 
@@ -78,24 +44,22 @@ export class MyTabDataService {
    * Uses parallel queries with minimal selects for maximum performance.
    */
   static async getMyTabData(input: MyTabDataInput): Promise<MyTabDataOutput> {
-    const { userId, options = {} } = input;
+    const { userId, userCityId, options = {} } = input;
 
     // Performance monitoring
     const startTime = Date.now();
 
     try {
-      // Execute all queries in parallel
+      // Keep the game/invite payload compatible with the existing My tab UI.
+      // This preserves functionality while the aggregate endpoint removes
+      // frontend round trips and adds conditional caching.
       const results = await Promise.allSettled([
-        this.fetchCoreGames(userId),
-        this.fetchPendingInvites(userId),
+        GameReadService.getMyGamesWithUnread(userId, userCityId),
         this.fetchUserTeams(userId),
-        this.fetchUnreadCounts(userId, options),
-        // Optional: Include only if requested
         options.includeStories ? this.fetchStoriesCount(userId) : Promise.resolve(null),
         options.includeBooktime ? this.fetchBooktimeStatus(userId) : Promise.resolve(null),
       ]);
 
-      // Check for failures
       const failures = results.filter((r) => r.status === 'rejected');
       if (failures.length > 0) {
         const failureReasons = failures.map(
@@ -106,26 +70,30 @@ export class MyTabDataService {
           failures: failureReasons,
         });
 
-        // If core queries failed (first 4), throw error
-        const coreFailures = results.slice(0, 4).filter((r) => r.status === 'rejected');
+        const coreFailures = results.slice(0, 2).filter((r) => r.status === 'rejected');
         if (coreFailures.length > 0) {
           throw new ApiError(
-            500,
+            503,
             'Failed to fetch core my-tab data',
             true,
-            { code: 'my_tab.core_failure', reasons: failureReasons.slice(0, 4) }
+            { code: 'my_tab.core_failure', reasons: failureReasons.slice(0, 2) }
           );
         }
       }
 
+      const gamesBundle =
+        results[0].status === 'fulfilled'
+          ? results[0].value
+          : { games: [], invites: [], gamesUnreadCounts: {} };
+
       // Extract successful results
       const data: MyTabDataOutput = {
-        games: results[0].status === 'fulfilled' ? results[0].value : [],
-        invites: results[1].status === 'fulfilled' ? results[1].value : [],
-        teams: results[2].status === 'fulfilled' ? results[2].value : [],
-        unreadCounts: results[3].status === 'fulfilled' ? results[3].value : {},
-        storiesCount: results[4]?.status === 'fulfilled' ? results[4].value : null,
-        booktimeConnected: results[5]?.status === 'fulfilled' ? results[5].value : null,
+        games: gamesBundle.games,
+        invites: gamesBundle.invites,
+        teams: results[1].status === 'fulfilled' ? results[1].value : [],
+        unreadCounts: gamesBundle.gamesUnreadCounts ?? {},
+        storiesCount: results[2]?.status === 'fulfilled' ? results[2].value : null,
+        booktimeConnected: results[3]?.status === 'fulfilled' ? results[3].value : null,
         _meta: {
           timestamp: new Date().toISOString(),
         },
@@ -154,170 +122,6 @@ export class MyTabDataService {
   }
 
   /**
-   * Fetch user's upcoming games with minimal projection.
-   * Only returns fields needed for the list view to reduce payload size.
-   */
-  private static async fetchCoreGames(userId: string): Promise<any[]> {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const gamesRaw = await prisma.game.findMany({
-      where: {
-        participants: {
-          some: {
-            userId,
-            status: { in: ['PLAYING', 'INVITED'] },
-          },
-        },
-        OR: [
-          { status: { not: 'ARCHIVED' } },
-          {
-            status: 'ARCHIVED',
-            startTime: { gte: today },
-          },
-        ],
-      },
-      select: {
-        // Core game fields
-        id: true,
-        status: true,
-        startTime: true,
-        endTime: true,
-        sport: true,
-        gameType: true,
-        entityType: true,
-        clubId: true,
-        courtId: true,
-
-        // Minimal club data
-        club: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-
-        // Minimal court data
-        court: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-
-        // Participants: Only essential fields
-        participants: {
-          select: {
-            userId: true,
-            status: true,
-            role: true,
-            user: {
-              select: USER_SELECT_WITH_SPORT_PROFILES,
-            },
-          },
-          where: {
-            status: { in: ['PLAYING', 'INVITED', 'IN_QUEUE'] },
-          },
-        },
-      },
-      orderBy: { startTime: 'asc' },
-      take: 50, // Reasonable limit for upcoming games
-    });
-
-    // Apply sport context projection
-    return gamesRaw.map((game) => {
-      const sport = game.sport;
-      return {
-        ...game,
-        participants: game.participants.map((p) => ({
-          ...p,
-          user: projectUserForSportContext(p.user, sport),
-        })),
-      };
-    });
-  }
-
-  /**
-   * Fetch pending invites for user with minimal projection.
-   */
-  private static async fetchPendingInvites(userId: string): Promise<any[]> {
-    const participants = await prisma.gameParticipant.findMany({
-      where: { userId, status: 'INVITED' },
-      select: {
-        id: true,
-        userId: true,
-        gameId: true,
-        status: true,
-        joinedAt: true,
-        inviteExpiresAt: true,
-        invitedByUser: {
-          select: {
-            id: true,
-            name: true,
-            avatar: true,
-          },
-        },
-        game: {
-          select: {
-            id: true,
-            name: true,
-            gameType: true,
-            startTime: true,
-            endTime: true,
-            sport: true,
-            status: true,
-            club: {
-              select: {
-                id: true,
-                name: true,
-                avatar: true,
-              },
-            },
-            court: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-            participants: {
-              select: {
-                userId: true,
-                status: true,
-                user: {
-                  select: USER_SELECT_WITH_SPORT_PROFILES,
-                },
-              },
-            },
-          },
-        },
-      },
-      orderBy: { joinedAt: 'desc' },
-      take: 20,
-    });
-
-    const now = new Date();
-    const filtered = participants.filter(
-      (p) => !p.inviteExpiresAt || new Date(p.inviteExpiresAt) > now
-    );
-
-    return filtered.map((p) => {
-      const sport = p.game.sport;
-      return {
-        ...p,
-        game: {
-          ...p.game,
-          participants: p.game.participants.map((participant: any) => ({
-            ...participant,
-            user: projectUserForSportContext(participant.user, sport),
-          })),
-        },
-        invitedByUser: p.invitedByUser ? projectUserForSportContext(p.invitedByUser, sport) : null,
-      };
-    });
-  }
-
-  /**
    * Fetch user's teams with minimal projection.
    */
   private static async fetchUserTeams(userId: string): Promise<any[]> {
@@ -335,11 +139,25 @@ export class MyTabDataService {
         name: true,
         avatar: true,
         ownerId: true,
+        size: true,
+        createdAt: true,
+        updatedAt: true,
+        cutAngle: true,
+        verbalStatus: true,
+        originalAvatar: true,
+        owner: {
+          select: USER_SELECT_WITH_SPORT_PROFILES,
+        },
         members: {
           select: {
             id: true,
+            teamId: true,
             userId: true,
             status: true,
+            isOwner: true,
+            joinedAt: true,
+            createdAt: true,
+            updatedAt: true,
             user: {
               select: USER_SELECT_WITH_SPORT_PROFILES,
             },
@@ -356,62 +174,6 @@ export class MyTabDataService {
       },
       take: 10,
     });
-  }
-
-  /**
-   * Fetch unread message counts per game.
-   * Uses the existing ReadReceiptService for consistency.
-   */
-  private static async fetchUnreadCounts(
-    userId: string,
-    options: MyTabDataOptions
-  ): Promise<Record<string, number>> {
-    // First, fetch the games to get their IDs and participant info
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const games = await prisma.game.findMany({
-      where: {
-        participants: {
-          some: {
-            userId,
-            status: { in: ['PLAYING', 'INVITED'] },
-          },
-        },
-        OR: [
-          { status: { not: 'ARCHIVED' } },
-          {
-            status: 'ARCHIVED',
-            startTime: { gte: today },
-          },
-        ],
-      },
-      select: {
-        id: true,
-        status: true,
-        participants: {
-          select: {
-            status: true,
-            role: true,
-          },
-          where: {
-            userId,
-          },
-        },
-      },
-      take: 50,
-    });
-
-    if (games.length === 0) return {};
-
-    return ReadReceiptService.getGamesUnreadCountsFromGames(
-      games.map((g) => ({
-        id: g.id,
-        status: g.status,
-        participants: g.participants,
-      })),
-      userId
-    );
   }
 
   /**
@@ -468,15 +230,39 @@ export class MyTabDataService {
    * Based on data hash for conditional requests.
    */
   static generateETag(data: MyTabDataOutput): string {
-    const crypto = require('crypto');
-    const hash = crypto.createHash('sha256');
+    const hash = createHash('sha256');
 
     // Hash only the fields that affect data freshness
-    const gameKeys = data.games.map((g) => `${g.id}:${g.status}:${g.startTime}`);
-    const inviteKeys = data.invites.map((i) => `${i.id}:${i.status}:${i.joinedAt}`);
-    const teamKeys = data.teams.map((t) => `${t.id}`);
+    const gameKeys = data.games.map((g) => ({
+      id: g.id,
+      status: g.status,
+      startTime: g.startTime,
+      updatedAt: g.updatedAt,
+      participants: (g.participants ?? []).map((p: any) => ({
+        userId: p.userId,
+        status: p.status,
+        role: p.role,
+      })),
+    }));
+    const inviteKeys = data.invites.map((i) => ({
+      id: i.id,
+      status: i.status,
+      joinedAt: i.joinedAt,
+      inviteExpiresAt: i.inviteExpiresAt,
+      updatedAt: i.updatedAt,
+    }));
+    const teamKeys = data.teams.map((t) => ({
+      id: t.id,
+      updatedAt: t.updatedAt,
+      members: (t.members ?? []).map((m: any) => ({
+        userId: m.userId,
+        status: m.status,
+        updatedAt: m.updatedAt,
+      })),
+    }));
+    const unreadKeys = Object.entries(data.unreadCounts).sort(([a], [b]) => a.localeCompare(b));
 
-    hash.update(JSON.stringify({ games: gameKeys, invites: inviteKeys, teams: teamKeys }));
+    hash.update(JSON.stringify({ games: gameKeys, invites: inviteKeys, teams: teamKeys, unread: unreadKeys }));
     return hash.digest('base64');
   }
 }
