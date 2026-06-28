@@ -10,6 +10,7 @@ import {
 } from '@/utils/weather';
 import { WeatherIcon } from './WeatherIcon';
 import { WeatherWindowDialog } from './WeatherWindowDialog';
+import { getWeatherIconPalette } from './weatherIconPalette';
 
 interface WeatherPreviewCardProps {
   cityId?: string | null;
@@ -44,6 +45,7 @@ export function WeatherPreviewCard({
   const summary = forecast?.summary;
   const condition = summary ? getWeatherConditionLabel(t, summary.conditionKey) : null;
   const temperatureColor = summary ? getWeatherTemperatureColor(summary) : null;
+  const iconPalette = summary ? getWeatherIconPalette(summary.conditionKey, summary.isDay) : null;
   const canOpen = Boolean(forecast && !query.isPending);
   const cardClassName =
     'w-full rounded-xl border border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-3 text-left shadow-sm transition-all duration-200 dark:border-sky-800/50 dark:from-sky-950/40 dark:via-gray-950 dark:to-emerald-950/30';
@@ -56,7 +58,15 @@ export function WeatherPreviewCard({
         </div>
       ) : summary ? (
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-sky-700 shadow-sm dark:bg-gray-900 dark:text-sky-200">
+          <div
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border shadow-sm"
+            style={iconPalette
+              ? {
+                  backgroundColor: iconPalette.surfaceColor,
+                  borderColor: iconPalette.borderColor,
+                }
+              : undefined}
+          >
             <WeatherIcon conditionKey={summary.conditionKey} isDay={summary.isDay} size={22} />
           </div>
           <div className="min-w-0 flex-1">

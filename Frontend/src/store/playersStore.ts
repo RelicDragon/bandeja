@@ -59,7 +59,7 @@ interface UsersState {
   addChat: (chat: UserChat) => Promise<void>;
   getOrCreateAndAddUserChat: (userId: string) => Promise<UserChat | null>;
 
-  fetchPlayers: (gameId?: string, sport?: string) => Promise<BasicUser[]>;
+  fetchPlayers: (gameId?: string, sport?: string, search?: string) => Promise<BasicUser[]>;
   fetchUserChats: () => Promise<void>;
   invalidateUserChatsCache: () => void;
   fetchUnreadCounts: () => Promise<void>;
@@ -78,8 +78,8 @@ let unifiedReadReceiptHandler: (() => void) | null = null;
 let cleanupPromise: Promise<void> | null = null;
 const fetchPlayersInflight = new Map<string, Promise<BasicUser[]>>();
 
-function fetchPlayersCacheKey(gameId?: string, sport?: string): string {
-  return `${gameId ?? ''}:${sport ?? ''}`;
+function fetchPlayersCacheKey(gameId?: string, sport?: string, search?: string): string {
+  return `${gameId ?? ''}:${sport ?? ''}:${search?.trim() ?? ''}`;
 }
 
 const createDefaultMetadata = (existing?: Partial<UserMetadata>): UserMetadata => ({
@@ -443,8 +443,9 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     }
   },
 
-  fetchPlayers: async (gameId?: string, sport?: string): Promise<BasicUser[]> => {
-    const cacheKey = fetchPlayersCacheKey(gameId, sport);
+  fetchPlayers: async (gameId?: string, sport?: string, search?: string): Promise<BasicUser[]> => {
+    const normalizedSearch = search?.trim();
+    const cacheKey = fetchPlayersCacheKey(gameId, sport, normalizedSearch);
     const inflight = fetchPlayersInflight.get(cacheKey);
     if (inflight) return inflight;
 
@@ -455,6 +456,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     const cacheValid =
       !gameId &&
       !sport &&
+      !normalizedSearch &&
       state.lastPlayersFetchTime > 0 &&
       now - state.lastPlayersFetchTime < CACHE_DURATION;
     if (cacheValid) {
@@ -463,7 +465,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
     set({ loading: true, isFetching: true });
     try {
-      const response = await usersApi.getInvitablePlayers(gameId, sport);
+      const response = await usersApi.getInvitablePlayers(gameId, sport, normalizedSearch);
       const payload = response.data;
       const players = payload?.players ?? [];
       const maxSocialLevel = payload?.maxSocialLevel ?? null;
@@ -482,7 +484,7 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
           });
         });
 
-        const isGlobalCacheFetch = !gameId && !sport;
+        const isGlobalCacheFetch = !gameId && !sport && !normalizedSearch;
 
         return {
           users: { ...currentState.users, ...newUsers },

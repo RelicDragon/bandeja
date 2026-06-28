@@ -15,6 +15,21 @@ import { CommonChatsService } from '../../services/user/commonChats.service';
 
 export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, sport: sportQuery } = req.query;
+  const searchInput = Array.isArray(req.query.search) ? req.query.search[0] : req.query.search;
+  const searchTerm = typeof searchInput === 'string' ? searchInput.trim() : '';
+  const searchTerms = searchTerm.split(/\s+/).filter(Boolean).slice(0, 5);
+  const searchWhere: Prisma.UserWhereInput =
+    searchTerms.length > 0
+      ? {
+          AND: searchTerms.map((term) => ({
+            OR: [
+              { firstName: { contains: term, mode: 'insensitive' } },
+              { lastName: { contains: term, mode: 'insensitive' } },
+              { telegramUsername: { contains: term, mode: 'insensitive' } },
+            ],
+          })),
+        }
+      : {};
 
   const currentUser = await prisma.user.findUnique({
     where: { id: req.userId },
@@ -105,8 +120,10 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
         },
         isActive: true,
         currentCityId: cityId,
+        ...searchWhere,
       },
       select: USER_SELECT_WITH_SPORT_PROFILES,
+      orderBy: searchTerms.length > 0 ? [{ firstName: 'asc' }, { lastName: 'asc' }] : undefined,
       take: 1000,
     }),
   ]);
@@ -196,4 +213,3 @@ export const getCommonGroupChannels = asyncHandler(async (req: AuthRequest, res:
   const chats = await CommonChatsService.getCommonChats(req.userId!, otherUserId);
   res.json({ success: true, data: chats });
 });
-

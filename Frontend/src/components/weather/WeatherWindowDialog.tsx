@@ -12,6 +12,7 @@ import {
 } from '@/utils/weather';
 import { WeatherDayChart } from './WeatherDayChart';
 import { WeatherIcon } from './WeatherIcon';
+import { getWeatherIconPalette } from './weatherIconPalette';
 
 interface WeatherWindowDialogProps {
   open: boolean;
@@ -147,6 +148,7 @@ export function WeatherWindowDialog({
                 {sortedRows.map((point) => {
                   const condition = getWeatherConditionLabel(t, point.conditionKey);
                   const temperatureColor = getWeatherTemperatureColor(point);
+                  const iconPalette = getWeatherIconPalette(point.conditionKey, point.isDay);
                   const phase = resolveRowPhase(point, startTime, endTime);
                   const isGameHour = phase === 'game';
                   const isSelected = isFullDay && selectedTime === point.time;
@@ -167,7 +169,13 @@ export function WeatherWindowDialog({
                           : ''
                       }`}
                     >
-                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-200">
+                      <div
+                        className="flex h-9 w-9 items-center justify-center rounded-lg border"
+                        style={{
+                          backgroundColor: iconPalette.surfaceColor,
+                          borderColor: iconPalette.borderColor,
+                        }}
+                      >
                         <WeatherIcon conditionKey={point.conditionKey} isDay={point.isDay} size={19} />
                       </div>
                       <div className="min-w-0">

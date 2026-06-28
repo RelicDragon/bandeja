@@ -203,19 +203,24 @@ export const PlayerListModal = ({
   const filterPlayerIdsKey = useMemo(() => [...filterPlayerIds].sort().join(','), [filterPlayerIds]);
   const filterPlayerIdsRef = useRef(filterPlayerIds);
   filterPlayerIdsRef.current = filterPlayerIds;
+  const serverSearchQuery = useMemo(() => {
+    const q = searchQuery.trim();
+    return q.length >= 2 ? q : undefined;
+  }, [searchQuery]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const loadPlayers = async () => {
       setLoading(true);
       if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       const filterIds = filterPlayerIdsRef.current;
       try {
-        await usePlayersStore.getState().fetchPlayers(gameId, gameSport);
+        const fetchedPlayers = await usePlayersStore.getState().fetchPlayers(gameId, gameSport, serverSearchQuery);
         const [inviteTeams] = await Promise.all([
           userTeamsApi.getForPlayerInvite({ gameId, sport: gameSport }).catch(() => [] as UserTeam[]),
           useUserTeamsStore.getState().refreshAll(),
         ]);
-        const currentUsers = usePlayersStore.getState().users;
         const { teams, memberships } = useUserTeamsStore.getState();
         const storeTeams = mergeUserTeamsForInviteList(teams, memberships);
         const mergedTeamMap = new Map<string, UserTeam>();
@@ -227,6 +232,8 @@ export const PlayerListModal = ({
           gameId ? gamesApi.getById(gameId) : Promise.resolve(null),
           gameId ? invitesApi.getGameInvites(gameId).catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
         ]);
+
+        if (cancelled) return;
 
         const participantIds = new Set<string>();
         const invitedUserIds = new Set<string>();
@@ -269,7 +276,7 @@ export const PlayerListModal = ({
           }
         }
 
-        const filtered = Object.values(currentUsers).filter(
+        const filtered = fetchedPlayers.filter(
           (player) => !participantIds.has(player.id) && !invitedUserIds.has(player.id),
         );
         setPlayers(filtered);
@@ -281,18 +288,22 @@ export const PlayerListModal = ({
         );
         setReadyTeams(invitableTeams);
       } catch {
+        if (cancelled) return;
         setPlayers([]);
         setReadyTeams([]);
         setInvitePickerOutcomes([]);
         setFetchedGameContext(null);
         toast.error(t('errors.generic'));
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadPlayers();
-  }, [gameId, gameSport, t, inviteAsTrainerOnly, filterPlayerIdsKey]);
+    return () => {
+      cancelled = true;
+    };
+  }, [gameId, gameSport, t, inviteAsTrainerOnly, filterPlayerIdsKey, serverSearchQuery]);
 
   const effectiveGameContext: GameAvailabilityContext | null = gameTiming ?? fetchedGameContext;
   const ctxTimeIsSet = effectiveGameContext?.timeIsSet ?? false;

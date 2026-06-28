@@ -4,11 +4,14 @@ import {
   CloudFog,
   CloudLightning,
   CloudRain,
+  CloudMoon,
   CloudSnow,
   CloudSun,
+  Moon,
   Sun,
 } from 'lucide-react';
 import type { WeatherConditionKey } from '@/types';
+import { getWeatherIconPalette } from './weatherIconPalette';
 
 interface WeatherIconProps {
   conditionKey: WeatherConditionKey;
@@ -18,13 +21,21 @@ interface WeatherIconProps {
 }
 
 export function WeatherIcon({ conditionKey, isDay, size = 16, className = '' }: WeatherIconProps) {
-  const common = { size, className };
+  const palette = getWeatherIconPalette(conditionKey, isDay);
+  const common = {
+    size,
+    className,
+    style: { color: palette.iconColor },
+    strokeWidth: 2.15,
+    'aria-hidden': true,
+  };
+
   switch (conditionKey) {
     case 'clear':
     case 'mainly_clear':
-      return isDay === false ? <CloudSun {...common} /> : <Sun {...common} />;
+      return isDay === false ? <Moon {...common} /> : <Sun {...common} />;
     case 'partly_cloudy':
-      return <CloudSun {...common} />;
+      return isDay === false ? <CloudMoon {...common} /> : <CloudSun {...common} />;
     case 'cloudy':
       return <Cloud {...common} />;
     case 'fog':

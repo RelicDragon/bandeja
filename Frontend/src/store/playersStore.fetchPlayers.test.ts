@@ -103,4 +103,22 @@ describe('playersStore.fetchPlayers', () => {
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe('u1');
   });
+
+  it('does not satisfy searched players from the global cache', async () => {
+    const cached = baseUser();
+    const searched = { ...baseUser(), id: 'u2', firstName: 'Maksim', lastName: 'S' };
+    usePlayersStore.setState({
+      users: { [cached.id]: cached },
+      lastPlayersFetchTime: Date.now(),
+    });
+    getInvitablePlayers.mockResolvedValue({
+      data: { players: [searched], maxSocialLevel: null },
+    });
+
+    const result = await usePlayersStore.getState().fetchPlayers(undefined, undefined, 'Maksim S');
+
+    expect(getInvitablePlayers).toHaveBeenCalledWith(undefined, undefined, 'Maksim S');
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('u2');
+  });
 });

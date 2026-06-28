@@ -41,7 +41,7 @@ export function GameCardWeatherTag({ entityType, summary, locale, onClick }: Gam
         conditionKey={summary.conditionKey}
         isDay={summary.isDay}
         size={14}
-        className="shrink-0 text-sky-600 dark:text-sky-300"
+        className="shrink-0"
       />
       <span
         className="text-[11px] font-semibold tabular-nums leading-none"

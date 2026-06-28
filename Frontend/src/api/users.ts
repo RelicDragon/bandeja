@@ -351,10 +351,11 @@ export const usersApi = {
     return response.data;
   },
 
-  getInvitablePlayers: async (gameId?: string, sport?: string) => {
+  getInvitablePlayers: async (gameId?: string, sport?: string, search?: string) => {
     const params: Record<string, string> = {};
     if (gameId) params.gameId = gameId;
     if (sport) params.sport = sport;
+    if (search?.trim()) params.search = search.trim();
     const response = await api.get<ApiResponse<InvitablePlayersPayload>>('/users/invitable-players', {
       params,
     });
