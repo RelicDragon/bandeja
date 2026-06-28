@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.96.42 |
-| **Build** | 156 |
-| **Commit** | `70e3da22e77504a0c9e98dd0368fa4d00b7493a1` |
-| **Short** | `70e3da22` |
-| **Date** | 2026-06-24 |
-| **Message** | Bump app release to 0.96.42 (build 156) |
+| **Version** | 0.96.50 |
+| **Build** | 164 |
+| **Commit** | `35478ae34868e2cecf869198d53d1e7a7a3aab31` |
+| **Short** | `35478ae3` |
+| **Date** | 2026-06-28 |
+| **Message** | Bump app release to 0.96.50 (build 164) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -23,9 +23,7 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 ./scripts/app-release.sh
 ```
 
-Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure or after App Store Connect is still processing an uploaded iOS build: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
-
-The store phase is staged: upload Android and iOS binaries, wait until App Store Connect exposes the processed build, update App Store metadata with What's New, optionally submit for review, then verify both Google Play and App Store Connect before updating the shipped baseline. If Apple processing times out, the saved session keeps the uploaded-binary checkpoint so the next resume skips the IPA upload.
+Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
 
 See this file for store API credentials, Android signing, and internal-track smoke test steps.
 
@@ -70,5 +68,6 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.96.50 | 164 | `35478ae3` | 2026-06-28 |
 | 0.96.42 | 156 | `70e3da22` | 2026-06-24 |
 | 0.96.40 | 154 | `109da47b` | 2026-06-23 |
