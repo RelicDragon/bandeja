@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { TFunction } from 'i18next';
 import { Droplets, Loader2, Wind } from 'lucide-react';
 import type { WeatherHourlyPoint, WeatherWindow } from '@/types';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
@@ -8,8 +7,10 @@ import {
   formatWeatherTemperature,
   formatWeatherTime,
   getForecastUpdatedLabel,
+  getWeatherTemperatureColor,
   getWeatherConditionLabel,
 } from '@/utils/weather';
+import { WeatherDayChart } from './WeatherDayChart';
 import { WeatherIcon } from './WeatherIcon';
 
 interface WeatherWindowDialogProps {
@@ -27,18 +28,25 @@ interface WeatherWindowDialogProps {
   modalId: string;
 }
 
-function rowPhase(
+type WeatherRowPhase = 'before' | 'game' | 'after';
+
+const GAME_PHASE_CONFIG = {
+  labelKey: 'weather.gameTime',
+  defaultLabel: 'Game',
+};
+
+function resolveRowPhase(
   point: WeatherHourlyPoint,
   startTime: string,
   endTime: string,
-  t: TFunction,
-): string {
+): WeatherRowPhase {
   const time = new Date(point.time).getTime();
+  const nextHour = time + 60 * 60 * 1000;
   const start = new Date(startTime).getTime();
   const end = new Date(endTime).getTime();
-  if (time < start) return t('weather.beforeGame', { defaultValue: 'Before' });
-  if (time >= end) return t('weather.afterGame', { defaultValue: 'After' });
-  return t('weather.gameTime', { defaultValue: 'Game' });
+  if (nextHour <= start) return 'before';
+  if (time >= end) return 'after';
+  return 'game';
 }
 
 export function WeatherWindowDialog({
@@ -56,11 +64,20 @@ export function WeatherWindowDialog({
   modalId,
 }: WeatherWindowDialogProps) {
   const { t } = useTranslation();
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const hasRows = Boolean(forecast?.available && forecast.hours.length > 0);
   const sortedRows = useMemo(
     () => [...(forecast?.hours ?? [])].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
     [forecast?.hours],
   );
+  useEffect(() => {
+    if (!selectedTime) return;
+    if (!sortedRows.some((point) => point.time === selectedTime)) {
+      setSelectedTime(null);
+    }
+  }, [selectedTime, sortedRows]);
+
   const metadata = forecast
     ? [
         forecast.cityName,
@@ -69,6 +86,20 @@ export function WeatherWindowDialog({
       ].filter(Boolean)
     : [];
   const showFullDayButton = Boolean(hasRows && onShowFullDay && !isFullDay);
+  const handleChartPointSelect = (time: string) => {
+    setSelectedTime(time);
+
+    const scrollToSelectedRow = () => {
+      rowRefs.current.get(time)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    if (typeof window === 'undefined') {
+      scrollToSelectedRow();
+      return;
+    }
+
+    window.requestAnimationFrame(scrollToSelectedRow);
+  };
 
   return (
     <Dialog open={open} onClose={onClose} modalId={modalId}>
@@ -100,65 +131,114 @@ export function WeatherWindowDialog({
                   })}
             </div>
           ) : (
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {sortedRows.map((point) => {
-                const condition = getWeatherConditionLabel(t, point.conditionKey);
-                return (
-                  <div
-                    key={point.time}
-                    className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 px-1 py-2.5 first:pt-0 last:pb-0"
-                  >
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-200">
-                      <WeatherIcon conditionKey={point.conditionKey} isDay={point.isDay} size={19} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {formatWeatherTime(point.time, locale, hour12)}
-                        </span>
-                        <span className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                          {rowPhase(point, startTime, endTime, t)}
-                        </span>
-                      </div>
-                      <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        <span className="truncate">{condition}</span>
-                        {point.precipitationProbability != null ? (
-                          <span className="inline-flex items-center gap-1">
-                            <Droplets size={12} />
-                            {point.precipitationProbability}%
-                          </span>
-                        ) : null}
-                        {point.windSpeedKmh != null ? (
-                          <span className="inline-flex items-center gap-1">
-                            <Wind size={12} />
-                            {t('weather.windSpeed', {
-                              speed: Math.round(point.windSpeedKmh),
-                            })}
-                          </span>
-                        ) : null}
-                      </div>
-                    </div>
-                    <div className="text-lg font-semibold tabular-nums text-gray-900 dark:text-white">
-                      {formatWeatherTemperature(point, { locale })}
-                    </div>
-                  </div>
-                );
-              })}
-              {showFullDayButton ? (
-                <div className="pt-3">
-                  <button
-                    type="button"
-                    onClick={onShowFullDay}
-                    disabled={isFullDayLoading}
-                    className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-wait disabled:opacity-70 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
-                  >
-                    {isFullDayLoading ? <Loader2 size={14} className="animate-spin" /> : null}
-                    {isFullDayLoading
-                      ? t('weather.loadingShort', { defaultValue: 'Loading' })
-                      : t('weather.showFullDay', { defaultValue: 'Show full day' })}
-                  </button>
-                </div>
+            <div>
+              {isFullDay ? (
+                <WeatherDayChart
+                  points={sortedRows}
+                  locale={locale}
+                  hour12={hour12}
+                  startTime={startTime}
+                  endTime={endTime}
+                  selectedTime={selectedTime}
+                  onPointSelect={handleChartPointSelect}
+                />
               ) : null}
+              <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                {sortedRows.map((point) => {
+                  const condition = getWeatherConditionLabel(t, point.conditionKey);
+                  const temperatureColor = getWeatherTemperatureColor(point);
+                  const phase = resolveRowPhase(point, startTime, endTime);
+                  const isGameHour = phase === 'game';
+                  const isSelected = isFullDay && selectedTime === point.time;
+                  return (
+                    <div
+                      key={point.time}
+                      ref={(element) => {
+                        if (element) {
+                          rowRefs.current.set(point.time, element);
+                        } else {
+                          rowRefs.current.delete(point.time);
+                        }
+                      }}
+                      aria-current={isSelected ? 'true' : undefined}
+                      className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-lg px-1 py-2.5 transition-colors first:pt-0 last:pb-0 ${
+                        isSelected
+                          ? 'bg-sky-50/90 ring-2 ring-inset ring-sky-400/70 dark:bg-sky-950/40 dark:ring-sky-500/60'
+                          : ''
+                      }`}
+                    >
+                      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-200">
+                        <WeatherIcon conditionKey={point.conditionKey} isDay={point.isDay} size={19} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="min-w-0">
+                          <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                            {formatWeatherTime(point.time, locale, hour12)}
+                          </span>
+                        </div>
+                        {point.precipitationProbability != null || point.windSpeedKmh != null ? (
+                          <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                            {point.precipitationProbability != null ? (
+                              <span
+                                className={`inline-flex items-center gap-1 ${
+                                  point.precipitationProbability > 0
+                                    ? 'font-medium text-sky-600 dark:text-sky-300'
+                                    : ''
+                                }`}
+                              >
+                                <Droplets size={12} />
+                                {point.precipitationProbability}%
+                              </span>
+                            ) : null}
+                            {point.windSpeedKmh != null ? (
+                              <span className="inline-flex items-center gap-1">
+                                <Wind size={12} />
+                                {t('weather.windSpeed', {
+                                  speed: Math.round(point.windSpeedKmh),
+                                })}
+                              </span>
+                            ) : null}
+                          </div>
+                        ) : null}
+                        <div className="mt-0.5 min-w-0 text-xs text-gray-500 dark:text-gray-400">
+                          <span className="truncate">{condition}</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-0.5">
+                        {isGameHour ? (
+                          <span
+                            className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none text-white"
+                            style={{ backgroundColor: temperatureColor.textColor }}
+                          >
+                            {t(GAME_PHASE_CONFIG.labelKey, { defaultValue: GAME_PHASE_CONFIG.defaultLabel })}
+                          </span>
+                        ) : null}
+                        <div
+                          className="text-lg font-semibold leading-none tabular-nums"
+                          style={{ color: temperatureColor.textColor }}
+                        >
+                          {formatWeatherTemperature(point, { locale })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {showFullDayButton ? (
+                  <div className="pt-3">
+                    <button
+                      type="button"
+                      onClick={onShowFullDay}
+                      disabled={isFullDayLoading}
+                      className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-wait disabled:opacity-70 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+                    >
+                      {isFullDayLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                      {isFullDayLoading
+                        ? t('weather.loadingShort', { defaultValue: 'Loading' })
+                        : t('weather.showFullDay', { defaultValue: 'Show full day' })}
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
         </div>

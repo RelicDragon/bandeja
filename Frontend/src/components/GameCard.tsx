@@ -8,6 +8,7 @@ import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
 import { GameCardTrainerBadge } from '@/components/gameCard/GameCardTrainerBadge';
 import { GameCardInfoRows } from '@/components/gameCard/GameCardInfoRows';
 import { GameCardHeaderTags } from '@/components/gameCard/GameCardHeaderTags';
+import { GameCardWeatherTag } from '@/components/gameCard/GameCardWeatherTag';
 import { Game } from '@/types';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
 import { getGameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
@@ -205,6 +206,11 @@ export const GameCard = ({
     setShowWeatherModal(true);
   };
 
+  const weatherSummary = game.weatherSummary ?? null;
+  // Show the weather chip for every entity type except LEAGUE_SEASON,
+  // regardless of whether the viewer is a participant (so it appears in Find too).
+  const showWeatherChip = game.entityType !== 'LEAGUE_SEASON' && Boolean(weatherSummary);
+
   const handleCardClick = () => {
     if (onClick) {
       onClick();
@@ -379,6 +385,14 @@ export const GameCard = ({
           onReactionsChange={setReactions}
           pickerOpens="below"
         />
+        {showWeatherChip && weatherSummary ? (
+          <GameCardWeatherTag
+            entityType={game.entityType}
+            summary={weatherSummary}
+            locale={displaySettings.locale}
+            onClick={handleWeatherClick}
+          />
+        ) : null}
         {showChatIndicator && (
           <button
             type="button"
@@ -545,8 +559,6 @@ export const GameCard = ({
                 hintText={infoHintText}
                 showConfirmedCourtBadge={showConfirmedCourtBadge}
                 linkedExternalBooking={linkedExternalBooking}
-                weatherLocale={displaySettings.locale}
-                onWeatherClick={handleWeatherClick}
                 className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400 justify-center min-h-0"
               />
             )}
@@ -562,8 +574,6 @@ export const GameCard = ({
                 hintText={infoHintText}
                 showConfirmedCourtBadge={showConfirmedCourtBadge}
                 linkedExternalBooking={linkedExternalBooking}
-                weatherLocale={displaySettings.locale}
-                onWeatherClick={handleWeatherClick}
                 className="space-y-2 flex-1"
               />
             )}

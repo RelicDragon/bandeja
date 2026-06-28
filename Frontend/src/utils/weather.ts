@@ -70,6 +70,70 @@ export function formatWeatherTemperature(
   return options.compact ? `${rounded}°` : `${rounded}°${unit}`;
 }
 
+export interface WeatherTemperatureColor {
+  textColor: string;
+  iconColor: string;
+  markerFill: string;
+  markerBorder: string;
+  strokeColor: string;
+}
+
+const WEATHER_TEMPERATURE_STOPS = [
+  { c: -8, rgb: [37, 99, 235] },
+  { c: 4, rgb: [14, 165, 233] },
+  { c: 16, rgb: [16, 185, 129] },
+  { c: 22, rgb: [234, 179, 8] },
+  { c: 28, rgb: [249, 115, 22] },
+  { c: 36, rgb: [225, 29, 72] },
+];
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function interpolateNumber(from: number, to: number, progress: number): number {
+  return Math.round(from + (to - from) * progress);
+}
+
+function interpolateRgb(from: number[], to: number[], progress: number): string {
+  const r = interpolateNumber(from[0], to[0], progress);
+  const g = interpolateNumber(from[1], to[1], progress);
+  const b = interpolateNumber(from[2], to[2], progress);
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
+function temperatureColorForCelsius(temperatureC: number): string {
+  const fallbackStop = WEATHER_TEMPERATURE_STOPS[2];
+  if (!Number.isFinite(temperatureC)) {
+    return `rgb(${fallbackStop.rgb.join(', ')})`;
+  }
+
+  const firstStop = WEATHER_TEMPERATURE_STOPS[0];
+  const lastStop = WEATHER_TEMPERATURE_STOPS[WEATHER_TEMPERATURE_STOPS.length - 1];
+
+  if (temperatureC <= firstStop.c) return `rgb(${firstStop.rgb.join(', ')})`;
+  if (temperatureC >= lastStop.c) return `rgb(${lastStop.rgb.join(', ')})`;
+
+  const nextStopIndex = WEATHER_TEMPERATURE_STOPS.findIndex((stop) => temperatureC <= stop.c);
+  const previousStop = WEATHER_TEMPERATURE_STOPS[nextStopIndex - 1];
+  const nextStop = WEATHER_TEMPERATURE_STOPS[nextStopIndex];
+  const progress = clamp((temperatureC - previousStop.c) / (nextStop.c - previousStop.c), 0, 1);
+
+  return interpolateRgb(previousStop.rgb, nextStop.rgb, progress);
+}
+
+export function getWeatherTemperatureColor(point: Pick<WeatherHourlyPoint, 'temperatureC'>): WeatherTemperatureColor {
+  const color = temperatureColorForCelsius(point.temperatureC);
+
+  return {
+    textColor: color,
+    iconColor: color,
+    markerFill: 'rgb(255, 255, 255)',
+    markerBorder: color,
+    strokeColor: color,
+  };
+}
+
 export function formatWeatherTime(time: string, locale: string, hour12: boolean): string {
   return new Intl.DateTimeFormat(locale, {
     hour: 'numeric',

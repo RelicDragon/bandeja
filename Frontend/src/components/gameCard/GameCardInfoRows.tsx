@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Calendar, MapPin, Users, Plane, Check } from 'lucide-react';
 import { GameCardConfirmedCourtBadge } from '@/components/GameCardConfirmedCourtBadge';
-import { WeatherSummaryChip } from '@/components/weather/WeatherSummaryChip';
 import type { Game, GameParticipant } from '@/types';
 
 interface GameCardInfoRowsProps {
@@ -11,8 +10,6 @@ interface GameCardInfoRowsProps {
   hintText?: string | null;
   showConfirmedCourtBadge: boolean;
   linkedExternalBooking?: boolean;
-  weatherLocale?: string;
-  onWeatherClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
   className?: string;
 }
 
@@ -43,8 +40,6 @@ export const GameCardInfoRows = ({
   hintText,
   showConfirmedCourtBadge,
   linkedExternalBooking = false,
-  weatherLocale,
-  onWeatherClick,
   className = '',
 }: GameCardInfoRowsProps) => {
   const { t } = useTranslation();
@@ -68,13 +63,6 @@ export const GameCardInfoRows = ({
             <span>{dateText}</span>
             {showConfirmedCourtBadge ? (
               <GameCardConfirmedCourtBadge linkedExternalBooking={linkedExternalBooking} />
-            ) : null}
-            {game.weatherSummary && onWeatherClick ? (
-              <WeatherSummaryChip
-                summary={game.weatherSummary}
-                locale={weatherLocale}
-                onClick={onWeatherClick}
-              />
             ) : null}
           </span>
         )}

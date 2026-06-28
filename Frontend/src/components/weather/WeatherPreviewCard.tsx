@@ -5,6 +5,7 @@ import { useWeatherPreviewQuery } from '@/queries/weather';
 import {
   formatWeatherTemperature,
   getForecastUpdatedLabel,
+  getWeatherTemperatureColor,
   getWeatherConditionLabel,
 } from '@/utils/weather';
 import { WeatherIcon } from './WeatherIcon';
@@ -42,6 +43,7 @@ export function WeatherPreviewCard({
   const forecast = query.data;
   const summary = forecast?.summary;
   const condition = summary ? getWeatherConditionLabel(t, summary.conditionKey) : null;
+  const temperatureColor = summary ? getWeatherTemperatureColor(summary) : null;
   const canOpen = Boolean(forecast && !query.isPending);
   const cardClassName =
     'w-full rounded-xl border border-sky-200/80 bg-gradient-to-br from-sky-50 via-white to-emerald-50 p-3 text-left shadow-sm transition-all duration-200 dark:border-sky-800/50 dark:from-sky-950/40 dark:via-gray-950 dark:to-emerald-950/30';
@@ -59,14 +61,23 @@ export function WeatherPreviewCard({
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-lg font-semibold tabular-nums text-gray-900 dark:text-white">
+              <span
+                className="text-lg font-semibold tabular-nums"
+                style={temperatureColor ? { color: temperatureColor.textColor } : undefined}
+              >
                 {formatWeatherTemperature(summary, { locale })}
               </span>
               <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{condition}</span>
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
               {summary.precipitationProbability != null ? (
-                <span className="inline-flex items-center gap-1">
+                <span
+                  className={`inline-flex items-center gap-1 ${
+                    summary.precipitationProbability > 0
+                      ? 'font-medium text-sky-600 dark:text-sky-300'
+                      : ''
+                  }`}
+                >
                   <Droplets size={13} />
                   {summary.precipitationProbability}%
                 </span>
