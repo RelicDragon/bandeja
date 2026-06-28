@@ -54,6 +54,7 @@ import {
 } from '@/utils/inviteSportFilter';
 import { listEnabledSports } from '@/utils/profileSports';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import { useDebounce } from '@/components/CityMap/useDebounce';
 
 export interface PlayerListModalConfirmMeta {
   userTeamIdByReceiverId?: Record<string, string>;
@@ -122,6 +123,7 @@ export const PlayerListModal = ({
   const [invitePickerOutcomes, setInvitePickerOutcomes] = useState<GameInviteOutcome[]>([]);
   const listSegmentUsers = inviteListKind === 'all' || inviteListKind === 'users';
   const listSegmentTeams = inviteListKind === 'all' || inviteListKind === 'teams';
+  const hasLoadedPlayersRef = useRef(false);
 
   const showTeams = multiSelect && !inviteAsTrainerOnly;
 
@@ -144,6 +146,10 @@ export const PlayerListModal = ({
     () => `${gameId ?? ''}:${gameSport ?? ''}:${inviteAsTrainerOnly}`,
     [gameId, gameSport, inviteAsTrainerOnly],
   );
+
+  useEffect(() => {
+    hasLoadedPlayersRef.current = false;
+  }, [inviteSessionKey]);
 
   const inviteExtraSports = useMemo(() => {
     if (!gameSport) return [];
@@ -203,16 +209,18 @@ export const PlayerListModal = ({
   const filterPlayerIdsKey = useMemo(() => [...filterPlayerIds].sort().join(','), [filterPlayerIds]);
   const filterPlayerIdsRef = useRef(filterPlayerIds);
   filterPlayerIdsRef.current = filterPlayerIds;
+  const debouncedSearchQuery = useDebounce(searchQuery, 350);
   const serverSearchQuery = useMemo(() => {
-    const q = searchQuery.trim();
+    const q = debouncedSearchQuery.trim();
     return q.length >= 2 ? q : undefined;
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   useEffect(() => {
     let cancelled = false;
 
     const loadPlayers = async () => {
-      setLoading(true);
+      const backgroundSearch = hasLoadedPlayersRef.current && Boolean(serverSearchQuery);
+      if (!backgroundSearch) setLoading(true);
       if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       const filterIds = filterPlayerIdsRef.current;
       try {
@@ -279,6 +287,7 @@ export const PlayerListModal = ({
         const filtered = fetchedPlayers.filter(
           (player) => !participantIds.has(player.id) && !invitedUserIds.has(player.id),
         );
+        hasLoadedPlayersRef.current = true;
         setPlayers(filtered);
 
         const invitableTeams = merged.filter(
@@ -289,13 +298,14 @@ export const PlayerListModal = ({
         setReadyTeams(invitableTeams);
       } catch {
         if (cancelled) return;
+        hasLoadedPlayersRef.current = true;
         setPlayers([]);
         setReadyTeams([]);
         setInvitePickerOutcomes([]);
         setFetchedGameContext(null);
         toast.error(t('errors.generic'));
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && !backgroundSearch) setLoading(false);
       }
     };
 

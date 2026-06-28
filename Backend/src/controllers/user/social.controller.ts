@@ -1,5 +1,5 @@
 import { Response } from 'express';
-import { Prisma, Sport } from '@prisma/client';
+import { ParticipantStatus, Prisma, Sport } from '@prisma/client';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
@@ -12,6 +12,14 @@ import {
 import { projectEmbeddedUserByPrimarySport } from '../../services/user/projectEmbeddedBasicUsers';
 import { BasicUser } from '../../types/user.types';
 import { CommonChatsService } from '../../services/user/commonChats.service';
+
+const INVITE_PICKER_BLOCKING_PARTICIPANT_STATUSES = new Set<ParticipantStatus>([
+  ParticipantStatus.PLAYING,
+  ParticipantStatus.NON_PLAYING,
+  ParticipantStatus.IN_QUEUE,
+  ParticipantStatus.GUEST,
+  ParticipantStatus.INVITED,
+]);
 
 export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId, sport: sportQuery } = req.query;
@@ -54,6 +62,7 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
         participants: {
           select: {
             userId: true,
+            status: true,
           },
         },
         club: {
@@ -73,7 +82,9 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
       throw new ApiError(400, 'Game is not in your city');
     }
 
-    participantIds = game.participants.map((p: { userId: string }) => p.userId);
+    participantIds = game.participants
+      .filter((p) => INVITE_PICKER_BLOCKING_PARTICIPANT_STATUSES.has(p.status))
+      .map((p) => p.userId);
     cityId = gameCityId || currentUser?.currentCityId;
     gameSport = game.sport ?? Sport.PADEL;
   } else if (sportQuery) {
