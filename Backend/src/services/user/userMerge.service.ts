@@ -10,6 +10,7 @@ import { ApiError } from '../../utils/ApiError';
 import { ChatSyncEventService } from '../chat/chatSyncEvent.service';
 import { clampSportProfileGameStats } from '../results/outcomeStatsSnapshot';
 import { resolveDisplayNameData } from './userDisplayName.service';
+import { recomputeUserGameStats } from './userGameStatsRecompute.service';
 import {
   mergeDuplicateUserInteractions,
   remapAllUserScopedCompositeRows,
@@ -418,19 +419,6 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
   };
 }
 
-async function recomputeGameStats(tx: Tx, userId: string) {
-  const goAgg = await tx.gameOutcome.aggregate({
-    where: { userId },
-    _sum: { pointsEarned: true },
-  });
-  await tx.user.update({
-    where: { id: userId },
-    data: {
-      totalPoints: goAgg._sum.pointsEarned ?? 0,
-    },
-  });
-}
-
 async function dedupePairTables(tx: Tx, survivorId: string) {
   await tx.userFavoriteUser.deleteMany({
     where: { userId: survivorId, favoriteUserId: survivorId },
@@ -496,7 +484,7 @@ function mergeSportLevelSource(a: SportLevelSource, b: SportLevelSource): SportL
   return LEVEL_SOURCE_RANK[a] >= LEVEL_SOURCE_RANK[b] ? a : b;
 }
 
-/** §19: merge profiles by sport; v1 level = max(survivor, source); gamesPlayed = max. */
+/** §19: merge profiles by sport; v1 level = max(survivor, source); game stats are recomputed from outcomes after remap. */
 async function mergeUserSportProfiles(tx: Tx, survivorId: string, sourceId: string) {
   const sourceProfiles = await tx.userSportProfile.findMany({ where: { userId: sourceId } });
   for (const src of sourceProfiles) {
@@ -530,10 +518,7 @@ async function mergeUserSportProfiles(tx: Tx, survivorId: string, sourceId: stri
       data: {
         level: Math.max(surv.level, src.level),
         reliability: Math.max(surv.reliability, src.reliability),
-        ...clampSportProfileGameStats(
-          Math.max(surv.gamesPlayed, src.gamesPlayed),
-          Math.max(surv.gamesWon, src.gamesWon),
-        ),
+        ...clampSportProfileGameStats(surv.gamesPlayed, surv.gamesWon),
         questionnaireCompletedAt: completedAt,
         questionnaireSkippedAt: surv.questionnaireSkippedAt ?? src.questionnaireSkippedAt,
         questionnaireVersion: version,
@@ -754,7 +739,7 @@ export class UserMergeService {
         await mergeUserSportProfiles(tx, survivorId, sourceId);
         await mergeLundaProfiles(tx, survivorId, sourceId);
 
-        await recomputeGameStats(tx, survivorId);
+        await recomputeUserGameStats(tx, survivorId);
 
         await tx.user.update({
           where: { id: survivorId },
