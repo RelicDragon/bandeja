@@ -86,6 +86,8 @@
     "worstPartner": "Najslabiji partner",
     "favoriteTarget": "Omiljena meta",
     "nemesis": "Najteži protivnik",
+    "relationshipInfoButton": "Kako se ovo računa",
+    "relationshipInfo": "Izbor se računa ponderisanim skorom pouzdanosti: promena rejtinga zajedno, odnos pobeda/nerešenih/poraza i broj mečeva. Jedan slučajan rezultat ima manju težinu, pa stabilan obrazac više znači.",
     "noStreakYet": "Još nema niza",
     "noPartnerStatsYet": "Još nema statistike partnera",
     "streakWin": "Pobeda",

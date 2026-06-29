@@ -1,4 +1,5 @@
-import { Crosshair, Handshake, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
+import { useState } from 'react';
+import { Crosshair, Handshake, HelpCircle, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type {
   PerformanceRelationshipEntry,
@@ -44,6 +45,7 @@ export const ProfilePerformanceInsights = ({
   darkBgClass = 'dark:bg-gray-700/50',
 }: ProfilePerformanceInsightsProps) => {
   const { t } = useTranslation();
+  const [showRelationshipInfo, setShowRelationshipInfo] = useState(false);
   if (!insights) return null;
 
   const recentGames = insights.streaks.recentGames.slice(-10);
@@ -144,9 +146,31 @@ export const ProfilePerformanceInsights = ({
       </section>
 
       <section className={`relative rounded-xl bg-gray-100 ${darkBgClass} border border-gray-200/60 dark:border-gray-600/50 p-4`}>
-        <div className="mb-3 flex items-center gap-2">
-          <Handshake size={16} className="text-gray-500 dark:text-gray-400" />
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.partners')}</h3>
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-2">
+            <Handshake size={16} className="shrink-0 text-gray-500 dark:text-gray-400" />
+            <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.partners')}</h3>
+          </div>
+          <button
+            type="button"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/75 text-gray-500 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-600/70 dark:bg-gray-800/70 dark:text-gray-300 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 dark:focus-visible:ring-offset-gray-800"
+            aria-label={t('playerCard.relationshipInfoButton')}
+            aria-expanded={showRelationshipInfo}
+            aria-controls="profile-relationship-info"
+            onClick={() => setShowRelationshipInfo((value) => !value)}
+          >
+            <HelpCircle size={17} aria-hidden />
+          </button>
+        </div>
+        <div
+          id="profile-relationship-info"
+          className={`overflow-hidden transition-[max-height,opacity,margin] duration-300 ease-out ${
+            showRelationshipInfo ? 'mb-3 max-h-40 opacity-100' : 'mb-0 max-h-0 opacity-0'
+          }`}
+        >
+          <p className="rounded-lg border border-primary-100 bg-primary-50/70 px-3 py-2 text-xs leading-5 text-gray-600 dark:border-primary-900/50 dark:bg-primary-950/25 dark:text-gray-300">
+            {t('playerCard.relationshipInfo')}
+          </p>
         </div>
 
         {hasRelationshipData ? (

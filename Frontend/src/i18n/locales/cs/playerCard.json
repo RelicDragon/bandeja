@@ -86,6 +86,8 @@
     "worstPartner": "Nejhorší partner",
     "favoriteTarget": "Oblíbený cíl",
     "nemesis": "Nejtěžší soupeř",
+    "relationshipInfoButton": "Jak se to počítá",
+    "relationshipInfo": "Výběr používá skóre vážené jistotou: změnu ratingu společně, bilanci výher/remíz/proher a počet zápasů. Jednorázové výsledky mají menší váhu, takže stabilní vzorce znamenají víc.",
     "noStreakYet": "Zatím žádná série",
     "noPartnerStatsYet": "Zatím žádné statistiky partnerů",
     "streakWin": "Výhra",

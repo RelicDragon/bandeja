@@ -86,6 +86,8 @@
     "worstPartner": "Peor compañero",
     "favoriteTarget": "Objetivo favorito",
     "nemesis": "Rival más difícil",
+    "relationshipInfoButton": "Cómo se calcula",
+    "relationshipInfo": "Estas elecciones usan una puntuación ponderada por confianza: rating ganado o perdido juntos, registro de victorias/empates/derrotas y cantidad de partidos. Los resultados aislados pesan menos, así que los patrones constantes importan más.",
     "noStreakYet": "Aún no hay racha",
     "noPartnerStatsYet": "Aún no hay estadísticas de compañeros",
     "streakWin": "Victoria",

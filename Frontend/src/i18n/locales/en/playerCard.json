@@ -86,6 +86,8 @@
     "worstPartner": "Worst partner",
     "favoriteTarget": "Favorite target",
     "nemesis": "Toughest opponent",
+    "relationshipInfoButton": "How these are calculated",
+    "relationshipInfo": "These picks use a confidence-weighted score from rating gained or lost together, win/tie/loss record, and number of matches. One-off results are down-weighted, so steady patterns matter more.",
     "noStreakYet": "No streak yet",
     "noPartnerStatsYet": "No partner stats yet",
     "streakWin": "Win",
