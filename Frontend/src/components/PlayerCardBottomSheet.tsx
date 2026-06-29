@@ -114,7 +114,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   });
 
   const canFetchCommonChats = !!user && !!playerId && !isCurrentUser && !isBlocked;
-  const showProfileTabs = canFetchCommonChats && !commonChatsLoading && commonChats.length > 0;
+  const showGroupsTab = canFetchCommonChats && !commonChatsLoading && commonChats.length > 0;
 
   useEffect(() => {
     if (!playerId) return;
@@ -154,10 +154,10 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   }, [canFetchCommonChats, playerId]);
 
   useEffect(() => {
-    if (!showProfileTabs && profileTab === 'groups') {
+    if (!showGroupsTab && profileTab === 'groups') {
       setProfileTab('statistics');
     }
-  }, [showProfileTabs, profileTab]);
+  }, [showGroupsTab, profileTab]);
 
   const handleAvatarViewerClose = useCallback(() => {
     suppressDrawerDismissUntilRef.current = Date.now() + 400;
@@ -315,7 +315,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         t={t}
                         isBlocked={isBlocked}
                         showTelegram={!!user}
-                        showProfileTabs={showProfileTabs}
+                        showProfileTabs
+                        showGroupsTab={showGroupsTab}
                         activeProfileTab={profileTab}
                         onProfileTabChange={setProfileTab}
                         groupsContent={(

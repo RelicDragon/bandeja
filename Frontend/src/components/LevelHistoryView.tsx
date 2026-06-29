@@ -246,6 +246,7 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
           <ProfilePerformanceInsights
             insights={sportScopedStats?.performanceInsights ?? stats.performanceInsights}
             darkBgClass={tabDarkBgClass}
+            onOpenGame={onOpenGame}
           />
         </>
       )}

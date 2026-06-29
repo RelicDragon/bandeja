@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
-import { Gender, Sport } from '@prisma/client';
+import { EntityType, GameStatus, GameType, Gender, ResultsStatus, Sport } from '@prisma/client';
 import {
   buildPerformanceRelationships,
   buildPerformanceStreaks,
   isRelationshipInsightMatch,
+  type PerformanceRelationshipGame,
   type RelationshipMatchInput,
   type StreakOutcomeInput,
 } from './userPerformanceInsights.service';
@@ -49,10 +50,32 @@ const match = (
   winnerTeamId: string | null,
   teams: ReturnType<typeof team>[],
   ratingDelta?: number,
+  game?: PerformanceRelationshipGame,
 ): RelationshipMatchInput<ReturnType<typeof user>> => ({
   winnerTeamId,
   ratingDelta,
+  game,
   teams,
+});
+
+const relationshipGame = (
+  id: string,
+  day: number,
+  overrides: Partial<PerformanceRelationshipGame> = {},
+): PerformanceRelationshipGame => ({
+  id,
+  name: null,
+  sport: Sport.PADEL,
+  gameType: GameType.CLASSIC,
+  entityType: EntityType.GAME,
+  startTime: new Date(Date.UTC(2026, 0, day, 18)),
+  endTime: new Date(Date.UTC(2026, 0, day, 20)),
+  status: GameStatus.FINISHED,
+  resultsStatus: ResultsStatus.FINAL,
+  affectsRating: true,
+  club: { id: `club-${id}`, name: `Club ${id}` },
+  court: { id: `court-${id}`, name: `Court ${id}` },
+  ...overrides,
 });
 
 (() => {
@@ -261,6 +284,120 @@ const match = (
   assert.equal(relationships.favoriteTargetByCount.user.id, favoriteTarget.id);
   assert.ok(relationships.nemesisByCount);
   assert.equal(relationships.nemesisByCount.user.id, nemesis.id);
+})();
+
+(() => {
+  const current = user('u-current', 'Current');
+  const frequentWinOpponent = user('u-frequent-win-opponent', 'FrequentWin');
+  const frequentLossOpponent = user('u-frequent-loss-opponent', 'FrequentLoss');
+
+  const relationships = buildPerformanceRelationships(
+    current.id,
+    [
+      match('team-current-win-1', [
+        team('team-current-win-1', [current]),
+        team('team-frequent-win-1', [frequentWinOpponent]),
+      ]),
+      match('team-current-win-2', [
+        team('team-current-win-2', [current]),
+        team('team-frequent-win-2', [frequentWinOpponent]),
+      ]),
+      match('team-current-win-3', [
+        team('team-current-win-3', [current]),
+        team('team-frequent-win-3', [frequentWinOpponent]),
+      ]),
+      match('team-frequent-loss-1', [
+        team('team-current-loss-1', [current]),
+        team('team-frequent-loss-1', [frequentLossOpponent]),
+      ]),
+      match('team-frequent-loss-2', [
+        team('team-current-loss-2', [current]),
+        team('team-frequent-loss-2', [frequentLossOpponent]),
+      ]),
+      match('team-frequent-loss-3', [
+        team('team-current-loss-3', [current]),
+        team('team-frequent-loss-3', [frequentLossOpponent]),
+      ]),
+    ],
+    Sport.PADEL,
+  );
+
+  assert.ok(relationships.favoriteTarget);
+  assert.equal(relationships.favoriteTarget.user.id, frequentWinOpponent.id);
+  assert.equal(relationships.favoriteTarget.wins, 3);
+  assert.equal(relationships.favoriteTarget.losses, 0);
+  assert.ok(relationships.nemesis);
+  assert.equal(relationships.nemesis.user.id, frequentLossOpponent.id);
+  assert.equal(relationships.nemesis.wins, 0);
+  assert.equal(relationships.nemesis.losses, 3);
+})();
+
+(() => {
+  const current = user('u-current', 'Current');
+  const partner = user('u-partner', 'Partner');
+  const doublesOpponentA = user('u-doubles-a', 'DoublesA');
+  const doublesOpponentB = user('u-doubles-b', 'DoublesB');
+  const singlesTarget = user('u-singles-target', 'SinglesTarget');
+
+  const oldPartnerGame = relationshipGame('g-old-partner', 1);
+  const newPartnerGame = relationshipGame('g-new-partner', 3);
+  const singlesGameA = relationshipGame('g-singles-a', 4);
+  const singlesGameB = relationshipGame('g-singles-b', 5);
+  const singlesGameC = relationshipGame('g-singles-c', 6);
+  const singlesGameD = relationshipGame('g-singles-d', 7);
+
+  const relationships = buildPerformanceRelationships(
+    current.id,
+    [
+      match('team-current-old-1', [
+        team('team-current-old-1', [current, partner]),
+        team('team-doubles-old-1', [doublesOpponentA, doublesOpponentB]),
+      ], 0.02, oldPartnerGame),
+      match('team-current-old-2', [
+        team('team-current-old-2', [current, partner]),
+        team('team-doubles-old-2', [doublesOpponentA, doublesOpponentB]),
+      ], 0.01, oldPartnerGame),
+      match('team-current-new', [
+        team('team-current-new', [current, partner]),
+        team('team-doubles-new', [doublesOpponentA, doublesOpponentB]),
+      ], 0.03, newPartnerGame),
+      match('team-current-singles-a', [
+        team('team-current-singles-a', [current]),
+        team('team-singles-target-a', [singlesTarget]),
+      ], 0.01, singlesGameA),
+      match('team-current-singles-b', [
+        team('team-current-singles-b', [current]),
+        team('team-singles-target-b', [singlesTarget]),
+      ], 0.01, singlesGameB),
+      match('team-current-singles-c', [
+        team('team-current-singles-c', [current]),
+        team('team-singles-target-c', [singlesTarget]),
+      ], 0.01, singlesGameC),
+      match('team-current-singles-d', [
+        team('team-current-singles-d', [current]),
+        team('team-singles-target-d', [singlesTarget]),
+      ], 0.01, singlesGameD),
+    ],
+    Sport.PADEL,
+  );
+
+  assert.ok(relationships.bestPartner);
+  assert.equal(relationships.bestPartner.user.id, partner.id);
+  assert.deepEqual(
+    relationships.bestPartner.games.map((game) => game.id),
+    [newPartnerGame.id, oldPartnerGame.id],
+  );
+
+  assert.ok(relationships.favoriteTarget);
+  assert.equal(relationships.favoriteTarget.user.id, singlesTarget.id);
+  assert.deepEqual(
+    relationships.favoriteTarget.games.map((game) => game.id),
+    [singlesGameD.id, singlesGameC.id, singlesGameB.id, singlesGameA.id],
+  );
+  assert.equal(
+    relationships.bestPartner.games.some((game) => game.id === singlesGameA.id),
+    false,
+  );
 })();
 
 (() => {

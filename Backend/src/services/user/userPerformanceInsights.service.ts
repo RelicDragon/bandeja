@@ -1,4 +1,4 @@
-import { EntityType, MatchSetRole, ParticipantStatus, Sport } from '@prisma/client';
+import { EntityType, GameStatus, GameType, MatchSetRole, ParticipantStatus, ResultsStatus, Sport } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import {
@@ -50,6 +50,28 @@ export interface PerformanceRelationshipEntry {
   totalMatches: number;
   winRate: string;
   ratingNetChange: number;
+  games: PerformanceRelationshipGame[];
+}
+
+export interface PerformanceRelationshipGame {
+  id: string;
+  name: string | null;
+  sport: Sport;
+  gameType: GameType;
+  entityType: EntityType;
+  startTime: Date | string;
+  endTime: Date | string;
+  status: GameStatus;
+  resultsStatus: ResultsStatus;
+  affectsRating: boolean;
+  club?: {
+    id: string;
+    name: string;
+  } | null;
+  court?: {
+    id: string;
+    name: string;
+  } | null;
 }
 
 export interface PerformanceRelationships {
@@ -78,6 +100,7 @@ interface RelationshipCounter {
   losses: number;
   ties: number;
   ratingNetChange: number;
+  games: Map<string, PerformanceRelationshipGame>;
 }
 
 const RELATIONSHIP_BAYES_PRIOR_MATCHES = 4;
@@ -91,6 +114,7 @@ const RELATIONSHIP_MIN_CONFIDENT_MATCHES = 2;
 export interface RelationshipMatchInput<TUser = InsightUser> {
   winnerTeamId: string | null;
   ratingDelta?: number;
+  game?: PerformanceRelationshipGame;
   teams: Array<{
     id: string;
     players: Array<{
@@ -151,6 +175,9 @@ function toRelationshipEntry(
     totalMatches,
     winRate: ((entry.wins / totalMatches) * 100).toFixed(1),
     ratingNetChange: entry.ratingNetChange,
+    games: [...entry.games.values()].sort(
+      (a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime(),
+    ),
   };
 }
 
@@ -205,12 +232,14 @@ function incrementCounter(
   user: InsightUser,
   outcome: StreakResult,
   ratingDelta = 0,
+  game?: PerformanceRelationshipGame,
 ) {
-  const entry = map.get(user.id) ?? { user, wins: 0, losses: 0, ties: 0, ratingNetChange: 0 };
+  const entry = map.get(user.id) ?? { user, wins: 0, losses: 0, ties: 0, ratingNetChange: 0, games: new Map<string, PerformanceRelationshipGame>() };
   if (outcome === 'win') entry.wins += 1;
   else if (outcome === 'loss') entry.losses += 1;
   else entry.ties += 1;
   entry.ratingNetChange += ratingDelta;
+  if (game) entry.games.set(game.id, game);
   map.set(user.id, entry);
 }
 
@@ -343,7 +372,7 @@ export function buildPerformanceRelationships(
 
     if (userTeam.players.length === 2) {
       const partner = userTeam.players.find((player) => player.userId !== userId);
-      if (partner) incrementCounter(partners, partner.user, outcome, match.ratingDelta ?? 0);
+      if (partner) incrementCounter(partners, partner.user, outcome, match.ratingDelta ?? 0, match.game);
     }
 
     const isOneVsOne = userTeam.players.length === 1 && opponentTeam.players.length === 1;
@@ -351,7 +380,7 @@ export function buildPerformanceRelationships(
     if (isOneVsOne || isTwoVsTwo) {
       const opponentRatingDelta = (match.ratingDelta ?? 0) / Math.max(opponentTeam.players.length, 1);
       for (const opponent of opponentTeam.players) {
-        incrementCounter(opponents, opponent.user, outcome, opponentRatingDelta);
+        incrementCounter(opponents, opponent.user, outcome, opponentRatingDelta, match.game);
       }
     }
   }
@@ -400,6 +429,36 @@ export function isRelationshipInsightMatch(match: {
   );
 }
 
+function toRelationshipGameSummary(game: {
+  id: string;
+  name: string | null;
+  sport: Sport;
+  gameType: GameType;
+  entityType: EntityType;
+  startTime: Date;
+  endTime: Date;
+  status: GameStatus;
+  resultsStatus: ResultsStatus;
+  affectsRating: boolean;
+  club?: { id: string; name: string } | null;
+  court?: { id: string; name: string } | null;
+}): PerformanceRelationshipGame {
+  return {
+    id: game.id,
+    name: game.name,
+    sport: game.sport,
+    gameType: game.gameType,
+    entityType: game.entityType,
+    startTime: game.startTime,
+    endTime: game.endTime,
+    status: game.status,
+    resultsStatus: game.resultsStatus,
+    affectsRating: game.affectsRating,
+    club: game.club ? { id: game.club.id, name: game.club.name } : null,
+    court: game.court ? { id: game.court.id, name: game.court.name } : null,
+  };
+}
+
 export async function getUserPerformanceInsights(
   userId: string,
   sport: Sport,
@@ -431,6 +490,18 @@ export async function getUserPerformanceInsights(
       include: {
         game: {
           include: {
+            club: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+            court: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
             rounds: {
               include: {
                 matches: {
@@ -461,12 +532,14 @@ export async function getUserPerformanceInsights(
   );
   for (const participation of participations) {
     const game = participation.game;
+    const gameSummary = toRelationshipGameSummary(game);
     const gameRelationshipMatches: RelationshipMatchInput[] = [];
     for (const round of game.rounds) {
       for (const match of round.matches) {
         if (!isRelationshipInsightMatch(match)) continue;
         gameRelationshipMatches.push({
           winnerTeamId: match.winnerId,
+          game: gameSummary,
           teams: match.teams.map((team) => ({
             id: team.id,
             players: team.players.map((player) => ({

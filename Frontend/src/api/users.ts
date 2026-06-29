@@ -41,6 +41,27 @@ export interface GamesStat {
 
 export type StreakResult = 'win' | 'loss' | 'tie';
 
+export interface PerformanceRelationshipGame {
+  id: string;
+  name: string | null;
+  sport: Sport;
+  gameType: GameType;
+  entityType: EntityType;
+  startTime: string;
+  endTime: string;
+  status: GameStatus;
+  resultsStatus: 'NONE' | 'IN_PROGRESS' | 'FINAL';
+  affectsRating: boolean;
+  club?: {
+    id: string;
+    name: string;
+  } | null;
+  court?: {
+    id: string;
+    name: string;
+  } | null;
+}
+
 export interface PerformanceRelationshipEntry {
   user: BasicUser;
   wins: number;
@@ -49,6 +70,7 @@ export interface PerformanceRelationshipEntry {
   totalMatches: number;
   winRate: string;
   ratingNetChange: number;
+  games: PerformanceRelationshipGame[];
 }
 
 export interface UserPerformanceInsights {

@@ -22,6 +22,7 @@ export interface PlayerCardProfileBodyProps {
   edgeToEdge?: boolean;
   prependBeforeLevelHistory?: ReactNode;
   showProfileTabs?: boolean;
+  showGroupsTab?: boolean;
   activeProfileTab?: PlayerCardProfileTab;
   onProfileTabChange?: (tab: PlayerCardProfileTab) => void;
   groupsContent?: ReactNode;
@@ -41,6 +42,7 @@ export const PlayerCardProfileBody = ({
   edgeToEdge = false,
   prependBeforeLevelHistory,
   showProfileTabs = false,
+  showGroupsTab = true,
   activeProfileTab = 'statistics',
   onProfileTabChange,
   groupsContent,
@@ -57,14 +59,19 @@ export const PlayerCardProfileBody = ({
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const hasTelegram = showTelegram && !!(user.telegramId || (user.telegramUsername && user.telegramUsername.trim()));
 
-  const profileTabs = useMemo<SegmentedSwitchTab[]>(
-    () => [
+  const profileTabs = useMemo<SegmentedSwitchTab[]>(() => {
+    const tabs: SegmentedSwitchTab[] = [
       { id: 'statistics', label: t('playerCard.statistics'), icon: BarChart3 },
       { id: 'levels', label: t('playerCard.levels'), icon: Dumbbell },
-      { id: 'groups', label: t('playerCard.groups'), icon: Users },
-    ],
-    [t],
-  );
+    ];
+
+    if (showGroupsTab) {
+      tabs.push({ id: 'groups', label: t('playerCard.groups'), icon: Users });
+    }
+
+    return tabs;
+  }, [showGroupsTab, t]);
+  const safeActiveProfileTab = activeProfileTab === 'groups' && !showGroupsTab ? 'statistics' : activeProfileTab;
 
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } } };
   const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } } };
@@ -142,7 +149,7 @@ export const PlayerCardProfileBody = ({
         )}
       </motion.div>
 
-      {(!showProfileTabs || activeProfileTab === 'statistics') && stats.user.bio && (
+      {(!showProfileTabs || safeActiveProfileTab === 'statistics') && stats.user.bio && (
         <motion.div variants={itemVariants} className={edgeToEdge ? 'px-0' : 'px-6'}>
           <p className="text-sm text-gray-600 dark:text-gray-400 italic">
             {`"${stats.user.bio}"`}
@@ -160,7 +167,7 @@ export const PlayerCardProfileBody = ({
         <motion.div variants={itemVariants} className="flex justify-center">
           <SegmentedSwitch
             tabs={profileTabs}
-            activeId={activeProfileTab}
+            activeId={safeActiveProfileTab}
             onChange={(id) => onProfileTabChange(id as PlayerCardProfileTab)}
             showOnlyActiveTabText={false}
             layoutId="player-card-profile-tabs"
@@ -169,7 +176,7 @@ export const PlayerCardProfileBody = ({
         </motion.div>
       )}
 
-      {showProfileTabs && activeProfileTab === 'groups' ? (
+      {showProfileTabs && safeActiveProfileTab === 'groups' ? (
         <motion.div variants={itemVariants}>
           {groupsContent}
         </motion.div>
@@ -180,7 +187,7 @@ export const PlayerCardProfileBody = ({
             padding="p-0"
             tabDarkBgClass="dark:bg-gray-700/50"
             hideUserCard
-            content={showProfileTabs && activeProfileTab === 'levels' ? 'levels' : showProfileTabs ? 'statistics' : 'all'}
+            content={showProfileTabs && safeActiveProfileTab === 'levels' ? 'levels' : showProfileTabs ? 'statistics' : 'all'}
             onOpenGame={onOpenGame}
             showItemsToSell
             onMarketItemClick={onMarketItemClick}
