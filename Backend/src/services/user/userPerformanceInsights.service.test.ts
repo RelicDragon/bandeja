@@ -3,6 +3,7 @@ import { Gender, Sport } from '@prisma/client';
 import {
   buildPerformanceRelationships,
   buildPerformanceStreaks,
+  isRelationshipInsightMatch,
   type RelationshipMatchInput,
   type StreakOutcomeInput,
 } from './userPerformanceInsights.service';
@@ -53,6 +54,28 @@ const match = (
   ratingDelta,
   teams,
 });
+
+(() => {
+  assert.equal(
+    isRelationshipInsightMatch({
+      sets: [{ teamAScore: 11, teamBScore: 5, role: 'OFFICIAL' }],
+    }),
+    true,
+    'relationship insights count legacy final scores even when current rulebook would not rate them',
+  );
+  assert.equal(
+    isRelationshipInsightMatch({
+      sets: [{ teamAScore: 0, teamBScore: 0, role: 'OFFICIAL' }],
+    }),
+    false,
+  );
+  assert.equal(
+    isRelationshipInsightMatch({
+      sets: [{ teamAScore: 11, teamBScore: 5, role: 'EXTRA_GAMES' }],
+    }),
+    false,
+  );
+})();
 
 (() => {
   const streaks = buildPerformanceStreaks([

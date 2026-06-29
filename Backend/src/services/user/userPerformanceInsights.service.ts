@@ -1,4 +1,4 @@
-import { EntityType, ParticipantStatus, Sport } from '@prisma/client';
+import { EntityType, MatchSetRole, ParticipantStatus, Sport } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import {
@@ -7,7 +7,6 @@ import {
 } from '../../utils/constants';
 import { projectUserForSportContext } from './userSportProfile.service';
 import { isOfficialMatchSetRole } from '../results/matchSetRole';
-import { isPrismaMatchCountedForStandingsAndRating } from '../results/matchStandingsPrisma';
 
 const INSIGHT_USER_SELECT = {
   ...USER_SELECT_FIELDS,
@@ -389,6 +388,18 @@ function isRelationshipRatingMatch(userId: string, match: RelationshipMatchInput
   return hasPartnerRelationship || hasOneVsOneOpponentRelationship || hasTwoVsTwoOpponentRelationship;
 }
 
+export function isRelationshipInsightMatch(match: {
+  sets: Array<{
+    teamAScore: number;
+    teamBScore: number;
+    role: MatchSetRole | string;
+  }>;
+}): boolean {
+  return match.sets.some((set) =>
+    (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role as MatchSetRole),
+  );
+}
+
 export async function getUserPerformanceInsights(
   userId: string,
   sport: Sport,
@@ -453,11 +464,7 @@ export async function getUserPerformanceInsights(
     const gameRelationshipMatches: RelationshipMatchInput[] = [];
     for (const round of game.rounds) {
       for (const match of round.matches) {
-        if (!isPrismaMatchCountedForStandingsAndRating(match, game)) continue;
-        const officialSets = match.sets.filter((set) =>
-          (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role),
-        );
-        if (officialSets.length === 0) continue;
+        if (!isRelationshipInsightMatch(match)) continue;
         gameRelationshipMatches.push({
           winnerTeamId: match.winnerId,
           teams: match.teams.map((team) => ({
