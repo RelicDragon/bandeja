@@ -98,12 +98,14 @@ export interface PlayerComparison {
     gamesCoplayed: number;
     wins: number;
     losses: number;
+    ties: number;
     winRate: string;
   };
   gamesAgainst: {
     total: number;
     wins: number;
     losses: number;
+    ties: number;
     winRate: string;
   };
   gamesAgainstEachOther?: Array<{

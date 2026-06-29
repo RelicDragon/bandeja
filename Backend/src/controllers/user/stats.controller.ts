@@ -11,6 +11,10 @@ import {
 import { getUserGameOutcomeAggregates } from '../../services/user/userGameOutcomeStats.service';
 import { getUserPerformanceInsights } from '../../services/user/userPerformanceInsights.service';
 import {
+  addScoredComparisonMatchStats,
+  emptyComparisonRelationshipStats,
+} from '../../services/user/playerComparisonStats.service';
+import {
   parseSportParam,
   projectUserForSportContext,
 } from '../../services/user/userSportProfile.service';
@@ -359,6 +363,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
                       },
                     },
                   },
+                  sets: { orderBy: { setNumber: 'asc' } },
                 },
               },
             },
@@ -368,44 +373,22 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
     },
   });
 
-  let matchesTogetherCount = 0;
-  let matchesAgainstCount = 0;
-  let winsTogether = 0;
-  let lossesTogether = 0;
-  let winsAgainst = 0;
-  let lossesAgainst = 0;
+  const comparisonBuckets = {
+    together: emptyComparisonRelationshipStats(),
+    against: emptyComparisonRelationshipStats(),
+  };
 
   const addStatsFromMatchTeamsOnly = (game: (typeof gamesTogether)[0]['game']): boolean => {
     let playedAgainst = false;
     for (const round of game.rounds) {
       for (const match of round.matches) {
-        const currentUserTeam = match.teams.find((team) =>
-          team.players.some((p) => p.userId === currentUserId)
+        const relationship = addScoredComparisonMatchStats(
+          comparisonBuckets,
+          currentUserId,
+          otherUserId,
+          match,
         );
-        const otherUserTeam = match.teams.find((team) =>
-          team.players.some((p) => p.userId === otherUserId)
-        );
-
-        if (!currentUserTeam || !otherUserTeam) {
-          continue;
-        }
-
-        if (currentUserTeam.id === otherUserTeam.id) {
-          matchesTogetherCount++;
-          if (match.winnerId === currentUserTeam.id) {
-            winsTogether++;
-          } else if (match.winnerId) {
-            lossesTogether++;
-          }
-        } else {
-          matchesAgainstCount++;
-          playedAgainst = true;
-          if (match.winnerId === currentUserTeam.id) {
-            winsAgainst++;
-          } else if (match.winnerId === otherUserTeam.id) {
-            lossesAgainst++;
-          }
-        }
+        if (relationship === 'against') playedAgainst = true;
       }
     }
     return playedAgainst;
@@ -440,35 +423,21 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
             }
 
             if (sameFixedTeam) {
-              matchesTogetherCount++;
-              const currentUserTeamInMatch = match.teams.find((team) =>
-                team.players.some((p) => p.userId === currentUserId)
+              addScoredComparisonMatchStats(
+                comparisonBuckets,
+                currentUserId,
+                otherUserId,
+                match,
+                'together',
               );
-              if (currentUserTeamInMatch && match.winnerId === currentUserTeamInMatch.id) {
-                winsTogether++;
-              } else if (match.winnerId) {
-                lossesTogether++;
-              }
             } else {
-              const currentUserTeamInMatch = match.teams.find((team) =>
-                team.players.some((p) => p.userId === currentUserId)
+              addScoredComparisonMatchStats(
+                comparisonBuckets,
+                currentUserId,
+                otherUserId,
+                match,
+                'against',
               );
-              const otherUserTeamInMatch = match.teams.find((team) =>
-                team.players.some((p) => p.userId === otherUserId)
-              );
-
-              if (
-                currentUserTeamInMatch &&
-                otherUserTeamInMatch &&
-                currentUserTeamInMatch.id !== otherUserTeamInMatch.id
-              ) {
-                matchesAgainstCount++;
-                if (match.winnerId === currentUserTeamInMatch.id) {
-                  winsAgainst++;
-                } else if (match.winnerId === otherUserTeamInMatch.id) {
-                  lossesAgainst++;
-                }
-              }
             }
           }
         }
@@ -499,6 +468,7 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
     getUserGameOutcomeAggregates(currentUserId, sport),
     getUserGameOutcomeAggregates(otherUserId, sport),
   ]);
+  const { together, against } = comparisonBuckets;
 
   res.json({
     success: true,
@@ -506,17 +476,19 @@ export const getPlayerComparison = asyncHandler(async (req: AuthRequest, res: Re
       sport,
       otherUser,
       gamesTogether: {
-        total: matchesTogetherCount,
+        total: together.total,
         gamesCoplayed: coplayedGamesCount,
-        wins: winsTogether,
-        losses: lossesTogether,
-        winRate: matchesTogetherCount > 0 ? ((winsTogether / matchesTogetherCount) * 100).toFixed(1) : '0',
+        wins: together.wins,
+        losses: together.losses,
+        ties: together.ties,
+        winRate: together.total > 0 ? ((together.wins / together.total) * 100).toFixed(1) : '0',
       },
       gamesAgainst: {
-        total: matchesAgainstCount,
-        wins: winsAgainst,
-        losses: lossesAgainst,
-        winRate: matchesAgainstCount > 0 ? ((winsAgainst / matchesAgainstCount) * 100).toFixed(1) : '0',
+        total: against.total,
+        wins: against.wins,
+        losses: against.losses,
+        ties: against.ties,
+        winRate: against.total > 0 ? ((against.wins / against.total) * 100).toFixed(1) : '0',
       },
       gamesAgainstEachOther,
       currentUserStats,

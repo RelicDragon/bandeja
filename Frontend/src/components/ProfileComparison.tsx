@@ -202,6 +202,14 @@ export const ProfileComparison = () => {
                       {comparison.gamesTogether.losses}
                     </span>
                   </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('playerCard.tiesShort')}
+                    </span>
+                    <span className="text-xl font-semibold text-yellow-600 dark:text-yellow-400">
+                      {comparison.gamesTogether.ties}
+                    </span>
+                  </div>
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-600">
                     <span className="text-gray-600 dark:text-gray-400">
                       {t('playerCard.winRate')}
@@ -243,6 +251,14 @@ export const ProfileComparison = () => {
                     </span>
                     <span className="text-xl font-semibold text-red-600 dark:text-red-400">
                       {comparison.gamesAgainst.losses}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 dark:text-gray-400">
+                      {t('playerCard.tiesShort')}
+                    </span>
+                    <span className="text-xl font-semibold text-yellow-600 dark:text-yellow-400">
+                      {comparison.gamesAgainst.ties}
                     </span>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-gray-600">
@@ -301,4 +317,3 @@ export const ProfileComparison = () => {
     </SportLevelProvider>
   );
 };
-
