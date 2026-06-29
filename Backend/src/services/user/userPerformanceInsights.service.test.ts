@@ -145,6 +145,12 @@ const match = (
   assert.ok(relationships.worstPartner);
   assert.equal(relationships.worstPartner.user.id, highLossPartner.id);
   assert.equal(relationships.worstPartner.ratingNetChange, -0.02);
+  assert.ok(relationships.bestPartnerByRating);
+  assert.equal(relationships.bestPartnerByRating.user.id, netBestPartner.id);
+  assert.equal(relationships.bestPartnerByRating.ratingNetChange, 0.08);
+  assert.ok(relationships.worstPartnerByRating);
+  assert.equal(relationships.worstPartnerByRating.user.id, netWorstPartner.id);
+  assert.equal(relationships.worstPartnerByRating.ratingNetChange, -0.08);
 })();
 
 (() => {
@@ -228,6 +234,10 @@ const match = (
   assert.equal(relationships.nemesis?.losses, 4);
   assert.equal(relationships.nemesis?.wins, 1);
   assert.equal(relationships.nemesis?.ties, 0);
+  assert.ok(relationships.favoriteTargetByCount);
+  assert.equal(relationships.favoriteTargetByCount.user.id, favoriteTarget.id);
+  assert.ok(relationships.nemesisByCount);
+  assert.equal(relationships.nemesisByCount.user.id, nemesis.id);
 })();
 
 (() => {
@@ -279,9 +289,17 @@ const match = (
   assert.ok(relationships.favoriteTarget);
   assert.equal(relationships.favoriteTarget.user.id, highImpactTarget.id);
   assert.equal(relationships.favoriteTarget.ratingNetChange, 0.16);
+  assert.ok(relationships.favoriteTargetByRating);
+  assert.equal(relationships.favoriteTargetByRating.user.id, highImpactTarget.id);
+  assert.ok(relationships.favoriteTargetByCount);
+  assert.equal(relationships.favoriteTargetByCount.user.id, steadyTarget.id);
   assert.ok(relationships.nemesis);
   assert.equal(relationships.nemesis.user.id, highImpactNemesis.id);
   assert.equal(relationships.nemesis.ratingNetChange, -0.16);
+  assert.ok(relationships.nemesisByRating);
+  assert.equal(relationships.nemesisByRating.user.id, highImpactNemesis.id);
+  assert.ok(relationships.nemesisByCount);
+  assert.equal(relationships.nemesisByCount.user.id, steadyNemesis.id);
 })();
 
 (() => {

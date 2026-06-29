@@ -56,10 +56,16 @@ export interface PerformanceRelationshipEntry {
 export interface PerformanceRelationships {
   bestPartner: PerformanceRelationshipEntry | null;
   worstPartner: PerformanceRelationshipEntry | null;
+  bestPartnerByRating: PerformanceRelationshipEntry | null;
+  worstPartnerByRating: PerformanceRelationshipEntry | null;
   bestPartnerByCount: PerformanceRelationshipEntry | null;
   worstPartnerByCount: PerformanceRelationshipEntry | null;
   favoriteTarget: PerformanceRelationshipEntry | null;
   nemesis: PerformanceRelationshipEntry | null;
+  favoriteTargetByRating: PerformanceRelationshipEntry | null;
+  nemesisByRating: PerformanceRelationshipEntry | null;
+  favoriteTargetByCount: PerformanceRelationshipEntry | null;
+  nemesisByCount: PerformanceRelationshipEntry | null;
 }
 
 export interface UserPerformanceInsights {
@@ -217,6 +223,26 @@ function pickPartner(
   return pickByRelationshipScore(entries, direction);
 }
 
+function pickByRating(
+  entries: RelationshipCounter[],
+  direction: 'best' | 'worst',
+): RelationshipCounter | null {
+  if (entries.length === 0) return null;
+  return [...entries].sort((a, b) => {
+    const ratingDiff = direction === 'best'
+      ? b.ratingNetChange - a.ratingNetChange
+      : a.ratingNetChange - b.ratingNetChange;
+    if (ratingDiff !== 0) return ratingDiff;
+    const rateDiff = direction === 'best'
+      ? bayesianRelationshipRate(b) - bayesianRelationshipRate(a)
+      : bayesianRelationshipRate(a) - bayesianRelationshipRate(b);
+    if (rateDiff !== 0) return rateDiff;
+    const totalDiff = relationshipTotal(b) - relationshipTotal(a);
+    if (totalDiff !== 0) return totalDiff;
+    return compareName(a.user, b.user);
+  })[0] ?? null;
+}
+
 function pickPartnerByCount(
   entries: RelationshipCounter[],
   direction: 'best' | 'worst',
@@ -241,6 +267,32 @@ function pickTarget(entries: RelationshipCounter[]): RelationshipCounter | null 
 function pickNemesis(entries: RelationshipCounter[]): RelationshipCounter | null {
   if (entries.length === 0) return null;
   return pickByRelationshipScore(entries, 'worst');
+}
+
+function pickTargetByCount(entries: RelationshipCounter[]): RelationshipCounter | null {
+  if (entries.length === 0) return null;
+  return [...entries].sort((a, b) => {
+    const winsDiff = b.wins - a.wins;
+    if (winsDiff !== 0) return winsDiff;
+    const rateDiff = winRate(b) - winRate(a);
+    if (rateDiff !== 0) return rateDiff;
+    const totalDiff = relationshipTotal(b) - relationshipTotal(a);
+    if (totalDiff !== 0) return totalDiff;
+    return compareName(a.user, b.user);
+  })[0] ?? null;
+}
+
+function pickNemesisByCount(entries: RelationshipCounter[]): RelationshipCounter | null {
+  if (entries.length === 0) return null;
+  return [...entries].sort((a, b) => {
+    const lossesDiff = b.losses - a.losses;
+    if (lossesDiff !== 0) return lossesDiff;
+    const rateDiff = winRate(a) - winRate(b);
+    if (rateDiff !== 0) return rateDiff;
+    const totalDiff = relationshipTotal(b) - relationshipTotal(a);
+    if (totalDiff !== 0) return totalDiff;
+    return compareName(a.user, b.user);
+  })[0] ?? null;
 }
 
 function pickByRelationshipScore(
@@ -310,10 +362,16 @@ export function buildPerformanceRelationships(
   return {
     bestPartner: toRelationshipEntry(pickPartner(partnerEntries, 'best'), sport),
     worstPartner: toRelationshipEntry(pickPartner(partnerEntries, 'worst'), sport),
+    bestPartnerByRating: toRelationshipEntry(pickByRating(partnerEntries, 'best'), sport),
+    worstPartnerByRating: toRelationshipEntry(pickByRating(partnerEntries, 'worst'), sport),
     bestPartnerByCount: toRelationshipEntry(pickPartnerByCount(partnerEntries, 'best'), sport),
     worstPartnerByCount: toRelationshipEntry(pickPartnerByCount(partnerEntries, 'worst'), sport),
     favoriteTarget: toRelationshipEntry(pickTarget(opponentEntries), sport),
     nemesis: toRelationshipEntry(pickNemesis(opponentEntries), sport),
+    favoriteTargetByRating: toRelationshipEntry(pickByRating(opponentEntries, 'best'), sport),
+    nemesisByRating: toRelationshipEntry(pickByRating(opponentEntries, 'worst'), sport),
+    favoriteTargetByCount: toRelationshipEntry(pickTargetByCount(opponentEntries), sport),
+    nemesisByCount: toRelationshipEntry(pickNemesisByCount(opponentEntries), sport),
   };
 }
 

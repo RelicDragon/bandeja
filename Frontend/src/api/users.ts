@@ -64,10 +64,16 @@ export interface UserPerformanceInsights {
   relationships: {
     bestPartner: PerformanceRelationshipEntry | null;
     worstPartner: PerformanceRelationshipEntry | null;
+    bestPartnerByRating?: PerformanceRelationshipEntry | null;
+    worstPartnerByRating?: PerformanceRelationshipEntry | null;
     bestPartnerByCount?: PerformanceRelationshipEntry | null;
     worstPartnerByCount?: PerformanceRelationshipEntry | null;
     favoriteTarget: PerformanceRelationshipEntry | null;
     nemesis: PerformanceRelationshipEntry | null;
+    favoriteTargetByRating?: PerformanceRelationshipEntry | null;
+    nemesisByRating?: PerformanceRelationshipEntry | null;
+    favoriteTargetByCount?: PerformanceRelationshipEntry | null;
+    nemesisByCount?: PerformanceRelationshipEntry | null;
   };
 }
 

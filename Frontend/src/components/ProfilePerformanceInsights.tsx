@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Crosshair, Handshake, HelpCircle, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type {
@@ -11,6 +11,14 @@ interface ProfilePerformanceInsightsProps {
   insights?: UserPerformanceInsights;
   darkBgClass?: string;
 }
+
+type RelationshipRankingMode = 'formulae' | 'rating' | 'games';
+
+const relationshipRankingModes: Array<{ mode: RelationshipRankingMode; labelKey: string }> = [
+  { mode: 'formulae', labelKey: 'playerCard.relationshipRankingFormulae' },
+  { mode: 'rating', labelKey: 'playerCard.relationshipRankingRating' },
+  { mode: 'games', labelKey: 'playerCard.relationshipRankingGames' },
+];
 
 const streakClasses: Record<StreakResult, string> = {
   win: 'bg-green-500 dark:bg-green-400 border-green-600 dark:border-green-300',
@@ -50,20 +58,70 @@ function getInitials(entry: PerformanceRelationshipEntry) {
   return initials || '?';
 }
 
+function formatRatingNetChange(change: number) {
+  return `${change >= 0 ? '+' : ''}${change.toFixed(2)}`;
+}
+
+function getRatingNetChangeClass(change: number) {
+  if (change > 0) {
+    return 'bg-green-50 text-green-700 ring-green-200 dark:bg-green-950/30 dark:text-green-300 dark:ring-green-900/60';
+  }
+  if (change < 0) {
+    return 'bg-red-50 text-red-700 ring-red-200 dark:bg-red-950/30 dark:text-red-300 dark:ring-red-900/60';
+  }
+  return 'bg-gray-50 text-gray-600 ring-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:ring-gray-700';
+}
+
 export const ProfilePerformanceInsights = ({
   insights,
   darkBgClass = 'dark:bg-gray-700/50',
 }: ProfilePerformanceInsightsProps) => {
   const { t } = useTranslation();
   const [showRelationshipInfo, setShowRelationshipInfo] = useState(false);
+  const [relationshipRankingMode, setRelationshipRankingMode] =
+    useState<RelationshipRankingMode>('formulae');
+  const [displayedRelationshipRankingMode, setDisplayedRelationshipRankingMode] =
+    useState<RelationshipRankingMode>('formulae');
+  const [relationshipCardsVisible, setRelationshipCardsVisible] = useState(true);
+  const relationshipHideTimeoutRef = useRef<number | null>(null);
+  const relationshipRevealTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (relationshipHideTimeoutRef.current != null) {
+      window.clearTimeout(relationshipHideTimeoutRef.current);
+    }
+    if (relationshipRevealTimeoutRef.current != null) {
+      window.clearTimeout(relationshipRevealTimeoutRef.current);
+    }
+  }, []);
+
   if (!insights) return null;
 
   const recentGames = insights.streaks.recentGames.slice(-10);
   const emptySlots = Math.max(0, 10 - recentGames.length);
   const hasStreakData = recentGames.length > 0 || !!insights.streaks.current;
 
-  const bestPartner = insights.relationships.bestPartner;
-  const worstPartner = insights.relationships.worstPartner;
+  const relationshipSource = insights.relationships;
+  const bestPartner = displayedRelationshipRankingMode === 'rating'
+    ? relationshipSource.bestPartnerByRating ?? relationshipSource.bestPartner
+    : displayedRelationshipRankingMode === 'games'
+      ? relationshipSource.bestPartnerByCount ?? relationshipSource.bestPartner
+      : relationshipSource.bestPartner;
+  const worstPartner = displayedRelationshipRankingMode === 'rating'
+    ? relationshipSource.worstPartnerByRating ?? relationshipSource.worstPartner
+    : displayedRelationshipRankingMode === 'games'
+      ? relationshipSource.worstPartnerByCount ?? relationshipSource.worstPartner
+      : relationshipSource.worstPartner;
+  const favoriteTarget = displayedRelationshipRankingMode === 'rating'
+    ? relationshipSource.favoriteTargetByRating ?? relationshipSource.favoriteTarget
+    : displayedRelationshipRankingMode === 'games'
+      ? relationshipSource.favoriteTargetByCount ?? relationshipSource.favoriteTarget
+      : relationshipSource.favoriteTarget;
+  const nemesis = displayedRelationshipRankingMode === 'rating'
+    ? relationshipSource.nemesisByRating ?? relationshipSource.nemesis
+    : displayedRelationshipRankingMode === 'games'
+      ? relationshipSource.nemesisByCount ?? relationshipSource.nemesis
+      : relationshipSource.nemesis;
 
   const relationships = [
     {
@@ -84,14 +142,14 @@ export const ProfilePerformanceInsights = ({
       key: 'favoriteTarget',
       label: t('playerCard.favoriteTarget'),
       icon: Crosshair,
-      entry: insights.relationships.favoriteTarget,
+      entry: favoriteTarget,
       tone: 'text-blue-600 dark:text-blue-400',
     },
     {
       key: 'nemesis',
       label: t('playerCard.nemesis'),
       icon: ShieldAlert,
-      entry: insights.relationships.nemesis,
+      entry: nemesis,
       tone: 'text-purple-600 dark:text-purple-400',
     },
   ].filter((item) => item.entry);
@@ -110,6 +168,26 @@ export const ProfilePerformanceInsights = ({
         count: insights.streaks.current.count,
       })
     : t('playerCard.noStreakYet');
+
+  const selectRelationshipRankingMode = (mode: RelationshipRankingMode) => {
+    if (mode === relationshipRankingMode) return;
+    setRelationshipRankingMode(mode);
+
+    if (relationshipHideTimeoutRef.current != null) {
+      window.clearTimeout(relationshipHideTimeoutRef.current);
+    }
+    if (relationshipRevealTimeoutRef.current != null) {
+      window.clearTimeout(relationshipRevealTimeoutRef.current);
+    }
+
+    setRelationshipCardsVisible(false);
+    relationshipHideTimeoutRef.current = window.setTimeout(() => {
+      setDisplayedRelationshipRankingMode(mode);
+      relationshipRevealTimeoutRef.current = window.setTimeout(() => {
+        setRelationshipCardsVisible(true);
+      }, 30);
+    }, 150);
+  };
 
   return (
     <div className="space-y-3">
@@ -196,11 +274,43 @@ export const ProfilePerformanceInsights = ({
             <p className="mt-2">{t('playerCard.relationshipFormulaPick')}</p>
           </div>
         </div>
+        <div
+          className="mb-3 grid grid-cols-3 rounded-lg bg-white/70 p-1 shadow-inner ring-1 ring-gray-200/70 dark:bg-gray-800/40 dark:ring-gray-700/70"
+          aria-label={t('playerCard.relationshipRankingMode')}
+          role="radiogroup"
+        >
+          {relationshipRankingModes.map(({ mode, labelKey }) => {
+            const selected = relationshipRankingMode === mode;
+            return (
+              <button
+                key={mode}
+                type="button"
+                className={`min-w-0 rounded-md px-2 py-1.5 text-xs font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+                  selected
+                    ? 'bg-primary-600 text-white shadow-sm'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/70 dark:hover:text-white'
+                }`}
+                role="radio"
+                aria-checked={selected}
+                onClick={() => selectRelationshipRankingMode(mode)}
+              >
+                <span className="block truncate">{t(labelKey)}</span>
+              </button>
+            );
+          })}
+        </div>
 
         {hasRelationshipData ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div
+            className={`grid grid-cols-1 gap-2 transition-all duration-200 ease-out motion-reduce:transition-none sm:grid-cols-2 ${
+              relationshipCardsVisible
+                ? 'translate-y-0 scale-100 opacity-100'
+                : 'pointer-events-none translate-y-2 scale-[0.98] opacity-0'
+            }`}
+          >
             {relationships.map(({ key, label, icon: Icon, entry, tone }) => {
               if (!entry) return null;
+              const ratingNetChange = formatRatingNetChange(entry.ratingNetChange);
               return (
                 <div key={key} className="rounded-lg bg-white/70 dark:bg-gray-800/40 p-3">
                   <div className="mb-2 flex items-center gap-2">
@@ -239,6 +349,14 @@ export const ProfilePerformanceInsights = ({
                         </span>
                         <span className="text-gray-400 dark:text-gray-500">·</span>
                         <span>{entry.winRate}%</span>
+                        <span className="text-gray-400 dark:text-gray-500">·</span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none ring-1 ${getRatingNetChangeClass(entry.ratingNetChange)}`}
+                          title={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
+                          aria-label={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
+                        >
+                          Δ {ratingNetChange}
+                        </span>
                       </div>
                     </div>
                   </div>
