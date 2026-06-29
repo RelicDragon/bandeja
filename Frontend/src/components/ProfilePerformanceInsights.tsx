@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowUpRight, CalendarDays, ChevronDown, Crosshair, Handshake, HelpCircle, MapPin, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, CalendarDays, Crosshair, Handshake, HelpCircle, MapPin, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import type {
@@ -97,7 +97,7 @@ export const ProfilePerformanceInsights = ({
   const [displayedRelationshipRankingMode, setDisplayedRelationshipRankingMode] =
     useState<RelationshipRankingMode>('formulae');
   const [relationshipCardsVisible, setRelationshipCardsVisible] = useState(true);
-  const [expandedRelationshipKey, setExpandedRelationshipKey] = useState<RelationshipCardKey | null>(null);
+  const [selectedRelationshipKey, setSelectedRelationshipKey] = useState<RelationshipCardKey | null>(null);
   const relationshipHideTimeoutRef = useRef<number | null>(null);
   const relationshipRevealTimeoutRef = useRef<number | null>(null);
 
@@ -138,30 +138,36 @@ export const ProfilePerformanceInsights = ({
       ? relationshipSource.nemesisByCount ?? relationshipSource.nemesis
       : relationshipSource.nemesis;
 
-  const relationships = [
+  const relationships: Array<{
+    key: RelationshipCardKey;
+    label: string;
+    icon: typeof Trophy;
+    entry: PerformanceRelationshipEntry | null | undefined;
+    tone: string;
+  }> = [
     {
-      key: 'bestPartner',
+      key: 'bestPartner' as const,
       label: t('playerCard.bestPartner'),
       icon: Trophy,
       entry: bestPartner,
       tone: 'text-green-600 dark:text-green-400',
     },
     {
-      key: 'worstPartner',
+      key: 'worstPartner' as const,
       label: t('playerCard.worstPartner'),
       icon: TrendingDown,
       entry: worstPartner,
       tone: 'text-red-600 dark:text-red-400',
     },
     {
-      key: 'favoriteTarget',
+      key: 'favoriteTarget' as const,
       label: t('playerCard.favoriteTarget'),
       icon: Crosshair,
       entry: favoriteTarget,
       tone: 'text-blue-600 dark:text-blue-400',
     },
     {
-      key: 'nemesis',
+      key: 'nemesis' as const,
       label: t('playerCard.nemesis'),
       icon: ShieldAlert,
       entry: nemesis,
@@ -169,6 +175,9 @@ export const ProfilePerformanceInsights = ({
     },
   ].filter((item) => item.entry);
   const hasRelationshipData = relationships.length > 0;
+  const selectedRelationship = selectedRelationshipKey
+    ? relationships.find((relationship) => relationship.key === selectedRelationshipKey)
+    : null;
   const relationshipFormulaLines = [
     t('playerCard.relationshipFormulaMatches'),
     t('playerCard.relationshipFormulaRate'),
@@ -196,7 +205,7 @@ export const ProfilePerformanceInsights = ({
     }
 
     setRelationshipCardsVisible(false);
-    setExpandedRelationshipKey(null);
+    setSelectedRelationshipKey(null);
     relationshipHideTimeoutRef.current = window.setTimeout(() => {
       setDisplayedRelationshipRankingMode(mode);
       relationshipRevealTimeoutRef.current = window.setTimeout(() => {
@@ -269,220 +278,274 @@ export const ProfilePerformanceInsights = ({
         )}
       </section>
 
-      <section className={`relative rounded-xl bg-gray-100 ${darkBgClass} border border-gray-200/60 dark:border-gray-600/50 p-4`}>
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <Handshake size={16} className="shrink-0 text-gray-500 dark:text-gray-400" />
-            <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.partners')}</h3>
-          </div>
-          <button
-            type="button"
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/75 text-gray-500 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-600/70 dark:bg-gray-800/70 dark:text-gray-300 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 dark:focus-visible:ring-offset-gray-800"
-            aria-label={t('playerCard.relationshipInfoButton')}
-            aria-expanded={showRelationshipInfo}
-            aria-controls="profile-relationship-info"
-            onClick={() => setShowRelationshipInfo((value) => !value)}
-          >
-            <HelpCircle size={17} aria-hidden />
-          </button>
-        </div>
-        <div
-          id="profile-relationship-info"
-          className={`overflow-hidden transition-[max-height,opacity,margin] duration-300 ease-out ${
-            showRelationshipInfo ? 'mb-3 max-h-96 opacity-100' : 'mb-0 max-h-0 opacity-0'
-          }`}
-        >
-          <div className="rounded-lg border border-primary-100 bg-primary-50/70 px-3 py-2 text-xs leading-5 text-gray-600 dark:border-primary-900/50 dark:bg-primary-950/25 dark:text-gray-300">
-            <p>{t('playerCard.relationshipInfo')}</p>
-            <div className="mt-2 space-y-1 rounded-md bg-white/60 px-2 py-2 font-mono text-[11px] leading-4 text-gray-700 dark:bg-gray-900/30 dark:text-gray-200">
-              {relationshipFormulaLines.map((line) => (
-                <div key={line}>{line}</div>
-              ))}
-            </div>
-            <p className="mt-2">{t('playerCard.relationshipFormulaPick')}</p>
-          </div>
-        </div>
-        <div
-          className="mb-3 grid grid-cols-3 rounded-lg bg-white/70 p-1 shadow-inner ring-1 ring-gray-200/70 dark:bg-gray-800/40 dark:ring-gray-700/70"
-          aria-label={t('playerCard.relationshipRankingMode')}
-          role="radiogroup"
-        >
-          {relationshipRankingModes.map(({ mode, labelKey }) => {
-            const selected = relationshipRankingMode === mode;
-            return (
-              <button
-                key={mode}
-                type="button"
-                className={`min-w-0 rounded-md px-2 py-1.5 text-xs font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
-                  selected
-                    ? 'bg-primary-600 text-white shadow-sm'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/70 dark:hover:text-white'
-                }`}
-                role="radio"
-                aria-checked={selected}
-                onClick={() => selectRelationshipRankingMode(mode)}
-              >
-                <span className="block truncate">{t(labelKey)}</span>
-              </button>
-            );
-          })}
-        </div>
+      <section className={`relative overflow-hidden rounded-xl bg-gray-100 ${darkBgClass} border border-gray-200/60 dark:border-gray-600/50 p-4`}>
+        <AnimatePresence mode="wait" initial={false}>
+          {selectedRelationship?.entry ? (
+            <motion.div
+              key={`relationship-games-${selectedRelationship.key}`}
+              initial={{ opacity: 0, x: 28 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 28 }}
+              transition={{ duration: 0.24, ease: 'easeOut' }}
+              className="space-y-3"
+            >
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/80 text-gray-600 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-600/70 dark:bg-gray-800/70 dark:text-gray-300 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 dark:focus-visible:ring-offset-gray-800"
+                  aria-label={t('common.back', { defaultValue: 'Back' })}
+                  onClick={() => setSelectedRelationshipKey(null)}
+                >
+                  <ArrowLeft size={18} aria-hidden />
+                </button>
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <selectedRelationship.icon size={15} className={selectedRelationship.tone} />
+                    <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                      {selectedRelationship.label}
+                    </h3>
+                  </div>
+                  <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                    {getPlayerName(selectedRelationship.entry, t('playerCard.shareProfileFallbackName'))}
+                  </p>
+                </div>
+              </div>
 
-        {hasRelationshipData ? (
-          <motion.div
-            layout
-            className={`grid grid-cols-1 gap-2 transition-all duration-200 ease-out motion-reduce:transition-none sm:grid-cols-2 ${
-              relationshipCardsVisible
-                ? 'translate-y-0 scale-100 opacity-100'
-                : 'pointer-events-none translate-y-2 scale-[0.98] opacity-0'
-            }`}
-          >
-            {relationships.map(({ key, label, icon: Icon, entry, tone }) => {
-              if (!entry) return null;
-              const ratingNetChange = formatRatingNetChange(entry.ratingNetChange);
-              const relationshipKey = key as RelationshipCardKey;
-              const expanded = expandedRelationshipKey === relationshipKey;
-              const games = entry.games ?? [];
-              const panelId = `profile-relationship-games-${relationshipKey}`;
-              return (
-                <motion.div
-                  key={key}
-                  layout
-                  className={`overflow-hidden rounded-lg bg-white/70 shadow-sm ring-1 transition-colors duration-200 dark:bg-gray-800/40 ${
-                    expanded
-                      ? 'ring-primary-200 dark:ring-primary-800/70'
-                      : 'ring-transparent hover:bg-white/90 dark:hover:bg-gray-800/65'
+              <div className="rounded-xl border border-gray-200/70 bg-white/70 p-3 shadow-sm dark:border-gray-700/70 dark:bg-gray-800/45">
+                <div className="flex min-w-0 items-center gap-3">
+                  {selectedRelationship.entry.user.avatar ? (
+                    <img
+                      src={selectedRelationship.entry.user.avatar}
+                      alt={getPlayerName(selectedRelationship.entry, t('playerCard.shareProfileFallbackName'))}
+                      className="h-10 w-10 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
+                      {getInitials(selectedRelationship.entry)}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                      {getPlayerName(selectedRelationship.entry, t('playerCard.shareProfileFallbackName'))}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs tabular-nums text-gray-500 dark:text-gray-400">
+                      <span className="font-semibold text-green-600 dark:text-green-400">
+                        {selectedRelationship.entry.wins}{t('playerCard.winsShort')}
+                      </span>
+                      <span className="font-semibold text-red-600 dark:text-red-400">
+                        {selectedRelationship.entry.losses}{t('playerCard.lossesShort')}
+                      </span>
+                      <span className="font-semibold text-yellow-600 dark:text-yellow-400">
+                        {selectedRelationship.entry.ties}{t('playerCard.tiesShort')}
+                      </span>
+                      <span className="text-gray-400 dark:text-gray-500">·</span>
+                      <span>{selectedRelationship.entry.winRate}%</span>
+                      <span className="text-gray-400 dark:text-gray-500">·</span>
+                      <span
+                        className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none ring-1 ${getRatingNetChangeClass(selectedRelationship.entry.ratingNetChange)}`}
+                        title={t('playerCard.relationshipRatingNetChange', { change: formatRatingNetChange(selectedRelationship.entry.ratingNetChange) })}
+                        aria-label={t('playerCard.relationshipRatingNetChange', { change: formatRatingNetChange(selectedRelationship.entry.ratingNetChange) })}
+                      >
+                        Δ {formatRatingNetChange(selectedRelationship.entry.ratingNetChange)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {(selectedRelationship.entry.games ?? []).length > 0 ? selectedRelationship.entry.games.map((game) => {
+                  const location = getGameLocation(game);
+                  return (
+                    <motion.button
+                      key={game.id}
+                      type="button"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      className="group flex w-full items-center gap-3 rounded-xl border border-gray-200/70 bg-white/85 px-3 py-2.5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:bg-primary-50/70 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700/70 dark:bg-gray-800/70 dark:hover:border-primary-800 dark:hover:bg-primary-950/25"
+                      onClick={() => openRelationshipGame(game)}
+                    >
+                      <div className="flex h-11 w-14 shrink-0 flex-col items-center justify-center rounded-lg bg-gray-100 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700/80 dark:text-gray-300">
+                        <CalendarDays size={14} className="mb-0.5" aria-hidden />
+                        <span>{formatDate(game.startTime, 'MMM d')}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                          {getRelationshipGameTitle(game)}
+                        </div>
+                        <div className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                          <MapPin size={12} className="shrink-0" aria-hidden />
+                          <span className="truncate">{location || t(`games.entityTypes.${game.entityType}`, { defaultValue: game.entityType })}</span>
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                            {t('games.resultsAvailable')}
+                          </span>
+                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
+                            game.affectsRating
+                              ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300'
+                              : 'bg-gray-100 text-gray-600 dark:bg-gray-700/70 dark:text-gray-300'
+                          }`}
+                          >
+                            {game.affectsRating ? t('games.Rating') : t('games.noRating')}
+                          </span>
+                        </div>
+                      </div>
+                      <ArrowUpRight size={17} className="shrink-0 text-gray-400 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-300" aria-hidden />
+                    </motion.button>
+                  );
+                }) : (
+                  <div className="rounded-lg bg-white/70 px-3 py-4 text-center text-sm text-gray-500 dark:bg-gray-800/40 dark:text-gray-400">
+                    {t('profile.noSharedGames', { defaultValue: 'No shared finished games yet' })}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="relationship-cards"
+              initial={{ opacity: 0, x: -28 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -28 }}
+              transition={{ duration: 0.24, ease: 'easeOut' }}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Handshake size={16} className="shrink-0 text-gray-500 dark:text-gray-400" />
+                  <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.partners')}</h3>
+                </div>
+                <button
+                  type="button"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200/80 bg-white/75 text-gray-500 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-primary-50 hover:text-primary-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:border-gray-600/70 dark:bg-gray-800/70 dark:text-gray-300 dark:hover:border-primary-700 dark:hover:bg-primary-950/40 dark:hover:text-primary-300 dark:focus-visible:ring-offset-gray-800"
+                  aria-label={t('playerCard.relationshipInfoButton')}
+                  aria-expanded={showRelationshipInfo}
+                  aria-controls="profile-relationship-info"
+                  onClick={() => setShowRelationshipInfo((value) => !value)}
+                >
+                  <HelpCircle size={17} aria-hidden />
+                </button>
+              </div>
+              <div
+                id="profile-relationship-info"
+                className={`overflow-hidden transition-[max-height,opacity,margin] duration-300 ease-out ${
+                  showRelationshipInfo ? 'mb-3 max-h-96 opacity-100' : 'mb-0 max-h-0 opacity-0'
+                }`}
+              >
+                <div className="rounded-lg border border-primary-100 bg-primary-50/70 px-3 py-2 text-xs leading-5 text-gray-600 dark:border-primary-900/50 dark:bg-primary-950/25 dark:text-gray-300">
+                  <p>{t('playerCard.relationshipInfo')}</p>
+                  <div className="mt-2 space-y-1 rounded-md bg-white/60 px-2 py-2 font-mono text-[11px] leading-4 text-gray-700 dark:bg-gray-900/30 dark:text-gray-200">
+                    {relationshipFormulaLines.map((line) => (
+                      <div key={line}>{line}</div>
+                    ))}
+                  </div>
+                  <p className="mt-2">{t('playerCard.relationshipFormulaPick')}</p>
+                </div>
+              </div>
+              <div
+                className="mb-3 grid grid-cols-3 rounded-lg bg-white/70 p-1 shadow-inner ring-1 ring-gray-200/70 dark:bg-gray-800/40 dark:ring-gray-700/70"
+                aria-label={t('playerCard.relationshipRankingMode')}
+                role="radiogroup"
+              >
+                {relationshipRankingModes.map(({ mode, labelKey }) => {
+                  const selected = relationshipRankingMode === mode;
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      className={`min-w-0 rounded-md px-2 py-1.5 text-xs font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+                        selected
+                          ? 'bg-primary-600 text-white shadow-sm'
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/70 dark:hover:text-white'
+                      }`}
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => selectRelationshipRankingMode(mode)}
+                    >
+                      <span className="block truncate">{t(labelKey)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {hasRelationshipData ? (
+                <div
+                  className={`grid grid-cols-1 gap-2 transition-all duration-200 ease-out motion-reduce:transition-none sm:grid-cols-2 ${
+                    relationshipCardsVisible
+                      ? 'translate-y-0 scale-100 opacity-100'
+                      : 'pointer-events-none translate-y-2 scale-[0.98] opacity-0'
                   }`}
                 >
-                  <button
-                    type="button"
-                    className="w-full p-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-800"
-                    aria-expanded={expanded}
-                    aria-controls={panelId}
-                    onClick={() => setExpandedRelationshipKey((current) => current === relationshipKey ? null : relationshipKey)}
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <Icon size={14} className={tone} />
-                        <span className="truncate text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
-                      </div>
-                      <ChevronDown
-                        size={15}
-                        className={`shrink-0 text-gray-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
-                        aria-hidden
-                      />
-                    </div>
-                    <div className="flex min-w-0 items-center gap-2">
-                      {entry.user.avatar ? (
-                        <img
-                          src={entry.user.avatar}
-                          alt={getPlayerName(entry, t('playerCard.shareProfileFallbackName'))}
-                          className="h-8 w-8 shrink-0 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
-                          {getInitials(entry)}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="min-h-[2.3rem] text-sm font-semibold leading-[1.15rem] text-gray-900 dark:text-white">
-                          {getPlayerNameLines(entry, t('playerCard.shareProfileFallbackName')).map((line, index) => (
-                            <span key={`${line}-${index}`} className="block truncate">
-                              {line}
-                            </span>
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs tabular-nums text-gray-500 dark:text-gray-400">
-                          <span className="font-semibold text-green-600 dark:text-green-400">
-                            {entry.wins}{t('playerCard.winsShort')}
-                          </span>
-                          <span className="font-semibold text-red-600 dark:text-red-400">
-                            {entry.losses}{t('playerCard.lossesShort')}
-                          </span>
-                          <span className="font-semibold text-yellow-600 dark:text-yellow-400">
-                            {entry.ties}{t('playerCard.tiesShort')}
-                          </span>
-                          <span className="text-gray-400 dark:text-gray-500">·</span>
-                          <span>{entry.winRate}%</span>
-                          <span className="text-gray-400 dark:text-gray-500">·</span>
-                          <span
-                            className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none ring-1 ${getRatingNetChangeClass(entry.ratingNetChange)}`}
-                            title={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
-                            aria-label={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
-                          >
-                            Δ {ratingNetChange}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-
-                  <AnimatePresence initial={false}>
-                    {expanded && (
-                      <motion.div
-                        id={panelId}
-                        key={`${key}-games`}
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.24, ease: 'easeOut' }}
-                        className="overflow-hidden"
+                  {relationships.map(({ key, label, icon: Icon, entry, tone }) => {
+                    if (!entry) return null;
+                    const ratingNetChange = formatRatingNetChange(entry.ratingNetChange);
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        className="rounded-lg bg-white/70 p-3 text-left shadow-sm ring-1 ring-transparent transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/90 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:bg-gray-800/40 dark:hover:bg-gray-800/65 dark:focus-visible:ring-offset-gray-800"
+                        onClick={() => setSelectedRelationshipKey(key)}
                       >
-                        <div className="space-y-2 border-t border-gray-200/70 bg-white/55 p-2 dark:border-gray-700/70 dark:bg-gray-900/20">
-                          {games.length > 0 ? games.map((game) => {
-                            const location = getGameLocation(game);
-                            return (
-                              <button
-                                key={game.id}
-                                type="button"
-                                className="group flex w-full items-center gap-2 rounded-lg border border-gray-200/70 bg-white/80 px-2.5 py-2 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary-200 hover:bg-primary-50/70 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 dark:border-gray-700/70 dark:bg-gray-800/70 dark:hover:border-primary-800 dark:hover:bg-primary-950/25"
-                                onClick={() => openRelationshipGame(game)}
-                              >
-                                <div className="flex h-10 w-12 shrink-0 flex-col items-center justify-center rounded-md bg-gray-100 text-[10px] font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-700/80 dark:text-gray-300">
-                                  <CalendarDays size={13} className="mb-0.5" aria-hidden />
-                                  <span>{formatDate(game.startTime, 'MMM d')}</span>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                                    {getRelationshipGameTitle(game)}
-                                  </div>
-                                  <div className="mt-0.5 flex min-w-0 items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-                                    <MapPin size={12} className="shrink-0" aria-hidden />
-                                    <span className="truncate">{location || t(`games.entityTypes.${game.entityType}`, { defaultValue: game.entityType })}</span>
-                                  </div>
-                                  <div className="mt-1 flex flex-wrap gap-1">
-                                    <span className="rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
-                                      {t('games.resultsAvailable')}
-                                    </span>
-                                    <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                                      game.affectsRating
-                                        ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300'
-                                        : 'bg-gray-100 text-gray-600 dark:bg-gray-700/70 dark:text-gray-300'
-                                    }`}
-                                    >
-                                      {game.affectsRating ? t('games.Rating') : t('games.noRating')}
-                                    </span>
-                                  </div>
-                                </div>
-                                <ArrowUpRight size={16} className="shrink-0 text-gray-400 transition-colors group-hover:text-primary-600 dark:group-hover:text-primary-300" aria-hidden />
-                              </button>
-                            );
-                          }) : (
-                            <div className="rounded-lg bg-white/70 px-3 py-4 text-center text-sm text-gray-500 dark:bg-gray-800/40 dark:text-gray-400">
-                              {t('profile.noSharedGames', { defaultValue: 'No shared finished games yet' })}
+                        <div className="mb-2 flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Icon size={14} className={tone} />
+                            <span className="truncate text-xs font-medium text-gray-500 dark:text-gray-400">{label}</span>
+                          </div>
+                          <ArrowUpRight size={14} className="shrink-0 text-gray-400" aria-hidden />
+                        </div>
+                        <div className="flex min-w-0 items-center gap-2">
+                          {entry.user.avatar ? (
+                            <img
+                              src={entry.user.avatar}
+                              alt={getPlayerName(entry, t('playerCard.shareProfileFallbackName'))}
+                              className="h-8 w-8 shrink-0 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-200">
+                              {getInitials(entry)}
                             </div>
                           )}
+                          <div className="min-w-0 flex-1">
+                            <div className="min-h-[2.3rem] text-sm font-semibold leading-[1.15rem] text-gray-900 dark:text-white">
+                              {getPlayerNameLines(entry, t('playerCard.shareProfileFallbackName')).map((line, index) => (
+                                <span key={`${line}-${index}`} className="block truncate">
+                                  {line}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs tabular-nums text-gray-500 dark:text-gray-400">
+                              <span className="font-semibold text-green-600 dark:text-green-400">
+                                {entry.wins}{t('playerCard.winsShort')}
+                              </span>
+                              <span className="font-semibold text-red-600 dark:text-red-400">
+                                {entry.losses}{t('playerCard.lossesShort')}
+                              </span>
+                              <span className="font-semibold text-yellow-600 dark:text-yellow-400">
+                                {entry.ties}{t('playerCard.tiesShort')}
+                              </span>
+                              <span className="text-gray-400 dark:text-gray-500">·</span>
+                              <span>{entry.winRate}%</span>
+                              <span className="text-gray-400 dark:text-gray-500">·</span>
+                              <span
+                                className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold leading-none ring-1 ${getRatingNetChangeClass(entry.ratingNetChange)}`}
+                                title={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
+                                aria-label={t('playerCard.relationshipRatingNetChange', { change: ratingNetChange })}
+                              >
+                                Δ {ratingNetChange}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        ) : (
-          <div className="text-sm text-gray-500 dark:text-gray-400">{t('playerCard.noPartnerStatsYet')}</div>
-        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-500 dark:text-gray-400">{t('playerCard.noPartnerStatsYet')}</div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
     </div>
   );
