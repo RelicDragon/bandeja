@@ -35,6 +35,16 @@ function getPlayerName(entry: PerformanceRelationshipEntry, fallback: string) {
   return name || fallback;
 }
 
+function getPlayerNameLines(entry: PerformanceRelationshipEntry, fallback: string) {
+  const firstName = entry.user.firstName?.trim();
+  const lastName = entry.user.lastName?.trim();
+
+  if (firstName && lastName) return [firstName, lastName];
+
+  const name = `${firstName ?? ''} ${lastName ?? ''}`.trim();
+  return [name || fallback];
+}
+
 function getInitials(entry: PerformanceRelationshipEntry) {
   const initials = `${entry.user.firstName?.[0] ?? ''}${entry.user.lastName?.[0] ?? ''}`.toUpperCase();
   return initials || '?';
@@ -210,7 +220,13 @@ export const ProfilePerformanceInsights = ({
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <div className="truncate text-sm font-semibold text-gray-900 dark:text-white">{getPlayerName(entry, t('playerCard.shareProfileFallbackName'))}</div>
+                      <div className="min-h-[2.3rem] text-sm font-semibold leading-[1.15rem] text-gray-900 dark:text-white">
+                        {getPlayerNameLines(entry, t('playerCard.shareProfileFallbackName')).map((line, index) => (
+                          <span key={`${line}-${index}`} className="block truncate">
+                            {line}
+                          </span>
+                        ))}
+                      </div>
                       <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs tabular-nums text-gray-500 dark:text-gray-400">
                         <span className="font-semibold text-green-600 dark:text-green-400">
                           {entry.wins}{t('playerCard.winsShort')}
