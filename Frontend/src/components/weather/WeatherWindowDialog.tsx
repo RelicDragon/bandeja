@@ -1,8 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Droplets, Loader2, Wind } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import type { WeatherHourlyPoint, WeatherWindow } from '@/types';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { LAYOUT_TRANSITION, PANEL_TRANSITION } from '@/components/motion/motionTokens';
 import {
   formatWeatherTemperature,
   formatWeatherTime,
@@ -50,7 +53,7 @@ function resolveRowPhase(
   return 'game';
 }
 
-export function WeatherWindowDialog({
+function WeatherWindowDialogInner({
   open,
   onClose,
   forecast,
@@ -65,7 +68,10 @@ export function WeatherWindowDialog({
   modalId,
 }: WeatherWindowDialogProps) {
   const { t } = useTranslation();
+  const reduceMotion = usePrefersReducedMotion();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const bodyScrollRef = useRef<HTMLDivElement | null>(null);
+  const previousIsFullDayRef = useRef(false);
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const hasRows = Boolean(forecast?.available && forecast.hours.length > 0);
   const sortedRows = useMemo(
@@ -78,20 +84,40 @@ export function WeatherWindowDialog({
       setSelectedTime(null);
     }
   }, [selectedTime, sortedRows]);
+  useEffect(() => {
+    const becameFullDay = isFullDay && !previousIsFullDayRef.current;
+    previousIsFullDayRef.current = isFullDay;
 
-  const metadata = forecast
-    ? [
-        forecast.cityName,
-        getForecastUpdatedLabel(t, forecast.fetchedAt),
-        forecast.stale ? t('weather.stale', { defaultValue: 'stale' }) : null,
-      ].filter(Boolean)
-    : [];
+    if (!becameFullDay || typeof window === 'undefined') return;
+
+    window.requestAnimationFrame(() => {
+      bodyScrollRef.current?.scrollTo({
+        top: 0,
+        behavior: reduceMotion ? 'auto' : 'smooth',
+      });
+    });
+  }, [isFullDay, reduceMotion]);
+
+  const metadata = useMemo(
+    () =>
+      forecast
+        ? [
+            forecast.cityName,
+            getForecastUpdatedLabel(t, forecast.fetchedAt),
+            forecast.stale ? t('weather.stale', { defaultValue: 'stale' }) : null,
+          ].filter(Boolean)
+        : [],
+    [forecast, t],
+  );
   const showFullDayButton = Boolean(hasRows && onShowFullDay && !isFullDay);
-  const handleChartPointSelect = (time: string) => {
+  const handleChartPointSelect = useCallback((time: string) => {
     setSelectedTime(time);
 
     const scrollToSelectedRow = () => {
-      rowRefs.current.get(time)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      rowRefs.current.get(time)?.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'center',
+      });
     };
 
     if (typeof window === 'undefined') {
@@ -100,11 +126,15 @@ export function WeatherWindowDialog({
     }
 
     window.requestAnimationFrame(scrollToSelectedRow);
-  };
+  }, [reduceMotion]);
 
   return (
     <Dialog open={open} onClose={onClose} modalId={modalId}>
-      <DialogContent className="max-w-[92vw] rounded-2xl sm:max-w-md">
+      <DialogContent
+        className={`max-w-[92vw] rounded-2xl transition-[max-width] duration-300 ease-out ${
+          isFullDay ? 'sm:max-w-lg' : 'sm:max-w-md'
+        }`}
+      >
         <DialogTitle className="sr-only">
           {t('weather.forecastTitle', { defaultValue: 'Game weather' })}
         </DialogTitle>
@@ -115,7 +145,12 @@ export function WeatherWindowDialog({
           </div>
         ) : null}
 
-        <div className="max-h-[65vh] overflow-y-auto p-3">
+        <div
+          ref={bodyScrollRef}
+          className={`overflow-y-auto p-3 transition-[max-height] duration-300 ease-out ${
+            isFullDay ? 'max-h-[78vh]' : 'max-h-[65vh]'
+          }`}
+        >
           {isLoading ? (
             <div className="flex min-h-28 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
               <Loader2 size={18} className="mr-2 animate-spin" />
@@ -133,17 +168,34 @@ export function WeatherWindowDialog({
             </div>
           ) : (
             <div>
-              {isFullDay ? (
-                <WeatherDayChart
-                  points={sortedRows}
-                  locale={locale}
-                  hour12={hour12}
-                  startTime={startTime}
-                  endTime={endTime}
-                  selectedTime={selectedTime}
-                  onPointSelect={handleChartPointSelect}
-                />
-              ) : null}
+              <AnimatePresence initial={false}>
+                {isFullDay ? (
+                  <motion.div
+                    key="weather-full-day-chart"
+                    layout={!reduceMotion}
+                    initial={reduceMotion ? false : { opacity: 0, height: 0, y: -8 }}
+                    animate={reduceMotion ? { opacity: 1 } : { opacity: 1, height: 'auto', y: 0 }}
+                    exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0, y: -8 }}
+                    transition={{
+                      opacity: PANEL_TRANSITION,
+                      height: LAYOUT_TRANSITION,
+                      y: PANEL_TRANSITION,
+                      layout: LAYOUT_TRANSITION,
+                    }}
+                    className="overflow-hidden"
+                  >
+                    <WeatherDayChart
+                      points={sortedRows}
+                      locale={locale}
+                      hour12={hour12}
+                      startTime={startTime}
+                      endTime={endTime}
+                      selectedTime={selectedTime}
+                      onPointSelect={handleChartPointSelect}
+                    />
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
                 {sortedRows.map((point) => {
                   const condition = getWeatherConditionLabel(t, point.conditionKey);
@@ -163,7 +215,7 @@ export function WeatherWindowDialog({
                         }
                       }}
                       aria-current={isSelected ? 'true' : undefined}
-                      className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 rounded-lg px-1 py-2.5 transition-colors first:pt-0 last:pb-0 ${
+                      className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-lg px-1 py-2.5 transition-colors first:pt-0 last:pb-0 ${
                         isSelected
                           ? 'bg-sky-50/90 ring-2 ring-inset ring-sky-400/70 dark:bg-sky-950/40 dark:ring-sky-500/60'
                           : ''
@@ -231,21 +283,36 @@ export function WeatherWindowDialog({
                     </div>
                   );
                 })}
-                {showFullDayButton ? (
-                  <div className="pt-3">
-                    <button
-                      type="button"
-                      onClick={onShowFullDay}
-                      disabled={isFullDayLoading}
-                      className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-wait disabled:opacity-70 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+                <AnimatePresence initial={false}>
+                  {showFullDayButton ? (
+                    <motion.div
+                      key="weather-full-day-button"
+                      layout={!reduceMotion}
+                      initial={reduceMotion ? false : { opacity: 0, height: 0, y: 6 }}
+                      animate={reduceMotion ? { opacity: 1 } : { opacity: 1, height: 'auto', y: 0 }}
+                      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0, y: -4 }}
+                      transition={{
+                        opacity: PANEL_TRANSITION,
+                        height: LAYOUT_TRANSITION,
+                        y: PANEL_TRANSITION,
+                        layout: LAYOUT_TRANSITION,
+                      }}
+                      className="overflow-hidden pt-3"
                     >
-                      {isFullDayLoading ? <Loader2 size={14} className="animate-spin" /> : null}
-                      {isFullDayLoading
-                        ? t('weather.loadingShort', { defaultValue: 'Loading' })
-                        : t('weather.showFullDay', { defaultValue: 'Show full day' })}
-                    </button>
-                  </div>
-                ) : null}
+                      <button
+                        type="button"
+                        onClick={onShowFullDay}
+                        disabled={isFullDayLoading}
+                        className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:cursor-wait disabled:opacity-70 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+                      >
+                        {isFullDayLoading ? <Loader2 size={14} className="animate-spin" /> : null}
+                        {isFullDayLoading
+                          ? t('weather.loadingShort', { defaultValue: 'Loading' })
+                          : t('weather.showFullDay', { defaultValue: 'Show full day' })}
+                      </button>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
               </div>
             </div>
           )}
@@ -254,3 +321,5 @@ export function WeatherWindowDialog({
     </Dialog>
   );
 }
+
+export const WeatherWindowDialog = memo(WeatherWindowDialogInner);

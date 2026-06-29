@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import type { Game } from '@/types';
 import { useWeatherPreviewQuery } from '@/queries/weather';
-import { resolveGameWeatherQueryParams } from '@/utils/gameWeatherQueryParams';
 import { WeatherWindowDialog } from './WeatherWindowDialog';
 
 interface GameWeatherDialogProps {
@@ -12,28 +11,48 @@ interface GameWeatherDialogProps {
   hour12: boolean;
 }
 
-export function GameWeatherDialog({ game, open, onClose, locale, hour12 }: GameWeatherDialogProps) {
+const EMPTY_WEATHER_PARAMS = {};
+
+function GameWeatherDialogInner({ game, open, onClose, locale, hour12 }: GameWeatherDialogProps) {
   const [fullDayRequested, setFullDayRequested] = useState(false);
-  const weatherParams = resolveGameWeatherQueryParams(game);
-  const query = useWeatherPreviewQuery(weatherParams ?? {}, open && Boolean(weatherParams));
+  const weatherCityId = game.city?.id ?? game.club?.cityId ?? game.court?.club?.cityId ?? null;
+  const weatherParams = useMemo(
+    () => {
+      if (!weatherCityId || !game.startTime || !game.endTime) return null;
+
+      return {
+        cityId: weatherCityId,
+        startTime: game.startTime,
+        endTime: game.endTime,
+      };
+    },
+    [game.endTime, game.startTime, weatherCityId],
+  );
+  const query = useWeatherPreviewQuery(weatherParams ?? EMPTY_WEATHER_PARAMS, open && Boolean(weatherParams));
+  const fullDayParams = useMemo(
+    () => (weatherParams ? { ...weatherParams, scope: 'day' as const } : EMPTY_WEATHER_PARAMS),
+    [weatherParams],
+  );
   const fullDayQuery = useWeatherPreviewQuery(
-    weatherParams ? { ...weatherParams, scope: 'day' } : {},
+    fullDayParams,
     open && fullDayRequested && Boolean(weatherParams),
   );
   const fullDayForecast = fullDayQuery.data;
+  const handleClose = useCallback(() => {
+    setFullDayRequested(false);
+    onClose();
+  }, [onClose]);
+  const handleShowFullDay = useCallback(() => setFullDayRequested(true), []);
 
   return (
     <WeatherWindowDialog
       open={open}
-      onClose={() => {
-        setFullDayRequested(false);
-        onClose();
-      }}
+      onClose={handleClose}
       forecast={fullDayForecast ?? query.data}
       isLoading={query.isPending}
       isFullDay={Boolean(fullDayForecast)}
       isFullDayLoading={fullDayRequested && fullDayQuery.isPending}
-      onShowFullDay={() => setFullDayRequested(true)}
+      onShowFullDay={handleShowFullDay}
       startTime={weatherParams?.startTime ?? game.startTime}
       endTime={weatherParams?.endTime ?? game.endTime}
       locale={locale}
@@ -42,3 +61,5 @@ export function GameWeatherDialog({ game, open, onClose, locale, hour12 }: GameW
     />
   );
 }
+
+export const GameWeatherDialog = memo(GameWeatherDialogInner);

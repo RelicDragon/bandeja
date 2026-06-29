@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { memo } from 'react';
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Dumbbell, BarChart3, Users } from 'lucide-react';
@@ -34,7 +35,17 @@ export interface PlayerCardProfileBodyProps {
   onStatsRefresh?: (stats: UserStats) => void;
 }
 
-export const PlayerCardProfileBody = ({
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } },
+};
+
+const PlayerCardProfileBodyComponent = ({
   stats,
   t,
   isBlocked,
@@ -72,9 +83,6 @@ export const PlayerCardProfileBody = ({
     return tabs;
   }, [showGroupsTab, t]);
   const safeActiveProfileTab = activeProfileTab === 'groups' && !showGroupsTab ? 'statistics' : activeProfileTab;
-
-  const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } } };
-  const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } } };
 
   return (
     <motion.div className={`flex flex-col p-6 pt-2 ${prependBeforeLevelHistory ? 'gap-2' : 'gap-3'}`} variants={containerVariants} initial="hidden" animate="visible">
@@ -198,3 +206,5 @@ export const PlayerCardProfileBody = ({
     </motion.div>
   );
 };
+
+export const PlayerCardProfileBody = memo(PlayerCardProfileBodyComponent);

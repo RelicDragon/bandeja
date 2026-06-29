@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CloudSun, Droplets, Loader2, Wind } from 'lucide-react';
 import { useWeatherPreviewQuery } from '@/queries/weather';
@@ -11,8 +11,9 @@ import {
 import { WeatherIcon } from './WeatherIcon';
 import { WeatherWindowDialog } from './WeatherWindowDialog';
 import { getWeatherIconPalette } from './weatherIconPalette';
+import { areWeatherPreviewCardPropsEqual } from './weatherPreviewCardMemo';
 
-interface WeatherPreviewCardProps {
+export interface WeatherPreviewCardProps {
   cityId?: string | null;
   startTime?: string | null;
   endTime?: string | null;
@@ -21,7 +22,7 @@ interface WeatherPreviewCardProps {
   hour12: boolean;
 }
 
-export function WeatherPreviewCard({
+function WeatherPreviewCardInner({
   cityId,
   startTime,
   endTime,
@@ -33,11 +34,22 @@ export function WeatherPreviewCard({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [fullDayRequested, setFullDayRequested] = useState(false);
   const shouldLoad = enabled && Boolean(cityId && startTime && endTime);
-  const query = useWeatherPreviewQuery({ cityId, startTime, endTime }, shouldLoad);
+  const previewParams = useMemo(() => ({ cityId, startTime, endTime }), [cityId, endTime, startTime]);
+  const fullDayParams = useMemo(
+    () => ({ cityId, startTime, endTime, scope: 'day' as const }),
+    [cityId, endTime, startTime],
+  );
+  const query = useWeatherPreviewQuery(previewParams, shouldLoad);
   const fullDayQuery = useWeatherPreviewQuery(
-    { cityId, startTime, endTime, scope: 'day' },
+    fullDayParams,
     dialogOpen && fullDayRequested,
   );
+  const handleOpenDialog = useCallback(() => setDialogOpen(true), []);
+  const handleCloseDialog = useCallback(() => {
+    setDialogOpen(false);
+    setFullDayRequested(false);
+  }, []);
+  const handleShowFullDay = useCallback(() => setFullDayRequested(true), []);
 
   if (!shouldLoad) return null;
 
@@ -125,7 +137,7 @@ export function WeatherPreviewCard({
         <button
           type="button"
           className={`${cardClassName} cursor-pointer hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md dark:hover:border-sky-700`}
-          onClick={() => setDialogOpen(true)}
+          onClick={handleOpenDialog}
           aria-label={t('weather.openForecast', {
             condition: condition ?? '',
             temperature: summary ? formatWeatherTemperature(summary, { locale }) : '',
@@ -142,15 +154,12 @@ export function WeatherPreviewCard({
       {dialogOpen && startTime && endTime ? (
         <WeatherWindowDialog
           open={dialogOpen}
-          onClose={() => {
-            setDialogOpen(false);
-            setFullDayRequested(false);
-          }}
+          onClose={handleCloseDialog}
           forecast={fullDayQuery.data ?? forecast}
           isLoading={query.isPending}
           isFullDay={Boolean(fullDayQuery.data)}
           isFullDayLoading={fullDayRequested && fullDayQuery.isPending}
-          onShowFullDay={() => setFullDayRequested(true)}
+          onShowFullDay={handleShowFullDay}
           startTime={startTime}
           endTime={endTime}
           locale={locale}
@@ -161,3 +170,5 @@ export function WeatherPreviewCard({
     </>
   );
 }
+
+export const WeatherPreviewCard = memo(WeatherPreviewCardInner, areWeatherPreviewCardPropsEqual);

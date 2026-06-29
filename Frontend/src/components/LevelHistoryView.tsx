@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { memo, useState, useEffect, useMemo, useRef } from 'react';
 import { useUserStatsQuery } from '@/queries/useUserStatsQuery';
 import { useNavigate } from 'react-router-dom';
 import { UserStats, usersApi, LevelHistoryItem } from '@/api/users';
@@ -35,7 +35,7 @@ interface LevelHistoryViewProps {
   onStatsRefresh?: (stats: UserStats) => void;
 }
 
-export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, content = 'all', onOpenGame, showItemsToSell = false, onMarketItemClick, onStatsRefresh }: LevelHistoryViewProps) => {
+const LevelHistoryViewComponent = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, content = 'all', onOpenGame, showItemsToSell = false, onMarketItemClick, onStatsRefresh }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = stats;
@@ -578,3 +578,5 @@ export const LevelHistoryView = ({ stats, padding = 'p-6', tabDarkBgClass, hideU
     </div>
   );
 };
+
+export const LevelHistoryView = memo(LevelHistoryViewComponent);

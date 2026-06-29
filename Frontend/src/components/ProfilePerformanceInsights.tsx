@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeft, ArrowUpRight, CalendarDays, Crosshair, Handshake, HelpCircle, MapPin, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -84,7 +84,7 @@ function getGameLocation(game: PerformanceRelationshipGame) {
   return [...new Set(parts)].join(' · ');
 }
 
-export const ProfilePerformanceInsights = ({
+const ProfilePerformanceInsightsComponent = ({
   insights,
   darkBgClass = 'dark:bg-gray-700/50',
   onOpenGame,
@@ -550,3 +550,5 @@ export const ProfilePerformanceInsights = ({
     </div>
   );
 };
+
+export const ProfilePerformanceInsights = memo(ProfilePerformanceInsightsComponent);

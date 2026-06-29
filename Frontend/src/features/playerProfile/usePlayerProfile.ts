@@ -28,7 +28,18 @@ export function usePlayerProfile(
   const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const {
+    levelSport: explicitLevelSport,
+    sportFromUrl,
+    presenceKey: presenceKeyOption,
+    enabled: enabledOption,
+    onShareFallback,
+    onBlocked,
+    onStartChat,
+    onOpenFullProfile,
+  } = options;
   const user = useAuthStore((state) => state.user);
+  const viewerUserId = user?.id;
   const updateUser = useAuthStore((state) => state.updateUser);
   const { addFavorite, removeFavorite } = useFavoritesStore();
   const contextLevelSport = useSportLevelContext();
@@ -37,12 +48,12 @@ export function usePlayerProfile(
   const levelSport = useMemo(
     () =>
       resolveLevelSport({
-        explicit: options.levelSport,
-        fromUrl: options.sportFromUrl,
+        explicit: explicitLevelSport,
+        fromUrl: sportFromUrl,
         fromContext: contextLevelSport,
         viewerDefault,
       }),
-    [options.levelSport, options.sportFromUrl, contextLevelSport, viewerDefault],
+    [explicitLevelSport, sportFromUrl, contextLevelSport, viewerDefault],
   );
 
   const [isBlocked, setIsBlocked] = useState(false);
@@ -50,10 +61,10 @@ export function usePlayerProfile(
   const [startingChat, setStartingChat] = useState(false);
   const [blockingUser, setBlockingUser] = useState(false);
 
-  const enabled = options.enabled ?? !!playerId;
-  const isCurrentUser = !!(user && playerId && user.id === playerId);
-  const needsBlockedCheck = enabled && !!playerId && !!user?.id && user.id !== playerId;
-  const presenceKey = options.presenceKey ?? 'player-profile';
+  const enabled = enabledOption ?? !!playerId;
+  const isCurrentUser = !!(viewerUserId && playerId && viewerUserId === playerId);
+  const needsBlockedCheck = enabled && !!playerId && !!viewerUserId && viewerUserId !== playerId;
+  const presenceKey = presenceKeyOption ?? 'player-profile';
 
   const statsQueryEnabled = enabled && !!playerId;
   const {
@@ -101,17 +112,18 @@ export function usePlayerProfile(
     [queryClient, playerId, levelSport],
   );
 
-  usePresenceSubscription(
-    presenceKey,
-    user && playerId && !isCurrentUser ? [playerId] : [],
+  const presenceUserIds = useMemo(
+    () => (viewerUserId && playerId && !isCurrentUser ? [playerId] : []),
+    [viewerUserId, playerId, isCurrentUser],
   );
+  usePresenceSubscription(presenceKey, presenceUserIds);
 
   useEffect(() => {
-    if (!user || !playerId || isCurrentUser) return;
+    if (!viewerUserId || !playerId || isCurrentUser) return;
     usersApi.getPresence([playerId]).then((data) => {
       if (Object.keys(data).length > 0) usePresenceStore.getState().setPresenceInitial(data);
     }).catch(() => {});
-  }, [playerId, isCurrentUser, user]);
+  }, [playerId, isCurrentUser, viewerUserId]);
 
   const toggleFavorite = useCallback(async () => {
     if (!playerId || !stats || isBlocked) return;
@@ -151,7 +163,7 @@ export function usePlayerProfile(
         toast.error(t('errors.generic', { defaultValue: 'Something went wrong' }));
         return;
       }
-      const skipDefault = options.onStartChat?.(chat);
+      const skipDefault = onStartChat?.(chat);
       if (!skipDefault) {
         navigate(`/user-chat/${chat.id}`, {
           state: { chat, contextType: 'USER' },
@@ -164,7 +176,7 @@ export function usePlayerProfile(
     } finally {
       setStartingChat(false);
     }
-  }, [playerId, startingChat, isBlocked, navigate, t, options]);
+  }, [playerId, startingChat, isBlocked, navigate, t, onStartChat]);
 
   const share = useCallback(async () => {
     if (!playerId || !stats || isBlocked) return;
@@ -172,17 +184,17 @@ export function usePlayerProfile(
       playerId,
       sport: levelSport,
       t,
-      onFallbackModal: options.onShareFallback ?? (() => {}),
+      onFallbackModal: onShareFallback ?? (() => {}),
     });
-  }, [playerId, stats, isBlocked, levelSport, t, options]);
+  }, [playerId, stats, isBlocked, levelSport, t, onShareFallback]);
 
   const openFullProfile = useCallback(() => {
     if (!playerId || isCurrentUser) return;
-    const skipDefault = options.onOpenFullProfile?.(levelSport);
+    const skipDefault = onOpenFullProfile?.(levelSport);
     if (!skipDefault) {
       navigate(appendLevelSportQuery(`/user-profile/${playerId}`, levelSport));
     }
-  }, [playerId, isCurrentUser, levelSport, navigate, options]);
+  }, [playerId, isCurrentUser, levelSport, navigate, onOpenFullProfile]);
 
   const blockOrUnblock = useCallback(async () => {
     if (!playerId || blockingUser) return;
@@ -196,7 +208,7 @@ export function usePlayerProfile(
         await blockedUsersApi.blockUser(playerId);
         setIsBlocked(true);
         toast.success(t('playerCard.userBlocked') || 'User blocked');
-        options.onBlocked?.();
+        onBlocked?.();
       }
       try {
         const profileResponse = await usersApi.getProfile();
@@ -211,7 +223,7 @@ export function usePlayerProfile(
     } finally {
       setBlockingUser(false);
     }
-  }, [playerId, blockingUser, isBlocked, t, updateUser, options]);
+  }, [playerId, blockingUser, isBlocked, t, updateUser, onBlocked]);
 
   const block = useCallback(async () => {
     if (isBlocked) return;

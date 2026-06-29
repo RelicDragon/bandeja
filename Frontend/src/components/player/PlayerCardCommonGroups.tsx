@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Users } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import type { CommonChatItem } from '@/api/commonChats';
@@ -11,7 +12,7 @@ interface PlayerCardCommonGroupsProps {
   onChatClick: (chat: CommonChatItem) => void;
 }
 
-export const PlayerCardCommonGroups = ({
+const PlayerCardCommonGroupsComponent = ({
   chats,
   loading,
   t,
@@ -46,3 +47,5 @@ export const PlayerCardCommonGroups = ({
     </div>
   );
 };
+
+export const PlayerCardCommonGroups = memo(PlayerCardCommonGroupsComponent);

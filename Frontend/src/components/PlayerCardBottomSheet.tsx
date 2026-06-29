@@ -1,10 +1,13 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, Share2, Maximize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import type { UserChat } from '@/api/chat';
 import type { CommonChatItem } from '@/api/commonChats';
 import { usersApi } from '@/api/users';
+import type { MarketItem } from '@/types';
+import type { Sport } from '@shared/sport';
 import { Loading } from './Loading';
 import { ReviewsList } from './ReviewsList';
 import { SendMoneyToUserModal } from './SendMoneyToUserModal';
@@ -75,6 +78,41 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     onClose();
   }, [onClose, navigate]);
 
+  const handleShareFallback = useCallback((url: string) => {
+    setShareModalUrl(url);
+    setShowShareModal(true);
+  }, []);
+
+  const handleProfileStartChat = useCallback((chat: UserChat) => {
+    markReopenOnBack();
+    navigatingToChatRef.current = true;
+    navigate(`/user-chat/${chat.id}`, {
+      state: { chat, contextType: 'USER' },
+    });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => onClose());
+    });
+    return true;
+  }, [markReopenOnBack, navigate, onClose]);
+
+  const handleOpenFullProfile = useCallback((sport: Sport | undefined) => {
+    if (!playerId || playerId === user?.id) return true;
+    navigatingToFullProfileRef.current = true;
+    navigate(appendLevelSportQuery(`/user-profile/${playerId}`, sport));
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => onClose());
+    });
+    return true;
+  }, [navigate, onClose, playerId, user?.id]);
+
+  const playerProfileOptions = useMemo(() => ({
+    presenceKey: 'player-card',
+    onBlocked: handleClose,
+    onShareFallback: handleShareFallback,
+    onStartChat: handleProfileStartChat,
+    onOpenFullProfile: handleOpenFullProfile,
+  }), [handleClose, handleShareFallback, handleProfileStartChat, handleOpenFullProfile]);
+
   const {
     stats,
     loading,
@@ -84,34 +122,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     startingChat,
     blockingUser,
     actions,
-  } = usePlayerProfile(playerId, {
-    presenceKey: 'player-card',
-    onBlocked: () => handleClose(),
-    onShareFallback: (url) => {
-      setShareModalUrl(url);
-      setShowShareModal(true);
-    },
-    onStartChat: (chat) => {
-      markReopenOnBack();
-      navigatingToChatRef.current = true;
-      navigate(`/user-chat/${chat.id}`, {
-        state: { chat, contextType: 'USER' },
-      });
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => onClose());
-      });
-      return true;
-    },
-    onOpenFullProfile: (sport) => {
-      if (!playerId || playerId === user?.id) return true;
-      navigatingToFullProfileRef.current = true;
-      navigate(appendLevelSportQuery(`/user-profile/${playerId}`, sport));
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => onClose());
-      });
-      return true;
-    },
-  });
+  } = usePlayerProfile(playerId, playerProfileOptions);
 
   const canFetchCommonChats = !!user && !!playerId && !isCurrentUser && !isBlocked;
   const showGroupsTab = canFetchCommonChats && !commonChatsLoading && commonChats.length > 0;
@@ -201,6 +212,111 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     });
   }, [markReopenOnBack, navigate, onClose]);
 
+  const handleToggleFavorite = useCallback(() => {
+    void actions.toggleFavorite();
+  }, [actions]);
+
+  const handleShare = useCallback(() => {
+    void actions.share();
+  }, [actions]);
+
+  const handleStartChat = useCallback(() => {
+    void actions.startChat();
+  }, [actions]);
+
+  const handleBlockPrimary = useCallback(() => {
+    if (isBlocked) {
+      void actions.unblock();
+      return;
+    }
+    setShowBlockConfirmation(true);
+  }, [actions, isBlocked]);
+
+  const handleAvatarClick = useCallback(() => {
+    if (stats?.user.originalAvatar) setAvatarViewerUrl(stats.user.originalAvatar);
+  }, [stats?.user.originalAvatar]);
+
+  const handleRatingClick = useCallback(() => {
+    setShowReviewsView(true);
+  }, []);
+
+  const handleTelegramClick = useCallback(() => {
+    if (!stats || isBlocked) return;
+    const telegramUrl = stats.user.telegramUsername
+      ? `https://t.me/${stats.user.telegramUsername.replace('@', '')}`
+      : stats.user.telegramId
+        ? `tg://user?id=${stats.user.telegramId}`
+        : null;
+
+    if (telegramUrl) window.open(telegramUrl, '_blank');
+  }, [isBlocked, stats]);
+
+  const handleOpenGame = useCallback(() => {
+    markReopenOnBack();
+    handleClose();
+  }, [handleClose, markReopenOnBack]);
+
+  const handleMarketItemClick = useCallback((item: MarketItem) => {
+    markReopenOnBack();
+    handleClose();
+    navigate(`/marketplace/${item.id}`);
+  }, [handleClose, markReopenOnBack, navigate]);
+
+  const handleReviewClick = useCallback((gameId: string) => {
+    markReopenOnBack();
+    handleClose();
+    navigate(`/games/${gameId}`);
+  }, [handleClose, markReopenOnBack, navigate]);
+
+  const groupsContent = useMemo(() => (
+    <PlayerCardCommonGroups
+      chats={commonChats}
+      loading={commonChatsLoading}
+      t={t}
+      onChatClick={handleOpenCommonChat}
+    />
+  ), [commonChats, commonChatsLoading, handleOpenCommonChat, t]);
+
+  const prependBeforeLevelHistory = useMemo(() => {
+    if (isCurrentUser || !stats) return undefined;
+
+    return (
+      <PlayerProfileSocialActions
+        isFavorite={!!stats.user.isFavorite}
+        isBlocked={isBlocked}
+        startingChat={startingChat}
+        onToggleFavorite={handleToggleFavorite}
+        onStartChat={handleStartChat}
+        t={t}
+      />
+    );
+  }, [handleStartChat, handleToggleFavorite, isBlocked, isCurrentUser, startingChat, stats, t]);
+
+  const showRatingLink = !!stats?.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0;
+
+  const handleReviewsBack = useCallback(() => {
+    setShowReviewsView(false);
+  }, []);
+
+  const handleShareModalClose = useCallback(() => {
+    setShowShareModal(false);
+    setShareModalUrl('');
+  }, []);
+
+  const handleSendMoneyClose = useCallback(() => {
+    setShowSendMoneyModal(false);
+    onClose();
+  }, [onClose]);
+
+  const handleBlockConfirmationClose = useCallback(() => {
+    setShowBlockConfirmation(false);
+  }, []);
+
+  const handleBlockConfirm = useCallback(async () => {
+    await actions.block();
+    setShowBlockConfirmation(false);
+  }, [actions]);
+
   return (
     <>
       {!showSendMoneyModal && (
@@ -209,7 +325,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
             {showReviewsView && playerId ? (
               <div className="flex shrink-0 items-center justify-between w-full p-2 pl-6">
                 <div className="flex items-center gap-4">
-                  <button type="button" onClick={() => setShowReviewsView(false)} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                  <button type="button" onClick={handleReviewsBack} className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
                     <ArrowLeft size={20} className="text-gray-700 dark:text-gray-300" />
                   </button>
                   <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">{t('profile.review') || 'Reviews'}</h2>
@@ -228,10 +344,10 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   isBlocked={isBlocked}
                   blockingUser={blockingUser}
                   startingChat={startingChat}
-                  onToggleFavorite={() => void actions.toggleFavorite()}
-                  onShare={() => void actions.share()}
-                  onStartChat={() => void actions.startChat()}
-                  onBlockPrimary={isBlocked ? () => void actions.unblock() : () => setShowBlockConfirmation(true)}
+                  onToggleFavorite={handleToggleFavorite}
+                  onShare={handleShare}
+                  onStartChat={handleStartChat}
+                  onBlockPrimary={handleBlockPrimary}
                   onOpenFullProfile={!isCurrentUser ? actions.openFullProfile : undefined}
                   t={t}
                   closeSlot={(
@@ -247,7 +363,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                   {!isBlocked && (
                     <button
                       type="button"
-                      onClick={() => void actions.share()}
+                      onClick={handleShare}
                       className="px-4 py-2 rounded-xl text-white flex items-center justify-center shadow-md bg-gradient-to-r from-slate-500 to-slate-600 hover:from-slate-600 hover:to-slate-700"
                       title={t('playerCard.shareProfileTitle')}
                       aria-label={t('playerCard.shareProfileTitle')}
@@ -302,7 +418,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                       <ReviewsList
                         trainerId={playerId}
                         initialSummary={stats ? { rating: stats.user.trainerRating ?? null, reviewCount: stats.user.trainerReviewCount ?? 0 } : undefined}
-                        onReviewClick={(gameId) => { markReopenOnBack(); handleClose(); navigate(`/games/${gameId}`); }}
+                        onReviewClick={handleReviewClick}
                         showSummary
                         showTitle={false}
                         compact
@@ -319,41 +435,13 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         showGroupsTab={showGroupsTab}
                         activeProfileTab={profileTab}
                         onProfileTabChange={setProfileTab}
-                        groupsContent={(
-                          <PlayerCardCommonGroups
-                            chats={commonChats}
-                            loading={commonChatsLoading}
-                            t={t}
-                            onChatClick={handleOpenCommonChat}
-                          />
-                        )}
-                        prependBeforeLevelHistory={
-                          !isCurrentUser ? (
-                            <PlayerProfileSocialActions
-                              isFavorite={!!stats.user.isFavorite}
-                              isBlocked={isBlocked}
-                              startingChat={startingChat}
-                              onToggleFavorite={() => void actions.toggleFavorite()}
-                              onStartChat={() => void actions.startChat()}
-                              t={t}
-                            />
-                          ) : undefined
-                        }
-                        onAvatarClick={() => {
-                          if (stats.user.originalAvatar) setAvatarViewerUrl(stats.user.originalAvatar);
-                        }}
-                        onRatingClick={stats.user.isTrainer && (stats.user.trainerReviewCount ?? 0) > 0 ? () => setShowReviewsView(true) : undefined}
-                        onTelegramClick={() => {
-                          const getTelegramUrl = () => {
-                            if (stats.user.telegramUsername) return `https://t.me/${stats.user.telegramUsername.replace('@', '')}`;
-                            if (stats.user.telegramId) return `tg://user?id=${stats.user.telegramId}`;
-                            return null;
-                          };
-                          const telegramUrl = getTelegramUrl();
-                          if (telegramUrl && !isBlocked) window.open(telegramUrl, '_blank');
-                        }}
-                        onOpenGame={() => { markReopenOnBack(); handleClose(); }}
-                        onMarketItemClick={(item) => { markReopenOnBack(); handleClose(); navigate(`/marketplace/${item.id}`); }}
+                        groupsContent={groupsContent}
+                        prependBeforeLevelHistory={prependBeforeLevelHistory}
+                        onAvatarClick={handleAvatarClick}
+                        onRatingClick={showRatingLink ? handleRatingClick : undefined}
+                        onTelegramClick={handleTelegramClick}
+                        onOpenGame={handleOpenGame}
+                        onMarketItemClick={handleMarketItemClick}
                         onStatsRefresh={setStats}
                       />
                     </motion.div>
@@ -366,12 +454,12 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       )}
 
       {showSendMoneyModal && playerId && (
-        <SendMoneyToUserModal toUserId={playerId} onClose={() => { setShowSendMoneyModal(false); onClose(); }} />
+        <SendMoneyToUserModal toUserId={playerId} onClose={handleSendMoneyClose} />
       )}
 
       <ShareModal
         isOpen={showShareModal}
-        onClose={() => { setShowShareModal(false); setShareModalUrl(''); }}
+        onClose={handleShareModalClose}
         shareUrl={shareModalUrl}
         dialogTitle={t('playerCard.shareProfileTitle')}
         modalId="share-modal-profile"
@@ -395,11 +483,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
           confirmText={t('playerCard.block')}
           cancelText={t('common.cancel')}
           confirmVariant="danger"
-          onConfirm={async () => {
-            await actions.block();
-            setShowBlockConfirmation(false);
-          }}
-          onClose={() => setShowBlockConfirmation(false)}
+          onConfirm={handleBlockConfirm}
+          onClose={handleBlockConfirmationClose}
         />
       )}
     </>
