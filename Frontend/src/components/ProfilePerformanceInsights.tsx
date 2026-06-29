@@ -86,6 +86,14 @@ export const ProfilePerformanceInsights = ({
     },
   ].filter((item) => item.entry);
   const hasRelationshipData = relationships.length > 0;
+  const relationshipFormulaLines = [
+    t('playerCard.relationshipFormulaMatches'),
+    t('playerCard.relationshipFormulaRate'),
+    t('playerCard.relationshipFormulaConfidence'),
+    t('playerCard.relationshipFormulaRatingSignal'),
+    t('playerCard.relationshipFormulaRecordSignal'),
+    t('playerCard.relationshipFormulaScore'),
+  ];
 
   const currentStreak = insights.streaks.current
     ? t(`${currentStreakKey[insights.streaks.current.result]}_${insights.streaks.current.count === 1 ? 'one' : 'other'}`, {
@@ -165,12 +173,18 @@ export const ProfilePerformanceInsights = ({
         <div
           id="profile-relationship-info"
           className={`overflow-hidden transition-[max-height,opacity,margin] duration-300 ease-out ${
-            showRelationshipInfo ? 'mb-3 max-h-40 opacity-100' : 'mb-0 max-h-0 opacity-0'
+            showRelationshipInfo ? 'mb-3 max-h-96 opacity-100' : 'mb-0 max-h-0 opacity-0'
           }`}
         >
-          <p className="rounded-lg border border-primary-100 bg-primary-50/70 px-3 py-2 text-xs leading-5 text-gray-600 dark:border-primary-900/50 dark:bg-primary-950/25 dark:text-gray-300">
-            {t('playerCard.relationshipInfo')}
-          </p>
+          <div className="rounded-lg border border-primary-100 bg-primary-50/70 px-3 py-2 text-xs leading-5 text-gray-600 dark:border-primary-900/50 dark:bg-primary-950/25 dark:text-gray-300">
+            <p>{t('playerCard.relationshipInfo')}</p>
+            <div className="mt-2 space-y-1 rounded-md bg-white/60 px-2 py-2 font-mono text-[11px] leading-4 text-gray-700 dark:bg-gray-900/30 dark:text-gray-200">
+              {relationshipFormulaLines.map((line) => (
+                <div key={line}>{line}</div>
+              ))}
+            </div>
+            <p className="mt-2">{t('playerCard.relationshipFormulaPick')}</p>
+          </div>
         </div>
 
         {hasRelationshipData ? (
