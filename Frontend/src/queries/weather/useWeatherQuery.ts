@@ -2,7 +2,7 @@ import { queryOptions, useQuery } from '@tanstack/react-query';
 import { weatherApi, type WeatherWindowScope } from '@/api/weather';
 import { queryKeys } from '@/queries/queryKeys';
 
-const WEATHER_STALE_MS = 5 * 60 * 1000;
+const WEATHER_STALE_MS = 60 * 60 * 1000;
 
 export function gameWeatherQueryOptions(gameId: string, enabled = true, scope: WeatherWindowScope = 'game') {
   return queryOptions({

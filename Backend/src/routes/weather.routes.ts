@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { query } from 'express-validator';
-import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { getWeatherPreview } from '../controllers/weather.controller';
 
@@ -8,7 +7,6 @@ const router = Router();
 
 router.get(
   '/preview',
-  authenticate,
   validate([
     query('cityId').isString().notEmpty().withMessage('cityId is required'),
     query('startTime').isISO8601().withMessage('Valid startTime is required'),

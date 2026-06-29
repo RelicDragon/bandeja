@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Game } from '@/types';
-import { useGameWeatherQuery } from '@/queries/weather';
+import { useWeatherPreviewQuery } from '@/queries/weather';
+import { resolveGameWeatherQueryParams } from '@/utils/gameWeatherQueryParams';
 import { WeatherWindowDialog } from './WeatherWindowDialog';
 
 interface GameWeatherDialogProps {
@@ -12,9 +13,13 @@ interface GameWeatherDialogProps {
 }
 
 export function GameWeatherDialog({ game, open, onClose, locale, hour12 }: GameWeatherDialogProps) {
-  const query = useGameWeatherQuery(game.id, open);
   const [fullDayRequested, setFullDayRequested] = useState(false);
-  const fullDayQuery = useGameWeatherQuery(game.id, open && fullDayRequested, 'day');
+  const weatherParams = resolveGameWeatherQueryParams(game);
+  const query = useWeatherPreviewQuery(weatherParams ?? {}, open && Boolean(weatherParams));
+  const fullDayQuery = useWeatherPreviewQuery(
+    weatherParams ? { ...weatherParams, scope: 'day' } : {},
+    open && fullDayRequested && Boolean(weatherParams),
+  );
   const fullDayForecast = fullDayQuery.data;
 
   return (
@@ -29,11 +34,11 @@ export function GameWeatherDialog({ game, open, onClose, locale, hour12 }: GameW
       isFullDay={Boolean(fullDayForecast)}
       isFullDayLoading={fullDayRequested && fullDayQuery.isPending}
       onShowFullDay={() => setFullDayRequested(true)}
-      startTime={game.startTime}
-      endTime={game.endTime}
+      startTime={weatherParams?.startTime ?? game.startTime}
+      endTime={weatherParams?.endTime ?? game.endTime}
       locale={locale}
       hour12={hour12}
-      modalId={`game-weather-${game.id}`}
+      modalId={`game-weather-${weatherParams?.cityId ?? game.id}-${weatherParams?.startTime ?? game.startTime}`}
     />
   );
 }
