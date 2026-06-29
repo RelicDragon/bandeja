@@ -140,11 +140,11 @@ const match = (
   );
 
   assert.ok(relationships.bestPartner);
-  assert.equal(relationships.bestPartner.user.id, netBestPartner.id);
-  assert.equal(relationships.bestPartner.ratingNetChange, 0.08);
+  assert.equal(relationships.bestPartner.user.id, highWinPartner.id);
+  assert.equal(relationships.bestPartner.ratingNetChange, 0.02);
   assert.ok(relationships.worstPartner);
-  assert.equal(relationships.worstPartner.user.id, netWorstPartner.id);
-  assert.equal(relationships.worstPartner.ratingNetChange, -0.08);
+  assert.equal(relationships.worstPartner.user.id, highLossPartner.id);
+  assert.equal(relationships.worstPartner.ratingNetChange, -0.02);
 })();
 
 (() => {
@@ -209,10 +209,10 @@ const match = (
   assert.equal(relationships.bestPartner?.wins, 2);
   assert.equal(relationships.bestPartner?.losses, 0);
   assert.ok(relationships.worstPartner);
-  assert.equal(relationships.worstPartner.user.id, weakPartner.id);
-  assert.equal(relationships.worstPartner?.wins, 0);
-  assert.equal(relationships.worstPartner?.losses, 2);
-  assert.equal(relationships.worstPartner?.ties, 1);
+  assert.equal(relationships.worstPartner.user.id, volumePartner.id);
+  assert.equal(relationships.worstPartner?.wins, 1);
+  assert.equal(relationships.worstPartner?.losses, 3);
+  assert.equal(relationships.worstPartner?.ties, 0);
   assert.ok(relationships.bestPartnerByCount);
   assert.equal(relationships.bestPartnerByCount.user.id, strongPartner.id);
   assert.ok(relationships.worstPartnerByCount);
@@ -228,6 +228,60 @@ const match = (
   assert.equal(relationships.nemesis?.losses, 4);
   assert.equal(relationships.nemesis?.wins, 1);
   assert.equal(relationships.nemesis?.ties, 0);
+})();
+
+(() => {
+  const current = user('u-current', 'Current');
+  const highImpactTarget = user('u-high-impact-target', 'ImpactTarget');
+  const steadyTarget = user('u-steady-target', 'SteadyTarget');
+  const highImpactNemesis = user('u-high-impact-nemesis', 'ImpactNemesis');
+  const steadyNemesis = user('u-steady-nemesis', 'SteadyNemesis');
+
+  const relationships = buildPerformanceRelationships(
+    current.id,
+    [
+      match('team-current-steady-target-1', [
+        team('team-current-steady-target-1', [current]),
+        team('team-steady-target-1', [steadyTarget]),
+      ], 0.01),
+      match('team-current-steady-target-2', [
+        team('team-current-steady-target-2', [current]),
+        team('team-steady-target-2', [steadyTarget]),
+      ], 0.01),
+      match('team-current-impact-target-1', [
+        team('team-current-impact-target-1', [current]),
+        team('team-impact-target-1', [highImpactTarget]),
+      ], 0.08),
+      match(null, [
+        team('team-current-impact-target-2', [current]),
+        team('team-impact-target-2', [highImpactTarget]),
+      ], 0.08),
+      match('team-steady-nemesis-1', [
+        team('team-current-steady-nemesis-1', [current]),
+        team('team-steady-nemesis-1', [steadyNemesis]),
+      ], -0.01),
+      match('team-steady-nemesis-2', [
+        team('team-current-steady-nemesis-2', [current]),
+        team('team-steady-nemesis-2', [steadyNemesis]),
+      ], -0.01),
+      match('team-impact-nemesis-1', [
+        team('team-current-impact-nemesis-1', [current]),
+        team('team-impact-nemesis-1', [highImpactNemesis]),
+      ], -0.08),
+      match(null, [
+        team('team-current-impact-nemesis-2', [current]),
+        team('team-impact-nemesis-2', [highImpactNemesis]),
+      ], -0.08),
+    ],
+    Sport.PADEL,
+  );
+
+  assert.ok(relationships.favoriteTarget);
+  assert.equal(relationships.favoriteTarget.user.id, highImpactTarget.id);
+  assert.equal(relationships.favoriteTarget.ratingNetChange, 0.16);
+  assert.ok(relationships.nemesis);
+  assert.equal(relationships.nemesis.user.id, highImpactNemesis.id);
+  assert.equal(relationships.nemesis.ratingNetChange, -0.16);
 })();
 
 (() => {

@@ -75,6 +75,14 @@ interface RelationshipCounter {
   ratingNetChange: number;
 }
 
+const RELATIONSHIP_BAYES_PRIOR_MATCHES = 4;
+const RELATIONSHIP_BAYES_PRIOR_SCORE = 0.5;
+const RELATIONSHIP_CONFIDENCE_MATCH_SCALE = 4;
+const RELATIONSHIP_RATING_SCALE = 0.1;
+const RELATIONSHIP_RATING_WEIGHT = 0.6;
+const RELATIONSHIP_RECORD_WEIGHT = 0.4;
+const RELATIONSHIP_MIN_CONFIDENT_MATCHES = 2;
+
 export interface RelationshipMatchInput<TUser = InsightUser> {
   winnerTeamId: string | null;
   ratingDelta?: number;
@@ -96,6 +104,31 @@ function compareName(a: InsightUser, b: InsightUser): number {
 function winRate(entry: Pick<RelationshipCounter, 'wins' | 'losses' | 'ties'>): number {
   const total = entry.wins + entry.losses + entry.ties;
   return total > 0 ? entry.wins / total : 0;
+}
+
+function relationshipTotal(entry: Pick<RelationshipCounter, 'wins' | 'losses' | 'ties'>): number {
+  return entry.wins + entry.losses + entry.ties;
+}
+
+function bayesianRelationshipRate(entry: Pick<RelationshipCounter, 'wins' | 'losses' | 'ties'>): number {
+  const total = relationshipTotal(entry);
+  const resultScore = entry.wins + (entry.ties * 0.5);
+  return (
+    resultScore + (RELATIONSHIP_BAYES_PRIOR_SCORE * RELATIONSHIP_BAYES_PRIOR_MATCHES)
+  ) / (total + RELATIONSHIP_BAYES_PRIOR_MATCHES);
+}
+
+function relationshipConfidence(entry: Pick<RelationshipCounter, 'wins' | 'losses' | 'ties'>): number {
+  return 1 - Math.exp(-relationshipTotal(entry) / RELATIONSHIP_CONFIDENCE_MATCH_SCALE);
+}
+
+function relationshipScore(entry: RelationshipCounter): number {
+  const ratingSignal = Math.tanh(entry.ratingNetChange / RELATIONSHIP_RATING_SCALE);
+  const recordSignal = 2 * (bayesianRelationshipRate(entry) - 0.5);
+  return relationshipConfidence(entry) * (
+    (RELATIONSHIP_RATING_WEIGHT * ratingSignal) +
+    (RELATIONSHIP_RECORD_WEIGHT * recordSignal)
+  );
 }
 
 function toRelationshipEntry(
@@ -181,17 +214,7 @@ function pickPartner(
   direction: 'best' | 'worst',
 ): RelationshipCounter | null {
   if (entries.length === 0) return null;
-  return [...entries].sort((a, b) => {
-    const ratingDiff = direction === 'best'
-      ? b.ratingNetChange - a.ratingNetChange
-      : a.ratingNetChange - b.ratingNetChange;
-    if (ratingDiff !== 0) return ratingDiff;
-    const rateDiff = direction === 'best' ? winRate(b) - winRate(a) : winRate(a) - winRate(b);
-    if (rateDiff !== 0) return rateDiff;
-    const totalDiff = (b.wins + b.losses + b.ties) - (a.wins + a.losses + a.ties);
-    if (totalDiff !== 0) return totalDiff;
-    return compareName(a.user, b.user);
-  })[0] ?? null;
+  return pickByRelationshipScore(entries, direction);
 }
 
 function pickPartnerByCount(
@@ -212,25 +235,36 @@ function pickPartnerByCount(
 
 function pickTarget(entries: RelationshipCounter[]): RelationshipCounter | null {
   if (entries.length === 0) return null;
-  return [...entries].sort((a, b) => {
-    const winsDiff = b.wins - a.wins;
-    if (winsDiff !== 0) return winsDiff;
-    const rateDiff = winRate(b) - winRate(a);
-    if (rateDiff !== 0) return rateDiff;
-    const totalDiff = (b.wins + b.losses + b.ties) - (a.wins + a.losses + a.ties);
-    if (totalDiff !== 0) return totalDiff;
-    return compareName(a.user, b.user);
-  })[0] ?? null;
+  return pickByRelationshipScore(entries, 'best');
 }
 
 function pickNemesis(entries: RelationshipCounter[]): RelationshipCounter | null {
   if (entries.length === 0) return null;
-  return [...entries].sort((a, b) => {
-    const lossesDiff = b.losses - a.losses;
-    if (lossesDiff !== 0) return lossesDiff;
-    const rateDiff = winRate(a) - winRate(b);
+  return pickByRelationshipScore(entries, 'worst');
+}
+
+function pickByRelationshipScore(
+  entries: RelationshipCounter[],
+  direction: 'best' | 'worst',
+): RelationshipCounter | null {
+  const confidentEntries = entries.filter(
+    (entry) => relationshipTotal(entry) >= RELATIONSHIP_MIN_CONFIDENT_MATCHES,
+  );
+  const candidates = confidentEntries.length > 0 ? confidentEntries : entries;
+  return [...candidates].sort((a, b) => {
+    const scoreDiff = direction === 'best'
+      ? relationshipScore(b) - relationshipScore(a)
+      : relationshipScore(a) - relationshipScore(b);
+    if (scoreDiff !== 0) return scoreDiff;
+    const ratingDiff = direction === 'best'
+      ? b.ratingNetChange - a.ratingNetChange
+      : a.ratingNetChange - b.ratingNetChange;
+    if (ratingDiff !== 0) return ratingDiff;
+    const rateDiff = direction === 'best'
+      ? bayesianRelationshipRate(b) - bayesianRelationshipRate(a)
+      : bayesianRelationshipRate(a) - bayesianRelationshipRate(b);
     if (rateDiff !== 0) return rateDiff;
-    const totalDiff = (b.wins + b.losses + b.ties) - (a.wins + a.losses + a.ties);
+    const totalDiff = relationshipTotal(b) - relationshipTotal(a);
     if (totalDiff !== 0) return totalDiff;
     return compareName(a.user, b.user);
   })[0] ?? null;
@@ -264,8 +298,9 @@ export function buildPerformanceRelationships(
     const isOneVsOne = userTeam.players.length === 1 && opponentTeam.players.length === 1;
     const isTwoVsTwo = userTeam.players.length === 2 && opponentTeam.players.length === 2;
     if (isOneVsOne || isTwoVsTwo) {
+      const opponentRatingDelta = (match.ratingDelta ?? 0) / Math.max(opponentTeam.players.length, 1);
       for (const opponent of opponentTeam.players) {
-        incrementCounter(opponents, opponent.user, outcome);
+        incrementCounter(opponents, opponent.user, outcome, opponentRatingDelta);
       }
     }
   }
@@ -280,6 +315,20 @@ export function buildPerformanceRelationships(
     favoriteTarget: toRelationshipEntry(pickTarget(opponentEntries), sport),
     nemesis: toRelationshipEntry(pickNemesis(opponentEntries), sport),
   };
+}
+
+function isRelationshipRatingMatch(userId: string, match: RelationshipMatchInput): boolean {
+  if (match.teams.length !== 2) return false;
+  const userTeam = match.teams.find((team) =>
+    team.players.some((player) => player.userId === userId),
+  );
+  const opponentTeam = match.teams.find((team) => team.id !== userTeam?.id);
+  if (!userTeam || !opponentTeam) return false;
+
+  const hasPartnerRelationship = userTeam.players.length === 2;
+  const hasOneVsOneOpponentRelationship = userTeam.players.length === 1 && opponentTeam.players.length === 1;
+  const hasTwoVsTwoOpponentRelationship = userTeam.players.length === 2 && opponentTeam.players.length === 2;
+  return hasPartnerRelationship || hasOneVsOneOpponentRelationship || hasTwoVsTwoOpponentRelationship;
 }
 
 export async function getUserPerformanceInsights(
@@ -364,20 +413,18 @@ export async function getUserPerformanceInsights(
       }
     }
 
-    const partnerMatchCount = gameRelationshipMatches.filter((match) => {
-      if (match.teams.length !== 2) return false;
-      const userTeam = match.teams.find((team) =>
-        team.players.some((player) => player.userId === userId),
-      );
-      return userTeam?.players.length === 2;
-    }).length;
+    const relationshipRatingMatchCount = gameRelationshipMatches.filter((match) =>
+      isRelationshipRatingMatch(userId, match),
+    ).length;
     const gameRatingDelta = userOutcomeByGameId.get(game.id)?.levelChange ?? 0;
-    const partnerRatingDelta = partnerMatchCount > 0 ? gameRatingDelta / partnerMatchCount : 0;
+    const matchRatingDelta = relationshipRatingMatchCount > 0
+      ? gameRatingDelta / relationshipRatingMatchCount
+      : 0;
 
     relationshipMatches.push(
       ...gameRelationshipMatches.map((match) => ({
         ...match,
-        ratingDelta: partnerRatingDelta,
+        ratingDelta: matchRatingDelta,
       })),
     );
   }
