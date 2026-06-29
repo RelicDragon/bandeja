@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Crosshair, Handshake, ShieldAlert, TrendingDown, Trophy } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type {
@@ -6,7 +5,6 @@ import type {
   StreakResult,
   UserPerformanceInsights,
 } from '@/api/users';
-import { SegmentedSwitch } from './SegmentedSwitch';
 
 interface ProfilePerformanceInsightsProps {
   insights?: UserPerformanceInsights;
@@ -46,21 +44,14 @@ export const ProfilePerformanceInsights = ({
   darkBgClass = 'dark:bg-gray-700/50',
 }: ProfilePerformanceInsightsProps) => {
   const { t } = useTranslation();
-  const [partnerRankMode, setPartnerRankMode] = useState<'count' | 'percent'>('count');
   if (!insights) return null;
 
   const recentGames = insights.streaks.recentGames.slice(-10);
   const emptySlots = Math.max(0, 10 - recentGames.length);
   const hasStreakData = recentGames.length > 0 || !!insights.streaks.current;
 
-  const bestPartner =
-    partnerRankMode === 'count'
-      ? insights.relationships.bestPartnerByCount ?? insights.relationships.bestPartner
-      : insights.relationships.bestPartner;
-  const worstPartner =
-    partnerRankMode === 'count'
-      ? insights.relationships.worstPartnerByCount ?? insights.relationships.worstPartner
-      : insights.relationships.worstPartner;
+  const bestPartner = insights.relationships.bestPartner;
+  const worstPartner = insights.relationships.worstPartner;
 
   const relationships = [
     {
@@ -153,21 +144,7 @@ export const ProfilePerformanceInsights = ({
       </section>
 
       <section className={`relative rounded-xl bg-gray-100 ${darkBgClass} border border-gray-200/60 dark:border-gray-600/50 p-4`}>
-        <div className="absolute right-3 top-3">
-          <SegmentedSwitch
-            tabs={[
-              { id: 'count', label: '123', ariaLabel: t('playerCard.partnerRankByCount') },
-              { id: 'percent', label: '%', ariaLabel: t('playerCard.partnerRankByPercent') },
-            ]}
-            activeId={partnerRankMode}
-            onChange={(id) => setPartnerRankMode(id as 'count' | 'percent')}
-            showOnlyActiveTabText={false}
-            layoutId="profile-partner-rank-mode"
-            className="scale-75 origin-top-right"
-            ariaLabel={t('playerCard.partnerRankingMode')}
-          />
-        </div>
-        <div className="mb-3 flex items-center gap-2 pr-24">
+        <div className="mb-3 flex items-center gap-2">
           <Handshake size={16} className="text-gray-500 dark:text-gray-400" />
           <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('playerCard.partners')}</h3>
         </div>

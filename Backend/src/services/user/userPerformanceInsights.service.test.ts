@@ -47,8 +47,10 @@ const team = (id: string, players: ReturnType<typeof user>[]) => ({
 const match = (
   winnerTeamId: string | null,
   teams: ReturnType<typeof team>[],
+  ratingDelta?: number,
 ): RelationshipMatchInput<ReturnType<typeof user>> => ({
   winnerTeamId,
+  ratingDelta,
   teams,
 });
 
@@ -95,6 +97,54 @@ const match = (
 
   assert.deepEqual(streaks.current, { result: 'win', count: 3 });
   assert.equal(streaks.longestLoss, 0);
+})();
+
+(() => {
+  const current = user('u-current', 'Current');
+  const highWinPartner = user('u-high-win-partner', 'HighWin');
+  const netBestPartner = user('u-net-best-partner', 'NetBest');
+  const highLossPartner = user('u-high-loss-partner', 'HighLoss');
+  const netWorstPartner = user('u-net-worst-partner', 'NetWorst');
+  const opponentA = user('u-opponent-a', 'OpponentA');
+  const opponentB = user('u-opponent-b', 'OpponentB');
+
+  const relationships = buildPerformanceRelationships(
+    current.id,
+    [
+      match('team-current-high-win-1', [
+        team('team-current-high-win-1', [current, highWinPartner]),
+        team('team-opponents-1', [opponentA, opponentB]),
+      ], 0.01),
+      match('team-current-high-win-2', [
+        team('team-current-high-win-2', [current, highWinPartner]),
+        team('team-opponents-2', [opponentA, opponentB]),
+      ], 0.01),
+      match('team-current-net-best', [
+        team('team-current-net-best', [current, netBestPartner]),
+        team('team-opponents-3', [opponentA, opponentB]),
+      ], 0.08),
+      match('team-opponents-4', [
+        team('team-current-high-loss-1', [current, highLossPartner]),
+        team('team-opponents-4', [opponentA, opponentB]),
+      ], -0.01),
+      match('team-opponents-5', [
+        team('team-current-high-loss-2', [current, highLossPartner]),
+        team('team-opponents-5', [opponentA, opponentB]),
+      ], -0.01),
+      match('team-opponents-6', [
+        team('team-current-net-worst', [current, netWorstPartner]),
+        team('team-opponents-6', [opponentA, opponentB]),
+      ], -0.08),
+    ],
+    Sport.PADEL,
+  );
+
+  assert.ok(relationships.bestPartner);
+  assert.equal(relationships.bestPartner.user.id, netBestPartner.id);
+  assert.equal(relationships.bestPartner.ratingNetChange, 0.08);
+  assert.ok(relationships.worstPartner);
+  assert.equal(relationships.worstPartner.user.id, netWorstPartner.id);
+  assert.equal(relationships.worstPartner.ratingNetChange, -0.08);
 })();
 
 (() => {

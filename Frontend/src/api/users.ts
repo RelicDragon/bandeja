@@ -48,6 +48,7 @@ export interface PerformanceRelationshipEntry {
   ties: number;
   totalMatches: number;
   winRate: string;
+  ratingNetChange: number;
 }
 
 export interface UserPerformanceInsights {

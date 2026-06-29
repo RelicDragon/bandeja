@@ -1,0 +1,2390 @@
+[
+  {
+    "tenant_id": "cc83720c-420f-4114-bae7-ad08b10aeebe",
+    "tenant_name": "1 Padel Malta - Mosta",
+    "slug": "1-padel-malta-mosta",
+    "address": {
+      "street": "Manwella",
+      "postal_code": "WC4M+3MM",
+      "city": "Mosta",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.90510665,
+        "lon": 14.43434552
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1655895992/pro/tenants/cc83720c-420f-4114-bae7-ad08b10aeebe/1655895991464.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "false",
+      "CONTACT_PHONE": "+356 79662662",
+      "DETAILS_PAGE_DESCRIPTION": "We share the same passion: Padel! 1Padel was launched in 2022 with the aim of revolutionising the Padel industry in Malta.\nDon't have a partner? Join us in our Whatsapp Group here and find friends to play: https://chat.whatsapp.com/Grt5VlRHe6g9sYZ6OrTvwL",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "e36dc1a4-f044-4552-9dcc-b81f77af1eec;8bfa58fc-19f3-4311-94b3-66d191c0ee02;9cf45c57-00fd-4dec-b310-9d20724a0423;06fc235a-19c4-4840-816d-621da326959d;64b9e484-3272-413f-bd78-f69ae769240d;be62c490-6e10-4795-88ab-df44511458c2;2533db7a-6cf0-45cb-88da-5579d2f28ed3;437657bf-35c0-4e05-ada9-cb3d816c516e;1640438d-f75c-4fcb-87e8-e5d7cd177138;ed7cd8ae-1ef0-4811-911f-2b794b1826bf",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "false",
+      "WEBSITE_URL": "https://www.1padelmalta.com/",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "3c5966fa-1870-4f4d-9121-aacb02c60f3b",
+        "name": "Mosta 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d2b385ad-8bce-4e78-b8a5-c36876f942c3",
+        "name": "Mosta 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "98518aa5-0587-4695-b159-655e45bc5d63",
+        "name": "Mosta 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  We share the same passion: Padel! 1Padel was launched in 2022 with the aim of revolutionising the Padel industry in Malta.\n  Don't have a partner? Join us in our Whatsapp Group here and find friends to play: https://chat.whatsapp.com/Grt5VlRHe6g9sYZ6OrTvwL\n</p>\n"
+  },
+  {
+    "tenant_id": "94ed6b66-4b70-4056-b115-b76476ee8019",
+    "tenant_name": "1 Padel Malta - Saint Julian's",
+    "slug": "1-padel-malta-saint-julians",
+    "address": {
+      "street": "St George's Bay",
+      "postal_code": "VLT 1011",
+      "city": "Saint Julian's",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.92639,
+        "lon": 14.4867
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1652882153/pro/tenants/94ed6b66-4b70-4056-b115-b76476ee8019/1652882152522.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://www.1padelmalta.com/",
+      "DETAILS_PAGE_DESCRIPTION": "We share the same passion: Padel! 1Padel was launched in 2021 with the aim of revolutionising the Padel industry in Malta.\nDon't have a partner? Join us in our Whatsapp Group here and find friends to play: https://chat.whatsapp.com/Grt5VlRHe6g9sYZ6OrTvwL",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "CONTACT_PHONE": "+356 79662662",
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "2788836e-901c-4231-9711-db6247367b1e;50fe36fb-28ea-40af-963e-cb2759c2f553;c86def70-b3d6-4b64-9b4a-222fd5ffb9e5;5a1a6dad-f3ab-4d56-9d9b-9097723e4bf8;279a9a8a-e2e0-4cca-98eb-c22a363ac582;3880ff0a-6f0c-47b7-8cb1-5504db9b702f;e80c42e1-b604-4974-a6ce-ee0629d08bbb",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_VENDING_MACHINE": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "b7a67a4f-65f0-4b7b-a12b-ac0f29f570b6",
+        "name": "Single Court ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c4944059-fad5-4674-9c89-7ba9a058f58c",
+        "name": "Double court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  We share the same passion: Padel! 1Padel was launched in 2021 with the aim of revolutionising the Padel industry in Malta.\n  Don't have a partner? Join us in our Whatsapp Group here and find friends to play: https://chat.whatsapp.com/Grt5VlRHe6g9sYZ6OrTvwL\n</p>\n"
+  },
+  {
+    "tenant_id": "34a65e82-99e3-4a75-9033-d07dc3f700f8",
+    "tenant_name": "1 Padel Malta - Valletta",
+    "slug": "1-padel-malta-valletta",
+    "address": {
+      "street": "Salinos Ground",
+      "postal_code": "VGW4+JWJ",
+      "city": "Valletta",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.89632,
+        "lon": 14.50823
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1649670989/pro/tenants/34a65e82-99e3-4a75-9033-d07dc3f700f8/1649670988619.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1649670994/pro/tenants/34a65e82-99e3-4a75-9033-d07dc3f700f8/1649670993556.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://www.1padelmalta.com/",
+      "DETAILS_PAGE_DESCRIPTION": "We share the same passion: Padel! 1Padel was launched in 2021 with the aim of revolutionising the Padel industry in Malta.\nDon't have a partner? Join us in our Whatsapp Group here and find friends to play: https://chat.whatsapp.com/Grt5VlRHe6g9sYZ6OrTvwL",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "CONTACT_PHONE": "+356 79662662",
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "b59152af-5a47-4f1e-85e6-890b66802519;2ed761cd-e6bd-470c-a8b8-6630bbf2350f;cc895d77-5907-4279-bc05-e61829ee35e2;fe71022a-d897-417b-820a-08860bb3877f;b74702ce-c193-45c9-8e60-0fba1b697d9d;c8a5e8a7-ef4a-4f42-9183-5b12bb9e6fe9;69810d62-e9ee-4467-a8be-66d1b7cb62eb;d300ea2d-c616-44cb-aca0-04f40df4be8f;97714e30-8125-4c4d-8c3c-f78fdcea705a;fe1b6cb8-44c2-4e84-8753-05a981649dda;a911b6f4-9627-4cf5-bef4-5c9e445991ca;2ec98d69-063d-4bfe-a0e3-317de30b7837;72dd7205-c872-4333-8427-e495fe5fa80d;3712a531-3c26-427d-80c6-66c758733a6e;a559f468-982d-4ae9-8437-e4602bb78e52",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_VENDING_MACHINE": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f766a939-827d-489f-ba3a-b72c334820d1",
+        "name": "Valletta 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5d8a7669-aabf-4291-9123-24d9c376824f",
+        "name": "Valletta 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f5f6d053-5b16-487a-b97a-973555fe6eae",
+        "name": "Top Court (Valletta 3)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  We share the same passion: Padel! 1Padel was launched in 2021 with the aim of revolutionising the Padel industry in Malta.\n  Don't have a partner? Join us in our Whatsapp Group here and find friends to play: https://chat.whatsapp.com/Grt5VlRHe6g9sYZ6OrTvwL\n</p>\n"
+  },
+  {
+    "tenant_id": "028c7b9b-a7b6-4bf1-839d-25b4e30f474b",
+    "tenant_name": "IK Lija",
+    "slug": "ik-lija",
+    "address": {
+      "street": "Lija Tennis Club",
+      "postal_code": "LJA1021",
+      "city": "Lija",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.9018584,
+        "lon": 14.4480114
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1738750354/pro/tenants/028c7b9b-a7b6-4bf1-839d-25b4e30f474b/1738750353806.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1770016322/pro/tenants/028c7b9b-a7b6-4bf1-839d-25b4e30f474b/1770016322016.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "https://www.ikpadel.com/",
+      "FACILITY_WIFI": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "DETAILS_PAGE_TITLE": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_LOCKERS": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_PLAYPARK": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "false",
+      "CONTACT_PHONE": "+356 77800083"
+    },
+    "resources": [
+      {
+        "resourceId": "813ee198-e8bd-4fa2-9096-e06986948e4e",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "03cebdb1-7ecc-4c12-888d-030c948e93c7",
+    "tenant_name": "Ik Luxol",
+    "slug": "ik-luxol",
+    "address": {
+      "street": "Triq Arnhem",
+      "postal_code": "59538",
+      "city": "Pembroke",
+      "sub_administrative_area": "Pembroke",
+      "administrative_area": "Pembroke",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.924119,
+        "lon": 14.476118
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/03cebdb1-7ecc-4c12-888d-030c948e93c7/ikluxol_0001"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://www.iktennisacademy.com",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+35677800083",
+      "FACILITY_WIFI": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "DETAILS_PAGE_DESCRIPTION": "\n\n\n"
+    },
+    "resources": [
+      {
+        "resourceId": "665872e3-35c6-4d9e-8ef6-d4d4a1a28cc5",
+        "name": "IK Luxol Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "68fb015c-ea4a-404d-a02f-fdaf770400a5",
+        "name": "IK Luxol Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d72547db-db2a-48a2-940f-5c4f820565c5",
+        "name": "IK Luxol Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "14f9b1e7-f06d-4799-8627-d293cfb84959",
+        "name": "IK Luxol Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "67075a71-5c95-4766-b9a3-5b68fe1971a9",
+        "name": "Restaurant court n. 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "fa8c1fe1-cd87-4c98-ad0f-ff846b061bae",
+        "name": "Restaurant Court n. 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": ""
+  },
+  {
+    "tenant_id": "ea69a2b0-4d1a-4a88-8394-0cf6e184dff6",
+    "tenant_name": "Ik Padel Gzira",
+    "slug": "ik-padel-gzira",
+    "address": {
+      "street": "Triq il-Forti Manoel",
+      "postal_code": "59538",
+      "city": "Il-Gżira",
+      "sub_administrative_area": "Il-Gżira",
+      "administrative_area": "Il-Gżira",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.904114,
+        "lon": 14.497136
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ea69a2b0-4d1a-4a88-8394-0cf6e184dff6/ikpadelgzira_0001"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.iktennisacademy.com",
+      "DETAILS_PAGE_DESCRIPTION": "\n\n\n",
+      "CONTACT_PHONE": "+35677800083",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "SHOW_AVAILABILITY_GRID": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "8e58a0a4-35d8-4360-9684-0b42b6078347",
+        "name": "Gates of Olympus - Doubles CRT 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c82e4583-2444-4203-ae0c-22220840290a",
+        "name": "Sweet Bonanza - Doubles CRT 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a6e6725c-7ecc-4479-bdaa-7eb094c2c32f",
+        "name": "The Dog House - Singles CRT 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ee7c41af-09ad-4ce2-86eb-0b5e3bb8476e",
+        "name": "Big Bass Splash - Singles CRT 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": ""
+  },
+  {
+    "tenant_id": "61e8b37d-ba46-4cf9-8246-c355f50e8047",
+    "tenant_name": "Ik Padel Salini",
+    "slug": "ik-padel-salini",
+    "address": {
+      "street": "Salini Resort, Salina Bay",
+      "postal_code": "59538",
+      "city": "Salina",
+      "sub_administrative_area": "Salina",
+      "administrative_area": "Salina",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.948024,
+        "lon": 14.427877
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/61e8b37d-ba46-4cf9-8246-c355f50e8047/ikpadelmalta_0001"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "SYLTEK_CUSTOMER_TYPE_861",
+      "WEBSITE_URL": "https://www.iktennisacademy.com",
+      "FACILITY_CHANGEROOM": "false",
+      "CONTACT_PHONE": "+35677788810",
+      "FACILITY_WIFI": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "\n\n",
+      "FACILITY_RESTAURANT": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ce6631fd-3fe7-4513-8f47-218b8394cc9e",
+        "name": "Luxol Blue Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9222a192-e4e5-4999-8d6a-9e80366b47cf",
+        "name": "Salini Resort Padel",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "49b62d6a-ae32-410a-a205-97968f8f77eb",
+        "name": "Luxol Green Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": ""
+  },
+  {
+    "tenant_id": "eb2bb8c4-77c6-427d-b9d2-88a6571f912d",
+    "tenant_name": "Ik Padel Village By YGGDRASIL",
+    "slug": "ik-padel-village-by-yggdrasil",
+    "address": {
+      "street": "Pembroke gardens, P.D' Armenia Street",
+      "postal_code": "0000",
+      "city": "Pembroke",
+      "sub_administrative_area": "Pembroke",
+      "administrative_area": "Pembroke",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.928479,
+        "lon": 14.487228
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/eb2bb8c4-77c6-427d-b9d2-88a6571f912d/ikpadelpembrokegardens_0001"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+35677800083",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "DETAILS_PAGE_TITLE": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "\n\n",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "https://www.iktennisacademy.com"
+    },
+    "resources": [
+      {
+        "resourceId": "d74f5cdc-9ec0-4cd1-8e89-fe5a07346056",
+        "name": "Rooftop court 1 COO COO CASHOO",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5275b2de-5c9f-4cd1-a880-b17ab014ff26",
+        "name": "Rooftop Court 2 GEMSTONE JAM",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "037c6f7c-ecf4-4b24-acd2-9d035e623a26",
+        "name": "Singles 1 GIGABLOX",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "678a34b9-cb29-434b-8493-0a4f773c48ee",
+        "name": "Court n.1 VALLEY OF THE GODS",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f93c16be-ecc8-4479-ae05-d249872c6733",
+        "name": "Court n.2 VIKINGS GO BERZERK",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "301cb503-ea65-4c62-880d-b0b041b2bc25",
+        "name": "Court n.3 RAPTOR 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7ab811f3-0ebb-4c1f-b638-bbb179a8cf21",
+        "name": "Court n.4 SLIGHTLY EDGY",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "13814214-2d0f-46f3-9261-e9537e158d79",
+        "name": "Court n.5 FISH & CHIPS",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "51552068-4f3d-484a-9b48-71661985106c",
+        "name": "Court n.6 SUITS & ROYALS",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0c96419f-25fb-4c27-9bdb-1d67153cadc1",
+        "name": "Court n.7 MEXOMAX!",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2d369cd2-acd1-411d-89b9-0afb148d4244",
+        "name": "Court n.8 GOLDEN FISH TANK",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6f20e593-18f5-4e55-ae74-8226b7cd7a72",
+        "name": "Court n.9 MULTIFLY!",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": ""
+  },
+  {
+    "tenant_id": "ac7e5450-3315-4d10-bd0c-4ac67093b959",
+    "tenant_name": "Ik Tennis Academy - Kappara",
+    "slug": "ik-tennis-academy-kappara",
+    "address": {
+      "street": "Triq Wied Ghollieqa",
+      "postal_code": "59538",
+      "city": "San Ġwann",
+      "sub_administrative_area": "San Ġwann",
+      "administrative_area": "San Ġwann",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.905213,
+        "lon": 14.484895
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "SYLTEK_CUSTOMER_TYPE_657;SYLTEK_CUSTOMER_TYPE_861;SYLTEK_CUSTOMER_TYPE_858",
+      "DETAILS_PAGE_DESCRIPTION": "\n",
+      "WEBSITE_URL": "https://www.iktennisacademy.com",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "CONTACT_PHONE": "+35677788810"
+    },
+    "resources": [
+      {
+        "resourceId": "285f4b97-96af-49a9-89b5-d1fd7b389726",
+        "name": "Kappara Court 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "6dfb92a0-f0fd-4810-815d-68cf31723976",
+        "name": "Kappara Court 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "f2dc0538-e6ed-41bf-a47a-2ccd5b7a1702",
+    "tenant_name": "Ik Tennis Academy - Madliena Heights",
+    "slug": "ik-tennis-academy-madliena-heights",
+    "address": {
+      "street": "Triq L-Ingenier, Madliena Heights",
+      "postal_code": "59538",
+      "city": "Swieqi",
+      "sub_administrative_area": "Swieqi",
+      "administrative_area": "Swieqi",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.931581,
+        "lon": 14.457673
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/f2dc0538-e6ed-41bf-a47a-2ccd5b7a1702/iktennismadliena_0001"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "DETAILS_PAGE_DESCRIPTION": "\n",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "CONTACT_PHONE": "+35677788810",
+      "WEBSITE_URL": "https://www.iktennisacademy.com",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_CAFETERIA": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "SYLTEK_CUSTOMER_TYPE_861",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "78fe43e5-743e-457c-b31a-535baf831d33",
+        "name": "Court 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en_US",
+    "description": ""
+  },
+  {
+    "tenant_id": "ba45666b-8627-4919-af11-3114222bc535",
+    "tenant_name": "Ik Tennis Academy - Salini Resort",
+    "slug": "ik-tennis-academy-salini-resort",
+    "address": {
+      "street": "Salina Bay",
+      "postal_code": "59538",
+      "city": "Salina",
+      "sub_administrative_area": "Salina",
+      "administrative_area": "Salina",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.948109,
+        "lon": 14.427889
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "WEBSITE_URL": "https://www.iktennisacademy.com",
+      "DETAILS_PAGE_DESCRIPTION": "\n",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "CONTACT_PHONE": "+35677788810",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "SYLTEK_CUSTOMER_TYPE_657;SYLTEK_CUSTOMER_TYPE_861;SYLTEK_CUSTOMER_TYPE_858;SYLTEK_CUSTOMER_TYPE_857",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "34f0e9bd-13df-425d-bf55-562055305e41",
+        "name": "Salini Resort Tennis",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en_US",
+    "description": ""
+  },
+  {
+    "tenant_id": "52af7c65-c35f-4b6b-b38b-2b9a2c7156d0",
+    "tenant_name": "Ik Tennis Academy - Swatar",
+    "slug": "ik-tennis-academy-swatar",
+    "address": {
+      "street": "St. Martins College, Triq is-Swatar",
+      "postal_code": "59538",
+      "city": "Swatar",
+      "sub_administrative_area": "San Ġwann",
+      "administrative_area": "San Ġwann",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.897217,
+        "lon": 14.48071285
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+35677788810",
+      "DETAILS_PAGE_DESCRIPTION": "\n",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "SYLTEK_CUSTOMER_TYPE_861",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "true",
+      "WEBSITE_URL": "https://www.iktennisacademy.com"
+    },
+    "resources": [
+      {
+        "resourceId": "6b39567a-dd53-4cc8-8966-c320c080982d",
+        "name": "Court 2 Swatar",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "7375b1ef-b577-4699-a653-4e80d7192208",
+        "name": "Court 1 Swatar",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "146c09bd-6759-48b7-85c1-3ab25228b1df",
+    "tenant_name": "Ik Tennis Academy - Villa Bologna",
+    "slug": "ik-tennis-academy-villa-bologna",
+    "address": {
+      "street": "Triq Dun Michele Balzan, Ħ'Attard, Malta",
+      "postal_code": "VCWV+28H",
+      "city": "Attard",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.895252,
+        "lon": 14.443352
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [],
+    "properties": {
+      "WEBSITE_URL": "https://www.iktennisacademy.com",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "DETAILS_PAGE_DESCRIPTION": "\n\n",
+      "FACILITY_WIFI": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "SYLTEK_CUSTOMER_TYPE_861",
+      "FACILITY_STORE": "true",
+      "CONTACT_PHONE": "+35677788810",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "5682a1c3-ec6f-462b-93c3-7bafd19621a1",
+        "name": "Villa Bologna Court",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "d27e4ef4-a5f2-4b23-94d7-b5b6e9beb47d",
+    "tenant_name": "Ik Tennis - Pembroke",
+    "slug": "ik-tennis-pembroke",
+    "address": {
+      "street": "Triq Tobruk",
+      "postal_code": "59538",
+      "city": "Pembroke",
+      "sub_administrative_area": "Pembroke",
+      "administrative_area": "Pembroke",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.924412,
+        "lon": 14.479071
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/d27e4ef4-a5f2-4b23-94d7-b5b6e9beb47d/iktennispembroke_0001"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "\n",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "SYLTEK_CUSTOMER_TYPE_861",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.iktennisacademy.com",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "SPORT_TENNIS": "true",
+      "FACILITY_STORE": "true",
+      "CONTACT_PHONE": "+35677788810"
+    },
+    "resources": [
+      {
+        "resourceId": "107ec4be-89ea-455f-be03-d3e0c6b2dffe",
+        "name": "PEMBROKE COURT - PARK & RIDE",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en_US",
+    "description": ""
+  },
+  {
+    "tenant_id": "ab978067-0628-4803-923e-ca9a8e989523",
+    "tenant_name": "Padair Luqa",
+    "slug": "padair-luqa",
+    "address": {
+      "street": "St. Thomas Street",
+      "postal_code": "LQA 9036",
+      "city": "Luqa",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.85781,
+        "lon": 14.48511
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1693810211/pro/tenants/ab978067-0628-4803-923e-ca9a8e989523/1693810210359.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "https://www.facebook.com/search/top?q=padair%20luqa",
+      "FACILITY_WIFI": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+356 99438223",
+      "FACILITY_LOCKERS": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "6100caa4-b5ce-4d62-b3cb-7a6d5e74ba9d",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": ""
+  },
+  {
+    "tenant_id": "36c72930-f948-4dca-a1aa-6d22cd704aab",
+    "tenant_name": "Padel Malta Pembroke",
+    "slug": "padel-malta",
+    "address": {
+      "street": "Triq L-Imhallef William Harding, Pembroke, PBK 1532, Malta",
+      "postal_code": "1532",
+      "city": "Pembroke",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.9246139,
+        "lon": 14.482335
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1702539044/pro/tenants/36c72930-f948-4dca-a1aa-6d22cd704aab/1702539044115.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "7211d0e9-e30b-46af-8981-bc3a05075c19;5a2c6108-6db6-457a-9283-053c00608c2b",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Malta hosts 3 brand new Padel courts in the heart of Pembroke. We offer racket rentals, coaching, a bar/restaurant and much much more.\n\nFor more info and to book coaching sessions, contact us on info@padel.mt or call / whatsapp +356 79988987",
+      "FACILITY_LOCKERS": "false",
+      "WEBSITE_URL": "https://www.padel.mt/",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "CONTACT_PHONE": "+356 79988987"
+    },
+    "resources": [
+      {
+        "resourceId": "2bfe82be-b56f-40eb-bded-d7a9bb509c5a",
+        "name": "Blokotech Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d55d035e-97b9-4182-a084-63b5b41be958",
+        "name": "Bolt Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "70ee8cb9-f15a-4f40-b8d8-cc6c6832b708",
+        "name": "Fast Track Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel Malta hosts 3 brand new Padel courts in the heart of Pembroke. We offer racket rentals, coaching, a bar/restaurant and much much more.</p>\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">For more info and to book coaching sessions, contact us on info@padel.mt or call / whatsapp +356 79988987</p>\n"
+  },
+  {
+    "tenant_id": "177f38fc-f3fa-426e-875a-12753db55a3f",
+    "tenant_name": "Padel Malta Birkirkara",
+    "slug": "padel-malta-birkirkara",
+    "address": {
+      "street": "Triq P.P. Castagna",
+      "postal_code": "BKR4019",
+      "city": "Birkirkara",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.894457,
+        "lon": 14.459004
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1731299586/pro/tenants/177f38fc-f3fa-426e-875a-12753db55a3f/1731299585852.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1745474574/pro/tenants/177f38fc-f3fa-426e-875a-12753db55a3f/1745474574249.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.padel.mt/",
+      "DETAILS_PAGE_TITLE": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_STORE": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Malta Birkirkara is offering 2 panoramic courts in a great sporty setting of the Mediterranean College of Sport. Coaching, rental rackets, purchase of balls, drinks, and much more available!",
+      "FACILITY_LOCKERS": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "CONTACT_PHONE": "+356 79988987"
+    },
+    "resources": [
+      {
+        "resourceId": "de235cd7-1e39-4bc2-aedf-3ca8410bc29a",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "01cc8040-e180-4aa6-926d-ab36e7699826",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">Padel Malta Birkirkara is offering 2 panoramic courts in a great sporty setting of the Mediterranean College of Sport. Coaching, rental rackets, purchase of balls, drinks, and much more available!</p>\n"
+  },
+  {
+    "tenant_id": "0a8f768f-adff-4c5f-aaf1-f2237d9e5d55",
+    "tenant_name": "Racket Club Malta Zabbar",
+    "slug": "racket-club-malta-zabbar",
+    "address": {
+      "street": "Triq Bormla, Żabbar",
+      "postal_code": "ZBR 1543",
+      "city": "Żabbar",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.88022757,
+        "lon": 14.52965104
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1749813464/pro/tenants/0a8f768f-adff-4c5f-aaf1-f2237d9e5d55/1749813463474.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1749813467/pro/tenants/0a8f768f-adff-4c5f-aaf1-f2237d9e5d55/1749813466906.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1754733464/pro/tenants/0a8f768f-adff-4c5f-aaf1-f2237d9e5d55/1754733464127.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1754733470/pro/tenants/0a8f768f-adff-4c5f-aaf1-f2237d9e5d55/1754733469127.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1754733471/pro/tenants/0a8f768f-adff-4c5f-aaf1-f2237d9e5d55/1754733470802.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1754733473/pro/tenants/0a8f768f-adff-4c5f-aaf1-f2237d9e5d55/1754733472396.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1754733669/pro/tenants/0a8f768f-adff-4c5f-aaf1-f2237d9e5d55/1754733668832.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779807357/pro/tenants/0a8f768f-adff-4c5f-aaf1-f2237d9e5d55/1779807356278.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "",
+      "DETAILS_PAGE_DESCRIPTION": "At our new location in the south of Malta, we offer a premium padel experience featuring:\nOne outdoor single padel court, ideal for one-on-one games and training sessions.\nOne outdoor double padel court, perfect for competitive or social doubles matches.\nFree parking available.\nWhether you're a beginner or a seasoned player, our facilities are designed to offer a fun, accessible, and professional environment. The new venue's southern location ensures easy access and a relaxed atmosphere, making it a great spot for both regular play and casual visits.",
+      "CONTACT_PHONE": "+356 99429811",
+      "FACILITY_WIFI": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "6a253b7c-ca45-4d12-a241-0507e0f5afe4",
+        "name": "Padel Doubles ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bb580c13-f24b-48fa-a045-2252a2d71ae2",
+        "name": "Padel Singles",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en",
+    "description": "\n<p class=\"text-sm text-primary-80 mb-3 leading-relaxed\">\n  At our new location in the south of Malta, we offer a premium padel experience featuring:\n  One outdoor single padel court, ideal for one-on-one games and training sessions.\n  One outdoor double padel court, perfect for competitive or social doubles matches.\n  Free parking available.\n  Whether you're a beginner or a seasoned player, our facilities are designed to offer a fun, accessible, and professional environment. The new venue's southern location ensures easy access and a relaxed atmosphere, making it a great spot for both regular play and casual visits.\n</p>\n"
+  },
+  {
+    "tenant_id": "2d92fbcc-bd10-488c-81d8-03969a0c0203",
+    "tenant_name": "Marsa Sports Club",
+    "slug": "marsa-sports-club-malta",
+    "address": {
+      "street": "Aldo Moro Street",
+      "postal_code": "MRS 9064",
+      "city": "Marsa",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.875722,
+        "lon": 14.487639
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+356 2123 3851",
+      "WEBSITE_URL": "https://marsasportsclub.com",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "17daf104-3c12-449e-9ccc-3ba94966883a",
+        "name": "Tennis 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "11ffb7ee-1590-4ad3-977c-c189b67a70c4",
+        "name": "Tennis 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "dd3dd861-7b1a-4851-94a4-e3beaa9b4338",
+        "name": "Tennis 3",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "a0991b92-fa02-42a3-9f6f-be244818cc5f",
+        "name": "Tennis 4",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "abbf3625-7441-4de5-8190-a81bb100f60a",
+        "name": "Tennis 5",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "66275bc1-191f-4612-9051-4ef76d73600e",
+        "name": "Tennis 6",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "29e4e20b-1bbc-4ca7-8880-5eec5f0d721f",
+        "name": "Tennis 7",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "a6a0863c-ef19-4bd3-8ae2-0af080245414",
+        "name": "Tennis 8",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "f05d869f-756e-4118-9962-ff17b587daae",
+        "name": "Tennis 9",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "66b8623b-41d8-4ab3-b998-062508091b85",
+        "name": "Tennis 10",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "ab116d90-d595-4930-ad47-ee5f4a9fd1c3",
+        "name": "Tennis 11",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "735a6f51-fb95-4c91-ae26-9bd2bdf6454e",
+        "name": "Tennis 12",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "744ba64b-8098-43e6-bb6d-b37e65797ea4",
+        "name": "Tennis 13",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "986e6c46-c286-400e-b10b-a0a667ffef91",
+        "name": "Tennis 14",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "99d75f9a-964a-4e98-a266-2967082f1b17",
+        "name": "Tennis 15",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "e3fcb59d-b07b-4922-989f-61325800c260",
+        "name": "Tennis 16",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "123f5cf5-84d1-4705-8913-bebd0ed49167",
+        "name": "Tennis 17",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "92326275-6cc7-4274-b940-94bd517e21b6",
+        "name": "Tennis 18",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "22d2316e-c23f-42b9-8e06-781707dc9d1e",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "42ba2ed4-f0e3-4eb1-a980-8fee428ac069",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "355b8e12-83d0-49d5-94f8-a0e6781bbedd",
+        "name": "Squash 1",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "cef7dca4-1492-402d-a279-d99e4f9a4b64",
+        "name": "Squash 2",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "825f9615-4df5-4fd4-9a00-7ca04b060f56",
+        "name": "Squash 3",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "640e3634-f2c6-404a-a525-a65ca7fa6b3a",
+        "name": "Squash 4",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "61770b7b-08a5-47fd-b015-00d0bf73d43f",
+        "name": "Squash 5",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS",
+      "PADEL",
+      "SQUASH"
+    ],
+    "communications_language": "en",
+    "description": "Multi-sport club with tennis, padel and squash courts in Marsa."
+  },
+  {
+    "tenant_id": "5e44dadd-d835-4135-ad65-5fbb5c72f4ca",
+    "tenant_name": "Pickleball Hub MT",
+    "slug": "pickleball-hub-mt",
+    "address": {
+      "street": "Triq Stiefnu Zerafa, Gharghur FC",
+      "postal_code": "GHR 1012",
+      "city": "Għargħur",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.9245,
+        "lon": 14.4521
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+356 99424019",
+      "WEBSITE_URL": "https://playtomic.com/clubs/pickleball-hub-mt"
+    },
+    "resources": [
+      {
+        "resourceId": "09c2c2e7-c539-4701-9bf8-e88ee7d55761",
+        "name": "Pickleball 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double"
+        ]
+      },
+      {
+        "resourceId": "19d4d6de-73aa-495d-8f14-1bee522e91a1",
+        "name": "Pickleball 2",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PICKLEBALL"
+    ],
+    "communications_language": "en",
+    "description": "Two outdoor pickleball courts at Gharghur FC."
+  },
+  {
+    "tenant_id": "1f5899dd-b73b-4e60-9dd2-c5a05d1a7c3d",
+    "tenant_name": "Mgarr Tennis Club",
+    "slug": "mgarr-tennis-club-malta",
+    "address": {
+      "street": "Triq il-Plejju / Triq L-Alwiza",
+      "postal_code": "MGR 1020",
+      "city": "Mġarr",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Malta",
+      "country_code": "MT",
+      "coordinate": {
+        "lat": 35.9198,
+        "lon": 14.3616
+      },
+      "timezone": "Europe/Malta"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+356 99214424",
+      "WEBSITE_URL": "https://www.mgarrtennisclub.com"
+    },
+    "resources": [
+      {
+        "resourceId": "3e6f2cc3-6b35-4588-832f-15bfe604c1f2",
+        "name": "Tennis Court",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "ce412c55-451c-4a46-adfa-5fcc9c4c46de",
+        "name": "Pickleball Court",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS",
+      "PICKLEBALL"
+    ],
+    "communications_language": "en",
+    "description": "Community tennis and pickleball club in Mġarr."
+  }
+]

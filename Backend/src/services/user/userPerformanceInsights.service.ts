@@ -50,6 +50,7 @@ export interface PerformanceRelationshipEntry {
   ties: number;
   totalMatches: number;
   winRate: string;
+  ratingNetChange: number;
 }
 
 export interface PerformanceRelationships {
@@ -71,10 +72,12 @@ interface RelationshipCounter {
   wins: number;
   losses: number;
   ties: number;
+  ratingNetChange: number;
 }
 
 export interface RelationshipMatchInput<TUser = InsightUser> {
   winnerTeamId: string | null;
+  ratingDelta?: number;
   teams: Array<{
     id: string;
     players: Array<{
@@ -109,6 +112,7 @@ function toRelationshipEntry(
     ties: entry.ties,
     totalMatches,
     winRate: ((entry.wins / totalMatches) * 100).toFixed(1),
+    ratingNetChange: entry.ratingNetChange,
   };
 }
 
@@ -162,11 +166,13 @@ function incrementCounter(
   map: Map<string, RelationshipCounter>,
   user: InsightUser,
   outcome: StreakResult,
+  ratingDelta = 0,
 ) {
-  const entry = map.get(user.id) ?? { user, wins: 0, losses: 0, ties: 0 };
+  const entry = map.get(user.id) ?? { user, wins: 0, losses: 0, ties: 0, ratingNetChange: 0 };
   if (outcome === 'win') entry.wins += 1;
   else if (outcome === 'loss') entry.losses += 1;
   else entry.ties += 1;
+  entry.ratingNetChange += ratingDelta;
   map.set(user.id, entry);
 }
 
@@ -176,6 +182,10 @@ function pickPartner(
 ): RelationshipCounter | null {
   if (entries.length === 0) return null;
   return [...entries].sort((a, b) => {
+    const ratingDiff = direction === 'best'
+      ? b.ratingNetChange - a.ratingNetChange
+      : a.ratingNetChange - b.ratingNetChange;
+    if (ratingDiff !== 0) return ratingDiff;
     const rateDiff = direction === 'best' ? winRate(b) - winRate(a) : winRate(a) - winRate(b);
     if (rateDiff !== 0) return rateDiff;
     const totalDiff = (b.wins + b.losses + b.ties) - (a.wins + a.losses + a.ties);
@@ -248,7 +258,7 @@ export function buildPerformanceRelationships(
 
     if (userTeam.players.length === 2) {
       const partner = userTeam.players.find((player) => player.userId !== userId);
-      if (partner) incrementCounter(partners, partner.user, outcome);
+      if (partner) incrementCounter(partners, partner.user, outcome, match.ratingDelta ?? 0);
     }
 
     const isOneVsOne = userTeam.players.length === 1 && opponentTeam.players.length === 1;
@@ -281,10 +291,12 @@ export async function getUserPerformanceInsights(
       where: { userId, game: { sport } },
       orderBy: { createdAt: 'asc' },
       select: {
+        gameId: true,
         isWinner: true,
         wins: true,
         ties: true,
         losses: true,
+        levelChange: true,
         createdAt: true,
       },
     }),
@@ -326,8 +338,12 @@ export async function getUserPerformanceInsights(
   ]);
 
   const relationshipMatches: RelationshipMatchInput[] = [];
+  const userOutcomeByGameId = new Map(
+    outcomes.map((outcome) => [outcome.gameId, outcome]),
+  );
   for (const participation of participations) {
     const game = participation.game;
+    const gameRelationshipMatches: RelationshipMatchInput[] = [];
     for (const round of game.rounds) {
       for (const match of round.matches) {
         if (!isPrismaMatchCountedForStandingsAndRating(match, game)) continue;
@@ -335,7 +351,7 @@ export async function getUserPerformanceInsights(
           (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role),
         );
         if (officialSets.length === 0) continue;
-        relationshipMatches.push({
+        gameRelationshipMatches.push({
           winnerTeamId: match.winnerId,
           teams: match.teams.map((team) => ({
             id: team.id,
@@ -347,6 +363,23 @@ export async function getUserPerformanceInsights(
         });
       }
     }
+
+    const partnerMatchCount = gameRelationshipMatches.filter((match) => {
+      if (match.teams.length !== 2) return false;
+      const userTeam = match.teams.find((team) =>
+        team.players.some((player) => player.userId === userId),
+      );
+      return userTeam?.players.length === 2;
+    }).length;
+    const gameRatingDelta = userOutcomeByGameId.get(game.id)?.levelChange ?? 0;
+    const partnerRatingDelta = partnerMatchCount > 0 ? gameRatingDelta / partnerMatchCount : 0;
+
+    relationshipMatches.push(
+      ...gameRelationshipMatches.map((match) => ({
+        ...match,
+        ratingDelta: partnerRatingDelta,
+      })),
+    );
   }
 
   return {
