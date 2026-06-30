@@ -101,62 +101,57 @@ export const useAuthStore = create<AuthState>((set, get) => {
         i18n.changeLanguage(langCode);
       }
 
-      void import('@/services/chat/chatSyncBatchWarm').then((warm) => {
-        warm.resetChatSyncWarmSession();
-        void warm.ensureChatSyncWarmBootstrap();
-      });
-
-      void import('@/store/unreadStore').then(({ useUnreadStore }) => {
-        useUnreadStore.getState().refreshAll().catch(() => {});
-      });
-
       syncNativeAppIconForUser(user);
 
-      void (async () => {
-        const deviceLocale = navigator.language || 'en-GB';
-        const normalizedLanguage = normalizeLanguageForProfile(user.language);
-        const needsLanguageNormalization = user.language && normalizedLanguage !== user.language;
-        const needsUpdate =
-          !user.language ||
-          needsLanguageNormalization ||
-          !user.timeFormat ||
-          !user.weekStart;
+      setTimeout(() => {
+        void (async () => {
+          const deviceLocale = navigator.language || 'en-GB';
+          const normalizedLanguage = normalizeLanguageForProfile(user.language);
+          const needsLanguageNormalization = user.language && normalizedLanguage !== user.language;
+          const needsUpdate =
+            !user.language ||
+            needsLanguageNormalization ||
+            !user.timeFormat ||
+            !user.weekStart;
 
-        if (!needsUpdate) return;
+          if (!needsUpdate) return;
 
-        const updates: Partial<User> = {};
-        if (!user.language) {
-          updates.language = deviceLocale;
-        } else if (needsLanguageNormalization) {
-          updates.language = normalizedLanguage;
-        }
-        if (!user.timeFormat) {
-          updates.timeFormat = detectTimeFormat(deviceLocale);
-        }
-        if (!user.weekStart) {
-          updates.weekStart = detectWeekStart(deviceLocale);
-        }
-        if (Object.keys(updates).length === 0) return;
+          const updates: Partial<User> = {};
+          if (!user.language) {
+            updates.language = deviceLocale;
+          } else if (needsLanguageNormalization) {
+            updates.language = normalizedLanguage;
+          }
+          if (!user.timeFormat) {
+            updates.timeFormat = detectTimeFormat(deviceLocale);
+          }
+          if (!user.weekStart) {
+            updates.weekStart = detectWeekStart(deviceLocale);
+          }
+          if (Object.keys(updates).length === 0) return;
 
-        let userToSet = user;
-        try {
-          const response = await usersApi.updateProfile(updates);
-          userToSet = response.data;
-        } catch (error) {
-          console.error('Error auto-detecting preferences:', error);
-          userToSet = { ...user, ...updates };
-        }
+          let userToSet = user;
+          try {
+            const response = await usersApi.updateProfile(updates);
+            userToSet = response.data;
+          } catch (error) {
+            console.error('Error auto-detecting preferences:', error);
+            userToSet = { ...user, ...updates };
+          }
 
-        localStorage.setItem('user', JSON.stringify(userToSet));
-        set({ user: userToSet });
+          if (get().token !== token || !get().isAuthenticated) return;
 
-        if (userToSet.language) {
-          const langCode = extractLanguageCode(userToSet.language);
-          i18n.changeLanguage(langCode);
-        }
+          localStorage.setItem('user', JSON.stringify(userToSet));
+          set({ user: userToSet });
 
-        syncNativeAppIconForUser(userToSet);
-      })();
+          if (userToSet.language) {
+            const langCode = extractLanguageCode(userToSet.language);
+            i18n.changeLanguage(langCode);
+          }
+
+          syncNativeAppIconForUser(userToSet);
+        })();
+      }, 1500);
     },
     setToken: (token) => {
       try {

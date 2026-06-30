@@ -143,12 +143,16 @@ function AppContent() {
   const isOnline = useNetworkStore((state) => state.isOnline);
   const [showOptionalUpdateModal, setShowOptionalUpdateModal] = useState(false);
   const [dismissedOptionalUpdate, setDismissedOptionalUpdate] = useState<string | null>(null);
+  const isAuthRouteForBootstraps =
+    location.pathname === '/login' ||
+    location.pathname === '/register' ||
+    isTelegramAutoLoginPath(location.pathname);
 
   const { versionCheck, isChecking: isCheckingVersion } = useAppVersionCheck();
   
   useDeepLink();
   useUrlStoreSync();
-  useMyTabPrefetch();
+  useMyTabPrefetch({ enabled: !isAuthRouteForBootstraps });
 
   const pendingAuthPath = useDeepLinkStore((s) => s.pendingAuthPath);
   const setPendingAuthPath = useDeepLinkStore((s) => s.setPendingAuthPath);
@@ -450,10 +454,7 @@ function AppContent() {
     isGameBroadcastPage && liveViewSearch.get('transparent') === '1';
   const liveBoardShellTheme = parseLiveBoardTheme(liveViewSearch.get('theme'));
   const isUserProfilePage = location.pathname.match(/^\/user-profile\/[^/]+$/);
-  const isAuthPage =
-    location.pathname === '/login' ||
-    location.pathname === '/register' ||
-    isTelegramAutoLoginPath(location.pathname);
+  const isAuthPage = isAuthRouteForBootstraps;
   // Chat threads work offline from the local cache (Dexie) with a queued outbox.
   const isChatPage =
     /^\/(user-chat|group-chat|channel-chat)\/[^/]+$/.test(location.pathname) ||
@@ -509,8 +510,8 @@ function AppContent() {
           <PrimarySportGateHost />
           <CityPickerRedirectHost />
           <PermissionModalProvider />
-          <ReactionEmojiUsageBootstrap />
-          {isAuthenticated && <AdPlacementsBootstrap />}
+          {!isAuthPage && <ReactionEmojiUsageBootstrap />}
+          {!isAuthPage && isAuthenticated && <AdPlacementsBootstrap />}
           <PlayerCardModalManager>
             <Routes>
         <Route

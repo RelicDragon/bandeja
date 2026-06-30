@@ -17,12 +17,12 @@ import { pastGamesInfiniteQueryOptions } from '@/queries/games/usePastGamesQuery
  *
  * Uses requestIdleCallback when available for non-blocking prefetching.
  */
-export function useMyTabPrefetch() {
+export function useMyTabPrefetch(opts?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isInitializing = useAuthStore((state) => state.isInitializing);
-  const canPrefetch = !isInitializing && isAuthenticated && !!user;
+  const canPrefetch = opts?.enabled !== false && !isInitializing && isAuthenticated && !!user;
 
   // Track prefetch state to avoid duplicate calls
   const hasPrefetchedCore = useRef(false);

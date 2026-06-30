@@ -55,6 +55,7 @@ describe('useAuthStore.setAuth credential ordering', () => {
     syncTokenToNativeMock.mockClear();
     updateProfileMock.mockReset();
     storage.clear();
+    vi.useFakeTimers();
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => {
@@ -71,6 +72,8 @@ describe('useAuthStore.setAuth credential ordering', () => {
   });
 
   afterEach(() => {
+    vi.clearAllTimers();
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -101,22 +104,22 @@ describe('useAuthStore.setAuth credential ordering', () => {
     const { useAuthStore } = await import('@/store/authStore');
     updateProfileMock.mockReturnValue(new Promise(() => {}));
 
-    const result = await Promise.race([
-      useAuthStore.getState().setAuth(
-        {
-          id: 'user-1',
-          firstName: 'Test',
-          lastName: 'User',
-          phone: '+10000000000',
-        } as never,
-        'access-token',
-        { refreshToken: 'refresh-token', currentSessionId: 'session-1' }
-      ).then(() => 'resolved'),
-      new Promise((resolve) => setTimeout(() => resolve('timeout'), 0)),
-    ]);
+    await useAuthStore.getState().setAuth(
+      {
+        id: 'user-1',
+        firstName: 'Test',
+        lastName: 'User',
+        phone: '+10000000000',
+      } as never,
+      'access-token',
+      { refreshToken: 'refresh-token', currentSessionId: 'session-1' }
+    );
 
-    expect(result).toBe('resolved');
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(updateProfileMock).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(1500);
+
     expect(updateProfileMock).toHaveBeenCalled();
   });
 });
