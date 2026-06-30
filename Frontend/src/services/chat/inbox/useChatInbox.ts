@@ -372,14 +372,17 @@ export function useChatInbox(opts: UseChatInboxOptions) {
         debouncedSearchQuery,
         userId,
         subtabs: {
-          users: usersSubtabUnread,
-          bugs: bugsSubtabUnread,
-          channels: channelsSubtabUnread,
-          market: marketSubtabUnread,
+          users: usersSubtabUnread ?? 0,
+          bugs: bugsSubtabUnread ?? 0,
+          channels: channelsSubtabUnread ?? 0,
+          market: marketSubtabUnread ?? 0,
         },
         unreadStoreWarm,
         marketUnreadCounts,
-        marketBuyerSellerUnreadFromStore,
+        marketBuyerSellerUnreadFromStore: {
+          buyer: marketBuyerSellerUnreadFromStore.buyer ?? 0,
+          seller: marketBuyerSellerUnreadFromStore.seller ?? 0,
+        },
       }),
     [
       threads,
