@@ -21,15 +21,20 @@ sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
 sudo -u postgres createdb padelpulse_dev
 sudo -u postgres psql -d padelpulse_dev -c "CREATE SCHEMA IF NOT EXISTS padelpulse;"
 cd Backend && cp env.sample .env
-npx prisma db push
+npx prisma migrate dev
 ```
 Set `FALLBACK_CITY_ID` in `Backend/.env` and seed at least one City row for registration to work.
+
+### Prisma migrations
+- Never use `npx prisma db push` for schema changes.
+- Always create a named migration with `cd Backend && npx prisma migrate dev --name <descriptive_name>`.
+- Commit the generated `Backend/prisma/migrations/.../migration.sql` with the Prisma schema change so production `npx prisma migrate deploy` can apply it.
 
 ### Key gotchas
 - Registration requires a City row in the database and `FALLBACK_CITY_ID` in `.env` pointing to it
 - `pg_hba.conf` defaults to `peer` auth on Ubuntu; must change to `md5` for the `postgres` user and reload: `sudo pg_ctlcluster 16 main reload`
 - Backend `.env` is gitignored; copy from `env.sample`. Most optional services (Telegram, APNs, FCM, S3, AI) work gracefully when tokens are empty
-- Prisma schema is at `Backend/prisma/schema.prisma`; use `npx prisma db push` for dev sync (not migrations)
+- Prisma schema is at `Backend/prisma/schema.prisma`; schema changes must be paired with a named migration
 - The `test:automated` script (`Backend/scripts/tests/run-all.ts`) runs several QA suites; some require seeded data (e.g. 4+ users for match live scoring)
 - Frontend env vars have defaults in `vite.config.ts` so no `.env` file is needed for the frontend
 

@@ -96,18 +96,34 @@ export const useAuthStore = create<AuthState>((set, get) => {
       set({ user, token, isAuthenticated: true });
       scheduleProactiveAccessRefresh(token);
 
-      const deviceLocale = navigator.language || 'en-GB';
-      const normalizedLanguage = normalizeLanguageForProfile(user.language);
-      const needsLanguageNormalization = user.language && normalizedLanguage !== user.language;
-      const needsUpdate =
-        !user.language ||
-        needsLanguageNormalization ||
-        !user.timeFormat ||
-        !user.weekStart;
+      if (user.language) {
+        const langCode = extractLanguageCode(user.language);
+        i18n.changeLanguage(langCode);
+      }
 
-      let userToSet = user;
+      void import('@/services/chat/chatSyncBatchWarm').then((warm) => {
+        warm.resetChatSyncWarmSession();
+        void warm.ensureChatSyncWarmBootstrap();
+      });
 
-      if (needsUpdate) {
+      void import('@/store/unreadStore').then(({ useUnreadStore }) => {
+        useUnreadStore.getState().refreshAll().catch(() => {});
+      });
+
+      syncNativeAppIconForUser(user);
+
+      void (async () => {
+        const deviceLocale = navigator.language || 'en-GB';
+        const normalizedLanguage = normalizeLanguageForProfile(user.language);
+        const needsLanguageNormalization = user.language && normalizedLanguage !== user.language;
+        const needsUpdate =
+          !user.language ||
+          needsLanguageNormalization ||
+          !user.timeFormat ||
+          !user.weekStart;
+
+        if (!needsUpdate) return;
+
         const updates: Partial<User> = {};
         if (!user.language) {
           updates.language = deviceLocale;
@@ -120,37 +136,27 @@ export const useAuthStore = create<AuthState>((set, get) => {
         if (!user.weekStart) {
           updates.weekStart = detectWeekStart(deviceLocale);
         }
+        if (Object.keys(updates).length === 0) return;
 
-        if (Object.keys(updates).length > 0) {
-          try {
-            const response = await usersApi.updateProfile(updates);
-            userToSet = response.data;
-          } catch (error) {
-            console.error('Error auto-detecting preferences:', error);
-            userToSet = { ...user, ...updates };
-          }
-          localStorage.setItem('user', JSON.stringify(userToSet));
-          set({ user: userToSet });
+        let userToSet = user;
+        try {
+          const response = await usersApi.updateProfile(updates);
+          userToSet = response.data;
+        } catch (error) {
+          console.error('Error auto-detecting preferences:', error);
+          userToSet = { ...user, ...updates };
         }
-      }
 
-      if (userToSet.language) {
-        const langCode = extractLanguageCode(userToSet.language);
-        i18n.changeLanguage(langCode);
-      }
+        localStorage.setItem('user', JSON.stringify(userToSet));
+        set({ user: userToSet });
 
-      set({ user: userToSet, token, isAuthenticated: true });
+        if (userToSet.language) {
+          const langCode = extractLanguageCode(userToSet.language);
+          i18n.changeLanguage(langCode);
+        }
 
-      void import('@/services/chat/chatSyncBatchWarm').then((warm) => {
-        warm.resetChatSyncWarmSession();
-        void warm.ensureChatSyncWarmBootstrap();
-      });
-
-      void import('@/store/unreadStore').then(({ useUnreadStore }) => {
-        useUnreadStore.getState().refreshAll().catch(() => {});
-      });
-
-      syncNativeAppIconForUser(userToSet);
+        syncNativeAppIconForUser(userToSet);
+      })();
     },
     setToken: (token) => {
       try {
@@ -284,4 +290,3 @@ export const useAuthStore = create<AuthState>((set, get) => {
 registerAuthAccessTokenSink((token) => {
   useAuthStore.getState().setToken(token);
 });
-

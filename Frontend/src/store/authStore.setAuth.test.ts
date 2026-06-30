@@ -10,6 +10,8 @@ const syncTokenToNativeMock = vi.fn(async () => {
   persistOrder.push('syncNative');
 });
 
+const updateProfileMock = vi.fn();
+
 vi.mock('@/services/refreshTokenPersistence', () => ({
   clearRefreshBundle: vi.fn(async () => {
     persistOrder.push('clear');
@@ -22,6 +24,7 @@ vi.mock('@/services/authBridge', () => ({
   syncTokenToNative: syncTokenToNativeMock,
   syncLogoutToNative: vi.fn(),
   syncApiBaseUrlToNative: vi.fn(async () => {}),
+  syncBrandingLogoToNative: vi.fn(async () => {}),
 }));
 
 vi.mock('@/api/authRefresh', () => ({
@@ -34,7 +37,7 @@ vi.mock('@/integrations/booktime/proactiveRefresh', () => ({
 }));
 
 vi.mock('@/api', () => ({
-  usersApi: { updateProfile: vi.fn() },
+  usersApi: { updateProfile: updateProfileMock },
   authApi: {},
   pushApi: { removeAllTokens: vi.fn() },
 }));
@@ -50,6 +53,7 @@ describe('useAuthStore.setAuth credential ordering', () => {
     persistOrder.length = 0;
     persistRefreshBundleMock.mockClear();
     syncTokenToNativeMock.mockClear();
+    updateProfileMock.mockReset();
     storage.clear();
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => storage.get(key) ?? null,
@@ -91,5 +95,28 @@ describe('useAuthStore.setAuth credential ordering', () => {
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
     expect(persistRefreshBundleMock).toHaveBeenCalledWith('refresh-token', 'session-1');
     expect(syncTokenToNativeMock).toHaveBeenCalledWith('access-token');
+  });
+
+  it('does not keep login waiting on profile preference normalization', async () => {
+    const { useAuthStore } = await import('@/store/authStore');
+    updateProfileMock.mockReturnValue(new Promise(() => {}));
+
+    const result = await Promise.race([
+      useAuthStore.getState().setAuth(
+        {
+          id: 'user-1',
+          firstName: 'Test',
+          lastName: 'User',
+          phone: '+10000000000',
+        } as never,
+        'access-token',
+        { refreshToken: 'refresh-token', currentSessionId: 'session-1' }
+      ).then(() => 'resolved'),
+      new Promise((resolve) => setTimeout(() => resolve('timeout'), 0)),
+    ]);
+
+    expect(result).toBe('resolved');
+    expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(updateProfileMock).toHaveBeenCalled();
   });
 });
