@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1154';
+const CACHE_VERSION = 'v1156';
 const CACHE_NAME = `bandeja-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `bandeja-runtime-${CACHE_VERSION}`;
 
@@ -101,7 +101,11 @@ async function runChatOfflineBackgroundSync() {
       mc.port1.onmessage = null;
       throw err;
     }
-    await ackPromise;
+    try {
+      await ackPromise;
+    } catch (err) {
+      console.warn('Chat offline flush acknowledgement timed out:', err);
+    }
   }
   await probeReachableOrigin();
 }
@@ -132,7 +136,10 @@ async function putInCache(request, response, cacheName = CACHE_NAME) {
 
 async function networkFirst(request, { offlineDocumentFallback = false } = {}) {
   try {
-    const response = await fetch(request);
+    const networkRequest = request.mode === 'navigate'
+      ? new Request(request, { cache: 'reload' })
+      : request;
+    const response = await fetch(networkRequest);
     await putInCache(request, response);
     return response;
   } catch {
