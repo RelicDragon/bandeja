@@ -257,6 +257,7 @@ export interface User extends BasicUser {
   wallet?: number;
   blockedUserIds?: string[];
   showOnlineStatus?: boolean;
+  alwaysShowUserNames?: boolean;
   shareGamePhotosToFollowers?: boolean;
   shareGameCreationsToFollowers?: boolean;
   shareGameResultsToFollowers?: boolean;

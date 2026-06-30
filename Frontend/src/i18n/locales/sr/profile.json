@@ -202,6 +202,8 @@
     "allowMessagesFromNonContactsDescription": "Dozvoli bilo kome u vašem gradu da vam šalje direktne poruke. Isključite da biste primali poruke samo od kontakata.",
     "showOnlineStatus": "Prikaži moj mrežni status",
     "showOnlineStatusHint": "Ostali neće videti vaš status; ni vi nećete videti statuse drugih korisnika.",
+    "alwaysShowUserNames": "Uvek prikaži imena korisnika",
+    "alwaysShowUserNamesDescription": "Prikaži imena učesnika u karuselima igara bez držanja ili dodirivanja karusela.",
     "verbalStatus": "Status",
     "verbalStatusPlaceholder": "Šta vam je na umu?",
     "bio": "Biografija",

@@ -66,7 +66,7 @@ function requestHadBearer(config?: InternalAxiosRequestConfig): boolean {
   return typeof raw === 'string' && raw.startsWith('Bearer ');
 }
 
-const ACCESS_LEEWAY_MS = ((): number => {
+export const ACCESS_LEEWAY_MS = ((): number => {
   const raw = import.meta.env.VITE_ACCESS_REFRESH_LEEWAY_MS as unknown;
   if (typeof raw === 'number' && raw > 0) return raw;
   const n = Number(raw);
@@ -100,10 +100,27 @@ let authBroadcastChannel: BroadcastChannel | null = null;
 const retriedRequestAfterRefresh = new WeakSet<object>();
 /** Set when the last `runRefresh` cleared stored refresh credentials (server rejected rotation). */
 let lastRefreshRunClearedCredentials = false;
+let lastRefreshRunFailureCode: string | null = null;
+
+const REFRESH_HARD_REJECT_CODES = new Set([
+  'auth.refreshInvalid',
+  'auth.refreshExpired',
+  'auth.refreshReused',
+  'auth.refreshTokenRequired',
+  'auth.userInactive',
+  'auth.userNotFound',
+  'auth.clientUpgradeRequired',
+]);
 
 export function consumeRefreshRunClearedCredentials(): boolean {
   const v = lastRefreshRunClearedCredentials;
   lastRefreshRunClearedCredentials = false;
+  return v;
+}
+
+export function consumeLastRefreshRunFailureCode(): string | null {
+  const v = lastRefreshRunFailureCode;
+  lastRefreshRunFailureCode = null;
   return v;
 }
 
@@ -184,14 +201,18 @@ export function scheduleProactiveAccessRefresh(accessToken: string) {
   const expMs = decodeJwtExpMs(accessToken);
   if (!expMs) return;
   const msUntilExp = expMs - Date.now();
-  if (msUntilExp <= 0) return;
+  const refreshAndReschedule = () => {
+    void refreshAccessTokenSingleFlight().then((t) => {
+      if (t && t !== accessToken) scheduleProactiveAccessRefresh(t);
+    });
+  };
+  if (msUntilExp <= ACCESS_LEEWAY_MS) {
+    proactiveTimer = setTimeout(refreshAndReschedule, 0);
+    return;
+  }
   const desiredLeadMs = Math.min(ACCESS_LEEWAY_MS, Math.floor(msUntilExp * 0.5));
   const delay = Math.max(30_000, msUntilExp - desiredLeadMs);
-  proactiveTimer = setTimeout(() => {
-    void refreshAccessTokenSingleFlight().then((t) => {
-      if (t) scheduleProactiveAccessRefresh(t);
-    });
-  }, delay);
+  proactiveTimer = setTimeout(refreshAndReschedule, delay);
 }
 
 async function postRefresh(refreshToken: string): Promise<{
@@ -236,10 +257,14 @@ async function postRefresh(refreshToken: string): Promise<{
 
 export async function runRefresh(): Promise<string | null> {
   lastRefreshRunClearedCredentials = false;
+  lastRefreshRunFailureCode = null;
   const execute = async (): Promise<string | null> => {
     for (let attempt = 0; attempt < 2; attempt++) {
       const rt = (await getRefreshTokenForRequest())?.trim() ?? '';
-      if (!rt && !isWebHttpOnlyRefreshCookie()) return null;
+      if (!rt && !isWebHttpOnlyRefreshCookie()) {
+        lastRefreshRunFailureCode = 'auth.refreshTokenRequired';
+        return null;
+      }
       try {
         const genBeforePost = getApiAuthCredentialGeneration();
         const out = await postRefresh(rt);
@@ -255,11 +280,13 @@ export async function runRefresh(): Promise<string | null> {
         }
         lastSuccessfulRefreshAt = Date.now();
         lastSuccessfulRefreshToken = out.token;
+        lastRefreshRunFailureCode = null;
         scheduleProactiveAccessRefresh(out.token);
         broadcastAuthRefreshSignal(out.currentSessionId);
         return out.token;
       } catch (e) {
         const code = (e as { refreshCode?: string }).refreshCode;
+        lastRefreshRunFailureCode = code ?? null;
         if (code === 'auth.refreshReused' || code === 'auth.refreshExpired') {
           await clearRefreshBundle();
           lastRefreshRunClearedCredentials = true;
@@ -271,7 +298,7 @@ export async function runRefresh(): Promise<string | null> {
           await new Promise((r) => setTimeout(r, 180));
           continue;
         }
-        if (code === 'auth.refreshInvalid') {
+        if (code && REFRESH_HARD_REJECT_CODES.has(code)) {
           await clearRefreshBundle();
           lastRefreshRunClearedCredentials = true;
           lastSuccessfulRefreshAt = 0;

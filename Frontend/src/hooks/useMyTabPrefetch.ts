@@ -20,6 +20,9 @@ import { pastGamesInfiniteQueryOptions } from '@/queries/games/usePastGamesQuery
 export function useMyTabPrefetch() {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isInitializing = useAuthStore((state) => state.isInitializing);
+  const canPrefetch = !isInitializing && isAuthenticated && !!user;
 
   // Track prefetch state to avoid duplicate calls
   const hasPrefetchedCore = useRef(false);
@@ -31,7 +34,7 @@ export function useMyTabPrefetch() {
    * Should be called immediately on app launch
    */
   const prefetchCoreData = useCallback(() => {
-    if (!user || hasPrefetchedCore.current || isPrefetching.current) return;
+    if (!canPrefetch || !user || hasPrefetchedCore.current || isPrefetching.current) return;
 
     isPrefetching.current = true;
     hasPrefetchedCore.current = true;
@@ -42,14 +45,14 @@ export function useMyTabPrefetch() {
     }).finally(() => {
       isPrefetching.current = false;
     });
-  }, [user, queryClient]);
+  }, [canPrefetch, user, queryClient]);
 
   /**
    * Prefetch extra data (teams, stories)
    * Should be called during idle time
    */
   const prefetchExtras = useCallback(() => {
-    if (!user || hasPrefetchedExtras.current) return;
+    if (!canPrefetch || !user || hasPrefetchedExtras.current) return;
 
     hasPrefetchedExtras.current = true;
 
@@ -58,7 +61,7 @@ export function useMyTabPrefetch() {
       queryFn: () => getMyTabData({ includeStories: true, includeBooktime: true, useCache: true }),
       staleTime: 5 * 60 * 1000, // 5 minutes
     });
-  }, [user, queryClient]);
+  }, [canPrefetch, user, queryClient]);
 
   /**
    * Prefetch on navigation intent (hover/touch)
@@ -93,7 +96,7 @@ export function useMyTabPrefetch() {
 
   // Prefetch core data on mount (app launch)
   useEffect(() => {
-    if (!user) return;
+    if (!canPrefetch || !user) return;
 
     // Immediate prefetch of core data
     prefetchCoreData();
@@ -114,7 +117,7 @@ export function useMyTabPrefetch() {
 
       return () => clearTimeout(timer);
     }
-  }, [user, prefetchCoreData, prefetchExtras]);
+  }, [canPrefetch, user, prefetchCoreData, prefetchExtras]);
 
   return {
     prefetchOnIntent,
@@ -131,16 +134,18 @@ export function useMyTabPrefetch() {
 export function usePastGamesPrefetch() {
   const queryClient = useQueryClient();
   const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isInitializing = useAuthStore((state) => state.isInitializing);
 
   const prefetchPastGames = useCallback(() => {
-    if (!user) return;
+    if (isInitializing || !isAuthenticated || !user) return;
 
     queryClient.prefetchInfiniteQuery({
       ...pastGamesInfiniteQueryOptions(user.id),
       staleTime: 60 * 1000, // 1 minute
       pages: 1,
     });
-  }, [user, queryClient]);
+  }, [isInitializing, isAuthenticated, user, queryClient]);
 
   return { prefetchPastGames };
 }

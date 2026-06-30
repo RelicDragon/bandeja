@@ -131,6 +131,8 @@
     "allowMessagesFromNonContactsDescription": "Let anyone in your city send you direct messages. Turn off to receive messages only from contacts.",
     "showOnlineStatus": "Show my online status",
     "showOnlineStatusHint": "Others won't see your online status; you also won't see other users' online statuses.",
+    "alwaysShowUserNames": "Always show users names",
+    "alwaysShowUserNamesDescription": "Show participant names in game carousels without holding or touching the carousel.",
     "verbalStatus": "Status",
     "verbalStatusPlaceholder": "What's on your mind?",
     "bio": "Bio",

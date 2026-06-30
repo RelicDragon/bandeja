@@ -10,6 +10,7 @@ import { SportQuestionnaireInviteNudge } from '@/components/sportQuestionnaire';
 import { parseGameSport } from '@/utils/gameSport';
 import { ParticipantsSectionHeader } from './ParticipantsSectionHeader';
 import { ParticipantsActionBar } from './ParticipantsActionBar';
+import { useAuthStore } from '@/store/authStore';
 
 interface GameParticipantsProps {
   game: Game;
@@ -65,6 +66,7 @@ export const GameParticipants = ({
   onEditMaxParticipants,
 }: GameParticipantsProps) => {
   const { t } = useTranslation();
+  const currentUser = useAuthStore((state) => state.user);
   const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
   const isUnauthorized = !userId;
   const isNonPlaying = !isUnauthorized && game.participants.find(p => p.userId === userId)?.status === 'NON_PLAYING';
@@ -450,6 +452,7 @@ export const GameParticipants = ({
                 userId={userId}
                 shouldShowCrowns={shouldShowCrowns}
                 canInvitePlayers={!isUnauthorized && canInvitePlayers}
+                autoHideNames={currentUser?.alwaysShowUserNames === false}
                 onLeave={!isUnauthorized ? onLeave : undefined}
                 onShowPlayerList={!isUnauthorized ? onShowPlayerList : undefined}
               />
@@ -463,6 +466,7 @@ export const GameParticipants = ({
                   userId={userId}
                   shouldShowCrowns={shouldShowCrowns}
                   canInvitePlayers={!isUnauthorized && canInvitePlayers}
+                  autoHideNames={currentUser?.alwaysShowUserNames === false}
                   onLeave={!isUnauthorized ? onLeave : undefined}
                   onShowPlayerList={!isUnauthorized ? onShowPlayerList : undefined}
                 />

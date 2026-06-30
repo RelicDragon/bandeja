@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback } from 'react';
-import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChatType } from '@/types';
 import { type MessageListHandle } from '@/components/MessageList';
 import { useAuthStore } from '@/store/authStore';
@@ -30,7 +30,6 @@ export function useThreadViewController({
 
   const id = propChatId ?? paramId;
   const locationState = location.state as LocationState | null;
-  const [searchParams, setSearchParams] = useSearchParams();
   const contextType = getContextTypeFromRoute(location.pathname, locationState, isEmbedded, propChatType);
   const initialChatType = locationState?.initialChatType
     ? normalizeChatType(locationState.initialChatType)
@@ -86,25 +85,6 @@ export function useThreadViewController({
     setChatsFilter,
     currentIdRef,
   });
-
-  useEffect(() => {
-    if (contextType !== 'GAME' || !id) return;
-    const q = searchParams.get('chatType');
-    if (!q || q.toUpperCase() !== 'PHOTOS') return;
-    if (isEmbedded) {
-      navigate(`/games/${id}`, { replace: true });
-      return;
-    }
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.delete('chatType');
-        return next;
-      },
-      { replace: true }
-    );
-    setCurrentChatType('PUBLIC');
-  }, [contextType, id, isEmbedded, navigate, searchParams, setSearchParams]);
 
   const effectiveChatType = useMemo(
     () => (contextType === 'GAME' ? normalizeChatType(currentChatType) : 'PUBLIC') as ChatType,

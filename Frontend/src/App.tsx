@@ -72,6 +72,7 @@ import pushNotificationService from './services/pushNotificationService';
 import { navigationService } from './services/navigationService';
 import { markNavigation, setupPopstateFallback } from './utils/navigation';
 import { ensureAuthBroadcastListener, scheduleProactiveAccessRefresh } from '@/api/authRefresh';
+import { settleStoredAuthBeforeBootstrap } from '@/api/authStartup';
 import { ensureBooktimeProactiveRefresh } from '@/integrations/booktime/session';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { useMyTabPrefetch } from './hooks/useMyTabPrefetch';
@@ -183,7 +184,8 @@ function AppContent() {
     const syncChatNet = () => {
       const online = useNetworkStore.getState().isOnline;
       refreshChatOfflineBanner();
-      if (online && useAuthStore.getState().isAuthenticated) {
+      const auth = useAuthStore.getState();
+      if (online && auth.isAuthenticated && !auth.isInitializing) {
         if (!wasOnline) {
           void warmChatSyncHeads(undefined, { enrichFromUnread: true });
         }
@@ -200,6 +202,7 @@ function AppContent() {
     stripStaleSessionForAndroidGoogleLoginRecovery();
     restoreAuthIfNeeded();
     const cleanupAuthPersistence = monitorAuthPersistence();
+    let cancelled = false;
     
     if (isCapacitor()) {
       document.body.classList.add('capacitor-app');
@@ -216,13 +219,18 @@ function AppContent() {
 
     const cleanup = initNetworkListener();
 
-    finishInitializing();
-    syncNativeAppIconForUser(useAuthStore.getState().user);
-    if (isCapacitor() && useAuthStore.getState().isAuthenticated) {
-      void pushNotificationService.ensureTokenSentToBackend();
-    }
+    void settleStoredAuthBeforeBootstrap().finally(() => {
+      if (cancelled) return;
+      finishInitializing();
+      syncNativeAppIconForUser(useAuthStore.getState().user);
+      const authState = useAuthStore.getState();
+      if (isCapacitor() && authState.isAuthenticated && !authState.isInitializing) {
+        void pushNotificationService.ensureTokenSentToBackend();
+      }
+    });
 
     return () => {
+      cancelled = true;
       cleanup();
       cleanupAuthPersistence();
       appLifecycleService.cleanup();

@@ -272,6 +272,7 @@ export const PROFILE_SELECT_FIELDS = {
   sendPushReminders: true,
   allowMessagesFromNonContacts: true,
   showOnlineStatus: true,
+  alwaysShowUserNames: true,
   shareGamePhotosToFollowers: true,
   shareGameCreationsToFollowers: true,
   shareGameResultsToFollowers: true,
@@ -303,4 +304,3 @@ export {
   getCreatableSports,
   isSportCreatable,
 } from './multisportFlags';
-

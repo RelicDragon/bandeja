@@ -36,7 +36,8 @@ async function runForegroundSync(): Promise<void> {
       recordChatSyncForegroundSyncMs(performance.now() - t0);
     }
   };
-  if (useAuthStore.getState().isAuthenticated) {
+  const authState = useAuthStore.getState();
+  if (authState.isAuthenticated && !authState.isInitializing) {
     void ensureChatPersistentStorageOnce();
     void probeChatStoragePressure();
     if (!shouldDeferImplicitChatWarm()) {
@@ -119,7 +120,10 @@ export const appLifecycleService = {
             return;
           }
           runForegroundSync();
-          void pushNotificationService.ensureTokenSentToBackend();
+          const auth = useAuthStore.getState();
+          if (auth.isAuthenticated && !auth.isInitializing) {
+            void pushNotificationService.ensureTokenSentToBackend();
+          }
         }).then((h) => {
           capUnsubscribe = h;
         });

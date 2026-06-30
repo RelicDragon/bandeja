@@ -115,6 +115,7 @@ model User {
   sendPushWalletNotifications Boolean             @default(true)
   allowMessagesFromNonContacts Boolean            @default(true)
   showOnlineStatus             Boolean            @default(true)
+  alwaysShowUserNames           Boolean            @default(true)
   shareGamePhotosToFollowers    Boolean           @default(true)
   shareGameCreationsToFollowers Boolean           @default(true)
   shareGameResultsToFollowers   Boolean           @default(true)

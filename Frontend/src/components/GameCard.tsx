@@ -587,7 +587,7 @@ export const GameCard = ({
                 participants={participants.filter(p => p.status === 'PLAYING')}
                 userId={effectiveUser?.id}
                 shouldShowCrowns={true}
-                autoHideNames={true}
+                autoHideNames={effectiveUser?.alwaysShowUserNames === false}
               />
             </div>
           </div>

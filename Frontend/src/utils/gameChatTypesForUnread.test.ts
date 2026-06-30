@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { getGameChatTypesForUnreadAndMarkRead } from './gameChatTypesForUnread';
-import { getAvailableGameChatTypes } from './chatType';
 
 describe('getGameChatTypesForUnreadAndMarkRead', () => {
   it('always includes PUBLIC', () => {
@@ -47,13 +46,5 @@ describe('getGameChatTypesForUnreadAndMarkRead', () => {
         true
       )
     ).toContain('ADMINS');
-  });
-
-  it('never includes removed PHOTOS channel', () => {
-    const types = getGameChatTypesForUnreadAndMarkRead({ status: 'SCHEDULED' });
-    expect((types as string[]).includes('PHOTOS')).toBe(false);
-    expect((getAvailableGameChatTypes({ status: 'PLAYING', role: 'PLAYER' }) as string[]).includes('PHOTOS')).toBe(
-      false
-    );
   });
 });

@@ -415,53 +415,6 @@ class ChatLocalDexie extends Dexie {
       mutationQueue: 'id, [contextType+contextId], status, createdAt',
       outboxMediaBlobs: 'id, tempId',
       messageSearchTokens: 'id, token, messageId',
-    }).upgrade(async (tx) => {
-      const msgs = tx.table('messages');
-      const photosRows = ((await msgs.toArray()) as ChatLocalRow[]).filter(
-        (r) => r.contextType === 'GAME' && String(r.chatType) === 'PHOTOS'
-      );
-      const photoIds = photosRows.map((r) => r.id);
-      if (photoIds.length) {
-        await msgs.bulkDelete(photoIds);
-        const tokens = tx.table('messageSearchTokens');
-        for (const messageId of photoIds) {
-          const tokenKeys = await tokens.where('messageId').equals(messageId).primaryKeys();
-          if (tokenKeys.length) await tokens.bulkDelete(tokenKeys);
-        }
-      }
-
-      const headTable = tx.table('messageContextHead');
-      for (const head of await headTable.filter((h) => h.key.endsWith(':PHOTOS')).toArray()) {
-        await headTable.delete(head.key);
-      }
-
-      const scrollTable = tx.table('threadScroll');
-      for (const row of await scrollTable.filter((r) => r.key.endsWith(':PHOTOS')).toArray()) {
-        await scrollTable.delete(row.key);
-      }
-
-      const outboxTable = tx.table('outbox');
-      const outboxRows = await outboxTable.toArray();
-      for (const row of outboxRows) {
-        if (row.contextType === 'GAME' && row.payload?.chatType === 'PHOTOS') {
-          await outboxTable.delete(row.tempId);
-          const blobs = tx.table('outboxMediaBlobs');
-          const blobKeys = await blobs.where('tempId').equals(row.tempId).primaryKeys();
-          if (blobKeys.length) await blobs.bulkDelete(blobKeys);
-        }
-      }
-
-      const draftTable = tx.table('chatDrafts');
-      for (const draft of await draftTable.filter((d) => d.key.includes(':PHOTOS')).toArray()) {
-        await draftTable.delete(draft.key);
-      }
-
-      const threadTable = tx.table('chatThreads');
-      for (const thread of await threadTable.toArray()) {
-        if (thread.lastGameChatType === 'PHOTOS') {
-          await threadTable.put({ ...thread, lastGameChatType: 'PUBLIC' });
-        }
-      }
     });
   }
 }

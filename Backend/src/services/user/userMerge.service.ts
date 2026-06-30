@@ -82,6 +82,7 @@ const survivorSelect = {
   sendPushWalletNotifications: true,
   allowMessagesFromNonContacts: true,
   showOnlineStatus: true,
+  alwaysShowUserNames: true,
   appIcon: true,
   trainerRating: true,
   trainerReviewCount: true,
@@ -413,6 +414,7 @@ function buildMergedUserData(survivor: SurvivorRow, source: SurvivorRow): Prisma
     allowMessagesFromNonContacts:
       survivor.allowMessagesFromNonContacts || source.allowMessagesFromNonContacts,
     showOnlineStatus: survivor.showOnlineStatus || source.showOnlineStatus,
+    alwaysShowUserNames: survivor.alwaysShowUserNames || source.alwaysShowUserNames,
     appIcon: pickStr(survivor.appIcon, source.appIcon),
     trainerRating,
     trainerReviewCount: trc,

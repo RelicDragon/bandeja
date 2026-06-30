@@ -107,6 +107,8 @@ let lastFetchKey: string | null = null;
 /** Fetches placements once auth/city/sport context is ready — mount at app shell, not only inside AdSlot. */
 export function useAdPlacementsFetcher() {
   const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isInitializing = useAuthStore((s) => s.isInitializing);
   const isOnline = useNetworkStore((s) => s.isOnline);
   const sportsByPlacement = useAdPlacementsStore((s) => s.sportsByPlacement);
   const setCityId = useAdPlacementsStore((s) => s.setCityId);
@@ -120,7 +122,8 @@ export function useAdPlacementsFetcher() {
   }, [setCityId, userCityId]);
 
   useEffect(() => {
-    if (!user?.id || !isOnline) {
+    if (isInitializing) return;
+    if (!isAuthenticated || !user?.id || !isOnline) {
       setPlacements({});
       lastFetchKey = null;
       return;
@@ -153,7 +156,7 @@ export function useAdPlacementsFetcher() {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, isOnline, sportsByPlacement, userCityId, setLoading, setPlacements]);
+  }, [isInitializing, isAuthenticated, user?.id, isOnline, sportsByPlacement, userCityId, setLoading, setPlacements]);
 }
 
 export function useRegisterAdSportContext(placement: AdPlacementKey, sport: Sport | undefined) {

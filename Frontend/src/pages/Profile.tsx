@@ -119,6 +119,7 @@ export const ProfileContent = () => {
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreference[]>([]);
   const [allowMessagesFromNonContacts, setAllowMessagesFromNonContacts] = useState(user?.allowMessagesFromNonContacts !== false);
   const [showOnlineStatus, setShowOnlineStatus] = useState(user?.showOnlineStatus !== false);
+  const [alwaysShowUserNames, setAlwaysShowUserNames] = useState(user?.alwaysShowUserNames !== false);
   const [shareGamePhotosToFollowers, setShareGamePhotosToFollowers] = useState(user?.shareGamePhotosToFollowers !== false);
   const [shareGameCreationsToFollowers, setShareGameCreationsToFollowers] = useState(user?.shareGameCreationsToFollowers !== false);
   const [shareGameResultsToFollowers, setShareGameResultsToFollowers] = useState(user?.shareGameResultsToFollowers !== false);
@@ -214,6 +215,7 @@ export const ProfileContent = () => {
       setPreferredCourtSideRight(user.preferredCourtSideRight || false);
       setAllowMessagesFromNonContacts(user.allowMessagesFromNonContacts !== false);
       setShowOnlineStatus(user.showOnlineStatus !== false);
+      setAlwaysShowUserNames(user.alwaysShowUserNames !== false);
       setShareGamePhotosToFollowers(user.shareGamePhotosToFollowers !== false);
       setShareGameCreationsToFollowers(user.shareGameCreationsToFollowers !== false);
       setShareGameResultsToFollowers(user.shareGameResultsToFollowers !== false);
@@ -373,6 +375,11 @@ export const ProfileContent = () => {
   const handleShowOnlineStatusChange = (value: boolean) => {
     setShowOnlineStatus(value);
     updateProfile({ showOnlineStatus: value });
+  };
+
+  const handleAlwaysShowUserNamesChange = (value: boolean) => {
+    setAlwaysShowUserNames(value);
+    updateProfile({ alwaysShowUserNames: value });
   };
 
   const handleShareGamePhotosToFollowersChange = (value: boolean) => {
@@ -1209,6 +1216,21 @@ export const ProfileContent = () => {
                 ]}
                 value={theme}
                 onChange={(value) => setTheme(value as 'light' | 'dark' | 'system')}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-4 py-2">
+              <div className="flex-1 min-w-0">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300 block">
+                  {t('profile.alwaysShowUserNames')}
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                  {t('profile.alwaysShowUserNamesDescription')}
+                </p>
+              </div>
+              <ToggleSwitch
+                checked={alwaysShowUserNames}
+                onChange={handleAlwaysShowUserNamesChange}
               />
             </div>
 
