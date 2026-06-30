@@ -425,10 +425,12 @@ export async function handleAxios401MaybeRefresh(error: AxiosError): Promise<unk
 
   const newTok = await refreshAccessTokenSingleFlight();
   if (!newTok) {
-    if (consumeRefreshRunClearedCredentials()) {
+    const refreshFailureCode = consumeLastRefreshRunFailureCode();
+    if (
+      consumeRefreshRunClearedCredentials() ||
+      (refreshFailureCode && REFRESH_HARD_REJECT_CODES.has(refreshFailureCode))
+    ) {
       handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
-    } else {
-      handleApiUnauthorizedIfNeeded();
     }
     return Promise.reject(error);
   }
