@@ -17,6 +17,7 @@ import {
   getApiAuthCredentialGeneration,
   isStaleApiAuthCredentialGeneration,
 } from '@/api/apiAuthCredentialGeneration';
+import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
 
 const AUTH_CHANNEL = 'padelpulse-auth-v2';
 const AUTH_SYNC_TYPE = 'padelpulse-auth-sync-v2';
@@ -165,6 +166,7 @@ export function ensureAuthBroadcastListener(): void {
     };
     if (d?.type !== AUTH_SYNC_TYPE || typeof d.sourceId !== 'string') return;
     if (d.sourceId === BROADCAST_TAB_ID) return;
+    if (hasExplicitLogoutMarker()) return;
     if (typeof d.currentSessionId === 'string' && d.currentSessionId.length > 0) {
       persistSessionIdOnly(d.currentSessionId);
     }
@@ -197,6 +199,7 @@ function clearProactiveTimer() {
 }
 
 export function scheduleProactiveAccessRefresh(accessToken: string) {
+  if (hasExplicitLogoutMarker()) return;
   clearProactiveTimer();
   const expMs = decodeJwtExpMs(accessToken);
   if (!expMs) return;
@@ -259,6 +262,11 @@ export async function runRefresh(): Promise<string | null> {
   lastRefreshRunClearedCredentials = false;
   lastRefreshRunFailureCode = null;
   const execute = async (): Promise<string | null> => {
+    if (hasExplicitLogoutMarker()) {
+      lastRefreshRunFailureCode = 'auth.explicitLogout';
+      return null;
+    }
+
     for (let attempt = 0; attempt < 2; attempt++) {
       const rt = (await getRefreshTokenForRequest())?.trim() ?? '';
       if (!rt && !isWebHttpOnlyRefreshCookie()) {
@@ -317,6 +325,10 @@ export async function runRefresh(): Promise<string | null> {
 }
 
 export function refreshAccessTokenSingleFlight(): Promise<string | null> {
+  if (hasExplicitLogoutMarker()) {
+    lastRefreshRunFailureCode = 'auth.explicitLogout';
+    return Promise.resolve(null);
+  }
   if (!refreshPromise) {
     if (
       lastSuccessfulRefreshToken &&
@@ -377,6 +389,9 @@ export async function handleAxios401MaybeRefresh(error: AxiosError): Promise<unk
     }
     await clearRefreshBundle();
     handleApiUnauthorizedIfNeeded({ forceSessionClear: true });
+    return Promise.reject(error);
+  }
+  if (hasExplicitLogoutMarker()) {
     return Promise.reject(error);
   }
   if (/\/auth\/(login|register)\//.test(url) || url.includes('/telegram/verify')) {

@@ -20,6 +20,7 @@ import { chatApi } from '@/api/chat';
 import { restoreAuthIfNeeded } from '@/utils/authPersistence';
 import { getTokenNative } from '@/services/authBridge';
 import { setPushReplyJsReadyNative } from '@/services/push/pushDelegateBridge';
+import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
 
 interface NotificationData {
   type: string;
@@ -314,6 +315,9 @@ class PushNotificationService {
     }
 
     restoreAuthIfNeeded();
+    if (hasExplicitLogoutMarker()) {
+      return;
+    }
     let token = localStorage.getItem('token');
     if (!token && Capacitor.getPlatform() === 'ios') {
       token = await getTokenNative();
@@ -343,6 +347,9 @@ class PushNotificationService {
     }
 
     restoreAuthIfNeeded();
+    if (hasExplicitLogoutMarker()) {
+      return;
+    }
     const authUser = useAuthStore.getState().user;
     if (authUser && authUser.nameIsSet !== true) {
       runWithProfileName(() => void sendChatReplyFromPush(ctx, content));

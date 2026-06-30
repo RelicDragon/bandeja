@@ -23,6 +23,12 @@ import { registerAuthAccessTokenSink } from '@/store/authAccessSink';
 import { bumpApiAuthCredentialGeneration } from '@/api/apiAuthCredentialGeneration';
 import { markLoginCompleted } from '@/utils/authLoginGrace';
 import {
+  clearExplicitLogoutMarker,
+  clearLocalAuthStorageForExplicitLogout,
+  hasExplicitLogoutMarker,
+  markExplicitLogout,
+} from '@/utils/authExplicitLogout';
+import {
   getNativeAppIconSyncKey,
   syncNativeAppIconForUser,
 } from '@/services/appIcon.service';
@@ -50,19 +56,23 @@ export const useAuthStore = create<AuthState>((set, get) => {
   let savedToken = null;
   
   try {
-    const userStr = localStorage.getItem('user');
-    const tokenStr = localStorage.getItem('token');
-    
-    if (tokenStr) {
-      savedToken = tokenStr;
-      console.log('Token loaded from localStorage');
-      syncTokenToNative(tokenStr);
-      void syncApiBaseUrlToNative();
-    }
-    
-    if (userStr) {
-      savedUser = JSON.parse(userStr);
-      console.log('User loaded from localStorage');
+    if (hasExplicitLogoutMarker()) {
+      clearLocalAuthStorageForExplicitLogout();
+    } else {
+      const userStr = localStorage.getItem('user');
+      const tokenStr = localStorage.getItem('token');
+
+      if (tokenStr) {
+        savedToken = tokenStr;
+        console.log('Token loaded from localStorage');
+        syncTokenToNative(tokenStr);
+        void syncApiBaseUrlToNative();
+      }
+
+      if (userStr) {
+        savedUser = JSON.parse(userStr);
+        console.log('User loaded from localStorage');
+      }
     }
   } catch (error) {
     console.error('Error loading auth from localStorage:', error);
@@ -80,6 +90,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
     isAuthenticated: !!savedToken,
     isInitializing: true,
     setAuth: async (user, token, opts) => {
+      clearExplicitLogoutMarker();
       markLoginCompleted();
       bumpApiAuthCredentialGeneration();
       localStorage.setItem('user', JSON.stringify(user));
@@ -155,10 +166,14 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
     setToken: (token) => {
       try {
+        if (hasExplicitLogoutMarker()) {
+          console.info('[auth:setToken] ignored while explicit logout marker is present');
+          return;
+        }
         localStorage.setItem('token', token);
         set({ token, isAuthenticated: true });
         syncTokenToNative(token);
-      void syncApiBaseUrlToNative();
+        void syncApiBaseUrlToNative();
         scheduleProactiveAccessRefresh(token);
       } catch (error) {
         console.error('Error saving token to localStorage:', error);
@@ -177,6 +192,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           path: typeof window !== 'undefined' ? window.location.pathname : '',
           capNative: Capacitor.isNativePlatform(),
         });
+        markExplicitLogout();
         bumpApiAuthCredentialGeneration();
         clearProactiveAccessRefresh();
         clearAllProactiveBooktimeRefresh();
@@ -260,6 +276,10 @@ export const useAuthStore = create<AuthState>((set, get) => {
     },
     updateUser: (user) => {
       try {
+        if (hasExplicitLogoutMarker() || !get().isAuthenticated || !get().token) {
+          console.info('[auth:updateUser] ignored without an active authenticated session');
+          return;
+        }
         const prev = get().user;
         localStorage.setItem('user', JSON.stringify(user));
         set({ user });

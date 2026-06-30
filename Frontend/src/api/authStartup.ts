@@ -15,6 +15,7 @@ import {
 } from '@/services/refreshTokenPersistence';
 import { syncLogoutToNative } from '@/services/authBridge';
 import { useAuthStore } from '@/store/authStore';
+import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
 
 export type StoredAccessTokenState =
   | 'missing'
@@ -45,6 +46,7 @@ type AuthStartupDeps = {
   clearLocalAuth: (reason: string) => Promise<void>;
   suspendAccessToken: (reason: string) => Promise<void>;
   hasStoredUserCandidate: () => boolean;
+  hasExplicitLogoutMarker: () => boolean;
   consumeRefreshClearedCredentials: () => boolean;
   consumeRefreshFailureCode: () => string | null;
   now: () => number;
@@ -135,6 +137,7 @@ const defaultDeps: AuthStartupDeps = {
   clearLocalAuth: clearLocalAuthCandidate,
   suspendAccessToken: suspendAccessTokenCandidate,
   hasStoredUserCandidate,
+  hasExplicitLogoutMarker,
   consumeRefreshClearedCredentials: consumeRefreshRunClearedCredentials,
   consumeRefreshFailureCode: consumeLastRefreshRunFailureCode,
   now: () => Date.now(),
@@ -201,6 +204,11 @@ export async function settleStoredAuthBeforeBootstrap(opts?: {
   try {
     const token = deps.getAccessToken();
     const tokenState = classifyStoredAccessToken(token, deps.now());
+
+    if (deps.hasExplicitLogoutMarker()) {
+      await deps.clearLocalAuth('explicit_logout');
+      return result('cleared', tokenState, 'explicit_logout');
+    }
 
     if (tokenState === 'missing') {
       if (!deps.hasStoredUserCandidate()) {

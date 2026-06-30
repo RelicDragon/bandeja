@@ -7,6 +7,7 @@ import { restoreAuthIfNeeded } from '@/utils/authPersistence';
 import { getTokenNative } from '@/services/authBridge';
 import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { hasExplicitLogoutMarker } from '@/utils/authExplicitLogout';
 import i18n from '@/i18n/config';
 import type { PushChatContext } from './parsePushChatContext';
 import { PUSH_REPLY_MAX_CONTENT_LENGTH } from './pushNotificationConstants';
@@ -72,6 +73,9 @@ async function scheduleReplyFailedNotification(): Promise<void> {
 
 async function ensureAuthToken(): Promise<boolean> {
   restoreAuthIfNeeded();
+  if (hasExplicitLogoutMarker()) {
+    return false;
+  }
 
   let token = typeof localStorage !== 'undefined' ? localStorage.getItem('token') : null;
   if (!token && Capacitor.getPlatform() === 'ios') {

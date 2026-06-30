@@ -5,6 +5,7 @@ const clearRefreshBundleMock = vi.fn(async () => {});
 const getRefreshTokenForRequestMock = vi.fn(async () => 'refresh-token');
 const handleApiUnauthorizedIfNeededMock = vi.fn();
 const apiRequestMock = vi.fn();
+const hasExplicitLogoutMarkerMock = vi.fn(() => false);
 
 vi.mock('@/services/refreshTokenPersistence', () => ({
   clearRefreshBundle: clearRefreshBundleMock,
@@ -20,6 +21,10 @@ vi.mock('@/api/handleApiUnauthorized', () => ({
 
 vi.mock('@/api/httpClient', () => ({
   api: { request: apiRequestMock },
+}));
+
+vi.mock('@/utils/authExplicitLogout', () => ({
+  hasExplicitLogoutMarker: hasExplicitLogoutMarkerMock,
 }));
 
 vi.mock('@/api/apiBaseUrl', () => ({
@@ -70,12 +75,15 @@ describe('handleAxios401MaybeRefresh', () => {
     vi.resetModules();
     clearRefreshBundleMock.mockClear();
     getRefreshTokenForRequestMock.mockResolvedValue('refresh-token');
+    getRefreshTokenForRequestMock.mockClear();
     handleApiUnauthorizedIfNeededMock.mockClear();
     apiRequestMock.mockClear();
+    hasExplicitLogoutMarkerMock.mockReturnValue(false);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.unstubAllGlobals();
   });
 
   it('does not logout when refresh fails transiently after a protected 401', async () => {
@@ -116,5 +124,25 @@ describe('handleAxios401MaybeRefresh', () => {
 
     expect(clearRefreshBundleMock).toHaveBeenCalled();
     expect(handleApiUnauthorizedIfNeededMock).toHaveBeenCalledWith({ forceSessionClear: true });
+  });
+
+  it('does not attempt refresh after explicit logout', async () => {
+    hasExplicitLogoutMarkerMock.mockReturnValue(true);
+    const postMock = vi.fn();
+    const axios = await import('axios');
+    vi.spyOn(axios.default, 'create').mockReturnValue({
+      interceptors: { request: { use: vi.fn() } },
+      post: postMock,
+    } as never);
+
+    const { handleAxios401MaybeRefresh } = await import('@/api/authRefresh');
+
+    await expect(handleAxios401MaybeRefresh(make401Error())).rejects.toMatchObject({
+      response: { status: 401 },
+    });
+
+    expect(getRefreshTokenForRequestMock).not.toHaveBeenCalled();
+    expect(postMock).not.toHaveBeenCalled();
+    expect(handleApiUnauthorizedIfNeededMock).not.toHaveBeenCalled();
   });
 });

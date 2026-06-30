@@ -4,6 +4,10 @@ const LAST_CHECK_KEY = 'auth_last_check';
 import { useAuthStore } from '@/store/authStore';
 import { scheduleProactiveAccessRefresh } from '@/api/authRefresh';
 import { syncTokenToNative } from '@/services/authBridge';
+import {
+  clearLocalAuthStorageForExplicitLogout,
+  hasExplicitLogoutMarker,
+} from '@/utils/authExplicitLogout';
 import type { User } from '@/types';
 
 interface AuthBackup {
@@ -14,6 +18,11 @@ interface AuthBackup {
 
 export const backupAuth = (): void => {
   try {
+    if (hasExplicitLogoutMarker()) {
+      localStorage.removeItem(AUTH_BACKUP_KEY);
+      return;
+    }
+
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     
@@ -33,6 +42,12 @@ export const backupAuth = (): void => {
 
 export const restoreAuthIfNeeded = (): void => {
   try {
+    if (hasExplicitLogoutMarker()) {
+      clearLocalAuthStorageForExplicitLogout();
+      localStorage.setItem(LAST_CHECK_KEY, Date.now().toString());
+      return;
+    }
+
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     
@@ -109,5 +124,4 @@ export const monitorAuthPersistence = (): (() => void) => {
     }
   };
 };
-
 

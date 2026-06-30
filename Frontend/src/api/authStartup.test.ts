@@ -20,6 +20,7 @@ function depsFor(token: string | null, overrides?: {
   consumeRefreshClearedCredentials?: () => boolean;
   consumeRefreshFailureCode?: () => string | null;
   hasStoredUserCandidate?: () => boolean;
+  hasExplicitLogoutMarker?: () => boolean;
 }) {
   return {
     getAccessToken: vi.fn(() => token),
@@ -29,6 +30,7 @@ function depsFor(token: string | null, overrides?: {
     clearLocalAuth: vi.fn(async () => {}),
     suspendAccessToken: vi.fn(async () => {}),
     hasStoredUserCandidate: vi.fn(overrides?.hasStoredUserCandidate ?? (() => false)),
+    hasExplicitLogoutMarker: vi.fn(overrides?.hasExplicitLogoutMarker ?? (() => false)),
     consumeRefreshClearedCredentials: vi.fn(overrides?.consumeRefreshClearedCredentials ?? (() => false)),
     consumeRefreshFailureCode: vi.fn(overrides?.consumeRefreshFailureCode ?? (() => null)),
     now: vi.fn(() => baseNow),
@@ -68,6 +70,25 @@ describe('auth startup verifier', () => {
     expect(result.tokenState).toBe('missing');
     expect(deps.refreshAccessToken).toHaveBeenCalledTimes(1);
     expect(deps.scheduleRefresh).toHaveBeenCalledWith(freshToken);
+  });
+
+  it('does not refresh missing access token after explicit logout', async () => {
+    const { settleStoredAuthBeforeBootstrap } = await import('@/api/authStartup');
+    const freshToken = jwtWithExp(baseNow + 10 * 60 * 1000);
+    const deps = depsFor(null, {
+      hasStoredUserCandidate: () => true,
+      hasExplicitLogoutMarker: () => true,
+      refreshAccessToken: async () => freshToken,
+    });
+
+    const result = await settleStoredAuthBeforeBootstrap({ deps });
+
+    expect(result.status).toBe('cleared');
+    expect(result.tokenState).toBe('missing');
+    expect(result.reason).toBe('explicit_logout');
+    expect(deps.clearLocalAuth).toHaveBeenCalledWith('explicit_logout');
+    expect(deps.refreshAccessToken).not.toHaveBeenCalled();
+    expect(deps.scheduleRefresh).not.toHaveBeenCalled();
   });
 
   it('accepts a token that is valid beyond the refresh leeway', async () => {

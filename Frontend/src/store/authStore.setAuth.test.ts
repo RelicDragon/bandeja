@@ -79,6 +79,7 @@ describe('useAuthStore.setAuth credential ordering', () => {
 
   it('persists refresh bundle before exposing authenticated state', async () => {
     const { useAuthStore } = await import('@/store/authStore');
+    storage.set('auth_explicit_logout_at', '1782828960000');
 
     await useAuthStore.getState().setAuth(
       {
@@ -96,8 +97,19 @@ describe('useAuthStore.setAuth credential ordering', () => {
 
     expect(persistOrder.indexOf('persist')).toBeLessThan(persistOrder.indexOf('syncNative'));
     expect(useAuthStore.getState().isAuthenticated).toBe(true);
+    expect(storage.get('auth_explicit_logout_at')).toBeUndefined();
     expect(persistRefreshBundleMock).toHaveBeenCalledWith('refresh-token', 'session-1');
     expect(syncTokenToNativeMock).toHaveBeenCalledWith('access-token');
+  });
+
+  it('does not accept refresh-delivered tokens while explicitly logged out', async () => {
+    storage.set('auth_explicit_logout_at', '1782828960000');
+    const { useAuthStore } = await import('@/store/authStore');
+
+    useAuthStore.getState().setToken('late-refresh-token');
+
+    expect(storage.get('token')).toBeUndefined();
+    expect(useAuthStore.getState().isAuthenticated).toBe(false);
   });
 
   it('does not keep login waiting on profile preference normalization', async () => {
