@@ -3,9 +3,9 @@
  */
 import { useShallow } from 'zustand/react/shallow';
 import type { ChatItem } from '@/utils/chatListSort';
-import { contextKey } from '@/services/chat/unreadSnapshot';
-import { gameUnreadCountsMap } from '@/utils/unreadCountsFromStore';
+import { gameUnreadCountsMap, marketItemUnreadCount } from '@/utils/unreadCountsFromStore';
 import { useAuthStore } from '@/store/authStore';
+import { usePlayersStore } from '@/store/playersStore';
 import {
   isUnreadStoreWarm,
   selectBottomTabChatsBadge,
@@ -17,29 +17,42 @@ import {
   selectMarketBuyerUnread,
   selectMarketSellerUnread,
   selectMyGamesUnread,
+  selectPastGamesUnread,
   selectTotalAll,
-  selectUnreadByUserId,
   type ChatsSubtabFilter,
   type UnreadChatContextType,
   useUnreadStore,
 } from '@/store/unreadStore';
 
+export type TabUnreadBadge = number | undefined;
+
 export function useUnreadStoreWarm(): boolean {
   return useUnreadStore((s) => isUnreadStoreWarm(s));
 }
 
-export function useBottomTabUnreadBadges() {
+export function useBottomTabUnreadBadges(): {
+  my: TabUnreadBadge;
+  chats: TabUnreadBadge;
+  market: TabUnreadBadge;
+} {
   return useUnreadStore(
-    useShallow((s) => ({
-      my: selectBottomTabMyGamesBadge(s),
-      chats: selectBottomTabChatsBadge(s),
-      market: selectBottomTabMarketplaceBadge(s),
-    }))
+    useShallow((s) => {
+      if (!isUnreadStoreWarm(s)) {
+        return { my: undefined, chats: undefined, market: undefined };
+      }
+      return {
+        my: selectBottomTabMyGamesBadge(s),
+        chats: selectBottomTabChatsBadge(s),
+        market: selectBottomTabMarketplaceBadge(s),
+      };
+    })
   );
 }
 
-export function useChatsSubtabUnreadBadge(filter: ChatsSubtabFilter): number {
-  return useUnreadStore((s) => selectChatsSubtabBadge(filter, s));
+export function useChatsSubtabUnreadBadge(filter: ChatsSubtabFilter): TabUnreadBadge {
+  const warm = useUnreadStoreWarm();
+  const count = useUnreadStore((s) => selectChatsSubtabBadge(filter, s));
+  return warm ? count : undefined;
 }
 
 export function useTotalUnreadForMarkAllBanner(): number {
@@ -59,58 +72,77 @@ export function useContextUnread(
   return warm ? fromStore : propFallback;
 }
 
-export function useGameUnreadCountsForIds(gameIds: readonly string[]): Record<string, number> {
-  return useUnreadStore(
+export function useGameUnreadCountsForIds(
+  gameIds: readonly string[],
+  propFallback: Record<string, number> = {}
+): Record<string, number> {
+  const warm = useUnreadStoreWarm();
+  const fromStore = useUnreadStore(
     useShallow((s) => gameUnreadCountsMap([...gameIds], s.byContext))
   );
+  return warm ? fromStore : propFallback;
 }
 
-export function useMyGamesSubtabUnreadBadges() {
+export function useMyGamesSubtabUnreadBadges(): {
+  myGames: TabUnreadBadge;
+  pastGames: TabUnreadBadge;
+} {
   return useUnreadStore(
-    useShallow((s) => ({
-      myGames: selectMyGamesUnread(s),
-      pastGames: s.totals.pastGames,
-    }))
+    useShallow((s) => {
+      if (!isUnreadStoreWarm(s)) {
+        return { myGames: undefined, pastGames: undefined };
+      }
+      return {
+        myGames: selectMyGamesUnread(s),
+        pastGames: selectPastGamesUnread([], s),
+      };
+    })
   );
 }
 
 export function useChatListItemUnread(item: ChatItem): number {
   const warm = useUnreadStoreWarm();
-  const fromStore = useUnreadStore((s) => selectContextUnreadForListItem(item, s));
+  const fromStore = useUnreadStore((s) => selectContextUnreadForListItem(item, s, { warm }));
   if (warm) return fromStore;
   return 'unreadCount' in item ? (item.unreadCount ?? 0) : 0;
 }
 
 export function useMarketItemUnread(
   item: { groupChannel?: { id: string }; groupChannels?: { id: string }[] },
-  _legacyByChannelId: Record<string, number> = {}
+  legacyByChannelId: Record<string, number> = {}
 ): number {
   const warm = useUnreadStoreWarm();
-  const byContext = useUnreadStore((s) => s.byContext);
-  if (!warm) return 0;
-  if (item.groupChannel) {
-    return byContext[contextKey('GROUP', item.groupChannel.id)] ?? 0;
+  const count = useUnreadStore((s) => marketItemUnreadCount(item, s.byContext));
+  if (!warm) {
+    if (item.groupChannel) return legacyByChannelId[item.groupChannel.id] ?? 0;
+    return (item.groupChannels ?? []).reduce((sum, channel) => sum + (legacyByChannelId[channel.id] ?? 0), 0);
   }
-  return (item.groupChannels ?? []).reduce(
-    (s, c) => s + (byContext[contextKey('GROUP', c.id)] ?? 0),
-    0
-  );
+  return count;
 }
 
-export function useMarketBuyerSellerUnreadBadges(): { buyer: number; seller: number } {
+export function useMarketBuyerSellerUnreadBadges(): {
+  buyer: TabUnreadBadge;
+  seller: TabUnreadBadge;
+} {
   const userId = useAuthStore((s) => s.user?.id);
   return useUnreadStore(
-    useShallow((s) => ({
-      buyer: selectMarketBuyerUnread(userId, s),
-      seller: selectMarketSellerUnread(userId, s),
-    }))
+    useShallow((s) => {
+      if (!isUnreadStoreWarm(s)) {
+        return { buyer: undefined, seller: undefined };
+      }
+      return {
+        buyer: selectMarketBuyerUnread(userId, s),
+        seller: selectMarketSellerUnread(userId, s),
+      };
+    })
   );
 }
 
 export function useUnreadByUserIdBridge(userId: string | undefined, propFallback = 0): number {
   const warm = useUnreadStoreWarm();
+  const chatId = usePlayersStore((s) => (userId ? s.userIdToChatId[userId] : undefined));
   const fromStore = useUnreadStore((s) =>
-    userId ? selectUnreadByUserId(userId, s) : 0
+    chatId ? selectContextUnread('USER', chatId, s) : 0
   );
   if (!userId) return propFallback;
   return warm ? fromStore : propFallback;

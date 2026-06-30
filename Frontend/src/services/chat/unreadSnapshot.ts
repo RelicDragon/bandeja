@@ -31,11 +31,14 @@ export type UnreadSnapshotDto = UnreadObjectsApiPayload & {
   version?: number;
   totals?: Partial<UnreadTotals>;
   byContext?: Record<ContextKey, number>;
+  mutedGroupIds?: string[];
 };
 
 export type ComputeTotalsMeta = {
   groupChannelMeta: Record<string, GroupChannelMeta>;
   mutedGroupIds: Set<string>;
+  myGameIds?: Set<string>;
+  pastGameIds?: Set<string>;
 };
 
 export type ChatsSubtabFilter = 'users' | 'bugs' | 'channels' | 'market';
@@ -161,6 +164,70 @@ export function byContextFromSnapshotDto(dto: UnreadSnapshotDto): Record<Context
   return map;
 }
 
+/** bugId → group channel id (for BUG wire events before meta is hydrated). */
+export function bugIdToChannelIdFromSnapshot(dto: UnreadSnapshotDto): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const row of dto.bugs ?? []) {
+    const bug = row.bug;
+    const bugId =
+      bug && typeof bug === 'object' && bug != null && 'id' in bug ? (bug as { id?: string }).id : undefined;
+    const channelId =
+      bug && typeof bug === 'object' && bug != null && 'groupChannelId' in bug
+        ? (bug as { groupChannelId?: string }).groupChannelId
+        : undefined;
+    if (bugId && channelId) map[bugId] = channelId;
+  }
+  return map;
+}
+
+export function hydrateBugMetaFromGroupChannels(
+  channels: ReadonlyArray<{ id: string; bugId?: string | null; bug?: { id?: string } | null }>
+): { groupChannelMeta: Record<string, GroupChannelMeta>; bugIdToChannelId: Record<string, string> } {
+  const groupChannelMeta: Record<string, GroupChannelMeta> = {};
+  const bugIdToChannelId: Record<string, string> = {};
+  for (const ch of channels) {
+    const bugId = ch.bugId ?? ch.bug?.id;
+    if (!bugId) continue;
+    bugIdToChannelId[bugId] = ch.id;
+    groupChannelMeta[ch.id] = {
+      bugId,
+      isChannel: true,
+      marketItemId: groupChannelMeta[ch.id]?.marketItemId ?? null,
+    };
+  }
+  return { groupChannelMeta, bugIdToChannelId };
+}
+
+export function computeScopedGameTotals(
+  byContext: Record<ContextKey, number>,
+  myGameIds: Set<string>,
+  pastGameIds: Set<string>
+): Pick<UnreadTotals, 'myGames' | 'pastGames'> {
+  let myGames = 0;
+  let pastGames = 0;
+  for (const id of myGameIds) {
+    myGames += byContext[contextKey('GAME', id)] ?? 0;
+  }
+  for (const id of pastGameIds) {
+    pastGames += byContext[contextKey('GAME', id)] ?? 0;
+  }
+  return { myGames, pastGames };
+}
+
+export function applyScopedGameTotals(
+  totals: UnreadTotals,
+  byContext: Record<ContextKey, number>,
+  meta: ComputeTotalsMeta
+): UnreadTotals {
+  if (!meta.myGameIds?.size && !meta.pastGameIds?.size) return totals;
+  const scoped = computeScopedGameTotals(
+    byContext,
+    meta.myGameIds ?? new Set(),
+    meta.pastGameIds ?? new Set()
+  );
+  return { ...totals, ...scoped };
+}
+
 export function computeTotals(
   byContext: Record<ContextKey, number>,
   meta: ComputeTotalsMeta
@@ -215,6 +282,11 @@ export function computeTotals(
   };
 }
 
+/** Prefer server overlay when it reports a positive scoped total; snapshot API sends 0 as placeholder. */
+function mergeScopedGameTotal(serverVal: number | undefined, computedVal: number): number {
+  return serverVal != null && serverVal > 0 ? serverVal : computedVal;
+}
+
 export function mergeServerTotals(
   computed: UnreadTotals,
   server?: Partial<UnreadTotals>
@@ -228,15 +300,16 @@ export function mergeServerTotals(
     groups: server.groups ?? computed.groups,
     channels: server.channels ?? computed.channels,
     marketplace: server.marketplace ?? computed.marketplace,
-    myGames: server.myGames ?? computed.myGames,
-    pastGames: server.pastGames ?? computed.pastGames,
+    myGames: mergeScopedGameTotal(server.myGames, computed.myGames),
+    pastGames: mergeScopedGameTotal(server.pastGames, computed.pastGames),
   };
 }
 
 export function normalizeSocketContextToKey(
   contextType: SocketContextType,
   contextId: string,
-  groupChannelMeta: Record<string, GroupChannelMeta>
+  groupChannelMeta: Record<string, GroupChannelMeta>,
+  bugIdToChannelId: Record<string, string> = {}
 ): ContextKey | null {
   if (contextType === 'GAME' || contextType === 'USER') {
     return contextKey(contextType, contextId);
@@ -245,6 +318,8 @@ export function normalizeSocketContextToKey(
     return contextKey('GROUP', contextId);
   }
   if (contextType === 'BUG') {
+    const mapped = bugIdToChannelId[contextId];
+    if (mapped) return contextKey('GROUP', mapped);
     for (const [channelId, gm] of Object.entries(groupChannelMeta)) {
       if (gm.bugId === contextId) return contextKey('GROUP', channelId);
     }

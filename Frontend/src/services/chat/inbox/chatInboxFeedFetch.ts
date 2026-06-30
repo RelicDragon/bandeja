@@ -21,6 +21,7 @@ import {
   shouldSkipRedundantNetworkVisibleApply,
 } from './chatInboxFeedPrepare';
 import { resolveGameUnreadCounts, resolveGroupUnreadCounts, userChatUnreadCount } from '@/utils/unreadCountsFromStore';
+import { useUnreadStore } from '@/store/unreadStore';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import type { ChatItem } from '@/components/chat/chatListTypes';
 import type { BasicUser } from '@/types';
@@ -48,7 +49,7 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
     await fetchUserChats();
     const cityUsersData = await loadGlobalInvitablePlayers();
     const allDrafts = await getMergedDrafts();
-    const { chats: userChats, unreadCounts } = usePlayersStore.getState();
+    const { chats: userChats } = usePlayersStore.getState();
     const blockedUserIds = user.blockedUserIds || [];
     const activeChats: ChatItem[] = [];
     Object.values(userChats).forEach((chat) => {
@@ -62,7 +63,7 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
           type: 'user',
           data: chat,
           lastMessageDate,
-          unreadCount: userChatUnreadCount(chat.id) || unreadCounts[chat.id] || 0,
+          unreadCount: userChatUnreadCount(chat.id),
           otherUser,
           draft: draft || null,
         });
@@ -129,6 +130,7 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
         getMergedDrafts(),
       ]);
       const channelList = (channelsRes.data || []) as GroupChannel[];
+      useUnreadStore.getState().registerBugChannels(channelList);
       const channelIds = channelList.map((c: GroupChannel) => c.id);
       const channelUnreads = await resolveGroupUnreadCounts(channelIds);
       const chatItems = channelsToChatItems(channelList, channelUnreads, 'bugs', {
@@ -210,7 +212,7 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
         resolveGroupUnreadCounts(groupIds),
         resolveGameUnreadCounts(gameIds),
       ]);
-      const { chats: userChats, unreadCounts } = usePlayersStore.getState();
+      const { chats: userChats } = usePlayersStore.getState();
       const blockedUserIds = user.blockedUserIds || [];
       const activeChats: ChatItem[] = [];
       Object.values(userChats).forEach((chat) => {
@@ -224,7 +226,7 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
             type: 'user',
             data: chat,
             lastMessageDate,
-            unreadCount: userChatUnreadCount(chat.id) || unreadCounts[chat.id] || 0,
+            unreadCount: userChatUnreadCount(chat.id),
             otherUser,
             draft: draft || null,
           });
@@ -254,6 +256,7 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
     if (filter === 'bugs') {
       const bugsRes = await chatApi.getGroupChannels('bugs', 1, bugsFilterParams);
       const channelList = (bugsRes.data || []) as GroupChannel[];
+      useUnreadStore.getState().registerBugChannels(channelList);
       const channelIds = channelList.map((c: GroupChannel) => c.id);
       const channelUnreads = await resolveGroupUnreadCounts(channelIds);
       const bugsChatItems = channelsToChatItems(channelList, channelUnreads, 'bugs', {

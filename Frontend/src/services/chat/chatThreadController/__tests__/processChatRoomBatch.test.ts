@@ -44,10 +44,8 @@ vi.mock('@/services/socketService', () => ({
   },
 }));
 
-vi.mock('@/store/playersStore', () => ({
-  usePlayersStore: {
-    getState: () => ({ updateUnreadCount: vi.fn() }),
-  },
+vi.mock('@/services/chat/unreadStoreSocketBridge', () => ({
+  applyUnreadSocketDelta: vi.fn(),
 }));
 
 vi.mock('@/utils/chatScrollHelpers', () => ({

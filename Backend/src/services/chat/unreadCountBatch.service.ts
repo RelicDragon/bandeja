@@ -8,6 +8,12 @@ export type UnreadCountMap = Record<string, number>;
 
 const IN_CLAUSE_BATCH_SIZE = 500;
 
+function chatContextTypeSql(chatContextType: 'USER' | 'BUG' | 'GROUP'): Prisma.Sql {
+  if (chatContextType === 'USER') return Prisma.sql`'USER'::"ChatContextType"`;
+  if (chatContextType === 'BUG') return Prisma.sql`'BUG'::"ChatContextType"`;
+  return Prisma.sql`'GROUP'::"ChatContextType"`;
+}
+
 export class UnreadCountBatchService {
   static async getUnreadCountsByContext(
     chatContextType: 'USER' | 'BUG' | 'GROUP',
@@ -23,7 +29,7 @@ export class UnreadCountBatchService {
         Prisma.sql`
         SELECT m."contextId", COUNT(*)::bigint as cnt
         FROM "ChatMessage" m
-        WHERE m."chatContextType"::text = ${chatContextType}
+        WHERE m."chatContextType" = ${chatContextTypeSql(chatContextType)}
           AND m."deletedAt" IS NULL
           AND m."senderId" IS NOT NULL AND m."senderId" != ${userId}
           AND m."contextId" IN (${Prisma.join(batch)})

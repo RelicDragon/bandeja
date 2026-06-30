@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { UnreadBadge } from '@/components/UnreadBadge';
 import { formatChatTime } from '@/utils/dateFormat';
 import {
   UserChat,
@@ -169,11 +170,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
                     <span className="text-gray-500 dark:text-gray-400 italic ml-1">{displayContent}</span>
                   )}
                 </p>
-                {unreadCount > 0 && (
-                  <span className="flex-shrink-0 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
+                <UnreadBadge count={unreadCount ?? 0} className="shrink-0" />
               </div>
             );
           }
@@ -237,11 +234,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
                     displayContent || t('chat.noMessage')
                   )}
                 </p>
-                {unreadCount > 0 && (
-                  <span className="flex-shrink-0 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
+                <UnreadBadge count={unreadCount ?? 0} className="shrink-0" />
               </div>
             );
           }

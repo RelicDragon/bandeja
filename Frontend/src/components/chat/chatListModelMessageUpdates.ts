@@ -1,6 +1,7 @@
 import { calculateLastMessageDate } from '@/utils/chatListHelpers';
 import { sortChatItems } from '@/utils/chatListSort';
 import { usePlayersStore } from '@/store/playersStore';
+import { isUnreadStoreWarm, selectContextUnread, useUnreadStore } from '@/store/unreadStore';
 import type { ChatDraft, ChatMessage, GroupChannel } from '@/api/chat';
 import type { ChatItem } from './chatListTypes';
 import type { Game } from '@/types';
@@ -72,7 +73,8 @@ export function updateChatMessageInList(
   chatsFilter: string,
   userId: string | undefined
 ): ChatItem[] {
-  const { chats: storeChats, unreadCounts } = usePlayersStore.getState();
+  const { chats: storeChats } = usePlayersStore.getState();
+  const unreadWarm = isUnreadStoreWarm(useUnreadStore.getState());
   const updatedChats = prevChats.map((chat) => {
     if (chat.type === 'user' && chatContextType === 'USER' && chat.data.id === contextId) {
       const fromStore = storeChats[contextId];
@@ -89,10 +91,13 @@ export function updateChatMessageInList(
       const lastMessageDate = (message || d)
         ? calculateLastMessageDate(message, d, updatedChat.updatedAt)
         : null;
+      const unreadCount = unreadWarm
+        ? selectContextUnread('USER', contextId)
+        : chat.unreadCount || 0;
       return {
         ...chat,
         data: updatedChat,
-        unreadCount: unreadCounts[contextId] || chat.unreadCount || 0,
+        unreadCount,
         lastMessageDate,
       };
     }

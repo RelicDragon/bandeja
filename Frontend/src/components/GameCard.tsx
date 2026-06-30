@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Card, Button } from '@/components';
+import { Card, Button, UnreadBadge } from '@/components';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
 import { AnnouncedFireIcon } from '@/components/AnnouncedFireIcon';
 import { PlayersCarousel } from '@/components/GameDetails/PlayersCarousel';
@@ -404,14 +404,7 @@ export const GameCard = ({
             className="pl-1.5 pt-1 pr-2 pb-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-110 active:scale-95 transition-all duration-200 relative"
           >
             <MessageCircle size={20} className="text-gray-600 dark:text-gray-400" />
-            {displayUnread > 0 && (
-              <>
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-red-500 opacity-40 animate-ping [animation-duration:2s]" aria-hidden />
-                <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_6px_rgba(239,68,68,0.5)]">
-                  {displayUnread > 99 ? '99+' : displayUnread}
-                </span>
-              </>
-            )}
+            <UnreadBadge count={displayUnread} className="absolute -top-0.5 -right-0.5" />
           </button>
         )}
       </div>

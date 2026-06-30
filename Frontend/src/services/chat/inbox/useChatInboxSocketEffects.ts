@@ -3,6 +3,7 @@ import { matchDraftToChat } from '@/utils/chatListUtils';
 import { calculateLastMessageDate, deduplicateChats } from '@/utils/chatListHelpers';
 import { chatInboxThreadIndex } from './chatInboxProductionAdapter';
 import { usePlayersStore } from '@/store/playersStore';
+import { markContextReadOnUserActivity } from '@/services/chat/unreadCoordinator';
 import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
 import {
   chatApi,
@@ -367,6 +368,9 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
       void chatInboxThreadIndex.clearUnread(contextType as ChatContextType, contextId);
       useChatListFeedStore.getState().patchRowsForFilter(listFilter, (prev) =>
         prev.map((chat) => {
+          if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) {
+            return { ...chat, unreadCount: 0 };
+          }
           if (contextType === 'GAME' && chat.type === 'game' && chat.data.id === contextId) {
             return { ...chat, unreadCount: 0 };
           }
@@ -453,7 +457,14 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
 
     for (const w of work) {
       if (isViewingMessage(w.contextType, w.contextId, chatsRef.current) && w.contextType === 'USER') {
-        usePlayersStore.getState().markChatAsRead(w.contextId);
+        // Desktop split-pane: a new message arrived in the DM currently in view.
+        // Route through the single coordinator (server sync + optimistic clear +
+        // rollback + dedup) instead of a local-only clear the next snapshot reverts.
+        markContextReadOnUserActivity({
+          contextType: 'USER',
+          contextId: w.contextId,
+          rawContextType: 'USER',
+        });
       }
     }
 
@@ -541,13 +552,6 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
     const groupRefreshIds = new Set<string>();
     const userRefreshIds = new Set<string>();
     let userListRefetchFromGameUnread = false;
-
-    for (const u of unreadBatch) {
-      if (u.contextType !== 'USER') continue;
-      const isViewingThis = isDesktop && selectedChatType === 'user' && selectedChatId === u.contextId;
-      const nextCount = isViewingThis ? 0 : effectiveSocketUnreadCount('USER', u.contextId, u.unreadCount);
-      usePlayersStore.getState().updateUnreadCount(u.contextId, nextCount);
-    }
 
     let userListRefetchFromUnread = false;
     useChatListFeedStore.getState().patchRowsForFilter(listFilter, (prev) => {

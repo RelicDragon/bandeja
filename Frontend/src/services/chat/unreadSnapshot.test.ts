@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  applyScopedGameTotals,
   byContextFromSnapshotDto,
+  computeScopedGameTotals,
   computeTotals,
   contextKey,
+  mergeServerTotals,
   normalizeSocketContextToKey,
   selectBottomTabChatsBadgeFromTotals,
   selectChatsSubtabBadgeFromTotals,
@@ -43,6 +46,18 @@ describe('computeTotals', () => {
       mutedGroupIds: new Set(['muted']),
     });
     expect(totals.all).toBe(0);
+    expect(totals.groups).toBe(0);
+  });
+
+  it('keeps muted GROUP count in byContext but out of totals', () => {
+    const byContext = { [contextKey('GROUP', 'muted')]: 9 };
+    expect(byContext[contextKey('GROUP', 'muted')]).toBe(9);
+    expect(
+      computeTotals(byContext, {
+        groupChannelMeta: { muted: { isChannel: false } },
+        mutedGroupIds: new Set(['muted']),
+      }).all
+    ).toBe(0);
   });
 });
 
@@ -52,6 +67,55 @@ describe('normalizeSocketContextToKey', () => {
       'ch-1': { bugId: 'b1', isChannel: true },
     });
     expect(key).toBe(contextKey('GROUP', 'ch-1'));
+  });
+
+  it('maps BUG id via bugIdToChannelId map when meta is empty', () => {
+    const key = normalizeSocketContextToKey('BUG', 'b1', {}, { b1: 'ch-2' });
+    expect(key).toBe(contextKey('GROUP', 'ch-2'));
+  });
+});
+
+describe('mergeServerTotals', () => {
+  it('keeps client-scoped myGames when server snapshot sends 0 placeholder', () => {
+    const byContext = { [contextKey('GAME', 'mine')]: 4 };
+    const meta = {
+      groupChannelMeta: {},
+      mutedGroupIds: new Set<string>(),
+      myGameIds: new Set(['mine']),
+      pastGameIds: new Set<string>(),
+    };
+    const computed = applyScopedGameTotals(computeTotals(byContext, meta), byContext, meta);
+    expect(computed.myGames).toBe(4);
+    const merged = mergeServerTotals(computed, { myGames: 0, pastGames: 0 });
+    expect(merged.myGames).toBe(4);
+    expect(merged.pastGames).toBe(0);
+  });
+
+  it('prefers positive server myGames overlay when provided', () => {
+    const computed = applyScopedGameTotals(
+      computeTotals({}, { groupChannelMeta: {}, mutedGroupIds: new Set() }),
+      {},
+      { groupChannelMeta: {}, mutedGroupIds: new Set(), myGameIds: new Set(['g1']) }
+    );
+    const merged = mergeServerTotals(computed, { myGames: 7 });
+    expect(merged.myGames).toBe(7);
+  });
+});
+
+describe('computeScopedGameTotals', () => {
+  it('sums unread only for scoped game ids', () => {
+    const byContext = {
+      [contextKey('GAME', 'mine')]: 2,
+      [contextKey('GAME', 'past')]: 3,
+      [contextKey('GAME', 'other')]: 9,
+    };
+    const scoped = computeScopedGameTotals(
+      byContext,
+      new Set(['mine']),
+      new Set(['past'])
+    );
+    expect(scoped.myGames).toBe(2);
+    expect(scoped.pastGames).toBe(3);
   });
 });
 
@@ -94,5 +158,17 @@ describe('byContextFromSnapshotDto', () => {
     });
     expect(map[contextKey('GAME', 'g1')]).toBe(2);
     expect(map[contextKey('GROUP', 'mc')]).toBe(1);
+  });
+
+  it('prefers dto.byContext when present', () => {
+    const map = byContextFromSnapshotDto({
+      byContext: { [contextKey('USER', 'u1')]: 3 },
+      games: [],
+      userChats: [],
+      bugs: [],
+      groupChannels: [],
+      marketItems: [],
+    });
+    expect(map[contextKey('USER', 'u1')]).toBe(3);
   });
 });

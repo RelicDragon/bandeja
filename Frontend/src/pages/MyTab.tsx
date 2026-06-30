@@ -113,6 +113,7 @@ export const MyTab = () => {
   const {
     games,
     invites,
+    unreadCounts,
     setInvites,
     refetch: refetchMyGames,
   } = useMyGames(user, setLoading);
@@ -134,7 +135,7 @@ export const MyTab = () => {
     return [...ids];
   }, [games, pastGamesInRange]);
 
-  const gameUnreadForSort = useGameUnreadCountsForIds(gameIdsForUnread);
+  const gameUnreadForSort = useGameUnreadCountsForIds(gameIdsForUnread, unreadCounts);
 
   const mergedUnreadCounts = gameUnreadForSort;
 

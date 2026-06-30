@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import type { ComponentType } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { UnreadBadge } from '@/components/UnreadBadge';
 
 export type SegmentedSwitchIcon = LucideIcon | ComponentType<{ size?: number; className?: string }>;
 
@@ -143,7 +144,7 @@ export const SegmentedSwitch = ({
             ) : (
               <span className={isVertical ? '' : 'truncate whitespace-nowrap'}>{tab.label}</span>
             )}
-            {badgeStyle === 'inline' && tab.badge !== undefined && tab.badge > 0 ? (
+            {badgeStyle === 'inline' && tab.badge != null && tab.badge > 0 ? (
               <span
                 className={`relative z-[1] inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${
                   isActive
@@ -155,10 +156,8 @@ export const SegmentedSwitch = ({
               </span>
             ) : null}
           </span>
-          {badgeStyle === 'notification' && tab.badge !== undefined && tab.badge > 0 ? (
-            <span className="absolute -top-1 -right-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-xs font-medium text-white">
-              {tab.badge > 99 ? '99+' : tab.badge}
-            </span>
+          {badgeStyle === 'notification' && tab.badge != null ? (
+            <UnreadBadge count={tab.badge} size="sm" className="absolute -top-1 -right-1" />
           ) : null}
         </motion.button>
       );

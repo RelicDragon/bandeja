@@ -14,14 +14,6 @@ function snapshotTypeFromChatContext(contextType: ChatContextType): SnapshotCont
   return null;
 }
 
-/** @deprecated Prefer unreadCoordinator restore + refreshContext */
-export function resyncAfterMarkReadFailure(contextType: ChatContextType, contextId: string | undefined) {
-  if (!contextId) return;
-  const snapshotType = snapshotTypeFromChatContext(contextType);
-  if (!snapshotType) return;
-  onMarkReadBatchFlushFailure(contextKey(snapshotType, contextId));
-}
-
 let markReadFlushResyncInstalled = false;
 
 export function installMarkReadFlushFailureResync(): void {

@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { chatApi } from '@/api/chat';
 import { MAX_PINNED_CHATS } from '@/utils/chatListConstants';
+import { useUnreadStore } from '@/store/unreadStore';
 import type { ChatInboxAdapter } from '@/services/chat/inbox/types';
 import type { ChatsFilterType } from '@/components/chat/chatListFeedStore';
 import toast from 'react-hot-toast';
@@ -43,9 +44,11 @@ export function useChatListPinMuteActions(
         if (isMuted) {
           await chatApi.unmuteChat('GROUP', channelId);
           setMutedChats((prev) => ({ ...prev, [channelId]: false }));
+          useUnreadStore.getState().toggleMutedGroupId(channelId, false);
         } else {
           await chatApi.muteChat('GROUP', channelId);
           setMutedChats((prev) => ({ ...prev, [channelId]: true }));
+          useUnreadStore.getState().toggleMutedGroupId(channelId, true);
         }
       } catch {
         toast.error(t('chat.muteFailed', { defaultValue: 'Failed to update mute' }));

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getAvailableGameChatTypes } from './chatType';
 import { getGameChatTypesForUnreadAndMarkRead } from './gameChatTypesForUnread';
 
 describe('getGameChatTypesForUnreadAndMarkRead', () => {

@@ -11,6 +11,7 @@ import { isChatShellPlace, parseLocation } from '@/utils/urlSchema';
 import { resolveBottomTabActiveId, type BottomTabId } from '@/utils/bottomTabActiveId';
 import { hasEnabledSports } from '@/utils/profileSports';
 import { ClubAdminFab } from '@/components/clubAdmin/ClubAdminFab';
+import { UnreadBadge } from '@/components/UnreadBadge';
 
 interface BottomTabBarProps {
   containerPosition?: boolean;
@@ -161,10 +162,8 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                         </span>
                       ) : null}
                     </div>
-                    {tab.badge !== undefined && tab.badge > 0 ? (
-                      <span className="absolute -top-2 -right-2 bg-gradient-to-br from-red-500 to-red-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg shadow-red-500/50">
-                        {tab.badge > 99 ? '99+' : tab.badge}
-                      </span>
+                    {tab.badge != null ? (
+                      <UnreadBadge count={tab.badge} size="sm" className="absolute -top-2 -right-2" />
                     ) : null}
                   </div>
                   <div className="h-[14px] flex items-center justify-center">
@@ -215,19 +214,9 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
                     ) : null}
                   </motion.div>
 
-                  <AnimatePresence initial={false}>
-                    {tab.badge !== undefined && tab.badge > 0 ? (
-                      <motion.span
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        exit={{ scale: 0, opacity: 0 }}
-                        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                        className="absolute -top-2 -right-2 bg-gradient-to-br from-red-500 to-red-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 shadow-lg shadow-red-500/50"
-                      >
-                        {tab.badge > 99 ? '99+' : tab.badge}
-                      </motion.span>
-                    ) : null}
-                  </AnimatePresence>
+                  {tab.badge != null ? (
+                    <UnreadBadge count={tab.badge} size="sm" className="absolute -top-2 -right-2" />
+                  ) : null}
                 </motion.div>
 
                 <div className="h-[14px] flex items-center justify-center">

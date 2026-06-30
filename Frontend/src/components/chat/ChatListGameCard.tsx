@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+import { UnreadBadge } from '@/components/UnreadBadge';
 import { useTranslation } from 'react-i18next';
 import type { ChatMessage } from '@/api/chat';
 import { getLastMessageTime, isLastMessagePreview } from '@/api/chat';
@@ -154,11 +155,7 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
                 )}
               </span>
             ) : null}
-            {displayUnread > 0 ? (
-              <span className="min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold flex items-center justify-center">
-                {displayUnread > 99 ? '99+' : displayUnread}
-              </span>
-            ) : null}
+            <UnreadBadge count={displayUnread} />
           </div>
         </div>
 

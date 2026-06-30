@@ -2,14 +2,13 @@ import { create } from 'zustand';
 import { chatApi, type ChatMessage, UserChat } from '@/api/chat';
 import { usersApi, type InvitablePlayer } from '@/api/users';
 import { useAuthStore } from './authStore';
-import { isUnreadStoreWarm, selectContextUnread, useUnreadStore } from '@/store/unreadStore';
+import { useUnreadStore } from '@/store/unreadStore';
 import { useSocketEventsStore } from './socketEventsStore';
 import { BasicUser } from '@/types';
 import { mergeInvitablePlayer } from '@/utils/mergeInvitablePlayer';
 import type { NewUserChatMessage, UserChatReadReceipt } from '@/services/socketService';
 import { warmChatSyncHeads } from '@/services/chat/chatSyncBatchWarm';
 import {
-  patchThreadIndexClearUnread,
   pruneThreadIndexUserChatsNotIn,
   syncUserThreadIndexFromUnreadMap,
 } from '@/services/chat/chatThreadIndex';
@@ -30,7 +29,6 @@ interface UsersState {
   metadata: Record<string, UserMetadata>;
   chats: Record<string, UserChat>;
   userIdToChatId: Record<string, string>;
-  unreadCounts: Record<string, number>;
   loading: boolean;
   chatsLoading: boolean;
   isFetching: boolean;
@@ -49,20 +47,13 @@ interface UsersState {
   
   getChatByUserId: (userId: string) => UserChat | undefined;
   getChatById: (chatId: string) => UserChat | undefined;
-  getUnreadCount: (chatId: string) => number;
-  getUnreadCountByUserId: (userId: string) => number;
-  getUnreadUserChatsCount: () => number;
-  applyUserUnreadCountsFromSnapshot: (counts: Record<string, number>) => void;
-  updateUnreadCount: (chatId: string, count: number | ((current: number) => number)) => void;
   patchUserChatPreview: (chatId: string, lastMessage: ChatMessage, updatedAt: string) => void;
-  markChatAsRead: (chatId: string) => void;
   addChat: (chat: UserChat) => Promise<void>;
   getOrCreateAndAddUserChat: (userId: string) => Promise<UserChat | null>;
 
   fetchPlayers: (gameId?: string, sport?: string, search?: string) => Promise<BasicUser[]>;
   fetchUserChats: () => Promise<void>;
   invalidateUserChatsCache: () => void;
-  fetchUnreadCounts: () => Promise<void>;
   refresh: () => Promise<void>;
   invalidatePlayersCache: () => void;
   clear: () => void;
@@ -94,14 +85,9 @@ const setupSocketSubscriptions = () => {
   socketSubscriptionsSetup = true;
 
   newMessageHandler = (message: NewUserChatMessage) => {
-    console.log('[playersStore] New user chat message received:', message);
     const store = usePlayersStore.getState();
-    const { user } = useAuthStore.getState();
     const chat = store.getChatById(message.contextId);
-    console.log('[playersStore] Chat found in store:', chat ? `Yes (${chat.id})` : 'No');
     if (chat) {
-      console.log('[playersStore] Current unread counts:', store.unreadCounts);
-
       usePlayersStore.setState((state) => ({
         chats: {
           ...state.chats,
@@ -112,21 +98,13 @@ const setupSocketSubscriptions = () => {
           },
         },
       }));
-
-      if (message.senderId && message.senderId !== user?.id) {
-        store.updateUnreadCount(chat.id, (current) => (current || 0) + 1);
-      }
     } else {
-      console.log('[playersStore] Chat not found, fetching user chats...');
       store.fetchUserChats();
     }
   };
 
-  readReceiptHandler = (readReceipt: UserChatReadReceipt) => {
-    const { user } = useAuthStore.getState();
-    if (readReceipt.userId === user?.id) {
-      usePlayersStore.getState().fetchUnreadCounts();
-    }
+  readReceiptHandler = () => {
+    // Unread counts: unreadStore socket deltas + snapshot.
   };
 
   let prevUserMsgQLen = 0;
@@ -202,7 +180,6 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
   metadata: {},
   chats: {},
   userIdToChatId: {},
-  unreadCounts: {},
   loading: false,
   chatsLoading: false,
   isFetching: false,
@@ -302,59 +279,6 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
     return state.chats[chatId];
   },
 
-  getUnreadCount: (chatId: string) => {
-    const unreadState = useUnreadStore.getState();
-    if (isUnreadStoreWarm(unreadState)) {
-      return selectContextUnread('USER', chatId, unreadState);
-    }
-    return get().unreadCounts[chatId] || 0;
-  },
-
-  getUnreadCountByUserId: (userId: string) => {
-    const state = get();
-    const chatId = state.userIdToChatId[userId];
-    if (!chatId) return 0;
-    const unreadState = useUnreadStore.getState();
-    if (isUnreadStoreWarm(unreadState)) {
-      return selectContextUnread('USER', chatId, unreadState);
-    }
-    return state.unreadCounts[chatId] || 0;
-  },
-
-  applyUserUnreadCountsFromSnapshot: (counts: Record<string, number>) => {
-    set((state) => {
-      const next = { ...state.unreadCounts };
-      for (const [chatId, n] of Object.entries(counts)) {
-        if (n <= 0) delete next[chatId];
-        else next[chatId] = n;
-      }
-      return { unreadCounts: next };
-    });
-  },
-
-  getUnreadUserChatsCount: () => {
-    const state = get();
-    return Object.values(state.unreadCounts).filter(count => count > 0).length;
-  },
-
-  updateUnreadCount: (chatId: string, count: number | ((current: number) => number)) => {
-    set((state) => {
-      const currentCount = state.unreadCounts[chatId] || 0;
-      const newCount = typeof count === 'function' ? count(currentCount) : count;
-      const newUnreadCounts = {
-        ...state.unreadCounts,
-        [chatId]: newCount,
-      };
-      console.log(`[playersStore] Updating unread count for chat ${chatId}: ${currentCount} -> ${newCount}`);
-      console.log('[playersStore] Old unreadCounts object:', state.unreadCounts);
-      console.log('[playersStore] New unreadCounts object:', newUnreadCounts);
-      console.log('[playersStore] Objects are different?', state.unreadCounts !== newUnreadCounts);
-      return {
-        unreadCounts: newUnreadCounts,
-      };
-    });
-  },
-
   patchUserChatPreview: (chatId: string, lastMessage: ChatMessage, updatedAt: string) => {
     set((state) => {
       const cur = state.chats[chatId];
@@ -366,16 +290,6 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
         },
       };
     });
-  },
-
-  markChatAsRead: (chatId: string) => {
-    get().applyUserUnreadCountsFromSnapshot({ [chatId]: 0 });
-    useUnreadStore.getState().applySocketDelta({
-      contextType: 'USER',
-      contextId: chatId,
-      unreadCount: 0,
-    });
-    void patchThreadIndexClearUnread('USER', chatId);
   },
 
   addChat: async (chat: UserChat) => {
@@ -414,14 +328,13 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
     try {
       const unreadResponse = await chatApi.getUserChatsUnreadCounts([chat.id]);
-      if (unreadResponse.data && unreadResponse.data[chat.id] !== undefined) {
-        const n = unreadResponse.data[chat.id];
-        set((state) => ({
-          unreadCounts: {
-            ...state.unreadCounts,
-            [chat.id]: n,
-          },
-        }));
+      const n = unreadResponse.data?.[chat.id];
+      if (n != null && n > 0) {
+        useUnreadStore.getState().applySocketDelta({
+          contextType: 'USER',
+          contextId: chat.id,
+          unreadCount: n,
+        });
         syncUserThreadIndexFromUnreadMap({ [chat.id]: n });
       }
     } catch (error) {
@@ -575,14 +488,6 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
       if (chats.length > 0) {
         const chatIds = Object.keys(chatsMap);
-        try {
-          const unreadResponse = await chatApi.getUserChatsUnreadCounts(chatIds);
-          const u = unreadResponse.data || {};
-          set({ unreadCounts: u });
-          syncUserThreadIndexFromUnreadMap(u);
-        } catch (error) {
-          console.error('Failed to fetch unread counts:', error);
-        }
         void warmChatSyncHeads(chatIds.map((id) => ({ contextType: 'USER' as const, contextId: id })));
       }
     } catch (error) {
@@ -593,28 +498,6 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
   invalidateUserChatsCache: () => {
     set({ lastChatsFetchTime: 0 });
-  },
-
-  fetchUnreadCounts: async () => {
-    const state = get();
-    const chatIds = Object.keys(state.chats);
-    if (chatIds.length === 0) return;
-
-    const unreadState = useUnreadStore.getState();
-    if (isUnreadStoreWarm(unreadState)) {
-      const u: Record<string, number> = {};
-      for (const chatId of chatIds) {
-        const n = selectContextUnread('USER', chatId, unreadState);
-        if (n > 0) u[chatId] = n;
-      }
-      get().applyUserUnreadCountsFromSnapshot(u);
-      return;
-    }
-    try {
-      await useUnreadStore.getState().refreshAll();
-    } catch (error) {
-      console.error('Failed to fetch unread counts:', error);
-    }
   },
 
   invalidatePlayersCache: () => {
@@ -633,7 +516,6 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
       metadata: {},
       chats: {},
       userIdToChatId: {},
-      unreadCounts: {},
       lastPlayersFetchTime: 0,
       lastChatsFetchTime: 0,
       invitableMaxSocialLevel: null,

@@ -45,6 +45,12 @@ export function useMyTabPrefetch(opts?: { enabled?: boolean }) {
     }).finally(() => {
       isPrefetching.current = false;
     });
+
+    void queryClient.prefetchInfiniteQuery({
+      ...pastGamesInfiniteQueryOptions(user.id),
+      staleTime: 60 * 1000,
+      pages: 1,
+    });
   }, [canPrefetch, user, queryClient]);
 
   /**

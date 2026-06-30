@@ -1,7 +1,9 @@
-import { ChatContextType, ChatType, ParticipantRole } from '@prisma/client';
+import { ChatContextType, ChatType, ParticipantRole, Prisma } from '@prisma/client';
+import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { ChatMuteService } from './chatMute.service';
+import { sqlMessageNotReadByUser } from './chatReadUnreadSql';
 import { MessageService } from './message.service';
 import { ReadReceiptService } from './readReceipt.service';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
@@ -34,6 +36,8 @@ export type UnreadSnapshotDto = UnreadObjectsResult & {
   version: number;
   totals: UnreadTotals;
   byContext: Record<ContextKey, number>;
+  /** GROUP channel ids muted by the viewer — client recomputes badge totals on socket deltas. */
+  mutedGroupIds: string[];
 };
 
 export type MarkContextReadParams = {
@@ -144,10 +148,10 @@ export function computeTotals(
     } else if (type === 'GROUP') {
       if (meta.mutedGroupIds?.has(id)) continue;
       const channelMeta = meta.groupChannelMeta[id];
-      if (channelMeta?.bugId) {
-        bugs += count;
-      } else if (channelMeta?.marketItemId) {
+      if (channelMeta?.marketItemId) {
         marketplace += count;
+      } else if (channelMeta?.bugId) {
+        bugs += count;
       } else if (channelMeta?.isChannel === true) {
         channels += count;
       } else {
@@ -178,10 +182,71 @@ export function computeUnreadTotals(objects: UnreadObjectsResult): UnreadTotals 
 }
 
 export class UnreadSnapshotService {
+  private static async getScopedGameTotals(userId: string): Promise<Pick<UnreadTotals, 'myGames' | 'pastGames'>> {
+    const unreadContexts = await prisma.$queryRaw<Array<{ contextId: string }>>(
+      Prisma.sql`
+        SELECT DISTINCT m."contextId"
+        FROM "ChatMessage" m
+        WHERE m."chatContextType" = 'GAME'::"ChatContextType"
+          AND m."deletedAt" IS NULL
+          AND m."senderId" IS NOT NULL
+          AND m."senderId" <> ${userId}
+          AND ${sqlMessageNotReadByUser(userId)}
+      `
+    );
+    const gameIds = unreadContexts.map((row) => row.contextId).filter(Boolean);
+    if (gameIds.length === 0) return { myGames: 0, pastGames: 0 };
+
+    const games = await prisma.game.findMany({
+      where: {
+        id: { in: gameIds },
+        participants: { some: { userId } },
+      },
+      select: {
+        id: true,
+        status: true,
+        startTime: true,
+        participants: {
+          where: { userId },
+          select: { status: true, role: true },
+        },
+      },
+    });
+    if (games.length === 0) return { myGames: 0, pastGames: 0 };
+
+    const unreadCounts = await ReadReceiptService.getGamesUnreadCountsFromGames(
+      games.map((game) => ({
+        id: game.id,
+        status: String(game.status),
+        participants: game.participants.map((participant) => ({
+          status: String(participant.status),
+          role: String(participant.role),
+        })),
+      })),
+      userId
+    );
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let myGames = 0;
+    let pastGames = 0;
+    for (const game of games) {
+      const count = unreadCounts[game.id] ?? 0;
+      if (count <= 0) continue;
+      if (game.status === 'ARCHIVED' && game.startTime < today) {
+        pastGames += count;
+      } else {
+        myGames += count;
+      }
+    }
+    return { myGames, pastGames };
+  }
+
   static async getSnapshot(userId: string): Promise<UnreadSnapshotDto> {
-    const [objects, mutedChats] = await Promise.all([
+    const [objects, mutedChats, scopedGameTotals] = await Promise.all([
       UnreadObjectsService.getUnreadObjects(userId),
       ChatMuteService.getMutedChats(userId, 'GROUP'),
+      this.getScopedGameTotals(userId),
     ]);
     const mutedGroupIds = new Set(
       mutedChats.map((m) => m.contextId).filter((id): id is string => typeof id === 'string' && id.length > 0)
@@ -191,11 +256,14 @@ export class UnreadSnapshotService {
       groupChannelMeta: buildGroupChannelMeta(objects),
       mutedGroupIds,
     });
+    totals.myGames = scopedGameTotals.myGames;
+    totals.pastGames = scopedGameTotals.pastGames;
     return {
       ...objects,
       version: Date.now(),
       totals,
       byContext,
+      mutedGroupIds: [...mutedGroupIds],
     };
   }
 
@@ -216,7 +284,7 @@ export class UnreadSnapshotService {
 
     let result: { count: number; syncSeq?: number };
     if (contextType === 'GAME') {
-      result = await ReadReceiptService.markAllMessagesAsRead(contextId, userId, []);
+      result = await ReadReceiptService.markAllMessagesAsRead(contextId, userId, gameChatTypes ?? []);
     } else if (contextType === 'USER') {
       result = await ReadReceiptService.markUserChatAsRead(contextId, userId);
     } else {
@@ -278,6 +346,7 @@ export class UnreadSnapshotService {
       version: Date.now(),
       totals: { ...EMPTY_TOTALS },
       byContext: {},
+      mutedGroupIds: snapshot.mutedGroupIds,
       games: [],
       userChats: [],
       bugs: [],

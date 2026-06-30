@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { chatApi } from '@/api/chat';
 import type { ChatItem } from '@/utils/chatListSort';
 import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
-import { usePlayersStore } from '@/store/playersStore';
 import { runUnreadSnapshotSideEffects } from '@/services/chat/unreadSnapshotSideEffects';
 import {
   type ChatsSubtabFilter,
@@ -13,19 +12,24 @@ import {
   type SocketContextType,
   type UnreadSnapshotDto,
   type UnreadTotals,
+  applyScopedGameTotals,
+  bugIdToChannelIdFromSnapshot,
   byContextFromSnapshotDto,
   computeTotals,
   contextKey,
   emptyUnreadTotals,
+  hydrateBugMetaFromGroupChannels,
   hydrateGroupChannelMetaFromPayload,
   listItemToContextKey,
   marketBuyerSellerUnreadFromContext,
   mergeServerTotals,
   normalizeSocketContextToKey,
+  parseContextKey,
   selectBottomTabChatsBadgeFromTotals,
   selectChatsSubtabBadgeFromTotals,
   sumGameContextUnread,
 } from '@/services/chat/unreadSnapshot';
+import { applyUnresolvedBugSocketDelta } from '@/services/chat/unreadBugSocketDelta';
 
 export type { ChatsSubtabFilter } from '@/services/chat/unreadSnapshot';
 
@@ -44,7 +48,10 @@ type UnreadStoreState = {
   byContext: Record<ContextKey, number>;
   totals: UnreadTotals;
   groupChannelMeta: Record<string, GroupChannelMeta>;
+  bugIdToChannelId: Record<string, string>;
   mutedGroupIds: Set<string>;
+  myGameIds: Set<string>;
+  pastGameIds: Set<string>;
   markInFlight: Set<ContextKey>;
   lastEnteredContextKey: ContextKey | null;
   refreshInFlight: Promise<void> | null;
@@ -60,17 +67,35 @@ type UnreadStoreState = {
   markAllRead: () => Promise<void>;
   restoreContext: (key: ContextKey, count: number) => void;
   patchGroupChannelMeta: (channelId: string, patch: GroupChannelMeta) => void;
+  registerBugChannels: (
+    channels: ReadonlyArray<{ id: string; bugId?: string | null; bug?: { id?: string } | null }>
+  ) => void;
   setMutedGroupIds: (ids: Iterable<string>) => void;
+  toggleMutedGroupId: (channelId: string, muted: boolean) => void;
+  setMyGamesScope: (myGameIds: Iterable<string>, pastGameIds: Iterable<string>) => void;
   reset: () => void;
 };
+
+function buildComputeMeta(state: Pick<
+  UnreadStoreState,
+  'groupChannelMeta' | 'mutedGroupIds' | 'myGameIds' | 'pastGameIds'
+>): ComputeTotalsMeta {
+  return {
+    groupChannelMeta: state.groupChannelMeta,
+    mutedGroupIds: state.mutedGroupIds,
+    myGameIds: state.myGameIds,
+    pastGameIds: state.pastGameIds,
+  };
+}
 
 function recomputeStateSlice(
   byContext: Record<ContextKey, number>,
   meta: ComputeTotalsMeta
 ): Pick<UnreadStoreState, 'byContext' | 'totals'> {
+  const base = computeTotals(byContext, meta);
   return {
     byContext,
-    totals: computeTotals(byContext, meta),
+    totals: applyScopedGameTotals(base, byContext, meta),
   };
 }
 
@@ -94,7 +119,10 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
   byContext: {},
   totals: emptyUnreadTotals(),
   groupChannelMeta: {},
+  bugIdToChannelId: {},
   mutedGroupIds: new Set(),
+  myGameIds: new Set(),
+  pastGameIds: new Set(),
   markInFlight: new Set(),
   lastEnteredContextKey: null,
   refreshInFlight: null,
@@ -104,17 +132,28 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
       ...get().groupChannelMeta,
       ...hydrateGroupChannelMetaFromPayload(dto),
     };
+    const bugIdToChannelId = {
+      ...get().bugIdToChannelId,
+      ...bugIdToChannelIdFromSnapshot(dto),
+    };
     const byContext = byContextFromSnapshotDto(dto);
+    // Preserve client-side mute toggles when a snapshot omits mutedGroupIds
+    // (e.g. a mark-all-read envelope); otherwise muted channels re-enter totals.
+    const mutedGroupIds = dto.mutedGroupIds ? new Set(dto.mutedGroupIds) : get().mutedGroupIds;
     const meta: ComputeTotalsMeta = {
       groupChannelMeta,
-      mutedGroupIds: get().mutedGroupIds,
+      mutedGroupIds,
+      myGameIds: get().myGameIds,
+      pastGameIds: get().pastGameIds,
     };
-    const computed = computeTotals(byContext, meta);
+    const computed = applyScopedGameTotals(computeTotals(byContext, meta), byContext, meta);
     set({
       version: dto.version ?? Date.now(),
       fetchedAt: Date.now(),
       byContext,
       groupChannelMeta,
+      bugIdToChannelId,
+      mutedGroupIds,
       totals: mergeServerTotals(computed, dto.totals),
     });
     runUnreadSnapshotSideEffects({ ...dto, byContext, totals: get().totals, version: get().version });
@@ -139,19 +178,30 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
   },
 
   applySocketDelta: ({ contextType, contextId, unreadCount }) => {
-    const { groupChannelMeta, mutedGroupIds, byContext } = get();
-    const key = normalizeSocketContextToKey(contextType, contextId, groupChannelMeta);
-    if (!key) return;
+    const state = get();
+    const { groupChannelMeta, byContext, bugIdToChannelId } = state;
+    const key = normalizeSocketContextToKey(
+      contextType,
+      contextId,
+      groupChannelMeta,
+      bugIdToChannelId
+    );
+    if (!key) {
+      if (contextType === 'BUG') {
+        applyUnresolvedBugSocketDelta(contextId, unreadCount);
+      }
+      return;
+    }
 
     if (unreadCount > 0) {
       void import('@/services/chat/unreadCoordinator').then((m) => m.invalidateMarkReadConfirmed(key));
     }
 
-    const parsed = key.split(':')[0] as SnapshotContextType;
-    const id = key.slice(key.indexOf(':') + 1);
-    const next = effectiveSocketUnreadCount(parsed, id, unreadCount);
+    const parsed = parseContextKey(key);
+    if (!parsed) return;
+    const next = effectiveSocketUnreadCount(parsed.contextType, parsed.contextId, unreadCount);
 
-    const meta: ComputeTotalsMeta = { groupChannelMeta, mutedGroupIds };
+    const meta = buildComputeMeta(state);
     const nextByContext = setContextUnreadInMap(byContext, key, next);
     set(recomputeStateSlice(nextByContext, meta));
   },
@@ -182,11 +232,9 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
   },
 
   restoreContext: (key, count) => {
-    const meta: ComputeTotalsMeta = {
-      groupChannelMeta: get().groupChannelMeta,
-      mutedGroupIds: get().mutedGroupIds,
-    };
-    const nextByContext = setContextUnreadInMap(get().byContext, key, count);
+    const state = get();
+    const meta = buildComputeMeta(state);
+    const nextByContext = setContextUnreadInMap(state.byContext, key, count);
     set({
       ...recomputeStateSlice(nextByContext, meta),
       lastEnteredContextKey: null,
@@ -194,18 +242,58 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
   },
 
   patchGroupChannelMeta: (channelId, patch) => {
+    const state = get();
     const groupChannelMeta = {
-      ...get().groupChannelMeta,
-      [channelId]: { ...get().groupChannelMeta[channelId], ...patch },
+      ...state.groupChannelMeta,
+      [channelId]: { ...state.groupChannelMeta[channelId], ...patch },
     };
-    const meta: ComputeTotalsMeta = { groupChannelMeta, mutedGroupIds: get().mutedGroupIds };
-    set({ groupChannelMeta, ...recomputeStateSlice(get().byContext, meta) });
+    const meta = buildComputeMeta({ ...state, groupChannelMeta });
+    set({ groupChannelMeta, ...recomputeStateSlice(state.byContext, meta) });
+  },
+
+  registerBugChannels: (channels) => {
+    if (channels.length === 0) return;
+    const state = get();
+    const hydrated = hydrateBugMetaFromGroupChannels(channels);
+    const groupChannelMeta = { ...state.groupChannelMeta };
+    for (const [channelId, patch] of Object.entries(hydrated.groupChannelMeta)) {
+      groupChannelMeta[channelId] = { ...groupChannelMeta[channelId], ...patch };
+    }
+    const bugIdToChannelId = { ...state.bugIdToChannelId, ...hydrated.bugIdToChannelId };
+    const meta = buildComputeMeta({ ...state, groupChannelMeta });
+    set({ groupChannelMeta, bugIdToChannelId, ...recomputeStateSlice(state.byContext, meta) });
   },
 
   setMutedGroupIds: (ids) => {
+    const state = get();
     const mutedGroupIds = new Set(ids);
-    const meta: ComputeTotalsMeta = { groupChannelMeta: get().groupChannelMeta, mutedGroupIds };
-    set({ mutedGroupIds, ...recomputeStateSlice(get().byContext, meta) });
+    const meta = buildComputeMeta({ ...state, mutedGroupIds });
+    set({ mutedGroupIds, ...recomputeStateSlice(state.byContext, meta) });
+  },
+
+  toggleMutedGroupId: (channelId, muted) => {
+    const state = get();
+    const mutedGroupIds = new Set(state.mutedGroupIds);
+    if (muted) mutedGroupIds.add(channelId);
+    else mutedGroupIds.delete(channelId);
+    const meta = buildComputeMeta({ ...state, mutedGroupIds });
+    set({ mutedGroupIds, ...recomputeStateSlice(state.byContext, meta) });
+  },
+
+  setMyGamesScope: (myGameIds, pastGameIds) => {
+    const state = get();
+    const nextMy = new Set(myGameIds);
+    const nextPast = new Set(pastGameIds);
+    const meta = buildComputeMeta({
+      ...state,
+      myGameIds: nextMy,
+      pastGameIds: nextPast,
+    });
+    set({
+      myGameIds: nextMy,
+      pastGameIds: nextPast,
+      ...recomputeStateSlice(state.byContext, meta),
+    });
   },
 
   reset: () => {
@@ -215,7 +303,10 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
       byContext: {},
       totals: emptyUnreadTotals(),
       groupChannelMeta: {},
+      bugIdToChannelId: {},
       mutedGroupIds: new Set(),
+      myGameIds: new Set(),
+      pastGameIds: new Set(),
       markInFlight: new Set(),
       lastEnteredContextKey: null,
       refreshInFlight: null,
@@ -240,7 +331,7 @@ export function selectBottomTabChatsBadge(state: UnreadStoreState = useUnreadSto
 }
 
 export function selectBottomTabMyGamesBadge(state: UnreadStoreState = useUnreadStore.getState()): number {
-  return state.totals.myGames > 0 ? state.totals.myGames : state.totals.games;
+  return selectMyGamesUnread(state);
 }
 
 export function selectBottomTabMarketplaceBadge(state: UnreadStoreState = useUnreadStore.getState()): number {
@@ -263,6 +354,7 @@ export function selectContextUnread(
 }
 
 export function selectMyGamesUnread(state: UnreadStoreState = useUnreadStore.getState()): number {
+  if (state.myGameIds.size > 0) return state.totals.myGames;
   return state.totals.myGames > 0 ? state.totals.myGames : state.totals.games;
 }
 
@@ -270,6 +362,7 @@ export function selectPastGamesUnread(
   gameIds: string[],
   state: UnreadStoreState = useUnreadStore.getState()
 ): number {
+  if (state.pastGameIds.size > 0) return state.totals.pastGames;
   if (state.totals.pastGames > 0) return state.totals.pastGames;
   return sumGameContextUnread(state.byContext, gameIds);
 }
@@ -288,22 +381,16 @@ export function selectMarketSellerUnread(
   return marketBuyerSellerUnreadFromContext(state.byContext, state.groupChannelMeta, currentUserId).seller;
 }
 
-export function selectUnreadByUserId(
-  userId: string,
-  state: UnreadStoreState = useUnreadStore.getState()
-): number {
-  const chatId = usePlayersStore.getState().userIdToChatId[userId];
-  if (!chatId) return 0;
-  return state.byContext[contextKey('USER', chatId)] ?? 0;
-}
-
 export function selectContextUnreadForListItem(
   item: ChatItem,
-  state: UnreadStoreState = useUnreadStore.getState()
+  state: UnreadStoreState = useUnreadStore.getState(),
+  options?: { warm?: boolean }
 ): number {
   const key = listItemToContextKey(item);
   const fallback = 'unreadCount' in item ? (item.unreadCount ?? 0) : 0;
   if (!key) return fallback;
+  const warm = options?.warm ?? isUnreadStoreWarm(state);
+  if (warm) return state.byContext[key] ?? 0;
   return state.byContext[key] ?? fallback;
 }
 
@@ -318,6 +405,5 @@ export const unreadStoreSelectors = {
   selectPastGamesUnread,
   selectMarketBuyerUnread,
   selectMarketSellerUnread,
-  selectUnreadByUserId,
   selectContextUnreadForListItem,
 } as const;

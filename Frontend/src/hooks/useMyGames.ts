@@ -19,6 +19,7 @@ export const useMyGames = (
 
   const games = data?.games ?? [];
   const invites = data?.invites ?? [];
+  const unreadCounts = data?.unreadCounts ?? {};
 
   const setInvites = useCallback(
     (newInvites: Invite[] | ((prev: Invite[]) => Invite[])) => {
@@ -29,7 +30,7 @@ export const useMyGames = (
           const prevInvites = old?.invites ?? [];
           const nextInvites =
             typeof newInvites === 'function' ? newInvites(prevInvites) : newInvites;
-          if (!old) return { games: [], invites: nextInvites };
+          if (!old) return { games: [], invites: nextInvites, unreadCounts: {} };
           return { ...old, invites: nextInvites };
         },
       );
@@ -59,6 +60,7 @@ export const useMyGames = (
   return {
     games,
     invites,
+    unreadCounts,
     fetchData,
     setInvites,
     isLoading: isPending,

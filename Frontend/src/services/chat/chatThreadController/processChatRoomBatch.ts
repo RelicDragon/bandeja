@@ -1,5 +1,5 @@
 import { applyThreadL1Put, persistSocketInboundMessage } from '@/services/chat/chatLocalApply';
-import { usePlayersStore } from '@/store/playersStore';
+import { applyUnreadSocketDelta } from '@/services/chat/unreadStoreSocketBridge';
 import { socketService } from '@/services/socketService';
 import type { ChatContextType, ChatMessage, MessageReaction } from '@/api/chat';
 import type { ChatMessageWithStatus } from '@/api/chat';
@@ -225,15 +225,17 @@ function executeThreadLiveEffects(
       }
       case 'clearUnread': {
         if (contextType === 'USER') {
-          usePlayersStore.getState().updateUnreadCount(contextId, 0);
+          applyUnreadSocketDelta({ contextType: 'USER', contextId, unreadCount: 0 });
           void patchThreadIndexClearUnread('USER', contextId);
         } else if (contextType === 'GROUP') {
+          applyUnreadSocketDelta({ contextType: 'GROUP', contextId, unreadCount: 0 });
           window.dispatchEvent(
             new CustomEvent('chat-viewing-clear-unread', {
               detail: { contextType: 'GROUP', contextId },
             })
           );
         } else if (contextType === 'GAME') {
+          applyUnreadSocketDelta({ contextType: 'GAME', contextId, unreadCount: 0 });
           void patchThreadIndexClearUnread('GAME', contextId);
         }
         break;

@@ -9,6 +9,7 @@ import {
 } from '@/api/chat';
 import { Users, Hash, Package, Pin, Loader2, BellOff, Home, Mic } from 'lucide-react';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
+import { UnreadBadge } from '@/components/UnreadBadge';
 import { BugPriorityBadge } from '@/components/chat/BugPriorityBadge';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
@@ -278,11 +279,7 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
                     <span className="text-gray-500 dark:text-gray-400 italic ml-1">{displayContent}</span>
                   )}
                 </p>
-                {unreadCount > 0 && (
-                  <span className="flex-shrink-0 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
+                <UnreadBadge count={unreadCount ?? 0} className="shrink-0" />
               </div>
             );
           }
@@ -398,11 +395,7 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
                     )}
                   </p>
                 </div>
-                {unreadCount > 0 && (
-                  <span className="flex-shrink-0 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
+                <UnreadBadge count={unreadCount ?? 0} className="shrink-0" />
               </div>
             );
           }

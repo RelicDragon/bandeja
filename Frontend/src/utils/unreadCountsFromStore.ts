@@ -25,6 +25,30 @@ export function groupUnreadCountsMap(
   return out;
 }
 
+/** A marketplace listing with one explicit channel (single) or many (grouped by item). */
+export type MarketUnreadItem = {
+  groupChannel?: { id: string };
+  groupChannels?: { id: string }[];
+};
+
+/**
+ * Sum of unread across a market item's GROUP channel(s). Pure on `byContext` so it
+ * can back a primitive zustand selector: the result only changes when THIS item's
+ * channels change, letting `Object.is` skip re-renders for unrelated contexts.
+ */
+export function marketItemUnreadCount(
+  item: MarketUnreadItem,
+  byContext: Record<ContextKey, number>
+): number {
+  if (item.groupChannel) {
+    return byContext[contextKey('GROUP', item.groupChannel.id)] ?? 0;
+  }
+  return (item.groupChannels ?? []).reduce(
+    (sum, c) => sum + (byContext[contextKey('GROUP', c.id)] ?? 0),
+    0
+  );
+}
+
 async function ensureUnreadStoreWarm(): Promise<void> {
   if (isUnreadStoreWarm(useUnreadStore.getState())) return;
   await useUnreadStore.getState().refreshAll();

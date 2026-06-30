@@ -1,6 +1,7 @@
 import type { ChatsSubtabFilter } from '@/services/chat/unreadSnapshot';
+import type { TabUnreadBadge } from '@/hooks/useUnreadBridge';
 
-export type ChatListSubtabUnreadBadges = Record<ChatsSubtabFilter, number>;
+export type ChatListSubtabUnreadBadges = Record<ChatsSubtabFilter, TabUnreadBadge>;
 
 /** Unread count for the mail filter control — authoritative snapshot only. */
 export function chatListUnreadFilterCount(

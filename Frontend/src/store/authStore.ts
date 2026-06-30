@@ -250,7 +250,13 @@ export const useAuthStore = create<AuthState>((set, get) => {
           useShellNavStore.getState().setFindSelectedDay(null);
           useShellNavStore.getState().setFindListWeekStartDay(null);
           useReactionEmojiUsageStore.getState().reset();
-          void import('@/store/unreadStore').then(({ useUnreadStore }) => {
+          void Promise.all([
+            import('@/services/chat/unreadCoordinator'),
+            import('@/store/unreadStore'),
+          ]).then(([coord, { useUnreadStore }]) => {
+            // Coordinator first: cancel pending mark-read timers before the
+            // store they operate on is cleared.
+            coord.resetCoordinator();
             useUnreadStore.getState().reset();
           });
           set({ user: null, token: null, isAuthenticated: false });

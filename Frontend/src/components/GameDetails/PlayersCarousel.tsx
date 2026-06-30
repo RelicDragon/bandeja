@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, type Variants } from 'framer-motion';
-import { PlayerAvatar } from '@/components';
+import { PlayerAvatar, UnreadBadge } from '@/components';
 import { GameParticipant } from '@/types';
 import type { Sport } from '@shared/sport';
 import { useUnreadByUserIdBridge } from '@/hooks/useUnreadBridge';
@@ -131,13 +131,7 @@ function ParticipantCarouselSlot({
         onTouchEnd={draggable ? onTouchEnd : undefined}
         levelSport={levelSport}
       />
-      {unreadCount > 0 && (
-        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 flex items-center justify-center border-2 border-white dark:border-gray-900">
-          <span className="text-[10px] font-bold text-white">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        </div>
-      )}
+      <UnreadBadge count={unreadCount} className="absolute -top-1 -right-1 border-2 border-white dark:border-gray-900" />
     </motion.div>
   );
 }

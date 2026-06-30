@@ -78,5 +78,6 @@ export * from './MainTabFooter';
 export * from './AppIconCarousel';
 export * from './marketplace';
 export * from './SegmentedSwitch';
+export * from './UnreadBadge';
 export * from './welcome';
 export * from './auth';

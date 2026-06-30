@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { format, startOfDay } from 'date-fns';
-import { AlertTriangle, Calendar, Check, ChevronDown, MapPin, MessageCircle, Users, Plane } from 'lucide-react';
-import { Card, GameCard } from '@/components';
+import { AlertTriangle, Calendar, Check, ChevronDown, MapPin, Users, Plane } from 'lucide-react';
+import { Card, GameCard, UnreadBadge } from '@/components';
 import { AnimatedGameList } from '@/components/home/AnimatedGameList';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { GamesDateGroupHeading } from '@/components/home/GamesDateGroupHeading';
@@ -222,12 +222,7 @@ export const UpcomingGamesList = ({
               <span className="inline-flex shrink-0 items-center rounded-md border border-amber-700/50 dark:border-amber-500/60 bg-amber-200/90 dark:bg-amber-800/80 px-2 py-0.5 text-xs font-bold text-amber-950 dark:text-amber-50">
                 {t('home.staleGamesCount', { count: staleCount })}
               </span>
-              {staleSectionUnread > 0 && (
-                <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  <MessageCircle size={10} strokeWidth={2.5} />
-                  {staleSectionUnread > 99 ? '99+' : staleSectionUnread}
-                </span>
-              )}
+              <UnreadBadge count={staleSectionUnread} size="sm" showIcon className="shrink-0" />
             </div>
             <ChevronDown
               size={22}
@@ -339,12 +334,7 @@ const StaleScheduledGameRow = ({
         )}
       </div>
       <div className="flex items-center gap-1.5 flex-shrink-0 font-semibold">
-        {displayUnread > 0 && (
-          <span className="inline-flex items-center gap-0.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
-            <MessageCircle size={10} strokeWidth={2.5} />
-            {displayUnread > 99 ? '99+' : displayUnread}
-          </span>
-        )}
+        <UnreadBadge count={displayUnread} size="sm" showIcon />
         <div className="flex items-center gap-1 text-xs text-amber-900 dark:text-amber-200">
           <Users size={12} />
           <span>{game.entityType === 'BAR' ? playingCount : `${playingCount}/${game.maxParticipants}`}</span>

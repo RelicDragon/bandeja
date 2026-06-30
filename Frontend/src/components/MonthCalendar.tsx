@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar, List, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
@@ -115,10 +116,11 @@ export const MonthCalendar = ({
   const calendarRef = useRef<HTMLDivElement>(null);
 
   const displaySettings = useMemo(() => user ? resolveDisplaySettings(user) : resolveDisplaySettings(null), [user]);
-  const byContext = useUnreadStore((s) => s.byContext);
-  const gamesUnreadCounts = useMemo(
-    () => gameUnreadCountsMap(availableGames.map((g) => g.id), byContext),
-    [availableGames, byContext],
+  // Subscribe to a shallow-stable record of ONLY this calendar's game ids, not the
+  // whole byContext map, so the calendar re-renders only when one of these games'
+  // counts changes.
+  const gamesUnreadCounts = useUnreadStore(
+    useShallow((s) => gameUnreadCountsMap(availableGames.map((g) => g.id), s.byContext))
   );
   const locale = useMemo(() => {
     return localeMap[i18n.language as keyof typeof localeMap] || enGB;

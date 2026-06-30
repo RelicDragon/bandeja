@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { CHAT_SEARCH_BAR_TRANSITION } from '@/components/chat/chatListMotion';
 import { Search, X, BookUser, Plus, Mail, SlidersHorizontal } from 'lucide-react';
 import { shouldShowChatListUnreadFilter } from '@/components/chat/chatListUnreadFilter';
+import { UnreadBadge } from '@/components/UnreadBadge';
 
 type ChatsFilter = 'users' | 'bugs' | 'channels' | 'market';
 
@@ -73,9 +74,7 @@ export const ChatListSearchBar = ({
               aria-label={t('chat.filterUnread', { defaultValue: 'Filter unread' })}
             >
               <Mail size={20} className={unreadFilterActive ? 'text-white' : 'text-gray-600 dark:text-gray-400'} />
-              <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-semibold min-w-[16px] h-4 px-1 rounded-full flex items-center justify-center">
-                {unreadChatsCount > 99 ? '99+' : unreadChatsCount}
-              </span>
+              <UnreadBadge count={unreadChatsCount ?? 0} size="sm" className="absolute -top-0.5 -right-0.5" />
             </button>
           </motion.div>
         )}

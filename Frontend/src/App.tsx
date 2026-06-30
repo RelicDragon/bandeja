@@ -76,6 +76,7 @@ import { settleStoredAuthBeforeBootstrap } from '@/api/authStartup';
 import { ensureBooktimeProactiveRefresh } from '@/integrations/booktime/session';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { useMyTabPrefetch } from './hooks/useMyTabPrefetch';
+import { UnreadMyGamesScopeSync } from './components/UnreadMyGamesScopeSync';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
 import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
 import { AdPlacementsBootstrap } from './components/sponsorSlots/AdPlacementsBootstrap';
@@ -504,6 +505,7 @@ function AppContent() {
           <PermissionModalProvider />
           {!isAuthPage && <ReactionEmojiUsageBootstrap />}
           {!isAuthPage && isAuthenticated && <AdPlacementsBootstrap />}
+          {!isAuthPage && isAuthenticated && <UnreadMyGamesScopeSync />}
           <PlayerCardModalManager>
             <Routes>
         <Route

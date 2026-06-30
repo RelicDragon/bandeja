@@ -10,10 +10,10 @@ import { normalizeGameFromApi } from '@/api/games';
 import { mergeGameResultsArtifactsFields } from '@/utils/gameResultsArtifacts.util';
 import type { InviteDeletedSocketPayload } from '@/utils/gameInviteParticipant';
 import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
-import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
 import { teardownWatchBridge } from '@/services/watchBridgeInit';
 import type { ChatMessage } from '@/api/chat';
 import { donateIncomingChatIntent } from '@/services/chat/chatIntentDonation';
+import { applyUnreadSocketDelta } from '@/services/chat/unreadStoreSocketBridge';
 
 interface GameUpdateData {
   gameId: string;
@@ -281,14 +281,11 @@ interface SocketEventsState {
   listChatUnreadQueue: ChatUnreadCountData[];
   listChatMessageSeq: number;
   listChatUnreadSeq: number;
-  groupUnreadInbound: ChatUnreadCountData[];
-  groupUnreadSeq: number;
   userChatMessageQueue: ChatMessageData[];
   userChatReadReceiptQueue: ChatReadReceiptData[];
   takeChatRoomQueue: (key: string) => ChatRoomEvent[];
   takeListChatMessages: () => ChatMessageData[];
   takeListChatUnreads: () => ChatUnreadCountData[];
-  takeGroupUnreadInbound: () => ChatUnreadCountData[];
   takeUserChatMessages: () => ChatMessageData[];
   takeUserChatReadReceipts: () => ChatReadReceiptData[];
   initialized: boolean;
@@ -341,8 +338,6 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
     listChatUnreadQueue: [],
     listChatMessageSeq: 0,
     listChatUnreadSeq: 0,
-    groupUnreadInbound: [],
-    groupUnreadSeq: 0,
     userChatMessageQueue: [],
     userChatReadReceiptQueue: [],
     takeChatRoomQueue: (key) => {
@@ -365,12 +360,6 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       const q = get().listChatUnreadQueue;
       if (!q.length) return [];
       set({ listChatUnreadQueue: [] });
-      return q;
-    },
-    takeGroupUnreadInbound: () => {
-      const q = get().groupUnreadInbound;
-      if (!q.length) return [];
-      set({ groupUnreadInbound: [] });
       return q;
     },
     takeUserChatMessages: () => {
@@ -552,31 +541,16 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       };
 
       const handleChatUnreadCount = (data: ChatUnreadCountData) => {
-        void import('@/store/unreadStore')
-          .then((mod) => {
-            const apply = mod.useUnreadStore?.getState?.()?.applySocketDelta;
-            if (typeof apply !== 'function') return;
-            apply({
-              contextType: data.contextType as import('@/services/chat/unreadSnapshot').SocketContextType,
-              contextId: data.contextId,
-              unreadCount: effectiveSocketUnreadCount(data.contextType, data.contextId, data.unreadCount),
-            });
-          })
-          .catch(() => {});
-        set((s) => {
-          const listU = capQueue([...s.listChatUnreadQueue, data], CHAT_FIFO_CAP, 'listUnread');
-          const groupU =
-            data.contextType === 'GROUP'
-              ? capQueue([...s.groupUnreadInbound, data], CHAT_FIFO_CAP, 'groupUnread')
-              : s.groupUnreadInbound;
-          return {
-            lastChatUnreadCount: data,
-            listChatUnreadQueue: listU,
-            listChatUnreadSeq: s.listChatUnreadSeq + 1,
-            groupUnreadInbound: groupU,
-            groupUnreadSeq: data.contextType === 'GROUP' ? s.groupUnreadSeq + 1 : s.groupUnreadSeq,
-          };
+        applyUnreadSocketDelta({
+          contextType: data.contextType as import('@/services/chat/unreadSnapshot').SocketContextType,
+          contextId: data.contextId,
+          unreadCount: data.unreadCount,
         });
+        set((s) => ({
+          lastChatUnreadCount: data,
+          listChatUnreadQueue: capQueue([...s.listChatUnreadQueue, data], CHAT_FIFO_CAP, 'listUnread'),
+          listChatUnreadSeq: s.listChatUnreadSeq + 1,
+        }));
       };
 
       const handleSyncRequired = (data: { timestamp: string }) => {
@@ -878,8 +852,6 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         listChatUnreadQueue: [],
         listChatMessageSeq: 0,
         listChatUnreadSeq: 0,
-        groupUnreadInbound: [],
-        groupUnreadSeq: 0,
         userChatMessageQueue: [],
         userChatReadReceiptQueue: [],
       });

@@ -316,22 +316,28 @@ export async function patchThreadIndexSetUnreadCount(
   contextId: string,
   unreadCount: number
 ): Promise<void> {
-  const rows = await chatLocalDb.threadIndex
+  const initial = await chatLocalDb.threadIndex
     .where('[contextType+contextId]')
     .equals([contextType, contextId])
     .toArray();
-  for (const row of rows) {
-    const seenAt = row.updatedAt;
-    const item = parseItem(row.itemJson);
-    if (!item || item.type === 'contact' || !('unreadCount' in item)) continue;
-    if ((item.unreadCount ?? 0) === unreadCount) continue;
-    const next = { ...item, unreadCount } as ChatItem;
-    await putThreadRowIfUnchanged(row.rowKey, seenAt, {
-      ...rowToPutBase(row),
-      sortAt: row.sortAt,
-      itemJson: stringifyItem(next),
-      updatedAt: Date.now(),
-    });
+  const rowKeys = [...new Set(initial.map((r) => r.rowKey))];
+  for (const rowKey of rowKeys) {
+    for (let attempt = 0; attempt < THREAD_INDEX_CAS_RETRIES; attempt++) {
+      const latest = await chatLocalDb.threadIndex.get(rowKey);
+      if (!latest) break;
+      if (latest.contextType !== contextType || latest.contextId !== contextId) break;
+      const item = parseItem(latest.itemJson);
+      if (!item || item.type === 'contact' || !('unreadCount' in item)) break;
+      if ((item.unreadCount ?? 0) === unreadCount) break;
+      const next = { ...item, unreadCount } as ChatItem;
+      const applied = await putThreadRowIfUnchanged(rowKey, latest.updatedAt, {
+        ...rowToPutBase(latest),
+        sortAt: latest.sortAt,
+        itemJson: stringifyItem(next),
+        updatedAt: Date.now(),
+      });
+      if (applied) break;
+    }
   }
 }
 
@@ -339,22 +345,28 @@ export async function patchThreadIndexClearUnread(
   contextType: ChatContextType,
   contextId: string
 ): Promise<void> {
-  const rows = await chatLocalDb.threadIndex
+  const initial = await chatLocalDb.threadIndex
     .where('[contextType+contextId]')
     .equals([contextType, contextId])
     .toArray();
-  for (const row of rows) {
-    const seenAt = row.updatedAt;
-    const item = parseItem(row.itemJson);
-    if (!item || item.type === 'contact' || !('unreadCount' in item)) continue;
-    if ((item.unreadCount ?? 0) === 0) continue;
-    const next = { ...item, unreadCount: 0 } as ChatItem;
-    await putThreadRowIfUnchanged(row.rowKey, seenAt, {
-      ...rowToPutBase(row),
-      sortAt: row.sortAt,
-      itemJson: stringifyItem(next),
-      updatedAt: Date.now(),
-    });
+  const rowKeys = [...new Set(initial.map((r) => r.rowKey))];
+  for (const rowKey of rowKeys) {
+    for (let attempt = 0; attempt < THREAD_INDEX_CAS_RETRIES; attempt++) {
+      const latest = await chatLocalDb.threadIndex.get(rowKey);
+      if (!latest) break;
+      if (latest.contextType !== contextType || latest.contextId !== contextId) break;
+      const item = parseItem(latest.itemJson);
+      if (!item || item.type === 'contact' || !('unreadCount' in item)) break;
+      if ((item.unreadCount ?? 0) === 0) break;
+      const next = { ...item, unreadCount: 0 } as ChatItem;
+      const applied = await putThreadRowIfUnchanged(rowKey, latest.updatedAt, {
+        ...rowToPutBase(latest),
+        sortAt: latest.sortAt,
+        itemJson: stringifyItem(next),
+        updatedAt: Date.now(),
+      });
+      if (applied) break;
+    }
   }
 }
 
@@ -427,11 +439,19 @@ export async function patchThreadIndexFromMessage(
   const updatedAtIso = message.updatedAt ?? message.createdAt;
   const bumpUnread = applyUnread && shouldIncrementThreadUnread(message);
   for (const rowRef of initialRows) {
+    let applied = false;
+    let skipped = false;
     for (let attempt = 0; attempt < THREAD_INDEX_CAS_RETRIES; attempt++) {
       const latest = await chatLocalDb.threadIndex.get(rowRef.rowKey);
-      if (!latest) break;
+      if (!latest) {
+        skipped = true;
+        break;
+      }
       const item = parseItem(latest.itemJson);
-      if (!item || item.type === 'contact') break;
+      if (!item || item.type === 'contact') {
+        skipped = true;
+        break;
+      }
       const draft = 'draft' in item ? item.draft : undefined;
       const lastMessageForData =
         item.type === 'game' ? chatMessageToGameListPreview(message) : message;
@@ -444,13 +464,24 @@ export async function patchThreadIndexFromMessage(
         ...(bumpUnread && 'unreadCount' in item ? { unreadCount: prevUnread + 1 } : {}),
       } as ChatItem & { listOutbox?: ChatListOutbox | null };
       delete next.listOutbox;
-      const applied = await putThreadRowIfUnchanged(rowRef.rowKey, latest.updatedAt, {
+      applied = await putThreadRowIfUnchanged(rowRef.rowKey, latest.updatedAt, {
         ...rowToPutBase(latest),
         sortAt: Math.max(latest.sortAt, sortAtMsg, lastMessageDate.getTime()),
         itemJson: stringifyItem(next),
         updatedAt: Date.now(),
       });
       if (applied) break;
+    }
+    // CAS exhaustion: the optimistic unread bump lost every read-check-write
+    // race. The authoritative store-subscriber write reconciles the count when
+    // the server delta arrives, but surface it so a chronic contention path is
+    // observable rather than silently dropping updates.
+    if (!applied && !skipped) {
+      console.warn('[chatThreadIndex] CAS retries exhausted; unread bump not applied', {
+        rowKey: rowRef.rowKey,
+        contextType: message.chatContextType,
+        contextId: message.contextId,
+      });
     }
   }
   await reconcileThreadIndexOutboxForContext(message.chatContextType, message.contextId);

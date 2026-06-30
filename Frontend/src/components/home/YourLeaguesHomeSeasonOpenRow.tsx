@@ -6,10 +6,10 @@ import {
   ChevronRight,
   LayoutGrid,
   MapPin,
-  MessageCircle,
   Plane,
   Users,
 } from 'lucide-react';
+import { UnreadBadge } from '@/components/UnreadBadge';
 import type { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
@@ -143,12 +143,7 @@ export function YourLeaguesHomeSeasonOpenRow({
               {t('home.leagueSeasonBracketShortcut', { defaultValue: 'Bracket' })}
             </button>
           )}
-          {displayUnread > 0 && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-              <MessageCircle size={10} strokeWidth={2.5} />
-              {displayUnread > 99 ? '99+' : displayUnread}
-            </span>
-          )}
+          <UnreadBadge count={displayUnread} size="sm" showIcon />
           {hubGame && (
             <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
               <Users size={12} />

@@ -8,6 +8,7 @@ import { sortGames } from './sortGames';
 export interface MyGamesData {
   games: Game[];
   invites: Invite[];
+  unreadCounts: Record<string, number>;
 }
 
 export function myGamesQueryOptions(userId: string | undefined, enabled = true) {
@@ -15,10 +16,11 @@ export function myGamesQueryOptions(userId: string | undefined, enabled = true) 
   return queryOptions({
     queryKey: queryKeys.games.my(userId ?? ''),
     queryFn: async (): Promise<MyGamesData> => {
-      const { games: myGames, invites: invitesData } = await getMyTabData({ useCache: true });
+      const { games: myGames, invites: invitesData, unreadCounts } = await getMyTabData({ useCache: true });
       return {
         games: sortGames([...(myGames || [])]),
         invites: invitesData ?? [],
+        unreadCounts: unreadCounts ?? {},
       };
     },
     staleTime: GAMES_LIST_STALE_TIME,

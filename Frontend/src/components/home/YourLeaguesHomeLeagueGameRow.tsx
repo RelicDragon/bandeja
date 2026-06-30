@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { Calendar, MapPin, MessageCircle, Trophy } from 'lucide-react';
+import { Calendar, MapPin, Trophy } from 'lucide-react';
+import { UnreadBadge } from '@/components/UnreadBadge';
 import type { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -134,12 +135,7 @@ export function YourLeaguesHomeLeagueGameRow({
           </p>
         )}
         </div>
-        {displayUnread > 0 && (
-          <span className="mt-0.5 inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
-            <MessageCircle size={10} strokeWidth={2.5} />
-            {displayUnread > 99 ? '99+' : displayUnread}
-          </span>
-        )}
+        <UnreadBadge count={displayUnread} size="sm" showIcon className="mt-0.5 shrink-0" />
       </div>
       {matchup && (
         <div className="w-full min-w-0">

@@ -28,6 +28,7 @@ import type { GroupChannel } from '@/api/chat';
 import type { ChatMessageWithStatus } from '@/api/chat';
 import type { RefObject } from 'react';
 import { useAuthStore } from '@/store/authStore';
+import { useUnreadStore } from '@/store/unreadStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { isPendingGameInvite } from '@/utils/gameInviteParticipant';
@@ -250,6 +251,9 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
       } else {
         await chatApi.muteChat(contextType, id);
         setIsMuted(true);
+      }
+      if (contextType === 'GROUP') {
+        useUnreadStore.getState().toggleMutedGroupId(id, !isMuted);
       }
     } catch (error) {
       console.error('Failed to toggle mute:', error);

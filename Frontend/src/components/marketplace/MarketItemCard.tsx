@@ -10,6 +10,7 @@ import { formatConvertedPrice } from '@/utils/currency';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { MarketItemCardMedia } from './MarketItemCardMedia';
+import { UnreadBadge } from '@/components/UnreadBadge';
 
 const TRADE_TYPE_BADGE_CLASS = {
   BUY_IT_NOW: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
@@ -127,9 +128,7 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
       {isReserved && (
         <StatusBadge label={t('marketplace.status.reserved', { defaultValue: 'Reserved' })} className="bg-amber-600/90 dark:bg-amber-700/90" />
       )}
-      {unreadCount != null && unreadCount > 0 && (
-        <UnreadBadge count={unreadCount} reduceMotion={reduceMotion} />
-      )}
+      <UnreadBadge count={unreadCount ?? 0} size="sm" className="absolute right-1.5 top-1.5 z-10" />
       <div className={`mt-auto p-2 ${!imageUrl && isInactive ? 'pt-7' : ''}`}>
         <p className={`truncate text-sm font-semibold ${isInactive ? 'text-gray-500 dark:text-gray-400' : 'text-slate-900 dark:text-slate-100'}`}>{item.title}</p>
         {isFree ? (
@@ -220,26 +219,6 @@ export const MarketItemCard = ({ item, formatPrice, tradeTypeLabel, unreadCount,
     </motion.article>
   );
 };
-
-function UnreadBadge({ count, reduceMotion }: { count: number; reduceMotion: boolean }) {
-  const className =
-    'absolute right-1.5 top-1.5 z-10 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white shadow-lg shadow-red-500/30';
-
-  if (reduceMotion) {
-    return <div className={className}>{count > 99 ? '99+' : count}</div>;
-  }
-
-  return (
-    <motion.div
-      initial={{ scale: 0, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 460, damping: 18 }}
-      className={className}
-    >
-      {count > 99 ? '99+' : count}
-    </motion.div>
-  );
-}
 
 function StatusBadge({ label, className }: { label: string; className: string }) {
   const reduceMotion = usePrefersReducedMotion();

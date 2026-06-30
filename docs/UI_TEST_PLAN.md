@@ -741,6 +741,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-09 | Load more pagination | Scroll list end | More threads load |
 | CH-10 | Empty inbox | New user no chats | Empty state |
 | CH-11 | Muted chat indicator | Mute thread | Muted badge/state |
+| CH-81 | Unified unread badge styling | Seed unread on chat row, bottom tab, game card, market card | Red pill, `99+` cap, same mount animation; no per-site gradient/ping variants |
 
 ### 11.2 Thread types
 

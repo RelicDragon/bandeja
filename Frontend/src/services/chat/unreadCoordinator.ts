@@ -4,6 +4,7 @@ import { getGameChatTypesForUnreadAndMarkRead } from '@/utils/gameChatTypesForUn
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useUnreadStore, type EnterContextParams } from '@/store/unreadStore';
 import {
+  applyScopedGameTotals,
   computeTotals,
   contextKey,
   parseContextKey,
@@ -12,6 +13,7 @@ import {
   type MarkContextReadRequest,
   type SnapshotContextType,
 } from '@/services/chat/unreadSnapshot';
+import { resolveBugChannelId, resolveBugChannelIdFromStore } from '@/services/chat/unreadBugSocketDelta';
 import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
@@ -35,6 +37,22 @@ export function invalidateMarkReadConfirmed(key: ContextKey): void {
 
 function confirmMarkRead(key: ContextKey): void {
   markReadConfirmedKeys.add(key);
+}
+
+/**
+ * Reset all coordinator session state: cancel pending debounced mark-read
+ * timers and clear the optimistic-restore / dedup maps. Called on logout so a
+ * timer scheduled before logout can't fire afterwards (which would hit the API
+ * on a dead session and mutate an already-cleared store). Must run BEFORE the
+ * unread store itself is reset.
+ */
+export function resetCoordinator(): void {
+  for (const timer of activityNetworkTimers.values()) {
+    clearTimeout(timer);
+  }
+  activityNetworkTimers.clear();
+  pendingRestoreByKey.clear();
+  markReadConfirmedKeys.clear();
 }
 
 /** Phase 4.6 / Bug L: skip redundant mark-context-read when already read locally. */
@@ -86,9 +104,7 @@ function resolveSnapshotContext(
   }
   if (raw === 'BUG') {
     const channelId =
-      params.groupChannelId ??
-      params.contextId ??
-      resolveGroupChannelIdForBug(params.contextId);
+      params.groupChannelId ?? resolveGroupChannelIdForBug(params.contextId);
     if (!channelId) return null;
     return {
       snapshotType: 'GROUP',
@@ -104,11 +120,16 @@ function resolveSnapshotContext(
 }
 
 function resolveGroupChannelIdForBug(bugId: string): string | null {
-  const meta = useUnreadStore.getState().groupChannelMeta;
-  for (const [channelId, gm] of Object.entries(meta)) {
-    if (gm.bugId === bugId) return channelId;
-  }
-  return null;
+  return resolveBugChannelIdFromStore(bugId);
+}
+
+function computeMetaFromStore(state: ReturnType<typeof useUnreadStore.getState>): ComputeTotalsMeta {
+  return {
+    groupChannelMeta: state.groupChannelMeta,
+    mutedGroupIds: state.mutedGroupIds,
+    myGameIds: state.myGameIds,
+    pastGameIds: state.pastGameIds,
+  };
 }
 
 function isViewingContextKey(key: ContextKey): boolean {
@@ -138,6 +159,17 @@ function setViewingBeforeMark(params: CoordinatorEnterParams, resolved: ReturnTy
   }
 }
 
+function dispatchViewingClearUnread(key: ContextKey): void {
+  if (typeof window === 'undefined') return;
+  const parsed = parseContextKey(key);
+  if (!parsed) return;
+  window.dispatchEvent(
+    new CustomEvent('chat-viewing-clear-unread', {
+      detail: { contextType: parsed.contextType, contextId: parsed.contextId },
+    })
+  );
+}
+
 function optimisticClear(key: ContextKey): number {
   invalidateMarkReadConfirmed(key);
   const state = useUnreadStore.getState();
@@ -145,19 +177,17 @@ function optimisticClear(key: ContextKey): number {
 
   const markInFlight = new Set(state.markInFlight);
   markInFlight.add(key);
-  const meta: ComputeTotalsMeta = {
-    groupChannelMeta: state.groupChannelMeta,
-    mutedGroupIds: state.mutedGroupIds,
-  };
+  const meta = computeMetaFromStore(state);
   const nextByContext = { ...state.byContext };
   delete nextByContext[key];
   useUnreadStore.setState({
     byContext: nextByContext,
-    totals: computeTotals(nextByContext, meta),
+    totals: applyScopedGameTotals(computeTotals(nextByContext, meta), nextByContext, meta),
     markInFlight,
     lastEnteredContextKey: key,
   });
   pendingRestoreByKey.set(key, prev);
+  dispatchViewingClearUnread(key);
   return prev;
 }
 
@@ -301,7 +331,12 @@ export function markContextReadOnUserActivity(params: CoordinatorEnterParams): v
 }
 
 export async function enterContextAndMarkRead(params: CoordinatorEnterParams): Promise<void> {
-  const resolved = resolveSnapshotContext(params);
+  let resolved = resolveSnapshotContext(params);
+  if (!resolved && (params.rawContextType ?? params.contextType) === 'BUG') {
+    const channelId = await resolveBugChannelId(params.contextId);
+    if (!channelId) return;
+    resolved = resolveSnapshotContext({ ...params, groupChannelId: channelId });
+  }
   if (!resolved) return;
   const { key } = resolved;
 
