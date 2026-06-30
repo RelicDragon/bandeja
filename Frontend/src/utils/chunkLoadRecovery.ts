@@ -14,14 +14,14 @@ async function clearSwAndCaches(): Promise<void> {
     await Promise.all(registrations.map((reg) => reg.unregister()));
   }
   if ('caches' in window) {
-    const keys = await caches.keys();
-    await Promise.all(keys.map((key) => caches.delete(key)));
+    const keys = await window.caches.keys();
+    await Promise.all(keys.map((key) => window.caches.delete(key)));
   }
 }
 
-export async function recoverFromChunkLoadError(): Promise<boolean> {
+export async function recoverFromChunkLoadError(opts?: { force?: boolean }): Promise<boolean> {
   const last = Number(sessionStorage.getItem(CHUNK_RELOAD_KEY) || 0);
-  if (Date.now() - last < 15_000) return false;
+  if (!opts?.force && Date.now() - last < 15_000) return false;
   sessionStorage.setItem(CHUNK_RELOAD_KEY, String(Date.now()));
   await clearSwAndCaches();
   window.location.reload();

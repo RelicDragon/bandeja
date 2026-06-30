@@ -92,6 +92,44 @@ import {
   shouldConsumePendingTelegramAuthPath,
 } from '@/utils/telegramAutoLoginPath';
 import { dismissHtmlBootSplash, markAppReady, notifyShellPainted } from '@/utils/bootSplash';
+import { recoverFromChunkLoadError } from '@/utils/chunkLoadRecovery';
+
+const ROUTE_LAZY_RECOVERY_MS = 8000;
+
+function RouteLoadingFallback() {
+  const [showRecovery, setShowRecovery] = useState(false);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void recoverFromChunkLoadError().then((reloading) => {
+        if (!reloading) setShowRecovery(true);
+      });
+    }, ROUTE_LAZY_RECOVERY_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  if (showRecovery) {
+    return (
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-white px-6 text-center dark:bg-gray-950">
+        <div className="h-16 w-16 animate-splash-logo rounded-2xl bg-primary-600" />
+        <p className="max-w-xs text-sm text-gray-600 dark:text-gray-300">
+          The app is taking longer than expected to open.
+        </p>
+        <button
+          type="button"
+          className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm active:scale-95"
+          onClick={() => {
+            void recoverFromChunkLoadError({ force: true });
+          }}
+        >
+          Reload app
+        </button>
+      </div>
+    );
+  }
+
+  return <AppLoadingScreen isInitializing={true} />;
+}
 
 function AppContent() {
   const location = useLocation();
@@ -448,6 +486,7 @@ function AppContent() {
           ? 'min-h-[100dvh] bg-white text-gray-900'
           : 'min-h-[100dvh] bg-black text-white'
       : 'min-h-screen bg-gray-50 dark:bg-gray-900';
+  const routeLoadingFallback = <RouteLoadingFallback />;
 
   return (
     <div className={appShellClass}>
@@ -477,7 +516,7 @@ function AppContent() {
         <Route
           path="/login/:telegramKey"
           element={
-            <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+            <Suspense fallback={routeLoadingFallback}>
               <TelegramAutoLogin />
             </Suspense>
           }
@@ -488,7 +527,7 @@ function AppContent() {
             isAuthenticated ? (
               <Navigate to="/" replace />
             ) : (
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <Login />
               </Suspense>
             )
@@ -500,7 +539,7 @@ function AppContent() {
             isAuthenticated ? (
               <Navigate to="/" replace />
             ) : (
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <Register />
               </Suspense>
             )
@@ -516,7 +555,7 @@ function AppContent() {
               ) : needsPrimarySportSelection(user) ? (
                 <Navigate to="/" replace />
               ) : (
-                <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+                <Suspense fallback={routeLoadingFallback}>
                   <SelectCity />
                 </Suspense>
               )}
@@ -528,7 +567,7 @@ function AppContent() {
           path="/"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -538,7 +577,7 @@ function AppContent() {
           path="/find"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -548,7 +587,7 @@ function AppContent() {
           path="/chats/marketplace"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -558,7 +597,7 @@ function AppContent() {
           path="/chats"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -568,7 +607,7 @@ function AppContent() {
           path="/profile/sessions"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <SessionsPage />
               </Suspense>
             </ProtectedRoute>
@@ -578,7 +617,7 @@ function AppContent() {
           path="/profile/connected-clubs"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <ConnectedClubsBookingsPage />
               </Suspense>
             </ProtectedRoute>
@@ -588,7 +627,7 @@ function AppContent() {
           path="/profile"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -598,7 +637,7 @@ function AppContent() {
           path="/user-team/:id"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -608,7 +647,7 @@ function AppContent() {
           path="/leaderboard"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -618,7 +657,7 @@ function AppContent() {
           path="/games/:id/live/tv"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <GameLiveTvRedirect />
               </Suspense>
             </ProtectedRoute>
@@ -628,7 +667,7 @@ function AppContent() {
           path="/games/:id/live/broadcast"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <GameLiveBroadcastRedirect />
               </Suspense>
             </ProtectedRoute>
@@ -637,7 +676,7 @@ function AppContent() {
         <Route
           path="/games/:id/broadcast"
           element={
-            <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+            <Suspense fallback={routeLoadingFallback}>
               <GameBroadcastRoute />
             </Suspense>
           }
@@ -645,7 +684,7 @@ function AppContent() {
         <Route
           path="/games/:id/live"
           element={
-            <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+            <Suspense fallback={routeLoadingFallback}>
               <GameLiveRoute />
             </Suspense>
           }
@@ -654,7 +693,7 @@ function AppContent() {
           path="/games/:id/league-table"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <LeagueFixtureTableFullscreenPage />
               </Suspense>
             </ProtectedRoute>
@@ -664,7 +703,7 @@ function AppContent() {
           path="/games/:id/league-bracket"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <LeagueBracketFullscreenPage />
               </Suspense>
             </ProtectedRoute>
@@ -673,7 +712,7 @@ function AppContent() {
         <Route
           path="/games/:id"
           element={
-            <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+            <Suspense fallback={routeLoadingFallback}>
               <MainPage />
             </Suspense>
           }
@@ -681,7 +720,7 @@ function AppContent() {
         <Route
           path="/user-profile/:userId"
           element={
-            <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+            <Suspense fallback={routeLoadingFallback}>
               <MainPage />
             </Suspense>
           }
@@ -690,7 +729,7 @@ function AppContent() {
           path="/create-game"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <CreateGameWrapper />
               </Suspense>
             </ProtectedRoute>
@@ -700,7 +739,7 @@ function AppContent() {
           path="/create-league"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <CreateLeague />
               </Suspense>
             </ProtectedRoute>
@@ -711,7 +750,7 @@ function AppContent() {
           path="/games/:id/chat"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -721,7 +760,7 @@ function AppContent() {
           path="/bugs/:id"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -731,7 +770,7 @@ function AppContent() {
           path="/bugs"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -741,7 +780,7 @@ function AppContent() {
           path="/marketplace"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -751,7 +790,7 @@ function AppContent() {
           path="/marketplace/my"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -761,7 +800,7 @@ function AppContent() {
           path="/marketplace/create"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -771,7 +810,7 @@ function AppContent() {
           path="/marketplace/:id/edit"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -781,7 +820,7 @@ function AppContent() {
           path="/marketplace/:id"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -791,7 +830,7 @@ function AppContent() {
           path="/game-subscriptions"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -801,7 +840,7 @@ function AppContent() {
           path="/user-chat/:id"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -811,7 +850,7 @@ function AppContent() {
           path="/group-chat/:id"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -821,7 +860,7 @@ function AppContent() {
           path="/channel-chat/:id"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing={true} />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <MainPage />
               </Suspense>
             </ProtectedRoute>
@@ -831,7 +870,7 @@ function AppContent() {
           path="/my-clubs/*"
           element={
             <ProtectedRoute>
-              <Suspense fallback={<AppLoadingScreen isInitializing />}>
+              <Suspense fallback={routeLoadingFallback}>
                 <ClubManagementApp />
               </Suspense>
             </ProtectedRoute>
