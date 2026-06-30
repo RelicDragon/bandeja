@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
@@ -17,15 +17,25 @@ export const TelegramAutoLogin = () => {
   const { t } = useTranslation();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [done, setDone] = useState(false);
+  const startedKeyRef = useRef<string | null>(null);
+  const tRef = useRef(t);
+
+  useEffect(() => {
+    tRef.current = t;
+  }, [t]);
 
   useEffect(() => {
     if (!telegramKey || telegramKey.length < 20) {
-      toast.error(t('auth.invalidCode'));
+      toast.error(tRef.current('auth.invalidCode'));
       navigate('/login', { replace: true });
       return;
     }
 
-    let showErrorIfCancelled = true;
+    if (startedKeyRef.current === telegramKey) return;
+    startedKeyRef.current = telegramKey;
+    setDone(false);
+
+    let cancelled = false;
 
     (async () => {
       try {
@@ -48,25 +58,21 @@ export const TelegramAutoLogin = () => {
           currentSessionId: response.data.currentSessionId,
         });
 
-        try {
-          await pushNotificationService.ensureTokenSentToBackend();
-        } catch {
-          /* non-blocking */
-        }
-
         setDone(true);
         navigate('/', { replace: true });
+        void pushNotificationService.ensureTokenSentToBackend().catch(() => {});
       } catch (err: unknown) {
-        if (!showErrorIfCancelled) return;
-        toast.error(extractApiErrorMessage(err, t));
+        if (cancelled) return;
+        startedKeyRef.current = null;
+        toast.error(extractApiErrorMessage(err, tRef.current));
         navigate('/login', { replace: true });
       }
     })();
 
     return () => {
-      showErrorIfCancelled = false;
+      cancelled = true;
     };
-  }, [telegramKey, navigate, t, setAuth]);
+  }, [telegramKey, navigate, setAuth]);
 
   return <AppLoadingScreen isInitializing={!done} />;
 };

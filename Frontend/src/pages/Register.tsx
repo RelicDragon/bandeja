@@ -302,6 +302,7 @@ export const Register = () => {
           <Input
             label={t('auth.password')}
             type="password"
+            autoComplete="new-password"
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
@@ -316,6 +317,7 @@ export const Register = () => {
           <Input
             label={t('auth.passwordConfirm') || 'Confirm Password'}
             type="password"
+            autoComplete="new-password"
             value={passwordConfirm}
             onChange={(e) => {
               setPasswordConfirm(e.target.value);

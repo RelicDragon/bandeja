@@ -346,6 +346,7 @@ export const Login = () => {
                   <Input
                     label={t('auth.password')}
                     type="password"
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
