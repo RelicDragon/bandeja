@@ -25,7 +25,6 @@ import { TranslationService } from './translation.service';
 import { translationEqualsSource } from './translationOutputNormalize';
 import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
-import { ChatMuteService } from './chatMute.service';
 import { invalidateBasicUsersAllowedCacheForMessage } from '../user/basicUsersForMessageAllowedCache';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { computeContentSearchable, computeVoiceContentSearchable } from '../../utils/messageSearchContent';
@@ -1170,21 +1169,12 @@ export class MessageService {
           : undefined;
       queueMicrotask(async () => {
         try {
-          let emitRecipients = recipients;
-          if (data.chatContextType === 'GROUP') {
-            const muted = await ChatMuteService.getMutedUserIdsForContext(
-              'GROUP',
-              data.contextId,
-              recipients
-            );
-            emitRecipients = recipients.filter((id) => !muted.has(id));
-          }
           const countsByUser = await ReadReceiptService.getUnreadCountsForContextForUsers(
             data.chatContextType,
             data.contextId,
-            emitRecipients
+            recipients
           );
-          for (const userId of emitRecipients) {
+          for (const userId of recipients) {
             const unreadCount = countsByUser.get(userId) ?? 0;
             await notifier.emitUnreadCountUpdate(
               data.chatContextType,
@@ -1913,4 +1903,3 @@ export class MessageService {
     }));
   }
 }
-

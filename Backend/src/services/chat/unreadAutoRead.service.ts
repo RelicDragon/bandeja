@@ -3,6 +3,7 @@ import { ChatSyncEventType } from '@bandeja/chat-contract';
 import { ChatContextType } from '@prisma/client';
 import { subMonths } from 'date-fns';
 import { ChatSyncEventService } from './chatSyncEvent.service';
+import { ChatReadCursorService, type ReadCursorMessageSlice } from './chatReadCursor.service';
 
 const CUTOFF_MONTHS = 1;
 const MESSAGE_BATCH = 500;
@@ -30,7 +31,14 @@ export class UnreadAutoReadService {
             senderId: { not: null },
             deletedAt: null,
           },
-          select: { id: true, contextId: true, senderId: true },
+          select: {
+            id: true,
+            contextId: true,
+            senderId: true,
+            chatType: true,
+            serverSyncSeq: true,
+            createdAt: true,
+          },
           take: MESSAGE_BATCH,
           ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
           orderBy: { id: 'asc' },
@@ -95,6 +103,12 @@ export class UnreadAutoReadService {
             );
           }
         }
+
+        await this.mergeReadCursorsForOldMessages(
+          chatContextType,
+          messages,
+          recipientByContext
+        );
 
         cursor = messages.length === MESSAGE_BATCH ? messages[messages.length - 1]!.id : undefined;
       } while (cursor);
@@ -175,6 +189,49 @@ export class UnreadAutoReadService {
     }
 
     return map;
+  }
+
+  private static async mergeReadCursorsForOldMessages(
+    chatContextType: ChatContextType,
+    messages: Array<{
+      id: string;
+      contextId: string;
+      senderId: string | null;
+      chatType: ReadCursorMessageSlice['chatType'];
+      serverSyncSeq: number | null;
+      createdAt: Date;
+    }>,
+    recipientByContext: Map<string, Set<string>>
+  ): Promise<void> {
+    const byUser = new Map<string, ReadCursorMessageSlice[]>();
+    for (const msg of messages) {
+      const recipients = recipientByContext.get(msg.contextId);
+      if (!recipients || !msg.senderId) continue;
+      const cursorSlice: ReadCursorMessageSlice = {
+        id: msg.id,
+        chatContextType,
+        contextId: msg.contextId,
+        chatType: msg.chatType,
+        serverSyncSeq: msg.serverSyncSeq,
+        createdAt: msg.createdAt,
+      };
+      for (const uid of recipients) {
+        if (uid === msg.senderId) continue;
+        const rows = byUser.get(uid);
+        if (rows) rows.push(cursorSlice);
+        else byUser.set(uid, [cursorSlice]);
+      }
+    }
+    if (byUser.size === 0) return;
+
+    await prisma.$transaction(
+      async (tx) => {
+        for (const [userId, rows] of byUser) {
+          await ChatReadCursorService.mergeFromMessages(tx, userId, rows);
+        }
+      },
+      { timeout: 120_000 }
+    );
   }
 
   private static async appendReadBatchSyncEvents(

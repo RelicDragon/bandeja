@@ -11,6 +11,15 @@ import { sqlMessageNotReadByUser, sqlMessageNotReadByViewerColumn } from './chat
 
 const READ_SYNC_CHUNK = 400;
 
+type UnreadMessageRow = {
+  id: string;
+  chatContextType: ChatContextType;
+  contextId: string;
+  chatType: ChatType;
+  serverSyncSeq: number | null;
+  createdAt: Date;
+};
+
 export class ReadReceiptService {
   static async markMessageAsRead(messageId: string, userId: string) {
     const message = await prisma.chatMessage.findUnique({
@@ -334,34 +343,29 @@ export class ReadReceiptService {
     } else {
       chatTypeFilter = UnreadCountBatchService.buildGameChatTypeFilter(participant, game.status, isParentGameAdminOrOwner);
     }
+    if (chatTypeFilter.length === 0) {
+      return { count: 0, syncSeq: undefined as number | undefined };
+    }
 
-    // Get all unread messages for this game and chat types
-    const unreadMessages = await prisma.chatMessage.findMany({
-      where: {
-        chatContextType: 'GAME',
-        contextId: gameId,
-        chatType: {
-          in: chatTypeFilter
-        },
-        deletedAt: null,
-        senderId: {
-          not: userId
-        },
-        readReceipts: {
-          none: {
-            userId
-          }
-        }
-      },
-      select: {
-        id: true,
-        chatContextType: true,
-        contextId: true,
-        chatType: true,
-        serverSyncSeq: true,
-        createdAt: true,
-      }
-    });
+    const unreadMessages = await prisma.$queryRaw<UnreadMessageRow[]>(
+      Prisma.sql`
+        SELECT
+          m.id,
+          m."chatContextType",
+          m."contextId",
+          m."chatType",
+          m."serverSyncSeq",
+          m."createdAt"
+        FROM "ChatMessage" m
+        WHERE m."chatContextType" = 'GAME'::"ChatContextType"
+          AND m."contextId" = ${gameId}
+          AND m."chatType"::text IN (${Prisma.join(chatTypeFilter)})
+          AND m."deletedAt" IS NULL
+          AND m."senderId" IS NOT NULL
+          AND m."senderId" <> ${userId}
+          AND ${sqlMessageNotReadByUser(userId)}
+      `
+    );
 
     if (unreadMessages.length === 0) {
       return { count: 0, syncSeq: undefined as number | undefined };
@@ -398,25 +402,24 @@ export class ReadReceiptService {
   static async markUserChatAsRead(chatId: string, userId: string) {
     await MessageService.validateUserChatAccess(chatId, userId);
 
-    const unreadMessages = await prisma.chatMessage.findMany({
-      where: {
-        chatContextType: 'USER',
-        contextId: chatId,
-        deletedAt: null,
-        senderId: { not: userId },
-        readReceipts: {
-          none: { userId }
-        }
-      },
-      select: {
-        id: true,
-        chatContextType: true,
-        contextId: true,
-        chatType: true,
-        serverSyncSeq: true,
-        createdAt: true,
-      }
-    });
+    const unreadMessages = await prisma.$queryRaw<UnreadMessageRow[]>(
+      Prisma.sql`
+        SELECT
+          m.id,
+          m."chatContextType",
+          m."contextId",
+          m."chatType",
+          m."serverSyncSeq",
+          m."createdAt"
+        FROM "ChatMessage" m
+        WHERE m."chatContextType" = 'USER'::"ChatContextType"
+          AND m."contextId" = ${chatId}
+          AND m."deletedAt" IS NULL
+          AND m."senderId" IS NOT NULL
+          AND m."senderId" <> ${userId}
+          AND ${sqlMessageNotReadByUser(userId)}
+      `
+    );
 
     if (unreadMessages.length === 0) {
       return { count: 0, syncSeq: undefined as number | undefined };
@@ -576,10 +579,7 @@ export class ReadReceiptService {
                 AND m."deletedAt" IS NULL
                 AND m."senderId" IS NOT NULL
                 AND m."senderId" <> ${userId}
-                AND NOT EXISTS (
-                  SELECT 1 FROM "MessageReadReceipt" r
-                  WHERE r."messageId" = m.id AND r."userId" = ${userId}
-                )
+                AND ${sqlMessageNotReadByUser(userId)}
               ON CONFLICT ("messageId", "userId") DO NOTHING
             `
           );
@@ -698,25 +698,24 @@ export class ReadReceiptService {
     } else if (contextType === 'BUG') {
       await MessageService.validateBugAccess(contextId, userId);
 
-      const unreadMessages = await prisma.chatMessage.findMany({
-        where: {
-          chatContextType: 'BUG',
-          contextId,
-          deletedAt: null,
-          senderId: { not: userId },
-          readReceipts: {
-            none: { userId },
-          },
-        },
-        select: {
-          id: true,
-          chatContextType: true,
-          contextId: true,
-          chatType: true,
-          serverSyncSeq: true,
-          createdAt: true,
-        },
-      });
+      const unreadMessages = await prisma.$queryRaw<UnreadMessageRow[]>(
+        Prisma.sql`
+          SELECT
+            m.id,
+            m."chatContextType",
+            m."contextId",
+            m."chatType",
+            m."serverSyncSeq",
+            m."createdAt"
+          FROM "ChatMessage" m
+          WHERE m."chatContextType" = 'BUG'::"ChatContextType"
+            AND m."contextId" = ${contextId}
+            AND m."deletedAt" IS NULL
+            AND m."senderId" IS NOT NULL
+            AND m."senderId" <> ${userId}
+            AND ${sqlMessageNotReadByUser(userId)}
+        `
+      );
 
       if (unreadMessages.length === 0) {
         return { count: 0, syncSeq: undefined as number | undefined };

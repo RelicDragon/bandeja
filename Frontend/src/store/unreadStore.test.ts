@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { contextKey } from '@/services/chat/unreadSnapshot';
 import type { ChatItem } from '@/utils/chatListSort';
-import { selectContextUnreadForListItem } from '@/store/unreadStore';
+import { selectContextUnreadForListItem, useUnreadStore } from '@/store/unreadStore';
 import { emptyUnreadTotals } from '@/services/chat/unreadSnapshot';
 
 describe('selectContextUnreadForListItem', () => {
@@ -36,5 +36,44 @@ describe('selectContextUnreadForListItem', () => {
       totals: emptyUnreadTotals(),
     } as Parameters<typeof selectContextUnreadForListItem>[1];
     expect(selectContextUnreadForListItem(gameItem, state, { warm: true })).toBe(2);
+  });
+
+  it('keeps muted group row unread while excluding it from totals', () => {
+    useUnreadStore.getState().reset();
+    useUnreadStore.getState().setSnapshot({
+      groupChannels: [
+        {
+          groupChannel: { id: 'muted-group', isChannel: false } as never,
+          unreadCount: 9,
+        },
+      ],
+      games: [],
+      userChats: [],
+      bugs: [],
+      marketItems: [],
+      byContext: { [contextKey('GROUP', 'muted-group')]: 9 },
+      mutedGroupIds: ['muted-group'],
+      totals: {
+        all: 0,
+        games: 0,
+        userChats: 0,
+        bugs: 0,
+        groups: 0,
+        channels: 0,
+        marketplace: 0,
+        myGames: 0,
+        pastGames: 0,
+      },
+    });
+
+    const groupItem = {
+      type: 'group',
+      data: { id: 'muted-group' },
+      unreadCount: 0,
+    } as ChatItem;
+    const state = useUnreadStore.getState();
+    expect(state.totals.all).toBe(0);
+    expect(selectContextUnreadForListItem(groupItem, state, { warm: true })).toBe(9);
+    useUnreadStore.getState().reset();
   });
 });

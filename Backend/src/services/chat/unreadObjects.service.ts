@@ -1,7 +1,6 @@
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { ParticipantRole } from '@prisma/client';
-import { ChatMuteService } from './chatMute.service';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
 import { ReadReceiptService } from './readReceipt.service';
 
@@ -200,20 +199,16 @@ async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['b
 async function getGroupChannelsWithUnread(
   userId: string
 ): Promise<UnreadObjectsResult['groupChannels']> {
-  const [channels, mutedChats] = await Promise.all([
-    prisma.groupChannel.findMany({
-      where: {
-        bugId: null,
-        marketItemId: null,
-        participants: { some: { userId, hidden: false } },
-      },
-      select: { id: true },
-    }),
-    ChatMuteService.getMutedChats(userId, 'GROUP'),
-  ]);
+  const channels = await prisma.groupChannel.findMany({
+    where: {
+      bugId: null,
+      marketItemId: null,
+      participants: { some: { userId, hidden: false } },
+    },
+    select: { id: true },
+  });
 
-  const mutedSet = new Set(mutedChats.map((m) => m.contextId));
-  const contextIds = channels.map((c) => c.id).filter((id) => !mutedSet.has(id));
+  const contextIds = channels.map((c) => c.id);
 
   if (contextIds.length === 0) return [];
 
@@ -259,19 +254,15 @@ async function getGroupChannelsWithUnread(
 async function getMarketItemChannelsWithUnread(
   userId: string
 ): Promise<UnreadObjectsResult['marketItems']> {
-  const [channels, mutedChats] = await Promise.all([
-    prisma.groupChannel.findMany({
-      where: {
-        marketItemId: { not: null },
-        participants: { some: { userId, hidden: false } },
-      },
-      select: { id: true, marketItemId: true, buyerId: true },
-    }),
-    ChatMuteService.getMutedChats(userId, 'GROUP'),
-  ]);
+  const channels = await prisma.groupChannel.findMany({
+    where: {
+      marketItemId: { not: null },
+      participants: { some: { userId, hidden: false } },
+    },
+    select: { id: true, marketItemId: true, buyerId: true },
+  });
 
-  const mutedSet = new Set(mutedChats.map((m) => m.contextId));
-  const contextIds = channels.map((c) => c.id).filter((id) => !mutedSet.has(id));
+  const contextIds = channels.map((c) => c.id);
   if (contextIds.length === 0) return [];
 
   const unreadMap = await UnreadCountBatchService.getUnreadCountsByContext(

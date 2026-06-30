@@ -190,7 +190,7 @@ This is the badge engine.
 type UnreadTotals = {
   all: number; games: number; userChats: number; bugs: number;
   groups: number; channels: number; marketplace: number;
-  myGames: number; pastGames: number;   // last two always 0 here — overlaid by server
+  myGames: number; pastGames: number;   // scoped game totals computed server-side
 };
 ```
 
@@ -209,7 +209,7 @@ type UnreadTotals = {
 - `getGamesWithUnread` — batches 30 at a time (`GAME_COUNT_CONCURRENCY = 30`), hydrates only games with `count > 0`.
 - `getUserChatsWithUnread` — DMs.
 - `getBugsWithUnread` — bug group channels.
-- `getGroupChannelsWithUnread` — non-bug, non-market channels; **muted filtered before counting**.
+- `getGroupChannelsWithUnread` — non-bug, non-market channels; muted rows are included in `byContext` so per-row badges can render, then excluded from aggregate totals by `computeTotals`.
 - `getMarketItemChannelsWithUnread` — marketplace listing channels.
 
 ## 1.6 Socket events
@@ -230,7 +230,7 @@ this.io.to(`notify-user-${userId}`).emit(eventName, {
 Targeted to the per-user room `notify-user-${userId}` so **all of a user's devices/tabs** get it. Payload: `{ contextType, contextId, unreadCount, lastMessage? }`.
 
 ### When unread socket events fire
-1. **On message send** — `message.service.ts:1164–1201`: after emitting `chat:message`, a `queueMicrotask` computes per-recipient unread via `getUnreadCountsForContextForUsers` and emits `chat:unread-count` to each (GROUP recipients filtered to exclude muted users).
+1. **On message send** — `message.service.ts:1164–1201`: after emitting `chat:message`, a `queueMicrotask` computes per-recipient unread via `getUnreadCountsForContextForUsers` and emits `chat:unread-count` to each recipient. Muted GROUP recipients still receive the row-count update; their muted channel is excluded later from aggregate totals.
 2. **On mark-read** — every mark-read controller handler emits `chat:unread-count` with `0` for the acting user (`chat.controller.ts:1683`, `groupChannel.controller.ts:317`).
 3. **On sender composing** — `MessageService.markSenderContextReadAfterSend` (`message.service.ts:501–554`): sending a message forces your own unread for that context to `0` and emits it. Fire-and-forget via `scheduleSenderContextReadAfterSend` (L556–570).
 4. **On mark-all** — emits `0` for every affected context.

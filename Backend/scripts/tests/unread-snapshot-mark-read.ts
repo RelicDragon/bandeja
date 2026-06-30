@@ -124,6 +124,23 @@ async function main() {
     const after = await ReadReceiptService.getGameUnreadCount(gameId, reader.id);
     assert(after.count === 0, `game unread after mark-context-read must be 0, got ${after.count}`);
 
+    await prisma.messageReadReceipt.deleteMany({
+      where: { messageId: { in: [publicMsg.id, privateMsg.id] }, userId: reader.id },
+    });
+    const cursorOnlyUnread = await ReadReceiptService.getGameUnreadCount(gameId, reader.id);
+    assert(cursorOnlyUnread.count === 0, 'cursor-only read state must keep unread count at 0');
+
+    const cursorOnlyMark = await UnreadSnapshotService.markContextRead(reader.id, {
+      contextType: 'GAME',
+      contextId: gameId,
+      gameChatTypes: chatTypes as ChatType[],
+    });
+    assert(cursorOnlyMark.markedCount === 0, `cursor-only mark-read must be a no-op, got ${cursorOnlyMark.markedCount}`);
+    const recreatedReceipts = await prisma.messageReadReceipt.count({
+      where: { messageId: { in: [publicMsg.id, privateMsg.id] }, userId: reader.id },
+    });
+    assert(recreatedReceipts === 0, 'cursor-only mark-read must not recreate covered receipts');
+
     const snapshotAfter = await UnreadSnapshotService.getSnapshot(reader.id);
     assert(
       snapshotAfter.byContext[gameKey] === undefined || snapshotAfter.byContext[gameKey] === 0,
