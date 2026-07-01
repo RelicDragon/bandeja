@@ -20,7 +20,7 @@ export class MeController {
    *
    * Response headers:
    * - ETag: Data hash for caching
-   * - Cache-Control: max-age=30, private
+   * - Cache-Control: private, no-cache, must-revalidate
    */
   static async getMyTabData(req: AuthRequest, res: Response): Promise<void> {
     const userId = req.userId;
@@ -60,9 +60,13 @@ export class MeController {
         return;
       }
 
-      // Set caching headers
+      // Set caching headers.
+      // `no-cache, must-revalidate` lets the client (and native WebView) store the
+      // response but forces a revalidation (conditional GET) before reuse, so an
+      // accepted/declined invite can never be resurrected from a stale transport
+      // cache after the local ETag cache is cleared. 304/ETag behavior is preserved.
       res.set('ETag', etag);
-      res.set('Cache-Control', 'private, max-age=30');
+      res.set('Cache-Control', 'private, no-cache, must-revalidate');
 
       const duration = Date.now() - startTime;
       console.info('[MeController] getMyTabData success', {

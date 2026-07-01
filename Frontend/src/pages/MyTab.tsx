@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { format, parse, startOfDay } from 'date-fns';
@@ -114,7 +114,6 @@ export const MyTab = () => {
     games,
     invites,
     unreadCounts,
-    setInvites,
     refetch: refetchMyGames,
   } = useMyGames(user, setLoading);
 
@@ -264,6 +263,7 @@ export const MyTab = () => {
 
   const [isMarkingAllAsRead, setIsMarkingAllAsRead] = useState(false);
   const [decliningInviteIds, setDecliningInviteIds] = useState<Set<string>>(new Set());
+  const acceptingInviteIdsRef = useRef<Set<string>>(new Set());
 
   const handleMarkAllAsRead = async () => {
     if (!user?.id || isMarkingAllAsRead || markAllBannerUnread === 0) return;
@@ -287,6 +287,10 @@ export const MyTab = () => {
       runWithProfileName(() => void handleAcceptInvite(inviteId));
       return;
     }
+    // Guard against a rapid double-tap firing two POSTs (the second would 404
+    // because the invite is no longer in the INVITED state, surfacing a spurious error toast).
+    if (acceptingInviteIdsRef.current.has(inviteId)) return;
+    acceptingInviteIdsRef.current.add(inviteId);
     try {
       const { invitesApi } = await import('@/api');
       const response = await invitesApi.accept(inviteId);
@@ -298,16 +302,14 @@ export const MyTab = () => {
         toast.success(t(message, { defaultValue: message }));
       }
 
-      setInvites(invites.filter((inv) => inv.id !== inviteId));
-      const { setPendingInvites } = useHeaderStore.getState();
-      const currentCount = useHeaderStore.getState().pendingInvites;
-      setPendingInvites(Math.max(0, currentCount - 1));
-      Promise.resolve().then(() => {
-        refetchMyGames();
-      });
+      const { decrementPendingInvite } = useHeaderStore.getState();
+      decrementPendingInvite(inviteId);
+      void refetchMyGames(false, true);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      acceptingInviteIdsRef.current.delete(inviteId);
     }
   };
 
@@ -317,10 +319,7 @@ export const MyTab = () => {
     },
     onDeclined: async (inviteId) => {
       await new Promise((resolve) => setTimeout(resolve, 50));
-      setInvites((prev) => prev.filter((inv) => inv.id !== inviteId));
-      const { setPendingInvites } = useHeaderStore.getState();
-      const currentCount = useHeaderStore.getState().pendingInvites;
-      setPendingInvites(Math.max(0, currentCount - 1));
+      useHeaderStore.getState().decrementPendingInvite(inviteId);
     },
     onDeclineEnd: (inviteId) => {
       setDecliningInviteIds((prev) => {

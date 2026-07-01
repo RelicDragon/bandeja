@@ -134,6 +134,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const gameRef = useRef<Game | null>(null);
   gameRef.current = game;
   const [myInvites, setMyInvites] = useState<Invite[]>([]);
+  const acceptingInviteIdsRef = useRef<Set<string>>(new Set());
   const [gameInvites, setGameInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
   const [showPlayerList, setShowPlayerList] = useState(false);
@@ -634,6 +635,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       runWithProfileName(() => void handleAcceptInvite(inviteId));
       return;
     }
+    if (acceptingInviteIdsRef.current.has(inviteId)) return;
+    acceptingInviteIdsRef.current.add(inviteId);
     try {
       const response = await invitesApi.accept(inviteId);
       const message = (response as any).message || 'Invite accepted successfully';
@@ -656,15 +659,15 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 'errors.generic';
       toast.error(t(errorMessage, { defaultValue: errorMessage }));
+    } finally {
+      acceptingInviteIdsRef.current.delete(inviteId);
     }
   };
 
   const { handleDeclineInvite, declineInviteModal } = useDeclineInvite({
     onDeclined: async (inviteId) => {
       setMyInvites((prev) => prev.filter((inv) => inv.id !== inviteId));
-      const { setPendingInvites } = useHeaderStore.getState();
-      const currentCount = useHeaderStore.getState().pendingInvites;
-      setPendingInvites(Math.max(0, currentCount - 1));
+      useHeaderStore.getState().decrementPendingInvite(inviteId);
       if (id) {
         const response = await gamesApi.getById(id);
         setGame(response.data);

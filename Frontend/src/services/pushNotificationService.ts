@@ -7,6 +7,7 @@ import { navigationService } from './navigationService';
 import { getAppInfo } from '@/utils/capacitor';
 import { pushApi } from '@/api/push';
 import { useAuthStore } from '@/store/authStore';
+import { useHeaderStore } from '@/store/headerStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { parsePushChatContext } from '@/services/push/parsePushChatContext';
 import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
@@ -496,8 +497,9 @@ class PushNotificationService {
 
     try {
       await invitesApi.accept(data.data.inviteId);
+      useHeaderStore.getState().decrementPendingInvite(data.data.inviteId);
       console.log('✅ Invite accepted');
-      
+
       if (data.data.gameId) {
         navigationService.navigateToGame(data.data.gameId);
       }
@@ -520,6 +522,7 @@ class PushNotificationService {
 
     try {
       await invitesApi.decline(data.data.inviteId);
+      useHeaderStore.getState().decrementPendingInvite(data.data.inviteId);
       console.log('✅ Invite declined');
     } catch (error) {
       console.error('❌ Failed to decline invite:', error);

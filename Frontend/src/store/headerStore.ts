@@ -4,6 +4,8 @@ export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 
 interface HeaderState {
   pendingInvites: number;
+  /** Invite ids already counted as closed, to absorb the `invite-deleted` socket echo of a local action. */
+  decrementedInviteIds: Set<string>;
   isNewInviteAnimating: boolean;
   syncStatus: SyncStatus;
   leaderboardType: 'level' | 'social' | 'games';
@@ -12,6 +14,10 @@ interface HeaderState {
   areFiltersSticky: boolean;
   createGameInitialDate: string | null;
   setPendingInvites: (count: number) => void;
+  /** Authoritative count from the server; resets the echo-absorption set. */
+  setPendingInvitesFromServer: (count: number) => void;
+  /** Decrement once per inviteId, so a local action and its socket echo don't double-count. */
+  decrementPendingInvite: (inviteId: string) => void;
   triggerNewInviteAnimation: () => void;
   setSyncStatus: (status: SyncStatus) => void;
   setLeaderboardType: (type: 'level' | 'social' | 'games') => void;
@@ -31,6 +37,18 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   areFiltersSticky: false,
   createGameInitialDate: null,
   setPendingInvites: (count) => set({ pendingInvites: count }),
+  setPendingInvitesFromServer: (count) =>
+    set({ pendingInvites: count, decrementedInviteIds: new Set<string>() }),
+  decrementPendingInvite: (inviteId) =>
+    set((state) => {
+      if (state.decrementedInviteIds.has(inviteId)) return state;
+      const next = new Set(state.decrementedInviteIds);
+      next.add(inviteId);
+      return {
+        pendingInvites: Math.max(0, state.pendingInvites - 1),
+        decrementedInviteIds: next,
+      };
+    }),
   triggerNewInviteAnimation: () => {
     set({ isNewInviteAnimating: true });
     setTimeout(() => set({ isNewInviteAnimating: false }), 1000);

@@ -240,6 +240,7 @@ Frontend/e2e/
 | H-14 | Decline invite | Decline → confirm modal | Invite removed |
 | H-15 | Decline with note | Add note in modal | Note saved |
 | H-16 | Invite note on game | Save note without accept/decline | Persisted |
+| H-61 | Invite cleared after accept from game | My tab invite → open game → accept invite on game page → back to My tab | Invite card gone immediately; second accept not offered |
 
 ### 6.3 My games interactions
 

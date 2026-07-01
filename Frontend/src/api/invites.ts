@@ -1,5 +1,13 @@
 import api from './axios';
 import { ApiResponse, Invite } from '@/types';
+import { queryClient } from '@/queries/queryClient';
+import { removeInviteFromMyGamesCache } from '@/queries/games/removeInviteFromMyGamesCache';
+import { useAuthStore } from '@/store/authStore';
+
+function syncInviteClosedInMyTabCache(inviteId: string): void {
+  const userId = useAuthStore.getState().user?.id;
+  removeInviteFromMyGamesCache(queryClient, userId, inviteId);
+}
 
 export const invitesApi = {
   getMyInvites: async (status?: string) => {
@@ -48,6 +56,7 @@ export const invitesApi = {
 
   accept: async (id: string) => {
     const response = await api.post<ApiResponse<Invite>>(`/invites/${id}/accept`);
+    syncInviteClosedInMyTabCache(id);
     return response.data;
   },
 
@@ -56,6 +65,7 @@ export const invitesApi = {
       `/invites/${id}/decline`,
       options?.message != null ? { message: options.message } : undefined,
     );
+    syncInviteClosedInMyTabCache(id);
     return response.data;
   },
 

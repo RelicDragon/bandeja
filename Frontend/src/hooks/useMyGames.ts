@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Invite } from '@/types';
+import { clearMyTabCache } from '@/api/me';
 import {
   useMyGamesQuery,
   type MyGamesData,
@@ -50,6 +51,7 @@ export const useMyGames = (
     async (_showLoader = true, _force = false) => {
       if (!userId) return;
       if (_force) {
+        clearMyTabCache();
         await queryClient.invalidateQueries({ queryKey: queryKeys.games.my(userId) });
       }
       await refetch();

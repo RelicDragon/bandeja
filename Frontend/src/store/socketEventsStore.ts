@@ -400,9 +400,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       };
 
       const handleInviteDeleted = (data: InviteDeletedSocketPayload) => {
-        const { setPendingInvites } = useHeaderStore.getState();
-        const currentCount = useHeaderStore.getState().pendingInvites;
-        setPendingInvites(Math.max(0, currentCount - 1));
+        useHeaderStore.getState().decrementPendingInvite(data.inviteId);
         set({ lastInviteDeleted: data });
       };
 
@@ -589,7 +587,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
           syncRequiredEpoch: s.syncRequiredEpoch + 1,
         }));
         invitesApi.getMyInvites('PENDING')
-          .then((res) => useHeaderStore.getState().setPendingInvites(res.data.length))
+          .then((res) => useHeaderStore.getState().setPendingInvitesFromServer(res.data.length))
           .catch(() => {});
       };
 
