@@ -15,6 +15,7 @@ import { applyChatSyncPatchesInSlice } from '@/services/chat/chatSyncApplyPatche
 import { rowFromMessage } from '@/services/chat/chatSyncRowUtils';
 import type { ChatSyncEventDTO } from '@/services/chat/chatSyncEventTypes';
 import { notifyInboundMessageSeen } from '@/services/chat/unreadInboundMessage';
+import { withChatLocalBulkApply } from './chatLocalApplyBulk';
 import { persistChatMessagesFromApiDirect } from './chatLocalApplyWrite';
 import { getLocalCursorSeq, reconcileCursorWithServerHead } from './chatLocalApplyCursor';
 import {

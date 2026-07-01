@@ -425,7 +425,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
           );
           const message = data.message as ChatMessage;
           const selfId = useAuthStore.getState().user?.id;
-          if (selfId && message.senderId !== selfId) {
+          if (selfId && message.senderId && message.senderId !== selfId) {
             donateIncomingChatIntent(message);
             notifyInboundMessageSeen({
               contextType: data.contextType,
