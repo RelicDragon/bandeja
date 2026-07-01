@@ -62,12 +62,13 @@ export default defineConfig(({ command }) => {
       '@bandeja/shared': path.resolve(__dirname, './shared'),
       '@backend': path.resolve(__dirname, '../Backend/src'),
       '@bandeja/chat-contract': path.resolve(__dirname, '../packages/chat-contract/src/index.ts'),
+      '@bandeja/unread-contract': path.resolve(__dirname, '../packages/unread-contract/src/index.ts'),
     },
   },
   test: {
     server: {
       deps: {
-        inline: ['@backend/sport/sportRegistry', '@bandeja/chat-contract', '@bandeja/shared'],
+        inline: ['@backend/sport/sportRegistry', '@bandeja/chat-contract', '@bandeja/unread-contract', '@bandeja/shared'],
       },
     },
   },

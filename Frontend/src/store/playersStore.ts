@@ -7,7 +7,6 @@ import { useSocketEventsStore } from './socketEventsStore';
 import { BasicUser } from '@/types';
 import { mergeInvitablePlayer } from '@/utils/mergeInvitablePlayer';
 import type { NewUserChatMessage, UserChatReadReceipt } from '@/services/socketService';
-import { warmChatSyncHeads } from '@/services/chat/chatSyncBatchWarm';
 import {
   pruneThreadIndexUserChatsNotIn,
   syncUserThreadIndexFromUnreadMap,
@@ -155,6 +154,7 @@ const cleanupSocketSubscriptions = () => {
 
 const initializeStore = () => {
   if (initSubscribed) return;
+  if (typeof useAuthStore?.subscribe !== 'function') return;
   initSubscribed = true;
 
   useAuthStore.subscribe((state) => {
@@ -488,7 +488,9 @@ export const usePlayersStore = create<UsersState>((set, get) => ({
 
       if (chats.length > 0) {
         const chatIds = Object.keys(chatsMap);
-        void warmChatSyncHeads(chatIds.map((id) => ({ contextType: 'USER' as const, contextId: id })));
+        void import('@/services/chat/chatSyncBatchWarm').then(({ warmChatSyncHeads }) =>
+          warmChatSyncHeads(chatIds.map((id) => ({ contextType: 'USER' as const, contextId: id })))
+        );
       }
     } catch (error) {
       console.error('Failed to fetch user chats:', error);
@@ -533,4 +535,4 @@ usePlayersStore.setState({
   },
 });
 
-initializeStore();
+queueMicrotask(() => initializeStore());

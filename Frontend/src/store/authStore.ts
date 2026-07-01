@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
   try {
     if (hasExplicitLogoutMarker()) {
       clearLocalAuthStorageForExplicitLogout();
-    } else {
+    } else if (typeof localStorage !== 'undefined') {
       const userStr = localStorage.getItem('user');
       const tokenStr = localStorage.getItem('token');
 
@@ -76,11 +76,13 @@ export const useAuthStore = create<AuthState>((set, get) => {
     }
   } catch (error) {
     console.error('Error loading auth from localStorage:', error);
-    try {
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-    } catch (cleanupError) {
-      console.error('Error cleaning up corrupted localStorage:', cleanupError);
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      } catch (cleanupError) {
+        console.error('Error cleaning up corrupted localStorage:', cleanupError);
+      }
     }
   }
 
