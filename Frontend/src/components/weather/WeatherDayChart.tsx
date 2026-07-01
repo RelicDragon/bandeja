@@ -8,6 +8,7 @@ import {
   getWeatherTemperatureColor,
   shouldUseFahrenheit,
 } from '@/utils/weather';
+import { getWeatherDayChartRainBarGeometry } from './weatherDayChartGeometry';
 
 interface WeatherDayChartProps {
   points: WeatherHourlyPoint[];
@@ -204,13 +205,13 @@ export function WeatherDayChart({
           {chart.points.map((point) => {
             if (!point.hasPrecipitation) return null;
 
-            const barWidth = Math.max(1.8, 70 / chart.points.length);
+            const barGeometry = getWeatherDayChartRainBarGeometry(point.x, chart.points.length);
             return (
               <rect
                 key={`${point.time}-rain`}
-                x={Math.max(0, point.x - barWidth / 2)}
+                x={barGeometry.x}
                 y={76 - point.barHeight}
-                width={barWidth}
+                width={barGeometry.width}
                 height={point.barHeight}
                 rx="0.8"
                 fill={`url(#${rainGradientId})`}
