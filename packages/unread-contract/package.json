@@ -1,0 +1,18 @@
+{
+  "name": "@bandeja/unread-contract",
+  "version": "1.0.0",
+  "description": "Shared unread count types, computeTotals, and merge helpers",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "npx -p typescript@6.0.3 tsc",
+    "test": "npm run build && node --test test/*.test.mjs"
+  },
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}

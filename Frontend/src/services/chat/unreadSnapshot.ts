@@ -1,23 +1,22 @@
 import type { ChatType } from '@/types';
 import type { UnreadObjectsApiPayload } from '@/services/chat/chatUnreadPayload';
 import type { ChatItem } from '@/utils/chatListSort';
+import {
+  contextKey as contractContextKey,
+  emptyUnreadTotals as contractEmptyUnreadTotals,
+  parseContextKey as contractParseContextKey,
+  type ContextKey as ContractContextKey,
+  type UnreadTotals as ContractUnreadTotals,
+} from '@bandeja/unread-contract';
+
+export { computeTotals } from '@bandeja/unread-contract';
 
 export type SnapshotContextType = 'GAME' | 'USER' | 'GROUP';
 export type SocketContextType = SnapshotContextType | 'BUG';
 
-export type ContextKey = `${SnapshotContextType}:${string}`;
+export type ContextKey = ContractContextKey;
 
-export type UnreadTotals = {
-  all: number;
-  games: number;
-  userChats: number;
-  bugs: number;
-  groups: number;
-  channels: number;
-  marketplace: number;
-  myGames: number;
-  pastGames: number;
-};
+export type UnreadTotals = ContractUnreadTotals;
 
 export type GroupChannelMeta = {
   isChannel?: boolean;
@@ -32,6 +31,9 @@ export type UnreadSnapshotDto = UnreadObjectsApiPayload & {
   totals?: Partial<UnreadTotals>;
   byContext?: Record<ContextKey, number>;
   mutedGroupIds?: string[];
+  groupChannelMeta?: Record<string, GroupChannelMeta>;
+  clock?: { userUnreadRevision: number };
+  contextRevisions?: Record<ContextKey, number>;
 };
 
 export type ComputeTotalsMeta = {
@@ -43,40 +45,20 @@ export type ComputeTotalsMeta = {
 
 export type ChatsSubtabFilter = 'users' | 'bugs' | 'channels' | 'market';
 
-const EMPTY_TOTALS: UnreadTotals = {
-  all: 0,
-  games: 0,
-  userChats: 0,
-  bugs: 0,
-  groups: 0,
-  channels: 0,
-  marketplace: 0,
-  myGames: 0,
-  pastGames: 0,
-};
-
 export function contextKey(contextType: SnapshotContextType, contextId: string): ContextKey {
-  return `${contextType}:${contextId}`;
+  return contractContextKey(contextType, contextId);
 }
 
 export function parseContextKey(key: ContextKey): { contextType: SnapshotContextType; contextId: string } | null {
-  const i = key.indexOf(':');
-  if (i <= 0) return null;
-  const contextType = key.slice(0, i) as SnapshotContextType;
-  if (contextType !== 'GAME' && contextType !== 'USER' && contextType !== 'GROUP') return null;
-  return { contextType, contextId: key.slice(i + 1) };
+  return contractParseContextKey(key);
 }
 
 export function emptyUnreadTotals(): UnreadTotals {
-  return { ...EMPTY_TOTALS };
-}
-
-function groupChannelIsChannel(meta: GroupChannelMeta | undefined): boolean {
-  return !!meta?.isChannel;
+  return contractEmptyUnreadTotals();
 }
 
 export function hydrateGroupChannelMetaFromPayload(dto: UnreadSnapshotDto): Record<string, GroupChannelMeta> {
-  const meta: Record<string, GroupChannelMeta> = {};
+  const meta: Record<string, GroupChannelMeta> = { ...(dto.groupChannelMeta ?? {}) };
   for (const row of dto.groupChannels ?? []) {
     const id = row.groupChannel?.id;
     if (!id) continue;
@@ -164,38 +146,31 @@ export function byContextFromSnapshotDto(dto: UnreadSnapshotDto): Record<Context
   return map;
 }
 
-/** bugId → group channel id (for BUG wire events before meta is hydrated). */
-export function bugIdToChannelIdFromSnapshot(dto: UnreadSnapshotDto): Record<string, string> {
-  const map: Record<string, string> = {};
-  for (const row of dto.bugs ?? []) {
-    const bug = row.bug;
-    const bugId =
-      bug && typeof bug === 'object' && bug != null && 'id' in bug ? (bug as { id?: string }).id : undefined;
-    const channelId =
-      bug && typeof bug === 'object' && bug != null && 'groupChannelId' in bug
-        ? (bug as { groupChannelId?: string }).groupChannelId
-        : undefined;
-    if (bugId && channelId) map[bugId] = channelId;
+/** bugId → group channel id from snapshot payload meta (sync lookup only). */
+export function bugChannelIdFromMeta(
+  bugId: string,
+  groupChannelMeta: Record<string, GroupChannelMeta>
+): string | null {
+  for (const [channelId, gm] of Object.entries(groupChannelMeta)) {
+    if (gm.bugId === bugId) return channelId;
   }
-  return map;
+  return null;
 }
 
 export function hydrateBugMetaFromGroupChannels(
   channels: ReadonlyArray<{ id: string; bugId?: string | null; bug?: { id?: string } | null }>
-): { groupChannelMeta: Record<string, GroupChannelMeta>; bugIdToChannelId: Record<string, string> } {
+): Record<string, GroupChannelMeta> {
   const groupChannelMeta: Record<string, GroupChannelMeta> = {};
-  const bugIdToChannelId: Record<string, string> = {};
   for (const ch of channels) {
     const bugId = ch.bugId ?? ch.bug?.id;
     if (!bugId) continue;
-    bugIdToChannelId[bugId] = ch.id;
     groupChannelMeta[ch.id] = {
       bugId,
       isChannel: true,
       marketItemId: groupChannelMeta[ch.id]?.marketItemId ?? null,
     };
   }
-  return { groupChannelMeta, bugIdToChannelId };
+  return groupChannelMeta;
 }
 
 export function computeScopedGameTotals(
@@ -228,60 +203,6 @@ export function applyScopedGameTotals(
   return { ...totals, ...scoped };
 }
 
-export function computeTotals(
-  byContext: Record<ContextKey, number>,
-  meta: ComputeTotalsMeta
-): UnreadTotals {
-  let games = 0;
-  let userChats = 0;
-  let bugs = 0;
-  let groups = 0;
-  let channels = 0;
-  let marketplace = 0;
-
-  for (const [key, count] of Object.entries(byContext)) {
-    if (count <= 0) continue;
-    const parsed = parseContextKey(key as ContextKey);
-    if (!parsed) continue;
-
-    if (parsed.contextType === 'GAME') {
-      games += count;
-      continue;
-    }
-    if (parsed.contextType === 'USER') {
-      userChats += count;
-      continue;
-    }
-    if (parsed.contextType === 'GROUP') {
-      if (meta.mutedGroupIds.has(parsed.contextId)) continue;
-      const gm = meta.groupChannelMeta[parsed.contextId];
-      if (gm?.marketItemId) {
-        marketplace += count;
-      } else if (gm?.bugId) {
-        bugs += count;
-      } else if (groupChannelIsChannel(gm)) {
-        channels += count;
-      } else {
-        groups += count;
-      }
-    }
-  }
-
-  const all = games + userChats + bugs + groups + channels + marketplace;
-
-  return {
-    all,
-    games,
-    userChats,
-    bugs,
-    groups,
-    channels,
-    marketplace,
-    myGames: 0,
-    pastGames: 0,
-  };
-}
-
 /** Prefer server overlay when it reports a positive scoped total; snapshot API sends 0 as placeholder. */
 function mergeScopedGameTotal(serverVal: number | undefined, computedVal: number): number {
   return serverVal != null && serverVal > 0 ? serverVal : computedVal;
@@ -305,25 +226,19 @@ export function mergeServerTotals(
   };
 }
 
-export function normalizeSocketContextToKey(
-  contextType: SocketContextType,
-  contextId: string,
-  groupChannelMeta: Record<string, GroupChannelMeta>,
-  bugIdToChannelId: Record<string, string> = {}
-): ContextKey | null {
-  if (contextType === 'GAME' || contextType === 'USER') {
-    return contextKey(contextType, contextId);
+export function resolveSocketContextKey(params: {
+  contextKey?: ContextKey;
+  contextType: SocketContextType;
+  contextId: string;
+  groupChannelMeta?: Record<string, GroupChannelMeta>;
+}): ContextKey | null {
+  if (params.contextKey) return params.contextKey;
+  if (params.contextType === 'GAME' || params.contextType === 'USER' || params.contextType === 'GROUP') {
+    return contextKey(params.contextType, params.contextId);
   }
-  if (contextType === 'GROUP') {
-    return contextKey('GROUP', contextId);
-  }
-  if (contextType === 'BUG') {
-    const mapped = bugIdToChannelId[contextId];
-    if (mapped) return contextKey('GROUP', mapped);
-    for (const [channelId, gm] of Object.entries(groupChannelMeta)) {
-      if (gm.bugId === contextId) return contextKey('GROUP', channelId);
-    }
-    return null;
+  if (params.contextType === 'BUG' && params.groupChannelMeta) {
+    const channelId = bugChannelIdFromMeta(params.contextId, params.groupChannelMeta);
+    if (channelId) return contextKey('GROUP', channelId);
   }
   return null;
 }
@@ -390,14 +305,24 @@ export function marketBuyerSellerUnreadFromContext(
   return { buyer, seller };
 }
 
+export type UnreadAuthorityClock = {
+  userUnreadRevision: number;
+  userContextUnreadRevision: number;
+};
+
 export type MarkContextReadRequest = {
   contextType: SnapshotContextType;
   contextId: string;
   gameChatTypes?: ChatType[];
+  clientOpId?: string;
 };
 
 export type MarkContextReadResponse = {
   markedCount: number;
   unreadCount: number;
   syncSeq?: number;
+  contextKey: ContextKey;
+  clock: UnreadAuthorityClock;
+  reason: string;
+  clientOpId?: string;
 };

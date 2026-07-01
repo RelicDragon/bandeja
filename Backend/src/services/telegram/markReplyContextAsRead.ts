@@ -1,5 +1,7 @@
 import { ChatContextType, ChatType } from '@prisma/client';
 import prisma from '../../config/database';
+import { lookupBugGroupChannelIds } from '../chat/bugGroupChannelLookup';
+import { notifyUserContextUnreadAuthority } from '../chat/messageCreateUnreadNotify.service';
 import { ReadReceiptService } from '../chat/readReceipt.service';
 
 export async function markReplyContextAsRead(params: {
@@ -21,7 +23,8 @@ export async function markReplyContextAsRead(params: {
     );
   }
 
-  const socketService = (global as any).socketService;
+  const socketService = (global as { socketService?: { emitChatEvent: (...args: unknown[]) => void } })
+    .socketService;
   if (!socketService) return;
 
   const socketContextType = chatContextType as ChatContextType;
@@ -55,10 +58,17 @@ export async function markReplyContextAsRead(params: {
     );
   }
 
-  const unreadCount = await ReadReceiptService.getUnreadCountForContext(
-    socketContextType,
+  let bugGroupChannelId: string | null | undefined;
+  if (chatContextType === 'BUG') {
+    const map = await lookupBugGroupChannelIds([contextId]);
+    bugGroupChannelId = map.get(contextId) ?? null;
+  }
+
+  await notifyUserContextUnreadAuthority({
+    userId,
+    chatContextType: socketContextType,
     contextId,
-    userId
-  );
-  await socketService.emitUnreadCountUpdate(socketContextType, contextId, userId, unreadCount);
+    reason: 'mark_context_read',
+    bugGroupChannelId,
+  });
 }

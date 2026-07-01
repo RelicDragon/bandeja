@@ -13,6 +13,7 @@ import {
   removeReaction,
   deleteMessage,
   getUnreadCount,
+  getUnreadTotals,
   getUserChatGames,
   getGameUnreadCount,
   getGamesUnreadCounts,
@@ -268,16 +269,17 @@ router.get(
 router.get('/games/:gameId/messages', getGameMessages);
 router.get('/bugs/:bugId/messages', getBugMessages);
 router.get('/games/:gameId/participants', getGameParticipants);
-router.get('/games/:gameId/unread-count', getGameUnreadCount);
+router.get('/games/:gameId/unread-count', getGameUnreadCount); // legacy repair/debug — prefer GET /chat/unread-objects?shape=counts
 router.post(
   '/games/unread-counts',
   validate([
     body('gameIds').isArray().withMessage('Game IDs must be an array'),
     body('gameIds.*').notEmpty().withMessage('Game ID cannot be empty')
   ]),
-  getGamesUnreadCounts
+  getGamesUnreadCounts // legacy repair/debug
 );
-router.get('/unread-count', getUnreadCount);
+router.get('/unread-count', getUnreadCount); // legacy repair/debug — prefer GET /chat/unread-totals or unread-objects?shape=counts
+router.get('/unread-totals', getUnreadTotals);
 router.post(
   '/list-row-previews',
   validate([
@@ -286,13 +288,19 @@ router.post(
   ]),
   postChatListRowPreviews
 );
-router.get('/unread-objects', unreadObjectsLimiter, getUnreadObjects);
+router.get(
+  '/unread-objects',
+  unreadObjectsLimiter,
+  validate([query('shape').optional().isIn(['counts', 'objects']).withMessage('Invalid shape')]),
+  getUnreadObjects
+);
 router.post(
   '/mark-context-read',
   validate([
     body('contextType').isIn(['GAME', 'USER', 'GROUP']).withMessage('Invalid contextType'),
     body('contextId').notEmpty().withMessage('contextId is required'),
     body('gameChatTypes').optional().isArray().withMessage('gameChatTypes must be an array'),
+    body('clientOpId').optional().isString().withMessage('clientOpId must be a string'),
   ]),
   markContextRead
 );
@@ -366,7 +374,7 @@ router.delete(
 router.get('/user-chats', getUserChats);
 router.get('/user-chats/with/:userId', getOrCreateChatWithUser);
 router.get('/user-chats/:chatId/messages', getUserChatMessages);
-router.get('/user-chats/:chatId/unread-count', getUserChatUnreadCount);
+router.get('/user-chats/:chatId/unread-count', getUserChatUnreadCount); // legacy repair/debug
 router.post('/user-chats/:chatId/mark-all-read', markUserChatAsRead);
 router.post('/user-chats/:chatId/pin', pinUserChat);
 router.delete('/user-chats/:chatId/pin', unpinUserChat);
@@ -381,7 +389,7 @@ router.post(
   respondToChatRequest
 );
 router.post(
-  '/user-chats/unread-counts',
+  '/user-chats/unread-counts', // legacy repair/debug
   validate([
     body('chatIds').isArray().withMessage('Chat IDs must be an array'),
     body('chatIds.*').notEmpty().withMessage('Chat ID cannot be empty')

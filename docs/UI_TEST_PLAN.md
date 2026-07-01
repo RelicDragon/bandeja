@@ -743,6 +743,13 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-10 | Empty inbox | New user no chats | Empty state |
 | CH-11 | Muted chat indicator | Mute thread | Muted badge/state |
 | CH-81 | Unified unread badge styling | Seed unread on chat row, bottom tab, game card, market card | Red pill, `99+` cap, same mount animation; no per-site gradient/ping variants |
+| CH-82 | Stale socket after read | `@two-user` B opens unread DM (badge clears); delayed/stale A-side recount socket with lower revision arrives | B badge stays cleared; row unread stays 0 |
+| CH-83 | Tab badges stable on navigation (regression) | Seed unread; navigate My → Chats → thread → back without reconnect | Tab badges unchanged; no full snapshot refetch flicker (see also G-20) |
+| CH-84 | Enter thread immediate badge clear | Open unread DM or game chat from list | Row badge and tab badge clear immediately; no wait for socket |
+| CH-85 | Muted group tab totals | Mute a group with unread; check Chats tab badge vs row badge | Row may show unread count; tab/subtab totals exclude muted group |
+| CH-86 | Tab badge single projection source | Compare bottom-tab Chats badge, list row badge, native app icon badge (Capacitor) after unread changes | All read same projection totals; no divergent feed-store unread patches |
+| CH-87 | Inbound DM badge latency (optimistic receive) | `@two-user` B on another tab/screen; A sends DM | B sees chat tab / row badge within ~100ms before authority envelope arrives |
+| CH-88 | Viewing thread no badge on inbound | `@two-user` B has DM thread open; A sends message | B message list updates; no badge bump on row or tab; read state catches up |
 
 ### 11.2 Thread types
 

@@ -29,6 +29,12 @@ function makeRecordingNotifier(): ChatNotifier & {
     async emitUnreadCountUpdate() {
       calls.push('emitUnreadCountUpdate');
     },
+    async emitUnreadAuthorityEnvelope() {
+      calls.push('emitUnreadAuthorityEnvelope');
+    },
+    async emitUnreadInvalidate() {
+      calls.push('emitUnreadInvalidate');
+    },
     emitMessageTranslation() {
       calls.push('emitMessageTranslation');
     },
@@ -117,6 +123,12 @@ async function run() {
     async emitUnreadCountUpdate() {
       delegated.push('emitUnreadCountUpdate');
     },
+    async emitUnreadAuthorityEnvelope() {
+      delegated.push('emitUnreadAuthorityEnvelope');
+    },
+    async emitUnreadInvalidate() {
+      delegated.push('emitUnreadInvalidate');
+    },
     emitMessageTranslation() {
       delegated.push('emitMessageTranslation');
     },
@@ -150,6 +162,14 @@ async function run() {
     socketChatNotifier.emitChatEvent(ChatContextType.USER, 'uc', 'deleted', { messageId: 'm3' });
     socketChatNotifier.recordMessageDelivery('m2', ChatContextType.USER, 'uc', ['u2']);
     await socketChatNotifier.emitUnreadCountUpdate(ChatContextType.USER, 'uc', 'u2', 3);
+    await socketChatNotifier.emitUnreadAuthorityEnvelope('u2', {
+      contextKey: 'USER:uc',
+      contextType: 'USER',
+      contextId: 'uc',
+      unreadCount: 3,
+      clock: { userUnreadRevision: 1, userContextUnreadRevision: 1 },
+      reason: 'message_created',
+    });
     socketChatNotifier.emitMessageTranslation(ChatContextType.USER, 'uc', 'm2', {
       languageCode: 'en',
       translation: 'hi',
@@ -169,6 +189,7 @@ async function run() {
       'emitChatEvent',
       'recordMessageDelivery',
       'emitUnreadCountUpdate',
+      'emitUnreadAuthorityEnvelope',
       'emitMessageTranslation',
       'emitPinnedMessagesUpdated',
       'getUndeliveredRecipients',

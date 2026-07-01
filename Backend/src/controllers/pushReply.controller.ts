@@ -49,7 +49,7 @@ export const pushReply = asyncHandler(async (req: Request, res: Response) => {
       chatContextType: scope.chatContextType,
       recipientUserId: scope.recipientUserId,
     });
-    const unreadBadgeCount = await UnreadCheapTotalsService.getTotalsAll(scope.recipientUserId);
+    const unreadBadgeCount = (await UnreadCheapTotalsService.getTotalsWithRevision(scope.recipientUserId)).total;
     res.status(200).json({ success: true, data: message, unreadBadgeCount });
     return;
   }
@@ -87,7 +87,7 @@ export const pushReply = asyncHandler(async (req: Request, res: Response) => {
       messageId: message.id,
     });
 
-    const unreadBadgeCount = await UnreadCheapTotalsService.getTotalsAll(scope.recipientUserId);
+    const unreadBadgeCount = (await UnreadCheapTotalsService.getTotalsWithRevision(scope.recipientUserId)).total;
     res.status(deduped ? 200 : 201).json({ success: true, data: message, unreadBadgeCount });
   } catch (error: unknown) {
     const statusCode =

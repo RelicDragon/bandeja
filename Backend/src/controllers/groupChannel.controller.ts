@@ -5,6 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 import { GroupChannelService } from '../services/chat/groupChannel.service';
 import { MessageService } from '../services/chat/message.service';
 import { ReadReceiptService } from '../services/chat/readReceipt.service';
+import { UnreadSnapshotService } from '../services/chat/unreadSnapshot.service';
 import { ChatType } from '@prisma/client';
 
 export const createGroupChannel = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -310,17 +311,14 @@ export const markGroupChannelAsRead = asyncHandler(async (req: AuthRequest, res:
     throw new ApiError(401, 'Unauthorized');
   }
 
-  const result = await ReadReceiptService.markAllMessagesAsReadForContext('GROUP', id, userId, undefined);
-
-  const socketService = (global as any).socketService;
-  if (socketService) {
-    const unreadCount = await ReadReceiptService.getUnreadCountForContext('GROUP', id, userId);
-    await socketService.emitUnreadCountUpdate('GROUP', id, userId, unreadCount);
-  }
+  const result = await UnreadSnapshotService.markContextRead(userId, {
+    contextType: 'GROUP',
+    contextId: id,
+  });
 
   res.json({
     success: true,
-    data: result
+    data: { count: result.markedCount, syncSeq: result.syncSeq },
   });
 });
 

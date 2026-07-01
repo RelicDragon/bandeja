@@ -3,7 +3,6 @@ import type { ChatItem, ChatListOutbox } from '@/utils/chatListSort';
 import type { Game } from '@/types';
 import { calculateLastMessageDate } from '@/utils/chatListHelpers';
 import { useAuthStore } from '@/store/authStore';
-import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { chatLocalDb, type ChatListFilterTab, type ChatThreadIndexRow } from './chatLocalDb';
 import { getLatestLocalMessageRowAcrossChatTypes } from './messageContextHead';
 import {
@@ -20,23 +19,6 @@ import { clearMessageHeightMemoryCache } from './chatMessageHeights';
 
 const ITEM_JSON_VERSION = 1 as const;
 const THREAD_INDEX_CAS_RETRIES = 8;
-
-function shouldIncrementThreadUnread(message: ChatMessage): boolean {
-  if (
-    message.chatContextType !== 'USER' &&
-    message.chatContextType !== 'GROUP' &&
-    message.chatContextType !== 'GAME'
-  ) {
-    return false;
-  }
-  const me = useAuthStore.getState().user?.id;
-  if (!me || !message.senderId || message.senderId === me) return false;
-  const nav = useGameDetailsChromeStore.getState();
-  if (message.chatContextType === 'USER' && nav.viewingUserChatId === message.contextId) return false;
-  if (message.chatContextType === 'GROUP' && nav.viewingGroupChannelId === message.contextId) return false;
-  if (message.chatContextType === 'GAME' && nav.viewingGameChatId === message.contextId) return false;
-  return true;
-}
 
 function rowKeyForItem(listFilter: ChatListFilterTab, item: ChatItem): string | null {
   if (item.type === 'contact') return null;
@@ -416,17 +398,16 @@ export async function reconcileThreadIndexOutboxForContext(
 }
 
 export type PatchThreadIndexFromMessageOptions = {
-  /** When false, only lastMessage / sort fields are updated (socket unread events own counts). Default true. */
+  /** @deprecated Unread counts come from unreadStore subscriber only. */
   applyUnread?: boolean;
 };
 
 export async function patchThreadIndexFromMessage(
   message: ChatMessage,
-  options?: PatchThreadIndexFromMessageOptions
+  _options?: PatchThreadIndexFromMessageOptions
 ): Promise<void> {
   if (!isGamePublicListPreviewMessage(message)) return;
 
-  const applyUnread = options?.applyUnread !== false;
   const initialRows = await chatLocalDb.threadIndex
     .where('[contextType+contextId]')
     .equals([message.chatContextType, message.contextId])
@@ -437,31 +418,25 @@ export async function patchThreadIndexFromMessage(
     new Date(message.updatedAt ?? message.createdAt).getTime()
   );
   const updatedAtIso = message.updatedAt ?? message.createdAt;
-  const bumpUnread = applyUnread && shouldIncrementThreadUnread(message);
   for (const rowRef of initialRows) {
     let applied = false;
-    let skipped = false;
     for (let attempt = 0; attempt < THREAD_INDEX_CAS_RETRIES; attempt++) {
       const latest = await chatLocalDb.threadIndex.get(rowRef.rowKey);
       if (!latest) {
-        skipped = true;
         break;
       }
       const item = parseItem(latest.itemJson);
       if (!item || item.type === 'contact') {
-        skipped = true;
         break;
       }
       const draft = 'draft' in item ? item.draft : undefined;
       const lastMessageForData =
         item.type === 'game' ? chatMessageToGameListPreview(message) : message;
       const lastMessageDate = calculateLastMessageDate(lastMessageForData, draft ?? null, updatedAtIso);
-      const prevUnread = 'unreadCount' in item ? (item.unreadCount ?? 0) : 0;
       const next = {
         ...item,
         data: { ...item.data, lastMessage: lastMessageForData, updatedAt: updatedAtIso },
         lastMessageDate,
-        ...(bumpUnread && 'unreadCount' in item ? { unreadCount: prevUnread + 1 } : {}),
       } as ChatItem & { listOutbox?: ChatListOutbox | null };
       delete next.listOutbox;
       applied = await putThreadRowIfUnchanged(rowRef.rowKey, latest.updatedAt, {
@@ -471,17 +446,6 @@ export async function patchThreadIndexFromMessage(
         updatedAt: Date.now(),
       });
       if (applied) break;
-    }
-    // CAS exhaustion: the optimistic unread bump lost every read-check-write
-    // race. The authoritative store-subscriber write reconciles the count when
-    // the server delta arrives, but surface it so a chronic contention path is
-    // observable rather than silently dropping updates.
-    if (!applied && !skipped) {
-      console.warn('[chatThreadIndex] CAS retries exhausted; unread bump not applied', {
-        rowKey: rowRef.rowKey,
-        contextType: message.chatContextType,
-        contextId: message.contextId,
-      });
     }
   }
   await reconcileThreadIndexOutboxForContext(message.chatContextType, message.contextId);

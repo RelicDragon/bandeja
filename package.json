@@ -10,6 +10,8 @@
   ],
   "scripts": {
     "build:contract": "npm run build -w @bandeja/chat-contract",
-    "test:contract": "npm run test -w @bandeja/chat-contract"
+    "test:contract": "npm run test -w @bandeja/chat-contract",
+    "build:unread-contract": "npm run build -w @bandeja/unread-contract",
+    "test:unread-contract": "npm run test -w @bandeja/unread-contract"
   }
 }

@@ -407,7 +407,7 @@ Steps inside transaction where applicable:
 
 Avoid emitting a socket from inside a transaction that may roll back. If an outbox is needed later, `UnreadAuthority` is where it belongs.
 
-**Call sites to migrate:** `message.service.ts` (recipients), `chat.controller.ts` (mark-read), `unreadAutoRead.service.ts`, mark-all-read, mute changes.
+**Call sites to migrate:** `message.service.ts` (recipients), `chat.controller.ts` (mark-read), `unreadAutoRead.service.ts`, mark-all-read, mute changes (totals-only — no revision bump).
 
 ### Mark-all-read (logical atomicity)
 
@@ -624,68 +624,71 @@ Phase 0 push badge: interim use batched context counts or minimal totals query �
 
 ### Phase 1 — Backend authority + clocks (3–5 days)
 
-- [ ] Migration: `UserUnreadState`, `UserContextUnreadState`.
-- [ ] Implement `UnreadAuthority.recordContextChanged`.
-- [ ] Wire message create, mark-context-read, mark-all-read.
-- [ ] Add `clientOpId` to mark-read request/response.
-- [ ] Socket + HTTP return full envelope (canonical `contextKey`, clocks, meta).
-- [ ] Document `?shape=counts|objects`; optionally ship slim counts response early (no game graph hydration).
-- [ ] FE: add `contextRevisions`, `lastAppliedSnapshotRevision`, `maxSeenUserUnreadRevision` to store; gate merge via shared helpers.
-- [ ] Wire `clientOpId` through `OfflineIntent` `mark_read_batch` payload and flush path.
-- [ ] Keep socket payload backward-compatible during rollout (`chat:unread-count` may carry both legacy top-level fields and the new envelope fields until all clients are migrated).
-- [ ] Implement `chat:unread-invalidate` socket event + client handler (slim snapshot on gap).
+- [x] Migration: `UserUnreadState`, `UserContextUnreadState`.
+- [x] Implement `UnreadAuthority.recordContextChanged`.
+- [x] Wire message create recipient notify through `UnreadAuthority.recordContextChanged`.
+- [x] Wire mark-context-read through `UnreadAuthority.recordContextChanged` (#238).
+- [x] Wire mark-all-read.
+- [x] Add `clientOpId` to mark-read request/response (#238).
+- [x] Socket + HTTP return full envelope for mark-context-read (#238).
+- [x] Document `?shape=counts|objects`; optionally ship slim counts response early (no game graph hydration).
+- [x] FE: add `contextRevisions`, `lastAppliedSnapshotRevision`, `maxSeenUserUnreadRevision` to store (#238); gate merge via shared helpers (Phase 2).
+- [x] Wire `clientOpId` through `OfflineIntent` `mark_read_batch` payload and flush path (#238).
+- [x] Keep socket payload backward-compatible during rollout (#238).
+- [x] Implement `chat:unread-invalidate` socket event + client handler (slim snapshot on gap).
 
 **Exit:** every unread-changing write bumps clocks and emits ordered authority.
 
 ### Phase 2 — Gated merge in existing store (2–3 days)
 
-- [ ] Implement snapshot + delta merge rules in `unreadStore` (thin wrappers → shared merge module).
-- [ ] Reapply optimistic clears after accepted snapshots.
-- [ ] Fix viewing: update base on envelope; display via selector layer.
-- [ ] Start `@bandeja/unread-contract`: types, `computeTotals`, merge helpers; root `build:unread-contract` script.
-- [ ] Update `docs/UI_TEST_PLAN.md`: stale-socket-after-read regression, navigation does not refresh badges.
+- [x] Implement snapshot + delta merge rules in `unreadStore` (thin wrappers → shared merge module).
+- [x] Reapply optimistic clears after accepted snapshots.
+- [x] Fix viewing: update base on envelope; display via selector layer.
+- [x] Start `@bandeja/unread-contract`: types, `computeTotals`, merge helpers; root `build:unread-contract` script.
+- [x] Update `docs/UI_TEST_PLAN.md`: stale-socket-after-read regression, navigation does not refresh badges.
 
 **Exit:** stale packets cannot win; selectors stable for UI.
 
 ### Phase 3 — Single projection (3–5 days)
 
-- [ ] Extract `UnreadProjection` reducer + effects.
-- [ ] Move coordinator optimistic state into projection.
-- [ ] `unreadStore` becomes adapter.
-- [ ] List rows: selectors only; remove feed-store unread patches.
-- [ ] Dexie thread index: cache adapter from store subscriber only.
-- [ ] Native badge effect from `selectTotalAll(displayed)`.
-- [ ] Update `docs/UI_TEST_PLAN.md`: enter-thread immediate clear, muted group totals, tab badge sources.
+- [x] Extract `UnreadProjection` reducer + effects.
+- [x] Move coordinator optimistic state into projection.
+- [x] `unreadStore` becomes adapter.
+- [x] List rows: selectors only; remove feed-store unread patches.
+- [x] Dexie thread index: cache adapter from store subscriber only.
+- [x] Native badge effect from `selectTotalAll(displayed)`.
+- [x] Update `docs/UI_TEST_PLAN.md`: enter-thread immediate clear, muted group totals, tab badge sources.
 
 **Exit:** one module owns unread invariants.
 
 ### Phase 4 — Optimistic receive (2–3 days)
 
-- [ ] `inboundMessageSeen` event from socket/sync ingress.
-- [ ] Optimistic bump when not viewing.
-- [ ] Reconcile with envelopes; message-id matching for pending bumps.
-- [ ] Replay tests: delayed socket, mark-read overlap, viewing thread.
-- [ ] Update `docs/UI_TEST_PLAN.md`: inbound DM badge latency (optimistic receive), viewing thread no badge.
+- [x] `inboundMessageSeen` event from socket/sync ingress.
+- [x] Optimistic bump when not viewing.
+- [x] Reconcile with envelopes; message-id matching for pending bumps.
+- [x] Replay tests: delayed socket, mark-read overlap, viewing thread.
+- [x] Update `docs/UI_TEST_PLAN.md`: inbound DM badge latency (optimistic receive), viewing thread no badge.
 
 **Exit:** badges feel instant; backend still corrects.
 
 ### Phase 5 — Backend performance (3–5 days, can partially overlap)
 
-- [ ] `UnreadCountQuery` module; batch game counts.
-- [ ] Default slim snapshot (`?shape=counts`).
-- [ ] `GET /chat/unread-totals`.
-- [ ] EXPLAIN-driven indexes on hot unread predicates.
+- [x] `UnreadCountQuery` module; batch game counts.
+- [x] Default slim snapshot (`?shape=counts`).
+- [x] `GET /chat/unread-totals`.
+- [x] EXPLAIN-driven indexes on hot unread predicates.
 - [ ] Optional: populate `unreadCountSnapshot` only if P95 still above target.
 
 **Exit:** repair path < 500ms P95; push badge O(cheap).
 
 ### Phase 6 — Cleanup
 
-- [ ] Delete duplicate FE/BE `computeTotals` (contract only).
-- [ ] Remove BUG→GROUP client mapping hot path.
+- [x] Delete duplicate FE/BE `computeTotals` (contract only).
+- [x] Remove BUG→GROUP client mapping hot path.
 - [ ] Retire legacy endpoints only when [legacy retirement gate](#legacy-endpoint-retirement-phase-6-gate) met.
-- [ ] Optional prod drift metric: `|clientTotal - serverTotal|` after snapshot.
-- [ ] Check off phase items in [Implementation phases](#implementation-phases); note ship date in [Document maintenance](#document-maintenance).
+- [x] Optional prod drift metric: `|clientTotal - serverTotal|` after snapshot.
+- [x] If drift repair becomes push-based, emit `chat:unread-invalidate` with `reason: 'repair'` (client handler from #241).
+- [x] Check off phase items in [Implementation phases](#implementation-phases); note ship date in [Document maintenance](#document-maintenance).
 
 ---
 
@@ -809,13 +812,13 @@ Phase 0 push badge: interim use batched context counts or minimal totals query �
 
 | Phase | Status | Notes |
 |-------|--------|-------|
-| 0 | shipped | #233–#235: navigation/cache storms, mark-read skip refresh, cheap push badge + auto-read notify |
-| 1 | | |
-| 2 | | |
-| 3 | | |
-| 4 | | |
-| 5 | | |
-| 6 | | |
+| 0 | shipped | #233–#236: navigation/cache storms, mark-read skip refresh, cheap push badge + auto-read notify, Phase 0 regression tests |
+| 1 | shipped (#237, #238, #240, #241) | revision schema + `UnreadAuthority`; mark-context-read + mark-all-read authority; invalidate handler |
+| 2 | shipped (#242) | `@bandeja/unread-contract`, gated merge, viewing base/display split |
+| 3 | shipped (#243) | `UnreadProjection` reducer + store adapter; selectors-only UI |
+| 4 | shipped (#244) | optimistic receive on inbound messages; envelope reconcile |
+| 5 | shipped (#245) | UnreadCountQuery, slim `?shape=counts`, `/chat/unread-totals`, batched game counts, unread index |
+| 6 | shipped (#246) | contract-only `computeTotals`, removed async BUG socket mapping, drift sampling, legacy route comments |
 
 ---
 

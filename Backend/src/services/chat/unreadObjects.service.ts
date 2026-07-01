@@ -55,8 +55,6 @@ const GAME_INCLUDE = {
 } as const;
 
 
-const GAME_COUNT_CONCURRENCY = 30;
-
 async function getGamesWithUnread(userId: string): Promise<UnreadObjectsResult['games']> {
   const minimalGames = await prisma.game.findMany({
     where: { status: { not: 'ARCHIVED' }, participants: { some: { userId } } },
@@ -70,28 +68,24 @@ async function getGamesWithUnread(userId: string): Promise<UnreadObjectsResult['
     },
   });
 
-  const counts: Array<{ gameId: string; count: number }> = [];
-  for (let i = 0; i < minimalGames.length; i += GAME_COUNT_CONCURRENCY) {
-    const batch = minimalGames.slice(i, i + GAME_COUNT_CONCURRENCY);
-    const batchResults = await Promise.all(
-      batch.map(async (g) => {
-        const participant = g.participants[0];
-        const chatTypeFilter = await UnreadCountBatchService.resolveGameChatTypeFilterForUser(
-          g.id,
-          userId,
-          participant,
-          g.status
-        );
-        const count = await UnreadCountBatchService.getGameUnreadCount(
-          g.id,
-          userId,
-          chatTypeFilter
-        );
-        return { gameId: g.id, count };
-      })
-    );
-    counts.push(...batchResults);
-  }
+  if (minimalGames.length === 0) return [];
+
+  const unreadCounts = await ReadReceiptService.getGamesUnreadCountsFromGames(
+    minimalGames.map((game) => ({
+      id: game.id,
+      status: String(game.status),
+      participants: game.participants.map((participant) => ({
+        status: String(participant.status),
+        role: String(participant.role),
+      })),
+    })),
+    userId
+  );
+
+  const counts = minimalGames.map((game) => ({
+    gameId: game.id,
+    count: unreadCounts[game.id] ?? 0,
+  }));
 
   const gameIdsWithUnread = counts.filter((c) => c.count > 0).map((c) => c.gameId);
 

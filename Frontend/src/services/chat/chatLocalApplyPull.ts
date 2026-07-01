@@ -14,7 +14,7 @@ import { chatSyncEventsToPatches } from '@/services/chat/chatSyncEventsToPatches
 import { applyChatSyncPatchesInSlice } from '@/services/chat/chatSyncApplyPatches';
 import { rowFromMessage } from '@/services/chat/chatSyncRowUtils';
 import type { ChatSyncEventDTO } from '@/services/chat/chatSyncEventTypes';
-import { withChatLocalBulkApply } from './chatLocalApplyBulk';
+import { notifyInboundMessageSeen } from '@/services/chat/unreadInboundMessage';
 import { persistChatMessagesFromApiDirect } from './chatLocalApplyWrite';
 import { getLocalCursorSeq, reconcileCursorWithServerHead } from './chatLocalApplyCursor';
 import {
@@ -28,6 +28,14 @@ function schedulePullPageIndexHooks(events: ChatSyncEventDTO[]): void {
       if (ev.eventType === 'MESSAGE_CREATED' || ev.eventType === 'MESSAGE_UPDATED') {
         const pl = ev.payload as { message?: ChatMessage; messageId?: string };
         const m = pl.message;
+        if (ev.eventType === 'MESSAGE_CREATED' && m?.id && m.senderId) {
+          notifyInboundMessageSeen({
+            contextType: m.chatContextType,
+            contextId: m.contextId,
+            messageId: m.id,
+            senderId: m.senderId,
+          });
+        }
         if (m?.id) {
           const r = rowFromMessage(m);
           await bumpMessageContextHead(r).catch(() => {});

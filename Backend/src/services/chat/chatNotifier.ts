@@ -1,4 +1,5 @@
 import type { ChatContextType, ChatType } from '@prisma/client';
+import type { UnreadAuthorityEnvelope } from './unreadAuthority/types';
 import { socketChatNotifier } from './socketChatNotifier';
 
 export type ChatEventType =
@@ -26,6 +27,13 @@ export interface ChatNotifier {
     userId: string,
     unreadCount: number,
     lastMessage?: Record<string, unknown>
+  ): Promise<void>;
+
+  emitUnreadAuthorityEnvelope(userId: string, envelope: UnreadAuthorityEnvelope): Promise<void>;
+
+  emitUnreadInvalidate(
+    userId: string,
+    payload: { userUnreadRevision: number; reason: 'auto_read' | 'repair' | 'mark_all_read' }
   ): Promise<void>;
 
   emitMessageTranslation(

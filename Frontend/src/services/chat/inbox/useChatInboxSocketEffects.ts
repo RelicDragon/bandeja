@@ -4,7 +4,6 @@ import { calculateLastMessageDate, deduplicateChats } from '@/utils/chatListHelp
 import { chatInboxThreadIndex } from './chatInboxProductionAdapter';
 import { usePlayersStore } from '@/store/playersStore';
 import { markContextReadOnUserActivity } from '@/services/chat/unreadCoordinator';
-import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
 import {
   chatApi,
   type ChatContextType,
@@ -366,24 +365,6 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
       const customEvent = event as CustomEvent<{ contextType: string; contextId: string }>;
       const { contextType, contextId } = customEvent.detail;
       void chatInboxThreadIndex.clearUnread(contextType as ChatContextType, contextId);
-      useChatListFeedStore.getState().patchRowsForFilter(listFilter, (prev) =>
-        prev.map((chat) => {
-          if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) {
-            return { ...chat, unreadCount: 0 };
-          }
-          if (contextType === 'GAME' && chat.type === 'game' && chat.data.id === contextId) {
-            return { ...chat, unreadCount: 0 };
-          }
-          if (
-            (contextType === 'GROUP' || contextType === 'BUG') &&
-            (chat.type === 'group' || chat.type === 'channel') &&
-            chat.data.id === contextId
-          ) {
-            return { ...chat, unreadCount: 0 };
-          }
-          return chat;
-        })
-      );
     };
 
     const handleVisibilityChange = () => {
@@ -508,21 +489,6 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
 
         if (chatExists) {
           next = deduplicateChats(updateChatMessageInList(next, contextType, contextId, message as ChatMessage, chatsFilter, userId));
-          if (isViewingMessage(contextType, contextId, next)) {
-            next = next.map((chat) => {
-              if (contextType === 'USER' && chat.type === 'user' && chat.data.id === contextId) return { ...chat, unreadCount: 0 };
-              if (contextType === 'GAME' && chat.type === 'game' && chat.data.id === contextId) return { ...chat, unreadCount: 0 };
-              if (contextType === 'GROUP' && (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId)
-                return { ...chat, unreadCount: 0 };
-              if (
-                contextType === 'BUG' &&
-                (chat.type === 'group' || chat.type === 'channel') &&
-                (chat.data.bug?.id === contextId || chat.data.bugId === contextId)
-              )
-                return { ...chat, unreadCount: 0 };
-              return chat;
-            });
-          }
         } else if ((contextType === 'USER' || contextType === 'GAME') && chatsFilter === 'users') {
           needsUserListRefetch = true;
         }
@@ -557,7 +523,7 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
     useChatListFeedStore.getState().patchRowsForFilter(listFilter, (prev) => {
       let next = prev;
       for (const lastChatUnreadCount of unreadBatch) {
-        const { contextType, contextId, unreadCount, lastMessage: lmRaw } = lastChatUnreadCount as {
+        const { contextType, contextId, lastMessage: lmRaw } = lastChatUnreadCount as {
           contextType: string;
           contextId: string;
           unreadCount: number;
@@ -576,16 +542,7 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
           };
           const row = next.find(matchBug);
           const channelId = row && (row.type === 'channel' || row.type === 'group') ? row.data.id : undefined;
-          const isViewingThis =
-            isDesktop &&
-            channelId != null &&
-            selectedChatId === channelId &&
-            (selectedChatType === 'group' || selectedChatType === 'channel');
-          const nextCount = isViewingThis ? 0 : unreadCount;
-          if (channelId) {
-            if (!lm) groupRefreshIds.add(channelId);
-          }
-          next = next.map((chat) => (matchBug(chat) ? { ...chat, unreadCount: nextCount } : chat));
+          if (channelId && !lm) groupRefreshIds.add(channelId);
           if (lm && channelId) {
             const updatedAt = lm.updatedAt ?? lm.createdAt;
             next = mergeGroupChannelLatestMessageIntoChats(next, channelId, lm, updatedAt);
@@ -594,15 +551,7 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
         }
 
         if (contextType === 'GROUP') {
-          const isViewingThis =
-            isDesktop &&
-            selectedChatId === contextId &&
-            (selectedChatType === 'group' || selectedChatType === 'channel');
-          const nextCount = isViewingThis ? 0 : unreadCount;
           if (!lm) groupRefreshIds.add(contextId);
-          next = next.map((chat) =>
-            (chat.type === 'group' || chat.type === 'channel') && chat.data.id === contextId ? { ...chat, unreadCount: nextCount } : chat
-          );
           if (lm) {
             const updatedAt = lm.updatedAt ?? lm.createdAt;
             next = mergeGroupChannelLatestMessageIntoChats(next, contextId, lm, updatedAt);
@@ -612,16 +561,11 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
 
         if (contextType === 'GAME') {
           if (chatsFilter !== 'users') continue;
-          const isViewingThis = isDesktop && selectedChatType === 'game' && selectedChatId === contextId;
-          const nextCount = isViewingThis ? 0 : effectiveSocketUnreadCount('GAME', contextId, unreadCount);
           const exists = next.some((c) => c.type === 'game' && c.data.id === contextId);
-          if (!exists && nextCount > 0) {
+          if (!exists) {
             userListRefetchFromGameUnread = true;
             continue;
           }
-          next = next.map((chat) =>
-            chat.type === 'game' && chat.data.id === contextId ? { ...chat, unreadCount: nextCount } : chat
-          );
           if (lm && typeof lm === 'object') {
             const updatedAt =
               (lm as { updatedAt?: string; createdAt?: string }).updatedAt ??
@@ -648,16 +592,11 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
 
         if (contextType === 'USER') {
           if (chatsFilter !== 'users') continue;
-          const isViewingThis = isDesktop && selectedChatType === 'user' && selectedChatId === contextId;
-          const nextCount = isViewingThis ? 0 : effectiveSocketUnreadCount('USER', contextId, unreadCount);
           const exists = next.some((c) => c.type === 'user' && c.data.id === contextId);
-          if (!exists && nextCount > 0) {
+          if (!exists) {
             userListRefetchFromUnread = true;
             continue;
           }
-          next = next.map((chat) =>
-            chat.type === 'user' && chat.data.id === contextId ? { ...chat, unreadCount: nextCount } : chat
-          );
           if (!lm) {
             userRefreshIds.add(contextId);
           } else {

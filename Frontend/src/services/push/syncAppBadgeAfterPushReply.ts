@@ -9,13 +9,13 @@ async function resolvePushReplyBadgeCount(unreadBadgeCount?: number): Promise<nu
   }
 
   try {
-    const response = await chatApi.getUnreadCount();
-    const count = response?.data?.count;
-    if (typeof count === 'number' && Number.isFinite(count)) {
-      return Math.max(0, Math.floor(count));
+    const response = await chatApi.getUnreadTotals();
+    const total = response?.data?.total;
+    if (typeof total === 'number' && Number.isFinite(total)) {
+      return Math.max(0, Math.floor(total));
     }
   } catch (error) {
-    console.warn('[push-reply] cheap unread count fetch failed', error);
+    console.warn('[push-reply] cheap unread totals fetch failed', error);
   }
 
   return selectTotalAll(useUnreadStore.getState());

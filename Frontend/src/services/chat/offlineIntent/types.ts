@@ -3,8 +3,8 @@ import type { ChatType } from '@/types';
 import type { QueuedMessageEnqueue } from '@/services/chatMessageQueueStorage';
 
 export type ChatMarkReadMutationPayload =
-  | { target: 'context'; chatTypes?: ChatType[] }
-  | { target: 'group_channel' };
+  | { target: 'context'; chatTypes?: ChatType[]; clientOpId?: string }
+  | { target: 'group_channel'; clientOpId?: string };
 
 export type OfflineSendIntent = {
   kind: 'send';

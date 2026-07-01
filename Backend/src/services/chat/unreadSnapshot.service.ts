@@ -1,14 +1,17 @@
-import { ChatContextType, ChatType, ParticipantRole, Prisma } from '@prisma/client';
-import prisma from '../../config/database';
+import { ChatType, ParticipantRole } from '@prisma/client';
+import { computeTotals } from '@bandeja/unread-contract';
 import { ApiError } from '../../utils/ApiError';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
-import { ChatMuteService } from './chatMute.service';
-import { sqlMessageNotReadByUser } from './chatReadUnreadSql';
 import { MessageService } from './message.service';
 import { ReadReceiptService } from './readReceipt.service';
-import { UnreadCheapTotalsService } from './unreadCheapTotals.service';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
-import { UnreadObjectsService, type UnreadObjectsResult } from './unreadObjects.service';
+import { UnreadCountQuery } from './unreadCountQuery';
+import type { UnreadObjectsResult } from './unreadObjects.service';
+import { UnreadAuthority } from './unreadAuthority';
+import { MarkAllReadService, type MarkAllReadContext } from './unreadAuthority/markAllRead.service';
+import type { UnreadAuthorityClock, UnreadChangeReason } from './unreadAuthority/types';
+
+export { computeTotals } from '@bandeja/unread-contract';
 
 export type SnapshotContextType = 'GAME' | 'USER' | 'GROUP';
 export type ContextKey = `${SnapshotContextType}:${string}`;
@@ -39,6 +42,10 @@ export type UnreadSnapshotDto = UnreadObjectsResult & {
   byContext: Record<ContextKey, number>;
   /** GROUP channel ids muted by the viewer — client recomputes badge totals on socket deltas. */
   mutedGroupIds: string[];
+  /** Minimal GROUP meta for totals classification (slim `shape=counts` snapshot). */
+  groupChannelMeta?: Record<string, GroupChannelMeta>;
+  clock?: { userUnreadRevision: number };
+  contextRevisions?: Record<ContextKey, number>;
 };
 
 export type MarkContextReadParams = {
@@ -51,6 +58,10 @@ export type MarkContextReadResult = {
   markedCount: number;
   unreadCount: 0;
   syncSeq?: number;
+  contextKey: ContextKey;
+  clock: UnreadAuthorityClock;
+  reason: UnreadChangeReason;
+  clientOpId?: string;
 };
 
 const EMPTY_TOTALS: UnreadTotals = {
@@ -125,225 +136,121 @@ export function buildGroupChannelMeta(objects: UnreadObjectsResult): Record<stri
   return meta;
 }
 
-export function computeTotals(
-  byContext: Record<ContextKey, number>,
-  meta: { groupChannelMeta: Record<string, GroupChannelMeta>; mutedGroupIds?: Set<string> }
-): UnreadTotals {
-  let games = 0;
-  let userChats = 0;
-  let bugs = 0;
-  let groups = 0;
-  let channels = 0;
-  let marketplace = 0;
-
-  for (const [key, count] of Object.entries(byContext) as Array<[ContextKey, number]>) {
-    if (count <= 0) continue;
-    const colon = key.indexOf(':');
-    const type = key.slice(0, colon) as SnapshotContextType;
-    const id = key.slice(colon + 1);
-
-    if (type === 'GAME') {
-      games += count;
-    } else if (type === 'USER') {
-      userChats += count;
-    } else if (type === 'GROUP') {
-      if (meta.mutedGroupIds?.has(id)) continue;
-      const channelMeta = meta.groupChannelMeta[id];
-      if (channelMeta?.marketItemId) {
-        marketplace += count;
-      } else if (channelMeta?.bugId) {
-        bugs += count;
-      } else if (channelMeta?.isChannel === true) {
-        channels += count;
-      } else {
-        groups += count;
-      }
-    }
-  }
-
-  const all = games + userChats + bugs + groups + channels + marketplace;
-  return {
-    all,
-    games,
-    userChats,
-    bugs,
-    groups,
-    channels,
-    marketplace,
-    myGames: 0,
-    pastGames: 0,
-  };
-}
-
-/** @deprecated use computeTotals — kept for tests importing array-based helper */
+/** @deprecated use computeTotals from @bandeja/unread-contract — kept for array-based tests */
 export function computeUnreadTotals(objects: UnreadObjectsResult): UnreadTotals {
   const byContext = buildByContextFromUnreadObjects(objects);
   const groupChannelMeta = buildGroupChannelMeta(objects);
-  return computeTotals(byContext, { groupChannelMeta });
+  return computeTotals(byContext, { groupChannelMeta, mutedGroupIds: new Set() });
 }
 
 export class UnreadSnapshotService {
-  private static async getScopedGameTotals(userId: string): Promise<Pick<UnreadTotals, 'myGames' | 'pastGames'>> {
-    const unreadContexts = await prisma.$queryRaw<Array<{ contextId: string }>>(
-      Prisma.sql`
-        SELECT DISTINCT m."contextId"
-        FROM "ChatMessage" m
-        WHERE m."chatContextType" = 'GAME'::"ChatContextType"
-          AND m."deletedAt" IS NULL
-          AND m."senderId" IS NOT NULL
-          AND m."senderId" <> ${userId}
-          AND ${sqlMessageNotReadByUser(userId)}
-      `
-    );
-    const gameIds = unreadContexts.map((row) => row.contextId).filter(Boolean);
-    if (gameIds.length === 0) return { myGames: 0, pastGames: 0 };
-
-    const games = await prisma.game.findMany({
-      where: {
-        id: { in: gameIds },
-        participants: { some: { userId } },
-      },
-      select: {
-        id: true,
-        status: true,
-        startTime: true,
-        participants: {
-          where: { userId },
-          select: { status: true, role: true },
-        },
-      },
-    });
-    if (games.length === 0) return { myGames: 0, pastGames: 0 };
-
-    const unreadCounts = await ReadReceiptService.getGamesUnreadCountsFromGames(
-      games.map((game) => ({
-        id: game.id,
-        status: String(game.status),
-        participants: game.participants.map((participant) => ({
-          status: String(participant.status),
-          role: String(participant.role),
-        })),
-      })),
-      userId
-    );
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    let myGames = 0;
-    let pastGames = 0;
-    for (const game of games) {
-      const count = unreadCounts[game.id] ?? 0;
-      if (count <= 0) continue;
-      if (game.status === 'ARCHIVED' && game.startTime < today) {
-        pastGames += count;
-      } else {
-        myGames += count;
-      }
-    }
-    return { myGames, pastGames };
-  }
-
-  static async getSnapshot(userId: string): Promise<UnreadSnapshotDto> {
-    const [objects, mutedChats, scopedGameTotals] = await Promise.all([
-      UnreadObjectsService.getUnreadObjects(userId),
-      ChatMuteService.getMutedChats(userId, 'GROUP'),
-      this.getScopedGameTotals(userId),
-    ]);
-    const mutedGroupIds = new Set(
-      mutedChats.map((m) => m.contextId).filter((id): id is string => typeof id === 'string' && id.length > 0)
-    );
-    const byContext = buildByContextFromUnreadObjects(objects);
-    const totals = computeTotals(byContext, {
-      groupChannelMeta: buildGroupChannelMeta(objects),
-      mutedGroupIds,
-    });
-    totals.myGames = scopedGameTotals.myGames;
-    totals.pastGames = scopedGameTotals.pastGames;
-    return {
-      ...objects,
-      version: Date.now(),
-      totals,
-      byContext,
-      mutedGroupIds: [...mutedGroupIds],
-    };
+  static async getSnapshot(
+    userId: string,
+    shape: 'counts' | 'objects' = 'counts'
+  ): Promise<UnreadSnapshotDto> {
+    return UnreadCountQuery.getSnapshot(userId, shape) as Promise<UnreadSnapshotDto>;
   }
 
   static async getTotalsAll(userId: string): Promise<number> {
-    return UnreadCheapTotalsService.getTotalsAll(userId);
+    const result = await UnreadCountQuery.getTotals(userId);
+    return result.total;
+  }
+
+  static async getTotalsWithRevision(userId: string): Promise<{ total: number; userUnreadRevision: number }> {
+    return UnreadCountQuery.getTotals(userId);
   }
 
   static async markContextRead(
     userId: string,
-    params: MarkContextReadParams
+    params: MarkContextReadParams & { clientOpId?: string; emitSocket?: boolean }
   ): Promise<MarkContextReadResult> {
-    const { contextType, contextId, gameChatTypes } = params;
+    const { contextType, contextId, gameChatTypes, clientOpId, emitSocket } = params;
 
     if (contextType === 'GAME' && gameChatTypes?.length) {
       await this.validateGameChatTypesSubset(contextId, userId, gameChatTypes);
     }
 
-    let result: { count: number; syncSeq?: number };
-    if (contextType === 'GAME') {
-      result = await ReadReceiptService.markAllMessagesAsRead(contextId, userId, gameChatTypes ?? []);
-    } else if (contextType === 'USER') {
-      result = await ReadReceiptService.markUserChatAsRead(contextId, userId);
-    } else {
-      result = await ReadReceiptService.markAllMessagesAsReadForContext(
-        'GROUP',
-        contextId,
-        userId,
-        undefined
-      );
-    }
+    let markedCount = 0;
+    let syncSeq: number | undefined;
+
+    const envelope = await UnreadAuthority.recordContextChanged({
+      userId,
+      contextKey: toContextKey(contextType, contextId),
+      contextType,
+      contextId,
+      reason: 'mark_context_read',
+      clientOpId,
+      emitSocket: emitSocket ?? true,
+      performReadWrite: async () => {
+        let result: { count: number; syncSeq?: number };
+        if (contextType === 'GAME') {
+          result = await ReadReceiptService.markAllMessagesAsRead(
+            contextId,
+            userId,
+            gameChatTypes ?? []
+          );
+        } else if (contextType === 'USER') {
+          result = await ReadReceiptService.markUserChatAsRead(contextId, userId);
+        } else {
+          result = await ReadReceiptService.markAllMessagesAsReadForContext(
+            'GROUP',
+            contextId,
+            userId,
+            undefined
+          );
+        }
+        markedCount = result.count;
+        syncSeq = result.syncSeq;
+      },
+    });
 
     return {
-      markedCount: result.count,
+      markedCount,
       unreadCount: 0,
-      syncSeq: result.syncSeq,
+      syncSeq,
+      contextKey: envelope.contextKey,
+      clock: envelope.clock,
+      reason: envelope.reason,
+      ...(envelope.clientOpId ? { clientOpId: envelope.clientOpId } : {}),
     };
   }
 
   static async markAllAndSnapshot(userId: string): Promise<UnreadSnapshotDto> {
     const snapshot = await this.getSnapshot(userId);
-    const socketService = (global as any).socketService;
+    const contexts: MarkAllReadContext[] = [];
 
-    for (const { game } of snapshot.games) {
-      if (!game?.id) continue;
-      await ReadReceiptService.markAllMessagesAsRead(game.id, userId, []);
-      if (socketService) {
-        await socketService.emitUnreadCountUpdate('GAME' as ChatContextType, game.id, userId, 0);
-      }
-    }
-
-    for (const { chat } of snapshot.userChats) {
-      if (!chat?.id) continue;
-      await ReadReceiptService.markUserChatAsRead(chat.id, userId);
-      if (socketService) {
-        await socketService.emitUnreadCountUpdate('USER', chat.id, userId, 0);
-      }
+    for (const [contextKey, count] of Object.entries(snapshot.byContext) as Array<[ContextKey, number]>) {
+      if (count <= 0) continue;
+      const colon = contextKey.indexOf(':');
+      const contextType = contextKey.slice(0, colon) as SnapshotContextType;
+      const contextId = contextKey.slice(colon + 1);
+      if (!contextId) continue;
+      contexts.push({ contextKey, contextType, contextId });
     }
 
-    const groupChannelIds = new Set<string>();
-    for (const { bug } of snapshot.bugs) {
-      const id = bug?.groupChannelId as string | undefined;
-      if (id) groupChannelIds.add(id);
-    }
-    for (const { groupChannel } of snapshot.groupChannels) {
-      if (groupChannel?.id) groupChannelIds.add(groupChannel.id);
-    }
-    for (const { groupChannelId } of snapshot.marketItems) {
-      if (groupChannelId) groupChannelIds.add(groupChannelId);
-    }
-
-    for (const channelId of groupChannelIds) {
-      await ReadReceiptService.markAllMessagesAsReadForContext('GROUP', channelId, userId, undefined);
-      if (socketService) {
-        await socketService.emitUnreadCountUpdate('GROUP', channelId, userId, 0);
-      }
-    }
+    const markAllResult = await MarkAllReadService.recordMarkAllRead({
+      userId,
+      contexts,
+      performMarkRead: async (ctx) => {
+        if (ctx.contextType === 'GAME') {
+          await ReadReceiptService.markAllMessagesAsRead(ctx.contextId, userId, []);
+        } else if (ctx.contextType === 'USER') {
+          await ReadReceiptService.markUserChatAsRead(ctx.contextId, userId);
+        } else {
+          await ReadReceiptService.markAllMessagesAsReadForContext(
+            'GROUP',
+            ctx.contextId,
+            userId,
+            undefined
+          );
+        }
+      },
+    });
 
     return {
-      version: Date.now(),
+      version: markAllResult.userUnreadRevision,
+      clock: { userUnreadRevision: markAllResult.userUnreadRevision },
+      contextRevisions: markAllResult.contextRevisions,
       totals: { ...EMPTY_TOTALS },
       byContext: {},
       mutedGroupIds: snapshot.mutedGroupIds,

@@ -41,6 +41,7 @@ import {
   MIN_VIDEO_DURATION_MS,
 } from '../../constants/chatVideo';
 import { getChatNotifier } from './chatNotifier';
+import { scheduleMessageCreateUnreadNotify } from './messageCreateUnreadNotify.service';
 import { hasStoryReplyPayload } from './storyReplySanitize';
 import { validateStoryReplyForUserChatMessage } from './storyReplyValidate.service';
 
@@ -507,7 +508,6 @@ export class MessageService {
     const { UnreadSnapshotService } = await import('./unreadSnapshot.service');
     let markContextType: 'GAME' | 'USER' | 'GROUP';
     let markContextId = contextId;
-    let socketContextType: ChatContextType = chatContextType;
 
     if (chatContextType === 'GAME') {
       markContextType = 'GAME';
@@ -527,7 +527,6 @@ export class MessageService {
       if (!channelId) return;
       markContextType = 'GROUP';
       markContextId = channelId;
-      socketContextType = 'GROUP';
     } else {
       return;
     }
@@ -543,13 +542,6 @@ export class MessageService {
       contextType: markContextType,
       contextId: markContextId,
     });
-
-    await getChatNotifier().emitUnreadCountUpdate(
-      socketContextType,
-      markContextId,
-      senderId,
-      0
-    );
   }
 
   private static scheduleSenderContextReadAfterSend(
@@ -1023,6 +1015,7 @@ export class MessageService {
 
     const recipients: string[] = [];
     let userDmNotifyIds: string[] | undefined;
+    let bugGroupChannelId: string | undefined;
 
     if (data.chatContextType === 'GAME') {
       const game = await prisma.game.findUnique({
@@ -1053,12 +1046,14 @@ export class MessageService {
       const bug = await prisma.bug.findUnique({
         where: { id: data.contextId },
         include: {
+          groupChannel: { select: { id: true } },
           participants: {
             where: { userId: { not: data.senderId } }
           }
         }
       });
       if (bug) {
+        bugGroupChannelId = bug.groupChannel?.id ?? undefined;
         if (bug.senderId !== data.senderId) {
           recipients.push(bug.senderId);
         }
@@ -1167,26 +1162,13 @@ export class MessageService {
         data.chatContextType === ChatContextType.GAME
           ? lastMessageForUnreadListSocket(messageWithTranslations)
           : undefined;
-      queueMicrotask(async () => {
-        try {
-          const countsByUser = await ReadReceiptService.getUnreadCountsForContextForUsers(
-            data.chatContextType,
-            data.contextId,
-            recipients
-          );
-          for (const userId of recipients) {
-            const unreadCount = countsByUser.get(userId) ?? 0;
-            await notifier.emitUnreadCountUpdate(
-              data.chatContextType,
-              data.contextId,
-              userId,
-              unreadCount,
-              listPreview ?? undefined
-            );
-          }
-        } catch (error) {
-          console.error('[MessageService] Failed to emit unread count updates after send:', error);
-        }
+      scheduleMessageCreateUnreadNotify({
+        chatContextType: data.chatContextType,
+        contextId: data.contextId,
+        senderId: data.senderId,
+        recipientIds: recipients,
+        lastMessage: listPreview,
+        bugGroupChannelId,
       });
     }
 

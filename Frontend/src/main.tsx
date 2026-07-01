@@ -9,6 +9,7 @@ import { initChatLocalDbLifecycle } from './services/chat/chatLocalDbLifecycle';
 import { initChatBackgroundSyncClient } from './services/chat/chatBackgroundSync';
 import { installMarkReadFlushFailureResync } from './services/chat/chatMarkReadResync';
 import { installUnreadThreadIndexSync } from './services/chat/unreadThreadIndexSync';
+import { installUnreadNativeBadgeSync } from './services/chat/unreadNativeBadgeSync';
 import { installChunkLoadRecovery } from './utils/chunkLoadRecovery';
 
 const CACHE_VERSION = 'v1';
@@ -20,6 +21,7 @@ initChatLocalDbLifecycle();
 initChatBackgroundSyncClient();
 installMarkReadFlushFailureResync();
 installUnreadThreadIndexSync();
+installUnreadNativeBadgeSync();
 
 if (isCapacitor() && isAndroid()) {
   document.body.classList.add('capacitor-android');

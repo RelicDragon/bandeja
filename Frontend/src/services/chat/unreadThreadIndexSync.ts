@@ -2,7 +2,7 @@ import { useUnreadStore } from '@/store/unreadStore';
 import { type ContextKey, parseContextKey } from '@/services/chat/unreadSnapshot';
 import { patchThreadIndexSetUnreadCount } from '@/services/chat/chatThreadIndex';
 
-function syncThreadIndexFromByContextDelta(
+function syncThreadIndexFromDisplayedDelta(
   prev: Record<ContextKey, number>,
   next: Record<ContextKey, number>
 ): void {
@@ -19,16 +19,16 @@ function syncThreadIndexFromByContextDelta(
 
 let installed = false;
 
-/** §5.4 — mirror unreadStore.byContext into Dexie thread index rows. */
+/** Mirror unreadStore.displayedByContext into Dexie thread index rows. */
 export function installUnreadThreadIndexSync(): void {
   if (installed) return;
   installed = true;
 
-  let prevByContext = useUnreadStore.getState().byContext;
+  let prevDisplayed = useUnreadStore.getState().displayedByContext;
   useUnreadStore.subscribe((state) => {
-    const nextByContext = state.byContext;
-    if (nextByContext === prevByContext) return;
-    syncThreadIndexFromByContextDelta(prevByContext, nextByContext);
-    prevByContext = nextByContext;
+    const nextDisplayed = state.displayedByContext;
+    if (nextDisplayed === prevDisplayed) return;
+    syncThreadIndexFromDisplayedDelta(prevDisplayed, nextDisplayed);
+    prevDisplayed = nextDisplayed;
   });
 }

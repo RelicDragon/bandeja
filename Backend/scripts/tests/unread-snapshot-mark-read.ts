@@ -2,7 +2,8 @@ import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { ChatType } from '@prisma/client';
 import prisma from '../../src/config/database';
-import { UnreadSnapshotService, buildByContextFromUnreadObjects, computeTotals, buildGroupChannelMeta } from '../../src/services/chat/unreadSnapshot.service';
+import { UnreadSnapshotService, buildByContextFromUnreadObjects, buildGroupChannelMeta } from '../../src/services/chat/unreadSnapshot.service';
+import { computeTotals } from '@bandeja/unread-contract';
 import { UnreadObjectsService } from '../../src/services/chat/unreadObjects.service';
 import { ReadReceiptService } from '../../src/services/chat/readReceipt.service';
 import { UnreadCountBatchService } from '../../src/services/chat/unreadCountBatch.service';
@@ -120,6 +121,23 @@ async function main() {
     });
     assert(markResult.unreadCount === 0, 'mark-context unreadCount must be 0');
     assert(markResult.markedCount >= 2, `markedCount >= 2, got ${markResult.markedCount}`);
+    assert(markResult.clock.userUnreadRevision >= 1, 'mark-context must bump user revision');
+    assert(markResult.clock.userContextUnreadRevision >= 1, 'mark-context must bump context revision');
+    assert(markResult.contextKey === gameKey, 'mark-context returns canonical contextKey');
+    assert(markResult.reason === 'mark_context_read', 'mark-context reason');
+
+    const userRevisionRow = await prisma.userUnreadState.findUnique({ where: { userId: reader.id } });
+    assert(
+      (userRevisionRow?.unreadRevision ?? 0) >= markResult.clock.userUnreadRevision,
+      'user revision persisted'
+    );
+    const contextRevisionRow = await prisma.userContextUnreadState.findUnique({
+      where: { userId_contextKey: { userId: reader.id, contextKey: gameKey } },
+    });
+    assert(
+      (contextRevisionRow?.unreadRevision ?? 0) >= markResult.clock.userContextUnreadRevision,
+      'context revision persisted'
+    );
 
     const after = await ReadReceiptService.getGameUnreadCount(gameId, reader.id);
     assert(after.count === 0, `game unread after mark-context-read must be 0, got ${after.count}`);
@@ -166,6 +184,28 @@ async function main() {
     assert(emptySnapshot.totals.all === 0, 'mark-all totals.all must be 0');
     assert(Object.keys(emptySnapshot.byContext).length === 0, 'mark-all byContext empty');
     assert(emptySnapshot.games.length === 0, 'mark-all games array empty');
+    assert(
+      (emptySnapshot.clock?.userUnreadRevision ?? 0) >= 1,
+      'mark-all must return snapshot at new user revision'
+    );
+
+    const userRevisionAfterAll = await prisma.userUnreadState.findUnique({
+      where: { userId: reader.id },
+    });
+    const persistedUserRevision = userRevisionAfterAll?.unreadRevision;
+    assert(persistedUserRevision != null, 'user revision row after mark-all');
+    assert(
+      emptySnapshot.clock?.userUnreadRevision === persistedUserRevision,
+      'mark-all snapshot clock matches persisted user revision'
+    );
+    const contextRevisionAfterAll = await prisma.userContextUnreadState.findUnique({
+      where: { userId_contextKey: { userId: reader.id, contextKey: gameKey } },
+    });
+    assert(
+      (contextRevisionAfterAll?.unreadRevision ?? 0) >=
+        (emptySnapshot.contextRevisions?.[gameKey] ?? 0),
+      'mark-all context revision persisted for cleared game'
+    );
 
     const afterAll = await ReadReceiptService.getGameUnreadCount(gameId, reader.id);
     assert(afterAll.count === 0, 'game unread after mark-all must be 0');

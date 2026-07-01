@@ -150,6 +150,7 @@ export async function enqueueMarkReadBatch(params: {
   payload: ChatMarkReadMutationPayload;
 }): Promise<void> {
   const { contextType, contextId, payload } = params;
+  const clientOpId = payload.clientOpId?.trim() || newClientMutationId();
   const all = await chatLocalDb.mutationQueue.toArray();
   await Promise.all(
     all
@@ -159,7 +160,13 @@ export async function enqueueMarkReadBatch(params: {
       )
       .map((r) => chatLocalDb.mutationQueue.delete(r.id))
   );
-  const row = baseRow('mark_read_batch', contextType, contextId, undefined, payload as Record<string, unknown>);
+  const row: ChatMutationQueueRow = {
+    ...baseRow('mark_read_batch', contextType, contextId, undefined, {
+      ...payload,
+      clientOpId,
+    } as Record<string, unknown>),
+    clientMutationId: clientOpId,
+  };
   await putMutationRow(row);
 }
 
@@ -228,14 +235,16 @@ async function executeMutation(row: ChatMutationQueueRow): Promise<void> {
       break;
     }
     case 'mark_read_batch': {
-      const p = row.payload as { target: string; chatTypes?: ChatType[] };
+      const p = row.payload as { target: string; chatTypes?: ChatType[]; clientOpId?: string };
       const snapshotType = row.contextType as SnapshotContextType;
-      await chatApi.markContextRead({
+      const clientOpId = (p.clientOpId ?? row.clientMutationId).trim();
+      const response = await chatApi.markContextRead({
         contextType: snapshotType,
         contextId: row.contextId,
         gameChatTypes: p.chatTypes,
+        clientOpId: clientOpId.length > 0 ? clientOpId : undefined,
       });
-      onMarkReadBatchFlushSuccess(contextKey(snapshotType, row.contextId));
+      onMarkReadBatchFlushSuccess(contextKey(snapshotType, row.contextId), response.data);
       break;
     }
     default:

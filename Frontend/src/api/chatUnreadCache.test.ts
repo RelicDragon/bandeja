@@ -1,22 +1,25 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+import {
+  invalidateUnreadApiCache,
+  resetUnreadApiCacheForTests,
+  unreadApiCacheState,
+  unreadCountCache,
+} from '@/api/chatUnreadApiCache';
 
-const refreshAllMock = vi.fn().mockResolvedValue(undefined);
+describe('invalidateUnreadApiCache (Phase 0 #233)', () => {
+  beforeEach(() => {
+    resetUnreadApiCacheForTests();
+  });
 
-vi.mock('@/store/unreadStore', () => ({
-  useUnreadStore: {
-    getState: () => ({
-      refreshAll: refreshAllMock,
-    }),
-  },
-}));
+  it('clears count cache and in-flight promises', () => {
+    unreadCountCache.set('unread-count-global', { data: { count: 3 }, timestamp: Date.now() });
+    unreadApiCacheState.unreadCountPromise = Promise.resolve({ count: 3 });
+    unreadApiCacheState.unreadObjectsInFlight.set('test', Promise.resolve({ success: true, data: {} } as never));
 
-describe('chatApi.invalidateUnreadCache (Phase 0 #233)', () => {
-  it('does not trigger unread store refreshAll', async () => {
-    const { chatApi } = await import('@/api/chat');
-    refreshAllMock.mockClear();
+    invalidateUnreadApiCache();
 
-    chatApi.invalidateUnreadCache();
-
-    expect(refreshAllMock).not.toHaveBeenCalled();
+    expect(unreadCountCache.size).toBe(0);
+    expect(unreadApiCacheState.unreadCountPromise).toBeNull();
+    expect(unreadApiCacheState.unreadObjectsInFlight.size).toBe(0);
   });
 });

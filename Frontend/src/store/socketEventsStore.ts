@@ -13,7 +13,8 @@ import { logChatSocketQueueTrim } from '@/services/chat/chatDiagnostics';
 import { teardownWatchBridge } from '@/services/watchBridgeInit';
 import type { ChatMessage } from '@/api/chat';
 import { donateIncomingChatIntent } from '@/services/chat/chatIntentDonation';
-import { applyUnreadSocketDelta } from '@/services/chat/unreadStoreSocketBridge';
+import { applyUnreadInvalidate, applyUnreadSocketDelta } from '@/services/chat/unreadStoreSocketBridge';
+import { notifyInboundMessageSeen } from '@/services/chat/unreadInboundMessage';
 
 interface GameUpdateData {
   gameId: string;
@@ -57,6 +58,18 @@ export interface ChatUnreadCountData {
   contextId: string;
   unreadCount: number;
   lastMessage?: unknown;
+  contextKey?: string;
+  clock?: {
+    userUnreadRevision: number;
+    userContextUnreadRevision: number;
+  };
+  reason?: string;
+  clientOpId?: string;
+}
+
+export interface ChatUnreadInvalidateData {
+  userUnreadRevision: number;
+  reason: 'auto_read' | 'repair' | 'mark_all_read';
 }
 
 interface ChatMessageTranscriptionData {
@@ -414,6 +427,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
           const selfId = useAuthStore.getState().user?.id;
           if (selfId && message.senderId !== selfId) {
             donateIncomingChatIntent(message);
+            notifyInboundMessageSeen({
+              contextType: data.contextType,
+              contextId: data.contextId,
+              messageId: message.id,
+              senderId: message.senderId,
+            });
           }
         }
         const rk = chatRoomKey(data.contextType, data.contextId);
@@ -545,12 +564,23 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
           contextType: data.contextType as import('@/services/chat/unreadSnapshot').SocketContextType,
           contextId: data.contextId,
           unreadCount: data.unreadCount,
+          contextKey: data.contextKey as import('@/services/chat/unreadSnapshot').ContextKey | undefined,
+          clock: data.clock,
+          clientOpId: data.clientOpId,
         });
         set((s) => ({
           lastChatUnreadCount: data,
           listChatUnreadQueue: capQueue([...s.listChatUnreadQueue, data], CHAT_FIFO_CAP, 'listUnread'),
           listChatUnreadSeq: s.listChatUnreadSeq + 1,
         }));
+      };
+
+      const handleChatUnreadInvalidate = (data: ChatUnreadInvalidateData) => {
+        if (typeof data?.userUnreadRevision !== 'number') return;
+        applyUnreadInvalidate({
+          userUnreadRevision: data.userUnreadRevision,
+          reason: data.reason ?? 'repair',
+        });
       };
 
       const handleSyncRequired = (data: { timestamp: string }) => {
@@ -734,6 +764,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
       socketService.on('chat:message-translation', handleChatMessageTranslation);
       socketService.on('chat:auto-translate-config', handleAutoTranslateConfig);
       socketService.on('chat:unread-count', handleChatUnreadCount);
+      socketService.on('chat:unread-invalidate', handleChatUnreadInvalidate);
       socketService.on('sync-required', handleSyncRequired);
       socketService.on('bet:created', handleBetCreated);
       socketService.on('bet:updated', handleBetUpdated);
@@ -777,6 +808,7 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
         () => socketService.off('chat:message-translation', handleChatMessageTranslation),
         () => socketService.off('chat:auto-translate-config', handleAutoTranslateConfig),
         () => socketService.off('chat:unread-count', handleChatUnreadCount),
+        () => socketService.off('chat:unread-invalidate', handleChatUnreadInvalidate),
         () => socketService.off('sync-required', handleSyncRequired),
         () => socketService.off('bet:created', handleBetCreated),
         () => socketService.off('bet:updated', handleBetUpdated),

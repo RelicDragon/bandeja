@@ -173,6 +173,8 @@ model User {
   storySegmentCommentsOwned    StorySegmentComment[] @relation("StorySegmentCommentOwner")
   storyCommentLikes       StoryCommentLike[]   @relation("StoryCommentLikeUser")
   storyCommentReports     StoryCommentReport[] @relation("StoryCommentReportReporter")
+  unreadState             UserUnreadState?
+  contextUnreadStates     UserContextUnreadState[]
 
   @@index([phone])
   @@index([telegramId])
@@ -1201,6 +1203,7 @@ model ChatMessage {
   pinnedIn        PinnedMessage[]
 
   @@index([chatContextType, contextId])
+  @@index([chatContextType, contextId, deletedAt], map: "idx_ChatMessage_unread_count")
   @@index([chatContextType, contextId, serverSyncSeq])
   @@index([gameId])
   @@index([gameId, createdAt(sort: Desc)], map: "idx_ChatMessage_gameId_createdAt")
@@ -1461,6 +1464,28 @@ model ChatReadCursor {
   @@unique([userId, chatContextType, contextId, chatType])
   @@index([userId])
   @@index([userId, chatContextType, contextId], map: "idx_ChatReadCursor_userId_contextType_contextId")
+}
+
+model UserUnreadState {
+  userId         String   @id
+  unreadRevision Int      @default(0)
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserContextUnreadState {
+  userId              String
+  contextKey          String
+  contextType         ChatContextType
+  contextId           String
+  unreadRevision      Int      @default(0)
+  unreadCountSnapshot Int?
+  updatedAt           DateTime @updatedAt
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, contextKey])
+  @@index([userId, unreadRevision])
+  @@index([contextType, contextId])
 }
 
 model MessageReaction {

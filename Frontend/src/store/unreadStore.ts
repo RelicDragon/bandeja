@@ -1,68 +1,60 @@
 import { create } from 'zustand';
 import { chatApi } from '@/api/chat';
 import type { ChatItem } from '@/utils/chatListSort';
-import { effectiveSocketUnreadCount } from '@/services/chat/unreadViewingGuard';
-import { runUnreadSnapshotSideEffects } from '@/services/chat/unreadSnapshotSideEffects';
 import {
   type ChatsSubtabFilter,
-  type ComputeTotalsMeta,
   type ContextKey,
   type GroupChannelMeta,
   type SnapshotContextType,
   type SocketContextType,
+  type UnreadAuthorityClock,
   type UnreadSnapshotDto,
   type UnreadTotals,
-  applyScopedGameTotals,
-  bugIdToChannelIdFromSnapshot,
-  byContextFromSnapshotDto,
-  computeTotals,
   contextKey,
   emptyUnreadTotals,
-  hydrateBugMetaFromGroupChannels,
-  hydrateGroupChannelMetaFromPayload,
   listItemToContextKey,
   marketBuyerSellerUnreadFromContext,
-  mergeServerTotals,
-  normalizeSocketContextToKey,
-  parseContextKey,
+  resolveSocketContextKey,
   selectBottomTabChatsBadgeFromTotals,
   selectChatsSubtabBadgeFromTotals,
   sumGameContextUnread,
 } from '@/services/chat/unreadSnapshot';
-import { applyUnresolvedBugSocketDelta } from '@/services/chat/unreadBugSocketDelta';
+import { shouldSuppressUnreadForOpenContext } from '@/services/chat/unreadViewingGuard';
+import {
+  beginRefreshRepair,
+  clearMarkInFlight,
+  createInitialUnreadProjectionState,
+  endRefreshRepair,
+  reduceUnreadProjection,
+  type EnterContextParams,
+  type UnreadProjectionState,
+} from '@/services/chat/unreadProjection';
+import { runUnreadProjectionEffects } from '@/services/chat/unreadProjectionEffects';
 
 export type { ChatsSubtabFilter } from '@/services/chat/unreadSnapshot';
+export type { EnterContextParams };
 
-export type EnterContextParams = {
-  contextType: SnapshotContextType;
-  contextId: string;
-  game?: { id: string; status: string };
-  participant?: { status: string; role: string } | null;
-  parentParticipant?: { role: string } | null;
-  isParentGameAdminOrOwner?: boolean;
+const projectionConfig = {
+  shouldSuppressDisplay: shouldSuppressUnreadForOpenContext,
 };
 
-type UnreadStoreState = {
-  version: number;
-  fetchedAt: number;
+type UnreadStoreState = UnreadProjectionState & {
+  /** Legacy alias for baseByContext — kept in sync on every write. */
   byContext: Record<ContextKey, number>;
-  totals: UnreadTotals;
-  groupChannelMeta: Record<string, GroupChannelMeta>;
-  bugIdToChannelId: Record<string, string>;
-  mutedGroupIds: Set<string>;
-  myGameIds: Set<string>;
-  pastGameIds: Set<string>;
-  markInFlight: Set<ContextKey>;
-  lastEnteredContextKey: ContextKey | null;
   refreshInFlight: Promise<void> | null;
 
   refreshAll: () => Promise<void>;
+  onUserInvalidated: (payload: { userUnreadRevision: number; reason: string }) => void;
   setSnapshot: (dto: UnreadSnapshotDto) => void;
   applySocketDelta: (d: {
     contextType: SocketContextType;
     contextId: string;
     unreadCount: number;
+    contextKey?: ContextKey;
+    clock?: UnreadAuthorityClock;
+    clientOpId?: string;
   }) => void;
+  onInboundMessageSeen: (params: { contextKey: ContextKey; messageId: string; senderId: string }) => void;
   enterContextAndMarkRead: (params: EnterContextParams) => Promise<void>;
   markAllRead: () => Promise<void>;
   restoreContext: (key: ContextKey, count: number) => void;
@@ -76,87 +68,45 @@ type UnreadStoreState = {
   reset: () => void;
 };
 
-function buildComputeMeta(state: Pick<
+function toStoreSlice(projection: UnreadProjectionState): UnreadProjectionState & { byContext: Record<ContextKey, number> } {
+  return { ...projection, byContext: projection.baseByContext };
+}
+
+function dispatchProjection(
+  state: UnreadProjectionState,
+  event: Parameters<typeof reduceUnreadProjection>[1]
+): ReturnType<typeof toStoreSlice> {
+  const { state: next, effects } = reduceUnreadProjection(state, event, projectionConfig);
+  runUnreadProjectionEffects(effects);
+  return toStoreSlice(next);
+}
+
+function initialStoreState(): Omit<
   UnreadStoreState,
-  'groupChannelMeta' | 'mutedGroupIds' | 'myGameIds' | 'pastGameIds'
->): ComputeTotalsMeta {
-  return {
-    groupChannelMeta: state.groupChannelMeta,
-    mutedGroupIds: state.mutedGroupIds,
-    myGameIds: state.myGameIds,
-    pastGameIds: state.pastGameIds,
-  };
-}
-
-function recomputeStateSlice(
-  byContext: Record<ContextKey, number>,
-  meta: ComputeTotalsMeta
-): Pick<UnreadStoreState, 'byContext' | 'totals'> {
-  const base = computeTotals(byContext, meta);
-  return {
-    byContext,
-    totals: applyScopedGameTotals(base, byContext, meta),
-  };
-}
-
-function setContextUnreadInMap(
-  byContext: Record<ContextKey, number>,
-  key: ContextKey,
-  next: number
-): Record<ContextKey, number> {
-  const out = { ...byContext };
-  if (next <= 0) {
-    delete out[key];
-  } else {
-    out[key] = next;
-  }
-  return out;
+  | 'refreshAll'
+  | 'onUserInvalidated'
+  | 'setSnapshot'
+  | 'applySocketDelta'
+  | 'onInboundMessageSeen'
+  | 'enterContextAndMarkRead'
+  | 'markAllRead'
+  | 'restoreContext'
+  | 'patchGroupChannelMeta'
+  | 'registerBugChannels'
+  | 'setMutedGroupIds'
+  | 'toggleMutedGroupId'
+  | 'setMyGamesScope'
+  | 'reset'
+> {
+  const projection = createInitialUnreadProjectionState();
+  return { ...projection, byContext: projection.baseByContext, refreshInFlight: null };
 }
 
 export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
-  version: 0,
-  fetchedAt: 0,
-  byContext: {},
-  totals: emptyUnreadTotals(),
-  groupChannelMeta: {},
-  bugIdToChannelId: {},
-  mutedGroupIds: new Set(),
-  myGameIds: new Set(),
-  pastGameIds: new Set(),
-  markInFlight: new Set(),
-  lastEnteredContextKey: null,
-  refreshInFlight: null,
+  ...initialStoreState(),
 
   setSnapshot: (dto) => {
-    const groupChannelMeta = {
-      ...get().groupChannelMeta,
-      ...hydrateGroupChannelMetaFromPayload(dto),
-    };
-    const bugIdToChannelId = {
-      ...get().bugIdToChannelId,
-      ...bugIdToChannelIdFromSnapshot(dto),
-    };
-    const byContext = byContextFromSnapshotDto(dto);
-    // Preserve client-side mute toggles when a snapshot omits mutedGroupIds
-    // (e.g. a mark-all-read envelope); otherwise muted channels re-enter totals.
-    const mutedGroupIds = dto.mutedGroupIds ? new Set(dto.mutedGroupIds) : get().mutedGroupIds;
-    const meta: ComputeTotalsMeta = {
-      groupChannelMeta,
-      mutedGroupIds,
-      myGameIds: get().myGameIds,
-      pastGameIds: get().pastGameIds,
-    };
-    const computed = applyScopedGameTotals(computeTotals(byContext, meta), byContext, meta);
-    set({
-      version: dto.version ?? Date.now(),
-      fetchedAt: Date.now(),
-      byContext,
-      groupChannelMeta,
-      bugIdToChannelId,
-      mutedGroupIds,
-      totals: mergeServerTotals(computed, dto.totals),
-    });
-    runUnreadSnapshotSideEffects({ ...dto, byContext, totals: get().totals, version: get().version });
+    set(dispatchProjection(get(), { type: 'snapshotReceived', snapshot: dto }));
   },
 
   refreshAll: async () => {
@@ -169,41 +119,50 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
         const dto = envelope.data;
         if (dto) get().setSnapshot(dto);
       } finally {
-        set({ refreshInFlight: null });
+        set({ ...endRefreshRepair(get()), refreshInFlight: null });
       }
     })();
 
-    set({ refreshInFlight: promise });
+    set({ ...beginRefreshRepair(get()), refreshInFlight: promise });
     return promise;
   },
 
-  applySocketDelta: ({ contextType, contextId, unreadCount }) => {
-    const state = get();
-    const { groupChannelMeta, byContext, bugIdToChannelId } = state;
-    const key = normalizeSocketContextToKey(
-      contextType,
-      contextId,
-      groupChannelMeta,
-      bugIdToChannelId
+  onUserInvalidated: (payload) => {
+    set(
+      dispatchProjection(get(), {
+        type: 'userInvalidated',
+        userUnreadRevision: payload.userUnreadRevision,
+        reason: payload.reason,
+      })
     );
-    if (!key) {
-      if (contextType === 'BUG') {
-        applyUnresolvedBugSocketDelta(contextId, unreadCount);
-      }
-      return;
-    }
+  },
 
-    if (unreadCount > 0) {
-      void import('@/services/chat/unreadCoordinator').then((m) => m.invalidateMarkReadConfirmed(key));
-    }
+  applySocketDelta: (delta) => {
+    const state = get();
+    const resolvedKey = resolveSocketContextKey({
+      contextKey: delta.contextKey,
+      contextType: delta.contextType,
+      contextId: delta.contextId,
+      groupChannelMeta: state.groupChannelMeta,
+    });
+    set(
+      dispatchProjection(state, {
+        type: 'authorityEnvelopeReceived',
+        envelope: delta,
+        resolvedKey,
+      })
+    );
+  },
 
-    const parsed = parseContextKey(key);
-    if (!parsed) return;
-    const next = effectiveSocketUnreadCount(parsed.contextType, parsed.contextId, unreadCount);
-
-    const meta = buildComputeMeta(state);
-    const nextByContext = setContextUnreadInMap(byContext, key, next);
-    set(recomputeStateSlice(nextByContext, meta));
+  onInboundMessageSeen: (params) => {
+    set(
+      dispatchProjection(get(), {
+        type: 'inboundMessageSeen',
+        contextKey: params.contextKey,
+        messageId: params.messageId,
+        senderId: params.senderId,
+      })
+    );
   },
 
   enterContextAndMarkRead: async (params) => {
@@ -219,12 +178,20 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
         get().setSnapshot(dto);
         return;
       }
-      set({
-        version: Date.now(),
-        fetchedAt: Date.now(),
-        byContext: {},
-        totals: emptyUnreadTotals(),
-      });
+      set(
+        dispatchProjection(get(), {
+          type: 'snapshotReceived',
+          snapshot: {
+            games: [],
+            userChats: [],
+            groupChannels: [],
+            bugs: [],
+            marketItems: [],
+            byContext: {},
+            totals: emptyUnreadTotals(),
+          },
+        })
+      );
     } catch (err) {
       console.error('[unreadStore] markAllRead failed', err);
       throw err;
@@ -233,92 +200,73 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
 
   restoreContext: (key, count) => {
     const state = get();
-    const meta = buildComputeMeta(state);
-    const nextByContext = setContextUnreadInMap(state.byContext, key, count);
-    set({
-      ...recomputeStateSlice(nextByContext, meta),
-      lastEnteredContextKey: null,
-    });
+    const nextBase = { ...state.baseByContext };
+    if (count <= 0) delete nextBase[key];
+    else nextBase[key] = count;
+    const cleared = clearMarkInFlight(state, key);
+    const optimistic = { ...cleared.optimistic };
+    delete optimistic[key];
+    const { state: reduced, effects } = reduceUnreadProjection(
+      { ...cleared, optimistic, baseByContext: nextBase, lastEnteredContextKey: null },
+      { type: 'metaPatch', patch: { kind: 'mutedGroupIds', ids: cleared.mutedGroupIds } },
+      projectionConfig
+    );
+    runUnreadProjectionEffects(effects);
+    set(toStoreSlice(reduced));
   },
 
   patchGroupChannelMeta: (channelId, patch) => {
-    const state = get();
-    const groupChannelMeta = {
-      ...state.groupChannelMeta,
-      [channelId]: { ...state.groupChannelMeta[channelId], ...patch },
-    };
-    const meta = buildComputeMeta({ ...state, groupChannelMeta });
-    set({ groupChannelMeta, ...recomputeStateSlice(state.byContext, meta) });
+    set(dispatchProjection(get(), { type: 'metaPatch', patch: { kind: 'groupChannelMeta', channelId, patch } }));
   },
 
   registerBugChannels: (channels) => {
     if (channels.length === 0) return;
-    const state = get();
-    const hydrated = hydrateBugMetaFromGroupChannels(channels);
-    const groupChannelMeta = { ...state.groupChannelMeta };
-    for (const [channelId, patch] of Object.entries(hydrated.groupChannelMeta)) {
-      groupChannelMeta[channelId] = { ...groupChannelMeta[channelId], ...patch };
-    }
-    const bugIdToChannelId = { ...state.bugIdToChannelId, ...hydrated.bugIdToChannelId };
-    const meta = buildComputeMeta({ ...state, groupChannelMeta });
-    set({ groupChannelMeta, bugIdToChannelId, ...recomputeStateSlice(state.byContext, meta) });
+    set(dispatchProjection(get(), { type: 'metaPatch', patch: { kind: 'registerBugChannels', channels } }));
   },
 
   setMutedGroupIds: (ids) => {
-    const state = get();
-    const mutedGroupIds = new Set(ids);
-    const meta = buildComputeMeta({ ...state, mutedGroupIds });
-    set({ mutedGroupIds, ...recomputeStateSlice(state.byContext, meta) });
+    set(dispatchProjection(get(), { type: 'metaPatch', patch: { kind: 'mutedGroupIds', ids } }));
   },
 
   toggleMutedGroupId: (channelId, muted) => {
-    const state = get();
-    const mutedGroupIds = new Set(state.mutedGroupIds);
-    if (muted) mutedGroupIds.add(channelId);
-    else mutedGroupIds.delete(channelId);
-    const meta = buildComputeMeta({ ...state, mutedGroupIds });
-    set({ mutedGroupIds, ...recomputeStateSlice(state.byContext, meta) });
+    set(dispatchProjection(get(), { type: 'metaPatch', patch: { kind: 'toggleMutedGroupId', channelId, muted } }));
   },
 
   setMyGamesScope: (myGameIds, pastGameIds) => {
-    const state = get();
-    const nextMy = new Set(myGameIds);
-    const nextPast = new Set(pastGameIds);
-    const meta = buildComputeMeta({
-      ...state,
-      myGameIds: nextMy,
-      pastGameIds: nextPast,
-    });
-    set({
-      myGameIds: nextMy,
-      pastGameIds: nextPast,
-      ...recomputeStateSlice(state.byContext, meta),
-    });
+    set(dispatchProjection(get(), { type: 'metaPatch', patch: { kind: 'myGamesScope', myGameIds, pastGameIds } }));
   },
 
   reset: () => {
-    set({
-      version: 0,
-      fetchedAt: 0,
-      byContext: {},
-      totals: emptyUnreadTotals(),
-      groupChannelMeta: {},
-      bugIdToChannelId: {},
-      mutedGroupIds: new Set(),
-      myGameIds: new Set(),
-      pastGameIds: new Set(),
-      markInFlight: new Set(),
-      lastEnteredContextKey: null,
-      refreshInFlight: null,
-    });
+    set(initialStoreState());
   },
 }));
 
-// --- Selectors (§5.1) ---
+function normalizePartialState(partial: Partial<UnreadStoreState>): Partial<UnreadStoreState> {
+  if ('byContext' in partial && partial.byContext != null && partial.baseByContext == null) {
+    return { ...partial, baseByContext: partial.byContext };
+  }
+  return partial;
+}
+
+const storeSetState = useUnreadStore.setState.bind(useUnreadStore);
+useUnreadStore.setState = ((partial, replace) => {
+  if (replace === true) {
+    storeSetState(partial as UnreadStoreState, true);
+    return;
+  }
+  if (partial === undefined) return;
+  storeSetState(normalizePartialState(partial as Partial<UnreadStoreState>));
+}) as typeof useUnreadStore.setState;
+
+const storeGetState = useUnreadStore.getState.bind(useUnreadStore);
+useUnreadStore.getState = () => {
+  const s = storeGetState();
+  return { ...s, byContext: s.baseByContext };
+};
 
 export type UnreadChatContextType = SnapshotContextType;
 
-export function isUnreadStoreWarm(state: UnreadStoreState): boolean {
+export function isUnreadStoreWarm(state: UnreadStoreState = useUnreadStore.getState()): boolean {
   return state.fetchedAt > 0;
 }
 
@@ -350,7 +298,7 @@ export function selectContextUnread(
   contextId: string,
   state: UnreadStoreState = useUnreadStore.getState()
 ): number {
-  return state.byContext[contextKey(contextType, contextId)] ?? 0;
+  return state.displayedByContext[contextKey(contextType, contextId)] ?? 0;
 }
 
 export function selectMyGamesUnread(state: UnreadStoreState = useUnreadStore.getState()): number {
@@ -364,21 +312,21 @@ export function selectPastGamesUnread(
 ): number {
   if (state.pastGameIds.size > 0) return state.totals.pastGames;
   if (state.totals.pastGames > 0) return state.totals.pastGames;
-  return sumGameContextUnread(state.byContext, gameIds);
+  return sumGameContextUnread(state.displayedByContext, gameIds);
 }
 
 export function selectMarketBuyerUnread(
   currentUserId: string | undefined,
   state: UnreadStoreState = useUnreadStore.getState()
 ): number {
-  return marketBuyerSellerUnreadFromContext(state.byContext, state.groupChannelMeta, currentUserId).buyer;
+  return marketBuyerSellerUnreadFromContext(state.displayedByContext, state.groupChannelMeta, currentUserId).buyer;
 }
 
 export function selectMarketSellerUnread(
   currentUserId: string | undefined,
   state: UnreadStoreState = useUnreadStore.getState()
 ): number {
-  return marketBuyerSellerUnreadFromContext(state.byContext, state.groupChannelMeta, currentUserId).seller;
+  return marketBuyerSellerUnreadFromContext(state.displayedByContext, state.groupChannelMeta, currentUserId).seller;
 }
 
 export function selectContextUnreadForListItem(
@@ -390,8 +338,9 @@ export function selectContextUnreadForListItem(
   const fallback = 'unreadCount' in item ? (item.unreadCount ?? 0) : 0;
   if (!key) return fallback;
   const warm = options?.warm ?? isUnreadStoreWarm(state);
-  if (warm) return state.byContext[key] ?? 0;
-  return state.byContext[key] ?? fallback;
+  const displayed = state.displayedByContext ?? state.byContext ?? {};
+  if (!warm) return displayed[key] ?? fallback;
+  return displayed[key] ?? 0;
 }
 
 export const unreadStoreSelectors = {
@@ -407,3 +356,5 @@ export const unreadStoreSelectors = {
   selectMarketSellerUnread,
   selectContextUnreadForListItem,
 } as const;
+
+export type { UnreadStoreState, UnreadTotals };

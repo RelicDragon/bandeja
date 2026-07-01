@@ -1,5 +1,11 @@
 import type { ChatContextType } from '@prisma/client';
-import { ReadReceiptService } from './readReceipt.service';
+import { getChatNotifier } from './chatNotifier';
+import { lookupBugGroupChannelIds } from './bugGroupChannelLookup';
+import {
+  resolveMessageUnreadContext,
+} from './messageCreateUnreadNotify.service';
+import { bumpUserRevisionsAndEmitInvalidation } from './unreadBulkInvalidate.service';
+import { UnreadAuthority } from './unreadAuthority';
 
 export type AutoReadAffectedContext = {
   userId: string;
@@ -7,7 +13,7 @@ export type AutoReadAffectedContext = {
   contextId: string;
 };
 
-/** Phase 0 small-batch cap; larger auto-read runs defer to Phase 1 `chat:unread-invalidate`. */
+/** Small batches emit per-context authority envelopes; larger auto-read runs use `chat:unread-invalidate`. */
 export const AUTO_READ_NOTIFY_MAX_PAIRS = 200;
 
 function affectedContextKey(entry: AutoReadAffectedContext): string {
@@ -31,36 +37,38 @@ export class UnreadAutoReadNotifyService {
     if (unique.length === 0) return;
 
     if (unique.length > AUTO_READ_NOTIFY_MAX_PAIRS) {
-      console.log(
-        `📬 Unread auto-read notify deferred (${unique.length} affected pairs > ${AUTO_READ_NOTIFY_MAX_PAIRS}); Phase 1 chat:unread-invalidate`
+      await bumpUserRevisionsAndEmitInvalidation(
+        unique.map((entry) => entry.userId),
+        'auto_read'
       );
       return;
     }
 
-    const socketService = (global as { socketService?: {
-      isUserOnline: (userId: string) => boolean;
-      emitUnreadCountUpdate: (
-        contextType: ChatContextType,
-        contextId: string,
-        userId: string,
-        unreadCount: number
-      ) => Promise<void>;
-    } }).socketService;
-    if (!socketService) return;
+    const notifier = getChatNotifier();
+    const bugIds = unique
+      .filter((entry) => entry.chatContextType === 'BUG')
+      .map((entry) => entry.contextId);
+    const bugGroupChannelIds = await lookupBugGroupChannelIds(bugIds);
 
     for (const { userId, chatContextType, contextId } of unique) {
-      if (!socketService.isUserOnline(userId)) continue;
-      const unreadCount = await ReadReceiptService.getUnreadCountForContext(
+      if (!notifier.isUserOnline(userId)) continue;
+
+      const resolved = resolveMessageUnreadContext(
         chatContextType,
         contextId,
-        userId
+        chatContextType === 'BUG' ? bugGroupChannelIds.get(contextId) ?? null : undefined
       );
-      await socketService.emitUnreadCountUpdate(
-        chatContextType,
-        contextId,
+      if (!resolved) continue;
+
+      await UnreadAuthority.recordContextChanged({
         userId,
-        unreadCount
-      );
+        contextKey: resolved.contextKey,
+        contextType: resolved.contextType,
+        contextId: resolved.contextId,
+        reason: 'auto_read',
+        ...(resolved.countAdapter ? { countAdapter: resolved.countAdapter } : {}),
+        ...(resolved.groupChannelMeta ? { groupChannelMeta: resolved.groupChannelMeta } : {}),
+      });
     }
   }
 }

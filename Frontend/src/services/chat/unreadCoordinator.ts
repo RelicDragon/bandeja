@@ -4,77 +4,66 @@ import { getGameChatTypesForUnreadAndMarkRead } from '@/utils/gameChatTypesForUn
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useUnreadStore, type EnterContextParams } from '@/store/unreadStore';
 import {
-  applyScopedGameTotals,
-  computeTotals,
+  clearMarkInFlight,
+  getPendingClientOpId,
+  reduceUnreadProjection,
+  shouldSkipEnterOptimistic,
+  shouldSkipMarkReadNetwork,
+} from '@/services/chat/unreadProjection';
+import { runUnreadProjectionEffects } from '@/services/chat/unreadProjectionEffects';
+import {
   contextKey,
+  bugChannelIdFromMeta,
   parseContextKey,
-  type ComputeTotalsMeta,
   type ContextKey,
   type MarkContextReadRequest,
+  type MarkContextReadResponse,
   type SnapshotContextType,
 } from '@/services/chat/unreadSnapshot';
-import { resolveBugChannelId, resolveBugChannelIdFromStore } from '@/services/chat/unreadBugSocketDelta';
+import { shouldSuppressUnreadForOpenContext } from '@/services/chat/unreadViewingGuard';
 import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
+import { newClientMutationId } from '@/services/chat/chatMutationQueueStorage';
 import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
 
 export type CoordinatorEnterParams = EnterContextParams & {
   rawContextType?: ChatContextType;
   gameChatType?: ChatType;
-  /** When raw route uses BUG id, pass resolved group channel id for mark/count key. */
   groupChannelId?: string;
 };
 
-const pendingRestoreByKey = new Map<ContextKey, number>();
+const projectionConfig = {
+  shouldSuppressDisplay: shouldSuppressUnreadForOpenContext,
+};
+
 const activityNetworkTimers = new Map<ContextKey, ReturnType<typeof setTimeout>>();
-const markReadConfirmedKeys = new Set<ContextKey>();
 const ACTIVITY_MARK_DEBOUNCE_MS = 280;
 
+function dispatchMarkReadRequested(key: ContextKey, clientOpId: string, skipOptimistic?: boolean): void {
+  const state = useUnreadStore.getState();
+  const event = skipOptimistic
+    ? ({ type: 'enterContext' as const, contextKey: key, clientOpId, skipOptimistic: true })
+    : ({ type: 'markReadRequested' as const, contextKey: key, clientOpId });
+  const { state: next, effects } = reduceUnreadProjection(state, event, projectionConfig);
+  runUnreadProjectionEffects(effects);
+  useUnreadStore.setState({ ...next, byContext: next.baseByContext });
+}
+
 /** Cleared when socket reports unread > 0 for this context (see unreadStore.applySocketDelta). */
-export function invalidateMarkReadConfirmed(key: ContextKey): void {
-  markReadConfirmedKeys.delete(key);
+export function invalidateMarkReadConfirmed(_key: ContextKey): void {
+  // Projection clears markReadConfirmedKeys on authorityEnvelope with unreadCount > 0
 }
 
-function confirmMarkRead(key: ContextKey): void {
-  markReadConfirmedKeys.add(key);
+/** Matching clientOpId on authority envelope clears pending optimistic clear. */
+export function onAuthorityEnvelopeAck(_key: ContextKey, _clientOpId?: string): void {
+  // Handled in projection reduceAuthorityEnvelope
 }
 
-/**
- * Reset all coordinator session state: cancel pending debounced mark-read
- * timers and clear the optimistic-restore / dedup maps. Called on logout so a
- * timer scheduled before logout can't fire afterwards (which would hit the API
- * on a dead session and mutate an already-cleared store). Must run BEFORE the
- * unread store itself is reset.
- */
 export function resetCoordinator(): void {
   for (const timer of activityNetworkTimers.values()) {
     clearTimeout(timer);
   }
   activityNetworkTimers.clear();
-  pendingRestoreByKey.clear();
-  markReadConfirmedKeys.clear();
-}
-
-/** Phase 4.6 / Bug L: skip redundant mark-context-read when already read locally. */
-function shouldSkipMarkReadNetwork(key: ContextKey): boolean {
-  const state = useUnreadStore.getState();
-  if ((state.byContext[key] ?? 0) > 0) return false;
-  if (pendingRestoreByKey.has(key)) return false;
-  return markReadConfirmedKeys.has(key);
-}
-
-/** Skip enter optimistic UI when already in context with no local unread (still schedule server sync). */
-function shouldSkipEnterOptimistic(key: ContextKey, state: ReturnType<typeof useUnreadStore.getState>): boolean {
-  if (state.lastEnteredContextKey !== key || !isViewingContextKey(key)) return false;
-  return (state.byContext[key] ?? 0) === 0;
-}
-
-function ensureMarkInFlight(key: ContextKey): void {
-  const state = useUnreadStore.getState();
-  if (state.markInFlight.has(key)) return;
-  const markInFlight = new Set(state.markInFlight);
-  markInFlight.add(key);
-  useUnreadStore.setState({ markInFlight });
 }
 
 function resolveSnapshotContext(
@@ -103,8 +92,8 @@ function resolveSnapshotContext(
     };
   }
   if (raw === 'BUG') {
-    const channelId =
-      params.groupChannelId ?? resolveGroupChannelIdForBug(params.contextId);
+    const meta = useUnreadStore.getState().groupChannelMeta;
+    const channelId = params.groupChannelId ?? bugChannelIdFromMeta(params.contextId, meta);
     if (!channelId) return null;
     return {
       snapshotType: 'GROUP',
@@ -119,27 +108,10 @@ function resolveSnapshotContext(
   };
 }
 
-function resolveGroupChannelIdForBug(bugId: string): string | null {
-  return resolveBugChannelIdFromStore(bugId);
-}
-
-function computeMetaFromStore(state: ReturnType<typeof useUnreadStore.getState>): ComputeTotalsMeta {
-  return {
-    groupChannelMeta: state.groupChannelMeta,
-    mutedGroupIds: state.mutedGroupIds,
-    myGameIds: state.myGameIds,
-    pastGameIds: state.pastGameIds,
-  };
-}
-
 function isViewingContextKey(key: ContextKey): boolean {
   const parsed = parseContextKey(key);
   if (!parsed) return false;
-  const nav = useGameDetailsChromeStore.getState();
-  if (parsed.contextType === 'GAME') return nav.viewingGameChatId === parsed.contextId;
-  if (parsed.contextType === 'USER') return nav.viewingUserChatId === parsed.contextId;
-  if (parsed.contextType === 'GROUP') return nav.viewingGroupChannelId === parsed.contextId;
-  return false;
+  return shouldSuppressUnreadForOpenContext(parsed.contextType, parsed.contextId);
 }
 
 function setViewingBeforeMark(params: CoordinatorEnterParams, resolved: ReturnType<typeof resolveSnapshotContext>): void {
@@ -159,45 +131,23 @@ function setViewingBeforeMark(params: CoordinatorEnterParams, resolved: ReturnTy
   }
 }
 
-function dispatchViewingClearUnread(key: ContextKey): void {
-  if (typeof window === 'undefined') return;
-  const parsed = parseContextKey(key);
-  if (!parsed) return;
-  window.dispatchEvent(
-    new CustomEvent('chat-viewing-clear-unread', {
-      detail: { contextType: parsed.contextType, contextId: parsed.contextId },
-    })
-  );
-}
-
-function optimisticClear(key: ContextKey): number {
-  invalidateMarkReadConfirmed(key);
-  const state = useUnreadStore.getState();
-  const prev = state.byContext[key] ?? 0;
-
-  const markInFlight = new Set(state.markInFlight);
-  markInFlight.add(key);
-  const meta = computeMetaFromStore(state);
-  const nextByContext = { ...state.byContext };
-  delete nextByContext[key];
-  useUnreadStore.setState({
-    byContext: nextByContext,
-    totals: applyScopedGameTotals(computeTotals(nextByContext, meta), nextByContext, meta),
-    markInFlight,
-    lastEnteredContextKey: key,
-  });
-  pendingRestoreByKey.set(key, prev);
-  dispatchViewingClearUnread(key);
-  return prev;
+function getOrCreateClientOpId(key: ContextKey): string {
+  const existing = getPendingClientOpId(useUnreadStore.getState(), key);
+  if (existing) return existing;
+  const clientOpId = newClientMutationId();
+  dispatchMarkReadRequested(key, clientOpId, true);
+  return clientOpId;
 }
 
 function buildMarkContextBody(
   params: CoordinatorEnterParams,
-  resolved: NonNullable<ReturnType<typeof resolveSnapshotContext>>
+  resolved: NonNullable<ReturnType<typeof resolveSnapshotContext>>,
+  key: ContextKey
 ): MarkContextReadRequest {
   const body: MarkContextReadRequest = {
     contextType: resolved.snapshotType,
     contextId: resolved.contextId,
+    clientOpId: getOrCreateClientOpId(key),
   };
   if (resolved.snapshotType === 'GAME' && params.game) {
     body.gameChatTypes = getGameChatTypesForUnreadAndMarkRead(
@@ -210,46 +160,64 @@ function buildMarkContextBody(
   return body;
 }
 
-export async function refreshContext(key: ContextKey): Promise<void> {
-  const parsed = parseContextKey(key);
-  if (!parsed) return;
-  try {
-    const unreadCount = await chatApi.getUnreadCountForContext(parsed.contextType, parsed.contextId);
-    useUnreadStore.getState().applySocketDelta({
-      contextType: parsed.contextType,
-      contextId: parsed.contextId,
-      unreadCount,
-    });
-  } catch {
-    await useUnreadStore.getState().refreshAll();
-  }
+export async function refreshContext(_key: ContextKey): Promise<void> {
+  await useUnreadStore.getState().refreshAll();
 }
 
-/** Phase 0 interim: mark-read success already applied count 0 — skip repair refetch. */
 function shouldSkipRedundantRefreshAfterMarkReadSuccess(key: ContextKey): boolean {
-  return (useUnreadStore.getState().byContext[key] ?? 0) === 0;
+  return (useUnreadStore.getState().displayedByContext[key] ?? 0) === 0;
 }
 
-export function onMarkReadBatchFlushSuccess(key: ContextKey): void {
-  confirmMarkRead(key);
-  pendingRestoreByKey.delete(key);
+function isMarkReadAuthorityAck(ack: MarkContextReadResponse | undefined): ack is MarkContextReadResponse {
+  return ack != null && ack.clock != null && typeof ack.contextKey === 'string';
+}
+
+function tryApplyMarkReadAuthorityAck(key: ContextKey, ack: MarkContextReadResponse): boolean {
+  if (!isMarkReadAuthorityAck(ack)) return false;
+
+  const pendingOpId = getPendingClientOpId(useUnreadStore.getState(), key);
+  if (pendingOpId && ack.clientOpId && pendingOpId !== ack.clientOpId) {
+    return false;
+  }
+
   const parsed = parseContextKey(key);
-  if (!parsed) return;
-  const skipRefresh = shouldSkipRedundantRefreshAfterMarkReadSuccess(key);
+  if (!parsed) return false;
+
   useUnreadStore.getState().applySocketDelta({
     contextType: parsed.contextType,
     contextId: parsed.contextId,
-    unreadCount: 0,
+    unreadCount: ack.unreadCount,
+    contextKey: ack.contextKey,
+    clock: ack.clock,
+    clientOpId: ack.clientOpId,
   });
+  return true;
+}
+
+export function onMarkReadBatchFlushSuccess(
+  key: ContextKey,
+  ack?: MarkContextReadResponse
+): void {
+  if (!ack || !tryApplyMarkReadAuthorityAck(key, ack)) {
+    return;
+  }
+  const parsed = parseContextKey(key);
+  if (!parsed) return;
+  const skipRefresh = shouldSkipRedundantRefreshAfterMarkReadSuccess(key);
   if (!skipRefresh) {
     void refreshContext(key);
   }
 }
 
 export function onMarkReadBatchFlushFailure(key: ContextKey): void {
-  const prev = pendingRestoreByKey.get(key) ?? 0;
-  useUnreadStore.getState().restoreContext(key, prev);
-  pendingRestoreByKey.delete(key);
+  const state = useUnreadStore.getState();
+  const { state: next, effects } = reduceUnreadProjection(
+    state,
+    { type: 'markReadFailed', contextKey: key },
+    projectionConfig
+  );
+  runUnreadProjectionEffects(effects);
+  useUnreadStore.setState({ ...next, byContext: next.baseByContext });
   void refreshContext(key);
 }
 
@@ -258,13 +226,14 @@ async function flushEnterContextMarkReadNetwork(
   resolved: NonNullable<ReturnType<typeof resolveSnapshotContext>>,
   key: ContextKey
 ): Promise<void> {
-  const body = buildMarkContextBody(params, resolved);
+  const body = buildMarkContextBody(params, resolved, key);
+  const clientOpId = body.clientOpId ?? getOrCreateClientOpId(key);
   const markPayload =
     resolved.snapshotType === 'GAME'
-      ? { target: 'context' as const, chatTypes: body.gameChatTypes }
+      ? { target: 'context' as const, chatTypes: body.gameChatTypes, clientOpId }
       : resolved.snapshotType === 'GROUP'
-        ? { target: 'group_channel' as const }
-        : { target: 'context' as const };
+        ? { target: 'group_channel' as const, clientOpId }
+        : { target: 'context' as const, clientOpId };
 
   if (shouldQueueChatMutation()) {
     void OfflineIntent.enqueue({
@@ -273,32 +242,22 @@ async function flushEnterContextMarkReadNetwork(
       contextId: resolved.contextId,
       payload: markPayload,
     }).finally(() => {
-      const inflight = new Set(useUnreadStore.getState().markInFlight);
-      inflight.delete(key);
-      useUnreadStore.setState({ markInFlight: inflight });
+      const cleared = clearMarkInFlight(useUnreadStore.getState(), key);
+      useUnreadStore.setState({ ...cleared, byContext: cleared.baseByContext });
     });
     return;
   }
 
   try {
-    await chatApi.markContextRead(body);
-    confirmMarkRead(key);
-    pendingRestoreByKey.delete(key);
-    useUnreadStore.getState().applySocketDelta({
-      contextType: resolved.snapshotType,
-      contextId: resolved.contextId,
-      unreadCount: 0,
-    });
+    const response = await chatApi.markContextRead(body);
+    const ack = response.data;
+    tryApplyMarkReadAuthorityAck(key, ack);
   } catch (err) {
     console.error('[unreadCoordinator] markContextRead failed', err);
-    const prev = pendingRestoreByKey.get(key) ?? 0;
-    useUnreadStore.getState().restoreContext(key, prev);
-    pendingRestoreByKey.delete(key);
-    void refreshContext(key);
+    onMarkReadBatchFlushFailure(key);
   } finally {
-    const inflight = new Set(useUnreadStore.getState().markInFlight);
-    inflight.delete(key);
-    useUnreadStore.setState({ markInFlight: inflight });
+    const cleared = clearMarkInFlight(useUnreadStore.getState(), key);
+    useUnreadStore.setState({ ...cleared, byContext: cleared.baseByContext });
   }
 }
 
@@ -307,7 +266,7 @@ function scheduleMarkReadNetwork(
   resolved: NonNullable<ReturnType<typeof resolveSnapshotContext>>,
   key: ContextKey
 ): void {
-  if (shouldSkipMarkReadNetwork(key)) return;
+  if (shouldSkipMarkReadNetwork(useUnreadStore.getState(), key)) return;
   const existing = activityNetworkTimers.get(key);
   if (existing) clearTimeout(existing);
   activityNetworkTimers.set(
@@ -321,42 +280,36 @@ function scheduleMarkReadNetwork(
   );
 }
 
-/** Mark-read on send / activity: debounced server sync; optimistic clear when badge > 0. */
 export function markContextReadOnUserActivity(params: CoordinatorEnterParams): void {
   const resolved = resolveSnapshotContext(params);
   if (!resolved) return;
   const { key } = resolved;
-  if (shouldSkipMarkReadNetwork(key)) return;
+  if (shouldSkipMarkReadNetwork(useUnreadStore.getState(), key)) return;
   const state = useUnreadStore.getState();
-  if ((state.byContext[key] ?? 0) > 0) {
-    optimisticClear(key);
+  if ((state.displayedByContext[key] ?? 0) > 0) {
+    dispatchMarkReadRequested(key, newClientMutationId());
   } else {
-    ensureMarkInFlight(key);
+    getOrCreateClientOpId(key);
   }
   scheduleMarkReadNetwork(params, resolved, key);
 }
 
 export async function enterContextAndMarkRead(params: CoordinatorEnterParams): Promise<void> {
-  let resolved = resolveSnapshotContext(params);
-  if (!resolved && (params.rawContextType ?? params.contextType) === 'BUG') {
-    const channelId = await resolveBugChannelId(params.contextId);
-    if (!channelId) return;
-    resolved = resolveSnapshotContext({ ...params, groupChannelId: channelId });
-  }
+  const resolved = resolveSnapshotContext(params);
   if (!resolved) return;
   const { key } = resolved;
 
   const state = useUnreadStore.getState();
-  if (shouldSkipEnterOptimistic(key, state)) {
+  if (shouldSkipEnterOptimistic(state, key) && isViewingContextKey(key)) {
     scheduleMarkReadNetwork(params, resolved, key);
     return;
   }
 
   setViewingBeforeMark(params, resolved);
-  if ((state.byContext[key] ?? 0) > 0) {
-    optimisticClear(key);
+  if ((state.displayedByContext[key] ?? 0) > 0) {
+    dispatchMarkReadRequested(key, newClientMutationId());
   } else {
-    ensureMarkInFlight(key);
+    getOrCreateClientOpId(key);
   }
   scheduleMarkReadNetwork(params, resolved, key);
 }

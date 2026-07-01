@@ -87,6 +87,10 @@ export interface SocketEvents {
   }) => void;
   'chat:deleted': (data: { contextType: string; contextId: string; messageId: string; syncSeq?: number }) => void;
   'chat:unread-count': (data: { contextType: string; contextId: string; unreadCount: number }) => void;
+  'chat:unread-invalidate': (data: {
+    userUnreadRevision: number;
+    reason: 'auto_read' | 'repair' | 'mark_all_read';
+  }) => void;
   'sync-required': (data: { timestamp: string }) => void;
   'sync-ready': (data: { contextType: string; contextId: string }) => void;
   'new-bug': (data: { timestamp: string }) => void;

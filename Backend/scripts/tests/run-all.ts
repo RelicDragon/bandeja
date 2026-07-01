@@ -557,6 +557,78 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'unread bulk invalidate unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'chat', 'unreadBulkInvalidate.test.ts'),
+    ],
+  },
+  {
+    label: 'unread authority unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'chat', 'unreadAuthority', 'unreadAuthority.test.ts'),
+    ],
+  },
+  {
+    label: 'unread mark-all-read unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'chat', 'unreadAuthority', 'markAllRead.test.ts'),
+    ],
+  },
+  {
+    label: 'unread mark-all atomicity integration',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'unread-mark-all-atomicity.ts'),
+    ],
+  },
+  {
+    label: 'unread authority revisions integration',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'unread-authority-revisions.ts'),
+    ],
+  },
+  {
+    label: 'unread count query integration',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'unread-count-query.ts'),
+    ],
+  },
+  {
+    label: 'message create unread notify unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'chat', 'messageCreateUnreadNotify.test.ts'),
+    ],
+  },
+  {
+    label: 'message create unread notify integration',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'message-create-unread-notify.ts'),
+    ],
+  },
+  {
     label: 'game photos',
     command: process.execPath,
     args: [

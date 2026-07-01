@@ -19,7 +19,7 @@ import { ChatMuteService } from '../services/chat/chatMute.service';
 import { ChatTranslationPreferenceService } from '../services/chat/chatTranslationPreference.service';
 import { TranslationService, TRANSLATE_TO_LANGUAGE_CODES } from '../services/chat/translation.service';
 import { TranscriptionService } from '../services/chat/transcription.service';
-import { MESSAGE_TRANSCRIPTION_PENDING } from '@bandeja/chat-contract';
+import { MESSAGE_TRANSCRIPTION_PENDING, normalizeClientMutationId } from '@bandeja/chat-contract';
 import { DraftService } from '../services/chat/draft.service';
 import { GameReadService } from '../services/game/read.service';
 import { GameChatContextService } from '../services/game/gameChatContext.service';
@@ -34,6 +34,11 @@ import { ChatMutationIdempotencyService } from '../services/chat/chatMutationIde
 import { hashChatMutationPayload } from '../utils/chatClientMutationId';
 import { ChatListRowPreviewService } from '../services/chat/chatListRowPreview.service';
 import { getChatNotifier } from '../services/chat/chatNotifier';
+import { lookupBugGroupChannelIds } from '../services/chat/bugGroupChannelLookup';
+import {
+  notifyMessageDeletedUnread,
+  notifyUserContextUnreadAuthority,
+} from '../services/chat/messageCreateUnreadNotify.service';
 
 async function notifyUserIdsForUserChat(contextId: string): Promise<string[] | undefined> {
   const peers = await prisma.userChat.findUnique({
@@ -531,17 +536,18 @@ export const markMessageAsRead = asyncHandler(async (req: AuthRequest, res: Resp
       notifyUserIds
     );
 
-    const unreadCount = await ReadReceiptService.getUnreadCountForContext(
-      message.chatContextType,
-      message.contextId,
-      userId
-    );
-    await getChatNotifier().emitUnreadCountUpdate(
-      message.chatContextType,
-      message.contextId,
+    let bugGroupChannelId: string | null | undefined;
+    if (message.chatContextType === ChatContextType.BUG) {
+      const map = await lookupBugGroupChannelIds([message.contextId]);
+      bugGroupChannelId = map.get(message.contextId) ?? null;
+    }
+    await notifyUserContextUnreadAuthority({
       userId,
-      unreadCount
-    );
+      chatContextType: message.chatContextType,
+      contextId: message.contextId,
+      reason: 'mark_context_read',
+      bugGroupChannelId,
+    });
   }
 
   res.json({ success: true });
@@ -707,7 +713,27 @@ export const getUnreadCount = asyncHandler(async (req: AuthRequest, res: Respons
   });
 });
 
+export const getUnreadTotals = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
+  }
+
+  const result = await UnreadSnapshotService.getTotalsWithRevision(userId);
+
+  res.json({
+    success: true,
+    data: result,
+  });
+});
+
 const UNREAD_OBJECTS_TIMEOUT_MS = 15000;
+
+function parseUnreadSnapshotShape(raw: unknown): 'counts' | 'objects' {
+  if (raw === 'objects') return 'objects';
+  return 'counts';
+}
 
 export const getUnreadObjects = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -716,8 +742,10 @@ export const getUnreadObjects = asyncHandler(async (req: AuthRequest, res: Respo
     throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
+  const shape = parseUnreadSnapshotShape(req.query.shape);
+
   const result = await withTimeout(
-    UnreadSnapshotService.getSnapshot(userId),
+    UnreadSnapshotService.getSnapshot(userId, shape),
     UNREAD_OBJECTS_TIMEOUT_MS
   );
 
@@ -796,9 +824,13 @@ export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: 
     throw new ApiError(400, 'Game ID is required');
   }
 
-  const result = await ReadReceiptService.markAllMessagesAsRead(gameId, userId, chatTypes);
+  const result = await UnreadSnapshotService.markContextRead(userId, {
+    contextType: 'GAME',
+    contextId: gameId,
+    gameChatTypes: chatTypes,
+  });
 
-  if (result.count > 0 && result.syncSeq != null) {
+  if (result.markedCount > 0 && result.syncSeq != null) {
     getChatNotifier().emitChatEvent(
       'GAME',
       gameId,
@@ -809,21 +841,9 @@ export const markAllMessagesAsRead = asyncHandler(async (req: AuthRequest, res: 
     );
   }
 
-  const unreadCount = await ReadReceiptService.getUnreadCountForContext(
-    'GAME',
-    gameId,
-    userId
-  );
-  await getChatNotifier().emitUnreadCountUpdate(
-    'GAME',
-    gameId,
-    userId,
-    unreadCount
-  );
-
   res.json({
     success: true,
-    data: result
+    data: { count: result.markedCount, syncSeq: result.syncSeq },
   });
 });
 
@@ -865,6 +885,13 @@ export const deleteMessage = asyncHandler(async (req: AuthRequest, res: Response
       (message as { syncSeq?: number }).syncSeq,
       notifyUserIds
     );
+
+    void notifyMessageDeletedUnread({
+      chatContextType: message.chatContextType,
+      contextId: message.contextId,
+    }).catch((error) => {
+      console.error('[deleteMessage] unread authority notify failed:', error);
+    });
 
     res.json(body);
   } catch (e) {
@@ -971,9 +998,12 @@ export const markUserChatAsRead = asyncHandler(async (req: AuthRequest, res: Res
     throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
 
-  const result = await ReadReceiptService.markUserChatAsRead(chatId, userId);
+  const result = await UnreadSnapshotService.markContextRead(userId, {
+    contextType: 'USER',
+    contextId: chatId,
+  });
 
-  if (result.count > 0 && result.syncSeq != null) {
+  if (result.markedCount > 0 && result.syncSeq != null) {
     const peers = await prisma.userChat.findUnique({
       where: { id: chatId },
       select: { user1Id: true, user2Id: true },
@@ -991,21 +1021,10 @@ export const markUserChatAsRead = asyncHandler(async (req: AuthRequest, res: Res
       notifyUserIds
     );
   }
-  const unreadCount = await ReadReceiptService.getUnreadCountForContext(
-    'USER',
-    chatId,
-    userId
-  );
-  await getChatNotifier().emitUnreadCountUpdate(
-    'USER',
-    chatId,
-    userId,
-    unreadCount
-  );
 
   res.json({
     success: true,
-    data: result
+    data: { count: result.markedCount, syncSeq: result.syncSeq },
   });
 });
 
@@ -1628,6 +1647,8 @@ export const postChatSyncBatchHead = asyncHandler(async (req: AuthRequest, res: 
 
 export const markContextRead = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { contextType, contextId, gameChatTypes } = req.body;
+  const clientOpIdRaw = normalizeClientMutationId(req.body.clientOpId);
+  const clientOpId = clientOpIdRaw.length > 0 ? clientOpIdRaw : undefined;
   const userId = req.userId;
 
   if (!userId) {
@@ -1647,6 +1668,7 @@ export const markContextRead = asyncHandler(async (req: AuthRequest, res: Respon
     contextType,
     contextId,
     gameChatTypes,
+    clientOpId,
   });
 
   if (result.markedCount > 0 && result.syncSeq != null) {
@@ -1680,12 +1702,6 @@ export const markContextRead = asyncHandler(async (req: AuthRequest, res: Respon
       notifyUserIds
     );
   }
-  await getChatNotifier().emitUnreadCountUpdate(
-    contextType === 'GROUP' ? 'GROUP' : (contextType as ChatContextType),
-    contextId,
-    userId,
-    0
-  );
 
   res.json({
     success: true,
@@ -1727,42 +1743,32 @@ export const markAllMessagesAsReadForContext = asyncHandler(async (req: AuthRequ
     throw new ApiError(400, 'Invalid contextType');
   }
 
-  const normalizedType =
-    contextType === 'BUG' ? 'GROUP' : (contextType as SnapshotContextType | 'BUG');
-  if (normalizedType === 'GAME' || normalizedType === 'USER' || normalizedType === 'GROUP') {
-    const result = await UnreadSnapshotService.markContextRead(userId, {
-      contextType: normalizedType,
-      contextId,
-      gameChatTypes: chatTypes,
-    });
-    await getChatNotifier().emitUnreadCountUpdate(
-      normalizedType === 'GROUP' ? 'GROUP' : (normalizedType as ChatContextType),
+  if (contextType === 'BUG') {
+    const result = await ReadReceiptService.markAllMessagesAsReadForContext(
+      'BUG',
       contextId,
       userId,
-      0
+      chatTypes
     );
+    const bugChannelIds = await lookupBugGroupChannelIds([contextId]);
+    await notifyUserContextUnreadAuthority({
+      userId,
+      chatContextType: 'BUG',
+      contextId,
+      reason: 'mark_context_read',
+      bugGroupChannelId: bugChannelIds.get(contextId) ?? null,
+    });
     res.json({ success: true, data: result });
     return;
   }
 
-  const result = await ReadReceiptService.markAllMessagesAsReadForContext(
-    contextType as ChatContextType,
+  const normalizedType = contextType as SnapshotContextType;
+  const result = await UnreadSnapshotService.markContextRead(userId, {
+    contextType: normalizedType,
     contextId,
-    userId,
-    chatTypes
-  );
-
-  await getChatNotifier().emitUnreadCountUpdate(
-    contextType as ChatContextType,
-    contextId,
-    userId,
-    0
-  );
-
-  res.json({
-    success: true,
-    data: result
+    gameChatTypes: chatTypes,
   });
+  res.json({ success: true, data: result });
 });
 
 export const saveDraft = asyncHandler(async (req: AuthRequest, res: Response) => {

@@ -1,6 +1,5 @@
 import api from './axios';
 import { ApiResponse, Game, ChatType, BasicUser } from '@/types';
-import type { UnreadObjectsApiPayload } from '@/services/chat/chatUnreadPayload';
 import type {
   MarkContextReadRequest,
   MarkContextReadResponse,
@@ -10,6 +9,12 @@ import { normalizeChatType } from '@/utils/chatType';
 import { withChatSyncRetry, withMessageCreateRetry } from '@/services/chat/chatHttpRetry';
 import type { ReactionEmojiUsageMutationPayload } from '@/store/reactionEmojiUsageStore';
 import type { StorySourceType } from './stories';
+import type { UnreadObjectsApiPayload } from '@/services/chat/chatUnreadPayload';
+import {
+  invalidateUnreadApiCache,
+  unreadApiCacheState,
+  unreadCountCache,
+} from './chatUnreadApiCache';
 
 export type { ChatType };
 export type {
@@ -59,11 +64,7 @@ export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER' | 'GROUP';
 export type MessageType = 'TEXT' | 'IMAGE' | 'VOICE' | 'VIDEO' | 'POLL';
 
-const unreadCountCache = new Map<string, { data: any; timestamp: number }>();
 const UNREAD_COUNT_CACHE_TTL = 1000;
-let unreadCountPromise: Promise<any> | null = null;
-
-let unreadObjectsInFlight: Promise<ApiResponse<UnreadObjectsApiPayload>> | null = null;
 const UNREAD_OBJECTS_IN_FLIGHT_TTL_MS = 1800;
 
 const syncHeadInFlight = new Map<string, Promise<number>>();
@@ -539,48 +540,93 @@ export const chatApi = {
       return cached.data;
     }
 
-    if (unreadCountPromise) {
-      return unreadCountPromise;
+    if (unreadApiCacheState.unreadCountPromise) {
+      return unreadApiCacheState.unreadCountPromise;
     }
 
-    unreadCountPromise = api.get<ApiResponse<{ count: number }>>('/chat/unread-count').then(response => {
+    unreadApiCacheState.unreadCountPromise = api.get<ApiResponse<{ count: number }>>('/chat/unread-count').then(response => {
       unreadCountCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
       setTimeout(() => {
         unreadCountCache.delete(cacheKey);
-        unreadCountPromise = null;
+        unreadApiCacheState.unreadCountPromise = null;
       }, UNREAD_COUNT_CACHE_TTL);
       return response.data;
     }).catch(error => {
-      unreadCountPromise = null;
+      unreadApiCacheState.unreadCountPromise = null;
       throw error;
     });
 
-    return unreadCountPromise;
+    return unreadApiCacheState.unreadCountPromise;
+  },
+
+  getUnreadTotals: async () => {
+    const cacheKey = 'unread-totals-global';
+    const cached = unreadCountCache.get(cacheKey);
+    const now = Date.now();
+
+    if (cached && (now - cached.timestamp) < UNREAD_COUNT_CACHE_TTL) {
+      return cached.data as ApiResponse<{ total: number; userUnreadRevision: number }>;
+    }
+
+    if (unreadApiCacheState.unreadTotalsPromise) {
+      return unreadApiCacheState.unreadTotalsPromise as Promise<ApiResponse<{ total: number; userUnreadRevision: number }>>;
+    }
+
+    unreadApiCacheState.unreadTotalsPromise = api
+      .get<ApiResponse<{ total: number; userUnreadRevision: number }>>('/chat/unread-totals')
+      .then((response) => {
+        unreadCountCache.set(cacheKey, { data: response.data, timestamp: Date.now() });
+        setTimeout(() => {
+          unreadCountCache.delete(cacheKey);
+          unreadApiCacheState.unreadTotalsPromise = null;
+        }, UNREAD_COUNT_CACHE_TTL);
+        return response.data;
+      })
+      .catch((error) => {
+        unreadApiCacheState.unreadTotalsPromise = null;
+        throw error;
+      });
+
+    return unreadApiCacheState.unreadTotalsPromise as Promise<ApiResponse<{ total: number; userUnreadRevision: number }>>;
   },
 
   getUnreadObjects: async () => {
-    return chatApi.getUnreadSnapshot();
+    return chatApi.getUnreadSnapshotObjects();
   },
 
-  /** Canonical unread snapshot (GET /chat/unread-objects). */
+  /** Slim repair snapshot (GET /chat/unread-objects?shape=counts). */
   getUnreadSnapshot: async (): Promise<ApiResponse<UnreadSnapshotDto>> => {
+    return chatApi.fetchUnreadSnapshot('counts');
+  },
+
+  /** Rich inbox cold start (GET /chat/unread-objects?shape=objects). */
+  getUnreadSnapshotObjects: async (): Promise<ApiResponse<UnreadSnapshotDto>> => {
+    return chatApi.fetchUnreadSnapshot('objects');
+  },
+
+  fetchUnreadSnapshot: async (shape: 'counts' | 'objects'): Promise<ApiResponse<UnreadSnapshotDto>> => {
     if (typeof window !== 'undefined') {
       const t = localStorage.getItem('token')?.trim();
       if (!t) {
         return Promise.reject(new Error('auth.noLocalToken'));
       }
     }
-    if (unreadObjectsInFlight) return unreadObjectsInFlight as Promise<ApiResponse<UnreadSnapshotDto>>;
-    unreadObjectsInFlight = api
-      .get<ApiResponse<UnreadSnapshotDto>>('/chat/unread-objects')
+    const inFlightKey = shape;
+    const existing = unreadApiCacheState.unreadObjectsInFlight.get(inFlightKey);
+    if (existing) {
+      return existing as Promise<ApiResponse<UnreadSnapshotDto>>;
+    }
+    const request = api
+      .get<ApiResponse<UnreadSnapshotDto>>('/chat/unread-objects', { params: { shape } })
       .then((response) => response.data)
       .catch((error) => {
-        unreadObjectsInFlight = null;
+        unreadApiCacheState.unreadObjectsInFlight.delete(inFlightKey);
         throw error;
       });
-    const data = await unreadObjectsInFlight;
+    unreadApiCacheState.unreadObjectsInFlight.set(inFlightKey, request as Promise<ApiResponse<UnreadObjectsApiPayload>>);
+    const data = await request;
     setTimeout(() => {
-      unreadObjectsInFlight = null;
+      unreadApiCacheState.unreadObjectsInFlight.delete(inFlightKey);
     }, UNREAD_OBJECTS_IN_FLIGHT_TTL_MS);
     return data as ApiResponse<UnreadSnapshotDto>;
   },
@@ -934,9 +980,7 @@ export const chatApi = {
   },
 
   invalidateUnreadCache: () => {
-    unreadCountCache.clear();
-    unreadCountPromise = null;
-    unreadObjectsInFlight = null;
+    invalidateUnreadApiCache();
   },
 
   getUnreadCountForContext: async (contextType: ChatContextType, contextId: string): Promise<number> => {

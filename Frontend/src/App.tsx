@@ -87,7 +87,7 @@ import { needsPrimarySportSelection } from './utils/needsPrimarySportSelection';
 import i18n from './i18n/config';
 import './i18n/config';
 import { parseLiveBoardTheme } from '@/utils/liveScoring';
-import { useUnreadStore } from '@/store/unreadStore';
+import { useUnreadAuthBootstrapRefresh } from '@/hooks/useUnreadAuthBootstrapRefresh';
 import {
   isTelegramAutoLoginPath,
   shouldConsumePendingTelegramAuthPath,
@@ -193,11 +193,7 @@ function AppContent() {
     ensureBooktimeProactiveRefresh();
   }, [isInitializing, isAuthenticated, location.pathname]);
 
-  useEffect(() => {
-    if (isInitializing || !isAuthenticated) return;
-    if (isTelegramAutoLoginPath(window.location.pathname)) return;
-    void useUnreadStore.getState().refreshAll();
-  }, [isInitializing, isAuthenticated]);
+  useUnreadAuthBootstrapRefresh(isInitializing, isAuthenticated);
 
   useEffect(() => {
     if (!isCapacitor()) return;

@@ -5,6 +5,8 @@ type SocketServiceLike = {
   emitChatEvent: ChatNotifier['emitChatEvent'];
   recordMessageDelivery: ChatNotifier['recordMessageDelivery'];
   emitUnreadCountUpdate: ChatNotifier['emitUnreadCountUpdate'];
+  emitUnreadAuthorityEnvelope: ChatNotifier['emitUnreadAuthorityEnvelope'];
+  emitUnreadInvalidate: ChatNotifier['emitUnreadInvalidate'];
   getUndeliveredRecipients: ChatNotifier['getUndeliveredRecipients'];
   isUserOnline: ChatNotifier['isUserOnline'];
   isUserInChatRoom: ChatNotifier['isUserInChatRoom'];
@@ -65,6 +67,24 @@ class SocketChatNotifier implements ChatNotifier {
       unreadCount,
       lastMessage
     );
+  }
+
+  async emitUnreadAuthorityEnvelope(
+    userId: string,
+    envelope: Parameters<ChatNotifier['emitUnreadAuthorityEnvelope']>[1]
+  ): Promise<void> {
+    const socketService = getSocketService();
+    if (!socketService) return;
+    await socketService.emitUnreadAuthorityEnvelope(userId, envelope);
+  }
+
+  async emitUnreadInvalidate(
+    userId: string,
+    payload: Parameters<ChatNotifier['emitUnreadInvalidate']>[1]
+  ): Promise<void> {
+    const socketService = getSocketService();
+    if (!socketService) return;
+    await socketService.emitUnreadInvalidate(userId, payload);
   }
 
   emitMessageTranslation(

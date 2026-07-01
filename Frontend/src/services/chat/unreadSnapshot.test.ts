@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { computeTotals } from '@bandeja/unread-contract';
 import {
   applyScopedGameTotals,
   byContextFromSnapshotDto,
   computeScopedGameTotals,
-  computeTotals,
   contextKey,
   mergeServerTotals,
-  normalizeSocketContextToKey,
+  resolveSocketContextKey,
   selectBottomTabChatsBadgeFromTotals,
   selectChatsSubtabBadgeFromTotals,
 } from './unreadSnapshot';
@@ -61,17 +61,29 @@ describe('computeTotals', () => {
   });
 });
 
-describe('normalizeSocketContextToKey', () => {
-  it('maps BUG id to GROUP channel when meta has bugId', () => {
-    const key = normalizeSocketContextToKey('BUG', 'b1', {
-      'ch-1': { bugId: 'b1', isChannel: true },
+describe('resolveSocketContextKey', () => {
+  it('prefers explicit contextKey from authority envelope', () => {
+    const key = resolveSocketContextKey({
+      contextKey: contextKey('GROUP', 'ch-1'),
+      contextType: 'BUG',
+      contextId: 'b1',
     });
     expect(key).toBe(contextKey('GROUP', 'ch-1'));
   });
 
-  it('maps BUG id via bugIdToChannelId map when meta is empty', () => {
-    const key = normalizeSocketContextToKey('BUG', 'b1', {}, { b1: 'ch-2' });
-    expect(key).toBe(contextKey('GROUP', 'ch-2'));
+  it('maps BUG id via groupChannelMeta when contextKey absent', () => {
+    const key = resolveSocketContextKey({
+      contextType: 'BUG',
+      contextId: 'b1',
+      groupChannelMeta: { 'ch-1': { bugId: 'b1', isChannel: true } },
+    });
+    expect(key).toBe(contextKey('GROUP', 'ch-1'));
+  });
+
+  it('returns null for BUG without meta or contextKey', () => {
+    expect(
+      resolveSocketContextKey({ contextType: 'BUG', contextId: 'b1' })
+    ).toBeNull();
   });
 });
 

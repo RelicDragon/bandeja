@@ -13,6 +13,7 @@ import {
 } from './chat/gameChatSocketRecipients';
 import { GameReadService } from './game/read.service';
 import { ChatContextType, ChatType, Sport } from '@prisma/client';
+import type { UnreadAuthorityEnvelope } from './chat/unreadAuthority/types';
 import { ApiError } from '../utils/ApiError';
 import { presenceService } from './presence.service';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
@@ -1276,6 +1277,33 @@ class SocketService {
       unreadCount,
       ...(lastMessage != null && Object.keys(lastMessage).length > 0 ? { lastMessage } : {}),
     });
+  }
+
+  public async emitUnreadAuthorityEnvelope(userId: string, envelope: UnreadAuthorityEnvelope) {
+    const eventName = 'chat:unread-count';
+
+    this.io.to(`notify-user-${userId}`).emit(eventName, {
+      contextType: envelope.contextType,
+      contextId: envelope.contextId,
+      unreadCount: envelope.unreadCount,
+      contextKey: envelope.contextKey,
+      clock: envelope.clock,
+      reason: envelope.reason,
+      ...(envelope.clientOpId ? { clientOpId: envelope.clientOpId } : {}),
+      ...(envelope.lastMessage != null && Object.keys(envelope.lastMessage).length > 0
+        ? { lastMessage: envelope.lastMessage }
+        : {}),
+      ...(envelope.groupChannelMeta != null && Object.keys(envelope.groupChannelMeta).length > 0
+        ? { groupChannelMeta: envelope.groupChannelMeta }
+        : {}),
+    });
+  }
+
+  public async emitUnreadInvalidate(
+    userId: string,
+    payload: { userUnreadRevision: number; reason: 'auto_read' | 'repair' | 'mark_all_read' }
+  ) {
+    this.io.to(`notify-user-${userId}`).emit('chat:unread-invalidate', payload);
   }
 
   /**
