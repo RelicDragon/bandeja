@@ -207,6 +207,10 @@ export const GameCard = ({
     setShowWeatherModal(true);
   };
 
+  const handleCloseWeatherModal = useCallback(() => {
+    setShowWeatherModal(false);
+  }, []);
+
   const weatherSummary = game.weatherSummary ?? null;
   // Show the weather chip for every entity type except LEAGUE_SEASON,
   // regardless of whether the viewer is a participant (so it appears in Find too).
@@ -627,15 +631,15 @@ export const GameCard = ({
           onSaved={handleNoteSaved}
         />
       )}
-      {showWeatherModal && (
+      {weatherSummary ? (
         <GameWeatherDialog
           game={game}
           open={showWeatherModal}
-          onClose={() => setShowWeatherModal(false)}
+          onClose={handleCloseWeatherModal}
           locale={displaySettings.locale}
           hour12={displaySettings.hour12}
         />
-      )}
+      ) : null}
       {showJoinConfirm && joinAction && (
         <ConfirmationModal
           isOpen={showJoinConfirm}

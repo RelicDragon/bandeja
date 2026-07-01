@@ -4,7 +4,9 @@
     "download": "Preuzmi",
     "copyImage": "Kopiraj sliku",
     "imageCopied": "Slika je kopirana",
+    "imageDownloaded": "Slika je preuzeta",
     "imageShareOpened": "U meniju za deljenje izaberi Kopiraj ili Sačuvaj",
-    "copyImageFailed": "Kopiranje slike nije uspelo"
+    "copyImageFailed": "Kopiranje slike nije uspelo",
+    "downloadImageFailed": "Preuzimanje slike nije uspelo"
   }
 }

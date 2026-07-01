@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { PlayerCardModalProvider } from '@/components/PlayerCardModalProvider';
@@ -18,7 +18,6 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
   const [cardLevelSport, setCardLevelSport] = useState<Sport | undefined>();
   const location = useLocation();
   const pendingReopen = useShellNavStore((s) => s.pendingPlayerCardReopen);
-  const activeLevelSport = useSportContextStore((s) => s.activeLevelSport);
   const sportFromUrl = useMemo(
     () => parseLevelSportQuery(new URLSearchParams(location.search).get('sport')),
     [location.search],
@@ -28,7 +27,9 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
     const overlay = getOverlay(location.search);
     if (overlay?.type === 'player' && overlay.id) {
       setPlayerId(overlay.id);
-      setCardLevelSport(sportFromUrl);
+      setCardLevelSport(
+        sportFromUrl ?? useSportContextStore.getState().activeLevelSport,
+      );
     }
   }, [location.pathname, location.search, sportFromUrl]);
 
@@ -46,21 +47,19 @@ export const PlayerCardModalManager = ({ children }: PlayerCardModalManagerProps
     }
   }, [location.pathname, location.search, pendingReopen]);
 
-  const openPlayerCard = (id: string, levelSport?: Sport) => {
+  const openPlayerCard = useCallback((id: string, levelSport?: Sport) => {
     setPlayerId(id);
     setCardLevelSport(
       levelSport ?? useSportContextStore.getState().activeLevelSport,
     );
-  };
+  }, []);
 
-  const closePlayerCard = () => {
+  const closePlayerCard = useCallback(() => {
     setPlayerId(null);
     setCardLevelSport(undefined);
-  };
+  }, []);
 
-  const sheetLevelSport = playerId
-    ? (cardLevelSport ?? sportFromUrl ?? activeLevelSport)
-    : undefined;
+  const sheetLevelSport = playerId ? (cardLevelSport ?? sportFromUrl) : undefined;
 
   const sheet = (
     <PlayerCardBottomSheet playerId={playerId} onClose={closePlayerCard} />

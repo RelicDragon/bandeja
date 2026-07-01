@@ -321,7 +321,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     <>
       {!showSendMoneyModal && (
       <Drawer open={!!playerId} dismissible={!avatarViewerUrl} onOpenChange={handleDrawerOpenChange}>
-          <DrawerContent>
+          <DrawerContent data-testid="player-card-sheet">
             {showReviewsView && playerId ? (
               <div className="flex shrink-0 items-center justify-between w-full p-2 pl-6">
                 <div className="flex items-center gap-4">

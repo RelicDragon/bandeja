@@ -4,7 +4,9 @@
     "download": "Download",
     "copyImage": "Copy image",
     "imageCopied": "Image copied",
+    "imageDownloaded": "Image downloaded",
     "imageShareOpened": "Choose Copy or Save from the share menu",
-    "copyImageFailed": "Could not copy image"
+    "copyImageFailed": "Could not copy image",
+    "downloadImageFailed": "Could not download image"
   }
 }

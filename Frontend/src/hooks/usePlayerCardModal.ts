@@ -10,13 +10,22 @@ export const usePlayerCardModal = () => {
     throw new Error('usePlayerCardModal must be used within PlayerCardModalProvider');
   }
 
+  const { openPlayerCard: contextOpenPlayerCard, closePlayerCard: contextClosePlayerCard } = context;
+
   const openPlayerCard = useCallback(
     (playerId: string, levelSport?: Sport) => {
-      context.openPlayerCard(playerId, levelSport ?? contextLevelSport);
+      contextOpenPlayerCard(playerId, levelSport ?? contextLevelSport);
     },
-    [context, contextLevelSport],
+    [contextOpenPlayerCard, contextLevelSport],
   );
 
-  return { openPlayerCard, closePlayerCard: context.closePlayerCard };
+  const closePlayerCard = useCallback(
+    () => {
+      contextClosePlayerCard();
+    },
+    [contextClosePlayerCard],
+  );
+
+  return { openPlayerCard, closePlayerCard };
 };
 

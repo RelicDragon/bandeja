@@ -4,17 +4,15 @@ export class OverlaysPage {
   constructor(private readonly page: Page) {}
 
   playerSheet() {
-    return this.page.locator('[data-testid="player-card-sheet"], [role="dialog"]').filter({
-      has: this.page.getByRole('button', { name: /^close$/i }),
-    }).first();
+    return this.page.getByTestId('player-card-sheet');
   }
 
   async expectPlayerOverlayOpen() {
-    await expect(this.page.getByRole('button', { name: /^close$/i }).first()).toBeVisible({ timeout: 20_000 });
+    await expect(this.playerSheet()).toBeVisible({ timeout: 20_000 });
   }
 
   async closePlayerOverlay() {
-    await this.page.getByRole('button', { name: /^close$/i }).first().click();
+    await this.playerSheet().getByRole('button').first().click();
   }
 
   async expectPlayerQueryRemoved() {

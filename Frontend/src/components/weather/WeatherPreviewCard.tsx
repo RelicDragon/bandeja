@@ -148,14 +148,14 @@ function WeatherPreviewCardInner({
           {content}
         </div>
       )}
-      {dialogOpen && startTime && endTime ? (
+      {shouldLoad ? (
         <WeatherWindowDialog
           open={dialogOpen}
           onClose={handleCloseDialog}
           forecast={fullDayQuery.data}
           isLoading={fullDayQuery.isPending}
-          startTime={startTime}
-          endTime={endTime}
+          startTime={startTime!}
+          endTime={endTime!}
           locale={locale}
           hour12={hour12}
           modalId={`weather-preview-${cityId ?? 'city'}-${startTime}`}

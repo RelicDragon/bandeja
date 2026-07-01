@@ -783,6 +783,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-29 | Send video | Attach video | Upload + transcode state |
 | CH-30 | Fullscreen media | Tap image/video | Viewer opens |
 | CH-30a | Copy fullscreen image | Open image viewer → tap copy | Desktop/native: “Image copied” toast; paste works. Mobile web without clipboard image API: share sheet opens with “Choose Copy or Save…” toast |
+| CH-30b | Download fullscreen image | Open image viewer → tap download | Desktop web: file download + “Image downloaded” toast. iOS/Android/native + mobile web: share sheet opens with “Choose Copy or Save…” toast; user can save to Photos/files |
 | CH-31 | Send voice (if enabled) | Record voice | Audio message |
 | CH-32 | Create poll | Poll composer | Poll message |
 | CH-33 | Vote on poll | Select option | Vote count updates |

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Card } from '@/components';
 import { Game, GameParticipant } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
@@ -149,6 +149,9 @@ export const GameInfo = ({
   const [showFullscreenAvatar, setShowFullscreenAvatar] = useState(false);
   const [showAddToCalendarModal, setShowAddToCalendarModal] = useState(false);
   const [showWeatherModal, setShowWeatherModal] = useState(false);
+  const handleCloseWeatherModal = useCallback(() => {
+    setShowWeatherModal(false);
+  }, []);
   const [isCollapsed, setIsCollapsed] = useState(collapsedByDefault);
   const reduceMotion = usePrefersReducedMotion();
   const prevResultsStatusRef = useRef(game.resultsStatus);
@@ -1189,7 +1192,7 @@ export const GameInfo = ({
         <GameWeatherDialog
           game={game}
           open={showWeatherModal}
-          onClose={() => setShowWeatherModal(false)}
+          onClose={handleCloseWeatherModal}
           locale={displaySettings.locale}
           hour12={displaySettings.hour12}
         />

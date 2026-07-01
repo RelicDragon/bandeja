@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { PlayerCardModalContext } from '@/contexts/PlayerCardModalContext';
 
 interface PlayerCardModalProviderProps {
@@ -7,13 +7,18 @@ interface PlayerCardModalProviderProps {
   closePlayerCard: () => void;
 }
 
-export const PlayerCardModalProvider = ({ 
-  children, 
-  openPlayerCard, 
-  closePlayerCard 
+export const PlayerCardModalProvider = ({
+  children,
+  openPlayerCard,
+  closePlayerCard,
 }: PlayerCardModalProviderProps) => {
+  const value = useMemo(
+    () => ({ openPlayerCard, closePlayerCard }),
+    [openPlayerCard, closePlayerCard],
+  );
+
   return (
-    <PlayerCardModalContext.Provider value={{ openPlayerCard, closePlayerCard }}>
+    <PlayerCardModalContext.Provider value={value}>
       {children}
     </PlayerCardModalContext.Provider>
   );

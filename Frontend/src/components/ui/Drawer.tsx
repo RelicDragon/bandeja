@@ -52,7 +52,7 @@ const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof VaulDrawer.Overlay>,
   React.ComponentPropsWithoutRef<typeof VaulDrawer.Overlay>
 >(({ className, ...props }, ref) => (
-  <VaulDrawer.Overlay ref={ref} className={`fixed inset-0 z-50 bg-black/50 backdrop-blur-sm ${className ?? ''}`} {...props} />
+  <VaulDrawer.Overlay ref={ref} className={`fixed inset-0 z-50 bg-black/50 ${className ?? ''}`} {...props} />
 ));
 DrawerOverlay.displayName = 'DrawerOverlay';
 

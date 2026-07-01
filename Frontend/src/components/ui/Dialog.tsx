@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 
 const DIALOG_OVERLAY_CLASS =
-  'dialog-overlay-animate fixed inset-0 z-50 bg-black/60 backdrop-blur-sm';
+  'dialog-overlay-animate fixed inset-0 z-50 bg-black/60';
 const DIALOG_CONTENT_CLASS =
   'cap-keyboard-aware-dialog dialog-content-animate fixed left-[50%] top-[50%] z-50 w-[90vw] max-w-[420px] max-h-[85vh] translate-x-[-50%] translate-y-[-50%] flex flex-col overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-white text-gray-900 dark:bg-gray-900 dark:text-white shadow-2xl focus:outline-none';
 

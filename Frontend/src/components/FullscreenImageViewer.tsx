@@ -7,10 +7,8 @@ import {
   type FullscreenImageZoomHandle,
 } from '@/components/fullscreenImageViewer/FullscreenImageZoom';
 import toast from 'react-hot-toast';
-import { Share } from '@capacitor/share';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { isCapacitor, isAndroid } from '@/utils/capacitor';
 import { copyImageToClipboard } from '@/utils/copyImageToClipboard';
+import { downloadImage } from '@/utils/downloadImage';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
@@ -129,62 +127,28 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
     };
   }, [isOpen, usePortaledOverlay]);
 
-  const handleDownload = useCallback(async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsDownloading(true);
-    try {
-      if (isCapacitor()) {
-        const response = await fetch(displayUrl);
-        const blob = await response.blob();
-        
-        const reader = new FileReader();
-        const base64Promise = new Promise<string>((resolve, reject) => {
-          reader.onloadend = () => {
-            const result = reader.result as string;
-            const base64 = result.split(',')[1];
-            resolve(base64);
-          };
-          reader.onerror = reject;
-          reader.readAsDataURL(blob);
+  const handleDownload = useCallback(
+    async (e: React.MouseEvent) => {
+      e.stopPropagation();
+      setIsDownloading(true);
+      try {
+        const img = containerRef.current?.querySelector('img');
+        const outcome = await downloadImage(displayUrl, {
+          blob: resolvedBlobRef.current,
+          img,
         });
-        
-        const base64 = await base64Promise;
-        const fileName = `image-${Date.now()}.jpg`;
-        const filePath = fileName;
-        
-        await Filesystem.writeFile({
-          path: filePath,
-          data: base64,
-          directory: isAndroid() ? Directory.ExternalStorage : Directory.Data,
-        });
-        
-        const fileUri = await Filesystem.getUri({
-          path: filePath,
-          directory: isAndroid() ? Directory.ExternalStorage : Directory.Data,
-        });
-        
-        await Share.share({
-          url: fileUri.uri,
-          dialogTitle: t('media.download'),
-        });
-      } else {
-        const response = await fetch(displayUrl);
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `image-${Date.now()}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
+        toast.success(
+          outcome === 'shared' ? t('media.imageShareOpened') : t('media.imageDownloaded'),
+        );
+      } catch (error) {
+        console.error('Failed to download image:', error);
+        toast.error(t('media.downloadImageFailed'));
+      } finally {
+        setIsDownloading(false);
       }
-    } catch (error) {
-      console.error('Failed to download image:', error);
-    } finally {
-      setIsDownloading(false);
-    }
-  }, [displayUrl, t]);
+    },
+    [displayUrl, t],
+  );
 
   const handleCopy = useCallback(
     async (e: React.MouseEvent) => {

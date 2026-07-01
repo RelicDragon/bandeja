@@ -149,7 +149,7 @@ function WeatherWindowDialogInner({
 
   return (
     <Dialog open={open} onClose={onClose} modalId={modalId}>
-      <DialogContent className="max-w-[92vw] rounded-2xl sm:max-w-lg">
+      <DialogContent className="max-w-[92vw] rounded-2xl sm:max-w-lg" data-testid="weather-dialog">
         <DialogTitle className="sr-only">
           {t('weather.forecastTitle', { defaultValue: 'Game weather' })}
         </DialogTitle>
