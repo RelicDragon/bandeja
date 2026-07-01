@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Droplets, Loader2, Wind } from 'lucide-react';
 import type { WeatherHourlyPoint, WeatherWindow } from '@/types';
@@ -8,10 +9,16 @@ import {
   formatWeatherTemperature,
   formatWeatherTime,
   getForecastUpdatedLabel,
+  formatWeatherTimezoneLabel,
   getWeatherTemperatureColor,
   getWeatherConditionLabel,
 } from '@/utils/weather';
+import {
+  dateKeyInTimezone,
+  groupWeatherHoursByDay,
+} from '@/utils/weatherDayGroups';
 import { WeatherDayChart } from './WeatherDayChart';
+import { WeatherDayNavigator } from './WeatherDayNavigator';
 import { WeatherIcon } from './WeatherIcon';
 import { getWeatherIconPalette } from './weatherIconPalette';
 
@@ -79,32 +86,65 @@ function WeatherWindowDialogInner({
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
+  const [slideDirection, setSlideDirection] = useState(0);
   const hourlyScrollRef = useRef<HTMLDivElement | null>(null);
   const initialScrollKeyRef = useRef<string | null>(null);
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const hasRows = Boolean(forecast?.available && forecast.hours.length > 0);
-  const sortedRows = useMemo(
-    () => [...(forecast?.hours ?? [])].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
-    [forecast?.hours],
+  const timezone = forecast?.cityTimezone ?? 'UTC';
+  const dayGroups = useMemo(
+    () => groupWeatherHoursByDay(forecast?.hours ?? [], timezone),
+    [forecast?.hours, timezone],
   );
+  const gameDayKey = useMemo(
+    () => dateKeyInTimezone(new Date(startTime), timezone),
+    [startTime, timezone],
+  );
+  const gameDayIndex = dayGroups.findIndex((group) => group.dayKey === gameDayKey);
+  const defaultDayKey = gameDayIndex >= 0 ? gameDayKey : dayGroups[0]?.dayKey ?? null;
+  const resolvedDayKey = selectedDayKey && dayGroups.some((group) => group.dayKey === selectedDayKey)
+    ? selectedDayKey
+    : defaultDayKey;
+  const activeDayKey = resolvedDayKey ?? gameDayKey;
+  const selectedDay = dayGroups.find((group) => group.dayKey === activeDayKey) ?? dayGroups[0] ?? null;
+  const sortedRows = useMemo(
+    () => selectedDay?.hours ?? [],
+    [selectedDay?.hours],
+  );
+  const hasRows = Boolean(forecast?.available && sortedRows.length > 0);
+  const canReturnToGameDay = gameDayIndex >= 0;
+  const isGameDay = canReturnToGameDay && activeDayKey === gameDayKey;
+  const selectedDayIndex = dayGroups.findIndex((group) => group.dayKey === activeDayKey);
+
+  useEffect(() => {
+    if (!open) {
+      initialScrollKeyRef.current = null;
+      return;
+    }
+    setSelectedDayKey(defaultDayKey);
+    setSelectedTime(null);
+    setSlideDirection(0);
+  }, [defaultDayKey, open]);
+
   useEffect(() => {
     if (!selectedTime) return;
     if (!sortedRows.some((point) => point.time === selectedTime)) {
       setSelectedTime(null);
     }
   }, [selectedTime, sortedRows]);
+
   useEffect(() => {
     if (!open) {
       initialScrollKeyRef.current = null;
       return;
     }
-    if (!hasRows || typeof window === 'undefined') return;
+    if (!hasRows || !isGameDay || typeof window === 'undefined') return;
 
     const firstGameHourIndex = sortedRows.findIndex((point) => resolveRowPhase(point, startTime, endTime) === 'game');
     if (firstGameHourIndex < 0) return;
 
     const targetRow = sortedRows[Math.max(0, firstGameHourIndex - 1)];
-    const scrollKey = `${modalId}:${startTime}:${endTime}:${targetRow.time}`;
+    const scrollKey = `${modalId}:${startTime}:${endTime}:${targetRow.time}:${activeDayKey}`;
     if (initialScrollKeyRef.current === scrollKey) return;
     initialScrollKeyRef.current = scrollKey;
 
@@ -115,19 +155,21 @@ function WeatherWindowDialogInner({
 
       scrollRowIntoView(scrollContainer, targetElement, reduceMotion ? 'auto' : 'smooth', 'start');
     });
-  }, [endTime, hasRows, modalId, open, reduceMotion, sortedRows, startTime]);
+  }, [activeDayKey, endTime, hasRows, isGameDay, modalId, open, reduceMotion, sortedRows, startTime]);
 
   const metadata = useMemo(
     () =>
       forecast
         ? [
             forecast.cityName,
+            formatWeatherTimezoneLabel(timezone, locale),
             getForecastUpdatedLabel(t, forecast.fetchedAt),
             forecast.stale ? t('weather.stale', { defaultValue: 'stale' }) : null,
           ].filter(Boolean)
         : [],
-    [forecast, t],
+    [forecast, locale, t, timezone],
   );
+
   const handleChartPointSelect = useCallback((time: string) => {
     setSelectedTime(time);
 
@@ -146,6 +188,32 @@ function WeatherWindowDialogInner({
 
     window.requestAnimationFrame(scrollToSelectedRow);
   }, [reduceMotion]);
+
+  const navigateDay = useCallback((direction: 'left' | 'right') => {
+    if (selectedDayIndex < 0) return;
+    const nextIndex = direction === 'left' ? selectedDayIndex - 1 : selectedDayIndex + 1;
+    const nextGroup = dayGroups[nextIndex];
+    if (!nextGroup) return;
+
+    setSlideDirection(direction === 'left' ? -1 : 1);
+    setSelectedDayKey(nextGroup.dayKey);
+    setSelectedTime(null);
+    if (hourlyScrollRef.current) {
+      hourlyScrollRef.current.scrollTop = 0;
+    }
+  }, [dayGroups, selectedDayIndex]);
+
+  const handleGoToGameDay = useCallback(() => {
+    if (gameDayIndex < 0 || selectedDayIndex < 0) return;
+    setSlideDirection(selectedDayIndex > gameDayIndex ? -1 : 1);
+    setSelectedDayKey(gameDayKey);
+    setSelectedTime(null);
+    if (hourlyScrollRef.current) {
+      hourlyScrollRef.current.scrollTop = 0;
+    }
+  }, [gameDayIndex, gameDayKey, selectedDayIndex]);
+
+  const showDayNavigator = dayGroups.length > 1;
 
   return (
     <Dialog open={open} onClose={onClose} modalId={modalId}>
@@ -178,106 +246,135 @@ function WeatherWindowDialogInner({
             </div>
           ) : (
             <>
-              <div className="shrink-0">
-                <WeatherDayChart
-                  points={sortedRows}
+              {showDayNavigator ? (
+                <WeatherDayNavigator
+                  dayGroups={dayGroups}
+                  selectedDayKey={activeDayKey}
+                  gameDayKey={gameDayKey}
+                  canReturnToGameDay={canReturnToGameDay}
+                  timezone={timezone}
                   locale={locale}
-                  hour12={hour12}
-                  startTime={startTime}
-                  endTime={endTime}
-                  selectedTime={selectedTime}
-                  onPointSelect={handleChartPointSelect}
+                  onPrevious={() => navigateDay('left')}
+                  onNext={() => navigateDay('right')}
+                  onGoToGameDay={handleGoToGameDay}
                 />
-              </div>
-              <div ref={hourlyScrollRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                  {sortedRows.map((point) => {
-                    const condition = getWeatherConditionLabel(t, point.conditionKey);
-                    const temperatureColor = getWeatherTemperatureColor(point);
-                    const iconPalette = getWeatherIconPalette(point.conditionKey, point.isDay);
-                    const phase = resolveRowPhase(point, startTime, endTime);
-                    const isGameHour = phase === 'game';
-                    const isSelected = selectedTime === point.time;
-                    return (
-                      <div
-                        key={point.time}
-                        ref={(element) => {
-                          if (element) {
-                            rowRefs.current.set(point.time, element);
-                          } else {
-                            rowRefs.current.delete(point.time);
-                          }
-                        }}
-                        aria-current={isSelected ? 'true' : undefined}
-                        className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-lg px-1 py-2.5 transition-colors first:pt-0 last:pb-0 ${
-                          isSelected
-                            ? 'bg-sky-50/90 ring-2 ring-inset ring-sky-400/70 dark:bg-sky-950/40 dark:ring-sky-500/60'
-                            : ''
-                        }`}
-                      >
-                        <div
-                          className="flex h-9 w-9 items-center justify-center rounded-lg border"
-                          style={{
-                            backgroundColor: iconPalette.surfaceColor,
-                            borderColor: iconPalette.borderColor,
-                          }}
-                        >
-                          <WeatherIcon conditionKey={point.conditionKey} isDay={point.isDay} size={19} />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="min-w-0">
-                            <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                              {formatWeatherTime(point.time, locale, hour12)}
-                            </span>
-                          </div>
-                          {point.precipitationProbability != null || point.windSpeedKmh != null ? (
-                            <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
-                              {point.precipitationProbability != null ? (
-                                <span
-                                  className={`inline-flex items-center gap-1 ${
-                                    point.precipitationProbability > 0
-                                      ? 'font-medium text-sky-600 dark:text-sky-300'
-                                      : ''
-                                  }`}
-                                >
-                                  <Droplets size={12} />
-                                  {point.precipitationProbability}%
-                                </span>
-                              ) : null}
-                              {point.windSpeedKmh != null ? (
-                                <span className="inline-flex items-center gap-1">
-                                  <Wind size={12} />
-                                  {t('weather.windSpeed', {
-                                    speed: Math.round(point.windSpeedKmh),
-                                  })}
-                                </span>
-                              ) : null}
-                            </div>
-                          ) : null}
-                          <div className="mt-0.5 min-w-0 text-xs text-gray-500 dark:text-gray-400">
-                            <span className="truncate">{condition}</span>
-                          </div>
-                        </div>
-                        <div className="flex flex-col items-end gap-0.5">
-                          {isGameHour ? (
-                            <span
-                              className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none text-white"
-                              style={{ backgroundColor: temperatureColor.textColor }}
+              ) : null}
+
+              <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={activeDayKey}
+                    initial={reduceMotion ? false : { opacity: 0, x: slideDirection * 24 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={reduceMotion ? undefined : { opacity: 0, x: slideDirection * -24 }}
+                    transition={{ duration: 0.2, ease: 'easeOut' }}
+                    className="flex min-h-0 flex-1 flex-col"
+                  >
+                    <div className="shrink-0">
+                      <WeatherDayChart
+                        points={sortedRows}
+                        locale={locale}
+                        hour12={hour12}
+                        cityTimezone={timezone}
+                        startTime={startTime}
+                        endTime={endTime}
+                        selectedTime={selectedTime}
+                        onPointSelect={handleChartPointSelect}
+                        showGameWindow={isGameDay}
+                      />
+                    </div>
+                    <div ref={hourlyScrollRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
+                      <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                        {sortedRows.map((point) => {
+                          const condition = getWeatherConditionLabel(t, point.conditionKey);
+                          const temperatureColor = getWeatherTemperatureColor(point);
+                          const iconPalette = getWeatherIconPalette(point.conditionKey, point.isDay);
+                          const phase = isGameDay ? resolveRowPhase(point, startTime, endTime) : 'after';
+                          const isGameHour = phase === 'game';
+                          const isSelected = selectedTime === point.time;
+                          return (
+                            <div
+                              key={point.time}
+                              ref={(element) => {
+                                if (element) {
+                                  rowRefs.current.set(point.time, element);
+                                } else {
+                                  rowRefs.current.delete(point.time);
+                                }
+                              }}
+                              aria-current={isSelected ? 'true' : undefined}
+                              className={`grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 overflow-hidden rounded-lg px-1 py-2.5 transition-colors first:pt-0 last:pb-0 ${
+                                isSelected
+                                  ? 'bg-sky-50/90 ring-2 ring-inset ring-sky-400/70 dark:bg-sky-950/40 dark:ring-sky-500/60'
+                                  : ''
+                              }`}
                             >
-                              {t(GAME_PHASE_CONFIG.labelKey, { defaultValue: GAME_PHASE_CONFIG.defaultLabel })}
-                            </span>
-                          ) : null}
-                          <div
-                            className="text-lg font-semibold leading-none tabular-nums"
-                            style={{ color: temperatureColor.textColor }}
-                          >
-                            {formatWeatherTemperature(point, { locale })}
-                          </div>
-                        </div>
+                              <div
+                                className="flex h-9 w-9 items-center justify-center rounded-lg border"
+                                style={{
+                                  backgroundColor: iconPalette.surfaceColor,
+                                  borderColor: iconPalette.borderColor,
+                                }}
+                              >
+                                <WeatherIcon conditionKey={point.conditionKey} isDay={point.isDay} size={19} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="min-w-0">
+                                  <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                    {formatWeatherTime(point.time, locale, hour12, timezone)}
+                                  </span>
+                                </div>
+                                {point.precipitationProbability != null || point.windSpeedKmh != null ? (
+                                  <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
+                                    {point.precipitationProbability != null ? (
+                                      <span
+                                        className={`inline-flex items-center gap-1 ${
+                                          point.precipitationProbability > 0
+                                            ? 'font-medium text-sky-600 dark:text-sky-300'
+                                            : ''
+                                        }`}
+                                      >
+                                        <Droplets size={12} />
+                                        {point.precipitationProbability}%
+                                      </span>
+                                    ) : null}
+                                    {point.windSpeedKmh != null ? (
+                                      <span className="inline-flex items-center gap-1">
+                                        <Wind size={12} />
+                                        {t('weather.windSpeed', {
+                                          speed: Math.round(point.windSpeedKmh),
+                                        })}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                ) : null}
+                                <div className="mt-0.5 min-w-0 text-xs text-gray-500 dark:text-gray-400">
+                                  <span className="truncate">{condition}</span>
+                                </div>
+                              </div>
+                              <div className="flex flex-col items-end gap-0.5">
+                                {isGameHour ? (
+                                  <span
+                                    className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none text-white"
+                                    style={{ backgroundColor: temperatureColor.textColor }}
+                                  >
+                                    {t(GAME_PHASE_CONFIG.labelKey, { defaultValue: GAME_PHASE_CONFIG.defaultLabel })}
+                                  </span>
+                                ) : null}
+                                <div
+                                  className="text-lg font-semibold leading-none tabular-nums"
+                                  style={{ color: temperatureColor.textColor }}
+                                >
+                                  {formatWeatherTemperature(point, { locale })}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    );
-                  })}
-                </div>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </>
           )}

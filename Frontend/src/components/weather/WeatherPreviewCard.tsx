@@ -35,7 +35,7 @@ function WeatherPreviewCardInner({
   const shouldLoad = enabled && Boolean(cityId && startTime && endTime);
   const previewParams = useMemo(() => ({ cityId, startTime, endTime }), [cityId, endTime, startTime]);
   const fullDayParams = useMemo(
-    () => ({ cityId, startTime, endTime, scope: 'day' as const }),
+    () => ({ cityId, startTime, endTime, scope: 'forecast' as const }),
     [cityId, endTime, startTime],
   );
   const query = useWeatherPreviewQuery(previewParams, shouldLoad);

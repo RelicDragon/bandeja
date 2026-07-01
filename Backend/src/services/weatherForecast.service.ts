@@ -69,7 +69,7 @@ export interface WeatherWindowDto {
   unavailableReason?: 'missing_city_coordinates' | 'out_of_range' | 'not_scheduled';
 }
 
-export type WeatherWindowScope = 'game' | 'day';
+export type WeatherWindowScope = 'game' | 'day' | 'forecast';
 
 type CityForWeather = {
   id: string;
@@ -525,10 +525,15 @@ export class WeatherForecastService {
     }
 
     const payload = getPayload(cache);
-    const hours = params.scope === 'day'
-      ? fullDayWindow(payload, startTime, endTime)
-      : hourlyWindow(payload, startTime, endTime);
+    const hours = params.scope === 'forecast'
+      ? payload.hourly
+      : params.scope === 'day'
+        ? fullDayWindow(payload, startTime, endTime)
+        : hourlyWindow(payload, startTime, endTime);
     const summary = buildSummary(cache, stale, startTime);
+    const available = params.scope === 'forecast'
+      ? hours.length > 0
+      : Boolean(summary && hours.length > 0);
     return {
       provider: PROVIDER,
       cityId: payload.cityId,
@@ -536,11 +541,11 @@ export class WeatherForecastService {
       cityTimezone: payload.cityTimezone,
       fetchedAt: cache.fetchedAt.toISOString(),
       stale,
-      available: Boolean(summary && hours.length > 0),
+      available,
       summary,
       hours,
       attribution: 'Open-Meteo',
-      ...(summary && hours.length > 0 ? {} : { unavailableReason: 'out_of_range' as const }),
+      ...(available ? {} : { unavailableReason: 'out_of_range' as const }),
     };
   }
 

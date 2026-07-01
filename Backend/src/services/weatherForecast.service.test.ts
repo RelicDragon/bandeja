@@ -150,4 +150,9 @@ assert.deepEqual(
   ],
 );
 
+assert.equal(
+  payload(hourlyTimes('2026-06-28T00:00:00.000Z', 240)).hourly.length,
+  240,
+);
+
 console.log('weatherForecast.service.test passed');

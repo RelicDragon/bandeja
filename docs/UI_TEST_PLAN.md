@@ -534,6 +534,8 @@ Frontend/e2e/
 | GD-06e | Photo privacy toggle | FINAL game with visible Photos section; owner/admin toggles in gallery header | Setting persists; visibility matches matrix |
 | GD-06f | Photo upload permissions | Participant uploads; stranger cannot upload/set main | Upload/set-main succeed for participant/admin only |
 | GD-07 | Open game chat | Chat button | `/games/:id/chat` |
+| GD-104 | Weather dialog opens on game day | Game with weather summary → open forecast dialog | Shows game-day hourly chart/list; game hours tagged “Game” |
+| GD-105 | Weather dialog day navigation | In weather dialog → next/previous day chevrons | Day label and chart animate; counter updates; “Go to game day” appears when away from game day and returns on tap |
 | GD-73 | Scroll-more hint | Open long game details; scroll partway down | Bottom gradient + bouncing chevron; hides at page bottom |
 | GD-74 | Scroll-more hint tap | Tap chevron on long game details | Smooth scroll to bottom; hint hides when at bottom |
 | GD-75 | Scroll-above hint | Scroll down on long game details | Top gradient + bouncing chevron up; hides at page top |

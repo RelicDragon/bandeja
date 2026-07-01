@@ -145,7 +145,6 @@ html.dark {
 .animate-backdrop-out {
   animation: dialogOverlayOut 0.3s ease-in forwards;
 }
-
 @keyframes splashLogoRotate {
   0% {
     transform: rotate(0deg);

@@ -14,10 +14,12 @@ interface WeatherDayChartProps {
   points: WeatherHourlyPoint[];
   locale: string;
   hour12: boolean;
+  cityTimezone: string;
   startTime: string;
   endTime: string;
   selectedTime?: string | null;
   onPointSelect?: (time: string) => void;
+  showGameWindow?: boolean;
 }
 
 interface ChartPoint {
@@ -59,10 +61,12 @@ export function WeatherDayChart({
   points,
   locale,
   hour12,
+  cityTimezone,
   startTime,
   endTime,
   selectedTime,
   onPointSelect,
+  showGameWindow = true,
 }: WeatherDayChartProps) {
   const { t } = useTranslation();
   const chartButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -96,7 +100,7 @@ export function WeatherDayChart({
 
       return {
         time: point.time,
-        label: formatWeatherTime(point.time, locale, hour12),
+        label: formatWeatherTime(point.time, locale, hour12, cityTimezone),
         displayTemperature,
         temperatureC: point.temperatureC,
         precipitationProbability: cappedPrecipitation,
@@ -104,7 +108,7 @@ export function WeatherDayChart({
         x,
         y,
         barHeight: hasPrecipitation ? Math.max(3.5, (cappedPrecipitation / 100) * BAR_MAX_HEIGHT) : 0,
-        isGameHour: isPointDuringGame(point.time, startTime, endTime),
+        isGameHour: showGameWindow && isPointDuringGame(point.time, startTime, endTime),
         temperatureColor: getWeatherTemperatureColor(point),
       };
     });
@@ -116,7 +120,7 @@ export function WeatherDayChart({
       minTemperatureC,
       maxTemperatureC,
     };
-  }, [endTime, hour12, locale, points, startTime, unit]);
+  }, [cityTimezone, endTime, hour12, locale, points, showGameWindow, startTime, unit]);
 
   if (!chart) return null;
 

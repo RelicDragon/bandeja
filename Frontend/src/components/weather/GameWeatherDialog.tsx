@@ -23,7 +23,7 @@ function GameWeatherDialogInner({ game, open, onClose, locale, hour12 }: GameWea
         cityId: weatherCityId,
         startTime: game.startTime,
         endTime: game.endTime,
-        scope: 'day' as const,
+        scope: 'forecast' as const,
       };
     },
     [game.endTime, game.startTime, weatherCityId],

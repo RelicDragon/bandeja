@@ -1,7 +1,7 @@
 import api from './axios';
 import type { ApiResponse, WeatherWindow } from '@/types';
 
-export type WeatherWindowScope = 'game' | 'day';
+export type WeatherWindowScope = 'game' | 'day' | 'forecast';
 
 export const weatherApi = {
   getPreview: async (params: {
@@ -14,9 +14,9 @@ export const weatherApi = {
     return response.data.data;
   },
 
-  getGameWeather: async (gameId: string, scope: WeatherWindowScope = 'game'): Promise<WeatherWindow> => {
+    getGameWeather: async (gameId: string, scope: WeatherWindowScope = 'game'): Promise<WeatherWindow> => {
     const response = await api.get<ApiResponse<WeatherWindow>>(`/games/${gameId}/weather`, {
-      params: scope === 'day' ? { scope } : undefined,
+      params: scope === 'game' ? undefined : { scope },
     });
     return response.data.data;
   },

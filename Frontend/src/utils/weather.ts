@@ -134,12 +134,30 @@ export function getWeatherTemperatureColor(point: Pick<WeatherHourlyPoint, 'temp
   };
 }
 
-export function formatWeatherTime(time: string, locale: string, hour12: boolean): string {
+export function formatWeatherTime(
+  time: string,
+  locale: string,
+  hour12: boolean,
+  timeZone = 'UTC',
+): string {
   return new Intl.DateTimeFormat(locale, {
     hour: 'numeric',
     minute: '2-digit',
     hour12,
+    timeZone: timeZone || 'UTC',
   }).format(new Date(time));
+}
+
+export function formatWeatherTimezoneLabel(timezone: string, locale: string): string {
+  try {
+    const parts = new Intl.DateTimeFormat(locale, {
+      timeZone: timezone || 'UTC',
+      timeZoneName: 'short',
+    }).formatToParts(new Date());
+    return parts.find((part) => part.type === 'timeZoneName')?.value ?? timezone;
+  } catch {
+    return timezone;
+  }
 }
 
 export function getForecastUpdatedLabel(t: TFunction, fetchedAt: string): string {

@@ -2,7 +2,13 @@ import { Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { ApiError } from '../utils/ApiError';
-import { WeatherForecastService } from '../services/weatherForecast.service';
+import { WeatherForecastService, type WeatherWindowScope } from '../services/weatherForecast.service';
+
+function parseWeatherWindowScope(value: unknown): WeatherWindowScope {
+  if (value === 'day') return 'day';
+  if (value === 'forecast') return 'forecast';
+  return 'game';
+}
 
 export const getWeatherPreview = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { cityId, startTime, endTime, scope } = req.query;
@@ -19,7 +25,7 @@ export const getWeatherPreview = asyncHandler(async (req: AuthRequest, res: Resp
     startTime,
     endTime,
     timeIsSet: true,
-    scope: scope === 'day' ? 'day' : 'game',
+    scope: parseWeatherWindowScope(scope),
   });
 
   res.json({
@@ -31,7 +37,7 @@ export const getWeatherPreview = asyncHandler(async (req: AuthRequest, res: Resp
 
 export const getGameWeather = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
-  const forecast = await WeatherForecastService.getWindowForGame(id, req.query.scope === 'day' ? 'day' : 'game');
+  const forecast = await WeatherForecastService.getWindowForGame(id, parseWeatherWindowScope(req.query.scope));
 
   res.json({
     success: true,
