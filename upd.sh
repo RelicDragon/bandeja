@@ -76,7 +76,7 @@ path_needs_be() {
   case "$1" in
     Backend/*|scripts/deploy-backend.sh) return 0 ;;
     Frontend/shared/*) return 0 ;;
-    packages/chat-contract/*) return 0 ;;
+    packages/chat-contract/*|packages/unread-contract/*) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -84,7 +84,7 @@ path_needs_be() {
 path_needs_fe() {
   case "$1" in
     Frontend/*|scripts/deploy-frontend.sh) return 0 ;;
-    packages/chat-contract/*) return 0 ;;
+    packages/chat-contract/*|packages/unread-contract/*) return 0 ;;
     *) return 1 ;;
   esac
 }
