@@ -32,7 +32,6 @@ function WeatherPreviewCardInner({
 }: WeatherPreviewCardProps) {
   const { t } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [fullDayRequested, setFullDayRequested] = useState(false);
   const shouldLoad = enabled && Boolean(cityId && startTime && endTime);
   const previewParams = useMemo(() => ({ cityId, startTime, endTime }), [cityId, endTime, startTime]);
   const fullDayParams = useMemo(
@@ -42,14 +41,12 @@ function WeatherPreviewCardInner({
   const query = useWeatherPreviewQuery(previewParams, shouldLoad);
   const fullDayQuery = useWeatherPreviewQuery(
     fullDayParams,
-    dialogOpen && fullDayRequested,
+    dialogOpen && shouldLoad,
   );
   const handleOpenDialog = useCallback(() => setDialogOpen(true), []);
   const handleCloseDialog = useCallback(() => {
     setDialogOpen(false);
-    setFullDayRequested(false);
   }, []);
-  const handleShowFullDay = useCallback(() => setFullDayRequested(true), []);
 
   if (!shouldLoad) return null;
 
@@ -155,11 +152,8 @@ function WeatherPreviewCardInner({
         <WeatherWindowDialog
           open={dialogOpen}
           onClose={handleCloseDialog}
-          forecast={fullDayQuery.data ?? forecast}
-          isLoading={query.isPending}
-          isFullDay={Boolean(fullDayQuery.data)}
-          isFullDayLoading={fullDayRequested && fullDayQuery.isPending}
-          onShowFullDay={handleShowFullDay}
+          forecast={fullDayQuery.data}
+          isLoading={fullDayQuery.isPending}
           startTime={startTime}
           endTime={endTime}
           locale={locale}

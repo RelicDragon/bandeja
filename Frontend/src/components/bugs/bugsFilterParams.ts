@@ -24,6 +24,19 @@ export function getDefaultBugsFilter(isAdmin: boolean): BugsFilterState {
   return { statuses: [...ALL_BUG_STATUSES], type: null, createdByMe: true };
 }
 
+let bugsFilterDefaultsAppliedForUserId: string | null = null;
+
+export function shouldApplyBugsFilterDefaultsForUser(userId: string | null | undefined): boolean {
+  if (!userId) return false;
+  if (bugsFilterDefaultsAppliedForUserId === userId) return false;
+  bugsFilterDefaultsAppliedForUserId = userId;
+  return true;
+}
+
+export function resetBugsFilterDefaultsForTests() {
+  bugsFilterDefaultsAppliedForUserId = null;
+}
+
 export function buildBugsApiFilterParams(bf: BugsFilterState) {
   if (bf.statuses.length === 0 && !bf.type && !bf.createdByMe) return undefined;
   return {

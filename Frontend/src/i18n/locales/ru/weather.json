@@ -3,8 +3,6 @@
     "forecastTitle": "Погода на игру",
     "openForecast": "Открыть прогноз погоды: {{temperature}}, {{condition}}",
     "loading": "Загружаем прогноз",
-    "loadingShort": "Загрузка",
-    "showFullDay": "Показать весь день",
     "dayChartTitle": "Прогноз на день",
     "dayChartA11y": "Почасовой график температуры и осадков",
     "temperatureShort": "Темп.",

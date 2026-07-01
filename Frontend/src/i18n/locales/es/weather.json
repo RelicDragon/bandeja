@@ -3,8 +3,6 @@
     "forecastTitle": "Tiempo para el partido",
     "openForecast": "Abrir previsión del tiempo: {{temperature}}, {{condition}}",
     "loading": "Cargando previsión",
-    "loadingShort": "Cargando",
-    "showFullDay": "Ver día completo",
     "dayChartTitle": "Resumen del día",
     "dayChartA11y": "Gráfico horario de temperatura y precipitación",
     "temperatureShort": "Temp",

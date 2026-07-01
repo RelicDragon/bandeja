@@ -3,8 +3,6 @@
     "forecastTitle": "Vremenska prognoza za igru",
     "openForecast": "Otvori vremensku prognozu: {{temperature}}, {{condition}}",
     "loading": "Učitavanje prognoze",
-    "loadingShort": "Učitavanje",
-    "showFullDay": "Prikaži ceo dan",
     "dayChartTitle": "Pregled celog dana",
     "dayChartA11y": "Grafikon temperature i padavina po satu",
     "temperatureShort": "Temp",

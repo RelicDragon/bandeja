@@ -3,8 +3,6 @@
     "forecastTitle": "Počasí na hru",
     "openForecast": "Otevřít předpověď počasí: {{temperature}}, {{condition}}",
     "loading": "Načítání předpovědi",
-    "loadingShort": "Načítání",
-    "showFullDay": "Zobrazit celý den",
     "dayChartTitle": "Přehled celého dne",
     "dayChartA11y": "Hodinový graf teploty a srážek",
     "temperatureShort": "Tepl.",

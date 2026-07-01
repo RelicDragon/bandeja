@@ -5,18 +5,28 @@ ROOT="$(cd "$(dirname "$0")" && pwd)"
 UPD_BE_HOST="${UPD_BE_HOST:-relic@back.bandeja.com}"
 UPD_FE_HOST="${UPD_FE_HOST:-relic@front.bandeja.com}"
 UPD_SSH_KEY="${UPD_SSH_KEY:-$HOME/.ssh/id_hetzner}"
+UPD_SSH_BATCH_MODE="${UPD_SSH_BATCH_MODE:-no}"
+UPD_SSH_CONNECT_TIMEOUT="${UPD_SSH_CONNECT_TIMEOUT:-20}"
 
 upd_ssh() {
   local host="$1"
   shift
-  ssh \
-    -o IdentitiesOnly=yes \
-    -o IdentityFile="${UPD_SSH_KEY}" \
-    -o AddressFamily=inet \
-    -o StrictHostKeyChecking=accept-new \
-    -o ServerAliveInterval=60 \
-    -o ServerAliveCountMax=3 \
-    "${host}" "$@"
+  local ssh_args=(
+    -o IdentitiesOnly=yes
+    -o IdentityFile="${UPD_SSH_KEY}"
+    -o AddressFamily=inet
+    -o StrictHostKeyChecking=accept-new
+    -o ConnectTimeout="${UPD_SSH_CONNECT_TIMEOUT}"
+    -o ConnectionAttempts=2
+    -o ServerAliveInterval=60
+    -o ServerAliveCountMax=3
+  )
+
+  if [[ "${UPD_SSH_BATCH_MODE}" == "yes" ]]; then
+    ssh_args+=(-o BatchMode=yes)
+  fi
+
+  ssh "${ssh_args[@]}" "${host}" "$@"
 }
 
 upd_git_sync='cd ~/src && git fetch origin && git reset --hard origin/master'
@@ -49,13 +59,16 @@ maybe_push() {
 
 server_commit_be() {
   if [[ "${UPD_BE_HOST}" == "local" ]]; then
+    echo "deploy: checking backend commit locally" >&2
     git -C ~/src rev-parse HEAD
     return
   fi
+  echo "deploy: checking backend commit on ${UPD_BE_HOST}" >&2
   upd_ssh "${UPD_BE_HOST}" 'cd ~/src && git rev-parse HEAD'
 }
 
 server_commit_fe() {
+  echo "deploy: checking frontend commit on ${UPD_FE_HOST}" >&2
   upd_ssh "${UPD_FE_HOST}" 'cd ~/src && git rev-parse HEAD'
 }
 
@@ -95,12 +108,10 @@ diff_needs_deploy() {
 }
 
 detect_deploy_target() {
-  git -C "$ROOT" fetch origin master
-
-  local deploy_ref be_sha fe_sha need_be=0 need_fe=0
-  deploy_ref="$(git -C "$ROOT" rev-parse origin/master)"
-  be_sha="$(server_commit_be)"
-  fe_sha="$(server_commit_fe)"
+  local deploy_ref="$1"
+  local be_sha="$2"
+  local fe_sha="$3"
+  local need_be=0 need_fe=0
 
   diff_needs_deploy "${be_sha}" "${deploy_ref}" path_needs_be && need_be=1
   diff_needs_deploy "${fe_sha}" "${deploy_ref}" path_needs_fe && need_fe=1
@@ -118,10 +129,12 @@ detect_deploy_target() {
 
 resolve_auto_target() {
   local detected deploy_ref be_sha fe_sha
+  echo "deploy: fetching origin/master" >&2
+  git -C "$ROOT" fetch origin master
   deploy_ref="$(git -C "$ROOT" rev-parse origin/master)"
   be_sha="$(server_commit_be)"
   fe_sha="$(server_commit_fe)"
-  detected="$(detect_deploy_target)"
+  detected="$(detect_deploy_target "${deploy_ref}" "${be_sha}" "${fe_sha}")"
 
   case "${detected}" in
     none)

@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
-import { getDefaultBugsFilter } from '@/components/bugs/bugsFilterParams';
+import { getDefaultBugsFilter, shouldApplyBugsFilterDefaultsForUser } from '@/components/bugs/bugsFilterParams';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { useChatSyncStore } from '@/store/chatSyncStore';
 import {
@@ -18,6 +18,7 @@ import {
   useUnreadStoreWarm,
 } from '@/hooks/useUnreadBridge';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
+
 import { useChatListMergedDrafts } from '@/components/chat/useChatListMergedDrafts';
 import { useChatListPrefetch } from '@/components/chat/useChatListPrefetch';
 import type { ChatItem, ChatSelectNavOptions, ChatType } from '@/components/chat/chatListTypes';
@@ -85,12 +86,9 @@ export function useChatInbox(opts: UseChatInboxOptions) {
   const isOnline = useNetworkStore((s) => s.isOnline);
   const bugsFilter = useGameDetailsChromeStore((s) => s.bugsFilter);
   const setBugsFilter = useGameDetailsChromeStore((s) => s.setBugsFilter);
-  const bugsFilterDefaultsAppliedRef = useRef<string | null>(null);
 
   useLayoutEffect(() => {
-    if (!userId) return;
-    if (bugsFilterDefaultsAppliedRef.current === userId) return;
-    bugsFilterDefaultsAppliedRef.current = userId;
+    if (!shouldApplyBugsFilterDefaultsForUser(userId)) return;
     setBugsFilter(getDefaultBugsFilter(Boolean(user?.isAdmin)));
   }, [userId, user?.isAdmin, setBugsFilter]);
   const viewingGameChatId = useGameDetailsChromeStore((s) => s.viewingGameChatId);

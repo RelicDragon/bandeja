@@ -845,6 +845,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-61 | Group settings page | Navigate to group settings | Member/admin actions |
 | CH-62 | Kick from group settings | Admin kicks member | Member removed |
 | CH-63 | Bug chat video attach (iOS) | `@mobile` Capacitor iOS → bug thread → attach gallery MOV | Video accepted; compress toast; message sends |
+| CH-64 | Bugs filter survives thread nav | `@mobile` Bugs → turn off Created by me → open non-owned bug → back | Created by me stays off; list still shows all bugs |
 
 ---
 

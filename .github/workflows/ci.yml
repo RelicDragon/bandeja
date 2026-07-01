@@ -9,6 +9,7 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: Backend
@@ -28,6 +29,7 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: Frontend
@@ -53,9 +55,12 @@ jobs:
     needs: [backend, frontend]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     runs-on: [self-hosted, linux, production]
+    timeout-minutes: 60
     env:
       UPD_BE_HOST: local
       UPD_FE_HOST: relic@10.0.0.2
+      UPD_SSH_BATCH_MODE: yes
+      UPD_SSH_CONNECT_TIMEOUT: 15
     concurrency:
       group: production-deploy
       cancel-in-progress: false
@@ -64,6 +69,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Configure SSH
+        timeout-minutes: 2
         env:
           DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
@@ -76,9 +82,10 @@ jobs:
           printf '%s\n' "${DEPLOY_SSH_KEY}" | tr -d '\r' > ~/.ssh/id_hetzner
           chmod 600 ~/.ssh/id_hetzner
           ssh-keyscan -4 -H 127.0.0.1 10.0.0.2 >> ~/.ssh/known_hosts 2>/dev/null || true
-          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@127.0.0.1 'echo backend-ssh-ok'
-          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -i ~/.ssh/id_hetzner relic@10.0.0.2 'echo frontend-ssh-ok'
+          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/id_hetzner relic@127.0.0.1 'echo backend-ssh-ok'
+          ssh -4 -o IdentitiesOnly=yes -o BatchMode=yes -o ConnectTimeout=15 -o ConnectionAttempts=2 -i ~/.ssh/id_hetzner relic@10.0.0.2 'echo frontend-ssh-ok'
       - name: Deploy (auto BE/FE from diff)
+        timeout-minutes: 55
         env:
           UPD_SSH_KEY: ~/.ssh/id_hetzner
         run: ./upd.sh
