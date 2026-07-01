@@ -8,11 +8,3 @@ export function shouldSuppressUnreadForOpenContext(contextType: string, contextI
   if (contextType === 'GROUP' && nav.viewingGroupChannelId === contextId) return true;
   return false;
 }
-
-export function effectiveSocketUnreadCount(
-  contextType: string,
-  contextId: string,
-  unreadCount: number
-): number {
-  return shouldSuppressUnreadForOpenContext(contextType, contextId) ? 0 : unreadCount;
-}
