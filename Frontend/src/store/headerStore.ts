@@ -29,6 +29,7 @@ interface HeaderState {
 
 export const useHeaderStore = create<HeaderState>((set) => ({
   pendingInvites: 0,
+  decrementedInviteIds: new Set<string>(),
   isNewInviteAnimating: false,
   syncStatus: 'IDLE',
   leaderboardType: 'level',
