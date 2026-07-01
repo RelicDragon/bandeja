@@ -39,7 +39,7 @@ jobs:
           cache: npm
           cache-dependency-path: Frontend/package-lock.json
       - run: npm ci
-      - run: npm run build:contract
+      - run: npm run build:contracts
       - run: npm run lint
       - run: npm run test:chat-open
       - run: npm run test:chat-inbox-feed
