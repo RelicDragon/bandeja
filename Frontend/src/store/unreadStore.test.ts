@@ -1,8 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { contextKey } from '@/services/chat/unreadSnapshot';
 import type { ChatItem } from '@/utils/chatListSort';
 import { selectContextUnreadForListItem, useUnreadStore } from '@/store/unreadStore';
 import { emptyUnreadTotals } from '@/services/chat/unreadSnapshot';
+
+const getUnreadSnapshotMock = vi.fn();
+
+vi.mock('@/api/chat', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/api/chat')>();
+  return {
+    ...actual,
+    chatApi: {
+      ...actual.chatApi,
+      getUnreadSnapshot: (...args: unknown[]) => getUnreadSnapshotMock(...args),
+    },
+  };
+});
 
 describe('selectContextUnreadForListItem', () => {
   const gameItem = {
@@ -75,5 +88,61 @@ describe('selectContextUnreadForListItem', () => {
     expect(state.totals.all).toBe(0);
     expect(selectContextUnreadForListItem(groupItem, state, { warm: true })).toBe(9);
     useUnreadStore.getState().reset();
+  });
+});
+
+describe('refreshAll in-flight dedupe (Phase 0 #233)', () => {
+  beforeEach(() => {
+    useUnreadStore.getState().reset();
+    getUnreadSnapshotMock.mockReset();
+    getUnreadSnapshotMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          setTimeout(
+            () =>
+              resolve({
+                data: {
+                  games: [],
+                  userChats: [],
+                  groupChannels: [],
+                  bugs: [],
+                  marketItems: [],
+                  byContext: {},
+                  totals: emptyUnreadTotals(),
+                },
+              }),
+            20
+          );
+        })
+    );
+  });
+
+  it('coalesces concurrent refreshAll into one snapshot fetch', async () => {
+    let resolveSnapshot: ((value: unknown) => void) | undefined;
+    getUnreadSnapshotMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSnapshot = resolve;
+        })
+    );
+
+    const first = useUnreadStore.getState().refreshAll();
+    const second = useUnreadStore.getState().refreshAll();
+
+    expect(getUnreadSnapshotMock).toHaveBeenCalledTimes(1);
+
+    resolveSnapshot?.({
+      data: {
+        games: [],
+        userChats: [],
+        groupChannels: [],
+        bugs: [],
+        marketItems: [],
+        byContext: {},
+        totals: emptyUnreadTotals(),
+      },
+    });
+
+    await Promise.all([first, second]);
   });
 });

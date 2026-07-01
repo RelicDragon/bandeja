@@ -119,6 +119,7 @@ Frontend/e2e/
 | G-09 | Primary sport gate | User without enabled sports | Redirect from `/` and `/find` to `/profile` |
 | G-10 | Bottom tab navigation | Tap each tab | Correct route + active state |
 | G-11 | Tab unread badges | Seed unread game + chat + market | Badges on My, Chats, Market |
+| G-20 | Tab badges stable on navigation | Seed unread; switch My → Find → Chats → Market without reconnect | Tab badge counts unchanged (no full unread snapshot refetch flicker) |
 | G-12 | Pull to refresh | Pull on My / Find / Profile | Spinner sits in blank gap below header (not over stories/content); list refreshes, no crash |
 | G-13 | Deep link game | Open `/games/:id` | Game details loads |
 | G-14 | Deep link game chat | Open `/games/:id/chat` | Game chat thread opens |
@@ -1065,7 +1066,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-06 | Game participant join socket | Other client updates roster |
 | X-07 | Chat message socket | Appears in open thread |
 | X-08 | Wallet update socket | Profile wallet badge updates |
-| X-09 | Unread counts refresh | Tab badges update |
+| X-09 | Unread counts refresh | Tab badges update on login, reconnect, or socket delta — not on ordinary tab/route navigation |
 
 ### 18.3 Offline & resilience
 

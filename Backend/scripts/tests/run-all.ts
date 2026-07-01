@@ -549,6 +549,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'unread auto-read notify unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'chat', 'unreadAutoReadNotify.test.ts'),
+    ],
+  },
+  {
     label: 'game photos',
     command: process.execPath,
     args: [

@@ -1,5 +1,6 @@
 import * as cron from 'node-cron';
 import { UnreadAutoReadService } from './chat/unreadAutoRead.service';
+import { UnreadAutoReadNotifyService } from './chat/unreadAutoReadNotify.service';
 
 export class UnreadAutoReadScheduler {
   private cronJob: cron.ScheduledTask | null = null;
@@ -18,8 +19,11 @@ export class UnreadAutoReadScheduler {
     try {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          const created = await UnreadAutoReadService.markOldUnreadAsRead();
-          if (created > 0) console.log(`📬 Unread auto-read: marked ${created} receipt(s) for messages older than 1 month`);
+          const { totalCreated, affected } = await UnreadAutoReadService.markOldUnreadAsRead();
+          if (totalCreated > 0) {
+            console.log(`📬 Unread auto-read: marked ${totalCreated} receipt(s) for messages older than 1 month`);
+          }
+          await UnreadAutoReadNotifyService.notifyOnlineUsers(affected);
           return;
         } catch (err) {
           console.error(`Unread auto-read scheduler error (attempt ${attempt}/${maxAttempts}):`, err);

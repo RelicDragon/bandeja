@@ -195,9 +195,9 @@ function AppContent() {
 
   useEffect(() => {
     if (isInitializing || !isAuthenticated) return;
-    if (isTelegramAutoLoginPath(location.pathname)) return;
+    if (isTelegramAutoLoginPath(window.location.pathname)) return;
     void useUnreadStore.getState().refreshAll();
-  }, [isInitializing, isAuthenticated, location.pathname]);
+  }, [isInitializing, isAuthenticated]);
 
   useEffect(() => {
     if (!isCapacitor()) return;

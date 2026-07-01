@@ -1,23 +1,31 @@
 import { Capacitor } from '@capacitor/core';
+import { chatApi } from '@/api/chat';
 import { selectTotalAll, useUnreadStore } from '@/store/unreadStore';
 import { getAppIconBadgeCountNative, setAppIconBadgeCountNative } from '@/services/authBridge';
 
-export async function syncAppBadgeAfterPushReply(unreadBadgeCount?: number): Promise<void> {
+async function resolvePushReplyBadgeCount(unreadBadgeCount?: number): Promise<number | undefined> {
   if (typeof unreadBadgeCount === 'number' && Number.isFinite(unreadBadgeCount)) {
-    await setAppIconBadgeCountNative(Math.max(0, Math.floor(unreadBadgeCount)));
+    return Math.max(0, Math.floor(unreadBadgeCount));
   }
 
   try {
-    await useUnreadStore.getState().refreshAll();
+    const response = await chatApi.getUnreadCount();
+    const count = response?.data?.count;
+    if (typeof count === 'number' && Number.isFinite(count)) {
+      return Math.max(0, Math.floor(count));
+    }
   } catch (error) {
-    console.warn('[push-reply] unread refresh after reply failed', error);
+    console.warn('[push-reply] cheap unread count fetch failed', error);
   }
 
-  if (Capacitor.getPlatform() === 'ios') {
-    const count = selectTotalAll(useUnreadStore.getState());
-    await setAppIconBadgeCountNative(count);
-    return;
-  }
+  return selectTotalAll(useUnreadStore.getState());
+}
+
+export async function syncAppBadgeAfterPushReply(unreadBadgeCount?: number): Promise<void> {
+  const badgeCount = await resolvePushReplyBadgeCount(unreadBadgeCount);
+  if (typeof badgeCount !== 'number') return;
+
+  await setAppIconBadgeCountNative(badgeCount);
 
   if (Capacitor.getPlatform() === 'android' && typeof unreadBadgeCount !== 'number') {
     const storedCount = await getAppIconBadgeCountNative();

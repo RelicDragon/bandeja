@@ -6,6 +6,7 @@ import { ChatMuteService } from './chatMute.service';
 import { sqlMessageNotReadByUser } from './chatReadUnreadSql';
 import { MessageService } from './message.service';
 import { ReadReceiptService } from './readReceipt.service';
+import { UnreadCheapTotalsService } from './unreadCheapTotals.service';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
 import { UnreadObjectsService, type UnreadObjectsResult } from './unreadObjects.service';
 
@@ -268,8 +269,7 @@ export class UnreadSnapshotService {
   }
 
   static async getTotalsAll(userId: string): Promise<number> {
-    const snapshot = await this.getSnapshot(userId);
-    return snapshot.totals.all;
+    return UnreadCheapTotalsService.getTotalsAll(userId);
   }
 
   static async markContextRead(

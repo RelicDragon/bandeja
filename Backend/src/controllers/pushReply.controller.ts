@@ -8,7 +8,7 @@ import { recordPushReplyMetric } from '../services/push/push-reply-metrics';
 import { assertPushReplyRateLimit } from '../services/push/pushReply.rateLimit';
 import { markReplyContextAsRead } from '../services/telegram/markReplyContextAsRead';
 import { getChatNotifier } from '../services/chat/chatNotifier';
-import { UnreadSnapshotService } from '../services/chat/unreadSnapshot.service';
+import { UnreadCheapTotalsService } from '../services/chat/unreadCheapTotals.service';
 import prisma from '../config/database';
 
 const PUSH_REPLY_MAX_CONTENT = 4096;
@@ -49,7 +49,7 @@ export const pushReply = asyncHandler(async (req: Request, res: Response) => {
       chatContextType: scope.chatContextType,
       recipientUserId: scope.recipientUserId,
     });
-    const unreadBadgeCount = await UnreadSnapshotService.getTotalsAll(scope.recipientUserId);
+    const unreadBadgeCount = await UnreadCheapTotalsService.getTotalsAll(scope.recipientUserId);
     res.status(200).json({ success: true, data: message, unreadBadgeCount });
     return;
   }
@@ -87,7 +87,7 @@ export const pushReply = asyncHandler(async (req: Request, res: Response) => {
       messageId: message.id,
     });
 
-    const unreadBadgeCount = await UnreadSnapshotService.getTotalsAll(scope.recipientUserId);
+    const unreadBadgeCount = await UnreadCheapTotalsService.getTotalsAll(scope.recipientUserId);
     res.status(deduped ? 200 : 201).json({ success: true, data: message, unreadBadgeCount });
   } catch (error: unknown) {
     const statusCode =

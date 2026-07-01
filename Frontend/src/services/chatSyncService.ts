@@ -1,7 +1,6 @@
 import { chatApi } from '@/api/chat';
 import { pullMissedAndPersistToDexie } from '@/services/chat/chatThreadNetworkSync';
 import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
-import { scheduleWarmFromUnreadApiPayload } from '@/services/chat/chatSyncBatchWarm';
 import { refreshChatOfflineBanner } from '@/services/chat/chatOfflineBanner';
 import {
   enqueueChatSyncPull,
@@ -12,8 +11,8 @@ import {
   resolveAccessibleGameChatTypes,
   type GameChatSyncContext,
 } from '@/services/chat/resolveGameChatSyncTypes';
-import { unreadApiEnvelopeData } from '@/services/chat/chatUnreadPayload';
 import { useChatSyncStore, ChatContextType } from '@/store/chatSyncStore';
+import { useUnreadStore } from '@/store/unreadStore';
 import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 
@@ -131,8 +130,7 @@ export const chatSyncService = {
       } else {
         chatApi.invalidateUnreadCache();
         try {
-          const res = await chatApi.getUnreadObjects();
-          scheduleWarmFromUnreadApiPayload(unreadApiEnvelopeData(res));
+          await useUnreadStore.getState().refreshAll();
         } catch {
           // list will refetch when opened
         }
@@ -153,8 +151,7 @@ export const chatSyncService = {
   async refreshUnreadAndList(): Promise<void> {
     chatApi.invalidateUnreadCache();
     try {
-      const res = await chatApi.getUnreadObjects();
-      scheduleWarmFromUnreadApiPayload(unreadApiEnvelopeData(res));
+      await useUnreadStore.getState().refreshAll();
     } catch {
       // list will refetch when opened
     }

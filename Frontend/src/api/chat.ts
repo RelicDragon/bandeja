@@ -937,9 +937,6 @@ export const chatApi = {
     unreadCountCache.clear();
     unreadCountPromise = null;
     unreadObjectsInFlight = null;
-    void import('@/store/unreadStore').then(({ useUnreadStore }) => {
-      useUnreadStore.getState().refreshAll().catch(() => {});
-    });
   },
 
   getUnreadCountForContext: async (contextType: ChatContextType, contextId: string): Promise<number> => {

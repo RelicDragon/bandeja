@@ -225,24 +225,30 @@ export async function refreshContext(key: ContextKey): Promise<void> {
   }
 }
 
+/** Phase 0 interim: mark-read success already applied count 0 — skip repair refetch. */
+function shouldSkipRedundantRefreshAfterMarkReadSuccess(key: ContextKey): boolean {
+  return (useUnreadStore.getState().byContext[key] ?? 0) === 0;
+}
+
 export function onMarkReadBatchFlushSuccess(key: ContextKey): void {
   confirmMarkRead(key);
   pendingRestoreByKey.delete(key);
   const parsed = parseContextKey(key);
   if (!parsed) return;
+  const skipRefresh = shouldSkipRedundantRefreshAfterMarkReadSuccess(key);
   useUnreadStore.getState().applySocketDelta({
     contextType: parsed.contextType,
     contextId: parsed.contextId,
     unreadCount: 0,
   });
-  void refreshContext(key);
+  if (!skipRefresh) {
+    void refreshContext(key);
+  }
 }
 
 export function onMarkReadBatchFlushFailure(key: ContextKey): void {
-  const prev = pendingRestoreByKey.get(key);
-  if (prev != null && prev > 0) {
-    useUnreadStore.getState().restoreContext(key, prev);
-  }
+  const prev = pendingRestoreByKey.get(key) ?? 0;
+  useUnreadStore.getState().restoreContext(key, prev);
   pendingRestoreByKey.delete(key);
   void refreshContext(key);
 }

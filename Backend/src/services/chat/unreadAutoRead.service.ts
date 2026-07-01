@@ -4,6 +4,10 @@ import { ChatContextType } from '@prisma/client';
 import { subMonths } from 'date-fns';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { ChatReadCursorService, type ReadCursorMessageSlice } from './chatReadCursor.service';
+import {
+  type AutoReadAffectedContext,
+  dedupeAutoReadAffected,
+} from './unreadAutoReadNotify.service';
 
 const CUTOFF_MONTHS = 1;
 const MESSAGE_BATCH = 500;
@@ -15,10 +19,29 @@ function cutoffDate(): Date {
   return subMonths(new Date(), CUTOFF_MONTHS);
 }
 
+export type MarkOldUnreadAsReadResult = {
+  totalCreated: number;
+  affected: AutoReadAffectedContext[];
+};
+
 export class UnreadAutoReadService {
-  static async markOldUnreadAsRead(): Promise<number> {
+  static async markOldUnreadAsRead(): Promise<MarkOldUnreadAsReadResult> {
     const cutoff = cutoffDate();
     let totalCreated = 0;
+    const affected: AutoReadAffectedContext[] = [];
+
+    const trackAffected = (
+      chatContextType: ChatContextType,
+      contextId: string,
+      userIds: Iterable<string>,
+      senderId: string | null
+    ): void => {
+      if (!senderId) return;
+      for (const userId of userIds) {
+        if (userId === senderId) continue;
+        affected.push({ userId, chatContextType, contextId });
+      }
+    };
 
     const contextTypes: ChatContextType[] = ['GAME', 'USER', 'GROUP', 'BUG'];
     for (const chatContextType of contextTypes) {
@@ -60,6 +83,7 @@ export class UnreadAutoReadService {
         for (const msg of messages) {
           const recipients = recipientByContext.get(msg.contextId);
           if (!recipients) continue;
+          trackAffected(chatContextType, msg.contextId, recipients, msg.senderId);
           const senderId = msg.senderId!;
           for (const uid of recipients) {
             if (uid !== senderId) toCreate.push({ messageId: msg.id, userId: uid });
@@ -114,7 +138,10 @@ export class UnreadAutoReadService {
       } while (cursor);
     }
 
-    return totalCreated;
+    return {
+      totalCreated,
+      affected: dedupeAutoReadAffected(affected),
+    };
   }
 
   private static async getRecipientUserIdsByContext(

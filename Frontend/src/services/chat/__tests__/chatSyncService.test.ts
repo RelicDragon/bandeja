@@ -3,11 +3,20 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const pullMissedMock = vi.fn().mockResolvedValue([]);
 const enqueuePullMock = vi.fn();
 const resolveAccessibleGameChatTypesMock = vi.fn();
+const refreshAllMock = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
+const invalidateUnreadCacheMock = vi.hoisted(() => vi.fn());
+
+vi.mock('@/store/unreadStore', () => ({
+  useUnreadStore: {
+    getState: () => ({
+      refreshAll: refreshAllMock,
+    }),
+  },
+}));
 
 vi.mock('@/api/chat', () => ({
   chatApi: {
-    invalidateUnreadCache: vi.fn(),
-    getUnreadObjects: vi.fn().mockResolvedValue({ data: null }),
+    invalidateUnreadCache: invalidateUnreadCacheMock,
   },
 }));
 
@@ -17,10 +26,6 @@ vi.mock('@/services/chat/chatThreadNetworkSync', () => ({
 
 vi.mock('@/services/chat/chatLocalApplyThreadEvent', () => ({
   applyThreadEvent: vi.fn(),
-}));
-
-vi.mock('@/services/chat/chatSyncBatchWarm', () => ({
-  scheduleWarmFromUnreadApiPayload: vi.fn(),
 }));
 
 vi.mock('@/services/chat/chatOfflineBanner', () => ({
@@ -55,6 +60,8 @@ describe('chatSyncService.syncContext', () => {
     enqueuePullMock.mockClear();
     resolveAccessibleGameChatTypesMock.mockReset();
     resolveAccessibleGameChatTypesMock.mockResolvedValue(['PUBLIC', 'PRIVATE']);
+    refreshAllMock.mockClear();
+    invalidateUnreadCacheMock.mockClear();
   });
 
   it('skips missed pull for GROUP but still enqueues events sync in syncAllContexts', async () => {
@@ -62,6 +69,8 @@ describe('chatSyncService.syncContext', () => {
 
     expect(pullMissedMock).not.toHaveBeenCalled();
     expect(enqueuePullMock).toHaveBeenCalledWith('GROUP', 'g1', 100);
+    expect(invalidateUnreadCacheMock).toHaveBeenCalledTimes(1);
+    expect(refreshAllMock).toHaveBeenCalledTimes(1);
   });
 
   it('pulls missed only for accessible game chat types', async () => {
@@ -104,5 +113,19 @@ describe('chatSyncService.syncContext', () => {
       contextId: 'game-1',
       gameChatType: 'ADMINS',
     });
+  });
+});
+
+describe('chatSyncService.refreshUnreadAndList', () => {
+  beforeEach(() => {
+    refreshAllMock.mockClear();
+    invalidateUnreadCacheMock.mockClear();
+  });
+
+  it('invalidates API cache then refreshes unread store once', async () => {
+    await chatSyncService.refreshUnreadAndList();
+
+    expect(invalidateUnreadCacheMock).toHaveBeenCalledTimes(1);
+    expect(refreshAllMock).toHaveBeenCalledTimes(1);
   });
 });
