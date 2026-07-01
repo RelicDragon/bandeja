@@ -646,7 +646,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       } else {
         toast.success(t(message, { defaultValue: message }));
       }
-      
+
+      useHeaderStore.getState().decrementPendingInvite(inviteId);
       setMyInvites(myInvites.filter((inv) => inv.id !== inviteId));
       if (id) {
         const response = await gamesApi.getById(id);
