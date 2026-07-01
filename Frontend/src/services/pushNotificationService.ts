@@ -10,6 +10,7 @@ import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { parsePushChatContext } from '@/services/push/parsePushChatContext';
 import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
+import { applyPushUnreadBadgeFromNotification } from '@/services/push/applyPushUnreadBadge';
 import {
   PUSH_ACTION_ACCEPT,
   PUSH_ACTION_DECLINE,
@@ -149,6 +150,7 @@ class PushNotificationService {
       'pushNotificationReceived',
       async (notification: PushNotificationSchema) => {
         console.log('Push notification received:', notification);
+        await applyPushUnreadBadgeFromNotification(notification);
         if (Capacitor.getPlatform() === 'android' && parsePushChatContext(notification.data)) {
           return;
         }

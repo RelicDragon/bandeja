@@ -1,11 +1,13 @@
 import { ChatContextType, ChatType } from '@prisma/client';
 import { NotificationPayload, NotificationType } from '../../types/notifications.types';
+import { UnreadCheapTotalsService } from '../chat/unreadCheapTotals.service';
 import {
   hasFullChatReplyContext,
   PUSH_CATEGORY_CHAT_REPLY,
   resolveApnsNotificationCategory,
 } from './notifications/chat-push-reply.utils';
 import { PushReplyTokenService } from './pushReplyToken.service';
+import { shouldAttachPushUnreadBadge, withPushUnreadBadge } from './pushUnreadBadge';
 
 const INVITE_ACTION_TYPES = new Set<NotificationType>([
   NotificationType.INVITE,
@@ -98,6 +100,11 @@ export async function preparePushPayloadForRecipient(
         declineActionTitle: decline?.title,
       },
     };
+  }
+
+  if (shouldAttachPushUnreadBadge(next)) {
+    const { total } = await UnreadCheapTotalsService.getTotalsWithRevision(userId);
+    next = withPushUnreadBadge(next, total);
   }
 
   return next;

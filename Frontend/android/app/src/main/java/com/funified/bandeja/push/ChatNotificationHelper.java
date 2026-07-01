@@ -17,6 +17,7 @@ import androidx.core.app.RemoteInput;
 import androidx.core.content.ContextCompat;
 import com.funified.bandeja.MainActivity;
 import com.funified.bandeja.R;
+import com.funified.bandeja.auth.AppBadgeStorage;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -62,6 +63,7 @@ public final class ChatNotificationHelper {
         if (pushData == null) {
             return;
         }
+        applyUnreadBadgeFromData(context, data);
         ensureChannel(context);
         NotificationManager manager = notificationManager(context);
         if (manager == null) {
@@ -236,7 +238,38 @@ public final class ChatNotificationHelper {
             builder.setLargeIcon(previewBitmap);
         }
 
+        int unreadBadge = pushData.unreadBadgeCount != null ? pushData.unreadBadgeCount : -1;
+        if (unreadBadge > 0) {
+            builder.setNumber(unreadBadge);
+        }
+
         return builder.build();
+    }
+
+    private static void applyUnreadBadgeFromData(Context context, Map<String, String> data) {
+        if (data == null) {
+            return;
+        }
+        int count = parseUnreadBadgeCount(data.get("unreadBadgeCount"));
+        if (count < 0) {
+            return;
+        }
+        AppBadgeStorage.setCount(context, count);
+    }
+
+    private static int parseUnreadBadgeCount(String raw) {
+        if (raw == null) {
+            return -1;
+        }
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            return -1;
+        }
+        try {
+            return Math.max(0, Integer.parseInt(trimmed));
+        } catch (NumberFormatException ignored) {
+            return -1;
+        }
     }
 
     private static Bitmap downloadBitmap(String imageUrl) {

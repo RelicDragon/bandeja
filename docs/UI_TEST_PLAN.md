@@ -750,6 +750,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-86 | Tab badge single projection source | Compare bottom-tab Chats badge, list row badge, native app icon badge (Capacitor) after unread changes | All read same projection totals; no divergent feed-store unread patches |
 | CH-87 | Inbound DM badge latency (optimistic receive) | `@two-user` B on another tab/screen; A sends DM | B sees chat tab / row badge within ~100ms before authority envelope arrives |
 | CH-88 | Viewing thread no badge on inbound | `@two-user` B has DM thread open; A sends message | B message list updates; no badge bump on row or tab; read state catches up |
+| CH-89 | Native icon badge while app backgrounded (Capacitor) | `@two-user` A sends DM while B has app backgrounded/killed (not in thread) | B home-screen icon badge reflects authoritative unread total; opening app keeps tab + icon in sync after resume repair |
 
 ### 11.2 Thread types
 

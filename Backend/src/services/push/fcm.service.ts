@@ -55,6 +55,11 @@ function buildDataMap(payload: NotificationPayload): Record<string, string> {
     data.threadId = payload.threadId;
     data.conversationKey = payload.threadId;
   }
+  if (payload.badge !== undefined && Number.isFinite(payload.badge)) {
+    data.unreadBadgeCount = String(Math.max(0, Math.floor(payload.badge)));
+  } else if (payload.data?.unreadBadgeCount !== undefined) {
+    data.unreadBadgeCount = String(Math.max(0, Math.floor(payload.data.unreadBadgeCount)));
+  }
   if (
     isReplyableChatNotificationType(payload.type) &&
     hasFullChatReplyContext(payload.data as Record<string, unknown>)

@@ -67,6 +67,8 @@ export interface NotificationData {
   previewImageUrl?: string;
   previewMediaType?: string;
   mediaCount?: number;
+  /** Authoritative unread total for native app icon badge (chat push). */
+  unreadBadgeCount?: number;
 }
 
 export interface NotificationPayload {

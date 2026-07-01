@@ -34,6 +34,7 @@ public final class ChatPushData {
     public final String replyToken;
     public final String previewImageUrl;
     public final String previewMediaType;
+    public final Integer unreadBadgeCount;
 
     private ChatPushData(
         String type,
@@ -52,7 +53,8 @@ public final class ChatPushData {
         String marketItemId,
         String replyToken,
         String previewImageUrl,
-        String previewMediaType
+        String previewMediaType,
+        Integer unreadBadgeCount
     ) {
         this.type = type;
         this.chatContextType = chatContextType;
@@ -71,6 +73,7 @@ public final class ChatPushData {
         this.replyToken = replyToken;
         this.previewImageUrl = previewImageUrl;
         this.previewMediaType = previewMediaType;
+        this.unreadBadgeCount = unreadBadgeCount;
     }
 
     public static boolean isReplyable(Map<String, String> data) {
@@ -110,7 +113,8 @@ public final class ChatPushData {
             trim(data.get("marketItemId")),
             trim(data.get("replyToken")),
             trim(data.get("previewImageUrl")),
-            trim(data.get("previewMediaType"))
+            trim(data.get("previewMediaType")),
+            parseUnreadBadgeCount(trim(data.get("unreadBadgeCount")))
         );
     }
 
@@ -135,7 +139,8 @@ public final class ChatPushData {
             trim(extras.getString("marketItemId")),
             trim(extras.getString("replyToken")),
             trim(extras.getString("previewImageUrl")),
-            trim(extras.getString("previewMediaType"))
+            trim(extras.getString("previewMediaType")),
+            parseUnreadBadgeCount(trim(extras.getString("unreadBadgeCount")))
         );
         if (!isReplyableMap(data)) {
             return null;
@@ -204,5 +209,16 @@ public final class ChatPushData {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private static Integer parseUnreadBadgeCount(String value) {
+        if (value == null) {
+            return null;
+        }
+        try {
+            return Math.max(0, Integer.parseInt(value));
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 }

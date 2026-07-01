@@ -37,8 +37,26 @@ function testFcmOmitsAndroidImageWithoutPreview(): void {
   assert.equal(message.android?.notification?.imageUrl, undefined);
 }
 
+function testFcmIncludesUnreadBadgeInData(): void {
+  const message = buildFcmMessage('token-3', {
+    type: NotificationType.USER_CHAT,
+    title: 'Sender',
+    body: 'Hello',
+    badge: 12,
+    data: {
+      chatContextType: 'USER',
+      contextId: 'chat-3',
+      messageId: 'msg-3',
+      unreadBadgeCount: 12,
+    },
+  });
+
+  assert.equal(message.data?.unreadBadgeCount, '12');
+}
+
 void (async () => {
   testFcmIncludesAndroidImageWhenPreviewPresent();
   testFcmOmitsAndroidImageWithoutPreview();
+  testFcmIncludesUnreadBadgeInData();
   console.log('fcm.service.test.ts: ok');
 })();

@@ -10,7 +10,10 @@
 # Preserve generic signatures for better debugging
 -keepattributes Signature
 
-# Capacitor Core
+# ShortcutBadger (launcher icon badge on supported OEM launchers)
+-keep class me.leolin.shortcutbadger.** { *; }
+-dontwarn me.leolin.shortcutbadger.**
+
 -keep class com.getcapacitor.** { *; }
 -keep interface com.getcapacitor.** { *; }
 -keepclassmembers class * extends com.getcapacitor.Plugin {
