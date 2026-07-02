@@ -34,7 +34,12 @@ const Chip = ({ icon: Icon, label, active, onClick }: ChipProps) => (
   >
     <motion.span
       animate={{ scale: active ? 1.15 : 1, rotate: active ? [0, -10, 10, 0] : 0 }}
-      transition={{ type: 'spring', stiffness: 320, damping: 16 }}
+      transition={{
+        scale: { type: 'spring', stiffness: 320, damping: 16 },
+        rotate: active
+          ? { duration: 0.45, ease: 'easeInOut', times: [0, 0.2, 0.6, 1] }
+          : { type: 'spring', stiffness: 320, damping: 16 },
+      }}
       className="flex shrink-0 items-center justify-center"
     >
       <Icon

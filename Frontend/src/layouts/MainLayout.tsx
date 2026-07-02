@@ -75,6 +75,12 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
     !isDesktopGameDetailsSplitView &&
     !isGameDetailsTableFullBleed &&
     !isDesktopCalendarSplitView;
+  const hasClubAdminFab = Boolean(user?.clubAdminClubs?.length);
+  const mainBottomPadding = shouldAddBottomPadding
+    ? hasClubAdminFab
+      ? 'calc(5rem + 3rem + env(safe-area-inset-bottom))'
+      : 'calc(5rem + env(safe-area-inset-bottom))'
+    : '1.5rem';
   const isUserTeamRoute = /^\/user-team\/[^/]+$/.test(location.pathname);
 
   return (
@@ -90,7 +96,7 @@ export const MainLayout = ({ children }: MainLayoutProps) => {
         className={isUserTeamRoute ? 'flex min-h-0 flex-1 flex-col' : undefined}
         style={{
           paddingTop: shouldHideHeader ? '0' : anySplitView || gameDetailsWideBleedChrome ? '0' : `calc(4rem + env(safe-area-inset-top))`,
-          paddingBottom: shouldAddBottomPadding ? 'calc(5rem + env(safe-area-inset-bottom))' : '1.5rem',
+          paddingBottom: mainBottomPadding,
           paddingLeft: anySplitView || userProfileFullBleed || gameDetailsWideBleedChrome ? '0' : `max(0.5rem, env(safe-area-inset-left))`,
           paddingRight: anySplitView || userProfileFullBleed || gameDetailsWideBleedChrome ? '0' : `max(0.5rem, env(safe-area-inset-right))`,
         }}

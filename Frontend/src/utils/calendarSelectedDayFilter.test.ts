@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { format, parse, startOfDay } from 'date-fns';
 import type { Game } from '@/types';
-import { filterGamesForCalendarDay, unionDateRangeWithDay } from './calendarSelectedDayFilter';
+import {
+  filterGamesForCalendarDay,
+  selectedDayInMonth,
+  unionDateRangeWithDay,
+} from './calendarSelectedDayFilter';
 
 const dayKey = (d: Date) => format(startOfDay(d), 'yyyy-MM-dd');
 
@@ -16,6 +20,20 @@ const gameOn = (dateStr: string, id = 'g1'): Game =>
     maxParticipants: 4,
     isPublic: true,
   }) as Game;
+
+describe('selectedDayInMonth', () => {
+  it('preserves day-of-month when paging to another month', () => {
+    const anchor = parse('2026-07-17', 'yyyy-MM-dd', new Date());
+    const may = parse('2026-05-01', 'yyyy-MM-dd', new Date());
+    expect(format(selectedDayInMonth(anchor, may), 'yyyy-MM-dd')).toBe('2026-05-17');
+  });
+
+  it('clamps to last day when target month is shorter', () => {
+    const anchor = parse('2026-03-31', 'yyyy-MM-dd', new Date());
+    const feb = parse('2026-02-01', 'yyyy-MM-dd', new Date());
+    expect(format(selectedDayInMonth(anchor, feb), 'yyyy-MM-dd')).toBe('2026-02-28');
+  });
+});
 
 describe('filterGamesForCalendarDay', () => {
   it('returns games matching the selected calendar day key', () => {

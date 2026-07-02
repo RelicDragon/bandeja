@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Calendar, List, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';
+import { calendarDayKey, selectedDayInMonth } from '@/utils/calendarSelectedDayFilter';
 import { useTranslation } from 'react-i18next';
 import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
@@ -109,11 +110,15 @@ export const MonthCalendar = ({
   const headerTransition = reduceMotion
     ? { duration: 0 }
     : { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
-  const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
   const [slideDirection, setSlideDirection] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
-  const isNavigatingRef = useRef(false);
   const calendarRef = useRef<HTMLDivElement>(null);
+
+  const displayedMonth = useMemo(
+    () => startOfMonth(selectedDate ?? new Date()),
+    [selectedDate],
+  );
+  const selectedDayKey = selectedDate ? calendarDayKey(selectedDate) : null;
 
   const displaySettings = useMemo(() => user ? resolveDisplaySettings(user) : resolveDisplaySettings(null), [user]);
   // Subscribe to a shallow-stable record of ONLY this calendar's game ids, not the
@@ -127,24 +132,12 @@ export const MonthCalendar = ({
   }, [i18n.language]);
   const weekStartsOn = useMemo(() => displaySettings.weekStart, [displaySettings.weekStart]);
   const monthHeaderLabel = useMemo(
-    () => formatCompactMonthHeader(currentMonth, i18n.language),
-    [currentMonth, i18n.language],
+    () => formatCompactMonthHeader(displayedMonth, i18n.language),
+    [displayedMonth, i18n.language],
   );
 
-  useEffect(() => {
-    if (!isNavigatingRef.current && selectedDate) {
-      const newMonth = startOfMonth(selectedDate);
-      if (!isSameMonth(newMonth, currentMonth)) {
-        setSlideDirection(newMonth > currentMonth ? 1 : -1);
-        setIsSliding(true);
-        setCurrentMonth(newMonth);
-      }
-    }
-    isNavigatingRef.current = false;
-  }, [selectedDate, currentMonth]);
-
-  const monthStart = useMemo(() => startOfMonth(currentMonth), [currentMonth]);
-  const monthEnd = useMemo(() => endOfMonth(currentMonth), [currentMonth]);
+  const monthStart = useMemo(() => startOfMonth(displayedMonth), [displayedMonth]);
+  const monthEnd = useMemo(() => endOfMonth(displayedMonth), [displayedMonth]);
   const startDate = useMemo(() => startOfWeek(monthStart, { locale, weekStartsOn }), [monthStart, locale, weekStartsOn]);
   const endDate = useMemo(() => endOfWeek(monthEnd, { locale, weekStartsOn }), [monthEnd, locale, weekStartsOn]);
 
@@ -238,57 +231,50 @@ export const MonthCalendar = ({
     return dataMap;
   }, [availableGames, filterAvailableSlots, filterSuitableRating, hideBarGames, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user, panelFilters, showPrivateGames, isAdmin, gamesUnreadCounts, findDiscoveryEnabled, filterNoRating]);
 
+  const notifyMonthChange = (month: Date) => {
+    if (onMonthChange) {
+      onMonthChange(getMonth(month) + 1, getYear(month));
+    }
+  };
+
   const handlePreviousMonth = () => {
-    isNavigatingRef.current = true;
-    const newMonth = subMonths(currentMonth, 1);
+    const anchor = selectedDate ?? new Date();
+    const newMonth = startOfMonth(subMonths(displayedMonth, 1));
     setSlideDirection(-1);
     setIsSliding(true);
-    setCurrentMonth(newMonth);
-    if (onMonthChange) {
-      onMonthChange(getMonth(newMonth) + 1, getYear(newMonth));
-    }
+    onDateSelect(selectedDayInMonth(anchor, newMonth));
+    notifyMonthChange(newMonth);
   };
 
   const handleNextMonth = () => {
-    isNavigatingRef.current = true;
-    const newMonth = addMonths(currentMonth, 1);
+    const anchor = selectedDate ?? new Date();
+    const newMonth = startOfMonth(addMonths(displayedMonth, 1));
     setSlideDirection(1);
     setIsSliding(true);
-    setCurrentMonth(newMonth);
-    if (onMonthChange) {
-      onMonthChange(getMonth(newMonth) + 1, getYear(newMonth));
-    }
+    onDateSelect(selectedDayInMonth(anchor, newMonth));
+    notifyMonthChange(newMonth);
   };
 
   const handleDateClick = (day: Date) => {
-    const crossesMonth = !isSameMonth(day, currentMonth);
-    if (crossesMonth) {
-      isNavigatingRef.current = true;
-    }
-
-    onDateSelect(day);
-
-    if (crossesMonth) {
-      const newMonth = startOfMonth(day);
-      setSlideDirection(newMonth > currentMonth ? 1 : -1);
+    const dayMonth = startOfMonth(day);
+    if (!isSameMonth(dayMonth, displayedMonth)) {
+      setSlideDirection(dayMonth > displayedMonth ? 1 : -1);
       setIsSliding(true);
-      setCurrentMonth(newMonth);
-      if (onMonthChange) {
-        onMonthChange(getMonth(newMonth) + 1, getYear(newMonth));
-      }
+      notifyMonthChange(dayMonth);
     }
+
+    onDateSelect(startOfDay(day));
 
     if (calendarRef.current) {
       const rect = calendarRef.current.getBoundingClientRect();
       const header = document.querySelector('header');
       const headerHeight = header ? header.getBoundingClientRect().height : 0;
-      const currentScrollY = window.scrollY || window.pageYOffset;
-      const targetScrollY = currentScrollY + rect.top - headerHeight;
-
-      window.scrollTo({
-        top: Math.max(0, targetScrollY),
-        behavior: 'smooth'
-      });
+      if (rect.top < headerHeight - 4) {
+        window.scrollTo({
+          top: Math.max(0, window.scrollY + rect.top - headerHeight),
+          behavior: 'auto',
+        });
+      }
     }
   };
 
@@ -362,7 +348,7 @@ export const MonthCalendar = ({
                 <div className="relative min-w-0 overflow-hidden">
                   <AnimatePresence mode="popLayout" initial={false}>
                     <motion.h3
-                      key={format(currentMonth, 'yyyy-MM')}
+                      key={format(displayedMonth, 'yyyy-MM')}
                       initial={{ x: slideDirection * 32, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       exit={{ x: slideDirection * -32, opacity: 0 }}
@@ -396,7 +382,7 @@ export const MonthCalendar = ({
             <div className="relative overflow-hidden text-center">
               <AnimatePresence mode="popLayout" initial={false}>
                 <motion.h3
-                  key={format(currentMonth, 'yyyy-MM')}
+                  key={format(displayedMonth, 'yyyy-MM')}
                   initial={{ x: slideDirection * 32, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
                   exit={{ x: slideDirection * -32, opacity: 0 }}
@@ -497,7 +483,7 @@ export const MonthCalendar = ({
           <div className={`relative ${isSliding ? 'overflow-hidden' : 'overflow-visible'}`}>
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
-                key={format(currentMonth, 'yyyy-MM')}
+                key={format(displayedMonth, 'yyyy-MM')}
                 initial={{ x: slideDirection * 56, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: slideDirection * -56, opacity: 0 }}
@@ -505,11 +491,11 @@ export const MonthCalendar = ({
                 onAnimationComplete={() => setIsSliding(false)}
                 className="grid grid-cols-7 gap-1 px-1.5 pt-1.5 pb-3"
               >
-        {calendarDays.map((day, index) => {
-          const isCurrentMonth = isSameMonth(day, currentMonth);
-          const isSelected = selectedDate != null && isSameDay(day, selectedDate);
-          const isTodayDate = isToday(day);
+        {calendarDays.map((day) => {
+          const isCurrentMonth = isSameMonth(day, displayedMonth);
           const dateStr = format(startOfDay(day), 'yyyy-MM-dd');
+          const isSelected = selectedDayKey != null && dateStr === selectedDayKey;
+          const isTodayDate = isToday(day);
           const dayData = dateCellData.get(dateStr) || { gameCount: 0, unreadCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
           const gameCount = dayData.gameCount;
           const unreadCount = dayData.unreadCount;
@@ -522,8 +508,11 @@ export const MonthCalendar = ({
 
           return (
             <button
-              key={index}
+              key={dateStr}
+              type="button"
               onClick={() => handleDateClick(day)}
+              aria-selected={isSelected}
+              aria-current={isTodayDate ? 'date' : undefined}
               className={`
                 relative w-full p-2 rounded-lg text-sm flex flex-col items-center justify-center gap-0.5
                 transition-colors duration-300 ease-out
