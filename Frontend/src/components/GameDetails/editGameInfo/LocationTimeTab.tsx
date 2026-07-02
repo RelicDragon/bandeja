@@ -398,7 +398,10 @@ export function LocationTimeTab({
             hideCalendar={willBookOnCreateProp}
             bookableDaysHint={bookableDaysHint}
             connectedPhone={connectedPhone}
-            slotsLoading={slotsLoading || linkedBookingsHydrating}
+            slotsLoading={
+              slotsLoading ||
+              (locationTimeMode === 'bookings' && linkedBookingsHydrating)
+            }
             booktimeSlotsActive={booktimeSlotsActive}
             snapshotOverlayEnabled={snapshotOverlayEnabled}
             snapshotLoading={snapshotLoading}

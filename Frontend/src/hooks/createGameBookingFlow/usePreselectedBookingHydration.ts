@@ -12,6 +12,10 @@ const inactiveClubPlaceholder: Club = {
   integrationType: 'BOOKTIME',
 };
 
+function areStringArraysEqual(left: readonly string[], right: readonly string[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
 function orderedBookingRecords(
   ids: readonly string[],
   bookings: readonly BooktimeBookingRecord[],
@@ -81,6 +85,7 @@ export function usePreselectedBookingHydration({
 
   useEffect(() => {
     if (!active) return;
+    if (selectedBookingIds.length === 0) return;
     if (hydratedRef.current) return;
     if (
       selectedBookingRecords.length >= selectedBookingIds.length &&
@@ -114,16 +119,14 @@ export function usePreselectedBookingHydration({
     onHydrated,
   ]);
 
-  const hydrationState = resolvePreselectedBookingHydration(
-    initialBookingIds,
-    bookings,
-    loading,
-  );
-
-  const hydrating =
+  const pendingInitialHydration =
     active &&
-    selectedBookingRecords.length < initialBookingIds.length &&
-    (loading || hydrationState.ready);
+    initialBookingIds.length > 0 &&
+    selectedBookingIds.length > 0 &&
+    areStringArraysEqual(selectedBookingIds, initialBookingIds) &&
+    selectedBookingRecords.length < initialBookingIds.length;
+
+  const hydrating = pendingInitialHydration && loading;
 
   return { hydrating };
 }
