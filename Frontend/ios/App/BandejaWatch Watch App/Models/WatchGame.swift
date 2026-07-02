@@ -52,6 +52,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
     let participants: [WatchParticipant]
     let parent: WatchGameParent?
     let club: WatchClub?
+    let weatherSummary: WatchWeatherSummary?
 
     var displayTitle: String {
         if let name, !name.isEmpty { return name }
@@ -78,7 +79,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         case startTime, endTime, winnerOfMatch, winnerOfGame
         case fixedNumberOfSets, maxTotalPointsPerSet, maxPointsPerTeam, ballsInGames, scoringPreset, matchTimedCapMinutes, matchTimerEnabled, deucesBeforeGoldenPoint, pointsPerTie
         case maxParticipants, sport, playersPerMatch, timeIsSet, affectsRating, hasFixedTeams, allowUserInMultipleTeams, participantsReady, teamsReady, matchGenerationType, fixedTeams, resultsByAnyone
-        case participants, parent, club
+        case participants, parent, club, weatherSummary
     }
 
     nonisolated init(from decoder: Decoder) throws {
@@ -121,6 +122,7 @@ struct WatchGame: Decodable, Identifiable, Sendable {
         participants = try c.decode([WatchParticipant].self, forKey: .participants)
         parent = try c.decodeIfPresent(WatchGameParent.self, forKey: .parent)
         club = try c.decodeIfPresent(WatchClub.self, forKey: .club)
+        weatherSummary = (try? c.decodeIfPresent(WatchWeatherSummary.self, forKey: .weatherSummary)) ?? nil
     }
 
     var isMatchTimerEnabled: Bool {

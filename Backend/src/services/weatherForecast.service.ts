@@ -62,6 +62,7 @@ export interface WeatherWindowDto {
   cityTimezone: string;
   fetchedAt: string;
   stale: boolean;
+  source: 'forecast' | 'historical';
   available: boolean;
   summary: WeatherSummaryDto | null;
   hours: WeatherHourlyPoint[];
@@ -85,6 +86,28 @@ type CacheLike = {
   expiresAt: Date;
   forecastStart: Date;
   forecastEnd: Date;
+};
+
+type GameForWeatherSnapshot = {
+  id: string;
+  cityId: string;
+  startTime: Date | string;
+  endTime: Date | string;
+  timeIsSet: boolean;
+};
+
+type WeatherSnapshotLike = {
+  gameId: string;
+  cityId: string;
+  cityName: string;
+  cityTimezone: string;
+  provider: string;
+  gameStartTime: Date;
+  gameEndTime: Date;
+  fetchedAt: Date;
+  capturedAt: Date;
+  summary: unknown;
+  hours: unknown;
 };
 
 const inFlightByCity = new Map<string, Promise<CacheLike>>();
@@ -334,6 +357,15 @@ async function getCacheForCity(cityId: string): Promise<{ cache: CacheLike | nul
     return { cache: existing, stale: false };
   }
 
+  if (existing) {
+    await persistCompletedGameSnapshotsFromCache(existing, now).catch((error) => {
+      console.warn('[WeatherForecastService] Failed to snapshot completed game weather', {
+        cityId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  }
+
   const inFlightKey = `${PROVIDER}:${cityId}`;
   let refresh = inFlightByCity.get(inFlightKey);
   if (!refresh) {
@@ -424,14 +456,204 @@ function buildSummary(cache: CacheLike, stale: boolean, at: Date): WeatherSummar
   };
 }
 
+function buildWindowFromCache(
+  cache: CacheLike,
+  stale: boolean,
+  startTime: Date,
+  endTime: Date,
+  scope: WeatherWindowScope = 'game',
+): WeatherWindowDto {
+  const payload = getPayload(cache);
+  const hours = scope === 'forecast'
+    ? payload.hourly
+    : scope === 'day'
+      ? fullDayWindow(payload, startTime, endTime)
+      : hourlyWindow(payload, startTime, endTime);
+  const summary = buildSummary(cache, stale, startTime);
+  const available = scope === 'forecast'
+    ? hours.length > 0
+    : Boolean(summary && hours.length > 0);
+
+  return {
+    provider: PROVIDER,
+    cityId: payload.cityId,
+    cityName: payload.cityName,
+    cityTimezone: payload.cityTimezone,
+    fetchedAt: cache.fetchedAt.toISOString(),
+    stale,
+    source: 'forecast',
+    available,
+    summary,
+    hours,
+    attribution: 'Open-Meteo',
+    ...(available ? {} : { unavailableReason: 'out_of_range' as const }),
+  };
+}
+
+function isWeatherHourlyPoint(value: unknown): value is WeatherHourlyPoint {
+  if (!value || typeof value !== 'object') return false;
+  const point = value as WeatherHourlyPoint;
+  return typeof point.time === 'string'
+    && typeof point.temperatureC === 'number'
+    && typeof point.temperatureF === 'number'
+    && typeof point.weatherCode === 'number'
+    && typeof point.conditionKey === 'string';
+}
+
+function weatherHoursFromJson(value: unknown): WeatherHourlyPoint[] {
+  return Array.isArray(value) ? value.filter(isWeatherHourlyPoint) : [];
+}
+
+function buildSummaryFromSnapshot(snapshot: WeatherSnapshotLike): WeatherSummaryDto | null {
+  if (!isWeatherHourlyPoint(snapshot.summary)) return null;
+  return {
+    ...snapshot.summary,
+    provider: PROVIDER,
+    fetchedAt: snapshot.fetchedAt.toISOString(),
+    stale: false,
+  };
+}
+
+function snapshotMatchesGame(snapshot: WeatherSnapshotLike, game: GameForWeatherSnapshot): boolean {
+  return snapshot.cityId === game.cityId
+    && snapshot.gameStartTime.getTime() === new Date(game.startTime).getTime()
+    && snapshot.gameEndTime.getTime() === new Date(game.endTime).getTime();
+}
+
+function buildWindowFromSnapshot(snapshot: WeatherSnapshotLike): WeatherWindowDto {
+  const hours = weatherHoursFromJson(snapshot.hours);
+  const summary = buildSummaryFromSnapshot(snapshot);
+  const available = Boolean(summary && hours.length > 0);
+
+  return {
+    provider: PROVIDER,
+    cityId: snapshot.cityId,
+    cityName: snapshot.cityName,
+    cityTimezone: snapshot.cityTimezone,
+    fetchedAt: snapshot.fetchedAt.toISOString(),
+    stale: false,
+    source: 'historical',
+    available,
+    summary,
+    hours,
+    attribution: 'Open-Meteo',
+    ...(available ? {} : { unavailableReason: 'out_of_range' as const }),
+  };
+}
+
+async function readSnapshotForGame(game: GameForWeatherSnapshot): Promise<WeatherSnapshotLike | null> {
+  const snapshot = await prisma.gameWeatherSnapshot.findUnique({
+    where: { gameId: game.id },
+  });
+
+  if (!snapshot) return null;
+  if (snapshotMatchesGame(snapshot, game)) return snapshot;
+
+  await prisma.gameWeatherSnapshot.delete({ where: { gameId: game.id } }).catch(() => undefined);
+  return null;
+}
+
+function buildSnapshotPayload(game: GameForWeatherSnapshot, cache: CacheLike): {
+  cityId: string;
+  provider: typeof PROVIDER;
+  source: 'forecast';
+  cityName: string;
+  cityTimezone: string;
+  gameStartTime: Date;
+  gameEndTime: Date;
+  fetchedAt: Date;
+  summary: Prisma.InputJsonValue;
+  hours: Prisma.InputJsonValue;
+} | null {
+  if (!game.timeIsSet) return null;
+
+  const startTime = new Date(game.startTime);
+  const endTime = new Date(game.endTime);
+  if (Number.isNaN(startTime.getTime()) || Number.isNaN(endTime.getTime())) return null;
+
+  const payload = getPayload(cache);
+  if (payload.cityId !== game.cityId) return null;
+
+  const summary = buildSummary(cache, false, startTime);
+  const hours = hourlyWindow(payload, startTime, endTime);
+  if (!summary || hours.length === 0) return null;
+
+  const summaryPoint: WeatherHourlyPoint = {
+    time: summary.time,
+    temperatureC: summary.temperatureC,
+    temperatureF: summary.temperatureF,
+    weatherCode: summary.weatherCode,
+    conditionKey: summary.conditionKey,
+    precipitationProbability: summary.precipitationProbability,
+    precipitationMm: summary.precipitationMm,
+    windSpeedKmh: summary.windSpeedKmh,
+    relativeHumidity: summary.relativeHumidity,
+    isDay: summary.isDay,
+  };
+
+  return {
+    cityId: payload.cityId,
+    provider: PROVIDER,
+    source: 'forecast',
+    cityName: payload.cityName,
+    cityTimezone: payload.cityTimezone,
+    gameStartTime: startTime,
+    gameEndTime: endTime,
+    fetchedAt: cache.fetchedAt,
+    summary: summaryPoint as unknown as Prisma.InputJsonValue,
+    hours: hours as unknown as Prisma.InputJsonValue,
+  };
+}
+
+async function upsertSnapshotForGameFromCache(game: GameForWeatherSnapshot, cache: CacheLike): Promise<WeatherSnapshotLike | null> {
+  const data = buildSnapshotPayload(game, cache);
+  if (!data) return null;
+
+  return prisma.gameWeatherSnapshot.upsert({
+    where: { gameId: game.id },
+    create: {
+      gameId: game.id,
+      ...data,
+    },
+    update: data,
+  });
+}
+
+async function persistCompletedGameSnapshotsFromCache(cache: CacheLike, now: Date): Promise<void> {
+  const payload = getPayload(cache);
+  const games = await prisma.game.findMany({
+    where: {
+      cityId: payload.cityId,
+      timeIsSet: true,
+      endTime: { lte: now },
+      startTime: {
+        gte: cache.forecastStart,
+        lte: cache.forecastEnd,
+      },
+      weatherSnapshot: { is: null },
+    },
+    select: {
+      id: true,
+      cityId: true,
+      startTime: true,
+      endTime: true,
+      timeIsSet: true,
+    },
+  });
+
+  await Promise.all(games.map((game) => upsertSnapshotForGameFromCache(game, cache)));
+}
+
 export class WeatherForecastService {
   static async warmCityForecast(cityId: string): Promise<void> {
     await getCacheForCity(cityId);
   }
 
   static async getSummaryForGame(game: {
+    id?: string;
     cityId: string;
     startTime: Date | string;
+    endTime?: Date | string;
     timeIsSet: boolean;
   }): Promise<WeatherSummaryDto | null> {
     if (!game.timeIsSet) return null;
@@ -439,23 +661,67 @@ export class WeatherForecastService {
     const startTime = new Date(game.startTime);
     if (Number.isNaN(startTime.getTime())) return null;
 
+    if (game.id && game.endTime) {
+      const snapshot = await readSnapshotForGame({
+        id: game.id,
+        cityId: game.cityId,
+        startTime: game.startTime,
+        endTime: game.endTime,
+        timeIsSet: game.timeIsSet,
+      });
+      if (snapshot) {
+        return buildSummaryFromSnapshot(snapshot);
+      }
+    }
+
     const { cache, stale } = await getCacheForCity(game.cityId);
     if (!cache) return null;
 
-    return buildSummary(cache, stale, startTime);
+    const summary = buildSummary(cache, stale, startTime);
+    if (summary && game.id && game.endTime && new Date(game.endTime).getTime() <= Date.now()) {
+      await upsertSnapshotForGameFromCache({
+        id: game.id,
+        cityId: game.cityId,
+        startTime: game.startTime,
+        endTime: game.endTime,
+        timeIsSet: game.timeIsSet,
+      }, cache).catch((error) => {
+        console.warn('[WeatherForecastService] Failed to snapshot game weather summary', {
+          gameId: game.id,
+          cityId: game.cityId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      });
+    }
+
+    return summary;
   }
 
   static async attachSummariesToGames<T extends {
+    id: string;
     cityId: string;
     startTime: Date | string;
+    endTime: Date | string;
     timeIsSet: boolean;
   }>(games: T[]): Promise<Array<T & { weatherSummary?: WeatherSummaryDto | null }>> {
     const eligible = games.filter((game) => game.timeIsSet);
     if (eligible.length === 0) return games;
 
+    const snapshots = await prisma.gameWeatherSnapshot.findMany({
+      where: {
+        gameId: {
+          in: eligible.map((game) => game.id),
+        },
+      },
+    });
+    const snapshotsByGameId = new Map(snapshots.map((snapshot) => [snapshot.gameId, snapshot]));
+
     const cityCaches = new Map<string, Awaited<ReturnType<typeof getCacheForCity>>>();
     await Promise.all(
-      Array.from(new Set(eligible.map((game) => game.cityId))).map(async (cityId) => {
+      Array.from(new Set(eligible.filter((game) => {
+        const snapshot = snapshotsByGameId.get(game.id);
+        return !snapshot || !snapshotMatchesGame(snapshot, game);
+      }).map((game) => game.cityId))).map(async (cityId) => {
         try {
           cityCaches.set(cityId, await getCacheForCity(cityId));
         } catch (error) {
@@ -470,11 +736,25 @@ export class WeatherForecastService {
 
     return games.map((game) => {
       if (!game.timeIsSet) return game;
+      const snapshot = snapshotsByGameId.get(game.id);
+      if (snapshot && snapshotMatchesGame(snapshot, game)) {
+        return { ...game, weatherSummary: buildSummaryFromSnapshot(snapshot) };
+      }
       const cityCache = cityCaches.get(game.cityId);
       if (!cityCache?.cache) return { ...game, weatherSummary: null };
+      const summary = buildSummary(cityCache.cache, cityCache.stale, new Date(game.startTime));
+      if (summary && new Date(game.endTime).getTime() <= Date.now()) {
+        upsertSnapshotForGameFromCache(game, cityCache.cache).catch((error) => {
+          console.warn('[WeatherForecastService] Failed to snapshot attached game weather', {
+            gameId: game.id,
+            cityId: game.cityId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+      }
       return {
         ...game,
-        weatherSummary: buildSummary(cityCache.cache, cityCache.stale, new Date(game.startTime)),
+        weatherSummary: summary,
       };
     });
   }
@@ -496,6 +776,7 @@ export class WeatherForecastService {
         cityTimezone: '',
         fetchedAt: new Date(0).toISOString(),
         stale: false,
+        source: 'forecast',
         available: false,
         summary: null,
         hours: [],
@@ -516,6 +797,7 @@ export class WeatherForecastService {
         cityTimezone: '',
         fetchedAt: new Date(0).toISOString(),
         stale: false,
+        source: 'forecast',
         available: false,
         summary: null,
         hours: [],
@@ -524,29 +806,7 @@ export class WeatherForecastService {
       };
     }
 
-    const payload = getPayload(cache);
-    const hours = params.scope === 'forecast'
-      ? payload.hourly
-      : params.scope === 'day'
-        ? fullDayWindow(payload, startTime, endTime)
-        : hourlyWindow(payload, startTime, endTime);
-    const summary = buildSummary(cache, stale, startTime);
-    const available = params.scope === 'forecast'
-      ? hours.length > 0
-      : Boolean(summary && hours.length > 0);
-    return {
-      provider: PROVIDER,
-      cityId: payload.cityId,
-      cityName: payload.cityName,
-      cityTimezone: payload.cityTimezone,
-      fetchedAt: cache.fetchedAt.toISOString(),
-      stale,
-      available,
-      summary,
-      hours,
-      attribution: 'Open-Meteo',
-      ...(available ? {} : { unavailableReason: 'out_of_range' as const }),
-    };
+    return buildWindowFromCache(cache, stale, startTime, endTime, params.scope);
   }
 
   static async getWindowForGame(gameId: string, scope: WeatherWindowScope = 'game'): Promise<WeatherWindowDto> {
@@ -564,6 +824,33 @@ export class WeatherForecastService {
       throw new ApiError(404, 'Game not found');
     }
 
-    return WeatherForecastService.getWindowForCity({ ...game, scope });
+    if (!game.timeIsSet) {
+      return WeatherForecastService.getWindowForCity({ ...game, scope });
+    }
+
+    const snapshot = await readSnapshotForGame({ id: gameId, ...game });
+    if (snapshot) {
+      return buildWindowFromSnapshot(snapshot);
+    }
+
+    const window = await WeatherForecastService.getWindowForCity({ ...game, scope });
+    if (window.available && game.endTime.getTime() <= Date.now()) {
+      const { cache } = await getCacheForCity(game.cityId);
+      if (cache) {
+        await upsertSnapshotForGameFromCache({ id: gameId, ...game }, cache).catch((error) => {
+          console.warn('[WeatherForecastService] Failed to snapshot game weather window', {
+            gameId,
+            cityId: game.cityId,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+      }
+    }
+
+    return window;
+  }
+
+  static async clearGameWeatherSnapshot(gameId: string): Promise<void> {
+    await prisma.gameWeatherSnapshot.delete({ where: { gameId } }).catch(() => undefined);
   }
 }

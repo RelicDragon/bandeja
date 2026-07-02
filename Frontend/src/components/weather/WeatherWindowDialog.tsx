@@ -163,7 +163,9 @@ function WeatherWindowDialogInner({
         ? {
             cityName: forecast.cityName,
             timezoneLabel: formatWeatherTimezoneLabel(timezone, locale),
-            updatedLabel: getForecastUpdatedLabel(t, forecast.fetchedAt),
+            updatedLabel: forecast.source === 'historical'
+              ? t('weather.recordedConditions', { defaultValue: 'Recorded conditions' })
+              : getForecastUpdatedLabel(t, forecast.fetchedAt),
             stale: forecast.stale,
           }
         : null,

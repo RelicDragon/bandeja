@@ -502,6 +502,7 @@ export interface WeatherWindow {
   cityTimezone: string;
   fetchedAt: string;
   stale: boolean;
+  source: 'forecast' | 'historical';
   available: boolean;
   summary: WeatherSummary | null;
   hours: WeatherHourlyPoint[];

@@ -35,6 +35,9 @@ struct GameRowView: View {
                 Text(game.participantCountLabel)
                     .font(.caption2)
                     .foregroundStyle(.secondary)
+                if let summary = game.weatherSummary {
+                    WatchWeatherBadgeView(summary: summary)
+                }
             }
         }
         .padding(.vertical, 2)

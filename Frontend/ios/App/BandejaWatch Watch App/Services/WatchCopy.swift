@@ -1411,4 +1411,145 @@ enum WatchCopy {
         default: return "Service fault"
         }
     }
+
+    nonisolated static func weather(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Tiempo"
+        case "ru": return "Погода"
+        case "sr": return "Време"
+        case "cs": return "Počasí"
+        default: return "Weather"
+        }
+    }
+
+    nonisolated static func weatherRainChance(_ lang: String, probability: Int) -> String {
+        switch lang {
+        case "es": return "Lluvia \(probability)%"
+        case "ru": return "Дождь \(probability)%"
+        case "sr": return "Киша \(probability)%"
+        case "cs": return "Déšť \(probability)%"
+        default: return "Rain \(probability)%"
+        }
+    }
+
+    nonisolated static func weatherWind(_ lang: String, speedKmh: Int) -> String {
+        switch lang {
+        case "es": return "Viento \(speedKmh) km/h"
+        case "ru": return "Ветер \(speedKmh) км/ч"
+        case "sr": return "Ветар \(speedKmh) km/h"
+        case "cs": return "Vítr \(speedKmh) km/h"
+        default: return "Wind \(speedKmh) km/h"
+        }
+    }
+
+    nonisolated static func weatherStale(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Previsión antigua"
+        case "ru": return "Устаревший прогноз"
+        case "sr": return "Застарела прогноза"
+        case "cs": return "Starší předpověď"
+        default: return "Stale forecast"
+        }
+    }
+
+    nonisolated static func weatherCondition(_ lang: String, conditionKey: String) -> String {
+        switch conditionKey {
+        case "clear":
+            switch lang {
+            case "es": return "Despejado"
+            case "ru": return "Ясно"
+            case "sr": return "Ведро"
+            case "cs": return "Jasno"
+            default: return "Clear"
+            }
+        case "mainly_clear":
+            switch lang {
+            case "es": return "Mayormente despejado"
+            case "ru": return "Преимущественно ясно"
+            case "sr": return "Углавном ведро"
+            case "cs": return "Převážně jasno"
+            default: return "Mostly clear"
+            }
+        case "partly_cloudy":
+            switch lang {
+            case "es": return "Parcialmente nublado"
+            case "ru": return "Переменная облачность"
+            case "sr": return "Делимично облачно"
+            case "cs": return "Polojasno"
+            default: return "Partly cloudy"
+            }
+        case "cloudy":
+            switch lang {
+            case "es": return "Nublado"
+            case "ru": return "Облачно"
+            case "sr": return "Облачно"
+            case "cs": return "Oblačno"
+            default: return "Cloudy"
+            }
+        case "fog":
+            switch lang {
+            case "es": return "Niebla"
+            case "ru": return "Туман"
+            case "sr": return "Магла"
+            case "cs": return "Mlha"
+            default: return "Fog"
+            }
+        case "drizzle":
+            switch lang {
+            case "es": return "Llovizna"
+            case "ru": return "Морось"
+            case "sr": return "Росуља"
+            case "cs": return "Mrholení"
+            default: return "Drizzle"
+            }
+        case "rain":
+            switch lang {
+            case "es": return "Lluvia"
+            case "ru": return "Дождь"
+            case "sr": return "Киша"
+            case "cs": return "Déšť"
+            default: return "Rain"
+            }
+        case "freezing_rain":
+            switch lang {
+            case "es": return "Lluvia helada"
+            case "ru": return "Ледяной дождь"
+            case "sr": return "Ледена киша"
+            case "cs": return "Mrznoucí déšť"
+            default: return "Freezing rain"
+            }
+        case "snow":
+            switch lang {
+            case "es": return "Nieve"
+            case "ru": return "Снег"
+            case "sr": return "Снег"
+            case "cs": return "Sníh"
+            default: return "Snow"
+            }
+        case "showers":
+            switch lang {
+            case "es": return "Chubascos"
+            case "ru": return "Ливни"
+            case "sr": return "Пљускови"
+            case "cs": return "Přeháňky"
+            default: return "Showers"
+            }
+        case "thunderstorm":
+            switch lang {
+            case "es": return "Tormenta"
+            case "ru": return "Гроза"
+            case "sr": return "Грмљавина"
+            case "cs": return "Bouřka"
+            default: return "Thunderstorm"
+            }
+        default:
+            switch lang {
+            case "es": return "Tiempo"
+            case "ru": return "Погода"
+            case "sr": return "Време"
+            case "cs": return "Počasí"
+            default: return "Weather"
+            }
+        }
+    }
 }

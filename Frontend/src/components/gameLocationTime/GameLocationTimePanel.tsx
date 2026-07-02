@@ -19,6 +19,7 @@ import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration
 import { useAuthStore } from '@/store/authStore';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
+import { resolveReservationPickerCourts } from './resolveReservationPickerCourts';
 
 export type GameLocationTimePanelProps = {
   mode: 'create' | 'edit';
@@ -89,6 +90,15 @@ export function GameLocationTimePanel({
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const matchCourts = bookingMatchCourts ?? courts;
+  const reservationPickerCourts = useMemo(
+    () =>
+      resolveReservationPickerCourts({
+        selectedCourtIds,
+        courts,
+        bookingMatchCourts: matchCourts,
+      }),
+    [selectedCourtIds, courts, matchCourts],
+  );
 
   const integratedCourts = useMemo(
     () =>
@@ -112,7 +122,7 @@ export function GameLocationTimePanel({
     companyId: companyId ?? '',
     selectedDate: selectedDate ?? new Date(),
     enabled: reservationsEnabled,
-    matchCourts,
+    matchCourts: reservationPickerCourts,
   });
 
   const handleToggleBooking = useCallback(
@@ -243,6 +253,7 @@ export function GameLocationTimePanel({
         dateBookings={clubReservations.dateBookings}
         bookings={clubReservations.bookings}
         loading={clubReservations.authLoading || clubReservations.bookingsLoading}
+        loaded={clubReservations.bookingsLoaded}
         selectedBookingIds={selectedBookingIds}
         onSelectedBookingIdsChange={onSelectedBookingIdsChange}
         onToggleBooking={handleToggleBooking}

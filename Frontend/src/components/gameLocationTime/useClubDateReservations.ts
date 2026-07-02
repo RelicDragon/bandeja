@@ -32,7 +32,7 @@ export function useClubDateReservations({
   const active = enabled && club != null && companyId.length > 0;
   const { status: auth, loading: authLoading } = useBooktimeClubAuth(club?.id, active);
   const connected = Boolean(auth?.connected);
-  const { bookings, loading: bookingsLoading } = useBooktimeUpcomingBookings(
+  const { bookings, loading: bookingsLoading, loaded: bookingsLoaded } = useBooktimeUpcomingBookings(
     club ?? inactiveClubPlaceholder,
     companyId,
     connected,
@@ -53,6 +53,7 @@ export function useClubDateReservations({
     bookings,
     dateBookings,
     bookingsLoading,
+    bookingsLoaded,
     clubTimezone,
   };
 }

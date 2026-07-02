@@ -7,174 +7,174 @@ datasource db {
 }
 
 model User {
-  id                         String               @id @default(cuid())
-  phone                      String?              @unique
-  email                      String?              @unique
-  telegramId                 String?              @unique
-  telegramUsername           String?
-  appleSub                   String?              @unique
-  appleEmail                 String?
-  appleEmailVerified         Boolean              @default(false)
-  googleId                   String?              @unique
-  googleEmail                String?
-  googleEmailVerified        Boolean              @default(false)
-  firstName                  String?
-  lastName                   String?
-  avatar                     String?
-  originalAvatar             String?
-  passwordHash               String?
-  isActive                   Boolean              @default(true)
-  primarySport               Sport                @default(PADEL)
-  sportsEnabled              Sport[]              @default([PADEL])
-  lastCreatedSport           Sport?
-  socialLevel                Float                @default(1.0)
-  reliabilityDecayPostGraceDaysApplied Int         @default(0)
-  totalPoints                Int                  @default(0)
-  wallet                     Int                  @default(0)
-  currentCityId              String?
-  lastUserIP                 String?
-  latitudeByIP               Float?
-  longitudeByIP              Float?
-  defaultCurrency            String               @default("EUR")
-  language                   String?              @default("auto")
-  translateToLanguage        String?              @db.VarChar(10)
-  timeFormat                 String               @default("auto")
-  weekStart                  String               @default("auto")
-  preferredHandLeft          Boolean              @default(false)
-  preferredHandRight         Boolean              @default(false)
-  preferredCourtSideLeft     Boolean              @default(false)
-  preferredCourtSideRight    Boolean              @default(false)
-  verbalStatus               String?              @db.VarChar(32)
-  bio                        String?              @db.VarChar(128)
-  weeklyAvailability             Json?
-  availabilityBucketBoundaries   Json?
-  createdAt                  DateTime             @default(now())
-  updatedAt                  DateTime             @updatedAt
-  isAdmin                    Boolean              @default(false)
-  isDeveloper                Boolean              @default(false)
-  isTrainer                  Boolean              @default(false)
-  canCreateTournament        Boolean              @default(false)
-  maxParticipantsInGame      Int                  @default(12)
-  canCreateLeague            Boolean              @default(false)
-  isPremium                  Boolean              @default(false)
-  gender                     Gender               @default(PREFER_NOT_TO_SAY)
-  genderIsSet                Boolean              @default(false)
-  nameIsSet                  Boolean              @default(false)
-  primarySportIsSet          Boolean              @default(false)
-  cityIsSet                  Boolean              @default(false)
-  welcomeScreenPassed        Boolean              @default(false)
-  booktimeConnectHintDismissed Boolean            @default(false)
-  approvedLevel               Boolean              @default(false)
-  approvedById                String?
-  approvedWhen                DateTime?
-  favoriteTrainerId           String?
-  sendTelegramMessages       Boolean              @default(true)
-  sendTelegramInvites        Boolean              @default(true)
-  sendTelegramDirectMessages Boolean              @default(true)
-  sendTelegramReminders      Boolean              @default(true)
-  sendTelegramWalletNotifications Boolean         @default(true)
-  chatMessages               ChatMessage[]
-  participateInGames         GameParticipant[]    @relation("ParticipantUser")
-  participantsInvitedByMe     GameParticipant[]    @relation("ParticipantInvitedBy")
-  gameInviteOutcomes         GameInviteOutcome[]  @relation("GameInviteOutcomeUser")
-  gameInviteOutcomesSent     GameInviteOutcome[]  @relation("GameInviteOutcomeInvitedBy")
-  userChats1                 UserChat[]           @relation("UserChat1")
-  userChats2                 UserChat[]           @relation("UserChat2")
-  pinnedUserChats            PinnedUserChat[]
-  pinnedGroupChannels        PinnedGroupChannel[]
-  pinnedMessages             PinnedMessage[]
-  messageReactions           MessageReaction[]
-  gameReactions              GameReaction[]
-  messageReadReceipts        MessageReadReceipt[]
-  currentCity                City?                @relation("UserCurrentCity", fields: [currentCityId], references: [id])
-  approvedBy                 User?                @relation("UserApprovedBy", fields: [approvedById], references: [id])
-  approvedUsers              User[]               @relation("UserApprovedBy")
-  favoriteTrainer            User?                @relation("UserFavoriteTrainer", fields: [favoriteTrainerId], references: [id], onDelete: SetNull)
-  usersWithFavoriteTrainer   User[]               @relation("UserFavoriteTrainer")
-  favoriteClubs              UserFavoriteClub[]
-  favoriteUsers              UserFavoriteUser[]   @relation("UserFavorites")
-  favoritedBy                UserFavoriteUser[]   @relation("UserFavoritedBy")
-  interactionsFrom           UserInteraction[]    @relation("InteractionFromUser")
-  interactionsTo             UserInteraction[]    @relation("InteractionToUser")
-  teamPlayers                TeamPlayer[]
-  roundOutcomes              RoundOutcome[]
-  gameOutcomes               GameOutcome[]
-  gameTeamPlayers            GameTeamPlayer[]
-  bugs                       Bug[]
-  bugParticipants            BugParticipant[]
-  lundaProfile               LundaProfile?
-  transactionsFrom           Transaction[]        @relation("TransactionFromUser")
-  transactionsTo             Transaction[]        @relation("TransactionToUser")
-  levelChangeEvents          LevelChangeEvent[]
-  leagueParticipants         LeagueParticipant[]
-  leagueTeamPlayers          LeagueTeamPlayer[]
-  sendPushMessages           Boolean              @default(true)
-  sendPushInvites            Boolean              @default(true)
-  sendPushDirectMessages     Boolean              @default(true)
-  sendPushReminders          Boolean              @default(true)
-  sendPushWalletNotifications Boolean             @default(true)
-  allowMessagesFromNonContacts Boolean            @default(true)
-  showOnlineStatus             Boolean            @default(true)
-  alwaysShowUserNames           Boolean            @default(true)
-  shareGamePhotosToFollowers    Boolean           @default(true)
-  shareGameCreationsToFollowers Boolean           @default(true)
-  shareGameResultsToFollowers   Boolean           @default(true)
-  appIcon                    String?             @default("tiger")
-  trainerRating               Float?
-  trainerReviewCount          Int                 @default(0)
-  pushTokens                 PushToken[]
-  pushReplyTokens            PushReplyToken[]
-  messageReports             MessageReport[]      @relation("MessageReportReporter")
-  blockedUsers               BlockedUser[]        @relation("UserBlocked")
-  blockedBy                    BlockedUser[]        @relation("UserBlockedBy")
-  chatMutes                   ChatMute[]
-  chatTranslationPreferences  ChatTranslationPreference[]
-  gameSubscriptions           GameSubscription[]
-  groupChannelParticipants    GroupChannelParticipant[]
-  groupInvitesSent            GroupChannelInvite[] @relation("GroupInviteSender")
-  groupInvitesReceived        GroupChannelInvite[] @relation("GroupInviteReceiver")
-  betsCreated                 Bet[]                @relation("BetCreator")
-  betsAccepted                Bet[]                @relation("BetAcceptor")
-  betsWon                     Bet[]                @relation("BetWinner")
-  betParticipants             BetParticipant[]
-  messageTranslations         MessageTranslation[]
-  messageTranscriptions       MessageTranscription[]
-  chatDrafts                  ChatDraft[]
-  chatMutationIdempotencies   ChatMutationIdempotency[]
-  chatReadCursors             ChatReadCursor[]
-  reactionEmojiUsageVersion   Int                      @default(0)
-  reactionEmojiStats          UserReactionEmojiStat[]
-  notificationPreferences     NotificationPreference[]
-  pollVotes              PollVote[]
-  marketItems             MarketItem[]         @relation("MarketItemSeller")
-  marketItemsWon          MarketItem[]         @relation("MarketItemWinner")
-  marketItemBids          MarketItemBid[]
-  trainedGames            Game[]               @relation("GameTrainer")
-  buyerGroupChannels      GroupChannel[]       @relation("GroupChannelBuyer")
-  groupChannelsLastMessageFrom GroupChannel[]  @relation("GroupChannelLastMessageSender")
-  reviewsReceivedAsTrainer TrainerReview[]      @relation("TrainerReviewsReceived")
-  reviewsGiven            TrainerReview[]      @relation("TrainerReviewsGiven")
-  clubReviewsGiven        ClubReview[]         @relation("ClubReviewsGiven")
-  gameWorkoutSummaries    GameWorkoutSummary[]
-  telegramLinkIntents     TelegramAccountLinkIntent[]
-  ownedUserTeams          UserTeam[]                    @relation("UserTeamOwner")
-  userTeamMemberships     UserTeamMember[]
-  refreshSessions         UserRefreshSession[]
-  clubAdmins              ClubAdmin[]
-  courtSlotHoldsCreated   CourtSlotHold[]
-  booktimeClubAuths       UserClubBooktimeAuth[]
-  sportProfiles           UserSportProfile[]
-  gamePhotosUploaded      GamePhoto[]          @relation("GamePhotoUploader")
-  stories                 UserStory[]          @relation("UserStoryOwner")
-  storyViewsAsViewer      StoryView[]          @relation("StoryViewViewer")
-  storyViewsAsOwner       StoryView[]          @relation("StoryViewOwner")
-  storySegmentLikes       StorySegmentLike[]   @relation("StorySegmentLikeUser")
-  storySegmentCommentsAuthored StorySegmentComment[] @relation("StorySegmentCommentAuthor")
-  storySegmentCommentsOwned    StorySegmentComment[] @relation("StorySegmentCommentOwner")
-  storyCommentLikes       StoryCommentLike[]   @relation("StoryCommentLikeUser")
-  storyCommentReports     StoryCommentReport[] @relation("StoryCommentReportReporter")
-  unreadState             UserUnreadState?
-  contextUnreadStates     UserContextUnreadState[]
+  id                                   String                      @id @default(cuid())
+  phone                                String?                     @unique
+  email                                String?                     @unique
+  telegramId                           String?                     @unique
+  telegramUsername                     String?
+  appleSub                             String?                     @unique
+  appleEmail                           String?
+  appleEmailVerified                   Boolean                     @default(false)
+  googleId                             String?                     @unique
+  googleEmail                          String?
+  googleEmailVerified                  Boolean                     @default(false)
+  firstName                            String?
+  lastName                             String?
+  avatar                               String?
+  originalAvatar                       String?
+  passwordHash                         String?
+  isActive                             Boolean                     @default(true)
+  primarySport                         Sport                       @default(PADEL)
+  sportsEnabled                        Sport[]                     @default([PADEL])
+  lastCreatedSport                     Sport?
+  socialLevel                          Float                       @default(1.0)
+  reliabilityDecayPostGraceDaysApplied Int                         @default(0)
+  totalPoints                          Int                         @default(0)
+  wallet                               Int                         @default(0)
+  currentCityId                        String?
+  lastUserIP                           String?
+  latitudeByIP                         Float?
+  longitudeByIP                        Float?
+  defaultCurrency                      String                      @default("EUR")
+  language                             String?                     @default("auto")
+  translateToLanguage                  String?                     @db.VarChar(10)
+  timeFormat                           String                      @default("auto")
+  weekStart                            String                      @default("auto")
+  preferredHandLeft                    Boolean                     @default(false)
+  preferredHandRight                   Boolean                     @default(false)
+  preferredCourtSideLeft               Boolean                     @default(false)
+  preferredCourtSideRight              Boolean                     @default(false)
+  verbalStatus                         String?                     @db.VarChar(32)
+  bio                                  String?                     @db.VarChar(128)
+  weeklyAvailability                   Json?
+  availabilityBucketBoundaries         Json?
+  createdAt                            DateTime                    @default(now())
+  updatedAt                            DateTime                    @updatedAt
+  isAdmin                              Boolean                     @default(false)
+  isDeveloper                          Boolean                     @default(false)
+  isTrainer                            Boolean                     @default(false)
+  canCreateTournament                  Boolean                     @default(false)
+  maxParticipantsInGame                Int                         @default(12)
+  canCreateLeague                      Boolean                     @default(false)
+  isPremium                            Boolean                     @default(false)
+  gender                               Gender                      @default(PREFER_NOT_TO_SAY)
+  genderIsSet                          Boolean                     @default(false)
+  nameIsSet                            Boolean                     @default(false)
+  primarySportIsSet                    Boolean                     @default(false)
+  cityIsSet                            Boolean                     @default(false)
+  welcomeScreenPassed                  Boolean                     @default(false)
+  booktimeConnectHintDismissed         Boolean                     @default(false)
+  approvedLevel                        Boolean                     @default(false)
+  approvedById                         String?
+  approvedWhen                         DateTime?
+  favoriteTrainerId                    String?
+  sendTelegramMessages                 Boolean                     @default(true)
+  sendTelegramInvites                  Boolean                     @default(true)
+  sendTelegramDirectMessages           Boolean                     @default(true)
+  sendTelegramReminders                Boolean                     @default(true)
+  sendTelegramWalletNotifications      Boolean                     @default(true)
+  chatMessages                         ChatMessage[]
+  participateInGames                   GameParticipant[]           @relation("ParticipantUser")
+  participantsInvitedByMe              GameParticipant[]           @relation("ParticipantInvitedBy")
+  gameInviteOutcomes                   GameInviteOutcome[]         @relation("GameInviteOutcomeUser")
+  gameInviteOutcomesSent               GameInviteOutcome[]         @relation("GameInviteOutcomeInvitedBy")
+  userChats1                           UserChat[]                  @relation("UserChat1")
+  userChats2                           UserChat[]                  @relation("UserChat2")
+  pinnedUserChats                      PinnedUserChat[]
+  pinnedGroupChannels                  PinnedGroupChannel[]
+  pinnedMessages                       PinnedMessage[]
+  messageReactions                     MessageReaction[]
+  gameReactions                        GameReaction[]
+  messageReadReceipts                  MessageReadReceipt[]
+  currentCity                          City?                       @relation("UserCurrentCity", fields: [currentCityId], references: [id])
+  approvedBy                           User?                       @relation("UserApprovedBy", fields: [approvedById], references: [id])
+  approvedUsers                        User[]                      @relation("UserApprovedBy")
+  favoriteTrainer                      User?                       @relation("UserFavoriteTrainer", fields: [favoriteTrainerId], references: [id], onDelete: SetNull)
+  usersWithFavoriteTrainer             User[]                      @relation("UserFavoriteTrainer")
+  favoriteClubs                        UserFavoriteClub[]
+  favoriteUsers                        UserFavoriteUser[]          @relation("UserFavorites")
+  favoritedBy                          UserFavoriteUser[]          @relation("UserFavoritedBy")
+  interactionsFrom                     UserInteraction[]           @relation("InteractionFromUser")
+  interactionsTo                       UserInteraction[]           @relation("InteractionToUser")
+  teamPlayers                          TeamPlayer[]
+  roundOutcomes                        RoundOutcome[]
+  gameOutcomes                         GameOutcome[]
+  gameTeamPlayers                      GameTeamPlayer[]
+  bugs                                 Bug[]
+  bugParticipants                      BugParticipant[]
+  lundaProfile                         LundaProfile?
+  transactionsFrom                     Transaction[]               @relation("TransactionFromUser")
+  transactionsTo                       Transaction[]               @relation("TransactionToUser")
+  levelChangeEvents                    LevelChangeEvent[]
+  leagueParticipants                   LeagueParticipant[]
+  leagueTeamPlayers                    LeagueTeamPlayer[]
+  sendPushMessages                     Boolean                     @default(true)
+  sendPushInvites                      Boolean                     @default(true)
+  sendPushDirectMessages               Boolean                     @default(true)
+  sendPushReminders                    Boolean                     @default(true)
+  sendPushWalletNotifications          Boolean                     @default(true)
+  allowMessagesFromNonContacts         Boolean                     @default(true)
+  showOnlineStatus                     Boolean                     @default(true)
+  alwaysShowUserNames                  Boolean                     @default(true)
+  shareGamePhotosToFollowers           Boolean                     @default(true)
+  shareGameCreationsToFollowers        Boolean                     @default(true)
+  shareGameResultsToFollowers          Boolean                     @default(true)
+  appIcon                              String?                     @default("tiger")
+  trainerRating                        Float?
+  trainerReviewCount                   Int                         @default(0)
+  pushTokens                           PushToken[]
+  pushReplyTokens                      PushReplyToken[]
+  messageReports                       MessageReport[]             @relation("MessageReportReporter")
+  blockedUsers                         BlockedUser[]               @relation("UserBlocked")
+  blockedBy                            BlockedUser[]               @relation("UserBlockedBy")
+  chatMutes                            ChatMute[]
+  chatTranslationPreferences           ChatTranslationPreference[]
+  gameSubscriptions                    GameSubscription[]
+  groupChannelParticipants             GroupChannelParticipant[]
+  groupInvitesSent                     GroupChannelInvite[]        @relation("GroupInviteSender")
+  groupInvitesReceived                 GroupChannelInvite[]        @relation("GroupInviteReceiver")
+  betsCreated                          Bet[]                       @relation("BetCreator")
+  betsAccepted                         Bet[]                       @relation("BetAcceptor")
+  betsWon                              Bet[]                       @relation("BetWinner")
+  betParticipants                      BetParticipant[]
+  messageTranslations                  MessageTranslation[]
+  messageTranscriptions                MessageTranscription[]
+  chatDrafts                           ChatDraft[]
+  chatMutationIdempotencies            ChatMutationIdempotency[]
+  chatReadCursors                      ChatReadCursor[]
+  reactionEmojiUsageVersion            Int                         @default(0)
+  reactionEmojiStats                   UserReactionEmojiStat[]
+  notificationPreferences              NotificationPreference[]
+  pollVotes                            PollVote[]
+  marketItems                          MarketItem[]                @relation("MarketItemSeller")
+  marketItemsWon                       MarketItem[]                @relation("MarketItemWinner")
+  marketItemBids                       MarketItemBid[]
+  trainedGames                         Game[]                      @relation("GameTrainer")
+  buyerGroupChannels                   GroupChannel[]              @relation("GroupChannelBuyer")
+  groupChannelsLastMessageFrom         GroupChannel[]              @relation("GroupChannelLastMessageSender")
+  reviewsReceivedAsTrainer             TrainerReview[]             @relation("TrainerReviewsReceived")
+  reviewsGiven                         TrainerReview[]             @relation("TrainerReviewsGiven")
+  clubReviewsGiven                     ClubReview[]                @relation("ClubReviewsGiven")
+  gameWorkoutSummaries                 GameWorkoutSummary[]
+  telegramLinkIntents                  TelegramAccountLinkIntent[]
+  ownedUserTeams                       UserTeam[]                  @relation("UserTeamOwner")
+  userTeamMemberships                  UserTeamMember[]
+  refreshSessions                      UserRefreshSession[]
+  clubAdmins                           ClubAdmin[]
+  courtSlotHoldsCreated                CourtSlotHold[]
+  booktimeClubAuths                    UserClubBooktimeAuth[]
+  sportProfiles                        UserSportProfile[]
+  gamePhotosUploaded                   GamePhoto[]                 @relation("GamePhotoUploader")
+  stories                              UserStory[]                 @relation("UserStoryOwner")
+  storyViewsAsViewer                   StoryView[]                 @relation("StoryViewViewer")
+  storyViewsAsOwner                    StoryView[]                 @relation("StoryViewOwner")
+  storySegmentLikes                    StorySegmentLike[]          @relation("StorySegmentLikeUser")
+  storySegmentCommentsAuthored         StorySegmentComment[]       @relation("StorySegmentCommentAuthor")
+  storySegmentCommentsOwned            StorySegmentComment[]       @relation("StorySegmentCommentOwner")
+  storyCommentLikes                    StoryCommentLike[]          @relation("StoryCommentLikeUser")
+  storyCommentReports                  StoryCommentReport[]        @relation("StoryCommentReportReporter")
+  unreadState                          UserUnreadState?
+  contextUnreadStates                  UserContextUnreadState[]
 
   @@index([phone])
   @@index([telegramId])
@@ -184,20 +184,20 @@ model User {
 }
 
 model UserRefreshSession {
-  id                    String    @id @default(cuid())
-  userId                String
-  tokenHash             String    @unique
-  expiresAt             DateTime
-  createdAt             DateTime  @default(now())
-  lastUsedAt            DateTime  @default(now())
-  deviceLabel           String?
-  platform              String    @default("unknown")
-  userAgent             String?
-  deviceId              String?
-  ip                    String?   @db.VarChar(64)
-  revokedAt             DateTime?
-  replacedBySessionId   String?
-  rotationFamilyId      String
+  id                  String    @id @default(cuid())
+  userId              String
+  tokenHash           String    @unique
+  expiresAt           DateTime
+  createdAt           DateTime  @default(now())
+  lastUsedAt          DateTime  @default(now())
+  deviceLabel         String?
+  platform            String    @default("unknown")
+  userAgent           String?
+  deviceId            String?
+  ip                  String?   @db.VarChar(64)
+  revokedAt           DateTime?
+  replacedBySessionId String?
+  rotationFamilyId    String
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -228,31 +228,32 @@ model LundaProfile {
 }
 
 model City {
-  id                     String   @id @default(cuid())
-  name                   String
-  country                String
-  timezone               String
-  subAdministrativeArea  String?
-  administrativeArea     String?
-  latitude               Float?
-  longitude              Float?
-  clubsCount             Int      @default(0)
-  isCorrect              Boolean  @default(false)
-  telegramGroupId        String?
+  id                      String                 @id @default(cuid())
+  name                    String
+  country                 String
+  timezone                String
+  subAdministrativeArea   String?
+  administrativeArea      String?
+  latitude                Float?
+  longitude               Float?
+  clubsCount              Int                    @default(0)
+  isCorrect               Boolean                @default(false)
+  telegramGroupId         String?
   telegramPinnedMessageId String?
-  telegramPinnedLanguage String   @default("en-GB")
-  isActive               Boolean  @default(true)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
-  clubs                  Club[]
-  users                  User[]   @relation("UserCurrentCity")
-  leagues                League[]
-  games                  Game[]
-  gameSubscriptions      GameSubscription[]
-  groupChannels          GroupChannel[] @relation("GroupChannelCity")
-  marketItems            MarketItem[]
-  cancelledGames         CancelledGame[]
-  weatherForecastCaches  WeatherForecastCache[]
+  telegramPinnedLanguage  String                 @default("en-GB")
+  isActive                Boolean                @default(true)
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  clubs                   Club[]
+  users                   User[]                 @relation("UserCurrentCity")
+  leagues                 League[]
+  games                   Game[]
+  gameSubscriptions       GameSubscription[]
+  groupChannels           GroupChannel[]         @relation("GroupChannelCity")
+  marketItems             MarketItem[]
+  cancelledGames          CancelledGame[]
+  weatherForecastCaches   WeatherForecastCache[]
+  gameWeatherSnapshots    GameWeatherSnapshot[]
 
   @@index([isActive])
   @@index([clubsCount])
@@ -277,50 +278,74 @@ model WeatherForecastCache {
   @@index([expiresAt])
 }
 
+model GameWeatherSnapshot {
+  id            String   @id @default(cuid())
+  gameId        String   @unique
+  cityId        String
+  provider      String   @default("open-meteo")
+  source        String   @default("forecast")
+  cityName      String
+  cityTimezone  String
+  gameStartTime DateTime
+  gameEndTime   DateTime
+  fetchedAt     DateTime
+  capturedAt    DateTime @default(now())
+  summary       Json
+  hours         Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  city          City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+
+  @@index([cityId])
+  @@index([gameStartTime])
+  @@index([capturedAt])
+}
+
 model Club {
-  id                   String             @id @default(cuid())
-  name                 String
-  normalizedName       String
-  description          String?
-  avatar               String?
-  originalAvatar       String?
-  photos               Json               @default("[]")
-  address              String
-  cityId               String
-  phone                String?
-  email                String?
-  website              String?
-  latitude             Float?
-  longitude            Float?
-  openingTime          String?
-  closingTime          String?
-  amenities            Json?
-  isActive             Boolean            @default(true)
-  isBar                Boolean            @default(false)
-  isForPlaying         Boolean            @default(true)
-  integrationType      ClubIntegrationType?
-  integrationConfig    Json?
-  ptMeta               Json?    @map("pt_meta")
-  courtsNumber         Int                @default(0)
-  sports               Sport[]            @default([PADEL])
-  clubRating           Float?
-  clubReviewCount      Int                @default(0)
-  defaultSlotMinutes   Int?
+  id                      String                     @id @default(cuid())
+  name                    String
+  normalizedName          String
+  description             String?
+  avatar                  String?
+  originalAvatar          String?
+  photos                  Json                       @default("[]")
+  address                 String
+  cityId                  String
+  phone                   String?
+  email                   String?
+  website                 String?
+  latitude                Float?
+  longitude               Float?
+  openingTime             String?
+  closingTime             String?
+  amenities               Json?
+  isActive                Boolean                    @default(true)
+  isBar                   Boolean                    @default(false)
+  isForPlaying            Boolean                    @default(true)
+  integrationType         ClubIntegrationType?
+  integrationConfig       Json?
+  ptMeta                  Json?                      @map("pt_meta")
+  courtsNumber            Int                        @default(0)
+  sports                  Sport[]                    @default([PADEL])
+  clubRating              Float?
+  clubReviewCount         Int                        @default(0)
+  defaultSlotMinutes      Int?
   cancellationNoticeHours Int?
-  policyText           String?
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
-  city                 City               @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  courts               Court[]
-  games                Game[]
-  favoritedBy          UserFavoriteClub[]
-  leagues              League[]
-  clubReviews          ClubReview[]
-  clubAdmins           ClubAdmin[]
-  courtSlotHolds       CourtSlotHold[]
-  adSponsors           AdSponsor[]
-  booktimeAuths        UserClubBooktimeAuth[]
-  booktimeBusySnapshots ClubBooktimeBusySnapshot[]
+  policyText              String?
+  createdAt               DateTime                   @default(now())
+  updatedAt               DateTime                   @updatedAt
+  city                    City                       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  courts                  Court[]
+  games                   Game[]
+  favoritedBy             UserFavoriteClub[]
+  leagues                 League[]
+  clubReviews             ClubReview[]
+  clubAdmins              ClubAdmin[]
+  courtSlotHolds          CourtSlotHold[]
+  adSponsors              AdSponsor[]
+  booktimeAuths           UserClubBooktimeAuth[]
+  booktimeBusySnapshots   ClubBooktimeBusySnapshot[]
 
   @@index([cityId])
   @@index([isActive])
@@ -371,47 +396,49 @@ model ClubBooktimeBusySnapshot {
 }
 
 model UserSportProfile {
-  id                       String            @id @default(cuid())
+  id                       String           @id @default(cuid())
   userId                   String
   sport                    Sport
-  level                    Float             @default(1.0)
-  reliability              Float             @default(0)
-  gamesPlayed              Int               @default(0)
-  gamesWon                 Int               @default(0)
+  level                    Float            @default(1.0)
+  reliability              Float            @default(0)
+  gamesPlayed              Int              @default(0)
+  gamesWon                 Int              @default(0)
   questionnaireCompletedAt DateTime?
   questionnaireSkippedAt   DateTime?
   questionnaireVersion     String?
-  levelSource              SportLevelSource  @default(DEFAULT)
-  /** Manual or imported display bridge (DUPR, NTRP, Playtomic, etc.) — not used on avatar badge. */
-  externalRatingHint       String?           @db.VarChar(32)
-  createdAt                DateTime          @default(now())
-  updatedAt                DateTime          @updatedAt
-  user                     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  levelSource              SportLevelSource @default(DEFAULT)
+  /**
+   * Manual or imported display bridge (DUPR, NTRP, Playtomic, etc.) — not used on avatar badge.
+   */
+  externalRatingHint       String?          @db.VarChar(32)
+  createdAt                DateTime         @default(now())
+  updatedAt                DateTime         @updatedAt
+  user                     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, sport])
   @@index([userId])
 }
 
 model Court {
-  id             String      @id @default(cuid())
-  name           String
-  clubId         String
-  sport          Sport?
-  courtType      String?
-  isIndoor       Boolean     @default(false)
-  surfaceType    String?
-  pricePerHour   Float?
+  id                    String                     @id @default(cuid())
+  name                  String
+  clubId                String
+  sport                 Sport?
+  courtType             String?
+  isIndoor              Boolean                    @default(false)
+  surfaceType           String?
+  pricePerHour          Float?
   externalCourtId       String?
   integrationCourtName  String?
-  webCameraUrl   String?
-  isActive       Boolean     @default(true)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  club           Club        @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  games          Game[]
-  gameCourts     GameCourt[]
-  matches        Match[]
-  courtSlotHolds CourtSlotHold[]
+  webCameraUrl          String?
+  isActive              Boolean                    @default(true)
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+  club                  Club                       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  games                 Game[]
+  gameCourts            GameCourt[]
+  matches               Match[]
+  courtSlotHolds        CourtSlotHold[]
   booktimeBusySnapshots ClubBooktimeBusySnapshot[]
   gameExternalBookings  GameExternalBooking[]
 
@@ -467,108 +494,109 @@ model CourtSlotHold {
 }
 
 model Game {
-  id                     String              @id @default(cuid())
-  entityType             EntityType
-  sport                  Sport               @default(PADEL)
-  gameType               GameType
-  name                   String?
-  description            String?
-  avatar                 String?
-  originalAvatar         String?
-  clubId                 String?
-  courtId                String?
-  cityId                 String
-  startTime              DateTime
-  endTime                DateTime
-  maxParticipants        Int                 @default(4)
+  id                        String                  @id @default(cuid())
+  entityType                EntityType
+  sport                     Sport                   @default(PADEL)
+  gameType                  GameType
+  name                      String?
+  description               String?
+  avatar                    String?
+  originalAvatar            String?
+  clubId                    String?
+  courtId                   String?
+  cityId                    String
+  startTime                 DateTime
+  endTime                   DateTime
+  maxParticipants           Int                     @default(4)
   /// Players per match: 2 = 1v1, 4 = 2v2 (ADR-002; distinct from event roster size).
-  playersPerMatch        Int                 @default(4)
-  minParticipants        Int                 @default(2)
-  minLevel               Float?
-  maxLevel               Float?
-  isPublic               Boolean             @default(true)
-  affectsRating          Boolean             @default(true)
-  anyoneCanInvite        Boolean             @default(false)
-  resultsByAnyone        Boolean             @default(false)
-  allowDirectJoin        Boolean             @default(false)
-  hasBookedCourt         Boolean             @default(false)
-  bookingStatus          GameBookingStatus   @default(NONE)
-  afterGameGoToBar       Boolean             @default(false)
-  hasFixedTeams          Boolean             @default(false)
-  allowUserInMultipleTeams Boolean           @default(false)
-  genderTeams            GenderTeam          @default(ANY)
-  teamsReady             Boolean             @default(false)
-  participantsReady      Boolean             @default(false)
-  status                 GameStatus          @default(ANNOUNCED)
-  resultsStatus          ResultsStatus       @default(NONE)
-  resultsMeta            Json?
-  fixedNumberOfSets      Int                 @default(0)
-  maxTotalPointsPerSet   Int                 @default(0)
+  playersPerMatch           Int                     @default(4)
+  minParticipants           Int                     @default(2)
+  minLevel                  Float?
+  maxLevel                  Float?
+  isPublic                  Boolean                 @default(true)
+  affectsRating             Boolean                 @default(true)
+  anyoneCanInvite           Boolean                 @default(false)
+  resultsByAnyone           Boolean                 @default(false)
+  allowDirectJoin           Boolean                 @default(false)
+  hasBookedCourt            Boolean                 @default(false)
+  bookingStatus             GameBookingStatus       @default(NONE)
+  afterGameGoToBar          Boolean                 @default(false)
+  hasFixedTeams             Boolean                 @default(false)
+  allowUserInMultipleTeams  Boolean                 @default(false)
+  genderTeams               GenderTeam              @default(ANY)
+  teamsReady                Boolean                 @default(false)
+  participantsReady         Boolean                 @default(false)
+  status                    GameStatus              @default(ANNOUNCED)
+  resultsStatus             ResultsStatus           @default(NONE)
+  resultsMeta               Json?
+  fixedNumberOfSets         Int                     @default(0)
+  maxTotalPointsPerSet      Int                     @default(0)
   /// Per-match time cap in minutes when `matchTimerEnabled` is true; otherwise 0.
-  matchTimedCapMinutes   Int                 @default(0)
-  matchTimerEnabled      Boolean             @default(false)
-  maxPointsPerTeam       Int                 @default(0)
-  winnerOfGame           WinnerOfGame        @default(BY_MATCHES_WON)
-  winnerOfMatch          WinnerOfMatch       @default(BY_SCORES)
-  matchGenerationType    MatchGenerationType @default(HANDMADE)
-  pointsPerWin           Int                 @default(0)
-  pointsPerLoose         Int                 @default(0)
-  pointsPerTie           Int                 @default(0)
-  ballsInGames           Boolean             @default(false)
-  scoringPreset          ScoringPreset?
-  scoringMode            String?
-  deucesBeforeGoldenPoint Int?
-  mediaUrls              String[]
-  photosCount            Int                 @default(0)
-  forbidOthersPhotosView Boolean             @default(false)
-  mainPhotoId            String?             @unique
-  resultsSentToTelegram  Boolean             @default(false)
-  telegramResultsSummary String?             @db.Text
-  resultsSummaryText           String?   @db.Text
-  resultsSummaryGeneratedAt      DateTime?
-  resultsArtifactsReadyAt        DateTime?
-  resultsArtifactsVersion        Int       @default(0)
-  parentId               String?
-  trainerId              String?
-  leagueRoundId          String?
-  leagueGroupId          String?
-  timeIsSet              Boolean             @default(false)
-  finishedDate           DateTime?
-  priceTotal             Float?
-  priceType              PriceType           @default(NOT_KNOWN)
-  priceCurrency          PriceCurrency?
-  timeOverride           Boolean             @default(false)
-  metadata               Json?
-  lastMessagePreview     String?             @db.VarChar(500)
-  createdAt              DateTime            @default(now())
-  updatedAt              DateTime            @updatedAt
-  club                   Club?               @relation(fields: [clubId], references: [id])
-  court                  Court?              @relation(fields: [courtId], references: [id])
-  city                   City                @relation(fields: [cityId], references: [id], onDelete: Cascade)
-  parent                 Game?               @relation("GameHierarchy", fields: [parentId], references: [id])
-  children               Game[]              @relation("GameHierarchy")
-  trainer                User?               @relation("GameTrainer", fields: [trainerId], references: [id], onDelete: SetNull)
-  leagueRound            LeagueRound?        @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
-  leagueGroup            LeagueGroup?        @relation(fields: [leagueGroupId], references: [id], onDelete: SetNull)
-  bracketSlot            LeagueBracketSlot?  @relation("BracketSlotGame")
-  participants           GameParticipant[]
-  inviteOutcomes         GameInviteOutcome[]
-  rounds                 Round[]
-  outcomes               GameOutcome[]
-  fixedTeams             GameTeam[]
-  gameCourts             GameCourt[]
-  levelChangeEvents      LevelChangeEvent[]
-  leagueSeason           LeagueSeason?       @relation("GameLeagueSeason")
-  faqs                   GameFaq[]
-  bets                   Bet[]
-  trainerReviews         TrainerReview[]
-  clubReviews            ClubReview[]
-  workoutSummaries       GameWorkoutSummary[]
-  reactions              GameReaction[]       @relation("GameReactions")
-  photos                 GamePhoto[]
-  mainPhoto              GamePhoto?           @relation("GameMainPhoto", fields: [mainPhotoId], references: [id], onDelete: SetNull)
-  resultsArtifactJob     GameResultsArtifactJob?
-  externalBookings       GameExternalBooking[]
+  matchTimedCapMinutes      Int                     @default(0)
+  matchTimerEnabled         Boolean                 @default(false)
+  maxPointsPerTeam          Int                     @default(0)
+  winnerOfGame              WinnerOfGame            @default(BY_MATCHES_WON)
+  winnerOfMatch             WinnerOfMatch           @default(BY_SCORES)
+  matchGenerationType       MatchGenerationType     @default(HANDMADE)
+  pointsPerWin              Int                     @default(0)
+  pointsPerLoose            Int                     @default(0)
+  pointsPerTie              Int                     @default(0)
+  ballsInGames              Boolean                 @default(false)
+  scoringPreset             ScoringPreset?
+  scoringMode               String?
+  deucesBeforeGoldenPoint   Int?
+  mediaUrls                 String[]
+  photosCount               Int                     @default(0)
+  forbidOthersPhotosView    Boolean                 @default(false)
+  mainPhotoId               String?                 @unique
+  resultsSentToTelegram     Boolean                 @default(false)
+  telegramResultsSummary    String?                 @db.Text
+  resultsSummaryText        String?                 @db.Text
+  resultsSummaryGeneratedAt DateTime?
+  resultsArtifactsReadyAt   DateTime?
+  resultsArtifactsVersion   Int                     @default(0)
+  parentId                  String?
+  trainerId                 String?
+  leagueRoundId             String?
+  leagueGroupId             String?
+  timeIsSet                 Boolean                 @default(false)
+  finishedDate              DateTime?
+  priceTotal                Float?
+  priceType                 PriceType               @default(NOT_KNOWN)
+  priceCurrency             PriceCurrency?
+  timeOverride              Boolean                 @default(false)
+  metadata                  Json?
+  lastMessagePreview        String?                 @db.VarChar(500)
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+  club                      Club?                   @relation(fields: [clubId], references: [id])
+  court                     Court?                  @relation(fields: [courtId], references: [id])
+  city                      City                    @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  parent                    Game?                   @relation("GameHierarchy", fields: [parentId], references: [id])
+  children                  Game[]                  @relation("GameHierarchy")
+  trainer                   User?                   @relation("GameTrainer", fields: [trainerId], references: [id], onDelete: SetNull)
+  leagueRound               LeagueRound?            @relation(fields: [leagueRoundId], references: [id], onDelete: SetNull)
+  leagueGroup               LeagueGroup?            @relation(fields: [leagueGroupId], references: [id], onDelete: SetNull)
+  bracketSlot               LeagueBracketSlot?      @relation("BracketSlotGame")
+  participants              GameParticipant[]
+  inviteOutcomes            GameInviteOutcome[]
+  rounds                    Round[]
+  outcomes                  GameOutcome[]
+  fixedTeams                GameTeam[]
+  gameCourts                GameCourt[]
+  levelChangeEvents         LevelChangeEvent[]
+  leagueSeason              LeagueSeason?           @relation("GameLeagueSeason")
+  faqs                      GameFaq[]
+  bets                      Bet[]
+  trainerReviews            TrainerReview[]
+  clubReviews               ClubReview[]
+  workoutSummaries          GameWorkoutSummary[]
+  reactions                 GameReaction[]          @relation("GameReactions")
+  photos                    GamePhoto[]
+  mainPhoto                 GamePhoto?              @relation("GameMainPhoto", fields: [mainPhotoId], references: [id], onDelete: SetNull)
+  resultsArtifactJob        GameResultsArtifactJob?
+  externalBookings          GameExternalBooking[]
+  weatherSnapshot           GameWeatherSnapshot?
 
   @@index([clubId])
   @@index([courtId])
@@ -609,7 +637,7 @@ model GameExternalBooking {
 }
 
 model GamePhoto {
-  id             String         @id @default(cuid())
+  id             String          @id @default(cuid())
   gameId         String
   uploaderId     String?
   source         GamePhotoSource @default(USER)
@@ -620,10 +648,10 @@ model GamePhoto {
   thumbWidth     Int?
   thumbHeight    Int?
   byteSize       Int?
-  order          Int       @default(0)
+  order          Int             @default(0)
   clientUploadId String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   deletedAt      DateTime?
 
   game     Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
@@ -711,7 +739,7 @@ model StorySegmentLike {
 }
 
 model StorySegmentComment {
-  id               String          @id @default(cuid())
+  id               String                @id @default(cuid())
   sourceType       StorySourceType
   sourceId         String
   ownerUserId      String
@@ -719,10 +747,10 @@ model StorySegmentComment {
   parentId         String?
   body             String
   clientMutationId String?
-  createdAt        DateTime        @default(now())
+  createdAt        DateTime              @default(now())
   deletedAt        DateTime?
-  author           User            @relation("StorySegmentCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  owner            User            @relation("StorySegmentCommentOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  author           User                  @relation("StorySegmentCommentAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  owner            User                  @relation("StorySegmentCommentOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
   parent           StorySegmentComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies          StorySegmentComment[] @relation("CommentReplies")
   likes            StoryCommentLike[]
@@ -778,15 +806,15 @@ model UserReactionEmojiStat {
 }
 
 model CancelledGame {
-  id                 String     @id
-  entityType         EntityType
-  name               String?
-  sport              Sport      @default(PADEL)
-  cancelledByUserId  String
-  cancelledAt        DateTime   @default(now())
-  cityId             String
-  startTime          DateTime
-  city               City       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  id                String     @id
+  entityType        EntityType
+  name              String?
+  sport             Sport      @default(PADEL)
+  cancelledByUserId String
+  cancelledAt       DateTime   @default(now())
+  cityId            String
+  startTime         DateTime
+  city              City       @relation(fields: [cityId], references: [id], onDelete: Cascade)
 
   @@index([cityId])
 }
@@ -845,25 +873,25 @@ model ClubReview {
 }
 
 model GameParticipant {
-  id               String             @id @default(cuid())
+  id               String            @id @default(cuid())
   userId           String
   gameId           String
   role             ParticipantRole
-  status           ParticipantStatus  @default(PLAYING)
-  joinedAt         DateTime           @default(now())
+  status           ParticipantStatus @default(PLAYING)
+  joinedAt         DateTime          @default(now())
   stats            Json?
   invitedByUserId  String?
   inviteMessage    String?
   inviteExpiresAt  DateTime?
   /// When set, accepting this invite can auto-assign this user-team to game fixed teams once all members are playing.
   inviteUserTeamId String?
-  inviteClosedAt     DateTime?
+  inviteClosedAt   DateTime?
   /// Watch / client: match the user is currently scoring (cleared on finalize).
   activeMatchId    String?
-  game             Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user             User               @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
-  invitedByUser    User?              @relation("ParticipantInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
-  activeMatch      Match?             @relation("ParticipantActiveMatch", fields: [activeMatchId], references: [id], onDelete: SetNull)
+  game             Game              @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user             User              @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
+  invitedByUser    User?             @relation("ParticipantInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
+  activeMatch      Match?            @relation("ParticipantActiveMatch", fields: [activeMatchId], references: [id], onDelete: SetNull)
 
   @@unique([userId, gameId])
   @@index([userId])
@@ -907,29 +935,29 @@ model Round {
 }
 
 model Match {
-  id          String   @id @default(cuid())
-  roundId     String
-  matchNumber Int
-  winnerId    String?
-  courtId     String?
-  metadata    Json?
-  timerStatus            MatchTimerStatus @default(IDLE)
-  timerStartedAt         DateTime?
-  timerPausedAt          DateTime?
-  timerElapsedMs         Int              @default(0)
-  timerCapMinutes        Int?
-  timerExpiryNotifiedAt  DateTime?
-  timerUpdatedBy         String?
-  timerUpdatedAt         DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  round       Round    @relation(fields: [roundId], references: [id], onDelete: Cascade)
-  winner      Team?    @relation("MatchWinner", fields: [winnerId], references: [id])
-  court       Court?   @relation(fields: [courtId], references: [id])
-  teams       Team[]
-  sets        Set[]
-  participantsWithActiveMatch GameParticipant[] @relation("ParticipantActiveMatch")
-  liveScoringAudits            MatchLiveScoringAudit[]
+  id                          String                  @id @default(cuid())
+  roundId                     String
+  matchNumber                 Int
+  winnerId                    String?
+  courtId                     String?
+  metadata                    Json?
+  timerStatus                 MatchTimerStatus        @default(IDLE)
+  timerStartedAt              DateTime?
+  timerPausedAt               DateTime?
+  timerElapsedMs              Int                     @default(0)
+  timerCapMinutes             Int?
+  timerExpiryNotifiedAt       DateTime?
+  timerUpdatedBy              String?
+  timerUpdatedAt              DateTime?
+  createdAt                   DateTime                @default(now())
+  updatedAt                   DateTime                @updatedAt
+  round                       Round                   @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  winner                      Team?                   @relation("MatchWinner", fields: [winnerId], references: [id])
+  court                       Court?                  @relation(fields: [courtId], references: [id])
+  teams                       Team[]
+  sets                        Set[]
+  participantsWithActiveMatch GameParticipant[]       @relation("ParticipantActiveMatch")
+  liveScoringAudits           MatchLiveScoringAudit[]
 
   @@index([roundId])
   @@index([winnerId])
@@ -938,19 +966,21 @@ model Match {
 }
 
 model MatchLiveScoringAudit {
-  id               String   @id @default(cuid())
-  matchId          String
-  gameId           String
-  source           String
-  userId           String?
-  revisionBefore   Int?
-  revisionAfter    Int?
-  clientMessageId  String?
-  opId             String?
-  /** Stable reject/diagnostic code (see `liveScoringRejectReasons.ts`). Null for accepted writes. */
-  reasonCode       String?
-  createdAt        DateTime @default(now())
-  match            Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  matchId         String
+  gameId          String
+  source          String
+  userId          String?
+  revisionBefore  Int?
+  revisionAfter   Int?
+  clientMessageId String?
+  opId            String?
+  /**
+   * Stable reject/diagnostic code (see `liveScoringRejectReasons.ts`). Null for accepted writes.
+   */
+  reasonCode      String?
+  createdAt       DateTime @default(now())
+  match           Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   @@index([matchId, createdAt])
   @@index([gameId, createdAt])
@@ -998,16 +1028,16 @@ enum MatchSetRole {
 }
 
 model Set {
-  id         String        @id @default(cuid())
+  id         String       @id @default(cuid())
   matchId    String
   setNumber  Int
-  teamAScore Int           @default(0)
-  teamBScore Int           @default(0)
-  isTieBreak Boolean       @default(false)
-  role       MatchSetRole   @default(OFFICIAL)
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-  match      Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  teamAScore Int          @default(0)
+  teamBScore Int          @default(0)
+  isTieBreak Boolean      @default(false)
+  role       MatchSetRole @default(OFFICIAL)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  match      Match        @relation(fields: [matchId], references: [id], onDelete: Cascade)
 
   @@unique([matchId, setNumber])
   @@index([matchId])
@@ -1035,7 +1065,7 @@ enum WorkoutSessionSource {
 }
 
 model GameWorkoutSummary {
-  id               String              @id @default(cuid())
+  id               String               @id @default(cuid())
   gameId           String
   userId           String
   source           WorkoutSessionSource @default(APPLE_WATCH)
@@ -1046,10 +1076,10 @@ model GameWorkoutSummary {
   startedAt        DateTime
   endedAt          DateTime
   healthExternalId String?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
-  game             Game                @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  user             User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  game             Game                 @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user             User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, userId])
   @@index([userId, endedAt])
@@ -1130,17 +1160,17 @@ model UserInteraction {
 }
 
 model UserChat {
-  id                  String           @id @default(cuid())
-  user1Id             String
-  user2Id             String
-  user1allowed        Boolean          @default(true)
-  user2allowed        Boolean          @default(true)
-  lastMessagePreview  String?          @db.VarChar(500)
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
-  user1               User             @relation("UserChat1", fields: [user1Id], references: [id], onDelete: Cascade)
-  user2         User             @relation("UserChat2", fields: [user2Id], references: [id], onDelete: Cascade)
-  pinnedByUsers PinnedUserChat[]
+  id                 String           @id @default(cuid())
+  user1Id            String
+  user2Id            String
+  user1allowed       Boolean          @default(true)
+  user2allowed       Boolean          @default(true)
+  lastMessagePreview String?          @db.VarChar(500)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  user1              User             @relation("UserChat1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2              User             @relation("UserChat2", fields: [user2Id], references: [id], onDelete: Cascade)
+  pinnedByUsers      PinnedUserChat[]
 
   @@unique([user1Id, user2Id])
   @@index([user1Id])
@@ -1162,46 +1192,47 @@ model PinnedUserChat {
 }
 
 model ChatMessage {
-  id                 String               @id @default(cuid())
-  chatContextType    ChatContextType      @default(GAME)
+  id                 String                @id @default(cuid())
+  chatContextType    ChatContextType       @default(GAME)
   contextId          String
   gameId             String?
   senderId           String?
   content            String?
   contentSearchable  String?
-  mediaUrls       String[]
-  thumbnailUrls   String[]
-  mentionIds      String[]
-  state           MessageState         @default(SENT)
-  chatType        ChatType             @default(PUBLIC)
-  messageType     MessageType          @default(TEXT)
-  audioDurationMs Int?
-  videoDurationMs Int?
-  videoWidth      Int?
-  videoHeight     Int?
-  waveformData    Float[]            @default([])
-  createdAt       DateTime             @default(now())
-  updatedAt       DateTime             @updatedAt
-  editedAt        DateTime?
-  deletedAt       DateTime?
-  clientMutationId String?
+  mediaUrls          String[]
+  thumbnailUrls      String[]
+  mentionIds         String[]
+  state              MessageState          @default(SENT)
+  chatType           ChatType              @default(PUBLIC)
+  messageType        MessageType           @default(TEXT)
+  audioDurationMs    Int?
+  videoDurationMs    Int?
+  videoWidth         Int?
+  videoHeight        Int?
+  waveformData       Float[]               @default([])
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  editedAt           DateTime?
+  deletedAt          DateTime?
+  clientMutationId   String?
   /// Sync log seq last written onto this ChatMessage row (create, edit, delete, delivery state). Side tables (reactions, etc.) do not bump this; idempotent create replays use this as syncSeq, not head.
-  serverSyncSeq    Int?
-  replyToId       String?
+  serverSyncSeq      Int?
+  replyToId          String?
   /// Instagram-style story reply context: { sourceType, sourceId, ownerUserId, thumbnailUrl?, mediaUrl?, mediaType? }
-  storyReply      Json?
-  replyTo         ChatMessage?         @relation("MessageReply", fields: [replyToId], references: [id])
-  replies         ChatMessage[]        @relation("MessageReply")
-  sender          User?                @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  reactions       MessageReaction[]
-  readReceipts    MessageReadReceipt[]
-  reports         MessageReport[]
-  translations    MessageTranslation[]
+  storyReply         Json?
+  replyTo            ChatMessage?          @relation("MessageReply", fields: [replyToId], references: [id])
+  replies            ChatMessage[]         @relation("MessageReply")
+  sender             User?                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  reactions          MessageReaction[]
+  readReceipts       MessageReadReceipt[]
+  reports            MessageReport[]
+  translations       MessageTranslation[]
   audioTranscription MessageTranscription?
-  poll            Poll?
-  pollId          String?              @unique
-  pinnedIn        PinnedMessage[]
+  poll               Poll?
+  pollId             String?               @unique
+  pinnedIn           PinnedMessage[]
 
+  @@unique([senderId, clientMutationId])
   @@index([chatContextType, contextId])
   @@index([chatContextType, contextId, deletedAt], map: "idx_ChatMessage_unread_count")
   @@index([chatContextType, contextId, serverSyncSeq])
@@ -1214,20 +1245,19 @@ model ChatMessage {
   @@index([chatType])
   @@index([contextId])
   @@index([deletedAt])
-  @@unique([senderId, clientMutationId])
 }
 
 model PinnedMessage {
-  id               String          @id @default(cuid())
-  chatContextType  ChatContextType
-  contextId        String
-  chatType         ChatType        @default(PUBLIC)
-  messageId        String
-  order            Int             @default(0)
-  pinnedById       String
-  createdAt        DateTime        @default(now())
-  message          ChatMessage     @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  pinnedBy         User            @relation(fields: [pinnedById], references: [id], onDelete: Cascade)
+  id              String          @id @default(cuid())
+  chatContextType ChatContextType
+  contextId       String
+  chatType        ChatType        @default(PUBLIC)
+  messageId       String
+  order           Int             @default(0)
+  pinnedById      String
+  createdAt       DateTime        @default(now())
+  message         ChatMessage     @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  pinnedBy        User            @relation(fields: [pinnedById], references: [id], onDelete: Cascade)
 
   @@unique([chatContextType, contextId, chatType, messageId])
   @@index([chatContextType, contextId, chatType])
@@ -1235,19 +1265,19 @@ model PinnedMessage {
 }
 
 model Poll {
-  id              String       @id @default(cuid())
-  question        String
-  type            PollType     @default(CLASSICAL)
-  isAnonymous     Boolean      @default(false)
-  allowsMultipleAnswers Boolean @default(false)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  
-  message         ChatMessage  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  messageId       String       @unique
+  id                    String   @id @default(cuid())
+  question              String
+  type                  PollType @default(CLASSICAL)
+  isAnonymous           Boolean  @default(false)
+  allowsMultipleAnswers Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
-  options         PollOption[]
-  votes           PollVote[]
+  message   ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String      @unique
+
+  options PollOption[]
+  votes   PollVote[]
 }
 
 model PollOption {
@@ -1263,14 +1293,14 @@ model PollOption {
 }
 
 model PollVote {
-  id           String     @id @default(cuid())
-  poll         Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
-  pollId       String
-  option       PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
-  optionId     String
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId       String
-  createdAt    DateTime   @default(now())
+  id        String     @id @default(cuid())
+  poll      Poll       @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  pollId    String
+  option    PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  optionId  String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime   @default(now())
 
   @@unique([userId, optionId])
   @@index([pollId])
@@ -1285,7 +1315,7 @@ model ChatMute {
   contextId       String
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, chatContextType, contextId])
   @@index([userId])
@@ -1293,13 +1323,13 @@ model ChatMute {
 }
 
 model ChatTranslationPreference {
-  id                String          @id @default(cuid())
-  userId            String
-  chatContextType   ChatContextType
-  contextId         String
-  translateToLanguage String?       @db.VarChar(10)
-  updatedAt         DateTime        @updatedAt
-  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String          @id @default(cuid())
+  userId              String
+  chatContextType     ChatContextType
+  contextId           String
+  translateToLanguage String?         @db.VarChar(10)
+  updatedAt           DateTime        @updatedAt
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, chatContextType, contextId])
   @@index([userId])
@@ -1347,11 +1377,11 @@ model ResultsArtifactSetting {
 }
 
 model GameResultsArtifactJob {
-  id        String                        @id @default(cuid())
-  gameId    String                        @unique
-  status    GameResultsArtifactJobStatus  @default(pending)
-  runAfter  DateTime                      @default(now())
-  attempts  Int                           @default(0)
+  id        String                       @id @default(cuid())
+  gameId    String                       @unique
+  status    GameResultsArtifactJobStatus @default(pending)
+  runAfter  DateTime                     @default(now())
+  attempts  Int                          @default(0)
   lastError String?
 
   generationVersion Int @default(1)
@@ -1478,10 +1508,10 @@ model UserContextUnreadState {
   contextKey          String
   contextType         ChatContextType
   contextId           String
-  unreadRevision      Int      @default(0)
+  unreadRevision      Int             @default(0)
   unreadCountSnapshot Int?
-  updatedAt           DateTime @updatedAt
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt           DateTime        @updatedAt
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, contextKey])
   @@index([userId, unreadRevision])
@@ -1516,14 +1546,14 @@ model MessageReadReceipt {
 }
 
 model MessageTranslation {
-  id          String      @id @default(cuid())
-  messageId   String
-  message     ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  languageCode String     @db.VarChar(10)
-  translation String
-  createdBy   String
-  createdByUser User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt   DateTime    @default(now())
+  id            String      @id @default(cuid())
+  messageId     String
+  message       ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  languageCode  String      @db.VarChar(10)
+  translation   String
+  createdBy     String
+  createdByUser User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
 
   @@unique([messageId, languageCode])
   @@index([messageId])
@@ -1531,14 +1561,14 @@ model MessageTranslation {
 }
 
 model MessageTranscription {
-  id              String      @id @default(cuid())
-  messageId       String      @unique
-  message         ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  transcription   String
-  languageCode    String?     @db.VarChar(16)
-  createdBy       String
-  createdByUser   User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt       DateTime    @default(now())
+  id            String      @id @default(cuid())
+  messageId     String      @unique
+  message       ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  transcription String
+  languageCode  String?     @db.VarChar(16)
+  createdBy     String
+  createdByUser User        @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
 
   @@index([messageId])
 }
@@ -1795,21 +1825,21 @@ enum AuctionType {
 }
 
 model TelegramOtp {
-  id             String   @id @default(cuid())
-  code           String   @db.VarChar(6)
-  telegramId     String   @db.VarChar(255)
-  username       String?  @db.VarChar(255)
-  firstName      String?  @db.VarChar(255)
-  lastName       String?  @db.VarChar(255)
-  languageCode   String?  @db.VarChar(10)
-  chatId         String?  @db.VarChar(255)
-  textMessageId  String?  @db.VarChar(255)
-  codeMessageId  String?  @db.VarChar(255)
-  linkKey        String?  @db.VarChar(64)
-  linkMessageId  String?  @db.VarChar(255)
-  linkUserId     String?  @db.VarChar(255)
-  expiresAt      DateTime
-  createdAt      DateTime @default(now())
+  id            String   @id @default(cuid())
+  code          String   @db.VarChar(6)
+  telegramId    String   @db.VarChar(255)
+  username      String?  @db.VarChar(255)
+  firstName     String?  @db.VarChar(255)
+  lastName      String?  @db.VarChar(255)
+  languageCode  String?  @db.VarChar(10)
+  chatId        String?  @db.VarChar(255)
+  textMessageId String?  @db.VarChar(255)
+  codeMessageId String?  @db.VarChar(255)
+  linkKey       String?  @db.VarChar(64)
+  linkMessageId String?  @db.VarChar(255)
+  linkUserId    String?  @db.VarChar(255)
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
 
   @@index([code])
   @@index([telegramId])
@@ -1830,20 +1860,20 @@ model TelegramAccountLinkIntent {
 }
 
 model Bug {
-  id                   String           @id @default(cuid())
-  text                 String
-  senderId             String
-  status               BugStatus        @default(CREATED)
-  bugType              BugType          @default(BUG)
-  priority             Int              @default(0)
-  lastMessagePreview   String?          @db.VarChar(500)
-  finishedAt           DateTime?
-  testingStartedAt     DateTime?
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-  sender               User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  participants         BugParticipant[]
-  groupChannel         GroupChannel?
+  id                 String           @id @default(cuid())
+  text               String
+  senderId           String
+  status             BugStatus        @default(CREATED)
+  bugType            BugType          @default(BUG)
+  priority           Int              @default(0)
+  lastMessagePreview String?          @db.VarChar(500)
+  finishedAt         DateTime?
+  testingStartedAt   DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  sender             User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  participants       BugParticipant[]
+  groupChannel       GroupChannel?
 
   @@index([senderId])
   @@index([status])
@@ -1934,29 +1964,29 @@ model MarketItemBid {
 }
 
 model GroupChannel {
-  id                   String                  @id @default(cuid())
-  name                 String
-  avatar               String?
-  originalAvatar       String?
-  cityId               String?
-  bugId                String?                 @unique
-  marketItemId         String?
-  buyerId              String?
-  isChannel            Boolean                 @default(false)
-  isPublic             Boolean                 @default(true)
-  isCityGroup          Boolean                 @default(false)
-  participantsCount    Int                     @default(0)
-  lastMessagePreview   String?                 @db.VarChar(500)
-  lastMessageSenderId  String?
-  createdAt            DateTime                @default(now())
-  updatedAt            DateTime                @updatedAt
-  city                 City?                   @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
-  bug                  Bug?                    @relation(fields: [bugId], references: [id], onDelete: Cascade)
-  marketItem           MarketItem?              @relation(fields: [marketItemId], references: [id], onDelete: Cascade)
-  buyer                User?                   @relation("GroupChannelBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
-  lastMessageSender    User?                   @relation("GroupChannelLastMessageSender", fields: [lastMessageSenderId], references: [id], onDelete: SetNull)
-  participants         GroupChannelParticipant[]
-  invites              GroupChannelInvite[]
+  id                  String                    @id @default(cuid())
+  name                String
+  avatar              String?
+  originalAvatar      String?
+  cityId              String?
+  bugId               String?                   @unique
+  marketItemId        String?
+  buyerId             String?
+  isChannel           Boolean                   @default(false)
+  isPublic            Boolean                   @default(true)
+  isCityGroup         Boolean                   @default(false)
+  participantsCount   Int                       @default(0)
+  lastMessagePreview  String?                   @db.VarChar(500)
+  lastMessageSenderId String?
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+  city                City?                     @relation("GroupChannelCity", fields: [cityId], references: [id], onDelete: SetNull)
+  bug                 Bug?                      @relation(fields: [bugId], references: [id], onDelete: Cascade)
+  marketItem          MarketItem?               @relation(fields: [marketItemId], references: [id], onDelete: Cascade)
+  buyer               User?                     @relation("GroupChannelBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  lastMessageSender   User?                     @relation("GroupChannelLastMessageSender", fields: [lastMessageSenderId], references: [id], onDelete: SetNull)
+  participants        GroupChannelParticipant[]
+  invites             GroupChannelInvite[]
   pinnedByUsers       PinnedGroupChannel[]
 
   @@index([isPublic])
@@ -1969,12 +1999,12 @@ model GroupChannel {
 }
 
 model PinnedGroupChannel {
-  id               String       @id @default(cuid())
-  userId           String
-  groupChannelId   String
-  pinnedAt         DateTime     @default(now())
-  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  groupChannel     GroupChannel @relation(fields: [groupChannelId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  userId         String
+  groupChannelId String
+  pinnedAt       DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  groupChannel   GroupChannel @relation(fields: [groupChannelId], references: [id], onDelete: Cascade)
 
   @@unique([userId, groupChannelId])
   @@index([userId])
@@ -1982,14 +2012,14 @@ model PinnedGroupChannel {
 }
 
 model GroupChannelParticipant {
-  id            String       @id @default(cuid())
+  id             String          @id @default(cuid())
   groupChannelId String
-  userId        String
-  role          ParticipantRole @default(PARTICIPANT)
-  joinedAt      DateTime     @default(now())
-  hidden        Boolean      @default(false)
-  groupChannel  GroupChannel @relation(fields: [groupChannelId], references: [id], onDelete: Cascade)
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String
+  role           ParticipantRole @default(PARTICIPANT)
+  joinedAt       DateTime        @default(now())
+  hidden         Boolean         @default(false)
+  groupChannel   GroupChannel    @relation(fields: [groupChannelId], references: [id], onDelete: Cascade)
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([groupChannelId, userId])
   @@index([groupChannelId])
@@ -1998,18 +2028,18 @@ model GroupChannelParticipant {
 }
 
 model GroupChannelInvite {
-  id            String       @id @default(cuid())
+  id             String       @id @default(cuid())
   groupChannelId String
-  senderId      String
-  receiverId   String
-  status        InviteStatus @default(PENDING)
-  message       String?
-  expiresAt     DateTime?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  groupChannel  GroupChannel @relation(fields: [groupChannelId], references: [id], onDelete: Cascade)
-  sender        User         @relation("GroupInviteSender", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver      User         @relation("GroupInviteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  senderId       String
+  receiverId     String
+  status         InviteStatus @default(PENDING)
+  message        String?
+  expiresAt      DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  groupChannel   GroupChannel @relation(fields: [groupChannelId], references: [id], onDelete: Cascade)
+  sender         User         @relation("GroupInviteSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver       User         @relation("GroupInviteReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
 
   @@index([groupChannelId])
   @@index([receiverId])
@@ -2364,21 +2394,21 @@ enum BracketScope {
 }
 
 model LeagueRound {
-  id                     String         @id @default(cuid())
+  id                     String              @id @default(cuid())
   leagueSeasonId         String
   orderIndex             Int
-  roundType              RoundType      @default(REGULAR)
+  roundType              RoundType           @default(REGULAR)
   playoffFormat          PlayoffFormat?
-  bracketScope           BracketScope   @default(PER_GROUP)
+  bracketScope           BracketScope        @default(PER_GROUP)
   entrantCount           Int?
   bracketSize            Int?
   byeCount               Int?
   bracketTemplateVersion Int?
   bracketConfig          Json?
-  sentStartMessage       Boolean        @default(false)
-  createdAt              DateTime       @default(now())
-  updatedAt              DateTime       @updatedAt
-  leagueSeason           LeagueSeason   @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  sentStartMessage       Boolean             @default(false)
+  createdAt              DateTime            @default(now())
+  updatedAt              DateTime            @updatedAt
+  leagueSeason           LeagueSeason        @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
   games                  Game[]
   bracketSlots           LeagueBracketSlot[]
 
@@ -2387,7 +2417,7 @@ model LeagueRound {
 }
 
 model LeagueBracketSlot {
-  id                  String            @id @default(cuid())
+  id                  String              @id @default(cuid())
   leagueRoundId       String
   leagueGroupId       String?
   slotKey             String
@@ -2396,22 +2426,22 @@ model LeagueBracketSlot {
   roundIndex          Int
   matchIndex          Int
   leagueParticipantId String?
-  gameId              String?           @unique
+  gameId              String?             @unique
   winnerSlotId        String?
   feederSlotAId       String?
   feederSlotBId       String?
   seedRank            Int?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-  leagueRound         LeagueRound       @relation(fields: [leagueRoundId], references: [id], onDelete: Cascade)
-  leagueGroup         LeagueGroup?      @relation(fields: [leagueGroupId], references: [id], onDelete: Cascade)
-  leagueParticipant   LeagueParticipant? @relation(fields: [leagueParticipantId], references: [id], onDelete: SetNull)
-  game                Game?             @relation("BracketSlotGame", fields: [gameId], references: [id], onDelete: SetNull)
-  winnerSlot          LeagueBracketSlot? @relation("BracketWinnerFeed", fields: [winnerSlotId], references: [id], onDelete: SetNull)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  leagueRound         LeagueRound         @relation(fields: [leagueRoundId], references: [id], onDelete: Cascade)
+  leagueGroup         LeagueGroup?        @relation(fields: [leagueGroupId], references: [id], onDelete: Cascade)
+  leagueParticipant   LeagueParticipant?  @relation(fields: [leagueParticipantId], references: [id], onDelete: SetNull)
+  game                Game?               @relation("BracketSlotGame", fields: [gameId], references: [id], onDelete: SetNull)
+  winnerSlot          LeagueBracketSlot?  @relation("BracketWinnerFeed", fields: [winnerSlotId], references: [id], onDelete: SetNull)
   slotsFedByWinner    LeagueBracketSlot[] @relation("BracketWinnerFeed")
-  feederSlotA         LeagueBracketSlot? @relation("BracketFeederA", fields: [feederSlotAId], references: [id], onDelete: SetNull)
+  feederSlotA         LeagueBracketSlot?  @relation("BracketFeederA", fields: [feederSlotAId], references: [id], onDelete: SetNull)
   slotsFedByA         LeagueBracketSlot[] @relation("BracketFeederA")
-  feederSlotB         LeagueBracketSlot? @relation("BracketFeederB", fields: [feederSlotBId], references: [id], onDelete: SetNull)
+  feederSlotB         LeagueBracketSlot?  @relation("BracketFeederB", fields: [feederSlotBId], references: [id], onDelete: SetNull)
   slotsFedByB         LeagueBracketSlot[] @relation("BracketFeederB")
 
   @@unique([leagueRoundId, leagueGroupId, slotKey])
@@ -2434,36 +2464,36 @@ enum PriceType {
 }
 
 enum PriceCurrency {
-  EUR  // Euro
-  USD  // US Dollar
-  GBP  // British Pound
-  JPY  // Japanese Yen
-  CNY  // Chinese Yuan
-  CHF  // Swiss Franc
-  CAD  // Canadian Dollar
-  AUD  // Australian Dollar
-  NZD  // New Zealand Dollar
-  SEK  // Swedish Krona
-  NOK  // Norwegian Krone
-  DKK  // Danish Krone
-  PLN  // Polish Zloty
-  CZK  // Czech Koruna
-  HUF  // Hungarian Forint
-  RON  // Romanian Leu
-  BGN  // Bulgarian Lev
-  RUB  // Russian Ruble
-  RSD  // Serbian Dinar
-  TRY  // Turkish Lira
-  INR  // Indian Rupee
-  BRL  // Brazilian Real
-  MXN  // Mexican Peso
-  SGD  // Singapore Dollar
-  HKD  // Hong Kong Dollar
-  KRW  // South Korean Won
-  THB  // Thai Baht
-  MYR  // Malaysian Ringgit
-  IDR  // Indonesian Rupiah
-  PHP  // Philippine Peso
+  EUR // Euro
+  USD // US Dollar
+  GBP // British Pound
+  JPY // Japanese Yen
+  CNY // Chinese Yuan
+  CHF // Swiss Franc
+  CAD // Canadian Dollar
+  AUD // Australian Dollar
+  NZD // New Zealand Dollar
+  SEK // Swedish Krona
+  NOK // Norwegian Krone
+  DKK // Danish Krone
+  PLN // Polish Zloty
+  CZK // Czech Koruna
+  HUF // Hungarian Forint
+  RON // Romanian Leu
+  BGN // Bulgarian Lev
+  RUB // Russian Ruble
+  RSD // Serbian Dinar
+  TRY // Turkish Lira
+  INR // Indian Rupee
+  BRL // Brazilian Real
+  MXN // Mexican Peso
+  SGD // Singapore Dollar
+  HKD // Hong Kong Dollar
+  KRW // South Korean Won
+  THB // Thai Baht
+  MYR // Malaysian Ringgit
+  IDR // Indonesian Rupiah
+  PHP // Philippine Peso
 }
 
 model PushReplyToken {
@@ -2535,19 +2565,19 @@ enum NotificationChannelType {
 }
 
 model NotificationPreference {
-  id                      String                 @id @default(cuid())
-  userId                  String
-  channelType             NotificationChannelType
-  sendMessages            Boolean                @default(true)
-  sendInvites             Boolean                @default(true)
-  sendDirectMessages      Boolean                @default(true)
-  sendReminders           Boolean                @default(true)
-  sendWalletNotifications      Boolean                @default(true)
-  sendMarketplaceNotifications Boolean                @default(true)
-  sendTeamNotifications        Boolean                @default(true)
-  createdAt                    DateTime               @default(now())
-  updatedAt                    DateTime               @updatedAt
-  user                         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                           String                  @id @default(cuid())
+  userId                       String
+  channelType                  NotificationChannelType
+  sendMessages                 Boolean                 @default(true)
+  sendInvites                  Boolean                 @default(true)
+  sendDirectMessages           Boolean                 @default(true)
+  sendReminders                Boolean                 @default(true)
+  sendWalletNotifications      Boolean                 @default(true)
+  sendMarketplaceNotifications Boolean                 @default(true)
+  sendTeamNotifications        Boolean                 @default(true)
+  createdAt                    DateTime                @default(now())
+  updatedAt                    DateTime                @updatedAt
+  user                         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, channelType])
   @@index([userId])
@@ -2588,24 +2618,24 @@ enum MessageReportStatus {
 }
 
 model GameSubscription {
-  id            String      @id @default(cuid())
-  userId        String
-  cityId        String
-  clubIds       String[]
-  entityTypes   EntityType[]
-  dayOfWeek     Int[]
-  startDate     DateTime?
-  endDate       DateTime?
-  startTime     String?
-  endTime       String?
-  minLevel      Float?
-  maxLevel      Float?
-  myGenderOnly  Boolean     @default(false)
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  city          City        @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  id           String       @id @default(cuid())
+  userId       String
+  cityId       String
+  clubIds      String[]
+  entityTypes  EntityType[]
+  dayOfWeek    Int[]
+  startDate    DateTime?
+  endDate      DateTime?
+  startTime    String?
+  endTime      String?
+  minLevel     Float?
+  maxLevel     Float?
+  myGenderOnly Boolean      @default(false)
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  city         City         @relation(fields: [cityId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([cityId])
@@ -2614,31 +2644,31 @@ model GameSubscription {
 }
 
 model Bet {
-  id               String    @id @default(cuid())
+  id               String           @id @default(cuid())
   gameId           String
   creatorId        String
-  type             BetType   @default(SOCIAL)
-  status           BetStatus @default(OPEN)
-  condition        Json      // BetCondition type
-  stakeType        String    @default("COINS") // COINS or TEXT
-  stakeCoins       Int?      // Amount if stakeType is COINS
-  stakeText        String?  // Text if stakeType is TEXT
-  rewardType       String    @default("COINS") // COINS or TEXT
-  rewardCoins      Int?      // Amount if rewardType is COINS
-  rewardText       String?   // Text if rewardType is TEXT
-  poolTotalCoins   Int?      // POOL: total coins in pool
+  type             BetType          @default(SOCIAL)
+  status           BetStatus        @default(OPEN)
+  condition        Json // BetCondition type
+  stakeType        String           @default("COINS") // COINS or TEXT
+  stakeCoins       Int? // Amount if stakeType is COINS
+  stakeText        String? // Text if stakeType is TEXT
+  rewardType       String           @default("COINS") // COINS or TEXT
+  rewardCoins      Int? // Amount if rewardType is COINS
+  rewardText       String? // Text if rewardType is TEXT
+  poolTotalCoins   Int? // POOL: total coins in pool
   acceptedBy       String?
-  acceptedAt      DateTime?
-  winnerId         String?   // Set when resolved (SOCIAL single winner; POOL null)
+  acceptedAt       DateTime?
+  winnerId         String? // Set when resolved (SOCIAL single winner; POOL null)
   resolvedAt       DateTime?
   resolutionReason String?
   metadata         Json?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  game             Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  creator          User      @relation("BetCreator", fields: [creatorId], references: [id], onDelete: Cascade)
-  acceptedByUser   User?     @relation("BetAcceptor", fields: [acceptedBy], references: [id], onDelete: SetNull)
-  winner           User?     @relation("BetWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  game             Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  creator          User             @relation("BetCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  acceptedByUser   User?            @relation("BetAcceptor", fields: [acceptedBy], references: [id], onDelete: SetNull)
+  winner           User?            @relation("BetWinner", fields: [winnerId], references: [id], onDelete: SetNull)
   participants     BetParticipant[]
 
   @@index([gameId])
@@ -2689,14 +2719,14 @@ model UserGameNote {
 }
 
 model ExchangeRate {
-  id               String        @id @default(cuid())
-  baseCurrency     PriceCurrency
-  targetCurrency   PriceCurrency
-  rate             Float
-  lastUpdated      DateTime      @default(now())
-  fetchedFromAPI   DateTime      @default(now())
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  id             String        @id @default(cuid())
+  baseCurrency   PriceCurrency
+  targetCurrency PriceCurrency
+  rate           Float
+  lastUpdated    DateTime      @default(now())
+  fetchedFromAPI DateTime      @default(now())
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   @@unique([baseCurrency, targetCurrency])
   @@index([baseCurrency])
@@ -2704,16 +2734,16 @@ model ExchangeRate {
 }
 
 model LlmUsageLog {
-  id            String   @id @default(cuid())
-  provider      String   @db.VarChar(32)
-  model         String   @db.VarChar(128)
-  reason        String?  @db.VarChar(64)
-  userId        String?
-  input         String   @db.Text
-  output        String   @db.Text
-  inputTokens   Int?
-  outputTokens  Int?
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  provider     String   @db.VarChar(32)
+  model        String   @db.VarChar(128)
+  reason       String?  @db.VarChar(64)
+  userId       String?
+  input        String   @db.Text
+  output       String   @db.Text
+  inputTokens  Int?
+  outputTokens Int?
+  createdAt    DateTime @default(now())
 
   @@index([provider])
   @@index([model])
@@ -2764,26 +2794,26 @@ model AdSponsor {
 }
 
 model AdCampaign {
-  id                String                @id @default(cuid())
+  id                String                 @id @default(cuid())
   sponsorId         String
   name              String
-  status            AdCampaignStatus      @default(DRAFT)
-  priority          Int                   @default(0)
-  weight            Int                   @default(100)
+  status            AdCampaignStatus       @default(DRAFT)
+  priority          Int                    @default(0)
+  weight            Int                    @default(100)
   startsAt          DateTime?
   endsAt            DateTime?
-  defaultLocale     String                @default("en")
+  defaultLocale     String                 @default("en")
   frequencyCap      Json?
-  dismissible       Boolean               @default(true)
+  dismissible       Boolean                @default(true)
   dismissSnoozeDays Int?
-  clickUrlTrusted   Boolean               @default(true)
+  clickUrlTrusted   Boolean                @default(true)
   disclosureLabel   String?
-  hideDisclosure    Boolean               @default(false)
+  hideDisclosure    Boolean                @default(false)
   targeting         Json
-  testUserIds       String[]              @default([])
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
-  sponsor           AdSponsor             @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  testUserIds       String[]               @default([])
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  sponsor           AdSponsor              @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
   creatives         AdCreative[]
   placements        AdCampaignPlacement[]
   events            AdEvent[]
@@ -2851,11 +2881,11 @@ model AdEvent {
 model AdUserState {
   userId         String
   campaignId     String
-  impressions    Int       @default(0)
+  impressions    Int        @default(0)
   capWindowStart DateTime?
   lastSeenAt     DateTime?
   snoozedUntil   DateTime?
-  updatedAt      DateTime  @updatedAt
+  updatedAt      DateTime   @updatedAt
   campaign       AdCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@id([userId, campaignId])

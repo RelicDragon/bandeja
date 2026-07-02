@@ -23,6 +23,7 @@ export function useBooktimeUpcomingBookings(
 ) {
   const [bookings, setBookings] = useState<BooktimeBookingRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const filterCourtsRef = useRef(filterCourts);
   filterCourtsRef.current = filterCourts;
@@ -40,10 +41,12 @@ export function useBooktimeUpcomingBookings(
   const reload = useCallback(async () => {
     if (!enabled || !connected || club.integrationType !== 'BOOKTIME') {
       setBookings([]);
+      setLoaded(true);
       lastLoadedCourtsKeyRef.current = filterCourtsKey;
       return;
     }
     setLoading(true);
+    setLoaded(false);
     setError(null);
     try {
       const clubTimeZone = resolveBooktimeMyClubTimezone(club);
@@ -51,6 +54,7 @@ export function useBooktimeUpcomingBookings(
       const client = getBooktimeClient(club.id, companyId, clubTimeZone);
       if (!client.isAuthenticated) {
         setBookings([]);
+        setLoaded(true);
         lastLoadedCourtsKeyRef.current = filterCourtsKey;
         return;
       }
@@ -62,11 +66,13 @@ export function useBooktimeUpcomingBookings(
           ? raw
           : raw.filter((b) => bookingMatchesClubCourts(b, courtsForMatch));
       setBookings((prev) => (areBookingListsEqual(prev, filtered) ? prev : filtered));
+      setLoaded(true);
       lastLoadedCourtsKeyRef.current = filterCourtsKey;
     } catch (err) {
       console.error('Club booking upcoming failed:', err);
       setError('loadFailed');
       setBookings([]);
+      setLoaded(true);
     } finally {
       setLoading(false);
     }
@@ -80,5 +86,5 @@ export function useBooktimeUpcomingBookings(
     setBookings((prev) => prev.filter((b) => b.uuid !== bookingId));
   }, []);
 
-  return { bookings, loading, error, reload, removeBooking };
+  return { bookings, loading, loaded, error, reload, removeBooking };
 }

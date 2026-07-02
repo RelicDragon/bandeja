@@ -75,7 +75,29 @@ struct GameDetailView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
+            if let summary = game.weatherSummary {
+                weatherSummaryRow(summary)
+            }
         }
+    }
+
+    private func weatherSummaryRow(_ summary: WatchWeatherSummary) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            WatchWeatherBadgeView(summary: summary, showCondition: true, lang: prefs.uiLanguageCode)
+            VStack(alignment: .leading, spacing: 2) {
+                if let probability = summary.precipitationProbability {
+                    Label(WatchCopy.weatherRainChance(prefs.uiLanguageCode, probability: probability), systemImage: "drop.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                if let wind = summary.windSpeedKmh {
+                    Label(WatchCopy.weatherWind(prefs.uiLanguageCode, speedKmh: Int(wind.rounded())), systemImage: "wind")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private func statusBanner(_ game: WatchGame) -> some View {

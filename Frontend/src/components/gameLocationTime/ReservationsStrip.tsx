@@ -15,6 +15,7 @@ import { booktimeRowToClub } from '@/components/booktime/booktimeBookingUtils';
 import { buildSelectedBookingRecordsSyncKey } from '@/components/gameLocationTime/locationTimeDraft';
 import { resolveBookingSelectionAfterDeselect } from '@/components/gameLocationTime/resolveBookingSelectionAfterDeselect';
 import { useReservationGridSync } from '@/components/gameLocationTime/useReservationGridSync';
+import { pruneSelectedBookingsToAvailable } from './pruneSelectedBookingsToAvailable';
 
 type ReservationsStripProps = {
   club: Club;
@@ -25,6 +26,7 @@ type ReservationsStripProps = {
   dateBookings: BooktimeBookingRecord[];
   bookings: BooktimeBookingRecord[];
   loading: boolean;
+  loaded: boolean;
   selectedBookingIds: string[];
   onSelectedBookingIdsChange: (ids: string[], records: BooktimeBookingRecord[]) => void;
   onToggleBooking: (bookingId: string) => void;
@@ -106,6 +108,7 @@ export function ReservationsStrip({
   dateBookings,
   bookings,
   loading,
+  loaded,
   selectedBookingIds,
   onSelectedBookingIdsChange,
   onToggleBooking,
@@ -138,6 +141,17 @@ export function ReservationsStrip({
   useEffect(() => {
     onDerivedTimeChangeRef.current?.(derived.startTime, derived.endTime);
   }, [derived.startTime, derived.endTime]);
+
+  useEffect(() => {
+    if (loading || !loaded) return;
+    const pruned = pruneSelectedBookingsToAvailable({
+      selectedBookingIds,
+      availableBookings: dateBookings,
+      selectionLimits,
+    });
+    if (!pruned) return;
+    onSelectedBookingIdsChangeRef.current(pruned.ids, pruned.records);
+  }, [loading, loaded, dateBookings, selectedBookingIds, selectionLimits]);
 
   useEffect(() => {
     if (selectedBookingIds.length === 0) {
