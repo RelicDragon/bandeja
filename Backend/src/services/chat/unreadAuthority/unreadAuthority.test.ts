@@ -198,7 +198,41 @@ async function testRecordContextChangedEmitsAfterCommit(): Promise<void> {
       contextId: 'chat-1',
       reason: 'mark_context_read',
     });
-    assert.deepEqual(order, ['tx-start', 'count', 'tx-commit', 'emit']);
+    assert.deepEqual(order, ['tx-start', 'tx-commit', 'count', 'emit']);
+  } finally {
+    setUnreadAuthorityDepsForTests(undefined);
+  }
+}
+
+async function testRecordContextChangedCountsOutsideTransaction(): Promise<void> {
+  const userRows = new Map<string, FakeUnreadState>();
+  const contextRows = new Map<string, FakeContextState>();
+  const tx = makeFakeTransactionClient(userRows, contextRows);
+  let inTransaction = false;
+
+  setUnreadAuthorityDepsForTests({
+    transaction: async (fn) => {
+      inTransaction = true;
+      const result = await fn(tx);
+      inTransaction = false;
+      return result;
+    },
+    countAdapter: async () => {
+      assert.equal(inTransaction, false, 'unread count should not hold the transaction open');
+      return 3;
+    },
+    emitEnvelope: async () => {},
+  });
+
+  try {
+    const envelope = await UnreadAuthorityService.recordContextChanged({
+      userId: 'u1',
+      contextKey: 'GAME:game-1',
+      contextType: 'GAME',
+      contextId: 'game-1',
+      reason: 'message_created',
+    });
+    assert.equal(envelope.unreadCount, 3);
   } finally {
     setUnreadAuthorityDepsForTests(undefined);
   }
@@ -307,6 +341,7 @@ async function main(): Promise<void> {
   await testRecordContextChangedBuildsEnvelope();
   await testRecordContextChangedPerformReadWriteBeforeBump();
   await testRecordContextChangedEmitsAfterCommit();
+  await testRecordContextChangedCountsOutsideTransaction();
   await testRecordContextChangedSkipsEmitOnRollback();
   await testRecordContextChangedRespectsEmitSocketFalse();
   console.log('unreadAuthority.test.ts: ok');

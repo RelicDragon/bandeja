@@ -31,8 +31,7 @@ export type UnreadAuthorityEnvelope = {
 export type UnreadCountAdapter = (
   contextType: SnapshotContextType,
   contextId: string,
-  userId: string,
-  tx: Prisma.TransactionClient
+  userId: string
 ) => Promise<number>;
 
 export type RecordContextChangedParams = {

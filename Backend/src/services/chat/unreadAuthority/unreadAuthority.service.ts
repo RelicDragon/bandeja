@@ -43,39 +43,36 @@ export class UnreadAuthorityService {
     const countAdapter = params.countAdapter ?? deps.countAdapter;
     const shouldEmit = params.emitSocket !== false;
 
-    const envelope = await deps.transaction(async (tx) => {
+    const clock = await deps.transaction(async (tx) => {
       if (params.performReadWrite) {
         await params.performReadWrite(tx);
       }
 
-      const clock = await bumpUnreadRevisions(tx, {
+      return bumpUnreadRevisions(tx, {
         userId: params.userId,
         contextKey: params.contextKey,
         contextType: params.contextType,
         contextId: params.contextId,
       });
-
-      const unreadCount = await countAdapter(
-        params.contextType,
-        params.contextId,
-        params.userId,
-        tx
-      );
-
-      const built: UnreadAuthorityEnvelope = {
-        contextKey: params.contextKey,
-        contextType: params.contextType,
-        contextId: params.contextId,
-        unreadCount,
-        clock,
-        reason: params.reason,
-        ...(params.clientOpId ? { clientOpId: params.clientOpId } : {}),
-        ...(params.lastMessage ? { lastMessage: params.lastMessage } : {}),
-        ...(params.groupChannelMeta ? { groupChannelMeta: params.groupChannelMeta } : {}),
-      };
-
-      return built;
     });
+
+    const unreadCount = await countAdapter(
+      params.contextType,
+      params.contextId,
+      params.userId
+    );
+
+    const envelope: UnreadAuthorityEnvelope = {
+      contextKey: params.contextKey,
+      contextType: params.contextType,
+      contextId: params.contextId,
+      unreadCount,
+      clock,
+      reason: params.reason,
+      ...(params.clientOpId ? { clientOpId: params.clientOpId } : {}),
+      ...(params.lastMessage ? { lastMessage: params.lastMessage } : {}),
+      ...(params.groupChannelMeta ? { groupChannelMeta: params.groupChannelMeta } : {}),
+    };
 
     if (shouldEmit) {
       await deps.emitEnvelope(params.userId, envelope);
