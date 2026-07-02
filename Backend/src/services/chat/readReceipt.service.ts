@@ -20,7 +20,66 @@ type UnreadMessageRow = {
   createdAt: Date;
 };
 
+type MessageForReadReceipt = {
+  id: string;
+  chatContextType: ChatContextType;
+  contextId: string;
+  chatType: ChatType;
+  serverSyncSeq: number | null;
+  createdAt: Date;
+  senderId: string | null;
+};
+
 export class ReadReceiptService {
+  static async markMessageAsReadInTransaction(
+    tx: Prisma.TransactionClient,
+    message: MessageForReadReceipt,
+    userId: string,
+    readAt: Date
+  ): Promise<number | undefined> {
+    if (!message.senderId || message.senderId === userId) {
+      return undefined;
+    }
+
+    await tx.messageReadReceipt.upsert({
+      where: {
+        messageId_userId: {
+          messageId: message.id,
+          userId,
+        },
+      },
+      update: {
+        readAt,
+      },
+      create: {
+        messageId: message.id,
+        userId,
+        readAt,
+      },
+    });
+
+    await ChatReadCursorService.mergeFromMessage(tx, userId, {
+      id: message.id,
+      chatContextType: message.chatContextType,
+      contextId: message.contextId,
+      chatType: message.chatType,
+      serverSyncSeq: message.serverSyncSeq,
+      createdAt: message.createdAt,
+    });
+
+    return ChatSyncEventService.appendEventInTransaction(
+      tx,
+      message.chatContextType,
+      message.contextId,
+      ChatSyncEventType.MESSAGES_READ_BATCH,
+      {
+        userId,
+        readAt: readAt.toISOString(),
+        messageIds: [message.id],
+      }
+    );
+  }
+
   static async markMessageAsRead(messageId: string, userId: string) {
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId }
@@ -38,45 +97,9 @@ export class ReadReceiptService {
 
     const readAt = new Date();
 
-    const syncSeq = await prisma.$transaction(async (tx) => {
-      await tx.messageReadReceipt.upsert({
-        where: {
-          messageId_userId: {
-            messageId,
-            userId
-          }
-        },
-        update: {
-          readAt
-        },
-        create: {
-          messageId,
-          userId,
-          readAt
-        }
-      });
-
-      await ChatReadCursorService.mergeFromMessage(tx, userId, {
-        id: message.id,
-        chatContextType: message.chatContextType,
-        contextId: message.contextId,
-        chatType: message.chatType,
-        serverSyncSeq: message.serverSyncSeq,
-        createdAt: message.createdAt,
-      });
-
-      return ChatSyncEventService.appendEventInTransaction(
-        tx,
-        message.chatContextType,
-        message.contextId,
-        ChatSyncEventType.MESSAGES_READ_BATCH,
-        {
-          userId,
-          readAt: readAt.toISOString(),
-          messageIds: [messageId],
-        }
-      );
-    });
+    const syncSeq = await prisma.$transaction(async (tx) =>
+      ReadReceiptService.markMessageAsReadInTransaction(tx, message, userId, readAt)
+    );
 
     return {
       messageId,

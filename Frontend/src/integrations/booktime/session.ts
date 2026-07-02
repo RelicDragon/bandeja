@@ -17,6 +17,7 @@ import {
   restoreProactiveBooktimeRefreshForStoredSessions,
   scheduleProactiveBooktimeRefresh,
 } from './proactiveRefresh';
+import { invalidateExternalBookingCache } from './booktimeAllUpcomingCacheInvalidation';
 import { clearRateLimitState, type BooktimeRateLimitConfig } from './rateLimiter';
 
 type SessionEntry = {
@@ -162,6 +163,7 @@ function createClient(
       clearStoredSession(clubId);
       memoryClients.delete(clubId);
       markSessionBlocked(clubId);
+      invalidateExternalBookingCache();
       notifyReconnect(clubId);
     },
   });
@@ -350,6 +352,7 @@ export async function persistBooktimeSessionAfterConnect(
     lastName: payload.lastName ?? null,
   });
   sessionBlockedUntil.delete(clubId);
+  invalidateExternalBookingCache();
 }
 
 export async function disconnectBooktimeClub(clubId: string): Promise<void> {
@@ -359,6 +362,7 @@ export async function disconnectBooktimeClub(clubId: string): Promise<void> {
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
   sessionBlockedUntil.delete(clubId);
+  invalidateExternalBookingCache();
 }
 
 export function clearBooktimeSessionLocal(clubId: string): void {
@@ -367,6 +371,7 @@ export function clearBooktimeSessionLocal(clubId: string): void {
   clearStoredSession(clubId);
   memoryClients.delete(clubId);
   sessionBlockedUntil.delete(clubId);
+  invalidateExternalBookingCache();
 }
 
 export function ensureBooktimeProactiveRefresh(rateLimitConfig?: BooktimeRateLimitConfig): void {

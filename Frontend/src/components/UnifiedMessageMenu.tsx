@@ -26,7 +26,7 @@ import { usePlayersStore } from '@/store/playersStore';
 import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
 import type { BasicUser } from '@/types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
-import { readReceiptsFromOthers } from '@/services/chat/messageTickState';
+import { buildMessageDetailsAudienceRows } from '@/utils/messageDetailsAudience';
 import {
   CHAT_MESSAGE_MENU_BACKDROP,
   CHAT_MESSAGE_MENU_INNER,
@@ -115,19 +115,25 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     setVisible(false);
   }, []);
 
-  const otherReadReceipts = useMemo(
-    () => readReceiptsFromOthers(message.readReceipts, message.senderId, user?.id),
-    [message.readReceipts, message.senderId, user?.id]
+  const detailsAudienceRows = useMemo(
+    () =>
+      buildMessageDetailsAudienceRows(
+        message.readReceipts,
+        message.reactions,
+        message.senderId,
+        user?.id
+      ),
+    [message.readReceipts, message.reactions, message.senderId, user?.id]
   );
 
   const receiptAndSenderIds = useMemo(() => {
     const ids = new Set<string>();
-    for (const r of otherReadReceipts) {
-      if (r.userId) ids.add(r.userId);
+    for (const row of detailsAudienceRows) {
+      if (row.userId) ids.add(row.userId);
     }
     if (message.senderId) ids.add(message.senderId);
     return [...ids];
-  }, [otherReadReceipts, message.senderId]);
+  }, [detailsAudienceRows, message.senderId]);
 
   const usersById = usePlayersStore(
     useShallow((s) => {
@@ -208,7 +214,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     if (nextDetailsHeight > 10) {
       setDetailsHeight((prev) => (prev === nextDetailsHeight ? prev : nextDetailsHeight));
     }
-  }, [showDetails, otherReadReceipts, message.reactions, detailsUsersLoading]);
+  }, [showDetails, detailsAudienceRows, message.reactions, detailsUsersLoading]);
 
   const handleReply = () => {
     onReply(message);
@@ -321,10 +327,10 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     if (!showDetails) return;
     let cancelled = false;
 
-    const hasReceipts = otherReadReceipts.length > 0;
+    const hasAudience = detailsAudienceRows.length > 0;
     const needsSender = Boolean(message.senderId && !message.sender);
 
-    if (!hasReceipts && !needsSender) {
+    if (!hasAudience && !needsSender) {
       setDetailsUsersLoading(false);
       return;
     }
@@ -333,9 +339,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
     const run = async () => {
       const idSet = new Set<string>();
-      if (hasReceipts) {
-        for (const r of otherReadReceipts) {
-          if (r.userId) idSet.add(r.userId);
+      if (hasAudience) {
+        for (const row of detailsAudienceRows) {
+          if (row.userId) idSet.add(row.userId);
         }
       }
       if (needsSender && message.senderId) idSet.add(message.senderId);
@@ -344,7 +350,10 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
       const missing: string[] = [];
       for (const id of idSet) {
         const embedded =
-          id === message.senderId ? message.sender : otherReadReceipts.find((r) => r.userId === id)?.user;
+          id === message.senderId
+            ? message.sender
+            : detailsAudienceRows.find((row) => row.userId === id)?.user ??
+              message.reactions?.find((reaction) => reaction.userId === id)?.user;
         if (embedded) continue;
         if (!store.getUser(id)) missing.push(id);
       }
@@ -371,46 +380,34 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     return () => {
       cancelled = true;
     };
-  }, [showDetails, message.id, message.senderId, otherReadReceipts, message.sender, t]);
+  }, [showDetails, message.id, message.senderId, detailsAudienceRows, message.reactions, message.sender, t]);
 
   const handleBackdropClick = () => {
     if (Date.now() - openTimeRef.current < 400) return;
     closeMenu();
   };
 
-  const getReadReceiptsWithReactions = () => {
-    const reactions = message.reactions || [];
-    return otherReadReceipts.map((receipt, index) => {
-      const userReaction = reactions.find(r => r.userId === receipt.userId);
-      return {
-        ...receipt,
-        reaction: userReaction,
-        key: receipt.id || `receipt-${index}`
-      };
-    }).sort((a, b) => new Date(a.readAt).getTime() - new Date(b.readAt).getTime());
-  };
+  const audienceDisplayUser = (row: { userId: string; user?: BasicUser }): BasicUser | undefined =>
+    mergeBasicUsers(row.user, usersById[row.userId]);
 
   const displaySenderUser = useMemo((): BasicUser | undefined => {
     const fromStore = message.senderId ? usersById[message.senderId] : undefined;
     return mergeBasicUsers(message.sender ?? undefined, fromStore);
   }, [message.sender, message.senderId, usersById]);
 
-  const receiptDisplayUser = (receipt: { userId: string; user?: BasicUser }): BasicUser | undefined =>
-    mergeBasicUsers(receipt.user, usersById[receipt.userId]);
-
-  const formatReadTime = (readAt: string) => {
-    const readDate = new Date(readAt);
+  const formatAudienceTime = (iso: string) => {
+    const readDate = new Date(iso);
     const now = new Date();
     const diffInHours = (now.getTime() - readDate.getTime()) / (1000 * 60 * 60);
     
     if (diffInHours < 24) {
-      const timePart = displaySettings ? formatGameTime(readAt, displaySettings) : formatDate(readDate, 'HH:mm');
+      const timePart = displaySettings ? formatGameTime(iso, displaySettings) : formatDate(readDate, 'HH:mm');
       return `today at ${timePart}`;
     } else if (diffInHours < 48) {
-      const timePart = displaySettings ? formatGameTime(readAt, displaySettings) : formatDate(readDate, 'HH:mm');
+      const timePart = displaySettings ? formatGameTime(iso, displaySettings) : formatDate(readDate, 'HH:mm');
       return `yesterday at ${timePart}`;
     } else {
-      return formatFullDateTime(readAt, user);
+      return formatFullDateTime(iso, user);
     }
   };
 
@@ -708,22 +705,23 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
           {/* Read Receipts */}
           <div className="px-3 py-2">
-            {otherReadReceipts.length > 0 && (
+            {detailsAudienceRows.length > 0 && (
               <div className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-                <div className="font-medium">{t('chat.contextMenu.readBy')} ({otherReadReceipts.length})</div>
+                <div className="font-medium">{t('chat.contextMenu.readBy')} ({detailsAudienceRows.length})</div>
               </div>
             )}
-            {otherReadReceipts.length > 0 ? (
+            {detailsAudienceRows.length > 0 ? (
               detailsUsersLoading ? (
                 <div className="flex justify-center py-8 max-h-48">
                   <Loader2 className="w-6 h-6 animate-spin text-gray-400" aria-hidden />
                 </div>
               ) : (
                 <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {getReadReceiptsWithReactions().map((receipt) => {
-                    const du = receiptDisplayUser(receipt);
+                  {detailsAudienceRows.map((row) => {
+                    const du = audienceDisplayUser(row);
+                    const statusTime = row.readAt ?? row.reaction?.createdAt;
                     return (
-                      <div key={receipt.key} className="flex items-center gap-2">
+                      <div key={row.key} className="flex items-center gap-2">
                         <PlayerAvatar
                           player={du ?? null}
                           inlineFace
@@ -737,15 +735,24 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                           <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                             {du ? getUserDisplayName(du) : 'Unknown User'}
                           </div>
-                          <div className="flex items-center space-x-1">
-                            <DoubleTickIcon size={14} variant="double" className="text-gray-500" />
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatReadTime(receipt.readAt)}
-                            </span>
-                          </div>
+                          {statusTime ? (
+                            <div className="flex items-center space-x-1">
+                              {row.readAt ? (
+                                <DoubleTickIcon size={14} variant="double" className="text-gray-500" />
+                              ) : null}
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {row.readAt
+                                  ? formatAudienceTime(row.readAt)
+                                  : t('chat.contextMenu.reactedAt', {
+                                      defaultValue: 'Reacted {{time}}',
+                                      time: formatAudienceTime(statusTime),
+                                    })}
+                              </span>
+                            </div>
+                          ) : null}
                         </div>
 
-                        {receipt.reaction && <div className="text-sm">{receipt.reaction.emoji}</div>}
+                        {row.reaction ? <div className="text-sm">{row.reaction.emoji}</div> : null}
                       </div>
                     );
                   })}

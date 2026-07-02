@@ -287,4 +287,90 @@ describe('buildGameChatMarkReadParams — per chat type', () => {
       buildGameChatMarkReadParams({ id: 'g1', contextType: 'GAME', game: null, userId: 'u1', gameChatType: 'PUBLIC' })
     ).toBeNull();
   });
+
+  it('builds GAME mark-read params for parent league admin on non-public child game', () => {
+    const game = {
+      id: 'child-g1',
+      status: 'ANNOUNCED',
+      isPublic: false,
+      participants: [],
+      parent: {
+        id: 'parent-g1',
+        participants: [{ userId: 'league-owner', status: 'PLAYING', role: 'OWNER' }],
+      },
+    } as Game;
+    const params = buildGameChatMarkReadParams({
+      id: 'child-g1',
+      contextType: 'GAME',
+      game,
+      userId: 'league-owner',
+      gameChatType: 'PUBLIC',
+    });
+    expect(params).toMatchObject({
+      contextType: 'GAME',
+      contextId: 'child-g1',
+      gameChatType: 'PUBLIC',
+      parentParticipant: { userId: 'league-owner', status: 'PLAYING', role: 'OWNER' },
+      forceMarkReadNetwork: true,
+    });
+  });
+
+  it('builds GAME mark-read params for parent league participant on non-public child game', () => {
+    const game = {
+      id: 'child-g1',
+      status: 'ANNOUNCED',
+      isPublic: false,
+      participants: [],
+      parent: {
+        id: 'parent-g1',
+        participants: [{ userId: 'league-player', status: 'PLAYING', role: 'PARTICIPANT' }],
+      },
+    } as Game;
+    const params = buildGameChatMarkReadParams({
+      id: 'child-g1',
+      contextType: 'GAME',
+      game,
+      userId: 'league-player',
+      gameChatType: 'PUBLIC',
+    });
+    expect(params).toMatchObject({
+      contextType: 'GAME',
+      contextId: 'child-g1',
+      forceMarkReadNetwork: true,
+    });
+  });
+
+  it('does not force mark-read network for direct child game participants', () => {
+    const game = participantGame('u1');
+    const params = buildGameChatMarkReadParams({
+      id: 'g1',
+      contextType: 'GAME',
+      game,
+      userId: 'u1',
+      gameChatType: 'PUBLIC',
+    });
+    expect(params?.forceMarkReadNetwork).toBeFalsy();
+  });
+
+  it('returns null for non-public child game without parent admin access', () => {
+    const game = {
+      id: 'child-g1',
+      status: 'ANNOUNCED',
+      isPublic: false,
+      participants: [],
+      parent: {
+        id: 'parent-g1',
+        participants: [{ userId: 'other-user', status: 'PLAYING', role: 'OWNER' }],
+      },
+    } as Game;
+    expect(
+      buildGameChatMarkReadParams({
+        id: 'child-g1',
+        contextType: 'GAME',
+        game,
+        userId: 'stranger',
+        gameChatType: 'PUBLIC',
+      })
+    ).toBeNull();
+  });
 });

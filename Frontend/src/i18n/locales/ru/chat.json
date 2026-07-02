@@ -38,6 +38,7 @@
       "replyTo": "Ответить {{name}}",
       "readBy": "Прочитано",
       "notReadYet": "Ещё не прочитано",
+      "reactedAt": "Реакция {{time}}",
       "back": "Назад",
       "translate": "Перевести",
       "translating": "Переводится...",

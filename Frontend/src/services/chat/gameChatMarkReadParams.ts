@@ -27,8 +27,16 @@ export function buildGameChatMarkReadParams(opts: {
       game.participants.some(
         (p) => p.userId === userId && (p.status === 'GUEST' || !isParticipantPlaying(p))
       ) ?? false;
-    if (!isParticipant && !hasPendingInvite && !isGuest && !game.isPublic) return null;
     const parentParticipant = game.parent?.participants?.find((p) => p.userId === userId);
+    if (
+      !isParticipant &&
+      !hasPendingInvite &&
+      !isGuest &&
+      !game.isPublic &&
+      !parentParticipant
+    ) {
+      return null;
+    }
     registerGameChatSyncContext(id, game, userId);
     return {
       contextType: 'GAME',
@@ -37,6 +45,7 @@ export function buildGameChatMarkReadParams(opts: {
       game: { id, status: game.status },
       participant: participant ?? null,
       parentParticipant: parentParticipant ?? null,
+      forceMarkReadNetwork: Boolean(parentParticipant && !isParticipant),
       gameChatType,
     };
   }

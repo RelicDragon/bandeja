@@ -266,7 +266,7 @@ function scheduleMarkReadNetwork(
   resolved: NonNullable<ReturnType<typeof resolveSnapshotContext>>,
   key: ContextKey
 ): void {
-  if (shouldSkipMarkReadNetwork(useUnreadStore.getState(), key)) return;
+  if (!params.forceMarkReadNetwork && shouldSkipMarkReadNetwork(useUnreadStore.getState(), key)) return;
   const existing = activityNetworkTimers.get(key);
   if (existing) clearTimeout(existing);
   activityNetworkTimers.set(
@@ -284,7 +284,7 @@ export function markContextReadOnUserActivity(params: CoordinatorEnterParams): v
   const resolved = resolveSnapshotContext(params);
   if (!resolved) return;
   const { key } = resolved;
-  if (shouldSkipMarkReadNetwork(useUnreadStore.getState(), key)) return;
+  if (!params.forceMarkReadNetwork && shouldSkipMarkReadNetwork(useUnreadStore.getState(), key)) return;
   const state = useUnreadStore.getState();
   if ((state.displayedByContext[key] ?? 0) > 0) {
     dispatchMarkReadRequested(key, newClientMutationId());

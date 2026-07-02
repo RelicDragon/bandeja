@@ -38,6 +38,7 @@
       "replyTo": "Reply to {{name}}",
       "readBy": "Read by",
       "notReadYet": "Not read yet",
+      "reactedAt": "Reacted {{time}}",
       "back": "Back",
       "translate": "Translate",
       "translating": "Translating...",

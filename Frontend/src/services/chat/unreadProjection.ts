@@ -70,6 +70,8 @@ export type EnterContextParams = {
   participant?: { status: string; role: string } | null;
   parentParticipant?: { role: string } | null;
   isParentGameAdminOrOwner?: boolean;
+  /** Parent-league access without child participant row — unread snapshot omits this game. */
+  forceMarkReadNetwork?: boolean;
 };
 
 export type AuthorityEnvelopeInput = {

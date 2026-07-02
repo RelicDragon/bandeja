@@ -7,6 +7,7 @@ import { resolveChatMessageSport, projectUserForSportContext } from '../user/use
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { assertValidReactionEmoji, normalizeReactionEmoji } from '../../utils/validateReactionEmoji';
 import { UserReactionEmojiUsageService } from '../user/userReactionEmojiUsage.service';
+import { ReadReceiptService } from './readReceipt.service';
 
 export class ReactionService {
   static async addReaction(messageId: string, userId: string, emoji: string) {
@@ -27,6 +28,7 @@ export class ReactionService {
     const normalizedEmoji = assertValidReactionEmoji(emoji);
 
     return prisma.$transaction(async (tx) => {
+      const readAt = new Date();
       const existing = await tx.messageReaction.findUnique({
         where: {
           messageId_userId: {
@@ -71,6 +73,8 @@ export class ReactionService {
         emoji: normalizedEmoji,
         previousEmoji,
       });
+
+      await ReadReceiptService.markMessageAsReadInTransaction(tx, message, userId, readAt);
 
       const syncSeq = await ChatSyncEventService.appendEventInTransaction(
         tx,
