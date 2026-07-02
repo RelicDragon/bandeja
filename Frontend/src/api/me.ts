@@ -132,3 +132,42 @@ export function clearMyTabCache(): void {
   storage.removeItem(MY_TAB_DATA_KEY);
   storage.removeItem(MY_TAB_TIMESTAMP_KEY);
 }
+
+export function patchMyTabCacheUserNote(gameId: string, userNote: string | null): void {
+  const storage = getStorage();
+  if (!storage) return;
+  const cachedData = storage.getItem(MY_TAB_DATA_KEY);
+  if (!cachedData) return;
+
+  try {
+    const data = JSON.parse(cachedData) as MyTabData;
+    let changed = false;
+
+    const games = data.games?.map((game) => {
+      if (game.id !== gameId) return game;
+      if (game.userNote === userNote) return game;
+      changed = true;
+      return { ...game, userNote };
+    });
+
+    const invites = data.invites?.map((invite) => {
+      if (!invite.game || invite.game.id !== gameId) return invite;
+      if (invite.game.userNote === userNote) return invite;
+      changed = true;
+      return { ...invite, game: { ...invite.game, userNote } };
+    });
+
+    if (!changed) return;
+
+    storage.setItem(
+      MY_TAB_DATA_KEY,
+      JSON.stringify({
+        ...data,
+        games: games ?? data.games,
+        invites: invites ?? data.invites,
+      }),
+    );
+  } catch {
+    // ignore corrupt cache
+  }
+}

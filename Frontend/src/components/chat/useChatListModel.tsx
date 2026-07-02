@@ -25,6 +25,11 @@ import {
   useChatListExpandableSections,
 } from '@/components/chat/useChatListPresenterUi';
 import type { ChatListProps, ChatType } from './chatListTypes';
+import {
+  clearChatListUnreadUrlParam,
+  isChatListUnreadUrlActive,
+  toggleChatListUnreadUrlParam,
+} from '@/components/chat/chatListUnreadUrl';
 
 export function useChatListModel({
   onChatSelect,
@@ -47,7 +52,7 @@ export function useChatListModel({
   useChatListSearchUrlSync(urlQuery, skipUrlSyncRef, setSearchInput);
 
   const marketChatRole = (searchParams.get('role') === 'seller' ? 'seller' : 'buyer') as 'buyer' | 'seller';
-  const [unreadFilterActive, setUnreadFilterActive] = useState(false);
+  const unreadFilterActive = isChatListUnreadUrlActive(searchParams);
   const [showBugModal, setShowBugModal] = useState(false);
   const [bugsFilterPanelOpen, setBugsFilterPanelOpen] = useState(false);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
@@ -119,6 +124,10 @@ export function useChatListModel({
     [setSearchParams]
   );
 
+  const toggleUnreadFilter = useCallback(() => {
+    setSearchParams((prev) => toggleChatListUnreadUrlParam(prev));
+  }, [setSearchParams]);
+
   const handleContactsToggle = useCallback(
     () => toggleContacts(skipUrlSyncRef, setSearchInput, searchData.fetchContactsData),
     [toggleContacts, searchData.fetchContactsData]
@@ -127,10 +136,11 @@ export function useChatListModel({
   useEffect(() => {
     if (chatsFilter !== 'bugs') setBugsFilterPanelOpen(false);
   }, [chatsFilter]);
-  useEffect(() => setUnreadFilterActive(false), [chatsFilter]);
   useEffect(() => {
-    if (readModel.unreadChatsCount <= 0) setUnreadFilterActive(false);
-  }, [readModel.unreadChatsCount]);
+    if (readModel.unreadChatsCount > 0) return;
+    if (!isChatListUnreadUrlActive(searchParams)) return;
+    setSearchParams((prev) => clearChatListUnreadUrlParam(prev), { replace: true });
+  }, [readModel.unreadChatsCount, searchParams, setSearchParams]);
   useEffect(() => {
     if (chatsFilter !== 'users' || !debouncedSearchQuery.trim() || contactsMode) return;
     if (searchData.searchableUsersData?.cityUsers?.length) return;
@@ -254,7 +264,7 @@ export function useChatListModel({
       showContactsEmpty,
       unreadChatsCount: readModel.unreadChatsCount,
       unreadFilterActive,
-      setUnreadFilterActive,
+      toggleUnreadFilter,
       skipUrlSyncRef,
       setSearchParams,
     },

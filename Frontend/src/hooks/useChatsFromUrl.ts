@@ -1,4 +1,5 @@
 import { useLocation, useSearchParams } from 'react-router-dom';
+import { isChatListUnreadUrlActive } from '@/components/chat/chatListUnreadUrl';
 
 export type ChatsFilter = 'users' | 'bugs' | 'channels' | 'market';
 
@@ -20,6 +21,7 @@ export function useChatsFromUrl() {
   const q = searchParams.get('q') || '';
   const role = (searchParams.get('role') || 'buyer') as 'buyer' | 'seller';
   const item = searchParams.get('item') || undefined;
+  const unreadOnly = isChatListUnreadUrlActive(searchParams);
 
-  return { filter, q, role, item };
+  return { filter, q, role, item, unreadOnly };
 }

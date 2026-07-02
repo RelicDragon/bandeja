@@ -35,7 +35,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
     showContactsEmpty,
     unreadChatsCount,
     unreadFilterActive,
-    setUnreadFilterActive,
+    toggleUnreadFilter,
     skipUrlSyncRef,
     setSearchParams,
   } = search;
@@ -139,7 +139,7 @@ export function ChatListView({ model }: { model: ChatListViewModel }) {
             searchInput={searchInput}
             unreadChatsCount={unreadChatsCount}
             unreadFilterActive={unreadFilterActive}
-            onUnreadFilterToggle={() => setUnreadFilterActive((a) => !a)}
+            onUnreadFilterToggle={toggleUnreadFilter}
             onSearchChange={(v) => {
               skipUrlSyncRef.current = true;
               setSearchInput(v);

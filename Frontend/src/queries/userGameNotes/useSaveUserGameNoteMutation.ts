@@ -3,6 +3,7 @@ import { isAxiosError } from 'axios';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { userGameNotesApi } from '@/api/userGameNotes';
+import { patchUserGameNoteInCaches } from '../games/patchUserGameNoteInCaches';
 import { queryKeys } from '../queryKeys';
 
 export function useSaveUserGameNoteMutation(gameId: string) {
@@ -24,8 +25,9 @@ export function useSaveUserGameNoteMutation(gameId: string) {
       return response.data.data;
     },
     onSuccess: (note) => {
+      const content = note?.content?.trim() ?? null;
       queryClient.setQueryData(queryKeys.userGameNotes.detail(gameId), note);
-      void queryClient.invalidateQueries({ queryKey: queryKeys.games.all });
+      patchUserGameNoteInCaches(queryClient, gameId, content);
     },
     onError: (error) => {
       console.error('Failed to save user game note:', error);

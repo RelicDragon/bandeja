@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import toast from 'react-hot-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
 import { Button } from '@/components';
-import { userGameNotesApi } from '@/api/userGameNotes';
+import { useSaveUserGameNoteMutation } from '@/queries/userGameNotes/useSaveUserGameNoteMutation';
 import { Loader2 } from 'lucide-react';
 
 interface UserGameNoteModalProps {
@@ -23,7 +22,8 @@ export const UserGameNoteModal = ({
 }: UserGameNoteModalProps) => {
   const { t } = useTranslation();
   const [content, setContent] = useState(initialContent || '');
-  const [saving, setSaving] = useState(false);
+  const saveMutation = useSaveUserGameNoteMutation(gameId);
+  const saving = saveMutation.isPending;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const adjustHeight = useCallback(() => {
@@ -40,6 +40,11 @@ export const UserGameNoteModal = ({
 
   useEffect(() => {
     if (!isOpen) return;
+    setContent(initialContent || '');
+  }, [isOpen, initialContent]);
+
+  useEffect(() => {
+    if (!isOpen) return;
     requestAnimationFrame(() => {
       const el = textareaRef.current;
       if (!el) return;
@@ -50,27 +55,14 @@ export const UserGameNoteModal = ({
     });
   }, [isOpen, adjustHeight]);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     const trimmed = content.trim();
-    setSaving(true);
-    try {
-      if (trimmed) {
-        await userGameNotesApi.upsertNote(gameId, trimmed);
-      } else {
-        try {
-          await userGameNotesApi.deleteNote(gameId);
-        } catch (e: any) {
-          if (e?.response?.status !== 404) throw e;
-        }
-      }
-      onSaved?.(trimmed || null);
-      onClose();
-    } catch (error: any) {
-      const msg = error.response?.data?.message || 'errors.generic';
-      toast.error(t(msg, { defaultValue: msg }));
-    } finally {
-      setSaving(false);
-    }
+    saveMutation.mutate(trimmed, {
+      onSuccess: () => {
+        onSaved?.(trimmed || null);
+        onClose();
+      },
+    });
   };
 
   const handleClose = () => {

@@ -41,7 +41,7 @@ export type ChatListSearchModel = {
   showContactsEmpty: boolean;
   unreadChatsCount: number;
   unreadFilterActive: boolean;
-  setUnreadFilterActive: React.Dispatch<React.SetStateAction<boolean>>;
+  toggleUnreadFilter: () => void;
   skipUrlSyncRef: React.MutableRefObject<boolean>;
   setSearchParams: ReturnType<typeof import('react-router-dom').useSearchParams>[1];
 };

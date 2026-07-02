@@ -313,15 +313,17 @@ export function useChatInbox(opts: UseChatInboxOptions) {
     };
   }, [chatsFilter, bugsFilter, fetchOps, userId, unreadFilterActive]);
 
-  const prevUnreadFilterRef = useRef(unreadFilterActive);
+  const prevUnreadFilterRef = useRef<boolean | undefined>(undefined);
   useEffect(() => {
-    if (chatsFilter === 'bugs') return;
-    prevUnreadFilterRef.current = false;
-  }, [chatsFilter]);
-
-  useEffect(() => {
-    if (chatsFilter !== 'bugs') return;
+    if (chatsFilter !== 'bugs') {
+      prevUnreadFilterRef.current = undefined;
+      return;
+    }
     if (prevUnreadFilterRef.current === unreadFilterActive) return;
+    if (prevUnreadFilterRef.current === undefined && !unreadFilterActive) {
+      prevUnreadFilterRef.current = false;
+      return;
+    }
     prevUnreadFilterRef.current = unreadFilterActive;
     adapterRef.current.invalidateFilterCache('bugs');
     let cancelled = false;

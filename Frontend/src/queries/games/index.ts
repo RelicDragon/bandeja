@@ -1,5 +1,6 @@
 export { useMyGamesQuery, myGamesQueryOptions, type MyGamesData } from './useMyGamesQuery';
 export { removeInviteFromMyGamesCache } from './removeInviteFromMyGamesCache';
+export { patchUserGameNoteInCaches } from './patchUserGameNoteInCaches';
 export {
   useAvailableGamesQuery,
   availableGamesQueryOptions,
