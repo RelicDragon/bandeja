@@ -741,7 +741,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-03 | Market filter | Switch to market | Market-related threads |
 | CH-04 | Bugs filter | `@admin` bugs filter | Bug threads |
 | CH-05 | Search users | Type in search | Matching users/chats |
-| CH-06 | Unread filter toggle | Show unread only | Filters list |
+| CH-06 | Unread filter toggle | Bugs tab with status filter applied; tap unread mail icon | All unread bug threads shown; status/type filters ignored while unread mode on; turning unread off restores panel filters |
 | CH-07 | Contacts mode | Toggle contacts | City users list |
 | CH-08 | Start new DM | Pick user → chat | `/user-chat/:id` |
 | CH-09 | Load more pagination | Scroll list end | More threads load |

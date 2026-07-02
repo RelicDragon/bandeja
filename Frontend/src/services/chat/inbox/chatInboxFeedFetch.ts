@@ -27,6 +27,11 @@ import type { ChatItem } from '@/components/chat/chatListTypes';
 import type { BasicUser } from '@/types';
 import type { ChatInboxAdapter } from './types';
 
+export type ChatInboxFetchOptions = {
+  /** When true, bugs list ignores status/type/created-by-me panel filters (unread-only mode). */
+  ignoreBugsFilter?: boolean;
+};
+
 export type ChatInboxFetchDeps = {
   getMergedDrafts: (forceRefetch?: boolean) => Promise<import('@/api/chat').ChatDraft[]>;
   adapter: Pick<
@@ -119,12 +124,16 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
     }
   };
 
-  const fetchBugs = async (page = 1): Promise<{ chats: ChatItem[]; hasMore: boolean }> => {
+  const fetchBugs = async (
+    page = 1,
+    fetchOptions?: ChatInboxFetchOptions
+  ): Promise<{ chats: ChatItem[]; hasMore: boolean }> => {
     const user = useAuthStore.getState().user;
     if (!user) return { chats: [], hasMore: false };
     try {
-      const bf = useGameDetailsChromeStore.getState().bugsFilter;
-      const filterParams = buildBugsApiFilterParams(bf);
+      const filterParams = fetchOptions?.ignoreBugsFilter
+        ? undefined
+        : buildBugsApiFilterParams(useGameDetailsChromeStore.getState().bugsFilter);
       const [channelsRes, allDrafts] = await Promise.all([
         chatApi.getGroupChannels('bugs', page, filterParams),
         getMergedDrafts(),
@@ -190,11 +199,12 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
     }
   };
 
-  const fetchFilter = async (filter: ChatsFilterType) => {
+  const fetchFilter = async (filter: ChatsFilterType, fetchOptions?: ChatInboxFetchOptions) => {
     const user = useAuthStore.getState().user;
     if (!user) return;
-    const bf = useGameDetailsChromeStore.getState().bugsFilter;
-    const bugsFilterParams = buildBugsApiFilterParams(bf);
+    const bugsFilterParams = fetchOptions?.ignoreBugsFilter
+      ? undefined
+      : buildBugsApiFilterParams(useGameDetailsChromeStore.getState().bugsFilter);
 
     if (filter === 'users') {
       const playersStore = usePlayersStore.getState();
@@ -311,7 +321,11 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
     }
   };
 
-  const runCoalescedFilterFetch = async (filter: ChatsFilterType) => {
+  const runCoalescedFilterFetch = async (filter: ChatsFilterType, fetchOptions?: ChatInboxFetchOptions) => {
+    if (fetchOptions?.ignoreBugsFilter) {
+      await fetchFilter(filter, fetchOptions);
+      return;
+    }
     const store = useChatListFeedStore.getState();
     let p = store.getInFlight(filter);
     if (!p) {
@@ -327,11 +341,11 @@ export function createChatInboxFetchOps(deps: ChatInboxFetchDeps) {
     await p;
   };
 
-  const fetchChatsForFilter = async (filterArg?: ChatsFilterType) => {
+  const fetchChatsForFilter = async (filterArg?: ChatsFilterType, fetchOptions?: ChatInboxFetchOptions) => {
     const filter = filterArg ?? useShellNavStore.getState().chatsFilter;
     if (filter !== 'users' && filter !== 'bugs' && filter !== 'channels' && filter !== 'market') return;
     try {
-      await runCoalescedFilterFetch(filter);
+      await runCoalescedFilterFetch(filter, fetchOptions);
     } catch (err) {
       console.error('fetchChatsForFilter failed:', err);
       return;

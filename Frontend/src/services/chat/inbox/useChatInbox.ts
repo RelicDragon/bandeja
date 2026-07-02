@@ -115,25 +115,29 @@ export function useChatInbox(opts: UseChatInboxOptions) {
 
   const fetchChatsForFilter = useCallback(
     async (filterArg?: ChatsFilterType) => {
-      await fetchOps.fetchChatsForFilter(filterArg);
+      const filter = filterArg ?? chatsFilter;
+      const fetchOptions =
+        filter === 'bugs' && unreadFilterActive ? { ignoreBugsFilter: true as const } : undefined;
+      await fetchOps.fetchChatsForFilter(filterArg, fetchOptions);
       if (filterArg === 'users' || (!filterArg && chatsFilter === 'users')) {
         setMutedChats({});
       }
-      const filter = filterArg ?? chatsFilter;
       const cached = useChatListFeedStore.getState().getFilterCache(filter);
       if (cached?.cityUsers) {
         setCityUsers(cached.cityUsers);
         setSearchableUsersData({ activeChats: cached.chats, cityUsers: cached.cityUsers });
       }
     },
-    [fetchOps, chatsFilter]
+    [fetchOps, chatsFilter, unreadFilterActive]
   );
 
   const loadMore = useCallback(async () => {
     const snap = adapterRef.current.getFeedSnapshot();
     const p = snap.pagination;
     if (chatsFilter === 'bugs') {
-      await fetchOps.runFeedLoadMore('bugs', true, p.bugsLoadingMore, p.bugsHasMore, fetchOps.fetchBugs);
+      const fetchBugs = (page: number) =>
+        fetchOps.fetchBugs(page, unreadFilterActive ? { ignoreBugsFilter: true } : undefined);
+      await fetchOps.runFeedLoadMore('bugs', true, p.bugsLoadingMore, p.bugsHasMore, fetchBugs);
     } else if (chatsFilter === 'users') {
       await fetchOps.runFeedLoadMore('users', true, p.usersLoadingMore, p.usersHasMore, fetchOps.fetchUsersGroups);
     } else if (chatsFilter === 'market') {
@@ -147,7 +151,7 @@ export function useChatInbox(opts: UseChatInboxOptions) {
         fetchOps.fetchChannels
       );
     }
-  }, [chatsFilter, fetchOps]);
+  }, [chatsFilter, fetchOps, unreadFilterActive]);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -274,6 +278,7 @@ export function useChatInbox(opts: UseChatInboxOptions) {
   const prevBugsFilterRef = useRef(bugsFilter);
   useEffect(() => {
     if (chatsFilter !== 'bugs') return;
+    if (unreadFilterActive) return;
     if (prevBugsFilterRef.current === bugsFilter) return;
     prevBugsFilterRef.current = bugsFilter;
     adapterRef.current.invalidateFilterCache('bugs');
@@ -306,7 +311,44 @@ export function useChatInbox(opts: UseChatInboxOptions) {
     return () => {
       cancelled = true;
     };
-  }, [chatsFilter, bugsFilter, fetchOps, userId]);
+  }, [chatsFilter, bugsFilter, fetchOps, userId, unreadFilterActive]);
+
+  const prevUnreadFilterRef = useRef(unreadFilterActive);
+  useEffect(() => {
+    if (chatsFilter !== 'bugs') return;
+    if (prevUnreadFilterRef.current === unreadFilterActive) return;
+    prevUnreadFilterRef.current = unreadFilterActive;
+    adapterRef.current.invalidateFilterCache('bugs');
+    let cancelled = false;
+    fetchOps
+      .fetchBugs(1, unreadFilterActive ? { ignoreBugsFilter: true } : undefined)
+      .then(({ chats, hasMore }) => {
+        if (cancelled) return;
+        const deduped = deduplicateChats(chats);
+        adapterRef.current.commitFilterCache(
+          'bugs',
+          { chats: deduped, bugsHasMore: hasMore },
+          { userId, applyToVisible: chatsFilter === 'bugs' }
+        );
+        adapterRef.current.replaceThreadIndex('bugs', deduped);
+      })
+      .catch(async () => {
+        if (cancelled) return;
+        const d = await chatInboxThreadIndex.load('bugs');
+        if (d.length) {
+          adapterRef.current.commitFilterCache(
+            'bugs',
+            { chats: deduplicateChats(d) },
+            { userId, applyToVisible: chatsFilter === 'bugs' }
+          );
+        } else {
+          adapterRef.current.commitFilterCache('bugs', { chats: [] }, { userId, applyToVisible: chatsFilter === 'bugs' });
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [chatsFilter, unreadFilterActive, fetchOps, userId]);
 
   const marketUnknownGroupFetchRef = useRef<string | null>(null);
   useEffect(() => {

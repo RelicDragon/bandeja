@@ -149,11 +149,12 @@ function WeatherWindowDialogInner({
     [startTime, timezone],
   );
   const maxDayKey = useMemo(() => maxForecastDayKey(timezone), [timezone]);
+  const activeDayData = dayQuery.data?.date === activeDayKey ? dayQuery.data : undefined;
   const sortedRows = useMemo(
-    () => dayQuery.data?.hours ?? [],
-    [dayQuery.data?.hours],
+    () => activeDayData?.hours ?? [],
+    [activeDayData?.hours],
   );
-  const hasRows = Boolean(dayQuery.data?.available && sortedRows.length > 0);
+  const hasRows = Boolean(activeDayData?.available && sortedRows.length > 0);
   const isDayLoading = dayQuery.isFetching && !hasRows;
   const isGameDay = activeDayKey === resolvedGameDayKey;
   const canGoPrevious = true;
@@ -351,7 +352,7 @@ function WeatherWindowDialogInner({
                     <WeatherDayRowsSkeleton />
                   ) : !hasRows ? (
                     <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-950/50 dark:text-gray-300">
-                      {dayQuery.data?.unavailableReason === 'missing_city_coordinates'
+                      {activeDayData?.unavailableReason === 'missing_city_coordinates'
                         ? t('weather.missingCityCoordinates', {
                             defaultValue: 'Weather is unavailable because this city has no coordinates yet.',
                           })

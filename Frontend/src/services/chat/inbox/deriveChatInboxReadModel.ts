@@ -76,12 +76,21 @@ export function deriveMarketFilteredByRoleAndSearch(opts: DeriveDisplayedChatsOp
   ) as ChatItem[];
 }
 
+function deriveMarketUnreadChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
+  const { threads, marketUnreadCounts } = opts;
+  const unreadRows = threads.filter((c) => c.type === 'channel' && (c.unreadCount ?? 0) > 0);
+  const sorted = [...unreadRows];
+  sortChatItems(sorted, 'market');
+  return sorted.map((c) =>
+    c.type === 'channel' ? { ...c, unreadCount: marketUnreadCounts[c.data.id] ?? c.unreadCount } : c
+  ) as ChatItem[];
+}
+
 export function deriveDisplayedChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
   const { chatsFilter, threads, unreadFilterActive } = opts;
   if (chatsFilter === 'market') {
-    const marketRows = deriveMarketFilteredByRoleAndSearch(opts);
-    if (!unreadFilterActive) return marketRows;
-    return marketRows.filter((c) => c.type === 'channel' && (c.unreadCount ?? 0) > 0);
+    if (unreadFilterActive) return deriveMarketUnreadChats(opts);
+    return deriveMarketFilteredByRoleAndSearch(opts);
   }
   if (!unreadFilterActive) return threads;
   return threads.filter(
