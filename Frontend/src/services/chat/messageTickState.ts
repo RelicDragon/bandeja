@@ -1,7 +1,7 @@
 import type { ChatMessage, MessageReadReceipt } from '@/api/chat';
 
 export function readReceiptsFromOthers(
-  readReceipts: MessageReadReceipt[] | undefined,
+  readReceipts: readonly MessageReadReceipt[] | undefined,
   senderId: string | null | undefined,
   viewerUserId?: string | null
 ): MessageReadReceipt[] {
