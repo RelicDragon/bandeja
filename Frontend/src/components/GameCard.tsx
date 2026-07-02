@@ -327,6 +327,17 @@ export const GameCard = ({
     />
   ) : null;
 
+  const isJoinButtonVisible =
+    showJoinButton &&
+    onJoin &&
+    game.status !== 'ARCHIVED' &&
+    game.status !== 'FINISHED' &&
+    game.resultsStatus === 'NONE' &&
+    game.entityType !== 'LEAGUE' &&
+    !isParticipant &&
+    !hasMyInvites &&
+    !isInJoinQueue;
+
   const headerTagsProps = {
     game,
     showStatusIcon,
@@ -368,7 +379,7 @@ export const GameCard = ({
     <Card
       className={`group hover:shadow-lg hover:-translate-y-0.5 hover:scale-[1.01]
         active:scale-[0.99] transition-all duration-300 ease-out will-change-transform
-        cursor-pointer relative pb-0 overflow-visible ${getGameCardEntityGradientClasses(game.entityType)}`}
+        cursor-pointer relative ${isJoinButtonVisible ? 'pb-2' : 'pb-0'} overflow-visible ${getGameCardEntityGradientClasses(game.entityType)}`}
       onClick={handleCardClick}
     >
       <span className="pointer-events-none absolute inset-0 z-0 overflow-hidden rounded-xl" aria-hidden>
@@ -585,8 +596,8 @@ export const GameCard = ({
         </div>
         )}
 
-        {showJoinButton && onJoin && game.status !== 'ARCHIVED' && game.status !== 'FINISHED' && game.resultsStatus === 'NONE' && game.entityType !== 'LEAGUE' && !isParticipant && !hasMyInvites && !isInJoinQueue && (
-          <div className="mt-1 mb-0">
+        {isJoinButtonVisible && (
+          <div className="mt-1">
             {hasUnoccupiedSlots ? (
               <Button
                 onClick={(e) => {
