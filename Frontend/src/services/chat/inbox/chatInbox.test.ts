@@ -3,12 +3,13 @@ import type { ChatItem } from '@/components/chat/chatListTypes';
 import {
   buildUnreadByThread,
   deriveChatInboxReadModel,
+  deriveDisplayedChats,
   mergeThreadUnreadCounts,
   sortThreadsForFilter,
 } from './deriveChatInboxReadModel';
 import { createFakeChatInboxAdapter } from './chatInboxFakeAdapter';
 
-import type { UserChat } from '@/api/chat';
+import type { GroupChannel, UserChat } from '@/api/chat';
 
 function userThread(id: string, unread: number, updatedAt: string): ChatItem {
   return {
@@ -25,6 +26,59 @@ function userThread(id: string, unread: number, updatedAt: string): ChatItem {
     otherUser: { id: 'other', firstName: 'A', lastName: 'B' },
   };
 }
+
+function marketChannel(id: string, unread: number, role: 'buyer' | 'seller'): ChatItem {
+  return {
+    type: 'channel',
+    data: {
+      id,
+      buyerId: role === 'buyer' ? 'me' : 'other',
+      marketItemId: `item-${id}`,
+      marketItem: { sellerId: role === 'seller' ? 'me' : 'other' },
+      updatedAt: '2026-01-01',
+    } as GroupChannel,
+    lastMessageDate: new Date('2026-01-01'),
+    unreadCount: unread,
+  };
+}
+
+describe('deriveDisplayedChats', () => {
+  it('shows all unread market threads when unread filter overrides role filter', () => {
+    const threads = [
+      marketChannel('buyer-unread', 2, 'buyer'),
+      marketChannel('seller-unread', 1, 'seller'),
+      marketChannel('buyer-read', 0, 'buyer'),
+    ];
+    const displayed = deriveDisplayedChats({
+      chatsFilter: 'market',
+      threads,
+      unreadFilterActive: true,
+      marketChatRole: 'buyer',
+      debouncedSearchQuery: '',
+      userId: 'me',
+      marketUnreadCounts: {},
+    });
+    expect(displayed).toHaveLength(2);
+    expect(displayed.map((c) => (c.type === 'channel' ? c.data.id : ''))).toEqual(
+      expect.arrayContaining(['buyer-unread', 'seller-unread'])
+    );
+  });
+
+  it('filters unread threads from the full list for non-market tabs', () => {
+    const threads = [userThread('read', 0, '2026-01-01'), userThread('unread', 3, '2026-01-02')];
+    const displayed = deriveDisplayedChats({
+      chatsFilter: 'users',
+      threads,
+      unreadFilterActive: true,
+      marketChatRole: 'buyer',
+      debouncedSearchQuery: '',
+      userId: 'me',
+      marketUnreadCounts: {},
+    });
+    expect(displayed).toHaveLength(1);
+    expect(displayed[0]?.type === 'user' && displayed[0].data.id).toBe('unread');
+  });
+});
 
 describe('deriveChatInboxReadModel', () => {
   it('builds unread map keyed by chat row key', () => {
