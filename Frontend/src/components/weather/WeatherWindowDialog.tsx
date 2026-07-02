@@ -15,10 +15,10 @@ import {
 } from '@/utils/weather';
 import {
   dateKeyInTimezone,
+  formatWeatherDayLabel,
   groupWeatherHoursByDay,
 } from '@/utils/weatherDayGroups';
 import { WeatherDayChart } from './WeatherDayChart';
-import { WeatherDayNavigator } from './WeatherDayNavigator';
 import { WeatherIcon } from './WeatherIcon';
 import { getWeatherIconPalette } from './weatherIconPalette';
 
@@ -214,6 +214,9 @@ function WeatherWindowDialogInner({
   }, [gameDayIndex, gameDayKey, selectedDayIndex]);
 
   const showDayNavigator = dayGroups.length > 1;
+  const chartDayLabel = selectedDay
+    ? formatWeatherDayLabel(selectedDay.dayKey, timezone, locale, t)
+    : undefined;
 
   return (
     <Dialog open={open} onClose={onClose} modalId={modalId}>
@@ -246,20 +249,6 @@ function WeatherWindowDialogInner({
             </div>
           ) : (
             <>
-              {showDayNavigator ? (
-                <WeatherDayNavigator
-                  dayGroups={dayGroups}
-                  selectedDayKey={activeDayKey}
-                  gameDayKey={gameDayKey}
-                  canReturnToGameDay={canReturnToGameDay}
-                  timezone={timezone}
-                  locale={locale}
-                  onPrevious={() => navigateDay('left')}
-                  onNext={() => navigateDay('right')}
-                  onGoToGameDay={handleGoToGameDay}
-                />
-              ) : null}
-
               <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
@@ -281,6 +270,13 @@ function WeatherWindowDialogInner({
                         selectedTime={selectedTime}
                         onPointSelect={handleChartPointSelect}
                         showGameWindow={isGameDay}
+                        dayLabel={chartDayLabel}
+                        canGoPrevious={showDayNavigator && selectedDayIndex > 0}
+                        canGoNext={showDayNavigator && selectedDayIndex >= 0 && selectedDayIndex < dayGroups.length - 1}
+                        onPrevious={showDayNavigator ? () => navigateDay('left') : undefined}
+                        onNext={showDayNavigator ? () => navigateDay('right') : undefined}
+                        showGoToGameDay={canReturnToGameDay && !isGameDay}
+                        onGoToGameDay={handleGoToGameDay}
                       />
                     </div>
                     <div ref={hourlyScrollRef} className="min-h-0 flex-1 overflow-y-auto pr-1">
