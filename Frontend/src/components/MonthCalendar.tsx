@@ -112,12 +112,16 @@ export const MonthCalendar = ({
     : { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
   const [slideDirection, setSlideDirection] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
+  const [viewMonth, setViewMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
   const calendarRef = useRef<HTMLDivElement>(null);
 
-  const displayedMonth = useMemo(
-    () => startOfMonth(selectedDate ?? new Date()),
-    [selectedDate],
-  );
+  useEffect(() => {
+    if (!selectedDate) return;
+    const selectedMonth = startOfMonth(selectedDate);
+    setViewMonth((prev) => (isSameMonth(prev, selectedMonth) ? prev : selectedMonth));
+  }, [selectedDate]);
+
+  const displayedMonth = viewMonth;
   const selectedDayKey = selectedDate ? calendarDayKey(selectedDate) : null;
 
   const displaySettings = useMemo(() => user ? resolveDisplaySettings(user) : resolveDisplaySettings(null), [user]);
@@ -239,27 +243,30 @@ export const MonthCalendar = ({
 
   const handlePreviousMonth = () => {
     const anchor = selectedDate ?? new Date();
-    const newMonth = startOfMonth(subMonths(displayedMonth, 1));
+    const newMonth = startOfMonth(subMonths(viewMonth, 1));
     setSlideDirection(-1);
     setIsSliding(true);
+    setViewMonth(newMonth);
     onDateSelect(selectedDayInMonth(anchor, newMonth));
     notifyMonthChange(newMonth);
   };
 
   const handleNextMonth = () => {
     const anchor = selectedDate ?? new Date();
-    const newMonth = startOfMonth(addMonths(displayedMonth, 1));
+    const newMonth = startOfMonth(addMonths(viewMonth, 1));
     setSlideDirection(1);
     setIsSliding(true);
+    setViewMonth(newMonth);
     onDateSelect(selectedDayInMonth(anchor, newMonth));
     notifyMonthChange(newMonth);
   };
 
   const handleDateClick = (day: Date) => {
     const dayMonth = startOfMonth(day);
-    if (!isSameMonth(dayMonth, displayedMonth)) {
-      setSlideDirection(dayMonth > displayedMonth ? 1 : -1);
+    if (!isSameMonth(dayMonth, viewMonth)) {
+      setSlideDirection(dayMonth > viewMonth ? 1 : -1);
       setIsSliding(true);
+      setViewMonth(dayMonth);
       notifyMonthChange(dayMonth);
     }
 

@@ -136,17 +136,20 @@ export const EditGameInfoModal = ({
     () => game.linkedBookings?.map((b) => b.externalBookingId) ?? [],
     [game.linkedBookings],
   );
+  const hasLocationTimeDraft = locationTimeDraft != null;
   const pendingUnlinkIds = useMemo(
     () =>
       computePendingBookingUnlinks(
         initialLinkedBookingIds,
         pendingRemoveBookingIds,
         locationTimeDraft?.selectedBookingIds ?? initialLinkedBookingIds,
-        locationTimeDraft?.locationTimeMode === 'bookings',
+        hasLocationTimeDraft &&
+          (locationTimeDraft?.locationTimeMode === 'bookings' || initialLinkedBookingIds.length > 0),
       ),
     [
       initialLinkedBookingIds,
       pendingRemoveBookingIds,
+      hasLocationTimeDraft,
       locationTimeDraft?.selectedBookingIds,
       locationTimeDraft?.locationTimeMode,
     ],

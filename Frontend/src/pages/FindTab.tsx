@@ -16,9 +16,8 @@ import { useAvailableUpcomingGames } from '@/hooks/useAvailableUpcomingGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
 import { findSportFilterToApiParam, getViewerPrimarySport } from '@/utils/findSportFilter';
 import type { Sport } from '@/types';
-import { parse, startOfDay, format } from 'date-fns';
+import { startOfDay, format } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { unionDateRangeWithDay } from '@/utils/calendarSelectedDayFilter';
 import { computeFindMonthDateRange, isFindGamesQueryReady } from '@/utils/findMonthDateRange';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
@@ -79,23 +78,7 @@ export const FindTab = () => {
     setDateRange(computeFindMonthDateRange(new Date(), displaySettings.weekStart));
   }, [displaySettings.weekStart, calendarRangeReady]);
 
-  const selectedCalendarDay = useMemo(() => {
-    if (findSelectedDay) {
-      const parsed = parse(findSelectedDay, 'yyyy-MM-dd', new Date());
-      if (!isNaN(parsed.getTime())) {
-        return startOfDay(parsed);
-      }
-    }
-    return startOfDay(new Date());
-  }, [findSelectedDay]);
-
-  const queryDateRange = useMemo(() => {
-    const { startDate, endDate } = dateRange;
-    if (!startDate || !endDate) {
-      return dateRange;
-    }
-    return unionDateRangeWithDay(startDate, endDate, selectedCalendarDay);
-  }, [dateRange, selectedCalendarDay]);
+  const queryDateRange = dateRange;
 
   const { filters, updateFilter, updateFilters, isHydrated } = useGameFilters();
   const findSportApiParam = useMemo(

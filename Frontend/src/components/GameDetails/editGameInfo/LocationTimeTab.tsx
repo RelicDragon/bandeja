@@ -239,7 +239,7 @@ export function LocationTimeTab({
         initialLinkedBookingIds,
         pendingRemoveBookingIds,
         selectedBookingIds,
-        locationTimeMode === 'bookings',
+        locationTimeMode === 'bookings' || initialLinkedBookingIds.length > 0,
       ),
     [initialLinkedBookingIds, pendingRemoveBookingIds, selectedBookingIds, locationTimeMode],
   );

@@ -117,7 +117,7 @@ export async function saveLocationTime(gameId: string, draft: LocationTimeSaveDr
     });
   }
 
-  if (draft.courtIds && draft.courtIds.length > 0) {
+  if (draft.courtIds !== undefined) {
     await runSaveStep('courts', completedSteps, async () => {
       await gameCourtsApi.setGameCourts(gameId, draft.courtIds!);
     });
@@ -178,11 +178,14 @@ export function buildEditLocationTimeSaveDraft({
   bookingOverrides,
 }: BuildEditSaveDraftArgs): LocationTimeSaveDraft {
   const initialLinked = game.linkedBookings?.map((b) => b.externalBookingId) ?? [];
+  const bookingSelectionAuthoritative = Boolean(locationTimeDraft) && (
+    locationTimeDraft?.locationTimeMode === 'bookings' || initialLinked.length > 0
+  );
   const removeBookingIds = computePendingBookingUnlinks(
     initialLinked,
     pendingRemoveBookingIds,
     locationTimeDraft?.selectedBookingIds ?? initialLinked,
-    locationTimeDraft?.locationTimeMode === 'bookings',
+    bookingSelectionAuthoritative,
   );
 
   const pickerAddIds =
@@ -278,15 +281,18 @@ export function buildEditLocationTimeSaveDraft({
       ...(courtId ? [courtId] : []),
     ]),
   ].filter(Boolean);
+  const initialCourtIds =
+    game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : []);
+  const courtIdsChanged = courtIds.join(',') !== initialCourtIds.join(',');
 
-  const resolvedCourtId = courtIds[0] ?? courtId ?? undefined;
+  const resolvedCourtId = courtIds[0] ?? courtId;
   const resolvedHasBookedCourt =
-    remainingLinkedCount > 0 ? true : courtIds.length > 0 ? hasBookedCourt : hasBookedCourt;
+    remainingLinkedCount > 0 ? true : hasBookedCourt;
 
   return {
     clubId: clubId || undefined,
     courtId: resolvedCourtId,
-    courtIds: courtIds.length > 0 ? courtIds : undefined,
+    courtIds: courtIdsChanged ? courtIds : undefined,
     startTime,
     endTime,
     timeOverride,
