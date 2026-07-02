@@ -1,4 +1,5 @@
 import type { Prisma } from '@prisma/client';
+import { fromZonedTime } from 'date-fns-tz';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 import {
@@ -46,10 +47,6 @@ function cToF(c: number): number {
   return Math.round(((c * 9) / 5 + 32) * 10) / 10;
 }
 
-function parseUtcHour(value: string): Date {
-  return new Date(value.endsWith('Z') ? value : `${value}Z`);
-}
-
 function isValidDayKey(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
@@ -68,7 +65,15 @@ function compareDayKeys(left: string, right: string): number {
   return left.localeCompare(right);
 }
 
-function normalizeArchiveHourly(body: unknown): WeatherHourlyPoint[] {
+function parseLocalHour(value: string, timezone: string): Date {
+  if (value.endsWith('Z')) return new Date(value);
+  const [datePart, timePart = '00:00'] = value.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute = 0] = timePart.split(':').map(Number);
+  return fromZonedTime(new Date(year, month - 1, day, hour, minute, 0, 0), timezone);
+}
+
+function normalizeArchiveHourly(body: unknown, timezone: string): WeatherHourlyPoint[] {
   const hourly = (body as { hourly?: Record<string, unknown> })?.hourly;
   const times: string[] = Array.isArray(hourly?.time) ? hourly.time as string[] : [];
   const temps: number[] = Array.isArray(hourly?.temperature_2m) ? hourly.temperature_2m as number[] : [];
@@ -83,8 +88,10 @@ function normalizeArchiveHourly(body: unknown): WeatherHourlyPoint[] {
     ? hourly.relative_humidity_2m as Array<number | null>
     : [];
 
+  const isDay: Array<number | null> = Array.isArray(hourly?.is_day) ? hourly.is_day as Array<number | null> : [];
+
   return times.flatMap((time, index): WeatherHourlyPoint[] => {
-    const parsed = parseUtcHour(time);
+    const parsed = parseLocalHour(time, timezone);
     const temperatureC = temps[index];
     const weatherCode = codes[index];
     if (Number.isNaN(parsed.getTime()) || typeof temperatureC !== 'number' || typeof weatherCode !== 'number') {
@@ -94,6 +101,7 @@ function normalizeArchiveHourly(body: unknown): WeatherHourlyPoint[] {
     const precipitationMm = precipitation[index];
     const windSpeedKmh = windSpeed[index];
     const relativeHumidity = humidity[index];
+    const dayFlag = isDay[index];
 
     return [{
       time: parsed.toISOString(),
@@ -105,7 +113,7 @@ function normalizeArchiveHourly(body: unknown): WeatherHourlyPoint[] {
       precipitationMm: typeof precipitationMm === 'number' ? roundOne(precipitationMm) : null,
       windSpeedKmh: typeof windSpeedKmh === 'number' ? roundOne(windSpeedKmh) : null,
       relativeHumidity: typeof relativeHumidity === 'number' ? Math.round(relativeHumidity) : null,
-      isDay: null,
+      isDay: typeof dayFlag === 'number' ? dayFlag === 1 : null,
     }];
   });
 }
@@ -141,9 +149,9 @@ async function fetchArchiveDayFromOpenMeteo(city: CityForWeather, day: string): 
   url.searchParams.set('end_date', day);
   url.searchParams.set(
     'hourly',
-    ['temperature_2m', 'weather_code', 'precipitation', 'wind_speed_10m', 'relative_humidity_2m'].join(','),
+    ['temperature_2m', 'weather_code', 'precipitation', 'wind_speed_10m', 'relative_humidity_2m', 'is_day'].join(','),
   );
-  url.searchParams.set('timezone', 'UTC');
+  url.searchParams.set('timezone', city.timezone);
   url.searchParams.set('wind_speed_unit', 'kmh');
 
   const controller = new AbortController();
@@ -160,7 +168,7 @@ async function fetchArchiveDayFromOpenMeteo(city: CityForWeather, day: string): 
       throw new Error(`Open-Meteo archive responded ${response.status}`);
     }
     const body = await response.json();
-    const hourly = normalizeArchiveHourly(body);
+    const hourly = normalizeArchiveHourly(body, city.timezone);
     if (hourly.length === 0) {
       throw new Error(`Open-Meteo archive returned no hourly rows for ${day}`);
     }

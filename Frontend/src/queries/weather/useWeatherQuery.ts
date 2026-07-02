@@ -10,6 +10,7 @@ export function weatherDayQueryOptions(cityId: string, date: string, enabled = t
     queryFn: () => weatherApi.getDay({ cityId, date }),
     enabled: enabled && Boolean(cityId && date),
     staleTime: WEATHER_STALE_MS,
+    gcTime: 24 * 60 * 60 * 1000,
   });
 }
 
