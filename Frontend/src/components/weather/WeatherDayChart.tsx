@@ -29,6 +29,7 @@ interface WeatherDayChartProps {
   onNext?: () => void;
   showGoToGameDay?: boolean;
   onGoToGameDay?: () => void;
+  isLoading?: boolean;
 }
 
 interface ChartPoint {
@@ -86,6 +87,7 @@ export function WeatherDayChart({
   onNext,
   showGoToGameDay = false,
   onGoToGameDay,
+  isLoading = false,
 }: WeatherDayChartProps) {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
@@ -145,7 +147,66 @@ export function WeatherDayChart({
     };
   }, [cityTimezone, endTime, hour12, locale, points, showGameWindow, startTime, unit]);
 
-  if (!chart) return null;
+  if (isLoading || !chart) {
+    if (!isLoading) return null;
+
+    return (
+      <div className="mb-3 rounded-xl border border-sky-100 bg-gradient-to-br from-white via-sky-50/70 to-emerald-50/80 p-3 shadow-sm dark:border-sky-900/60 dark:from-gray-950 dark:via-sky-950/30 dark:to-emerald-950/20">
+        <div className="mb-2 flex items-center gap-2">
+          {showDayNav ? (
+            <motion.button
+              type="button"
+              whileTap={reduceMotion ? undefined : { scale: 0.9 }}
+              onClick={onPrevious}
+              disabled={!canGoPrevious}
+              className={chartNavButtonClass}
+              aria-label={t('weather.previousDay', { defaultValue: 'Previous day' })}
+            >
+              <ChevronLeft size={17} strokeWidth={2.25} />
+            </motion.button>
+          ) : null}
+
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-gray-900 dark:text-white">{chartTitle}</div>
+            <div className="mt-1 h-3 w-32 animate-pulse rounded bg-gray-200/80 dark:bg-gray-800" />
+          </div>
+
+          {showDayNav ? (
+            <motion.button
+              type="button"
+              whileTap={reduceMotion ? undefined : { scale: 0.9 }}
+              onClick={onNext}
+              disabled={!canGoNext}
+              className={chartNavButtonClass}
+              aria-label={t('weather.nextDay', { defaultValue: 'Next day' })}
+            >
+              <ChevronRight size={17} strokeWidth={2.25} />
+            </motion.button>
+          ) : null}
+        </div>
+
+        <div
+          className="relative h-32 w-full overflow-hidden rounded-lg bg-sky-50/80 dark:bg-sky-950/20"
+          aria-hidden
+        >
+          <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-transparent via-white/50 to-transparent dark:via-white/5" />
+        </div>
+
+        {showGoToGameDay && onGoToGameDay ? (
+          <div className="mt-1">
+            <button
+              type="button"
+              onClick={onGoToGameDay}
+              className="inline-flex shrink-0 items-center gap-0.5 text-[9px] font-medium text-sky-700 transition-colors hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-100"
+            >
+              {t('weather.goToGameDay', { defaultValue: 'Go to game day' })}
+              <ChevronRight size={11} strokeWidth={2.25} aria-hidden />
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   const labelIndexes = Array.from(
     new Set([0, Math.floor((chart.points.length - 1) / 2), chart.points.length - 1]),
