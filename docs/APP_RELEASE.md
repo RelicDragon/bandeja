@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.96.52 |
-| **Build** | 166 |
-| **Commit** | `bd167854a8bdfc6cde1563e7519fa44804378f49` |
-| **Short** | `bd167854` |
-| **Date** | 2026-06-28 |
-| **Message** | Bump app release to 0.96.52 (build 166) |
+| **Version** | 0.96.54 |
+| **Build** | 168 |
+| **Commit** | `a782ccbce8ad0d0f2a0d79eb40e6466ac4d98fdb` |
+| **Short** | `a782ccbc` |
+| **Date** | 2026-07-02 |
+| **Message** | Bump app release to 0.96.54 (build 168) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -22,8 +22,6 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 ```bash
 ./scripts/app-release.sh
 ```
-
-The CLI asks whether to release **Both** stores (default), **Android**, or **iOS**. You can also choose non-interactively: `./scripts/app-release.sh --platform android`, `./scripts/app-release.sh --platform ios`, or `./scripts/app-release.sh --platform both`.
 
 Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
 
@@ -70,6 +68,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.96.54 | 168 | `a782ccbc` | 2026-07-02 |
 | 0.96.52 | 166 | `bd167854` | 2026-06-28 |
 | 0.96.51 | 165 | `d985ad8d` | 2026-06-28 |
 | 0.96.50 | 164 | `35478ae3` | 2026-06-28 |
