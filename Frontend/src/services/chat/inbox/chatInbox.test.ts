@@ -32,6 +32,7 @@ function marketChannel(id: string, unread: number, role: 'buyer' | 'seller'): Ch
     type: 'channel',
     data: {
       id,
+      name: id,
       buyerId: role === 'buyer' ? 'me' : 'other',
       marketItemId: `item-${id}`,
       marketItem: { sellerId: role === 'seller' ? 'me' : 'other' },

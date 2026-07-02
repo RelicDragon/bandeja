@@ -315,6 +315,10 @@ export function useChatInbox(opts: UseChatInboxOptions) {
 
   const prevUnreadFilterRef = useRef(unreadFilterActive);
   useEffect(() => {
+    prevUnreadFilterRef.current = unreadFilterActive;
+  }, [chatsFilter]);
+
+  useEffect(() => {
     if (chatsFilter !== 'bugs') return;
     if (prevUnreadFilterRef.current === unreadFilterActive) return;
     prevUnreadFilterRef.current = unreadFilterActive;
