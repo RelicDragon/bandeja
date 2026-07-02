@@ -21,4 +21,15 @@ describe('chatLocalApplyPull public API', () => {
     });
     expect(rev).toBe(2);
   });
+
+  it('passes expected server max seq through syncPull when provided', async () => {
+    await pullAndApplyChatSyncEvents('USER', 'u1', { expectedServerMaxSeq: 9 });
+
+    expect(applyThreadEvent).toHaveBeenCalledWith({
+      kind: 'syncPull',
+      contextType: 'USER',
+      contextId: 'u1',
+      expectedServerMaxSeq: 9,
+    });
+  });
 });

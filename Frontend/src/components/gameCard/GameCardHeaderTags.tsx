@@ -1,7 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { GameStatusIcon } from '@/components/GameStatusIcon';
-import { Users, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy, Camera } from 'lucide-react';
+import { Users, Dumbbell, Beer, Ban, Award, Lock, Swords, Trophy } from 'lucide-react';
 import type { Game } from '@/types';
 import type { GameCardMyParticipationBadge } from '@/utils/gameCardMyParticipationBadge';
 
@@ -9,7 +8,6 @@ interface GameCardHeaderTagsProps {
   game: Game;
   showStatusIcon: boolean;
   sportTags: React.ReactNode;
-  showPhotoCountBadge: boolean;
   myParticipationBadge: GameCardMyParticipationBadge | null;
   showEntityTypePill: boolean;
   skipStatus?: boolean;
@@ -19,30 +17,16 @@ export const GameCardHeaderTags = ({
   game,
   showStatusIcon,
   sportTags,
-  showPhotoCountBadge,
   myParticipationBadge,
   showEntityTypePill,
   skipStatus = false,
 }: GameCardHeaderTagsProps) => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
 
   return (
     <>
       {!skipStatus && showStatusIcon && <GameStatusIcon status={game.status} />}
       {sportTags}
-      {showPhotoCountBadge && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/games/${game.id}/chat`);
-          }}
-          className="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1 shadow-[0_0_8px_rgba(168,85,247,0.4)] dark:shadow-[0_0_8px_rgba(168,85,247,0.5)] hover:bg-purple-200 dark:hover:bg-purple-900/50 hover:shadow-[0_0_12px_rgba(168,85,247,0.6)] dark:hover:shadow-[0_0_12px_rgba(168,85,247,0.7)] hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
-        >
-          <Camera size={12} />
-          {game.photosCount}
-        </button>
-      )}
       {!game.isPublic && (
         <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 flex items-center gap-1">
           <Lock size={12} />

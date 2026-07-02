@@ -95,9 +95,6 @@ export const GameCard = ({
     !!game.mainPhoto?.thumbnailUrl;
 
   const mainPhotoUrl = showPhotoPreview ? game.mainPhoto?.thumbnailUrl ?? null : null;
-  const showPhotoCountBadge =
-    canViewGamePhotos(game, effectiveUser ? { id: effectiveUser.id, isAdmin: effectiveUser.isAdmin } : null) &&
-    (game.photosCount ?? 0) > 0;
 
   const participants = game.participants ?? [];
   const participation = getGameParticipationState(participants, effectiveUser?.id, game);
@@ -132,7 +129,6 @@ export const GameCard = ({
   const isNonGameEntity = game.entityType !== 'GAME';
 
   const hasOtherTags = isLeagueEntity && (
-    (game.photosCount ?? 0) > 0 ||
     !game.isPublic ||
     (game.genderTeams && game.genderTeams !== 'ANY') ||
     myParticipationBadge != null ||
@@ -274,9 +270,8 @@ export const GameCard = ({
     }
   };
 
-  const infoDateText =
-    getDateLabelResolved(game.startTime) +
-    (shouldShowTiming ? ` ${timeRangeDisplay.primaryText}` : '');
+  const infoDateText = getDateLabelResolved(game.startTime);
+  const infoTimeText = shouldShowTiming ? timeRangeDisplay.primaryText : null;
 
   const titleEntityInlineIcon =
     (isLeagueEntity ? bookmarkInTitleRow && isNonGameEntity : nonLeagueShowEntityIcon) ? (
@@ -336,7 +331,6 @@ export const GameCard = ({
     game,
     showStatusIcon,
     sportTags: gameSportTags,
-    showPhotoCountBadge,
     myParticipationBadge,
   };
 
@@ -346,7 +340,6 @@ export const GameCard = ({
       (!shouldMoveIconsToTitle && showFireIcon) ||
       (!shouldMoveIconsToTitle && showStatusIcon) ||
       (!shouldMoveIconsToTitle && hasGameSportTags) ||
-      showPhotoCountBadge ||
       !game.isPublic ||
       (game.genderTeams != null && game.genderTeams !== 'ANY') ||
       myParticipationBadge != null ||
@@ -539,9 +532,11 @@ export const GameCard = ({
 
       {/* Content */}
       <div ref={expandedContentRef} className="relative z-10">
+        {trainerParticipant ? (
+          <GameCardTrainerBadge trainer={trainerParticipant} className="mb-2" />
+        ) : null}
         {mainPhotoUrl ? (
           <div className="flex gap-4 mb-2 items-center">
-            {trainerParticipant && <GameCardTrainerBadge trainer={trainerParticipant} />}
             <div className="flex-shrink-0">
               <div className="w-24 h-24 rounded-xl overflow-hidden ring-2 ring-gray-200 dark:ring-gray-700 shadow-sm transition-shadow duration-300 group-hover:shadow-md">
                 <img
@@ -557,29 +552,28 @@ export const GameCard = ({
                 game={game}
                 participants={participants}
                 dateText={infoDateText}
+                timeText={infoTimeText}
                 hintText={infoHintText}
                 className="flex flex-col gap-2 flex-1 text-sm text-gray-600 dark:text-gray-400 justify-center min-h-0"
               />
             )}
           </div>
         ) : (
-          <div className={`text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' ? 'flex gap-4 -mt-1 items-center' : ''}`}>
-            {trainerParticipant && <GameCardTrainerBadge trainer={trainerParticipant} />}
-            {game.entityType !== 'LEAGUE_SEASON' && (
-              <GameCardInfoRows
-                game={game}
-                participants={participants}
-                dateText={infoDateText}
-                hintText={infoHintText}
-                className="space-y-2 flex-1"
-              />
-            )}
-          </div>
+          game.entityType !== 'LEAGUE_SEASON' && (
+            <GameCardInfoRows
+              game={game}
+              participants={participants}
+              dateText={infoDateText}
+              timeText={infoTimeText}
+              hintText={infoHintText}
+              className="space-y-2 text-sm text-gray-600 dark:text-gray-400"
+            />
+          )
         )}
         {game.entityType !== 'LEAGUE_SEASON' && (
-        <div className={`space-y-1.5 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => p.status === 'PLAYING').length >= 1 ? 'pt-1.5 mt-1.5 border-t border-gray-200 dark:border-gray-700' : ''}`}>
-          <div className="flex items-center gap-2 min-h-0">
-            <div className="relative -mx-0 flex-1 w-full min-w-0">
+        <div className={`space-y-1.5 pb-2 text-sm text-gray-600 dark:text-gray-400 ${game.entityType === 'TRAINING' && participants.filter(p => p.status === 'PLAYING').length >= 1 ? 'pt-1.5 mt-1.5 border-t border-gray-200 dark:border-gray-700' : ''}`}>
+          <div className="flex items-center gap-2 overflow-visible">
+            <div className="relative flex-1 w-full min-w-0 overflow-visible">
               <PlayersCarousel
                 participants={participants.filter(p => p.status === 'PLAYING')}
                 userId={effectiveUser?.id}

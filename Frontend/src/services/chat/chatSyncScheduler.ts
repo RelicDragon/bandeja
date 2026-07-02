@@ -34,7 +34,12 @@ export const SYNC_PRIORITY_GAP = 85;
 export const SYNC_PRIORITY_COOP = 45;
 export const SYNC_PRIORITY_WARM = 12;
 
-type Job = { contextType: ChatContextType; contextId: string; priority: number };
+type Job = {
+  contextType: ChatContextType;
+  contextId: string;
+  priority: number;
+  expectedServerMaxSeq?: number;
+};
 const pending = new Map<string, Job>();
 let running = 0;
 
@@ -129,7 +134,13 @@ function pump(): void {
       chatSyncPullStarted();
       try {
         await markPullStart(key);
-        await pullAndApplyChatSyncEvents(job.contextType, job.contextId);
+        await pullAndApplyChatSyncEvents(
+          job.contextType,
+          job.contextId,
+          job.expectedServerMaxSeq != null
+            ? { expectedServerMaxSeq: job.expectedServerMaxSeq }
+            : undefined
+        );
         await markPullEnd(key);
       } catch {
         recordChatSyncPullFailure();
@@ -146,12 +157,25 @@ function pump(): void {
 export function enqueueChatSyncPull(
   contextType: ChatContextType,
   contextId: string,
-  priority: number = SYNC_PRIORITY_WARM
+  priority: number = SYNC_PRIORITY_WARM,
+  options?: { expectedServerMaxSeq?: number }
 ): void {
   const key = chatCursorKey(contextType, contextId);
   const prev = pending.get(key);
   if (!prev || priority >= prev.priority) {
-    pending.set(key, { contextType, contextId, priority });
+    const next: Job = {
+      contextType,
+      contextId,
+      priority,
+    };
+    const expectedServerMaxSeq = options?.expectedServerMaxSeq ?? prev?.expectedServerMaxSeq;
+    if (expectedServerMaxSeq != null) next.expectedServerMaxSeq = expectedServerMaxSeq;
+    pending.set(key, next);
+  } else if (
+    options?.expectedServerMaxSeq != null &&
+    (prev.expectedServerMaxSeq == null || options.expectedServerMaxSeq > prev.expectedServerMaxSeq)
+  ) {
+    pending.set(key, { ...prev, expectedServerMaxSeq: options.expectedServerMaxSeq });
   }
   if (import.meta.env.DEV && pending.size > 40) {
     console.warn('[chatSync] pull queue depth', pending.size);

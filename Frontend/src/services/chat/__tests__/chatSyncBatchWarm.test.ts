@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UnreadObjectsApiPayload } from '../chatUnreadPayload';
 
-const { postChatSyncBatchHeadMock } = vi.hoisted(() => ({
+const { enqueueChatSyncPullMock, postChatSyncBatchHeadMock } = vi.hoisted(() => ({
+  enqueueChatSyncPullMock: vi.fn(),
   postChatSyncBatchHeadMock: vi.fn().mockResolvedValue({}),
 }));
 
@@ -46,7 +47,7 @@ vi.mock('../chatLocalApply', () => ({
 }));
 
 vi.mock('../chatSyncScheduler', () => ({
-  enqueueChatSyncPull: vi.fn(),
+  enqueueChatSyncPull: (...args: unknown[]) => enqueueChatSyncPullMock(...args),
   SYNC_PRIORITY_UNREAD: 1,
   SYNC_PRIORITY_WARM: 2,
 }));
@@ -63,6 +64,7 @@ describe('chatSyncBatchWarm dedupe', () => {
   beforeEach(async () => {
     vi.resetModules();
     vi.useFakeTimers({ shouldAdvanceTime: true });
+    enqueueChatSyncPullMock.mockClear();
     postChatSyncBatchHeadMock.mockClear();
     postChatSyncBatchHeadMock.mockResolvedValue({ 'GAME:game-1': 0 });
   });
@@ -103,5 +105,17 @@ describe('chatSyncBatchWarm dedupe', () => {
     await vi.advanceTimersByTimeAsync(500);
 
     expect(postChatSyncBatchHeadMock).not.toHaveBeenCalled();
+  });
+
+  it('passes batch-head server max seq to scheduled event pulls', async () => {
+    postChatSyncBatchHeadMock.mockResolvedValue({ 'GAME:game-1': 12 });
+    const warm = await import('../chatSyncBatchWarm');
+    warm.resetChatSyncWarmSession();
+
+    await warm.warmChatSyncHeads();
+
+    expect(enqueueChatSyncPullMock).toHaveBeenCalledWith('GAME', 'game-1', 2, {
+      expectedServerMaxSeq: 12,
+    });
   });
 });

@@ -59,4 +59,12 @@ describe('reconcileCursorWithServerHead', () => {
 
     expect(getChatSyncHeadMock).toHaveBeenCalledWith('USER', 'u1');
   });
+
+  it('skips head fetch when a supplied pull target is already reached', async () => {
+    cursorRows.set('USER:u1', 12);
+
+    await reconcileCursorWithServerHead('USER', 'u1', { expectedServerMaxSeq: 12 });
+
+    expect(getChatSyncHeadMock).not.toHaveBeenCalled();
+  });
 });

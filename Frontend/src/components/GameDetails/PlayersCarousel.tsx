@@ -321,7 +321,9 @@ export const PlayersCarousel = ({
           onTouchEnd={autoHideNames ? handlePressEnd : undefined}
           onTouchCancel={autoHideNames ? handlePressEnd : undefined}
         >
-          <div className="flex gap-2">
+          <div className="flex">
+            <span className="block w-1.5 shrink-0" aria-hidden />
+            <div className="flex gap-2">
             {participants.map((participant, index) => (
               <ParticipantCarouselSlot
                 key={participant.userId}
@@ -351,6 +353,8 @@ export const PlayersCarousel = ({
                   onInvite={() => onShowPlayerList?.(gender)}
                 />
               ))}
+            </div>
+            <span className="block w-1.5 shrink-0" aria-hidden />
           </div>
         </div>
         {showLeftFade && (

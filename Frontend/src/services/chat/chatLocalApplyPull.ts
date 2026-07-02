@@ -172,12 +172,19 @@ export async function pullEventsLoop(
 
 export async function pullAndApplyChatSyncEventsDirect(
   contextType: ChatContextType,
-  contextId: string
+  contextId: string,
+  options?: { expectedServerMaxSeq?: number }
 ): Promise<PullEventsLoopResult> {
   const result = await pullEventsLoop(contextType, contextId);
   const { repairedStaleCursor, threadInvalidated } = result;
   markChatPullCompleted(contextType, contextId);
-  await reconcileCursorWithServerHead(contextType, contextId);
+  await reconcileCursorWithServerHead(
+    contextType,
+    contextId,
+    options?.expectedServerMaxSeq != null
+      ? { expectedServerMaxSeq: options.expectedServerMaxSeq }
+      : undefined
+  );
   clearPendingSocketSeqReconcileTimer(contextType, contextId);
   if (repairedStaleCursor || threadInvalidated) {
     const { persistLatestTailPagesAfterStaleCursor } = await import('./chatTailRecover');
@@ -188,8 +195,16 @@ export async function pullAndApplyChatSyncEventsDirect(
 
 export async function pullAndApplyChatSyncEvents(
   contextType: ChatContextType,
-  contextId: string
+  contextId: string,
+  options?: { expectedServerMaxSeq?: number }
 ): Promise<number> {
   const { applyThreadEvent } = await import('./chatLocalApplyThreadEvent');
-  return applyThreadEvent({ kind: 'syncPull', contextType, contextId });
+  return applyThreadEvent({
+    kind: 'syncPull',
+    contextType,
+    contextId,
+    ...(options?.expectedServerMaxSeq != null
+      ? { expectedServerMaxSeq: options.expectedServerMaxSeq }
+      : {}),
+  });
 }

@@ -6,6 +6,7 @@ interface GameCardInfoRowsProps {
   game: Game;
   participants: GameParticipant[];
   dateText: string;
+  timeText?: string | null;
   hintText?: string | null;
   className?: string;
 }
@@ -34,6 +35,7 @@ export const GameCardInfoRows = ({
   game,
   participants,
   dateText,
+  timeText,
   hintText,
   className = '',
 }: GameCardInfoRowsProps) => {
@@ -54,8 +56,9 @@ export const GameCardInfoRows = ({
             {t('gameDetails.datetimeNotSet')}
           </span>
         ) : (
-          <span className="inline-flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
             <span>{dateText}</span>
+            {timeText ? <span className="whitespace-nowrap">{timeText}</span> : null}
           </span>
         )}
       </div>
@@ -68,7 +71,7 @@ export const GameCardInfoRows = ({
       {(game.court?.club || game.club) && (
         <div className="flex items-center gap-2">
           <InfoIcon><MapPin size={14} /></InfoIcon>
-          <span className="min-w-0 truncate">
+          <span className="min-w-0">
             {game.court?.club?.name || game.club?.name}
             {game.court?.name && ` • ${game.court.name}`}
           </span>
@@ -83,27 +86,29 @@ export const GameCardInfoRows = ({
       )}
       {game.entityType !== 'BAR' && (
         <>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <InfoIcon><Users size={14} /></InfoIcon>
-            <span className="tabular-nums">
-              {`${playingCount} / ${game.maxParticipants}`}
-            </span>
-            {Boolean(game.maxParticipants) &&
-              (isFull ? (
-                <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-[0_0_6px_rgba(16,185,129,0.45)]">
-                  <Check size={11} strokeWidth={3} />
-                </span>
-              ) : (
-                <span className="h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200/90 dark:bg-gray-700/90">
-                  <span
-                    className="block h-full rounded-full bg-gradient-to-r from-primary-400 to-primary-500 transition-[width] duration-500 ease-out"
-                    style={{ width: `${fillRatio * 100}%` }}
-                  />
-                </span>
-              ))}
+            <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+              <span className="tabular-nums">
+                {`${playingCount} / ${game.maxParticipants}`}
+              </span>
+              {Boolean(game.maxParticipants) &&
+                (isFull ? (
+                  <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-[0_0_6px_rgba(16,185,129,0.45)]">
+                    <Check size={11} strokeWidth={3} />
+                  </span>
+                ) : (
+                  <span className="h-1.5 w-12 shrink-0 overflow-hidden rounded-full bg-gray-200/90 dark:bg-gray-700/90">
+                    <span
+                      className="block h-full rounded-full bg-gradient-to-r from-primary-400 to-primary-500 transition-[width] duration-500 ease-out"
+                      style={{ width: `${fillRatio * 100}%` }}
+                    />
+                  </span>
+                ))}
+            </div>
             {!game.trainerId && hasLevels && (
               <>
-                <span className="text-gray-400 dark:text-gray-500">•</span>
+                <span className="shrink-0 text-gray-400 dark:text-gray-500">•</span>
                 <LevelRange min={game.minLevel as number} max={game.maxLevel as number} />
               </>
             )}

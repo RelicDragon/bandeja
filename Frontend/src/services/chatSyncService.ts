@@ -18,6 +18,9 @@ import { normalizeChatType } from '@/utils/chatType';
 
 /** Wall-clock cap for foreground / post-rejoin bulk sync (GAME = up to 3 pulls per room). */
 const SYNC_ALL_CONTEXTS_WAVE_MS = 28_000;
+const BROAD_MISSED_REPAIR_ENABLED =
+  import.meta.env.VITE_CHAT_SYNC_BROAD_MISSED_REPAIR === '1' ||
+  import.meta.env.VITE_CHAT_SYNC_BROAD_MISSED_REPAIR === 'true';
 
 let syncAllContextsGeneration = 0;
 
@@ -39,8 +42,9 @@ export const chatSyncService = {
     contextType: ChatContextType,
     contextId: string,
     gameChatType?: ChatType,
-    options?: { gameSyncContext?: GameChatSyncContext }
+    options?: { gameSyncContext?: GameChatSyncContext; skipMissedRepair?: boolean }
   ): Promise<void> {
+    if (options?.skipMissedRepair) return;
     if (contextType === 'GAME' && !gameChatType) {
       const chatTypes = await resolveAccessibleGameChatTypes(contextId, options?.gameSyncContext);
       for (const ct of chatTypes) {
@@ -106,6 +110,7 @@ export const chatSyncService = {
         rooms.map(async (r) => {
           await this.syncContext(r.contextType, r.contextId, r.gameChatType, {
             gameSyncContext: r.gameSyncContext,
+            skipMissedRepair: !BROAD_MISSED_REPAIR_ENABLED,
           });
           const ctxKey = `${r.contextType}:${r.contextId}`;
           const priority = options?.viewingContextKeys?.has(ctxKey)

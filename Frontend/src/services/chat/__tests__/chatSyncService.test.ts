@@ -90,6 +90,23 @@ describe('chatSyncService.syncContext', () => {
     });
   });
 
+  it('skips broad missed repair for games during syncAllContexts by default', async () => {
+    await chatSyncService.syncAllContexts([{ contextType: 'GAME', contextId: 'game-1' }]);
+
+    expect(resolveAccessibleGameChatTypesMock).not.toHaveBeenCalled();
+    expect(pullMissedMock).not.toHaveBeenCalled();
+    expect(enqueuePullMock).toHaveBeenCalledWith('GAME', 'game-1', 100);
+    expect(invalidateUnreadCacheMock).toHaveBeenCalledTimes(1);
+    expect(refreshAllMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips missed repair when requested explicitly', async () => {
+    await chatSyncService.syncContext('GAME', 'game-1', undefined, { skipMissedRepair: true });
+
+    expect(resolveAccessibleGameChatTypesMock).not.toHaveBeenCalled();
+    expect(pullMissedMock).not.toHaveBeenCalled();
+  });
+
   it('includes ADMINS when sync context grants admin access', async () => {
     resolveAccessibleGameChatTypesMock.mockResolvedValue(['PUBLIC', 'PRIVATE', 'ADMINS']);
     const gameSyncContext = {
