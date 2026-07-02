@@ -16,7 +16,7 @@ import { useAvailableUpcomingGames } from '@/hooks/useAvailableUpcomingGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
 import { findSportFilterToApiParam, getViewerPrimarySport } from '@/utils/findSportFilter';
 import type { Sport } from '@/types';
-import { parse, startOfDay } from 'date-fns';
+import { parse, startOfDay, format } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { unionDateRangeWithDay } from '@/utils/calendarSelectedDayFilter';
 import { computeFindMonthDateRange, isFindGamesQueryReady } from '@/utils/findMonthDateRange';
@@ -58,7 +58,14 @@ export const FindTab = () => {
   const isDesktop = useDesktop();
   const findViewMode = useShellNavStore((s) => s.findViewMode);
   const findSelectedDay = useShellNavStore((s) => s.findSelectedDay);
+  const setFindSelectedDay = useShellNavStore((s) => s.setFindSelectedDay);
   const setFindHeaderActions = useShellNavStore((s) => s.setFindHeaderActions);
+
+  useEffect(() => {
+    if (findSelectedDay == null) {
+      setFindSelectedDay(format(startOfDay(new Date()), 'yyyy-MM-dd'));
+    }
+  }, [findSelectedDay, setFindSelectedDay]);
 
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 

@@ -484,9 +484,9 @@ export const MonthCalendar = ({
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={format(displayedMonth, 'yyyy-MM')}
-                initial={{ x: slideDirection * 56, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ x: slideDirection * -56, opacity: 0 }}
+                initial={{ x: slideDirection * 56 }}
+                animate={{ x: 0 }}
+                exit={{ x: slideDirection * -56 }}
                 transition={{ duration: 0.24, ease: 'easeOut' }}
                 onAnimationComplete={() => setIsSliding(false)}
                 className="grid grid-cols-7 gap-1 px-1.5 pt-1.5 pb-3"
