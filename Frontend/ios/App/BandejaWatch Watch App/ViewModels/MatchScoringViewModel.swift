@@ -446,7 +446,7 @@ final class MatchScoringViewModel {
         relayObserveTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 150_000_000)
-                await self?.consumePendingLiveScoringRelayIfNeeded()
+                self?.consumePendingLiveScoringRelayIfNeeded()
             }
         }
     }

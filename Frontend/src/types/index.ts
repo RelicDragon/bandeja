@@ -502,12 +502,27 @@ export interface WeatherWindow {
   cityTimezone: string;
   fetchedAt: string;
   stale: boolean;
-  source: 'forecast' | 'historical';
+  source: 'forecast' | 'archive';
   available: boolean;
   summary: WeatherSummary | null;
   hours: WeatherHourlyPoint[];
   attribution: 'Open-Meteo';
   unavailableReason?: 'missing_city_coordinates' | 'out_of_range' | 'not_scheduled';
+}
+
+export interface WeatherDay {
+  provider: 'open-meteo';
+  cityId: string;
+  cityName: string;
+  cityTimezone: string;
+  date: string;
+  fetchedAt: string;
+  stale: boolean;
+  source: 'forecast' | 'archive';
+  available: boolean;
+  hours: WeatherHourlyPoint[];
+  attribution: 'Open-Meteo';
+  unavailableReason?: 'missing_city_coordinates' | 'out_of_range';
 }
 
 export interface Game {

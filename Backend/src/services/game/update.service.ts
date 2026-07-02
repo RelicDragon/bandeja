@@ -724,10 +724,6 @@ export class GameUpdateService {
       throw new ApiError(404, 'Game not found after update');
     }
 
-    if (weatherScheduleChanged) {
-      await WeatherForecastService.clearGameWeatherSnapshot(updatedGame.id);
-    }
-
     if (updatedGame.timeIsSet && weatherScheduleChanged) {
       WeatherForecastService.warmCityForecast(updatedGame.cityId).catch((error) => {
         console.warn('[GameUpdateService] Failed to warm weather forecast', {

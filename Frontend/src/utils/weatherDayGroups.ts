@@ -2,6 +2,20 @@ import type { TFunction } from 'i18next';
 import type { WeatherHourlyPoint } from '@/types';
 import { shouldUseFahrenheit } from '@/utils/weather';
 
+export function shiftDayKey(dayKey: string, deltaDays: number): string {
+  const [year, month, day] = dayKey.split('-').map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + deltaDays, 12));
+  return shifted.toISOString().slice(0, 10);
+}
+
+export function compareDayKeys(left: string, right: string): number {
+  return left.localeCompare(right);
+}
+
+export function maxForecastDayKey(timezone: string): string {
+  return shiftDayKey(dateKeyInTimezone(new Date(), timezone), 9);
+}
+
 export function dateKeyInTimezone(date: Date, timezone: string): string {
   try {
     const formatter = new Intl.DateTimeFormat('en-CA', {

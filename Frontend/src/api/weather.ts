@@ -1,9 +1,17 @@
 import api from './axios';
-import type { ApiResponse, WeatherWindow } from '@/types';
+import type { ApiResponse, WeatherDay, WeatherWindow } from '@/types';
 
 export type WeatherWindowScope = 'game' | 'day' | 'forecast';
 
 export const weatherApi = {
+  getDay: async (params: {
+    cityId: string;
+    date: string;
+  }): Promise<WeatherDay> => {
+    const response = await api.get<ApiResponse<WeatherDay>>('/weather/day', { params });
+    return response.data.data;
+  },
+
   getPreview: async (params: {
     cityId: string;
     startTime: string;

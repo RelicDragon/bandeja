@@ -4,6 +4,15 @@ import { queryKeys } from '@/queries/queryKeys';
 
 const WEATHER_STALE_MS = 60 * 60 * 1000;
 
+export function weatherDayQueryOptions(cityId: string, date: string, enabled = true) {
+  return queryOptions({
+    queryKey: queryKeys.weather.day(cityId, date),
+    queryFn: () => weatherApi.getDay({ cityId, date }),
+    enabled: enabled && Boolean(cityId && date),
+    staleTime: WEATHER_STALE_MS,
+  });
+}
+
 export function gameWeatherQueryOptions(gameId: string, enabled = true, scope: WeatherWindowScope = 'game') {
   return queryOptions({
     queryKey: queryKeys.weather.game(gameId, scope),
@@ -32,6 +41,10 @@ export function weatherPreviewQueryOptions(
     enabled: enabled && Boolean(cityId && startTime && endTime),
     staleTime: WEATHER_STALE_MS,
   });
+}
+
+export function useWeatherDayQuery(cityId: string, date: string, enabled = true) {
+  return useQuery(weatherDayQueryOptions(cityId, date, enabled));
 }
 
 export function useGameWeatherQuery(gameId: string, enabled = true, scope: WeatherWindowScope = 'game') {

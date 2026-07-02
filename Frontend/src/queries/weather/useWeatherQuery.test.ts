@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { weatherPreviewQueryOptions } from './useWeatherQuery';
+import { weatherDayQueryOptions, weatherPreviewQueryOptions } from './useWeatherQuery';
+
+describe('weatherDayQueryOptions', () => {
+  it('caches day weather by city and date for one hour', () => {
+    const options = weatherDayQueryOptions('city-1', '2026-06-15');
+
+    expect(options.queryKey).toEqual(['weather', 'day', 'city-1', '2026-06-15']);
+    expect(options.staleTime).toBe(60 * 60 * 1000);
+  });
+});
 
 describe('weatherPreviewQueryOptions', () => {
   it('caches preview weather by city and schedule for one hour', () => {

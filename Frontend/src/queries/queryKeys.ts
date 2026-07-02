@@ -46,6 +46,7 @@ export const queryKeys = {
     detail: (gameId: string) => ['userGameNotes', gameId] as const,
   },
   weather: {
+    day: (cityId: string, date: string) => ['weather', 'day', cityId, date] as const,
     game: (gameId: string, scope = 'game') => ['weather', 'game', gameId, scope] as const,
     preview: (cityId: string, startTime: string, endTime: string, scope = 'game') =>
       ['weather', 'preview', cityId, startTime, endTime, scope] as const,

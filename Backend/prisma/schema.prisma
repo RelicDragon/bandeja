@@ -253,7 +253,7 @@ model City {
   marketItems             MarketItem[]
   cancelledGames          CancelledGame[]
   weatherForecastCaches   WeatherForecastCache[]
-  gameWeatherSnapshots    GameWeatherSnapshot[]
+  weatherDayArchives        WeatherDayArchive[]
 
   @@index([isActive])
   @@index([clubsCount])
@@ -278,28 +278,20 @@ model WeatherForecastCache {
   @@index([expiresAt])
 }
 
-model GameWeatherSnapshot {
-  id            String   @id @default(cuid())
-  gameId        String   @unique
-  cityId        String
-  provider      String   @default("open-meteo")
-  source        String   @default("forecast")
-  cityName      String
-  cityTimezone  String
-  gameStartTime DateTime
-  gameEndTime   DateTime
-  fetchedAt     DateTime
-  capturedAt    DateTime @default(now())
-  summary       Json
-  hours         Json
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  city          City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+model WeatherDayArchive {
+  id           String   @id @default(cuid())
+  cityId       String
+  provider     String   @default("open-meteo")
+  day          String
+  cityTimezone String
+  fetchedAt    DateTime
+  hours        Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  city         City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
 
-  @@index([cityId])
-  @@index([gameStartTime])
-  @@index([capturedAt])
+  @@unique([cityId, provider, day])
+  @@index([cityId, day])
 }
 
 model Club {
@@ -596,7 +588,6 @@ model Game {
   mainPhoto                 GamePhoto?              @relation("GameMainPhoto", fields: [mainPhotoId], references: [id], onDelete: SetNull)
   resultsArtifactJob        GameResultsArtifactJob?
   externalBookings          GameExternalBooking[]
-  weatherSnapshot           GameWeatherSnapshot?
 
   @@index([clubId])
   @@index([courtId])

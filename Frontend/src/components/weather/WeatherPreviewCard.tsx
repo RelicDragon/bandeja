@@ -34,15 +34,7 @@ function WeatherPreviewCardInner({
   const [dialogOpen, setDialogOpen] = useState(false);
   const shouldLoad = enabled && Boolean(cityId && startTime && endTime);
   const previewParams = useMemo(() => ({ cityId, startTime, endTime }), [cityId, endTime, startTime]);
-  const fullDayParams = useMemo(
-    () => ({ cityId, startTime, endTime, scope: 'forecast' as const }),
-    [cityId, endTime, startTime],
-  );
   const query = useWeatherPreviewQuery(previewParams, shouldLoad);
-  const fullDayQuery = useWeatherPreviewQuery(
-    fullDayParams,
-    dialogOpen && shouldLoad,
-  );
   const handleOpenDialog = useCallback(() => setDialogOpen(true), []);
   const handleCloseDialog = useCallback(() => {
     setDialogOpen(false);
@@ -152,8 +144,7 @@ function WeatherPreviewCardInner({
         <WeatherWindowDialog
           open={dialogOpen}
           onClose={handleCloseDialog}
-          forecast={fullDayQuery.data}
-          isLoading={fullDayQuery.isPending}
+          cityId={cityId!}
           startTime={startTime!}
           endTime={endTime!}
           locale={locale}

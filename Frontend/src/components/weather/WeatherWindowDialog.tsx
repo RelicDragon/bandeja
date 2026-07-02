@@ -2,9 +2,10 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { Droplets, Loader2, Wind } from 'lucide-react';
-import type { WeatherHourlyPoint, WeatherWindow } from '@/types';
+import type { WeatherHourlyPoint } from '@/types';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useWeatherDayQuery } from '@/queries/weather';
 import {
   formatWeatherTemperature,
   formatWeatherTime,
@@ -14,9 +15,11 @@ import {
   getWeatherConditionLabel,
 } from '@/utils/weather';
 import {
+  compareDayKeys,
   dateKeyInTimezone,
   formatWeatherDayLabel,
-  groupWeatherHoursByDay,
+  maxForecastDayKey,
+  shiftDayKey,
 } from '@/utils/weatherDayGroups';
 import { WeatherDayChart } from './WeatherDayChart';
 import { WeatherIcon } from './WeatherIcon';
@@ -25,8 +28,8 @@ import { getWeatherIconPalette } from './weatherIconPalette';
 interface WeatherWindowDialogProps {
   open: boolean;
   onClose: () => void;
-  forecast?: WeatherWindow;
-  isLoading?: boolean;
+  cityId: string;
+  cityTimezone?: string;
   startTime: string;
   endTime: string;
   locale: string;
@@ -75,8 +78,8 @@ function scrollRowIntoView(
 function WeatherWindowDialogInner({
   open,
   onClose,
-  forecast,
-  isLoading = false,
+  cityId,
+  cityTimezone: cityTimezoneProp,
   startTime,
   endTime,
   locale,
@@ -91,40 +94,39 @@ function WeatherWindowDialogInner({
   const hourlyScrollRef = useRef<HTMLDivElement | null>(null);
   const initialScrollKeyRef = useRef<string | null>(null);
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
-  const timezone = forecast?.cityTimezone ?? 'UTC';
-  const dayGroups = useMemo(
-    () => groupWeatherHoursByDay(forecast?.hours ?? [], timezone),
-    [forecast?.hours, timezone],
-  );
+
+  const initialTimezone = cityTimezoneProp ?? 'UTC';
   const gameDayKey = useMemo(
-    () => dateKeyInTimezone(new Date(startTime), timezone),
-    [startTime, timezone],
+    () => dateKeyInTimezone(new Date(startTime), initialTimezone),
+    [initialTimezone, startTime],
   );
-  const gameDayIndex = dayGroups.findIndex((group) => group.dayKey === gameDayKey);
-  const defaultDayKey = gameDayIndex >= 0 ? gameDayKey : dayGroups[0]?.dayKey ?? null;
-  const resolvedDayKey = selectedDayKey && dayGroups.some((group) => group.dayKey === selectedDayKey)
-    ? selectedDayKey
-    : defaultDayKey;
-  const activeDayKey = resolvedDayKey ?? gameDayKey;
-  const selectedDay = dayGroups.find((group) => group.dayKey === activeDayKey) ?? dayGroups[0] ?? null;
-  const sortedRows = useMemo(
-    () => selectedDay?.hours ?? [],
-    [selectedDay?.hours],
-  );
-  const hasRows = Boolean(forecast?.available && sortedRows.length > 0);
-  const canReturnToGameDay = gameDayIndex >= 0;
-  const isGameDay = canReturnToGameDay && activeDayKey === gameDayKey;
-  const selectedDayIndex = dayGroups.findIndex((group) => group.dayKey === activeDayKey);
 
   useEffect(() => {
     if (!open) {
       initialScrollKeyRef.current = null;
       return;
     }
-    setSelectedDayKey(defaultDayKey);
+    setSelectedDayKey(gameDayKey);
     setSelectedTime(null);
     setSlideDirection(0);
-  }, [defaultDayKey, open]);
+  }, [gameDayKey, open]);
+
+  const activeDayKey = selectedDayKey ?? gameDayKey;
+  const dayQuery = useWeatherDayQuery(cityId, activeDayKey, open && Boolean(cityId && activeDayKey));
+  const timezone = dayQuery.data?.cityTimezone ?? cityTimezoneProp ?? 'UTC';
+  const resolvedGameDayKey = useMemo(
+    () => dateKeyInTimezone(new Date(startTime), timezone),
+    [startTime, timezone],
+  );
+  const maxDayKey = useMemo(() => maxForecastDayKey(timezone), [timezone]);
+  const sortedRows = useMemo(
+    () => dayQuery.data?.hours ?? [],
+    [dayQuery.data?.hours],
+  );
+  const hasRows = Boolean(dayQuery.data?.available && sortedRows.length > 0);
+  const isGameDay = activeDayKey === resolvedGameDayKey;
+  const canGoPrevious = true;
+  const canGoNext = compareDayKeys(activeDayKey, maxDayKey) < 0;
 
   useEffect(() => {
     if (!selectedTime) return;
@@ -159,17 +161,17 @@ function WeatherWindowDialogInner({
 
   const metadata = useMemo(
     () =>
-      forecast
+      dayQuery.data
         ? {
-            cityName: forecast.cityName,
+            cityName: dayQuery.data.cityName,
             timezoneLabel: formatWeatherTimezoneLabel(timezone, locale),
-            updatedLabel: forecast.source === 'historical'
+            updatedLabel: dayQuery.data.source === 'archive'
               ? t('weather.recordedConditions', { defaultValue: 'Recorded conditions' })
-              : getForecastUpdatedLabel(t, forecast.fetchedAt),
-            stale: forecast.stale,
+              : getForecastUpdatedLabel(t, dayQuery.data.fetchedAt),
+            stale: dayQuery.data.stale,
           }
         : null,
-    [forecast, locale, t, timezone],
+    [dayQuery.data, locale, t, timezone],
   );
 
   const handleChartPointSelect = useCallback((time: string) => {
@@ -192,33 +194,31 @@ function WeatherWindowDialogInner({
   }, [reduceMotion]);
 
   const navigateDay = useCallback((direction: 'left' | 'right') => {
-    if (selectedDayIndex < 0) return;
-    const nextIndex = direction === 'left' ? selectedDayIndex - 1 : selectedDayIndex + 1;
-    const nextGroup = dayGroups[nextIndex];
-    if (!nextGroup) return;
-
-    setSlideDirection(direction === 'left' ? -1 : 1);
-    setSelectedDayKey(nextGroup.dayKey);
+    if (direction === 'left') {
+      setSlideDirection(-1);
+      setSelectedDayKey(shiftDayKey(activeDayKey, -1));
+    } else if (canGoNext) {
+      setSlideDirection(1);
+      setSelectedDayKey(shiftDayKey(activeDayKey, 1));
+    } else {
+      return;
+    }
     setSelectedTime(null);
     if (hourlyScrollRef.current) {
       hourlyScrollRef.current.scrollTop = 0;
     }
-  }, [dayGroups, selectedDayIndex]);
+  }, [activeDayKey, canGoNext]);
 
   const handleGoToGameDay = useCallback(() => {
-    if (gameDayIndex < 0 || selectedDayIndex < 0) return;
-    setSlideDirection(selectedDayIndex > gameDayIndex ? -1 : 1);
-    setSelectedDayKey(gameDayKey);
+    setSlideDirection(compareDayKeys(activeDayKey, resolvedGameDayKey) > 0 ? -1 : 1);
+    setSelectedDayKey(resolvedGameDayKey);
     setSelectedTime(null);
     if (hourlyScrollRef.current) {
       hourlyScrollRef.current.scrollTop = 0;
     }
-  }, [gameDayIndex, gameDayKey, selectedDayIndex]);
+  }, [activeDayKey, resolvedGameDayKey]);
 
-  const showDayNavigator = dayGroups.length > 1;
-  const chartDayLabel = selectedDay
-    ? formatWeatherDayLabel(selectedDay.dayKey, timezone, locale, t)
-    : undefined;
+  const chartDayLabel = formatWeatherDayLabel(activeDayKey, timezone, locale, t);
 
   return (
     <Dialog open={open} onClose={onClose} modalId={modalId}>
@@ -248,14 +248,14 @@ function WeatherWindowDialogInner({
         ) : null}
 
         <div className="flex min-h-0 flex-1 flex-col p-3">
-          {isLoading ? (
+          {dayQuery.isPending ? (
             <div className="flex min-h-28 items-center justify-center text-sm text-gray-500 dark:text-gray-400">
               <Loader2 size={18} className="mr-2 animate-spin" />
               {t('weather.loading', { defaultValue: 'Loading forecast' })}
             </div>
           ) : !hasRows ? (
             <div className="rounded-lg bg-gray-50 p-3 text-sm text-gray-600 dark:bg-gray-950/50 dark:text-gray-300">
-              {forecast?.unavailableReason === 'missing_city_coordinates'
+              {dayQuery.data?.unavailableReason === 'missing_city_coordinates'
                 ? t('weather.missingCityCoordinates', {
                     defaultValue: 'Weather is unavailable because this city has no coordinates yet.',
                   })
@@ -287,11 +287,11 @@ function WeatherWindowDialogInner({
                         onPointSelect={handleChartPointSelect}
                         showGameWindow={isGameDay}
                         dayLabel={chartDayLabel}
-                        canGoPrevious={showDayNavigator && selectedDayIndex > 0}
-                        canGoNext={showDayNavigator && selectedDayIndex >= 0 && selectedDayIndex < dayGroups.length - 1}
-                        onPrevious={showDayNavigator ? () => navigateDay('left') : undefined}
-                        onNext={showDayNavigator ? () => navigateDay('right') : undefined}
-                        showGoToGameDay={canReturnToGameDay && !isGameDay}
+                        canGoPrevious={canGoPrevious}
+                        canGoNext={canGoNext}
+                        onPrevious={() => navigateDay('left')}
+                        onNext={() => navigateDay('right')}
+                        showGoToGameDay={!isGameDay}
                         onGoToGameDay={handleGoToGameDay}
                       />
                     </div>

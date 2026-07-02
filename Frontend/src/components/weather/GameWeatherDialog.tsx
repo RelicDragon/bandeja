@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import type { Game } from '@/types';
-import { useGameWeatherQuery } from '@/queries/weather';
 import { WeatherWindowDialog } from './WeatherWindowDialog';
 
 interface GameWeatherDialogProps {
@@ -12,14 +11,14 @@ interface GameWeatherDialogProps {
 }
 
 function GameWeatherDialogInner({ game, open, onClose, locale, hour12 }: GameWeatherDialogProps) {
-  const query = useGameWeatherQuery(game.id, open && Boolean(game.id), 'forecast');
+  const cityId = game.city.id;
 
   return (
     <WeatherWindowDialog
       open={open}
       onClose={onClose}
-      forecast={query.data}
-      isLoading={query.isPending}
+      cityId={cityId}
+      cityTimezone={game.city.timezone}
       startTime={game.startTime}
       endTime={game.endTime}
       locale={locale}
