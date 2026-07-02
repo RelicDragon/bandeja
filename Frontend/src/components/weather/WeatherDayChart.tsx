@@ -329,7 +329,7 @@ export function WeatherDayChart({
           <button
             type="button"
             onClick={onGoToGameDay}
-            className="inline-flex shrink-0 items-center gap-0.5 rounded-full border border-sky-200/90 bg-white/80 px-2 py-0.5 text-[9px] font-medium text-sky-700 transition-colors hover:border-sky-300 hover:bg-white hover:text-sky-900 dark:border-sky-700/70 dark:bg-gray-900/60 dark:text-sky-300 dark:hover:border-sky-600 dark:hover:text-sky-100"
+            className="inline-flex shrink-0 items-center gap-0.5 text-[9px] font-medium text-sky-700 transition-colors hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-100"
           >
             {t('weather.goToGameDay', { defaultValue: 'Go to game day' })}
             <ChevronRight size={11} strokeWidth={2.25} aria-hidden />

@@ -160,13 +160,13 @@ function WeatherWindowDialogInner({
   const metadata = useMemo(
     () =>
       forecast
-        ? [
-            forecast.cityName,
-            formatWeatherTimezoneLabel(timezone, locale),
-            getForecastUpdatedLabel(t, forecast.fetchedAt),
-            forecast.stale ? t('weather.stale', { defaultValue: 'stale' }) : null,
-          ].filter(Boolean)
-        : [],
+        ? {
+            cityName: forecast.cityName,
+            timezoneLabel: formatWeatherTimezoneLabel(timezone, locale),
+            updatedLabel: getForecastUpdatedLabel(t, forecast.fetchedAt),
+            stale: forecast.stale,
+          }
+        : null,
     [forecast, locale, t, timezone],
   );
 
@@ -225,9 +225,23 @@ function WeatherWindowDialogInner({
           {t('weather.forecastTitle', { defaultValue: 'Game weather' })}
         </DialogTitle>
 
-        {metadata.length > 0 ? (
+        {metadata ? (
           <div className="border-b border-gray-100 px-4 py-3 pr-12 text-xs font-medium text-gray-500 dark:border-gray-800 dark:text-gray-400">
-            <span className="block truncate">{metadata.join(' · ')}</span>
+            <span className="block truncate">
+              {metadata.cityName}
+              <span className="mx-1 text-gray-300 dark:text-gray-600">·</span>
+              <span className="text-[10px] font-normal text-gray-400 dark:text-gray-500">{metadata.timezoneLabel}</span>
+              <span className="mx-1 text-gray-300 dark:text-gray-600">·</span>
+              <span className="text-[10px] font-normal text-gray-400 dark:text-gray-500">{metadata.updatedLabel}</span>
+              {metadata.stale ? (
+                <>
+                  <span className="mx-1 text-gray-300 dark:text-gray-600">·</span>
+                  <span className="text-[10px] font-normal text-gray-400 dark:text-gray-500">
+                    {t('weather.stale', { defaultValue: 'stale' })}
+                  </span>
+                </>
+              ) : null}
+            </span>
           </div>
         ) : null}
 
