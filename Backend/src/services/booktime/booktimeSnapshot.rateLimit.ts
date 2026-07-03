@@ -1,4 +1,7 @@
-import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@bandeja/shared/gameBooking/booktimeSnapshotFreshness';
+import {
+  BOOKTIME_SNAPSHOT_FRESH_MS,
+  BOOKTIME_SNAPSHOT_PUT_MAX_PER_WINDOW,
+} from '@bandeja/shared/gameBooking/booktimeSnapshotFreshness';
 import { ApiError } from '../../utils/ApiError';
 
 type Bucket = { count: number; resetAt: number };
@@ -19,7 +22,7 @@ export function assertSnapshotPutRateLimit(
     putBuckets.set(key, { count: 1, resetAt: now + BOOKTIME_SNAPSHOT_FRESH_MS });
     return;
   }
-  if (bucket.count >= 1) {
+  if (bucket.count >= BOOKTIME_SNAPSHOT_PUT_MAX_PER_WINDOW) {
     throw new ApiError(429, 'Snapshot refresh rate limit exceeded');
   }
   bucket.count += 1;

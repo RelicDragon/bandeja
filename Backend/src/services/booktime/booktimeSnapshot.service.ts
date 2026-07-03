@@ -1,9 +1,9 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { BOOKTIME_SNAPSHOT_PUT_COOLDOWN_MS } from '@bandeja/shared/gameBooking/booktimeSnapshotFreshness';
 import {
   assertBooktimeClub,
-  BOOKTIME_SNAPSHOT_FRESH_MS,
   BooktimeSnapshotCourtInput,
   parseBusySlots,
   parseDateParam,
@@ -143,7 +143,7 @@ export async function replaceBooktimeSnapshot(
       (max, row) => (row.fetchedAt > max ? row.fetchedAt : max),
       existing[0].fetchedAt
     );
-    if (Date.now() - latest.getTime() < BOOKTIME_SNAPSHOT_FRESH_MS) {
+    if (Date.now() - latest.getTime() < BOOKTIME_SNAPSHOT_PUT_COOLDOWN_MS) {
       throw new ApiError(429, 'Snapshot was refreshed recently; use force to override');
     }
   }

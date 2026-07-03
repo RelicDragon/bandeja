@@ -14,7 +14,7 @@ const router = Router();
 
 const booktimeSessionTokenLimiter = rateLimit({
   windowMs: 60_000,
-  max: 10,
+  max: 100,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, message: 'Too many session token requests' },
