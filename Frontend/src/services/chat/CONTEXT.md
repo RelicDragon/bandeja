@@ -13,3 +13,13 @@ The projection is intentionally separate from durability. `threadLiveProjection.
 `applyThreadEvent` is the durability/event-application path for Dexie and cross-surface local state. It persists and indexes chat changes, but it is not the live UI writer for an already-open thread.
 
 For open-thread reliability, prefer routing new live message/read state through Thread Live Projection first, then persist through emitted effects or `applyThreadEvent`. Avoid adding window events or module-level queues as bridges between sync/socket code and open-thread UI state.
+
+## Game chat lifecycle
+
+**Game chat lifecycle** — whether a game chat context is `active` (live `Game` row exists), `archived` (game deleted, `CancelledGame` + participant snapshot), or `missing`.
+
+**Thread archive** — terminal thread state after game delete: message history kept locally and on server, writes blocked, live socket/sync tail stopped. Emitted as `THREAD_ARCHIVED` sync event.
+
+**Thread invalidation** — terminal thread state where the local copy must be wiped (user merge, migrations). Emitted as `THREAD_LOCAL_INVALIDATE`. Distinct from thread archive.
+
+Epic: GitHub #248.
