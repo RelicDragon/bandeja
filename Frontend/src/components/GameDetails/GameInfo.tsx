@@ -1005,14 +1005,17 @@ export const GameInfo = ({
               <InfoIconChip>
                 <Crown size={18} />
               </InfoIconChip>
-              <PlayerAvatar
-                player={owner}
-                extrasmall={true}
-                showName={false}
-              />
-              <span className="text-xs">
-                {[owner.firstName, owner.lastName].filter(name => name && name.trim()).join(' ')}
-              </span>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <PlayerAvatar
+                  player={owner}
+                  extrasmall={true}
+                  showName={false}
+                  fullHideName={true}
+                />
+                <span className="text-xs truncate">
+                  {[owner.firstName, owner.lastName].filter(name => name && name.trim()).join(' ')}
+                </span>
+              </div>
             </div>
           )}
           {game.entityType === 'TRAINING' && (
