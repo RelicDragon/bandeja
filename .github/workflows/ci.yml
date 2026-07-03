@@ -64,7 +64,7 @@ jobs:
       UPD_SSH_CONNECT_TIMEOUT: 15
     concurrency:
       group: production-deploy
-      cancel-in-progress: false
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v6
         with:
