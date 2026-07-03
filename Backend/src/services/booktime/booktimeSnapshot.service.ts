@@ -1,7 +1,6 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { BOOKTIME_SNAPSHOT_PUT_COOLDOWN_MS } from '@bandeja/shared/gameBooking/booktimeSnapshotFreshness';
 import {
   assertBooktimeClub,
   BooktimeSnapshotCourtInput,
@@ -13,7 +12,7 @@ import {
   prepareSnapshotCourtsForStorage,
   type SnapshotCourtLookupRow,
 } from '../../shared/booktimeSnapshotCourtResolve';
-import { assertSnapshotPutRateLimit } from './booktimeSnapshot.rateLimit';
+import { assertSnapshotPutRateLimit, BOOKTIME_SNAPSHOT_PUT_COOLDOWN_MS } from './booktimeSnapshot.rateLimit';
 
 export type BooktimeSnapshotResponse = {
   date: string;

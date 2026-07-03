@@ -78,6 +78,8 @@ model User {
   participantsInvitedByMe              GameParticipant[]           @relation("ParticipantInvitedBy")
   gameInviteOutcomes                   GameInviteOutcome[]         @relation("GameInviteOutcomeUser")
   gameInviteOutcomesSent               GameInviteOutcome[]         @relation("GameInviteOutcomeInvitedBy")
+  gameLogsAsActor                      GameLog[]                   @relation("GameLogActor")
+  gameLogsAsTarget                     GameLog[]                   @relation("GameLogTarget")
   userChats1                           UserChat[]                  @relation("UserChat1")
   userChats2                           UserChat[]                  @relation("UserChat2")
   pinnedUserChats                      PinnedUserChat[]
@@ -572,6 +574,7 @@ model Game {
   bracketSlot               LeagueBracketSlot?      @relation("BracketSlotGame")
   participants              GameParticipant[]
   inviteOutcomes            GameInviteOutcome[]
+  logs                      GameLog[]
   rounds                    Round[]
   outcomes                  GameOutcome[]
   fixedTeams                GameTeam[]
@@ -908,6 +911,25 @@ model GameInviteOutcome {
   @@unique([gameId, userId])
   @@index([gameId])
   @@index([userId])
+}
+
+enum GameLogType {
+  USER_INVITED
+}
+
+model GameLog {
+  id        String      @id @default(cuid())
+  gameId    String
+  type      GameLogType
+  actorId   String?
+  targetId  String?
+  metadata  Json?
+  createdAt DateTime    @default(now())
+  game      Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  actor     User?       @relation("GameLogActor", fields: [actorId], references: [id], onDelete: SetNull)
+  target    User?       @relation("GameLogTarget", fields: [targetId], references: [id], onDelete: SetNull)
+
+  @@index([gameId, createdAt])
 }
 
 model Round {

@@ -580,6 +580,7 @@ Frontend/e2e/
 | GD-16 | Cancel invite | Owner cancels pending | Invite removed |
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
 | GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |
+| GD-18a | Invite not in game chat | Owner invites player from participants list | Pending invite on participants panel; no "X invites Y" system message in game chat; other participants get no chat/push notification for the invite |
 
 ### 9.3 Edit game (owner/admin)
 

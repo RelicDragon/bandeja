@@ -4,9 +4,8 @@ import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { ParticipantRole } from '@prisma/client';
-import { createSystemMessage } from './chat.controller';
-import { SystemMessageType, getUserDisplayName } from '../utils/systemMessages';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
+import { appendGameLog } from '../services/game/gameLog.service';
 import notificationService from '../services/notification.service';
 import { InviteService } from '../services/invite.service';
 import { hasParentGamePermission, hasRealParticipantStatus } from '../utils/parentGamePermissions';
@@ -184,20 +183,17 @@ export const sendInvite = asyncHandler(async (req: AuthRequest, res: Response) =
     typeof inviteUserTeamId === 'string' && inviteUserTeamId.length > 0 ? inviteUserTeamId : null
   );
 
-  // Send system message to game chat if it's a game invite
   if (gameId && invite.sender && invite.receiver) {
-    const senderName = getUserDisplayName(invite.sender.firstName, invite.sender.lastName);
-    const receiverName = getUserDisplayName(invite.receiver.firstName, invite.receiver.lastName);
-    
-    try {
-      await createSystemMessage(gameId, {
-        type: SystemMessageType.USER_INVITES_USER,
-        variables: { senderName, receiverName }
-      });
-    } catch (error) {
-      console.error('Failed to create system message for invite:', error);
-      // Don't fail the invite creation if system message fails
-    }
+    await appendGameLog({
+      gameId,
+      type: 'USER_INVITED',
+      actorId: invite.sender.id,
+      targetId: invite.receiver.id,
+      metadata: {
+        inviteId: invite.id,
+        asTrainer: asTrainer === true,
+      },
+    });
   }
 
   // Emit notification to receiver via Socket.IO

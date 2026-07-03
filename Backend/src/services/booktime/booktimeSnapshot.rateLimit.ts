@@ -1,8 +1,12 @@
-import {
-  BOOKTIME_SNAPSHOT_FRESH_MS,
-  BOOKTIME_SNAPSHOT_PUT_MAX_PER_WINDOW,
-} from '@bandeja/shared/gameBooking/booktimeSnapshotFreshness';
+import { BOOKTIME_SNAPSHOT_FRESH_MS } from '@bandeja/shared/gameBooking/booktimeSnapshotFreshness';
 import { ApiError } from '../../utils/ApiError';
+
+/** Max snapshot PUTs per user/club/date within {@link BOOKTIME_SNAPSHOT_FRESH_MS}. */
+export const BOOKTIME_SNAPSHOT_PUT_MAX_PER_WINDOW = 10;
+
+/** Min interval between global snapshot writes before server returns 429 (freshness / dedupe). */
+export const BOOKTIME_SNAPSHOT_PUT_COOLDOWN_MS =
+  BOOKTIME_SNAPSHOT_FRESH_MS / BOOKTIME_SNAPSHOT_PUT_MAX_PER_WINDOW;
 
 type Bucket = { count: number; resetAt: number };
 
