@@ -75,6 +75,7 @@ model User {
   sendTelegramWalletNotifications      Boolean                     @default(true)
   chatMessages                         ChatMessage[]
   participateInGames                   GameParticipant[]           @relation("ParticipantUser")
+  cancelledGameParticipants            CancelledGameParticipant[]
   participantsInvitedByMe              GameParticipant[]           @relation("ParticipantInvitedBy")
   gameInviteOutcomes                   GameInviteOutcome[]         @relation("GameInviteOutcomeUser")
   gameInviteOutcomesSent               GameInviteOutcome[]         @relation("GameInviteOutcomeInvitedBy")
@@ -800,17 +801,34 @@ model UserReactionEmojiStat {
 }
 
 model CancelledGame {
-  id                String     @id
+  id                String                     @id
   entityType        EntityType
   name              String?
-  sport             Sport      @default(PADEL)
+  sport             Sport                      @default(PADEL)
   cancelledByUserId String
-  cancelledAt       DateTime   @default(now())
+  cancelledAt       DateTime                   @default(now())
   cityId            String
   startTime         DateTime
-  city              City       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  parentId          String?
+  city              City                       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  participants      CancelledGameParticipant[]
 
   @@index([cityId])
+  @@index([parentId])
+}
+
+model CancelledGameParticipant {
+  id     String            @id @default(cuid())
+  gameId String
+  userId String
+  role   ParticipantRole
+  status ParticipantStatus
+  game   CancelledGame     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
+  @@index([userId])
+  @@index([gameId])
 }
 
 model GameFaq {
