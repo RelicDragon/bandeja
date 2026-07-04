@@ -21,6 +21,7 @@ import { TranslationService, TRANSLATE_TO_LANGUAGE_CODES } from '../services/cha
 import { TranscriptionService } from '../services/chat/transcription.service';
 import { MESSAGE_TRANSCRIPTION_PENDING, normalizeClientMutationId } from '@bandeja/chat-contract';
 import { DraftService } from '../services/chat/draft.service';
+import { assertDraftDeleteAccess, assertDraftWriteAccess } from '../services/chat/draftWriteAccess.service';
 import { GameReadService } from '../services/game/read.service';
 import { GameChatViewerAccessService } from '../services/chat/gameChatViewerAccess.service';
 import { PollService } from '../services/chat/poll.service';
@@ -1784,16 +1785,7 @@ export const saveDraft = asyncHandler(async (req: AuthRequest, res: Response) =>
     throw new ApiError(400, 'mentionIds must be an array');
   }
 
-  try {
-    const ctx = chatContextType as ChatContextType;
-    const cid = contextId as string;
-    if (ctx === 'GAME') await GameChatViewerAccessService.assertWritable(cid, userId);
-    else if (ctx === 'USER') await MessageService.validateUserChatAccess(cid, userId);
-    else if (ctx === 'GROUP') await MessageService.validateGroupChannelAccess(cid, userId);
-    else if (ctx === 'BUG') await MessageService.validateBugAccess(cid, userId);
-  } catch {
-    throw new ApiError(403, 'Access denied to this context');
-  }
+  await assertDraftWriteAccess(userId, chatContextType as ChatContextType, contextId as string);
 
   const hasContent = typeof content === 'string' && content.trim().length > 0;
   const hasMentions = mentionIds.length > 0;
@@ -1925,6 +1917,8 @@ export const deleteDraft = asyncHandler(async (req: AuthRequest, res: Response) 
   if (!chatContextType || !contextId) {
     throw new ApiError(400, 'chatContextType and contextId are required');
   }
+
+  await assertDraftDeleteAccess(userId, chatContextType as ChatContextType, contextId as string);
 
   await DraftService.deleteDraft(
     userId,

@@ -21,6 +21,7 @@ import {
   type ProcessChatRoomBatchCtx,
 } from '@/services/chat/chatThreadController/processChatRoomBatch';
 import type { ThreadLiveConfig } from '@/services/chat/threadLiveProjection';
+import { canUseLiveThreadIngress } from '@/services/chat/chatThreadLiveIngress';
 
 export interface UseThreadSocketParams {
   id: string | undefined;
@@ -35,6 +36,9 @@ export interface UseThreadSocketParams {
   onAfterSocketBatch?: () => void;
   /** Bumps when open paint commits — re-flush pending socket batches queued before paint. */
   openPaintGeneration?: number;
+  isLoadingContext?: boolean;
+  isGameChatArchived?: boolean;
+  isGameChatAccessDenied?: boolean;
 }
 
 export function useThreadSocket({
@@ -49,6 +53,9 @@ export function useThreadSocket({
   reloadMessagesFirstPage,
   onAfterSocketBatch,
   openPaintGeneration = 0,
+  isLoadingContext = false,
+  isGameChatArchived = false,
+  isGameChatAccessDenied = false,
 }: UseThreadSocketParams) {
   const snapshotRevision = useThreadSnapshotRevision(contextType, id);
   const roomKey = useMemo(
@@ -59,6 +66,12 @@ export function useThreadSocket({
   const syncRequiredEpoch = useSocketEventsStore((s) => s.syncRequiredEpoch);
   const lastSyncRequired = useSocketEventsStore((s) => s.lastSyncRequired);
   const syncEpochBaselineRef = useRef<number | null>(null);
+  const liveIngressEnabled = canUseLiveThreadIngress({
+    contextType,
+    isLoadingContext,
+    isGameChatArchived,
+    isGameChatAccessDenied,
+  });
   const roomProcessorCtx = useMemo(
     (): ProcessChatRoomBatchCtx => {
       const threadLiveConfig: ThreadLiveConfig | undefined = id
@@ -93,15 +106,23 @@ export function useThreadSocket({
   );
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !liveIngressEnabled) return;
+    let joined = false;
+    let disposed = false;
     const setupSocket = async () => {
       await socketService.joinChatRoom(contextType, id);
+      if (disposed) {
+        socketService.leaveChatRoom(contextType, id);
+        return;
+      }
+      joined = true;
     };
-    setupSocket();
+    void setupSocket();
     return () => {
-      socketService.leaveChatRoom(contextType, id);
+      disposed = true;
+      if (joined) socketService.leaveChatRoom(contextType, id);
     };
-  }, [id, contextType]);
+  }, [id, contextType, liveIngressEnabled]);
 
   useEffect(() => {
     if (contextType === 'GROUP' && id) {
@@ -119,7 +140,7 @@ export function useThreadSocket({
   }, [contextType, id, effectiveChatType]);
 
   useEffect(() => {
-    if (!roomKey || !id) return;
+    if (!roomKey || !id || !liveIngressEnabled) return;
     const tailKey = chatSyncTailKey(
       contextType,
       id,
@@ -147,6 +168,7 @@ export function useThreadSocket({
     onAfterSocketBatch,
     contextType,
     effectiveChatType,
+    liveIngressEnabled,
   ]);
 
   useEffect(() => {
@@ -154,7 +176,7 @@ export function useThreadSocket({
   }, [id, contextType]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || !liveIngressEnabled) return;
     const ep = syncRequiredEpoch;
     const currentMessages = messagesRef.current;
     const lastMessage = currentMessages[currentMessages.length - 1];
@@ -186,7 +208,7 @@ export function useThreadSocket({
     if (lastSyncRequired) {
       socketService.syncMessages(ct, id, lastMessage.id);
     }
-  }, [syncRequiredEpoch, lastSyncRequired, contextType, id, messagesRef]);
+  }, [syncRequiredEpoch, lastSyncRequired, contextType, id, messagesRef, liveIngressEnabled]);
 
   useEffect(() => {
     if (!id) return;

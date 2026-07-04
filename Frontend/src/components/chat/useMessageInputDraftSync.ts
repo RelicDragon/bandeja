@@ -9,6 +9,7 @@ import {
   emitDraftUpdatedEvent,
   withDraftRetry,
 } from '@/components/chat/messageInputDraftUtils';
+import { deleteDraftFromComposer } from '@/components/chat/draftDeleteFlow';
 
 function mentionIdsEqual(a: string[], b: string[]) {
   return a.length === b.length && a.every((id, i) => id === b[i]);
@@ -66,16 +67,18 @@ export function useMessageInputDraftSync({
       const safeMentionIds = (mentionIds ?? []).slice(0, 50);
       if (!trimmedContent && safeMentionIds.length === 0) {
         if (lastSavedContentRef.current === '' && lastSavedMentionIdsRef.current.length === 0) return;
-        lastSavedContentRef.current = '';
-        lastSavedMentionIdsRef.current = [];
-        await draftStorage.remove(userId, contextType, finalContextId, resolvedChatType);
+        const previousContent = lastSavedContentRef.current;
+        const previousMentionIds = lastSavedMentionIdsRef.current.slice();
         try {
-          await withDraftRetry(() => chatApi.deleteDraft(contextType, finalContextId, resolvedChatType));
-          window.dispatchEvent(
-            new CustomEvent('draft-deleted', {
-              detail: { chatContextType: contextType, contextId: finalContextId, chatType: resolvedChatType },
-            })
-          );
+          await deleteDraftFromComposer({
+            userId,
+            contextType,
+            contextId: finalContextId,
+            chatType: resolvedChatType,
+            previousDraft: { content: previousContent, mentionIds: previousMentionIds },
+          });
+          lastSavedContentRef.current = '';
+          lastSavedMentionIdsRef.current = [];
         } catch (error) {
           console.error('Failed to delete draft:', error);
         }

@@ -105,6 +105,7 @@ export interface ThreadChromeValue {
   currentChatType: ChatType;
   isEmbedded: boolean;
   isGameChatArchived: boolean;
+  isGameChatAccessDenied: boolean;
   archivedGameMeta: ArchivedGameChatMeta | null;
   game: Game | null;
   bug: Bug | null;

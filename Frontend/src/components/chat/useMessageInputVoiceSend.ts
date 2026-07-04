@@ -6,7 +6,7 @@ import type { ChatContextType, ChatMessage, OptimisticMessagePayload } from '@/a
 import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { mediaApi } from '@/api/media';
-import { draftStorage } from '@/services/draftStorage';
+import { deleteDraftFromComposer } from '@/components/chat/draftDeleteFlow';
 import {
   extractWaveformPeaksFromBlob,
   placeholderWaveform,
@@ -213,14 +213,14 @@ export function useMessageInputVoiceSend({
       }
       if (finalContextId && userId) {
         const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
-        await draftStorage.remove(userId, contextType, finalContextId, resolvedType);
         try {
-          await chatApi.deleteDraft(contextType, finalContextId, resolvedType);
-          window.dispatchEvent(
-            new CustomEvent('draft-deleted', {
-              detail: { chatContextType: contextType, contextId: finalContextId, chatType: resolvedType },
-            })
-          );
+          await deleteDraftFromComposer({
+            userId,
+            contextType,
+            contextId: finalContextId,
+            chatType: resolvedType,
+            previousDraft: null,
+          });
         } catch {
           /* noop */
         }

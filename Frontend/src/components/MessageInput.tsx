@@ -22,7 +22,7 @@ import { UndoTranslateButton } from './chat/UndoTranslateButton';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { PollType } from '@/api/chat';
-import { draftStorage } from '@/services/draftStorage';
+import { deleteDraftFromComposer } from '@/components/chat/draftDeleteFlow';
 import { VoiceRecordingOverlay } from './audio/VoiceRecordingOverlay';
 import { VoiceRecordButton } from './audio/VoiceRecordButton';
 import { useAudioRecorder } from './audio/useAudioRecorder';
@@ -328,14 +328,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
       onMessageCreated?.('temp-' + Date.now(), created);
       if (user?.id) {
         const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
-        await draftStorage.remove(user.id, contextType, finalContextId, resolvedType);
         try {
-          await chatApi.deleteDraft(contextType, finalContextId, resolvedType);
-          window.dispatchEvent(
-            new CustomEvent('draft-deleted', {
-              detail: { chatContextType: contextType, contextId: finalContextId, chatType: resolvedType },
-            })
-          );
+          await deleteDraftFromComposer({
+            userId: user.id,
+            contextType,
+            contextId: finalContextId,
+            chatType: resolvedType,
+            previousDraft: null,
+          });
         } catch (err) {
           console.error('Failed to delete draft after poll:', err);
         }

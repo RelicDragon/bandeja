@@ -10,9 +10,9 @@ import {
 } from '@/api/chat';
 import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
-import { draftStorage } from '@/services/draftStorage';
 import { shouldQueueChatMutation, isRetryableMutationError } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
+import { deleteDraftFromComposer } from '@/components/chat/draftDeleteFlow';
 import { isValidImage } from '@/components/chat/messageInputDraftUtils';
 import {
   ChatImageBatchUploadError,
@@ -110,14 +110,14 @@ export function useMessageInputSubmit(params: Params) {
       }
       if (p.finalContextId && p.userId) {
         const resolvedType = p.userChatId ? 'PUBLIC' : normalizeChatType(p.chatType);
-        await draftStorage.remove(p.userId, p.contextType, p.finalContextId, resolvedType);
         try {
-          await chatApi.deleteDraft(p.contextType, p.finalContextId, resolvedType);
-          window.dispatchEvent(
-            new CustomEvent('draft-deleted', {
-              detail: { chatContextType: p.contextType, contextId: p.finalContextId, chatType: resolvedType },
-            })
-          );
+          await deleteDraftFromComposer({
+            userId: p.userId,
+            contextType: p.contextType,
+            contextId: p.finalContextId,
+            chatType: resolvedType,
+            previousDraft: null,
+          });
         } catch (err) {
           console.error('Failed to delete draft:', err);
         }

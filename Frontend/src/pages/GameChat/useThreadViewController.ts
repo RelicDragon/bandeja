@@ -78,6 +78,8 @@ export function useThreadViewController({
     loadContext,
     isGameChatArchived,
     setIsGameChatArchived,
+    isGameChatAccessDenied,
+    setIsGameChatAccessDenied,
     archivedGameMeta,
     setArchivedGameMeta,
   } = useGameChatContext({
@@ -138,10 +140,13 @@ export function useThreadViewController({
     setIsBlockedByUser,
     setIsMuted,
     setTranslateToLanguageForChat,
+    isLoadingContext,
     setIsLoadingContext,
+    setIsGameChatAccessDenied,
     isBlockedByUser,
     isJoiningAsGuest,
     isGameChatArchived,
+    isGameChatAccessDenied,
   });
 
   const { setPage, setHasMoreMessages, setReplyTo, setEditingMessage } = thread;
@@ -239,6 +244,7 @@ export function useThreadViewController({
     setHasMoreMessages(true);
     setIsLoadingContext(true);
     setIsGameChatArchived(false);
+    setIsGameChatAccessDenied(false);
     setArchivedGameMeta(null);
     setIsBlockedByUser(false);
     setIsMuted(false);
@@ -257,6 +263,7 @@ export function useThreadViewController({
     setGroupChannelParticipantsCount,
     setIsLoadingContext,
     setIsGameChatArchived,
+    setIsGameChatAccessDenied,
     setArchivedGameMeta,
     setPage,
     setHasMoreMessages,
@@ -284,6 +291,7 @@ export function useThreadViewController({
     currentChatType,
     isEmbedded,
     isGameChatArchived,
+    isGameChatAccessDenied,
     archivedGameMeta,
     game,
     bug,

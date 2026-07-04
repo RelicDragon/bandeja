@@ -11,6 +11,7 @@ import { ThreadViewProvider } from './GameChat/ThreadViewProvider';
 import { useThreadChrome } from './GameChat/useThreadView';
 import { parseGameSport } from '@/utils/gameSport';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
+import { resolveGameChatViewState } from './GameChat/gameChatRouteState';
 
 export const GameChat: React.FC<GameChatProps> = (props) => (
   <ThreadViewProvider {...props}>
@@ -20,7 +21,17 @@ export const GameChat: React.FC<GameChatProps> = (props) => (
 
 const GameChatLayout: React.FC = () => {
   const setBottomTabsVisible = useShellNavStore((s) => s.setBottomTabsVisible);
-  const { id, contextType, isEmbedded, game, derived, panels, chatContainerRef, navigate } =
+  const {
+    id,
+    contextType,
+    isEmbedded,
+    game,
+    derived,
+    panels,
+    chatContainerRef,
+    navigate,
+    isGameChatAccessDenied,
+  } =
     useThreadChrome();
 
   useEffect(() => {
@@ -32,7 +43,12 @@ const GameChatLayout: React.FC = () => {
 
   useBackButtonHandler(panels.handleBackButton);
 
-  if (!derived.canViewPublicChat) {
+  if (
+    resolveGameChatViewState({
+      isGameChatAccessDenied,
+      canViewPublicChat: derived.canViewPublicChat,
+    }) === 'denied'
+  ) {
     return <GameChatAccessDenied id={id} navigate={navigate} />;
   }
 

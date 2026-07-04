@@ -22,6 +22,7 @@ import {
 } from '@/utils/cancelledGameChatStub';
 import { hydrateThreadArchivedMemory, markThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
 import { resolveLoadedGameChatArchiveState } from './gameChatArchiveState';
+import { shouldInitializeGameChatContextLoading } from './gameChatRouteState';
 
 function shouldBounceFromHttpError(error: unknown): boolean {
   const s = (error as { response?: { status?: number } })?.response?.status;
@@ -75,8 +76,14 @@ export function useGameChatContext({
         : null;
     return g?.participantsCount || 0;
   });
-  const [isLoadingContext, setIsLoadingContext] = useState(!isEmbedded);
+  const [isLoadingContext, setIsLoadingContext] = useState(() =>
+    shouldInitializeGameChatContextLoading({
+      contextType,
+      isEmbedded,
+    })
+  );
   const [isGameChatArchived, setIsGameChatArchived] = useState(false);
+  const [isGameChatAccessDenied, setIsGameChatAccessDenied] = useState(false);
   const [archivedGameMeta, setArchivedGameMeta] = useState<ArchivedGameChatMeta | null>(null);
 
   const userChatRef = useRef(userChat);
@@ -103,6 +110,7 @@ export function useGameChatContext({
           archivedLocally,
           archivedGameMetaRef.current
         );
+        setIsGameChatAccessDenied(false);
         setIsGameChatArchived(archiveState.isGameChatArchived);
         setArchivedGameMeta(archiveState.archivedGameMeta);
         setGame(response.data);
@@ -172,6 +180,7 @@ export function useGameChatContext({
         const stub = buildArchivedGameStub(requestId, payload);
         if (currentIdRef.current !== requestId) return null;
         setGame(stub);
+        setIsGameChatAccessDenied(false);
         setIsGameChatArchived(true);
         setArchivedGameMeta(archivedMetaFrom410(payload));
         markThreadArchivedInMemory('GAME', requestId);
@@ -216,6 +225,7 @@ export function useGameChatContext({
       if (currentIdRef.current === requestId && contextType === 'GAME') {
         const archivedLocally = await hydrateThreadArchivedMemory('GAME', requestId);
         if (archivedLocally) {
+          setIsGameChatAccessDenied(false);
           setIsGameChatArchived(true);
           markThreadArchivedInMemory('GAME', requestId);
         }
@@ -288,6 +298,8 @@ export function useGameChatContext({
     loadContext,
     isGameChatArchived,
     setIsGameChatArchived,
+    isGameChatAccessDenied,
+    setIsGameChatAccessDenied,
     archivedGameMeta,
     setArchivedGameMeta,
   };

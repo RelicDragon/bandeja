@@ -727,6 +727,22 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'draft write access unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'chat', 'draftWriteAccess.test.ts'),
+    ],
+  },
+  {
+    label: 'chat draft route unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'controllers', 'chatDraftRoute.test.ts'),
+    ],
+  },
+  {
     label: 'game chat archive delete',
     command: process.execPath,
     args: [

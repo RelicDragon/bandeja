@@ -27,10 +27,13 @@ export type UseChatThreadControllerParams = UseThreadMessagesParams & {
   setIsBlockedByUser: (v: boolean) => void;
   setIsMuted: (v: boolean) => void;
   setTranslateToLanguageForChat: (v: string | null) => void;
+  isLoadingContext: boolean;
   setIsLoadingContext: (v: boolean) => void;
+  setIsGameChatAccessDenied: (v: boolean) => void;
   isBlockedByUser: boolean;
   isJoiningAsGuest: boolean;
   isGameChatArchived?: boolean;
+  isGameChatAccessDenied?: boolean;
 };
 
 export function useChatThreadController(params: UseChatThreadControllerParams) {
@@ -48,10 +51,13 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     setIsBlockedByUser,
     setIsMuted,
     setTranslateToLanguageForChat,
+    isLoadingContext,
     setIsLoadingContext,
+    setIsGameChatAccessDenied,
     isBlockedByUser,
     isJoiningAsGuest,
     isGameChatArchived = false,
+    isGameChatAccessDenied = false,
     id,
     contextType,
     effectiveChatType,
@@ -73,6 +79,8 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     contextType,
     currentChatType,
     effectiveChatType,
+    isGameChatArchived,
+    onGameChatAccessDenied: () => setIsGameChatAccessDenied(true),
     chatContainerRef,
     messageListRef,
     currentIdRef,
@@ -177,6 +185,9 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     reloadMessagesFirstPage,
     onAfterSocketBatch: session.pinAfterSocketMergeIfAllowed,
     openPaintGeneration: session.openPaintGeneration,
+    isLoadingContext,
+    isGameChatArchived,
+    isGameChatAccessDenied,
   });
 
   useLayoutEffect(() => {

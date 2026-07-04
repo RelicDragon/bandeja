@@ -58,6 +58,7 @@ import {
   mergeOpenPaintWithLivePending,
 } from '@/services/chat/chatOpenSnapshot';
 import { decideReconcilePinApply } from '@/services/chat/threadScrollPolicy';
+import { shouldDenyArchivedGameChatRouteOnMessageError } from '@/pages/GameChat/gameChatRouteState';
 const PAGE_SIZE = 50;
 
 export interface UseThreadMessagesParams {
@@ -65,6 +66,8 @@ export interface UseThreadMessagesParams {
   contextType: ChatContextType;
   currentChatType: ChatType;
   effectiveChatType: ChatType;
+  isGameChatArchived?: boolean;
+  onGameChatAccessDenied?: () => void;
   chatContainerRef: RefObject<HTMLDivElement | null>;
   messageListRef: RefObject<MessageListHandle | null>;
   currentIdRef: RefObject<string | undefined>;
@@ -84,6 +87,8 @@ export function useThreadMessages({
   contextType,
   currentChatType,
   effectiveChatType,
+  isGameChatArchived = false,
+  onGameChatAccessDenied,
   chatContainerRef: _chatContainerRef,
   messageListRef,
   currentIdRef,
@@ -575,6 +580,16 @@ export function useThreadMessages({
         }
         return true;
       } catch (error) {
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (
+          contextType === 'GAME' &&
+          shouldDenyArchivedGameChatRouteOnMessageError({
+            status,
+            isGameChatArchived,
+          })
+        ) {
+          onGameChatAccessDenied?.();
+        }
         console.error('Failed to load messages:', error);
         if (!append) {
           pendingHistoryBackfillRef.current = false;
@@ -586,7 +601,20 @@ export function useThreadMessages({
         return false;
       }
     },
-    [id, contextType, currentChatType, currentIdRef, fetchMessagesPage, reconcileThreadOpenAndPinIfAtBottom, setMessagesTagged, commitOpenThreadPaint, endThreadOpenSettling, paintScrollFor]
+    [
+      id,
+      contextType,
+      currentChatType,
+      currentIdRef,
+      fetchMessagesPage,
+      reconcileThreadOpenAndPinIfAtBottom,
+      setMessagesTagged,
+      commitOpenThreadPaint,
+      endThreadOpenSettling,
+      paintScrollFor,
+      isGameChatArchived,
+      onGameChatAccessDenied,
+    ]
   );
 
   const bootstrapThread = useCallback(
