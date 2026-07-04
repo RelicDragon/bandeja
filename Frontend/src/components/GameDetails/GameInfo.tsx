@@ -516,7 +516,7 @@ export const GameInfo = ({
           <div className="flex flex-col gap-1 flex-1">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                {renderCalendarIcon(14)}
+                {renderCalendarIcon(14, 'text-current')}
                 {game.timeIsSet === false ? (
                   <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
                 ) : (
@@ -576,7 +576,7 @@ export const GameInfo = ({
           <div className="flex flex-col gap-1 flex-1">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-1">
-                {renderCalendarIcon(14)}
+                {renderCalendarIcon(14, 'text-current')}
                 {game.timeIsSet === false ? (
                   <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
                 ) : (
@@ -633,7 +633,7 @@ export const GameInfo = ({
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-1">
-              {renderCalendarIcon(14)}
+              {renderCalendarIcon(14, 'text-current')}
               {game.timeIsSet === false ? (
                 <span className="text-gray-500 dark:text-gray-400 italic text-xs">{t('gameDetails.datetimeNotSet')}</span>
               ) : (
