@@ -62,6 +62,7 @@ export const gamePhotosApi = {
     const response = await api.post<ApiResponse<GamePhoto>>(`/games/${gameId}/photos`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       signal: options?.signal,
+      timeout: 60_000,
     });
     return response.data.data;
   },

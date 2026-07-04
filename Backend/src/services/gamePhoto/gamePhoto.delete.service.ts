@@ -30,7 +30,7 @@ export class GamePhotoDeleteService {
     const result = await prisma.$transaction(async (tx) => {
       await tx.gamePhoto.update({
         where: { id: photoId },
-        data: { deletedAt },
+        data: { deletedAt, clientUploadId: null },
       });
 
       const currentGame = await tx.game.findUnique({

@@ -126,6 +126,8 @@ async function convertImageToFile(image: any, index: number = 0): Promise<File> 
     if (path.includes('.png')) mimeType = 'image/png';
     else if (path.includes('.gif')) mimeType = 'image/gif';
     else if (path.includes('.webp')) mimeType = 'image/webp';
+    else if (path.includes('.heic')) mimeType = 'image/heic';
+    else if (path.includes('.heif')) mimeType = 'image/heif';
     else mimeType = 'image/jpeg';
   }
   

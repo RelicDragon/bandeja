@@ -1,8 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { gamePhotosApi } from '@/api/gamePhotos';
+import { isAxiosError } from 'axios';
 import { gamesApi } from '@/api/games';
+import {
+  filterGamePhotoUploadFiles,
+  uploadGamePhotoFileWithRetry,
+} from '@/services/gamePhotoUploadRetry';
 import { useAuthStore } from '@/store/authStore';
 import { useGamePhotosStore } from '@/store/gamePhotosStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
@@ -46,9 +50,7 @@ export function usePhotosSectionUpload(
         return;
       }
 
-      const imageFiles = files.filter(
-        (file) => file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024
-      );
+      const imageFiles = filterGamePhotoUploadFiles(files);
 
       if (imageFiles.length === 0) {
         toast.error(t('chat.invalidImageType'));
@@ -63,12 +65,17 @@ export function usePhotosSectionUpload(
         for (const file of imageFiles) {
           const tempId = newClientUploadId();
           try {
-            const photo = await gamePhotosApi.upload(game.id, file, { clientUploadId: tempId });
+            const photo = await uploadGamePhotoFileWithRetry(game.id, file, tempId);
             addPhotoLocal(game.id, photo);
             onMainPhotoIdChange?.(photo.id);
             successCount++;
           } catch (error) {
-            console.error(`Failed to upload photo ${file.name}:`, error);
+            const detail = isAxiosError(error)
+              ? `${error.response?.status ?? 'network'} ${JSON.stringify(error.response?.data ?? error.message)}`
+              : error instanceof Error
+                ? error.message
+                : String(error);
+            console.error(`Failed to upload photo ${file.name}:`, detail, error);
             failCount++;
           }
         }

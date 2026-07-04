@@ -28,7 +28,15 @@ const MULTIPART_IMAGE_FILE_MAX_BYTES = 32 * 1024 * 1024;
 const storage = multer.memoryStorage();
 
 const fileFilter = (req: any, file: any, cb: FileFilterCallback) => {
-  const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const allowedImageTypes = [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+  ];
   const allowedDocTypes = ['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
   
   if ((file.fieldname === 'image' || file.fieldname === 'avatar' || file.fieldname === 'original') && allowedImageTypes.includes(file.mimetype)) {

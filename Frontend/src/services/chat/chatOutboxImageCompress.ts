@@ -4,9 +4,12 @@ const SKIP_BELOW_BYTES = 350_000;
 
 function isCompressibleImage(blob: Blob): boolean {
   const t = (blob.type || '').toLowerCase();
-  if (!t.startsWith('image/')) return false;
   if (t.includes('gif')) return false;
-  return true;
+  return t.startsWith('image/');
+}
+
+function hasImageFileExtension(name: string): boolean {
+  return /\.(jpe?g|png|webp|heic|heif)$/i.test(name);
 }
 
 async function blobToJpegBlob(blob: Blob, maxEdge: number, quality: number): Promise<Blob> {
@@ -49,8 +52,24 @@ export async function compressChatOutboxImageBlobs(blobs: Blob[]): Promise<Blob[
 
 /** Resize/compress a chat photo File before upload (non-outbox paths). */
 export async function compressChatImageFile(file: File): Promise<File> {
-  const blob = await compressChatOutboxImageBlob(file);
-  if (blob === file) return file;
-  const base = file.name.replace(/\.[^.]+$/i, '') || 'photo';
-  return new File([blob], `${base}.jpg`, { type: blob.type || 'image/jpeg' });
+  if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') {
+    return file;
+  }
+
+  const shouldCompress =
+    (isCompressibleImage(file) || hasImageFileExtension(file.name)) && !file.type.toLowerCase().includes('gif');
+  if (!shouldCompress) return file;
+
+  if (file.size <= SKIP_BELOW_BYTES && isCompressibleImage(file) && !file.type.toLowerCase().includes('heic') && !file.type.toLowerCase().includes('heif')) {
+    return file;
+  }
+
+  try {
+    const blob = await blobToJpegBlob(file, MAX_EDGE_PX, JPEG_QUALITY);
+    if (blob === file) return file;
+    const base = file.name.replace(/\.[^.]+$/i, '') || 'photo';
+    return new File([blob], `${base}.jpg`, { type: blob.type || 'image/jpeg' });
+  } catch {
+    return file;
+  }
 }

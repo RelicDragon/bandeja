@@ -140,11 +140,11 @@ export class GamePhotoCreateService {
       });
     } catch (e) {
       await ImageProcessor.deleteFilePair(processed.originalPath, processed.thumbnailPath);
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002' && normalizedClientUploadId) {
         const existing = await prisma.gamePhoto.findFirst({
           where: {
             uploaderId: userId,
-            clientUploadId: normalizedClientUploadId!,
+            clientUploadId: normalizedClientUploadId,
             gameId,
             deletedAt: null,
           },
@@ -152,6 +152,59 @@ export class GamePhotoCreateService {
         });
         if (existing) {
           return this.finishUpload(gameId, existing, userId, { isNew: false, emitAdded: false });
+        }
+
+        const softDeleted = await prisma.gamePhoto.findFirst({
+          where: {
+            uploaderId: userId,
+            clientUploadId: normalizedClientUploadId,
+            gameId,
+            deletedAt: { not: null },
+          },
+          include: { uploader: { select: UPLOADER_SELECT } },
+        });
+        if (softDeleted) {
+          const revived = await prisma.$transaction(async (tx) => {
+            await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${gameId} FOR UPDATE`);
+
+            const current = await tx.game.findUnique({
+              where: { id: gameId },
+              select: { photosCount: true },
+            });
+            if (!current) {
+              throw new ApiError(404, 'Game not found');
+            }
+            if (current.photosCount >= MAX_PHOTOS_PER_GAME) {
+              throw new ApiError(400, `Maximum ${MAX_PHOTOS_PER_GAME} photos per game`);
+            }
+
+            const updated = await tx.gamePhoto.update({
+              where: { id: softDeleted.id },
+              data: {
+                deletedAt: null,
+                originalUrl: processed.originalPath,
+                thumbnailUrl: processed.thumbnailPath ?? processed.originalPath,
+                width: processed.originalSize.width || null,
+                height: processed.originalSize.height || null,
+                thumbWidth: processed.thumbnailSize?.width ?? null,
+                thumbHeight: processed.thumbnailSize?.height ?? null,
+                byteSize: file.size,
+              },
+              include: { uploader: { select: UPLOADER_SELECT } },
+            });
+
+            await tx.game.update({
+              where: { id: gameId },
+              data: {
+                photosCount: { increment: 1 },
+                mainPhotoId: updated.id,
+              },
+            });
+
+            return updated;
+          });
+
+          return this.finishUpload(gameId, revived, userId, { isNew: true, emitAdded: true });
         }
       }
       throw e;
