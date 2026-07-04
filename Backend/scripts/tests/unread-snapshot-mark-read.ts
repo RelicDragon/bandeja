@@ -215,7 +215,10 @@ async function main() {
 
     const objects = await UnreadObjectsService.getUnreadObjects(reader.id);
     const byContext = buildByContextFromUnreadObjects(objects);
-    const totals = computeTotals(byContext, { groupChannelMeta: buildGroupChannelMeta(objects) });
+    const totals = computeTotals(byContext, {
+      groupChannelMeta: buildGroupChannelMeta(objects),
+      mutedGroupIds: new Set(),
+    });
     assert(totals.all >= 0, 'computeTotals all >= 0');
 
     await prisma.messageReadReceipt.deleteMany({

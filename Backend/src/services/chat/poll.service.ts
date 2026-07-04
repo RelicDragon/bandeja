@@ -4,6 +4,7 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import { ChatSyncEventService } from './chatSyncEvent.service';
+import { MessageService } from './message.service';
 
 export class PollService {
     /**
@@ -22,11 +23,21 @@ export class PollService {
 
             const hostMessage = await tx.chatMessage.findUnique({
                 where: { id: poll.messageId },
-                select: { deletedAt: true },
+                select: { deletedAt: true, chatContextType: true, contextId: true, chatType: true },
             });
             if (!hostMessage || hostMessage.deletedAt) {
                 throw new ApiError(404, 'Poll not found');
             }
+
+            await MessageService.validateMessageAccess(
+                {
+                    chatContextType: hostMessage.chatContextType,
+                    contextId: hostMessage.contextId,
+                    chatType: hostMessage.chatType,
+                },
+                userId,
+                true
+            );
 
             // Check if user has already voted on a quiz (quizzes don't allow vote changes)
             if (poll.type === 'QUIZ') {

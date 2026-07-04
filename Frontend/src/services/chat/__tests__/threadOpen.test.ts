@@ -14,6 +14,7 @@ import {
   shouldDeferOpenReload,
 } from '../threadOpen';
 import { detectReconcileScrollDelta, shouldPinOnOpen } from '../chatOpenScrollPolicy';
+import { markThreadArchivedInMemory, clearThreadArchivedInMemory } from '../chatThreadLifecycle';
 import { markOpenThreadNetworkPrefetched } from '../openThreadNetworkPrefetch';
 import { pullMissedAndPersistToDexie } from '../chatThreadNetworkSync';
 import { pullAndApplyChatSyncEvents } from '../chatLocalApply';
@@ -85,6 +86,7 @@ describe('threadOpen paint gating', () => {
   beforeEach(() => {
     vi.useFakeTimers();
     resetThreadOpenPaint(KEY);
+    clearThreadArchivedInMemory('GAME', 'g1');
   });
 
   afterEach(() => {
@@ -123,6 +125,12 @@ describe('threadOpen paint gating', () => {
     expect(shouldDeferOpenReload()).toBe(true);
     vi.advanceTimersByTime(1);
     expect(shouldDeferOpenReload()).toBe(false);
+  });
+
+  it('blocks live socket flush when thread archived in memory', () => {
+    commitThreadOpenPaint(KEY);
+    markThreadArchivedInMemory('GAME', 'g1');
+    expect(canFlushLiveSocketEvents(KEY)).toBe(false);
   });
 
   it('increments paint generation per commit', () => {

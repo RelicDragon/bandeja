@@ -17,6 +17,7 @@ export interface UseThreadFooterVariantParams {
   isChannelParticipant: boolean;
   isChannel: boolean;
   isJoiningAsGuest: boolean;
+  isGameChatArchived?: boolean;
 }
 
 export function useThreadFooterVariant(params: UseThreadFooterVariantParams): GameChatFooterVariant | null {
@@ -33,9 +34,11 @@ export function useThreadFooterVariant(params: UseThreadFooterVariantParams): Ga
     groupChannel,
     isInJoinQueue,
     isChannelParticipant,
+    isGameChatArchived,
   } = params;
 
   return useMemo((): GameChatFooterVariant | null => {
+    if (isGameChatArchived && contextType === 'GAME') return { type: 'archived' };
     if (isBlockedByUser && contextType === 'USER') return { type: 'blocked' };
     if (contextType === 'USER' && userChat && userId) {
       const chatId = id ?? userChat.id;
@@ -72,5 +75,6 @@ export function useThreadFooterVariant(params: UseThreadFooterVariantParams): Ga
     groupChannel,
     isInJoinQueue,
     isChannelParticipant,
+    isGameChatArchived,
   ]);
 }

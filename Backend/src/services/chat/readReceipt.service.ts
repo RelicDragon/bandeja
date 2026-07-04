@@ -1,6 +1,7 @@
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
+import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { ChatSyncEventType } from '@bandeja/chat-contract';
 import { ChatContextType, ChatType, ParticipantRole, Prisma } from '@prisma/client';
@@ -91,6 +92,10 @@ export class ReadReceiptService {
 
     if (message.deletedAt) {
       throw new ApiError(404, 'Message not found');
+    }
+
+    if (message.chatContextType === 'GAME') {
+      await GameChatViewerAccessService.assertWritable(message.contextId, userId);
     }
 
     await MessageService.validateMessageAccess(message, userId);
@@ -341,7 +346,11 @@ export class ReadReceiptService {
   }
 
   static async markAllMessagesAsRead(gameId: string, userId: string, chatTypes: string[] = []) {
-    const { participant, game } = await MessageService.validateGameAccess(gameId, userId);
+    const access = await GameChatViewerAccessService.assertWritable(gameId, userId);
+    if (access.lifecycle !== 'active') {
+      throw new ApiError(403, 'This chat is archived', true, { code: 'chat.threadArchived' });
+    }
+    const { participant, game } = access;
 
     const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
       gameId,

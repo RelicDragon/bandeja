@@ -198,4 +198,8 @@ export class GameChatViewerAccessService {
     }
     return access;
   }
+
+  static async hasArchivedParentAdminAccess(stub: CancelledGame, userId: string): Promise<boolean> {
+    return hasArchivedParentGamePermission(stub, userId, PARENT_ADMIN_ROLES);
+  }
 }

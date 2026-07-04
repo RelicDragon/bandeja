@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "ChatSyncEventType" ADD VALUE 'THREAD_ARCHIVED';

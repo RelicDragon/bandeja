@@ -2,6 +2,7 @@ import { ChatContextType } from '@prisma/client';
 import { ParticipantRole } from '@prisma/client';
 import prisma from '../../config/database';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
+import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
 import { canParticipantSeeGameChatMessage } from './gameChatVisibility';
 import { extractChatTypeFromEmitPayload } from './gameChatSocketRecipients';
 import { ChatSyncEventService } from './chatSyncEvent.service';
@@ -20,22 +21,41 @@ export async function resolveGameChatSyncAccess(
     where: { id: gameId },
     select: { id: true, status: true },
   });
-  if (!game) return null;
+  if (game) {
+    const participant = await prisma.gameParticipant.findFirst({
+      where: { gameId, userId },
+      select: { status: true, role: true },
+    });
 
-  const participant = await prisma.gameParticipant.findFirst({
-    where: { gameId, userId },
-    select: { status: true, role: true },
-  });
+    const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
+      gameId,
+      userId,
+      [ParticipantRole.OWNER, ParticipantRole.ADMIN]
+    );
 
-  const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
-    gameId,
-    userId,
-    [ParticipantRole.OWNER, ParticipantRole.ADMIN]
-  );
+    return {
+      game,
+      participant: participant ?? undefined,
+      isParentGameAdminOrOwner,
+    };
+  }
+
+  const access = await GameChatViewerAccessService.resolve(gameId, userId);
+  if (!access || access.lifecycle !== 'archived' || !access.isParticipant) {
+    return null;
+  }
+
+  const participant = access.participant
+    ? { status: access.participant.status, role: access.participant.role }
+    : undefined;
+
+  const isParentGameAdminOrOwner = participant
+    ? false
+    : await GameChatViewerAccessService.hasArchivedParentAdminAccess(access.stub, userId);
 
   return {
-    game,
-    participant: participant ?? undefined,
+    game: { status: 'ARCHIVED' },
+    participant,
     isParentGameAdminOrOwner,
   };
 }

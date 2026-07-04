@@ -3,6 +3,7 @@ import { ChatSyncEventType } from '@bandeja/chat-contract';
 import { ChatContextType, ChatType } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { MessageService } from './message.service';
+import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
 import { TranslationService } from './translation.service';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { getChatNotifier } from './chatNotifier';
@@ -15,8 +16,7 @@ export class PinnedMessageService {
     userId: string
   ) {
     if (chatContextType === 'GAME') {
-      const { participant, game } = await MessageService.validateGameAccess(contextId, userId);
-      await MessageService.validateChatTypeAccess(participant, chatType, game, userId, contextId, false);
+      await GameChatViewerAccessService.assertReadable(contextId, userId, chatType);
     } else if (chatContextType === 'BUG') {
       await MessageService.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {

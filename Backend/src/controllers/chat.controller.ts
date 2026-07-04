@@ -22,7 +22,7 @@ import { TranscriptionService } from '../services/chat/transcription.service';
 import { MESSAGE_TRANSCRIPTION_PENDING, normalizeClientMutationId } from '@bandeja/chat-contract';
 import { DraftService } from '../services/chat/draft.service';
 import { GameReadService } from '../services/game/read.service';
-import { GameChatContextService } from '../services/game/gameChatContext.service';
+import { GameChatViewerAccessService } from '../services/chat/gameChatViewerAccess.service';
 import { PollService } from '../services/chat/poll.service';
 import { MessageSearchService } from '../services/chat/messageSearch.service';
 import { PinnedMessageService } from '../services/chat/pinnedMessage.service';
@@ -1542,14 +1542,7 @@ export const getMissedMessages = asyncHandler(async (req: AuthRequest, res: Resp
 
 async function assertChatSyncAccess(contextType: ChatContextType, contextId: string, userId: string) {
   if (contextType === 'GAME') {
-    const gameStatus = await GameChatContextService.resolve(contextId);
-    if (gameStatus === 'missing') {
-      throw new ApiError(404, 'Game not found');
-    }
-    if (gameStatus === 'cancelled') {
-      return;
-    }
-    await MessageService.validateGameAccess(contextId, userId);
+    await GameChatViewerAccessService.assertReadable(contextId, userId);
   } else if (contextType === 'BUG') {
     await MessageService.validateBugAccess(contextId, userId);
   } else if (contextType === 'USER') {
@@ -1794,7 +1787,7 @@ export const saveDraft = asyncHandler(async (req: AuthRequest, res: Response) =>
   try {
     const ctx = chatContextType as ChatContextType;
     const cid = contextId as string;
-    if (ctx === 'GAME') await MessageService.validateGameAccess(cid, userId);
+    if (ctx === 'GAME') await GameChatViewerAccessService.assertWritable(cid, userId);
     else if (ctx === 'USER') await MessageService.validateUserChatAccess(cid, userId);
     else if (ctx === 'GROUP') await MessageService.validateGroupChannelAccess(cid, userId);
     else if (ctx === 'BUG') await MessageService.validateBugAccess(cid, userId);
@@ -1845,7 +1838,7 @@ export const getDraft = asyncHandler(async (req: AuthRequest, res: Response) => 
     const ctx = chatContextType as ChatContextType;
     const cid = contextId as string;
     if (ctx === 'GAME') {
-      await MessageService.validateGameAccess(cid, userId);
+      await GameChatViewerAccessService.assertReadable(cid, userId);
     } else if (ctx === 'USER') {
       await MessageService.validateUserChatAccess(cid, userId);
     } else if (ctx === 'GROUP') {

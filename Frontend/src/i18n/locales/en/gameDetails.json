@@ -212,6 +212,7 @@
     "gameCancelled": "Cancelled by the organizer.",
     "gameCancelledWithName": "«{{name}}» was cancelled by the organizer.",
     "gameCancelledGoHome": "Go to Home",
+    "viewArchivedChat": "View chat history",
     "cancelledBy": "Cancelled by",
     "leaveGame": "Leave Game",
     "leaveGameGame": "Leave Game",

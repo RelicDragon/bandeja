@@ -10,6 +10,7 @@ const onSocketSyncSeq = vi.fn(async () => {});
 const pullAndApplyChatSyncEventsDirect = vi.fn(async () => ({
   repairedStaleCursor: false,
   threadInvalidated: false,
+  threadArchived: false,
   eventsApplied: 1,
 }));
 vi.mock('@/utils/chatSyncStaleEvents', () => ({

@@ -33,6 +33,7 @@ export interface UseThreadDomainParams {
   endScrollTargetSession: (messageId?: string) => void;
   isBlockedByUser: boolean;
   isJoiningAsGuest: boolean;
+  isGameChatArchived?: boolean;
 }
 
 export function useThreadDomain(params: UseThreadDomainParams) {
@@ -57,6 +58,7 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     endScrollTargetSession,
     isBlockedByUser,
     isJoiningAsGuest,
+    isGameChatArchived,
   } = params;
 
   const { channelActivity, channelActivityResolved, noteUserMessage } = useThreadChannelActivity(
@@ -72,6 +74,7 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     currentChatType,
     messages,
     channelActivity: contextType === 'GAME' ? channelActivity : undefined,
+    isGameChatArchived,
   });
 
   useEffect(() => {
@@ -172,6 +175,7 @@ export function useThreadDomain(params: UseThreadDomainParams) {
     isChannelParticipant: !!derived.isChannelParticipant,
     isChannel: !!derived.isChannel,
     isJoiningAsGuest,
+    isGameChatArchived: !!isGameChatArchived,
   });
 
   const autoTranslateForModal = useMemo((): TranslationModalAutoTranslateProps | null => {

@@ -22,6 +22,7 @@ vi.mock('../chatLocalApplyPull', () => ({
   pullEventsLoop: vi.fn(async () => ({
     repairedStaleCursor: false,
     threadInvalidated: false,
+    threadArchived: false,
     eventsApplied: 0,
   })),
 }));

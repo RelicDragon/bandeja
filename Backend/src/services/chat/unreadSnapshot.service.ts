@@ -2,7 +2,7 @@ import { ChatType, ParticipantRole } from '@prisma/client';
 import { computeTotals } from '@bandeja/unread-contract';
 import { ApiError } from '../../utils/ApiError';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
-import { MessageService } from './message.service';
+import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
 import { ReadReceiptService } from './readReceipt.service';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
 import { UnreadCountQuery } from './unreadCountQuery';
@@ -166,8 +166,11 @@ export class UnreadSnapshotService {
   ): Promise<MarkContextReadResult> {
     const { contextType, contextId, gameChatTypes, clientOpId, emitSocket } = params;
 
-    if (contextType === 'GAME' && gameChatTypes?.length) {
-      await this.validateGameChatTypesSubset(contextId, userId, gameChatTypes);
+    if (contextType === 'GAME') {
+      await GameChatViewerAccessService.assertWritable(contextId, userId);
+      if (gameChatTypes?.length) {
+        await this.validateGameChatTypesSubset(contextId, userId, gameChatTypes);
+      }
     }
 
     let markedCount = 0;
@@ -267,7 +270,11 @@ export class UnreadSnapshotService {
     userId: string,
     clientTypes: ChatType[]
   ): Promise<void> {
-    const { participant, game } = await MessageService.validateGameAccess(gameId, userId);
+    const access = await GameChatViewerAccessService.assertReadable(gameId, userId);
+    if (access.lifecycle !== 'active') {
+      throw new ApiError(403, 'This chat is archived', true, { code: 'chat.threadArchived' });
+    }
+    const { participant, game } = access;
     const isParentGameAdminOrOwner = await hasParentGamePermissionWithUserCheck(
       gameId,
       userId,

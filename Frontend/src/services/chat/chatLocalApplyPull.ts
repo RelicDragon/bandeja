@@ -6,7 +6,8 @@ import { recordChatSyncStaleDispatch } from '@/services/chat/chatSyncMetrics';
 import { broadcastChatPullHint } from './chatLocalCoop';
 import { patchThreadIndexAfterMessageDeleted, patchThreadIndexFromMessage } from './chatThreadIndex';
 import { bumpMessageContextHead, refreshMessageContextHeadAfterDelete } from './messageContextHead';
-import { purgeLocalDexieThread } from './chatLocalThreadPurge';
+import { ChatSyncEventType } from '@bandeja/chat-contract';
+import { applyThreadTerminal } from './chatThreadLifecycle';
 import { scheduleChatMediaThumbPrefetchForMessage } from '@/services/chat/chatMediaThumbPrefetch';
 import { withChatSyncRetry } from '@/services/chat/chatHttpRetry';
 import { fetchChatSyncEventsPackOffMainThread } from '@/services/chat/chatSyncFetchWorkerClient';
@@ -67,6 +68,7 @@ function schedulePullPageIndexHooks(events: ChatSyncEventDTO[]): void {
 export type PullEventsLoopResult = {
   repairedStaleCursor: boolean;
   threadInvalidated: boolean;
+  threadArchived: boolean;
   eventsApplied: number;
 };
 
@@ -79,6 +81,7 @@ export async function pullEventsLoop(
   let staleDispatched = false;
   let repairedStaleCursor = false;
   let threadInvalidated = false;
+  let threadArchived = false;
   let eventsApplied = 0;
   for (;;) {
     const pack = await withChatSyncRetry('events', () =>
@@ -107,10 +110,8 @@ export async function pullEventsLoop(
       let i = 0;
       while (i < pack.events.length) {
         const ev = pack.events[i]!;
-        if (ev.eventType === 'THREAD_LOCAL_INVALIDATE') {
-          await purgeLocalDexieThread(contextType, contextId);
-          recordChatSyncStaleDispatch();
-          dispatchChatSyncStale(contextType, contextId, 'threadInvalidated');
+        if (ev.eventType === ChatSyncEventType.THREAD_LOCAL_INVALIDATE) {
+          await applyThreadTerminal('invalidate', contextType, contextId);
           threadInvalidated = true;
           const rowInv = await chatLocalDb.chatSyncCursor.get(key);
           await chatLocalDb.chatSyncCursor.put({
@@ -121,8 +122,25 @@ export async function pullEventsLoop(
           i += 1;
           continue;
         }
+        if (ev.eventType === ChatSyncEventType.THREAD_ARCHIVED) {
+          const payload = ev.payload as { archivedAt?: string };
+          const archivedAt = payload.archivedAt
+            ? Date.parse(payload.archivedAt)
+            : undefined;
+          await applyThreadTerminal('archived', contextType, contextId, {
+            syncSeq: ev.seq,
+            ...(archivedAt != null && !Number.isNaN(archivedAt) ? { archivedAt } : {}),
+          });
+          threadArchived = true;
+          i += 1;
+          continue;
+        }
         let j = i;
-        while (j < pack.events.length && pack.events[j]!.eventType !== 'THREAD_LOCAL_INVALIDATE') {
+        while (
+          j < pack.events.length &&
+          pack.events[j]!.eventType !== ChatSyncEventType.THREAD_LOCAL_INVALIDATE &&
+          pack.events[j]!.eventType !== ChatSyncEventType.THREAD_ARCHIVED
+        ) {
           j += 1;
         }
         const slice = pack.events.slice(i, j);
@@ -167,7 +185,7 @@ export async function pullEventsLoop(
     broadcastChatPullHint(key);
     if (!pack.hasMore) break;
   }
-  return { repairedStaleCursor, threadInvalidated, eventsApplied };
+  return { repairedStaleCursor, threadInvalidated, threadArchived, eventsApplied };
 }
 
 export async function pullAndApplyChatSyncEventsDirect(

@@ -16,6 +16,7 @@ import type { ThreadOpenOutboxContext } from '@/services/chat/threadOpen';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
 import type { ChatThreadController } from './ChatThreadController';
+import { isThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
 
 export interface UseThreadOpenEffectsParams {
   id: string | undefined;
@@ -47,6 +48,7 @@ export interface UseThreadOpenEffectsParams {
   setIsLoadingMessages: (v: boolean) => void;
   setIsLoadingContext: (v: boolean) => void;
   controllerRef: React.RefObject<ChatThreadController>;
+  isGameChatArchived?: boolean;
 }
 
 export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
@@ -79,6 +81,7 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
     setIsLoadingMessages,
     setIsLoadingContext,
     controllerRef,
+    isGameChatArchived = false,
   } = params;
 
   const currentChatTypeRef = useRef(currentChatType);
@@ -148,16 +151,21 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
         const loadedContext = await loadContextRef.current();
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
+        const contextArchived =
+          contextType === 'GAME' && !!id && isThreadArchivedInMemory('GAME', id);
+
         const loadedGame =
           contextType === 'GAME' ? ((loadedContext as Game | null) ?? gameRef.current) : null;
-        controllerRef.current.markReadOnEnter({
-          id,
-          contextType,
-          game: loadedGame,
-          userId: user?.id,
-          gameChatType: currentChatTypeRef.current,
-          groupChannelId: groupChannelIdRef.current,
-        });
+        if (!contextArchived) {
+          controllerRef.current.markReadOnEnter({
+            id,
+            contextType,
+            game: loadedGame,
+            userId: user?.id,
+            gameChatType: currentChatTypeRef.current,
+            groupChannelId: groupChannelIdRef.current,
+          });
+        }
 
         if (contextType === 'USER' && user?.id) {
           const uc = (loadedContext || userChatRef.current) as UserChatType | null;
@@ -239,7 +247,7 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
         );
         if (signal.aborted || loadingIdRef.current !== currentLoadId) return;
 
-        if (activeUser?.id) {
+        if (activeUser?.id && !contextArchived) {
           await applyQueuedMessagesToState({
             contextType,
             contextId: id,
@@ -293,5 +301,6 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
     setIsLoadingMessages,
     setIsLoadingContext,
     controllerRef,
+    isGameChatArchived,
   ]);
 }

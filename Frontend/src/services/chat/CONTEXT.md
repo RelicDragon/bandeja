@@ -18,8 +18,8 @@ For open-thread reliability, prefer routing new live message/read state through 
 
 **Game chat lifecycle** — whether a game chat context is `active` (live `Game` row exists), `archived` (game deleted, `CancelledGame` + participant snapshot), or `missing`.
 
-**Thread archive** — terminal thread state after game delete: message history kept locally and on server, writes blocked, live socket/sync tail stopped. Emitted as `THREAD_ARCHIVED` sync event.
+**Thread archive** — terminal thread state after game delete: message history kept locally and on server, writes blocked, live socket/sync tail stopped. Emitted as `THREAD_ARCHIVED` sync event. Always on for game delete (no env flag). Client handler: `chatThreadLifecycle.applyThreadTerminal('archived', …)` — sets `chatThreads.archivedAt`, drops outbox, leaves socket room; does **not** purge Dexie.
 
-**Thread invalidation** — terminal thread state where the local copy must be wiped (user merge, migrations). Emitted as `THREAD_LOCAL_INVALIDATE`. Distinct from thread archive.
+**Thread invalidation** — terminal thread state where the local copy must be wiped (user merge, migrations). Emitted as `THREAD_LOCAL_INVALIDATE`. Client handler: `applyThreadTerminal('invalidate', …)` → `purgeLocalDexieThread`. Distinct from thread archive.
 
 Epic: GitHub #248.

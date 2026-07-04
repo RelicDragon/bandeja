@@ -727,6 +727,16 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'game chat archive delete',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'game-chat-archive-delete.ts'),
+    ],
+  },
+  {
     label: 'game chat read access',
     command: process.execPath,
     args: [

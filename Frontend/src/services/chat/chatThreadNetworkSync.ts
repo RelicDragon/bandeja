@@ -6,6 +6,8 @@ import { bridgeGetLastMessageId } from '@/services/chat/chatLocalApplyStoreBridg
 import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageContextHead';
 import { applyThreadEvent } from '@/services/chat/chatLocalApplyThreadEvent';
 import {
+  archiveGameChatLocal,
+  isGameChatArchivedHttpError,
   isGameChatContextGoneHttpError,
   purgeGameChatLocal,
 } from '@/services/chat/purgeGameChatLocal';
@@ -35,18 +37,20 @@ export async function pullMissedAndPersistToDexie(opts: {
       lastId ?? undefined,
       normalized
     );
-    if (contextType === 'GAME' && result.threadInvalidated) {
-      await purgeGameChatLocal(contextId);
-      return [];
-    }
     if (result.messages.length > 0) {
       await applyThreadEvent({ kind: 'httpMessages', messages: result.messages });
     }
     return result.messages;
   } catch (error) {
-    if (contextType === 'GAME' && isGameChatContextGoneHttpError(error)) {
-      await purgeGameChatLocal(contextId);
-      return [];
+    if (contextType === 'GAME') {
+      if (isGameChatArchivedHttpError(error)) {
+        await archiveGameChatLocal(contextId);
+        return [];
+      }
+      if (isGameChatContextGoneHttpError(error)) {
+        await purgeGameChatLocal(contextId);
+        return [];
+      }
     }
     throw error;
   }

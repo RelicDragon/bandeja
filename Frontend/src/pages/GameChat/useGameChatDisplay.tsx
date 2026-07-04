@@ -15,6 +15,7 @@ import { getGameTimeDisplay } from '@/utils/gameTimeDisplay';
 import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 import type { ChatContextType, UserChat, GroupChannel } from '@/api/chat';
 import type { Game, Bug } from '@/types';
+import type { ArchivedGameChatMeta } from '@/utils/cancelledGameChatStub';
 import { useGroupChannelOnlineCount } from './useGroupChannelOnlineCount';
 
 export interface UseGameChatDisplayParams {
@@ -30,6 +31,8 @@ export interface UseGameChatDisplayParams {
   displaySettings: ResolvedDisplaySettings;
   onOpenItemPage: () => void;
   onOpenParticipantsPage: () => void;
+  isGameChatArchived?: boolean;
+  archivedGameMeta?: ArchivedGameChatMeta | null;
 }
 
 export function useGameChatDisplay({
@@ -45,6 +48,8 @@ export function useGameChatDisplay({
   displaySettings,
   onOpenItemPage,
   onOpenParticipantsPage,
+  isGameChatArchived = false,
+  archivedGameMeta = null,
 }: UseGameChatDisplayParams) {
   const { t } = useTranslation();
   const groupOnlineCount = useGroupChannelOnlineCount(
@@ -81,6 +86,13 @@ export function useGameChatDisplay({
   })();
 
   const subtitle = (() => {
+    if (contextType === 'GAME' && game && isGameChatArchived) {
+      const when = archivedGameMeta?.cancelledAt
+        ? formatDate(archivedGameMeta.cancelledAt, 'PPp')
+        : null;
+      const base = t('chat.archivedGameChatBanner');
+      return when ? `${base} · ${when}` : base;
+    }
     if (contextType === 'GAME' && game) {
       if (game.timeIsSet === false) return t('gameDetails.datetimeNotSet');
       const longDateD = getGameTimeDisplay({ game, displaySettings, startTime: game.startTime, kind: 'longDate', t });

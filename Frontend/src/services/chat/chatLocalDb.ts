@@ -67,6 +67,8 @@ export type ChatThreadMetaRow = {
   openCount?: number;
   /** GAME only: last focused chat tab for missed-message fetch. */
   lastGameChatType?: ChatType;
+  /** Terminal archive (game cancelled): read-only, no live sync tail. */
+  archivedAt?: number;
 };
 
 export type ChatListFilterTab = 'users' | 'bugs' | 'channels' | 'market' | 'games';

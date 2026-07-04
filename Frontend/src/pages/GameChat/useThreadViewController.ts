@@ -4,6 +4,7 @@ import { ChatType } from '@/types';
 import { type MessageListHandle } from '@/components/MessageList';
 import { useAuthStore } from '@/store/authStore';
 import { useShellNavStore } from '@/store/shellNavStore';
+import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { normalizeChatType } from '@/utils/chatType';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { cancelAllForContext } from '@/services/chatSendService';
@@ -13,6 +14,7 @@ import { useGameChatContext } from './useGameChatContext';
 import { useChatThreadController } from '@/services/chat/chatThreadController/useChatThreadController';
 import { useThreadViewChrome } from './useThreadViewChrome';
 import { recordChatThreadOpened } from '@/services/chat/chatThreadOpenStats';
+import { markThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
 import type { SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
 import type { ThreadViewValue } from './ThreadViewContext';
 import { createChatNearBottomStore } from './chatNearBottomStore';
@@ -74,6 +76,10 @@ export function useThreadViewController({
     isLoadingContext,
     setIsLoadingContext,
     loadContext,
+    isGameChatArchived,
+    setIsGameChatArchived,
+    archivedGameMeta,
+    setArchivedGameMeta,
   } = useGameChatContext({
     id,
     contextType,
@@ -135,6 +141,7 @@ export function useThreadViewController({
     setIsLoadingContext,
     isBlockedByUser,
     isJoiningAsGuest,
+    isGameChatArchived,
   });
 
   const { setPage, setHasMoreMessages, setReplyTo, setEditingMessage } = thread;
@@ -155,6 +162,8 @@ export function useThreadViewController({
     setGame,
     setGroupChannel,
     derived: thread.derived,
+    isGameChatArchived,
+    archivedGameMeta,
     setMessages: thread.setMessages,
     messagesRef: thread.messagesRef,
     setPage: thread.setPage,
@@ -197,6 +206,26 @@ export function useThreadViewController({
     [applyTranslationPref]
   );
 
+  const lastGameCancelled = useSocketEventsStore((s) => s.lastGameCancelled);
+  const clearLastGameCancelled = useSocketEventsStore((s) => s.clearLastGameCancelled);
+
+  useEffect(() => {
+    if (!lastGameCancelled || lastGameCancelled.gameId !== id || contextType !== 'GAME') return;
+    markThreadArchivedInMemory('GAME', id);
+    setIsGameChatArchived(true);
+    setArchivedGameMeta({
+      cancelledAt: lastGameCancelled.cancelledAt,
+      cancelledByUser: lastGameCancelled.cancelledByUser ?? null,
+      chatArchived: true,
+    });
+    setGame((prev) =>
+      prev
+        ? { ...prev, status: 'ARCHIVED' }
+        : prev
+    );
+    clearLastGameCancelled();
+  }, [lastGameCancelled, id, contextType, setIsGameChatArchived, setArchivedGameMeta, setGame, clearLastGameCancelled]);
+
   useLayoutEffect(() => {
     if (id === previousIdRef.current) return;
     const prevId = previousIdRef.current;
@@ -209,6 +238,8 @@ export function useThreadViewController({
     setPage(1);
     setHasMoreMessages(true);
     setIsLoadingContext(true);
+    setIsGameChatArchived(false);
+    setArchivedGameMeta(null);
     setIsBlockedByUser(false);
     setIsMuted(false);
     setReplyTo(null);
@@ -225,6 +256,8 @@ export function useThreadViewController({
     setGroupChannel,
     setGroupChannelParticipantsCount,
     setIsLoadingContext,
+    setIsGameChatArchived,
+    setArchivedGameMeta,
     setPage,
     setHasMoreMessages,
     setReplyTo,
@@ -250,6 +283,8 @@ export function useThreadViewController({
     effectiveChatType,
     currentChatType,
     isEmbedded,
+    isGameChatArchived,
+    archivedGameMeta,
     game,
     bug,
     userChat,

@@ -6,12 +6,16 @@ export async function purgeGameChatLocal(gameId: string): Promise<void> {
   await purgeLocalDexieThread('GAME', gameId);
 }
 
+export { archiveGameChatLocal } from './chatThreadLifecycle';
+
 export function isGameChatContextGoneHttpError(error: unknown): boolean {
+  const err = error as { response?: { status?: number } };
+  return err.response?.status === 404;
+}
+
+export function isGameChatArchivedHttpError(error: unknown): boolean {
   const err = error as {
     response?: { status?: number; data?: { cancelled?: boolean } };
   };
-  const status = err.response?.status;
-  if (status === 404) return true;
-  if (status === 410 && err.response?.data?.cancelled === true) return true;
-  return false;
+  return err.response?.status === 410 && err.response?.data?.cancelled === true;
 }

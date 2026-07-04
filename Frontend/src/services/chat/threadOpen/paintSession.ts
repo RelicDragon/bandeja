@@ -21,6 +21,10 @@ import { decideReconcilePinApply } from '@/services/chat/threadScrollPolicy';
 import { commitChatOpenMessages, traceChatOpenLength } from '@/services/chat/chatOpenTrace';
 import { consumeOpenThreadNetworkPrefetch } from '@/services/chat/openThreadNetworkPrefetch';
 import { reduceThreadLiveSnapshot } from '@/services/chat/threadLiveProjection';
+import {
+  isThreadArchivedInMemory,
+  parseContextFromTailKey,
+} from '@/services/chat/chatThreadLifecycle';
 
 /** Socket backlog + open reload guard after first paint commit. */
 export const THREAD_OPEN_SOCKET_GUARD_MS = 300;
@@ -108,7 +112,10 @@ export function msSinceThreadOpenPaintCommit(): number | null {
 
 /** Live tail socket events (messages, receipts, reactions) apply once open paint commits. */
 export function canFlushLiveSocketEvents(threadKey: string): boolean {
-  return isThreadOpenPaintCommitted(threadKey);
+  if (!isThreadOpenPaintCommitted(threadKey)) return false;
+  const ctx = parseContextFromTailKey(threadKey);
+  if (ctx && isThreadArchivedInMemory(ctx.contextType, ctx.contextId)) return false;
+  return true;
 }
 
 /**

@@ -18,11 +18,12 @@ export class GameDeleteService {
         sport: true,
         cityId: true,
         startTime: true,
+        parentId: true,
         mediaUrls: true,
         status: true,
         resultsStatus: true,
         participants: {
-          select: { userId: true, role: true },
+          select: { userId: true, role: true, status: true },
         },
       },
     });
@@ -57,14 +58,9 @@ export class GameDeleteService {
       }
     }
 
+    const archivedAt = new Date().toISOString();
+
     await prisma.$transaction(async (tx) => {
-      await ChatSyncEventService.appendEventInTransaction(
-        tx,
-        ChatContextType.GAME,
-        id,
-        ChatSyncEventType.THREAD_LOCAL_INVALIDATE,
-        {}
-      );
       await tx.cancelledGame.create({
         data: {
           id: game.id,
@@ -74,8 +70,29 @@ export class GameDeleteService {
           cancelledByUserId,
           cityId: game.cityId,
           startTime: game.startTime,
+          parentId: game.parentId,
+          participants: {
+            create: game.participants.map((p) => ({
+              userId: p.userId,
+              role: p.role,
+              status: p.status,
+            })),
+          },
         },
       });
+
+      await tx.chatDraft.deleteMany({
+        where: { chatContextType: ChatContextType.GAME, contextId: id },
+      });
+
+      await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        ChatContextType.GAME,
+        id,
+        ChatSyncEventType.THREAD_ARCHIVED,
+        { reason: 'game_cancelled', archivedAt }
+      );
+
       await tx.game.delete({ where: { id } });
     });
 
@@ -95,8 +112,9 @@ export class GameDeleteService {
       entityType: game.entityType,
       name: game.name ?? undefined,
       sport: cancelledSport,
-      cancelledAt: new Date().toISOString(),
+      cancelledAt: archivedAt,
       cancelledByUser,
+      chatArchived: true,
     };
     try {
       await notificationService.sendGameCancelledNotification(cancelledMeta, uniqueRecipientIds);
@@ -109,4 +127,3 @@ export class GameDeleteService {
     }
   }
 }
-

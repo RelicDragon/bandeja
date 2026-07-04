@@ -357,6 +357,12 @@ export class GameReadService {
           sport: true,
           cancelledAt: true,
           cancelledByUserId: true,
+          parentId: true,
+          participants: {
+            include: {
+              user: { select: USER_SELECT_WITH_SPORT_PROFILES },
+            },
+          },
         },
       });
       if (cancelled) {
@@ -368,6 +374,12 @@ export class GameReadService {
         const cancelledByUser = cancelledByUserRaw
           ? projectUserForSportContext(cancelledByUserRaw, cancelledSport)
           : undefined;
+        const participants = cancelled.participants.map((p) => ({
+          userId: p.userId,
+          role: p.role,
+          status: p.status,
+          user: projectUserForSportContext(p.user, cancelledSport),
+        }));
         throw new ApiError(410, 'Game cancelled by owner', true, {
           cancelled: true,
           entityType: cancelled.entityType,
@@ -375,6 +387,9 @@ export class GameReadService {
           sport: cancelledSport,
           cancelledAt: cancelled.cancelledAt.toISOString(),
           cancelledByUser,
+          chatArchived: true,
+          parentId: cancelled.parentId,
+          participants,
         });
       }
       throw new ApiError(404, 'Game not found');

@@ -2,6 +2,8 @@ import { ChatContextType } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { GameChatContextService } from '../game/gameChatContext.service';
+import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
+import { MessageService } from './message.service';
 
 /**
  * Batched read-access validation for chat sync endpoints.
@@ -31,9 +33,19 @@ export class ChatSyncAccessService {
     if (gameIds.size > 0) {
       tasks.push(
         (async () => {
-          const { missingIds } = await GameChatContextService.filterExistingGameIds([...gameIds]);
+          const { activeIds, cancelledIds, missingIds } =
+            await GameChatContextService.filterExistingGameIds([...gameIds]);
           if (missingIds.length > 0) {
             throw new ApiError(404, 'Game not found');
+          }
+          for (const cancelledId of cancelledIds) {
+            const access = await GameChatViewerAccessService.resolve(cancelledId, userId);
+            if (!access?.isParticipant) {
+              throw new ApiError(403, 'Access denied');
+            }
+          }
+          for (const activeId of activeIds) {
+            await MessageService.validateGameAccess(activeId, userId);
           }
         })()
       );

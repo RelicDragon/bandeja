@@ -38,10 +38,27 @@ export const ComposerShell: React.FC<ComposerShellProps> = ({ visible, variant }
   };
 
   const showInput = variant?.type === 'input';
+  const showArchived = variant?.type === 'archived';
   const showBlocked = variant?.type === 'blocked';
   const showRequest = variant?.type === 'request' && !!composer.userChat && !!(composer.id ?? composer.userChat.id);
   const showJoin = variant?.type === 'join';
-  const altVariantKey = showBlocked ? 'blocked' : showRequest ? 'request' : showJoin ? 'join' : null;
+  const altVariantKey = showArchived
+    ? 'archived'
+    : showBlocked
+      ? 'blocked'
+      : showRequest
+        ? 'request'
+        : showJoin
+          ? 'join'
+          : null;
+
+  const archivedPanel = (
+    <div className="px-4 py-3" style={padStyle}>
+      <div className="text-sm text-center text-gray-700 dark:text-gray-300 rounded-[20px] px-4 py-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-300 dark:border-amber-700">
+        {t('chat.archivedGameChatBanner')}
+      </div>
+    </div>
+  );
 
   const blockedPanel = (
     <div className="px-4 py-3" style={padStyle}>
@@ -106,6 +123,7 @@ export const ComposerShell: React.FC<ComposerShellProps> = ({ visible, variant }
           <MessageInput />
         </div>
         {showBlocked && blockedPanel}
+        {showArchived && archivedPanel}
         {showRequest && requestPanel}
         {showJoin && joinPanel}
       </footer>
@@ -134,6 +152,11 @@ export const ComposerShell: React.FC<ComposerShellProps> = ({ visible, variant }
       </motion.div>
 
       <AnimatePresence initial={false} mode="wait">
+        {altVariantKey === 'archived' && (
+          <motion.div key="archived" {...panelMotionProps}>
+            {archivedPanel}
+          </motion.div>
+        )}
         {altVariantKey === 'blocked' && (
           <motion.div key="blocked" {...panelMotionProps}>
             {blockedPanel}

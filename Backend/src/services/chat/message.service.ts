@@ -14,7 +14,7 @@ import {
   MessageType,
 } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { GameChatContextService } from '../game/gameChatContext.service';
+import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
 import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { resolveChatMessageSport } from '../user/userSportProfile.service';
 import { projectMessageEmbeddedUsers, projectMessagesEmbeddedUsers } from '../user/projectEmbeddedBasicUsers';
@@ -297,11 +297,11 @@ export class MessageService {
     requireWriteAccess: boolean = false
   ) {
     if (message.chatContextType === 'GAME') {
-      const { participant, game, isParticipant } = await this.validateGameAccess(message.contextId, userId);
-      if (!isParticipant) {
-        throw new ApiError(403, 'Access denied');
+      if (requireWriteAccess) {
+        await GameChatViewerAccessService.assertWritable(message.contextId, userId);
       }
-      await this.validateChatTypeAccess(participant, message.chatType, game, userId, message.contextId, false);
+      await GameChatViewerAccessService.assertReadable(message.contextId, userId, message.chatType);
+      return;
     } else if (message.chatContextType === 'BUG') {
       await this.validateBugAccess(message.contextId, userId, requireWriteAccess);
     } else if (message.chatContextType === 'USER') {
@@ -615,9 +615,12 @@ export class MessageService {
     let game, participant, bug, userChat, groupChannel;
 
     if (chatContextType === 'GAME') {
-      const result = await this.validateGameAccess(contextId, senderId);
-      game = result.game;
-      participant = result.participant;
+      const access = await GameChatViewerAccessService.assertWritable(contextId, senderId);
+      if (access.lifecycle !== 'active') {
+        throw new ApiError(403, 'This chat is archived', true, { code: 'chat.threadArchived' });
+      }
+      game = access.game;
+      participant = access.participant;
       await this.validateChatTypeAccess(participant, chatType, game, senderId, contextId, true);
     } else if (chatContextType === 'BUG') {
       const result = await this.validateBugAccess(contextId, senderId, true);
@@ -1208,8 +1211,11 @@ export class MessageService {
     const { page = 1, limit = 50, chatType = ChatType.PUBLIC, beforeMessageId } = options;
 
     if (chatContextType === 'GAME') {
-      const { participant, game } = await this.validateGameAccess(contextId, userId);
-      await this.validateChatTypeAccess(participant, chatType, game, userId, contextId, false);
+      await GameChatViewerAccessService.assertReadable(
+        contextId,
+        userId,
+        chatType ?? undefined
+      );
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {
@@ -1348,17 +1354,11 @@ export class MessageService {
     threadInvalidated?: boolean;
   }> {
     if (chatContextType === 'GAME') {
-      const gameStatus = await GameChatContextService.resolve(contextId);
-      if (gameStatus === 'cancelled') {
-        return { messages: [], threadInvalidated: true };
-      }
-      if (gameStatus === 'missing') {
-        throw new ApiError(404, 'Game not found');
-      }
-      const { participant, game } = await this.validateGameAccess(contextId, userId);
-      if (gameChatType != null) {
-        await this.validateChatTypeAccess(participant, gameChatType, game, userId, contextId, false);
-      }
+      await GameChatViewerAccessService.assertReadable(
+        contextId,
+        userId,
+        gameChatType ?? undefined
+      );
     } else if (chatContextType === 'BUG') {
       await this.validateBugAccess(contextId, userId);
     } else if (chatContextType === 'USER') {

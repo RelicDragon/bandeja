@@ -67,6 +67,12 @@ import { useHeaderStore } from '@/store/headerStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
 import { Game, Invite, Court, Club, GenderTeam } from '@/types';
 import { parseGameSport } from '@/utils/gameSport';
+import {
+  isCancelledGame410Payload,
+  isCancelledGameParticipant,
+  layoutInfoFrom410,
+  type CancelledGameParticipantSnapshot,
+} from '@/utils/cancelledGameChatStub';
 import { playersPerMatchOf } from '@/utils/matchFormat';
 import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
@@ -112,7 +118,14 @@ export interface GameDetailsShellProps {
   initialGame?: Game | null;
   selectedGameChatId?: string | null;
   onChatGameSelect?: (gameId: string) => void;
-  layoutCancelledInfo?: { entityType: string; name: string | null; sport?: import('@/types').Sport; cancelledAt: string; cancelledByUser?: import('@/types').BasicUser | null } | null;
+  layoutCancelledInfo?: {
+    entityType: string;
+    name: string | null;
+    sport?: import('@/types').Sport;
+    cancelledAt: string;
+    cancelledByUser?: import('@/types').BasicUser | null;
+    participants?: CancelledGameParticipantSnapshot[];
+  } | null;
 }
 
 export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onChatGameSelect, layoutCancelledInfo }: GameDetailsShellProps) => {
@@ -156,6 +169,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     sport?: import('@/types').Sport;
     cancelledAt: string;
     cancelledByUser?: import('@/types').BasicUser | null;
+    participants?: CancelledGameParticipantSnapshot[];
   } | null>(null);
   const [showLeaveConfirmation, setShowLeaveConfirmation] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -294,16 +308,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         setGame(response.data);
       } catch (error: unknown) {
         if (cancelled) return;
-        const err = error as { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; sport?: import('@/types').Sport; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } };
-        if (err.response?.status === 410 && err.response?.data?.cancelled) {
-          const d = err.response.data;
-          setCancelledGameInfo({
-            entityType: d.entityType ?? 'GAME',
-            name: d.name ?? null,
-            sport: d.sport,
-            cancelledAt: d.cancelledAt ?? new Date().toISOString(),
-            cancelledByUser: d.cancelledByUser ?? null,
-          });
+        const err = error as { response?: { status?: number; data?: unknown } };
+        if (err.response?.status === 410 && isCancelledGame410Payload(err.response.data)) {
+          setCancelledGameInfo(layoutInfoFrom410(err.response.data));
         } else {
           console.error('Failed to fetch game:', error);
         }
@@ -470,12 +477,19 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
   useEffect(() => {
     if (!lastGameCancelled || lastGameCancelled.gameId !== id) return;
+    const snapshotParticipants = gameRef.current?.participants?.map((p) => ({
+      userId: p.userId,
+      role: p.role,
+      status: p.status,
+      user: p.user,
+    }));
     setCancelledGameInfo({
       entityType: lastGameCancelled.entityType,
       name: lastGameCancelled.name ?? null,
       sport: lastGameCancelled.sport,
       cancelledAt: lastGameCancelled.cancelledAt,
       cancelledByUser: lastGameCancelled.cancelledByUser ?? null,
+      participants: snapshotParticipants,
     });
     setGame(null);
     clearLastGameCancelled();
@@ -993,16 +1007,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
         }
       }
     } catch (error: unknown) {
-      const err = error as { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; sport?: import('@/types').Sport; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } };
-      if (err.response?.status === 410 && err.response?.data?.cancelled) {
-        const d = err.response.data;
-        setCancelledGameInfo({
-          entityType: d.entityType ?? 'GAME',
-          name: d.name ?? null,
-          sport: d.sport,
-          cancelledAt: d.cancelledAt ?? new Date().toISOString(),
-          cancelledByUser: d.cancelledByUser ?? null,
-        });
+      const err = error as { response?: { status?: number; data?: unknown } };
+      if (err.response?.status === 410 && isCancelledGame410Payload(err.response.data)) {
+        setCancelledGameInfo(layoutInfoFrom410(err.response.data));
         setGame(null);
       } else {
         console.error('Failed to refresh game:', error);
@@ -1328,6 +1335,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               cancelledAt={cancelledGameInfo.cancelledAt}
               cancelledByUser={cancelledGameInfo.cancelledByUser ?? undefined}
               levelSport={cancelledGameInfo.sport ? parseGameSport(cancelledGameInfo.sport) : undefined}
+              gameId={id}
+              canViewChat={isCancelledGameParticipant(cancelledGameInfo.participants, user?.id)}
             />
           </AnimatedPresencePanel>
           {declineInviteModal}

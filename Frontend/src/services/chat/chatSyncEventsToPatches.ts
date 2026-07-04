@@ -126,6 +126,7 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
         break;
       }
       case ChatSyncEventType.THREAD_LOCAL_INVALIDATE:
+      case ChatSyncEventType.THREAD_ARCHIVED:
         break;
       default:
         out.push({ op: 'devUnhandled', eventType: ev.eventType, seq: ev.seq });

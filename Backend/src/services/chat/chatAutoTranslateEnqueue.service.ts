@@ -2,6 +2,7 @@ import { MessageType } from '@prisma/client';
 import prisma from '../../config/database';
 import { MESSAGE_TRANSCRIPTION_PENDING } from '@bandeja/chat-contract';
 import { ChatAutoTranslateService } from './chatAutoTranslate.service';
+import { GameChatContextService } from '../game/gameChatContext.service';
 import { sourceAppearsToBeTargetLanguage } from './translationFrancCheck';
 import { TranslationQueueService } from './translationQueue.service';
 
@@ -46,6 +47,13 @@ export class ChatAutoTranslateEnqueueService {
       },
     });
     if (!message?.senderId) return;
+
+    if (
+      message.chatContextType === 'GAME' &&
+      (await GameChatContextService.resolve(message.contextId)) === 'cancelled'
+    ) {
+      return;
+    }
 
     const sourceText = await this.resolveTranslatableText(messageId);
     if (!sourceText) return;

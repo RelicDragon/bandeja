@@ -53,6 +53,7 @@ vi.mock('../chatLocalApplyPull', () => ({
     eventsApplied: 1,
     repairedStaleCursor: false,
     threadInvalidated: false,
+    threadArchived: false,
   })),
 }));
 
@@ -167,6 +168,7 @@ describe('applyThreadEvent', () => {
       eventsApplied: 0,
       repairedStaleCursor: false,
       threadInvalidated: false,
+      threadArchived: false,
     });
     const rev0 = getThreadSnapshotRevision('USER', 'u1');
     const rev = await applyThreadEvent({ kind: 'syncPull', contextType: 'USER', contextId: 'u1' });

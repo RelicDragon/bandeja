@@ -33,6 +33,7 @@ export interface UseThreadDerivedParams {
   currentChatType: ChatType;
   messages: ChatMessageWithStatus[];
   channelActivity?: GameChatChannelActivity;
+  isGameChatArchived?: boolean;
 }
 
 export function useThreadDerived({
@@ -43,6 +44,7 @@ export function useThreadDerived({
   currentChatType,
   messages,
   channelActivity,
+  isGameChatArchived = false,
 }: UseThreadDerivedParams) {
   const { t } = useTranslation();
   const participation = useMemo(
@@ -125,11 +127,12 @@ export function useThreadDerived({
   }, [contextType, game, user?.id, currentChatType, isParticipant, isAdminOrOwner, isParentParticipant, hasPrivateAccess, hasAdminsAccess]);
 
   const canWriteChat = useMemo(() => {
+    if (isGameChatArchived) return false;
     if (contextType === 'GAME') return canWriteGameChat;
     if (contextType === 'GROUP') return canWriteGroupChat;
     if (contextType === 'USER') return true;
     return false;
-  }, [contextType, canWriteGameChat, canWriteGroupChat]);
+  }, [isGameChatArchived, contextType, canWriteGameChat, canWriteGroupChat]);
 
   const lastOwnMessageIdentity = getLastOwnMessageIdentity(messages, user?.id);
 
@@ -187,6 +190,7 @@ export function useThreadDerived({
       canViewPublicChat,
       lastOwnMessage,
       availableChatTypes,
+      isGameChatArchived,
     }),
     [
       participation,
@@ -219,6 +223,7 @@ export function useThreadDerived({
       canViewPublicChat,
       lastOwnMessage,
       availableChatTypes,
+      isGameChatArchived,
     ],
   );
 }

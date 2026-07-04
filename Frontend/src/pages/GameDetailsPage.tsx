@@ -8,6 +8,11 @@ import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { gamesApi } from '@/api';
 import { canShowTournamentTableView } from '@/utils/gameResults';
+import {
+  isCancelledGame410Payload,
+  layoutInfoFrom410,
+  type CancelledGameParticipantSnapshot,
+} from '@/utils/cancelledGameChatStub';
 import type { Game } from '@/types';
 import { GameDetailsContent } from './GameDetails';
 import { LeagueDetailsContent } from './LeagueDetails';
@@ -45,6 +50,7 @@ export const GameDetailsPage = () => {
     sport?: import('@/types').Sport;
     cancelledAt: string;
     cancelledByUser?: import('@/types').BasicUser | null;
+    participants?: CancelledGameParticipantSnapshot[];
   } | null>(null);
   const [entityRoute, setEntityRoute] = useState<EntityRouteState>({ status: 'loading' });
   const layoutLeagueFixtureTable =
@@ -69,7 +75,7 @@ export const GameDetailsPage = () => {
     (isDesktop || isLandscape) &&
     entityRoute.status !== 'loading' &&
     bootstrapMatchesRoute &&
-    (useTableViewLayout || !!layoutCancelledInfo);
+    useTableViewLayout;
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
@@ -111,17 +117,10 @@ export const GameDetailsPage = () => {
         const variant = et === 'LEAGUE' || et === 'LEAGUE_SEASON' ? 'league' : 'game';
         setEntityRoute({ status: 'ready', variant, initialGame: data });
       })
-      .catch((err: { response?: { status?: number; data?: { cancelled?: boolean; entityType?: string; name?: string | null; sport?: import('@/types').Sport; cancelledAt?: string; cancelledByUser?: import('@/types').BasicUser } } }) => {
+      .catch((err: { response?: { status?: number; data?: unknown } }) => {
         if (cancelled) return;
-        if (err.response?.status === 410 && err.response?.data?.cancelled) {
-          const d = err.response.data;
-          setLayoutCancelledInfo({
-            entityType: d?.entityType ?? 'GAME',
-            name: d?.name ?? null,
-            sport: d?.sport,
-            cancelledAt: d?.cancelledAt ?? new Date().toISOString(),
-            cancelledByUser: d?.cancelledByUser ?? null,
-          });
+        if (err.response?.status === 410 && isCancelledGame410Payload(err.response.data)) {
+          setLayoutCancelledInfo(layoutInfoFrom410(err.response.data));
           setLayoutTableAvailable(false);
           setEntityRoute({ status: 'cancelled' });
         } else {
@@ -195,20 +194,14 @@ export const GameDetailsPage = () => {
       </SplitViewLeftPanel>
     );
 
-    if (useTableViewLayout || layoutCancelledInfo) {
+    if (useTableViewLayout) {
       return (
         <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
           <div className="relative flex h-full min-h-0 flex-col">
-            <div
-              ref={scrollContainerRef}
-              className={`min-h-0 flex-1 overflow-x-hidden ${layoutCancelledInfo ? 'overflow-hidden' : 'overflow-y-auto'}`}
-            >
+            <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
               {renderEntityDetails()}
             </div>
-            <ScrollEdgeHints
-              scrollRef={scrollContainerRef}
-              enabled={showScrollMoreHint && !layoutCancelledInfo}
-            />
+            <ScrollEdgeHints scrollRef={scrollContainerRef} enabled={showScrollMoreHint} />
           </div>
         </div>
       );

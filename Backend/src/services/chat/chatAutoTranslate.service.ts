@@ -10,6 +10,8 @@ import { chatAutoTranslateTypeKey } from '../../utils/chatAutoTranslateKey';
 import { TRANSLATE_TO_LANGUAGE_CODES } from './translation.service';
 import { GroupChannelService } from './groupChannel.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
+import { GameChatContextService } from '../game/gameChatContext.service';
+import { GameChatViewerAccessService } from './gameChatViewerAccess.service';
 
 export type AutoTranslateConfigResponse = {
   languageCodes: string[];
@@ -37,6 +39,10 @@ export class ChatAutoTranslateService {
       return bugParticipants + 1;
     }
     if (chatContextType === 'GAME') {
+      const lifecycle = await GameChatContextService.resolve(contextId);
+      if (lifecycle === 'cancelled') {
+        return prisma.cancelledGameParticipant.count({ where: { gameId: contextId } });
+      }
       return prisma.gameParticipant.count({ where: { gameId: contextId } });
     }
     return 0;
@@ -73,6 +79,24 @@ export class ChatAutoTranslateService {
       return GroupChannelService.isGroupChannelAdminOrOwner(contextId, userId);
     }
     if (chatContextType === 'GAME') {
+      const lifecycle = await GameChatContextService.resolve(contextId);
+      if (lifecycle === 'cancelled') {
+        const direct = await prisma.cancelledGameParticipant.findFirst({
+          where: {
+            gameId: contextId,
+            userId,
+            role: { in: [ParticipantRole.OWNER, ParticipantRole.ADMIN] },
+          },
+        });
+        if (direct) return true;
+        const stub = await prisma.cancelledGame.findUnique({
+          where: { id: contextId },
+        });
+        if (stub?.parentId) {
+          return GameChatViewerAccessService.hasArchivedParentAdminAccess(stub, userId);
+        }
+        return false;
+      }
       const direct = await prisma.gameParticipant.findFirst({
         where: {
           gameId: contextId,
@@ -152,6 +176,9 @@ export class ChatAutoTranslateService {
     languageCodes: string[],
     chatType?: ChatType | null
   ): Promise<AutoTranslateConfigResponse> {
+    if (chatContextType === 'GAME') {
+      await GameChatViewerAccessService.assertWritable(contextId, userId);
+    }
     const canEdit = await this.canEdit(userId, chatContextType, contextId);
     if (!canEdit) {
       throw new ApiError(403, 'Only chat admins can edit auto-translate languages');

@@ -13,6 +13,7 @@ import { useGameChatActions } from './useGameChatActions';
 import { useGameChatMutationRetry } from './useGameChatMutationRetry';
 import type { useThreadDerived } from '@/services/chat/chatThreadController/useThreadDerived';
 import type { LoadContextOptions } from './useGameChatContext';
+import type { ArchivedGameChatMeta } from '@/utils/cancelledGameChatStub';
 
 export interface UseThreadViewChromeParams {
   id: string | undefined;
@@ -30,6 +31,8 @@ export interface UseThreadViewChromeParams {
   setGame: (game: Game | null | ((prev: Game | null) => Game | null)) => void;
   setGroupChannel: (ch: GroupChannel | null | ((prev: GroupChannel | null) => GroupChannel | null)) => void;
   derived: ReturnType<typeof useThreadDerived>;
+  isGameChatArchived?: boolean;
+  archivedGameMeta?: ArchivedGameChatMeta | null;
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   setPage: (n: number) => void;
@@ -75,6 +78,8 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     setGame,
     setGroupChannel,
     derived,
+    isGameChatArchived = false,
+    archivedGameMeta = null,
     setMessages,
     messagesRef,
     setPage,
@@ -127,6 +132,8 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     displaySettings,
     onOpenItemPage: panels.onOpenItemPage,
     onOpenParticipantsPage: panels.onOpenParticipantsPage,
+    isGameChatArchived,
+    archivedGameMeta,
   });
 
   const { failedMutationCount, retryMutations } = useGameChatMutationRetry(contextType, id);

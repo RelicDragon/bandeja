@@ -210,7 +210,8 @@ async function applyThreadEventUnqueued(event: ThreadApplyEvent): Promise<number
       if (
         pullResult.eventsApplied > 0 ||
         pullResult.repairedStaleCursor ||
-        pullResult.threadInvalidated
+        pullResult.threadInvalidated ||
+        pullResult.threadArchived
       ) {
         return finishApply(event.contextType, event.contextId);
       }

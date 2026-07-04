@@ -262,6 +262,7 @@
     "guest": "Guest",
     "noParticipants": "No participants found",
     "joinChatToSend": "Join Chat",
+    "archivedGameChatBanner": "This game was cancelled. Chat is read-only.",
     "joinChannel": "Subscribe to Channel",
     "joinGroup": "Join Group",
     "leave": "Leave chat",

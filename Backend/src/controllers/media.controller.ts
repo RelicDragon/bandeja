@@ -14,6 +14,7 @@ import prisma from '../config/database';
 import { hasParentGamePermission } from '../utils/parentGamePermissions';
 import { ParticipantRole, Prisma } from '@prisma/client';
 import { MessageService } from '../services/chat/message.service';
+import { GameChatViewerAccessService } from '../services/chat/gameChatViewerAccess.service';
 import { GroupChannelService } from '../services/chat/groupChannel.service';
 import { UserTeamService } from '../services/userTeam.service';
 import { parseClubPhotosJson } from '../utils/clubPhotosJson';
@@ -453,7 +454,7 @@ export const uploadChatAudio = asyncHandler(async (req: AuthRequest, res: Respon
   }
 
   if (gameId) {
-    await MessageService.validateGameAccess(gameId, senderId);
+    await GameChatViewerAccessService.assertWritable(gameId, senderId);
   } else if (bugId) {
     await MessageService.validateBugAccess(bugId, senderId, true);
   } else if (userChatId) {
@@ -493,7 +494,7 @@ export const uploadChatVideo = asyncHandler(async (req: AuthRequest, res: Respon
   }
 
   if (gameId) {
-    await MessageService.validateGameAccess(gameId, senderId);
+    await GameChatViewerAccessService.assertWritable(gameId, senderId);
   } else if (bugId) {
     await MessageService.validateBugAccess(bugId, senderId, true);
   } else if (userChatId) {
@@ -542,7 +543,7 @@ export const uploadChatImage = asyncHandler(async (req: AuthRequest, res: Respon
 
   // Validate access based on context type
   if (gameId) {
-    await MessageService.validateGameAccess(gameId, senderId);
+    await GameChatViewerAccessService.assertWritable(gameId, senderId);
   } else if (bugId) {
     await MessageService.validateBugAccess(bugId, senderId, true);
   } else if (userChatId) {

@@ -9,6 +9,7 @@ import { useThreadOptimistic } from './useThreadOptimistic';
 import { useThreadOpenEffects } from './useThreadOpenEffects';
 import { useThreadSocket } from './useThreadSocket';
 import { useThreadDomain } from './useThreadDomain';
+import { isThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
 
 export type UseChatThreadControllerParams = UseThreadMessagesParams & {
   user: { id: string; language?: string | null; isAdmin?: boolean | null } | null;
@@ -29,6 +30,7 @@ export type UseChatThreadControllerParams = UseThreadMessagesParams & {
   setIsLoadingContext: (v: boolean) => void;
   isBlockedByUser: boolean;
   isJoiningAsGuest: boolean;
+  isGameChatArchived?: boolean;
 };
 
 export function useChatThreadController(params: UseChatThreadControllerParams) {
@@ -49,6 +51,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     setIsLoadingContext,
     isBlockedByUser,
     isJoiningAsGuest,
+    isGameChatArchived = false,
     id,
     contextType,
     effectiveChatType,
@@ -121,6 +124,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     endScrollTargetSession: session.endScrollTargetSession,
     isBlockedByUser,
     isJoiningAsGuest,
+    isGameChatArchived,
   });
 
   const reloadMessagesFirstPage = useCallback(async () => {
@@ -158,6 +162,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     setIsLoadingMessages: session.setIsLoadingMessages,
     setIsLoadingContext,
     controllerRef,
+    isGameChatArchived,
   });
 
   useThreadSocket({
@@ -222,6 +227,8 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
   useEffect(() => () => { controllerRef.current.close(); }, []);
 
   const markRead = useCallback(() => {
+    if (isGameChatArchived) return;
+    if (contextType === 'GAME' && id && isThreadArchivedInMemory('GAME', id)) return;
     controllerRef.current.markRead({
       id,
       contextType,
@@ -230,7 +237,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
       gameChatType: effectiveChatType,
       groupChannelId,
     });
-  }, [id, contextType, game, user?.id, effectiveChatType, groupChannelId]);
+  }, [id, contextType, game, user?.id, effectiveChatType, groupChannelId, isGameChatArchived]);
 
   return {
     controller: controllerRef.current,

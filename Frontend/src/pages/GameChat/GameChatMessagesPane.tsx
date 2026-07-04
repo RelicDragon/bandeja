@@ -88,17 +88,18 @@ export const GameChatMessagesPane: React.FC = () => {
     panels.isItemPageAnimating;
 
   const tabMotionKey = threadScrollKey ?? 'thread-none';
+  const canMutateMessages = derived.canWriteChat;
   const messageList = (
     <MessageList
       ref={messageListRef}
       messages={messages}
       onChatScrollNearBottomChange={setChatNearBottom}
-      onAddReaction={handleAddReaction}
-      onRemoveReaction={handleRemoveReaction}
-      onDeleteMessage={handleDeleteMessage}
-      onReplyMessage={handleReplyMessage}
-      onEditMessage={handleEditMessage}
-      onPollUpdated={handlePollUpdated}
+      onAddReaction={canMutateMessages ? handleAddReaction : undefined}
+      onRemoveReaction={canMutateMessages ? handleRemoveReaction : undefined}
+      onDeleteMessage={canMutateMessages ? handleDeleteMessage : undefined}
+      onReplyMessage={canMutateMessages ? handleReplyMessage : undefined}
+      onEditMessage={canMutateMessages ? handleEditMessage : undefined}
+      onPollUpdated={canMutateMessages ? handlePollUpdated : undefined}
       onResendQueued={handleResendQueued}
       onRemoveFromQueue={handleRemoveFromQueue}
       isLoading={isLoadingMore}

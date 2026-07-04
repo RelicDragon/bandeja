@@ -14,10 +14,17 @@ import {
   isTrustedUserChatOpenContext,
 } from '@/services/chat/chatOpenContextValidation';
 import { mergeGroupChannelFromApi } from '@/utils/groupChannelParticipation';
+import {
+  archivedMetaFrom410,
+  buildArchivedGameStub,
+  isCancelledGame410Payload,
+  type ArchivedGameChatMeta,
+} from '@/utils/cancelledGameChatStub';
+import { hydrateThreadArchivedMemory, markThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
 
 function shouldBounceFromHttpError(error: unknown): boolean {
   const s = (error as { response?: { status?: number } })?.response?.status;
-  return s === 404 || s === 403 || s === 410;
+  return s === 404 || s === 403;
 }
 
 export type LoadContextOptions = {
@@ -68,6 +75,8 @@ export function useGameChatContext({
     return g?.participantsCount || 0;
   });
   const [isLoadingContext, setIsLoadingContext] = useState(!isEmbedded);
+  const [isGameChatArchived, setIsGameChatArchived] = useState(false);
+  const [archivedGameMeta, setArchivedGameMeta] = useState<ArchivedGameChatMeta | null>(null);
 
   const userChatRef = useRef(userChat);
   const groupChannelRef = useRef(groupChannel);
@@ -85,6 +94,8 @@ export function useGameChatContext({
       if (contextType === 'GAME') {
         const response = await gamesApi.getById(id);
         if (currentIdRef.current !== requestId) return null;
+        setIsGameChatArchived(false);
+        setArchivedGameMeta(null);
         setGame(response.data);
         return response.data;
       }
@@ -146,9 +157,17 @@ export function useGameChatContext({
       }
       return null;
     } catch (error: unknown) {
-      const err = error as { response?: { status?: number; data?: { cancelled?: boolean } } };
-      if (contextType === 'GAME' && err.response?.status === 410 && err.response?.data?.cancelled) {
-        setGame(null);
+      const err = error as { response?: { status?: number; data?: unknown } };
+      if (contextType === 'GAME' && err.response?.status === 410 && isCancelledGame410Payload(err.response.data)) {
+        const payload = err.response.data;
+        const stub = buildArchivedGameStub(requestId, payload);
+        if (currentIdRef.current !== requestId) return null;
+        setGame(stub);
+        setIsGameChatArchived(true);
+        setArchivedGameMeta(archivedMetaFrom410(payload));
+        markThreadArchivedInMemory('GAME', requestId);
+        await hydrateThreadArchivedMemory('GAME', requestId);
+        return stub;
       }
       console.error('Failed to load context:', error);
       if (currentIdRef.current === requestId && !isEmbedded && shouldBounceFromHttpError(error)) {
@@ -164,7 +183,7 @@ export function useGameChatContext({
         } else if (contextType === 'USER') {
           setChatsFilter('users');
           navigate('/chats', { replace: true });
-        } else {
+        } else if (contextType === 'GAME') {
           navigate('/', { replace: true });
         }
         return null;
@@ -185,6 +204,13 @@ export function useGameChatContext({
           return mergedStub;
         }
       }
+      if (currentIdRef.current === requestId && contextType === 'GAME') {
+        const archivedLocally = await hydrateThreadArchivedMemory('GAME', requestId);
+        if (archivedLocally) {
+          setIsGameChatArchived(true);
+          markThreadArchivedInMemory('GAME', requestId);
+        }
+      }
       return null;
     } finally {
       if (currentIdRef.current === requestId) setIsLoadingContext(false);
@@ -200,6 +226,17 @@ export function useGameChatContext({
     initialGroupChannel,
     currentUserId,
   ]);
+
+  useEffect(() => {
+    if (!id || contextType !== 'GAME') return;
+    let cancelled = false;
+    void hydrateThreadArchivedMemory('GAME', id).then((archived) => {
+      if (!cancelled && archived) setIsGameChatArchived(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, contextType]);
 
   useEffect(() => {
     if (!initialUserChat || initialUserChat.id !== id || !isTrustedUserChatOpenContext(initialUserChat, id, currentUserId)) {
@@ -240,5 +277,9 @@ export function useGameChatContext({
     isLoadingContext,
     setIsLoadingContext,
     loadContext,
+    isGameChatArchived,
+    setIsGameChatArchived,
+    archivedGameMeta,
+    setArchivedGameMeta,
   };
 }

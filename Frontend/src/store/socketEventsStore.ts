@@ -639,9 +639,12 @@ export const useSocketEventsStore = create<SocketEventsState>((set, get) => {
 
       const handleGameCancelled = (data: GameCancelledData) => {
         set({ lastGameCancelled: data });
-        void import('@/services/chat/purgeGameChatLocal').then(({ purgeGameChatLocal }) =>
-          purgeGameChatLocal(data.gameId).catch(() => {})
-        );
+        void import('@/services/chat/chatThreadLifecycle').then(({ archiveGameChatLocal }) => {
+          const parsed = Date.parse(data.cancelledAt);
+          return archiveGameChatLocal(data.gameId, {
+            ...(Number.isNaN(parsed) ? {} : { archivedAt: parsed }),
+          });
+        }).catch(() => {});
       };
 
       const handlePollVote = (data: PollVoteData) => {
