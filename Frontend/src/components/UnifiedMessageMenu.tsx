@@ -47,12 +47,12 @@ interface UnifiedMessageMenuProps {
   message: ChatMessage;
   isOwnMessage: boolean;
   currentReaction?: string;
-  onReply: (message: ChatMessage) => void;
+  onReply?: (message: ChatMessage) => void;
   onEdit?: (message: ChatMessage) => void;
   onCopy: (message: ChatMessage) => void;
-  onDelete: (messageId: string) => void;
-  onReactionSelect: (messageId: string, emoji: string) => void;
-  onReactionRemove: (messageId: string) => void;
+  onDelete?: (messageId: string) => void;
+  onReactionSelect?: (messageId: string, emoji: string) => void;
+  onReactionRemove?: (messageId: string) => void;
   onClose: () => void;
   messageElementRef: React.RefObject<HTMLDivElement | null>;
   onDeleteStart?: (messageId: string) => void;
@@ -108,6 +108,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const [visible, setVisible] = useState(true);
   const reduceMotion = usePrefersReducedMotion();
   const instantTransition = reduceMotion ? { duration: 0 } : undefined;
+  const canReact = !!onReactionSelect && !!onReactionRemove;
 
   const closeMenu = useCallback(() => {
     setShowDetails(false);
@@ -217,6 +218,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   }, [showDetails, detailsAudienceRows, message.reactions, detailsUsersLoading]);
 
   const handleReply = () => {
+    if (!onReply) return;
     onReply(message);
     closeMenu();
   };
@@ -285,6 +287,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   };
 
   const handleDelete = () => {
+    if (!onDelete) return;
     // Trigger deletion animation
     if (onDeleteStart) {
       onDeleteStart(message.id);
@@ -300,6 +303,10 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   };
 
   const handleReactionClick = (emoji: string, source: ReactionEmojiPickSource) => {
+    if (!onReactionSelect || !onReactionRemove) {
+      closeMenu();
+      return;
+    }
     if (currentReaction === emoji) {
       if (source === 'catalog') {
         closeMenu();
@@ -510,17 +517,19 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                   exit="hidden"
                   transition={instantTransition}
                 >
-                  <motion.div
-                    className="px-3 py-2 border-b border-gray-200 dark:border-gray-600"
-                    variants={CHAT_MESSAGE_MENU_SECTION}
-                    transition={instantTransition}
-                  >
-                    <EmojiQuickStrip
-                      frequentEmojis={frequentMenuEmojis}
-                      currentEmoji={currentReaction}
-                      onPick={(emoji, source) => handleReactionClick(emoji, source)}
-                    />
-                  </motion.div>
+                  {canReact && (
+                    <motion.div
+                      className="px-3 py-2 border-b border-gray-200 dark:border-gray-600"
+                      variants={CHAT_MESSAGE_MENU_SECTION}
+                      transition={instantTransition}
+                    >
+                      <EmojiQuickStrip
+                        frequentEmojis={frequentMenuEmojis}
+                        currentEmoji={currentReaction}
+                        onPick={(emoji, source) => handleReactionClick(emoji, source)}
+                      />
+                    </motion.div>
+                  )}
 
                   <motion.div className="py-1" variants={CHAT_MESSAGE_MENU_SECTION} transition={instantTransition}>
              <button
@@ -538,7 +547,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                </svg>
              </button>
             
-            {showReply && (
+            {showReply && onReply && (
               <button
                 onClick={handleReply}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
@@ -634,7 +643,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </button>
             )}
             
-            {isOwnMessage && !isSystemMessage && (
+            {isOwnMessage && onDelete && !isSystemMessage && (
               <button
                 onClick={handleDelete}
                 className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center space-x-3"

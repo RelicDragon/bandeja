@@ -16,7 +16,10 @@ import type { ThreadOpenOutboxContext } from '@/services/chat/threadOpen';
 import type { ChatType } from '@/types';
 import type { Game } from '@/types';
 import type { ChatThreadController } from './ChatThreadController';
-import { isThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
+import {
+  dropArchivedGameOutbox,
+  isThreadArchivedInMemory,
+} from '@/services/chat/chatThreadLifecycle';
 
 export interface UseThreadOpenEffectsParams {
   id: string | undefined;
@@ -153,6 +156,9 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
 
         const contextArchived =
           contextType === 'GAME' && !!id && isThreadArchivedInMemory('GAME', id);
+        if (contextArchived && contextType === 'GAME') {
+          await dropArchivedGameOutbox(id);
+        }
 
         const loadedGame =
           contextType === 'GAME' ? ((loadedContext as Game | null) ?? gameRef.current) : null;

@@ -17,6 +17,7 @@ import type { ChatContextType, UserChat, GroupChannel } from '@/api/chat';
 import type { Game, Bug } from '@/types';
 import type { ArchivedGameChatMeta } from '@/utils/cancelledGameChatStub';
 import { useGroupChannelOnlineCount } from './useGroupChannelOnlineCount';
+import { buildArchivedGameChatSubtitle } from './archivedGameChatSubtitle';
 
 export interface UseGameChatDisplayParams {
   contextType: ChatContextType;
@@ -90,8 +91,13 @@ export function useGameChatDisplay({
       const when = archivedGameMeta?.cancelledAt
         ? formatDate(archivedGameMeta.cancelledAt, 'PPp')
         : null;
-      const base = t('chat.archivedGameChatBanner');
-      return when ? `${base} · ${when}` : base;
+      return buildArchivedGameChatSubtitle({
+        archivedFallbackLabel: t('chat.archivedGameChatBanner'),
+        cancelledLabel: t('gameDetails.gameCancelledTitle'),
+        cancelledByLabel: t('gameDetails.cancelledBy'),
+        formattedCancelledAt: when,
+        cancelledByUser: archivedGameMeta?.cancelledByUser ?? null,
+      });
     }
     if (contextType === 'GAME' && game) {
       if (game.timeIsSet === false) return t('gameDetails.datetimeNotSet');

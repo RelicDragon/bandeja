@@ -10,7 +10,7 @@ import {
 } from './chatOutboxMediaBlobs';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { cancelSend } from '@/services/chatSendService';
-import { CHAT_OUTBOX_REMOVED_EVENT, dispatchChatOutboxSuccess } from './chatOutboxEvents';
+import { dispatchChatOutboxRemoved, dispatchChatOutboxSuccess } from './chatOutboxEvents';
 import { logChatOutboxBlobMismatch } from './chatDiagnostics';
 
 export async function outboxRowHasLocalMediaBlobs(row: ChatOutboxRow): Promise<boolean> {
@@ -105,15 +105,11 @@ export async function reconcileUnsendableOutboxRow(row: ChatOutboxRow): Promise<
 
   cancelSend(row.tempId);
   await messageQueueStorage.remove(row.tempId, row.contextType, row.contextId);
-  window.dispatchEvent(
-    new CustomEvent(CHAT_OUTBOX_REMOVED_EVENT, {
-      detail: {
-        contextType: row.contextType,
-        contextId: row.contextId,
-        tempIds: [row.tempId],
-      },
-    })
-  );
+  dispatchChatOutboxRemoved({
+    contextType: row.contextType,
+    contextId: row.contextId,
+    tempIds: [row.tempId],
+  });
   return 'removed';
 }
 

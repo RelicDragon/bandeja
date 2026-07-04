@@ -92,6 +92,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const isSendingSlow = useOptimisticSendSlowHint(isSending, currentMessage.createdAt);
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === currentMessage.id;
   const storyReply = parseStoryReplyInfo(currentMessage.storyReply);
+  const canReact = !!onAddReaction && !!onRemoveReaction && !isOffline;
 
   const displaySettings = user ? resolveDisplaySettings(user) : null;
   const formatMessageTime = useCallback(
@@ -281,6 +282,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   };
 
   const handleQuickReaction = (e: React.MouseEvent) => {
+    if (!onAddReaction || !onRemoveReaction) return;
     e.preventDefault();
     e.stopPropagation();
     const currentReaction = getCurrentUserReaction();
@@ -375,7 +377,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                 isThreadSearchOutline={isThreadSearchOutline}
                 threadSearchHighlightQuery={threadSearchHighlightQuery}
                 cornerSlot={
-                  !isOffline && !hasSystemReactions ? (
+                  canReact && !hasSystemReactions ? (
                     <SystemMessageReactionMotion
                       messageId={currentMessage.id}
                       className="absolute bottom-0.5 right-0.5 z-10"
@@ -386,7 +388,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                   ) : null
                 }
               />
-              {!isOffline && hasSystemReactions && (
+              {canReact && hasSystemReactions && (
                 <SystemMessageReactionMotion
                   messageId={currentMessage.id}
                   className="mt-0.5 flex justify-center"
@@ -525,7 +527,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                       </div>
                     )}
 
-                    {!isOffline && (
+                    {canReact && (
                       <div
                         className={`pointer-events-none absolute top-1/2 z-10 flex -translate-y-1/2 items-center ${
                           isOwnMessage && !isChannel ? 'right-full flex-row-reverse pr-2' : 'left-full flex-row pl-2'

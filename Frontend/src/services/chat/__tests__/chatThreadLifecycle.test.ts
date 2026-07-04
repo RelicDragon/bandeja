@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CHAT_OUTBOX_REMOVED_EVENT, type ChatOutboxRemovedDetail } from '../chatOutboxEvents';
 
 const purgeLocalDexieThreadMock = vi.fn();
 const leaveChatRoomMock = vi.fn();
@@ -65,8 +66,25 @@ import {
 } from '../chatThreadLifecycle';
 
 describe('chatThreadLifecycle', () => {
+  const listeners = new Map<string, Set<EventListener>>();
+
   beforeEach(() => {
     vi.clearAllMocks();
+    listeners.clear();
+    vi.stubGlobal('window', {
+      dispatchEvent: (ev: Event) => {
+        const set = listeners.get(ev.type);
+        set?.forEach((fn) => fn(ev));
+        return true;
+      },
+      addEventListener: (type: string, fn: EventListener) => {
+        if (!listeners.has(type)) listeners.set(type, new Set());
+        listeners.get(type)!.add(fn);
+      },
+      removeEventListener: (type: string, fn: EventListener) => {
+        listeners.get(type)?.delete(fn);
+      },
+    });
     clearThreadArchivedInMemory('GAME', 'g1');
     clearThreadArchivedInMemory('GAME', 'g2');
     clearThreadArchivedInMemory('GAME', 'g3');
@@ -86,6 +104,8 @@ describe('chatThreadLifecycle', () => {
   });
 
   it('archived sets metadata, advances cursor, leaves room, drops outbox, does not purge', async () => {
+    const removedHandler = vi.fn();
+    window.addEventListener(CHAT_OUTBOX_REMOVED_EVENT, removedHandler);
     getByContextMock.mockResolvedValue([
       { tempId: 't1', contextType: 'GAME', contextId: 'g2', status: 'queued' },
     ]);
@@ -105,6 +125,18 @@ describe('chatThreadLifecycle', () => {
       expect.objectContaining({ key: 'GAME:g2', lastAppliedSeq: 9 })
     );
     expect(dispatchStaleMock).not.toHaveBeenCalled();
+
+    await Promise.resolve();
+
+    expect(removedHandler).toHaveBeenCalledOnce();
+    const removedEvent = removedHandler.mock.calls[0]![0] as CustomEvent<ChatOutboxRemovedDetail>;
+    expect(removedEvent.detail).toEqual({
+      contextType: 'GAME',
+      contextId: 'g2',
+      tempIds: ['t1'],
+      reason: 'threadArchived',
+      archiveReason: 'game_cancelled',
+    });
   });
 
   it('dropPendingOutboxForContext removes all pending rows', async () => {

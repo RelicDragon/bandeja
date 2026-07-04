@@ -4,7 +4,7 @@ import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, isSending } from '@/services/chatSendService';
 import {
   CHAT_OUTBOX_FAILED_EVENT,
-  CHAT_OUTBOX_REMOVED_EVENT,
+  dispatchChatOutboxRemoved,
 } from '@/services/chat/chatOutboxEvents';
 
 export { CHAT_OUTBOX_REMOVED_EVENT } from '@/services/chat/chatOutboxEvents';
@@ -61,5 +61,5 @@ export async function dismissFailedOutboxForContext(
     await messageQueueStorage.remove(row.tempId, contextType, contextId);
   }
   const detail: RemovedDetail = { contextType, contextId, tempIds };
-  window.dispatchEvent(new CustomEvent(CHAT_OUTBOX_REMOVED_EVENT, { detail }));
+  dispatchChatOutboxRemoved(detail);
 }

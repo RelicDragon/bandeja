@@ -263,6 +263,8 @@
     "noParticipants": "No participants found",
     "joinChatToSend": "Join Chat",
     "archivedGameChatBanner": "This game was cancelled. Chat is read-only.",
+    "archivedOutboxDropped_one": "A message was not sent because this game was cancelled and chat is now read-only.",
+    "archivedOutboxDropped_other": "{{count}} messages were not sent because this game was cancelled and chat is now read-only.",
     "joinChannel": "Subscribe to Channel",
     "joinGroup": "Join Group",
     "leave": "Leave chat",

@@ -9,10 +9,10 @@ export type MessageListHandle = {
 
 export interface MessageListProps {
   messages: ChatMessage[];
-  onAddReaction: (messageId: string, emoji: string) => void;
-  onRemoveReaction: (messageId: string) => void;
-  onDeleteMessage: (messageId: string) => void;
-  onReplyMessage: (message: ChatMessage) => void;
+  onAddReaction?: (messageId: string, emoji: string) => void;
+  onRemoveReaction?: (messageId: string) => void;
+  onDeleteMessage?: (messageId: string) => void;
+  onReplyMessage?: (message: ChatMessage) => void;
   onEditMessage?: (message: ChatMessage) => void;
   onPollUpdated?: (messageId: string, updatedPoll: Poll) => void;
   onResendQueued?: (tempId: string) => void;

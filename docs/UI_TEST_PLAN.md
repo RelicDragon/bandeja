@@ -757,8 +757,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-87 | Inbound DM badge latency (optimistic receive) | `@two-user` B on another tab/screen; A sends DM | B sees chat tab / row badge within ~100ms before authority envelope arrives |
 | CH-88 | Viewing thread no badge on inbound | `@two-user` B has DM thread open; A sends message | B message list updates; no badge bump on row or tab; read state catches up |
 | CH-89 | Native icon badge while app backgrounded (Capacitor) | `@two-user` A sends DM while B has app backgrounded/killed (not in thread) | B home-screen icon badge reflects authoritative unread total; opening app keeps tab + icon in sync after resume repair |
-| CH-90 | Archived game chat after delete | Participant: create game → send messages → owner deletes game → open `/games/:id/chat` or embedded chat on game details | Message history visible; amber read-only banner instead of composer; reply/edit/react/pin disabled |
+| CH-90 | Archived game chat after delete | Participant: create game → send messages → owner deletes game → open `/games/:id/chat` or embedded chat on game details | Message history visible; header shows cancelled time and canceller when available (else time-only fallback); amber read-only banner instead of composer; reply/edit/react/pin disabled |
 | CH-91 | Archived game chat non-participant | User who was never a participant opens `/games/:id/chat` after delete | Access denied (403/empty); no composer |
+| CH-92 | Archived game chat drops queued sends | Queue or fail a game-chat send → owner deletes game while thread is open, or reopen archived `/games/:id/chat` with pending local outbox row | Pending send disappears instead of retrying; no stale sending/retry UI remains; toast explains game was cancelled and chat is now read-only |
 
 ### 11.2 Thread types
 

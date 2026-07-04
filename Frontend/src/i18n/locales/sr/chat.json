@@ -290,6 +290,8 @@
     "failedToSend": "Nije uspelo slanje",
     "queuedOffline": "Na čekanju — biće poslato kada budete na mreži",
     "queuedWhileOffline": "Na čekanju — sinhronizovaće se kada budete na mreži",
+    "archivedOutboxDropped_one": "Poruka nije poslata jer je ova igra otkazana i ćaskanje je sada samo za čitanje.",
+    "archivedOutboxDropped_other": "{{count}} poruka nije poslato jer je ova igra otkazana i ćaskanje je sada samo za čitanje.",
     "resend": "Pošalji ponovo",
     "missingContextId": "Nedostaje kontekst ćaskanja",
     "photoPickFailed": "Nije uspelo odabiranje fotografija",

@@ -282,6 +282,8 @@
     "failedToSend": "Error al enviar",
     "queuedOffline": "En cola — se enviará al conectarse",
     "queuedWhileOffline": "En cola — se sincronizará cuando vuelvas a estar en línea",
+    "archivedOutboxDropped_one": "No se envió un mensaje porque este juego fue cancelado y el chat ahora es de solo lectura.",
+    "archivedOutboxDropped_other": "No se enviaron {{count}} mensajes porque este juego fue cancelado y el chat ahora es de solo lectura.",
     "resend": "Reenviar",
     "missingContextId": "Falta el contexto del chat",
     "photoPickFailed": "Error al seleccionar fotos",

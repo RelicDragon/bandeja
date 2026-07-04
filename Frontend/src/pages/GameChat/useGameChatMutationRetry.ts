@@ -1,14 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ChatContextType } from '@/api/chat';
 import { countFailedMutationsForContext } from '@/services/chat/chatMutationQueueStorage';
-import {
-  CHAT_MUTATION_FLUSH_DONE_EVENT,
-  CHAT_MUTATION_FLUSH_FAILED_EVENT,
-} from '@/services/chat/chatMutationEvents';
-import { CHAT_OUTBOX_FAILED_EVENT } from '@/services/chat/chatOutboxEvents';
 import { countFailedOutboxForContext } from '@/services/chat/offlineIntent/outboxAdapter';
 import { flushAllChatOfflineQueues } from '@/services/chat/chatUnifiedOfflineFlush';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { subscribeMutationRetryRefresh } from './mutationRetryRefreshSubscription';
 
 export function useGameChatMutationRetry(contextType: ChatContextType, contextId: string | undefined) {
   const [failedCount, setFailedCount] = useState(0);
@@ -31,19 +27,11 @@ export function useGameChatMutationRetry(contextType: ChatContextType, contextId
   }, [refresh, netOnline]);
 
   useEffect(() => {
-    const onFail = (ev: Event) => {
-      const d = (ev as CustomEvent<{ contextType?: string; contextId?: string }>).detail;
-      if (d?.contextType === contextType && d?.contextId === contextId) void refresh();
-    };
-    const onDone = () => void refresh();
-    window.addEventListener(CHAT_MUTATION_FLUSH_FAILED_EVENT, onFail);
-    window.addEventListener(CHAT_OUTBOX_FAILED_EVENT, onFail);
-    window.addEventListener(CHAT_MUTATION_FLUSH_DONE_EVENT, onDone);
-    return () => {
-      window.removeEventListener(CHAT_MUTATION_FLUSH_FAILED_EVENT, onFail);
-      window.removeEventListener(CHAT_OUTBOX_FAILED_EVENT, onFail);
-      window.removeEventListener(CHAT_MUTATION_FLUSH_DONE_EVENT, onDone);
-    };
+    return subscribeMutationRetryRefresh({
+      contextType,
+      contextId,
+      refresh: () => void refresh(),
+    });
   }, [contextType, contextId, refresh]);
 
   const retryMutations = useCallback(() => {

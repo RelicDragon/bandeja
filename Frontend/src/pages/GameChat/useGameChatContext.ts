@@ -21,6 +21,7 @@ import {
   type ArchivedGameChatMeta,
 } from '@/utils/cancelledGameChatStub';
 import { hydrateThreadArchivedMemory, markThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
+import { resolveLoadedGameChatArchiveState } from './gameChatArchiveState';
 
 function shouldBounceFromHttpError(error: unknown): boolean {
   const s = (error as { response?: { status?: number } })?.response?.status;
@@ -80,9 +81,11 @@ export function useGameChatContext({
 
   const userChatRef = useRef(userChat);
   const groupChannelRef = useRef(groupChannel);
+  const archivedGameMetaRef = useRef(archivedGameMeta);
   const groupFetchSeqRef = useRef(0);
   userChatRef.current = userChat;
   groupChannelRef.current = groupChannel;
+  archivedGameMetaRef.current = archivedGameMeta;
 
   const loadContext = useCallback(async (options?: LoadContextOptions) => {
     if (!id) {
@@ -94,8 +97,14 @@ export function useGameChatContext({
       if (contextType === 'GAME') {
         const response = await gamesApi.getById(id);
         if (currentIdRef.current !== requestId) return null;
-        setIsGameChatArchived(false);
-        setArchivedGameMeta(null);
+        const archivedLocally = await hydrateThreadArchivedMemory('GAME', requestId);
+        if (currentIdRef.current !== requestId) return null;
+        const archiveState = resolveLoadedGameChatArchiveState(
+          archivedLocally,
+          archivedGameMetaRef.current
+        );
+        setIsGameChatArchived(archiveState.isGameChatArchived);
+        setArchivedGameMeta(archiveState.archivedGameMeta);
         setGame(response.data);
         return response.data;
       }

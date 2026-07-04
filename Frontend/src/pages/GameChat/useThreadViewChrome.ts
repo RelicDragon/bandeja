@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NavigateFunction } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -14,6 +14,9 @@ import { useGameChatMutationRetry } from './useGameChatMutationRetry';
 import type { useThreadDerived } from '@/services/chat/chatThreadController/useThreadDerived';
 import type { LoadContextOptions } from './useGameChatContext';
 import type { ArchivedGameChatMeta } from '@/utils/cancelledGameChatStub';
+import {
+  subscribeArchivedOutboxFeedback,
+} from './archivedOutboxFeedbackSubscription';
 
 export interface UseThreadViewChromeParams {
   id: string | undefined;
@@ -137,6 +140,15 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
   });
 
   const { failedMutationCount, retryMutations } = useGameChatMutationRetry(contextType, id);
+
+  useEffect(() => {
+    return subscribeArchivedOutboxFeedback({
+      contextType,
+      contextId: id,
+      t,
+      onFeedback: (message) => toast.error(message),
+    });
+  }, [contextType, id, t]);
 
   const {
     leaveModalLabels,

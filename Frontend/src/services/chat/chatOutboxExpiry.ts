@@ -2,7 +2,7 @@ import type { ChatContextType } from '@/api/chat';
 import { chatLocalDb } from './chatLocalDb';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { cancelSend } from '@/services/chatSendService';
-import { CHAT_OUTBOX_REMOVED_EVENT } from '@/services/chat/chatOutboxEvents';
+import { dispatchChatOutboxRemoved } from '@/services/chat/chatOutboxEvents';
 
 /** Failed outbox rows older than this are dropped locally (no auto-retry). */
 export const CHAT_FAILED_OUTBOX_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
@@ -39,15 +39,11 @@ export async function purgeExpiredFailedOutbox(): Promise<number> {
   }
 
   for (const g of groups.values()) {
-    window.dispatchEvent(
-      new CustomEvent(CHAT_OUTBOX_REMOVED_EVENT, {
-        detail: {
-          contextType: g.contextType,
-          contextId: g.contextId,
-          tempIds: g.tempIds,
-        },
-      })
-    );
+    dispatchChatOutboxRemoved({
+      contextType: g.contextType,
+      contextId: g.contextId,
+      tempIds: g.tempIds,
+    });
   }
 
   return expired.length;

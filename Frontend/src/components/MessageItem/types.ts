@@ -9,10 +9,10 @@ export interface ContextMenuState {
 
 export interface MessageItemProps {
   message: ChatMessageWithStatus | ChatMessage;
-  onAddReaction: (messageId: string, emoji: string) => void;
-  onRemoveReaction: (messageId: string) => void;
-  onDeleteMessage: (messageId: string) => void;
-  onReplyMessage: (message: ChatMessage) => void;
+  onAddReaction?: (messageId: string, emoji: string) => void;
+  onRemoveReaction?: (messageId: string) => void;
+  onDeleteMessage?: (messageId: string) => void;
+  onReplyMessage?: (message: ChatMessage) => void;
   onEditMessage?: (message: ChatMessage) => void;
   onPollUpdated?: (messageId: string, updatedPoll: import('@/api/chat').Poll) => void;
   onResendQueued?: (tempId: string) => void;

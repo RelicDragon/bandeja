@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  CHAT_OUTBOX_REMOVED_EVENT,
   CHAT_OUTBOX_SUCCESS_EVENT,
+  dispatchChatOutboxRemoved,
   dispatchChatOutboxSuccess,
+  type ChatOutboxRemovedDetail,
   type ChatOutboxSuccessDetail,
 } from './chatOutboxEvents';
 import type { ChatMessage } from '@/api/chat';
@@ -72,5 +75,28 @@ describe('dispatchChatOutboxSuccess', () => {
     expect(ev.detail).toEqual(detail);
 
     window.removeEventListener(CHAT_OUTBOX_SUCCESS_EVENT, handler);
+  });
+
+  it('dispatches CHAT_OUTBOX_REMOVED_EVENT on microtask with detail', async () => {
+    const handler = vi.fn();
+    window.addEventListener(CHAT_OUTBOX_REMOVED_EVENT, handler);
+
+    const detail: ChatOutboxRemovedDetail = {
+      contextType: 'GAME',
+      contextId: 'game-1',
+      tempIds: ['opt-1', 'opt-2'],
+      reason: 'threadArchived',
+      archiveReason: 'game_cancelled',
+    };
+    dispatchChatOutboxRemoved(detail);
+    expect(handler).not.toHaveBeenCalled();
+
+    await Promise.resolve();
+
+    expect(handler).toHaveBeenCalledOnce();
+    const ev = handler.mock.calls[0]![0] as CustomEvent<ChatOutboxRemovedDetail>;
+    expect(ev.detail).toEqual(detail);
+
+    window.removeEventListener(CHAT_OUTBOX_REMOVED_EVENT, handler);
   });
 });

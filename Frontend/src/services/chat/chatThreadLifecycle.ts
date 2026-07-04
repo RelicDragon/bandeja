@@ -5,7 +5,7 @@ import { dispatchChatSyncStale } from '@/utils/chatSyncStaleEvents';
 import { recordChatSyncStaleDispatch } from '@/services/chat/chatSyncMetrics';
 import { socketService } from '@/services/socketService';
 import { chatCursorKey, chatLocalDb } from './chatLocalDb';
-import { CHAT_OUTBOX_REMOVED_EVENT } from './chatOutboxEvents';
+import { dispatchChatOutboxRemoved } from './chatOutboxEvents';
 import { purgeLocalDexieThread } from './chatLocalThreadPurge';
 
 export type ThreadTerminalKind = 'invalidate' | 'archived';
@@ -35,7 +35,11 @@ export function parseContextFromTailKey(
 
 export async function dropPendingOutboxForContext(
   contextType: ChatContextType,
-  contextId: string
+  contextId: string,
+  options?: {
+    reason?: import('./chatOutboxEvents').ChatOutboxRemovalReason;
+    archiveReason?: import('./chatOutboxEvents').ChatOutboxArchiveReason;
+  }
 ): Promise<string[]> {
   const rows = await messageQueueStorage.getByContext(contextType, contextId);
   const tempIds: string[] = [];
@@ -44,12 +48,14 @@ export async function dropPendingOutboxForContext(
     tempIds.push(row.tempId);
     await messageQueueStorage.remove(row.tempId, contextType, contextId);
   }
-  if (tempIds.length > 0 && typeof window !== 'undefined') {
-    window.dispatchEvent(
-      new CustomEvent(CHAT_OUTBOX_REMOVED_EVENT, {
-        detail: { contextType, contextId, tempIds },
-      })
-    );
+  if (tempIds.length > 0) {
+    dispatchChatOutboxRemoved({
+      contextType,
+      contextId,
+      tempIds,
+      ...(options?.reason ? { reason: options.reason } : {}),
+      ...(options?.archiveReason ? { archiveReason: options.archiveReason } : {}),
+    });
   }
   return tempIds;
 }
@@ -110,7 +116,10 @@ export async function applyThreadTerminal(
   if (contextType === 'GAME') {
     socketService.leaveChatRoom('GAME', contextId);
   }
-  await dropPendingOutboxForContext(contextType, contextId);
+  await dropPendingOutboxForContext(contextType, contextId, {
+    reason: 'threadArchived',
+    archiveReason: 'game_cancelled',
+  });
   await persistThreadArchivedMeta(contextType, contextId, archivedAtMs, options?.syncSeq);
 }
 
@@ -119,6 +128,13 @@ export async function archiveGameChatLocal(
   options?: { syncSeq?: number; archivedAt?: number }
 ): Promise<void> {
   await applyThreadTerminal('archived', 'GAME', gameId, options);
+}
+
+export async function dropArchivedGameOutbox(gameId: string): Promise<string[]> {
+  return dropPendingOutboxForContext('GAME', gameId, {
+    reason: 'threadArchived',
+    archiveReason: 'game_cancelled',
+  });
 }
 
 export async function isThreadArchivedLocally(

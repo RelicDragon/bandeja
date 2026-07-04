@@ -25,6 +25,7 @@ import {
 import { WeatherDayChart } from './WeatherDayChart';
 import { WeatherIcon } from './WeatherIcon';
 import { getWeatherIconPalette } from './weatherIconPalette';
+import { useHorizontalSwipe } from './useHorizontalSwipe';
 
 interface WeatherWindowDialogProps {
   open: boolean;
@@ -116,6 +117,7 @@ function WeatherWindowDialogInner({
   const [selectedDayKey, setSelectedDayKey] = useState<string | null>(null);
   const [slideDirection, setSlideDirection] = useState(0);
   const hourlyScrollRef = useRef<HTMLDivElement | null>(null);
+  const daySwipeRef = useRef<HTMLDivElement | null>(null);
   const initialScrollKeyRef = useRef<string | null>(null);
   const rowRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const headerRef = useRef<{
@@ -266,6 +268,13 @@ function WeatherWindowDialogInner({
     }
   }, [activeDayKey, canGoNext]);
 
+  // Swipe left/right on the day content to move between days, mirroring the chart's prev/next buttons.
+  useHorizontalSwipe(daySwipeRef, {
+    enabled: open,
+    onSwipeLeft: () => navigateDay('right'),
+    onSwipeRight: () => navigateDay('left'),
+  });
+
   const handleGoToGameDay = useCallback(() => {
     setSlideDirection(compareDayKeys(activeDayKey, resolvedGameDayKey) > 0 ? -1 : 1);
     setSelectedDayKey(resolvedGameDayKey);
@@ -315,7 +324,7 @@ function WeatherWindowDialogInner({
         ) : null}
 
         <div className="flex min-h-0 flex-1 flex-col p-3">
-          <div className="relative min-h-[26rem] flex-1 overflow-hidden">
+          <div ref={daySwipeRef} className="relative min-h-[26rem] flex-1 overflow-hidden">
             <AnimatePresence initial={false}>
               <motion.div
                 key={activeDayKey}

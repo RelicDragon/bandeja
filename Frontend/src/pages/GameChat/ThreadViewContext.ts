@@ -12,6 +12,7 @@ import type { LoadContextOptions } from './useGameChatContext';
 import type { GameChatFooterVariant } from './GameChatFooter';
 import type { ThreadSessionScroll } from '@/services/chat/threadSession';
 import type { ThreadSearchValue } from './useThreadSearch';
+import type { ArchivedGameChatMeta } from '@/utils/cancelledGameChatStub';
 
 export type { ThreadSearchValue } from './useThreadSearch';
 
@@ -103,6 +104,8 @@ export interface ThreadChromeValue {
   effectiveChatType: ChatType;
   currentChatType: ChatType;
   isEmbedded: boolean;
+  isGameChatArchived: boolean;
+  archivedGameMeta: ArchivedGameChatMeta | null;
   game: Game | null;
   bug: Bug | null;
   userChat: UserChat | null;

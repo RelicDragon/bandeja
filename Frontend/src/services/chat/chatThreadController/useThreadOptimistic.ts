@@ -23,6 +23,7 @@ import {
   CHAT_OUTBOX_FAILED_EVENT,
   CHAT_OUTBOX_REMOVED_EVENT,
   CHAT_OUTBOX_SUCCESS_EVENT,
+  type ChatOutboxRemovedDetail,
 } from '@/services/chat/chatOutboxEvents';
 import { revokeChatBlobUrls } from '@/utils/chatBlobUrls';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
@@ -447,7 +448,7 @@ export function useThreadOptimistic({
       handleMarkFailed(d.tempId);
     };
     const onRemoved = (ev: Event) => {
-      const d = (ev as CustomEvent<{ contextType?: string; contextId?: string; tempIds?: string[] }>).detail;
+      const d = (ev as CustomEvent<ChatOutboxRemovedDetail>).detail;
       if (!d?.tempIds?.length || d.contextType !== contextType || d.contextId !== id) return;
       for (const tid of d.tempIds) {
         cancelSend(tid);
