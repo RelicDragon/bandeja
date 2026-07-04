@@ -18,7 +18,11 @@ import { findSportFilterToApiParam, getViewerPrimarySport } from '@/utils/findSp
 import type { Sport } from '@/types';
 import { startOfDay, format } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { computeFindMonthDateRange, isFindGamesQueryReady } from '@/utils/findMonthDateRange';
+import {
+  computeFindMonthDateRange,
+  isFindGamesQueryReady,
+  resolveFindMonthRangeAnchor,
+} from '@/utils/findMonthDateRange';
 import { clearCachesExceptUnsyncedResults } from '@/utils/cacheUtils';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
@@ -69,14 +73,22 @@ export const FindTab = () => {
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
   const [dateRange, setDateRange] = useState<{ startDate?: Date; endDate?: Date }>(() =>
-    computeFindMonthDateRange(new Date(), resolveDisplaySettings(user).weekStart),
+    computeFindMonthDateRange(
+      resolveFindMonthRangeAnchor(findSelectedDay, new Date()),
+      resolveDisplaySettings(user).weekStart,
+    ),
   );
   const [calendarRangeReady, setCalendarRangeReady] = useState(false);
 
   useEffect(() => {
     if (calendarRangeReady) return;
-    setDateRange(computeFindMonthDateRange(new Date(), displaySettings.weekStart));
-  }, [displaySettings.weekStart, calendarRangeReady]);
+    setDateRange(
+      computeFindMonthDateRange(
+        resolveFindMonthRangeAnchor(findSelectedDay, new Date()),
+        displaySettings.weekStart,
+      ),
+    );
+  }, [displaySettings.weekStart, calendarRangeReady, findSelectedDay]);
 
   const queryDateRange = dateRange;
 

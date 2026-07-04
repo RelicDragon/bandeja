@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { endOfMonth, endOfWeek, format, startOfMonth, startOfWeek } from 'date-fns';
-import { computeFindMonthDateRange, isFindGamesQueryReady } from './findMonthDateRange';
+import {
+  computeFindMonthDateRange,
+  isFindGamesQueryReady,
+  resolveFindMonthRangeAnchor,
+} from './findMonthDateRange';
 
 describe('computeFindMonthDateRange', () => {
   it('matches MonthCalendar grid bounds for monday week start', () => {
@@ -24,6 +28,25 @@ describe('computeFindMonthDateRange', () => {
     const sunday = computeFindMonthDateRange(anchor, 0);
     expect(format(monday.startDate, 'yyyy-MM-dd')).not.toBe(
       format(sunday.startDate, 'yyyy-MM-dd'),
+    );
+  });
+});
+
+describe('resolveFindMonthRangeAnchor', () => {
+  it('uses the restored selected day when present', () => {
+    const fallback = new Date('2026-07-04T12:00:00.000Z');
+
+    expect(format(resolveFindMonthRangeAnchor('2026-05-17', fallback), 'yyyy-MM-dd')).toBe(
+      '2026-05-17',
+    );
+  });
+
+  it('falls back when the selected day is missing or invalid', () => {
+    const fallback = new Date('2026-07-04T12:00:00.000Z');
+
+    expect(format(resolveFindMonthRangeAnchor(null, fallback), 'yyyy-MM-dd')).toBe('2026-07-04');
+    expect(format(resolveFindMonthRangeAnchor('not-a-date', fallback), 'yyyy-MM-dd')).toBe(
+      '2026-07-04',
     );
   });
 });
