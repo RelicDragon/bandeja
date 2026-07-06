@@ -1,0 +1,110 @@
+@keyframes chat-connection-edge-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.chat-connection-overlay {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.chat-connection-overlay__edge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0.25rem;
+  overflow: hidden;
+}
+
+.chat-connection-overlay__edge-shimmer {
+  height: 100%;
+  width: 100%;
+  animation: chat-connection-edge-shimmer 0.9s linear infinite;
+  will-change: transform;
+}
+
+.chat-connection-overlay__edge--syncing {
+  background-image: linear-gradient(
+    to right,
+    rgb(251 191 36 / 0),
+    rgb(245 158 11),
+    rgb(251 191 36 / 0)
+  );
+}
+
+.dark .chat-connection-overlay__edge--syncing {
+  background-image: linear-gradient(
+    to right,
+    rgb(251 191 36 / 0),
+    rgb(252 211 77),
+    rgb(251 191 36 / 0)
+  );
+}
+
+.chat-connection-overlay__edge--offline {
+  background-image: linear-gradient(
+    to right,
+    rgb(248 113 113 / 0),
+    rgb(239 68 68),
+    rgb(248 113 113 / 0)
+  );
+}
+
+.dark .chat-connection-overlay__edge--offline {
+  background-image: linear-gradient(
+    to right,
+    rgb(248 113 113 / 0),
+    rgb(248 113 113),
+    rgb(248 113 113 / 0)
+  );
+}
+
+.chat-connection-overlay__edge-shimmer--syncing {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    rgb(255 255 255 / 0.7),
+    transparent
+  );
+}
+
+.dark .chat-connection-overlay__edge-shimmer--syncing {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    rgb(254 243 199 / 0.5),
+    transparent
+  );
+}
+
+.chat-connection-overlay__edge-shimmer--offline {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    rgb(255 255 255 / 0.6),
+    transparent
+  );
+}
+
+.dark .chat-connection-overlay__edge-shimmer--offline {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    rgb(254 202 202 / 0.4),
+    transparent
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-connection-overlay__edge-shimmer {
+    animation: none;
+  }
+}

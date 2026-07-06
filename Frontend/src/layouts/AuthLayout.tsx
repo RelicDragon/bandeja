@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageSelector, ThemeSelector } from '@/components';
+import './AuthLayout.css';
 
 interface AuthLayoutProps {
   children: ReactNode;

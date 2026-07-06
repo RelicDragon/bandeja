@@ -1,0 +1,6 @@
+/* Stream overlay (OBS browser source): transparent app chrome */
+html.broadcast-transparent-root,
+html.broadcast-transparent-root body,
+html.broadcast-transparent-root #root {
+  background: transparent !important;
+}

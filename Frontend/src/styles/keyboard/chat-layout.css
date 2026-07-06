@@ -1,0 +1,144 @@
+/* Chat composer shadows — contained spread fits inside footer padding (all platforms).
+   Enhanced spread only where overflow-clip-margin extends the clip edge. */
+.message-input-panel {
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.06),
+    0 -1px 3px rgba(15, 23, 42, 0.05),
+    0 2px 6px -2px rgba(15, 23, 42, 0.1),
+    0 5px 14px -7px rgba(15, 23, 42, 0.14);
+}
+
+html.dark .message-input-panel {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 -1px 3px rgba(0, 0, 0, 0.22),
+    0 2px 8px -2px rgba(0, 0, 0, 0.38),
+    0 6px 18px -8px rgba(0, 0, 0, 0.44);
+}
+
+.message-input-action-btn {
+  box-shadow:
+    0 2px 8px -2px rgba(59, 130, 246, 0.72),
+    0 4px 14px -6px rgba(37, 99, 235, 0.52);
+}
+
+.message-input-action-btn:not(:disabled):hover {
+  box-shadow:
+    0 3px 12px -2px rgba(59, 130, 246, 0.82),
+    0 6px 18px -6px rgba(37, 99, 235, 0.58);
+}
+
+@supports (overflow-clip-margin: 1px) {
+  .chat-container {
+    overflow: clip;
+    overflow-clip-margin-block-end: 2.75rem;
+  }
+
+  .message-input-panel {
+    box-shadow:
+      0 0 0 1px rgba(15, 23, 42, 0.06),
+      0 2px 8px rgba(0, 0, 0, 0.14),
+      0 8px 28px rgba(0, 0, 0, 0.18);
+  }
+
+  html.dark .message-input-panel {
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 2px 10px rgba(0, 0, 0, 0.45),
+      0 10px 32px rgba(0, 0, 0, 0.42);
+  }
+
+  .message-input-action-btn {
+    box-shadow:
+      0 3px 14px rgba(59, 130, 246, 0.75),
+      0 8px 36px rgba(37, 99, 235, 0.55);
+  }
+
+  .message-input-action-btn:not(:disabled):hover {
+    box-shadow:
+      0 5px 20px rgba(59, 130, 246, 0.85),
+      0 12px 44px rgba(37, 99, 235, 0.6);
+  }
+}
+
+/* Chat layout improvements for mobile */
+.chat-container {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chat-container.chat-embedded {
+  position: relative !important;
+  inset: auto !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
+/* Keyboard + chat — native apps and mobile browsers */
+body.keyboard-visible .chat-container {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+}
+
+body.keyboard-visible .chat-container main .thread-message-scroll {
+  max-height: calc(100vh - var(--keyboard-height, 0px));
+  max-height: calc(100dvh - var(--keyboard-height, 0px));
+}
+
+/* Footer: always floating over chat, no background panel (same on desktop and mobile) */
+.chat-container footer {
+  position: absolute !important;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: visible;
+  background-color: transparent !important;
+  z-index: 50;
+  flex-shrink: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  transition: bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    padding-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body.keyboard-visible .chat-container footer {
+  bottom: calc(var(--keyboard-height, 0px) - var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
+  padding-bottom: max(16px, var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px))) !important;
+}
+
+body.keyboard-visible .chat-container main {
+  margin-bottom: var(--keyboard-height, 0px);
+}
+
+.chat-container main {
+  transition: margin-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ensure message input has proper background that extends to keyboard */
+body.keyboard-visible .chat-container .message-input-panel {
+  position: relative;
+}
+
+/* Add subtle gradient at bottom to blend with keyboard rounded corners */
+body.keyboard-visible .chat-container .message-input-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -16px;
+  left: 0;
+  right: 0;
+  height: 16px;
+  background: linear-gradient(to bottom,
+    currentColor 0%,
+    transparent 100%
+  );
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: -1;
+}

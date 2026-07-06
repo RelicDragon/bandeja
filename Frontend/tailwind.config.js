@@ -27,28 +27,9 @@ export default {
           950: '#082f49',
         },
       },
-      animation: {
-        'fadeOutUp': 'fadeOutUp 0.3s ease-out forwards',
-        'loadingTextShimmer': 'loadingTextShimmer 2.4s ease-in-out infinite',
-        'shimmer': 'shimmer 1.8s ease-in-out infinite',
-      },
-      keyframes: {
-        fadeOutUp: {
-          '0%': { opacity: '1', transform: 'translateY(0)' },
-          '100%': { opacity: '0', transform: 'translateY(-1rem)' },
-        },
-        shimmer: {
-          '100%': { transform: 'translateX(100%)' },
-        },
-        loadingTextShimmer: {
-          '0%': { backgroundPosition: '160% center' },
-          '100%': { backgroundPosition: '-160% center' },
-        },
-      },
     },
   },
   plugins: [],
-  // Story slides use runtime-selected gradient classes — keep them in the CSS bundle.
   safelist: [
     'bg-gradient-to-br',
     'from-red-600', 'via-orange-500', 'to-rose-900',
@@ -66,4 +47,3 @@ export default {
     'bg-amber-400/25', 'text-amber-100', 'ring-amber-200/40',
   ],
 }
-

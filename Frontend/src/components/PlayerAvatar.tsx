@@ -16,6 +16,7 @@ import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 import { getDisplayLevelForSport, getUserPrimarySport, formatSportLevelBadgeDisplay } from '@/utils/profileSports';
 import type { Sport } from '@shared/sport';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import './PlayerAvatar.css';
 
 function parseLevelForBadge(levelRaw: unknown): number | null {
   if (typeof levelRaw === 'number' && Number.isFinite(levelRaw)) return levelRaw;

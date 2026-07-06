@@ -3,6 +3,25 @@ export const KEYBOARD_DIALOG_SHIFT_THRESHOLD_PX = 80;
 export const KEYBOARD_VISIBILITY_THRESHOLD_PX = 150;
 export const KEYBOARD_LAYOUT_SHRINK_THRESHOLD_PX = 80;
 
+/**
+ * Keyboard layout module — JS/CSS contract
+ *
+ * DOM writer: `keyboardState.ts` (`publishKeyboardState`) sets:
+ * - `--keyboard-height` on `document.documentElement` (px inset)
+ * - `--vv-height`, `--vv-offset-top` on `:root` (visual viewport; set elsewhere)
+ * - `body.keyboard-visible` when keyboard is open
+ * - `body.keyboard-dialog-shift` when inset >= KEYBOARD_DIALOG_SHIFT_THRESHOLD_PX (80)
+ *
+ * CSS adapter: `styles/keyboard/` — surfaces that consume the contract:
+ * - `.cap-keyboard-aware-dialog|sheet|overlay|bottom-panel`
+ * - `.dialog-content-animate` under `keyboard-dialog-shift`
+ * - `.chat-container` footer/main lift
+ * - `.fullscreen-dialog-root .cap-fullscreen-dialog-body`
+ * - mention portal z-index bump (`mentions-portal.css`)
+ *
+ * Managed surfaces (skip scroll-assist): see `isInsideKeyboardManagedSurface`.
+ */
+
 /** Manual CSS lift (--keyboard-height, keyboard-visible). Native = browser shrinks layout viewport. */
 export type KeyboardLayoutMode = 'manual' | 'native-resize' | 'inactive';
 

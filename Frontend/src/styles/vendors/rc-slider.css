@@ -1,0 +1,34 @@
+.rc-slider-custom .rc-slider-rail {
+  border-radius: 9999px;
+}
+
+.rc-slider-custom .rc-slider-track {
+  border-radius: 9999px;
+  background: linear-gradient(to right, #10b981, #059669);
+}
+
+.dark .rc-slider-custom .rc-slider-rail {
+  background-color: var(--ui-border);
+}
+
+.dark .rc-slider-custom .rc-slider-track {
+  background: linear-gradient(to right, #10b981, #059669);
+}
+
+.rc-slider-custom .rc-slider-handle {
+  border-radius: 50%;
+}
+
+.rc-slider-custom .rc-slider-handle:hover {
+  transform: scale(1.15);
+}
+
+.rc-slider-custom .rc-slider-handle:active {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.2);
+}
+
+.dark .rc-slider-custom .rc-slider-handle {
+  background-color: var(--ui-muted);
+  border-color: #10b981;
+}

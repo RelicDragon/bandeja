@@ -4,7 +4,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { Trash2, RotateCw } from 'lucide-react';
 import Slider from 'rc-slider';
-import 'rc-slider/assets/index.css';
 import { gamesApi } from '@/api/games';
 import { Button } from './Button';
 import { PlayerAvatar } from './PlayerAvatar';

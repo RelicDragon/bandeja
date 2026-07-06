@@ -1,5 +1,4 @@
 import type { StoryBubble, StorySegment } from '@/api/stories';
-import { resolveStoryViewerSlideKind } from './storiesViewerSlideKind';
 import { MediaStorySlide } from './slides/MediaStorySlide';
 import { GamePromoStorySlide } from './slides/GamePromoStorySlide';
 import { GameResultStorySlide } from './slides/GameResultStorySlide';
@@ -22,35 +21,34 @@ export function buildStoryViewerSlide(
   bubble: StoryBubble,
   handlers: StoryViewerSlideHandlers,
 ) {
-  const kind = resolveStoryViewerSlideKind(segment.sourceType);
-  if (kind === 'GAME_CREATED') {
-    return <GamePromoStorySlide segment={segment} onOpenGame={handlers.openGame} />;
+  switch (segment.sourceType) {
+    case 'GAME_CREATED':
+      return <GamePromoStorySlide segment={segment} onOpenGame={handlers.openGame} />;
+    case 'GAME_RESULT':
+      return (
+        <GameResultStorySlide
+          segment={segment}
+          highlightPlayerId={bubble.user.id}
+          onOpenGame={handlers.openGame}
+        />
+      );
+    case 'BRACKET_CHAMPION':
+      return <BracketChampionStorySlide segment={segment} onOpenBracket={handlers.openBracket} />;
+    case 'USER_STORY_ITEM':
+    case 'GAME_PHOTO':
+      return (
+        <MediaStorySlide
+          segment={segment}
+          isActive={handlers.open}
+          paused={handlers.paused}
+          replayNonce={handlers.replayGeneration}
+          onVideoEnded={handlers.onVideoEnded}
+          onVideoError={handlers.onVideoError}
+          onVideoProgress={handlers.onVideoProgress}
+          onVideoDurationMs={handlers.onVideoDurationMs}
+        />
+      );
+    default:
+      return null;
   }
-  if (kind === 'GAME_RESULT') {
-    return (
-      <GameResultStorySlide
-        segment={segment}
-        highlightPlayerId={bubble.user.id}
-        onOpenGame={handlers.openGame}
-      />
-    );
-  }
-  if (kind === 'BRACKET_CHAMPION') {
-    return <BracketChampionStorySlide segment={segment} onOpenBracket={handlers.openBracket} />;
-  }
-  if (kind === 'MEDIA') {
-    return (
-      <MediaStorySlide
-        segment={segment}
-        isActive={handlers.open}
-        paused={handlers.paused}
-        replayNonce={handlers.replayGeneration}
-        onVideoEnded={handlers.onVideoEnded}
-        onVideoError={handlers.onVideoError}
-        onVideoProgress={handlers.onVideoProgress}
-        onVideoDurationMs={handlers.onVideoDurationMs}
-      />
-    );
-  }
-  return null;
 }

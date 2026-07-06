@@ -1,0 +1,86 @@
+/* Modern keyboard handling for Capacitor iOS/Android (Keyboard.resize: none) */
+body.capacitor-ios.keyboard-visible,
+body.capacitor-android.keyboard-visible {
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+}
+
+/* Handle keyboard rounded corners gap - add subtle padding to fill the space */
+body.capacitor-ios.keyboard-visible footer,
+body.capacitor-android.keyboard-visible footer {
+  /* Add padding to account for keyboard rounded corners (typically ~12-16px) */
+  padding-bottom: max(var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px)), 12px);
+}
+
+/* Input areas should have proper spacing above keyboard */
+.capacitor-ios input:focus,
+.capacitor-android input:focus,
+.capacitor-ios textarea:focus,
+.capacitor-android textarea:focus {
+  /* Ensure focused input has space above keyboard rounded corners */
+  scroll-margin-bottom: 20px;
+}
+
+.capacitor-ios [contenteditable='true']:focus,
+.capacitor-android [contenteditable='true']:focus {
+  scroll-margin-bottom: 24px;
+}
+
+/* Centered Radix dialogs: sit just above keyboard when inset is real.
+   keyboard-dialog-shift is set when --keyboard-height >= 80px (see keyboardState).
+   Do not tie this to keyboard-visible alone — that breaks vertical centering (top 50% + no translateY). */
+body.keyboard-dialog-shift .dialog-content-animate,
+body.keyboard-dialog-shift .cap-keyboard-aware-dialog {
+  top: auto !important;
+  bottom: calc(var(--keyboard-height, 0px) + max(8px, env(safe-area-inset-bottom, 0px))) !important;
+  translate: -50% 0 !important;
+  max-height: min(
+    calc(100vh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px),
+    calc(var(--vv-height, 100vh) - env(safe-area-inset-top, 0px) - 32px)
+  ) !important;
+  max-height: min(
+    calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px),
+    calc(var(--vv-height, 100dvh) - env(safe-area-inset-top, 0px) - 32px)
+  ) !important;
+  overflow-y: auto !important;
+  transition:
+    bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    translate 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.keyboard-visible .fullscreen-dialog-root .cap-fullscreen-dialog-body {
+  padding-bottom: var(--keyboard-height, 0px);
+}
+
+/* Bottom-anchored sheets (Vaul drawers, custom fixed/absolute bottom panels):
+   lift the whole panel above the keyboard and clamp its height. */
+.cap-keyboard-aware-sheet {
+  transition: bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.keyboard-visible .cap-keyboard-aware-sheet {
+  bottom: var(--keyboard-height, 0px) !important;
+  max-height: calc(100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 24px) !important;
+}
+
+/* Full-screen overlay wrappers (fixed inset-0 + flex items-end/center):
+   padding pushes the inner panel above the keyboard. */
+.cap-keyboard-aware-overlay {
+  transition: padding-bottom 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.keyboard-visible .cap-keyboard-aware-overlay {
+  padding-bottom: calc(var(--keyboard-height, 0px) + 0.75rem) !important;
+}
+
+/* Fixed/absolute bottom tool panels (e.g. story text style bar) — gated on keyboard-visible
+   so --keyboard-height does not linger during iOS hide animation. */
+body.keyboard-visible .cap-keyboard-aware-bottom-panel {
+  bottom: var(--keyboard-height, 0px) !important;
+  transition-property: bottom;
+  transition-duration: 0.25s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}

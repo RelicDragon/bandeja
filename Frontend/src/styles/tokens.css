@@ -1,0 +1,152 @@
+@theme {
+  --color-background: var(--ui-background);
+  --color-foreground: var(--ui-foreground);
+  --color-border: var(--ui-border);
+  --color-muted: var(--ui-muted);
+  --color-muted-foreground: var(--ui-muted-foreground);
+  --color-destructive: var(--ui-destructive);
+
+  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
+  --animate-fade-out-up: fadeOutUp 0.3s ease-out forwards;
+  --animate-loading-text-shimmer: loadingTextShimmer 2.4s ease-in-out infinite;
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-scale-in: scale-in 0.2s ease-out;
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  @keyframes fadeOutUp {
+    0% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-1rem);
+    }
+  }
+
+  @keyframes loadingTextShimmer {
+    0% {
+      background-position: 160% center;
+    }
+    100% {
+      background-position: -160% center;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes overlay-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes overlay-fade-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes overlay-scale-in {
+    from {
+      opacity: 0;
+      transform: scale(var(--overlay-scale-enter, 0.95));
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes overlay-scale-out {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(var(--overlay-scale-exit, 0.95));
+    }
+  }
+
+  @keyframes overlay-blur-in {
+    0% {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+    }
+    100% {
+      opacity: 1;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+  }
+
+  @keyframes overlay-blur-out {
+    0% {
+      opacity: 1;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    100% {
+      opacity: 0;
+      backdrop-filter: blur(0px);
+      -webkit-backdrop-filter: blur(0px);
+    }
+  }
+}
+
+:root {
+  --ui-background: #f9fafb;
+  --ui-foreground: #111827;
+  --ui-border: #e5e7eb;
+  --ui-muted: #f3f4f6;
+  --ui-muted-foreground: #6b7280;
+  --ui-destructive: #dc2626;
+  --ui-page-background: #f9fafb;
+  --ui-surface: #ffffff;
+  --ui-scrollbar-thumb: rgb(156 163 175 / 0.5);
+  --ui-scrollbar-thumb-hover: rgb(156 163 175 / 0.7);
+}
+
+html.dark {
+  --ui-background: #030712;
+  --ui-foreground: #f9fafb;
+  --ui-border: #374151;
+  --ui-muted: #1f2937;
+  --ui-muted-foreground: #9ca3af;
+  --ui-destructive: #ef4444;
+  --ui-page-background: #111827;
+  --ui-surface: #1f2937;
+  --ui-scrollbar-thumb: rgb(75 85 99 / 0.5);
+  --ui-scrollbar-thumb-hover: rgb(75 85 99 / 0.7);
+}

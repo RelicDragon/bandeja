@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import Slider from 'rc-slider';
-import 'rc-slider/assets/index.css';
 import { STORY_FILTER_PRESETS } from './utils/storyAdjustFilters';
 import type { StoryMediaAdjust } from './types/storyEditor.types';
 import { DEFAULT_MEDIA_ADJUST } from './types/storyEditor.types';

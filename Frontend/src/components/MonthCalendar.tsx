@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import './MonthCalendar.css';
 import { ChevronLeft, ChevronRight, Calendar, List, Users, Swords, Dumbbell, Trophy, Beer } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, isToday, addMonths, subMonths, getMonth, getYear, startOfDay } from 'date-fns';
 import { enGB, ru, es, sr, cs } from 'date-fns/locale';

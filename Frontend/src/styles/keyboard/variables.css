@@ -1,0 +1,6 @@
+/* Keyboard visible state */
+:root {
+  --keyboard-height: 0px;
+  --vv-height: 100dvh;
+  --vv-offset-top: 0px;
+}

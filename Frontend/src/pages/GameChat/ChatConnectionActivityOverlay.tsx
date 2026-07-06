@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useChatOfflineStore } from '@/store/chatOfflineStore';
 import { useChatSyncStore } from '@/store/chatSyncStore';
+import './ChatConnectionActivityOverlay.css';
 
 type OverlayVariant = 'syncing' | 'offline';
 
