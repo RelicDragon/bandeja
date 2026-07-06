@@ -1838,8 +1838,7 @@ export const getDraft = asyncHandler(async (req: AuthRequest, res: Response) => 
     } else if (ctx === 'BUG') {
       await MessageService.validateBugAccess(cid, userId);
     }
-  } catch (err) {
-    console.warn('getDraft access denied', { userId, chatContextType, contextId, err });
+  } catch {
     return res.json({ success: true, data: null });
   }
 

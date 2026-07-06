@@ -115,15 +115,20 @@ class PushNotificationService {
 
       if (result.failed && result.failed.length > 0) {
         const failure = result.failed[0];
-        console.error(`[APNS] ❌ Notification failed:`, {
-          token: token.substring(0, 20) + '...',
-          status: failure.status,
-          response: failure.response
-        });
-
-        if (failure.status === '410' || failure.status === '400') {
-          console.log(`[APNS] Removing invalid token`);
+        const staleToken = failure.status === '410' || failure.status === '400';
+        if (staleToken) {
+          console.log('[APNS] Stale token, removing', {
+            token: token.substring(0, 20) + '...',
+            status: failure.status,
+            response: failure.response,
+          });
           await PushTokenService.removeInvalidToken(token);
+        } else {
+          console.error('[APNS] Notification failed:', {
+            token: token.substring(0, 20) + '...',
+            status: failure.status,
+            response: failure.response,
+          });
         }
         return false;
       }

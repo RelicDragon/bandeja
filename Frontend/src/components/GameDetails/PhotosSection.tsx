@@ -18,6 +18,7 @@ import { PhotosSectionGrid } from './PhotosSectionGrid';
 import { usePhotosSectionUpload } from './usePhotosSectionUpload';
 import { gamePhotoOriginalUrl, hasGamePhotoUrl } from '@/utils/gamePhotoUrl';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
+import { mergeGamePhotoRefresh } from '@/utils/gameResultsArtifacts.util';
 import { canManageGamePhotos, canViewGamePhotos } from '@shared/gamePhotos/permissions';
 import { PhotosPrivacyToggle } from './PhotosPrivacyToggle';
 
@@ -54,6 +55,10 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     getGameMainPhotoId(game)
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const gameRef = useRef(game);
+  gameRef.current = game;
+
+  const getLatestGame = useCallback(() => gameRef.current, []);
 
   const resolvedMainPhotoId = getGameMainPhotoId(game);
 
@@ -64,6 +69,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
 
   const { isUploadingPhoto, handlePhotoSelect } = usePhotosSectionUpload(
     game,
+    getLatestGame,
     onGameUpdate,
     setMainPhotoId,
     canManage
@@ -109,34 +115,13 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
     if (!game.id || !canView) return;
     if (!lastGamePhotoDeleted || lastGamePhotoDeleted.gameId !== game.id) return;
     setMainPhotoId(lastGamePhotoDeleted.mainPhotoId);
-    if (
-      onGameUpdate &&
-      (game.mainPhotoId !== lastGamePhotoDeleted.mainPhotoId || game.photosCount !== lastGamePhotoDeleted.photosCount)
-    ) {
-      onGameUpdate({
-        ...game,
-        mainPhotoId: lastGamePhotoDeleted.mainPhotoId,
-        photosCount: lastGamePhotoDeleted.photosCount,
-      });
-    }
-  }, [
-    canView,
-    game,
-    game.id,
-    game.mainPhotoId,
-    game.photosCount,
-    lastGamePhotoDeleted,
-    onGameUpdate,
-  ]);
+  }, [canView, game.id, lastGamePhotoDeleted]);
 
   useEffect(() => {
     if (!game.id || !canView) return;
     if (!lastGamePhotoMainChanged || lastGamePhotoMainChanged.gameId !== game.id) return;
     setMainPhotoId(lastGamePhotoMainChanged.mainPhotoId);
-    if (onGameUpdate && game.mainPhotoId !== lastGamePhotoMainChanged.mainPhotoId) {
-      onGameUpdate({ ...game, mainPhotoId: lastGamePhotoMainChanged.mainPhotoId });
-    }
-  }, [canView, game, game.id, game.mainPhotoId, lastGamePhotoMainChanged, onGameUpdate]);
+  }, [canView, game.id, lastGamePhotoMainChanged]);
 
   const handlePhotoCapture = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -176,7 +161,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
         if (onGameUpdate) {
           const updatedGameResponse = await gamesApi.getById(game.id);
           if (updatedGameResponse.data) {
-            onGameUpdate(updatedGameResponse.data);
+            onGameUpdate(mergeGamePhotoRefresh(getLatestGame(), updatedGameResponse.data));
           }
         }
         toast.success(t('gameDetails.mainPhotoUpdated'));
@@ -187,7 +172,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
         setIsUpdatingMainPhoto(false);
       }
     },
-    [canEditMainPhoto, displayMainPhotoId, game.id, isUpdatingMainPhoto, onGameUpdate, photos, t]
+    [canEditMainPhoto, displayMainPhotoId, game.id, getLatestGame, isUpdatingMainPhoto, onGameUpdate, photos, t]
   );
 
   const handleDeleteConfirm = async () => {
@@ -201,7 +186,7 @@ export const PhotosSection = ({ game, onGameUpdate }: PhotosSectionProps) => {
         const updatedGameResponse = await gamesApi.getById(game.id);
         if (updatedGameResponse.data) {
           setMainPhotoId(updatedGameResponse.data.mainPhotoId);
-          onGameUpdate?.(updatedGameResponse.data);
+          onGameUpdate?.(mergeGamePhotoRefresh(getLatestGame(), updatedGameResponse.data));
         }
       } catch (refreshError) {
         console.error('Failed to refresh game after photo delete:', refreshError);

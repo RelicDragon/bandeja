@@ -166,7 +166,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
   const rounds = engine.rounds;
 
   const players = useMemo(() => 
-    (currentGame?.participants.filter(isParticipantPlaying).map(p => p.user) || []) as BasicUser[], 
+    (currentGame?.participants?.filter(isParticipantPlaying).map((p) => p.user) ?? []) as BasicUser[],
     [currentGame?.participants]
   );
 

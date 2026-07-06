@@ -55,6 +55,13 @@ export const errorHandler = (
     });
   }
 
+  if ((err as { type?: string }).type === 'entity.parse.failed') {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid JSON body',
+    });
+  }
+
   if (err.name === 'MulterError') {
     const code = (err as { code?: string }).code;
     const status = code === 'LIMIT_FILE_SIZE' ? 413 : 400;

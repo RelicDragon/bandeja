@@ -165,6 +165,35 @@ export function shouldMergeSelfGameSocketUpdate(
   return gamePhotoFieldsChanged(prev, updated);
 }
 
+export function mergeGamePhotoRefresh(prev: Game, next: Game): Game {
+  const photosCount = next.photosCount !== undefined ? next.photosCount : prev.photosCount;
+
+  let mainPhoto = prev.mainPhoto;
+  let mainPhotoId = prev.mainPhotoId;
+  if (next.mainPhoto !== undefined) {
+    mainPhoto = next.mainPhoto;
+    mainPhotoId = getGameMainPhotoId(next) ?? null;
+  } else if (next.mainPhotoId !== undefined) {
+    mainPhotoId = next.mainPhotoId;
+  }
+
+  const patch: Game = {
+    ...prev,
+    photosCount,
+    mainPhotoId,
+    mainPhoto,
+  };
+
+  if (next.resultsArtifacts !== undefined) {
+    patch.resultsArtifacts = next.resultsArtifacts;
+  }
+  if (next.resultsSummaryText !== undefined) {
+    patch.resultsSummaryText = next.resultsSummaryText;
+  }
+
+  return mergeGameResultsArtifactsFields(prev, patch);
+}
+
 export function mergeGameResultsArtifactsFields(prev: Game, next: Game): Game {
   const nextArtifacts = next.resultsArtifacts;
   const prevArtifacts = prev.resultsArtifacts;

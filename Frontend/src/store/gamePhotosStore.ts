@@ -15,6 +15,21 @@ const emptySlice = (): GamePhotosSlice => ({
   nextCursor: null,
 });
 
+function mergeGamePhotoLists(server: GamePhoto[], local: GamePhoto[]): GamePhoto[] {
+  const byId = new Map<string, GamePhoto>();
+  for (const photo of server) {
+    byId.set(photo.id, photo);
+  }
+  for (const photo of local) {
+    if (!byId.has(photo.id)) {
+      byId.set(photo.id, photo);
+    }
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
 interface GamePhotosState {
   byGameId: Record<string, GamePhotosSlice>;
   getSlice: (gameId: string) => GamePhotosSlice;
@@ -55,18 +70,20 @@ export const useGamePhotosStore = create<GamePhotosState>((set, get) => ({
         hasMore = !!page.nextCursor && page.items.length > 0;
       }
 
+      const localPhotos = get().byGameId[gameId]?.photos ?? [];
+      const mergedPhotos = mergeGamePhotoLists(allPhotos, localPhotos);
       set((s) => ({
         byGameId: {
           ...s.byGameId,
           [gameId]: {
-            photos: allPhotos,
+            photos: mergedPhotos,
             isLoading: false,
             loaded: true,
             nextCursor: null,
           },
         },
       }));
-      return allPhotos;
+      return mergedPhotos;
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } })?.response?.status;
       if (status === 403) {

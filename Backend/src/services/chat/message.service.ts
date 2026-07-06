@@ -538,10 +538,15 @@ export class MessageService {
     );
     if (unread === 0) return;
 
-    await UnreadSnapshotService.markContextRead(senderId, {
-      contextType: markContextType,
-      contextId: markContextId,
-    });
+    try {
+      await UnreadSnapshotService.markContextRead(senderId, {
+        contextType: markContextType,
+        contextId: markContextId,
+      });
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 403) return;
+      throw err;
+    }
   }
 
   private static scheduleSenderContextReadAfterSend(
@@ -556,6 +561,7 @@ export class MessageService {
       senderId,
       groupChannelId
     ).catch((err) => {
+      if (err instanceof ApiError && err.statusCode === 403) return;
       console.error('[MessageService] markSenderContextReadAfterSend failed', err);
     });
   }

@@ -10,6 +10,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { useGamePhotosStore } from '@/store/gamePhotosStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { mergeGamePhotoRefresh } from '@/utils/gameResultsArtifacts.util';
 import type { Game } from '@/types';
 
 function newClientUploadId(): string {
@@ -20,6 +21,7 @@ function newClientUploadId(): string {
 
 export function usePhotosSectionUpload(
   game: Game,
+  getLatestGame: () => Game,
   onGameUpdate?: (game: Game) => void,
   onMainPhotoIdChange?: (photoId: string) => void,
   canUpload = true
@@ -33,12 +35,13 @@ export function usePhotosSectionUpload(
     try {
       const updatedGameResponse = await gamesApi.getById(game.id);
       if (updatedGameResponse.data) {
-        onGameUpdate(updatedGameResponse.data);
+        const latest = getLatestGame();
+        onGameUpdate(mergeGamePhotoRefresh(latest, updatedGameResponse.data));
       }
     } catch (error) {
       console.error('Failed to fetch updated game:', error);
     }
-  }, [game.id, onGameUpdate]);
+  }, [game.id, getLatestGame, onGameUpdate]);
 
   const handlePhotoSelect = useCallback(
     async (files: File[]) => {

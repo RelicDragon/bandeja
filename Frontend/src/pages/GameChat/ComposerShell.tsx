@@ -25,7 +25,7 @@ export interface ComposerShellProps {
   variant: GameChatFooterVariant | null;
 }
 
-/** Composer stays mounted through variant transitions; visibility toggles preserve draft/voice state. */
+/** Mount MessageInput only for the writable input footer — avoids draft sync on join/read-only footers. */
 export const ComposerShell: React.FC<ComposerShellProps> = ({ visible, variant }) => {
   const { t } = useTranslation();
   const composer = useThreadComposer();
@@ -119,9 +119,11 @@ export const ComposerShell: React.FC<ComposerShellProps> = ({ visible, variant }
         className="flex-shrink-0 absolute left-0 right-0 bottom-0 z-50 !bg-transparent border-transparent"
         style={{ minHeight: COMPOSER_DOCK_MIN_H }}
       >
-        <div className={showInput ? 'relative overflow-visible' : 'hidden'} aria-hidden={!showInput}>
-          <MessageInput />
-        </div>
+        {showInput ? (
+          <div className="relative overflow-visible">
+            <MessageInput />
+          </div>
+        ) : null}
         {showBlocked && blockedPanel}
         {showArchived && archivedPanel}
         {showRequest && requestPanel}
@@ -136,20 +138,20 @@ export const ComposerShell: React.FC<ComposerShellProps> = ({ visible, variant }
       className="flex-shrink-0 absolute left-0 right-0 bottom-0 z-50 !bg-transparent border-transparent"
       style={{ minHeight: COMPOSER_DOCK_MIN_H }}
     >
-      <motion.div
-        initial={false}
-        animate={showInput ? { opacity: 1, y: 0 } : { opacity: 0, y: PANEL_EXIT_Y }}
-        transition={CHAT_PANEL_TRANSITION}
-        className={
-          showInput
-            ? 'relative overflow-visible'
-            : 'pointer-events-none absolute inset-x-0 bottom-0 overflow-hidden'
-        }
-        style={{ visibility: showInput ? 'visible' : 'hidden' }}
-        aria-hidden={!showInput}
-      >
-        <MessageInput />
-      </motion.div>
+      <AnimatePresence initial={false}>
+        {showInput ? (
+          <motion.div
+            key="composer-input"
+            initial={{ opacity: 0, y: PANEL_EXIT_Y }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: PANEL_EXIT_Y }}
+            transition={CHAT_PANEL_TRANSITION}
+            className="relative overflow-visible"
+          >
+            <MessageInput />
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <AnimatePresence initial={false} mode="wait">
         {altVariantKey === 'archived' && (

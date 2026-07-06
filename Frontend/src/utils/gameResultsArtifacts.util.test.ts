@@ -10,6 +10,7 @@ import {
   isPhotoReadyForTelegram,
   isSummaryArtifactGenerating,
   isSummaryReadyForTelegram,
+  mergeGamePhotoRefresh,
   shouldMergeSelfGameSocketUpdate,
 } from './gameResultsArtifacts.util';
 import type { Game } from '@/types';
@@ -150,6 +151,50 @@ function run() {
     true
   );
   assert.equal(shouldMergeSelfGameSocketUpdate(baseGame, baseGame, true), true);
+
+  const shellGame = {
+    id: 'game-1',
+    name: 'Evening padel',
+    photosCount: 1,
+    mainPhotoId: 'photo-1',
+    mainPhoto: { id: 'photo-1', thumbnailUrl: '/t1.jpg', originalUrl: '/o1.jpg' },
+    participants: [{ userId: 'u1', role: 'OWNER', status: 'PLAYING' }],
+    rounds: [{ id: 'round-1', matches: [] }],
+    resultsArtifacts: artifacts({ version: 3 }),
+    resultsSummaryText: 'Fresh summary',
+  } as Game;
+
+  const staleSocketPatch = {
+    ...shellGame,
+    participants: undefined,
+    rounds: undefined,
+    photosCount: 2,
+    mainPhotoId: 'photo-2',
+    mainPhoto: { id: 'photo-2', thumbnailUrl: '/t2.jpg', originalUrl: '/o2.jpg' },
+  } as Game;
+
+  const staleSpread = { ...shellGame, ...staleSocketPatch };
+  assert.equal(staleSpread.participants, undefined);
+  assert.equal(staleSpread.rounds, undefined);
+
+  const merged = mergeGamePhotoRefresh(shellGame, staleSocketPatch);
+  assert.deepEqual(merged.participants, shellGame.participants);
+  assert.deepEqual(merged.rounds, shellGame.rounds);
+  assert.equal(merged.photosCount, 2);
+  assert.equal(merged.mainPhotoId, 'photo-2');
+  assert.equal(merged.resultsSummaryText, 'Fresh summary');
+
+  const afterDelete = {
+    ...shellGame,
+    photosCount: 0,
+    mainPhoto: null,
+    mainPhotoId: null,
+  } as Game;
+  const cleared = mergeGamePhotoRefresh(shellGame, afterDelete);
+  assert.equal(cleared.photosCount, 0);
+  assert.equal(cleared.mainPhotoId, null);
+  assert.equal(cleared.mainPhoto, null);
+  assert.deepEqual(cleared.participants, shellGame.participants);
 
   console.log('gameResultsArtifacts.util.test.ts: ok');
 }

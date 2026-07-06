@@ -92,6 +92,7 @@ import { socketService } from '@/services/socketService';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { shouldSyncEngineGameFromShell } from '@/utils/mergeGameFormatForResults';
 import {
+  mergeGamePhotoRefresh,
   mergeGameResultsArtifactsFields,
   shouldMergeSelfGameSocketUpdate,
 } from '@/utils/gameResultsArtifacts.util';
@@ -404,15 +405,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     setGame((prevGame) => {
       if (!prevGame) return updatedGame;
 
-      const mergeArtifactsOnSelf = () =>
-        mergeGameResultsArtifactsFields(prevGame, {
-          ...prevGame,
-          resultsArtifacts: updatedGame.resultsArtifacts ?? prevGame.resultsArtifacts,
-          resultsSummaryText: updatedGame.resultsSummaryText ?? prevGame.resultsSummaryText,
-          photosCount: updatedGame.photosCount ?? prevGame.photosCount,
-          mainPhotoId: updatedGame.mainPhotoId ?? prevGame.mainPhotoId,
-          mainPhoto: updatedGame.mainPhoto ?? prevGame.mainPhoto,
-        });
+      const mergeArtifactsOnSelf = () => mergeGamePhotoRefresh(prevGame, updatedGame);
 
       if (fromSelf) {
         if (
