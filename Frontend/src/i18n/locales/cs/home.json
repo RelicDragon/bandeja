@@ -25,6 +25,7 @@
     "loadMore": "Načíst další",
     "noPastGames": "Žádné minulé zápasy",
     "noGames": "Zatím nemáte žádné zápasy",
+    "noGamesOnSelectedDate": "Na tento den nejsou žádné zápasy",
     "upcomingGames": "Nadcházející zápasy",
     "staleGamesTitle": "Plánovaný čas už uplynul — zápas se neodehrál",
     "staleGamesHint": "Organizátor může zápas zrušit nebo domluvit nový termín.",

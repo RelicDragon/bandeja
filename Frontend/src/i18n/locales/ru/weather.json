@@ -27,6 +27,9 @@
     "updatedMinutes": "Обновлено {{count}} мин назад",
     "updatedHours": "Обновлено {{count}} ч назад",
     "windSpeed": "{{speed}} км/ч",
+    "calendarToggle": "Показать погоду в календаре",
+    "calendarToggleActive": "Скрыть погоду в календаре",
+    "calendarToggleUnavailable": "Погода недоступна без выбранного города",
     "conditions": {
       "clear": "Ясно",
       "mainly_clear": "Преимущественно ясно",

@@ -1,7 +1,13 @@
 import { MonthCalendar, type MonthCalendarProps } from '@/components/MonthCalendar';
 import { SelectedDateHeading } from '@/components/SelectedDateHeading';
 
-export function CalendarSection({ selectedDate, collapsed, upcomingsToggle, ...calendarProps }: MonthCalendarProps) {
+export function CalendarSection({
+  selectedDate,
+  collapsed,
+  upcomingsToggle,
+  selectedDateEmptyHint,
+  ...calendarProps
+}: MonthCalendarProps & { selectedDateEmptyHint?: string }) {
   return (
     <>
       <MonthCalendar
@@ -10,7 +16,7 @@ export function CalendarSection({ selectedDate, collapsed, upcomingsToggle, ...c
         upcomingsToggle={upcomingsToggle}
         {...calendarProps}
       />
-      {!collapsed && <SelectedDateHeading date={selectedDate} />}
+      {!collapsed && <SelectedDateHeading date={selectedDate} hint={selectedDateEmptyHint} />}
     </>
   );
 }

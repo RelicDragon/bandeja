@@ -25,6 +25,7 @@
     "loadMore": "Cargar más",
     "noPastGames": "No hay juegos pasados",
     "noGames": "Aún no tienes juegos",
+    "noGamesOnSelectedDate": "No hay juegos en esta fecha",
     "upcomingGames": "Próximos juegos",
     "staleGamesTitle": "Ya pasó la hora prevista — el partido no se jugó",
     "staleGamesHint": "El organizador puede anular la convocatoria o fijar otra fecha.",

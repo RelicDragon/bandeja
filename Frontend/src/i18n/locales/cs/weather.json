@@ -27,6 +27,9 @@
     "updatedMinutes": "Aktualizováno před {{count}} min",
     "updatedHours": "Aktualizováno před {{count}} h",
     "windSpeed": "{{speed}} km/h",
+    "calendarToggle": "Zobrazit počasí v kalendáři",
+    "calendarToggleActive": "Skrýt počasí v kalendáři",
+    "calendarToggleUnavailable": "Počasí není k dispozici bez vybraného města",
     "conditions": {
       "clear": "Jasno",
       "mainly_clear": "Většinou jasno",

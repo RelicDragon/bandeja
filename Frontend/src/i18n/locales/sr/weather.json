@@ -27,6 +27,9 @@
     "updatedMinutes": "Ažurirano pre {{count}} min",
     "updatedHours": "Ažurirano pre {{count}} h",
     "windSpeed": "{{speed}} km/h",
+    "calendarToggle": "Prikaži vreme u kalendaru",
+    "calendarToggleActive": "Sakrij vreme u kalendaru",
+    "calendarToggleUnavailable": "Vreme nije dostupno bez izabranog grada",
     "conditions": {
       "clear": "Vedro",
       "mainly_clear": "Uglavnom vedro",

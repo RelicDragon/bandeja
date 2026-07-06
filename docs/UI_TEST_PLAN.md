@@ -219,6 +219,7 @@ Frontend/e2e/
 | H-57 | My tab panel switcher counts | User with bookings, teams, and leagues | Bookings / Teams / Leagues buttons show matching counts; hidden when zero |
 | H-02 | Calendar date select | Pick date on calendar | Games for that day |
 | H-41 | Selected date heading | Pick date on My tab calendar | Long localized date (e.g. "Thursday, 11 June") with Today/Tomorrow badge shown below calendar; updates on re-select, localized per language |
+| H-63 | Empty selected date hint | User with upcoming games on other days → pick a day with no games | Localized "No games on this date" below selected date heading; Upcoming games section still shown |
 | H-60 | Calendar weekday headers | My tab or Find calendar with app language set to Russian, then English | Column headers use locale short weekday (ru: 2-letter e.g. пн/вт; en: 3-letter e.g. Mon/Tue), not truncated full names |
 | H-40 | Overflow month day select | Navigate month → tap gray adjacent-month cell with game badge | Selected day highlights; that day's games in list (not upcoming sections) |
 | H-03 | Empty my games | User with no games | Empty state |
@@ -304,6 +305,9 @@ Frontend/e2e/
 | H-38l | Bookings integrations shortcut (My tab) | Connected user with upcoming bookings on My tab | Gear icon beside "See all" → `/profile/connected-clubs?tab=integrations` with Integrations subtab active; "See all" still opens Bookings subtab |
 | H-58 | My tab list view | My tab → tap List in calendar header (list icon + label) | Calendar grid collapses to header row; UpcomingGamesList sections; preference persists after reload |
 | H-59 | My tab games calendar view | Tap Calendar in collapsed calendar header | Calendar grid expands; day selection works as before |
+| H-64 | Calendar weather toggle | My tab calendar → tap cloud/sun icon in header | Icon highlights; day cells show weather pill (icon + temp) instead of entity-type pill where forecast exists; date select/filter unchanged |
+| H-65 | Calendar weather toggle off | With weather mode on → tap cloud/sun again | Entity-type pills return; weather pills hidden |
+| H-66 | Calendar weather toggle disabled | User without selected city | Cloud/sun control disabled; no weather requests; entity-type pills unchanged |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
 ---
@@ -317,6 +321,7 @@ Frontend/e2e/
 | F-01 | Calendar view default | Open Find | Calendar + games |
 | F-02 | List view | Tap List in Find calendar header | Calendar collapses; upcoming games from today grouped by date |
 | F-03 | List → calendar | Tap Calendar in collapsed header | Calendar expands; day-filtered games |
+| F-45 | Find calendar weather toggle | Find calendar → tap cloud/sun icon | Weather pills on forecast days replace entity-type pills; filters and day selection unchanged |
 | F-04 | Month calendar expand | Open month picker | Range changes |
 | F-05 | Go to today | Header action | Jumps to current date |
 | F-06 | Desktop calendar split | `@desktop` | Split layout |

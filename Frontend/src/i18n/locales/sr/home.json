@@ -25,6 +25,7 @@
     "loadMore": "Učitaj više",
     "noPastGames": "Nema prošlih igara",
     "noGames": "Još uvek nemate igara",
+    "noGamesOnSelectedDate": "Nema igara na ovaj datum",
     "upcomingGames": "Predstojeće igre",
     "staleGamesTitle": "Dogovoreno vreme je prošlo — igra nije odigrana",
     "staleGamesHint": "Organizator može da otkaže igru ili zakaže novi termin.",

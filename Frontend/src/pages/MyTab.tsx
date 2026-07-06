@@ -211,6 +211,14 @@ export const MyTab = () => {
       : upcomingGamesForCalendar;
   const gamesSectionLoading =
     loading || (myGamesViewMode === 'calendar' && loadingPastInRange);
+  const selectedDateEmptyHint =
+    myGamesViewMode === 'calendar' &&
+    myGamesSelectedDate &&
+    !gamesSectionLoading &&
+    myGamesForSelectedDate.filter((g) => g.entityType !== 'LEAGUE_SEASON').length === 0 &&
+    gamesSectionUpcoming.length > 0
+      ? t('home.noGamesOnSelectedDate')
+      : undefined;
   const useDesktopCalendarSplit = hasUpcomingGames || loading;
   const handleCalendarDateRangeChange = useCallback(
     async (start: Date, end: Date) => {
@@ -250,6 +258,7 @@ export const MyTab = () => {
     availableGames: calendarMergedGames,
     onDateRangeChange: handleCalendarDateRangeChange,
     collapsed: upcomingsCollapsed,
+    selectedDateEmptyHint,
     upcomingsToggle: {
       active: upcomingsCollapsed,
       onClick: handleUpcomingsToggle,

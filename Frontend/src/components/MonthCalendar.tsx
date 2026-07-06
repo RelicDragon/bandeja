@@ -23,6 +23,10 @@ import {
   passesFindHideBarGamesFilter,
   passesFindSuitableRatingFilter,
 } from '@/utils/findAvailabilityFilters';
+import { useMonthCalendarWeather } from '@/hooks/useMonthCalendarWeather';
+import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
+import { MonthCalendarWeatherToggle } from '@/components/MonthCalendarWeatherToggle';
+import { resolveCalendarDayPillVisibility } from '@/utils/calendarDayPillVisibility';
 
 type DisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
 
@@ -113,6 +117,7 @@ export const MonthCalendar = ({
     : { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
   const [slideDirection, setSlideDirection] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
+  const [weatherMode, setWeatherMode] = useState(false);
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
   const calendarRef = useRef<HTMLDivElement>(null);
 
@@ -298,19 +303,42 @@ export const MonthCalendar = ({
     }
   }, [startDate, endDate, onDateRangeChange]);
 
-  const calendarDays = [];
-  let day = startDate;
-  while (day <= endDate) {
-    calendarDays.push(day);
-    day = addDays(day, 1);
-  }
+  const calendarDays = useMemo(() => {
+    const days: Date[] = [];
+    let cursor = startDate;
+    while (cursor <= endDate) {
+      days.push(cursor);
+      cursor = addDays(cursor, 1);
+    }
+    return days;
+  }, [startDate, endDate]);
+
+  const calendarDayKeys = useMemo(
+    () => calendarDays.map((calendarDay) => format(startOfDay(calendarDay), 'yyyy-MM-dd')),
+    [calendarDays],
+  );
+  const isCompactUpcomings = collapsed && Boolean(upcomingsToggle);
+  const userCityId = user?.currentCity?.id || user?.currentCityId || null;
+  const userCityTimezone = user?.currentCity?.timezone ?? null;
+  const weatherToggleDisabled = !userCityId;
+  const weatherFetchEnabled = weatherMode && !isCompactUpcomings;
+  const { weatherByDay } = useMonthCalendarWeather(
+    userCityId,
+    calendarDayKeys,
+    weatherFetchEnabled,
+    userCityTimezone,
+  );
+
+  useEffect(() => {
+    if (weatherToggleDisabled && weatherMode) {
+      setWeatherMode(false);
+    }
+  }, [weatherToggleDisabled, weatherMode]);
 
   const weekDays = [];
   for (let i = 0; i < 7; i++) {
     weekDays.push(formatShortWeekday(addDays(startDate, i), displaySettings.locale));
   }
-
-  const isCompactUpcomings = collapsed && Boolean(upcomingsToggle);
 
   return (
     <motion.div
@@ -328,9 +356,9 @@ export const MonthCalendar = ({
         className={`flex items-center transition-[margin,padding] duration-300 ease-in-out motion-reduce:transition-none ${
           upcomingsToggle
             ? collapsed
-              ? 'justify-center'
+              ? 'justify-between gap-2'
               : 'mb-4 justify-between gap-3'
-            : 'mb-4 justify-between'
+            : 'mb-4 justify-between gap-2'
         }`}
       >
         {upcomingsToggle ? (
@@ -401,68 +429,94 @@ export const MonthCalendar = ({
                 </motion.h3>
               </AnimatePresence>
             </div>
-            <button
-              type="button"
-              onClick={handleNextMonth}
-              className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <ChevronRight size={20} className="text-gray-700 dark:text-gray-300" />
-            </button>
+            <div className="flex items-center gap-0.5">
+              <MonthCalendarWeatherToggle
+                active={weatherMode}
+                disabled={weatherToggleDisabled}
+                onClick={() => setWeatherMode((prev) => !prev)}
+              />
+              <button
+                type="button"
+                onClick={handleNextMonth}
+                className="rounded-lg p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <ChevronRight size={20} className="text-gray-700 dark:text-gray-300" />
+              </button>
+            </div>
           </>
         )}
         {upcomingsToggle ? (
-          <motion.button
-            layout
-            type="button"
-            onClick={upcomingsToggle.onClick}
-            aria-label={
-              upcomingsToggle.active
-                ? t('games.calendar')
-                : upcomingsToggle.label
-            }
-            transition={headerTransition}
-            className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
-              isCompactUpcomings ? 'px-3 py-1' : 'px-2.5 py-1.5'
-            }`}
-          >
-            <span className="relative inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center">
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span
-                  key={upcomingsToggle.active ? 'calendar-icon' : 'list-icon'}
-                  initial={{ opacity: 0, scale: 0.85, y: 3 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.85, y: -3 }}
-                  transition={headerTransition}
-                  className="absolute inset-0 flex items-center justify-center"
-                >
-                  {upcomingsToggle.active ? (
-                    <Calendar size={18} strokeWidth={2} aria-hidden />
-                  ) : (
-                    <List size={18} strokeWidth={2} aria-hidden />
-                  )}
-                </motion.span>
-              </AnimatePresence>
-            </span>
-            <span className="relative min-w-0 overflow-hidden">
-              <AnimatePresence mode="popLayout" initial={false}>
-                <motion.span
-                  key={upcomingsToggle.active ? 'calendar-label' : 'upcomings-label'}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  transition={headerTransition}
-                  className="flex items-center gap-1"
-                >
-                  {upcomingsToggle.active
+          <>
+            {collapsed ? (
+              <MonthCalendarWeatherToggle
+                active={weatherMode}
+                compact
+                disabled={weatherToggleDisabled}
+                onClick={() => setWeatherMode((prev) => !prev)}
+              />
+            ) : null}
+            <div className="flex shrink-0 items-center gap-0.5">
+              {!collapsed ? (
+                <MonthCalendarWeatherToggle
+                  active={weatherMode}
+                  disabled={weatherToggleDisabled}
+                  onClick={() => setWeatherMode((prev) => !prev)}
+                />
+              ) : null}
+              <motion.button
+                layout
+                type="button"
+                onClick={upcomingsToggle.onClick}
+                aria-label={
+                  upcomingsToggle.active
                     ? t('games.calendar')
-                    : upcomingsToggle.label}
-                  {upcomingsToggle.active ? (
-                    <ChevronRight size={16} strokeWidth={2} aria-hidden />
-                  ) : null}
-                </motion.span>
-              </AnimatePresence>
-            </span>
-          </motion.button>
+                    : upcomingsToggle.label
+                }
+                transition={headerTransition}
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 ${
+                  isCompactUpcomings ? 'px-3 py-1' : 'px-2.5 py-1.5'
+                }`}
+              >
+                <span className="relative inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span
+                      key={upcomingsToggle.active ? 'calendar-icon' : 'list-icon'}
+                      initial={{ opacity: 0, scale: 0.85, y: 3 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.85, y: -3 }}
+                      transition={headerTransition}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      {upcomingsToggle.active ? (
+                        <Calendar size={18} strokeWidth={2} aria-hidden />
+                      ) : (
+                        <List size={18} strokeWidth={2} aria-hidden />
+                      )}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+                <span className="relative min-w-0 overflow-hidden">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    <motion.span
+                      key={upcomingsToggle.active ? 'calendar-label' : 'upcomings-label'}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={headerTransition}
+                      className="flex items-center gap-1"
+                    >
+                      {upcomingsToggle.active
+                        ? t('games.calendar')
+                        : upcomingsToggle.label}
+                      {upcomingsToggle.active ? (
+                        <ChevronRight size={16} strokeWidth={2} aria-hidden />
+                      ) : null}
+                    </motion.span>
+                  </AnimatePresence>
+                </span>
+              </motion.button>
+            </div>
+          </>
         ) : null}
       </motion.div>
 
@@ -510,9 +564,15 @@ export const MonthCalendar = ({
           const hasGames = gameCount > 0;
           const isParticipant = dayData.isUserParticipant;
           const participantTypes = PILL_ENTITY_ORDER.filter(t => dayData.participantEntityTypes.has(t));
-          const showParticipantPill = noEntityFilter && isParticipant && participantTypes.length > 0;
           const typePillTypes = PILL_ENTITY_ORDER.filter(t => dayData.entityTypes.has(t));
-          const showTypePill = hasGames && typePillTypes.length > 0;
+          const dayWeather = weatherByDay.get(dateStr) ?? null;
+          const { showWeatherPill, showTypePill } = resolveCalendarDayPillVisibility({
+            weatherMode,
+            hasGames,
+            typePillCount: typePillTypes.length,
+            dayWeather,
+          });
+          const showParticipantPill = noEntityFilter && isParticipant && participantTypes.length > 0;
 
           return (
             <button
@@ -574,6 +634,14 @@ export const MonthCalendar = ({
                   {gameCount}
                 </motion.span>
               )}
+              {showWeatherPill && dayWeather ? (
+                <MonthCalendarWeatherPill
+                  weather={dayWeather}
+                  locale={displaySettings.locale}
+                  muted={!isCurrentMonth}
+                  selected={isSelected}
+                />
+              ) : null}
               {showTypePill && (
                 <span className={`
                   absolute -bottom-1.5 left-1/2 -translate-x-1/2
@@ -589,7 +657,7 @@ export const MonthCalendar = ({
                   })}
                 </span>
               )}
-              {showParticipantPill && !showTypePill && (
+              {showParticipantPill && !showTypePill && !showWeatherPill && (
                 <span className={`
                   absolute -bottom-1.5 left-1/2 -translate-x-1/2
                   inline-flex items-center justify-center

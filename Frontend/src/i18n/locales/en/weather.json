@@ -27,6 +27,9 @@
     "updatedMinutes": "Updated {{count}} min ago",
     "updatedHours": "Updated {{count}} hr ago",
     "windSpeed": "{{speed}} km/h",
+    "calendarToggle": "Show weather on calendar",
+    "calendarToggleActive": "Hide weather on calendar",
+    "calendarToggleUnavailable": "Weather unavailable without a selected city",
     "conditions": {
       "clear": "Clear",
       "mainly_clear": "Mostly clear",

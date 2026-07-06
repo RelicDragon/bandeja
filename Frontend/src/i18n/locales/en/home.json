@@ -25,6 +25,7 @@
     "loadMore": "Load More",
     "noPastGames": "No past games",
     "noGames": "You don't have any games yet",
+    "noGamesOnSelectedDate": "No games on this date",
     "upcomingGames": "Upcoming games",
     "staleGamesTitle": "Scheduled time has passed — game was not played",
     "staleGamesHint": "The organizer can cancel this listing or set a new date.",
