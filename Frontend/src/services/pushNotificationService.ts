@@ -369,6 +369,8 @@ class PushNotificationService {
       case 'GAME_SYSTEM_MESSAGE':
       case 'GAME_REMINDER':
       case 'GAME_RESULTS':
+      case 'GAME_CANCELLED':
+      case 'MATCH_TIMER_CAP':
       case 'NEW_GAME':
         if (this.tryNavigateToBracketSchedule(payload)) {
           break;

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { addHours, format } from 'date-fns';
 import { useTranslation } from 'react-i18next';
-import { Save, Edit3, CalendarClock, Banknote, Loader2 } from 'lucide-react';
+import { Save, Edit3, CalendarClock, Banknote, Loader2, Settings } from 'lucide-react';
 import { Game, Club, Court, PriceType, PriceCurrency } from '@/types';
 import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import { gamesApi, courtsApi, mediaApi } from '@/api';
@@ -25,6 +25,7 @@ import {
   type EditLocationTimeDraft,
 } from '@/components/gameLocationTime/locationTimeDraft';
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
+import { GameSettings } from './GameSettings';
 import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTimeDuration';
 import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
@@ -43,7 +44,7 @@ import { courtMatchesSportFilter } from '@/utils/courtSport';
 import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
 import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-export type EditGameInfoTabId = 'general' | 'locationTime' | 'price';
+export type EditGameInfoTabId = 'general' | 'locationTime' | 'price' | 'settings';
 export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
 
 interface EditGameInfoModalProps {
@@ -53,6 +54,8 @@ interface EditGameInfoModalProps {
   clubs: Club[];
   courts: Court[];
   initialTab?: EditGameInfoInitialTabId;
+  /** Owner/admin with results still open — mirrors shell `canViewSettings`. */
+  canEditSettings?: boolean;
   onGameUpdate?: (game: Game) => void;
   onCourtsChange?: (courts: Court[]) => void;
 }
@@ -61,6 +64,7 @@ const TABS = [
   { id: 'general' as const, icon: Edit3 },
   { id: 'locationTime' as const, icon: CalendarClock },
   { id: 'price' as const, icon: Banknote },
+  { id: 'settings' as const, icon: Settings },
 ];
 
 function getInitialGeneralState(game: Game): GeneralTabState {
@@ -96,6 +100,7 @@ export const EditGameInfoModal = ({
   clubs,
   courts,
   initialTab: initialTabProp = 'general',
+  canEditSettings = true,
   onGameUpdate,
   onCourtsChange,
 }: EditGameInfoModalProps) => {
@@ -177,6 +182,33 @@ export const EditGameInfoModal = ({
     [game.startTime, game.endTime]
   );
 
+  const openInitRef = useRef({
+    initialTab,
+    game,
+    userCurrency,
+    courts,
+    whenInitialValues,
+  });
+  openInitRef.current = { initialTab, game, userCurrency, courts, whenInitialValues };
+
+  const segmentedTabs = useMemo(() => {
+    const tabs = canEditSettings && onGameUpdate ? TABS : TABS.filter((tab) => tab.id !== 'settings');
+    return tabs.map((tab) => ({ id: tab.id, label: t(`gameDetails.editTab.${tab.id}`), icon: tab.icon }));
+  }, [canEditSettings, onGameUpdate, t]);
+
+  const handleSettingsGameUpdate = useCallback(
+    (updated: Game) => {
+      onGameUpdate?.(updated);
+    },
+    [onGameUpdate],
+  );
+
+  useEffect(() => {
+    if (activeTab === 'settings' && (!canEditSettings || !onGameUpdate)) {
+      setActiveTab('general');
+    }
+  }, [activeTab, canEditSettings, onGameUpdate]);
+
   const {
     selectedDate: hookDate,
     setSelectedDate: setHookDate,
@@ -199,20 +231,33 @@ export const EditGameInfoModal = ({
 
   useEffect(() => {
     if (isOpen && !prevIsOpenRef.current) {
-      setActiveTab(initialTab);
-      setGeneral(getInitialGeneralState(game));
-      setWhere(getInitialWhereState(game));
-      setPrice(getInitialPriceState(game, userCurrency));
-      setWhenSelectedDate(whenInitialValues.initialDate);
-      setWhenSelectedTime(whenInitialValues.initialTime);
-      setWhenDuration(whenInitialValues.initialDuration);
-      setHookDate(whenInitialValues.initialDate);
-      setHookTime(whenInitialValues.initialTime);
-      setHookDuration(whenInitialValues.initialDuration);
+      const {
+        initialTab: tab,
+        game: openGame,
+        userCurrency: currency,
+        courts: courtsList,
+        whenInitialValues: when,
+      } = openInitRef.current;
+      const resolvedTab =
+        tab === 'settings' && (!canEditSettings || !onGameUpdate) ? 'general' : tab;
+      setActiveTab(resolvedTab);
+      setGeneral(getInitialGeneralState(openGame));
+      setWhere(getInitialWhereState(openGame));
+      setPrice(getInitialPriceState(openGame, currency));
+      setWhenSelectedDate(when.initialDate);
+      setWhenSelectedTime(when.initialTime);
+      setWhenDuration(when.initialDuration);
+      setHookDate(when.initialDate);
+      setHookTime(when.initialTime);
+      setHookDuration(when.initialDuration);
       setDisableWhenAutoAdjust(true);
-      setModalCourts(game.clubId && courts.length > 0 && courts[0]?.clubId === game.clubId ? courts : []);
+      setModalCourts(
+        openGame.clubId && courtsList.length > 0 && courtsList[0]?.clubId === openGame.clubId
+          ? courtsList
+          : [],
+      );
       setSelectedCourtIds(
-        game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : []),
+        openGame.gameCourts?.map((gc) => gc.courtId) ?? (openGame.courtId ? [openGame.courtId] : []),
       );
       setPendingRemoveBookingIds([]);
       setLocationTimeDraft(null);
@@ -221,20 +266,7 @@ export const EditGameInfoModal = ({
       setTimeout(() => setDisableWhenAutoAdjust(false), 200);
     }
     prevIsOpenRef.current = isOpen;
-  }, [
-    isOpen,
-    initialTab,
-    game,
-    userCurrency,
-    whenInitialValues.initialDate,
-    whenInitialValues.initialTime,
-    whenInitialValues.initialDuration,
-    game.clubId,
-    courts,
-    setHookDate,
-    setHookTime,
-    setHookDuration,
-  ]);
+  }, [isOpen, canEditSettings, onGameUpdate, setHookDate, setHookTime, setHookDuration]);
 
   useEffect(() => {
     if (!disableWhenAutoAdjust) {
@@ -701,7 +733,7 @@ export const EditGameInfoModal = ({
         <DialogHeader className="flex-col items-start gap-3 pt-10 pr-10">
           <DialogTitle className="sr-only">{t('common.edit')}</DialogTitle>
           <SegmentedSwitch
-            tabs={TABS.map((tab) => ({ id: tab.id, label: t(`gameDetails.editTab.${tab.id}`), icon: tab.icon }))}
+            tabs={segmentedTabs}
             activeId={activeTab}
             onChange={(id) => setActiveTab(id as EditGameInfoTabId)}
             showOnlyActiveTabText={true}
@@ -801,7 +833,16 @@ export const EditGameInfoModal = ({
           {activeTab === 'price' && (
             <PriceTab state={price} onChange={(patch) => setPrice((s) => ({ ...s, ...patch }))} />
           )}
+          {activeTab === 'settings' && onGameUpdate && canEditSettings && (
+            <GameSettings
+              game={game}
+              canEdit={canEditSettings}
+              embedded
+              onGameUpdate={handleSettingsGameUpdate}
+            />
+          )}
         </div>
+        {activeTab !== 'settings' ? (
         <DialogFooter className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
           <button
             type="button"
@@ -826,6 +867,17 @@ export const EditGameInfoModal = ({
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
         </DialogFooter>
+        ) : (
+          <div className="flex justify-end p-6 border-t border-gray-200 dark:border-gray-800">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              {t('common.close')}
+            </button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
 

@@ -43,6 +43,7 @@ export function StoriesRail() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerBubbleIndex, setViewerBubbleIndex] = useState(0);
   const [viewerSegmentKey, setViewerSegmentKey] = useState<string | null>(null);
+  const [viewerSessionId, setViewerSessionId] = useState(0);
   const offline = typeof navigator !== 'undefined' && !navigator.onLine;
 
   const bubbles = useMemo(() => feed?.bubbles ?? [], [feed?.bubbles]);
@@ -62,6 +63,7 @@ export function StoriesRail() {
   const openViewerAt = useCallback((bubbleIndex: number, segmentKey?: string | null) => {
     setViewerBubbleIndex(bubbleIndex);
     setViewerSegmentKey(segmentKey ?? null);
+    setViewerSessionId((id) => id + 1);
     setViewerOpen(true);
   }, []);
 
@@ -236,6 +238,7 @@ export function StoriesRail() {
         />
       ) : null}
       <StoriesViewer
+        key={viewerSessionId}
         open={viewerOpen}
         bubbles={viewerBubbles}
         initialBubbleIndex={viewerBubbleIndex}

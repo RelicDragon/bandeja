@@ -64,7 +64,6 @@ interface GameInfoProps {
   isGuest: boolean;
   courts: any[];
   canEdit: boolean;
-  isEditMode: boolean;
   onToggleFavorite: () => void;
   onEditCourt: () => void;
   onOpenEditGameInfo?: (initialTab?: EditGameInfoInitialTabId) => void;
@@ -81,7 +80,6 @@ export const GameInfo = ({
   isGuest,
   courts,
   canEdit,
-  isEditMode,
   onToggleFavorite,
   onEditCourt,
   onOpenEditGameInfo,
@@ -820,7 +818,7 @@ export const GameInfo = ({
               <InfoIconChip>
                 <Calendar size={18} />
               </InfoIconChip>
-              {canEdit && canShowEdit && !isEditMode ? (
+              {canEdit && canShowEdit ? (
                 <button
                   onClick={() => onOpenEditGameInfo?.('locationTime')}
                   className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer text-gray-500 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 italic"
@@ -839,7 +837,7 @@ export const GameInfo = ({
                     {renderCalendarIcon(18, 'text-primary-600 dark:text-primary-400')}
                   </InfoIconChip>
                   <div className="whitespace-nowrap">
-                    {canEdit && canShowEdit && !isEditMode ? (
+                    {canEdit && canShowEdit ? (
                       <button
                         onClick={() => onOpenEditGameInfo?.('locationTime')}
                         className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
@@ -866,7 +864,7 @@ export const GameInfo = ({
                     />
                   </InfoIconChip>
                   <div>
-                    {canEdit && canShowEdit && !isEditMode ? (
+                    {canEdit && canShowEdit ? (
                       <button
                         onClick={() => onOpenEditGameInfo?.('locationTime')}
                         className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer whitespace-nowrap"
@@ -896,7 +894,7 @@ export const GameInfo = ({
                 {renderCalendarIcon(18, 'text-primary-600 dark:text-primary-400')}
               </InfoIconChip>
               <div className="flex-1">
-                {canEdit && canShowEdit && !isEditMode ? (
+                {canEdit && canShowEdit ? (
                   <button
                     onClick={() => onOpenEditGameInfo?.('locationTime')}
                     className="flex flex-col text-left font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"
@@ -930,7 +928,7 @@ export const GameInfo = ({
               </InfoIconChip>
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  {canEdit && canShowEdit && !isEditMode ? (
+                  {canEdit && canShowEdit ? (
                     <button
                       onClick={() => onOpenEditGameInfo?.('locationTime')}
                       className="font-medium hover:text-primary-600 dark:hover:text-primary-400 transition-colors cursor-pointer"

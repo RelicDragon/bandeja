@@ -12,6 +12,9 @@
     "clubNotSet": "Club is not set",
     "yourTime": "Your time: {{time}}",
     "settingsUpdated": "Settings updated successfully",
+    "settings": {
+      "saveFailed": "Could not save this setting"
+    },
     "scrollMoreBelow": "More content below",
     "scrollMoreAbove": "More content above",
     "participantsOnlyChat": {
@@ -31,6 +34,7 @@
       "where": "Where",
       "locationTime": "Location & time",
       "price": "Price",
+      "settings": "Settings",
       "eraseTime": "Erase time"
     },
     "locationTime": {

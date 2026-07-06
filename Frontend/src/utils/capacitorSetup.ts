@@ -11,6 +11,7 @@ import {
   computeKeyboardInsetPx,
   isInsideKeyboardManagedSurface,
   isKeyboardLikelyVisible,
+  isSelfLiftingKeyboardBottomPanel,
   resolveKeyboardLayoutMode,
 } from './keyboardLayout';
 import { getKeyboardState, publishKeyboardState } from './keyboardState';
@@ -141,6 +142,7 @@ const scrollInputIntoViewIfAble = (el: HTMLElement | null) => {
   if (!el || !el.isConnected) return;
   const smooth = !prefersReducedMotion();
   if (isInsideChatComposerFooter(el)) return;
+  if (isSelfLiftingKeyboardBottomPanel(el)) return;
   if (isInsideKeyboardManagedSurface(el)) {
     // Surface already lifted above the keyboard; local scroll is enough.
     el.scrollIntoView({

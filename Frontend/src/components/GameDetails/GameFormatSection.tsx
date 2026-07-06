@@ -29,11 +29,9 @@ interface GameFormatSectionProps {
   game: Game;
   canEdit: boolean;
   onGameUpdate: (game: Game) => void;
-  /** Hide allow-multi on format card while Settings edit mode uses the draft (single control). */
-  suppressAllowMultiToggle?: boolean;
 }
 
-export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMultiToggle }: GameFormatSectionProps) => {
+export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSectionProps) => {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const sport = parseGameSport(game.sport);
@@ -277,7 +275,6 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate, suppressAllowMu
       }
       teams={teamsForCard}
       showFixedTeamsToggle={false}
-      suppressAllowMultiToggle={suppressAllowMultiToggle}
     />
   );
 

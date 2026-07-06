@@ -23,6 +23,7 @@ import { runWithProfileName } from '@/utils/runWithProfileName';
 import { maxLeagueSeasonParticipantsCap } from '@/utils/userMaxParticipantsInGame';
 import type { Sport } from '@/sport/sportRegistry';
 import { listCreateFlowSports, resolveCreateGameDefaultSport } from '@/utils/profileSports';
+import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
 import { CreateFlowSportSelector } from '@/components/createGame/CreateFlowSportSelector';
 
 export const CreateLeague = () => {
@@ -109,6 +110,19 @@ export const CreateLeague = () => {
     };
     fetchClubs();
   }, [selectedCityId]);
+
+  const clubsForSport = useMemo(
+    () => filterClubsBySport(clubs, selectedSport, selectedClubId || undefined),
+    [clubs, selectedSport, selectedClubId],
+  );
+
+  useEffect(() => {
+    if (!selectedClubId) return;
+    const club = clubs.find((c) => c.id === selectedClubId);
+    if (club && !clubSupportsSport(club, selectedSport)) {
+      setSelectedClubId('');
+    }
+  }, [selectedSport, selectedClubId, clubs]);
 
   useBackButtonHandler(() => {
     navigate('/', { replace: true });
@@ -229,7 +243,7 @@ export const CreateLeague = () => {
 
           <LeagueLocationSection
             cities={cities}
-            clubs={clubs}
+            clubs={clubsForSport}
             selectedCityId={selectedCityId}
             selectedClubId={selectedClubId}
             isCityModalOpen={isCityModalOpen}

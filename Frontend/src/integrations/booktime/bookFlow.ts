@@ -13,6 +13,7 @@ import {
 import { getBooktimeExternalUserId } from './session';
 import { formatBooktimeErrorMessage } from './formatBooktimeErrorMessage';
 import { BOOKING_ERROR_KEYS } from '@shared/booking/errorKeys';
+import { unlinkBookingFromLinkedGames, fetchLinkedGameIdsForBooking } from '@/services/gameBooking/unlinkBookingFromLinkedGames';
 
 export type BooktimePendingBooking = {
   clubId: string;
@@ -190,6 +191,18 @@ export async function cancelBooktimeBooking(
   bookingId: string,
   refreshSnapshot: (options?: { force?: boolean }) => Promise<boolean>
 ): Promise<void> {
+  const linkedGameIds = await fetchLinkedGameIdsForBooking(bookingId).catch((error) => {
+    console.error('Failed to resolve linked games before booking cancel', { bookingId, error });
+    return [];
+  });
+
   await client.cancelBooking(bookingId);
+
+  try {
+    await unlinkBookingFromLinkedGames(bookingId, linkedGameIds);
+  } catch (error) {
+    console.error('Failed to unlink cancelled booking from linked games', { bookingId, error });
+  }
+
   await refreshSnapshot({ force: true });
 }

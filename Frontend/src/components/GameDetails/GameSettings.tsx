@@ -1,486 +1,389 @@
-import { Card, Divider, AvatarUpload } from '@/components';
-import { Game, Club, GenderTeam } from '@/types';
-import { Settings, Edit3, Save, X, HelpCircle } from 'lucide-react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Card, ToggleSwitch } from '@/components';
+import { Game } from '@/types';
+import { Settings, HelpCircle, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
-import { mediaApi } from '@/api/media';
-import { gamesApi } from '@/api';
+import { gamesApi, normalizeGameFromApi } from '@/api';
 import toast from 'react-hot-toast';
 
 interface GameSettingsProps {
   game: Game;
-  clubs: Club[];
-  courts: any[];
-  isEditMode: boolean;
-  isClosingEditMode: boolean;
   canEdit: boolean;
-  editFormData: {
-    clubId: string;
-    courtId: string;
-    name: string;
-    isPublic: boolean;
-    affectsRating: boolean;
-    anyoneCanInvite: boolean;
-    resultsByAnyone: boolean;
-    allowDirectJoin: boolean;
-    hasBookedCourt: boolean;
-    afterGameGoToBar: boolean;
-    hasFixedTeams: boolean;
-    allowUserInMultipleTeams: boolean;
-    genderTeams: GenderTeam;
-    description: string;
-  };
-  onEditModeToggle: () => void;
-  onSaveChanges: () => void;
-  onFormDataChange: (data: Partial<GameSettingsProps['editFormData']>) => void;
-  onOpenClubModal: () => void;
-  onOpenCourtModal: () => void;
-  onGameUpdate?: (game: Game) => void;
+  onGameUpdate: (game: Game) => void;
+  /** Inside EditGameInfoModal — no outer card/title chrome. */
+  embedded?: boolean;
 }
 
-const ToggleSwitch = ({ checked, onChange, disabled }: { checked: boolean; onChange: (checked: boolean) => void; disabled?: boolean }) => (
-  <button
-    type="button"
-    disabled={disabled}
-    onClick={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!disabled) onChange(!checked);
-    }}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-      disabled ? 'opacity-50 cursor-not-allowed' : ''
-    } ${
-      checked ? 'bg-primary-600' : 'bg-gray-300 dark:bg-gray-600'
-    }`}
-  >
-    <span
-      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-        checked ? 'translate-x-6' : 'translate-x-1'
-      }`}
-    />
-  </button>
-);
+type SettingKey =
+  | 'affectsRating'
+  | 'isPublic'
+  | 'anyoneCanInvite'
+  | 'resultsByAnyone'
+  | 'allowDirectJoin'
+  | 'afterGameGoToBar';
 
-export const GameSettings = ({
-  game,
-  isEditMode,
-  isClosingEditMode,
-  canEdit,
-  editFormData,
-  onEditModeToggle,
-  onSaveChanges,
-  onFormDataChange,
-  onGameUpdate,
-}: GameSettingsProps) => {
+const ERROR_CLEAR_MS = 5000;
+const SUCCESS_SHOW_MS = 1000;
+
+function readSetting(game: Game, key: SettingKey): boolean {
+  return game[key] ?? false;
+}
+
+interface SettingToggleRowProps {
+  title: string;
+  checked: boolean;
+  hasError: boolean;
+  showSuccess: boolean;
+  disabled: boolean;
+  note?: ReactNode;
+  onChange: (checked: boolean) => void;
+}
+
+function SettingToggleRow({
+  title,
+  checked,
+  hasError,
+  showSuccess,
+  disabled,
+  note,
+  onChange,
+}: SettingToggleRowProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div
+      className={`px-1 py-1 rounded-lg transition-colors ${
+        hasError
+          ? 'bg-red-50 dark:bg-red-950/25 ring-1 ring-red-300 dark:ring-red-800/80'
+          : 'bg-gray-50 dark:bg-gray-800/50'
+      }`}
+    >
+      <div className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1">
+        <span
+          className={`text-sm font-medium min-w-0 col-start-1 row-start-1 ${
+            hasError ? 'text-red-800 dark:text-red-200' : 'text-gray-800 dark:text-gray-200'
+          }`}
+        >
+          {title}
+        </span>
+        <div className="relative col-start-2 row-start-1 flex-shrink-0 self-center pr-1">
+          <ToggleSwitch checked={checked} onChange={onChange} disabled={disabled} />
+          <AnimatePresence>
+            {showSuccess ? (
+              <motion.span
+                key="saved"
+                initial={{ opacity: 0, scale: 0.4 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.4 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className="pointer-events-none absolute -right-0.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-green-500 text-white shadow-md ring-2 ring-white dark:ring-gray-900"
+                aria-hidden
+              >
+                <Check size={11} strokeWidth={3} />
+              </motion.span>
+            ) : null}
+          </AnimatePresence>
+        </div>
+        <AnimatePresence initial={false}>
+          {hasError ? (
+            <motion.p
+              key="error"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: 'easeInOut' }}
+              className="col-start-1 row-start-2 min-w-0 overflow-hidden text-xs text-red-600 dark:text-red-400"
+            >
+              {t('gameDetails.settings.saveFailed')}
+            </motion.p>
+          ) : note ? (
+            <motion.div
+              key="note"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.22, ease: 'easeInOut' }}
+              className="col-start-1 row-start-2 min-w-0 overflow-hidden"
+            >
+              {note}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: GameSettingsProps) => {
   const { t } = useTranslation();
   const { showNotes, toggleShowNotes } = useShowSettingsNotes();
-  const isLeagueSeason = game?.entityType === 'LEAGUE_SEASON';
-  const isTraining = game?.entityType === 'TRAINING';
+  const [optimistic, setOptimistic] = useState<Partial<Record<SettingKey, boolean>>>({});
+  const [errorFields, setErrorFields] = useState<Set<SettingKey>>(() => new Set());
+  const [successFields, setSuccessFields] = useState<Set<SettingKey>>(() => new Set());
+  const isLeagueSeason = game.entityType === 'LEAGUE_SEASON';
+  const isTraining = game.entityType === 'TRAINING';
   const settingsTitle = t(isLeagueSeason ? 'createGame.settingsLeague' : 'createGame.settings');
-  const avatarLabel = t(isLeagueSeason ? 'createLeague.seasonAvatar' : 'gameDetails.gameAvatar');
-  const nameLabel = t(
-    isLeagueSeason ? 'createGame.gameNameLeague' :
-    isTraining ? 'createGame.gameNameTraining' :
-    'createGame.gameName'
+  const canChangeSettings = canEdit && game.resultsStatus === 'NONE' && game.status !== 'ARCHIVED';
+
+  useEffect(() => {
+    setOptimistic((prev) => {
+      if (Object.keys(prev).length === 0) return prev;
+      const next = { ...prev };
+      let changed = false;
+      for (const key of Object.keys(prev) as SettingKey[]) {
+        if (prev[key] === readSetting(game, key)) {
+          delete next[key];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [game]);
+
+  const getChecked = useCallback(
+    (key: SettingKey) => (key in optimistic ? optimistic[key]! : readSetting(game, key)),
+    [game, optimistic],
   );
-  const namePlaceholder = t(
-    isLeagueSeason ? 'createGame.gameNamePlaceholderLeague' :
-    isTraining ? 'createGame.gameNamePlaceholderTraining' :
-    'createGame.gameNamePlaceholder'
-  );
-  const descriptionLabel = t('createGame.description');
-  const descriptionPlaceholder = t(
-    isLeagueSeason ? 'createGame.descriptionPlaceholderLeague' :
-    isTraining ? 'createGame.descriptionPlaceholderTraining' :
-    'createGame.descriptionPlaceholder'
+
+  const markFieldError = useCallback((key: SettingKey) => {
+    setErrorFields((prev) => new Set(prev).add(key));
+    window.setTimeout(() => {
+      setErrorFields((prev) => {
+        if (!prev.has(key)) return prev;
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }, ERROR_CLEAR_MS);
+  }, []);
+
+  const markFieldSuccess = useCallback((key: SettingKey) => {
+    setSuccessFields((prev) => new Set(prev).add(key));
+    window.setTimeout(() => {
+      setSuccessFields((prev) => {
+        if (!prev.has(key)) return prev;
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+    }, SUCCESS_SHOW_MS);
+  }, []);
+
+  const persistSetting = useCallback(
+    async (key: SettingKey, checked: boolean) => {
+      if (!canChangeSettings) return;
+
+      setOptimistic((prev) => ({ ...prev, [key]: checked }));
+      setErrorFields((prev) => {
+        if (!prev.has(key)) return prev;
+        const next = new Set(prev);
+        next.delete(key);
+        return next;
+      });
+
+      try {
+        const result = await gamesApi.update(game.id, { [key]: checked });
+        onGameUpdate(normalizeGameFromApi(result.data));
+        markFieldSuccess(key);
+      } catch (error: unknown) {
+        setOptimistic((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+        markFieldError(key);
+        const err = error as { response?: { data?: { message?: string } } };
+        const errorMessage = err.response?.data?.message || 'errors.generic';
+        toast.error(t(errorMessage, { defaultValue: errorMessage }));
+      }
+    },
+    [canChangeSettings, game.id, markFieldError, markFieldSuccess, onGameUpdate, t],
   );
 
   if (!canEdit) {
     return null;
   }
 
-  const canShowEdit = game.resultsStatus === 'NONE' && game.status !== 'ARCHIVED';
+  const toggleDisabled = !canChangeSettings;
+
+  const notesToggle = (
+    <button
+      type="button"
+      onClick={toggleShowNotes}
+      className={`p-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md ${
+        showNotes
+          ? 'bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20'
+          : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'
+      }`}
+      title={showNotes ? t('common.hideNotes') : t('common.showNotes')}
+    >
+      <HelpCircle size={18} className={showNotes ? 'text-white' : 'text-gray-600 dark:text-gray-300'} />
+    </button>
+  );
+
+  const toggleList = (
+    <div className="space-y-2">
+        {!isLeagueSeason && !isTraining && game.entityType !== 'BAR' && (
+          <SettingToggleRow
+            title={t('createGame.ratingGame.title')}
+            checked={getChecked('affectsRating')}
+            hasError={errorFields.has('affectsRating')}
+            showSuccess={successFields.has('affectsRating')}
+            disabled={toggleDisabled}
+            onChange={(checked) => void persistSetting('affectsRating', checked)}
+            note={
+              showNotes ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {getChecked('affectsRating')
+                    ? t('createGame.ratingGame.note.true')
+                    : t('createGame.ratingGame.note.false')}
+                </p>
+              ) : undefined
+            }
+          />
+        )}
+
+        <SettingToggleRow
+          title={isTraining ? t('createGame.publicGame.titleTraining') : t('createGame.publicGame.title')}
+          checked={getChecked('isPublic')}
+          hasError={errorFields.has('isPublic')}
+          showSuccess={successFields.has('isPublic')}
+          disabled={toggleDisabled}
+          onChange={(checked) => void persistSetting('isPublic', checked)}
+          note={
+            showNotes ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {getChecked('isPublic')
+                  ? isTraining
+                    ? t('createGame.publicGame.noteTraining.true')
+                    : t('createGame.publicGame.note.true')
+                  : isTraining
+                    ? t('createGame.publicGame.noteTraining.false')
+                    : t('createGame.publicGame.note.false')}
+              </p>
+            ) : undefined
+          }
+        />
+
+        <SettingToggleRow
+          title={
+            isTraining ? t('createGame.anyoneCanInvite.titleTraining') : t('createGame.anyoneCanInvite.title')
+          }
+          checked={getChecked('anyoneCanInvite')}
+          hasError={errorFields.has('anyoneCanInvite')}
+          showSuccess={successFields.has('anyoneCanInvite')}
+          disabled={toggleDisabled}
+          onChange={(checked) => void persistSetting('anyoneCanInvite', checked)}
+          note={
+            showNotes ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {getChecked('anyoneCanInvite')
+                  ? isTraining
+                    ? t('createGame.anyoneCanInvite.noteTraining.true')
+                    : t('createGame.anyoneCanInvite.note.true')
+                  : isTraining
+                    ? t('createGame.anyoneCanInvite.noteTraining.false')
+                    : t('createGame.anyoneCanInvite.note.false')}
+              </p>
+            ) : undefined
+          }
+        />
+
+        {!isLeagueSeason && game.entityType !== 'TOURNAMENT' && !isTraining && (
+          <SettingToggleRow
+            title={t('createGame.resultsByAnyone.title')}
+            checked={getChecked('resultsByAnyone')}
+            hasError={errorFields.has('resultsByAnyone')}
+            showSuccess={successFields.has('resultsByAnyone')}
+            disabled={toggleDisabled}
+            onChange={(checked) => void persistSetting('resultsByAnyone', checked)}
+            note={
+              showNotes ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {getChecked('resultsByAnyone')
+                    ? t('createGame.resultsByAnyone.note.true')
+                    : t('createGame.resultsByAnyone.note.false')}
+                </p>
+              ) : undefined
+            }
+          />
+        )}
+
+        <SettingToggleRow
+          title={
+            isTraining ? t('createGame.allowDirectJoin.titleTraining') : t('createGame.allowDirectJoin.title')
+          }
+          checked={getChecked('allowDirectJoin')}
+          hasError={errorFields.has('allowDirectJoin')}
+          showSuccess={successFields.has('allowDirectJoin')}
+          disabled={toggleDisabled}
+          onChange={(checked) => void persistSetting('allowDirectJoin', checked)}
+          note={
+            showNotes ? (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {getChecked('allowDirectJoin')
+                  ? isTraining
+                    ? t('createGame.allowDirectJoin.noteTraining.true')
+                    : t('createGame.allowDirectJoin.note.true')
+                  : isTraining
+                    ? t('createGame.allowDirectJoin.noteTraining.false')
+                    : t('createGame.allowDirectJoin.note.false')}
+              </p>
+            ) : undefined
+          }
+        />
+
+        {game.entityType !== 'BAR' && (
+          <SettingToggleRow
+            title={
+              isTraining
+                ? t('createGame.afterGameGoToBar.titleTraining')
+                : t('createGame.afterGameGoToBar.title')
+            }
+            checked={getChecked('afterGameGoToBar')}
+            hasError={errorFields.has('afterGameGoToBar')}
+            showSuccess={successFields.has('afterGameGoToBar')}
+            disabled={toggleDisabled}
+            onChange={(checked) => void persistSetting('afterGameGoToBar', checked)}
+            note={
+              showNotes ? (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {getChecked('afterGameGoToBar')
+                    ? isTraining
+                      ? t('createGame.afterGameGoToBar.noteTraining.true')
+                      : t('createGame.afterGameGoToBar.note.true')
+                    : isTraining
+                      ? t('createGame.afterGameGoToBar.noteTraining.false')
+                      : t('createGame.afterGameGoToBar.note.false')}
+                </p>
+              ) : undefined
+            }
+          />
+        )}
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div>
+        <div className="flex justify-end mb-3">{notesToggle}</div>
+        {toggleList}
+      </div>
+    );
+  }
 
   return (
     <Card>
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Settings size={18} className="text-gray-500 dark:text-gray-400" />
-          <h2 className="section-title">
-            {settingsTitle}
-          </h2>
-          <button
-            onClick={toggleShowNotes}
-            className={`p-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md ${
-              showNotes
-                ? 'bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20'
-                : 'bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600'
-            }`}
-            title={showNotes ? t('common.hideNotes') : t('common.showNotes')}
-          >
-            <HelpCircle size={18} className={showNotes ? 'text-white' : 'text-gray-600 dark:text-gray-300'} />
-          </button>
+          <h2 className="section-title">{settingsTitle}</h2>
+          {notesToggle}
         </div>
-        {canEdit && canShowEdit && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onEditModeToggle}
-              className={`p-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md ${
-                isEditMode
-                  ? 'bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 border border-red-600 dark:border-red-600 shadow-red-100 dark:shadow-red-900/20 translate-x-0'
-                  : 'bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20 translate-x-10'
-              }`}
-              title={isEditMode ? t('common.cancel') : t('common.edit')}
-            >
-              <div className="relative w-[18px] h-[18px]">
-                <X
-                  size={18}
-                  className={`absolute inset-0 transition-all duration-300 ease-in-out ${
-                    isEditMode
-                      ? 'opacity-100 rotate-0 scale-100 text-white'
-                      : 'opacity-0 rotate-90 scale-75'
-                  }`}
-                />
-                <Edit3
-                  size={18}
-                  className={`absolute inset-0 transition-all duration-300 ease-in-out ${
-                    isEditMode
-                      ? 'opacity-0 -rotate-90 scale-75'
-                      : 'opacity-100 rotate-0 scale-100 text-white'
-                  }`}
-                />
-              </div>
-            </button>
-            
-            <button
-              onClick={onSaveChanges}
-              className={`p-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md shadow-green-200 dark:shadow-green-900/30 ${
-                isEditMode 
-                  ? 'bg-green-600 hover:bg-green-700 opacity-100 scale-100 translate-x-0' 
-                  : 'bg-green-600 hover:bg-green-700 opacity-0 scale-75 pointer-events-none -translate-x-10'
-              }`}
-              title={t('common.save')}
-              disabled={!isEditMode}
-            >
-              <Save size={18} className="text-white" />
-            </button>
-          </div>
-        )}
       </div>
-
-      <div className="space-y-3">
-        {/* Avatar Upload - Only show in edit mode */}
-        {(isEditMode || isClosingEditMode) && (
-          <div className={`${isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in'}`}>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-              {avatarLabel}
-            </label>
-            <div className="flex justify-center">
-              <AvatarUpload
-                currentAvatar={game.avatar || undefined}
-                isGameAvatar={true}
-                onUpload={async (avatarFile: File, originalFile: File) => {
-                  if (!game.id) return;
-                  try {
-                    await mediaApi.uploadGameAvatar(game.id, avatarFile, originalFile);
-                    const response = await gamesApi.getById(game.id);
-                    if (onGameUpdate) {
-                      onGameUpdate(response.data);
-                    }
-                    toast.success(t('gameDetails.avatarUpdated'));
-                  } catch (error: any) {
-                    const errorMessage = error.response?.data?.message || 'errors.generic';
-                    toast.error(t(errorMessage, { defaultValue: errorMessage }));
-                    throw error;
-                  }
-                }}
-                onRemove={async () => {
-                  if (!game.id) return;
-                  try {
-                    await gamesApi.update(game.id, { avatar: null, originalAvatar: null });
-                    const response = await gamesApi.getById(game.id);
-                    if (onGameUpdate) {
-                      onGameUpdate(response.data);
-                    }
-                    toast.success(t('gameDetails.avatarRemoved'));
-                  } catch (error: any) {
-                    const errorMessage = error.response?.data?.message || 'errors.generic';
-                    toast.error(t(errorMessage, { defaultValue: errorMessage }));
-                    throw error;
-                  }
-                }}
-                disabled={!isEditMode}
-              />
-            </div>
-            <Divider />
-          </div>
-        )}
-
-        {/* Boolean Settings */}
-        <div className="space-y-2">
-          {!isLeagueSeason && !isTraining && (
-            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                  {t('createGame.ratingGame.title')}
-                </span>
-                <div className="flex-shrink-0">
-                  <ToggleSwitch 
-                    checked={isEditMode ? editFormData.affectsRating : game?.affectsRating || false} 
-                    onChange={(checked) => onFormDataChange({affectsRating: checked})}
-                    disabled={!isEditMode}
-                  />
-                </div>
-              </div>
-              {showNotes && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {(() => {
-                    const affectsRating = isEditMode ? editFormData.affectsRating : (game?.affectsRating || false);
-                    return affectsRating 
-                      ? t('createGame.ratingGame.note.true')
-                      : t('createGame.ratingGame.note.false');
-                  })()}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {isTraining ? t('createGame.publicGame.titleTraining') : t('createGame.publicGame.title')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch 
-                  checked={isEditMode ? editFormData.isPublic : game?.isPublic || false} 
-                  onChange={(checked) => onFormDataChange({isPublic: checked})}
-                  disabled={!isEditMode}
-                />
-              </div>
-            </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {(() => {
-                  const isPublic = isEditMode ? editFormData.isPublic : (game?.isPublic || false);
-                  return isPublic 
-                    ? (isTraining ? t('createGame.publicGame.noteTraining.true') : t('createGame.publicGame.note.true'))
-                    : (isTraining ? t('createGame.publicGame.noteTraining.false') : t('createGame.publicGame.note.false'));
-                })()}
-              </p>
-            )}
-          </div>
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {isTraining ? t('createGame.anyoneCanInvite.titleTraining') : t('createGame.anyoneCanInvite.title')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch 
-                  checked={isEditMode ? editFormData.anyoneCanInvite : game?.anyoneCanInvite || false} 
-                  onChange={(checked) => onFormDataChange({anyoneCanInvite: checked})}
-                  disabled={!isEditMode}
-                />
-              </div>
-            </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {(() => {
-                  const anyoneCanInvite = isEditMode ? editFormData.anyoneCanInvite : (game?.anyoneCanInvite || false);
-                  return anyoneCanInvite 
-                    ? (isTraining ? t('createGame.anyoneCanInvite.noteTraining.true') : t('createGame.anyoneCanInvite.note.true'))
-                    : (isTraining ? t('createGame.anyoneCanInvite.noteTraining.false') : t('createGame.anyoneCanInvite.note.false'));
-                })()}
-              </p>
-            )}
-          </div>
-          {!isLeagueSeason && game?.entityType !== 'TOURNAMENT' && !isTraining && (
-            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                  {t('createGame.resultsByAnyone.title')}
-                </span>
-                <div className="flex-shrink-0">
-                  <ToggleSwitch 
-                    checked={isEditMode ? editFormData.resultsByAnyone : game?.resultsByAnyone || false} 
-                    onChange={(checked) => onFormDataChange({resultsByAnyone: checked})}
-                    disabled={!isEditMode}
-                  />
-                </div>
-              </div>
-              {showNotes && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {(() => {
-                    const resultsByAnyone = isEditMode ? editFormData.resultsByAnyone : (game?.resultsByAnyone || false);
-                    return resultsByAnyone 
-                      ? t('createGame.resultsByAnyone.note.true')
-                      : t('createGame.resultsByAnyone.note.false');
-                  })()}
-                </p>
-              )}
-            </div>
-          )}
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                {isTraining ? t('createGame.allowDirectJoin.titleTraining') : t('createGame.allowDirectJoin.title')}
-              </span>
-              <div className="flex-shrink-0">
-                <ToggleSwitch 
-                  checked={isEditMode ? editFormData.allowDirectJoin : (game?.allowDirectJoin ?? false)} 
-                  onChange={(checked) => onFormDataChange({allowDirectJoin: checked})}
-                  disabled={!isEditMode}
-                />
-              </div>
-            </div>
-            {showNotes && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {(() => {
-                  const allowDirectJoin = isEditMode ? editFormData.allowDirectJoin : (game?.allowDirectJoin ?? false);
-                  return allowDirectJoin 
-                    ? (isTraining ? t('createGame.allowDirectJoin.noteTraining.true') : t('createGame.allowDirectJoin.note.true'))
-                    : (isTraining ? t('createGame.allowDirectJoin.noteTraining.false') : t('createGame.allowDirectJoin.note.false'));
-                })()}
-              </p>
-            )}
-          </div>
-          {game?.entityType !== 'BAR' && (
-            <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                  {isTraining ? t('createGame.afterGameGoToBar.titleTraining') : t('createGame.afterGameGoToBar.title')}
-                </span>
-                <div className="flex-shrink-0">
-                  <ToggleSwitch
-                    checked={isEditMode ? editFormData.afterGameGoToBar : game?.afterGameGoToBar || false}
-                    onChange={(checked) => onFormDataChange({afterGameGoToBar: checked})}
-                    disabled={!isEditMode}
-                  />
-                </div>
-              </div>
-              {showNotes && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {(() => {
-                    const afterGameGoToBar = isEditMode ? editFormData.afterGameGoToBar : (game?.afterGameGoToBar || false);
-                    return afterGameGoToBar 
-                      ? (isTraining ? t('createGame.afterGameGoToBar.noteTraining.true') : t('createGame.afterGameGoToBar.note.true'))
-                      : (isTraining ? t('createGame.afterGameGoToBar.noteTraining.false') : t('createGame.afterGameGoToBar.note.false'));
-                  })()}
-                </p>
-              )}
-            </div>
-          )}
-          {!isTraining &&
-            game?.entityType !== 'BAR' &&
-            game.maxParticipants > 2 &&
-            (isEditMode ? editFormData.hasFixedTeams : game?.hasFixedTeams) && (
-              <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
-                    {t('createGame.allowUserInMultipleTeams.title')}
-                  </span>
-                  <div className="flex-shrink-0">
-                    <ToggleSwitch
-                      checked={
-                        isEditMode
-                          ? editFormData.allowUserInMultipleTeams
-                          : game?.allowUserInMultipleTeams ?? false
-                      }
-                      onChange={(checked) => onFormDataChange({ allowUserInMultipleTeams: checked })}
-                      disabled={!isEditMode}
-                    />
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                  {t('createGame.allowUserInMultipleTeams.helper')}
-                </p>
-                {!isEditMode ? (
-                  <p className="text-xs text-primary-700 dark:text-primary-300 mb-1">
-                    {t('createGame.allowUserInMultipleTeams.tapEditHint')}
-                  </p>
-                ) : (
-                  <p className="text-xs text-primary-700 dark:text-primary-300 mb-1">
-                    {t('createGame.allowUserInMultipleTeams.saveAfterChangeHint')}
-                  </p>
-                )}
-                {showNotes && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {t(
-                      (isEditMode
-                        ? editFormData.allowUserInMultipleTeams
-                        : game?.allowUserInMultipleTeams)
-                        ? 'createGame.allowUserInMultipleTeams.note.true'
-                        : 'createGame.allowUserInMultipleTeams.note.false',
-                    )}
-                  </p>
-                )}
-              </div>
-            )}
-        </div>
-
-        {/* Name - only show if in edit mode */}
-        {(isEditMode || isClosingEditMode) && (
-          <div className={`${(isEditMode || isClosingEditMode) && (!game?.name || game.name.trim() === '') ? (isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in') : ''}`}>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-              {nameLabel}
-            </label>
-            {(isEditMode || isClosingEditMode) ? (
-              <input
-                type="text"
-                value={editFormData.name}
-                onChange={(e) => onFormDataChange({name: e.target.value})}
-                placeholder={namePlaceholder}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-              />
-            ) : (
-              <div className="px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm min-h-[48px]">
-                {game?.name}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Description - only show if in edit mode */}
-        {(isEditMode || isClosingEditMode) && (
-          <div className={`${(isEditMode || isClosingEditMode) && (!game?.description || game.description.trim() === '') ? (isClosingEditMode ? 'animate-bounce-out' : 'animate-bounce-in') : ''}`}>
-            <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-              {descriptionLabel}
-            </label>
-            {(isEditMode || isClosingEditMode) ? (
-              <textarea
-                value={editFormData.description}
-                onChange={(e) => onFormDataChange({description: e.target.value})}
-                placeholder={descriptionPlaceholder}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
-                rows={3}
-              />
-            ) : (
-              <div className="px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white text-sm min-h-[76px]">
-                {game?.description}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Cancel/Save buttons at bottom - only show in edit mode */}
-        {isEditMode && (
-          <div className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-            <button
-              onClick={onEditModeToggle}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 font-medium"
-            >
-              <X size={18} />
-              {t('common.cancel')}
-            </button>
-            <button
-              onClick={onSaveChanges}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 border border-green-600 dark:border-green-600 text-white font-medium"
-            >
-              <Save size={18} />
-              {t('common.save')}
-            </button>
-          </div>
-        )}
-      </div>
+      {toggleList}
     </Card>
   );
 };

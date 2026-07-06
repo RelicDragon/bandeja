@@ -16,6 +16,7 @@ import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
+import { filterClubsBySport } from '@/utils/courtSport';
 import { isParticipantPlaying } from '@/utils/participantStatus';
 
 interface EditLeagueGameTeamsModalProps {
@@ -91,6 +92,14 @@ export const EditLeagueGameTeamsModal = ({
     disableAutoAdjust: true,
   });
 
+  const clubsForSport = useMemo(
+    () =>
+      game.sport
+        ? filterClubsBySport(clubs, game.sport, selectedClubId || game.clubId || undefined)
+        : clubs,
+    [clubs, game.sport, game.clubId, selectedClubId],
+  );
+
   const showHasBookedCourtSwitch = useMemo(() => {
     if (!selectedCourtId || selectedCourtId === 'notBooked') return false;
     const club = clubs.find((c) => c.id === selectedClubId);
@@ -159,12 +168,12 @@ export const EditLeagueGameTeamsModal = ({
   const fetchCourts = useCallback(async () => {
     if (!selectedClubId) return;
     try {
-      const response = await courtsApi.getByClubId(selectedClubId);
+      const response = await courtsApi.getByClubId(selectedClubId, { sport: game.sport });
       setCourts(response.data);
     } catch (error) {
       console.error('Failed to fetch courts:', error);
     }
-  }, [selectedClubId]);
+  }, [selectedClubId, game.sport]);
 
   const isInitializingRef = useRef(false);
   const gameCourtIdRef = useRef<string | undefined>(undefined);
@@ -754,7 +763,9 @@ export const EditLeagueGameTeamsModal = ({
                       >
                         {selectedClubId ? (
                           (() => {
-                            const c = clubs.find((x) => x.id === selectedClubId);
+                            const c =
+                              clubsForSport.find((x) => x.id === selectedClubId) ??
+                              clubs.find((x) => x.id === selectedClubId);
                             return c ? (
                               <>
                                 <ClubAvatar club={c} className="h-9 w-12 shrink-0" />
@@ -894,7 +905,7 @@ export const EditLeagueGameTeamsModal = ({
         <ClubModal
           isOpen={isClubModalOpen}
           onClose={() => setIsClubModalOpen(false)}
-          clubs={clubs}
+          clubs={clubsForSport}
           selectedId={selectedClubId}
           onSelect={(clubId) => {
             setSelectedClubId(clubId);

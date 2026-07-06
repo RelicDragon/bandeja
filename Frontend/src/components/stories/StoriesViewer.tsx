@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { useStoriesPlayback } from '@/hooks/useStoriesPlayback';
@@ -10,10 +10,7 @@ import { storySegmentSlideVersion } from './storyPlayback';
 import { StoriesViewerHeader } from './StoriesViewerHeader';
 import { StoriesProgressBars } from './StoriesProgressBars';
 import { StoriesGestureLayer } from './StoriesGestureLayer';
-import { MediaStorySlide } from './slides/MediaStorySlide';
-import { GamePromoStorySlide } from './slides/GamePromoStorySlide';
-import { GameResultStorySlide } from './slides/GameResultStorySlide';
-import { BracketChampionStorySlide } from './slides/BracketChampionStorySlide';
+import { buildStoryViewerSlide } from './storiesViewerSlide';
 import { StoryViewerEngagementChrome } from './viewer/StoryViewerEngagementChrome';
 import {
   getStoryViewerEngagementPaused,
@@ -48,25 +45,23 @@ export function StoriesViewer({
   const wasOpenRef = useRef(false);
   const doubleTapLikeRef = useRef<(() => void) | null>(null);
   const [doubleTapBurst, setDoubleTapBurst] = useState<{ x: number; y: number } | null>(null);
+  const segmentNavKey = `${bubbleIndex}:${segmentIndex}`;
 
-  useEffect(() => {
-    if (open) {
-      setBubbleIndex(initialBubbleIndex);
-      setSegmentIndex(initialSegmentIndex);
-      setVideoEnded(false);
-      setVideoProgress(0);
-      setVideoDurationMs(null);
-    }
+  useLayoutEffect(() => {
+    if (!open) return;
+    setBubbleIndex(initialBubbleIndex);
+    setSegmentIndex(initialSegmentIndex);
+    setVideoEnded(false);
+    setVideoProgress(0);
+    setVideoDurationMs(null);
   }, [open, initialBubbleIndex, initialSegmentIndex]);
 
-  const segmentNavKey = `${bubbleIndex}:${segmentIndex}`;
-  const prevSegmentNavKeyRef = useRef(segmentNavKey);
-  if (prevSegmentNavKeyRef.current !== segmentNavKey) {
-    prevSegmentNavKeyRef.current = segmentNavKey;
-    if (videoEnded) setVideoEnded(false);
-    if (videoProgress !== 0) setVideoProgress(0);
-    if (videoDurationMs !== null) setVideoDurationMs(null);
-  }
+  useLayoutEffect(() => {
+    if (!open) return;
+    setVideoEnded(false);
+    setVideoProgress(0);
+    setVideoDurationMs(null);
+  }, [open, segmentNavKey]);
 
   useEffect(() => {
     if (open && !wasOpenRef.current) lightHaptic();
@@ -257,38 +252,19 @@ export function StoriesViewer({
   }, [open, goNextSegment, goPrevSegment, playback]);
 
   const slide = useMemo(() => {
-    if (slideVersion == null) return null;
-    const activeSegment = segmentRef.current;
-    const activeBubble = bubbleRef.current;
-    if (!activeSegment || !activeBubble) return null;
-    if (activeSegment.sourceType === 'GAME_CREATED') {
-      return <GamePromoStorySlide segment={activeSegment} onOpenGame={openGame} />;
-    }
-    if (activeSegment.sourceType === 'GAME_RESULT') {
-      return (
-        <GameResultStorySlide
-          segment={activeSegment}
-          highlightPlayerId={activeBubble.user.id}
-          onOpenGame={openGame}
-        />
-      );
-    }
-    if (activeSegment.sourceType === 'BRACKET_CHAMPION') {
-      return <BracketChampionStorySlide segment={activeSegment} onOpenBracket={openBracket} />;
-    }
-    return (
-      <MediaStorySlide
-        segment={activeSegment}
-        isActive={open}
-        paused={playback.paused}
-        replayNonce={playback.replayGeneration}
-        onVideoEnded={() => setVideoEnded(true)}
-        onVideoError={goNextSegment}
-        onVideoProgress={setVideoProgress}
-        onVideoDurationMs={setVideoDurationMs}
-      />
-    );
-  }, [slideVersion, open, goNextSegment, openGame, openBracket, playback.replayGeneration, playback.paused]);
+    if (slideVersion == null || !segment || !bubble) return null;
+    return buildStoryViewerSlide(segment, bubble, {
+      open,
+      openGame,
+      openBracket,
+      paused: playback.paused,
+      replayGeneration: playback.replayGeneration,
+      onVideoEnded: () => setVideoEnded(true),
+      onVideoError: goNextSegment,
+      onVideoProgress: setVideoProgress,
+      onVideoDurationMs: setVideoDurationMs,
+    });
+  }, [slideVersion, segment, bubble, open, goNextSegment, openGame, openBracket, playback.replayGeneration, playback.paused]);
 
   if (!bubble) return null;
 

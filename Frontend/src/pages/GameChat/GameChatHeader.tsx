@@ -1,13 +1,9 @@
-import React, { ReactNode, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { ReactNode } from 'react';
 import { ArrowLeft, Bug as BugIcon } from 'lucide-react';
 import { ChatHeaderActions } from '@/components/chat/ChatHeaderActions';
 import type { ChatContextType } from '@/api/chat';
 import type { Game } from '@/types';
-import { useChatOfflineStore } from '@/store/chatOfflineStore';
-import { useChatSyncStore } from '@/store/chatSyncStore';
 import { CHAT_PANE_SLIDE_CSS_TRANSITION } from '@/components/chat/chatListMotion';
-import { GameChatHeaderStatusSlot } from './GameChatHeaderMotion';
 
 export interface GameChatHeaderActionsProps {
   showMute: boolean;
@@ -57,25 +53,7 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
   showHeaderActions,
   headerActions,
 }) => {
-  const { t } = useTranslation();
   const isStructuredTitle = titleContent != null;
-  const chatConnectionState = useChatOfflineStore((s) => s.chatConnectionState);
-  const paint = useChatSyncStore((s) => s.lastThreadPaintSource);
-  const paintHint = useMemo(
-    () =>
-      paint === 'dexie'
-        ? t('chat.statusPaintDexie', 'Opened from saved messages')
-        : paint === 'network'
-          ? t('chat.statusPaintNetwork', 'Loaded from server')
-          : undefined,
-    [paint, t]
-  );
-  const statusTitle =
-    chatConnectionState === 'OFFLINE'
-      ? t('chat.offlineBanner', 'No connection — showing saved messages')
-      : chatConnectionState === 'SYNCING'
-        ? t('chat.syncingBanner', 'Syncing…')
-        : undefined;
   const headerActionsNode =
     showHeaderActions && headerActions != null ? (
       <ChatHeaderActions
@@ -217,33 +195,11 @@ export const GameChatHeader: React.FC<GameChatHeaderProps> = ({
                 onClick={isTitleClickable ? onTitleClick : undefined}
                 role={isTitleClickable ? 'button' : undefined}
               >
-                {!isBugChat && (
-                  <div className="flex-shrink-0 relative">
-                    {icon}
-                    {(chatConnectionState === 'OFFLINE' || chatConnectionState === 'SYNCING') && (
-                      <div className="absolute -bottom-0.5 -right-0.5">
-                        <GameChatHeaderStatusSlot
-                          connectionState={chatConnectionState}
-                          statusTitle={statusTitle}
-                          paintHint={paintHint}
-                          compact
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
+                {!isBugChat && <div className="flex-shrink-0">{icon}</div>}
                 <div className="min-w-0 flex-1">
                   <h1
                     className={`${isBugChat ? 'text-base' : 'text-lg'} flex min-w-0 items-center gap-2 font-semibold text-gray-900 dark:text-white`}
                   >
-                    {isBugChat &&
-                      (chatConnectionState === 'OFFLINE' || chatConnectionState === 'SYNCING') && (
-                        <GameChatHeaderStatusSlot
-                          connectionState={chatConnectionState}
-                          statusTitle={statusTitle}
-                          paintHint={paintHint}
-                        />
-                      )}
                     {isBugChat && (
                       <BugIcon size={16} className="flex-shrink-0 text-red-500" />
                     )}

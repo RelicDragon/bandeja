@@ -15,12 +15,16 @@
     "clubNotSet": "Klub nije postavljen",
     "yourTime": "Tvoje vreme: {{time}}",
     "settingsUpdated": "Podešavanja uspešno ažurirana",
+    "settings": {
+      "saveFailed": "Nije moguće sačuvati ovo podešavanje"
+    },
     "editTab": {
       "general": "Opšte",
       "when": "Kada",
       "where": "Gde",
       "locationTime": "Lokacija i vreme",
       "price": "Cena",
+      "settings": "Podešavanja",
       "eraseTime": "Ukloni vreme"
     },
     "locationTime": {

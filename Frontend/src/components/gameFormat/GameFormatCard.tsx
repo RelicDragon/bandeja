@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Pencil, HelpCircle, Users, Info } from 'lucide-react';
+import { Pencil, HelpCircle, Users } from 'lucide-react';
 import { EntityType } from '@/types';
 import { GameFormatSummary } from './GameFormatSummary';
 import { GameFormatDetails } from './GameFormatDetails';
@@ -27,8 +27,6 @@ interface GameFormatCardProps {
   /** When set, overrides `teams?.hasFixedTeams` for showing the fixed-teams panel */
   fixedTeamsPanelOpen?: boolean;
   showWizardButton?: boolean;
-  /** When true, omit allow-multi row (e.g. draft lives in Game Settings). */
-  suppressAllowMultiToggle?: boolean;
   showFixedTeamsToggle?: boolean;
   sportRow?: ReactNode;
   questionnaireBanner?: ReactNode;
@@ -53,7 +51,6 @@ export const GameFormatCard = ({
   fixedTeamsPanel,
   fixedTeamsPanelOpen,
   showWizardButton = true,
-  suppressAllowMultiToggle = false,
   showFixedTeamsToggle = true,
   sportRow,
   questionnaireBanner,
@@ -215,7 +212,6 @@ export const GameFormatCard = ({
       {questionnaireBanner}
 
       {showFixedToggle &&
-        !suppressAllowMultiToggle &&
         teams?.hasFixedTeams &&
         teams.onAllowUserInMultipleTeamsChange &&
         teams.participantCount > 2 && (
@@ -235,25 +231,6 @@ export const GameFormatCard = ({
               <p className="col-span-3 min-w-0 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
                 {t('createGame.allowUserInMultipleTeams.helper')}
               </p>
-            </div>
-          </div>
-        )}
-
-      {showFixedToggle &&
-        suppressAllowMultiToggle &&
-        teams?.hasFixedTeams &&
-        teams.participantCount > 2 && (
-          <div className="border-t border-gray-100 dark:border-gray-800 px-4 py-3">
-            <div className="flex gap-2.5">
-              <Info size={16} className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
-              <div className="min-w-0 space-y-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                  {t('createGame.allowUserInMultipleTeams.title')}
-                </p>
-                <p className="text-xs leading-relaxed text-gray-600 dark:text-gray-400">
-                  {t('createGame.allowUserInMultipleTeams.editInSettingsHint')}
-                </p>
-              </div>
             </div>
           </div>
         )}

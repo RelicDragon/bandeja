@@ -8,11 +8,13 @@ import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFr
 import { resolveBooktimeClubTimezone } from '@shared/gameBooking/linkBookingToGame';
 import { gamesApi } from '@/api/games';
 import { gameCourtsApi } from '@/api/gameCourts';
+import { queryClient } from '@/queries/queryClient';
+import { queryKeys } from '@/queries/queryKeys';
 import { clubToBooktimeRow, resolveCourtForBooking } from '@/components/booktime/booktimeBookingUtils';
 import { linkBookingToGame } from '@/services/gameBooking/linkBookingToGame';
 import { createDateFromClubTime } from '@/hooks/useGameTimeDuration';
 import type { EditLocationTimeDraft } from './locationTimeDraft';
-import { computePendingBookingUnlinks } from './computePendingBookingUnlinks';
+import { resolveEditBookingUnlinks } from './computePendingBookingUnlinks';
 import {
   LocationTimePartialSaveError,
   type LocationTimeSaveStep,
@@ -80,6 +82,12 @@ async function applyLinkBookingAdds(context: LinkBookingSaveContext): Promise<vo
 export async function saveLocationTime(gameId: string, draft: LocationTimeSaveDraft): Promise<Game> {
   const completedSteps: LocationTimeSaveStep[] = [];
 
+  if (draft.removeBookingIds.length > 0) {
+    await runSaveStep('bookings', completedSteps, async () => {
+      await gamesApi.patchBookings(gameId, { remove: draft.removeBookingIds });
+    });
+  }
+
   if (draft.linkBookingContext && draft.linkBookingContext.adds.length > 0) {
     await runSaveStep('bookings', completedSteps, async () => {
       await applyLinkBookingAdds(draft.linkBookingContext!);
@@ -101,11 +109,7 @@ export async function saveLocationTime(gameId: string, draft: LocationTimeSaveDr
     });
   }
 
-  if (draft.removeBookingIds.length > 0) {
-    await runSaveStep('bookings', completedSteps, async () => {
-      await gamesApi.patchBookings(gameId, { remove: draft.removeBookingIds });
-    });
-  } else if (draft.addBookingIds.length > 0) {
+  if (draft.addBookingIds.length > 0) {
     await runSaveStep('bookings', completedSteps, async () => {
       await gamesApi.patchBookings(gameId, { add: draft.addBookingIds });
     });
@@ -121,6 +125,14 @@ export async function saveLocationTime(gameId: string, draft: LocationTimeSaveDr
     await runSaveStep('courts', completedSteps, async () => {
       await gameCourtsApi.setGameCourts(gameId, draft.courtIds!);
     });
+  }
+
+  if (
+    draft.removeBookingIds.length > 0 ||
+    draft.addBookingIds.length > 0 ||
+    Boolean(draft.linkBookingContext?.adds.length)
+  ) {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.games.all });
   }
 
   const response = await gamesApi.getById(gameId);
@@ -181,12 +193,13 @@ export function buildEditLocationTimeSaveDraft({
   const bookingSelectionAuthoritative = Boolean(locationTimeDraft) && (
     locationTimeDraft?.locationTimeMode === 'bookings' || initialLinked.length > 0
   );
-  const removeBookingIds = computePendingBookingUnlinks(
-    initialLinked,
+  const removeBookingIds = resolveEditBookingUnlinks({
+    initialLinkedIds: initialLinked,
     pendingRemoveBookingIds,
-    locationTimeDraft?.selectedBookingIds ?? initialLinked,
-    bookingSelectionAuthoritative,
-  );
+    selectedBookingIds: locationTimeDraft?.selectedBookingIds ?? initialLinked,
+    bookingsMode: bookingSelectionAuthoritative,
+    bookFlowBookingIds: bookingOverrides?.externalBookingIds,
+  });
 
   const pickerAddIds =
     locationTimeDraft?.locationTimeMode === 'bookings'

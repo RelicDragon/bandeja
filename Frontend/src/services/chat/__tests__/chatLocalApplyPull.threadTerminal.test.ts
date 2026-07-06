@@ -68,8 +68,10 @@ vi.mock('@/services/chat/chatMediaThumbPrefetch', () => ({
   scheduleChatMediaThumbPrefetchForMessage: vi.fn(),
 }));
 
+const notifyInboundMessageSeenMock = vi.fn();
+
 vi.mock('@/services/chat/unreadInboundMessage', () => ({
-  notifyInboundMessageSeen: vi.fn(),
+  notifyInboundMessageSeen: (...args: unknown[]) => notifyInboundMessageSeenMock(...args),
 }));
 
 vi.mock('../chatSyncRowUtils', () => ({
@@ -124,6 +126,64 @@ describe('pullEventsLoop thread terminal events', () => {
     expect(result.threadArchived).toBe(true);
     expect(result.threadInvalidated).toBe(false);
     expect(messagesBulkDeleteMock).not.toHaveBeenCalled();
+  });
+
+  it('MESSAGE_CREATED during full replay (cursor 0) does not bump optimistic unread', async () => {
+    fetchPackMock.mockResolvedValueOnce({
+      cursorStale: false,
+      events: [
+        {
+          seq: 3,
+          eventType: ChatSyncEventType.MESSAGE_CREATED,
+          payload: {
+            message: {
+              id: 'm-hist',
+              senderId: 'other-user',
+              chatContextType: 'USER',
+              contextId: 'u1',
+            },
+          },
+        },
+      ],
+      hasMore: false,
+    });
+
+    await pullEventsLoop('USER', 'u1');
+
+    expect(notifyInboundMessageSeenMock).not.toHaveBeenCalled();
+  });
+
+  it('MESSAGE_CREATED during incremental pull (cursor > 0) bumps optimistic unread', async () => {
+    const { getLocalCursorSeq } = await import('../chatLocalApplyCursor');
+    vi.mocked(getLocalCursorSeq).mockResolvedValueOnce(5);
+
+    fetchPackMock.mockResolvedValueOnce({
+      cursorStale: false,
+      events: [
+        {
+          seq: 6,
+          eventType: ChatSyncEventType.MESSAGE_CREATED,
+          payload: {
+            message: {
+              id: 'm-new',
+              senderId: 'other-user',
+              chatContextType: 'USER',
+              contextId: 'u1',
+            },
+          },
+        },
+      ],
+      hasMore: false,
+    });
+
+    await pullEventsLoop('USER', 'u1');
+
+    expect(notifyInboundMessageSeenMock).toHaveBeenCalledWith({
+      contextType: 'USER',
+      contextId: 'u1',
+      messageId: 'm-new',
+      senderId: 'other-user',
+    });
   });
 
   it('THREAD_LOCAL_INVALIDATE still purges via invalidate terminal', async () => {

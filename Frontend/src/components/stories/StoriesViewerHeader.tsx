@@ -1,6 +1,6 @@
 import { X } from 'lucide-react';
 import type { BasicUser } from '@/types';
-import { formatRelativeTime } from '@/utils/dateFormat';
+import { formatRelativeTimeSafe } from '@/utils/dateFormat';
 import { StoryBubbleFace } from './StoryBubbleFace';
 import { STORY_VIEWER_ICON_BTN } from './storyViewerIconBtn';
 
@@ -11,7 +11,7 @@ type StoriesViewerHeaderProps = {
 };
 
 export function StoriesViewerHeader({ user, createdAt, onClose }: StoriesViewerHeaderProps) {
-  const timeLabel = createdAt ? formatRelativeTime(createdAt) : '';
+  const timeLabel = createdAt ? formatRelativeTimeSafe(createdAt) : '';
 
   return (
     <div className="flex items-center justify-between gap-2 px-3 pb-3 pointer-events-none">

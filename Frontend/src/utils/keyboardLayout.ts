@@ -78,3 +78,9 @@ export function isInsideKeyboardManagedSurface(el: HTMLElement | null): boolean 
     '[data-cap-chat-composer], .chat-container footer, .cap-keyboard-aware-dialog, .cap-keyboard-aware-sheet, .cap-keyboard-aware-overlay, .cap-keyboard-aware-bottom-panel, .cap-fullscreen-dialog-body, .fullscreen-dialog-root',
   );
 }
+
+/** Bottom panels that set `bottom: var(--keyboard-height)` — no scroll assist needed. */
+export function isSelfLiftingKeyboardBottomPanel(el: HTMLElement | null): boolean {
+  if (!el) return false;
+  return !!el.closest('.cap-keyboard-aware-bottom-panel');
+}

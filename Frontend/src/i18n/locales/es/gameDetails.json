@@ -15,12 +15,16 @@
     "clubNotSet": "El club no está establecido",
     "yourTime": "Tu hora: {{time}}",
     "settingsUpdated": "Configuración actualizada exitosamente",
+    "settings": {
+      "saveFailed": "No se pudo guardar este ajuste"
+    },
     "editTab": {
       "general": "General",
       "when": "Cuándo",
       "where": "Dónde",
       "locationTime": "Ubicación y horario",
       "price": "Precio",
+      "settings": "Ajustes",
       "eraseTime": "Quitar hora"
     },
     "locationTime": {

@@ -6,6 +6,7 @@ import {
   type StoryLayer,
   type StorySlide,
   type TextStoryLayer,
+  type TextStylePreset,
 } from '../types/storyEditor.types';
 import { STORY_STICKER_BASE_FONT_PX } from '../storySticker.constants';
 import { mediaAdjustToCanvasFilter } from './storyAdjustFilters';
@@ -37,6 +38,16 @@ export type CompositionAssets = {
   skipMedia?: boolean;
 };
 
+const DEFAULT_TEXT_LAYER_STYLE: TextStylePreset = { id: 'classic', align: 'center' };
+
+export function resolveTextLayerStyle(layer: TextStoryLayer): TextStylePreset {
+  const style = layer.style;
+  if (style && typeof style.id === 'string' && typeof style.align === 'string') {
+    return style;
+  }
+  return DEFAULT_TEXT_LAYER_STYLE;
+}
+
 export type DrawCompositionOptions = {
   width?: number;
   height?: number;
@@ -54,11 +65,12 @@ function layerSelectionBounds(ctx: CanvasRenderingContext2D, layer: StoryLayer):
   const { transform: t } = layer;
   if (layer.type === 'text') {
     if (!layer.text.trim() && !layer.text.includes('\n')) return null;
+    const style = resolveTextLayerStyle(layer);
     const fontSize = STORY_TEXT_BASE_CANVAS_PX;
-    applyCanvasTextStyle(ctx, layer.style.id, fontSize, layer.style.align);
+    applyCanvasTextStyle(ctx, style.id, fontSize, style.align);
     const layout = layoutCanvasText(ctx, layer.text, fontSize);
-    const padX = layer.style.id === 'blackBox' ? fontSize * 0.45 : 8;
-    const padY = layer.style.id === 'blackBox' ? fontSize * 0.35 : 8;
+    const padX = style.id === 'blackBox' ? fontSize * 0.45 : 8;
+    const padY = style.id === 'blackBox' ? fontSize * 0.35 : 8;
     return { x: t.x, y: t.y, w: (layout.width + padX * 2) * t.scale, h: (layout.height + padY * 2) * t.scale };
   }
   const size = STORY_STICKER_BASE_FONT_PX * t.scale;
@@ -156,7 +168,8 @@ function drawTextLineWithPreset(
 
 export function drawTextLayer(ctx: CanvasRenderingContext2D, layer: TextStoryLayer): void {
   if (!layer.text.trim() && !layer.text.includes('\n')) return;
-  const { transform: t, style } = layer;
+  const { transform: t } = layer;
+  const style = resolveTextLayerStyle(layer);
   const fontSize = STORY_TEXT_BASE_CANVAS_PX;
 
   ctx.save();

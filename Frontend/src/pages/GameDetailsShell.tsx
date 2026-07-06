@@ -15,7 +15,6 @@ import {
   PlayerListModal,
   ManageUsersModal,
   CourtModal,
-  ClubModal,
   GameInfo,
   GameParticipants,
   GameSettings,
@@ -65,7 +64,7 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
-import { Game, Invite, Court, Club, GenderTeam } from '@/types';
+import { Game, Invite, Court, Club } from '@/types';
 import { parseGameSport } from '@/utils/gameSport';
 import {
   isCancelledGame410Payload,
@@ -156,9 +155,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   const [showManageUsers, setShowManageUsers] = useState(false);
   const [courts, setCourts] = useState<Court[]>([]);
   const [isCourtModalOpen, setIsCourtModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isClosingEditMode, setIsClosingEditMode] = useState(false);
-  const [isClubModalOpen, setIsClubModalOpen] = useState(false);
   const [clubs, setClubs] = useState<Club[]>([]);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [showDeleteBookingsWarning, setShowDeleteBookingsWarning] = useState(false);
@@ -261,22 +257,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     }
     return tabs;
   }, [game?.entityType, hasFaqs, isLeagueSeasonParticipant, t]);
-  const [editFormData, setEditFormData] = useState({
-    clubId: '',
-    courtId: '',
-    name: '',
-    isPublic: true,
-    affectsRating: true,
-    anyoneCanInvite: false,
-    resultsByAnyone: false,
-    allowDirectJoin: false,
-    hasBookedCourt: false,
-    afterGameGoToBar: false,
-    hasFixedTeams: false,
-    allowUserInMultipleTeams: false,
-    genderTeams: 'ANY' as GenderTeam,
-    description: '',
-  });
 
   const initialGameId = initialGame?.id;
   const initialGameSeedRef = useRef(initialGame);
@@ -566,30 +546,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
     checkFaqs();
   }, [game, user]);
-
-  useEffect(() => {
-    if (game && !isEditMode) {
-      setEditFormData({
-        clubId: game.clubId || '',
-        courtId: game.courtId || '',
-        name: game.name || '',
-        isPublic: game.isPublic,
-        affectsRating: game.affectsRating,
-        anyoneCanInvite: game.anyoneCanInvite || false,
-        resultsByAnyone: game.resultsByAnyone || false,
-        allowDirectJoin: game.allowDirectJoin,
-        hasBookedCourt: game.hasBookedCourt || false,
-        afterGameGoToBar: game.afterGameGoToBar || false,
-        hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
-        allowUserInMultipleTeams:
-          game.maxParticipants === 2 || !(game.hasFixedTeams || false)
-            ? false
-            : (game.allowUserInMultipleTeams ?? false),
-        genderTeams: (game.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS',
-        description: game.description || '',
-      });
-    }
-  }, [game, isEditMode]);
 
   const handleJoin = async () => {
     if (!id) return;
@@ -1042,95 +998,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     }
   };
 
-  const handleEditModeToggle = () => {
-    if (isEditMode) {
-      if (game) {
-        setEditFormData({
-          clubId: game.clubId || '',
-          courtId: game.courtId || '',
-          name: game.name || '',
-          isPublic: game.isPublic,
-          affectsRating: game.affectsRating,
-          anyoneCanInvite: game.anyoneCanInvite || false,
-          resultsByAnyone: game.resultsByAnyone || false,
-          allowDirectJoin: game.allowDirectJoin,
-          hasBookedCourt: game.hasBookedCourt || false,
-          afterGameGoToBar: game.afterGameGoToBar || false,
-          hasFixedTeams: game.maxParticipants === 2 ? false : (game.hasFixedTeams || false),
-          allowUserInMultipleTeams:
-            game.maxParticipants === 2 || !(game.hasFixedTeams || false)
-              ? false
-              : (game.allowUserInMultipleTeams ?? false),
-          genderTeams: (game.genderTeams || 'ANY') as GenderTeam,
-          description: game.description || '',
-        });
-      }
-      setIsClosingEditMode(true);
-      setTimeout(() => {
-        setIsEditMode(false);
-        setIsClosingEditMode(false);
-      }, 400);
-    } else {
-      setIsEditMode(true);
-    }
-  };
-
-  const handleSaveChanges = async () => {
-    if (!id) return;
-
-    try {
-      const updateData: Partial<Game> = {
-        clubId: editFormData.clubId || undefined,
-        courtId: editFormData.courtId ? editFormData.courtId : '',
-        name: editFormData.name || undefined,
-        isPublic: editFormData.isPublic,
-        anyoneCanInvite: editFormData.anyoneCanInvite,
-        allowDirectJoin: editFormData.allowDirectJoin,
-        hasBookedCourt: editFormData.hasBookedCourt,
-        afterGameGoToBar: editFormData.afterGameGoToBar,
-        description: editFormData.description,
-      };
-
-      if (game?.entityType !== 'TRAINING') {
-        updateData.affectsRating = editFormData.affectsRating;
-        updateData.resultsByAnyone = editFormData.resultsByAnyone;
-        updateData.hasFixedTeams = game?.maxParticipants === 2 ? false : editFormData.hasFixedTeams;
-        const allowMulti =
-          game?.maxParticipants === 2 || !editFormData.hasFixedTeams
-            ? false
-            : editFormData.allowUserInMultipleTeams;
-        updateData.allowUserInMultipleTeams = allowMulti;
-      }
-
-      if (game?.entityType === 'GAME' || game?.entityType === 'TOURNAMENT' || game?.entityType === 'LEAGUE') {
-        updateData.genderTeams = editFormData.genderTeams;
-      }
-
-      await gamesApi.update(id, updateData);
-      
-      const response = await gamesApi.getById(id);
-      setGame(response.data);
-      
-      setIsClosingEditMode(true);
-      setTimeout(() => {
-        setIsEditMode(false);
-        setIsClosingEditMode(false);
-      }, 400);
-      toast.success(t('gameDetails.settingsUpdated'));
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'errors.generic';
-      toast.error(t(errorMessage, { defaultValue: errorMessage }));
-    }
-  };
-
-  const handleFormDataChange = (data: Partial<typeof editFormData>) => {
-    const next = { ...editFormData, ...data };
-    if (data.hasFixedTeams === false) {
-      next.allowUserInMultipleTeams = false;
-    }
-    setEditFormData(next);
-  };
-
   const canDeleteGame = () => {
     if (!game || !user) return false;
     
@@ -1485,7 +1352,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               isGuest={isGuest}
               courts={courts}
               canEdit={canEdit}
-              isEditMode={isEditMode}
               onToggleFavorite={handleToggleFavorite}
               onEditCourt={() => setIsCourtModalOpen(true)}
               onOpenEditGameInfo={(tab) => {
@@ -1575,7 +1441,6 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               game={game}
               canEdit={canEditGameFormat}
               onGameUpdate={setGame}
-              suppressAllowMultiToggle={isEditMode && canViewSettings}
             />
             </div>
           ) : null}
@@ -1625,23 +1490,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             </div>
           ) : null}
 
-          {user && canViewSettings && !isLeague ? (
+          {user && canViewSettings && !isLeague && !isEditGameInfoModalOpen ? (
             <div key="game-settings" className="contents" id="game-settings">
-              <GameSettings
-                game={game}
-                clubs={clubs}
-                courts={courts}
-                isEditMode={isEditMode}
-                isClosingEditMode={isClosingEditMode}
-                canEdit={canEdit}
-                editFormData={editFormData}
-                onEditModeToggle={handleEditModeToggle}
-                onSaveChanges={handleSaveChanges}
-                onFormDataChange={handleFormDataChange}
-                onOpenClubModal={() => setIsClubModalOpen(true)}
-                onOpenCourtModal={() => setIsCourtModalOpen(true)}
-                onGameUpdate={(updatedGame) => setGame(updatedGame)}
-              />
+              <GameSettings game={game} canEdit={canViewSettings} onGameUpdate={setGame} />
             </div>
           ) : null}
 
@@ -1928,32 +1779,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           isOpen={isCourtModalOpen}
           onClose={() => setIsCourtModalOpen(false)}
           courts={courts}
-          selectedId={isEditMode ? editFormData.courtId || 'notBooked' : game.courtId || 'notBooked'}
-          onSelect={isEditMode ? (courtId) => handleFormDataChange({courtId: courtId === 'notBooked' ? '' : courtId}) : handleCourtSelect}
+          selectedId={game.courtId || 'notBooked'}
+          onSelect={handleCourtSelect}
           entityType={game.entityType}
           preferredSport={game.sport}
           clubSports={clubs.find((c) => c.id === game.clubId)?.sports}
-        />
-      )}
-
-      {isClubModalOpen && (
-        <ClubModal
-          isOpen={isClubModalOpen}
-          onClose={() => setIsClubModalOpen(false)}
-          clubs={clubs}
-          selectedId={isEditMode ? editFormData.clubId : game?.clubId || ''}
-          onSelect={(clubId) => {
-            if (isEditMode) {
-              handleFormDataChange({clubId, courtId: ''});
-              if (clubId) {
-                courtsApi.getByClubId(clubId, { sport: game.sport }).then(response => {
-                  setCourts(response.data);
-                }).catch(error => {
-                  console.error('Failed to fetch courts:', error);
-                });
-              }
-            }
-          }}
         />
       )}
 
@@ -1965,6 +1795,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           clubs={clubs}
           courts={courts}
           initialTab={editGameInfoInitialTab}
+          canEditSettings={canViewSettings}
           onGameUpdate={setGame}
           onCourtsChange={handleCourtsChange}
         />

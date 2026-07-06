@@ -118,6 +118,77 @@ describe('buildEditLocationTimeSaveDraft', () => {
     expect(draft.courtIds).toEqual([]);
     expect(draft.hasBookedCourt).toBe(false);
   });
+
+  it('unlinks the previous booking when the edit picker switches to a new reservation', () => {
+    const draft = buildEditLocationTimeSaveDraft({
+      game,
+      clubId: 'club-1',
+      courtId: 'court-1',
+      selectedCourtIds: ['court-1'],
+      whenSelectedDate: new Date('2026-06-19T00:00:00.000Z'),
+      whenSelectedTime: '09:00',
+      whenDuration: 1,
+      hasBookedCourt: true,
+      club,
+      courts: [court],
+      pendingRemoveBookingIds: [],
+      locationTimeDraft: {
+        locationTimeMode: 'bookings',
+        selectedBookingIds: ['booking-2'],
+        selectedBookingRecords: [
+          {
+            uuid: 'booking-2',
+            bookingStart: '2026-06-19T08:00:00.000Z',
+            bookingEnd: '2026-06-19T09:00:00.000Z',
+          },
+        ],
+        timeOverride: false,
+        willBookOnCreate: false,
+        integratedCourtIds: [],
+      },
+    });
+
+    expect(draft.removeBookingIds).toEqual(['booking-1']);
+    expect(draft.linkBookingContext?.adds.map((add) => add.booking.uuid)).toEqual(['booking-2']);
+  });
+
+  it('unlinks the previous booking when edit save books a new court reservation', () => {
+    const draft = buildEditLocationTimeSaveDraft({
+      game,
+      clubId: 'club-1',
+      courtId: 'court-1',
+      selectedCourtIds: ['court-1'],
+      whenSelectedDate: new Date('2026-06-19T00:00:00.000Z'),
+      whenSelectedTime: '10:00',
+      whenDuration: 1,
+      hasBookedCourt: true,
+      club,
+      courts: [court],
+      pendingRemoveBookingIds: [],
+      locationTimeDraft: {
+        locationTimeMode: 'timeSlots',
+        selectedBookingIds: ['booking-1'],
+        selectedBookingRecords: [],
+        timeOverride: false,
+        willBookOnCreate: true,
+        integratedCourtIds: ['court-1'],
+      },
+      bookingOverrides: {
+        externalBookingIds: ['booking-2'],
+        bookingSnapshots: [
+          {
+            externalBookingId: 'booking-2',
+            courtId: 'court-1',
+            bookingStart: '2026-06-19T08:00:00.000Z',
+            bookingEnd: '2026-06-19T09:00:00.000Z',
+          },
+        ],
+      },
+    });
+
+    expect(draft.removeBookingIds).toEqual(['booking-1']);
+    expect(draft.linkBookingContext?.adds.map((add) => add.booking.uuid)).toEqual(['booking-2']);
+  });
 });
 
 describe('saveLocationTime', () => {
@@ -145,5 +216,21 @@ describe('saveLocationTime', () => {
       hasBookedCourt: false,
     });
     expect(apiMocks.setGameCourtsMock).toHaveBeenCalledWith('game-1', []);
+  });
+
+  it('removes old bookings before adding replacements', async () => {
+    const calls: string[] = [];
+    apiMocks.gamesPatchBookingsMock.mockImplementation(async (_id, body) => {
+      if (body.remove) calls.push(`remove:${body.remove.join(',')}`);
+      if (body.add) calls.push(`add:${body.add.join(',')}`);
+      return { data: game };
+    });
+
+    await saveLocationTime('game-1', {
+      addBookingIds: ['booking-2'],
+      removeBookingIds: ['booking-1'],
+    });
+
+    expect(calls).toEqual(['remove:booking-1', 'add:booking-2']);
   });
 });

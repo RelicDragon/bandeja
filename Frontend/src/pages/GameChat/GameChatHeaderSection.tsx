@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { CloudOff, RefreshCw } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { ChatConnectionActivityOverlay } from './ChatConnectionActivityOverlay';
 import { GameChatHeader } from './GameChatHeader';
 import { GameChatStatusBanner } from './GameChatHeaderMotion';
 import { GameChatLoadingLine } from './GameChatLoadingLine';
@@ -131,6 +132,7 @@ export const GameChatHeaderSection: React.FC = () => {
           showHeaderActions={derived.showHeaderActions}
           headerActions={headerActions}
         />
+        <ChatConnectionActivityOverlay />
         <GameChatLoadingLine show={showLoadingHeader} />
       </div>
 

@@ -1,5 +1,4 @@
 export * from './CreateGameHeader';
-export * from './LocationSection';
 export * from './PlayerLevelSection';
 export * from './ParticipantsSection';
 export * from './ParticipantsSetupSection';

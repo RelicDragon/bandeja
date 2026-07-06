@@ -12,12 +12,16 @@
     "clubNotSet": "Klub není nastaven",
     "yourTime": "Váš čas: {{time}}",
     "settingsUpdated": "Nastavení bylo aktualizováno",
+    "settings": {
+      "saveFailed": "Nepodařilo se uložit toto nastavení"
+    },
     "editTab": {
       "general": "Obecné",
       "when": "Kdy",
       "where": "Kde",
       "locationTime": "Místo a čas",
       "price": "Cena",
+      "settings": "Nastavení",
       "eraseTime": "Zrušit čas"
     },
     "locationTime": {

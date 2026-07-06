@@ -10,7 +10,6 @@ import {
 } from 'react';
 import { Heart, MessageCircle, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 import { lightHaptic } from '@/utils/lightHaptic';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { recordStoryDmReactionUse } from './storyDmQuickReactions';
@@ -70,7 +69,6 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
   const [dmText, setDmText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
   const barRef = useRef<HTMLDivElement>(null);
-  const keyboardInset = useKeyboardInset();
 
   const blurDm = useCallback(() => {
     inputRef.current?.blur();
@@ -129,10 +127,6 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
     [blurDm, onDmSent, onSendDm]
   );
 
-  const bottomPad = dmFocused
-    ? `max(0.5rem, ${keyboardInset.insetPx}px)`
-    : 'max(0.5rem, env(safe-area-inset-bottom, 0px))';
-
   return (
     <>
       {dmFocused ? (
@@ -147,8 +141,11 @@ export const StoryViewerBottomBar = memo(function StoryViewerBottomBar({
       <StoryViewerQuickReactions visible={dmFocused} onPick={handleQuickReaction} />
 
       <div
-        className="pointer-events-auto absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/75 via-black/25 to-transparent backdrop-blur-md"
-        style={{ paddingBottom: bottomPad }}
+        className={[
+          'pointer-events-auto absolute inset-x-0 bottom-0 z-40 bg-gradient-to-t from-black/75 via-black/25 to-transparent backdrop-blur-md',
+          dmFocused ? 'cap-keyboard-aware-bottom-panel' : '',
+        ].join(' ')}
+        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 0px))' }}
         data-story-interactive
       >
         {captionAbove ? <div className="px-3 pb-1.5 pt-2">{captionAbove}</div> : null}

@@ -24,13 +24,17 @@ import {
   markChatPullCompleted,
 } from './chatLocalApplySyncTimers';
 
-function schedulePullPageIndexHooks(events: ChatSyncEventDTO[]): void {
+function schedulePullPageIndexHooks(
+  events: ChatSyncEventDTO[],
+  options?: { bumpUnreadForNewMessages?: boolean }
+): void {
+  const bumpUnread = options?.bumpUnreadForNewMessages === true;
   void (async () => {
     for (const ev of events) {
       if (ev.eventType === 'MESSAGE_CREATED' || ev.eventType === 'MESSAGE_UPDATED') {
         const pl = ev.payload as { message?: ChatMessage; messageId?: string };
         const m = pl.message;
-        if (ev.eventType === 'MESSAGE_CREATED' && m?.id && m.senderId) {
+        if (bumpUnread && ev.eventType === 'MESSAGE_CREATED' && m?.id && m.senderId) {
           notifyInboundMessageSeen({
             contextType: m.chatContextType,
             contextId: m.contextId,
@@ -77,6 +81,7 @@ export async function pullEventsLoop(
   contextId: string
 ): Promise<PullEventsLoopResult> {
   let after = await getLocalCursorSeq(contextType, contextId);
+  const bumpUnreadForNewMessages = after > 0;
   const key = chatCursorKey(contextType, contextId);
   let staleDispatched = false;
   let repairedStaleCursor = false;
@@ -181,7 +186,7 @@ export async function pullEventsLoop(
       }
     });
     after = pack.events[pack.events.length - 1]!.seq;
-    schedulePullPageIndexHooks(pack.events);
+    schedulePullPageIndexHooks(pack.events, { bumpUnreadForNewMessages });
     broadcastChatPullHint(key);
     if (!pack.hasMore) break;
   }

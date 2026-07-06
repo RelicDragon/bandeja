@@ -1,4 +1,4 @@
-import { format as dateFnsFormat, formatDistanceToNow, isToday, isTomorrow, isYesterday, differenceInHours, differenceInDays, getYear, Locale } from 'date-fns';
+import { format as dateFnsFormat, formatDistanceToNow, isToday, isTomorrow, isYesterday, differenceInHours, differenceInDays, getYear, isValid, Locale } from 'date-fns';
 import { enGB } from 'date-fns/locale/en-GB';
 import { ru } from 'date-fns/locale/ru';
 import { sr } from 'date-fns/locale/sr';
@@ -67,6 +67,14 @@ export const formatRelativeTime = (date: Date | string): string => {
     locale: currentLocale 
   });
 };
+
+/** Like formatRelativeTime but returns empty string for invalid dates (avoids render crashes). */
+export function formatRelativeTimeSafe(date: Date | string | null | undefined): string {
+  if (date == null) return '';
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (!isValid(dateObj)) return '';
+  return formatRelativeTime(dateObj);
+}
 
 /** Search result timestamps: today/yesterday/tomorrow labels, else short weekday + short date (like GameCard). */
 export function formatSearchResultDate(date: Date | string, t: (key: string) => string): string {

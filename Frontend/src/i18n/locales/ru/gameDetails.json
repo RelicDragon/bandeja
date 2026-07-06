@@ -15,12 +15,16 @@
     "clubNotSet": "Клуб не указан",
     "yourTime": "Ваше время: {{time}}",
     "settingsUpdated": "Настройки успешно обновлены",
+    "settings": {
+      "saveFailed": "Не удалось сохранить эту настройку"
+    },
     "editTab": {
       "general": "Основное",
       "when": "Когда",
       "where": "Где",
       "locationTime": "Место и время",
       "price": "Цена",
+      "settings": "Настройки",
       "eraseTime": "Убрать время"
     },
     "locationTime": {

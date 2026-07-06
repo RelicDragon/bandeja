@@ -434,7 +434,7 @@ Frontend/e2e/
 | C-13l | Club booking cancel | Connected user → upcoming list → cancel | Policy confirm modal; booking removed; snapshot refreshes |
 | C-13m | Club slot → create-game prefill | Tap slot on availability grid | Create-game opens with club/court/time; reservation ON if integrated + live API |
 | C-13n | Club booking create game soft link | Create game from booking row (`bookingIds=…` or legacy `locationTimeMode=bookings&bookingIds=…`) | Unified location & time surface; reservation card pre-selected; game saved with `hasBookedCourt: true` and linked bookings |
-| C-13o | Club booking cancel linked game warn | Cancel booking that has linked game | Success + non-blocking "Your game is still on the calendar" + Open game |
+| C-13o | Club booking cancel linked game warn | Cancel booking that has linked game | Success + non-blocking "Your game is still on the calendar" + Open game; linked game no longer shows "Fully booked" badge (booking unlinked) |
 | C-13q | Club booking signup connect | ConnectClubSheet → new user signup + OTP | Account created; connected chip shown |
 | C-13r | Club booking create-game grid refresh | Open create-game for BOOKTIME club with stale snapshot | Banner then red external cells after snapshot PUT |
 | C-13s | Club booking scout pool degraded | Unconnected user, empty scout pool | "Live availability unavailable" banner on create-game/club detail |
@@ -595,12 +595,14 @@ Frontend/e2e/
 | GD-20e | Edit court grid sport filter | TENNIS game at multi-sport club → edit Location & time | Court grid shows TENNIS + null-sport courts only; courts API called with `sport=TENNIS` |
 | GD-20f | Edit prunes incompatible courts | Multi-sport game with padel court saved → club gains sport tags → reopen edit modal | Incompatible court selections cleared when modal opens |
 | GD-20g | Edit sport mismatch rejected | API: update game `clubId` or `courtId` to sport-incompatible venue | 400 with sport mismatch message |
+| GD-20h | Edit settings tab | Edit modal → Settings (gear) tab | Toggles save in place (checkmark on success); footer shows Close only, no Save |
 | GD-21 | Edit with linked bookings | Game with 2 linked courts at BOOKTIME club → edit Location & time | Unified surface: reservations strip + green grid; both links pre-selected; link hint lists both courts |
 | GD-21a | Edit add booking link | Edit game with 0 links → select reservation card | Link hint appears; schedule syncs from booking; save links game |
 | GD-21b | Edit partial unlink | Game with 2 linked courts → deselect one card → Save → confirm | Pending unlink hint; only deselected link removed; other link and courts preserved |
 | GD-21c | Edit shared reservation | Reservation card shows other linked games | Informational only; user can still link this game |
 | GD-22 | Edit unlink last booking | Deselect last linked reservation card | Pending unlink hint; after save manual time grid available; amber hint that club booking stays active; save asks confirm unlink |
 | GD-22a | Edit unlink save confirm | Edit modal → unlink reservation → Save | Confirm modal warns real booking is not cancelled; save unlinks only |
+| GD-22b | Edit switch linked booking | Game linked to booking A → edit location/time → pick booking B or book new court → save | Booking A unlinked from game; only B linked; game no longer shows stale "Fully booked" for A |
 | GD-23 | Edit price | Price tab | Price fields updated |
 | GD-23 | Edit level range | Level modal | Min/max saved |
 | GD-24 | Edit max participants | Max participants modal | Capacity updated |
@@ -659,7 +661,7 @@ Frontend/e2e/
 | GD-53 | Club mini map | Game with geo | Map renders |
 | GD-54 | User game note | Add private note from game info card, game card, or modal | Note saved; only visible to self |
 | GD-55 | Edit/delete game note | Update note content | Persisted / deleted |
-| GD-56 | Game settings panel | Toggle anyoneCanInvite, visibility, etc. | Settings saved |
+| GD-56 | Game settings panel | Toggle anyoneCanInvite, visibility, etc. | Each toggle saves immediately; no Edit/Save on settings card |
 | GD-57 | Manage users modal | Owner opens manage users | Roles/kick actions available |
 | GD-58 | Kick participant | Kick user from game | Removed from roster |
 | GD-59 | Kick admin | Owner kicks admin participant | Role change / removal |
@@ -760,6 +762,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-90 | Archived game chat after delete | Participant: create game → send messages → owner deletes game → open `/games/:id/chat` or embedded chat on game details | Message history visible; header shows cancelled time and canceller when available (else time-only fallback); amber read-only banner instead of composer; reply/edit/react/pin disabled |
 | CH-91 | Archived game chat non-participant | User who was never a participant opens `/games/:id/chat` after delete | Access denied (403/empty); no composer |
 | CH-92 | Archived game chat drops queued sends | Queue or fail a game-chat send → owner deletes game while thread is open, or reopen archived `/games/:id/chat` with pending local outbox row | Pending send disappears instead of retrying; no stale sending/retry UI remains; toast explains game was cancelled and chat is now read-only |
+| CH-93 | Unread stable after logout/login | Read all chats (zero unread) → logout → login same user → open Chats | Tab and row badges stay at zero; no transient all-chats-unread spike from sync replay |
+| CH-94 | Chat connection line | Open game, bug, group, or DM chat → go offline or trigger sync | Animated line at header bottom (amber sync / red offline); header height unchanged; no tint or inline badge |
 
 ### 11.2 Thread types
 
@@ -1191,7 +1195,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-48 | Club admin sheets keyboard | Schedule → cancel game / block slot / edit hold → focus reason/note | Sheet pushed above keyboard; submit button visible |
 | X-49 | Full-page form input visibility | Create game → focus a bottom field (e.g. comment) | Page scrolls so focused field sits above keyboard with gap |
 | X-50 | Story caption & text edit | Photo story editor → caption drawer / text style panel → focus | Caption drawer and style panel ride above keyboard |
-| X-51 | Story DM bar keyboard (Android) | Story viewer → focus DM input on Android | DM bar lifts by plugin keyboard height (not stuck under keyboard) |
+| X-51 | Story DM bar keyboard | Story viewer → focus DM input (iOS/Android) | DM bar sits just above keyboard with quick reactions visible; input does not jump to header |
 | X-52 | Keyboard dismiss restores layout | Any of above → dismiss keyboard | Surfaces return to resting position; no leftover bottom padding or shifted dialogs |
 | X-55 | Auth login keyboard (Android web) | Mobile Chrome → `/login` → focus phone field | Form sits directly above keyboard; no dark gray scroll gap between card and keyboard |
 
