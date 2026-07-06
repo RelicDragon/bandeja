@@ -4,10 +4,17 @@ import {
   dateKeyInTimezone,
   formatWeatherDayLabel,
   formatWeatherDayRange,
+  formatWeatherDayRangeCompact,
   groupWeatherHoursByDay,
+  pickRepresentativeWeatherHour,
+  summarizeDayTemperatureRange,
 } from './weatherDayGroups';
 
-function point(time: string, temperatureC = 20): WeatherHourlyPoint {
+function point(
+  time: string,
+  temperatureC = 20,
+  isDay: boolean | null = true,
+): WeatherHourlyPoint {
   return {
     time,
     temperatureC,
@@ -18,7 +25,7 @@ function point(time: string, temperatureC = 20): WeatherHourlyPoint {
     precipitationMm: null,
     windSpeedKmh: null,
     relativeHumidity: null,
-    isDay: true,
+    isDay,
   };
 }
 
@@ -53,5 +60,32 @@ describe('weatherDayGroups', () => {
 
   it('formats day temperature range in locale units', () => {
     expect(formatWeatherDayRange({ lowC: 10, highC: 24 }, 'en-GB')).toBe('10–24°C');
+  });
+
+  it('summarizes day high and low from hourly points', () => {
+    expect(
+      summarizeDayTemperatureRange([
+        point('2026-06-28T08:00:00.000Z', 18),
+        point('2026-06-28T09:00:00.000Z', 22),
+      ]),
+    ).toEqual({ lowC: 18, highC: 22 });
+  });
+
+  it('formats compact day range parts for calendar weather row', () => {
+    expect(formatWeatherDayRangeCompact({ lowC: 10, highC: 24 }, 'en-GB')).toEqual({
+      low: '10',
+      high: '24',
+    });
+  });
+
+  it('prefers a daytime hour near local noon for truncated forecast days', () => {
+    const hours = [
+      point('2026-07-16T00:00:00.000Z', 12, false),
+      point('2026-07-16T02:00:00.000Z', 13, false),
+      point('2026-07-16T08:00:00.000Z', 22, true),
+      point('2026-07-16T10:00:00.000Z', 24, true),
+    ];
+
+    expect(pickRepresentativeWeatherHour(hours, 'Europe/Belgrade')?.temperatureC).toBe(24);
   });
 });

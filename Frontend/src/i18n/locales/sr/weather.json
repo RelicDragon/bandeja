@@ -1,6 +1,7 @@
 {
   "weather": {
     "forecastTitle": "Vremenska prognoza za igru",
+    "dayForecastTitle": "Vremenska prognoza",
     "openForecast": "Otvori vremensku prognozu: {{temperature}}, {{condition}}",
     "loading": "Učitavanje prognoze",
     "dayToday": "Danas",
@@ -12,7 +13,11 @@
     "dayChartTitle": "Pregled celog dana",
     "dayChartA11y": "Grafikon temperature i padavina po satu",
     "temperatureShort": "Temp",
+    "dayRangeA11y": "{{low}} do {{high}} stepeni",
+    "archive": "Arhiva",
     "precipitationShort": "Kiša",
+    "precipitationAmount": "{{amount}} mm",
+    "precipitationPeakMm": "Maks {{amount}} mm",
     "precipitationPeak": "Maks {{probability}}%",
     "unavailable": "Vremenska prognoza još nije dostupna za termin ove igre.",
     "unavailableShort": "Prognoza još nije dostupna za ovaj termin.",

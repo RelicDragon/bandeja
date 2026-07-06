@@ -1,6 +1,7 @@
 {
   "weather": {
     "forecastTitle": "Game weather",
+    "dayForecastTitle": "Weather forecast",
     "openForecast": "Open weather forecast: {{temperature}}, {{condition}}",
     "loading": "Loading forecast",
     "dayToday": "Today",
@@ -12,7 +13,12 @@
     "dayChartTitle": "Full-day outlook",
     "dayChartA11y": "Hourly temperature and precipitation chart",
     "temperatureShort": "Temp",
+    "dayRangeA11y": "{{low}} to {{high}} degrees",
+    "archive": "Archive",
+    "recordedConditions": "Recorded conditions",
     "precipitationShort": "Rain",
+    "precipitationAmount": "{{amount}} mm",
+    "precipitationPeakMm": "Peak {{amount}} mm",
     "precipitationPeak": "Peak {{probability}}%",
     "unavailable": "Weather forecast is not available for this game time yet.",
     "unavailableShort": "Forecast is not available for this time yet.",

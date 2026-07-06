@@ -160,6 +160,12 @@ export const MyTab = () => {
     }
   }, [myGamesCalendarDateAfterCreate, setMyGamesCalendarDateAfterCreate, setMyGamesSelectedDay]);
   useEffect(() => {
+    if (myGamesSelectedDay != null || myGamesCalendarDateAfterCreate != null) {
+      return;
+    }
+    setMyGamesSelectedDay(format(startOfDay(new Date()), 'yyyy-MM-dd'));
+  }, [myGamesSelectedDay, myGamesCalendarDateAfterCreate, setMyGamesSelectedDay]);
+  useEffect(() => {
     if (isCalendarTab) {
       setCreateGameInitialDate(myGamesViewMode === 'list' ? null : myGamesSelectedDate);
     } else {
@@ -258,6 +264,7 @@ export const MyTab = () => {
     availableGames: calendarMergedGames,
     onDateRangeChange: handleCalendarDateRangeChange,
     collapsed: upcomingsCollapsed,
+    weatherModeScope: 'my' as const,
     selectedDateEmptyHint,
     upcomingsToggle: {
       active: upcomingsCollapsed,

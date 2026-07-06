@@ -1,19 +1,20 @@
-import type { WeatherDay, WeatherHourlyPoint, WeatherWindow } from '@/types';
-import { compareDayKeys, dateKeyInTimezone, groupWeatherHoursByDay } from '@/utils/weatherDayGroups';
+import type { WeatherDay, WeatherHourlyPoint, WeatherSummary, WeatherWindow } from '@/types';
+import {
+  compareDayKeys,
+  dateKeyInTimezone,
+  groupWeatherHoursByDay,
+  maxForecastDayKey,
+  pickRepresentativeWeatherHour,
+  trimTrailingIncompleteWeatherDayGroups,
+} from '@/utils/weatherDayGroups';
+
+export { pickRepresentativeWeatherHour } from '@/utils/weatherDayGroups';
+
+const CALENDAR_FORECAST_ANCHOR_ISO = 'T12:00:00.000Z';
 
 export interface CalendarDayWeather {
   point: WeatherHourlyPoint;
   stale: boolean;
-}
-
-export function pickRepresentativeWeatherHour(hours: WeatherHourlyPoint[]): WeatherHourlyPoint | null {
-  if (hours.length === 0) return null;
-
-  const sorted = [...hours].sort(
-    (a, b) => new Date(a.time).getTime() - new Date(b.time).getTime(),
-  );
-  const middayIndex = Math.min(sorted.length - 1, Math.max(0, Math.floor(sorted.length / 2)));
-  return sorted[middayIndex] ?? sorted[0] ?? null;
 }
 
 export function calendarDayWeatherFromPoint(
@@ -27,8 +28,53 @@ export function calendarDayWeatherFromPoint(
 export function calendarDayWeatherFromDay(day: WeatherDay | undefined): CalendarDayWeather | null {
   if (!day?.available || day.hours.length === 0) return null;
 
-  const point = pickRepresentativeWeatherHour(day.hours);
+  const point = pickRepresentativeWeatherHour(day.hours, day.cityTimezone);
   return calendarDayWeatherFromPoint(point, day.stale);
+}
+
+export function calendarForecastQueryRange(cityTimezone?: string | null): {
+  startTime: string;
+  endTime: string;
+} {
+  const timezone = cityTimezone || 'UTC';
+  const todayKey = dateKeyInTimezone(new Date(), timezone);
+  const maxForecastDay = maxForecastDayKey(timezone);
+  return {
+    startTime: `${todayKey}${CALENDAR_FORECAST_ANCHOR_ISO}`,
+    endTime: `${maxForecastDay}${CALENDAR_FORECAST_ANCHOR_ISO}`,
+  };
+}
+
+export function buildForecastWindowForDayKey(
+  forecastWindow: WeatherWindow | null | undefined,
+  dayKey: string,
+): WeatherWindow | null {
+  if (!forecastWindow?.available || forecastWindow.hours.length === 0) return null;
+
+  const groups = trimTrailingIncompleteWeatherDayGroups(
+    groupWeatherHoursByDay(forecastWindow.hours, forecastWindow.cityTimezone),
+    forecastWindow.cityTimezone,
+  );
+  const dayGroup = groups.find((group) => group.dayKey === dayKey);
+  const hours = dayGroup?.hours ?? [];
+  if (hours.length === 0) return null;
+
+  const point = dayGroup?.middayPoint ?? pickRepresentativeWeatherHour(hours, forecastWindow.cityTimezone);
+  if (!point) return null;
+
+  const summary: WeatherSummary = {
+    ...point,
+    provider: forecastWindow.provider,
+    fetchedAt: forecastWindow.fetchedAt,
+    stale: forecastWindow.stale,
+  };
+
+  return {
+    ...forecastWindow,
+    available: true,
+    summary,
+    hours,
+  };
 }
 
 export function splitCalendarDayKeys(dayKeys: string[], timezone: string): {
@@ -49,8 +95,11 @@ export function buildCalendarWeatherByDay(params: {
   const allowedDayKeys = new Set(params.dayKeys);
 
   if (params.forecastWindow?.available && params.forecastWindow.hours.length > 0) {
-    const groups = groupWeatherHoursByDay(
-      params.forecastWindow.hours,
+    const groups = trimTrailingIncompleteWeatherDayGroups(
+      groupWeatherHoursByDay(
+        params.forecastWindow.hours,
+        params.forecastWindow.cityTimezone,
+      ),
       params.forecastWindow.cityTimezone,
     );
 

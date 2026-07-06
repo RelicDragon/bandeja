@@ -1,6 +1,7 @@
 {
   "weather": {
     "forecastTitle": "Погода на игру",
+    "dayForecastTitle": "Прогноз погоды",
     "openForecast": "Открыть прогноз погоды: {{temperature}}, {{condition}}",
     "loading": "Загружаем прогноз",
     "dayToday": "Сегодня",
@@ -12,7 +13,11 @@
     "dayChartTitle": "Прогноз на день",
     "dayChartA11y": "Почасовой график температуры и осадков",
     "temperatureShort": "Темп.",
+    "dayRangeA11y": "от {{low}} до {{high}} градусов",
+    "archive": "Архив",
     "precipitationShort": "Дождь",
+    "precipitationAmount": "{{amount}} мм",
+    "precipitationPeakMm": "Макс {{amount}} мм",
     "precipitationPeak": "Макс {{probability}}%",
     "unavailable": "Прогноз погоды пока недоступен для времени этой игры.",
     "unavailableShort": "Прогноз пока недоступен для этого времени.",

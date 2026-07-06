@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import {
   conditionKeyForWeatherCode,
+  dateKeyInTimezone,
   fullDayWindow,
   hourlyWindow,
+  trimTrailingIncompleteForecastDays,
   type WeatherForecastPayload,
   type WeatherHourlyPoint,
 } from './weatherForecast.service';
@@ -41,12 +43,12 @@ function point(time: string): WeatherHourlyPoint {
   };
 }
 
-function payload(times: string[]): WeatherForecastPayload {
+function payload(times: string[], timezone = 'UTC'): WeatherForecastPayload {
   return {
     provider: 'open-meteo',
     cityId: 'city-1',
     cityName: 'Test City',
-    cityTimezone: 'UTC',
+    cityTimezone: timezone,
     latitude: 45,
     longitude: 19,
     fetchedAt: '2026-06-28T00:00:00.000Z',
@@ -153,6 +155,24 @@ assert.deepEqual(
 assert.equal(
   payload(hourlyTimes('2026-06-28T00:00:00.000Z', 240)).hourly.length,
   240,
+);
+
+const belgradeTrimmed = trimTrailingIncompleteForecastDays(
+  payload(hourlyTimes('2026-07-07T00:00:00.000Z', 240), 'Europe/Belgrade'),
+);
+assert.equal(belgradeTrimmed.forecastEnd, '2026-07-16T21:00:00.000Z');
+assert.equal(
+  belgradeTrimmed.hourly.some((row) => dateKeyInTimezone(new Date(row.time), 'Europe/Belgrade') === '2026-07-17'),
+  false,
+);
+
+const losAngelesTrimmed = trimTrailingIncompleteForecastDays(
+  payload(hourlyTimes('2026-07-07T00:00:00.000Z', 240), 'America/Los_Angeles'),
+);
+assert.equal(losAngelesTrimmed.forecastEnd, '2026-07-16T06:00:00.000Z');
+assert.equal(
+  losAngelesTrimmed.hourly.some((row) => dateKeyInTimezone(new Date(row.time), 'America/Los_Angeles') === '2026-07-16'),
+  false,
 );
 
 console.log('weatherForecast.service.test passed');

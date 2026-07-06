@@ -64,12 +64,6 @@ export const FindTab = () => {
   const setFindSelectedDay = useShellNavStore((s) => s.setFindSelectedDay);
   const setFindHeaderActions = useShellNavStore((s) => s.setFindHeaderActions);
 
-  useEffect(() => {
-    if (findSelectedDay == null) {
-      setFindSelectedDay(format(startOfDay(new Date()), 'yyyy-MM-dd'));
-    }
-  }, [findSelectedDay, setFindSelectedDay]);
-
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
   const [dateRange, setDateRange] = useState<{ startDate?: Date; endDate?: Date }>(() =>
@@ -93,6 +87,14 @@ export const FindTab = () => {
   const queryDateRange = dateRange;
 
   const { filters, updateFilter, updateFilters, isHydrated } = useGameFilters();
+
+  useEffect(() => {
+    if (!isHydrated || findSelectedDay != null) {
+      return;
+    }
+    setFindSelectedDay(format(startOfDay(new Date()), 'yyyy-MM-dd'));
+  }, [findSelectedDay, setFindSelectedDay, isHydrated]);
+
   const findSportApiParam = useMemo(
     () => findSportFilterToApiParam(filters.filterSport, getViewerPrimarySport(user)),
     [filters.filterSport, user],

@@ -1,5 +1,6 @@
 import { MonthCalendar, type MonthCalendarProps } from '@/components/MonthCalendar';
 import { SelectedDateHeading } from '@/components/SelectedDateHeading';
+import { CalendarDayWeatherRow } from '@/components/home/CalendarDayWeatherRow';
 
 export function CalendarSection({
   selectedDate,
@@ -16,7 +17,12 @@ export function CalendarSection({
         upcomingsToggle={upcomingsToggle}
         {...calendarProps}
       />
-      {!collapsed && <SelectedDateHeading date={selectedDate} hint={selectedDateEmptyHint} />}
+      {!collapsed && (
+        <>
+          <SelectedDateHeading date={selectedDate} hint={selectedDateEmptyHint} />
+          <CalendarDayWeatherRow selectedDate={selectedDate} />
+        </>
+      )}
     </>
   );
 }

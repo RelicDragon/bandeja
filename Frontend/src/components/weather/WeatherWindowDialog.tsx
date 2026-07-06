@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { Droplets, Wind } from 'lucide-react';
+import { Wind } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { WeatherHourlyPoint } from '@/types';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/Dialog';
@@ -14,6 +14,8 @@ import {
   formatWeatherTimezoneLabel,
   getWeatherTemperatureColor,
   getWeatherConditionLabel,
+  hasWeatherPrecipitation,
+  resolveWeatherPrecipitationMode,
 } from '@/utils/weather';
 import {
   compareDayKeys,
@@ -24,6 +26,7 @@ import {
 } from '@/utils/weatherDayGroups';
 import { WeatherDayChart } from './WeatherDayChart';
 import { WeatherIcon } from './WeatherIcon';
+import { WeatherPrecipitationInline } from './WeatherPrecipitationInline';
 import { getWeatherIconPalette } from './weatherIconPalette';
 import { useHorizontalSwipe } from './useHorizontalSwipe';
 
@@ -37,6 +40,7 @@ interface WeatherWindowDialogProps {
   locale: string;
   hour12: boolean;
   modalId: string;
+  gameWindowHighlight?: boolean;
 }
 
 type WeatherRowPhase = 'before' | 'game' | 'after';
@@ -109,6 +113,7 @@ function WeatherWindowDialogInner({
   locale,
   hour12,
   modalId,
+  gameWindowHighlight = true,
 }: WeatherWindowDialogProps) {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
@@ -158,7 +163,8 @@ function WeatherWindowDialogInner({
   );
   const hasRows = Boolean(activeDayData?.available && sortedRows.length > 0);
   const isDayLoading = dayQuery.isFetching && !hasRows;
-  const isGameDay = activeDayKey === resolvedGameDayKey;
+  const isGameDay = gameWindowHighlight && activeDayKey === resolvedGameDayKey;
+  const precipMode = resolveWeatherPrecipitationMode(activeDayData?.source);
   const canGoPrevious = true;
   const canGoNext = compareDayKeys(activeDayKey, maxDayKey) < 0;
 
@@ -182,7 +188,7 @@ function WeatherWindowDialogInner({
   }, [selectedTime, sortedRows]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !gameWindowHighlight) {
       initialScrollKeyRef.current = null;
       return;
     }
@@ -203,16 +209,14 @@ function WeatherWindowDialogInner({
 
       scrollRowIntoView(scrollContainer, targetElement, reduceMotion ? 'auto' : 'smooth', 'start');
     });
-  }, [activeDayKey, endTime, hasRows, isGameDay, modalId, open, reduceMotion, sortedRows, startTime]);
+  }, [activeDayKey, endTime, gameWindowHighlight, hasRows, isGameDay, modalId, open, reduceMotion, sortedRows, startTime]);
 
   const metadata = useMemo(() => {
     if (dayQuery.data?.date === activeDayKey) {
       const nextMetadata = {
         cityName: dayQuery.data.cityName,
         timezoneLabel: formatWeatherTimezoneLabel(dayQuery.data.cityTimezone, locale),
-        updatedLabel: dayQuery.data.source === 'archive'
-          ? t('weather.recordedConditions', { defaultValue: 'Recorded conditions' })
-          : getForecastUpdatedLabel(t, dayQuery.data.fetchedAt),
+        updatedLabel: getForecastUpdatedLabel(t, dayQuery.data.fetchedAt),
         stale: dayQuery.data.stale,
       };
       headerRef.current = nextMetadata;
@@ -290,7 +294,9 @@ function WeatherWindowDialogInner({
     <Dialog open={open} onClose={onClose} modalId={modalId}>
       <DialogContent className="max-w-[92vw] rounded-2xl sm:max-w-lg" data-testid="weather-dialog">
         <DialogTitle className="sr-only">
-          {t('weather.forecastTitle', { defaultValue: 'Game weather' })}
+          {gameWindowHighlight
+            ? t('weather.forecastTitle', { defaultValue: 'Game weather' })
+            : t('weather.dayForecastTitle', { defaultValue: 'Weather forecast' })}
         </DialogTitle>
 
         {(metadata || open) ? (
@@ -350,9 +356,10 @@ function WeatherWindowDialogInner({
                     canGoNext={canGoNext}
                     onPrevious={() => navigateDay('left')}
                     onNext={() => navigateDay('right')}
-                    showGoToGameDay={!isGameDay}
+                    showGoToGameDay={gameWindowHighlight && !isGameDay}
                     onGoToGameDay={handleGoToGameDay}
                     isLoading={isDayLoading}
+                    precipitationMode={precipMode}
                   />
                 </div>
 
@@ -410,20 +417,15 @@ function WeatherWindowDialogInner({
                                   {formatWeatherTime(point.time, locale, hour12, timezone)}
                                 </span>
                               </div>
-                              {point.precipitationProbability != null || point.windSpeedKmh != null ? (
+                              {hasWeatherPrecipitation(point, precipMode) || point.windSpeedKmh != null ? (
                                 <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 dark:text-gray-400">
-                                  {point.precipitationProbability != null ? (
-                                    <span
-                                      className={`inline-flex items-center gap-1 ${
-                                        point.precipitationProbability > 0
-                                          ? 'font-medium text-sky-600 dark:text-sky-300'
-                                          : ''
-                                      }`}
-                                    >
-                                      <Droplets size={12} />
-                                      {point.precipitationProbability}%
-                                    </span>
-                                  ) : null}
+                                  <WeatherPrecipitationInline
+                                    point={point}
+                                    mode={precipMode}
+                                    locale={locale}
+                                    iconSize={12}
+                                    className="inline-flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400"
+                                  />
                                   {point.windSpeedKmh != null ? (
                                     <span className="inline-flex items-center gap-1">
                                       <Wind size={12} />

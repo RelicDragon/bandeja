@@ -308,6 +308,8 @@ Frontend/e2e/
 | H-64 | Calendar weather toggle | My tab calendar → tap cloud/sun icon in header | Icon highlights; day cells show weather pill (icon + temp) instead of entity-type pill where forecast exists; date select/filter unchanged |
 | H-65 | Calendar weather toggle off | With weather mode on → tap cloud/sun again | Entity-type pills return; weather pills hidden |
 | H-66 | Calendar weather toggle disabled | User without selected city | Cloud/sun control disabled; no weather requests; entity-type pills unchanged |
+| H-67 | Calendar weather mode persists | Enable weather on My tab → reload | Weather mode still active; pills restored after fetch |
+| H-68 | Selected date weather row | My tab calendar with city → pick date | Full-width weather row below date heading shows current temp, day range pill, precip and wind; tap opens day forecast modal without game window; past dates show mm precipitation and archived hourly data |
 | H-39 | My tab bookings refresh | Switch away from My tab and back | Upcoming bookings refetched from club booking system |
 
 ---
@@ -322,6 +324,7 @@ Frontend/e2e/
 | F-02 | List view | Tap List in Find calendar header | Calendar collapses; upcoming games from today grouped by date |
 | F-03 | List → calendar | Tap Calendar in collapsed header | Calendar expands; day-filtered games |
 | F-45 | Find calendar weather toggle | Find calendar → tap cloud/sun icon | Weather pills on forecast days replace entity-type pills; filters and day selection unchanged |
+| F-46 | Find selected date weather row | Find calendar → pick date | Weather row below date heading shows day range pill; tap opens day forecast modal |
 | F-04 | Month calendar expand | Open month picker | Range changes |
 | F-05 | Go to today | Header action | Jumps to current date |
 | F-06 | Desktop calendar split | `@desktop` | Split layout |
@@ -540,7 +543,7 @@ Frontend/e2e/
 | GD-06f | Photo upload permissions | Participant uploads; stranger cannot upload/set main | Upload/set-main succeed for participant/admin only |
 | GD-07 | Open game chat | Chat button | `/games/:id/chat` |
 | GD-104 | Weather dialog opens on game day | Game with weather summary → open forecast dialog | Full-day hourly chart/list for game day; game hours tagged “Game” |
-| GD-106 | Weather dialog archive day | Past game with weather → open dialog | Full 24h archive day (not game-window only); “Recorded conditions” label |
+| GD-106 | Weather dialog archive day | Past game with weather → open dialog | Full 24h archive day (not game-window only); hourly rows and chart show precipitation in mm |
 | GD-107 | Weather dialog scroll archive days | In weather dialog on past game → previous/next day | Each day loads full hours via `/weather/day`; data persists (no refetch on revisit) |
 | GD-105 | Weather dialog day navigation | In weather dialog → next/previous day chevrons | Day label and chart animate; counter updates; “Go to game day” appears when away from game day and returns on tap |
 | GD-73 | Scroll-more hint | Open long game details; scroll partway down | Bottom gradient + bouncing chevron; hides at page bottom |

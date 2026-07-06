@@ -1,6 +1,7 @@
 {
   "weather": {
     "forecastTitle": "Počasí na hru",
+    "dayForecastTitle": "Předpověď počasí",
     "openForecast": "Otevřít předpověď počasí: {{temperature}}, {{condition}}",
     "loading": "Načítání předpovědi",
     "dayToday": "Dnes",
@@ -12,7 +13,11 @@
     "dayChartTitle": "Přehled celého dne",
     "dayChartA11y": "Hodinový graf teploty a srážek",
     "temperatureShort": "Tepl.",
+    "dayRangeA11y": "{{low}} až {{high}} stupňů",
+    "archive": "Archiv",
     "precipitationShort": "Déšť",
+    "precipitationAmount": "{{amount}} mm",
+    "precipitationPeakMm": "Max {{amount}} mm",
     "precipitationPeak": "Max {{probability}}%",
     "unavailable": "Předpověď počasí zatím není pro čas této hry dostupná.",
     "unavailableShort": "Předpověď zatím není pro tento čas dostupná.",

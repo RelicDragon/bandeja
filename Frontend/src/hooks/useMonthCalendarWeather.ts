@@ -4,12 +4,10 @@ import type { WeatherDay } from '@/types';
 import { weatherDayQueryOptions, weatherPreviewQueryOptions } from '@/queries/weather';
 import {
   buildCalendarWeatherByDay,
+  calendarForecastQueryRange,
   splitCalendarDayKeys,
   type CalendarDayWeather,
 } from '@/utils/calendarWeather.util';
-import { maxForecastDayKey } from '@/utils/weatherDayGroups';
-
-const GRID_ANCHOR_ISO = 'T12:00:00.000Z';
 
 export interface MonthCalendarWeatherState {
   weatherByDay: Map<string, CalendarDayWeather>;
@@ -24,15 +22,10 @@ export function useMonthCalendarWeather(
   const resolvedCityId = cityId ?? '';
   const shouldFetch = enabled && Boolean(resolvedCityId) && dayKeys.length > 0;
 
-  const forecastRange = useMemo(() => {
-    const timezone = cityTimezone || 'UTC';
-    const { todayKey } = splitCalendarDayKeys(dayKeys, timezone);
-    const maxForecastDay = maxForecastDayKey(timezone);
-    return {
-      startTime: `${todayKey}${GRID_ANCHOR_ISO}`,
-      endTime: `${maxForecastDay}${GRID_ANCHOR_ISO}`,
-    };
-  }, [cityTimezone, dayKeys]);
+  const forecastRange = useMemo(
+    () => calendarForecastQueryRange(cityTimezone),
+    [cityTimezone],
+  );
 
   const forecastQuery = useQuery(
     weatherPreviewQueryOptions(

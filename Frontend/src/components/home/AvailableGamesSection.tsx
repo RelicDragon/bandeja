@@ -712,6 +712,7 @@ export const AvailableGamesSection = ({
     findDiscoveryEnabled,
     filterNoRating: filterNoRatingVal,
     collapsed: findListCollapsed,
+    weatherModeScope: 'find' as const,
     upcomingsToggle: {
       active: findListCollapsed,
       onClick: handleFindListToggle,

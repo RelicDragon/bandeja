@@ -9,6 +9,7 @@ const STALE_FALLBACK_MS = 12 * 60 * 60 * 1000;
 const FORECAST_DAYS = 10;
 const FETCH_TIMEOUT_MS = 8000;
 const HOUR_MS = 60 * 60 * 1000;
+const MAX_TIMEZONE_OFFSET_HOURS = 14;
 
 export type WeatherConditionKey =
   | 'clear'
@@ -414,6 +415,103 @@ export function filterHourlyByDayKey(
   });
 }
 
+function expectedUtcHourlyTimesForLocalDay(dayKey: string, timezone: string): Set<string> {
+  const [year, month, day] = dayKey.split('-').map(Number);
+  if (!year || !month || !day) return new Set();
+
+  const searchStart = Date.UTC(year, month - 1, day, 0, 0, 0, 0) - MAX_TIMEZONE_OFFSET_HOURS * HOUR_MS;
+  const searchEnd = Date.UTC(year, month - 1, day + 1, 0, 0, 0, 0) + MAX_TIMEZONE_OFFSET_HOURS * HOUR_MS;
+  const times = new Set<string>();
+
+  for (let time = searchStart; time < searchEnd; time += HOUR_MS) {
+    const date = new Date(time);
+    if (dateKeyInTimezone(date, timezone) === dayKey) {
+      times.add(date.toISOString());
+    }
+  }
+
+  return times;
+}
+
+export function hasCompleteForecastDayCoverage(
+  hourly: WeatherHourlyPoint[],
+  dayKey: string,
+  timezone: string,
+): boolean {
+  const expectedTimes = expectedUtcHourlyTimesForLocalDay(dayKey, timezone);
+  if (expectedTimes.size === 0) return false;
+
+  const actualTimes = new Set<string>();
+  for (const point of hourly) {
+    const time = new Date(point.time);
+    if (Number.isNaN(time.getTime())) continue;
+    if (dateKeyInTimezone(time, timezone) === dayKey) {
+      actualTimes.add(time.toISOString());
+    }
+  }
+
+  for (const expectedTime of expectedTimes) {
+    if (!actualTimes.has(expectedTime)) return false;
+  }
+  return true;
+}
+
+function groupForecastHoursByDay(
+  hourly: WeatherHourlyPoint[],
+  timezone: string,
+): Array<{ dayKey: string; hours: WeatherHourlyPoint[] }> {
+  const groups = new Map<string, WeatherHourlyPoint[]>();
+
+  for (const point of hourly) {
+    const time = new Date(point.time);
+    if (Number.isNaN(time.getTime())) continue;
+
+    const dayKey = dateKeyInTimezone(time, timezone);
+    const bucket = groups.get(dayKey) ?? [];
+    bucket.push(point);
+    groups.set(dayKey, bucket);
+  }
+
+  return Array.from(groups.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([dayKey, hours]) => ({
+      dayKey,
+      hours: [...hours].sort((a, b) => new Date(a.time).getTime() - new Date(b.time).getTime()),
+    }));
+}
+
+export function trimTrailingIncompleteForecastDays(payload: WeatherForecastPayload): WeatherForecastPayload {
+  if (payload.hourly.length === 0) return payload;
+
+  const groups = groupForecastHoursByDay(payload.hourly, payload.cityTimezone);
+  let keepGroupCount = groups.length;
+
+  while (keepGroupCount > 1) {
+    const group = groups[keepGroupCount - 1];
+    if (hasCompleteForecastDayCoverage(group.hours, group.dayKey, payload.cityTimezone)) {
+      break;
+    }
+    keepGroupCount -= 1;
+  }
+
+  if (keepGroupCount === groups.length) return payload;
+
+  const allowedTimes = new Set(
+    groups
+      .slice(0, keepGroupCount)
+      .flatMap((group) => group.hours.map((point) => point.time)),
+  );
+  const hourly = payload.hourly.filter((point) => allowedTimes.has(point.time));
+  if (hourly.length === payload.hourly.length) return payload;
+
+  return {
+    ...payload,
+    forecastStart: hourly[0]?.time ?? payload.forecastStart,
+    forecastEnd: hourly[hourly.length - 1]?.time ?? payload.forecastEnd,
+    hourly,
+  };
+}
+
 export function fullDayWindow(payload: WeatherForecastPayload, startTime: Date, endTime: Date): WeatherHourlyPoint[] {
   const startDayKey = dateKeyInTimezone(startTime, payload.cityTimezone);
   const gameWindowTimes = new Set(hourlyWindow(payload, startTime, endTime).map((point) => point.time));
@@ -429,7 +527,7 @@ export function fullDayWindow(payload: WeatherForecastPayload, startTime: Date, 
 }
 
 function buildSummary(cache: CacheLike, stale: boolean, at: Date): WeatherSummaryDto | null {
-  const payload = getPayload(cache);
+  const payload = trimTrailingIncompleteForecastDays(getPayload(cache));
   const point = nearestPoint(payload, at);
   if (!point) return null;
   return {
@@ -447,7 +545,7 @@ function buildWindowFromCache(
   endTime: Date,
   scope: WeatherWindowScope = 'game',
 ): WeatherWindowDto {
-  const payload = getPayload(cache);
+  const payload = trimTrailingIncompleteForecastDays(getPayload(cache));
   const hours = scope === 'forecast'
     ? payload.hourly
     : scope === 'day'
@@ -482,7 +580,8 @@ export async function getForecastDay(
   if (!cache) return null;
 
   const payload = getPayload(cache);
-  const hours = filterHourlyByDayKey(payload.hourly, date, payload.cityTimezone);
+  const displayPayload = trimTrailingIncompleteForecastDays(payload);
+  const hours = filterHourlyByDayKey(displayPayload.hourly, date, displayPayload.cityTimezone);
   if (hours.length === 0) return null;
 
   return {

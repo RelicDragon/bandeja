@@ -1,6 +1,7 @@
 {
   "weather": {
     "forecastTitle": "Tiempo para el partido",
+    "dayForecastTitle": "Pronóstico del tiempo",
     "openForecast": "Abrir previsión del tiempo: {{temperature}}, {{condition}}",
     "loading": "Cargando previsión",
     "dayToday": "Hoy",
@@ -12,7 +13,11 @@
     "dayChartTitle": "Resumen del día",
     "dayChartA11y": "Gráfico horario de temperatura y precipitación",
     "temperatureShort": "Temp",
+    "dayRangeA11y": "{{low}} a {{high}} grados",
+    "archive": "Archivo",
     "precipitationShort": "Lluvia",
+    "precipitationAmount": "{{amount}} mm",
+    "precipitationPeakMm": "Máx {{amount}} mm",
     "precipitationPeak": "Máx {{probability}}%",
     "unavailable": "La previsión del tiempo aún no está disponible para la hora de este partido.",
     "unavailableShort": "La previsión aún no está disponible para esta hora.",

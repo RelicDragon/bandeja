@@ -27,6 +27,11 @@ import { useMonthCalendarWeather } from '@/hooks/useMonthCalendarWeather';
 import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
 import { MonthCalendarWeatherToggle } from '@/components/MonthCalendarWeatherToggle';
 import { resolveCalendarDayPillVisibility } from '@/utils/calendarDayPillVisibility';
+import {
+  readCalendarWeatherMode,
+  writeCalendarWeatherMode,
+  type CalendarWeatherModeScope,
+} from '@/utils/calendarWeatherModeStorage';
 
 type DisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
 
@@ -72,6 +77,7 @@ export interface MonthCalendarProps {
   findDiscoveryEnabled?: boolean;
   filterNoRating?: boolean;
   collapsed?: boolean;
+  weatherModeScope: CalendarWeatherModeScope;
   upcomingsToggle?: {
     active: boolean;
     onClick: () => void;
@@ -107,6 +113,7 @@ export const MonthCalendar = ({
   findDiscoveryEnabled = false,
   filterNoRating = false,
   collapsed = false,
+  weatherModeScope,
   upcomingsToggle,
 }: MonthCalendarProps) => {
   const { user } = useAuthStore();
@@ -117,7 +124,7 @@ export const MonthCalendar = ({
     : { duration: 0.28, ease: [0.21, 0.47, 0.32, 0.98] as const };
   const [slideDirection, setSlideDirection] = useState(0);
   const [isSliding, setIsSliding] = useState(false);
-  const [weatherMode, setWeatherMode] = useState(false);
+  const [weatherMode, setWeatherMode] = useState(() => readCalendarWeatherMode(weatherModeScope));
   const [viewMonth, setViewMonth] = useState(() => startOfMonth(selectedDate ?? new Date()));
   const calendarRef = useRef<HTMLDivElement>(null);
 
@@ -332,8 +339,17 @@ export const MonthCalendar = ({
   useEffect(() => {
     if (weatherToggleDisabled && weatherMode) {
       setWeatherMode(false);
+      writeCalendarWeatherMode(weatherModeScope, false);
     }
-  }, [weatherToggleDisabled, weatherMode]);
+  }, [weatherToggleDisabled, weatherMode, weatherModeScope]);
+
+  const handleWeatherModeToggle = () => {
+    setWeatherMode((prev) => {
+      const next = !prev;
+      writeCalendarWeatherMode(weatherModeScope, next);
+      return next;
+    });
+  };
 
   const weekDays = [];
   for (let i = 0; i < 7; i++) {
@@ -433,7 +449,7 @@ export const MonthCalendar = ({
               <MonthCalendarWeatherToggle
                 active={weatherMode}
                 disabled={weatherToggleDisabled}
-                onClick={() => setWeatherMode((prev) => !prev)}
+                onClick={handleWeatherModeToggle}
               />
               <button
                 type="button"
@@ -452,7 +468,7 @@ export const MonthCalendar = ({
                 active={weatherMode}
                 compact
                 disabled={weatherToggleDisabled}
-                onClick={() => setWeatherMode((prev) => !prev)}
+                onClick={handleWeatherModeToggle}
               />
             ) : null}
             <div className="flex shrink-0 items-center gap-0.5">
@@ -460,7 +476,7 @@ export const MonthCalendar = ({
                 <MonthCalendarWeatherToggle
                   active={weatherMode}
                   disabled={weatherToggleDisabled}
-                  onClick={() => setWeatherMode((prev) => !prev)}
+                  onClick={handleWeatherModeToggle}
                 />
               ) : null}
               <motion.button

@@ -58,6 +58,51 @@ export function shouldUseFahrenheit(locale?: string): boolean {
   return region ? FAHRENHEIT_REGIONS.has(region) : false;
 }
 
+export type WeatherPrecipitationMode = 'probability' | 'amount';
+
+export function resolveWeatherPrecipitationMode(
+  source: 'forecast' | 'archive' | undefined,
+): WeatherPrecipitationMode {
+  return source === 'archive' ? 'amount' : 'probability';
+}
+
+export function getWeatherPrecipitationValue(
+  point: Pick<WeatherHourlyPoint, 'precipitationProbability' | 'precipitationMm'>,
+  mode: WeatherPrecipitationMode,
+): number | null {
+  if (mode === 'amount') {
+    return typeof point.precipitationMm === 'number' && Number.isFinite(point.precipitationMm)
+      ? point.precipitationMm
+      : null;
+  }
+
+  return typeof point.precipitationProbability === 'number' && Number.isFinite(point.precipitationProbability)
+    ? point.precipitationProbability
+    : null;
+}
+
+export function hasWeatherPrecipitation(
+  point: Pick<WeatherHourlyPoint, 'precipitationProbability' | 'precipitationMm'>,
+  mode: WeatherPrecipitationMode,
+): boolean {
+  return getWeatherPrecipitationValue(point, mode) != null;
+}
+
+export function isWeatherPrecipitationActive(
+  point: Pick<WeatherHourlyPoint, 'precipitationProbability' | 'precipitationMm'>,
+  mode: WeatherPrecipitationMode,
+): boolean {
+  const value = getWeatherPrecipitationValue(point, mode);
+  return value != null && value > 0;
+}
+
+export function formatWeatherPrecipitationAmount(mm: number, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    maximumFractionDigits: 1,
+    minimumFractionDigits: 0,
+  }).format(mm);
+}
+
 export function formatWeatherTemperature(
   point: Pick<WeatherHourlyPoint, 'temperatureC' | 'temperatureF'>,
   options: { locale?: string; unit?: 'C' | 'F' | 'auto'; compact?: boolean } = {},

@@ -5,10 +5,13 @@ import { ChevronLeft, ChevronRight, Droplets, Thermometer } from 'lucide-react';
 import type { WeatherHourlyPoint } from '@/types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import {
+  formatWeatherPrecipitationAmount,
   formatWeatherTemperature,
   formatWeatherTime,
   getWeatherTemperatureColor,
+  getWeatherPrecipitationValue,
   shouldUseFahrenheit,
+  type WeatherPrecipitationMode,
 } from '@/utils/weather';
 import { getWeatherDayChartRainBarGeometry } from './weatherDayChartGeometry';
 
@@ -30,6 +33,7 @@ interface WeatherDayChartProps {
   showGoToGameDay?: boolean;
   onGoToGameDay?: () => void;
   isLoading?: boolean;
+  precipitationMode?: WeatherPrecipitationMode;
 }
 
 interface ChartPoint {
@@ -38,6 +42,7 @@ interface ChartPoint {
   displayTemperature: number;
   temperatureC: number;
   precipitationProbability: number;
+  precipitationTooltip: string;
   hasPrecipitation: boolean;
   x: number;
   y: number;
@@ -88,6 +93,7 @@ export function WeatherDayChart({
   showGoToGameDay = false,
   onGoToGameDay,
   isLoading = false,
+  precipitationMode = 'probability',
 }: WeatherDayChartProps) {
   const { t } = useTranslation();
   const reduceMotion = usePrefersReducedMotion();
@@ -102,7 +108,7 @@ export function WeatherDayChart({
       .map((point) => ({
         point,
         displayTemperature: unit === 'F' ? point.temperatureF : point.temperatureC,
-        precipitationProbability: point.precipitationProbability ?? 0,
+        precipValue: getWeatherPrecipitationValue(point, precipitationMode) ?? 0,
       }))
       .filter(({ displayTemperature }) => isFiniteNumber(displayTemperature));
 
@@ -117,22 +123,34 @@ export function WeatherDayChart({
     const temperatureSpan = Math.max(1, maxDisplayTemperature - minDisplayTemperature);
     const plotHeight = CHART_HEIGHT - TOP_PADDING - BOTTOM_PADDING;
     const lastIndex = Math.max(1, usablePoints.length - 1);
-    const chartPoints: ChartPoint[] = usablePoints.map(({ point, displayTemperature, precipitationProbability }, index) => {
+    const precipScaleMax = precipitationMode === 'amount'
+      ? Math.max(0.1, ...usablePoints.map(({ precipValue }) => precipValue))
+      : 100;
+    const chartPoints: ChartPoint[] = usablePoints.map(({ point, displayTemperature, precipValue }, index) => {
       const x = (index / lastIndex) * CHART_WIDTH;
       const y = TOP_PADDING + ((maxDisplayTemperature - displayTemperature) / temperatureSpan) * plotHeight;
-      const cappedPrecipitation = Math.min(100, Math.max(0, precipitationProbability));
-      const hasPrecipitation = cappedPrecipitation > 0;
+      const precipIntensity = precipitationMode === 'amount'
+        ? Math.min(100, Math.max(0, (precipValue / precipScaleMax) * 100))
+        : Math.min(100, Math.max(0, precipValue));
+      const hasPrecipitation = precipValue > 0;
+      const precipitationTooltip = precipitationMode === 'amount'
+        ? t('weather.precipitationAmount', {
+            amount: formatWeatherPrecipitationAmount(precipValue, locale),
+            defaultValue: '{{amount}} mm',
+          })
+        : `${Math.round(precipValue)}%`;
 
       return {
         time: point.time,
         label: formatWeatherTime(point.time, locale, hour12, cityTimezone),
         displayTemperature,
         temperatureC: point.temperatureC,
-        precipitationProbability: cappedPrecipitation,
+        precipitationProbability: precipIntensity,
+        precipitationTooltip,
         hasPrecipitation,
         x,
         y,
-        barHeight: hasPrecipitation ? Math.max(3.5, (cappedPrecipitation / 100) * BAR_MAX_HEIGHT) : 0,
+        barHeight: hasPrecipitation ? Math.max(3.5, (precipIntensity / 100) * BAR_MAX_HEIGHT) : 0,
         isGameHour: showGameWindow && isPointDuringGame(point.time, startTime, endTime),
         temperatureColor: getWeatherTemperatureColor(point),
       };
@@ -144,8 +162,9 @@ export function WeatherDayChart({
       maxDisplayTemperature,
       minTemperatureC,
       maxTemperatureC,
+      peakPrecipValue: Math.max(...usablePoints.map(({ precipValue }) => precipValue)),
     };
-  }, [cityTimezone, endTime, hour12, locale, points, showGameWindow, startTime, unit]);
+  }, [cityTimezone, endTime, hour12, locale, points, precipitationMode, showGameWindow, startTime, t, unit]);
 
   if (isLoading || !chart) {
     if (!isLoading) return null;
@@ -211,7 +230,7 @@ export function WeatherDayChart({
   const labelIndexes = Array.from(
     new Set([0, Math.floor((chart.points.length - 1) / 2), chart.points.length - 1]),
   );
-  const peakPrecipitation = Math.max(...chart.points.map((point) => point.precipitationProbability));
+  const peakPrecipitation = chart.peakPrecipValue;
   const averageTemperatureColor = getWeatherTemperatureColor({
     temperatureC: (chart.minTemperatureC + chart.maxTemperatureC) / 2,
   });
@@ -256,10 +275,15 @@ export function WeatherDayChart({
             </span>
             <span className="inline-flex items-center gap-1">
               <Droplets size={12} className="text-sky-500" />
-              {t('weather.precipitationPeak', {
-                probability: peakPrecipitation,
-                defaultValue: 'Peak {{probability}}%',
-              })}
+              {precipitationMode === 'amount'
+                ? t('weather.precipitationPeakMm', {
+                    amount: formatWeatherPrecipitationAmount(peakPrecipitation, locale),
+                    defaultValue: 'Peak {{amount}} mm',
+                  })
+                : t('weather.precipitationPeak', {
+                    probability: Math.round(peakPrecipitation),
+                    defaultValue: 'Peak {{probability}}%',
+                  })}
             </span>
           </div>
         </div>
@@ -323,7 +347,7 @@ export function WeatherDayChart({
                     {`${point.label}: ${formatWeatherTemperature(
                       { temperatureC: point.temperatureC, temperatureF: point.displayTemperature },
                       { locale, unit },
-                    )}, ${point.precipitationProbability}%`}
+                    )}, ${point.precipitationTooltip}`}
                   </title>
                 </rect>
               );
