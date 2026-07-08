@@ -281,6 +281,7 @@
       "authTitle": "Sign in to see available times",
       "authHint": "Sign in to {{club}} to pick a time for your game.",
       "authOptOut": "I'll book the court myself",
+      "authorizeInClub": "Authorize in {{club}}",
       "dateHint": "You can book up to {{days}} days ahead at this club.",
       "connectedChip": "Signed in · {{phone}}",
       "createCta": "Create game & reserve court",

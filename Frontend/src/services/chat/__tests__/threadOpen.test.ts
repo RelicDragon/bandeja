@@ -18,6 +18,11 @@ import { markThreadArchivedInMemory, clearThreadArchivedInMemory } from '../chat
 import { markOpenThreadNetworkPrefetched } from '../openThreadNetworkPrefetch';
 import { pullMissedAndPersistToDexie } from '../chatThreadNetworkSync';
 import { pullAndApplyChatSyncEvents } from '../chatLocalApply';
+import { hydrateLastMessageIdFromDexieIfMissing } from '@/services/chat/messageContextHead';
+
+const chatSyncStoreMocks = vi.hoisted(() => ({
+  setOpenSyncing: vi.fn(),
+}));
 
 vi.mock('@/services/chat/chatLocalApply', () => ({
   applyThreadEvent: vi.fn(async () => {}),
@@ -37,9 +42,14 @@ vi.mock('@/services/chat/chatOpenMissedFlush', () => ({
   takeMissedMessagesForOpen: vi.fn(() => []),
 }));
 
+vi.mock('@/services/chat/chatSyncScheduler', () => ({
+  enqueueChatSyncPull: vi.fn(),
+  SYNC_PRIORITY_FOREGROUND: 1,
+}));
+
 vi.mock('@/store/chatSyncStore', () => ({
   useChatSyncStore: {
-    getState: () => ({ setOpenSyncing: vi.fn(), syncInProgress: false }),
+    getState: () => ({ setOpenSyncing: chatSyncStoreMocks.setOpenSyncing, syncInProgress: false }),
     subscribe: vi.fn(() => () => {}),
   },
 }));
@@ -173,6 +183,8 @@ describe('reconcileAfterPaint', () => {
     currentIdRef.current = 'g1';
     messagesRef.current = [msg('a'), msg('b')];
     setMessages.mockClear();
+    chatSyncStoreMocks.setOpenSyncing.mockClear();
+    vi.mocked(hydrateLastMessageIdFromDexieIfMissing).mockResolvedValue(undefined);
   });
 
   it('returns noop when contextId does not match current thread', async () => {
@@ -222,6 +234,26 @@ describe('reconcileAfterPaint', () => {
     });
     expect(pullMissedAndPersistToDexie).not.toHaveBeenCalled();
     expect(pullAndApplyChatSyncEvents).not.toHaveBeenCalled();
+  });
+
+  it('clears open syncing when local tail hydration fails', async () => {
+    vi.mocked(hydrateLastMessageIdFromDexieIfMissing).mockRejectedValueOnce(
+      new Error('hydrate failed')
+    );
+    commitThreadOpenPaint(KEY, { atBottom: true });
+    const result = await reconcileAfterPaint({
+      threadKey: KEY,
+      paintGeneration: getThreadOpenPaintGeneration(KEY),
+      contextType: 'GAME',
+      contextId: 'g1',
+      gameChatType: 'PUBLIC',
+      currentIdRef,
+      messagesRef,
+      setMessages,
+    });
+    expect(result).toEqual({ committedRows: false, pinToBottom: false, reconcileDelta: 'none' });
+    expect(chatSyncStoreMocks.setOpenSyncing).toHaveBeenCalledWith(true);
+    expect(chatSyncStoreMocks.setOpenSyncing).toHaveBeenLastCalledWith(false);
   });
 
   it('returns pinToBottom false for anchor scroll even when tail appends', async () => {

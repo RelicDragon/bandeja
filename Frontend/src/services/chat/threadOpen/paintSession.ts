@@ -182,13 +182,13 @@ export async function reconcileAfterPaint(
   const beforeLen = before.length;
   const beforeFirstId = before[0]?.id;
 
-  await hydrateLastMessageIdFromDexieIfMissing(
-    contextType,
-    contextId,
-    contextType === 'GAME' ? gameChatType : undefined
-  );
-
   try {
+    await hydrateLastMessageIdFromDexieIfMissing(
+      contextType,
+      contextId,
+      contextType === 'GAME' ? gameChatType : undefined
+    );
+
     if (currentIdRef.current !== contextId) return noop;
 
     const missedBuffer = takeMissedMessagesForOpen(

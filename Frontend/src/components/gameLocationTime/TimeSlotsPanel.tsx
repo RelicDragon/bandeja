@@ -30,16 +30,12 @@ export function TimeSlotsPanel({
       {dateSection}
       {clubSection}
       {courtSection}
-      {needsBooktimeAuth ? authGateSection : null}
-      {!needsBooktimeAuth ? (
-        <>
-          {reservationsStrip}
-          {hintSection}
-          {timeSlotsChildren}
-          {linkHintSection}
-          {overrideSection}
-        </>
-      ) : null}
+      {authGateSection}
+      {!needsBooktimeAuth ? reservationsStrip : null}
+      {hintSection}
+      {timeSlotsChildren}
+      {linkHintSection}
+      {overrideSection}
     </div>
   );
 }

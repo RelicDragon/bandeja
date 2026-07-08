@@ -69,7 +69,7 @@ describe('resolveCreateGameBookingAction', () => {
     ).toEqual({ status: 'proceed' });
   });
 
-  it('blocks when auth required', () => {
+  it('falls back to manual create when auth is required for book-on-create', () => {
     expect(
       resolveCreateGameBookingAction({
         ...base,
@@ -77,7 +77,7 @@ describe('resolveCreateGameBookingAction', () => {
         willBookOnCreate: true,
         integratedCourtCount: 1,
       }),
-    ).toEqual({ status: 'abort' });
+    ).toEqual({ status: 'proceed', overrides: { hasBookedCourt: false } });
   });
 
   it('soft overlap opens confirmation path', () => {
@@ -221,6 +221,18 @@ describe('resolveCreateButtonLabel', () => {
         integratedCourtCount: 1,
       }),
     ).toBe('createGame.booktime.createCta');
+  });
+
+  it('uses the normal create label when booking auth is missing', () => {
+    expect(
+      resolveCreateButtonLabel({
+        t,
+        entityType: 'GAME',
+        needsBooktimeAuth: true,
+        willBookOnCreate: true,
+        integratedCourtCount: 1,
+      }),
+    ).toBe('createGame.createButton');
   });
 });
 

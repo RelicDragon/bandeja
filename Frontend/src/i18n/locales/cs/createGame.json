@@ -422,6 +422,7 @@
       "authTitle": "Přihlaste se pro zobrazení časů",
       "authHint": "Přihlaste se k {{club}}, abyste mohli rezervovat kurt s hrou.",
       "authOptOut": "Kurt si rezervuji sám/sama",
+      "authorizeInClub": "Autorizovat v {{club}}",
       "dateHint": "Můžete rezervovat až {{days}} dní dopředu v tomto klubu.",
       "connectedChip": "Přihlášen · {{phone}}",
       "createCta": "Vytvořit hru a rezervovat kurt",

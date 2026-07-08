@@ -12,8 +12,12 @@ import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { getBooktimeCompanyId } from '@shared/clubIntegration';
 
-export function buildBooktimeOptionsCacheKey(dateKey: string, courtId: string | null): string {
-  return `${dateKey}|${courtId ?? 'all'}`;
+export function buildBooktimeOptionsCacheKey(
+  dateKey: string,
+  courtId: string | null,
+  durationMinutes: number
+): string {
+  return `${dateKey}|${courtId ?? 'all'}|${durationMinutes}`;
 }
 
 type OptionsCache = Map<string, string[]>;
@@ -58,7 +62,7 @@ export function useBooktimeTimeOptions({
     async (date: Date, courtId: string | null, options?: { force?: boolean }) => {
       if (!enabled || !liveApiEnabled || !club || !companyId) return;
       const dateKey = formatClubDateKey(date, club);
-      const cacheKey = buildBooktimeOptionsCacheKey(dateKey, courtId);
+      const cacheKey = buildBooktimeOptionsCacheKey(dateKey, courtId, durationMinutes);
       if (!options?.force && cacheRef.current.has(cacheKey)) return;
       if (!courtMappingKey) {
         setCache((prev) => {
@@ -144,19 +148,19 @@ export function useBooktimeTimeOptions({
       void cacheTick;
       if (!club) return [];
       const dateKey = formatClubDateKey(date, club);
-      const cacheKey = buildBooktimeOptionsCacheKey(dateKey, courtId);
+      const cacheKey = buildBooktimeOptionsCacheKey(dateKey, courtId, durationMinutes);
       return cacheRef.current.get(cacheKey) ?? [];
     },
-    [cacheTick, club, selectedCourtId],
+    [cacheTick, club, durationMinutes, selectedCourtId],
   );
 
   const loading = useMemo(() => {
     void loadingTick;
     if (!club) return false;
     const dateKey = formatClubDateKey(selectedDate, club);
-    const cacheKey = buildBooktimeOptionsCacheKey(dateKey, selectedCourtId);
+    const cacheKey = buildBooktimeOptionsCacheKey(dateKey, selectedCourtId, durationMinutes);
     return inFlightKeysRef.current.has(cacheKey);
-  }, [loadingTick, club, selectedDate, selectedCourtId]);
+  }, [loadingTick, club, selectedDate, durationMinutes, selectedCourtId]);
 
   const generateTimeOptions = useCallback(
     () => optionsForDate(selectedDate),
@@ -221,7 +225,7 @@ export function useBooktimeTimeOptions({
   const reload = useCallback(() => {
     if (!club) return;
     const dateKey = formatClubDateKey(selectedDate, club);
-    const cacheKey = buildBooktimeOptionsCacheKey(dateKey, selectedCourtId);
+    const cacheKey = buildBooktimeOptionsCacheKey(dateKey, selectedCourtId, durationMinutes);
     setCache((prev) => {
       if (!prev.has(cacheKey)) return prev;
       const next = new Map(prev);
@@ -230,7 +234,7 @@ export function useBooktimeTimeOptions({
     });
     setCacheTick((tick) => tick + 1);
     void loadDate(selectedDate, selectedCourtId, { force: true });
-  }, [club, loadDate, selectedDate, selectedCourtId]);
+  }, [club, durationMinutes, loadDate, selectedDate, selectedCourtId]);
 
   return useMemo(
     () => ({

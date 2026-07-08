@@ -41,6 +41,9 @@ export async function persistChatMessagesFromApiDirect(messages: ChatMessage[]):
   for (const r of rows) {
     void bumpMessageContextHead(r).catch(() => {});
     const p = r.payload;
+    if (!isChatLocalIndexingSuppressed()) {
+      void patchThreadIndexFromMessage(p).catch(() => {});
+    }
     if (p.thumbnailUrls?.some((u) => u && !u.startsWith('blob:') && !u.startsWith('data:'))) {
       scheduleChatMediaThumbPrefetchForMessage(p);
     }

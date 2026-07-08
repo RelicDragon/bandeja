@@ -367,6 +367,7 @@ export const EditGameInfoModal = ({
   const needsBooktimeAuth = Boolean(
     willBookOnEdit && clubBookingFlowActive && !booktimeAuth?.connected,
   );
+  const booktimeScheduleConstrained = willBookOnEdit && !needsBooktimeAuth;
   const booktimeCompanyMeta = useBooktimeCompanyMeta(
     selectedClubData,
     (willBookOnEdit || bookingsModeActive) && clubBookingFlowActive && !needsBooktimeAuth,
@@ -426,7 +427,7 @@ export const EditGameInfoModal = ({
   const { clampDate: clampBooktimeDate, fixedDates: booktimeFixedDates } = booktimeCompanyMeta;
 
   useEffect(() => {
-    if (!willBookOnEdit || !booktimeFixedDates?.length) return;
+    if (!booktimeScheduleConstrained || !booktimeFixedDates?.length) return;
     const clamped = clampBooktimeDate(whenSelectedDate);
     if (format(clamped, 'yyyy-MM-dd') !== format(whenSelectedDate, 'yyyy-MM-dd')) {
       setWhenSelectedDate(clamped);
@@ -435,7 +436,7 @@ export const EditGameInfoModal = ({
       setHookTime('');
     }
   }, [
-    willBookOnEdit,
+    booktimeScheduleConstrained,
     booktimeFixedDates,
     clampBooktimeDate,
     whenSelectedDate,
@@ -568,8 +569,7 @@ export const EditGameInfoModal = ({
 
       if (willBookOnEdit) {
         if (needsBooktimeAuth) {
-          setIsSaving(false);
-          setActiveTab('locationTime');
+          await executeSave();
           return;
         }
         await refreshSnapshot({ force: true });
@@ -590,8 +590,7 @@ export const EditGameInfoModal = ({
     try {
       if (willBookOnEdit) {
         if (needsBooktimeAuth) {
-          setIsSaving(false);
-          setActiveTab('locationTime');
+          await executeSave();
           return;
         }
         await refreshSnapshot({ force: true });
@@ -802,20 +801,22 @@ export const EditGameInfoModal = ({
                 snapshotOverlayEnabled={editSnapshotOverlayEnabled}
                 snapshotLoading={isRefreshingSnapshot}
                 snapshotBannerState={snapshotBanner}
-                willBookOnCreate={willBookOnEdit}
+                willBookOnCreate={booktimeScheduleConstrained}
                 needsBooktimeAuth={needsBooktimeAuth}
-                booktimeFixedDates={willBookOnEdit ? booktimeFixedDates : undefined}
+                booktimeFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
                 slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
                 booktimeSlotsActive={booktimeTimeOptions.active}
                 connectedPhone={booktimeAuth?.phoneNumber ?? null}
-                bookableDaysHint={willBookOnEdit ? booktimeCompanyMeta.bookableDays : null}
-                authGateSection={
-                  needsBooktimeAuth && selectedClubData && booktimeIntegrationConfig ? (
+                bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
+                renderAuthGateSection={({ collapsed, onSkip, onCollapsedClick }) =>
+                  selectedClubData && booktimeIntegrationConfig ? (
                     <BooktimeConnectInline
                       club={selectedClubData}
                       integrationConfig={booktimeIntegrationConfig}
                       onConnected={() => void refreshBooktimeAuth()}
-                      onSkip={() => setActiveTab('locationTime')}
+                      onSkip={onSkip}
+                      collapsed={collapsed}
+                      onCollapsedClick={onCollapsedClick}
                     />
                   ) : null
                 }

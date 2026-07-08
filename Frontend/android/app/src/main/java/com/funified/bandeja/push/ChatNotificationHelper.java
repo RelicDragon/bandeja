@@ -15,7 +15,6 @@ import androidx.core.app.NotificationCompat;
 import androidx.core.app.Person;
 import androidx.core.app.RemoteInput;
 import androidx.core.content.ContextCompat;
-import com.funified.bandeja.MainActivity;
 import com.funified.bandeja.R;
 import com.funified.bandeja.auth.AppBadgeStorage;
 import java.io.InputStream;
@@ -208,12 +207,11 @@ public final class ChatNotificationHelper {
             .setAllowGeneratedReplies(true)
             .build();
 
-        Intent tapIntent = new Intent(context, MainActivity.class);
-        tapIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        tapIntent.putExtras(replyExtras(pushData));
-        // Capacitor PushNotificationsPlugin.handleOnNewIntent only forwards taps when
-        // google.message_id is present; custom MessagingStyle notifications must set it.
-        tapIntent.putExtra("google.message_id", pushData.messageId);
+        android.content.Intent tapIntent = PushTapIntentFactory.build(
+            context,
+            replyExtras(pushData),
+            pushData.messageId
+        );
 
         PendingIntent contentIntent = PendingIntent.getActivity(
             context,

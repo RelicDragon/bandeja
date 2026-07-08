@@ -87,6 +87,38 @@ function listSortTimestamp(row: ChatThreadIndexRow, item: ChatItem): number {
   return Math.max(row.sortAt, sortKey(item));
 }
 
+function parseTimeMs(value: unknown): number {
+  if (typeof value !== 'string' && typeof value !== 'number' && !(value instanceof Date)) return 0;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function messagePreviewTimeMs(message: Pick<ChatMessage, 'createdAt' | 'updatedAt'>): number {
+  const created = parseTimeMs(message.createdAt);
+  const updated = parseTimeMs(message.updatedAt);
+  return Math.max(created, updated);
+}
+
+function lastMessagePreviewTimeMs(lastMessage: unknown): number {
+  if (!lastMessage || typeof lastMessage !== 'object') return 0;
+  const record = lastMessage as { createdAt?: unknown; updatedAt?: unknown };
+  return Math.max(parseTimeMs(record.createdAt), parseTimeMs(record.updatedAt));
+}
+
+function lastMessagePreviewId(lastMessage: unknown): string | null {
+  if (!lastMessage || typeof lastMessage !== 'object') return null;
+  const id = (lastMessage as { id?: unknown }).id;
+  return typeof id === 'string' ? id : null;
+}
+
+function shouldApplyMessageAsThreadPreview(existingLastMessage: unknown, message: ChatMessage): boolean {
+  const existingId = lastMessagePreviewId(existingLastMessage);
+  if (existingId === message.id) return true;
+  const existingTime = lastMessagePreviewTimeMs(existingLastMessage);
+  if (existingTime <= 0) return true;
+  return messagePreviewTimeMs(message) >= existingTime;
+}
+
 export function chatItemsFromUnreadGames(items: Array<{ game: Game; unreadCount: number }>): ChatItem[] {
   return items
     .filter((x) => x.game.status !== 'ARCHIVED')
@@ -413,10 +445,7 @@ export async function patchThreadIndexFromMessage(
     .equals([message.chatContextType, message.contextId])
     .toArray();
   if (!initialRows.length) return;
-  const sortAtMsg = Math.max(
-    new Date(message.createdAt).getTime(),
-    new Date(message.updatedAt ?? message.createdAt).getTime()
-  );
+  const sortAtMsg = messagePreviewTimeMs(message);
   const updatedAtIso = message.updatedAt ?? message.createdAt;
   for (const rowRef of initialRows) {
     let applied = false;
@@ -427,6 +456,9 @@ export async function patchThreadIndexFromMessage(
       }
       const item = parseItem(latest.itemJson);
       if (!item || item.type === 'contact') {
+        break;
+      }
+      if (!shouldApplyMessageAsThreadPreview(item.data.lastMessage, message)) {
         break;
       }
       const draft = 'draft' in item ? item.draft : undefined;

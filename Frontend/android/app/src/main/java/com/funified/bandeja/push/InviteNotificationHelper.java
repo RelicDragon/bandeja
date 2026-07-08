@@ -5,9 +5,9 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.os.Bundle;
 import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
-import com.funified.bandeja.MainActivity;
 import com.funified.bandeja.R;
 import java.util.Map;
 
@@ -70,27 +70,24 @@ public final class InviteNotificationHelper {
             flags
         );
 
-        Intent tapIntent = new Intent(context, MainActivity.class);
-        tapIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        tapIntent.putExtra("type", invite.type);
+        Bundle tapExtras = new Bundle();
+        tapExtras.putString("type", invite.type);
         if (invite.title != null) {
-            tapIntent.putExtra("title", invite.title);
+            tapExtras.putString("title", invite.title);
         }
         if (invite.body != null) {
-            tapIntent.putExtra("body", invite.body);
+            tapExtras.putString("body", invite.body);
         }
         if (invite.inviteId != null) {
-            tapIntent.putExtra("inviteId", invite.inviteId);
+            tapExtras.putString("inviteId", invite.inviteId);
         }
         if (invite.gameId != null) {
-            tapIntent.putExtra("gameId", invite.gameId);
+            tapExtras.putString("gameId", invite.gameId);
         }
         if (invite.teamId != null) {
-            tapIntent.putExtra("teamId", invite.teamId);
+            tapExtras.putString("teamId", invite.teamId);
         }
-        // Capacitor forwards Android notification taps to JS only when a
-        // Firebase message id is present on the launch intent.
-        tapIntent.putExtra("google.message_id", invite.messageId());
+        Intent tapIntent = PushTapIntentFactory.build(context, tapExtras, invite.messageId());
         PendingIntent contentIntent = PendingIntent.getActivity(
             context,
             invite.notificationId() + 2,

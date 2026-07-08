@@ -350,7 +350,7 @@ export const GameStartSection = ({
       {courtSection}
       {reservationSection}
       {existingBookingBanner}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {needsBooktimeAuth ? (
           <motion.div
             key="auth-gate"
@@ -361,19 +361,17 @@ export const GameStartSection = ({
           >
             {authGateSection}
           </motion.div>
-        ) : (
-          <motion.div
-            key="time-scheduling"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-4"
-          >
-            {timeSlotsSection}
-          </motion.div>
-        )}
+        ) : null}
       </AnimatePresence>
+      <motion.div
+        key="time-scheduling"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className="space-y-4"
+      >
+        {timeSlotsSection}
+      </motion.div>
     </>
   );
 

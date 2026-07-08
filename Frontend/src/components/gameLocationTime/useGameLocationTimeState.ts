@@ -7,6 +7,10 @@ import { computeBookingSelectionLimits } from '@shared/gameBooking/computeBookin
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { deriveLocationTimeMode } from './LocationTimeMode';
+import {
+  getManualClubBookingPreference,
+  setManualClubBookingPreference,
+} from './manualClubBookingPreference';
 
 type UseGameLocationTimeStateArgs = {
   entityType: EntityType;
@@ -68,10 +72,20 @@ export function useGameLocationTimeState({
   );
 
   useEffect(() => {
-    if (integratedCourtIds.length === 0 && skipRealCourtBooking) {
+    if (integratedCourtIds.length === 0) {
       setSkipRealCourtBooking(false);
+      return;
     }
-  }, [integratedCourtIds.length, skipRealCourtBooking]);
+    setSkipRealCourtBooking(getManualClubBookingPreference(club?.id));
+  }, [club?.id, integratedCourtIds.length]);
+
+  const setSkipRealCourtBookingForClub = useCallback(
+    (value: boolean) => {
+      setSkipRealCourtBooking(value);
+      setManualClubBookingPreference(club?.id, value);
+    },
+    [club?.id],
+  );
 
   const willBookOnCreate =
     locationTimeMode === 'timeSlots' &&
@@ -182,7 +196,7 @@ export function useGameLocationTimeState({
     locationTimeMode,
     willBookOnCreate,
     skipRealCourtBooking,
-    setSkipRealCourtBooking,
+    setSkipRealCourtBooking: setSkipRealCourtBookingForClub,
     selectedBookingIds,
     setSelectedBookingIds,
     timeOverride,

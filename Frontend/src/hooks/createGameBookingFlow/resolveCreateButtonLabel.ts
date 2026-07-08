@@ -8,10 +8,7 @@ export function resolveCreateButtonLabel(input: {
   willBookOnCreate: boolean;
   integratedCourtCount: number;
 }): string {
-  if (input.needsBooktimeAuth) {
-    return input.t('createGame.booktime.signInToContinue');
-  }
-  if (input.willBookOnCreate && input.integratedCourtCount > 0) {
+  if (!input.needsBooktimeAuth && input.willBookOnCreate && input.integratedCourtCount > 0) {
     return input.t('createGame.booktime.createCta');
   }
   if (input.entityType === 'TOURNAMENT') return input.t('createGame.createButtonTournament');

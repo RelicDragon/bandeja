@@ -381,7 +381,6 @@ export const CreateGame = ({
       getTimeSlotsForDuration,
       isSlotHighlighted,
     },
-    handleCourtSelect,
     onNavigateAfterCreate: navigateAfterCreate,
     t,
   });
@@ -434,8 +433,19 @@ export const CreateGame = ({
     handleSkipMarkCourt,
     getConfirmModalProps,
     handleCourtSelectForAuthSkip,
+    handleAuthCollapsedClick,
     handleAuthConnected,
   } = bookingFlow;
+
+  const booktimeScheduleConstrained = willBookOnCreate && !needsBooktimeAuth;
+  const showBooktimeAuthPrompt =
+    entityType !== 'BAR' &&
+    Boolean(selectedClub) &&
+    clubBookingFlowActive &&
+    Boolean(booktimeIntegrationConfig) &&
+    !booktimeAuth?.connected &&
+    locationTimeMode === 'timeSlots';
+  const booktimeAuthPromptCollapsed = showBooktimeAuthPrompt && !needsBooktimeAuth;
 
   const weatherPreviewTiming = useMemo(() => {
     if (!selectedClubData?.cityId) return null;
@@ -1010,9 +1020,9 @@ export const CreateGame = ({
         onCalendarClick={() => setShowDatePicker(true)}
         onCloseDatePicker={() => setShowDatePicker(false)}
         generateTimeOptionsForDate={resolvedGenerateTimeOptionsForDate}
-        dateFixedDates={willBookOnCreate ? booktimeFixedDates : undefined}
-        hideCalendar={willBookOnCreate}
-        bookableDaysHint={willBookOnCreate ? booktimeCompanyMeta.bookableDays : null}
+        dateFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
+        hideCalendar={booktimeScheduleConstrained}
+        bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
       />
     ),
     [
@@ -1020,7 +1030,7 @@ export const CreateGame = ({
       showDatePicker,
       setSelectedDate,
       resolvedGenerateTimeOptionsForDate,
-      willBookOnCreate,
+      booktimeScheduleConstrained,
       booktimeFixedDates,
       booktimeCompanyMeta.bookableDays,
     ],
@@ -1067,11 +1077,6 @@ export const CreateGame = ({
         scrollToAndHighlightError(durationSectionRef);
         return;
       }
-    }
-
-    if (needsBooktimeAuth) {
-      scrollToAndHighlightError(locationTimeSectionRef);
-      return;
     }
 
     await handleCreateAttempt(
@@ -1515,12 +1520,14 @@ export const CreateGame = ({
                   }
                   courtSection={courtSection}
                   authGateSection={
-                    needsBooktimeAuth && booktimeIntegrationConfig ? (
+                    showBooktimeAuthPrompt && booktimeIntegrationConfig ? (
                       <BooktimeConnectInline
                         club={selectedClubData}
                         integrationConfig={booktimeIntegrationConfig}
                         onConnected={handleAuthConnected}
                         onSkip={handleCourtSelectForAuthSkip}
+                        collapsed={booktimeAuthPromptCollapsed}
+                        onCollapsedClick={handleAuthCollapsedClick}
                       />
                     ) : null
                   }
@@ -1550,15 +1557,15 @@ export const CreateGame = ({
                       entityType={entityType}
                       dateInputRef={dateInputRef}
                       needsBooktimeAuth={needsBooktimeAuth}
-                      bookCourtEnabled={willBookOnCreate}
-                      hideOccupancyOverlay={willBookOnCreate}
-                      dateFixedDates={willBookOnCreate ? booktimeFixedDates : undefined}
-                      hideCalendar={willBookOnCreate}
-                      bookableDaysHint={willBookOnCreate ? booktimeCompanyMeta.bookableDays : null}
+                      bookCourtEnabled={booktimeScheduleConstrained}
+                      hideOccupancyOverlay={booktimeScheduleConstrained}
+                      dateFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
+                      hideCalendar={booktimeScheduleConstrained}
+                      bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
                       connectedPhone={booktimeAuth?.phoneNumber ?? null}
                       slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
                       booktimeSlotsActive={booktimeTimeOptions.active}
-                      snapshotOverlayEnabled={willBookOnCreate && !needsBooktimeAuth}
+                      snapshotOverlayEnabled={booktimeScheduleConstrained}
                       snapshotLoading={isRefreshingSnapshot}
                       snapshotBannerState={createGameSnapshotBanner}
                       compact

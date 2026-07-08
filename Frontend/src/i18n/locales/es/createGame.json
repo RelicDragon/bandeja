@@ -419,6 +419,7 @@
       "authTitle": "Inicia sesión para ver horarios",
       "authHint": "Inicia sesión en {{club}} para reservar pista con tu partido.",
       "authOptOut": "Reservaré la pista yo mismo",
+      "authorizeInClub": "Autorizar en {{club}}",
       "dateHint": "Puedes reservar hasta {{days}} días por adelantado en este club.",
       "connectedChip": "Conectado · {{phone}}",
       "createCta": "Crear partido y reservar pista",

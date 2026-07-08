@@ -5,7 +5,7 @@ import { Game } from '@/types';
 import { Settings, HelpCircle, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useShowSettingsNotes } from '@/hooks/useShowSettingsNotes';
-import { gamesApi, normalizeGameFromApi } from '@/api';
+import { gamesApi } from '@/api';
 import toast from 'react-hot-toast';
 
 interface GameSettingsProps {
@@ -184,8 +184,9 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
       });
 
       try {
-        const result = await gamesApi.update(game.id, { [key]: checked });
-        onGameUpdate(normalizeGameFromApi(result.data));
+        await gamesApi.update(game.id, { [key]: checked });
+        const response = await gamesApi.getById(game.id);
+        onGameUpdate(response.data);
         markFieldSuccess(key);
       } catch (error: unknown) {
         setOptimistic((prev) => {

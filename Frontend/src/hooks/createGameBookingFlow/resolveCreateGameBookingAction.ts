@@ -18,6 +18,9 @@ export function resolveCreateGameBookingAction(
   input: ResolveCreateGameBookingActionInput,
 ): CreateGameAttemptResult {
   if (input.needsBooktimeAuth) {
+    if (input.locationTimeMode === 'timeSlots') {
+      return { status: 'proceed', overrides: { hasBookedCourt: false } };
+    }
     return { status: 'abort' };
   }
 

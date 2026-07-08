@@ -422,6 +422,7 @@
       "authTitle": "Prijavi se da vidiš termine",
       "authHint": "Prijavi se na {{club}} da rezervišeš teren uz meč.",
       "authOptOut": "Teren ću rezervisati sam",
+      "authorizeInClub": "Autorizuj u {{club}}",
       "dateHint": "Možeš rezervisati do {{days}} dana unapred u ovom klubu.",
       "connectedChip": "Prijavljen · {{phone}}",
       "createCta": "Kreiraj meč i rezerviši teren",

@@ -38,12 +38,12 @@ export function NavigationErrorFallback({ onClearPending, onRecover }: Navigatio
           className="mx-auto mt-6 h-9 w-9 animate-spin rounded-full border-[3px] border-primary-600/25 border-t-primary-600"
           aria-hidden
         />
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-center">
           <Button
             type="button"
             variant="secondary"
             size="lg"
-            className="w-full sm:w-auto sm:min-w-[8.5rem]"
+            className="w-full whitespace-nowrap sm:w-auto sm:min-w-[8.5rem] sm:shrink-0"
             onClick={handleBackClick}
           >
             <ArrowLeft size={18} aria-hidden />
@@ -53,7 +53,7 @@ export function NavigationErrorFallback({ onClearPending, onRecover }: Navigatio
             type="button"
             variant="primary"
             size="lg"
-            className="w-full sm:w-auto sm:min-w-[8.5rem]"
+            className="w-full whitespace-nowrap sm:w-auto sm:min-w-[8.5rem] sm:shrink-0"
             onClick={handleTryAgainClick}
           >
             <RefreshCw size={18} aria-hidden />

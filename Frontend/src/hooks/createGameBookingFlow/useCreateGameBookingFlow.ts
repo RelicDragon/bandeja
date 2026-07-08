@@ -72,7 +72,6 @@ export type UseCreateGameBookingFlowArgs = {
   hasInitialStartTime?: boolean;
   createDateFromSelection: () => { startTime: string; endTime: string };
   baseTimeOptions: TimeOptionHelpers;
-  handleCourtSelect: (id: string) => void;
   onNavigateAfterCreate: (gameStartTime: string) => void;
   t: TFunction;
 };
@@ -103,7 +102,6 @@ export function useCreateGameBookingFlow({
   hasInitialStartTime = false,
   createDateFromSelection,
   baseTimeOptions,
-  handleCourtSelect,
   onNavigateAfterCreate,
   t,
 }: UseCreateGameBookingFlowArgs) {
@@ -713,6 +711,7 @@ export function useCreateGameBookingFlow({
     setDerivedBookingSummary,
     effectiveDerivedSummary: panelDerivedSummary,
     derivedBookingWindowLabel,
+    integratedCourtIds,
     needsBooktimeAuth,
     booktimeAuth,
     refreshBooktimeAuth,
@@ -731,7 +730,7 @@ export function useCreateGameBookingFlow({
     resolvedGetTimeSlotsForDuration,
     resolvedIsSlotHighlighted,
     createButtonLabel,
-    createDisabledByAuth: needsBooktimeAuth,
+    createDisabledByAuth: false,
     preselectedBookings,
     preselectedBookingsHydrating,
     resetOnClubChange,
@@ -745,7 +744,10 @@ export function useCreateGameBookingFlow({
     handleSkipMarkCourt: finishPendingNavigate,
     getConfirmModalProps,
     handleCourtSelectForAuthSkip: () => {
-      handleCourtSelect('notBooked');
+      setSkipRealCourtBooking(true);
+    },
+    handleAuthCollapsedClick: () => {
+      setSkipRealCourtBooking(false);
     },
     handleAuthConnected: () => {
       void refreshBooktimeAuth();

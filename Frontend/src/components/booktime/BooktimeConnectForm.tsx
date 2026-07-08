@@ -20,6 +20,9 @@ type BooktimeConnectFormProps = {
 };
 
 const DEFAULT_BOOKTIME_COUNTRY_CODE = '+381';
+const FORM_CONTROL_CLASS =
+  'rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-primary-400 dark:focus:ring-primary-400/20 dark:disabled:bg-gray-800/60 dark:disabled:text-gray-500';
+const COUNTRY_SELECT_CLASS = FORM_CONTROL_CLASS.replace('px-3', 'px-2');
 
 export function BooktimeConnectForm({
   club,
@@ -191,7 +194,7 @@ export function BooktimeConnectForm({
             <select
               value={countryCode}
               onChange={(e) => setCountryCode(e.target.value)}
-              className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-2 text-sm"
+              className={COUNTRY_SELECT_CLASS}
               disabled={busy}
             >
               <option value="+381">+381</option>
@@ -204,7 +207,7 @@ export function BooktimeConnectForm({
               value={localPhone}
               onChange={(e) => setLocalPhone(e.target.value.replace(/[^\d\s]/g, ''))}
               placeholder={t('club.booktime.phonePlaceholder')}
-              className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+              className={`min-w-0 flex-1 ${FORM_CONTROL_CLASS}`}
               disabled={busy}
               required
             />
@@ -228,7 +231,7 @@ export function BooktimeConnectForm({
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             placeholder={t('club.booktime.firstName')}
-            className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+            className={`w-full ${FORM_CONTROL_CLASS}`}
             required
             disabled={busy}
           />
@@ -237,7 +240,7 @@ export function BooktimeConnectForm({
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             placeholder={t('club.booktime.lastName')}
-            className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+            className={`w-full ${FORM_CONTROL_CLASS}`}
             required
             disabled={busy}
           />
@@ -246,7 +249,7 @@ export function BooktimeConnectForm({
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={t('club.booktime.email')}
-            className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+            className={`w-full ${FORM_CONTROL_CLASS}`}
             required
             disabled={busy}
           />

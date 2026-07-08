@@ -158,7 +158,7 @@ export function StoriesRail() {
           <div
             ref={carouselRef}
             style={carouselMaskStyle}
-            className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide pb-1 touch-pan-x overscroll-x-contain [-webkit-overflow-scrolling:touch]"
+            className="flex gap-3 overflow-x-auto overflow-y-hidden scrollbar-hide pb-1 [touch-action:pan-x_pan-y] overscroll-x-contain [-webkit-overflow-scrolling:touch]"
           >
             <motion.div
               custom={0}

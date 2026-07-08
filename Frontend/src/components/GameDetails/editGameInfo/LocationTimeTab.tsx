@@ -61,6 +61,11 @@ type LocationTimeTabProps = {
   connectedPhone?: string | null;
   bookableDaysHint?: number | null;
   authGateSection?: ReactNode;
+  renderAuthGateSection?: (options: {
+    collapsed: boolean;
+    onSkip: () => void;
+    onCollapsedClick: () => void;
+  }) => ReactNode;
   clubBookingFlowActive?: boolean;
   booktimeCompanyId?: string | null;
   booktimeConnected?: boolean;
@@ -107,6 +112,7 @@ export function LocationTimeTab({
   connectedPhone = null,
   bookableDaysHint = null,
   authGateSection,
+  renderAuthGateSection,
   clubBookingFlowActive = false,
   booktimeCompanyId = null,
   booktimeConnected = false,
@@ -277,6 +283,20 @@ export function LocationTimeTab({
     booktimeConnected &&
     !needsBooktimeAuth;
 
+  const showBooktimeAuthPrompt =
+    clubBookingFlowActive &&
+    Boolean(booktimeCompanyId) &&
+    !booktimeConnected &&
+    locationTimeMode === 'timeSlots' &&
+    integratedCourtIds.length > 0;
+  const resolvedAuthGateSection = showBooktimeAuthPrompt
+    ? renderAuthGateSection?.({
+        collapsed: !needsBooktimeAuth,
+        onSkip: () => setSkipRealCourtBooking(true),
+        onCollapsedClick: () => setSkipRealCourtBooking(false),
+      }) ?? authGateSection
+    : null;
+
   const courtSection = (
     <CreateGameCourtSection
       clubs={clubsForSport}
@@ -362,7 +382,7 @@ export function LocationTimeTab({
             : undefined
         }
         needsBooktimeAuth={needsBooktimeAuth}
-        authGateSection={authGateSection}
+        authGateSection={resolvedAuthGateSection}
         dateSection={dateSection}
         courtSection={courtSection}
         timeSlotsChildren={
