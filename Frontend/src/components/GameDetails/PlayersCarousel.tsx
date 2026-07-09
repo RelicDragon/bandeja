@@ -33,7 +33,7 @@ function EmptyParticipantSlot({
         variants={slotVariants}
         initial="hidden"
         animate="visible"
-        className="flex-shrink-0 w-16 pt-1 pb-4"
+        className="flex-shrink-0 w-16 pt-2 pb-4"
       >
         <PlayerAvatar player={null} smallLayout={true} />
       </motion.div>
@@ -46,7 +46,7 @@ function EmptyParticipantSlot({
       variants={slotVariants}
       initial="hidden"
       animate="visible"
-      className="flex-shrink-0 w-16 pt-1 pb-4"
+      className="flex-shrink-0 w-16 pt-2 pb-4"
     >
       <motion.button
         type="button"
@@ -110,7 +110,7 @@ function ParticipantCarouselSlot({
       variants={slotVariants}
       initial="hidden"
       animate="visible"
-      className={`relative w-16 flex-shrink-0 pt-1 pb-4 ${
+      className={`relative w-16 flex-shrink-0 pt-2 pb-4 ${
         isDragged ? 'opacity-0' : ''
       }`}
       whileHover={draggable ? { scale: 1.05 } : undefined}
@@ -303,7 +303,7 @@ export const PlayersCarousel = ({
   return (
     <div className={showGenderIndicator && gender ? "flex gap-3 -mx-4 px-4" : "relative"}>
       {showGenderIndicator && gender && (
-        <div className="flex-shrink-0 flex flex-col items-center pt-1 pb-10">
+        <div className="flex-shrink-0 flex flex-col items-center pt-2 pb-10">
           {renderGenderIndicator(gender)}
           <span className="text-xs text-gray-600 dark:text-gray-400 mt-1">
             {genderCount ?? participants.length}
@@ -313,7 +313,7 @@ export const PlayersCarousel = ({
       <div className={showGenderIndicator && gender ? "flex-1 relative min-w-0" : "relative"}>
         <div 
           ref={carouselRef}
-          className="[touch-action:pan-x_pan-y] overscroll-x-contain overflow-x-auto overflow-y-hidden scrollbar-hide [-webkit-overflow-scrolling:touch]"
+          className="[touch-action:pan-x_pan-y] overscroll-x-contain overflow-x-auto overflow-y-hidden scrollbar-hide [-webkit-overflow-scrolling:touch] pt-2"
           onMouseDown={autoHideNames ? handlePressStart : undefined}
           onMouseUp={autoHideNames ? handlePressEnd : undefined}
           onMouseLeave={autoHideNames ? handlePressEnd : undefined}
