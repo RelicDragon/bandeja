@@ -23,3 +23,11 @@ export function canUnlinkAuthMethod(
 
   return linkedByMethod[method] && getLinkedAuthMethodCount(user) > 1;
 }
+
+export function hasLegacyPhoneAuth(user: AuthMethodUser | null | undefined): boolean {
+  return Boolean(user?.phone);
+}
+
+export function canRemoveLegacyPhoneAuth(user: AuthMethodUser | null | undefined): boolean {
+  return hasLegacyPhoneAuth(user) && getLinkedAuthMethodCount(user) > 1;
+}

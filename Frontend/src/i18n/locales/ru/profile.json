@@ -55,11 +55,19 @@
       "removeSportConfirmTitle": "Убрать вид спорта?",
       "removeSportConfirmMessage": "Убрать {{sport}} из профиля? Позже можно добавить снова.",
       "cannotRemoveAfterGames": "You cannot remove a sport after you have rated games in it.",
-      "tapToRemove": "Tap to remove",
+      "tapToDisable": "Нажмите, чтобы отключить",
       "activityWeekMonth": "{{week}} this week · {{month}} this month",
       "showDetails": "Show details",
       "hideDetails": "Hide details",
-      "editLevel": "Edit level"
+      "editLevel": "Edit level",
+      "questionnaire": {
+        "title": "Анкета — {{sport}}",
+        "notSet": "Ещё не заполнена. Несколько вопросов, чтобы начать.",
+        "completed": "Заполнена — рейтинг выше взят из этих ответов.",
+        "skipped": "Пропущена — можно заполнить в любой момент до рейтинговых игр.",
+        "actionFill": "Заполнить анкету",
+        "actionRetake": "Заполнить снова"
+      }
     },
     "preferredHand": "Рука",
     "preferredCourtSide": "Сторона корта",
@@ -109,6 +117,15 @@
     "unlinking": "Отвязка...",
     "linked": "Привязан",
     "unlink": "Отвязать",
+    "legacyPhone": {
+      "title": "Устаревший вход по телефону",
+      "description": "К этому аккаунту всё ещё привязан старый вход по номеру телефона и паролю. Рекомендуем удалить его, если вы используете Google, Apple или Telegram.",
+      "remove": "Удалить вход по телефону",
+      "removed": "Вход по телефону успешно удалён",
+      "confirmTitle": "Удалить вход по телефону?",
+      "confirmMessage": "Вы больше не сможете входить по номеру телефона и паролю. Номер телефона будет удалён из аккаунта.",
+      "notLinked": "Вход по телефону не привязан к этому аккаунту"
+    },
     "pushNotifications": "Push-уведомления",
     "sendMessages": "Уведомления чатов",
     "sendMessagesDescription": "Получайте уведомления когда кто-то отправляет сообщение в ваших игровых чатах или отчётах об ошибках",

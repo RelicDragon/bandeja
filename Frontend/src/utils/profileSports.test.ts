@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { BasicUser, User } from '@/types';
 import {
-  canRemoveSport,
+  canDisableSport,
   gamesPlayedForSport,
   formatSportLevelBadgeDisplay,
   getDisplayLevelForSport,
@@ -81,13 +81,25 @@ describe('profileSports', () => {
     expect(listEnabledSports(multi)).toEqual(['PADEL', 'TENNIS']);
   });
 
-  it('resolveCreateGameDefaultSport prefers lastCreatedSport when enabled', () => {
+  it('resolveCreateGameDefaultSport prefers active primary over lastCreatedSport', () => {
+    expect(
+      resolveCreateGameDefaultSport(
+        baseUser({
+          primarySport: 'BADMINTON',
+          lastCreatedSport: 'PADEL',
+          sportsEnabled: ['PADEL', 'BADMINTON'],
+        }),
+      ),
+    ).toBe('BADMINTON');
+  });
+
+  it('resolveCreateGameDefaultSport falls back to lastCreatedSport when primary disabled', () => {
     expect(
       resolveCreateGameDefaultSport(
         baseUser({
           primarySport: 'PADEL',
           lastCreatedSport: 'TENNIS',
-          sportsEnabled: ['PADEL', 'TENNIS'],
+          sportsEnabled: ['TENNIS'],
         }),
       ),
     ).toBe('TENNIS');
@@ -113,22 +125,22 @@ describe('profileSports', () => {
     ).toBe(3.4);
   });
 
-  it('canRemoveSport only when enabled, multiple sports, zero games', () => {
+  it('canDisableSport only when enabled and another sport remains', () => {
     const padelOnly = baseUser({
       sportsEnabled: ['PADEL'],
-      sportProfiles: [{ sport: 'PADEL', level: 1, reliability: 0, gamesPlayed: 0, gamesWon: 0 }],
+      sportProfiles: [{ sport: 'PADEL', level: 1, reliability: 0, gamesPlayed: 22, gamesWon: 10 }],
     });
-    expect(canRemoveSport(padelOnly, 'PADEL')).toBe(false);
+    expect(canDisableSport(padelOnly, 'PADEL')).toBe(false);
 
     const multi = baseUser({
       sportsEnabled: ['PADEL', 'TENNIS'],
       sportProfiles: [
-        { sport: 'PADEL', level: 1, reliability: 0, gamesPlayed: 0, gamesWon: 0 },
+        { sport: 'PADEL', level: 1.9, reliability: 0, gamesPlayed: 22, gamesWon: 10 },
         { sport: 'TENNIS', level: 2, reliability: 0, gamesPlayed: 5, gamesWon: 2 },
       ],
     });
-    expect(canRemoveSport(multi, 'PADEL')).toBe(true);
-    expect(canRemoveSport(multi, 'TENNIS')).toBe(false);
+    expect(canDisableSport(multi, 'PADEL')).toBe(true);
+    expect(canDisableSport(multi, 'TENNIS')).toBe(true);
   });
 
   it('shouldShowSportLevelBadge when games played or level above 1.0', () => {

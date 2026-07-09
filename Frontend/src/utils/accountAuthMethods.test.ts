@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canUnlinkAuthMethod, getLinkedAuthMethodCount } from './accountAuthMethods';
+import { canUnlinkAuthMethod, getLinkedAuthMethodCount, hasLegacyPhoneAuth, canRemoveLegacyPhoneAuth } from './accountAuthMethods';
 
 describe('account auth methods', () => {
   it('counts linked phone and social auth methods', () => {
@@ -22,5 +22,12 @@ describe('account auth methods', () => {
 
   it('does not allow unlinking a method that is not linked', () => {
     expect(canUnlinkAuthMethod({ telegramId: 'tg', googleId: 'g' }, 'apple')).toBe(false);
+  });
+
+  it('detects legacy phone auth and removal eligibility', () => {
+    expect(hasLegacyPhoneAuth({ phone: '+123' })).toBe(true);
+    expect(hasLegacyPhoneAuth({ googleId: 'g' })).toBe(false);
+    expect(canRemoveLegacyPhoneAuth({ phone: '+123', googleId: 'g' })).toBe(true);
+    expect(canRemoveLegacyPhoneAuth({ phone: '+123' })).toBe(false);
   });
 });

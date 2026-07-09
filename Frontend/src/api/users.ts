@@ -262,6 +262,11 @@ export const usersApi = {
     return response.data;
   },
 
+  unlinkLegacyPhoneProfile: async () => {
+    const response = await api.post<ApiResponse<{ user: User }>>('/users/profile/unlink-legacy-phone');
+    return response.data;
+  },
+
   getNotificationPreferences: async () => {
     const response = await api.get<ApiResponse<NotificationPreference[]>>('/users/notification-preferences');
     return response.data;
@@ -376,6 +381,13 @@ export const usersApi = {
   skipSportQuestionnaire: async (sport: Sport) => {
     const response = await api.post<ApiResponse<User>>(
       `/users/me/sports/${sport}/questionnaire/skip`,
+    );
+    return response.data;
+  },
+
+  resetSportQuestionnaire: async (sport: Sport) => {
+    const response = await api.post<ApiResponse<User>>(
+      `/users/me/sports/${sport}/questionnaire/reset`,
     );
     return response.data;
   },

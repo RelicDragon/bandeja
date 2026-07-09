@@ -1,69 +1,45 @@
-import { useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { type KeyboardEvent, type MouseEvent } from 'react';
 import { ChevronDown, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Button, Input } from '@/components';
-import type { Sport, User } from '@/types';
+import type { Sport } from '@/types';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { getSportPublicIcon } from '@/sport/sportPublicIcon';
-import { SportQuestionnaireEstimateLink } from '@/components/sportQuestionnaire/SportQuestionnaireEstimateLink';
-import { SportProfileLevelMeta } from '@/components/profile/SportProfileLevelMeta';
 import { ProfileSportActivityHint } from '@/components/profile/ProfileSportActivityHint';
-import { SportProfileExternalRating } from '@/components/profile/SportProfileExternalRating';
 
 type ProfileSportCardProps = {
   sport: Sport;
-  user: User;
   enabled: boolean;
   isPrimary: boolean;
   showStats: boolean;
   displayLevel: number;
   gamesPlayed: number;
-  levelEditable: boolean;
-  editing: boolean;
-  draftLevel: string;
   disabled?: boolean;
-  accordionMode?: boolean;
-  onDraftLevelChange: (value: string) => void;
+  detailsOpen?: boolean;
+  onToggleDetails?: () => void;
   onCardClick: () => void;
-  onStartEditLevel: () => void;
-  onSaveLevel: () => void;
-  onCancelEdit: () => void;
   onSetPrimary: () => void;
   onPrimaryStarClick: () => void;
-  onUserUpdated: (user: User) => void;
   activityRow?: { gamesLast7Days: number; gamesLast30Days: number } | null;
-  removeHint?: string;
 };
 
 export function ProfileSportCard({
   sport,
-  user,
   enabled,
   isPrimary,
   showStats,
   displayLevel,
   gamesPlayed,
-  levelEditable,
-  editing,
-  draftLevel,
   disabled = false,
-  accordionMode = false,
-  onDraftLevelChange,
+  detailsOpen = false,
+  onToggleDetails,
   onCardClick,
-  onStartEditLevel,
-  onSaveLevel,
-  onCancelEdit,
   onSetPrimary,
   onPrimaryStarClick,
-  onUserUpdated,
   activityRow,
-  removeHint,
 }: ProfileSportCardProps) {
   const { t } = useTranslation();
-  const [detailsOpen, setDetailsOpen] = useState(false);
   const config = getSportConfig(sport);
   const label = t(config.labelKey);
-  const showDetails = enabled && showStats && (!accordionMode || detailsOpen || editing);
 
   const handleStarClick = (e: MouseEvent) => {
     e.stopPropagation();
@@ -85,11 +61,11 @@ export function ProfileSportCard({
 
   const toggleDetails = (e: MouseEvent) => {
     e.stopPropagation();
-    setDetailsOpen((v) => !v);
+    onToggleDetails?.();
   };
 
   return (
-    <div className="relative pt-1 pr-1">
+    <div className="relative flex h-full w-full min-w-0 flex-col pt-1 pr-1">
       {enabled && (
         <button
           type="button"
@@ -111,16 +87,18 @@ export function ProfileSportCard({
         role="button"
         tabIndex={disabled ? -1 : 0}
         aria-pressed={enabled}
-        aria-expanded={accordionMode && enabled ? detailsOpen : undefined}
+        aria-expanded={enabled ? detailsOpen : undefined}
         aria-label={label}
         aria-disabled={disabled}
         onClick={disabled ? undefined : onCardClick}
         onKeyDown={handleCardKeyDown}
-        className={`relative flex w-full flex-col items-center gap-1 rounded-xl border-2 p-2 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+        className={`relative flex h-full w-full flex-1 flex-col items-center gap-1 rounded-xl border-2 p-2 transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
           disabled ? 'cursor-wait opacity-60' : 'cursor-pointer'
         } ${
           enabled
-            ? 'border-primary-500 bg-primary-50 shadow-md dark:border-primary-400 dark:bg-primary-900/35 dark:shadow-primary-950/30'
+            ? detailsOpen
+              ? 'border-primary-600 bg-primary-100/90 shadow-md ring-2 ring-primary-400/40 dark:border-primary-300 dark:bg-primary-900/50 dark:ring-primary-500/30'
+              : 'border-primary-500 bg-primary-50 shadow-md dark:border-primary-400 dark:bg-primary-900/35 dark:shadow-primary-950/30'
             : 'border-gray-200 bg-gray-50 opacity-60 grayscale hover:opacity-85 dark:border-slate-600 dark:bg-slate-800/55 dark:opacity-90 dark:grayscale-0 dark:hover:bg-slate-800/75'
         }`}
       >
@@ -133,11 +111,8 @@ export function ProfileSportCard({
           {label}
         </span>
         {enabled && activityRow ? <ProfileSportActivityHint row={activityRow} /> : null}
-        {enabled && removeHint ? (
-          <span className="text-[9px] text-gray-400 dark:text-slate-500">{removeHint}</span>
-        ) : null}
 
-        {enabled && showStats && !editing && (
+        {enabled && showStats && (
           <div className="mt-0.5 flex items-baseline gap-1.5">
             <span className="text-xs font-semibold text-yellow-600 dark:text-yellow-400">
               {displayLevel.toFixed(1)}
@@ -148,77 +123,20 @@ export function ProfileSportCard({
           </div>
         )}
 
-        {accordionMode && enabled && showStats && !editing ? (
+        {enabled ? (
           <button
             type="button"
-            className="mt-0.5 inline-flex items-center gap-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-400"
+            className="mt-auto inline-flex items-center gap-0.5 pt-1 text-[10px] font-medium text-primary-600 dark:text-primary-400"
             onClick={toggleDetails}
           >
             {detailsOpen ? t('profile.sports.hideDetails') : t('profile.sports.showDetails')}
             <ChevronDown
               size={12}
-              className={`transition-transform ${detailsOpen ? 'rotate-180' : ''}`}
+              className={`transition-transform duration-200 ${detailsOpen ? 'rotate-180' : ''}`}
               aria-hidden
             />
           </button>
         ) : null}
-
-        {showDetails &&
-          (editing ? (
-            <div className="mt-0.5 flex w-full flex-col items-stretch gap-1" onClick={(e) => e.stopPropagation()}>
-              <Input
-                type="number"
-                step="0.1"
-                min={1}
-                max={7}
-                value={draftLevel}
-                onChange={(e) => onDraftLevelChange(e.target.value)}
-                className="h-7 px-1.5 text-center text-xs"
-              />
-              <div className="flex gap-1">
-                <Button size="sm" className="flex-1 px-1 text-[10px]" onClick={onSaveLevel} disabled={disabled}>
-                  {t('profile.save')}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="flex-1 px-1 text-[10px]"
-                  onClick={onCancelEdit}
-                >
-                  {t('profile.cancel')}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-1 flex w-full flex-col items-center gap-1 border-t border-primary-200/60 pt-1.5 dark:border-primary-700/40">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (levelEditable) onStartEditLevel();
-                }}
-                className={`text-xs font-semibold text-yellow-600 dark:text-yellow-400 ${
-                  levelEditable ? 'underline-offset-2 hover:underline' : ''
-                }`}
-                disabled={!levelEditable}
-              >
-                {t('profile.sports.editLevel')}
-              </button>
-              <SportProfileLevelMeta user={user} sport={sport} level={displayLevel} className="max-w-full px-0.5" />
-              <SportProfileExternalRating
-                user={user}
-                sport={sport}
-                disabled={disabled}
-                onUserUpdated={onUserUpdated}
-              />
-              <SportQuestionnaireEstimateLink
-                user={user}
-                sport={sport}
-                onUserUpdated={onUserUpdated}
-                className="text-[10px]"
-              />
-            </div>
-          ))}
       </div>
     </div>
   );

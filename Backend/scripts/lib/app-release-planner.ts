@@ -17,6 +17,7 @@ import {
 import {
   includesAndroid,
   includesIos,
+  releaseArtifactsPresentOnDisk,
   type ReleasePlatform,
   type ReleaseSession,
 } from './app-release-session';
@@ -144,8 +145,9 @@ export function getSessionPhase(session: ReleaseSession): ReleaseSessionPhase {
 
   const needsAndroid = includesAndroid(session.targetPlatform);
   const needsIos = includesIos(session.targetPlatform);
+  const onDisk = releaseArtifactsPresentOnDisk(session);
   const hasArtifacts = Boolean(
-    (!needsAndroid || session.artifacts?.aab) && (!needsIos || session.artifacts?.ipa),
+    (!needsAndroid || onDisk.aab) && (!needsIos || onDisk.ipa),
   );
   if (!hasArtifacts) {
     return 'ready-to-build';

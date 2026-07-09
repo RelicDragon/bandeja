@@ -5,6 +5,7 @@ export {
   deleteUser,
   createTelegramLinkIntent,
   unlinkTelegramProfile,
+  unlinkLegacyPhoneProfile,
   syncTelegramProfile,
 } from './user/profile.controller';
 export { getNotificationPreferences, updateNotificationPreferences } from './user/notificationPreferences.controller';

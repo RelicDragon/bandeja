@@ -125,16 +125,12 @@ export const authApi = {
     nonce: string;
     confirmMerge?: boolean;
   }) => {
-    console.log('[APPLE_API] linkApple called', { hasIdentityToken: !!data.identityToken, hasNonce: !!data.nonce });
     const response = await api.post<ApiResponse<LoginResponse>>('/auth/link/apple', data);
-    console.log('[APPLE_API] linkApple response received');
     return response.data;
   },
 
   unlinkApple: async () => {
-    console.log('[APPLE_API] unlinkApple called');
     const response = await api.post<ApiResponse<{ user: any }>>('/auth/unlink/apple');
-    console.log('[APPLE_API] unlinkApple response received');
     return response.data;
   },
 

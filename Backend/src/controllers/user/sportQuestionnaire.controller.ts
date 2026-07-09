@@ -8,22 +8,24 @@ import {
   resetSportQuestionnaire,
   skipSportQuestionnaire,
 } from '../../services/user/sportQuestionnaire.service';
-import { parseSportParam } from '../../services/user/userSportProfile.service';
+import { loadProfileUser, parseSportParam } from '../../services/user/userSportProfile.service';
 import { disableConditionalHttpCache } from '../../utils/httpCache';
 
 export const completeSportQuestionnaireHandler = asyncHandler(async (req: AuthRequest, res: Response) => {
   rejectSocialLevelInQuestionnaireBody(req.body);
   const sport = parseSportParam(req.params.sport);
   const { answers } = req.body as { answers: string[] };
-  const status = await completeSportQuestionnaire(req.userId!, sport, answers, req.body as Record<string, unknown>);
-  res.json({ success: true, data: status });
+  await completeSportQuestionnaire(req.userId!, sport, answers, req.body as Record<string, unknown>);
+  const user = await loadProfileUser(req.userId!);
+  res.json({ success: true, data: user });
 });
 
 export const skipSportQuestionnaireHandler = asyncHandler(async (req: AuthRequest, res: Response) => {
   rejectSocialLevelInQuestionnaireBody(req.body);
   const sport = parseSportParam(req.params.sport);
-  const status = await skipSportQuestionnaire(req.userId!, sport, req.body as Record<string, unknown>);
-  res.json({ success: true, data: status });
+  await skipSportQuestionnaire(req.userId!, sport, req.body as Record<string, unknown>);
+  const user = await loadProfileUser(req.userId!);
+  res.json({ success: true, data: user });
 });
 
 export const getSportQuestionnaireStatusHandler = asyncHandler(async (req: AuthRequest, res: Response) => {

@@ -126,11 +126,19 @@
       "removeSportConfirmTitle": "Odebrat sport?",
       "removeSportConfirmMessage": "Odebrat {{sport}} z profilu? Později ho můžete znovu přidat.",
       "cannotRemoveAfterGames": "You cannot remove a sport after you have rated games in it.",
-      "tapToRemove": "Tap to remove",
+      "tapToDisable": "Klepněte pro vypnutí",
       "activityWeekMonth": "{{week}} this week · {{month}} this month",
       "showDetails": "Show details",
       "hideDetails": "Hide details",
-      "editLevel": "Edit level"
+      "editLevel": "Edit level",
+      "questionnaire": {
+        "title": "Dotazník — {{sport}}",
+        "notSet": "Ještě nevyplněno. Pár rychlých otázek na začátek.",
+        "completed": "Hotovo — rating výše vychází z těchto odpovědí.",
+        "skipped": "Přeskočeno — můžete vyplnit kdykoli před hodnocenými zápasy.",
+        "actionFill": "Vyplnit dotazník",
+        "actionRetake": "Vyplnit znovu"
+      }
     },
     "preferredHand": "Ruka",
     "preferredCourtSide": "Strana kurtu",
@@ -180,6 +188,15 @@
     "unlinking": "Odpojuji...",
     "linked": "Propojeno",
     "unlink": "Odpojit",
+    "legacyPhone": {
+      "title": "Zastaralé přihlášení telefonem",
+      "description": "K tomuto účtu je stále propojeno starší přihlášení telefonem a heslem. Doporučujeme ho odstranit, pokud místo toho používáte Google, Apple nebo Telegram.",
+      "remove": "Odstranit přihlášení telefonem",
+      "removed": "Přihlášení telefonem bylo úspěšně odstraněno",
+      "confirmTitle": "Odstranit přihlášení telefonem?",
+      "confirmMessage": "Už se nebudete moci přihlásit telefonním číslem a heslem. Telefonní číslo bude z účtu odstraněno.",
+      "notLinked": "Přihlášení telefonem není k tomuto účtu propojeno"
+    },
     "pushNotifications": "Push notifikace",
     "sendMessages": "Notifikace chatu",
     "sendMessagesDescription": "Dostávejte upozornění při zprávách v chatech zápasů nebo hlášeních chyb",

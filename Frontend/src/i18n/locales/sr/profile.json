@@ -126,11 +126,19 @@
       "removeSportConfirmTitle": "Ukloniti sport?",
       "removeSportConfirmMessage": "Ukloniti {{sport}} iz profila? Možete ga ponovo dodati kasnije.",
       "cannotRemoveAfterGames": "You cannot remove a sport after you have rated games in it.",
-      "tapToRemove": "Tap to remove",
+      "tapToDisable": "Dodirnite da isključite",
       "activityWeekMonth": "{{week}} this week · {{month}} this month",
       "showDetails": "Show details",
       "hideDetails": "Hide details",
-      "editLevel": "Edit level"
+      "editLevel": "Edit level",
+      "questionnaire": {
+        "title": "Upitnik — {{sport}}",
+        "notSet": "Još nije popunjen. Nekoliko brzih pitanja za početak.",
+        "completed": "Završeno — rating iznad dolazi iz ovih odgovora.",
+        "skipped": "Preskočeno — možete popuniti bilo kada pre rangiranih mečeva.",
+        "actionFill": "Popuni upitnik",
+        "actionRetake": "Popuni ponovo"
+      }
     },
     "preferredHand": "Ruka",
     "preferredCourtSide": "Strana terena",
@@ -180,6 +188,15 @@
     "unlinking": "Odvajanje...",
     "linked": "Povezan",
     "unlink": "Odvoji",
+    "legacyPhone": {
+      "title": "Zastarela prijava telefonom",
+      "description": "Još uvek imate stariji način prijave telefonom i lozinkom na ovom nalogu. Preporučujemo da ga uklonite ako koristite Google, Apple ili Telegram.",
+      "remove": "Ukloni prijavu telefonom",
+      "removed": "Prijava telefonom je uspešno uklonjena",
+      "confirmTitle": "Ukloniti prijavu telefonom?",
+      "confirmMessage": "Više nećete moći da se prijavite brojem telefona i lozinkom. Broj telefona biće uklonjen sa naloga.",
+      "notLinked": "Prijava telefonom nije povezana sa ovim nalogom"
+    },
     "pushNotifications": "Push obaveštenja",
     "sendMessages": "Obaveštenja ćaskanja",
     "sendMessagesDescription": "Dobijaj obaveštenja kada neko pošalje poruku u tvojim igarskim ćaskanjima ili izveštajima o greškama",

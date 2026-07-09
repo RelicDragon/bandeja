@@ -14,8 +14,7 @@ import { useDesktop } from '@/hooks/useDesktop';
 import { useAvailableGames } from '@/hooks/useAvailableGames';
 import { useAvailableUpcomingGames } from '@/hooks/useAvailableUpcomingGames';
 import { useGameFilters } from '@/hooks/useGameFilters';
-import { findSportFilterToApiParam, getViewerPrimarySport } from '@/utils/findSportFilter';
-import type { Sport } from '@/types';
+import { findSportFilterToApiParam, getViewerPrimarySport, resolveFindAdSportContext } from '@/utils/findSportFilter';
 import { startOfDay, format } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import {
@@ -95,11 +94,16 @@ export const FindTab = () => {
     setFindSelectedDay(format(startOfDay(new Date()), 'yyyy-MM-dd'));
   }, [findSelectedDay, setFindSelectedDay, isHydrated]);
 
+  const viewerPrimarySport = useMemo(() => getViewerPrimarySport(user), [user]);
   const findSportApiParam = useMemo(
-    () => findSportFilterToApiParam(filters.filterSport, getViewerPrimarySport(user)),
-    [filters.filterSport, user],
+    () => findSportFilterToApiParam(filters.filterSport, viewerPrimarySport),
+    [filters.filterSport, viewerPrimarySport],
   );
-  useRegisterAdSportContext(AD_PLACEMENTS.FIND_TOP, findSportApiParam as Sport | undefined);
+  const findAdSport = useMemo(
+    () => resolveFindAdSportContext(filters.filterSport, viewerPrimarySport),
+    [filters.filterSport, viewerPrimarySport],
+  );
+  useRegisterAdSportContext(AD_PLACEMENTS.FIND_TOP, findAdSport);
   const queryEnabled = isFindGamesQueryReady({
     isHydrated,
     calendarRangeReady: findViewMode === 'calendar' ? calendarRangeReady : true,

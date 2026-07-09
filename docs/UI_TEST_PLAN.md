@@ -958,6 +958,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-17 | Profile sports section | Enable/disable sports | Primary sport updated |
 | PR-18 | Sport levels display | Per-sport levels | Badges update |
 | PR-62 | Table tennis / squash questionnaire | Profile → add sport → Take questionnaire → answer all 5 questions | Completes without validation error; sport level assigned |
+| PR-70 | Profile sport questionnaire status | Profile → sport with 0 games → Show details | Card titled "{{sport}} questionnaire"; status + Fill out / Fill out again |
 | PR-19 | Change city | City modal | City updated |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |
@@ -971,6 +972,11 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-28 | Unlink Apple | Confirm unlink | Removed |
 | PR-29 | Link/unlink Google | Same as Apple | |
 | PR-30 | OAuth merge modal | Duplicate account detect | Merge flow |
+| PR-65 | Link Telegram from profile | Profile → Link Telegram → bot → Open Bandeja while logged in | Telegram row shows linked; username if available |
+| PR-66 | Unlink Telegram | User with 2+ auth methods → Unlink Telegram → confirm | Telegram row shows not linked |
+| PR-67 | Last auth method guard | User with only one of Google/Apple/Telegram | Unlink disabled + hint; API returns `auth.cannotUnlinkLastAuthMethod` if forced |
+| PR-68 | Telegram OAuth merge | Link Telegram already on another account → confirm merge | Accounts combined; survivor keeps session |
+| PR-69 | Legacy phone section | User with `phone` + Google/Apple/Telegram | Section visible; Remove clears phone sign-in; hidden when no phone |
 | PR-31 | Blocked users section | `@user with blocks` | List + unblock |
 | PR-32 | App icon carousel | Change app icon | `@native` manual; tiger uses primary-sport mascot (padel default); racket unchanged |
 | PR-63 | Tiger icon + primary sport | Profile → set primary sport to tennis (tiger icon selected) | Footer mascot + `@native` home-screen icon show tennis tiger; switch primary to padel → padel tiger |
@@ -996,7 +1002,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-45 | Send money from card | Player card → send money | `SendMoneyToUserModal` transfer |
 | PR-46 | Wallet transaction history | Open wallet modal | Balance + history visible |
 | PR-47 | Level history panel | Statistics → level history | Per-sport history chart |
-| PR-48 | Edit sport level on profile | `ProfileSportsSection` level edit | Level saved |
+| PR-48 | Edit sport level on profile | Enabled sport → Show details → Edit level in panel below grid | Panel opens; level saved; Show/Hide on every enabled sport |
 | PR-49 | Comparison tab pick player | Comparison → select opponent | Head-to-head stats load |
 | PR-50 | Comparison sport switch | Change sport in comparison | Stats refetch for sport |
 | PR-51 | Trainer reviews tab | `@P6` reviews tab | Reviews list + summary |

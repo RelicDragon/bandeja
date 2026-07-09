@@ -55,11 +55,19 @@
       "removeSportConfirmTitle": "Remove sport?",
       "removeSportConfirmMessage": "Remove {{sport}} from your profile? You can add it again later.",
       "cannotRemoveAfterGames": "You cannot remove a sport after you have rated games in it.",
-      "tapToRemove": "Tap to remove",
+      "tapToDisable": "Tap to disable",
       "activityWeekMonth": "{{week}} this week · {{month}} this month",
       "showDetails": "Show details",
       "hideDetails": "Hide details",
-      "editLevel": "Edit level"
+      "editLevel": "Edit level",
+      "questionnaire": {
+        "title": "{{sport}} questionnaire",
+        "notSet": "Not filled out yet. A few quick questions to get started.",
+        "completed": "Done — your rating above comes from these answers.",
+        "skipped": "Skipped — you can fill it out anytime before rated games.",
+        "actionFill": "Fill out questionnaire",
+        "actionRetake": "Fill out again"
+      }
     },
     "preferredHand": "Hand",
     "preferredCourtSide": "Court Side",
@@ -109,6 +117,15 @@
     "unlinking": "Unlinking...",
     "linked": "Linked",
     "unlink": "Unlink",
+    "legacyPhone": {
+      "title": "Legacy phone",
+      "description": "You still have the older phone and password sign-in linked to this account. We recommend removing it if you use Google, Apple, or Telegram instead.",
+      "remove": "Remove phone sign-in",
+      "removed": "Phone sign-in removed successfully",
+      "confirmTitle": "Remove phone sign-in?",
+      "confirmMessage": "You will no longer be able to sign in with your phone number and password. Your phone number will be cleared from this account.",
+      "notLinked": "Phone sign-in is not linked to this account"
+    },
     "pushNotifications": "Push Notifications",
     "sendMessages": "Chat notifications",
     "sendMessagesDescription": "Get notified when someone sends a message in your game chats or bug reports",

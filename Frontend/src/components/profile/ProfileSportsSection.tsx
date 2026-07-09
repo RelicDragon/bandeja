@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Card } from '@/components';
 import type { Sport, User } from '@/types';
 import { usersApi } from '@/api';
 import { syncNativeAppIconForUser } from '@/services/appIcon.service';
 import { AddSportQuestionnairePrompt } from '@/components/sportQuestionnaire/AddSportQuestionnairePrompt';
 import { ProfileSportCard } from '@/components/profile/ProfileSportCard';
+import { ProfileSportDetailsPanel } from '@/components/profile/ProfileSportDetailsPanel';
 import {
   canEditSportLevel,
-  canRemoveSport,
+  canDisableSport,
   findSportProfile,
   gamesPlayedForSport,
   getDisplayLevelForSport,
@@ -30,6 +32,7 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
   const { t } = useTranslation();
   const [busySport, setBusySport] = useState<Sport | null>(null);
   const [editingSport, setEditingSport] = useState<Sport | null>(null);
+  const [expandedSport, setExpandedSport] = useState<Sport | null>(null);
   const [draftLevel, setDraftLevel] = useState('');
   const [questionnairePromptSport, setQuestionnairePromptSport] = useState<Sport | null>(null);
   const sportsEnabledKey = (user.sportsEnabled ?? []).join(',');
@@ -62,6 +65,15 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
 
   const primary = resolveActivePrimarySport(user);
   const selectableSports = listSelectableSports();
+  const expandedProfile = expandedSport ? findSportProfile(user, expandedSport) : null;
+
+  useEffect(() => {
+    if (!expandedSport) return;
+    if (!isSportEnabled(user, expandedSport)) {
+      setExpandedSport(null);
+      setEditingSport(null);
+    }
+  }, [user, expandedSport, sportsEnabledKey]);
 
   const questionnairePrompt = (
     <AddSportQuestionnairePrompt
@@ -104,7 +116,7 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
   const handleSportCardClick = (sport: Sport) => {
     if (busySport === sport) return;
     if (isSportEnabled(user, sport)) {
-      if (!canRemoveSport(user, sport)) {
+      if (!canDisableSport(user, sport)) {
         toast.error(t('auth.atLeastOneSport'));
         return;
       }
@@ -126,7 +138,20 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
     const profile = findSportProfile(user, sport);
     if (!canEditSportLevel(profile)) return;
     setEditingSport(sport);
+    setExpandedSport(sport);
     setDraftLevel((profile?.level ?? getDisplayLevelForSport(user, sport)).toFixed(1));
+  };
+
+  const toggleExpandedSport = (sport: Sport) => {
+    setExpandedSport((current) => (current === sport ? null : sport));
+    if (editingSport && editingSport !== sport) {
+      setEditingSport(null);
+    }
+  };
+
+  const closeExpandedSport = () => {
+    setExpandedSport(null);
+    setEditingSport(null);
   };
 
   const saveLevel = () => {
@@ -141,6 +166,37 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
     });
   };
 
+  const colsPerRow = 3;
+  const sportRows: Sport[][] = [];
+  for (let i = 0; i < selectableSports.length; i += colsPerRow) {
+    sportRows.push(selectableSports.slice(i, i + colsPerRow));
+  }
+
+  const renderSportCard = (sport: Sport) => {
+    const enabled = isSportEnabled(user, sport);
+    const gamesPlayed = gamesPlayedForSport(user, sport);
+    const showStats = shouldShowSportLevelBadge(user, sport);
+
+    return (
+      <ProfileSportCard
+        key={sport}
+        sport={sport}
+        enabled={enabled}
+        isPrimary={primary !== null && sport === primary}
+        showStats={showStats}
+        displayLevel={getDisplayLevelForSport(user, sport)}
+        gamesPlayed={gamesPlayed}
+        disabled={busySport === sport}
+        detailsOpen={expandedSport === sport}
+        onToggleDetails={() => toggleExpandedSport(sport)}
+        onCardClick={() => handleSportCardClick(sport)}
+        onSetPrimary={() => handleSetPrimary(sport)}
+        onPrimaryStarClick={handlePrimaryStarClick}
+        activityRow={enabled ? activityBySport[sport] : undefined}
+      />
+    );
+  };
+
   return (
     <>
       <Card className="mt-4">
@@ -152,45 +208,49 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
             {t('profile.sports.otherSportsDescription')}
           </p>
         )}
-        <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-3">
-          {selectableSports.map((sport) => {
-            const enabled = isSportEnabled(user, sport);
-            const profile = findSportProfile(user, sport);
-            const gamesPlayed = gamesPlayedForSport(user, sport);
-            const showStats = shouldShowSportLevelBadge(user, sport);
-
-            return (
-              <ProfileSportCard
-                key={sport}
-                sport={sport}
-                user={user}
-                enabled={enabled}
-                isPrimary={primary !== null && sport === primary}
-                showStats={showStats}
-                displayLevel={getDisplayLevelForSport(user, sport)}
-                gamesPlayed={gamesPlayed}
-                levelEditable={canEditSportLevel(profile)}
-                editing={editingSport === sport}
-                draftLevel={draftLevel}
-                disabled={busySport === sport}
-                onDraftLevelChange={setDraftLevel}
-                onCardClick={() => handleSportCardClick(sport)}
-                onStartEditLevel={() => startEditLevel(sport)}
-                onSaveLevel={saveLevel}
-                onCancelEdit={() => setEditingSport(null)}
-                onSetPrimary={() => handleSetPrimary(sport)}
-                onPrimaryStarClick={handlePrimaryStarClick}
-                activityRow={enabled ? activityBySport[sport] : undefined}
-                removeHint={
-                  enabled && canRemoveSport(user, sport)
-                    ? t('profile.sports.tapToRemove')
-                    : undefined
-                }
-                onUserUpdated={onUserUpdated}
-                accordionMode={hasMultipleSportsEnabled(user)}
-              />
-            );
-          })}
+        <div className="mt-3 flex flex-col gap-3">
+          {sportRows.map((rowSports, rowIndex) => (
+            <div key={rowIndex} className="flex flex-col gap-3">
+              <div className="grid grid-cols-3 items-stretch gap-3">
+                {rowSports.map((sport) => (
+                  <div key={sport} className="min-w-0">
+                    {renderSportCard(sport)}
+                  </div>
+                ))}
+              </div>
+              <AnimatePresence initial={false}>
+                {expandedSport &&
+                isSportEnabled(user, expandedSport) &&
+                rowSports.includes(expandedSport) ? (
+                  <motion.div
+                    key={expandedSport}
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.24, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <ProfileSportDetailsPanel
+                      sport={expandedSport}
+                      user={user}
+                      displayLevel={getDisplayLevelForSport(user, expandedSport)}
+                      gamesPlayed={gamesPlayedForSport(user, expandedSport)}
+                      levelEditable={canEditSportLevel(expandedProfile)}
+                      editing={editingSport === expandedSport}
+                      draftLevel={draftLevel}
+                      disabled={busySport === expandedSport}
+                      onDraftLevelChange={setDraftLevel}
+                      onStartEditLevel={() => startEditLevel(expandedSport)}
+                      onSaveLevel={saveLevel}
+                      onCancelEdit={() => setEditingSport(null)}
+                      onClose={closeExpandedSport}
+                      onUserUpdated={onUserUpdated}
+                    />
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+            </div>
+          ))}
         </div>
       </Card>
 

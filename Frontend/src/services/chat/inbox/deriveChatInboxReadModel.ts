@@ -5,7 +5,39 @@ import { getChatTitle, sortChatItems } from '@/utils/chatListSort';
 import { chatListUnreadFilterCount } from '@/components/chat/chatListUnreadFilter';
 import type { ChatItem } from '@/components/chat/chatListTypes';
 import type { ChatsFilterType } from '@/components/chat/chatListFeedStore';
+import { listItemToContextKey, type ContextKey } from '@/services/chat/unreadSnapshot';
 import type { ChatInboxReadModel, ChatInboxSubtabBadges } from './types';
+
+export type UnreadFilterCountOpts = {
+  unreadStoreWarm: boolean;
+  displayedByContext: Record<ContextKey, number>;
+  marketUnreadCounts: Record<string, number>;
+};
+
+export function resolveThreadUnreadCountForFilter(
+  item: ChatItem,
+  opts: UnreadFilterCountOpts
+): number {
+  if (item.type === 'contact') return 0;
+  if (opts.unreadStoreWarm) {
+    if (item.type === 'channel' && item.data.marketItemId) {
+      return opts.marketUnreadCounts[item.data.id] ?? 0;
+    }
+    const key = listItemToContextKey(item);
+    if (!key) return 0;
+    return opts.displayedByContext[key] ?? 0;
+  }
+  return item.unreadCount ?? 0;
+}
+
+function isUnreadFilterableThread(item: ChatItem): boolean {
+  return (
+    item.type === 'user' ||
+    item.type === 'group' ||
+    item.type === 'channel' ||
+    item.type === 'game'
+  );
+}
 
 export function buildUnreadByThread(threads: ChatItem[]): Map<string, number> {
   const map = new Map<string, number>();
@@ -44,6 +76,8 @@ export type DeriveDisplayedChatsOpts = {
   debouncedSearchQuery: string;
   userId: string | undefined;
   marketUnreadCounts: Record<string, number>;
+  unreadStoreWarm: boolean;
+  displayedByContext: Record<ContextKey, number>;
 };
 
 function matchesMarketSearch(
@@ -77,8 +111,15 @@ export function deriveMarketFilteredByRoleAndSearch(opts: DeriveDisplayedChatsOp
 }
 
 function deriveMarketUnreadChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
-  const { threads, marketUnreadCounts } = opts;
-  const unreadRows = threads.filter((c) => c.type === 'channel' && (c.unreadCount ?? 0) > 0);
+  const { threads, marketUnreadCounts, unreadStoreWarm, displayedByContext } = opts;
+  const unreadOpts: UnreadFilterCountOpts = {
+    unreadStoreWarm,
+    displayedByContext,
+    marketUnreadCounts,
+  };
+  const unreadRows = threads.filter(
+    (c) => c.type === 'channel' && resolveThreadUnreadCountForFilter(c, unreadOpts) > 0
+  );
   const sorted = [...unreadRows];
   sortChatItems(sorted, 'market');
   return sorted.map((c) =>
@@ -87,16 +128,20 @@ function deriveMarketUnreadChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
 }
 
 export function deriveDisplayedChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
-  const { chatsFilter, threads, unreadFilterActive } = opts;
+  const { chatsFilter, threads, unreadFilterActive, unreadStoreWarm, displayedByContext, marketUnreadCounts } =
+    opts;
   if (chatsFilter === 'market') {
     if (unreadFilterActive) return deriveMarketUnreadChats(opts);
     return deriveMarketFilteredByRoleAndSearch(opts);
   }
   if (!unreadFilterActive) return threads;
+  const unreadOpts: UnreadFilterCountOpts = {
+    unreadStoreWarm,
+    displayedByContext,
+    marketUnreadCounts,
+  };
   return threads.filter(
-    (c) =>
-      (c.type === 'user' || c.type === 'group' || c.type === 'channel' || c.type === 'game') &&
-      (c.unreadCount ?? 0) > 0
+    (c) => isUnreadFilterableThread(c) && resolveThreadUnreadCountForFilter(c, unreadOpts) > 0
   );
 }
 
@@ -118,6 +163,7 @@ export type DeriveChatInboxReadModelInput = {
   userId: string | undefined;
   subtabs: ChatInboxSubtabBadges;
   unreadStoreWarm: boolean;
+  displayedByContext: Record<ContextKey, number>;
   marketUnreadCounts: Record<string, number>;
   marketBuyerSellerUnreadFromStore: { buyer: number; seller: number };
 };
@@ -138,6 +184,7 @@ export function deriveChatInboxReadModel(input: DeriveChatInboxReadModelInput): 
     unreadStoreWarm,
     marketUnreadCounts,
     marketBuyerSellerUnreadFromStore,
+    displayedByContext,
   } = input;
 
   const displayOpts: DeriveDisplayedChatsOpts = {
@@ -148,6 +195,8 @@ export function deriveChatInboxReadModel(input: DeriveChatInboxReadModelInput): 
     debouncedSearchQuery,
     userId,
     marketUnreadCounts,
+    unreadStoreWarm,
+    displayedByContext,
   };
 
   const marketChannelIds =

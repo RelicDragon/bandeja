@@ -7,6 +7,6 @@ export interface WelcomeQuestionnaireContentProps {
 
 export function WelcomeQuestionnaireContent({ onRequestClose }: WelcomeQuestionnaireContentProps) {
   return (
-    <SportQuestionnaireContent sport={Sports.PADEL} onRequestClose={onRequestClose} showPadelStartOver />
+    <SportQuestionnaireContent sport={Sports.PADEL} onRequestClose={onRequestClose} showStartOver />
   );
 }

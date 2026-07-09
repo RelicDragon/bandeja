@@ -37,6 +37,8 @@
     "backfill:user-name-is-set": "ts-node scripts/backfillUserNameIsSet.ts",
     "backfill:city-is-set": "ts-node scripts/backfillCityIsSet.ts",
     "backfill:padel-questionnaire-from-welcome": "ts-node scripts/backfillPadelQuestionnaireFromWelcome.ts",
+    "backfill:sport-questionnaire-markers": "ts-node scripts/backfillSportQuestionnaireMarkers.ts",
+    "backfill:padel-questionnaire-markers": "ts-node scripts/backfillSportQuestionnaireMarkers.ts",
     "backfill:game-booking-status": "ts-node scripts/backfillGameBookingStatus.ts",
     "reconcile:sport-profile-level-from-events": "ts-node scripts/reconcileSportProfileLevelFromEvents.ts",
     "reconcile:sport-profile-game-stats": "ts-node scripts/reconcileSportProfileGameStats.ts",

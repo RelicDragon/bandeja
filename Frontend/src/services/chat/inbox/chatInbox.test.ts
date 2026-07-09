@@ -10,6 +10,16 @@ import {
 import { createFakeChatInboxAdapter } from './chatInboxFakeAdapter';
 
 import type { GroupChannel, UserChat } from '@/api/chat';
+import type { Game } from '@/types';
+import { contextKey } from '@/services/chat/unreadSnapshot';
+
+function displayedChatsDefaults() {
+  return {
+    unreadStoreWarm: false,
+    displayedByContext: {},
+    marketUnreadCounts: {},
+  };
+}
 
 function userThread(id: string, unread: number, updatedAt: string): ChatItem {
   return {
@@ -57,7 +67,7 @@ describe('deriveDisplayedChats', () => {
       marketChatRole: 'buyer',
       debouncedSearchQuery: '',
       userId: 'me',
-      marketUnreadCounts: {},
+      ...displayedChatsDefaults(),
     });
     expect(displayed).toHaveLength(2);
     expect(displayed.map((c) => (c.type === 'channel' ? c.data.id : ''))).toEqual(
@@ -74,10 +84,38 @@ describe('deriveDisplayedChats', () => {
       marketChatRole: 'buyer',
       debouncedSearchQuery: '',
       userId: 'me',
-      marketUnreadCounts: {},
+      ...displayedChatsDefaults(),
     });
     expect(displayed).toHaveLength(1);
     expect(displayed[0]?.type === 'user' && displayed[0].data.id).toBe('unread');
+  });
+
+  it('excludes threads with stale unreadCount when unread store is warm', () => {
+    const threads: ChatItem[] = [
+      {
+        type: 'game',
+        data: { id: 'g1', name: 'Friday Americano', updatedAt: '2026-07-09', status: 'SCHEDULED' } as Game,
+        lastMessageDate: new Date('2026-07-09T18:24:00.000Z'),
+        unreadCount: 2,
+      },
+      userThread('dm', 2, '2026-07-02'),
+    ];
+    const displayed = deriveDisplayedChats({
+      chatsFilter: 'users',
+      threads,
+      unreadFilterActive: true,
+      marketChatRole: 'buyer',
+      debouncedSearchQuery: '',
+      userId: 'me',
+      unreadStoreWarm: true,
+      displayedByContext: {
+        [contextKey('GAME', 'g1')]: 0,
+        [contextKey('USER', 'dm')]: 2,
+      },
+      marketUnreadCounts: {},
+    });
+    expect(displayed).toHaveLength(1);
+    expect(displayed[0]?.type === 'user' && displayed[0].data.id).toBe('dm');
   });
 });
 
@@ -120,6 +158,7 @@ describe('deriveChatInboxReadModel', () => {
       userId: 'me',
       subtabs: { users: 4, bugs: 0, channels: 0, market: 0 },
       unreadStoreWarm: true,
+      displayedByContext: {},
       marketUnreadCounts: {},
       marketBuyerSellerUnreadFromStore: { buyer: 0, seller: 0 },
     });
@@ -175,6 +214,7 @@ describe('fake adapter socket unread path', () => {
       userId: 'me',
       subtabs: { users: 7, bugs: 0, channels: 0, market: 0 },
       unreadStoreWarm: true,
+      displayedByContext: {},
       marketUnreadCounts: {},
       marketBuyerSellerUnreadFromStore: { buyer: 0, seller: 0 },
     });

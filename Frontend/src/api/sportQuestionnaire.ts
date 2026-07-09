@@ -50,4 +50,11 @@ export const sportQuestionnaireApi = {
     );
     return response.data;
   },
+
+  reset: async (sport: Sport) => {
+    const response = await api.post<ApiResponse<User>>(
+      `/users/me/sports/${sport}/questionnaire/reset`,
+    );
+    return response.data;
+  },
 };

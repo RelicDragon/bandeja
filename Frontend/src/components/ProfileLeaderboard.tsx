@@ -13,7 +13,7 @@ import { useHeaderStore } from '@/store/headerStore';
 import { isAndroid } from '@/utils/capacitor';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import {
-  getUserPrimarySport,
+  getViewerPrimarySport,
   hasMultipleSportsEnabled,
   listEnabledSports,
 } from '@/utils/profileSports';
@@ -34,17 +34,17 @@ export const ProfileLeaderboard = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [leaderboardSport, setLeaderboardSport] = useState<Sport>(() => getUserPrimarySport(user));
+  const [leaderboardSport, setLeaderboardSport] = useState<Sport>(() => getViewerPrimarySport(user));
   const userRowRef = useRef<HTMLTableRowElement>(null);
   const filtersRef = useRef<HTMLDivElement>(null);
 
   const enabledSports = useMemo(() => listEnabledSports(user), [user]);
   const showSportPicker = hasMultipleSportsEnabled(user);
-  const activeLeaderboardSport = showSportPicker ? leaderboardSport : getUserPrimarySport(user);
+  const activeLeaderboardSport = showSportPicker ? leaderboardSport : getViewerPrimarySport(user);
   useRegisterAdSportContext(AD_PLACEMENTS.LEADERBOARD_BANNER, activeLeaderboardSport);
 
   useEffect(() => {
-    setLeaderboardSport(getUserPrimarySport(user));
+    setLeaderboardSport(getViewerPrimarySport(user));
   }, [user]);
 
   const formatRatingDelta = (change: number) => {

@@ -126,11 +126,19 @@
       "removeSportConfirmTitle": "¿Quitar deporte?",
       "removeSportConfirmMessage": "¿Quitar {{sport}} de tu perfil? Podrás añadirlo de nuevo más tarde.",
       "cannotRemoveAfterGames": "You cannot remove a sport after you have rated games in it.",
-      "tapToRemove": "Tap to remove",
+      "tapToDisable": "Toca para desactivar",
       "activityWeekMonth": "{{week}} this week · {{month}} this month",
       "showDetails": "Show details",
       "hideDetails": "Hide details",
-      "editLevel": "Edit level"
+      "editLevel": "Edit level",
+      "questionnaire": {
+        "title": "Cuestionario — {{sport}}",
+        "notSet": "Aún no completado. Unas preguntas rápidas para empezar.",
+        "completed": "Completado — tu rating de arriba viene de estas respuestas.",
+        "skipped": "Omitido — puedes completarlo cuando quieras antes de partidos con resultado.",
+        "actionFill": "Rellenar cuestionario",
+        "actionRetake": "Rellenar de nuevo"
+      }
     },
     "preferredHand": "Mano",
     "preferredCourtSide": "Lado de la cancha",
@@ -180,6 +188,15 @@
     "unlinking": "Desvinculando...",
     "linked": "Vinculado",
     "unlink": "Desvincular",
+    "legacyPhone": {
+      "title": "Inicio de sesión antiguo con teléfono",
+      "description": "Aún tienes vinculado el inicio de sesión antiguo con teléfono y contraseña. Recomendamos eliminarlo si usas Google, Apple o Telegram.",
+      "remove": "Eliminar inicio con teléfono",
+      "removed": "Inicio con teléfono eliminado correctamente",
+      "confirmTitle": "¿Eliminar inicio con teléfono?",
+      "confirmMessage": "Ya no podrás iniciar sesión con tu número de teléfono y contraseña. El número se eliminará de la cuenta.",
+      "notLinked": "El inicio con teléfono no está vinculado a esta cuenta"
+    },
     "pushNotifications": "Notificaciones Push",
     "sendMessages": "Notificaciones de chats",
     "sendMessagesDescription": "Recibe notificaciones cuando alguien envía un mensaje en tus chats de juego o informes de errores",

@@ -36,10 +36,7 @@ export function SportQuestionnairePrompt({ sport }: SportQuestionnairePromptProp
   const handleDismissForever = async () => {
     setSkipLoading(true);
     try {
-      const res =
-        sport === Sports.PADEL
-          ? await usersApi.skipWelcomeScreen()
-          : await usersApi.skipSportQuestionnaire(sport);
+      const res = await usersApi.skipSportQuestionnaire(sport);
       updateUser(res.data);
       setDismissConfirmOpen(false);
       void refresh();

@@ -17,6 +17,7 @@ import {
   useMarketBuyerSellerUnreadBadges,
   useUnreadStoreWarm,
 } from '@/hooks/useUnreadBridge';
+import { useUnreadStore } from '@/store/unreadStore';
 import { useChatListFeedStore, type ChatsFilterType } from '@/components/chat/chatListFeedStore';
 
 import { useChatListMergedDrafts } from '@/components/chat/useChatListMergedDrafts';
@@ -394,6 +395,7 @@ export function useChatInbox(opts: UseChatInboxOptions) {
   );
 
   const unreadStoreWarm = useUnreadStoreWarm();
+  const displayedByContext = useUnreadStore((s) => s.displayedByContext);
   const usersSubtabUnread = useChatsSubtabUnreadBadge('users');
   const bugsSubtabUnread = useChatsSubtabUnreadBadge('bugs');
   const channelsSubtabUnread = useChatsSubtabUnreadBadge('channels');
@@ -425,6 +427,7 @@ export function useChatInbox(opts: UseChatInboxOptions) {
           market: marketSubtabUnread ?? 0,
         },
         unreadStoreWarm,
+        displayedByContext,
         marketUnreadCounts,
         marketBuyerSellerUnreadFromStore: {
           buyer: marketBuyerSellerUnreadFromStore.buyer ?? 0,
@@ -446,6 +449,7 @@ export function useChatInbox(opts: UseChatInboxOptions) {
       channelsSubtabUnread,
       marketSubtabUnread,
       unreadStoreWarm,
+      displayedByContext,
       marketUnreadCounts,
       marketBuyerSellerUnreadFromStore,
     ]

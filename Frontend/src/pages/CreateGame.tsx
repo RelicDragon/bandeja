@@ -44,6 +44,7 @@ import {
   hasMultipleSportsEnabled,
   listCreateFlowSports,
   resolveCreateGameDefaultSport,
+  getViewerPrimarySport,
 } from '@/utils/profileSports';
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
@@ -178,10 +179,7 @@ export const CreateGame = ({
     entityType !== 'BAR' && entityType !== 'TRAINING',
   );
   const { sportConfig, allowedScoringModes, allowedScoringPresets } = sportFormatLimits;
-  const userDefaultSport = useMemo(
-    () => resolveCreateGameDefaultSport(user),
-    [user],
-  );
+  const favoriteSport = useMemo(() => getViewerPrimarySport(user), [user]);
   const { status: questionnaireStatus } = useQuestionnaireStatus(selectedSport);
   const showSportSelector = enabledSports.length > 1;
 
@@ -1364,7 +1362,7 @@ export const CreateGame = ({
               value={selectedSport}
               onChange={handleSportChange}
               showLabel={false}
-              defaultSport={userDefaultSport}
+              defaultSport={favoriteSport}
             />
           </div>
         )}

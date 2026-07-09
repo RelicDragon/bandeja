@@ -7,7 +7,7 @@ import {
   snapshotNativeProjectFiles,
   storeConfigComplete,
 } from './app-release-planner';
-import { proposeNextRelease } from './app-release';
+import { proposeNextRelease, readNativeVersions } from './app-release';
 import {
   buildReleaseNotes,
   parseReleaseNotesOutput,
@@ -18,6 +18,7 @@ import {
   clearSession,
   hasSavedSession,
   loadSession,
+  releaseArtifactExistsOnDisk,
   saveSession,
   SESSION_DIR,
   SESSION_FILE,
@@ -156,6 +157,27 @@ assert(
   getSessionPhase(sessionWithNotes) === 'ready-to-apply',
   'session with notes is ready-to-apply',
 );
+
+const nativeVersions = readNativeVersions();
+const staleArtifactSession = {
+  ...sessionWithNotes,
+  current: nativeVersions,
+  planned: nativeVersions,
+  artifacts: {
+    aab: path.join(SESSION_DIR, 'missing.aab'),
+    ipa: path.join(SESSION_DIR, 'missing.ipa'),
+  },
+  uploads: {},
+};
+assert(
+  getSessionPhase(staleArtifactSession) === 'ready-to-build',
+  'stale artifact paths without files require rebuild',
+);
+assert(
+  !releaseArtifactExistsOnDisk(staleArtifactSession.artifacts.aab),
+  'releaseArtifactExistsOnDisk rejects missing files',
+);
+
 assert(
   storeConfigComplete({ androidTrack: 'internal', iosSubmitForReview: false }),
   'storeConfigComplete accepts full store config',

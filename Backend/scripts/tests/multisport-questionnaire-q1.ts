@@ -8,6 +8,7 @@ import { getSportConfig } from '../../src/sport/sportRegistry';
 import {
   completeSportQuestionnaire,
   getSportQuestionnaireStatus,
+  skipSportQuestionnaire,
 } from '../../src/services/user/sportQuestionnaire.service';
 import { resetWelcomeScreen } from '../../src/services/welcomeScreen.service';
 
@@ -45,6 +46,41 @@ function testQuestionnaireServiceGuard(): void {
   const src = readFileSync(svcPath, 'utf8');
   assert(!src.includes('socialLevel:'), 'questionnaire service must not assign socialLevel');
   assert(src.includes('rejectSocialLevelInQuestionnaireBody'), 'rejects socialLevel in body');
+}
+
+async function testPadelLegacyWelcomeStatus(): Promise<void> {
+  const user = await prisma.user.create({
+    data: {
+      phone: `+1555${Date.now().toString().slice(-7)}`,
+      welcomeScreenPassed: true,
+      cityIsSet: true,
+      sportProfiles: {
+        create: {
+          sport: Sport.PADEL,
+          level: 1,
+          gamesPlayed: 0,
+        },
+      },
+    },
+    select: { id: true },
+  });
+
+  try {
+    const status = await getSportQuestionnaireStatus(user.id, Sport.PADEL);
+    assert(status.skipped, 'legacy welcomeScreenPassed without markers → skipped');
+    assert(!status.suggested, 'legacy welcome user not suggested');
+
+    const skipStatus = await skipSportQuestionnaire(user.id, Sport.PADEL);
+    assert(skipStatus.skipped, 'legacy skip is idempotent');
+
+    const profile = await prisma.userSportProfile.findUnique({
+      where: { userId_sport: { userId: user.id, sport: Sport.PADEL } },
+      select: { questionnaireSkippedAt: true },
+    });
+    assert(profile?.questionnaireSkippedAt != null, 'legacy skip repairs questionnaireSkippedAt');
+  } finally {
+    await prisma.user.delete({ where: { id: user.id } });
+  }
 }
 
 async function testPadelQuestionnaireFlow(): Promise<void> {
@@ -109,6 +145,7 @@ async function main(): Promise<void> {
   testScoreToLevelBands();
   testWelcomeDelegatesToSharedService();
   testQuestionnaireServiceGuard();
+  await testPadelLegacyWelcomeStatus();
   await testPadelQuestionnaireFlow();
   console.log('multisport-questionnaire-q1: all passed');
 }

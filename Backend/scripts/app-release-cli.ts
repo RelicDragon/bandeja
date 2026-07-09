@@ -48,7 +48,7 @@ import {
   hasSavedSession,
   includesAndroid,
   includesIos,
-  loadSession,
+  releaseArtifactsPresentOnDisk,
   releasePlatformLabel,
   tryLoadSession,
   saveSession,
@@ -1022,11 +1022,12 @@ type SessionResolution = {
 
 function renderSavedSessionSummary(session: ReleaseSession): string {
   const notesStatus = session.notes ? `set (${session.notes.source})` : 'not set';
+  const onDisk = releaseArtifactsPresentOnDisk(session);
   const artifactParts = [
     includesAndroid(session.targetPlatform)
-      ? `AAB ${session.artifacts?.aab ? 'ready' : 'pending'}`
+      ? `AAB ${onDisk.aab ? 'ready' : 'pending'}`
       : null,
-    includesIos(session.targetPlatform) ? `IPA ${session.artifacts?.ipa ? 'ready' : 'pending'}` : null,
+    includesIos(session.targetPlatform) ? `IPA ${onDisk.ipa ? 'ready' : 'pending'}` : null,
   ].filter(Boolean);
   const artifactStatus = artifactParts.length > 0 ? artifactParts.join(', ') : 'none';
   const uploadStatus =

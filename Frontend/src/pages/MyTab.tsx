@@ -17,7 +17,7 @@ import { AD_PLACEMENTS } from '@/shared/adPlacements';
 import { useRegisterAdSportContext } from '@/hooks/useAdPlacements';
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { isHomeHeroAdBlocked } from '@/utils/adHomeHeroVisibility';
-import { getUserPrimarySport } from '@/utils/profileSports';
+import { getViewerPrimarySport } from '@/utils/profileSports';
 import { Button, MainTabFooter } from '@/components';
 import { gamesApi } from '@/api';
 import { useTotalUnreadForMarkAllBanner, useGameUnreadCountsForIds } from '@/hooks/useUnreadBridge';
@@ -94,7 +94,7 @@ export const MyTab = () => {
   const myGamesCalendarDateAfterCreate = useShellNavStore((s) => s.myGamesCalendarDateAfterCreate);
   const setMyGamesCalendarDateAfterCreate = useShellNavStore((s) => s.setMyGamesCalendarDateAfterCreate);
   const setCreateGameInitialDate = useHeaderStore((s) => s.setCreateGameInitialDate);
-  const primarySport = getUserPrimarySport(user);
+  const primarySport = getViewerPrimarySport(user);
   const { status: questionnaireStatus } = useQuestionnaireStatus(primarySport);
   useRegisterAdSportContext(AD_PLACEMENTS.HOME_HERO, primarySport);
   const hideHomeHeroAd = isHomeHeroAdBlocked(user, primarySport, questionnaireStatus);
@@ -392,7 +392,7 @@ export const MyTab = () => {
           )}
           {user && (
             <AnimatedMount layout>
-              <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />
+              <SportQuestionnairePrompt sport={primarySport} />
             </AnimatedMount>
           )}
           <AnimatedMount layout>
@@ -502,7 +502,7 @@ export const MyTab = () => {
           )}
           {user && (
             <AnimatedMount layout>
-              <SportQuestionnairePrompt sport={getUserPrimarySport(user)} />
+              <SportQuestionnairePrompt sport={primarySport} />
             </AnimatedMount>
           )}
           <AnimatedMount layout>

@@ -31,14 +31,18 @@ export function hasEnabledSports(user: User | null | undefined): boolean {
   return listEnabledSports(user).length > 0;
 }
 
-/** Create-game default: court infer (caller) → lastCreatedSport → active primary → sportsEnabled[0]. */
+export function getViewerPrimarySport(user: User | null | undefined): Sport {
+  return resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
+}
+
+/** Create-game default: active primary → lastCreatedSport → sportsEnabled[0]. */
 export function resolveCreateGameDefaultSport(user: User | null | undefined): Sport {
   const enabled = listEnabledSports(user);
+  const activePrimary = resolveActivePrimarySport(user);
+  if (activePrimary) return activePrimary;
   if (user?.lastCreatedSport && enabled.includes(user.lastCreatedSport)) {
     return user.lastCreatedSport;
   }
-  const activePrimary = resolveActivePrimarySport(user);
-  if (activePrimary) return activePrimary;
   return enabled[0] ?? getUserPrimarySport(user);
 }
 
@@ -173,10 +177,9 @@ export function canEditSportLevel(profile: UserSportProfile | undefined): boolea
   return !!profile && profile.gamesPlayed === 0;
 }
 
-export function canRemoveSport(user: User, sport: Sport): boolean {
+export function canDisableSport(user: User, sport: Sport): boolean {
   if (!isSportEnabled(user, sport)) return false;
-  if (listEnabledSports(user).length <= 1) return false;
-  return gamesPlayedForSport(user, sport) === 0;
+  return listEnabledSports(user).length > 1;
 }
 
 /** After re-adding a sport — only prompt when API says so and profile has no Q/history. */

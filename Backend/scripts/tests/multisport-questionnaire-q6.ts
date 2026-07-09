@@ -218,6 +218,50 @@ function testReconcilePrimarySport(): void {
   console.log('ok: reconcilePrimarySport');
 }
 
+async function testReenablePadelRestoresProfile(): Promise<void> {
+  const profile = await prisma.userSportProfile.findFirst({
+    where: { sport: Sport.PADEL, gamesPlayed: { gt: 0 } },
+    select: { userId: true, level: true, gamesPlayed: true, gamesWon: true },
+  });
+  if (!profile) {
+    console.log('skip: re-enable padel (no profile with games)');
+    return;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: profile.userId },
+    select: { sportsEnabled: true, primarySport: true },
+  });
+  if (!user) return;
+
+  const beforeEnabled = [...(user.sportsEnabled ?? [])];
+  const beforePrimary = user.primarySport ?? Sport.PADEL;
+  const enabled = new Set<Sport>(beforeEnabled);
+  enabled.add(Sport.PADEL);
+  enabled.add(Sport.TENNIS);
+  await prisma.user.update({
+    where: { id: profile.userId },
+    data: { sportsEnabled: Array.from(enabled), primarySport: Sport.TENNIS },
+  });
+
+  await removeUserSport(profile.userId, Sport.PADEL);
+  const { user: afterAdd } = await addUserSport(profile.userId, Sport.PADEL);
+  assert(afterAdd.sportsEnabled.includes(Sport.PADEL), 'padel re-enabled');
+  const restored = afterAdd.sportProfiles?.find((p) => p.sport === Sport.PADEL);
+  assert(restored != null, 'padel profile still present');
+  if (restored) {
+    assert(restored.gamesPlayed === profile.gamesPlayed, 'gamesPlayed restored');
+    assert(restored.level === profile.level, 'level restored');
+    assert(restored.gamesWon === profile.gamesWon, 'gamesWon restored');
+  }
+
+  await prisma.user.update({
+    where: { id: profile.userId },
+    data: { sportsEnabled: beforeEnabled, primarySport: beforePrimary },
+  });
+  console.log('ok: re-enable padel restores profile');
+}
+
 async function testCannotRemoveLastSport(): Promise<void> {
   const user = await prisma.user.findFirst({
     where: { isActive: true },
@@ -257,6 +301,7 @@ async function main(): Promise<void> {
   testReconcilePrimarySport();
   await testRemovePadelWhenTennisPrimary();
   await testDisablePadelWithGamesKeepsProfile();
+  await testReenablePadelRestoresProfile();
   await testCannotRemoveLastSport();
   console.log('multisport-questionnaire-q6: all passed');
 }

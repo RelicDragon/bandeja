@@ -104,6 +104,23 @@ export function releasePlatformLabel(platform: ReleasePlatform | undefined): str
   return 'Android + iOS';
 }
 
+export function releaseArtifactExistsOnDisk(artifactPath: string | undefined): boolean {
+  if (!artifactPath?.trim()) {
+    return false;
+  }
+  return fs.existsSync(path.resolve(artifactPath));
+}
+
+export function releaseArtifactsPresentOnDisk(session: ReleaseSession): {
+  aab: boolean;
+  ipa: boolean;
+} {
+  return {
+    aab: releaseArtifactExistsOnDisk(session.artifacts?.aab),
+    ipa: releaseArtifactExistsOnDisk(session.artifacts?.ipa),
+  };
+}
+
 export function loadSession(): ReleaseSession | null {
   if (!fs.existsSync(SESSION_FILE)) {
     return null;

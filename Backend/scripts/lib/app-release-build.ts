@@ -7,6 +7,7 @@ import { ROOT } from './app-release';
 import {
   includesAndroid,
   includesIos,
+  releaseArtifactsPresentOnDisk,
   type ReleasePlatform,
   type ReleaseSession,
 } from './app-release-session';
@@ -407,6 +408,17 @@ export async function runReleaseBuild(
 ): Promise<BuildArtifacts> {
   const needsAndroid = includesAndroid(session.targetPlatform);
   const needsIos = includesIos(session.targetPlatform);
+  const onDisk = releaseArtifactsPresentOnDisk(session);
+  const needsAndroidBuild = needsAndroid && !onDisk.aab;
+  const needsIosBuild = needsIos && !onDisk.ipa;
+
+  if (!needsAndroidBuild && !needsIosBuild) {
+    return {
+      ...(onDisk.aab ? { aab: path.resolve(session.artifacts!.aab!) } : {}),
+      ...(onDisk.ipa ? { ipa: path.resolve(session.artifacts!.ipa!) } : {}),
+    };
+  }
+
   const preflight = runBuildPreflight(session.targetPlatform);
   if (!preflight.ok) {
     throw new ReleaseBuildError('Build preflight failed', preflight.issues.join('\n'));
@@ -422,11 +434,16 @@ export async function runReleaseBuild(
   };
   const iosEnv = xcodeBuildEnv(sharedEnv);
 
-  const capSyncTarget = needsAndroid && needsIos ? 'Android + iOS' : needsAndroid ? 'Android' : 'iOS';
+  const capSyncTarget =
+    needsAndroidBuild && needsIosBuild
+      ? 'Android + iOS'
+      : needsAndroidBuild
+        ? 'Android'
+        : 'iOS';
   const capSyncArgs = [
     'cap',
     'sync',
-    ...(needsAndroid && needsIos ? [] : [needsAndroid ? 'android' : 'ios']),
+    ...(needsAndroidBuild && needsIosBuild ? [] : [needsAndroidBuild ? 'android' : 'ios']),
   ];
 
   const releaseTasks = [
@@ -438,7 +455,7 @@ export async function runReleaseBuild(
       await runBashFunction('scripts/verify-capacitor-bundle.sh', 'verify_capacitor_bundle');
     }),
     timedListrTask(timer, `Capacitor sync (${capSyncTarget})`, async () => {
-      if (needsIos) {
+      if (needsIosBuild) {
         await runBashFunction('scripts/ensure-cocoapods.sh', 'ensure_cocoapods');
         await runBashFunction(
           'scripts/fix-ios-pbx-object-version.sh',
@@ -449,7 +466,7 @@ export async function runReleaseBuild(
         cwd: FRONTEND_DIR,
         env: sharedEnv,
       });
-      if (needsIos) {
+      if (needsIosBuild) {
         await runBashFunction(
           'scripts/fix-ios-pbx-object-version.sh',
           'fix_ios_pbx_object_version',
@@ -462,7 +479,7 @@ export async function runReleaseBuild(
     }),
   ];
 
-  if (needsAndroid) {
+  if (needsAndroidBuild) {
     releaseTasks.push(
       timedListrTask(timer, 'Android bundleRelease (AAB)', async () => {
         await runCommand('./gradlew', ['bundleRelease'], {
@@ -473,7 +490,7 @@ export async function runReleaseBuild(
     );
   }
 
-  if (needsIos) {
+  if (needsIosBuild) {
     releaseTasks.push(
       timedListrTask(timer, 'iOS archive + export (IPA)', async () => {
         if (fs.existsSync(IOS_ARCHIVE_PATH)) {
@@ -513,10 +530,14 @@ export async function runReleaseBuild(
 
   const artifacts: BuildArtifacts = {};
   if (needsAndroid) {
-    artifacts.aab = assertArtifactExists(AAB_OUTPUT, 'Android AAB');
+    artifacts.aab = needsAndroidBuild
+      ? assertArtifactExists(AAB_OUTPUT, 'Android AAB')
+      : path.resolve(session.artifacts!.aab!);
   }
   if (needsIos) {
-    artifacts.ipa = assertArtifactExists(resolveIpaOutputPath(), 'iOS IPA');
+    artifacts.ipa = needsIosBuild
+      ? assertArtifactExists(resolveIpaOutputPath(), 'iOS IPA')
+      : path.resolve(session.artifacts!.ipa!);
   }
   return artifacts;
 }

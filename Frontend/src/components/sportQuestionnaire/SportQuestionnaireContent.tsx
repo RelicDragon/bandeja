@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -22,14 +22,14 @@ export type SportQuestionnaireContentProps = {
   sport: Sport;
   onRequestClose: () => void;
   onCompleted?: (user: User) => void;
-  showPadelStartOver?: boolean;
+  showStartOver?: boolean;
 };
 
 export function SportQuestionnaireContent({
   sport,
   onRequestClose,
   onCompleted,
-  showPadelStartOver = sport === 'PADEL',
+  showStartOver = true,
 }: SportQuestionnaireContentProps) {
   const { t } = useTranslation();
   const updateUser = useAuthStore((s) => s.updateUser);
@@ -47,6 +47,7 @@ export function SportQuestionnaireContent({
   const [completedUser, setCompletedUser] = useState<User | null>(null);
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
   const [formEnterFromRight, setFormEnterFromRight] = useState(false);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -85,12 +86,11 @@ export function SportQuestionnaireContent({
 
   const submitWithAnswers = async (list: string[]) => {
     if (list.length !== questions.length || list.some((a) => !a)) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
     try {
-      const response =
-        sport === 'PADEL'
-          ? await usersApi.completeWelcomeScreen(list)
-          : await usersApi.completeSportQuestionnaire(sport, list);
+      const response = await usersApi.completeSportQuestionnaire(sport, list);
       const user = response.data;
       setAssignedLevel(resolveLevelFromUser(user));
       setCompletedUser(user);
@@ -101,21 +101,13 @@ export function SportQuestionnaireContent({
         t('errors.generic');
       toast.error(message);
     } finally {
+      submittingRef.current = false;
       setSubmitting(false);
     }
   };
 
   const handleSelect = (index: number, opt: string) => {
-    setAnswers((prev) => {
-      const next = { ...prev, [index]: opt };
-      if (index === questions.length - 1) {
-        const list = questions.map((_, i) => next[i]).filter(Boolean);
-        if (list.length === questions.length) {
-          setTimeout(() => submitWithAnswers(list), SLIDE_DURATION_MS / 2);
-        }
-      }
-      return next;
-    });
+    setAnswers((prev) => ({ ...prev, [index]: opt }));
     if (index < questions.length - 1) {
       setDirection(1);
       setTimeout(() => setCurrentIndex((i) => i + 1), SLIDE_DURATION_MS / 2);
@@ -137,9 +129,8 @@ export function SportQuestionnaireContent({
   };
 
   const handleStartOver = async () => {
-    if (sport !== 'PADEL') return;
     try {
-      const response = await usersApi.resetWelcomeScreen();
+      const response = await usersApi.resetSportQuestionnaire(sport);
       updateUser(response.data);
       setAnswers({});
       setCurrentIndex(0);
@@ -208,7 +199,7 @@ export function SportQuestionnaireContent({
               <Button onClick={handleGoToApp} className="w-full">
                 {t('sportQuestionnaire.common.goToApp')}
               </Button>
-              {showPadelStartOver && (
+              {showStartOver && (
                 <button
                   type="button"
                   onClick={handleStartOver}

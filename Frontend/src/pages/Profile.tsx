@@ -7,6 +7,7 @@ import { Button, Card, Input, Select, ToggleGroup, ToggleSwitch, AvatarUpload, F
 import { AvailabilitySection } from '@/components/availability';
 import { ProfileStatistics } from '@/components/ProfileStatistics';
 import { ProfileSportsSection } from '@/components/profile/ProfileSportsSection';
+import { LegacyPhoneAuthSection } from '@/components/profile/LegacyPhoneAuthSection';
 import { DEFAULT_SPORT } from '@shared/sport';
 import { resolveActivePrimarySport, shouldShowSportLevelBadge } from '@/utils/profileSports';
 import { CompetitiveSocialLevelBadge } from '@/components/profile/CompetitiveSocialLevelBadge';
@@ -542,22 +543,16 @@ export const ProfileContent = () => {
   };
 
   const handleUnlinkApple = async () => {
-    console.log('[APPLE_UNLINK] handleUnlinkApple called');
     try {
       setIsUnlinkingApple(true);
-      console.log('[APPLE_UNLINK] Calling unlinkApple API');
       const response = await authApi.unlinkApple();
-      console.log('[APPLE_UNLINK] Apple account unlinked successfully');
       updateUser(response.data.user);
       toast.success(t('profile.appleUnlinked') || 'Apple account unlinked successfully');
       setShowUnlinkAppleModal(false);
-    } catch (error: any) {
-      console.error('[APPLE_UNLINK] Error unlinking Apple account:', error);
-      const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
-      toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
+    } catch (error: unknown) {
+      toast.error(extractApiErrorMessage(error, t));
     } finally {
       setIsUnlinkingApple(false);
-      console.log('[APPLE_UNLINK] handleUnlinkApple completed');
     }
   };
 
@@ -608,9 +603,8 @@ export const ProfileContent = () => {
       updateUser(response.data.user);
       toast.success(t('profile.googleUnlinked') || 'Google account unlinked successfully');
       setShowUnlinkGoogleModal(false);
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || error.message || t('errors.generic');
-      toast.error(t(errorMessage) !== errorMessage ? t(errorMessage) : errorMessage);
+    } catch (error: unknown) {
+      toast.error(extractApiErrorMessage(error, t));
     } finally {
       setIsUnlinkingGoogle(false);
     }
@@ -677,6 +671,15 @@ export const ProfileContent = () => {
       }
     };
   }, []);
+
+  useEffect(() => {
+    const refreshLinkedAccountsOnFocus = () => {
+      if (document.visibilityState !== 'visible' || isLoadingProfile) return;
+      void usersApi.getProfile().then((res) => updateUser(res.data)).catch(() => {});
+    };
+    document.addEventListener('visibilitychange', refreshLinkedAccountsOnFocus);
+    return () => document.removeEventListener('visibilitychange', refreshLinkedAccountsOnFocus);
+  }, [isLoadingProfile, updateUser]);
 
   const handleRefresh = useCallback(async () => {
     await clearCachesExceptUnsyncedResults();
@@ -1151,10 +1154,10 @@ export const ProfileContent = () => {
               )}
               {hasTelegramLinked && (
                 <>
-                  <div className="flex flex-col sm:flex-row gap-2">
+                  <div className="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-3">
                     <Button
                       variant="outline"
-                      className="flex-1 h-10 text-sm font-medium"
+                      className="w-full h-10 text-sm font-medium"
                       onClick={async () => {
                         setIsSyncingTelegram(true);
                         try {
@@ -1179,17 +1182,17 @@ export const ProfileContent = () => {
                       }}
                       disabled={isSyncingTelegram}
                     >
-                      {isSyncingTelegram ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('profile.updateFromTelegram')}
+                      {isSyncingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : t('profile.updateFromTelegram')}
                     </Button>
                     <Button
                       variant="secondary"
-                      className="flex-1 h-10 text-sm font-medium"
+                      className="w-full h-10 text-sm font-medium"
                       onClick={() => setShowUnlinkTelegramModal(true)}
                       disabled={isUnlinkingTelegram || !canUnlinkTelegram}
                       title={!canUnlinkTelegram ? t('profile.lastAuthMethodHint') : undefined}
                     >
                       {isUnlinkingTelegram ? (
-                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         t('profile.unlinkTelegram')
                       )}
@@ -1203,6 +1206,8 @@ export const ProfileContent = () => {
                 </>
               )}
             </div>
+
+            <LegacyPhoneAuthSection user={user} onUserUpdated={(u) => updateUser(u)} />
           </div>
         </Card>
 
@@ -1610,35 +1615,50 @@ export const ProfileContent = () => {
 
       <ConfirmationModal
         isOpen={showUnlinkAppleModal}
-        onClose={() => setShowUnlinkAppleModal(false)}
+        onClose={() => {
+          if (isUnlinkingApple) return;
+          setShowUnlinkAppleModal(false);
+        }}
         onConfirm={handleUnlinkApple}
         title={t('profile.unlinkApple') || 'Unlink Apple Account'}
         message={t('profile.unlinkAppleConfirmation') || 'Are you sure you want to unlink your Apple account? You will no longer be able to sign in with Apple.'}
         confirmText={isUnlinkingApple ? (t('profile.unlinking') || 'Unlinking...') : (t('profile.unlink') || 'Unlink')}
         cancelText={t('common.cancel')}
         confirmVariant="primary"
+        isLoading={isUnlinkingApple}
+        closeOnConfirm={false}
       />
 
       <ConfirmationModal
         isOpen={showUnlinkGoogleModal}
-        onClose={() => setShowUnlinkGoogleModal(false)}
+        onClose={() => {
+          if (isUnlinkingGoogle) return;
+          setShowUnlinkGoogleModal(false);
+        }}
         onConfirm={handleUnlinkGoogle}
         title={t('profile.unlinkGoogle') || 'Unlink Google Account'}
         message={t('profile.unlinkGoogleConfirmation') || 'Are you sure you want to unlink your Google account? You will no longer be able to sign in with Google.'}
         confirmText={isUnlinkingGoogle ? (t('profile.unlinking') || 'Unlinking...') : (t('profile.unlink') || 'Unlink')}
         cancelText={t('common.cancel')}
         confirmVariant="primary"
+        isLoading={isUnlinkingGoogle}
+        closeOnConfirm={false}
       />
 
       <ConfirmationModal
         isOpen={showUnlinkTelegramModal}
-        onClose={() => setShowUnlinkTelegramModal(false)}
+        onClose={() => {
+          if (isUnlinkingTelegram) return;
+          setShowUnlinkTelegramModal(false);
+        }}
         onConfirm={handleUnlinkTelegram}
         title={t('profile.unlinkTelegram') || 'Unlink Telegram Account'}
         message={t('profile.unlinkTelegramConfirmation') || 'Are you sure you want to unlink your Telegram account? You will no longer be able to sign in with Telegram.'}
         confirmText={isUnlinkingTelegram ? (t('profile.unlinking') || 'Unlinking...') : (t('profile.unlink') || 'Unlink')}
         cancelText={t('common.cancel')}
         confirmVariant="primary"
+        isLoading={isUnlinkingTelegram}
+        closeOnConfirm={false}
       />
 
       <ConfirmationModal
@@ -1662,6 +1682,8 @@ export const ProfileContent = () => {
         }
         cancelText={t('common.cancel')}
         confirmVariant="primary"
+        isLoading={isConfirmingOAuthMerge}
+        closeOnConfirm={false}
       />
 
       <MainTabFooter isLoading={isRefreshing} />

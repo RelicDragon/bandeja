@@ -58,6 +58,25 @@ function assertQuestionnaireApiEnabled(): void {
   }
 }
 
+function isPadelWelcomeLegacyPassed(
+  sport: Sport,
+  welcomeScreenPassed: boolean,
+  profile:
+    | {
+        questionnaireCompletedAt?: Date | null;
+        questionnaireSkippedAt?: Date | null;
+      }
+    | null
+    | undefined,
+): boolean {
+  return (
+    sport === Sport.PADEL &&
+    welcomeScreenPassed &&
+    !profile?.questionnaireCompletedAt &&
+    !profile?.questionnaireSkippedAt
+  );
+}
+
 export async function getSportQuestionnaireStatus(
   userId: string,
   sportInput: unknown,
@@ -69,6 +88,7 @@ export async function getSportQuestionnaireStatus(
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
+      welcomeScreenPassed: true,
       sportProfiles: {
         where: { sport },
         select: {
@@ -91,11 +111,14 @@ export async function getSportQuestionnaireStatus(
   const snapshot = resolveUserSportSnapshot(user, sport);
 
   const completed = !!profile?.questionnaireCompletedAt;
-  const skipped = !!profile?.questionnaireSkippedAt;
+  const skipped =
+    !!profile?.questionnaireSkippedAt ||
+    isPadelWelcomeLegacyPassed(sport, user.welcomeScreenPassed, profile);
   const suggested =
     !!questionnaire &&
-    isQuestionnaireSuggestedForProfile(sport, profile) &&
-    snapshot.gamesPlayed === 0;
+    !completed &&
+    !skipped &&
+    isQuestionnaireSuggestedForProfile(sport, profile);
 
   return {
     completed,
@@ -136,6 +159,7 @@ export async function completeSportQuestionnaire(
           gamesPlayed: true,
           gamesWon: true,
           questionnaireCompletedAt: true,
+          questionnaireSkippedAt: true,
         },
       },
     },
@@ -153,8 +177,8 @@ export async function completeSportQuestionnaire(
   if (profile?.questionnaireCompletedAt) {
     throw new ApiError(400, 'Questionnaire already completed for this sport');
   }
-  if (sport === Sport.PADEL && user.welcomeScreenPassed) {
-    throw new ApiError(400, 'Welcome screen already completed');
+  if (profile?.questionnaireSkippedAt) {
+    throw new ApiError(400, 'Questionnaire was skipped for this sport');
   }
 
   const totalScore = sumAnswerScores(validatedAnswers);
@@ -233,8 +257,25 @@ export async function skipSportQuestionnaire(
   if (profile?.questionnaireCompletedAt) {
     throw new ApiError(400, 'Questionnaire already completed for this sport');
   }
-  if (sport === Sport.PADEL && user.welcomeScreenPassed) {
-    throw new ApiError(400, 'Welcome screen already completed');
+  if (
+    profile?.questionnaireSkippedAt ||
+    isPadelWelcomeLegacyPassed(sport, user.welcomeScreenPassed, profile)
+  ) {
+    if (!profile?.questionnaireSkippedAt) {
+      const now = new Date();
+      await prisma.userSportProfile.upsert({
+        where: { userId_sport: { userId, sport } },
+        create: {
+          userId,
+          sport,
+          questionnaireSkippedAt: now,
+        },
+        update: {
+          questionnaireSkippedAt: now,
+        },
+      });
+    }
+    return getSportQuestionnaireStatus(userId, sport);
   }
 
   const now = new Date();

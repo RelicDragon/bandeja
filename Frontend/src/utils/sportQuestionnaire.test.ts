@@ -92,6 +92,24 @@ describe('sportQuestionnaire skip gating', () => {
       }),
     ).toBe(false);
   });
+
+  it('does not suggest when API status marks skipped', () => {
+    const user = baseUser({
+      sportProfiles: [
+        { sport: 'PADEL', level: 1, reliability: 0, gamesPlayed: 0, gamesWon: 0, levelSource: 'DEFAULT' },
+      ],
+      welcomeScreenPassed: true,
+    });
+    expect(
+      shouldSuggestSportQuestionnaire(user, 'PADEL', {
+        completed: false,
+        skipped: true,
+        suggested: false,
+        level: 1,
+        gamesPlayed: 0,
+      }),
+    ).toBe(false);
+  });
 });
 
 describe('sportQuestionnaire level source', () => {

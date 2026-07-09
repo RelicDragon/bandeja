@@ -1,11 +1,9 @@
 import { DEFAULT_SPORT, type Sport } from '@shared/sport';
 import type { FindSportFilterValue, GameFilters } from '@/utils/gameFiltersStorage';
-import {
-  getUserPrimarySport,
-  listEnabledSports,
-  resolveActivePrimarySport,
-} from '@/utils/profileSports';
+import { getViewerPrimarySport, listEnabledSports } from '@/utils/profileSports';
 import type { User } from '@/types';
+
+export { getViewerPrimarySport };
 
 export type FindSportFilter = GameFilters['filterSport'];
 
@@ -51,8 +49,15 @@ export function shouldShowGameCardSportGlyph(
   return sport !== viewerPrimarySport;
 }
 
-export function getViewerPrimarySport(user: User | null | undefined): Sport {
-  return resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
+/** Sport context for ad targeting on Find — API omits primary, but ads need an explicit sport. */
+export function resolveFindAdSportContext(
+  filterSport: FindSportFilter | undefined,
+  viewerPrimarySport: Sport,
+): Sport | undefined {
+  const f = normalizeFindSportFilter(filterSport);
+  if (f === 'all') return undefined;
+  if (f === 'primary') return viewerPrimarySport;
+  return f;
 }
 
 /** Sport whose profile level applies to Find "my level" filters (primary or explicit filter). */
