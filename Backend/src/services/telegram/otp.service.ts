@@ -7,6 +7,22 @@ export function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+export async function generateActiveUniqueOTP(): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const code = generateOTP();
+    const existing = await prisma.telegramOtp.findFirst({
+      where: {
+        code,
+        expiresAt: { gt: new Date() },
+      },
+      select: { id: true },
+    });
+    if (!existing) return code;
+  }
+
+  return generateOTP();
+}
+
 export function generateLinkKey(): string {
   return randomUUID();
 }
@@ -15,6 +31,7 @@ export async function verifyCode(code: string, bot: Bot | null) {
   const otp = await prisma.telegramOtp.findFirst({
     where: {
       code,
+      linkUserId: null,
       expiresAt: {
         gt: new Date(),
       },
@@ -56,4 +73,3 @@ export async function verifyLinkKey(key: string, bot: Bot | null) {
 
   return otp;
 }
-

@@ -3,12 +3,12 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/layouts/AuthLayout';
-import { Input, Button } from '@/components';
+import { Input, Button, OTPInput } from '@/components';
 import { AuthBackHeader } from '@/components/auth';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { config } from '@/config/media';
-import { Phone, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Phone, AlertCircle } from 'lucide-react';
 import { TelegramIcon } from '@/components';
 import { signInWithApple } from '@/services/appleAuth.service';
 import {
@@ -41,9 +41,11 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [telegramHint, setTelegramHint] = useState(false);
+  const [telegramOtpCode, setTelegramOtpCode] = useState('');
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
   const [searchParams] = useSearchParams();
   const isWeb = !isCapacitor();
+  const isTelegramOtpMode = tab === 'main' && telegramHint;
 
   useEffect(() => {
     if (error) {
@@ -171,12 +173,60 @@ export const Login = () => {
     }
   };
 
-  const handleTelegramClick = () => {
+  const openTelegramLogin = () => {
     const url = config.telegramBotUrl.includes('?')
       ? `${config.telegramBotUrl}&start=login`
       : `${config.telegramBotUrl}?start=login`;
     window.open(url, '_blank');
+  };
+
+  const handleTelegramClick = () => {
+    openTelegramLogin();
     setTelegramHint(true);
+    setTelegramOtpCode('');
+    setError('');
+  };
+
+  const handleTelegramOpenAgain = () => {
+    openTelegramLogin();
+    setError('');
+  };
+
+  const handleTelegramCancel = () => {
+    if (loading) return;
+    setTelegramHint(false);
+    setTelegramOtpCode('');
+    setError('');
+  };
+
+  const handleTelegramOtpChange = (value: string) => {
+    setTelegramOtpCode(value.replace(/\D/g, '').slice(0, 6));
+  };
+
+  const handleTelegramOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = telegramOtpCode.trim();
+    if (code.length !== 6) {
+      setError(t('auth.enterCodeRequired'));
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    try {
+      const normalizedLanguage = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
+      const response = await authApi.verifyTelegramOtp({ code, language: normalizedLanguage });
+      await setAuth(response.data.user, response.data.token, {
+        refreshToken: response.data.refreshToken,
+        currentSessionId: response.data.currentSessionId,
+      });
+      await pushNotificationService.ensureTokenSentToBackend();
+      navigate('/', { replace: true });
+    } catch (err: any) {
+      setError(extractApiErrorMessage(err, t));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleAppleSignIn = async () => {
@@ -257,7 +307,7 @@ export const Login = () => {
       <div className="flex flex-col">
         <div className="overflow-hidden transition-[height] duration-300 ease-out min-h-[220px]">
           <AnimatePresence initial={false} mode="wait">
-            {tab === 'main' && (
+            {tab === 'main' && !telegramHint && (
               <motion.div
                 key="main"
                 initial={{ opacity: 0 }}
@@ -267,12 +317,6 @@ export const Login = () => {
                 className="space-y-3"
               >
                 {error && <ErrorBanner error={error} />}
-                {telegramHint && !error && (
-                  <div className="flex items-center gap-3 mb-6 p-4 bg-slate-100 dark:bg-slate-800/80 border-2 border-slate-200 dark:border-slate-600 text-slate-700 dark:text-slate-300 rounded-xl">
-                    <AlertCircle size={18} className="shrink-0" />
-                    <span className="text-sm font-medium">{t('auth.followInstructionsInTelegram')}</span>
-                  </div>
-                )}
                 {isWeb ? (
                   <button
                     type="button"
@@ -324,6 +368,71 @@ export const Login = () => {
               </motion.div>
             )}
 
+            {tab === 'main' && telegramHint && (
+              <motion.div
+                key="telegram-otp"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-4"
+              >
+                {error && <ErrorBanner error={error} />}
+                <form
+                  onSubmit={handleTelegramOtpSubmit}
+                  className="mx-auto w-full max-w-sm space-y-5 rounded-2xl border border-sky-100 bg-white/95 p-5 text-slate-800 shadow-[0_18px_45px_rgba(14,116,144,0.14)] dark:border-sky-500/20 dark:bg-slate-900/90 dark:text-slate-100 dark:shadow-none"
+                >
+                  <div className="flex min-h-12 items-center justify-between gap-4">
+                    <button
+                      type="button"
+                      onClick={handleTelegramCancel}
+                      disabled={loading}
+                      className="inline-flex items-center gap-1 rounded-full py-1.5 pr-3 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:text-white"
+                    >
+                      <ArrowLeft size={16} />
+                      {t('common.back')}
+                    </button>
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0088cc] text-white shadow-lg shadow-sky-600/20">
+                      <TelegramIcon size={24} className="text-white" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-bold leading-tight text-slate-900 dark:text-white">
+                      {t('auth.followInstructionsInTelegram')}
+                    </h2>
+                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                      {t('auth.telegramOtpFallbackHint')}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    <OTPInput
+                      value={telegramOtpCode}
+                      onChange={handleTelegramOtpChange}
+                      disabled={loading}
+                      autoFocus
+                    />
+                    <button
+                      type="submit"
+                      disabled={loading || telegramOtpCode.length !== 6}
+                      className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0088cc] px-4 text-sm font-bold text-white shadow-lg shadow-sky-600/20 transition-all hover:bg-[#007ab8] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0088cc] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none dark:focus-visible:ring-offset-slate-900"
+                    >
+                      {loading ? loadingSpinner : t('auth.telegramOtpSubmit')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleTelegramOpenAgain}
+                      disabled={loading}
+                      className="w-full rounded-xl py-2 text-sm font-semibold text-[#0088cc] transition-colors hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-sky-950/40"
+                    >
+                      {t('auth.openTelegramBot')}
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+
             {tab === 'phone' && (
               <motion.div
                 key="phone"
@@ -360,29 +469,33 @@ export const Login = () => {
           </AnimatePresence>
         </div>
 
-        <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-400 shrink-0">
-          {t('auth.noAccount')}{' '}
-          <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
-            {t('auth.register')}
-          </Link>
-        </p>
-        <p className="mt-4 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400 shrink-0">
-          {t('auth.byContinuing') || 'By continuing, you agree to our'}{' '}
-          <br />
-          <a
-            href="/eula/world/eula.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors underline decoration-2 underline-offset-2"
-            onClick={(e) => {
-              e.preventDefault();
-              openEula();
-            }}
-          >
-            {t('auth.eula') || 'Terms of Service'}
-          </a>
-        </p>
-        {appVersion && (
+        {!isTelegramOtpMode && (
+          <>
+            <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-400 shrink-0">
+              {t('auth.noAccount')}{' '}
+              <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+                {t('auth.register')}
+              </Link>
+            </p>
+            <p className="mt-4 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400 shrink-0">
+              {t('auth.byContinuing') || 'By continuing, you agree to our'}{' '}
+              <br />
+              <a
+                href="/eula/world/eula.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors underline decoration-2 underline-offset-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  openEula();
+                }}
+              >
+                {t('auth.eula') || 'Terms of Service'}
+              </a>
+            </p>
+          </>
+        )}
+        {appVersion && !isTelegramOtpMode && (
           <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
             App Version: {appVersion.version} (Build {appVersion.buildNumber})
           </p>

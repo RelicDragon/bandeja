@@ -41,7 +41,7 @@ import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClu
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { shouldUseBooktimeTimeOptions } from '@/hooks/createGameBookingFlow/shouldUseBooktimeTimeOptions';
 import { courtMatchesSportFilter } from '@/utils/courtSport';
-import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
+import { computeMaxSelectableCourts, computeRequiredCourtCount } from '@/utils/requiredCourtCount';
 import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price' | 'settings';
@@ -365,12 +365,20 @@ export const EditGameInfoModal = ({
     clubBookingFlowActive && Boolean(booktimeIntegrationConfig),
   );
   const needsBooktimeAuth = Boolean(
-    willBookOnEdit && clubBookingFlowActive && !booktimeAuth?.connected,
+    clubBookingFlowActive &&
+      !booktimeAuth?.connected &&
+      (willBookOnEdit ||
+        locationTimeDraft?.editReservationAction === 'reserveNew' ||
+        locationTimeDraft?.editReservationAction === 'useExisting'),
   );
-  const booktimeScheduleConstrained = willBookOnEdit && !needsBooktimeAuth;
+  const reserveNewEditActive = locationTimeDraft?.editReservationAction === 'reserveNew';
+  const booktimeScheduleConstrained =
+    (reserveNewEditActive || willBookOnEdit) && !needsBooktimeAuth;
   const booktimeCompanyMeta = useBooktimeCompanyMeta(
     selectedClubData,
-    (willBookOnEdit || bookingsModeActive) && clubBookingFlowActive && !needsBooktimeAuth,
+    (reserveNewEditActive || willBookOnEdit || bookingsModeActive) &&
+      clubBookingFlowActive &&
+      !needsBooktimeAuth,
   );
   const snapshotRefreshEnabled =
     isOpen &&
@@ -397,12 +405,13 @@ export const EditGameInfoModal = ({
     selectedDate: whenSelectedDate,
     durationHours: whenDuration,
     selectedCourtId: where.courtId || selectedCourtIds[0] || null,
+    selectedCourtIds: reserveNewEditActive ? selectedCourtIds : undefined,
     enabled: shouldUseBooktimeTimeOptions({
       entityType: game.entityType,
       clubHasBookingIntegration: clubHasBookingIntegration(selectedClubData),
       needsBooktimeAuth,
       locationTimeMode: locationTimeDraft?.locationTimeMode,
-      willBookOnCreate: willBookOnEdit,
+      willBookOnCreate: willBookOnEdit || reserveNewEditActive,
       booktimeConnected: Boolean(booktimeAuth?.connected),
     }) && isOpen,
   });
@@ -425,6 +434,10 @@ export const EditGameInfoModal = ({
     ? (time: string) => booktimeTimeOptions.isSlotHighlighted(time, whenSelectedTime, whenDuration)
     : isSlotHighlighted;
   const { clampDate: clampBooktimeDate, fixedDates: booktimeFixedDates } = booktimeCompanyMeta;
+  const requiredReservationCount = computeRequiredCourtCount(
+    game.maxParticipants,
+    game.playersPerMatch ?? 4,
+  );
 
   useEffect(() => {
     if (!booktimeScheduleConstrained || !booktimeFixedDates?.length) return;
@@ -443,7 +456,7 @@ export const EditGameInfoModal = ({
     setHookDate,
     setHookTime,
   ]);
-  const multiCourtMode = game.maxParticipants > 4;
+  const multiCourtMode = requiredReservationCount > 1;
 
   const handleEditCourtSelect = useCallback(
     (id: string) => {
@@ -463,13 +476,17 @@ export const EditGameInfoModal = ({
       setSelectedCourtIds((prev) => {
         const existing = prev.indexOf(id);
         const next = existing >= 0 ? prev.filter((courtId) => courtId !== id) : [...prev, id];
-        const max = computeMaxSelectableCourts(game.maxParticipants, modalCourts.length);
+        const max = computeMaxSelectableCourts(
+          game.maxParticipants,
+          modalCourts.length,
+          game.playersPerMatch ?? 4,
+        );
         const capped = next.length > max ? next.slice(0, max) : next;
         setWhere((s) => ({ ...s, courtId: capped[0] ?? '' }));
         return capped;
       });
     },
-    [multiCourtMode, game.maxParticipants, modalCourts.length, setHookTime],
+    [multiCourtMode, game.maxParticipants, game.playersPerMatch, modalCourts.length, setHookTime],
   );
 
   const handleEditCourtIdsSync = useCallback((ids: string[]) => {
@@ -550,6 +567,35 @@ export const EditGameInfoModal = ({
     if (!game.id) return;
     if (!validatePrice()) {
       toast.error(t('createGame.priceRequired', { defaultValue: 'Price must be greater than 0 for this price type' }));
+      return;
+    }
+    if (
+      needsBooktimeAuth &&
+      (locationTimeDraft?.editReservationAction === 'reserveNew' ||
+        locationTimeDraft?.editReservationAction === 'useExisting')
+    ) {
+      toast.error(t('createGame.booktime.signInToContinue'));
+      return;
+    }
+    if (
+      locationTimeDraft?.editReservationAction === 'reserveNew' &&
+      selectedCourtIds.length < requiredReservationCount
+    ) {
+      toast.error(t('createGame.reservationIntent.validation.selectCourt', { count: requiredReservationCount }));
+      return;
+    }
+    if (
+      locationTimeDraft?.editReservationAction === 'reserveNew' &&
+      (locationTimeDraft.integratedCourtIds.length ?? 0) < requiredReservationCount
+    ) {
+      toast.error(t('createGame.reservationIntent.validation.selectBookableCourt', { count: requiredReservationCount }));
+      return;
+    }
+    if (
+      locationTimeDraft?.editReservationAction === 'reserveNew' &&
+      !whenSelectedTime
+    ) {
+      toast.error(t('createGame.reservationIntent.validation.selectTime'));
       return;
     }
 

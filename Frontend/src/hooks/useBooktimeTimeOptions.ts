@@ -5,8 +5,10 @@ import {
   booktimeCourtMappingKey,
   computeCourtAvailabilityRows,
   fetchBooktimeCourtAvailabilityForDate,
+  intersectFreeSlotStarts,
   mappedBooktimeCourts,
   parseSlotMinutes,
+  type BooktimeCourtAvailabilityRow,
 } from '@/integrations/booktime/availability';
 import { formatClubDateKey } from '@/integrations/booktime/slots';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
@@ -21,6 +23,7 @@ export function buildBooktimeOptionsCacheKey(
 }
 
 type OptionsCache = Map<string, string[]>;
+type RowsCache = Map<string, BooktimeCourtAvailabilityRow[]>;
 
 type UseBooktimeTimeOptionsParams = {
   club: Club | undefined;
@@ -28,6 +31,7 @@ type UseBooktimeTimeOptionsParams = {
   selectedDate: Date;
   durationHours: number;
   selectedCourtId: string | null;
+  selectedCourtIds?: string[];
   enabled: boolean;
 };
 
@@ -37,12 +41,16 @@ export function useBooktimeTimeOptions({
   selectedDate,
   durationHours,
   selectedCourtId,
+  selectedCourtIds,
   enabled,
 }: UseBooktimeTimeOptionsParams) {
   const [cache, setCache] = useState<OptionsCache>(new Map());
+  const [rowsCache, setRowsCache] = useState<RowsCache>(new Map());
   const [cacheTick, setCacheTick] = useState(0);
   const cacheRef = useRef(cache);
   cacheRef.current = cache;
+  const rowsCacheRef = useRef(rowsCache);
+  rowsCacheRef.current = rowsCache;
   const [loadingTick, setLoadingTick] = useState(0);
   const inFlightKeysRef = useRef(new Set<string>());
   const requestVersionsRef = useRef(new Map<string, number>());
@@ -53,19 +61,53 @@ export function useBooktimeTimeOptions({
   const courtMappingKey = booktimeCourtMappingKey(courts, club);
   const mappedCourtsRef = useRef<Court[]>([]);
   mappedCourtsRef.current = club ? mappedBooktimeCourts(club, courts) : [];
+  const normalizedSelectedCourtIds = useMemo(() => {
+    const source = selectedCourtIds ?? (selectedCourtId ? [selectedCourtId] : []);
+    return [...new Set(source.filter((id) => id && id !== 'notBooked'))].sort();
+  }, [selectedCourtId, selectedCourtIds]);
+  const explicitCourtSelection = selectedCourtIds !== undefined;
+  const courtSelectionCacheId = explicitCourtSelection
+    ? normalizedSelectedCourtIds.length > 0
+      ? normalizedSelectedCourtIds.join(',')
+      : '__none__'
+    : selectedCourtId;
 
   const bumpLoading = useCallback(() => {
     setLoadingTick((tick) => tick + 1);
   }, []);
 
   const loadDate = useCallback(
-    async (date: Date, courtId: string | null, options?: { force?: boolean }) => {
+    async (date: Date, courtIds: string[] | null, options?: { force?: boolean }) => {
       if (!enabled || !liveApiEnabled || !club || !companyId) return;
       const dateKey = formatClubDateKey(date, club);
-      const cacheKey = buildBooktimeOptionsCacheKey(dateKey, courtId, durationMinutes);
+      const courtCacheId = courtIds
+        ? courtIds.length > 0
+          ? courtIds.join(',')
+          : '__none__'
+        : null;
+      const cacheKey = buildBooktimeOptionsCacheKey(dateKey, courtCacheId, durationMinutes);
       if (!options?.force && cacheRef.current.has(cacheKey)) return;
+      if (courtIds && courtIds.length === 0) {
+        setCache((prev) => {
+          const next = new Map(prev);
+          next.set(cacheKey, []);
+          return next;
+        });
+        setRowsCache((prev) => {
+          const next = new Map(prev);
+          next.set(cacheKey, []);
+          return next;
+        });
+        setCacheTick((tick) => tick + 1);
+        return;
+      }
       if (!courtMappingKey) {
         setCache((prev) => {
+          const next = new Map(prev);
+          next.set(cacheKey, []);
+          return next;
+        });
+        setRowsCache((prev) => {
           const next = new Map(prev);
           next.set(cacheKey, []);
           return next;
@@ -92,15 +134,24 @@ export function useBooktimeTimeOptions({
           raw,
           durationMinutes,
           dateKey,
-          courtFilter: courtId,
+          courtFilter: courtIds?.length === 1 ? courtIds[0] : null,
         });
-        const options = courtId
-          ? (rows[0]?.freeSlots ?? [])
-          : aggregateFreeSlotStarts(rows);
+        const scopedRows =
+          courtIds && courtIds.length > 1
+            ? rows.filter((row) => courtIds.includes(row.court.id))
+            : rows;
+        const options = courtIds
+          ? intersectFreeSlotStarts(scopedRows)
+          : aggregateFreeSlotStarts(scopedRows);
 
         setCache((prev) => {
           const next = new Map(prev);
           next.set(cacheKey, options);
+          return next;
+        });
+        setRowsCache((prev) => {
+          const next = new Map(prev);
+          next.set(cacheKey, scopedRows);
           return next;
         });
         setCacheTick((tick) => tick + 1);
@@ -108,6 +159,11 @@ export function useBooktimeTimeOptions({
         console.error('Booktime time options load failed:', err);
         if (requestVersionsRef.current.get(cacheKey) !== requestVersion) return;
         setCache((prev) => {
+          const next = new Map(prev);
+          next.set(cacheKey, []);
+          return next;
+        });
+        setRowsCache((prev) => {
           const next = new Map(prev);
           next.set(cacheKey, []);
           return next;
@@ -123,6 +179,7 @@ export function useBooktimeTimeOptions({
 
   useEffect(() => {
     setCache(new Map());
+    setRowsCache(new Map());
     setCacheTick((tick) => tick + 1);
     requestVersionsRef.current.clear();
     inFlightKeysRef.current.clear();
@@ -130,8 +187,11 @@ export function useBooktimeTimeOptions({
   }, [club?.id, companyId, courtMappingKey, durationMinutes, bumpLoading]);
 
   useEffect(() => {
-    void loadDate(selectedDate, selectedCourtId);
-  }, [loadDate, selectedDate, selectedCourtId]);
+    void loadDate(
+      selectedDate,
+      explicitCourtSelection ? normalizedSelectedCourtIds : selectedCourtId ? [selectedCourtId] : null,
+    );
+  }, [explicitCourtSelection, loadDate, normalizedSelectedCourtIds, selectedCourtId, selectedDate]);
 
   useEffect(() => {
     if (!enabled || !club) return;
@@ -139,28 +199,52 @@ export function useBooktimeTimeOptions({
     const todayKey = formatClubDateKey(today, club);
     const selectedKey = formatClubDateKey(selectedDate, club);
     if (todayKey !== selectedKey) {
-      void loadDate(today, selectedCourtId);
+      void loadDate(
+        today,
+        explicitCourtSelection ? normalizedSelectedCourtIds : selectedCourtId ? [selectedCourtId] : null,
+      );
     }
-  }, [club, enabled, loadDate, selectedDate, selectedCourtId]);
+  }, [club, enabled, explicitCourtSelection, loadDate, normalizedSelectedCourtIds, selectedCourtId, selectedDate]);
 
   const optionsForDate = useCallback(
-    (date: Date, courtId: string | null = selectedCourtId): string[] => {
+    (date: Date, courtId: string | null = null): string[] => {
       void cacheTick;
       if (!club) return [];
       const dateKey = formatClubDateKey(date, club);
-      const cacheKey = buildBooktimeOptionsCacheKey(dateKey, courtId, durationMinutes);
+      const requestedCourtId = courtId ?? (explicitCourtSelection ? courtSelectionCacheId : selectedCourtId);
+      const cacheKey = buildBooktimeOptionsCacheKey(
+        dateKey,
+        requestedCourtId,
+        durationMinutes,
+      );
       return cacheRef.current.get(cacheKey) ?? [];
     },
-    [cacheTick, club, durationMinutes, selectedCourtId],
+    [cacheTick, club, courtSelectionCacheId, durationMinutes, explicitCourtSelection, selectedCourtId],
+  );
+
+  const rowsForDate = useCallback(
+    (date: Date, courtId: string | null = null): BooktimeCourtAvailabilityRow[] => {
+      void cacheTick;
+      if (!club) return [];
+      const dateKey = formatClubDateKey(date, club);
+      const requestedCourtId = courtId ?? (explicitCourtSelection ? courtSelectionCacheId : selectedCourtId);
+      const cacheKey = buildBooktimeOptionsCacheKey(
+        dateKey,
+        requestedCourtId,
+        durationMinutes,
+      );
+      return rowsCacheRef.current.get(cacheKey) ?? [];
+    },
+    [cacheTick, club, courtSelectionCacheId, durationMinutes, explicitCourtSelection, selectedCourtId],
   );
 
   const loading = useMemo(() => {
     void loadingTick;
     if (!club) return false;
     const dateKey = formatClubDateKey(selectedDate, club);
-    const cacheKey = buildBooktimeOptionsCacheKey(dateKey, selectedCourtId, durationMinutes);
+    const cacheKey = buildBooktimeOptionsCacheKey(dateKey, courtSelectionCacheId, durationMinutes);
     return inFlightKeysRef.current.has(cacheKey);
-  }, [loadingTick, club, selectedDate, durationMinutes, selectedCourtId]);
+  }, [loadingTick, club, selectedDate, durationMinutes, courtSelectionCacheId]);
 
   const generateTimeOptions = useCallback(
     () => optionsForDate(selectedDate),
@@ -225,7 +309,7 @@ export function useBooktimeTimeOptions({
   const reload = useCallback(() => {
     if (!club) return;
     const dateKey = formatClubDateKey(selectedDate, club);
-    const cacheKey = buildBooktimeOptionsCacheKey(dateKey, selectedCourtId, durationMinutes);
+    const cacheKey = buildBooktimeOptionsCacheKey(dateKey, courtSelectionCacheId, durationMinutes);
     setCache((prev) => {
       if (!prev.has(cacheKey)) return prev;
       const next = new Map(prev);
@@ -233,8 +317,21 @@ export function useBooktimeTimeOptions({
       return next;
     });
     setCacheTick((tick) => tick + 1);
-    void loadDate(selectedDate, selectedCourtId, { force: true });
-  }, [club, durationMinutes, loadDate, selectedDate, selectedCourtId]);
+    void loadDate(
+      selectedDate,
+      explicitCourtSelection ? normalizedSelectedCourtIds : selectedCourtId ? [selectedCourtId] : null,
+      { force: true },
+    );
+  }, [
+    club,
+    courtSelectionCacheId,
+    durationMinutes,
+    explicitCourtSelection,
+    loadDate,
+    normalizedSelectedCourtIds,
+    selectedCourtId,
+    selectedDate,
+  ]);
 
   return useMemo(
     () => ({
@@ -247,6 +344,7 @@ export function useBooktimeTimeOptions({
       getAdjustedStartTime,
       getTimeSlotsForDuration,
       isSlotHighlighted,
+      rowsForDate,
     }),
     [
       active,
@@ -258,6 +356,7 @@ export function useBooktimeTimeOptions({
       getAdjustedStartTime,
       getTimeSlotsForDuration,
       isSlotHighlighted,
+      rowsForDate,
     ],
   );
 }

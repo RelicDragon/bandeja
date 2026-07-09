@@ -11,11 +11,21 @@ export type QuestionnaireStatus = {
   gamesPlayed: number;
 };
 
+const QUESTIONNAIRE_STATUS_NO_CACHE_HEADERS = {
+  'Cache-Control': 'no-cache, no-store, must-revalidate',
+  Pragma: 'no-cache',
+  Expires: '0',
+} as const;
+
 export const sportQuestionnaireApi = {
   getStatus: async (sport: Sport): Promise<QuestionnaireStatus | null> => {
     try {
       const response = await api.get<ApiResponse<QuestionnaireStatus>>(
         `/users/me/sports/${sport}/questionnaire/status`,
+        {
+          headers: QUESTIONNAIRE_STATUS_NO_CACHE_HEADERS,
+          params: { _t: Date.now() },
+        },
       );
       return response.data.data ?? null;
     } catch (err) {

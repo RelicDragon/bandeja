@@ -13,9 +13,9 @@
     "selectClub": "Vybrat klub",
     "court": "Kurt",
     "hall": "Hala",
-    "notBookedYet": "Nerezervovat kurt",
-    "dontSelectCourt": "Nevybírat kurt",
-    "dontSelectHall": "Nevybírat halu",
+    "notBookedYet": "Game only",
+    "dontSelectCourt": "No court yet",
+    "dontSelectHall": "No hall yet",
     "courtNotSelected": "Kurt není vybrán",
     "hallNotSelected": "Hala není vybrána",
     "multiCourtHint": "Vyberte až {{count}} kurtů pro {{participants}} hráčů (vybráno {{selected}})",
@@ -390,11 +390,11 @@
       "match": "Zápas"
     },
     "locationTime": {
-      "skipRealCourtToggle": "Nebrat kurt v klubu",
+      "skipRealCourtToggle": "Game only",
       "realCourtBookingHint": "{{courts}} v {{club}} — rezervace při vytvoření hry.",
       "realCourtBookingHintEdit": "{{courts}} v {{club}} — rezervace při uložení.",
-      "skipRealCourtHint": "Vytvoří se jen hra — bez rezervace v klubu.",
-      "skipRealCourtHintEdit": "Aktualizuje se jen hra — bez rezervace v klubu.",
+      "skipRealCourtHint": "The game will be scheduled in Bandeja only.",
+      "skipRealCourtHintEdit": "The game will be updated in Bandeja only.",
       "summaryFromBookings": "Z vašich {{count}} rezervací",
       "summaryWindow": "{{start}} – {{end}}",
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
@@ -415,6 +415,34 @@
       "unlinkNoCancelNote": "Rezervace kurtu u klubu zůstane aktivní — odebíráme jen propojení s touto hrou.",
       "syncInactiveCreate": "Synchronizace teď neběží — nemůžeme načíst sloty ani rezervovat kurt. Hru na tento čas stejně můžete vytvořit.",
       "syncInactiveEdit": "Synchronizace teď neběží — nemůžeme načíst sloty ani rezervovat kurt. Hru na tento čas stejně můžete upravit."
+    },
+    "reservationIntent": {
+      "title": "Court reservation",
+      "subtitle": "Choose what should happen with the real club court.",
+      "recommended": "Recommended",
+      "validation": {
+        "selectCourt": "Select {{count}} court(s) first.",
+        "selectBookableCourt": "Select {{count}} online-bookable court(s) first.",
+        "selectTime": "Select an available time first."
+      },
+      "reserveNow": { "title": "Reserve court now", "description": "Pick available court time and the app will reserve it when you create." },
+      "useExisting": { "title": "Use existing reservation", "description": "Link reservation(s) already in your club account." },
+      "gameOnly": { "title": "Game only", "description": "Create the game without making or marking a real court reservation." },
+      "manualBooked": { "title": "Already booked manually", "description": "Mark the game as booked without using the online reservation integration." },
+      "summary": {
+        "reserveNow": { "title": "A real court reservation will be made", "body": "Select {{count}} court(s), duration, and time. That exact schedule will be reserved." },
+        "useExisting": { "title": "Game will link to your reservation(s)", "body": "{{selected}} of {{count}} required reservation(s) selected." },
+        "gameOnly": { "title": "No real court reservation will be made", "body": "The game will be scheduled in Bandeja only." },
+        "manualBooked": { "title": "Game will be marked as booked", "body": "No online reservation will be created." }
+      },
+      "cta": {
+        "reserveOne": "Reserve court and create game",
+        "reserveMany": "Reserve {{count}} courts and create game",
+        "linkOne": "Link reservation and create game",
+        "linkMany": "Link {{count}} reservations and create game",
+        "gameOnly": "Create game only",
+        "manualBooked": "Create game"
+      }
     },
     "booktime": {
       "switchLabel": "Rezervovat kurt při vytvoření hry",

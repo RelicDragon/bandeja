@@ -1,4 +1,5 @@
 import type { LocationTimeMode } from '@/components/gameLocationTime/LocationTimeMode';
+import type { ReservationIntent } from '@shared/gameBooking/reservationIntent';
 import type { CreateGameAttemptResult, OverlapGateResult } from './types';
 
 export type ResolveCreateGameBookingActionInput = {
@@ -11,6 +12,7 @@ export type ResolveCreateGameBookingActionInput = {
   integratedCourtCount: number;
   selectedCourt: string;
   selectedCourtCount: number;
+  reservationIntent?: ReservationIntent;
   overlapGate: OverlapGateResult;
 };
 
@@ -18,13 +20,19 @@ export function resolveCreateGameBookingAction(
   input: ResolveCreateGameBookingActionInput,
 ): CreateGameAttemptResult {
   if (input.needsBooktimeAuth) {
-    if (input.locationTimeMode === 'timeSlots') {
+    if (!input.reservationIntent && input.locationTimeMode === 'timeSlots') {
       return { status: 'proceed', overrides: { hasBookedCourt: false } };
+    }
+    if (input.reservationIntent === 'gameOnly') {
+      return { status: 'proceed', overrides: { hasBookedCourt: false } };
+    }
+    if (input.reservationIntent === 'manualBooked') {
+      return { status: 'proceed', overrides: { hasBookedCourt: true } };
     }
     return { status: 'abort' };
   }
 
-  if (input.locationTimeMode === 'bookings') {
+  if (input.reservationIntent === 'useExisting' || input.locationTimeMode === 'bookings') {
     if (input.selectedBookingCount < input.bookingSelectionMin) {
       return { status: 'abort' };
     }
@@ -32,6 +40,21 @@ export function resolveCreateGameBookingAction(
       return { status: 'abort' };
     }
     return { status: 'proceed' };
+  }
+
+  if (input.reservationIntent === 'gameOnly') {
+    return { status: 'proceed', overrides: { hasBookedCourt: false, externalBookingIds: [] } };
+  }
+
+  if (input.reservationIntent === 'manualBooked') {
+    return { status: 'proceed', overrides: { hasBookedCourt: true, externalBookingIds: [] } };
+  }
+
+  if (
+    input.reservationIntent === 'reserveNow' &&
+    input.integratedCourtCount < input.bookingSelectionMin
+  ) {
+    return { status: 'abort' };
   }
 
   if (

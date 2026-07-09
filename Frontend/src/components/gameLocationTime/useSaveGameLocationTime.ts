@@ -190,13 +190,23 @@ export function buildEditLocationTimeSaveDraft({
   bookingOverrides,
 }: BuildEditSaveDraftArgs): LocationTimeSaveDraft {
   const initialLinked = game.linkedBookings?.map((b) => b.externalBookingId) ?? [];
-  const bookingSelectionAuthoritative = Boolean(locationTimeDraft) && (
-    locationTimeDraft?.locationTimeMode === 'bookings' || initialLinked.length > 0
+  const editAction = locationTimeDraft?.editReservationAction;
+  const preservesLinkedBookings =
+    editAction === 'keepCurrent' || editAction === 'changeGameTimeOnly';
+  const removesAllLinkedBookings = editAction === 'unlink' || editAction === 'gameOnly';
+  const bookingSelectionAuthoritative = Boolean(locationTimeDraft) && !preservesLinkedBookings && (
+    removesAllLinkedBookings ||
+    locationTimeDraft?.locationTimeMode === 'bookings' ||
+    initialLinked.length > 0
   );
   const removeBookingIds = resolveEditBookingUnlinks({
     initialLinkedIds: initialLinked,
     pendingRemoveBookingIds,
-    selectedBookingIds: locationTimeDraft?.selectedBookingIds ?? initialLinked,
+    selectedBookingIds: removesAllLinkedBookings
+      ? []
+      : preservesLinkedBookings
+        ? initialLinked
+        : locationTimeDraft?.selectedBookingIds ?? initialLinked,
     bookingsMode: bookingSelectionAuthoritative,
     bookFlowBookingIds: bookingOverrides?.externalBookingIds,
   });
@@ -300,7 +310,11 @@ export function buildEditLocationTimeSaveDraft({
 
   const resolvedCourtId = courtIds[0] ?? courtId;
   const resolvedHasBookedCourt =
-    remainingLinkedCount > 0 ? true : hasBookedCourt;
+    remainingLinkedCount > 0
+      ? true
+      : editAction === 'gameOnly' || editAction === 'unlink'
+        ? false
+        : hasBookedCourt;
 
   return {
     clubId: clubId || undefined,

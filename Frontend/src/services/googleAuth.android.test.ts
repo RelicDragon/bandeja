@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 const socialLoginMocks = vi.hoisted(() => ({
   isLoggedIn: vi.fn(),
   getAuthorizationCode: vi.fn(),
+  login: vi.fn(),
+  logout: vi.fn(),
   initialize: vi.fn(),
 }));
 
@@ -56,6 +58,8 @@ describe('recoverAndroidGoogleLoginFromNative', () => {
     });
     socialLoginMocks.isLoggedIn.mockReset();
     socialLoginMocks.getAuthorizationCode.mockReset();
+    socialLoginMocks.login.mockReset();
+    socialLoginMocks.logout.mockReset();
   });
 
   afterEach(() => {
@@ -88,6 +92,54 @@ describe('recoverAndroidGoogleLoginFromNative', () => {
     const result = await recoverAndroidGoogleLoginFromNative();
 
     expect(result).toBeNull();
+  });
+
+  it('clears pending login when Android token recovery fails', async () => {
+    storage.set('bandeja_android_google_login_pending', '1');
+    socialLoginMocks.isLoggedIn.mockResolvedValue({ isLoggedIn: true });
+    socialLoginMocks.getAuthorizationCode.mockRejectedValue(new Error('User is not logged in'));
+
+    const { recoverAndroidGoogleLoginFromNative } = await import('@/services/googleAuth.service');
+    const result = await recoverAndroidGoogleLoginFromNative();
+
+    expect(result).toBeNull();
+    expect(storage.get('bandeja_android_google_login_pending')).toBeUndefined();
+  });
+});
+
+describe('signInWithGoogle Android pending flag', () => {
+  const storage = new Map<string, string>();
+
+  beforeEach(() => {
+    storage.clear();
+    vi.stubGlobal('sessionStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        storage.set(key, value);
+      },
+      removeItem: (key: string) => {
+        storage.delete(key);
+      },
+      clear: () => {
+        storage.clear();
+      },
+    });
+    socialLoginMocks.login.mockReset();
+    socialLoginMocks.logout.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('clears pending login after a terminal native sign-in failure', async () => {
+    socialLoginMocks.login.mockRejectedValue(new Error('Google Sign-In failed: boom'));
+
+    const { signInWithGoogle } = await import('@/services/googleAuth.service');
+    await expect(signInWithGoogle()).rejects.toThrow('Google Sign-In failed: boom');
+
+    expect(storage.get('bandeja_android_google_login_pending')).toBeUndefined();
   });
 });
 

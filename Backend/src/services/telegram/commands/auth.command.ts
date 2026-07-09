@@ -1,9 +1,13 @@
-import { InlineKeyboard } from 'grammy';
 import { BotContext } from '../types';
-import { generateOTP, generateLinkKey } from '../otp.service';
+import { generateActiveUniqueOTP, generateLinkKey } from '../otp.service';
 import prisma from '../../../config/database';
-import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
+import { buildTelegramLoginUrl } from '../loginLink.service';
+import { boldTelegramOtpCode, sendTelegramLoginUrlMessage } from '../loginMessage.service';
+
+function buildInstantLoginMessage(lang: string, code: string): string {
+  return `${t('telegram.orClickToLogin', lang)}\n\n${t('telegram.fallbackCodeHint', lang)}\n${boldTelegramOtpCode(code)}`;
+}
 
 export async function generateAuthCode(ctx: BotContext) {
   if (!ctx.from || !ctx.chat || !ctx.lang || !ctx.telegramId) return;
@@ -66,14 +70,18 @@ export async function generateAuthCode(ctx: BotContext) {
 
     const textMessage = await ctx.reply(t('telegram.authCodeText', lang));
 
-    const code = generateOTP();
+    const code = await generateActiveUniqueOTP();
     const linkKey = generateLinkKey();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    const codeMessage = await ctx.reply(code);
+    const codeMessage = await ctx.reply(boldTelegramOtpCode(code), { parse_mode: 'HTML' });
 
-    const loginUrl = new URL(`/login/${linkKey}`, config.frontendUrl).href;
-    const linkMessage = await ctx.reply(t('telegram.orClickToLogin', lang), {
-      reply_markup: new InlineKeyboard().url(t('telegram.openBandeja', lang), loginUrl),
+    const loginUrl = buildTelegramLoginUrl(linkKey);
+    const linkMessage = await sendTelegramLoginUrlMessage({
+      reply: (text, options) => ctx.reply(text, options),
+      message: buildInstantLoginMessage(lang, code),
+      buttonText: t('telegram.openBandeja', lang),
+      loginUrl,
+      parseMode: 'HTML',
     });
 
     await prisma.telegramOtp.create({
@@ -97,4 +105,3 @@ export async function generateAuthCode(ctx: BotContext) {
     await ctx.reply(t('telegram.authError', lang));
   }
 }
-

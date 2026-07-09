@@ -9,6 +9,7 @@ import {
   skipSportQuestionnaire,
 } from '../../services/user/sportQuestionnaire.service';
 import { parseSportParam } from '../../services/user/userSportProfile.service';
+import { disableConditionalHttpCache } from '../../utils/httpCache';
 
 export const completeSportQuestionnaireHandler = asyncHandler(async (req: AuthRequest, res: Response) => {
   rejectSocialLevelInQuestionnaireBody(req.body);
@@ -26,6 +27,7 @@ export const skipSportQuestionnaireHandler = asyncHandler(async (req: AuthReques
 });
 
 export const getSportQuestionnaireStatusHandler = asyncHandler(async (req: AuthRequest, res: Response) => {
+  disableConditionalHttpCache(req, res);
   const sport = parseSportParam(req.params.sport);
   const status = await getSportQuestionnaireStatus(req.userId!, sport);
   res.json({ success: true, data: status });

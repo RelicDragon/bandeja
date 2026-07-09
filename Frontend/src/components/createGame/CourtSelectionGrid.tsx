@@ -23,6 +23,7 @@ interface CourtSelectionGridProps {
   selectedCourt: string;
   selectedCourtIds?: string[];
   maxParticipants?: number;
+  playersPerMatch?: number;
   multiSelect?: boolean;
   selectedDate: Date;
   entityType: EntityType;
@@ -39,6 +40,7 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
   selectedCourt,
   selectedCourtIds = [],
   maxParticipants = 4,
+  playersPerMatch = 4,
   multiSelect = false,
   selectedDate,
   entityType,
@@ -82,8 +84,8 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
   }, [courtsInClub, showSportTabs, activeSportTab, sportFilter]);
 
   const maxSelectable = useMemo(
-    () => computeMaxSelectableCourts(maxParticipants, visibleCourts.length),
-    [maxParticipants, visibleCourts.length],
+    () => computeMaxSelectableCourts(maxParticipants, visibleCourts.length, playersPerMatch),
+    [maxParticipants, playersPerMatch, visibleCourts.length],
   );
 
   const { occupancyByCourtId, loading } = useCourtDayOccupancy({

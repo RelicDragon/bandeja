@@ -55,6 +55,8 @@ interface GameStartSectionProps {
   connectedPhone?: string | null;
   slotsLoading?: boolean;
   booktimeSlotsActive?: boolean;
+  hideTimeSlotsPicker?: boolean;
+  timeSchedulingExtra?: ReactNode;
   existingBookingBanner?: ReactNode;
   snapshotOverlayEnabled?: boolean;
   snapshotLoading?: boolean;
@@ -104,6 +106,8 @@ export const GameStartSection = ({
   connectedPhone,
   slotsLoading = false,
   booktimeSlotsActive = false,
+  hideTimeSlotsPicker = false,
+  timeSchedulingExtra,
   existingBookingBanner,
   snapshotOverlayEnabled = false,
   snapshotLoading = false,
@@ -296,6 +300,7 @@ export const GameStartSection = ({
         />
       ) : null}
       {!needsBooktimeAuth && !slotsLoading && !hasTimeSlots ? (
+        hideTimeSlotsPicker ? null :
         <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400">
           {t(
             booktimeSlotsActive
@@ -304,7 +309,8 @@ export const GameStartSection = ({
           )}
         </div>
       ) : null}
-      {showTimePicker ? (
+      {timeSchedulingExtra}
+      {showTimePicker && !hideTimeSlotsPicker ? (
         <CreateGameTimeSlots
           times={timeOptions}
           selectedTime={selectedTime}

@@ -1,9 +1,13 @@
-import { InlineKeyboard } from 'grammy';
 import { BotContext } from '../types';
-import { generateLinkKey } from '../otp.service';
+import { generateActiveUniqueOTP, generateLinkKey } from '../otp.service';
 import prisma from '../../../config/database';
-import { config } from '../../../config/env';
 import { t } from '../../../utils/translations';
+import { buildTelegramLoginUrl } from '../loginLink.service';
+import { boldTelegramOtpCode, sendTelegramLoginUrlMessage } from '../loginMessage.service';
+
+function buildLoginMessage(lang: string, code: string): string {
+  return `${t('telegram.loginHint', lang)}\n\n${t('telegram.fallbackCodeHint', lang)}\n${boldTelegramOtpCode(code)}`;
+}
 
 export async function generateLoginLink(ctx: BotContext) {
   if (!ctx.from || !ctx.chat || !ctx.lang || !ctx.telegramId) return;
@@ -55,16 +59,21 @@ export async function generateLoginLink(ctx: BotContext) {
       where: { telegramId },
     });
 
+    const code = await generateActiveUniqueOTP();
     const linkKey = generateLinkKey();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    const loginUrl = new URL(`/login/${linkKey}`, config.frontendUrl).href;
-    const linkMessage = await ctx.reply(t('telegram.loginHint', lang), {
-      reply_markup: new InlineKeyboard().url(t('telegram.openBandeja', lang), loginUrl),
+    const loginUrl = buildTelegramLoginUrl(linkKey);
+    const linkMessage = await sendTelegramLoginUrlMessage({
+      reply: (text, options) => ctx.reply(text, options),
+      message: buildLoginMessage(lang, code),
+      buttonText: t('telegram.openBandeja', lang),
+      loginUrl,
+      parseMode: 'HTML',
     });
 
     await prisma.telegramOtp.create({
       data: {
-        code: '000000',
+        code,
         telegramId,
         username: from.username || null,
         firstName: from.first_name || null,

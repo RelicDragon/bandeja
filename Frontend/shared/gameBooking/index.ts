@@ -9,3 +9,4 @@ export * from './evaluateLinkedBookingCoverage';
 export * from './computeGameBookingStatus';
 export * from './linkBookingToGame';
 export * from './rollbackBooktimeBookings';
+export * from './reservationIntent';

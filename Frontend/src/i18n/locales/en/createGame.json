@@ -14,9 +14,9 @@
     "selectClub": "Select Club",
     "court": "Court",
     "hall": "Hall",
-    "notBookedYet": "Don't book court",
-    "dontSelectCourt": "Don't select court",
-    "dontSelectHall": "Don't select hall",
+    "notBookedYet": "Game only",
+    "dontSelectCourt": "No court yet",
+    "dontSelectHall": "No hall yet",
     "courtNotSelected": "Court is not selected",
     "hallNotSelected": "Hall is not selected",
     "multiCourtHint": "Select up to {{count}} courts for {{participants}} players ({{selected}} selected)",
@@ -249,11 +249,11 @@
     "markCourtBookedYes": "Yes, I've booked it",
     "markCourtBookedSkip": "Not yet",
     "locationTime": {
-      "skipRealCourtToggle": "Don't book real court",
+      "skipRealCourtToggle": "Game only",
       "realCourtBookingHint": "{{courts}} at {{club}} will be reserved when you create the game.",
       "realCourtBookingHintEdit": "{{courts}} at {{club}} will be reserved when you save.",
-      "skipRealCourtHint": "Only the game will be created — no court reservation with the club.",
-      "skipRealCourtHintEdit": "Only the game will be updated — no court reservation with the club.",
+      "skipRealCourtHint": "The game will be scheduled in Bandeja only.",
+      "skipRealCourtHintEdit": "The game will be updated in Bandeja only.",
       "summaryFromBookings": "From your {{count}} reservations",
       "summaryWindow": "{{start}} – {{end}}",
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
@@ -274,6 +274,58 @@
       "unlinkNoCancelNote": "The court reservation at the club stays active — only the link to this game is removed.",
       "syncInactiveCreate": "Sync isn't active right now — we couldn't retrieve slots or make bookings here. You can still create the game at this time.",
       "syncInactiveEdit": "Sync isn't active right now — we couldn't retrieve slots or make bookings here. You can still edit the game at this time."
+    },
+    "reservationIntent": {
+      "title": "Court reservation",
+      "subtitle": "Choose what should happen with the real club court.",
+      "recommended": "Recommended",
+      "validation": {
+        "selectCourt": "Select {{count}} court(s) first.",
+        "selectBookableCourt": "Select {{count}} online-bookable court(s) first.",
+        "selectTime": "Select an available time first."
+      },
+      "reserveNow": {
+        "title": "Reserve court now",
+        "description": "Pick available court time and the app will reserve it when you create."
+      },
+      "useExisting": {
+        "title": "Use existing reservation",
+        "description": "Link reservation(s) already in your club account."
+      },
+      "gameOnly": {
+        "title": "Game only",
+        "description": "Create the game without making or marking a real court reservation."
+      },
+      "manualBooked": {
+        "title": "Already booked manually",
+        "description": "Mark the game as booked without using the online reservation integration."
+      },
+      "summary": {
+        "reserveNow": {
+          "title": "A real court reservation will be made",
+          "body": "Select {{count}} court(s), duration, and time. That exact schedule will be reserved."
+        },
+        "useExisting": {
+          "title": "Game will link to your reservation(s)",
+          "body": "{{selected}} of {{count}} required reservation(s) selected."
+        },
+        "gameOnly": {
+          "title": "No real court reservation will be made",
+          "body": "The game will be scheduled in Bandeja only."
+        },
+        "manualBooked": {
+          "title": "Game will be marked as booked",
+          "body": "No online reservation will be created."
+        }
+      },
+      "cta": {
+        "reserveOne": "Reserve court and create game",
+        "reserveMany": "Reserve {{count}} courts and create game",
+        "linkOne": "Link reservation and create game",
+        "linkMany": "Link {{count}} reservations and create game",
+        "gameOnly": "Create game only",
+        "manualBooked": "Create game"
+      }
     },
     "booktime": {
       "switchLabel": "Reserve court when I create the game",

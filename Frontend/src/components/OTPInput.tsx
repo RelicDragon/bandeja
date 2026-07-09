@@ -5,14 +5,20 @@ interface OTPInputProps {
   onChange: (value: string) => void;
   length?: number;
   disabled?: boolean;
+  autoFocus?: boolean;
 }
 
-export const OTPInput = ({ value, onChange, length = 6, disabled = false }: OTPInputProps) => {
+export const OTPInput = ({ value, onChange, length = 6, disabled = false, autoFocus = false }: OTPInputProps) => {
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     inputRefs.current = inputRefs.current.slice(0, length);
   }, [length]);
+
+  useEffect(() => {
+    if (!autoFocus || disabled) return;
+    inputRefs.current[0]?.focus();
+  }, [autoFocus, disabled]);
 
   const handleChange = (index: number, val: string) => {
     if (disabled) return;
@@ -65,13 +71,18 @@ export const OTPInput = ({ value, onChange, length = 6, disabled = false }: OTPI
   };
 
   return (
-    <div className="flex gap-1.5 justify-center min-w-0">
+    <div
+      className="mx-auto grid w-full max-w-[320px] gap-1.5 sm:gap-2"
+      style={{ gridTemplateColumns: `repeat(${length}, minmax(0, 1fr))` }}
+    >
       {Array.from({ length }).map((_, index) => (
         <input
           key={index}
           ref={(el) => { inputRefs.current[index] = el; }}
           type="text"
           inputMode="numeric"
+          autoComplete={index === 0 ? 'one-time-code' : 'off'}
+          aria-label={`One-time code digit ${index + 1}`}
           maxLength={1}
           value={value[index] || ''}
           onChange={(e) => handleChange(index, e.target.value)}
@@ -79,7 +90,7 @@ export const OTPInput = ({ value, onChange, length = 6, disabled = false }: OTPI
           onKeyDown={(e) => handleKeyDown(index, e)}
           onPaste={handlePaste}
           disabled={disabled}
-          className="w-10 h-11 text-center text-lg font-semibold bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl focus:border-primary-500 dark:focus:border-primary-400 focus:ring-2 focus:ring-primary-500/20 dark:focus:ring-primary-400/20 focus:outline-none disabled:bg-slate-100 dark:disabled:bg-slate-800 disabled:cursor-not-allowed transition-all text-slate-800 dark:text-white"
+          className="h-12 min-w-0 rounded-xl border border-slate-200 bg-white text-center text-xl font-bold text-slate-900 shadow-sm transition-all placeholder:text-slate-300 focus:border-[#0088cc] focus:outline-none focus:ring-4 focus:ring-[#0088cc]/15 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-600 dark:bg-slate-800/80 dark:text-white dark:focus:border-sky-400 dark:focus:ring-sky-400/20 dark:disabled:bg-slate-900"
         />
       ))}
     </div>

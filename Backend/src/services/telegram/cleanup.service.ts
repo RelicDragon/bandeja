@@ -13,16 +13,17 @@ export async function deleteOtpMessages(
   if (!otp.chatId || !bot) return;
 
   const chatId = parseInt(otp.chatId);
+  const messageIds = Array.from(
+    new Set(
+      [otp.textMessageId, otp.codeMessageId, otp.linkMessageId].filter(
+        (id): id is string => typeof id === 'string' && id.length > 0
+      )
+    )
+  );
 
   try {
-    if (otp.textMessageId) {
-      await bot.api.deleteMessage(chatId, parseInt(otp.textMessageId));
-    }
-    if (otp.codeMessageId) {
-      await bot.api.deleteMessage(chatId, parseInt(otp.codeMessageId));
-    }
-    if (otp.linkMessageId) {
-      await bot.api.deleteMessage(chatId, parseInt(otp.linkMessageId));
+    for (const messageId of messageIds) {
+      await bot.api.deleteMessage(chatId, parseInt(messageId));
     }
   } catch (error) {
     console.log('Could not delete OTP messages:', error);
@@ -68,4 +69,3 @@ export function startCleanupInterval(bot: Bot | null): ReturnType<typeof setInte
 
   return cleanupInterval;
 }
-

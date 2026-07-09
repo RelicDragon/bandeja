@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club, Court, EntityType, Game } from '@/types';
 import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
@@ -15,6 +15,13 @@ import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBooking
 import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
+import {
+  resolveEditReservationActionOptions,
+  resolveInitialEditReservationAction,
+  type EditReservationAction,
+} from '@shared/gameBooking/reservationIntent';
+import { EditReservationActionPicker } from '@/components/gameLocationTime/ReservationIntentPicker';
+import { EditReservationConsequenceSummary } from '@/components/gameLocationTime/ReservationSummaryCard';
 import { filterClubsBySport } from '@/utils/courtSport';
 import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import type { RefObject, ReactNode } from 'react';
@@ -154,6 +161,36 @@ export function LocationTimeTab({
     () => game.linkedBookings?.map((b) => b.externalBookingId) ?? [],
     [game.linkedBookings],
   );
+  const [editReservationAction, setEditReservationAction] = useState<EditReservationAction>(() =>
+    resolveInitialEditReservationAction({
+      hasLinkedBookings: initialLinkedBookingIds.length > 0,
+      clubBookingFlowActive,
+      hasBookedCourt,
+    }),
+  );
+  const prevGameIdRef = useRef(game.id);
+  useEffect(() => {
+    if (prevGameIdRef.current === game.id) return;
+    prevGameIdRef.current = game.id;
+    setEditReservationAction(
+      resolveInitialEditReservationAction({
+        hasLinkedBookings: initialLinkedBookingIds.length > 0,
+        clubBookingFlowActive,
+        hasBookedCourt,
+      }),
+    );
+  }, [game.id, initialLinkedBookingIds.length, clubBookingFlowActive, hasBookedCourt]);
+  const previousEditActionRef = useRef(editReservationAction);
+
+  useEffect(() => {
+    if (previousEditActionRef.current === editReservationAction) return;
+    const previousAction = previousEditActionRef.current;
+    previousEditActionRef.current = editReservationAction;
+    if (editReservationAction === 'reserveNew' && previousAction !== 'reserveNew') {
+      onSelectCourtIds?.([]);
+      onTimeChange('');
+    }
+  }, [editReservationAction, onSelectCourtIds, onTimeChange]);
 
   const locationTimeState = useGameLocationTimeState({
     entityType,
@@ -171,6 +208,7 @@ export function LocationTimeTab({
     initialSelectedBookingIds: initialLinkedBookingIds,
     initialTimeOverride: game.timeOverride ?? false,
     game,
+    editReservationAction,
     createDateFromSelection,
   });
 
@@ -240,14 +278,26 @@ export function LocationTimeTab({
   });
 
   const pendingUnlinkIds = useMemo(
-    () =>
-      computePendingBookingUnlinks(
+    () => {
+      if (editReservationAction === 'unlink' || editReservationAction === 'gameOnly') {
+        return initialLinkedBookingIds;
+      }
+      if (editReservationAction === 'keepCurrent' || editReservationAction === 'changeGameTimeOnly') {
+        return [];
+      }
+      return computePendingBookingUnlinks(
         initialLinkedBookingIds,
         pendingRemoveBookingIds,
         selectedBookingIds,
-        locationTimeMode === 'bookings' || initialLinkedBookingIds.length > 0,
-      ),
-    [initialLinkedBookingIds, pendingRemoveBookingIds, selectedBookingIds, locationTimeMode],
+        editReservationAction === 'useExisting' || initialLinkedBookingIds.length > 0,
+      );
+    },
+    [
+      editReservationAction,
+      initialLinkedBookingIds,
+      pendingRemoveBookingIds,
+      selectedBookingIds,
+    ],
   );
 
   const draftPayload = useMemo(
@@ -260,6 +310,7 @@ export function LocationTimeTab({
       overrideEndTime,
       willBookOnCreate,
       integratedCourtIds,
+      editReservationAction,
     }),
     [
       locationTimeMode,
@@ -270,6 +321,7 @@ export function LocationTimeTab({
       overrideEndTime,
       willBookOnCreate,
       integratedCourtIds,
+      editReservationAction,
     ],
   );
 
@@ -287,12 +339,11 @@ export function LocationTimeTab({
     clubBookingFlowActive &&
     Boolean(booktimeCompanyId) &&
     !booktimeConnected &&
-    locationTimeMode === 'timeSlots' &&
-    integratedCourtIds.length > 0;
+    (editReservationAction === 'reserveNew' || editReservationAction === 'useExisting');
   const resolvedAuthGateSection = showBooktimeAuthPrompt
     ? renderAuthGateSection?.({
         collapsed: !needsBooktimeAuth,
-        onSkip: () => setSkipRealCourtBooking(true),
+        onSkip: () => setEditReservationAction('gameOnly'),
         onCollapsedClick: () => setSkipRealCourtBooking(false),
       }) ?? authGateSection
     : null;
@@ -305,13 +356,57 @@ export function LocationTimeTab({
       selectedCourt={selectedCourt}
       selectedCourtIds={selectedCourtIds}
       maxParticipants={game.maxParticipants}
-      multiSelectCourts={game.maxParticipants > 4}
+      playersPerMatch={game.playersPerMatch ?? 4}
+      multiSelectCourts={bookingSelectionLimits.min > 1}
       selectedDate={selectedDate}
       hasBookedCourt={hasBookedCourt}
       entityType={entityType}
       onSelectCourt={onSelectCourt}
       onToggleHasBookedCourt={onToggleHasBookedCourt}
       preferredSport={game.sport}
+      showHasBookedSwitch={false}
+    />
+  );
+
+  const editActionOptions = useMemo(
+    () =>
+      resolveEditReservationActionOptions({
+        hasLinkedBookings: initialLinkedBookingIds.length > 0,
+        clubBookingFlowActive,
+        hasBooktimeAuthPath: Boolean(booktimeCompanyId),
+      }),
+    [initialLinkedBookingIds.length, clubBookingFlowActive, booktimeCompanyId],
+  );
+
+  const actionPickerSection = (
+    <EditReservationActionPicker
+      value={editReservationAction}
+      options={editActionOptions}
+      onChange={setEditReservationAction}
+    />
+  );
+
+  const showScheduleControls =
+    editReservationAction === 'changeGameTimeOnly' ||
+    editReservationAction === 'reserveNew' ||
+    editReservationAction === 'unlink' ||
+    editReservationAction === 'gameOnly';
+  const showManualCourtControls =
+    editReservationAction === 'changeGameTimeOnly' ||
+    editReservationAction === 'reserveNew' ||
+    editReservationAction === 'unlink' ||
+    editReservationAction === 'gameOnly';
+
+  const showReservationPicker = editReservationAction === 'useExisting';
+
+  const consequenceSection = (
+    <EditReservationConsequenceSummary
+      action={editReservationAction}
+      linkedCount={initialLinkedBookingIds.length}
+      selectedBookingCount={selectedBookingIds.length}
+      willReserveNew={editReservationAction === 'reserveNew' && willBookOnCreate}
+      pendingUnlinkCount={pendingUnlinkIds.length}
+      club={club}
     />
   );
 
@@ -382,6 +477,12 @@ export function LocationTimeTab({
             : undefined
         }
         needsBooktimeAuth={needsBooktimeAuth}
+        intentSection={actionPickerSection}
+        consequenceSection={consequenceSection}
+        showCourtSection={showManualCourtControls}
+        showTimeSlots={showScheduleControls}
+        showReservations={showReservationPicker}
+        showRealBookingHint={false}
         authGateSection={resolvedAuthGateSection}
         dateSection={dateSection}
         courtSection={courtSection}

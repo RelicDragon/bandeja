@@ -27,6 +27,34 @@ test.describe('auth login', () => {
     await login.expectMainTabVisible();
   });
 
+  test('A-06 Telegram login shows OTP fallback', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.open = () => null;
+    });
+    const login = new LoginPage(page);
+    await login.goto();
+
+    await page.getByRole('button', { name: /login with telegram/i }).click();
+
+    const firstDigit = page.getByLabel(/one-time code digit 1/i);
+    const submitButton = page.getByRole('button', { name: /use code/i });
+    await expect(page.getByText(/if the link does not bring you back/i)).toBeVisible();
+    await expect(firstDigit).toBeVisible();
+    await expect(page.getByRole('button', { name: /continue with google/i })).toBeHidden();
+    await expect(page.getByRole('button', { name: /legacy phone sign-in/i })).toBeHidden();
+    await expect(submitButton).toBeDisabled();
+
+    for (const [index, digit] of Array.from('123456').entries()) {
+      await page.getByLabel(new RegExp(`one-time code digit ${index + 1}`, 'i')).fill(digit);
+    }
+
+    await expect(page.getByLabel(/one-time code digit 6/i)).toHaveValue('6');
+    await expect(submitButton).toBeEnabled();
+
+    await page.getByRole('button', { name: /^back$/i }).click();
+    await login.expectMainTabVisible();
+  });
+
   test('A-05 register link', async ({ page }) => {
     const login = new LoginPage(page);
     await login.goto();

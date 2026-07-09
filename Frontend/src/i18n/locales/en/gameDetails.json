@@ -48,7 +48,46 @@
       },
       "unlinkNoCancelHint": "The court reservation at the club stays active — we only remove the link from this game.",
       "unlinkSaveConfirmTitle": "Remove reservation links?",
-      "unlinkSaveConfirmMessage": "You are unlinking {{count}} reservation(s) from this game. The real court bookings will not be cancelled automatically."
+      "unlinkSaveConfirmMessage": "You are unlinking {{count}} reservation(s) from this game. The real court bookings will not be cancelled automatically.",
+      "reservationActionTitle": "Court reservation",
+      "reservationActionSubtitle": "Choose what should happen when you save.",
+      "reservationAction": {
+        "keepCurrent": {
+          "title": "Keep current reservation",
+          "description": "Preserve the linked reservation(s) and schedule."
+        },
+        "changeGameTimeOnly": {
+          "title": "Change game time only",
+          "description": "Update the game schedule without changing club reservation links."
+        },
+        "useExisting": {
+          "title": "Use existing reservation",
+          "description": "Replace links with reservation(s) from your club account."
+        },
+        "reserveNew": {
+          "title": "Reserve a new court",
+          "description": "Create a new real club reservation when saving."
+        },
+        "unlink": {
+          "title": "Unlink reservation",
+          "description": "Remove reservation links from this game only."
+        },
+        "gameOnly": {
+          "title": "Game only",
+          "description": "Keep the game scheduled without a real reservation link."
+        }
+      },
+      "consequenceTitle": "What will happen",
+      "consequence": {
+        "keepCurrent": "Current reservation links stay attached.",
+        "changeGameTimeOnly": "Game time changes; existing reservation links stay attached.",
+        "useExisting": "{{selected}} reservation(s) will be linked to this game.",
+        "reserveNew": "A new real court reservation will be created on save.",
+        "unlink": "Reservation links will be removed from this game.",
+        "gameOnly": "The game remains scheduled without real reservation links.",
+        "reserveNewConfirm": "You will review the real reservation before saving.",
+        "unlinkNoCancel": "{{count}} real club reservation(s) will remain active unless you cancel them with the club/provider."
+      }
     },
     "linkedBookings": {
       "fullyCovered": "Fully booked",

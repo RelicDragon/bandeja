@@ -1,5 +1,6 @@
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { LocationTimeMode } from './LocationTimeMode';
+import type { EditReservationAction } from '@shared/gameBooking/reservationIntent';
 
 export type EditLocationTimeDraft = {
   locationTimeMode: LocationTimeMode;
@@ -10,6 +11,7 @@ export type EditLocationTimeDraft = {
   overrideEndTime?: string;
   willBookOnCreate: boolean;
   integratedCourtIds: string[];
+  editReservationAction?: EditReservationAction;
 };
 
 export function areStringArraysEqual(left: string[], right: string[]): boolean {
@@ -43,6 +45,7 @@ export function areEditLocationTimeDraftsEqual(
     left.overrideStartTime === right.overrideStartTime &&
     left.overrideEndTime === right.overrideEndTime &&
     left.willBookOnCreate === right.willBookOnCreate &&
+    left.editReservationAction === right.editReservationAction &&
     areStringArraysEqual(left.selectedBookingIds, right.selectedBookingIds) &&
     areStringArraysEqual(left.integratedCourtIds, right.integratedCourtIds) &&
     areBookingRecordsEqual(left.selectedBookingRecords, right.selectedBookingRecords)

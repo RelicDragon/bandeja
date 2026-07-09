@@ -7,6 +7,7 @@ import {
   computeCourtAvailabilityRows,
   fetchBooktimeCourtAvailabilityForDate,
   filterPastSlots,
+  intersectFreeSlotStarts,
 } from './availability';
 
 vi.mock('@/api/booktime', () => ({
@@ -108,6 +109,25 @@ describe('filterPastSlots', () => {
   it('keeps all starts on non-today dates', () => {
     const filtered = filterPastSlots(['08:00', '14:00'], '2026-06-14', club);
     expect(filtered).toEqual(['08:00', '14:00']);
+  });
+});
+
+describe('intersectFreeSlotStarts', () => {
+  it('returns only starts shared by all selected courts', () => {
+    const rows = [
+      {
+        court: courts[0]!,
+        externalCourtId: 'ext-a',
+        freeSlots: ['18:00', '19:30', '21:00'],
+      },
+      {
+        court: courts[1]!,
+        externalCourtId: 'ext-b',
+        freeSlots: ['18:00', '21:00'],
+      },
+    ];
+
+    expect(intersectFreeSlotStarts(rows)).toEqual(['18:00', '21:00']);
   });
 });
 

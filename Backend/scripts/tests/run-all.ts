@@ -49,6 +49,16 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'sport questionnaire status cache',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'sport-questionnaire-status-cache.ts'),
+    ],
+  },
+  {
     label: 'multisport questionnaire tennis',
     command: process.execPath,
     args: [

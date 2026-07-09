@@ -69,6 +69,19 @@ describe('resolveCreateGameBookingAction', () => {
     ).toEqual({ status: 'proceed' });
   });
 
+  it('reserve-now aborts when the selected court is not online-bookable', () => {
+    expect(
+      resolveCreateGameBookingAction({
+        ...base,
+        reservationIntent: 'reserveNow',
+        willBookOnCreate: false,
+        integratedCourtCount: 0,
+        selectedCourt: 'court-1',
+        selectedCourtCount: 1,
+      }),
+    ).toEqual({ status: 'abort' });
+  });
+
   it('falls back to manual create when auth is required for book-on-create', () => {
     expect(
       resolveCreateGameBookingAction({

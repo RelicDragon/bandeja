@@ -12,6 +12,7 @@ interface CreateGameCourtSectionProps {
   selectedCourt: string;
   selectedCourtIds?: string[];
   maxParticipants?: number;
+  playersPerMatch?: number;
   multiSelectCourts?: boolean;
   selectedDate: Date;
   hasBookedCourt: boolean;
@@ -20,6 +21,7 @@ interface CreateGameCourtSectionProps {
   onToggleHasBookedCourt: (checked: boolean) => void;
   preferredSport?: Sport | null;
   onSportTabChange?: (sport: Sport) => void;
+  showHasBookedSwitch?: boolean;
 }
 
 export const CreateGameCourtSection = memo(function CreateGameCourtSection({
@@ -29,6 +31,7 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
   selectedCourt,
   selectedCourtIds = [],
   maxParticipants = 4,
+  playersPerMatch = 4,
   multiSelectCourts = false,
   selectedDate,
   hasBookedCourt,
@@ -37,6 +40,7 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
   onToggleHasBookedCourt,
   preferredSport,
   onSportTabChange,
+  showHasBookedSwitch: showHasBookedSwitchProp = true,
 }: CreateGameCourtSectionProps) {
   const { t } = useTranslation();
 
@@ -54,6 +58,7 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
         ? courts[0]
         : undefined;
   const showHasBookedSwitch =
+    showHasBookedSwitchProp &&
     (selectedCourt !== 'notBooked' || (entityType === 'BAR' && courts.length === 1)) &&
     !courtHasActiveBookingIntegration(club, court) &&
     !multiSelectCourts;
@@ -71,6 +76,7 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
             selectedCourt={selectedCourt}
             selectedCourtIds={selectedCourtIds}
             maxParticipants={maxParticipants}
+            playersPerMatch={playersPerMatch}
             multiSelect={multiSelectCourts}
             selectedDate={selectedDate}
             entityType={entityType}

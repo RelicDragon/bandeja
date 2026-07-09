@@ -477,7 +477,10 @@ export async function recoverAndroidGoogleLoginFromNative(): Promise<GoogleAuthR
   if (Capacitor.getPlatform() !== 'android') return null;
 
   await ensureSocialLoginInitialized();
-  if (!config.googleWebClientId) return null;
+  if (!config.googleWebClientId) {
+    clearAndroidGoogleLoginPending();
+    return null;
+  }
 
   let loggedIn = false;
   try {
@@ -509,6 +512,7 @@ export async function recoverAndroidGoogleLoginFromNative(): Promise<GoogleAuthR
       accessToken: typeof auth.accessToken === 'string' ? auth.accessToken : undefined,
     };
   } catch {
+    clearAndroidGoogleLoginPending();
     return null;
   }
 }
@@ -633,6 +637,9 @@ export async function signInWithGoogle(options?: GoogleSignInOptions): Promise<G
       errorString.includes('timed out');
 
     if (isNativeSignInFailure) {
+      if (Capacitor.getPlatform() === 'android') {
+        clearAndroidGoogleLoginPending();
+      }
       throw error;
     }
 
@@ -657,6 +664,9 @@ export async function signInWithGoogle(options?: GoogleSignInOptions): Promise<G
         clearAndroidGoogleLoginPending();
       }
       return null;
+    }
+    if (Capacitor.getPlatform() === 'android') {
+      clearAndroidGoogleLoginPending();
     }
     throw error;
   }

@@ -39,6 +39,14 @@ export type GameLocationTimePanelProps = {
   booktimeConnected?: boolean;
   onDerivedTimeChange?: (start: string | null, end: string | null) => void;
   timeSlotsChildren: ReactNode;
+  intentSection?: ReactNode;
+  summarySection?: ReactNode;
+  consequenceSection?: ReactNode;
+  showDateSection?: boolean;
+  showCourtSection?: boolean;
+  showTimeSlots?: boolean;
+  showReservations?: boolean;
+  showRealBookingHint?: boolean;
   dateSection: ReactNode;
   clubSection?: ReactNode;
   courtSection: ReactNode;
@@ -72,6 +80,14 @@ export function GameLocationTimePanel({
   booktimeConnected = false,
   onDerivedTimeChange,
   timeSlotsChildren,
+  intentSection,
+  summarySection,
+  consequenceSection,
+  showDateSection = true,
+  showCourtSection = true,
+  showTimeSlots = true,
+  showReservations,
+  showRealBookingHint = false,
   dateSection,
   clubSection,
   courtSection,
@@ -242,8 +258,9 @@ export function GameLocationTimePanel({
       />
     ) : null;
 
+  const shouldShowReservations = showReservations ?? locationTimeMode === 'bookings';
   const reservationsStrip =
-    reservationsEnabled && club && companyId && selectedDate && bookingSelectionLimits ? (
+    shouldShowReservations && reservationsEnabled && club && companyId && selectedDate && bookingSelectionLimits ? (
       <ReservationsStrip
         club={club}
         courts={courts}
@@ -271,15 +288,16 @@ export function GameLocationTimePanel({
       ) : null}
 
       <TimeSlotsPanel
-        dateSection={dateSection}
+        dateSection={showDateSection ? dateSection : null}
         clubSection={clubSection}
-        courtSection={courtSection}
+        intentSection={intentSection}
+        courtSection={showCourtSection ? courtSection : null}
         timeSlotsChildren={timeSlotsChildren}
         needsBooktimeAuth={needsBooktimeAuth}
         authGateSection={authGateSection}
         reservationsStrip={reservationsStrip}
         hintSection={
-          club && locationTimeMode === 'timeSlots' ? (
+          showRealBookingHint && club && locationTimeMode === 'timeSlots' ? (
             <BooktimeRealBookingSection
               mode={mode}
               club={club}
@@ -289,8 +307,11 @@ export function GameLocationTimePanel({
             />
           ) : null
         }
-        linkHintSection={linkHintSection}
+        linkHintSection={shouldShowReservations ? linkHintSection : null}
         overrideSection={overrideSection}
+        summarySection={summarySection}
+        consequenceSection={consequenceSection}
+        showTimeSlots={showTimeSlots}
       />
 
       {derivedSummary && locationTimeMode === 'bookings' ? (

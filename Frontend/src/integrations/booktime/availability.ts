@@ -129,6 +129,18 @@ export function aggregateFreeSlotStarts(rows: BooktimeCourtAvailabilityRow[]): s
   return [...freeStarts].sort((a, b) => (parseSlotMinutes(a) ?? 0) - (parseSlotMinutes(b) ?? 0));
 }
 
+export function intersectFreeSlotStarts(rows: BooktimeCourtAvailabilityRow[]): string[] {
+  if (rows.length === 0) return [];
+  const [first, ...rest] = rows;
+  const shared = new Set(first.freeSlots);
+  for (const row of rest) {
+    for (const start of [...shared]) {
+      if (!row.freeSlots.includes(start)) shared.delete(start);
+    }
+  }
+  return [...shared].sort((a, b) => (parseSlotMinutes(a) ?? 0) - (parseSlotMinutes(b) ?? 0));
+}
+
 export function resolveBooktimeDateBounds(club: Club, bookableDays: number): {
   minDateKey: string;
   maxDateKey: string;

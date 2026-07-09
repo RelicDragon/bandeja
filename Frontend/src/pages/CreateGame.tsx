@@ -19,6 +19,8 @@ import { resolveUserCurrency } from '@/utils/currency';
 import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, getClubTimezone } from '@/hooks/useGameTimeDuration';
 import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
+import { ReservationIntentPicker } from '@/components/gameLocationTime/ReservationIntentPicker';
+import { ReservationSummaryCard } from '@/components/gameLocationTime/ReservationSummaryCard';
 import type { CreateGameBookingOverrides } from '@/hooks/createGameBookingFlow';
 import { useCreateGameBookingFlow } from '@/hooks/createGameBookingFlow';
 import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
@@ -45,7 +47,7 @@ import {
 } from '@/utils/profileSports';
 import { useQuestionnaireStatus } from '@/hooks/useQuestionnaireStatus';
 import { shouldWarnCreateGameLevelBand } from '@/utils/sportQuestionnaire';
-import { computeMaxSelectableCourts } from '@/utils/requiredCourtCount';
+import { computeMaxSelectableCourts, computeRequiredCourtCount } from '@/utils/requiredCourtCount';
 import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
 import { invalidateBooktimeAllUpcomingCache } from '@/integrations/booktime/booktimeAllUpcomingLoader';
 import { CreateGameQuestionnaireBanner } from '@/components/sportQuestionnaire';
@@ -321,7 +323,8 @@ export const CreateGame = ({
     return { startTime: start.toISOString(), endTime: end.toISOString() };
   }, [clubs, selectedClub, selectedDate, selectedTime, duration]);
 
-  const multiCourtMode = entityType !== 'BAR' && maxParticipants > 4;
+  const requiredCourtCount = computeRequiredCourtCount(maxParticipants, playersPerMatch);
+  const multiCourtMode = entityType !== 'BAR' && requiredCourtCount > 1;
 
   const handleCourtSelect = useCallback(
     (id: string) => {
@@ -340,12 +343,12 @@ export const CreateGame = ({
       setSelectedCourtIds((prev) => {
         const existing = prev.indexOf(id);
         if (existing >= 0) return prev.filter((courtId) => courtId !== id);
-        const max = computeMaxSelectableCourts(maxParticipants, courts.length);
+        const max = computeMaxSelectableCourts(maxParticipants, courts.length, playersPerMatch);
         if (prev.length >= max) return prev;
         return [...prev, id];
       });
     },
-    [multiCourtMode, maxParticipants, courts.length, setSelectedTime],
+    [multiCourtMode, maxParticipants, playersPerMatch, courts.length, setSelectedTime],
   );
 
   const bookingFlow = useCreateGameBookingFlow({
@@ -432,19 +435,21 @@ export const CreateGame = ({
     handleMarkCourtBooked,
     handleSkipMarkCourt,
     getConfirmModalProps,
-    handleCourtSelectForAuthSkip,
     handleAuthCollapsedClick,
     handleAuthConnected,
+    reservationIntent,
+    setReservationIntent,
+    reservationIntentOptions,
   } = bookingFlow;
 
-  const booktimeScheduleConstrained = willBookOnCreate && !needsBooktimeAuth;
+  const booktimeScheduleConstrained = reservationIntent === 'reserveNow' && !needsBooktimeAuth;
   const showBooktimeAuthPrompt =
     entityType !== 'BAR' &&
     Boolean(selectedClub) &&
     clubBookingFlowActive &&
     Boolean(booktimeIntegrationConfig) &&
     !booktimeAuth?.connected &&
-    locationTimeMode === 'timeSlots';
+    (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting');
   const booktimeAuthPromptCollapsed = showBooktimeAuthPrompt && !needsBooktimeAuth;
 
   const weatherPreviewTiming = useMemo(() => {
@@ -983,6 +988,7 @@ export const CreateGame = ({
         selectedCourt={selectedCourt}
         selectedCourtIds={selectedCourtIds}
         maxParticipants={maxParticipants}
+        playersPerMatch={playersPerMatch}
         multiSelectCourts={multiCourtMode}
         selectedDate={selectedDate}
         hasBookedCourt={hasBookedCourt}
@@ -991,6 +997,7 @@ export const CreateGame = ({
         onToggleHasBookedCourt={setHasBookedCourt}
         preferredSport={selectedSport}
         onSportTabChange={handleCourtSportTab}
+        showHasBookedSwitch={false}
       />
     ),
     [
@@ -1000,6 +1007,7 @@ export const CreateGame = ({
       selectedCourt,
       selectedCourtIds,
       maxParticipants,
+      playersPerMatch,
       multiCourtMode,
       selectedDate,
       hasBookedCourt,
@@ -1034,6 +1042,22 @@ export const CreateGame = ({
       booktimeFixedDates,
       booktimeCompanyMeta.bookableDays,
     ],
+  );
+
+  const intentSection = (
+    <ReservationIntentPicker
+      value={reservationIntent}
+      options={reservationIntentOptions}
+      onChange={setReservationIntent}
+    />
+  );
+
+  const reservationSummarySection = (
+    <ReservationSummaryCard
+      intent={reservationIntent}
+      requiredCount={bookingSelectionLimits.min}
+      selectedBookingCount={selectedBookingIds.length}
+    />
   );
 
   const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement | null>) => {
@@ -1470,7 +1494,7 @@ export const CreateGame = ({
 
         <div ref={locationTimeSectionRef}>
           <div ref={durationSectionRef}>
-            {entityType !== 'BAR' && selectedClub && clubBookingFlowActive && selectedClubData ? (
+            {entityType !== 'BAR' && selectedClub && selectedClubData ? (
               <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4 space-y-4">
                 <GameLocationTimePanel
                   mode="create"
@@ -1501,6 +1525,16 @@ export const CreateGame = ({
                   overrideEndTime={overrideEndTime}
                   onOverrideTimesChange={setOverrideTimes}
                   needsBooktimeAuth={needsBooktimeAuth}
+                  intentSection={intentSection}
+                  summarySection={reservationSummarySection}
+                  showCourtSection={
+                    reservationIntent === 'gameOnly' ||
+                    reservationIntent === 'manualBooked' ||
+                    reservationIntent === 'reserveNow'
+                  }
+                  showTimeSlots={reservationIntent === 'gameOnly' || reservationIntent === 'manualBooked' || reservationIntent === 'reserveNow'}
+                  showReservations={reservationIntent === 'useExisting'}
+                  showRealBookingHint={false}
                   dateSection={dateSection}
                   clubSection={
                     <CreateGameClubSection
@@ -1525,7 +1559,7 @@ export const CreateGame = ({
                         club={selectedClubData}
                         integrationConfig={booktimeIntegrationConfig}
                         onConnected={handleAuthConnected}
-                        onSkip={handleCourtSelectForAuthSkip}
+                        onSkip={() => setReservationIntent('manualBooked')}
                         collapsed={booktimeAuthPromptCollapsed}
                         onCollapsedClick={handleAuthCollapsedClick}
                       />

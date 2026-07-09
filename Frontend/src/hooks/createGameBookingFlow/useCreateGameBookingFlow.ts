@@ -20,6 +20,12 @@ import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
 import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
+import {
+  resolveCreateReservationCtaKey,
+  resolveInitialReservationIntent,
+  resolveReservationIntentOptions,
+  type ReservationIntent,
+} from '@shared/gameBooking/reservationIntent';
 import { clubHasBookingIntegration, parseBooktimeIntegrationConfig } from '@shared/clubIntegration';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
@@ -106,6 +112,18 @@ export function useCreateGameBookingFlow({
   t,
 }: UseCreateGameBookingFlowArgs) {
   const preselectedBookings = initialBookingIds.length > 0;
+  const [reservationIntent, setReservationIntentState] = useState<ReservationIntent>(() =>
+    resolveInitialReservationIntent({
+      hasPreselectedBookings: preselectedBookings,
+      clubBookingFlowActive: clubHasBookingIntegration(selectedClubData) && supportsClubBookingFlow(entityType, 'create'),
+      initialHasBookedCourt,
+    }),
+  );
+  const [reservationIntentTouched, setReservationIntentTouched] = useState(false);
+  const setReservationIntent = useCallback((intent: ReservationIntent) => {
+    setReservationIntentTouched(true);
+    setReservationIntentState(intent);
+  }, []);
   const [hasBookedCourt, setHasBookedCourt] = useState(initialHasBookedCourt);
   const [selectedBookingRecords, setSelectedBookingRecords] = useState<BooktimeBookingRecord[]>([]);
   const [derivedBookingSummary, setDerivedBookingSummary] = useState<{
@@ -143,6 +161,7 @@ export function useCreateGameBookingFlow({
     duration,
     hasBookedCourt,
     initialSelectedBookingIds: initialBookingIds,
+    reservationIntent,
     createDateFromSelection,
   });
 
@@ -169,11 +188,16 @@ export function useCreateGameBookingFlow({
     clubBookingFlowActive,
   );
   const needsBooktimeAuth = Boolean(
-    willBookOnCreate && clubBookingFlowActive && !booktimeAuth?.connected,
+    clubBookingFlowActive &&
+      !booktimeAuth?.connected &&
+      (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting' || willBookOnCreate),
   );
+  const wantsReserveNowAvailability = reservationIntent === 'reserveNow';
   const booktimeCompanyMeta = useBooktimeCompanyMeta(
     selectedClubData,
-    (willBookOnCreate || locationTimeMode === 'bookings') && clubBookingFlowActive && !needsBooktimeAuth,
+    (wantsReserveNowAvailability || willBookOnCreate || locationTimeMode === 'bookings') &&
+      clubBookingFlowActive &&
+      !needsBooktimeAuth,
   );
   const snapshotRefreshEnabled =
     (willBookOnCreate || locationTimeMode === 'bookings') && clubBookingFlowActive && !needsBooktimeAuth;
@@ -190,12 +214,13 @@ export function useCreateGameBookingFlow({
     selectedDate,
     durationHours: duration,
     selectedCourtId: selectedCourt === 'notBooked' ? null : selectedCourt,
+    selectedCourtIds: reservationIntent === 'reserveNow' ? selectedCourtIds : undefined,
     enabled: shouldUseBooktimeTimeOptions({
       entityType,
       clubHasBookingIntegration: clubHasBookingIntegration(selectedClubData),
       needsBooktimeAuth,
       locationTimeMode,
-      willBookOnCreate,
+      willBookOnCreate: willBookOnCreate || wantsReserveNowAvailability,
       booktimeConnected: Boolean(booktimeAuth?.connected),
     }),
   });
@@ -237,13 +262,82 @@ export function useCreateGameBookingFlow({
     willBookOnCreate,
     integratedCourtCount: integratedCourtIds.length,
   });
+  const reservationCta = resolveCreateReservationCtaKey({
+    intent: reservationIntent,
+    requiredReservationCount: bookingSelectionLimits.min,
+  });
+  const resolvedCreateButtonLabel =
+    entityType === 'GAME' || entityType === 'TRAINING'
+      ? t(reservationCta.key, reservationCta.values)
+      : createButtonLabel;
+
+  const reservationIntentOptions = useMemo(
+    () =>
+      resolveReservationIntentOptions({
+        clubBookingFlowActive,
+        hasBooktimeAuthPath: Boolean(booktimeIntegrationConfig),
+        manualBookedAvailable: true,
+      }),
+    [clubBookingFlowActive, booktimeIntegrationConfig],
+  );
 
   const resetOnClubChange = useCallback(() => {
     setSelectedBookingIds([]);
     setSelectedBookingRecords([]);
   }, [setSelectedBookingIds]);
 
+  const prevSelectedClubRef = useRef(selectedClub);
   useEffect(() => {
+    if (prevSelectedClubRef.current === selectedClub) return;
+    prevSelectedClubRef.current = selectedClub;
+    setReservationIntentTouched(false);
+    setReservationIntentState(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: false,
+        clubBookingFlowActive,
+        initialHasBookedCourt: false,
+      }),
+    );
+  }, [selectedClub, clubBookingFlowActive]);
+
+  useEffect(() => {
+    if (reservationIntentTouched || !selectedClub) return;
+    setReservationIntentState(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: preselectedBookings,
+        clubBookingFlowActive,
+        initialHasBookedCourt,
+      }),
+    );
+  }, [
+    reservationIntentTouched,
+    selectedClub,
+    preselectedBookings,
+    clubBookingFlowActive,
+    initialHasBookedCourt,
+  ]);
+
+  useEffect(() => {
+    if (reservationIntent === 'useExisting') return;
+    if (selectedBookingIds.length > 0) {
+      setSelectedBookingIds([]);
+      setSelectedBookingRecords([]);
+      setDerivedBookingSummary({ startTime: null, endTime: null, count: 0 });
+    }
+  }, [reservationIntent, selectedBookingIds.length, setSelectedBookingIds]);
+
+  useEffect(() => {
+    if (reservationIntent === 'manualBooked') {
+      setHasBookedCourt(true);
+      return;
+    }
+    if (reservationIntent === 'gameOnly' || reservationIntent === 'reserveNow' || reservationIntent === 'useExisting') {
+      setHasBookedCourt(false);
+    }
+  }, [reservationIntent]);
+
+  useEffect(() => {
+    if (reservationIntent === 'manualBooked' || reservationIntent === 'gameOnly') return;
     if (selectedCourt === 'notBooked' && selectedCourtIds.length === 0) {
       setHasBookedCourt(false);
       return;
@@ -251,7 +345,7 @@ export function useCreateGameBookingFlow({
     if (willBookOnCreate || locationTimeMode === 'bookings') {
       setHasBookedCourt(false);
     }
-  }, [selectedCourt, selectedCourtIds.length, willBookOnCreate, locationTimeMode]);
+  }, [reservationIntent, selectedCourt, selectedCourtIds.length, willBookOnCreate, locationTimeMode]);
 
   const prevLiveApiEnabledRef = useRef(liveApiEnabled);
   useEffect(() => {
@@ -262,13 +356,21 @@ export function useCreateGameBookingFlow({
   }, [liveApiEnabled, willBookOnCreate, t]);
 
   useEffect(() => {
-    if (!willBookOnCreate || !booktimeFixedDates?.length) return;
+    if (!wantsReserveNowAvailability || needsBooktimeAuth || !booktimeFixedDates?.length) return;
     const clamped = clampBooktimeDate(selectedDate);
     if (format(clamped, 'yyyy-MM-dd') !== format(selectedDate, 'yyyy-MM-dd')) {
       setSelectedDate(clamped);
       setSelectedTime('');
     }
-  }, [willBookOnCreate, booktimeFixedDates, clampBooktimeDate, selectedDate, setSelectedDate, setSelectedTime]);
+  }, [
+    wantsReserveNowAvailability,
+    needsBooktimeAuth,
+    booktimeFixedDates,
+    clampBooktimeDate,
+    selectedDate,
+    setSelectedDate,
+    setSelectedTime,
+  ]);
 
   const confirmFormSnapshotRef = useRef<string | null>(null);
   useEffect(() => {
@@ -322,7 +424,7 @@ export function useCreateGameBookingFlow({
   }, [selectedClub]);
 
   const runBookingOverlapGate = useCallback(async (): Promise<OverlapGateResult> => {
-    if (willBookOnCreate || locationTimeMode === 'bookings') return 'skip';
+    if (wantsReserveNowAvailability || willBookOnCreate || locationTimeMode === 'bookings') return 'skip';
     if (entityType === 'BAR' || !selectedClub || !selectedTime || !duration) return 'skip';
     const club = clubs.find((c) => c.id === selectedClub);
     try {
@@ -340,6 +442,7 @@ export function useCreateGameBookingFlow({
     return 'ok';
   }, [
     willBookOnCreate,
+    wantsReserveNowAvailability,
     locationTimeMode,
     entityType,
     selectedClub,
@@ -362,6 +465,7 @@ export function useCreateGameBookingFlow({
       integratedCourtCount: integratedCourtIds.length,
       selectedCourt,
       selectedCourtCount: selectedCourtIds.length,
+      reservationIntent,
       overlapGate,
     });
   }, [
@@ -375,6 +479,7 @@ export function useCreateGameBookingFlow({
     integratedCourtIds.length,
     selectedCourt,
     selectedCourtIds.length,
+    reservationIntent,
   ]);
 
   const handleCreateAttempt = useCallback(
@@ -413,7 +518,7 @@ export function useCreateGameBookingFlow({
         multiCourtMode,
         selectedCourt,
         selectedCourtIds,
-        hasBookedCourt,
+        hasBookedCourt: reservationIntent === 'manualBooked' ? true : hasBookedCourt,
         overrides,
       });
     },
@@ -428,6 +533,7 @@ export function useCreateGameBookingFlow({
       selectedCourt,
       selectedCourtIds,
       hasBookedCourt,
+      reservationIntent,
     ],
   );
 
@@ -448,6 +554,7 @@ export function useCreateGameBookingFlow({
           locationTimeMode,
           clubHasActiveIntegration: courtHasActiveBookingIntegration(createClub, createCourt),
           overrides,
+          reservationIntent,
           createdGameId: created.id,
         })
       ) {
@@ -467,6 +574,7 @@ export function useCreateGameBookingFlow({
       willBookOnCreate,
       locationTimeMode,
       entityType,
+      reservationIntent,
     ],
   );
 
@@ -729,7 +837,7 @@ export function useCreateGameBookingFlow({
     resolvedGetAdjustedStartTime,
     resolvedGetTimeSlotsForDuration,
     resolvedIsSlotHighlighted,
-    createButtonLabel,
+    createButtonLabel: resolvedCreateButtonLabel,
     createDisabledByAuth: false,
     preselectedBookings,
     preselectedBookingsHydrating,
@@ -761,6 +869,9 @@ export function useCreateGameBookingFlow({
     },
     onSelectedBookingIdsChange: handleSelectedBookingIdsChange,
     onDerivedTimeChange: handleDerivedTimeChange,
+    reservationIntent,
+    setReservationIntent,
+    reservationIntentOptions,
   };
 }
 

@@ -109,7 +109,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.authCodeText': '🔐 Your authentication code:\n\n⏰ This code will expire in 5 minutes.\n\n📱 Enter this code in the app to complete authentication.',
     'telegram.orClickToLogin': 'Or tap the button below to log in instantly:',
     'telegram.loginHint':
-      'Simply click the button below to log in to Bandeja.\n\n‼️‼️ IMPORTANT ‼️‼️\nPlease update from the store to the latest version for your device: iOS (App Store) 0.94.3, Android (Google Play) 0.95.1.',
+      'Simply click the button below to log in to Bandeja.\n\n‼️‼️ IMPORTANT ‼️‼️\nPlease update from the store to at least iOS/Android 0.96.59 (build 173) for Telegram auto-login.',
+    'telegram.fallbackCodeHint': 'If the button does not bring you back to the app, enter this 6-digit code in Bandeja:',
     'telegram.accountLinkHint': 'Tap the button below to finish linking Telegram to your Bandeja profile. Stay logged in in the app.',
     'telegram.linkIntentInvalid': '❌ This link expired or is invalid. Open Bandeja → Profile → Link Telegram again.',
     'telegram.telegramInUseOtherAccount': '❌ This Telegram account is already linked to another Bandeja user.',
@@ -379,7 +380,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.authCodeText': '🔐 Ваш код авторизации:\n\n⏰ Этот код истечет через 5 минут.\n\n📱 Введите этот код в приложении, чтобы завершить авторизацию.',
     'telegram.orClickToLogin': 'Или нажмите кнопку ниже, чтобы войти сразу:',
     'telegram.loginHint':
-      'Просто нажмите кнопку ниже, чтобы войти в Bandeja.\n\n‼️‼️ ВАЖНО ‼️‼️\nОбновите приложение в магазине до актуальной версии для вашего устройства: iOS (App Store) — 0.94.3, Android (Google Play) — 0.95.1.',
+      'Просто нажмите кнопку ниже, чтобы войти в Bandeja.\n\n‼️‼️ ВАЖНО ‼️‼️\nОбновите приложение в магазине минимум до iOS/Android 0.96.59 (build 173), чтобы работал автовход через Telegram.',
+    'telegram.fallbackCodeHint': 'Если кнопка не вернула вас в приложение, введите этот 6-значный код в Bandeja:',
     'telegram.accountLinkHint': 'Нажмите кнопку ниже, чтобы привязать Telegram к профилю Bandeja. Оставайтесь в аккаунте в приложении.',
     'telegram.linkIntentInvalid': '❌ Ссылка устарела или недействительна. Откройте Bandeja → Профиль → Привязать Telegram снова.',
     'telegram.telegramInUseOtherAccount': '❌ Этот Telegram уже привязан к другому пользователю Bandeja.',
@@ -648,7 +650,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.authCodeText': '🔐 Vaš kod za autorizaciju:\n\n⏰ Ovaj kod će isteći za 5 minuta.\n\n📱 Unesite ovaj kod u aplikaciji da završite autorizaciju.',
     'telegram.orClickToLogin': 'Ili pritisnite dugme ispod da se odmah prijavite:',
     'telegram.loginHint':
-      'Jednostavno pritisnite dugme ispod da se prijavite u Bandeja.\n\n‼️‼️ VAŽNO ‼️‼️\nAžurirajte aplikaciju u prodavnici na aktuelnu verziju za vaš uređaj: iOS (App Store) — 0.94.3, Android (Google Play) — 0.95.1.',
+      'Jednostavno pritisnite dugme ispod da se prijavite u Bandeja.\n\n‼️‼️ VAŽNO ‼️‼️\nAžurirajte aplikaciju u prodavnici najmanje na iOS/Android 0.96.59 (build 173) da bi Telegram auto-login radio.',
+    'telegram.fallbackCodeHint': 'Ako vas dugme ne vrati u aplikaciju, unesite ovaj 6-cifreni kod u Bandeja:',
     'telegram.accountLinkHint': 'Pritisnite dugme ispod da završite povezivanje Telegram-a sa profilom Bandeja. Ostanite prijavljeni u aplikaciji.',
     'telegram.linkIntentInvalid': '❌ Link je istekao ili je nevažeći. Otvorite Bandeja → Profil → Poveži Telegram ponovo.',
     'telegram.telegramInUseOtherAccount': '❌ Ovaj Telegram je već povezan sa drugim korisnikom Bandeja.',
@@ -917,7 +920,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.authCodeText': '🔐 Tu código de autenticación:\n\n⏰ Este código expirará en 5 minutos.\n\n📱 Introduce este código en la aplicación para completar la autenticación.',
     'telegram.orClickToLogin': 'O pulsa el botón de abajo para iniciar sesión al instante:',
     'telegram.loginHint':
-      'Simplemente pulsa el botón de abajo para iniciar sesión en Bandeja.\n\n‼️‼️ IMPORTANTE ‼️‼️\nActualiza la app en la tienda a la última versión para tu dispositivo: iOS (App Store) 0.94.3, Android (Google Play) 0.95.1.',
+      'Simplemente pulsa el botón de abajo para iniciar sesión en Bandeja.\n\n‼️‼️ IMPORTANTE ‼️‼️\nActualiza la app en la tienda al menos a iOS/Android 0.96.59 (build 173) para que funcione el auto-login de Telegram.',
+    'telegram.fallbackCodeHint': 'Si el botón no te devuelve a la app, introduce este código de 6 dígitos en Bandeja:',
     'telegram.accountLinkHint': 'Pulsa el botón de abajo para terminar de vincular Telegram a tu perfil de Bandeja. Mantén la sesión iniciada en la app.',
     'telegram.linkIntentInvalid': '❌ El enlace caducó o no es válido. Abre Bandeja → Perfil → Vincular Telegram otra vez.',
     'telegram.telegramInUseOtherAccount': '❌ Esta cuenta de Telegram ya está vinculada a otro usuario de Bandeja.',
@@ -1186,7 +1190,8 @@ const translations: Record<string, Record<string, string>> = {
     'telegram.authCodeText': '🔐 Váš ověřovací kód:\n\n⏰ Platnost kódu vyprší za 5 minut.\n\n📱 Zadejte tento kód v aplikaci pro dokončení přihlášení.',
     'telegram.orClickToLogin': 'Nebo klepněte na tlačítko níže pro okamžité přihlášení:',
     'telegram.loginHint':
-      'Jednoduše klepněte na tlačítko níže pro přihlášení do Bandeja.\n\n‼️‼️ DŮLEŽITÉ ‼️‼️\nAktualizujte aplikaci v obchodě na nejnovější verzi pro vaše zařízení: iOS (App Store) 0.94.3, Android (Google Play) 0.95.1.',
+      'Jednoduše klepněte na tlačítko níže pro přihlášení do Bandeja.\n\n‼️‼️ DŮLEŽITÉ ‼️‼️\nAktualizujte aplikaci v obchodě alespoň na iOS/Android 0.96.59 (build 173), aby fungovalo automatické přihlášení přes Telegram.',
+    'telegram.fallbackCodeHint': 'Pokud vás tlačítko nevrátí do aplikace, zadejte tento 6místný kód v Bandeja:',
     'telegram.accountLinkHint': 'Klepněte na tlačítko níže a dokončete propojení Telegramu s profilem Bandeja. Zůstaňte v aplikaci přihlášeni.',
     'telegram.linkIntentInvalid': '❌ Odkaz vypršel nebo je neplatný. Otevřete Bandeja → Profil → Propojit Telegram znovu.',
     'telegram.telegramInUseOtherAccount': '❌ Tento Telegram je už propojen s jiným uživatelem Bandeja.',
@@ -1403,4 +1408,3 @@ export const getDateLabel = (date: Date | string, lang: string = 'en', includeCo
     return formatDate(gameDate, 'MMM d', lang) + (includeComma ? ',' : '');
   }
 };
-
