@@ -24,19 +24,6 @@ export async function generateAccountLinkFlow(ctx: BotContext, intentToken: stri
 
   const linkUserId = intent.userId;
 
-  const otherOwner = await prisma.user.findFirst({
-    where: {
-      telegramId,
-      id: { not: linkUserId },
-    },
-    select: { id: true },
-  });
-
-  if (otherOwner) {
-    await ctx.reply(t('telegram.telegramInUseOtherAccount', lang));
-    return;
-  }
-
   const targetUser = await prisma.user.findUnique({
     where: { id: linkUserId },
     select: { id: true, telegramId: true, isActive: true },

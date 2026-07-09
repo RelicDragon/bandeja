@@ -7,6 +7,7 @@ import {
   issueLoginTokens,
   jwtPayloadFromAuthUser,
 } from '../services/auth/authIssuance.service';
+import { revokeAllRefreshSessionsForUser } from '../services/auth/userRefreshSession.service';
 import { issuedRefreshJsonPayload } from '../utils/refreshWebCookie';
 import telegramBotService from '../services/telegram/bot.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
@@ -29,6 +30,20 @@ import {
   registrationSportExplicitlyChosen,
   registrationSportUserFields,
 } from '../services/auth/registrationSport.service';
+import { UserMergeService } from '../services/user/userMerge.service';
+
+const MERGE_REQUIRED_CODE = 'auth.oauthLinkMergeRequired';
+
+function parseConfirmMerge(value: unknown): boolean {
+  return value === true || value === 'true';
+}
+
+function throwTelegramMergeRequired(): never {
+  throw new ApiError(409, MERGE_REQUIRED_CODE, true, {
+    code: MERGE_REQUIRED_CODE,
+    provider: 'telegram',
+  });
+}
 
 async function completeTelegramAuth(
   otp: TelegramOtp,
@@ -115,16 +130,58 @@ async function mergeTelegramIntoUser(
   otp: TelegramOtp,
   linkUserId: string,
   req: Request,
-  language: string | undefined
+  language: string | undefined,
+  confirmMerge: boolean
 ): Promise<{ user: any; token: string; refreshToken?: string; currentSessionId?: string }> {
   const tgId = otp.telegramId;
 
   const conflicting = await prisma.user.findFirst({
     where: { telegramId: tgId, id: { not: linkUserId } },
-    select: { id: true },
+    select: { id: true, isActive: true },
   });
   if (conflicting) {
-    throw new ApiError(409, 'telegram.telegramInUse');
+    if (!confirmMerge) {
+      throwTelegramMergeRequired();
+    }
+    if (!conflicting.isActive) {
+      throw new ApiError(403, 'auth.accountInactive');
+    }
+
+    await revokeAllRefreshSessionsForUser(conflicting.id);
+    await UserMergeService.mergeUsers(linkUserId, conflicting.id);
+
+    let merged = await prisma.user.findUnique({
+      where: { id: linkUserId },
+      select: PROFILE_SELECT_FIELDS,
+    });
+    if (!merged) {
+      throw new ApiError(404, 'User not found');
+    }
+
+    const postMergeUpdateData: any = {};
+    if (otp.username && merged.telegramUsername !== otp.username) {
+      postMergeUpdateData.telegramUsername = otp.username;
+    }
+    if (language) {
+      postMergeUpdateData.language = language;
+    }
+    if (Object.keys(postMergeUpdateData).length > 0) {
+      merged = await prisma.user.update({
+        where: { id: linkUserId },
+        data: postMergeUpdateData,
+        select: PROFILE_SELECT_FIELDS,
+      });
+    }
+
+    merged = await ensureUserCityAssigned(merged.id, req);
+    const issued = await issueLoginTokens(jwtPayloadFromAuthUser(merged), req);
+    await NotificationPreferenceService.ensurePreferenceForChannel(merged.id, NotificationChannelType.TELEGRAM);
+    return {
+      user: merged,
+      token: issued.token,
+      refreshToken: issued.refreshToken,
+      currentSessionId: issued.currentSessionId,
+    };
   }
 
   let user = await prisma.user.findUnique({
@@ -200,7 +257,8 @@ export const verifyTelegramOtp = asyncHandler(async (req: Request, res: Response
 });
 
 export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { key, language, primarySport } = req.body;
+  const { key, language, primarySport, confirmMerge: confirmMergeRaw } = req.body;
+  const confirmMerge = parseConfirmMerge(confirmMergeRaw);
   if (!key || typeof key !== 'string' || key.length < 20) {
     throw new ApiError(400, 'auth.codeRequired');
   }
@@ -221,7 +279,7 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: 
     return;
   }
 
-  const otp = await telegramBotService.verifyLinkKey(key);
+  const otp = await telegramBotService.verifyLinkKey(key, { consume: false });
   if (!otp) {
     throw new ApiError(401, 'auth.invalidCode');
   }
@@ -232,7 +290,8 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: 
     if (req.userId !== otp.linkUserId) {
       throw new ApiError(403, 'auth.telegramLinkWrongAccount');
     }
-    const merged = await mergeTelegramIntoUser(otp, otp.linkUserId, req, language);
+    const merged = await mergeTelegramIntoUser(otp, otp.linkUserId, req, language, confirmMerge);
+    await telegramBotService.consumeTelegramOtp(otp);
     storeLinkKeyReplay(key, {
       user: merged.user,
       token: merged.token,
@@ -258,6 +317,7 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: 
     language,
     primarySport,
   );
+  await telegramBotService.consumeTelegramOtp(otp);
   storeLinkKeyReplay(key, { user, token, refreshToken, currentSessionId });
   res.json({
     success: true,
@@ -268,4 +328,3 @@ export const verifyTelegramLinkKey = asyncHandler(async (req: AuthRequest, res: 
     },
   });
 });
-

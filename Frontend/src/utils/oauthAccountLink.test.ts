@@ -30,6 +30,18 @@ describe('getOAuthLinkMergeRequired', () => {
     expect(getOAuthLinkMergeRequired(err)).toBe('apple');
   });
 
+  it('returns telegram when provider is telegram', () => {
+    const err = {
+      response: {
+        data: {
+          code: 'auth.oauthLinkMergeRequired',
+          provider: 'telegram',
+        },
+      },
+    };
+    expect(getOAuthLinkMergeRequired(err)).toBe('telegram');
+  });
+
   it('returns null for unrelated errors', () => {
     expect(getOAuthLinkMergeRequired({ response: { data: { code: 'auth.other' } } })).toBeNull();
     expect(getOAuthLinkMergeRequired(null)).toBeNull();

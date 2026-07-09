@@ -15,7 +15,7 @@ function pruneReplay() {
 export function verifyTelegramLinkKeySingleflight(
   key: string,
   language: string | undefined,
-  opts?: { withAuth?: boolean; primarySport?: RegistrationPrimarySport }
+  opts?: { withAuth?: boolean; primarySport?: RegistrationPrimarySport; confirmMerge?: boolean }
 ): Promise<ApiResponse<LoginResponse>> {
   pruneReplay();
   const cached = replayByKey.get(key);
@@ -27,7 +27,7 @@ export function verifyTelegramLinkKeySingleflight(
   if (existing) return existing;
 
   const run = authApi
-    .verifyTelegramLinkKey({ key, language, primarySport: opts?.primarySport }, opts)
+    .verifyTelegramLinkKey({ key, language, primarySport: opts?.primarySport, confirmMerge: opts?.confirmMerge }, opts)
     .then((data) => {
       replayByKey.set(key, { expiresAt: Date.now() + REPLAY_TTL_MS, data });
       return data;

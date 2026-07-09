@@ -1,4 +1,4 @@
-export type OAuthLinkProvider = 'google' | 'apple';
+export type OAuthLinkProvider = 'google' | 'apple' | 'telegram';
 
 export type OAuthLinkResponseData = {
   user: import('@/types').User;
@@ -21,6 +21,7 @@ export function getOAuthLinkMergeRequired(err: unknown): OAuthLinkProvider | nul
   if (!isMergeRequired) return null;
   if (data.provider === 'apple') return 'apple';
   if (data.provider === 'google') return 'google';
+  if (data.provider === 'telegram') return 'telegram';
   return null;
 }
 

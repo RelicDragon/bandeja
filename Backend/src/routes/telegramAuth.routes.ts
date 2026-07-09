@@ -32,6 +32,7 @@ router.post(
   optionalAuth,
   validate([
     body('key').isString().isLength({ min: 20 }).withMessage('Invalid key'),
+    body('confirmMerge').optional().isBoolean().withMessage('confirmMerge must be a boolean'),
   ]),
   telegramAuthController.verifyTelegramLinkKey
 );

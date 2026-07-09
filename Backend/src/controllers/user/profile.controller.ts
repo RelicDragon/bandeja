@@ -460,6 +460,39 @@ export const createTelegramLinkIntent = asyncHandler(async (req: AuthRequest, re
   res.json({ success: true, data: { linkToken } });
 });
 
+export const unlinkTelegramProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { id: true, telegramId: true, phone: true, appleSub: true, googleId: true },
+  });
+
+  if (!user) {
+    throw new ApiError(404, 'errors.userNotFound');
+  }
+
+  if (!user.telegramId) {
+    throw new ApiError(400, 'profile.telegramNotLinked');
+  }
+
+  const hasOtherAuthMethods = Boolean(user.phone || user.appleSub || user.googleId);
+  if (!hasOtherAuthMethods) {
+    throw new ApiError(400, 'auth.cannotUnlinkLastAuthMethod');
+  }
+
+  await prisma.telegramAccountLinkIntent.deleteMany({ where: { userId: user.id } });
+
+  const updated = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      telegramId: null,
+      telegramUsername: null,
+    },
+    select: PROFILE_SELECT_FIELDS,
+  });
+
+  res.json({ success: true, data: { user: enrichProfileUser(updated) } });
+});
+
 export const syncTelegramProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const user = await prisma.user.findUnique({
     where: { id: req.userId },

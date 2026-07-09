@@ -257,6 +257,11 @@ export const usersApi = {
     return response.data;
   },
 
+  unlinkTelegramProfile: async () => {
+    const response = await api.post<ApiResponse<{ user: User }>>('/users/profile/unlink-telegram');
+    return response.data;
+  },
+
   getNotificationPreferences: async () => {
     const response = await api.get<ApiResponse<NotificationPreference[]>>('/users/notification-preferences');
     return response.data;

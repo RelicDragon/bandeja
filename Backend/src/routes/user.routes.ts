@@ -52,6 +52,7 @@ router.get(
 );
 router.get('/workout-sessions', authenticate, userController.getMyWorkoutSessions);
 router.post('/profile/sync-telegram', authenticate, userController.syncTelegramProfile);
+router.post('/profile/unlink-telegram', authenticate, userController.unlinkTelegramProfile);
 router.post(
   '/profile/sync-playtomic',
   authenticate,
@@ -279,4 +280,3 @@ router.post(
 router.delete('/profile', authenticate, userController.deleteUser);
 
 export default router;
-

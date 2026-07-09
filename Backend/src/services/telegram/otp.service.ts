@@ -1,4 +1,5 @@
 import { randomUUID } from 'crypto';
+import type { TelegramOtp } from '@prisma/client';
 import { Bot } from 'grammy';
 import prisma from '../../config/database';
 import { deleteOtpMessages } from './cleanup.service';
@@ -27,6 +28,14 @@ export function generateLinkKey(): string {
   return randomUUID();
 }
 
+export async function consumeTelegramOtp(otp: TelegramOtp, bot: Bot | null) {
+  await deleteOtpMessages(otp, bot);
+
+  await prisma.telegramOtp.delete({
+    where: { id: otp.id },
+  });
+}
+
 export async function verifyCode(code: string, bot: Bot | null) {
   const otp = await prisma.telegramOtp.findFirst({
     where: {
@@ -42,16 +51,16 @@ export async function verifyCode(code: string, bot: Bot | null) {
     return null;
   }
 
-  await deleteOtpMessages(otp, bot);
-
-  await prisma.telegramOtp.delete({
-    where: { id: otp.id },
-  });
+  await consumeTelegramOtp(otp, bot);
 
   return otp;
 }
 
-export async function verifyLinkKey(key: string, bot: Bot | null) {
+export async function verifyLinkKey(
+  key: string,
+  bot: Bot | null,
+  options: { consume?: boolean } = {}
+) {
   const otp = await prisma.telegramOtp.findFirst({
     where: {
       linkKey: key,
@@ -65,11 +74,9 @@ export async function verifyLinkKey(key: string, bot: Bot | null) {
     return null;
   }
 
-  await deleteOtpMessages(otp, bot);
-
-  await prisma.telegramOtp.delete({
-    where: { id: otp.id },
-  });
+  if (options.consume !== false) {
+    await consumeTelegramOtp(otp, bot);
+  }
 
   return otp;
 }

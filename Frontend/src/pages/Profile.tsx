@@ -26,6 +26,7 @@ import {
   isOAuthLinkLoginResponse,
   type OAuthLinkMergePending,
 } from '@/utils/oauthAccountLink';
+import { canUnlinkAuthMethod } from '@/utils/accountAuthMethods';
 import { Gender, User } from '@/types';
 import type { OAuthLinkResponseData } from '@/utils/oauthAccountLink';
 import {
@@ -109,8 +110,10 @@ export const ProfileContent = () => {
   const [isLinkingGoogle, setIsLinkingGoogle] = useState(false);
   const [isUnlinkingApple, setIsUnlinkingApple] = useState(false);
   const [isUnlinkingGoogle, setIsUnlinkingGoogle] = useState(false);
+  const [isUnlinkingTelegram, setIsUnlinkingTelegram] = useState(false);
   const [showUnlinkAppleModal, setShowUnlinkAppleModal] = useState(false);
   const [showUnlinkGoogleModal, setShowUnlinkGoogleModal] = useState(false);
+  const [showUnlinkTelegramModal, setShowUnlinkTelegramModal] = useState(false);
   const [oauthMergePending, setOauthMergePending] = useState<OAuthLinkMergePending | null>(null);
   const [showOAuthMergeModal, setShowOAuthMergeModal] = useState(false);
   const [isConfirmingOAuthMerge, setIsConfirmingOAuthMerge] = useState(false);
@@ -124,6 +127,10 @@ export const ProfileContent = () => {
   const [shareGameCreationsToFollowers, setShareGameCreationsToFollowers] = useState(user?.shareGameCreationsToFollowers !== false);
   const [shareGameResultsToFollowers, setShareGameResultsToFollowers] = useState(user?.shareGameResultsToFollowers !== false);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const canUnlinkApple = canUnlinkAuthMethod(user, 'apple');
+  const canUnlinkGoogle = canUnlinkAuthMethod(user, 'google');
+  const canUnlinkTelegram = canUnlinkAuthMethod(user, 'telegram');
+  const hasTelegramLinked = Boolean(user?.telegramId);
 
   const updateProfile = useCallback(async (updates: Partial<User>) => {
     try {
@@ -609,6 +616,20 @@ export const ProfileContent = () => {
     }
   };
 
+  const handleUnlinkTelegram = async () => {
+    try {
+      setIsUnlinkingTelegram(true);
+      const response = await usersApi.unlinkTelegramProfile();
+      updateUser(response.data.user);
+      toast.success(t('profile.telegramUnlinked') || 'Telegram account unlinked successfully');
+      setShowUnlinkTelegramModal(false);
+    } catch (error: unknown) {
+      toast.error(extractApiErrorMessage(error, t));
+    } finally {
+      setIsUnlinkingTelegram(false);
+    }
+  };
+
   const handleAvatarUpload = async (avatarFile: File, originalFile: File) => {
     try {
       const response = await mediaApi.uploadAvatar(avatarFile, originalFile);
@@ -947,20 +968,28 @@ export const ProfileContent = () => {
                   )}
                 </div>
                 {user?.appleSub ? (
-                  <div className="flex justify-end">
-                    <Button
-                      variant="secondary"
-                      onClick={() => setShowUnlinkAppleModal(true)}
-                      disabled={isUnlinkingApple}
-                      size="sm"
-                    >
-                      {isUnlinkingApple ? (
-                        <Loader2 className="animate-spin" size={16} />
-                      ) : (
-                        t('profile.unlinkApple') || 'Unlink'
-                      )}
-                    </Button>
-                  </div>
+                  <>
+                    <div className="flex justify-end">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setShowUnlinkAppleModal(true)}
+                        disabled={isUnlinkingApple || !canUnlinkApple}
+                        size="sm"
+                        title={!canUnlinkApple ? t('profile.lastAuthMethodHint') : undefined}
+                      >
+                        {isUnlinkingApple ? (
+                          <Loader2 className="animate-spin" size={16} />
+                        ) : (
+                          t('profile.unlinkApple') || 'Unlink'
+                        )}
+                      </Button>
+                    </div>
+                    {!canUnlinkApple && (
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        {t('profile.lastAuthMethodHint')}
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <Button
                     onClick={handleLinkApple}
@@ -1012,21 +1041,29 @@ export const ProfileContent = () => {
                 )}
               </div>
               {user?.googleId ? (
-                <div className="flex justify-end">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowUnlinkGoogleModal(true)}
-                    disabled={isUnlinkingGoogle}
-                    size="sm"
-                  >
-                    {isUnlinkingGoogle ? (
-                      <Loader2 className="animate-spin" size={16} />
-                    ) : (
-                      t('profile.unlinkGoogle') || 'Unlink'
-                    )}
-                  </Button>
-                </div>
-              ) : isCapacitor() ? (
+                <>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowUnlinkGoogleModal(true)}
+                      disabled={isUnlinkingGoogle || !canUnlinkGoogle}
+                      size="sm"
+                      title={!canUnlinkGoogle ? t('profile.lastAuthMethodHint') : undefined}
+                    >
+                      {isUnlinkingGoogle ? (
+                        <Loader2 className="animate-spin" size={16} />
+                      ) : (
+                        t('profile.unlinkGoogle') || 'Unlink'
+                      )}
+                    </Button>
+                  </div>
+                  {!canUnlinkGoogle && (
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      {t('profile.lastAuthMethodHint')}
+                    </p>
+                  )}
+                </>
+              ) : (
                 <Button
                   onClick={handleLinkGoogle}
                   disabled={isLinkingGoogle}
@@ -1048,7 +1085,7 @@ export const ProfileContent = () => {
                     </span>
                   )}
                 </Button>
-              ) : null}
+              )}
             </div>
 
             {/* Telegram */}
@@ -1064,9 +1101,9 @@ export const ProfileContent = () => {
                   <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {t('profile.telegram')}
                   </div>
-                  {user?.telegramUsername ? (
+                  {hasTelegramLinked ? (
                     <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      @{user.telegramUsername}
+                      {user?.telegramUsername ? `@${user.telegramUsername}` : t('profile.linked')}
                     </div>
                   ) : (
                     <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -1074,11 +1111,11 @@ export const ProfileContent = () => {
                     </div>
                   )}
                 </div>
-                {user?.telegramUsername && (
+                {hasTelegramLinked && (
                   <Check className="text-green-600 dark:text-green-400 flex-shrink-0" size={20} />
                 )}
               </div>
-              {!user?.telegramUsername && (
+              {!hasTelegramLinked && (
                 <Button
                   onClick={async () => {
                     setIsOpeningTelegramLink(true);
@@ -1112,36 +1149,58 @@ export const ProfileContent = () => {
                   )}
                 </Button>
               )}
-              {user?.telegramId && (
-                <Button
-                  variant="outline"
-                  className="w-full h-10 text-sm font-medium mt-2"
-                  onClick={async () => {
-                    setIsSyncingTelegram(true);
-                    try {
-                      const res = await usersApi.syncTelegramProfile();
-                      const data = res?.data;
-                      if (!data) {
-                        toast.error(t('errors.generic'));
-                        return;
-                      }
-                      updateUser(data);
-                      setFirstName(data.firstName ?? '');
-                      setLastName(data.lastName ?? '');
-                      if (data.telegramUsername !== user?.telegramUsername) {
-                        toast.success(t('profile.telegram') + ' ' + (data.telegramUsername ? `@${data.telegramUsername}` : ''));
-                      }
-                    } catch (err: any) {
-                      const msg = err.response?.data?.message;
-                      toast.error(typeof msg === 'string' && msg.startsWith('profile.') ? t(msg) : msg || t('errors.generic'));
-                    } finally {
-                      setIsSyncingTelegram(false);
-                    }
-                  }}
-                  disabled={isSyncingTelegram}
-                >
-                  {isSyncingTelegram ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('profile.updateFromTelegram')}
-                </Button>
+              {hasTelegramLinked && (
+                <>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-10 text-sm font-medium"
+                      onClick={async () => {
+                        setIsSyncingTelegram(true);
+                        try {
+                          const res = await usersApi.syncTelegramProfile();
+                          const data = res?.data;
+                          if (!data) {
+                            toast.error(t('errors.generic'));
+                            return;
+                          }
+                          updateUser(data);
+                          setFirstName(data.firstName ?? '');
+                          setLastName(data.lastName ?? '');
+                          if (data.telegramUsername !== user?.telegramUsername) {
+                            toast.success(t('profile.telegram') + ' ' + (data.telegramUsername ? `@${data.telegramUsername}` : ''));
+                          }
+                        } catch (err: any) {
+                          const msg = err.response?.data?.message;
+                          toast.error(typeof msg === 'string' && msg.startsWith('profile.') ? t(msg) : msg || t('errors.generic'));
+                        } finally {
+                          setIsSyncingTelegram(false);
+                        }
+                      }}
+                      disabled={isSyncingTelegram}
+                    >
+                      {isSyncingTelegram ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('profile.updateFromTelegram')}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="flex-1 h-10 text-sm font-medium"
+                      onClick={() => setShowUnlinkTelegramModal(true)}
+                      disabled={isUnlinkingTelegram || !canUnlinkTelegram}
+                      title={!canUnlinkTelegram ? t('profile.lastAuthMethodHint') : undefined}
+                    >
+                      {isUnlinkingTelegram ? (
+                        <Loader2 className="w-4 h-4 animate-spin mx-auto" />
+                      ) : (
+                        t('profile.unlinkTelegram')
+                      )}
+                    </Button>
+                  </div>
+                  {!canUnlinkTelegram && (
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      {t('profile.lastAuthMethodHint')}
+                    </p>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -1567,6 +1626,17 @@ export const ProfileContent = () => {
         title={t('profile.unlinkGoogle') || 'Unlink Google Account'}
         message={t('profile.unlinkGoogleConfirmation') || 'Are you sure you want to unlink your Google account? You will no longer be able to sign in with Google.'}
         confirmText={isUnlinkingGoogle ? (t('profile.unlinking') || 'Unlinking...') : (t('profile.unlink') || 'Unlink')}
+        cancelText={t('common.cancel')}
+        confirmVariant="primary"
+      />
+
+      <ConfirmationModal
+        isOpen={showUnlinkTelegramModal}
+        onClose={() => setShowUnlinkTelegramModal(false)}
+        onConfirm={handleUnlinkTelegram}
+        title={t('profile.unlinkTelegram') || 'Unlink Telegram Account'}
+        message={t('profile.unlinkTelegramConfirmation') || 'Are you sure you want to unlink your Telegram account? You will no longer be able to sign in with Telegram.'}
+        confirmText={isUnlinkingTelegram ? (t('profile.unlinking') || 'Unlinking...') : (t('profile.unlink') || 'Unlink')}
         cancelText={t('common.cancel')}
         confirmVariant="primary"
       />

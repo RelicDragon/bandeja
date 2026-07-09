@@ -69,7 +69,7 @@ export const authApi = {
   },
 
   verifyTelegramLinkKey: async (
-    data: { key: string; language?: string; primarySport?: RegistrationPrimarySport },
+    data: { key: string; language?: string; primarySport?: RegistrationPrimarySport; confirmMerge?: boolean },
     opts?: { withAuth?: boolean }
   ) => {
     const config: AuthApiRequestConfig = {
@@ -172,4 +172,3 @@ export const authApi = {
     return response.data;
   },
 };
-

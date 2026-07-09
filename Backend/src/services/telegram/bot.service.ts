@@ -1,4 +1,5 @@
 import { Bot } from 'grammy';
+import type { TelegramOtp } from '@prisma/client';
 import { config } from '../../config/env';
 import { PendingReply } from './types';
 import { requireUser, requireChat, requirePrivateChat, syncTelegramProfile } from './middleware';
@@ -10,7 +11,7 @@ import { handleGamesCommand } from './commands/games.command';
 import { createMessageHandler } from './handlers/message.handler';
 import { createCallbackHandler } from './handlers/callback.handler';
 import { startCleanupInterval } from './cleanup.service';
-import { verifyCode, verifyLinkKey } from './otp.service';
+import { consumeTelegramOtp, verifyCode, verifyLinkKey } from './otp.service';
 import telegramNotificationService from './notification.service';
 import telegramResultsSenderService from './resultsSender.service';
 import { t } from '../../utils/translations';
@@ -81,8 +82,12 @@ class TelegramBotService {
     return verifyCode(code, this.bot);
   }
 
-  async verifyLinkKey(key: string) {
-    return verifyLinkKey(key, this.bot);
+  async verifyLinkKey(key: string, options?: { consume?: boolean }) {
+    return verifyLinkKey(key, this.bot, options);
+  }
+
+  async consumeTelegramOtp(otp: TelegramOtp) {
+    return consumeTelegramOtp(otp, this.bot);
   }
 
   stop() {
@@ -97,4 +102,3 @@ class TelegramBotService {
 }
 
 export default new TelegramBotService();
-

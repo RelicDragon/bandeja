@@ -8,9 +8,11 @@ import { normalizeLanguageForProfile } from '@/utils/displayPreferences';
 import { AppLoadingScreen } from '@/components';
 import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 import { verifyTelegramLinkKeySingleflight } from '@/services/telegramLinkVerifySingleflight';
+import { getOAuthLinkMergeRequired } from '@/utils/oauthAccountLink';
 import { isLegacyAccessJwt } from '@/utils/jwtPayload';
 import { withTelegramVerifyRetries } from '@/utils/telegramVerifyRetry';
 import { AuthLayout } from '@/layouts/AuthLayout';
+import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { isCapacitor } from '@/utils/capacitor';
 import {
   buildTelegramAppFallbackUrl,
@@ -31,6 +33,8 @@ export const TelegramAutoLogin = () => {
   const { t } = useTranslation();
   const setAuth = useAuthStore((state) => state.setAuth);
   const [done, setDone] = useState(false);
+  const [mergeKey, setMergeKey] = useState<string | null>(null);
+  const [isConfirmingMerge, setIsConfirmingMerge] = useState(false);
   const startedKeyRef = useRef<string | null>(null);
   const tRef = useRef(t);
   const useAppHandoff = shouldUseTelegramAppHandoff(
@@ -98,6 +102,10 @@ export const TelegramAutoLogin = () => {
       } catch (err: unknown) {
         if (cancelled) return;
         startedKeyRef.current = null;
+        if (getOAuthLinkMergeRequired(err) === 'telegram') {
+          setMergeKey(telegramKey);
+          return;
+        }
         toast.error(extractApiErrorMessage(err, tRef.current));
         navigate('/login', { replace: true });
       }
@@ -107,6 +115,45 @@ export const TelegramAutoLogin = () => {
       cancelled = true;
     };
   }, [telegramKey, navigate, setAuth, useAppHandoff]);
+
+  const handleConfirmTelegramMerge = async () => {
+    if (!mergeKey) return;
+    try {
+      setIsConfirmingMerge(true);
+      const language = normalizeLanguageForProfile(localStorage.getItem('language') || 'en');
+      const { isAuthenticated, token, logout } = useAuthStore.getState();
+      const withAuth = !!(isAuthenticated && token && !isLegacyAccessJwt(token));
+
+      if (!withAuth && isAuthenticated) {
+        await logout();
+      }
+      if (!withAuth) {
+        toast.error(tRef.current('auth.telegramLinkRequiresLogin'));
+        setMergeKey(null);
+        navigate('/login', { replace: true });
+        return;
+      }
+
+      const response = await verifyTelegramLinkKeySingleflight(mergeKey, language, {
+        withAuth,
+        confirmMerge: true,
+      });
+
+      await setAuth(response.data.user, response.data.token, {
+        refreshToken: response.data.refreshToken,
+        currentSessionId: response.data.currentSessionId,
+      });
+
+      setDone(true);
+      setMergeKey(null);
+      navigate('/', { replace: true });
+      void pushNotificationService.ensureTokenSentToBackend().catch(() => {});
+    } catch (err: unknown) {
+      toast.error(extractApiErrorMessage(err, tRef.current));
+    } finally {
+      setIsConfirmingMerge(false);
+    }
+  };
 
   if (telegramKey && useAppHandoff) {
     const continueInBrowser = () => {
@@ -154,5 +201,25 @@ export const TelegramAutoLogin = () => {
     );
   }
 
-  return <AppLoadingScreen isInitializing={!done} />;
+  return (
+    <>
+      <AppLoadingScreen isInitializing={!done && !mergeKey} />
+      <ConfirmationModal
+        isOpen={Boolean(mergeKey)}
+        onClose={() => {
+          if (isConfirmingMerge) return;
+          setMergeKey(null);
+          navigate('/profile', { replace: true });
+        }}
+        onConfirm={handleConfirmTelegramMerge}
+        title={t('profile.oauthMergeTitle')}
+        message={t('profile.oauthMergeMessageTelegram')}
+        confirmText={isConfirmingMerge ? t('profile.oauthMergeMerging') : t('profile.oauthMergeConfirm')}
+        cancelText={t('common.cancel')}
+        confirmVariant="primary"
+        isLoading={isConfirmingMerge}
+        closeOnConfirm={false}
+      />
+    </>
+  );
 };
