@@ -98,14 +98,14 @@ export class CreateGamePage {
   }
 
   async selectCourtNotBooked() {
-    const inline = this.page.getByRole('button', { name: /don't select court/i });
+    const inline = this.page.getByRole('button', { name: /no court yet|don't select court/i });
     if (await inline.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await inline.click();
       return;
     }
-    await this.page.getByRole('button', { name: /select court|select hall|don't select court/i }).click();
+    await this.page.getByRole('button', { name: /select court|select hall|no court yet|don't select court/i }).click();
     const dialog = this.page.getByRole('dialog');
-    const notBooked = dialog.getByRole('button', { name: /don't select court/i });
+    const notBooked = dialog.getByRole('button', { name: /no court yet|don't select court/i });
     if (await notBooked.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await notBooked.click();
     } else {
@@ -191,6 +191,27 @@ export class CreateGamePage {
     await this.submitButton(entityType).click();
     await this.page.waitForTimeout(500);
     await expect(this.page).toHaveURL(before);
+  }
+
+  async expectReservationIntentSection() {
+    await expect(this.page.getByText(/court reservation/i).first()).toBeVisible({ timeout: 10_000 });
+  }
+
+  async selectReservationIntent(label: RegExp) {
+    await this.page.getByRole('button', { name: label }).click();
+  }
+
+  async submitExpectValidationToast(pattern: RegExp) {
+    await this.submitButton('GAME').click();
+    await expect(this.page.getByRole('status').filter({ hasText: pattern }).first()).toBeVisible({
+      timeout: 5_000,
+    });
+  }
+
+  async expectExistingReservationEmptyState() {
+    await expect(this.page.getByTestId('existing-reservation-empty-state')).toBeVisible({
+      timeout: 15_000,
+    });
   }
 
   async expectTrainingSpecificFields() {

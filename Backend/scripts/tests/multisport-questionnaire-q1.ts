@@ -8,9 +8,9 @@ import { getSportConfig } from '../../src/sport/sportRegistry';
 import {
   completeSportQuestionnaire,
   getSportQuestionnaireStatus,
+  resetSportQuestionnaire,
   skipSportQuestionnaire,
 } from '../../src/services/user/sportQuestionnaire.service';
-import { resetWelcomeScreen } from '../../src/services/welcomeScreen.service';
 
 function assert(condition: boolean, message: string): void {
   if (!condition) {
@@ -33,19 +33,12 @@ function testScoreToLevelBands(): void {
   assert(PADEL_QUESTIONNAIRE_V1.scoreToLevel(15) === 3.0, 'padel config scoreToLevel');
 }
 
-function testWelcomeDelegatesToSharedService(): void {
-  const welcomePath = join(__dirname, '../../src/services/welcomeScreen.service.ts');
-  const src = readFileSync(welcomePath, 'utf8');
-  assert(src.includes('completeSportQuestionnaire'), 'welcome complete uses shared service');
-  assert(src.includes('skipSportQuestionnaire'), 'welcome skip uses shared service');
-  assert(!src.includes('scoreToLevel'), 'welcome service no longer embeds scoring');
-}
-
 function testQuestionnaireServiceGuard(): void {
   const svcPath = join(__dirname, '../../src/services/user/sportQuestionnaire.service.ts');
   const src = readFileSync(svcPath, 'utf8');
   assert(!src.includes('socialLevel:'), 'questionnaire service must not assign socialLevel');
   assert(src.includes('rejectSocialLevelInQuestionnaireBody'), 'rejects socialLevel in body');
+  assert(!src.includes('data: { welcomeScreenPassed'), 'questionnaire service must not dual-write welcomeScreenPassed');
 }
 
 async function testPadelLegacyWelcomeStatus(): Promise<void> {
@@ -104,46 +97,43 @@ async function testPadelQuestionnaireFlow(): Promise<void> {
   const answers = ['B', 'B', 'B', 'B', 'B'];
 
   try {
-  const status = await completeSportQuestionnaire(user.id, Sport.PADEL, answers);
-  assert(status.completed, 'status completed after padel Q');
-  assert(status.level === 2.0, 'BBBBB → score 10 → level 2.0');
+    const status = await completeSportQuestionnaire(user.id, Sport.PADEL, answers);
+    assert(status.completed, 'status completed after padel Q');
+    assert(status.level === 2.0, 'BBBBB → score 10 → level 2.0');
 
-  const afterUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: {
-      welcomeScreenPassed: true,
-      socialLevel: true,
-      sportProfiles: {
-        where: { sport: Sport.PADEL },
-        select: {
-          level: true,
-          levelSource: true,
-          questionnaireCompletedAt: true,
-          questionnaireVersion: true,
+    const afterUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        socialLevel: true,
+        sportProfiles: {
+          where: { sport: Sport.PADEL },
+          select: {
+            level: true,
+            levelSource: true,
+            questionnaireCompletedAt: true,
+            questionnaireVersion: true,
+          },
         },
       },
-    },
-  });
-  assert(afterUser?.welcomeScreenPassed === true, 'welcomeScreenPassed set');
-  assert(afterUser?.socialLevel === socialBefore, 'socialLevel unchanged');
-  const profile = afterUser?.sportProfiles[0];
-  assert(profile?.level === 2.0, 'padel profile level from questionnaire');
-  assert(profile?.questionnaireCompletedAt != null, 'padel profile questionnaireCompletedAt');
-  assert(profile?.questionnaireVersion === 'padel-v1', 'padel questionnaire version');
+    });
+    assert(afterUser?.socialLevel === socialBefore, 'socialLevel unchanged');
+    const profile = afterUser?.sportProfiles[0];
+    assert(profile?.level === 2.0, 'padel profile level from questionnaire');
+    assert(profile?.questionnaireCompletedAt != null, 'padel profile questionnaireCompletedAt');
+    assert(profile?.questionnaireVersion === 'padel-v1', 'padel questionnaire version');
 
-  const status2 = await getSportQuestionnaireStatus(user.id, Sport.PADEL);
-  assert(status2.completed, 'getStatus completed');
+    const status2 = await getSportQuestionnaireStatus(user.id, Sport.PADEL);
+    assert(status2.completed, 'getStatus completed');
 
-  console.log('ok: padel questionnaire complete flow');
+    console.log('ok: padel questionnaire complete flow');
   } finally {
-    await resetWelcomeScreen(user.id);
+    await resetSportQuestionnaire(user.id, Sport.PADEL);
   }
 }
 
 async function main(): Promise<void> {
   testPadelRegistry();
   testScoreToLevelBands();
-  testWelcomeDelegatesToSharedService();
   testQuestionnaireServiceGuard();
   await testPadelLegacyWelcomeStatus();
   await testPadelQuestionnaireFlow();

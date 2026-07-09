@@ -5,7 +5,6 @@ import { ApiError } from '../../utils/ApiError';
 import { AuthRequest } from '../../middleware/auth';
 import prisma from '../../config/database';
 import { PROFILE_SELECT_FIELDS } from '../../utils/constants';
-import { completeWelcomeScreen, resetWelcomeScreen, skipWelcomeScreen } from '../../services/welcomeScreen.service';
 import {
   clampSportLevel,
   enrichProfileUser,
@@ -114,31 +113,6 @@ export const setInitialLevel = asyncHandler(async (req: AuthRequest, res: Respon
 
   const user = await loadProfileUser(req.userId!);
 
-  res.json({
-    success: true,
-    data: user,
-  });
-});
-
-export const completeWelcome = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const { answers } = req.body;
-  const user = await completeWelcomeScreen(req.userId!, answers);
-  res.json({
-    success: true,
-    data: user,
-  });
-});
-
-export const resetWelcome = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const user = await resetWelcomeScreen(req.userId!);
-  res.json({
-    success: true,
-    data: user,
-  });
-});
-
-export const skipWelcome = asyncHandler(async (req: AuthRequest, res: Response) => {
-  const user = await skipWelcomeScreen(req.userId!);
   res.json({
     success: true,
     data: user,

@@ -39,26 +39,44 @@
       "unlinkNoCancelHint": "Бронь корта в клубе останется активной — мы только убираем связь с этой игрой.",
       "unlinkSaveConfirmTitle": "Удалить привязки бронирований?",
       "unlinkSaveConfirmMessage": "Вы отвязываете {{count}} бронирование(й) от этой игры. Реальные брони кортов автоматически не отменяются.",
-      "reservationActionTitle": "Court reservation",
-      "reservationActionSubtitle": "Choose what should happen when you save.",
+      "reservationActionTitle": "Бронирование корта",
+      "reservationActionSubtitle": "Выберите, что должно произойти при сохранении.",
       "reservationAction": {
-        "keepCurrent": { "title": "Keep current reservation", "description": "Preserve the linked reservation(s) and schedule." },
-        "changeGameTimeOnly": { "title": "Change game time only", "description": "Update the game schedule without changing club reservation links." },
-        "useExisting": { "title": "Use existing reservation", "description": "Replace links with reservation(s) from your club account." },
-        "reserveNew": { "title": "Reserve a new court", "description": "Create a new real club reservation when saving." },
-        "unlink": { "title": "Unlink reservation", "description": "Remove reservation links from this game only." },
-        "gameOnly": { "title": "Game only", "description": "Keep the game scheduled without a real reservation link." }
+        "keepCurrent": {
+          "title": "Сохранить текущую бронь",
+          "description": "Сохранить привязанные брони и расписание."
+        },
+        "changeGameTimeOnly": {
+          "title": "Изменить только время игры",
+          "description": "Обновить расписание игры без изменения привязок брони."
+        },
+        "useExisting": {
+          "title": "Использовать существующую бронь",
+          "description": "Заменить привязки бронями из вашего аккаунта клуба."
+        },
+        "reserveNew": {
+          "title": "Забронировать новый корт",
+          "description": "Создать новую реальную бронь клуба при сохранении."
+        },
+        "unlink": {
+          "title": "Отвязать бронь",
+          "description": "Удалить привязки брони только из этой игры."
+        },
+        "gameOnly": {
+          "title": "Только игра",
+          "description": "Оставить игру в расписании без привязки к реальной брони."
+        }
       },
-      "consequenceTitle": "What will happen",
+      "consequenceTitle": "Что произойдёт",
       "consequence": {
-        "keepCurrent": "Current reservation links stay attached.",
-        "changeGameTimeOnly": "Game time changes; existing reservation links stay attached.",
-        "useExisting": "{{selected}} reservation(s) will be linked to this game.",
-        "reserveNew": "A new real court reservation will be created on save.",
-        "unlink": "Reservation links will be removed from this game.",
-        "gameOnly": "The game remains scheduled without real reservation links.",
-        "reserveNewConfirm": "You will review the real reservation before saving.",
-        "unlinkNoCancel": "{{count}} real club reservation(s) will remain active unless you cancel them with the club/provider."
+        "keepCurrent": "Текущие привязки брони сохраняются.",
+        "changeGameTimeOnly": "Время игры меняется; привязки брони сохраняются.",
+        "useExisting": "К игре будет привязано {{selected}} бронирование(й).",
+        "reserveNew": "При сохранении будет создана новая реальная бронь корта.",
+        "unlink": "Привязки брони будут удалены из этой игры.",
+        "gameOnly": "Игра остаётся в расписании без привязок к реальной брони.",
+        "reserveNewConfirm": "Вы проверите реальную бронь перед сохранением.",
+        "unlinkNoCancel": "{{count}} реальная(ых) бронь(ей) клуба останется активной, пока вы не отмените её в клубе/у провайдера."
       }
     },
     "linkedBookings": {

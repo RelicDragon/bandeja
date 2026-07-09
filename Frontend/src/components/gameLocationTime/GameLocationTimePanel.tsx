@@ -51,6 +51,9 @@ export type GameLocationTimePanelProps = {
   clubSection?: ReactNode;
   courtSection: ReactNode;
   authGateSection?: ReactNode;
+  linkedReservationsSection?: ReactNode;
+  onEmptyReserveNow?: () => void;
+  onEmptyGameOnly?: () => void;
   needsBooktimeAuth?: boolean;
   derivedSummary?: { startTime: string | null; endTime: string | null; count: number };
   preselectedBanner?: boolean;
@@ -93,6 +96,9 @@ export function GameLocationTimePanel({
   courtSection,
   authGateSection,
   needsBooktimeAuth,
+  linkedReservationsSection,
+  onEmptyReserveNow,
+  onEmptyGameOnly,
   derivedSummary,
   preselectedBanner,
   fallbackSelectedBookings,
@@ -276,6 +282,8 @@ export function GameLocationTimePanel({
         onToggleBooking={handleToggleBooking}
         selectionLimits={bookingSelectionLimits}
         onDerivedTimeChange={onDerivedTimeChange}
+        onEmptyReserveNow={onEmptyReserveNow}
+        onEmptyGameOnly={onEmptyGameOnly}
       />
     ) : null;
 
@@ -291,6 +299,7 @@ export function GameLocationTimePanel({
         dateSection={showDateSection ? dateSection : null}
         clubSection={clubSection}
         intentSection={intentSection}
+        linkedReservationsSection={linkedReservationsSection}
         courtSection={showCourtSection ? courtSection : null}
         timeSlotsChildren={timeSlotsChildren}
         needsBooktimeAuth={needsBooktimeAuth}

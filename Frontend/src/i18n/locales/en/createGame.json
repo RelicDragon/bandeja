@@ -20,6 +20,8 @@
     "courtNotSelected": "Court is not selected",
     "hallNotSelected": "Hall is not selected",
     "multiCourtHint": "Select up to {{count}} courts for {{participants}} players ({{selected}} selected)",
+    "multiCourtNeedSharedSlots": "Select {{count}} courts that are free at the same time.",
+    "multiCourtNoSharedSlots": "No time slot is free on all {{count}} selected courts. Try different courts, another date, or duration.",
     "webCameraHint": "This court has a linked web camera",
     "webCameraHintsTitle": "Linked web cameras",
     "webCameraHintNamed": "{{court}} has a linked web camera",
@@ -259,6 +261,9 @@
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Select {{min}}–{{max}} reservations ({{players}})",
       "emptyBookingsOnDate": "No reservations on this date",
+      "emptyBookingsHint": "Try another date, reserve a new court, or create the game without linking a reservation.",
+      "emptyBookingsReserveNow": "Reserve court now",
+      "emptyBookingsGameOnly": "Create game only",
       "gridLegend": "Green = your reservation · Red/yellow = taken · Primary = selected time",
       "alsoUsedIn": "Also used in: {{games}}",
       "linkHintTitle": "Game will link to your reservations",
@@ -282,7 +287,10 @@
       "validation": {
         "selectCourt": "Select {{count}} court(s) first.",
         "selectBookableCourt": "Select {{count}} online-bookable court(s) first.",
-        "selectTime": "Select an available time first."
+        "selectTime": "Select an available time first.",
+        "selectDuration": "Select a duration first.",
+        "selectReservations": "Select {{count}} reservation(s) from your account.",
+        "bookingRecordsLoading": "Still loading your reservation details — try again in a moment."
       },
       "reserveNow": {
         "title": "Reserve court now",

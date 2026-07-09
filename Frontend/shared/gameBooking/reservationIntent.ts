@@ -35,7 +35,17 @@ export type EditReservationActionOption = {
 
 export type ReservationValidationResult =
   | { ok: true }
-  | { ok: false; reason: 'authRequired' | 'bookingSelectionRequired' | 'courtSelectionRequired' | 'timeRequired' };
+  | {
+      ok: false;
+      reason:
+        | 'authRequired'
+        | 'bookingSelectionRequired'
+        | 'bookingRecordsLoading'
+        | 'courtSelectionRequired'
+        | 'integratedCourtSelectionRequired'
+        | 'timeRequired'
+        | 'durationRequired';
+    };
 
 export function resolveInitialReservationIntent(input: {
   hasPreselectedBookings: boolean;
@@ -255,26 +265,136 @@ export function resolveReservationValidation(input: {
   intent: ReservationIntent;
   needsBooktimeAuth: boolean;
   selectedBookingCount: number;
+  selectedBookingRecordsCount?: number;
   selectedCourtCount?: number;
   bookingSelectionMin: number;
   selectedTime?: string;
+  duration?: number;
 }): ReservationValidationResult {
   if ((input.intent === 'reserveNow' || input.intent === 'useExisting') && input.needsBooktimeAuth) {
     return { ok: false, reason: 'authRequired' };
   }
-  if (input.intent === 'useExisting' && input.selectedBookingCount < input.bookingSelectionMin) {
-    return { ok: false, reason: 'bookingSelectionRequired' };
+  if (input.intent === 'useExisting') {
+    if (input.selectedBookingCount < input.bookingSelectionMin) {
+      return { ok: false, reason: 'bookingSelectionRequired' };
+    }
+    if ((input.selectedBookingRecordsCount ?? input.selectedBookingCount) < input.selectedBookingCount) {
+      return { ok: false, reason: 'bookingRecordsLoading' };
+    }
+    return { ok: true };
   }
   if (input.intent === 'reserveNow' && (input.selectedCourtCount ?? 0) < input.bookingSelectionMin) {
-    return { ok: false, reason: 'courtSelectionRequired' };
+    return { ok: false, reason: 'integratedCourtSelectionRequired' };
   }
   if (input.intent === 'reserveNow' && !input.selectedTime) {
     return { ok: false, reason: 'timeRequired' };
   }
+  if (input.intent === 'reserveNow' && !input.duration) {
+    return { ok: false, reason: 'durationRequired' };
+  }
   if ((input.intent === 'gameOnly' || input.intent === 'manualBooked') && !input.selectedTime) {
     return { ok: false, reason: 'timeRequired' };
   }
+  if ((input.intent === 'gameOnly' || input.intent === 'manualBooked') && !input.duration) {
+    return { ok: false, reason: 'durationRequired' };
+  }
   return { ok: true };
+}
+
+export function resolveEditReservationValidation(input: {
+  action: EditReservationAction;
+  needsBooktimeAuth: boolean;
+  selectedBookingCount: number;
+  selectedBookingRecordsCount: number;
+  selectedCourtCount: number;
+  integratedCourtCount: number;
+  bookingSelectionMin: number;
+  selectedTime?: string;
+  duration?: number;
+  requiresSchedule: boolean;
+}): ReservationValidationResult {
+  if (
+    (input.action === 'reserveNew' || input.action === 'useExisting') &&
+    input.needsBooktimeAuth
+  ) {
+    return { ok: false, reason: 'authRequired' };
+  }
+
+  if (input.action === 'useExisting') {
+    if (input.selectedBookingCount < input.bookingSelectionMin) {
+      return { ok: false, reason: 'bookingSelectionRequired' };
+    }
+    if (input.selectedBookingRecordsCount < input.selectedBookingCount) {
+      return { ok: false, reason: 'bookingRecordsLoading' };
+    }
+    return { ok: true };
+  }
+
+  if (input.action === 'reserveNew') {
+    if (input.selectedCourtCount < input.bookingSelectionMin) {
+      return { ok: false, reason: 'courtSelectionRequired' };
+    }
+    if (input.integratedCourtCount < input.bookingSelectionMin) {
+      return { ok: false, reason: 'integratedCourtSelectionRequired' };
+    }
+    if (!input.selectedTime) {
+      return { ok: false, reason: 'timeRequired' };
+    }
+    if (!input.duration) {
+      return { ok: false, reason: 'durationRequired' };
+    }
+    return { ok: true };
+  }
+
+  if (input.requiresSchedule) {
+    if (!input.selectedTime) {
+      return { ok: false, reason: 'timeRequired' };
+    }
+    if (!input.duration) {
+      return { ok: false, reason: 'durationRequired' };
+    }
+  }
+
+  return { ok: true };
+}
+
+export type ReservationValidationMessage = {
+  key: string;
+  values?: Record<string, number>;
+};
+
+export function resolveReservationValidationMessage(
+  result: Exclude<ReservationValidationResult, { ok: true }>,
+  bookingSelectionMin: number,
+): ReservationValidationMessage {
+  if (result.reason === 'authRequired') {
+    return { key: 'createGame.booktime.signInToContinue' };
+  }
+  if (result.reason === 'bookingSelectionRequired') {
+    return {
+      key: 'createGame.reservationIntent.validation.selectReservations',
+      values: { count: bookingSelectionMin },
+    };
+  }
+  if (result.reason === 'bookingRecordsLoading') {
+    return { key: 'createGame.reservationIntent.validation.bookingRecordsLoading' };
+  }
+  if (result.reason === 'courtSelectionRequired') {
+    return {
+      key: 'createGame.reservationIntent.validation.selectCourt',
+      values: { count: bookingSelectionMin },
+    };
+  }
+  if (result.reason === 'integratedCourtSelectionRequired') {
+    return {
+      key: 'createGame.reservationIntent.validation.selectBookableCourt',
+      values: { count: bookingSelectionMin },
+    };
+  }
+  if (result.reason === 'durationRequired') {
+    return { key: 'createGame.reservationIntent.validation.selectDuration' };
+  }
+  return { key: 'createGame.reservationIntent.validation.selectTime' };
 }
 
 export function resolveCreateReservationCtaKey(input: {

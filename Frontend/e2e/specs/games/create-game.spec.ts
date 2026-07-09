@@ -78,4 +78,18 @@ test.describe('create game entry @auth', () => {
     await createGame.pickDefaultTemplateIfShown();
     await createGame.submitExpectBlocked('GAME');
   });
+
+  test('C-14u create validation toast with integrated club', async ({ page }) => {
+    const createGame = new CreateGamePage(page);
+    await createGame.gotoWithEntityType('GAME');
+    await createGame.pickDefaultTemplateIfShown();
+    await createGame.selectFirstClub();
+    const intentVisible = await page
+      .getByText(/court reservation/i)
+      .first()
+      .isVisible({ timeout: 5_000 })
+      .catch(() => false);
+    test.skip(!intentVisible, 'No BOOKTIME-integrated club in test city');
+    await createGame.submitExpectValidationToast(/court|time|duration|reservation|bookable/i);
+  });
 });

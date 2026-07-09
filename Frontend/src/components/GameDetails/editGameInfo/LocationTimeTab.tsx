@@ -22,8 +22,11 @@ import {
 } from '@shared/gameBooking/reservationIntent';
 import { EditReservationActionPicker } from '@/components/gameLocationTime/ReservationIntentPicker';
 import { EditReservationConsequenceSummary } from '@/components/gameLocationTime/ReservationSummaryCard';
+import { LinkedBookingsList } from '@/components/gameLocationTime/LinkedBookingsList';
+import { MultiCourtTimeHint } from '@/components/gameLocationTime/MultiCourtTimeHint';
 import { filterClubsBySport } from '@/utils/courtSport';
 import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
+import { computeRequiredCourtCount } from '@/utils/requiredCourtCount';
 import type { RefObject, ReactNode } from 'react';
 import type { BooktimeSnapshotBanner } from '@/hooks/useBooktimeSnapshotRefresh';
 
@@ -76,6 +79,7 @@ type LocationTimeTabProps = {
   clubBookingFlowActive?: boolean;
   booktimeCompanyId?: string | null;
   booktimeConnected?: boolean;
+  panelRef?: RefObject<HTMLDivElement | null>;
 };
 
 export function LocationTimeTab({
@@ -123,6 +127,7 @@ export function LocationTimeTab({
   clubBookingFlowActive = false,
   booktimeCompanyId = null,
   booktimeConnected = false,
+  panelRef,
 }: LocationTimeTabProps) {
   const { t } = useTranslation();
   const clubsForSport = useMemo(
@@ -209,6 +214,7 @@ export function LocationTimeTab({
     initialTimeOverride: game.timeOverride ?? false,
     game,
     editReservationAction,
+    needsBooktimeAuth,
     createDateFromSelection,
   });
 
@@ -399,6 +405,35 @@ export function LocationTimeTab({
 
   const showReservationPicker = editReservationAction === 'useExisting';
 
+  const requiredReservationCount = useMemo(
+    () => computeRequiredCourtCount(game.maxParticipants, game.playersPerMatch ?? 4),
+    [game.maxParticipants, game.playersPerMatch],
+  );
+
+  const multiCourtTimeHint = (
+    <MultiCourtTimeHint
+      requiredCourtCount={requiredReservationCount}
+      integratedCourtCount={integratedCourtIds.length}
+      hasTimeSlots={
+        editReservationAction === 'reserveNew' && !needsBooktimeAuth
+          ? generateTimeOptions().length > 0
+          : false
+      }
+      booktimeSlotsActive={editReservationAction === 'reserveNew' && willBookOnCreateProp}
+    />
+  );
+
+  const linkedReservationsSection =
+    editReservationAction === 'keepCurrent' ? (
+      <LinkedBookingsList
+        game={game}
+        club={club}
+        courts={courts}
+        readOnly
+        readOnlyLabel
+      />
+    ) : null;
+
   const consequenceSection = (
     <EditReservationConsequenceSummary
       action={editReservationAction}
@@ -425,7 +460,11 @@ export function LocationTimeTab({
   );
 
   return (
-    <div className="space-y-4">
+    <div
+      ref={panelRef}
+      data-testid="edit-location-time-panel"
+      className="space-y-4"
+    >
       {pendingUnlinkIds.length > 0 ? <PendingBookingUnlinkHint /> : null}
       <div>
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
@@ -483,6 +522,9 @@ export function LocationTimeTab({
         showTimeSlots={showScheduleControls}
         showReservations={showReservationPicker}
         showRealBookingHint={false}
+        linkedReservationsSection={linkedReservationsSection}
+        onEmptyReserveNow={() => setEditReservationAction('reserveNew')}
+        onEmptyGameOnly={() => setEditReservationAction('gameOnly')}
         authGateSection={resolvedAuthGateSection}
         dateSection={dateSection}
         courtSection={courtSection}
@@ -529,6 +571,7 @@ export function LocationTimeTab({
             snapshotBannerState={snapshotBannerState}
             compact
             hideDateSection
+            timeSchedulingExtra={multiCourtTimeHint}
           />
         }
       />

@@ -108,26 +108,17 @@ export function PrimarySportSetModal({ open }: PrimarySportSetModalProps) {
                   <ProfileSportCard
                     key={sport}
                     sport={sport}
-                    user={draftUser}
                     enabled={enabled}
                     isPrimary={enabled && sport === primarySport}
                     showStats={false}
                     displayLevel={getDisplayLevelForSport(draftUser, sport)}
                     gamesPlayed={0}
-                    levelEditable={false}
-                    editing={false}
-                    draftLevel=""
                     disabled={isSaving}
-                    onDraftLevelChange={() => {}}
                     onCardClick={() => toggleSport(sport)}
-                    onStartEditLevel={() => {}}
-                    onSaveLevel={() => {}}
-                    onCancelEdit={() => {}}
                     onSetPrimary={() => setPrimarySport(sport)}
                     onPrimaryStarClick={() => {
                       toast(t('profile.sports.primarySportToast'), { icon: '⭐' });
                     }}
-                    onUserUpdated={updateUser}
                   />
                 );
               })}

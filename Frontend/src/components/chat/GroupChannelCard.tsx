@@ -7,7 +7,8 @@ import {
   isLastMessagePreview,
   type LastMessagePreview,
 } from '@/api/chat';
-import { Users, Hash, Package, Pin, Loader2, BellOff, Home, Mic } from 'lucide-react';
+import { Users, Hash, Package, Loader2, BellOff, Home, Mic } from 'lucide-react';
+import { ChatListPinIcon } from '@/components/chat/ChatListPinIcon';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { UnreadBadge } from '@/components/UnreadBadge';
 import { BugPriorityBadge } from '@/components/chat/BugPriorityBadge';
@@ -165,7 +166,7 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
                     {isPinning ? (
                       <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
                     ) : (
-                      <Pin className={`w-4 h-4 ${isPinned ? 'rotate-[-90deg] fill-current' : ''}`} aria-hidden />
+                      <ChatListPinIcon isPinned={isPinned} />
                     )}
                   </button>
                 )}
@@ -253,7 +254,7 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
                   {isPinning ? (
                     <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
                   ) : (
-                    <Pin className={`w-4 h-4 ${isPinned ? 'rotate-[-90deg] fill-current' : ''}`} aria-hidden />
+                    <ChatListPinIcon isPinned={isPinned} />
                   )}
                 </button>
               )}

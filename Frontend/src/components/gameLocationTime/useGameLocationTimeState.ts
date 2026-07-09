@@ -4,9 +4,11 @@ import type { CreateGameBookingFields } from '@shared/gameBooking/contracts';
 import { applyCourtIdsToBookingSnapshots } from '@shared/gameBooking/applyCourtIdsToBookingSnapshots';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import { computeBookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
-import type {
-  EditReservationAction,
-  ReservationIntent,
+import {
+  projectEditReservationActionToState,
+  projectReservationIntentToState,
+  type EditReservationAction,
+  type ReservationIntent,
 } from '@shared/gameBooking/reservationIntent';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
@@ -35,6 +37,7 @@ type UseGameLocationTimeStateArgs = {
   game?: Game;
   reservationIntent?: ReservationIntent;
   editReservationAction?: EditReservationAction;
+  needsBooktimeAuth?: boolean;
   createDateFromSelection: () => { startTime: string; endTime: string };
 };
 
@@ -57,6 +60,7 @@ export function useGameLocationTimeState({
   game: _game,
   reservationIntent,
   editReservationAction,
+  needsBooktimeAuth = false,
   createDateFromSelection,
 }: UseGameLocationTimeStateArgs) {
   const [selectedBookingIds, setSelectedBookingIds] = useState<string[]>(initialSelectedBookingIds);
@@ -68,18 +72,36 @@ export function useGameLocationTimeState({
   const [initialCourtIds] = useState(selectedCourtIds);
   const [initialTime] = useState({ date: selectedDate, time: selectedTime, duration });
 
-  const projectedLocationTimeMode =
-    reservationIntent === 'useExisting' ||
-    editReservationAction === 'keepCurrent' ||
-    editReservationAction === 'useExisting'
-      ? 'bookings'
-      : editReservationAction === 'changeGameTimeOnly'
-        ? 'timeSlots'
-        : reservationIntent || editReservationAction
-          ? 'timeSlots'
-          : undefined;
+  const intentProjection = useMemo(() => {
+    if (editReservationAction) {
+      return projectEditReservationActionToState({
+        action: editReservationAction,
+        initialLinkedBookingIds: initialBookingIds,
+        selectedBookingIds,
+        hasBookedCourt,
+        needsBooktimeAuth,
+      });
+    }
+    if (reservationIntent) {
+      return projectReservationIntentToState({
+        intent: reservationIntent,
+        selectedBookingIds,
+        hasBookedCourt,
+        needsBooktimeAuth,
+      });
+    }
+    return null;
+  }, [
+    editReservationAction,
+    initialBookingIds,
+    selectedBookingIds,
+    hasBookedCourt,
+    needsBooktimeAuth,
+    reservationIntent,
+  ]);
 
-  const locationTimeMode = projectedLocationTimeMode ?? deriveLocationTimeMode(selectedBookingIds);
+  const locationTimeMode =
+    intentProjection?.locationTimeMode ?? deriveLocationTimeMode(selectedBookingIds);
 
   const integratedCourtIds = useMemo(
     () =>
@@ -91,12 +113,13 @@ export function useGameLocationTimeState({
   );
 
   useEffect(() => {
+    if (reservationIntent || editReservationAction) return;
     if (integratedCourtIds.length === 0) {
       setSkipRealCourtBooking(false);
       return;
     }
     setSkipRealCourtBooking(getManualClubBookingPreference(club?.id));
-  }, [club?.id, integratedCourtIds.length]);
+  }, [club?.id, integratedCourtIds.length, reservationIntent, editReservationAction]);
 
   const setSkipRealCourtBookingForClub = useCallback(
     (value: boolean) => {
@@ -106,28 +129,17 @@ export function useGameLocationTimeState({
     [club?.id],
   );
 
-  const intentWantsRealBooking =
-    reservationIntent === 'reserveNow' || editReservationAction === 'reserveNew';
-
-  const projectedSkipRealCourtBooking =
-    reservationIntent === 'gameOnly' ||
-    reservationIntent === 'manualBooked' ||
-    editReservationAction === 'gameOnly' ||
-    editReservationAction === 'unlink' ||
-    editReservationAction === 'changeGameTimeOnly';
-
-  const effectiveSkipRealCourtBooking =
-    reservationIntent || editReservationAction
-      ? projectedSkipRealCourtBooking
-      : skipRealCourtBooking;
+  const effectiveSkipRealCourtBooking = intentProjection
+    ? intentProjection.skipRealCourtBooking
+    : skipRealCourtBooking;
 
   const willBookOnCreate =
-    (reservationIntent || editReservationAction
-      ? intentWantsRealBooking
-      : locationTimeMode === 'timeSlots') &&
     locationTimeMode === 'timeSlots' &&
     integratedCourtIds.length > 0 &&
-    !effectiveSkipRealCourtBooking;
+    !effectiveSkipRealCourtBooking &&
+    (intentProjection
+      ? reservationIntent === 'reserveNow' || editReservationAction === 'reserveNew'
+      : locationTimeMode === 'timeSlots');
 
   const bookingSelectionLimits = useMemo(
     () => computeBookingSelectionLimits(maxParticipants, playersPerMatch),
@@ -248,5 +260,6 @@ export function useGameLocationTimeState({
     integratedCourtIds,
     buildCreatePayload,
     dirtyFlags,
+    intentProjection,
   };
 }

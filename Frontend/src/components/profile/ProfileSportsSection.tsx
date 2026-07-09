@@ -235,7 +235,7 @@ export const ProfileSportsSection = ({ user, onUserUpdated }: ProfileSportsSecti
                       user={user}
                       displayLevel={getDisplayLevelForSport(user, expandedSport)}
                       gamesPlayed={gamesPlayedForSport(user, expandedSport)}
-                      levelEditable={canEditSportLevel(expandedProfile)}
+                      levelEditable={canEditSportLevel(expandedProfile ?? undefined)}
                       editing={editingSport === expandedSport}
                       draftLevel={draftLevel}
                       disabled={busySport === expandedSport}

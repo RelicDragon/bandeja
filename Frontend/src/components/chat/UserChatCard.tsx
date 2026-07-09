@@ -16,7 +16,8 @@ import { memo, useMemo } from 'react';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
-import { Pin, Loader2, BellOff, Mic } from 'lucide-react';
+import { Loader2, BellOff, Mic } from 'lucide-react';
+import { ChatListPinIcon } from '@/components/chat/ChatListPinIcon';
 import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated';
 import {
   ChatListGenericMediaRow,
@@ -141,7 +142,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
                 {isPinning ? (
                   <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
                 ) : (
-                  <Pin className={`w-4 h-4 ${isPinned ? 'rotate-[-90deg] fill-current' : ''}`} aria-hidden />
+                  <ChatListPinIcon isPinned={isPinned} />
                 )}
               </button>
             )}

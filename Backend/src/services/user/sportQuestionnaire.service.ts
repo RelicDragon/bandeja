@@ -214,13 +214,6 @@ export async function completeSportQuestionnaire(
       levelBefore,
       levelAfter: newLevel,
     });
-
-    if (sport === Sport.PADEL) {
-      await tx.user.update({
-        where: { id: userId },
-        data: { welcomeScreenPassed: true },
-      });
-    }
   });
 
   console.log('[questionnaire] Completed', { userId, sport, levelAfter: newLevel });
@@ -291,13 +284,6 @@ export async function skipSportQuestionnaire(
         questionnaireSkippedAt: now,
       },
     });
-
-    if (sport === Sport.PADEL) {
-      await tx.user.update({
-        where: { id: userId },
-        data: { welcomeScreenPassed: true },
-      });
-    }
   });
 
   return getSportQuestionnaireStatus(userId, sport);
@@ -333,13 +319,6 @@ export async function resetSportQuestionnaire(userId: string, sportInput: unknow
         questionnaireVersion: null,
       },
     });
-
-    if (sport === Sport.PADEL) {
-      await tx.user.update({
-        where: { id: userId },
-        data: { welcomeScreenPassed: false },
-      });
-    }
   });
 
   return loadProfileUser(userId);

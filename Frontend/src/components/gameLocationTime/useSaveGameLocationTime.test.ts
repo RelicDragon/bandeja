@@ -172,6 +172,7 @@ describe('buildEditLocationTimeSaveDraft', () => {
         timeOverride: false,
         willBookOnCreate: true,
         integratedCourtIds: ['court-1'],
+        editReservationAction: 'reserveNew',
       },
       bookingOverrides: {
         externalBookingIds: ['booking-2'],
@@ -188,6 +189,62 @@ describe('buildEditLocationTimeSaveDraft', () => {
 
     expect(draft.removeBookingIds).toEqual(['booking-1']);
     expect(draft.linkBookingContext?.adds.map((add) => add.booking.uuid)).toEqual(['booking-2']);
+  });
+
+  it('preserves linked bookings when edit action is keepCurrent', () => {
+    const draft = buildEditLocationTimeSaveDraft({
+      game,
+      clubId: 'club-1',
+      courtId: 'court-1',
+      selectedCourtIds: ['court-1'],
+      whenSelectedDate: new Date('2026-06-19T00:00:00.000Z'),
+      whenSelectedTime: '09:00',
+      whenDuration: 1,
+      hasBookedCourt: true,
+      club,
+      courts: [court],
+      pendingRemoveBookingIds: [],
+      locationTimeDraft: {
+        locationTimeMode: 'bookings',
+        selectedBookingIds: ['booking-1'],
+        selectedBookingRecords: [],
+        timeOverride: false,
+        willBookOnCreate: false,
+        integratedCourtIds: [],
+        editReservationAction: 'keepCurrent',
+      },
+    });
+
+    expect(draft.removeBookingIds).toEqual([]);
+    expect(draft.addBookingIds).toEqual([]);
+  });
+
+  it('unlinks all bookings when edit action is gameOnly', () => {
+    const draft = buildEditLocationTimeSaveDraft({
+      game,
+      clubId: 'club-1',
+      courtId: 'court-1',
+      selectedCourtIds: ['court-1'],
+      whenSelectedDate: new Date('2026-06-19T00:00:00.000Z'),
+      whenSelectedTime: '09:00',
+      whenDuration: 1,
+      hasBookedCourt: false,
+      club,
+      courts: [court],
+      pendingRemoveBookingIds: [],
+      locationTimeDraft: {
+        locationTimeMode: 'timeSlots',
+        selectedBookingIds: [],
+        selectedBookingRecords: [],
+        timeOverride: false,
+        willBookOnCreate: false,
+        integratedCourtIds: [],
+        editReservationAction: 'gameOnly',
+      },
+    });
+
+    expect(draft.removeBookingIds).toEqual(['booking-1']);
+    expect(draft.hasBookedCourt).toBe(false);
   });
 });
 

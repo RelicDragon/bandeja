@@ -36,9 +36,6 @@ function testQuestionnaireNeverTouchesSocialLevel(): void {
   const svcPath = join(__dirname, '../../src/services/user/sportQuestionnaire.service.ts');
   const svcSrc = readFileSync(svcPath, 'utf8');
   assert(!svcSrc.includes('socialLevel:'), 'sportQuestionnaire.service must not assign socialLevel');
-  const welcomePath = join(__dirname, '../../src/services/welcomeScreen.service.ts');
-  const welcomeSrc = readFileSync(welcomePath, 'utf8');
-  assert(!welcomeSrc.includes('socialLevel'), 'welcomeScreen.service must not reference socialLevel');
 }
 
 async function testAddUserSportInvariants(): Promise<void> {

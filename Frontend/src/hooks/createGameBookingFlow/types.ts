@@ -22,8 +22,15 @@ export type CreateGameBookingFields = {
   bookingSnapshots?: BookingSnapshotInput[];
 };
 
+export type CreateGameAbortReason =
+  | 'authRequired'
+  | 'bookingSelectionRequired'
+  | 'bookingRecordsLoading'
+  | 'integratedCourtSelectionRequired'
+  | 'courtSelectionRequired';
+
 export type CreateGameAttemptResult =
-  | { status: 'abort' }
+  | { status: 'abort'; reason: CreateGameAbortReason }
   | { status: 'confirm' }
   | { status: 'softOverlap' }
   | { status: 'proceed'; overrides?: CreateGameBookingOverrides };

@@ -3,24 +3,13 @@ import { getSportQuestionnaireConfig, sportHasQuestionnaire } from '@/sport/spor
 import { findSportProfile, gamesPlayedForSport, getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
 import type { QuestionnaireStatus } from '@/api/sportQuestionnaire';
 
-export function isPadelWelcomeComplete(user: User | null | undefined): boolean {
-  return user?.welcomeScreenPassed === true;
-}
-
 export function isSportQuestionnaireCompleted(
   user: User | null | undefined,
   sport: Sport,
   profile?: UserSportProfile,
 ): boolean {
   const p = profile ?? findSportProfile(user, sport);
-  if (p?.questionnaireCompletedAt) return true;
-  if (sport === 'PADEL' && isPadelWelcomeComplete(user) && user && getDisplayLevelForSport(user, sport) !== 1) {
-    return true;
-  }
-  if (sport === 'PADEL' && isPadelWelcomeComplete(user) && p?.levelSource === 'QUESTIONNAIRE') {
-    return true;
-  }
-  return false;
+  return !!p?.questionnaireCompletedAt;
 }
 
 export function isSportQuestionnaireSkipped(
@@ -29,11 +18,7 @@ export function isSportQuestionnaireSkipped(
   profile?: UserSportProfile,
 ): boolean {
   const p = profile ?? findSportProfile(user, sport);
-  if (p?.questionnaireSkippedAt) return true;
-  if (sport === 'PADEL' && isPadelWelcomeComplete(user) && !isSportQuestionnaireCompleted(user, sport, p)) {
-    return true;
-  }
-  return false;
+  return !!p?.questionnaireSkippedAt;
 }
 
 export function shouldSuggestSportQuestionnaire(

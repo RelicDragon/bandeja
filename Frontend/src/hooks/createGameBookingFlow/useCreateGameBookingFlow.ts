@@ -24,8 +24,10 @@ import {
   resolveCreateReservationCtaKey,
   resolveInitialReservationIntent,
   resolveReservationIntentOptions,
+  resolveReservationValidationMessage,
   type ReservationIntent,
 } from '@shared/gameBooking/reservationIntent';
+import { mapCreateAbortReasonToValidationReason } from './resolveCreateGameBookingAction';
 import { clubHasBookingIntegration, parseBooktimeIntegrationConfig } from '@shared/clubIntegration';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
@@ -146,6 +148,16 @@ export function useCreateGameBookingFlow({
     clubBookingFlowActive,
   );
 
+  const { status: booktimeAuth, refresh: refreshBooktimeAuth } = useBooktimeClubAuth(
+    selectedClub || undefined,
+    clubBookingFlowActive,
+  );
+  const needsBooktimeAuthForIntent = Boolean(
+    clubBookingFlowActive &&
+      !booktimeAuth?.connected &&
+      (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting'),
+  );
+
   const locationTimeState = useGameLocationTimeState({
     entityType,
     panelMode: 'create',
@@ -162,6 +174,7 @@ export function useCreateGameBookingFlow({
     hasBookedCourt,
     initialSelectedBookingIds: initialBookingIds,
     reservationIntent,
+    needsBooktimeAuth: needsBooktimeAuthForIntent,
     createDateFromSelection,
   });
 
@@ -183,10 +196,6 @@ export function useCreateGameBookingFlow({
     dirtyFlags,
   } = locationTimeState;
 
-  const { status: booktimeAuth, refresh: refreshBooktimeAuth } = useBooktimeClubAuth(
-    selectedClub || undefined,
-    clubBookingFlowActive,
-  );
   const needsBooktimeAuth = Boolean(
     clubBookingFlowActive &&
       !booktimeAuth?.connected &&
@@ -276,7 +285,7 @@ export function useCreateGameBookingFlow({
       resolveReservationIntentOptions({
         clubBookingFlowActive,
         hasBooktimeAuthPath: Boolean(booktimeIntegrationConfig),
-        manualBookedAvailable: true,
+        manualBookedAvailable: !clubBookingFlowActive,
       }),
     [clubBookingFlowActive, booktimeIntegrationConfig],
   );
@@ -489,6 +498,11 @@ export function useCreateGameBookingFlow({
     ) => {
       const result = await resolveCreateAttempt();
       if (result.status === 'abort') {
+        const message = resolveReservationValidationMessage(
+          { ok: false, reason: mapCreateAbortReasonToValidationReason(result.reason) },
+          bookingSelectionLimits.min,
+        );
+        toast.error(t(message.key, message.values));
         onAbort?.();
         return;
       }
@@ -502,7 +516,7 @@ export function useCreateGameBookingFlow({
       }
       await onProceed(result.overrides);
     },
-    [resolveCreateAttempt],
+    [resolveCreateAttempt, bookingSelectionLimits.min, t],
   );
 
   const prepareBookingFields = useCallback(
@@ -838,7 +852,9 @@ export function useCreateGameBookingFlow({
     resolvedGetTimeSlotsForDuration,
     resolvedIsSlotHighlighted,
     createButtonLabel: resolvedCreateButtonLabel,
-    createDisabledByAuth: false,
+    createDisabledByAuth:
+      needsBooktimeAuth &&
+      (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting'),
     preselectedBookings,
     preselectedBookingsHydrating,
     resetOnClubChange,
@@ -851,12 +867,6 @@ export function useCreateGameBookingFlow({
     handleMarkCourtBooked,
     handleSkipMarkCourt: finishPendingNavigate,
     getConfirmModalProps,
-    handleCourtSelectForAuthSkip: () => {
-      setSkipRealCourtBooking(true);
-    },
-    handleAuthCollapsedClick: () => {
-      setSkipRealCourtBooking(false);
-    },
     handleAuthConnected: () => {
       void refreshBooktimeAuth();
       if (booktimeFixedDates?.length) {

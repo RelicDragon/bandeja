@@ -206,34 +206,6 @@ router.put(
   userController.updateSportExternalRating,
 );
 
-router.post(
-  '/welcome-screen',
-  authenticate,
-  welcomeScreenLimiter,
-  validate([
-    body('answers')
-      .isArray()
-      .withMessage('answers must be an array')
-      .custom((val: unknown) => {
-        if (!Array.isArray(val) || val.length !== 5) {
-          throw new Error('Exactly 5 answers required');
-        }
-        const valid = ['A', 'B', 'C', 'D'];
-        for (let i = 0; i < val.length; i++) {
-          if (typeof val[i] !== 'string' || !valid.includes(val[i] as string)) {
-            throw new Error(`Answer ${i + 1} must be A, B, C, or D`);
-          }
-        }
-        return true;
-      }),
-  ]),
-  userController.completeWelcome
-);
-
-router.post('/welcome-screen/reset', authenticate, userController.resetWelcome);
-
-router.post('/welcome-screen/skip', authenticate, userController.skipWelcome);
-
 router.get('/compare/:otherUserId', authenticate, userController.getPlayerComparison);
 
 router.get('/:userId/common-groups', authenticate, userController.getCommonGroupChannels);

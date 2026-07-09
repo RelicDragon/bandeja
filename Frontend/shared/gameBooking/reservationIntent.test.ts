@@ -2,9 +2,11 @@ import {
   projectEditReservationActionToState,
   projectReservationIntentToState,
   resolveCreateReservationCtaKey,
+  resolveEditReservationValidation,
   resolveInitialEditReservationAction,
   resolveInitialReservationIntent,
   resolveReservationValidation,
+  resolveReservationValidationMessage,
 } from './reservationIntent';
 import { describe, expect, it } from 'vitest';
 
@@ -159,7 +161,17 @@ describe('reservation intent resolvers', () => {
         selectedCourtCount: 0,
         bookingSelectionMin: 1,
       }),
-    ).toEqual({ ok: false, reason: 'courtSelectionRequired' });
+    ).toEqual({ ok: false, reason: 'integratedCourtSelectionRequired' });
+
+    expect(
+      resolveReservationValidation({
+        intent: 'useExisting',
+        needsBooktimeAuth: false,
+        selectedBookingCount: 1,
+        selectedBookingRecordsCount: 0,
+        bookingSelectionMin: 1,
+      }),
+    ).toEqual({ ok: false, reason: 'bookingRecordsLoading' });
 
     expect(
       resolveReservationValidation({
@@ -168,6 +180,36 @@ describe('reservation intent resolvers', () => {
         selectedBookingCount: 0,
         selectedCourtCount: 1,
         bookingSelectionMin: 1,
+        selectedTime: '18:00',
+        duration: 1.5,
+      }),
+    ).toEqual({ ok: true });
+  });
+
+  it('validates edit reservation actions', () => {
+    expect(
+      resolveEditReservationValidation({
+        action: 'keepCurrent',
+        needsBooktimeAuth: false,
+        selectedBookingCount: 1,
+        selectedBookingRecordsCount: 1,
+        selectedCourtCount: 1,
+        integratedCourtCount: 1,
+        bookingSelectionMin: 1,
+        requiresSchedule: false,
+      }),
+    ).toEqual({ ok: true });
+
+    expect(
+      resolveEditReservationValidation({
+        action: 'gameOnly',
+        needsBooktimeAuth: false,
+        selectedBookingCount: 0,
+        selectedBookingRecordsCount: 0,
+        selectedCourtCount: 0,
+        integratedCourtCount: 0,
+        bookingSelectionMin: 1,
+        requiresSchedule: true,
       }),
     ).toEqual({ ok: false, reason: 'timeRequired' });
   });
@@ -179,6 +221,18 @@ describe('reservation intent resolvers', () => {
     });
     expect(resolveCreateReservationCtaKey({ intent: 'gameOnly', requiredReservationCount: 1 })).toEqual({
       key: 'createGame.reservationIntent.cta.gameOnly',
+    });
+  });
+
+  it('maps validation failures to user-facing toast keys', () => {
+    expect(
+      resolveReservationValidationMessage({ ok: false, reason: 'authRequired' }, 2),
+    ).toEqual({ key: 'createGame.booktime.signInToContinue' });
+    expect(
+      resolveReservationValidationMessage({ ok: false, reason: 'bookingSelectionRequired' }, 2),
+    ).toEqual({
+      key: 'createGame.reservationIntent.validation.selectReservations',
+      values: { count: 2 },
     });
   });
 });

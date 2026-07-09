@@ -19,6 +19,8 @@
     "courtNotSelected": "Kurt není vybrán",
     "hallNotSelected": "Hala není vybrána",
     "multiCourtHint": "Vyberte až {{count}} kurtů pro {{participants}} hráčů (vybráno {{selected}})",
+    "multiCourtNeedSharedSlots": "Vyberte {{count}} kurtů, které jsou volné ve stejný čas.",
+    "multiCourtNoSharedSlots": "Ve stejný čas nejsou volné všechny {{count}} vybrané kurty. Zkuste jiné kurty, datum nebo délku.",
     "webCameraHint": "Tento kurt má propojenou webovou kameru",
     "webCameraHintsTitle": "Propojené webové kamery",
     "webCameraHintNamed": "{{court}} má propojenou webovou kameru",
@@ -400,6 +402,9 @@
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Vyberte {{min}}–{{max}} rezervací ({{players}} hráčů)",
       "emptyBookingsOnDate": "Na tento den nemáte žádné rezervace",
+      "emptyBookingsHint": "Zkuste jiné datum, rezervujte kurt, nebo vytvořte hru bez propojení rezervace.",
+      "emptyBookingsReserveNow": "Rezervovat kurt",
+      "emptyBookingsGameOnly": "Vytvořit jen hru",
       "gridLegend": "Zelená = vaše rezervace · Červená/žlutá = obsazeno · Primární = vybraný čas",
       "alsoUsedIn": "Také použito v: {{games}}",
       "linkHintTitle": "Hra bude propojena s vašimi rezervacemi",
@@ -417,31 +422,58 @@
       "syncInactiveEdit": "Synchronizace teď neběží — nemůžeme načíst sloty ani rezervovat kurt. Hru na tento čas stejně můžete upravit."
     },
     "reservationIntent": {
-      "title": "Court reservation",
-      "subtitle": "Choose what should happen with the real club court.",
-      "recommended": "Recommended",
+      "title": "Rezervace kurtu",
+      "subtitle": "Vyberte, co se má stát se skutečnou rezervací v klubu.",
+      "recommended": "Doporučeno",
       "validation": {
-        "selectCourt": "Select {{count}} court(s) first.",
-        "selectBookableCourt": "Select {{count}} online-bookable court(s) first.",
-        "selectTime": "Select an available time first."
+        "selectCourt": "Nejprve vyberte {{count}} kurt(ů).",
+        "selectBookableCourt": "Nejprve vyberte {{count}} kurt(ů) s online rezervací.",
+        "selectTime": "Nejprve vyberte dostupný čas.",
+        "selectDuration": "Nejprve vyberte délku.",
+        "selectReservations": "Vyberte {{count}} rezervaci/rezervace z vašeho účtu.",
+        "bookingRecordsLoading": "Načítáme detaily rezervací — chvíli počkejte a zkuste znovu."
       },
-      "reserveNow": { "title": "Reserve court now", "description": "Pick available court time and the app will reserve it when you create." },
-      "useExisting": { "title": "Use existing reservation", "description": "Link reservation(s) already in your club account." },
-      "gameOnly": { "title": "Game only", "description": "Create the game without making or marking a real court reservation." },
-      "manualBooked": { "title": "Already booked manually", "description": "Mark the game as booked without using the online reservation integration." },
+      "reserveNow": {
+        "title": "Rezervovat kurt hned",
+        "description": "Vyberte volný termín a kurt — aplikace rezervuje při vytvoření hry."
+      },
+      "useExisting": {
+        "title": "Použít existující rezervaci",
+        "description": "Propojit rezervaci/e, které už máte v účtu klubu."
+      },
+      "gameOnly": {
+        "title": "Pouze hra",
+        "description": "Vytvořit hru bez skutečné rezervace nebo označení „kurt rezervován“."
+      },
+      "manualBooked": {
+        "title": "Již rezervováno ručně",
+        "description": "Označit hru jako rezervovanou bez online integrace."
+      },
       "summary": {
-        "reserveNow": { "title": "A real court reservation will be made", "body": "Select {{count}} court(s), duration, and time. That exact schedule will be reserved." },
-        "useExisting": { "title": "Game will link to your reservation(s)", "body": "{{selected}} of {{count}} required reservation(s) selected." },
-        "gameOnly": { "title": "No real court reservation will be made", "body": "The game will be scheduled in Bandeja only." },
-        "manualBooked": { "title": "Game will be marked as booked", "body": "No online reservation will be created." }
+        "reserveNow": {
+          "title": "Bude vytvořena skutečná rezervace kurtu",
+          "body": "Vyberte {{count}} kurt(ů), délku a čas. Rezervován bude přesně tento termín."
+        },
+        "useExisting": {
+          "title": "Hra bude propojena s vaší rezervací",
+          "body": "Vybráno {{selected}} z {{count}} požadovaných rezervací."
+        },
+        "gameOnly": {
+          "title": "Skutečná rezervace kurtu nevznikne",
+          "body": "Hra bude naplánována pouze v Bandeje."
+        },
+        "manualBooked": {
+          "title": "Hra bude označena jako rezervovaná",
+          "body": "Online rezervace se nevytvoří."
+        }
       },
       "cta": {
-        "reserveOne": "Reserve court and create game",
-        "reserveMany": "Reserve {{count}} courts and create game",
-        "linkOne": "Link reservation and create game",
-        "linkMany": "Link {{count}} reservations and create game",
-        "gameOnly": "Create game only",
-        "manualBooked": "Create game"
+        "reserveOne": "Rezervovat kurt a vytvořit hru",
+        "reserveMany": "Rezervovat {{count}} kurtů a vytvořit hru",
+        "linkOne": "Propojit rezervaci a vytvořit hru",
+        "linkMany": "Propojit {{count}} rezervací a vytvořit hru",
+        "gameOnly": "Vytvořit pouze hru",
+        "manualBooked": "Vytvořit hru"
       }
     },
     "booktime": {

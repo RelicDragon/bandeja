@@ -5,13 +5,13 @@ import { getChatTitle, sortChatItems } from '@/utils/chatListSort';
 import { chatListUnreadFilterCount } from '@/components/chat/chatListUnreadFilter';
 import type { ChatItem } from '@/components/chat/chatListTypes';
 import type { ChatsFilterType } from '@/components/chat/chatListFeedStore';
-import { listItemToContextKey, type ContextKey } from '@/services/chat/unreadSnapshot';
+import { type ContextKey } from '@/services/chat/unreadSnapshot';
+import { selectContextUnreadForListItem, type UnreadStoreState } from '@/store/unreadStore';
 import type { ChatInboxReadModel, ChatInboxSubtabBadges } from './types';
 
 export type UnreadFilterCountOpts = {
   unreadStoreWarm: boolean;
   displayedByContext: Record<ContextKey, number>;
-  marketUnreadCounts: Record<string, number>;
 };
 
 export function resolveThreadUnreadCountForFilter(
@@ -19,15 +19,12 @@ export function resolveThreadUnreadCountForFilter(
   opts: UnreadFilterCountOpts
 ): number {
   if (item.type === 'contact') return 0;
-  if (opts.unreadStoreWarm) {
-    if (item.type === 'channel' && item.data.marketItemId) {
-      return opts.marketUnreadCounts[item.data.id] ?? 0;
-    }
-    const key = listItemToContextKey(item);
-    if (!key) return 0;
-    return opts.displayedByContext[key] ?? 0;
-  }
-  return item.unreadCount ?? 0;
+  const unreadState = {
+    displayedByContext: opts.displayedByContext,
+    byContext: opts.displayedByContext,
+    fetchedAt: opts.unreadStoreWarm ? Date.now() : 0,
+  } as UnreadStoreState;
+  return selectContextUnreadForListItem(item, unreadState, { warm: opts.unreadStoreWarm });
 }
 
 function isUnreadFilterableThread(item: ChatItem): boolean {
@@ -106,30 +103,31 @@ export function deriveMarketFilteredByRoleAndSearch(opts: DeriveDisplayedChatsOp
   const sorted = [...searchFiltered];
   sortChatItems(sorted, 'market');
   return sorted.map((c) =>
-    c.type === 'channel' ? { ...c, unreadCount: marketUnreadCounts[c.data.id] ?? c.unreadCount } : c
+    c.type === 'channel' ? { ...c, unreadCount: marketUnreadCounts?.[c.data.id] ?? c.unreadCount } : c
   ) as ChatItem[];
 }
 
+function withResolvedUnreadCount(item: ChatItem, unreadOpts: UnreadFilterCountOpts): ChatItem {
+  if (item.type === 'contact' || !('unreadCount' in item)) return item;
+  return { ...item, unreadCount: resolveThreadUnreadCountForFilter(item, unreadOpts) };
+}
+
 function deriveMarketUnreadChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
-  const { threads, marketUnreadCounts, unreadStoreWarm, displayedByContext } = opts;
+  const { threads, unreadStoreWarm, displayedByContext } = opts;
   const unreadOpts: UnreadFilterCountOpts = {
     unreadStoreWarm,
     displayedByContext,
-    marketUnreadCounts,
   };
   const unreadRows = threads.filter(
     (c) => c.type === 'channel' && resolveThreadUnreadCountForFilter(c, unreadOpts) > 0
   );
   const sorted = [...unreadRows];
   sortChatItems(sorted, 'market');
-  return sorted.map((c) =>
-    c.type === 'channel' ? { ...c, unreadCount: marketUnreadCounts[c.data.id] ?? c.unreadCount } : c
-  ) as ChatItem[];
+  return sorted.map((c) => withResolvedUnreadCount(c, unreadOpts)) as ChatItem[];
 }
 
 export function deriveDisplayedChats(opts: DeriveDisplayedChatsOpts): ChatItem[] {
-  const { chatsFilter, threads, unreadFilterActive, unreadStoreWarm, displayedByContext, marketUnreadCounts } =
-    opts;
+  const { chatsFilter, threads, unreadFilterActive, unreadStoreWarm, displayedByContext } = opts;
   if (chatsFilter === 'market') {
     if (unreadFilterActive) return deriveMarketUnreadChats(opts);
     return deriveMarketFilteredByRoleAndSearch(opts);
@@ -138,7 +136,6 @@ export function deriveDisplayedChats(opts: DeriveDisplayedChatsOpts): ChatItem[]
   const unreadOpts: UnreadFilterCountOpts = {
     unreadStoreWarm,
     displayedByContext,
-    marketUnreadCounts,
   };
   return threads.filter(
     (c) => isUnreadFilterableThread(c) && resolveThreadUnreadCountForFilter(c, unreadOpts) > 0

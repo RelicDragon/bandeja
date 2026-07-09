@@ -113,6 +113,8 @@ Default intent rules:
 
 ### Reserve court now
 
+> **Implementation note (2026-07):** Court bundles from the original plan were replaced with a **time-slot + court-intersect** model. The user selects required courts in the grid; Booktime availability intersects free slot starts across those courts (`intersectFreeSlotStarts`). Multi-court guidance is shown via `MultiCourtTimeHint` when no shared slots exist.
+
 For single-court games:
 
 - Show available options as bundles of one court/time.

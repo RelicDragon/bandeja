@@ -342,21 +342,6 @@ export const usersApi = {
     return response.data;
   },
 
-  completeWelcomeScreen: async (answers: string[]) => {
-    const response = await api.post<ApiResponse<User>>('/users/welcome-screen', { answers });
-    return response.data;
-  },
-
-  resetWelcomeScreen: async () => {
-    const response = await api.post<ApiResponse<User>>('/users/welcome-screen/reset');
-    return response.data;
-  },
-
-  skipWelcomeScreen: async () => {
-    const response = await api.post<ApiResponse<User>>('/users/welcome-screen/skip');
-    return response.data;
-  },
-
   getSportQuestionnaireStatus: async (sport: Sport) => {
     try {
       const response = await api.get<ApiResponse<SportQuestionnaireStatus>>(

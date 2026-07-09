@@ -39,26 +39,44 @@
       "unlinkNoCancelHint": "La reserva de pista en el club sigue activa — solo quitamos el vínculo con este partido.",
       "unlinkSaveConfirmTitle": "¿Quitar enlaces de reserva?",
       "unlinkSaveConfirmMessage": "Vas a desvincular {{count}} reserva(s) de este partido. Las reservas reales de pista no se cancelarán automáticamente.",
-      "reservationActionTitle": "Court reservation",
-      "reservationActionSubtitle": "Choose what should happen when you save.",
+      "reservationActionTitle": "Reserva de pista",
+      "reservationActionSubtitle": "Elige qué debe ocurrir al guardar.",
       "reservationAction": {
-        "keepCurrent": { "title": "Keep current reservation", "description": "Preserve the linked reservation(s) and schedule." },
-        "changeGameTimeOnly": { "title": "Change game time only", "description": "Update the game schedule without changing club reservation links." },
-        "useExisting": { "title": "Use existing reservation", "description": "Replace links with reservation(s) from your club account." },
-        "reserveNew": { "title": "Reserve a new court", "description": "Create a new real club reservation when saving." },
-        "unlink": { "title": "Unlink reservation", "description": "Remove reservation links from this game only." },
-        "gameOnly": { "title": "Game only", "description": "Keep the game scheduled without a real reservation link." }
+        "keepCurrent": {
+          "title": "Mantener reserva actual",
+          "description": "Conserva la(s) reserva(s) vinculada(s) y el horario."
+        },
+        "changeGameTimeOnly": {
+          "title": "Cambiar solo horario del partido",
+          "description": "Actualiza el horario del partido sin cambiar los vínculos de reserva."
+        },
+        "useExisting": {
+          "title": "Usar reserva existente",
+          "description": "Sustituye los vínculos por reserva(s) de tu cuenta del club."
+        },
+        "reserveNew": {
+          "title": "Reservar pista nueva",
+          "description": "Crea una nueva reserva real del club al guardar."
+        },
+        "unlink": {
+          "title": "Desvincular reserva",
+          "description": "Quita los vínculos de reserva solo de este partido."
+        },
+        "gameOnly": {
+          "title": "Solo partido",
+          "description": "Mantén el partido programado sin vínculo de reserva real."
+        }
       },
-      "consequenceTitle": "What will happen",
+      "consequenceTitle": "Qué ocurrirá",
       "consequence": {
-        "keepCurrent": "Current reservation links stay attached.",
-        "changeGameTimeOnly": "Game time changes; existing reservation links stay attached.",
-        "useExisting": "{{selected}} reservation(s) will be linked to this game.",
-        "reserveNew": "A new real court reservation will be created on save.",
-        "unlink": "Reservation links will be removed from this game.",
-        "gameOnly": "The game remains scheduled without real reservation links.",
-        "reserveNewConfirm": "You will review the real reservation before saving.",
-        "unlinkNoCancel": "{{count}} real club reservation(s) will remain active unless you cancel them with the club/provider."
+        "keepCurrent": "Los vínculos de reserva actuales se mantienen.",
+        "changeGameTimeOnly": "Cambia el horario del partido; los vínculos de reserva se mantienen.",
+        "useExisting": "Se vincularán {{selected}} reserva(s) a este partido.",
+        "reserveNew": "Se creará una nueva reserva real de pista al guardar.",
+        "unlink": "Se quitarán los vínculos de reserva de este partido.",
+        "gameOnly": "El partido queda programado sin vínculos de reserva real.",
+        "reserveNewConfirm": "Revisarás la reserva real antes de guardar.",
+        "unlinkNoCancel": "{{count}} reserva(s) real(es) del club seguirán activas salvo que las canceles con el club/proveedor."
       }
     },
     "linkedBookings": {

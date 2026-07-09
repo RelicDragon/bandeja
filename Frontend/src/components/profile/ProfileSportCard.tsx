@@ -123,7 +123,7 @@ export function ProfileSportCard({
           </div>
         )}
 
-        {enabled ? (
+        {enabled && onToggleDetails ? (
           <button
             type="button"
             className="mt-auto inline-flex items-center gap-0.5 pt-1 text-[10px] font-medium text-primary-600 dark:text-primary-400"

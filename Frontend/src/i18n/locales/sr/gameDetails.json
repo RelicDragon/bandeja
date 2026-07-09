@@ -39,26 +39,44 @@
       "unlinkNoCancelHint": "Rezervacija terena u klubu ostaje aktivna — uklanjamo samo vezu sa ovom igrom.",
       "unlinkSaveConfirmTitle": "Ukloniti veze rezervacija?",
       "unlinkSaveConfirmMessage": "Uklanjate {{count}} vezu(e) rezervacija sa ovom igrom. Stvarne rezervacije terena se automatski ne otkazuju.",
-      "reservationActionTitle": "Court reservation",
-      "reservationActionSubtitle": "Choose what should happen when you save.",
+      "reservationActionTitle": "Rezervacija terena",
+      "reservationActionSubtitle": "Izaberite šta treba da se desi pri čuvanju.",
       "reservationAction": {
-        "keepCurrent": { "title": "Keep current reservation", "description": "Preserve the linked reservation(s) and schedule." },
-        "changeGameTimeOnly": { "title": "Change game time only", "description": "Update the game schedule without changing club reservation links." },
-        "useExisting": { "title": "Use existing reservation", "description": "Replace links with reservation(s) from your club account." },
-        "reserveNew": { "title": "Reserve a new court", "description": "Create a new real club reservation when saving." },
-        "unlink": { "title": "Unlink reservation", "description": "Remove reservation links from this game only." },
-        "gameOnly": { "title": "Game only", "description": "Keep the game scheduled without a real reservation link." }
+        "keepCurrent": {
+          "title": "Zadrži trenutnu rezervaciju",
+          "description": "Sačuvaj povezane rezervacije i raspored."
+        },
+        "changeGameTimeOnly": {
+          "title": "Promeni samo vreme igre",
+          "description": "Ažuriraj raspored igre bez promene veza rezervacija."
+        },
+        "useExisting": {
+          "title": "Koristi postojeću rezervaciju",
+          "description": "Zameni veze rezervacijama sa tvog naloga kluba."
+        },
+        "reserveNew": {
+          "title": "Rezerviši novi teren",
+          "description": "Kreiraj novu stvarnu rezervaciju kluba pri čuvanju."
+        },
+        "unlink": {
+          "title": "Ukloni vezu rezervacije",
+          "description": "Ukloni veze rezervacija samo sa ove igre."
+        },
+        "gameOnly": {
+          "title": "Samo igra",
+          "description": "Zadrži igru u rasporedu bez veze sa stvarnom rezervacijom."
+        }
       },
-      "consequenceTitle": "What will happen",
+      "consequenceTitle": "Šta će se desiti",
       "consequence": {
-        "keepCurrent": "Current reservation links stay attached.",
-        "changeGameTimeOnly": "Game time changes; existing reservation links stay attached.",
-        "useExisting": "{{selected}} reservation(s) will be linked to this game.",
-        "reserveNew": "A new real court reservation will be created on save.",
-        "unlink": "Reservation links will be removed from this game.",
-        "gameOnly": "The game remains scheduled without real reservation links.",
-        "reserveNewConfirm": "You will review the real reservation before saving.",
-        "unlinkNoCancel": "{{count}} real club reservation(s) will remain active unless you cancel them with the club/provider."
+        "keepCurrent": "Trenutne veze rezervacija ostaju.",
+        "changeGameTimeOnly": "Vreme igre se menja; veze rezervacija ostaju.",
+        "useExisting": "{{selected}} rezervacija će biti povezano sa ovom igrom.",
+        "reserveNew": "Nova stvarna rezervacija terena biće kreirana pri čuvanju.",
+        "unlink": "Veze rezervacija biće uklonjene sa ove igre.",
+        "gameOnly": "Igra ostaje u rasporedu bez veza sa stvarnom rezervacijom.",
+        "reserveNewConfirm": "Pregledaćeš stvarnu rezervaciju pre čuvanja.",
+        "unlinkNoCancel": "{{count}} stvarna rezervacija kluba ostaje aktivna dok je ne otkažeš u klubu/kod provajdera."
       }
     },
     "linkedBookings": {

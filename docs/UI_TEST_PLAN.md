@@ -148,8 +148,8 @@ Frontend/e2e/
 | OG-04 | Gender prompt banner | User without gender set | Banner on home/find; opens `GenderSetModal` |
 | OG-05 | Gender prompt dismiss | Dismiss gender banner | Banner hidden; mixed-gender games may stay limited |
 | OG-06 | City prompt banner | User with auto-city, after sport gate | `CityPromptBanner` on home |
-| OG-07 | Welcome questionnaire | New user, city set | `WelcomeQuestionnairePrompt` shown |
-| OG-08 | Welcome questionnaire skip | Skip welcome flow | `welcomeScreenPassed` set, prompt gone |
+| OG-07 | Sport questionnaire (home) | New user, city set, primary sport | `SportQuestionnairePrompt` on home |
+| OG-08 | Sport questionnaire skip | Dismiss home questionnaire | Padel profile `questionnaireSkippedAt` set; prompt gone |
 | OG-09 | Sport questionnaire | Incomplete per-sport Q | `SportQuestionnairePrompt` on home |
 | OG-10 | Sport questionnaire complete | Finish questionnaire | Prompt removed; levels updated |
 
@@ -449,12 +449,12 @@ Frontend/e2e/
 | C-13s | Club booking scout pool degraded | Unconnected user, empty scout pool | "Live availability unavailable" banner on create-game/club detail |
 | C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
-| C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club + integrated court | Single location & start card: club → date → court → reservation card → auth or duration → time |
-| C-13x | Integrated court opt-out toggle | BOOKTIME club, pick integrated court(s) on unified location & time panel | "Don't book real court" switch + hint animate in; OFF by default (will reserve); ON skips real booking and shows full club time grid (not API-only slots); red external cells selectable; deselect integrated court or pick non-integrated court only → switch animates out |
-| C-14p | Don't select court time grid | BOOKTIME club, tap "Don't select court" | Full club schedule; red external cells selectable and saveable; no bookable-days strip |
-| C-14q | Opt-out save on external overlap | Don't book real court ON; pick slot overlapping red external booking | Save succeeds (info banner ok); no hard-block toast |
-| C-13y | Create-game reserve CTA | Pick integrated court(s), connected, live API, opt-out OFF | CTA "Create game & reserve court" |
-| C-13z | Create-game inline auth gate | Reservation ON, not connected | Date visible; duration/time hidden; phone OTP inline; opt-out reveals normal grid |
+| C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club | Single location & time card: club → **Court reservation** intent picker → date → courts/time or reservation list per intent |
+| C-13x | Reservation intent (integrated club) | BOOKTIME club on create | Four choices: Reserve court now (default), Use existing reservation, Game only; no "Don't book real court" toggle |
+| C-14p | No court yet time grid | BOOKTIME club, intent Game only, tap "No court yet" | Full club schedule; red external cells selectable; bookable-days strip only for Reserve court now |
+| C-14q | Game only on external overlap | Intent Game only; pick slot overlapping red external booking | Save succeeds (info banner ok); no hard-block toast |
+| C-13y | Create-game reserve CTA | Intent Reserve court now; pick integrated court(s), connected, time | CTA "Reserve court and create game" (or "Reserve N courts…" for multi-court) |
+| C-13z | Create-game inline auth gate | Intent Reserve court now or Use existing; not connected | Auth inline in panel; duration/time hidden until connected; Create disabled until signed in |
 | C-14a | Create-game confirm morph | Reservation ON, connected, pick slot → Create | Single dialog: review → reserve → create → success → calendar |
 | C-14b | Create-game bookable days strip | Reservation ON, connected | Date strip only (no calendar); days clamped to club `bookableDays` |
 | C-14c | Create-game no overlap when reserving | Reservation ON | No yellow/red overlay; overlap gate skipped on submit |
@@ -473,23 +473,30 @@ Frontend/e2e/
 | C-14p | Create-game no time slots | Pick club/court/date with zero available slots (or late day with no times left) | No time grid or duration (except BOOKTIME: duration stays to try another length); dashed hint explains no times; no stale selected-slot summary |
 | C-14o | Create-game direct create overlay | Create without reservation pipeline (no integrated book confirm) | Page fades; fullscreen creating overlay; brief success; navigates to calendar |
 | C-14s | Create-game no court camera link | Select court with `webCameraUrl` on create-game | No “watch live” / web camera card below court grid; cameras remain on game details after create |
-| C-14 | Court not booked | Select "Don't book court" | Allowed |
+| C-14 | Court not booked | Intent Game only → "No court yet" | Allowed; summary says no real reservation |
 | C-15 | Court booked | Pick court | Overlap warning if conflict |
 | C-16 | Mark court booked modal | Confirm booking | Court marked |
-| C-17 | Unified location-time panel (integrated club) | Pick BOOKTIME club on create | Single scheduling surface (date, courts, duration, time grid); no "Pick a time" \| "Bookings" segmented switch |
-| C-18 | Integrated court book-on-create | Select integrated court on unified location & time panel | Opt-out toggle; default reserves on create; toggle ON creates game only with full schedule and selectable red cells |
-| C-19 | Reservations strip multi-select | Connected user at BOOKTIME club; reservations on selected date | Court-labeled cards above time grid; live min–max counter; select N per format; linked-game labels informational only |
+| C-17 | Unified location-time panel (integrated club) | Pick BOOKTIME club on create | Intent-first scheduling; no "Pick a time" \| "Bookings" segmented switch; reservations list only when **Use existing reservation** |
+| C-18 | Reserve court now flow | Intent Reserve court now; integrated courts + time | Summary states real reservation; confirm modal on create; no negative opt-out toggle |
+| C-19 | Reservations strip multi-select | Intent Use existing; connected user; reservations on date | Court-labeled cards; live min–max counter; select N per format |
 | C-19a | Reservations strip club TZ display | Create-game at club whose city TZ ≠ Europe/Belgrade | Reservation row wall-clock matches My bookings for same reservation |
-| C-19b | Reservations strip date filter | User has bookings on multiple days; change date on create | Strip shows only reservations for selected date; empty dashed hint when none on that date (no tab-switch CTA) |
+| C-19b | useExisting empty state | Intent Use existing; date with no user reservations | Empty card with copy + **Reserve court now** / **Create game only** buttons switch intent |
 | C-19c | Reservations strip adjacent group | 2+ consecutive same-court slots on selected date | Grouped card; tap selects/deselects all; different courts never group |
-| C-19d | Reservation grid overlay sync | Connected user; reservations on selected date | Green cells on grid for reservation windows; selected reservations stronger green + check; legend under time label; tap unambiguous green cell toggles matching card; tap ambiguous green cell (2+ courts) highlights cards without auto-select; tap free gray cell clears linked selections and sets manual time |
-| C-19e | Booking link hint card | Select 1+ reservations on unified panel | Green hint card below time grid lists each court + window; confirms game will link; shared-reservation game names shown without blocking |
-| C-19f | Schedule sync from reservations | Select reservation(s) | Form date, time, duration, and court chips update from booking union; book-on-create hint hidden |
-| C-19g | Multi-court link create | Select 2 reservations on different courts; create | Game persists 2 linked bookings and both court IDs; no book confirm modal |
-| C-20 | Override time when linking | Select reservation(s); toggle adjust game time | Expand animates; form duration/time update; create uses shorter window within reservation bounds |
-| C-21 | Multi-court confirm 2 steps | 2 integrated courts → Create | Stepper: 2 reserve steps + create; rollback on fail |
-| C-22 | Deep link bookingIds | `?bookingIds=uuid` (legacy `locationTimeMode=bookings` OK) | Unified surface; reservation card + grid selected; preselected banner; correct date |
-| C-22a | Adjacent reservations strip group | Create game with 2+ consecutive same-court slots in reservations strip | Adjacent slots shown as one grouped card; tap selects all slots and reveals per-slot rows; deselect respects min selection |
+| C-19d | Reservation grid overlay sync | Intent Use existing; reservations on selected date | Green cells on grid; selected reservations stronger green + check; legend under time label |
+| C-19e | Booking link hint card | Intent Use existing; select 1+ reservations | Green hint card lists each court + window |
+| C-19f | Schedule sync from reservations | Intent Use existing; select reservation(s) | Form date, time, duration, court chips update from booking union |
+| C-19g | Multi-court link create | Intent Use existing; select 2 reservations on different courts | Game persists 2 linked bookings and both court IDs; no book confirm modal |
+| C-20 | Override time when linking | Intent Use existing; toggle adjust game time | Expand animates; create uses shorter window within reservation bounds |
+| C-21 | Multi-court confirm 2 steps | Intent Reserve court now; 2 integrated courts → Create | Stepper: 2 reserve steps + create; rollback on fail |
+| C-22 | Deep link bookingIds | `?bookingIds=uuid` | Intent defaults to Use existing; preselected banner; grid selected; create without book confirm |
+| C-22a | Adjacent reservations strip group | Use existing with 2+ consecutive same-court slots | Grouped card; tap selects all; deselect respects min selection |
+| C-14t | Multi-court shared slot hint | Intent Reserve court now; 2 courts selected; no intersecting Booktime slots | Amber hint: try different courts, date, or duration |
+| C-14u | Create validation toasts | Submit without court/time/auth per intent | Inline toast + scroll to location section (not silent abort) |
+| C-14v | Edit keep current reservation | Edit game with linked bookings | Default **Keep current reservation**; read-only linked list + consequence summary; no reservation picker |
+| C-14w | Edit reservation actions | Edit integrated game | Actions: keep current, change time only, use existing, reserve new, unlink, game only; picker only for use existing |
+| C-14x | Edit unlink save | Edit → Unlink reservation → Save | Consequence warns club reservation stays active + policy; confirm before save |
+| C-14y | useExisting empty state | Intent Use existing; selected date has no club bookings | Empty card with hint + **Reserve court now** / **Game only** actions (not blank strip) |
+| C-14z | Edit multi-court shared slot hint | Edit integrated game → Reserve new; 2 courts; no intersecting slots | Amber hint: try different courts, date, or duration |
 | C-24 | Date/time | Change start + duration | End time updates |
 | C-25 | Level range slider | Adjust range | Min ≤ max |
 | C-26 | Max participants | Change count | Roster options update |

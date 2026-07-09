@@ -42,6 +42,10 @@ import { computePendingBookingUnlinks } from '@/components/gameLocationTime/comp
 import { shouldUseBooktimeTimeOptions } from '@/hooks/createGameBookingFlow/shouldUseBooktimeTimeOptions';
 import { courtMatchesSportFilter } from '@/utils/courtSport';
 import { computeMaxSelectableCourts, computeRequiredCourtCount } from '@/utils/requiredCourtCount';
+import {
+  resolveEditReservationValidation,
+  resolveReservationValidationMessage,
+} from '@shared/gameBooking/reservationIntent';
 import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price' | 'settings';
@@ -169,6 +173,7 @@ export const EditGameInfoModal = ({
   const prevIsOpenRef = useRef(false);
   const fetchAbortRef = useRef<AbortController | null>(null);
   const contentScrollRef = useRef<HTMLDivElement>(null);
+  const locationTimePanelRef = useRef<HTMLDivElement>(null);
 
   const whenInitialValues = useMemo(
     () => ({
@@ -563,40 +568,52 @@ export const EditGameInfoModal = ({
     return true;
   };
 
+  const scrollToLocationTimeValidationTarget = useCallback(() => {
+    setActiveTab('locationTime');
+    requestAnimationFrame(() => {
+      const panel = locationTimePanelRef.current;
+      if (!panel) return;
+      panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      panel.classList.add('error-bounce');
+      window.setTimeout(() => {
+        panel.classList.remove('error-bounce');
+      }, 2000);
+    });
+  }, []);
+
   const handleSave = async () => {
     if (!game.id) return;
     if (!validatePrice()) {
       toast.error(t('createGame.priceRequired', { defaultValue: 'Price must be greater than 0 for this price type' }));
       return;
     }
-    if (
-      needsBooktimeAuth &&
-      (locationTimeDraft?.editReservationAction === 'reserveNew' ||
-        locationTimeDraft?.editReservationAction === 'useExisting')
-    ) {
-      toast.error(t('createGame.booktime.signInToContinue'));
-      return;
-    }
-    if (
-      locationTimeDraft?.editReservationAction === 'reserveNew' &&
-      selectedCourtIds.length < requiredReservationCount
-    ) {
-      toast.error(t('createGame.reservationIntent.validation.selectCourt', { count: requiredReservationCount }));
-      return;
-    }
-    if (
-      locationTimeDraft?.editReservationAction === 'reserveNew' &&
-      (locationTimeDraft.integratedCourtIds.length ?? 0) < requiredReservationCount
-    ) {
-      toast.error(t('createGame.reservationIntent.validation.selectBookableCourt', { count: requiredReservationCount }));
-      return;
-    }
-    if (
-      locationTimeDraft?.editReservationAction === 'reserveNew' &&
-      !whenSelectedTime
-    ) {
-      toast.error(t('createGame.reservationIntent.validation.selectTime'));
-      return;
+
+    const editAction = locationTimeDraft?.editReservationAction;
+    const requiresSchedule =
+      editAction === 'changeGameTimeOnly' ||
+      editAction === 'reserveNew' ||
+      editAction === 'unlink' ||
+      editAction === 'gameOnly';
+
+    if (editAction) {
+      const validation = resolveEditReservationValidation({
+        action: editAction,
+        needsBooktimeAuth,
+        selectedBookingCount: locationTimeDraft?.selectedBookingIds.length ?? 0,
+        selectedBookingRecordsCount: locationTimeDraft?.selectedBookingRecords.length ?? 0,
+        selectedCourtCount: selectedCourtIds.length,
+        integratedCourtCount: locationTimeDraft?.integratedCourtIds.length ?? 0,
+        bookingSelectionMin: requiredReservationCount,
+        selectedTime: whenSelectedTime || undefined,
+        duration: whenDuration || undefined,
+        requiresSchedule,
+      });
+      if (!validation.ok) {
+        const message = resolveReservationValidationMessage(validation, requiredReservationCount);
+        toast.error(t(message.key, message.values));
+        scrollToLocationTimeValidationTarget();
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -866,6 +883,7 @@ export const EditGameInfoModal = ({
                     />
                   ) : null
                 }
+                panelRef={locationTimePanelRef}
               />
               <WeatherPreviewCard
                 cityId={weatherPreviewTiming?.cityId}

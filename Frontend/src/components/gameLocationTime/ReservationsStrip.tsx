@@ -16,6 +16,7 @@ import { buildSelectedBookingRecordsSyncKey } from '@/components/gameLocationTim
 import { resolveBookingSelectionAfterDeselect } from '@/components/gameLocationTime/resolveBookingSelectionAfterDeselect';
 import { useReservationGridSync } from '@/components/gameLocationTime/useReservationGridSync';
 import { pruneSelectedBookingsToAvailable } from './pruneSelectedBookingsToAvailable';
+import { ExistingReservationEmptyState } from './ExistingReservationEmptyState';
 
 type ReservationsStripProps = {
   club: Club;
@@ -32,6 +33,8 @@ type ReservationsStripProps = {
   onToggleBooking: (bookingId: string) => void;
   selectionLimits: BookingSelectionLimits;
   onDerivedTimeChange?: (start: string | null, end: string | null) => void;
+  onEmptyReserveNow?: () => void;
+  onEmptyGameOnly?: () => void;
 };
 
 function ReservationRowWithLinkedGames({
@@ -114,6 +117,8 @@ export function ReservationsStrip({
   onToggleBooking,
   selectionLimits,
   onDerivedTimeChange,
+  onEmptyReserveNow,
+  onEmptyGameOnly,
 }: ReservationsStripProps) {
   const { t } = useTranslation();
   const gridSync = useReservationGridSync();
@@ -230,7 +235,19 @@ export function ReservationsStrip({
   }
 
   if (dateBookings.length === 0) {
-    return null;
+    if (!loaded) {
+      return (
+        <p className="text-sm text-gray-500 dark:text-gray-400 py-2">
+          {t('common.loading')}
+        </p>
+      );
+    }
+    return (
+      <ExistingReservationEmptyState
+        onReserveNow={onEmptyReserveNow}
+        onGameOnly={onEmptyGameOnly}
+      />
+    );
   }
 
   return (

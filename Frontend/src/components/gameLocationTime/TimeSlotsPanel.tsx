@@ -13,6 +13,7 @@ type TimeSlotsPanelProps = {
   authGateSection?: ReactNode;
   summarySection?: ReactNode;
   consequenceSection?: ReactNode;
+  linkedReservationsSection?: ReactNode;
   needsBooktimeAuth?: boolean;
   showTimeSlots?: boolean;
 };
@@ -21,6 +22,7 @@ export function TimeSlotsPanel({
   dateSection,
   clubSection,
   intentSection,
+  linkedReservationsSection,
   courtSection,
   timeSlotsChildren,
   reservationsStrip,
@@ -38,6 +40,7 @@ export function TimeSlotsPanel({
       {dateSection}
       {clubSection}
       {intentSection}
+      {linkedReservationsSection}
       {courtSection}
       {authGateSection}
       {!needsBooktimeAuth ? reservationsStrip : null}

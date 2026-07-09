@@ -19,6 +19,8 @@
     "courtNotSelected": "Корт не выбран",
     "hallNotSelected": "Зал не выбран",
     "multiCourtHint": "Выберите до {{count}} кортов для {{participants}} игроков (выбрано {{selected}})",
+    "multiCourtNeedSharedSlots": "Выберите {{count}} кортов, свободных в одно и то же время.",
+    "multiCourtNoSharedSlots": "Нет общего свободного времени для всех {{count}} выбранных кортов. Попробуйте другие корты, дату или длительность.",
     "webCameraHint": "На этом корте есть подключённая веб-камера",
     "webCameraHintsTitle": "Подключённые веб-камеры",
     "webCameraHintNamed": "На корте {{court}} есть подключённая веб-камера",
@@ -402,6 +404,9 @@
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Выберите {{min}}–{{max}} броней ({{players}} игроков)",
       "emptyBookingsOnDate": "Нет броней на эту дату",
+      "emptyBookingsHint": "Выберите другую дату, забронируйте корт или создайте игру без привязки брони.",
+      "emptyBookingsReserveNow": "Забронировать корт",
+      "emptyBookingsGameOnly": "Создать только игру",
       "gridLegend": "Зелёный = ваша бронь · Красный/жёлтый = занято · Основной = выбранное время",
       "alsoUsedIn": "Также используется в: {{games}}",
       "linkHintTitle": "Игра будет связана с вашими бронированиями",
@@ -419,31 +424,58 @@
       "syncInactiveEdit": "Синхронизация сейчас не активна — мы не можем получить слоты и забронировать корт. Вы всё равно можете изменить игру на это время."
     },
     "reservationIntent": {
-      "title": "Court reservation",
-      "subtitle": "Choose what should happen with the real club court.",
-      "recommended": "Recommended",
+      "title": "Бронирование корта",
+      "subtitle": "Выберите, что должно произойти с реальной бронью в клубе.",
+      "recommended": "Рекомендуется",
       "validation": {
-        "selectCourt": "Select {{count}} court(s) first.",
-        "selectBookableCourt": "Select {{count}} online-bookable court(s) first.",
-        "selectTime": "Select an available time first."
+        "selectCourt": "Сначала выберите {{count}} корт(а).",
+        "selectBookableCourt": "Сначала выберите {{count}} корт(а) с онлайн-бронированием.",
+        "selectTime": "Сначала выберите доступное время.",
+        "selectDuration": "Сначала выберите длительность.",
+        "selectReservations": "Выберите {{count}} бронирование(й) из вашего аккаунта.",
+        "bookingRecordsLoading": "Загружаем детали бронирований — подождите и попробуйте снова."
       },
-      "reserveNow": { "title": "Reserve court now", "description": "Pick available court time and the app will reserve it when you create." },
-      "useExisting": { "title": "Use existing reservation", "description": "Link reservation(s) already in your club account." },
-      "gameOnly": { "title": "Game only", "description": "Create the game without making or marking a real court reservation." },
-      "manualBooked": { "title": "Already booked manually", "description": "Mark the game as booked without using the online reservation integration." },
+      "reserveNow": {
+        "title": "Забронировать корт сейчас",
+        "description": "Выберите свободное время и корт — приложение забронирует при создании игры."
+      },
+      "useExisting": {
+        "title": "Использовать существующую бронь",
+        "description": "Привязать бронь(и), которые уже есть в вашем аккаунте клуба."
+      },
+      "gameOnly": {
+        "title": "Только игра",
+        "description": "Создать игру без реальной брони или отметки «корт забронирован»."
+      },
+      "manualBooked": {
+        "title": "Уже забронировано вручную",
+        "description": "Отметить игру как забронированную без онлайн-интеграции."
+      },
       "summary": {
-        "reserveNow": { "title": "A real court reservation will be made", "body": "Select {{count}} court(s), duration, and time. That exact schedule will be reserved." },
-        "useExisting": { "title": "Game will link to your reservation(s)", "body": "{{selected}} of {{count}} required reservation(s) selected." },
-        "gameOnly": { "title": "No real court reservation will be made", "body": "The game will be scheduled in Bandeja only." },
-        "manualBooked": { "title": "Game will be marked as booked", "body": "No online reservation will be created." }
+        "reserveNow": {
+          "title": "Будет создана реальная бронь корта",
+          "body": "Выберите {{count}} корт(ов), длительность и время. Будет забронировано именно это расписание."
+        },
+        "useExisting": {
+          "title": "Игра будет привязана к вашей брони",
+          "body": "Выбрано {{selected}} из {{count}} необходимых бронирований."
+        },
+        "gameOnly": {
+          "title": "Реальная бронь корта не создаётся",
+          "body": "Игра будет запланирована только в Bandeja."
+        },
+        "manualBooked": {
+          "title": "Игра будет отмечена как забронированная",
+          "body": "Онлайн-бронь не создаётся."
+        }
       },
       "cta": {
-        "reserveOne": "Reserve court and create game",
-        "reserveMany": "Reserve {{count}} courts and create game",
-        "linkOne": "Link reservation and create game",
-        "linkMany": "Link {{count}} reservations and create game",
-        "gameOnly": "Create game only",
-        "manualBooked": "Create game"
+        "reserveOne": "Забронировать корт и создать игру",
+        "reserveMany": "Забронировать {{count}} кортов и создать игру",
+        "linkOne": "Привязать бронь и создать игру",
+        "linkMany": "Привязать {{count}} броней и создать игру",
+        "gameOnly": "Создать только игру",
+        "manualBooked": "Создать игру"
       }
     },
     "booktime": {

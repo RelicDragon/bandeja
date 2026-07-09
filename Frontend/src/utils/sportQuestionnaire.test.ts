@@ -98,7 +98,6 @@ describe('sportQuestionnaire skip gating', () => {
       sportProfiles: [
         { sport: 'PADEL', level: 1, reliability: 0, gamesPlayed: 0, gamesWon: 0, levelSource: 'DEFAULT' },
       ],
-      welcomeScreenPassed: true,
     });
     expect(
       shouldSuggestSportQuestionnaire(user, 'PADEL', {

@@ -17,7 +17,6 @@ function displayedChatsDefaults() {
   return {
     unreadStoreWarm: false,
     displayedByContext: {},
-    marketUnreadCounts: {},
   };
 }
 
@@ -112,10 +111,31 @@ describe('deriveDisplayedChats', () => {
         [contextKey('GAME', 'g1')]: 0,
         [contextKey('USER', 'dm')]: 2,
       },
-      marketUnreadCounts: {},
     });
     expect(displayed).toHaveLength(1);
     expect(displayed[0]?.type === 'user' && displayed[0].data.id).toBe('dm');
+  });
+
+  it('excludes market channels hidden from displayedByContext despite byContext unread', () => {
+    const threads = [
+      marketChannel('stale-muted', 3, 'buyer'),
+      marketChannel('active', 2, 'buyer'),
+    ];
+    const displayed = deriveDisplayedChats({
+      chatsFilter: 'market',
+      threads,
+      unreadFilterActive: true,
+      marketChatRole: 'buyer',
+      debouncedSearchQuery: '',
+      userId: 'me',
+      unreadStoreWarm: true,
+      displayedByContext: {
+        [contextKey('GROUP', 'active')]: 2,
+      },
+      marketUnreadCounts: {},
+    });
+    expect(displayed).toHaveLength(1);
+    expect(displayed[0]?.type === 'channel' && displayed[0].data.id).toBe('active');
   });
 });
 

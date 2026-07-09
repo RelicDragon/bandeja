@@ -56,7 +56,7 @@ describe('resolveCreateGameBookingAction', () => {
         selectedBookingRecordsCount: 0,
         bookingSelectionMin: 1,
       }),
-    ).toEqual({ status: 'abort' });
+    ).toEqual({ status: 'abort', reason: 'bookingRecordsLoading' });
   });
 
   it('skip-real-court proceeds like manual create', () => {
@@ -79,7 +79,7 @@ describe('resolveCreateGameBookingAction', () => {
         selectedCourt: 'court-1',
         selectedCourtCount: 1,
       }),
-    ).toEqual({ status: 'abort' });
+    ).toEqual({ status: 'abort', reason: 'integratedCourtSelectionRequired' });
   });
 
   it('falls back to manual create when auth is required for book-on-create', () => {
