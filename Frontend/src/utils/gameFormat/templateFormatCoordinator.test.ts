@@ -91,7 +91,7 @@ describe('templateFormatCoordinator', () => {
       });
       const inferred = inferTemplateFromFormat(PADEL_CTX, format);
       expect(inferred.templateId).toBe('PADEL_AUTOMATIC');
-      expect(inferred.intent).toBe('social');
+      expect(inferred.intent).toBe('match');
     });
 
     it('infers padel americano from POINTS_32 automatic format at 4 players', () => {

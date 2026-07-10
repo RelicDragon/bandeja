@@ -72,31 +72,31 @@ function MotionOption({
       whileTap={disabled || reduceMotion ? undefined : { scale: 0.985 }}
       className={`relative w-full rounded-lg border p-3 text-left transition-colors ${optionClass(selected, disabled)}`}
     >
-      <span className="flex items-start justify-between gap-3">
-        <span className="min-w-0">
-          <span className="block text-sm font-semibold">{title}</span>
-          <span className="mt-1 block text-xs leading-snug text-gray-600 dark:text-gray-400">
-            {description}
+      <span className="block">
+        <span className="flex items-center justify-between gap-3">
+          <span className="min-w-0 text-sm font-semibold">{title}</span>
+          <span className="flex shrink-0 items-center gap-1">
+            {badge ? (
+              <span className="rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-900/60 dark:text-primary-200">
+                {badge}
+              </span>
+            ) : null}
+            <AnimatePresence initial={false}>
+              {selected ? (
+                <motion.span
+                  key="selected"
+                  initial={reduceMotion ? false : { opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={reduceMotion ? undefined : { opacity: 0, scale: 0.8 }}
+                >
+                  <CheckCircle2 size={18} className="text-primary-600 dark:text-primary-300" />
+                </motion.span>
+              ) : null}
+            </AnimatePresence>
           </span>
         </span>
-        <span className="flex shrink-0 items-center gap-1">
-          {badge ? (
-            <span className="rounded-full bg-primary-100 px-2 py-0.5 text-[10px] font-semibold text-primary-700 dark:bg-primary-900/60 dark:text-primary-200">
-              {badge}
-            </span>
-          ) : null}
-          <AnimatePresence initial={false}>
-            {selected ? (
-              <motion.span
-                key="selected"
-                initial={reduceMotion ? false : { opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={reduceMotion ? undefined : { opacity: 0, scale: 0.8 }}
-              >
-                <CheckCircle2 size={18} className="text-primary-600 dark:text-primary-300" />
-              </motion.span>
-            ) : null}
-          </AnimatePresence>
+        <span className="mt-1 block text-xs leading-snug text-gray-600 dark:text-gray-400">
+          {description}
         </span>
       </span>
     </motion.button>
@@ -113,9 +113,6 @@ export function ReservationIntentPicker({ value, options, onChange }: IntentPick
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
           {t('createGame.reservationIntent.title')}
         </h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {t('createGame.reservationIntent.subtitle')}
-        </p>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {INTENT_ORDER.map((id) => {

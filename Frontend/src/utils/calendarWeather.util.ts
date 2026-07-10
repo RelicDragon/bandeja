@@ -3,6 +3,7 @@ import {
   compareDayKeys,
   dateKeyInTimezone,
   groupWeatherHoursByDay,
+  localHourInTimezone,
   maxForecastDayKey,
   pickRepresentativeWeatherHour,
   trimTrailingIncompleteWeatherDayGroups,
@@ -115,6 +116,36 @@ export function buildCalendarWeatherByDay(params: {
     const weather = calendarDayWeatherFromDay(day);
     if (weather) map.set(dayKey, weather);
   });
+
+  return map;
+}
+
+export function buildTimeSlotWeatherByTime(params: {
+  times: string[];
+  hours: WeatherHourlyPoint[];
+  timezone: string;
+  stale?: boolean;
+}): Map<string, CalendarDayWeather> {
+  const map = new Map<string, CalendarDayWeather>();
+  const { times, hours, timezone, stale = false } = params;
+  if (times.length === 0 || hours.length === 0) return map;
+
+  const hourIndex = new Map<number, WeatherHourlyPoint>();
+  for (const point of hours) {
+    const localHour = localHourInTimezone(point.time, timezone);
+    if (!hourIndex.has(localHour)) {
+      hourIndex.set(localHour, point);
+    }
+  }
+
+  for (const time of times) {
+    const [hoursPart] = time.split(':').map(Number);
+    if (!Number.isFinite(hoursPart)) continue;
+    const point = hourIndex.get(hoursPart);
+    if (!point) continue;
+    const weather = calendarDayWeatherFromPoint(point, stale);
+    if (weather) map.set(time, weather);
+  }
 
   return map;
 }

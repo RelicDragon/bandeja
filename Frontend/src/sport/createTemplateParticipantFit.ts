@@ -117,7 +117,13 @@ export function pickDefaultTemplateId(
     }
   }
   if (entityType === 'LEAGUE') {
-    const matchTier = list.find((t) => t.tier === 'match');
+    const leagueDefault = list.find((t) => t.id === 'PADEL_BEST_OF_3');
+    const matchTier =
+      leagueDefault ??
+      list.find(
+        (t) =>
+          t.tier === 'match' && t.id !== 'PADEL_AUTOMATIC' && t.id !== 'PADEL_SINGLES_AUTOMATIC',
+      );
     return matchTier?.id ?? list[0]?.id ?? null;
   }
   return list[0]?.id ?? null;

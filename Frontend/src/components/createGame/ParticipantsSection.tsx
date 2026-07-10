@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { UserPlus, Users2, Plus, Trophy, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button, PlayerAvatar, RangeSlider } from '@/components';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { BasicUser } from '@/types';
 import { EntityType } from '@/types';
 import {
@@ -60,7 +61,11 @@ export const ParticipantsSection = ({
   onPlayerLevelRangeChange,
 }: ParticipantsSectionProps) => {
   const { t } = useTranslation();
+  const reduceMotion = usePrefersReducedMotion();
   const [isLevelExpanded, setIsLevelExpanded] = useState(false);
+  const levelExpandTransition = reduceMotion
+    ? { duration: 0 }
+    : { duration: 0.32, ease: [0.21, 0.47, 0.32, 0.98] as const };
   const tournamentSlots = tournamentParticipantOptions(user);
   const gameLeagueSlots = gameLeagueRosterOptions(user);
   const trainingSlots = trainingParticipantOptions();
@@ -170,23 +175,37 @@ export const ParticipantsSection = ({
                   <span className="text-xs font-semibold px-2 py-1 rounded-full bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
                     {playerLevelRange[0].toFixed(1)} - {playerLevelRange[1].toFixed(1)}
                   </span>
-                  <ChevronDown
-                    size={16}
-                    className={`text-gray-500 transition-transform ${isLevelExpanded ? 'rotate-180' : ''}`}
-                  />
+                  <motion.span
+                    animate={{ rotate: isLevelExpanded ? 180 : 0 }}
+                    transition={levelExpandTransition}
+                    className="text-gray-500"
+                  >
+                    <ChevronDown size={16} />
+                  </motion.span>
                 </div>
               </button>
-              {isLevelExpanded && (
-                <div className="mt-3">
-                  <RangeSlider
-                    min={1.0}
-                    max={7.0}
-                    value={playerLevelRange}
-                    onChange={onPlayerLevelRangeChange}
-                    step={0.1}
-                  />
-                </div>
-              )}
+              <AnimatePresence initial={false}>
+                {isLevelExpanded ? (
+                  <motion.div
+                    key="player-level-slider"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={levelExpandTransition}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3">
+                      <RangeSlider
+                        min={1.0}
+                        max={7.0}
+                        value={playerLevelRange}
+                        onChange={onPlayerLevelRangeChange}
+                        step={0.1}
+                      />
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </div>
           )}
         {showRosterSelector && (

@@ -14,6 +14,9 @@ import {
   SELECTION_TINT_OVERLAY_CLASS,
   shouldShowGameTimeSelectionCheck,
 } from '@/components/createGame/timeSlotCellStyles';
+import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
+import { MonthCalendarWeatherToggle } from '@/components/MonthCalendarWeatherToggle';
+import type { CalendarDayWeather } from '@/utils/calendarWeather.util';
 
 interface BookedSlotInfo {
   courtName: string | null;
@@ -45,6 +48,11 @@ interface CreateGameTimeSlotsProps {
   getDurationLabel: (dur: number) => string;
   availabilityOverlay?: ReactNode;
   availabilityOverlayLoading?: boolean;
+  weatherByTime?: Map<string, CalendarDayWeather>;
+  weatherLocale?: string;
+  weatherMode?: boolean;
+  weatherToggleDisabled?: boolean;
+  onWeatherModeToggle?: () => void;
 }
 
 function parseTime(timeStr: string): number {
@@ -119,6 +127,11 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
   getDurationLabel,
   availabilityOverlay,
   availabilityOverlayLoading = false,
+  weatherByTime,
+  weatherLocale,
+  weatherMode = false,
+  weatherToggleDisabled = false,
+  onWeatherModeToggle,
 }: CreateGameTimeSlotsProps) {
   const { t } = useTranslation();
   const reservationGrid = useReservationGridSync();
@@ -142,17 +155,30 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
     () => (bookedSlotInfo && bookedSlotInfo.length > 0 ? groupBookedSlots(bookedSlotInfo) : []),
     [bookedSlotInfo],
   );
+  const showWeatherPills = Boolean(
+    weatherMode && weatherByTime && weatherLocale && weatherByTime.size > 0,
+  );
 
   return (
     <div>
-      <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
-        {t('createGame.selectTime')}
-        {timezoneLabel ? (
-          <span className="ml-2 text-gray-500 dark:text-gray-500 font-normal">
-            ({t('createGame.clubTime')} {timezoneLabel})
-          </span>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          {t('createGame.selectTime')}
+          {timezoneLabel ? (
+            <span className="ml-2 text-gray-500 dark:text-gray-500 font-normal">
+              ({t('createGame.clubTime')} {timezoneLabel})
+            </span>
+          ) : null}
+        </label>
+        {onWeatherModeToggle ? (
+          <MonthCalendarWeatherToggle
+            active={weatherMode}
+            disabled={weatherToggleDisabled}
+            onClick={onWeatherModeToggle}
+            compact
+          />
         ) : null}
-      </label>
+      </div>
       {showReservationLegend ? (
         <p className="text-[10px] leading-snug text-gray-500 dark:text-gray-400 mb-2">
           {t('createGame.locationTime.gridLegend')}
@@ -176,7 +202,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-6 gap-1.5 p-1">
+            <div className={`grid grid-cols-6 gap-1.5 p-1 ${showWeatherPills ? 'pb-3' : ''}`}>
               {times.map((time) => {
                 const isSelected = selectedTime === time;
                 const isHighlighted = entityType !== 'BAR' ? isSlotHighlighted(time) : false;
@@ -186,6 +212,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                 const isExternallyBooked = isBooked && hasExternallyBookedSlot(time);
                 const isHardBlocked = isBooked && isSlotHardBlocked(time);
                 const reservationCell = reservationCellMap?.[time] ?? null;
+                const slotWeather = weatherByTime?.get(time) ?? null;
 
                 const blockHardBookedSlot = hideOccupancyOverlay && isHardBlocked;
                 const isInSelectedRange =
@@ -226,7 +253,7 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                     type="button"
                     disabled={entityType !== 'BAR' && blockHardBookedSlot}
                     onClick={handleTimeClick}
-                    className={`relative overflow-hidden w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${resolveOccupancyCellClasses(
+                    className={`relative overflow-visible w-full h-10 flex items-center justify-center rounded-lg font-medium text-xs transition-all ${resolveOccupancyCellClasses(
                       {
                         isBooked,
                         allUnconfirmed,
@@ -255,6 +282,14 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
                       </span>
                     ) : null}
                     <span className="relative z-[1]">{time}</span>
+                    {showWeatherPills && slotWeather ? (
+                      <MonthCalendarWeatherPill
+                        weather={slotWeather}
+                        locale={weatherLocale!}
+                        selected={showGameTimeSelection}
+                        muted={isBooked || blockHardBookedSlot}
+                      />
+                    ) : null}
                   </button>
                 );
               })}

@@ -30,6 +30,7 @@
     "selectCourt": "Выбрать корт",
     "selectHall": "Выбрать зал",
     "selectClubFirst": "Сначала выберите клуб",
+    "selectCourtFirst": "Сначала выберите корт",
     "clubCancellationNotice": "Уведомление об отмене: не менее чем за {{hours}} ч до слота.",
     "clubPolicyTitle": "Правила клуба",
     "noClubsAvailable": "Нет доступных клубов",
@@ -151,6 +152,7 @@
       }
     },
     "fixedTeams": {
+      "optionOff": "Ротация",
       "GAME": {
         "descriptionOn": "Один напарник на все матчи этой игры.",
         "descriptionOff": "Пары могут меняться от раунда к раунду."
@@ -183,6 +185,7 @@
     "gameNamePlaceholderTournament": "Придумайте название турнира",
     "gameNamePlaceholderLeague": "Придумайте название лиги",
     "gameNamePlaceholderTraining": "Придумайте название тренировки",
+    "miscellaneous": "Разное",
     "description": "Описание",
     "descriptionPlaceholder": "Описание для участников",
     "descriptionPlaceholderTournament": "Описание для участников",
@@ -425,7 +428,6 @@
     },
     "reservationIntent": {
       "title": "Бронирование корта",
-      "subtitle": "Выберите, что должно произойти с реальной бронью в клубе.",
       "recommended": "Рекомендуется",
       "validation": {
         "selectCourt": "Сначала выберите {{count}} корт(а).",

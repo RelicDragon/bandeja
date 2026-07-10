@@ -13,6 +13,7 @@ describe('calendarWeatherModeStorage', () => {
     });
 
     expect(readCalendarWeatherMode('my')).toBe(false);
+    expect(readCalendarWeatherMode('timeSlots')).toBe(true);
   });
 
   it('persists enabled state', () => {

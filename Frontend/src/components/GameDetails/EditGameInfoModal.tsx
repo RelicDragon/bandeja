@@ -47,6 +47,7 @@ import {
   resolveReservationValidationMessage,
 } from '@shared/gameBooking/reservationIntent';
 import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
+import { ClubPoliciesBlock } from '@/components/createGame/ClubPoliciesBlock';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 export type EditGameInfoTabId = 'general' | 'locationTime' | 'price' | 'settings';
 export type EditGameInfoInitialTabId = EditGameInfoTabId | 'where' | 'when';
@@ -376,6 +377,13 @@ export const EditGameInfoModal = ({
         locationTimeDraft?.editReservationAction === 'reserveNew' ||
         locationTimeDraft?.editReservationAction === 'useExisting'),
   );
+  const showClubPoliciesFooter =
+    game.entityType !== 'BAR' &&
+    Boolean(selectedClubData) &&
+    !needsBooktimeAuth &&
+    Boolean(
+      selectedClubData?.policyText?.trim() || selectedClubData?.cancellationNoticeHours,
+    );
   const reserveNewEditActive = locationTimeDraft?.editReservationAction === 'reserveNew';
   const booktimeScheduleConstrained =
     (reserveNewEditActive || willBookOnEdit) && !needsBooktimeAuth;
@@ -885,14 +893,23 @@ export const EditGameInfoModal = ({
                 }
                 panelRef={locationTimePanelRef}
               />
-              <WeatherPreviewCard
-                cityId={weatherPreviewTiming?.cityId}
-                startTime={weatherPreviewTiming?.startTime}
-                endTime={weatherPreviewTiming?.endTime}
-                enabled={game.entityType !== 'BAR'}
-                locale={displaySettings.locale}
-                hour12={displaySettings.hour12}
-              />
+              {showClubPoliciesFooter || weatherPreviewTiming ? (
+                <div className="space-y-3">
+                  {showClubPoliciesFooter && selectedClubData ? (
+                    <ClubPoliciesBlock club={selectedClubData} entityType={game.entityType} />
+                  ) : null}
+                  {weatherPreviewTiming ? (
+                    <WeatherPreviewCard
+                      cityId={weatherPreviewTiming.cityId}
+                      startTime={weatherPreviewTiming.startTime}
+                      endTime={weatherPreviewTiming.endTime}
+                      enabled={game.entityType !== 'BAR'}
+                      locale={displaySettings.locale}
+                      hour12={displaySettings.hour12}
+                    />
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           )}
           {activeTab === 'price' && (

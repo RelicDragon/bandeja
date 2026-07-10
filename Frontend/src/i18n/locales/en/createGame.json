@@ -31,6 +31,7 @@
     "selectCourt": "Select Court",
     "selectHall": "Select Hall",
     "selectClubFirst": "Select club first",
+    "selectCourtFirst": "Select a court first",
     "clubCancellationNotice": "Cancellation notice: at least {{hours}} hours before your slot.",
     "clubPolicyTitle": "Club policies",
     "noClubsAvailable": "No clubs available",
@@ -153,6 +154,7 @@
       }
     },
     "fixedTeams": {
+      "optionOff": "Rotating",
       "GAME": {
         "descriptionOn": "Keep the same partner for every match in this game.",
         "descriptionOff": "Partners can change from round to round."
@@ -185,6 +187,7 @@
     "gameNamePlaceholderTournament": "Name your tournament",
     "gameNamePlaceholderLeague": "Name your league",
     "gameNamePlaceholderTraining": "Name your session",
+    "miscellaneous": "Miscellaneous",
     "description": "Description",
     "descriptionPlaceholder": "Description for players…",
     "descriptionPlaceholderTournament": "Description for players…",
@@ -282,7 +285,6 @@
     },
     "reservationIntent": {
       "title": "Court reservation",
-      "subtitle": "Choose what should happen with the real club court.",
       "recommended": "Recommended",
       "validation": {
         "selectCourt": "Select {{count}} court(s) first.",

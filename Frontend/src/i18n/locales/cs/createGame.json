@@ -30,6 +30,7 @@
     "selectCourt": "Vybrat kurt",
     "selectHall": "Vybrat halu",
     "selectClubFirst": "Nejprve vyberte klub",
+    "selectCourtFirst": "Nejprve vyberte kurt",
     "clubCancellationNotice": "Storno podmínky: alespoň {{hours}} hodin před termínem.",
     "clubPolicyTitle": "Pravidla klubu",
     "noClubsAvailable": "Žádné kluby k dispozici",
@@ -151,6 +152,7 @@
       }
     },
     "fixedTeams": {
+      "optionOff": "Rotace",
       "GAME": {
         "descriptionOn": "Stejný par ve všech zápasech této hry.",
         "descriptionOff": "Páry se mohou měnit z kola do kola."
@@ -183,6 +185,7 @@
     "gameNamePlaceholderTournament": "Pojmenujte turnaj",
     "gameNamePlaceholderLeague": "Pojmenujte ligu",
     "gameNamePlaceholderTraining": "Pojmenujte trénink",
+    "miscellaneous": "Různé",
     "description": "Popis",
     "descriptionPlaceholder": "Popis pro hráče",
     "descriptionPlaceholderTournament": "Popis pro hráče",
@@ -423,7 +426,6 @@
     },
     "reservationIntent": {
       "title": "Rezervace kurtu",
-      "subtitle": "Vyberte, co se má stát se skutečnou rezervací v klubu.",
       "recommended": "Doporučeno",
       "validation": {
         "selectCourt": "Nejprve vyberte {{count}} kurt(ů).",

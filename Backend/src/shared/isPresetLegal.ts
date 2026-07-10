@@ -194,7 +194,7 @@ export function isPresetLegalForScoringMode(preset: string, mode: ScoringMode): 
 }
 
 export function inferPresetTier(preset: ScoringPreset): PresetTier {
-  if (preset === 'CLASSIC_AUTOMATIC') return 'social';
+  if (preset === 'CLASSIC_AUTOMATIC') return 'match';
   if (
     preset.startsWith('POINTS_') ||
     preset === 'TIMED' ||

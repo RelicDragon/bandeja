@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Card, ToggleSwitch } from '@/components';
+import { ToggleSwitch } from '@/components';
+import { CollapsibleSettingsShell } from '@/components/gameSettings';
 import { Game } from '@/types';
 import { Settings, HelpCircle, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -209,7 +210,7 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
 
   const toggleDisabled = !canChangeSettings;
 
-  const notesToggle = (
+  const hintsButton = (
     <button
       type="button"
       onClick={toggleShowNotes}
@@ -366,25 +367,14 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
     </div>
   );
 
-  if (embedded) {
-    return (
-      <div>
-        <div className="flex justify-end mb-3">{notesToggle}</div>
-        {toggleList}
-      </div>
-    );
-  }
-
   return (
-    <Card>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Settings size={18} className="text-gray-500 dark:text-gray-400" />
-          <h2 className="section-title">{settingsTitle}</h2>
-          {notesToggle}
-        </div>
-      </div>
+    <CollapsibleSettingsShell
+      title={embedded ? undefined : settingsTitle}
+      icon={Settings}
+      hintsButton={hintsButton}
+      variant={embedded ? 'plain' : 'card'}
+    >
       {toggleList}
-    </Card>
+    </CollapsibleSettingsShell>
   );
 };

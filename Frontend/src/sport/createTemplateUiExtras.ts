@@ -188,7 +188,7 @@ export const FE_LEGACY_PADEL_TEMPLATES: Record<FeLegacyPadelTemplateId, FeCreate
   PADEL_AUTOMATIC: {
     id: 'PADEL_AUTOMATIC',
     sport: Sports.PADEL,
-    tier: 'social',
+    tier: 'match',
     labelKey: 'createGame.templates.PADEL_AUTOMATIC.title',
     descriptionKey: 'createGame.templates.PADEL_AUTOMATIC.description',
     scoringPreset: 'CLASSIC_AUTOMATIC',
@@ -197,7 +197,7 @@ export const FE_LEGACY_PADEL_TEMPLATES: Record<FeLegacyPadelTemplateId, FeCreate
     playersPerMatch: 4,
     suggestedMaxParticipants: 16,
     suggestedCourts: 4,
-    affectsRating: false,
+    affectsRating: true,
     baselineRounds: 1,
   },
   PADEL_BEST_OF_3: {
@@ -269,7 +269,7 @@ export const FE_LEGACY_PADEL_TEMPLATES: Record<FeLegacyPadelTemplateId, FeCreate
   PADEL_SINGLES_AUTOMATIC: {
     id: 'PADEL_SINGLES_AUTOMATIC',
     sport: Sports.PADEL,
-    tier: 'social',
+    tier: 'match',
     labelKey: 'createGame.templates.PADEL_SINGLES_AUTOMATIC.title',
     descriptionKey: 'createGame.templates.PADEL_SINGLES_AUTOMATIC.description',
     scoringPreset: 'CLASSIC_AUTOMATIC',
@@ -278,7 +278,7 @@ export const FE_LEGACY_PADEL_TEMPLATES: Record<FeLegacyPadelTemplateId, FeCreate
     playersPerMatch: 2,
     suggestedMaxParticipants: 8,
     suggestedCourts: 2,
-    affectsRating: false,
+    affectsRating: true,
     baselineRounds: 1,
   },
 };

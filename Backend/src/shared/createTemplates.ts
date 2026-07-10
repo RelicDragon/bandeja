@@ -518,9 +518,9 @@ export function getCreateTemplatesForSport(sport: Sport): CreateTemplate[] {
 export const PADEL_PRESET_META: SportPresetMeta[] = [
   {
     preset: 'CLASSIC_AUTOMATIC',
-    tier: 'social',
+    tier: 'match',
     labelKey: 'gameFormat.scoring.CLASSIC_AUTOMATIC.sport.PADEL',
-    defaultFor: 'social',
+    defaultFor: 'match',
     strictValidation: 'CLASSIC_AUTOMATIC_RELAXED',
   },
   {

@@ -30,6 +30,7 @@
     "selectCourt": "Seleccionar cancha",
     "selectHall": "Seleccionar salón",
     "selectClubFirst": "Selecciona el club primero",
+    "selectCourtFirst": "Selecciona una cancha primero",
     "clubCancellationNotice": "Aviso de cancelación: al menos {{hours}} horas antes de tu franja.",
     "clubPolicyTitle": "Normas del club",
     "noClubsAvailable": "No hay clubs disponibles",
@@ -150,6 +151,7 @@
       }
     },
     "fixedTeams": {
+      "optionOff": "Rotación",
       "GAME": {
         "descriptionOn": "La misma pareja en todos los partidos de este juego.",
         "descriptionOff": "Las parejas pueden cambiar en cada ronda."
@@ -181,6 +183,7 @@
     "gameNamePlaceholderTournament": "Ponle nombre al torneo",
     "gameNamePlaceholderLeague": "Ponle nombre a la liga",
     "gameNamePlaceholderTraining": "Ponle nombre al entrenamiento",
+    "miscellaneous": "Varios",
     "description": "Descripción",
     "descriptionPlaceholder": "Descripción para los jugadores",
     "descriptionPlaceholderTournament": "Descripción para los jugadores",
@@ -420,7 +423,6 @@
     },
     "reservationIntent": {
       "title": "Reserva de pista",
-      "subtitle": "Elige qué debe ocurrir con la reserva real del club.",
       "recommended": "Recomendado",
       "validation": {
         "selectCourt": "Selecciona {{count}} cancha(s) primero.",

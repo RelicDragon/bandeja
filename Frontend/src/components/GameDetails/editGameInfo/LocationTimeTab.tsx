@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club, Court, EntityType, Game } from '@/types';
 import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
+import { useClubDateReservations } from '@/components/gameLocationTime/useClubDateReservations';
 import { useGameLocationTimeState } from '@/components/gameLocationTime/useGameLocationTimeState';
 import { useEditGameLocationTimeBookingSync } from '@/components/gameLocationTime/useEditGameLocationTimeBookingSync';
 import type { EditLocationTimeDraft } from '@/components/gameLocationTime/locationTimeDraft';
@@ -371,8 +372,20 @@ export function LocationTimeTab({
       onToggleHasBookedCourt={onToggleHasBookedCourt}
       preferredSport={game.sport}
       showHasBookedSwitch={false}
+      showNotBookedOption={editReservationAction !== 'reserveNew'}
     />
   );
+
+  const clubDateReservations = useClubDateReservations({
+    club,
+    companyId: booktimeCompanyId ?? '',
+    selectedDate,
+    enabled: reservationsActive,
+    matchCourts: courts,
+  });
+
+  const hasReservationsForDate =
+    clubDateReservations.bookingsLoaded && clubDateReservations.dateBookings.length > 0;
 
   const editActionOptions = useMemo(
     () =>
@@ -380,9 +393,48 @@ export function LocationTimeTab({
         hasLinkedBookings: initialLinkedBookingIds.length > 0,
         clubBookingFlowActive,
         hasBooktimeAuthPath: Boolean(booktimeCompanyId),
+        hasReservationsForDate,
       }),
-    [initialLinkedBookingIds.length, clubBookingFlowActive, booktimeCompanyId],
+    [initialLinkedBookingIds.length, clubBookingFlowActive, booktimeCompanyId, hasReservationsForDate],
   );
+
+  useEffect(() => {
+    const availableIds = new Set(editActionOptions.map((option) => option.id));
+    if (availableIds.has(editReservationAction)) return;
+    setEditReservationAction(
+      resolveInitialEditReservationAction({
+        hasLinkedBookings: initialLinkedBookingIds.length > 0,
+        clubBookingFlowActive,
+        hasBookedCourt,
+      }),
+    );
+  }, [
+    editReservationAction,
+    editActionOptions,
+    initialLinkedBookingIds.length,
+    clubBookingFlowActive,
+    hasBookedCourt,
+  ]);
+
+  useEffect(() => {
+    if (editReservationAction !== 'useExisting') return;
+    if (hasReservationsForDate) return;
+    if (!clubDateReservations.bookingsLoaded) return;
+    setEditReservationAction(
+      resolveInitialEditReservationAction({
+        hasLinkedBookings: initialLinkedBookingIds.length > 0,
+        clubBookingFlowActive,
+        hasBookedCourt,
+      }),
+    );
+  }, [
+    editReservationAction,
+    hasReservationsForDate,
+    clubDateReservations.bookingsLoaded,
+    initialLinkedBookingIds.length,
+    clubBookingFlowActive,
+    hasBookedCourt,
+  ]);
 
   const actionPickerSection = (
     <EditReservationActionPicker
@@ -392,16 +444,18 @@ export function LocationTimeTab({
     />
   );
 
+  const showReserveNewScheduling =
+    editReservationAction === 'reserveNew' && !needsBooktimeAuth;
   const showScheduleControls =
     editReservationAction === 'changeGameTimeOnly' ||
-    editReservationAction === 'reserveNew' ||
     editReservationAction === 'unlink' ||
-    editReservationAction === 'gameOnly';
+    editReservationAction === 'gameOnly' ||
+    showReserveNewScheduling;
   const showManualCourtControls =
     editReservationAction === 'changeGameTimeOnly' ||
-    editReservationAction === 'reserveNew' ||
     editReservationAction === 'unlink' ||
-    editReservationAction === 'gameOnly';
+    editReservationAction === 'gameOnly' ||
+    showReserveNewScheduling;
 
   const showReservationPicker = editReservationAction === 'useExisting';
 
@@ -434,16 +488,21 @@ export function LocationTimeTab({
       />
     ) : null;
 
-  const consequenceSection = (
-    <EditReservationConsequenceSummary
-      action={editReservationAction}
-      linkedCount={initialLinkedBookingIds.length}
-      selectedBookingCount={selectedBookingIds.length}
-      willReserveNew={editReservationAction === 'reserveNew' && willBookOnCreate}
-      pendingUnlinkCount={pendingUnlinkIds.length}
-      club={club}
-    />
-  );
+  const consequenceSection =
+    editReservationAction === 'reserveNew' && needsBooktimeAuth ? null : (
+      <EditReservationConsequenceSummary
+        action={editReservationAction}
+        linkedCount={initialLinkedBookingIds.length}
+        selectedBookingCount={selectedBookingIds.length}
+        willReserveNew={
+          editReservationAction === 'reserveNew' &&
+          willBookOnCreate &&
+          Boolean(selectedTime)
+        }
+        pendingUnlinkCount={pendingUnlinkIds.length}
+        club={club}
+      />
+    );
 
   const dateSection = (
     <CreateGameDateSection
@@ -518,6 +577,7 @@ export function LocationTimeTab({
         needsBooktimeAuth={needsBooktimeAuth}
         intentSection={actionPickerSection}
         consequenceSection={consequenceSection}
+        showDateSection={showReserveNewScheduling || editReservationAction !== 'reserveNew'}
         showCourtSection={showManualCourtControls}
         showTimeSlots={showScheduleControls}
         showReservations={showReservationPicker}

@@ -2,15 +2,87 @@ import {
   projectEditReservationActionToState,
   projectReservationIntentToState,
   resolveCreateReservationCtaKey,
+  resolveEditReservationActionOptions,
   resolveEditReservationValidation,
   resolveInitialEditReservationAction,
   resolveInitialReservationIntent,
+  resolveReservationIntentOptions,
   resolveReservationValidation,
   resolveReservationValidationMessage,
 } from './reservationIntent';
 import { describe, expect, it } from 'vitest';
 
 describe('reservation intent resolvers', () => {
+  it('hides integration intents when the club has no external booking', () => {
+    const nonIntegrated = resolveReservationIntentOptions({
+      clubBookingFlowActive: false,
+      hasBooktimeAuthPath: false,
+      manualBookedAvailable: true,
+    });
+    expect(nonIntegrated.map((option) => option.id)).toEqual(['gameOnly', 'manualBooked']);
+    expect(nonIntegrated.find((option) => option.id === 'manualBooked')?.recommended).toBe(true);
+
+    const integrated = resolveReservationIntentOptions({
+      clubBookingFlowActive: true,
+      hasBooktimeAuthPath: true,
+      manualBookedAvailable: false,
+      hasReservationsForDate: false,
+    });
+    expect(integrated.map((option) => option.id)).toEqual(['reserveNow', 'gameOnly']);
+    expect(integrated.map((option) => option.id)).not.toContain('manualBooked');
+  });
+
+  it('hides useExisting when the club date has no reservations', () => {
+    const withoutReservations = resolveReservationIntentOptions({
+      clubBookingFlowActive: true,
+      hasBooktimeAuthPath: true,
+      hasReservationsForDate: false,
+    });
+    expect(withoutReservations.map((option) => option.id)).toEqual([
+      'reserveNow',
+      'gameOnly',
+    ]);
+
+    const withReservations = resolveReservationIntentOptions({
+      clubBookingFlowActive: true,
+      hasBooktimeAuthPath: true,
+      hasReservationsForDate: true,
+    });
+    expect(withReservations.map((option) => option.id)).toEqual([
+      'reserveNow',
+      'useExisting',
+      'gameOnly',
+    ]);
+  });
+
+  it('hides edit reserveNew when the club has no external booking', () => {
+    const nonIntegrated = resolveEditReservationActionOptions({
+      hasLinkedBookings: false,
+      clubBookingFlowActive: false,
+      hasBooktimeAuthPath: false,
+    });
+    expect(nonIntegrated.map((option) => option.id)).not.toContain('reserveNew');
+    expect(nonIntegrated.map((option) => option.id)).not.toContain('useExisting');
+  });
+
+  it('hides edit useExisting when the club date has no reservations', () => {
+    const withoutReservations = resolveEditReservationActionOptions({
+      hasLinkedBookings: false,
+      clubBookingFlowActive: true,
+      hasBooktimeAuthPath: true,
+      hasReservationsForDate: false,
+    });
+    expect(withoutReservations.map((option) => option.id)).not.toContain('useExisting');
+
+    const withReservations = resolveEditReservationActionOptions({
+      hasLinkedBookings: false,
+      clubBookingFlowActive: true,
+      hasBooktimeAuthPath: true,
+      hasReservationsForDate: true,
+    });
+    expect(withReservations.map((option) => option.id)).toContain('useExisting');
+  });
+
   it('initializes create intent from deep links, integrations, and manual state', () => {
     expect(
       resolveInitialReservationIntent({

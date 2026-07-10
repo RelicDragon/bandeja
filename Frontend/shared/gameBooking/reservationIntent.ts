@@ -62,28 +62,47 @@ export function resolveReservationIntentOptions(input: {
   clubBookingFlowActive: boolean;
   hasBooktimeAuthPath: boolean;
   manualBookedAvailable?: boolean;
+  hasReservationsForDate?: boolean;
 }): ReservationIntentOption[] {
-  return [
-    {
+  const showUseExisting =
+    input.clubBookingFlowActive &&
+    input.hasBooktimeAuthPath &&
+    input.hasReservationsForDate === true;
+
+  const manualBookedAvailable = input.manualBookedAvailable ?? !input.clubBookingFlowActive;
+
+  const options: ReservationIntentOption[] = [];
+
+  if (input.clubBookingFlowActive) {
+    options.push({
       id: 'reserveNow',
-      enabled: input.clubBookingFlowActive,
-      recommended: input.clubBookingFlowActive,
-    },
-    {
-      id: 'useExisting',
-      enabled: input.clubBookingFlowActive && input.hasBooktimeAuthPath,
-    },
-    {
-      id: 'gameOnly',
       enabled: true,
-      recommended: !input.clubBookingFlowActive && !input.manualBookedAvailable,
-    },
-    {
+      recommended: true,
+    });
+  }
+
+  if (showUseExisting) {
+    options.push({
+      id: 'useExisting',
+      enabled: true,
+    });
+  }
+
+  options.push({
+    id: 'gameOnly',
+    enabled: true,
+    recommended: !input.clubBookingFlowActive && !manualBookedAvailable,
+  });
+
+  if (manualBookedAvailable) {
+    options.push({
       id: 'manualBooked',
-      enabled: input.manualBookedAvailable ?? true,
-      recommended: !input.clubBookingFlowActive && Boolean(input.manualBookedAvailable),
-    },
-  ];
+      enabled: true,
+      recommended: !input.clubBookingFlowActive,
+    });
+  }
+
+  return options;
 }
 
 export function resolveInitialEditReservationAction(input: {
@@ -101,8 +120,14 @@ export function resolveEditReservationActionOptions(input: {
   hasLinkedBookings: boolean;
   clubBookingFlowActive: boolean;
   hasBooktimeAuthPath: boolean;
+  hasReservationsForDate?: boolean;
 }): EditReservationActionOption[] {
-  return [
+  const showUseExisting =
+    input.clubBookingFlowActive &&
+    input.hasBooktimeAuthPath &&
+    input.hasReservationsForDate === true;
+
+  const options: EditReservationActionOption[] = [
     {
       id: 'keepCurrent',
       enabled: input.hasLinkedBookings,
@@ -112,15 +137,24 @@ export function resolveEditReservationActionOptions(input: {
       id: 'changeGameTimeOnly',
       enabled: true,
     },
-    {
+  ];
+
+  if (showUseExisting) {
+    options.push({
       id: 'useExisting',
-      enabled: input.clubBookingFlowActive && input.hasBooktimeAuthPath,
-    },
-    {
+      enabled: true,
+    });
+  }
+
+  if (input.clubBookingFlowActive) {
+    options.push({
       id: 'reserveNew',
-      enabled: input.clubBookingFlowActive,
-      recommended: !input.hasLinkedBookings && input.clubBookingFlowActive,
-    },
+      enabled: true,
+      recommended: !input.hasLinkedBookings,
+    });
+  }
+
+  options.push(
     {
       id: 'unlink',
       enabled: input.hasLinkedBookings,
@@ -130,7 +164,9 @@ export function resolveEditReservationActionOptions(input: {
       enabled: true,
       recommended: !input.hasLinkedBookings && !input.clubBookingFlowActive,
     },
-  ];
+  );
+
+  return options;
 }
 
 export function projectReservationIntentToState(input: {

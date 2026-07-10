@@ -1,6 +1,6 @@
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowUp, Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { useEffect, useMemo, RefObject, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, RefObject, type ReactNode } from 'react';
 import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { CreateGameDurationSelector } from '@/components/createGame/CreateGameDurationSelector';
@@ -18,6 +18,13 @@ import {
   filterCourtsByClubSports,
   filterCourtsBySport,
 } from '@/utils/courtSport';
+import { useAuthStore } from '@/store/authStore';
+import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { useTimeSlotWeather } from '@/hooks/useTimeSlotWeather';
+import {
+  readCalendarWeatherMode,
+  writeCalendarWeatherMode,
+} from '@/utils/calendarWeatherModeStorage';
 
 interface GameStartSectionProps {
   selectedDate: Date;
@@ -122,6 +129,8 @@ export const GameStartSection = ({
   onCloseClubModal,
 }: GameStartSectionProps) => {
   const { t } = useTranslation();
+  const user = useAuthStore((state) => state.user);
+  const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const { durationOptions } = useClubIntegrationDurations(club, entityType, {
     selectedCourtId: selectedCourt,
     courts,
@@ -165,11 +174,36 @@ export const GameStartSection = ({
 
   const timeOptions = useMemo(() => generateTimeOptions(), [generateTimeOptions]);
   const hasTimeSlots = timeOptions.length > 0;
+  const weatherCityAvailable = Boolean(
+    club?.cityId ?? user?.currentCity?.id ?? user?.currentCityId,
+  );
+  const [weatherMode, setWeatherMode] = useState(() => readCalendarWeatherMode('timeSlots'));
+  const weatherToggleDisabled = !weatherCityAvailable;
+
+  const handleWeatherModeToggle = useCallback(() => {
+    if (weatherToggleDisabled) return;
+    setWeatherMode((previous) => {
+      const next = !previous;
+      writeCalendarWeatherMode('timeSlots', next);
+      return next;
+    });
+  }, [weatherToggleDisabled]);
+
+  const { weatherByTime } = useTimeSlotWeather({
+    club,
+    selectedDate,
+    times: timeOptions,
+    enabled: entityType !== 'BAR' && !needsBooktimeAuth && weatherMode && weatherCityAvailable,
+  });
+  const courtRequiredForScheduling =
+    bookCourtEnabled && (!selectedCourt || selectedCourt === 'notBooked');
   const showDurationPicker =
+    !courtRequiredForScheduling &&
     entityType !== 'BAR' &&
     durationOptions.length > 0 &&
     (slotsLoading || hasTimeSlots || booktimeSlotsActive);
-  const showTimePicker = slotsLoading || hasTimeSlots;
+  const showTimePicker =
+    !courtRequiredForScheduling && (slotsLoading || hasTimeSlots);
 
   useEffect(() => {
     if (slotsLoading || needsBooktimeAuth) return;
@@ -252,28 +286,6 @@ export const GameStartSection = ({
     />
   ) : null;
 
-  const schedulingBanners = (
-    <>
-      {entityType !== 'BAR' && (club?.policyText || club?.cancellationNoticeHours) && !needsBooktimeAuth ? (
-        <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400">
-          {club.cancellationNoticeHours != null && club.cancellationNoticeHours > 0 && (
-            <p className="mb-1">
-              {t('createGame.clubCancellationNotice', { hours: club.cancellationNoticeHours })}
-            </p>
-          )}
-          {club.policyText?.trim() && (
-            <>
-              <p className="font-medium text-gray-800 dark:text-gray-200">
-                {t('createGame.clubPolicyTitle')}
-              </p>
-              <p className="mt-1 whitespace-pre-wrap">{club.policyText.trim()}</p>
-            </>
-          )}
-        </div>
-      ) : null}
-    </>
-  );
-
   const dateSection = hideDateSection ? null : (
     <CreateGameDateSection
       selectedDate={selectedDate}
@@ -299,7 +311,14 @@ export const GameStartSection = ({
           connectedPhone={connectedPhone}
         />
       ) : null}
-      {!needsBooktimeAuth && !slotsLoading && !hasTimeSlots ? (
+      {courtRequiredForScheduling ? (
+        <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400">
+          <ArrowUp size={16} className="shrink-0" aria-hidden />
+          <span className="text-center">{t('createGame.selectCourtFirst')}</span>
+          <ArrowUp size={16} className="shrink-0" aria-hidden />
+        </div>
+      ) : null}
+      {!courtRequiredForScheduling && !needsBooktimeAuth && !slotsLoading && !hasTimeSlots ? (
         hideTimeSlotsPicker ? null :
         <div className="rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400">
           {t(
@@ -309,7 +328,7 @@ export const GameStartSection = ({
           )}
         </div>
       ) : null}
-      {timeSchedulingExtra}
+      {!courtRequiredForScheduling ? timeSchedulingExtra : null}
       {showTimePicker && !hideTimeSlotsPicker ? (
         <CreateGameTimeSlots
           times={timeOptions}
@@ -332,6 +351,11 @@ export const GameStartSection = ({
           getDurationLabel={getDurationLabel}
           availabilityOverlay={availabilityOverlay}
           availabilityOverlayLoading={availabilityOverlayLoading}
+          weatherByTime={weatherByTime}
+          weatherLocale={displaySettings.locale}
+          weatherMode={weatherMode}
+          weatherToggleDisabled={weatherToggleDisabled}
+          onWeatherModeToggle={handleWeatherModeToggle}
         />
       ) : null}
     </>
@@ -352,10 +376,9 @@ export const GameStartSection = ({
 
   const afterClubScheduling = (
     <>
-      {schedulingBanners}
-      {courtSection}
-      {reservationSection}
-      {existingBookingBanner}
+      {!needsBooktimeAuth ? courtSection : null}
+      {!needsBooktimeAuth ? reservationSection : null}
+      {!needsBooktimeAuth ? existingBookingBanner : null}
       <AnimatePresence>
         {needsBooktimeAuth ? (
           <motion.div
@@ -369,15 +392,17 @@ export const GameStartSection = ({
           </motion.div>
         ) : null}
       </AnimatePresence>
-      <motion.div
-        key="time-scheduling"
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2 }}
-        className="space-y-4"
-      >
-        {timeSlotsSection}
-      </motion.div>
+      {!needsBooktimeAuth ? (
+        <motion.div
+          key="time-scheduling"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-4"
+        >
+          {timeSlotsSection}
+        </motion.div>
+      ) : null}
     </>
   );
 

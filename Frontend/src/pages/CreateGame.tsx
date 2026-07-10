@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef, useCallback, createRef } from 're
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Plus } from 'lucide-react';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, AvatarUpload, PriceSection, CreateGameIntentPicker } from '@/components';
+import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameInput, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, AvatarUpload, CreateGameIntentPicker } from '@/components';
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useAuthStore } from '@/store/authStore';
@@ -57,7 +57,9 @@ import { computeMaxSelectableCourts, computeRequiredCourtCount } from '@/utils/r
 import {
   resolveReservationValidation,
   resolveReservationValidationMessage,
+  type ReservationValidationResult,
 } from '@shared/gameBooking/reservationIntent';
+import type { CreateGameAbortReason } from '@/hooks/createGameBookingFlow/types';
 import { MultiCourtTimeHint } from '@/components/gameLocationTime/MultiCourtTimeHint';
 import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
 import { invalidateBooktimeAllUpcomingCache } from '@/integrations/booktime/booktimeAllUpcomingLoader';
@@ -76,6 +78,7 @@ import { CreateGameSummaryBar } from '@/components/createGame/summaryHeader/Crea
 import { useScrolledPastSections } from '@/components/createGame/summaryHeader/useScrolledPastSections';
 import { useCreateGameSummaryChips } from '@/components/createGame/summaryHeader/useCreateGameSummaryChips';
 import { WeatherPreviewCard } from '@/components/weather/WeatherPreviewCard';
+import { ClubPoliciesBlock } from '@/components/createGame/ClubPoliciesBlock';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 
 interface CreateGameProps {
@@ -447,9 +450,7 @@ export const CreateGame = ({
     resolvedGetTimeSlotsForDuration,
     resolvedIsSlotHighlighted,
     createButtonLabel,
-    createDisabledByAuth,
     preselectedBookings,
-    preselectedBookingsHydrating,
     resetOnClubChange,
     handleCreateAttempt,
     prepareBookingFields,
@@ -467,6 +468,7 @@ export const CreateGame = ({
   } = bookingFlow;
 
   const booktimeScheduleConstrained = reservationIntent === 'reserveNow' && !needsBooktimeAuth;
+  const showReserveNowScheduling = reservationIntent === 'reserveNow' && !needsBooktimeAuth;
   const showBooktimeAuthPrompt =
     entityType !== 'BAR' &&
     Boolean(selectedClub) &&
@@ -491,16 +493,19 @@ export const CreateGame = ({
   );
 
   const weatherPreviewTiming = useMemo(() => {
-    if (!selectedClubData?.cityId) return null;
-    if (effectiveDerivedSummary.startTime && effectiveDerivedSummary.endTime) {
+    if (!selectedClubData?.cityId || needsBooktimeAuth) return null;
+    if (reservationIntent === 'useExisting') {
+      if (!effectiveDerivedSummary.startTime || !effectiveDerivedSummary.endTime) return null;
       return {
         cityId: selectedClubData.cityId,
         startTime: effectiveDerivedSummary.startTime,
         endTime: effectiveDerivedSummary.endTime,
       };
     }
+    if (reservationIntent === 'reserveNow' && !showReserveNowScheduling) return null;
     if (!selectedTime) return null;
     const manual = createDateFromSelection();
+    if (!manual.startTime || !manual.endTime) return null;
     return {
       cityId: selectedClubData.cityId,
       startTime: manual.startTime,
@@ -510,9 +515,39 @@ export const CreateGame = ({
     createDateFromSelection,
     effectiveDerivedSummary.endTime,
     effectiveDerivedSummary.startTime,
+    needsBooktimeAuth,
+    reservationIntent,
     selectedClubData?.cityId,
     selectedTime,
+    showReserveNowScheduling,
   ]);
+
+  const showClubPoliciesFooter =
+    entityType !== 'BAR' &&
+    Boolean(selectedClubData) &&
+    !needsBooktimeAuth &&
+    Boolean(
+      selectedClubData?.policyText?.trim() || selectedClubData?.cancellationNoticeHours,
+    );
+
+  const locationTimeFooter =
+    showClubPoliciesFooter || weatherPreviewTiming ? (
+      <div className="space-y-3">
+        {showClubPoliciesFooter && selectedClubData ? (
+          <ClubPoliciesBlock club={selectedClubData} entityType={entityType} />
+        ) : null}
+        {weatherPreviewTiming ? (
+          <WeatherPreviewCard
+            cityId={weatherPreviewTiming.cityId}
+            startTime={weatherPreviewTiming.startTime}
+            endTime={weatherPreviewTiming.endTime}
+            enabled={entityType !== 'BAR'}
+            locale={displaySettings.locale}
+            hour12={displaySettings.hour12}
+          />
+        ) : null}
+      </div>
+    ) : null;
 
   const clubsForSport = useMemo(
     () => filterClubsBySport(clubs, selectedSport),
@@ -1054,6 +1089,7 @@ export const CreateGame = ({
         preferredSport={selectedSport}
         onSportTabChange={handleCourtSportTab}
         showHasBookedSwitch={false}
+        showNotBookedOption={reservationIntent !== 'reserveNow'}
       />
     ),
     [
@@ -1072,6 +1108,7 @@ export const CreateGame = ({
       selectedSport,
       handleCourtSportTab,
       setHasBookedCourt,
+      reservationIntent,
     ],
   );
 
@@ -1108,13 +1145,16 @@ export const CreateGame = ({
     />
   );
 
-  const reservationSummarySection = (
+  const showReservationSummary =
+    reservationIntent !== 'reserveNow' || (!needsBooktimeAuth && Boolean(selectedTime));
+
+  const reservationSummarySection = showReservationSummary ? (
     <ReservationSummaryCard
       intent={reservationIntent}
       requiredCount={bookingSelectionLimits.min}
       selectedBookingCount={selectedBookingIds.length}
     />
-  );
+  ) : null;
 
   const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
@@ -1124,6 +1164,24 @@ export const CreateGame = ({
         ref.current?.classList.remove('error-bounce');
       }, 2000);
     }
+  };
+
+  const scrollToReservationValidationIssue = useCallback(
+    (reason: Exclude<ReservationValidationResult, { ok: true }>['reason'] | CreateGameAbortReason) => {
+      if (reason === 'durationRequired') {
+        scrollToAndHighlightError(durationSectionRef);
+        return;
+      }
+      scrollToAndHighlightError(locationTimeSectionRef);
+    },
+    [],
+  );
+
+  const validatePrice = (): boolean => {
+    if (priceType !== 'NOT_KNOWN' && priceType !== 'FREE') {
+      if (priceTotal == null || priceTotal <= 0) return false;
+    }
+    return true;
   };
 
   const handleCreateGame = async () => {
@@ -1136,6 +1194,12 @@ export const CreateGame = ({
 
     if (!selectedClub) {
       scrollToAndHighlightError(locationTimeSectionRef);
+      return;
+    }
+
+    if (!validatePrice()) {
+      toast.error(t('createGame.priceRequired', { defaultValue: 'Price must be greater than 0 for this price type' }));
+      scrollToAndHighlightError(summarySectionRefs.price);
       return;
     }
 
@@ -1153,9 +1217,7 @@ export const CreateGame = ({
     if (!validation.ok) {
       const message = resolveReservationValidationMessage(validation, bookingSelectionLimits.min);
       toast.error(t(message.key, message.values));
-      scrollToAndHighlightError(
-        validation.reason === 'durationRequired' ? durationSectionRef : locationTimeSectionRef,
-      );
+      scrollToReservationValidationIssue(validation.reason);
       return;
     }
 
@@ -1163,7 +1225,7 @@ export const CreateGame = ({
       async (overrides) => {
         await executeCreateGame(overrides);
       },
-      () => scrollToAndHighlightError(locationTimeSectionRef),
+      (reason) => scrollToReservationValidationIssue(reason),
     );
   };
 
@@ -1433,6 +1495,14 @@ export const CreateGame = ({
           </div>
         )}
 
+        <div ref={summarySectionRefs.name}>
+          <GameNameInput
+            value={gameName}
+            onChange={setGameName}
+            entityType={entityType}
+          />
+        </div>
+
         <div ref={summarySectionRefs.setup}>
         <ParticipantsSetupSection
           entityType={entityType}
@@ -1591,12 +1661,17 @@ export const CreateGame = ({
                   needsBooktimeAuth={needsBooktimeAuth}
                   intentSection={intentSection}
                   summarySection={reservationSummarySection}
+                  showDateSection={showReserveNowScheduling || reservationIntent !== 'reserveNow'}
                   showCourtSection={
                     reservationIntent === 'gameOnly' ||
                     reservationIntent === 'manualBooked' ||
-                    reservationIntent === 'reserveNow'
+                    showReserveNowScheduling
                   }
-                  showTimeSlots={reservationIntent === 'gameOnly' || reservationIntent === 'manualBooked' || reservationIntent === 'reserveNow'}
+                  showTimeSlots={
+                    reservationIntent === 'gameOnly' ||
+                    reservationIntent === 'manualBooked' ||
+                    showReserveNowScheduling
+                  }
                   showReservations={reservationIntent === 'useExisting'}
                   showRealBookingHint={false}
                   onEmptyReserveNow={() => setReservationIntent('reserveNow')}
@@ -1673,14 +1748,7 @@ export const CreateGame = ({
                     />
                   }
                 />
-                <WeatherPreviewCard
-                  cityId={weatherPreviewTiming?.cityId}
-                  startTime={weatherPreviewTiming?.startTime}
-                  endTime={weatherPreviewTiming?.endTime}
-                  enabled
-                  locale={displaySettings.locale}
-                  hour12={displaySettings.hour12}
-                />
+                {locationTimeFooter}
               </div>
             ) : (
               <>
@@ -1720,16 +1788,7 @@ export const CreateGame = ({
                   slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
                   booktimeSlotsActive={booktimeTimeOptions.active}
                 />
-                <div className="mt-3">
-                  <WeatherPreviewCard
-                    cityId={weatherPreviewTiming?.cityId}
-                    startTime={weatherPreviewTiming?.startTime}
-                    endTime={weatherPreviewTiming?.endTime}
-                    enabled={entityType !== 'BAR'}
-                    locale={displaySettings.locale}
-                    hour12={displaySettings.hour12}
-                  />
-                </div>
+                {locationTimeFooter ? <div className="mt-3">{locationTimeFooter}</div> : null}
               </>
             )}
           </div>
@@ -1795,18 +1854,10 @@ export const CreateGame = ({
         />
         </div>
 
-        <div ref={summarySectionRefs.name}>
         <GameNameCommentsSection
-          name={gameName}
           comments={comments}
-          onNameChange={setGameName}
           onCommentsChange={setComments}
           entityType={entityType}
-        />
-        </div>
-
-        <div ref={summarySectionRefs.price}>
-        <PriceSection
           priceTotal={priceTotal}
           priceType={priceType}
           priceCurrency={priceCurrency}
@@ -1814,12 +1865,12 @@ export const CreateGame = ({
           onPriceTotalChange={setPriceTotal}
           onPriceTypeChange={setPriceType}
           onPriceCurrencyChange={setPriceCurrency}
+          priceSectionRef={summarySectionRefs.price}
         />
-        </div>
 
         <Button
           onClick={handleCreateGame}
-          disabled={loading || createDisabledByAuth || preselectedBookingsHydrating}
+          disabled={loading}
           className="w-full py-3 text-base font-semibold mt-4 flex items-center justify-center gap-2"
           size="lg"
         >

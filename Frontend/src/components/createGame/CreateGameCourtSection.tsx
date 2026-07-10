@@ -22,6 +22,7 @@ interface CreateGameCourtSectionProps {
   preferredSport?: Sport | null;
   onSportTabChange?: (sport: Sport) => void;
   showHasBookedSwitch?: boolean;
+  showNotBookedOption?: boolean;
 }
 
 export const CreateGameCourtSection = memo(function CreateGameCourtSection({
@@ -41,6 +42,7 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
   preferredSport,
   onSportTabChange,
   showHasBookedSwitch: showHasBookedSwitchProp = true,
+  showNotBookedOption = true,
 }: CreateGameCourtSectionProps) {
   const { t } = useTranslation();
 
@@ -84,6 +86,7 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
             clubSports={club?.sports}
             onSelectCourt={onSelectCourt}
             onSportTabChange={onSportTabChange}
+            showNotBookedOption={showNotBookedOption}
           />
         </div>
       )}

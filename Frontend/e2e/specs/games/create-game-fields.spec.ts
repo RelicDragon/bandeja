@@ -100,13 +100,17 @@ test.describe('create game fields @auth', () => {
     await expect(page.getByText(/participants|number of participants/i).first()).toBeVisible();
   });
 
-  test('C-20 fixed teams toggle', async ({ page }) => {
+  test('C-20 fixed pairs segmented switch', async ({ page }) => {
     const createGame = new CreateGamePage(page);
     await createGame.gotoWithEntityType('GAME');
     await createGame.pickDefaultTemplateIfShown();
-    const fixedTeams = page.getByText(/fixed teams|teams format/i);
-    if ((await fixedTeams.count()) === 0) test.skip(true, 'fixed teams not shown for roster');
-    await expect(fixedTeams.first()).toBeVisible();
+    const doubles = page.getByRole('button', { name: /2v2|doubles/i });
+    if (await doubles.isVisible({ timeout: 2_000 }).catch(() => false)) {
+      await doubles.click();
+    }
+    const fixedPairs = page.getByRole('button', { name: /fixed pairs|rotating/i });
+    if ((await fixedPairs.count()) === 0) test.skip(true, 'fixed pairs not shown for roster');
+    await expect(fixedPairs.first()).toBeVisible();
   });
 
   test('C-21 game name and comments', async ({ page }) => {

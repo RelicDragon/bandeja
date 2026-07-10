@@ -1,41 +1,37 @@
+import type { RefObject } from 'react';
 import { Tag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { EntityType } from '@/types';
+import type { EntityType, PriceCurrency, PriceType } from '@/types';
+import { PriceSection } from './PriceSection';
 
 interface GameNameCommentsSectionProps {
-  name: string;
   comments: string;
-  onNameChange: (name: string) => void;
   onCommentsChange: (comments: string) => void;
   entityType: EntityType;
+  priceTotal: number | undefined;
+  priceType: PriceType;
+  priceCurrency: PriceCurrency | undefined;
+  defaultCurrency?: PriceCurrency | null;
+  onPriceTotalChange: (value: number | undefined) => void;
+  onPriceTypeChange: (value: PriceType) => void;
+  onPriceCurrencyChange: (value: PriceCurrency | undefined) => void;
+  priceSectionRef?: RefObject<HTMLDivElement | null>;
 }
 
 export const GameNameCommentsSection = ({
-  name,
   comments,
-  onNameChange,
   onCommentsChange,
   entityType,
+  priceTotal,
+  priceType,
+  priceCurrency,
+  defaultCurrency,
+  onPriceTotalChange,
+  onPriceTypeChange,
+  onPriceCurrencyChange,
+  priceSectionRef,
 }: GameNameCommentsSectionProps) => {
   const { t } = useTranslation();
-
-  const title =
-    entityType === 'TOURNAMENT'
-      ? t('createGame.gameNameTournament')
-      : entityType === 'LEAGUE'
-        ? t('createGame.gameNameLeague')
-        : entityType === 'TRAINING'
-          ? t('createGame.gameNameTraining')
-          : t('createGame.gameName');
-
-  const namePlaceholder =
-    entityType === 'TOURNAMENT'
-      ? t('createGame.gameNamePlaceholderTournament')
-      : entityType === 'LEAGUE'
-        ? t('createGame.gameNamePlaceholderLeague')
-        : entityType === 'TRAINING'
-          ? t('createGame.gameNamePlaceholderTraining')
-          : t('createGame.gameNamePlaceholder');
 
   const descriptionLabel = t('createGame.description');
   const descriptionPlaceholder =
@@ -51,16 +47,9 @@ export const GameNameCommentsSection = ({
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
       <div className="flex items-center gap-2 mb-3">
         <Tag size={18} className="text-gray-500 dark:text-gray-400" />
-        <h2 className="section-title">{title}</h2>
+        <h2 className="section-title">{t('createGame.miscellaneous')}</h2>
       </div>
       <div className="space-y-4">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
-          placeholder={namePlaceholder}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-        />
         <div>
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
             {descriptionLabel}
@@ -71,6 +60,18 @@ export const GameNameCommentsSection = ({
             placeholder={descriptionPlaceholder}
             className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
             rows={3}
+          />
+        </div>
+        <div ref={priceSectionRef}>
+          <PriceSection
+            embedded
+            priceTotal={priceTotal}
+            priceType={priceType}
+            priceCurrency={priceCurrency}
+            defaultCurrency={defaultCurrency}
+            onPriceTotalChange={onPriceTotalChange}
+            onPriceTypeChange={onPriceTypeChange}
+            onPriceCurrencyChange={onPriceCurrencyChange}
           />
         </div>
       </div>

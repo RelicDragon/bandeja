@@ -407,7 +407,7 @@ Frontend/e2e/
 |----|------|-------|----------|
 | C-09 | Sport selector | Multi-sport user switches sport | Format limits update |
 | C-10 | Template picker | Select template | Format + rating defaults applied |
-| C-10a | Padel Automatic default | Create padel doubles game (default load) | **Automatic** template selected (Social badge); `CLASSIC_AUTOMATIC` preset; generation Automatic |
+| C-10a | Padel Automatic default | Create padel doubles game (default load) | **Automatic** template selected (Match badge); `CLASSIC_AUTOMATIC` preset; generation Automatic; rating game on |
 | C-10b | Automatic customize demote | Automatic template → Customize format → change any param | Custom/advanced card; template no longer matches |
 | C-10c | Automatic set entry | Automatic game → set 1: SegmentedSwitch Set/games vs Americano points (match-level); set 2+ uses same mode; at 1–1 decider can pick super tiebreak; next match can differ | Any score saves; amber hint only |
 | C-11 | Game format wizard | Open/close wizard | Scoring preset saved |
@@ -453,11 +453,13 @@ Frontend/e2e/
 | C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
 | C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club | Single location & time card: club → **Court reservation** intent picker → date → courts/time or reservation list per intent |
-| C-13x | Reservation intent (integrated club) | BOOKTIME club on create | Four choices: Reserve court now (default), Use existing reservation, Game only; no "Don't book real court" toggle |
+| C-13x | Reservation intent (integrated club) | BOOKTIME club on create | **Reserve court now** (default), **Game only**; **Use existing reservation** only when user has club reservation(s) on selected date; no "Don't book real court" toggle |
+| C-13x1 | Reservation intent (non-integrated club) | Club without BOOKTIME integration on create | **Game only** (default) and **Already booked manually** only; **Reserve court now** and **Use existing reservation** hidden |
 | C-14p | No court yet time grid | BOOKTIME club, intent Game only, tap "No court yet" | Full club schedule; red external cells selectable; bookable-days strip only for Reserve court now |
 | C-14q | Game only on external overlap | Intent Game only; pick slot overlapping red external booking | Save succeeds (info banner ok); no hard-block toast |
-| C-13y | Create-game reserve CTA | Intent Reserve court now; pick integrated court(s), connected, time | CTA "Reserve court and create game" (or "Reserve N courts…" for multi-court) |
-| C-13z | Create-game inline auth gate | Intent Reserve court now or Use existing; not connected | Auth inline in panel; duration/time hidden until connected; Create disabled until signed in |
+| C-13y | Create-game reserve CTA | Intent Reserve court now; pick integrated court(s), connected, time | CTA "Reserve court and create game" (or "Reserve N courts…" for multi-court); court grid has no **No court yet** option |
+| C-13y1 | Reserve court now requires court | BOOKTIME club, intent Reserve court now | **No court yet** hidden; duration and no-time-slots hint hidden until court selected; dashed **Select a court first** hint shown instead; create blocked until required integrated court(s) selected |
+| C-13z | Create-game inline auth gate | Intent Reserve court now or Use existing; not connected | Auth inline in panel; date/courts/duration/time/reservation summary hidden until connected; weather hidden until time selected; Create/Reserve CTA always enabled; tap without auth shows sign-in toast and scrolls to auth gate |
 | C-14a | Create-game confirm morph | Reservation ON, connected, pick slot → Create | Single dialog: review → reserve → create → success → calendar |
 | C-14b | Create-game bookable days strip | Reservation ON, connected | Date strip only (no calendar); days clamped to club `bookableDays` |
 | C-14c | Create-game no overlap when reserving | Reservation ON | No yellow/red overlay; overlap gate skipped on submit |
@@ -473,6 +475,8 @@ Frontend/e2e/
 | C-14l | Create-game multi-court selection | Set max participants > 4; open court grid | Hint shows required court count; tap toggles courts up to min(ceil(participants/4), club courts); numbered badges on selected cards |
 | C-14m | Create-game multi-court create | Create game with 2+ courts selected | Game created with `courtIds`; primary `courtId` is first; gameCourts populated |
 | C-14n | Create-game selected time summary | Pick club + date + duration; tap a time slot | Below time grid, card shows selected start → end and duration badge; updates when time or duration changes |
+| C-53 | Create-game time slot weather pills | Create-game or edit Location & time; club with `cityId`; pick today or forecast date | Each time slot shows calendar-style weather pill (icon + temp) when hourly forecast exists; booked/blocked slots use muted pill; no pills without city |
+| C-54 | Create-game time slot weather toggle | Open create-game or edit Location & time time grid | Cloud/sun toggle on Select time row; on by default; tap hides/shows slot pills; disabled without city; preference persists on reload |
 | C-14p | Create-game no time slots | Pick club/court/date with zero available slots (or late day with no times left) | No time grid or duration (except BOOKTIME: duration stays to try another length); dashed hint explains no times; no stale selected-slot summary |
 | C-14o | Create-game direct create overlay | Create without reservation pipeline (no integrated book confirm) | Page fades; fullscreen creating overlay; brief success; navigates to calendar |
 | C-14s | Create-game no court camera link | Select court with `webCameraUrl` on create-game | No “watch live” / web camera card below court grid; cameras remain on game details after create |
@@ -483,7 +487,7 @@ Frontend/e2e/
 | C-18 | Reserve court now flow | Intent Reserve court now; integrated courts + time | Summary states real reservation; confirm modal on create; no negative opt-out toggle |
 | C-19 | Reservations strip multi-select | Intent Use existing; connected user; reservations on date | Court-labeled cards; live min–max counter; select N per format |
 | C-19a | Reservations strip club TZ display | Create-game at club whose city TZ ≠ Europe/Belgrade | Reservation row wall-clock matches My bookings for same reservation |
-| C-19b | useExisting empty state | Intent Use existing; date with no user reservations | Empty card with copy + **Reserve court now** / **Create game only** buttons switch intent |
+| C-19b | useExisting hidden without reservations | Integrated club; connected; date with no user reservations | **Use existing reservation** intent not shown in picker |
 | C-19c | Reservations strip adjacent group | 2+ consecutive same-court slots on selected date | Grouped card; tap selects/deselects all; different courts never group |
 | C-19d | Reservation grid overlay sync | Intent Use existing; reservations on selected date | Green cells on grid; selected reservations stronger green + check; legend under time label |
 | C-19e | Booking link hint card | Intent Use existing; select 1+ reservations | Green hint card lists each court + window |
@@ -498,16 +502,16 @@ Frontend/e2e/
 | C-14v | Edit keep current reservation | Edit game with linked bookings | Default **Keep current reservation**; read-only linked list + consequence summary; no reservation picker |
 | C-14w | Edit reservation actions | Edit integrated game | Actions: keep current, change time only, use existing, reserve new, unlink, game only; picker only for use existing |
 | C-14x | Edit unlink save | Edit → Unlink reservation → Save | Consequence warns club reservation stays active + policy; confirm before save |
-| C-14y | useExisting empty state | Intent Use existing; selected date has no club bookings | Empty card with hint + **Reserve court now** / **Game only** actions (not blank strip) |
+| C-14y | useExisting hidden without reservations | Integrated club; connected; selected date has no club bookings | **Use existing reservation** intent not shown (not blank strip / empty-state card) |
 | C-14z | Edit multi-court shared slot hint | Edit integrated game → Reserve new; 2 courts; no intersecting slots | Amber hint: try different courts, date, or duration |
 | C-24 | Date/time | Change start + duration | End time updates |
 | C-25 | Level range slider | Adjust range | Min ≤ max |
 | C-26 | Max participants (tournament/league) | Change tournament or league roster count | Roster options update within user cap |
 | C-49 | Game match format only | Create GAME on padel/tennis | No participant-count grid; 1v1/2v2 selector sets roster to 2 or 4 |
 | C-50 | Game fixed roster | Create GAME singles then doubles | Roster slots and `maxParticipants` follow format (2 ↔ 4) |
-| C-27 | Fixed teams toggle | Enable for doubles | Team setup shown |
-| C-28 | Game name & description | Fill name and description in one section | Saved on submit |
-| C-29 | Price section | Set price type/currency/total | Saved correctly |
+| C-27 | Fixed pairs segmented switch | Create GAME doubles → pick Rotating or Fixed pairs | Team setup shown when Fixed pairs selected |
+| C-28 | Game name & miscellaneous | Name input below sport selector; description and price in Miscellaneous section | Saved on submit |
+| C-29 | Price fields | Set price type/currency/total under Miscellaneous | Saved correctly |
 | C-30 | Avatar upload | Upload game image | Preview shown |
 | C-31 | Invite players | Open player list → select | Invites sent on create |
 | C-32 | Participants setup tags | Configure setup | Tags on game |
@@ -517,6 +521,7 @@ Frontend/e2e/
 | C-36 | Floating summary bar | Fill club/time/etc., scroll down past those sections | Animated chip bar appears under header summarizing scrolled-out values (sport, roster, format, club, date·time·duration·court, participants/level, name, price) |
 | C-37 | Summary chip scroll-back | Tap a chip in the summary bar | Page smooth-scrolls back to that section; chip disappears once section is visible |
 | C-38 | Summary bar empty values | Scroll past sections with nothing entered (no name, price not known) | No chip shown for empty sections; bar hidden when no chips |
+| C-52 | Settings collapse | Create game → Settings section | Collapsed by default (title + chevron only); expand animates toggles and hints button in; collapse hides them again |
 
 ### 8.4 Create league (`/create-league`)
 
@@ -683,6 +688,7 @@ Frontend/e2e/
 | GD-54 | User game note | Add private note from game info card, game card, or modal | Note saved; only visible to self |
 | GD-55 | Edit/delete game note | Update note content | Persisted / deleted |
 | GD-56 | Game settings panel | Toggle anyoneCanInvite, visibility, etc. | Each toggle saves immediately; no Edit/Save on settings card |
+| GD-108 | Game settings collapse | Owner on game details → Settings card | Collapsed by default (title + chevron only); expand animates toggles and hints button in; collapse hides them again |
 | GD-57 | Manage users modal | Owner opens manage users | Roles/kick actions available |
 | GD-58 | Kick participant | Kick user from game | Removed from roster |
 | GD-59 | Kick admin | Owner kicks admin participant | Role change / removal |

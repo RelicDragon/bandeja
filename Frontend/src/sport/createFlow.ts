@@ -45,7 +45,7 @@ function meta(
 export const CREATE_FLOW_BY_SPORT: Record<Sport, SportCreateFlowConfig> = {
   [Sports.PADEL]: {
     presetMeta: [
-      meta('CLASSIC_AUTOMATIC', 'social', 'createGame.presetMeta.CLASSIC_AUTOMATIC', 'social', 'CLASSIC_AUTOMATIC_RELAXED'),
+      meta('CLASSIC_AUTOMATIC', 'match', 'createGame.presetMeta.CLASSIC_AUTOMATIC', 'match', 'CLASSIC_AUTOMATIC_RELAXED'),
       meta('POINTS_11', 'social', 'createGame.presetMeta.POINTS_11'),
       meta('POINTS_16', 'social', 'createGame.presetMeta.POINTS_16'),
       meta('POINTS_21', 'social', 'createGame.presetMeta.POINTS_21'),

@@ -1,9 +1,10 @@
-export type CalendarWeatherModeScope = 'my' | 'find';
+export type CalendarWeatherModeScope = 'my' | 'find' | 'timeSlots';
 
 const LEGACY_STORAGE_KEY = 'padelpulse-calendar-weather-mode';
 const STORAGE_KEYS: Record<CalendarWeatherModeScope, string> = {
   my: `${LEGACY_STORAGE_KEY}-my`,
   find: `${LEGACY_STORAGE_KEY}-find`,
+  timeSlots: `${LEGACY_STORAGE_KEY}-time-slots`,
 };
 
 function parseStoredMode(value: string | null): boolean | null {
@@ -16,6 +17,8 @@ export function readCalendarWeatherMode(scope: CalendarWeatherModeScope): boolea
   try {
     const scopedMode = parseStoredMode(localStorage.getItem(STORAGE_KEYS[scope]));
     if (scopedMode !== null) return scopedMode;
+
+    if (scope === 'timeSlots') return true;
 
     const legacyMode = parseStoredMode(localStorage.getItem(LEGACY_STORAGE_KEY));
     if (legacyMode === null) return false;

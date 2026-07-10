@@ -3,6 +3,7 @@ export * from './PlayerLevelSection';
 export * from './ParticipantsSection';
 export * from './ParticipantsSetupSection';
 export * from './GameSettingsSection';
+export * from './GameNameInput';
 export * from './GameNameCommentsSection';
 export * from './GameStartSection';
 export * from './GameSetupSection';

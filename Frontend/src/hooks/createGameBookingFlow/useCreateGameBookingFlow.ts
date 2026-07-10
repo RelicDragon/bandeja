@@ -9,6 +9,7 @@ import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
 import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import type { SummaryChipItem } from '@/components/createGame/summaryHeader/CreateGameSummaryBar';
 import { useGameLocationTimeState } from '@/components/gameLocationTime/useGameLocationTimeState';
+import { useClubDateReservations } from '@/components/gameLocationTime/useClubDateReservations';
 import { syncFormScheduleFromBookings } from '@/components/gameLocationTime/syncFormScheduleFromBookings';
 import {
   areBookingRecordsEqual,
@@ -38,6 +39,7 @@ import { resolveCreateGameBookingAction } from './resolveCreateGameBookingAction
 import { shouldPromptMarkCourtAfterCreate } from './shouldPromptMarkCourtAfterCreate';
 import { shouldUseBooktimeTimeOptions } from './shouldUseBooktimeTimeOptions';
 import type {
+  CreateGameAbortReason,
   CreateGameAttemptResult,
   CreateGameBookingFields,
   CreateGameBookingOverrides,
@@ -260,6 +262,23 @@ export function useCreateGameBookingFlow({
     return parseBooktimeIntegrationConfig(selectedClubData.integrationConfig);
   }, [selectedClubData]);
 
+  const clubDateReservationsEnabled =
+    clubBookingFlowActive &&
+    Boolean(booktimeAuth?.connected) &&
+    Boolean(booktimeIntegrationConfig?.companyId);
+
+  const clubDateReservations = useClubDateReservations({
+    club: selectedClubData,
+    companyId: booktimeIntegrationConfig?.companyId ?? '',
+    selectedDate,
+    enabled: clubDateReservationsEnabled,
+    matchCourts: bookingMatchCourts ?? courts,
+  });
+
+  const hasReservationsForDate =
+    preselectedBookings ||
+    (clubDateReservations.bookingsLoaded && clubDateReservations.dateBookings.length > 0);
+
   const snapshotBlocked =
     createGameSnapshotBanner === 'noSyncToday' ||
     (createGameSnapshotBanner === 'scoutPoolEmpty' && !snapshotLastFetchedAt);
@@ -286,8 +305,9 @@ export function useCreateGameBookingFlow({
         clubBookingFlowActive,
         hasBooktimeAuthPath: Boolean(booktimeIntegrationConfig),
         manualBookedAvailable: !clubBookingFlowActive,
+        hasReservationsForDate,
       }),
-    [clubBookingFlowActive, booktimeIntegrationConfig],
+    [clubBookingFlowActive, booktimeIntegrationConfig, hasReservationsForDate],
   );
 
   const resetOnClubChange = useCallback(() => {
@@ -327,6 +347,43 @@ export function useCreateGameBookingFlow({
   ]);
 
   useEffect(() => {
+    const availableIds = new Set(reservationIntentOptions.map((option) => option.id));
+    if (availableIds.has(reservationIntent)) return;
+    setReservationIntentState(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: preselectedBookings,
+        clubBookingFlowActive,
+        initialHasBookedCourt,
+      }),
+    );
+  }, [
+    reservationIntent,
+    reservationIntentOptions,
+    preselectedBookings,
+    clubBookingFlowActive,
+    initialHasBookedCourt,
+  ]);
+
+  useEffect(() => {
+    if (reservationIntent !== 'useExisting') return;
+    if (hasReservationsForDate) return;
+    if (!clubDateReservations.bookingsLoaded && !preselectedBookings) return;
+    setReservationIntentState(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: false,
+        clubBookingFlowActive,
+        initialHasBookedCourt: false,
+      }),
+    );
+  }, [
+    reservationIntent,
+    hasReservationsForDate,
+    clubDateReservations.bookingsLoaded,
+    preselectedBookings,
+    clubBookingFlowActive,
+  ]);
+
+  useEffect(() => {
     if (reservationIntent === 'useExisting') return;
     if (selectedBookingIds.length > 0) {
       setSelectedBookingIds([]);
@@ -334,6 +391,25 @@ export function useCreateGameBookingFlow({
       setDerivedBookingSummary({ startTime: null, endTime: null, count: 0 });
     }
   }, [reservationIntent, selectedBookingIds.length, setSelectedBookingIds]);
+
+  const prevReservationIntentRef = useRef(reservationIntent);
+  useEffect(() => {
+    const previousIntent = prevReservationIntentRef.current;
+    prevReservationIntentRef.current = reservationIntent;
+    if (previousIntent === reservationIntent) return;
+    if (
+      (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting') &&
+      clubBookingFlowActive &&
+      !booktimeAuth?.connected
+    ) {
+      setSelectedTime('');
+    }
+  }, [
+    reservationIntent,
+    clubBookingFlowActive,
+    booktimeAuth?.connected,
+    setSelectedTime,
+  ]);
 
   useEffect(() => {
     if (reservationIntent === 'manualBooked') {
@@ -494,7 +570,7 @@ export function useCreateGameBookingFlow({
   const handleCreateAttempt = useCallback(
     async (
       onProceed: (overrides?: CreateGameBookingOverrides) => Promise<void>,
-      onAbort?: () => void,
+      onAbort?: (reason: CreateGameAbortReason) => void,
     ) => {
       const result = await resolveCreateAttempt();
       if (result.status === 'abort') {
@@ -503,7 +579,7 @@ export function useCreateGameBookingFlow({
           bookingSelectionLimits.min,
         );
         toast.error(t(message.key, message.values));
-        onAbort?.();
+        onAbort?.(result.reason);
         return;
       }
       if (result.status === 'softOverlap') {
@@ -852,9 +928,6 @@ export function useCreateGameBookingFlow({
     resolvedGetTimeSlotsForDuration,
     resolvedIsSlotHighlighted,
     createButtonLabel: resolvedCreateButtonLabel,
-    createDisabledByAuth:
-      needsBooktimeAuth &&
-      (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting'),
     preselectedBookings,
     preselectedBookingsHydrating,
     resetOnClubChange,

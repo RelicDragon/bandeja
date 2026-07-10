@@ -30,6 +30,7 @@
     "selectCourt": "Izaberite teren",
     "selectHall": "Izaberite salu",
     "selectClubFirst": "Prvo izaberite klub",
+    "selectCourtFirst": "Prvo izaberite teren",
     "clubCancellationNotice": "Obaveštenje o otkazivanju: najmanje {{hours}} sati pre termina.",
     "clubPolicyTitle": "Pravila kluba",
     "noClubsAvailable": "Nema dostupnih klubova",
@@ -150,6 +151,7 @@
       }
     },
     "fixedTeams": {
+      "optionOff": "Rotacija",
       "GAME": {
         "descriptionOn": "Isti par u svim mečevima ove igre.",
         "descriptionOff": "Parovi se mogu menjati iz kola u kolo."
@@ -181,6 +183,7 @@
     "gameNamePlaceholderTournament": "Imenujte turnir",
     "gameNamePlaceholderLeague": "Imenujte ligu",
     "gameNamePlaceholderTraining": "Imenujte trening",
+    "miscellaneous": "Razno",
     "description": "Opis",
     "descriptionPlaceholder": "Opis za igrače",
     "descriptionPlaceholderTournament": "Opis za igrače",
@@ -423,7 +426,6 @@
     },
     "reservationIntent": {
       "title": "Rezervacija terena",
-      "subtitle": "Izaberite šta treba da se desi sa stvarnom rezervacijom u klubu.",
       "recommended": "Preporučeno",
       "validation": {
         "selectCourt": "Prvo izaberite {{count}} teren(a).",

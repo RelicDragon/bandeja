@@ -2,6 +2,7 @@ import { describe, expect, it, vi, afterEach } from 'vitest';
 import {
   buildCalendarWeatherByDay,
   buildForecastWindowForDayKey,
+  buildTimeSlotWeatherByTime,
   calendarDayWeatherFromDay,
   pickRepresentativeWeatherHour,
   splitCalendarDayKeys,
@@ -284,5 +285,36 @@ describe('buildCalendarWeatherByDay', () => {
 
     expect(map.has('2026-07-16')).toBe(true);
     expect(map.has('2026-07-17')).toBe(false);
+  });
+});
+
+describe('buildTimeSlotWeatherByTime', () => {
+  it('maps each time slot to the matching local hour forecast', () => {
+    const hours = [
+      hour('2026-07-07T06:00:00.000Z', 12),
+      hour('2026-07-07T07:00:00.000Z', 14),
+      hour('2026-07-07T08:00:00.000Z', 16),
+    ];
+
+    const map = buildTimeSlotWeatherByTime({
+      times: ['08:00', '08:30', '09:00'],
+      hours,
+      timezone: 'UTC',
+      stale: false,
+    });
+
+    expect(map.get('08:00')?.point.temperatureC).toBe(16);
+    expect(map.get('08:30')?.point.temperatureC).toBe(16);
+    expect(map.get('09:00')).toBeUndefined();
+  });
+
+  it('returns an empty map when no hourly data is available', () => {
+    const map = buildTimeSlotWeatherByTime({
+      times: ['10:00'],
+      hours: [],
+      timezone: 'UTC',
+    });
+
+    expect(map.size).toBe(0);
   });
 });

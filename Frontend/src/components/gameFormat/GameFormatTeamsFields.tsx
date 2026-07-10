@@ -1,10 +1,9 @@
-import { useMemo } from 'react';
+import { useId, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LucideIcon } from 'lucide-react';
-import { Lock, Mars, Venus, UsersRound, Shuffle } from 'lucide-react';
+import { Lock, Mars, Shuffle, Venus, UsersRound } from 'lucide-react';
 import { EntityType, GenderTeam } from '@/types';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
-import { ToggleSwitch } from '@/components/ToggleSwitch';
 import { gameFormatFixedTeamsToggleVisible, gameFormatGenderVisible, gameFormatTeamsFieldsVisible } from './gameFormatTeamsVisibility';
 
 type FixedTeamsHintEntity = 'GAME' | 'TOURNAMENT' | 'LEAGUE';
@@ -103,55 +102,67 @@ export const GameFormatFixedTeamsToggle = ({
   readOnly = false,
 }: GameFormatFixedTeamsToggleProps) => {
   const { t } = useTranslation();
+  const hintId = useId();
 
   if (!gameFormatFixedTeamsToggleVisible(entityType, participantCount)) return null;
 
   const hintEntity = fixedTeamsHintEntity(entityType);
-  const description = t(
-    hasFixedTeams
-      ? `createGame.fixedTeams.${hintEntity}.descriptionOn`
-      : `createGame.fixedTeams.${hintEntity}.descriptionOff`,
-  );
+  const hintOff = t(`createGame.fixedTeams.${hintEntity}.descriptionOff`);
+  const hintOn = t(`createGame.fixedTeams.${hintEntity}.descriptionOn`);
+  const labelOff = t('createGame.fixedTeams.optionOff');
+  const labelOn = t('games.fixedTeams');
+  const selectedHint = hasFixedTeams ? hintOn : hintOff;
+
+  const options = [
+    { value: false, label: labelOff, icon: Shuffle },
+    { value: true, label: labelOn, icon: Lock },
+  ] as const;
 
   return (
     <div className={className.trim()}>
       <div
-        className={[
-          'rounded-xl transition-colors',
-          !readOnly && 'hover:bg-primary-50/45 dark:hover:bg-primary-500/10',
-          readOnly && 'opacity-90',
-        ]
-          .filter(Boolean)
-          .join(' ')}
+        className={`flex gap-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800 ${
+          readOnly ? 'opacity-60' : ''
+        }`}
+        role="group"
+        aria-label={t('games.fixedTeams')}
+        aria-describedby={hintId}
       >
-        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-x-2 gap-y-1">
-          <button
-            type="button"
-            disabled={readOnly}
-            onClick={() => onHasFixedTeamsChange(!hasFixedTeams)}
-            className={[
-              'col-span-2 flex min-w-0 items-start gap-2 rounded-lg py-0.5 text-left outline-none transition-colors',
-              !readOnly &&
-                'cursor-pointer active:bg-black/[0.03] dark:active:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
-              readOnly && 'cursor-default',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            aria-label={`${t('games.fixedTeams')}. ${description}`}
-          >
-            <Lock size={15} className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-400" aria-hidden />
-            <span className="min-w-0 flex-1 break-words text-sm font-semibold text-gray-900 dark:text-white">
-              {t('games.fixedTeams')}
-            </span>
-          </button>
-          <div className="shrink-0 justify-self-end pt-0.5">
-            <ToggleSwitch checked={hasFixedTeams} onChange={onHasFixedTeamsChange} disabled={readOnly} />
-          </div>
-          <p className="col-span-2 row-start-2 min-w-0 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-            {description}
-          </p>
-        </div>
+        {options.map((option) => {
+          const selected = hasFixedTeams === option.value;
+          const Icon = option.icon;
+          const iconClass = selected
+            ? 'text-white'
+            : 'text-gray-500 dark:text-gray-400';
+          return (
+            <button
+              key={String(option.value)}
+              type="button"
+              disabled={readOnly}
+              onClick={() => onHasFixedTeamsChange(option.value)}
+              aria-pressed={selected}
+              aria-label={option.label}
+              className={`flex-1 min-h-10 rounded-md px-2 py-1.5 transition-all disabled:cursor-not-allowed ${
+                selected
+                  ? 'bg-primary-500 text-white shadow-sm ring-1 ring-primary-600/30'
+                  : 'text-gray-700 hover:bg-gray-200 dark:text-gray-300 dark:hover:bg-gray-700 disabled:hover:bg-transparent dark:disabled:hover:bg-transparent'
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1.5 leading-tight">
+                <Icon className={`h-4 w-4 shrink-0 ${iconClass}`} strokeWidth={2.25} aria-hidden />
+                <span className="text-sm font-semibold">{option.label}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
+      <p
+        id={hintId}
+        aria-live="polite"
+        className="mt-1.5 text-center text-xs leading-relaxed text-gray-500 dark:text-gray-400"
+      >
+        {selectedHint}
+      </p>
     </div>
   );
 };
