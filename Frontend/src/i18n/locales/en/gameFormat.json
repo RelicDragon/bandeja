@@ -169,6 +169,18 @@
       "CUSTOM": "Start from a blank slate and control every rule using the advanced options."
     },
     "scoring": {
+      "CLASSIC_AUTOMATIC": {
+        "title": "Automatic",
+        "subtitle": "Up to 3 sets — games, Americano points, or super tiebreak",
+        "hint": "Casual padel — enter any score; hints only",
+        "sport": {
+          "PADEL": {
+            "title": "Automatic",
+            "subtitle": "Casual best-of-3 — flexible scoring",
+            "hint": "Games, Americano points, or super tiebreak when sets are tied"
+          }
+        }
+      },
       "CLASSIC_BEST_OF_3": {
         "title": "Best of 3 sets",
         "subtitle": "First to 2 sets wins the match",
@@ -397,6 +409,7 @@
       }
     },
     "scoringShort": {
+      "CLASSIC_AUTOMATIC": "Automatic",
       "CLASSIC_BEST_OF_3": "Best of 3",
       "CLASSIC_BEST_OF_5": "Best of 5",
       "CLASSIC_PRO_SET": "Pro set",

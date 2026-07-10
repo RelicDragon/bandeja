@@ -1,4 +1,10 @@
+import { EntityType } from '@prisma/client';
 import type { SportRatingModel } from '../../shared/createTemplates';
+import {
+  ratingSetUsesGamesMargin,
+  ratingSetUsesTiebreakMargin,
+  type RatingSetScore,
+} from '@bandeja/shared/automaticRelaxedScoring';
 
 interface PlayerStats {
   level: number;
@@ -12,7 +18,7 @@ interface MatchResult {
   scoreDelta?: number;
   ownTeamLevel: number;
   opponentsLevel: number;
-  setScores?: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>;
+  setScores?: RatingSetScore[];
 }
 
 interface RatingUpdate {
@@ -38,19 +44,34 @@ const ELO_SCALING_FACTOR = 0.8;
 const HIGH_LEVEL_THRESHOLD = 5.0;
 const MAX_ACHIEVABLE_LEVEL = 6.8;
 
-export function calculateEnduranceCoefficient(
-  setScores: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }> | undefined,
-  ballsInGames: boolean
-): number {
-  if (!setScores || setScores.length === 0) {
-    return 0.5;
-  }
+function enduranceEntityTypeMultiplier(entityType?: EntityType): number {
+  if (entityType === EntityType.LEAGUE) return 4;
+  if (entityType === EntityType.TOURNAMENT) return 2;
+  return 1;
+}
 
-  return ballsInGames ? 0.5 : 0.1;
+export function calculateEnduranceCoefficient(
+  setScores: RatingSetScore[] | undefined,
+  ballsInGames: boolean,
+  entityType?: EntityType,
+): number {
+  const usesGamesEndurance =
+    !setScores || setScores.length === 0
+      ? ballsInGames
+      : setScores.some((set) => ratingSetUsesGamesMargin(set, ballsInGames));
+  const base =
+    !setScores || setScores.length === 0
+      ? usesGamesEndurance ? 0.25 : 0.5
+      : usesGamesEndurance ? 0.25 : 0.1;
+
+  const setCountMultiplier =
+    setScores && setScores.length > 0 ? setScores.length : 1;
+
+  return base * enduranceEntityTypeMultiplier(entityType) * setCountMultiplier;
 }
 
 export function calculateReliabilityChange(
-  setScores: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }> | undefined,
+  setScores: RatingSetScore[] | undefined,
   ballsInGames: boolean
 ): number {
   if (!setScores || setScores.length === 0) {
@@ -59,7 +80,7 @@ export function calculateReliabilityChange(
 
   const sum = setScores.reduce((total, set) => {
     const setTotal = set.teamAScore + set.teamBScore;
-    const effectiveBallsInGames = ballsInGames && !set.isTieBreak;
+    const effectiveBallsInGames = ratingSetUsesGamesMargin(set, ballsInGames);
     return total + (effectiveBallsInGames ? setTotal * 5 : setTotal);
   }, 0);
   
@@ -85,12 +106,12 @@ function calculateHighLevelDampening(playerLevel: number, isGaining: boolean): n
   return Math.exp(-3.5 * ratio);
 }
 
-function calculateDifferentialMultiplier(setScores: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>): { multiplier: number; totalPointDifferential: number } {
+function calculateDifferentialMultiplier(setScores: RatingSetScore[]): { multiplier: number; totalPointDifferential: number } {
   let totalPointDifferential = 0;
 
   const validSets = setScores.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
   for (const set of validSets) {
-    const diff = set.isTieBreak
+    const diff = ratingSetUsesTiebreakMargin(set)
       ? (set.teamAScore > set.teamBScore ? 1 : set.teamBScore > set.teamAScore ? -1 : 0)
       : set.teamAScore - set.teamBScore;
     totalPointDifferential += diff;
@@ -123,6 +144,7 @@ export function calculateRatingUpdate(
     useScoreMargin: true,
     ballsInGamesMargin: false,
   },
+  entityType?: EntityType,
 ): RatingUpdate {
   const maxLevelChange = engine.maxDeltaPerEvent ?? DEFAULT_MAX_LEVEL_CHANGE;
   const marginBallsInGames = ballsInGames && (engine.ballsInGamesMargin ?? false);
@@ -166,6 +188,7 @@ export function calculateRatingUpdate(
   const enduranceCoefficient = calculateEnduranceCoefficient(
     matchResult.setScores,
     marginBallsInGames,
+    entityType,
   );
   levelChange = levelChange * enduranceCoefficient;
 

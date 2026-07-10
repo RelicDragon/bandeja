@@ -26,7 +26,8 @@ interface GameResultsModalsProps {
     teamAScore: number,
     teamBScore: number,
     isTieBreak?: boolean,
-    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>
+    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>,
+    options?: { automaticRecordMode?: import('@/utils/scoring').AutomaticMatchRecordMode },
   ) => Promise<void>;
   onRemoveSet: (roundId: string, matchId: string, setIndex: number) => Promise<void>;
   onPlayerSelect: (playerId: string) => Promise<void>;
@@ -96,8 +97,8 @@ export const GameResultsModals = ({
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
         ballsInGames={currentGame?.ballsInGames || false}
         game={currentGame}
-        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole) => {
-          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole);
+        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options) => {
+          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options);
         }}
         onRemove={(matchId, setIndex) => {
           onRemoveSet(modal.roundId, matchId, setIndex);
@@ -118,8 +119,8 @@ export const GameResultsModals = ({
         fixedNumberOfSets={currentGame?.fixedNumberOfSets}
         ballsInGames={currentGame?.ballsInGames || false}
         game={currentGame}
-        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole) => {
-          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole);
+        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options) => {
+          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options);
         }}
         onRemove={(matchId, setIndex) => {
           onRemoveSet(modal.roundId, matchId, setIndex);

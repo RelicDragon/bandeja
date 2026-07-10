@@ -407,6 +407,9 @@ Frontend/e2e/
 |----|------|-------|----------|
 | C-09 | Sport selector | Multi-sport user switches sport | Format limits update |
 | C-10 | Template picker | Select template | Format + rating defaults applied |
+| C-10a | Padel Automatic default | Create padel doubles game (default load) | **Automatic** template selected (Social badge); `CLASSIC_AUTOMATIC` preset; generation Automatic |
+| C-10b | Automatic customize demote | Automatic template → Customize format → change any param | Custom/advanced card; template no longer matches |
+| C-10c | Automatic set entry | Automatic game → set 1: SegmentedSwitch Set/games vs Americano points (match-level); set 2+ uses same mode; at 1–1 decider can pick super tiebreak; next match can differ | Any score saves; amber hint only |
 | C-11 | Game format wizard | Open/close wizard | Scoring preset saved |
 | C-47 | Golden point deuce count | Create/edit classic game → Set structure step → pick Off / At 40–40 / After 1–4 deuces | Setting saved on game; live scoring uses advantage until threshold then sudden death at 40–40; watch matches web |
 | C-12 | Rating vs social game | Toggle affects rating | Flag persisted on create |
@@ -693,6 +696,7 @@ Frontend/e2e/
 | GD-65 | Reset results | Owner reset all results | Confirm → cleared |
 | GD-66 | Sync conflict modal | Local + server results diverge | Choose sync-to-server or load-from-server |
 | GD-67 | Outcome explanation | Tap level change explanation | `OutcomeExplanationModal` shows delta |
+| GD-67a | Automatic match explanation sets | Open explanation after Automatic-format match (games vs americano vs super TB) | Set chips show raw scores with `pts` for americano rows and `STB` for super tiebreak decider |
 | GD-68 | Finish results confirm | Finish results action | Confirmation modal |
 | GD-69 | Edit finalized results | Edit after finish | Danger confirm modal |
 | GD-70 | BAR level changes display | Finished BAR game | Per-player level before/after on list |

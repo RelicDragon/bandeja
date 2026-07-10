@@ -1,8 +1,18 @@
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TrendingDown, TrendingUp } from 'lucide-react';
-import type { MatchExplanation } from '@/api/results';
+import type { MatchExplanation, SetExplanation } from '@/api/results';
 import { formatChange, formatNumber, getLevelChangeColor } from './formatters';
+
+function effectiveSetScoreKind(
+  set: SetExplanation,
+  match: MatchExplanation,
+): SetExplanation['scoreKind'] {
+  if (set.scoreKind) return set.scoreKind;
+  if (!match.automaticRecordMode) return undefined;
+  if (set.isTieBreak) return 'SUPER_TIEBREAK';
+  return match.automaticRecordMode;
+}
 
 type OutcomeExplanationMatchCardProps = {
   match: MatchExplanation;
@@ -69,7 +79,9 @@ export const OutcomeExplanationMatchCard = memo(function OutcomeExplanationMatch
           </span>
           {match.sets && match.sets.length > 0 && (
             <div className="flex gap-1.5 flex-wrap">
-              {match.sets.map((set, setIndex) => (
+              {match.sets.map((set, setIndex) => {
+                const scoreKind = effectiveSetScoreKind(set, match);
+                return (
                 <span
                   key={setIndex}
                   className={`text-xs font-semibold px-2 py-0.5 rounded ${
@@ -81,11 +93,22 @@ export const OutcomeExplanationMatchCard = memo(function OutcomeExplanationMatch
                   }`}
                 >
                   {set.userScore}-{set.opponentScore}
-                  {set.isTieBreak && (
+                  {scoreKind === 'SUPER_TIEBREAK' && (
+                    <span className="ml-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">
+                      {t('gameResults.explanationSetSuperTiebreak')}
+                    </span>
+                  )}
+                  {scoreKind === 'AMERICANO_POINTS' && (
+                    <span className="ml-1 text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                      {t('gameResults.explanationSetAmericanoPoints')}
+                    </span>
+                  )}
+                  {set.isTieBreak && scoreKind !== 'SUPER_TIEBREAK' && (
                     <span className="ml-1 text-[10px] font-bold text-primary-600 dark:text-primary-400">TB</span>
                   )}
                 </span>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>

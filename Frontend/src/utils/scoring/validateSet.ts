@@ -6,7 +6,7 @@ import {
 } from '@shared/strictValidation';
 import type { ScoringRules, SetKind } from './rulebook';
 import { getSetKind } from './setKind';
-import { isClassicRules, isClassicTimedRelaxedGameScores, isRallyGameRules, isRallyPointsRules } from './rulebook';
+import { isClassicRules, isClassicTimedRelaxedGameScores, isClassicAutomaticRelaxedScores, isRallyGameRules, isRallyPointsRules } from './rulebook';
 
 export type ValidationReason =
   | 'NEGATIVE_SCORE'
@@ -172,6 +172,11 @@ export const isLegalSetScore = (
   const kind = getSetKind(setIndex, sets, rules, { teamA: a, teamB: b, isTieBreak: isTieBreakFlag });
 
   if (a === 0 && b === 0) return ok(kind);
+
+  if (isClassicAutomaticRelaxedScores(rules)) {
+    if (a === b && a > 0) return ok(kind);
+    return ok(kind);
+  }
 
   if (kind === 'POINTS') return validatePointsSet(a, b, rules);
   if (kind === 'TIMED') return validateTimedSet(a, b);

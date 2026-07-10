@@ -120,6 +120,7 @@ export const GameFormatSection = ({ game, canEdit, onGameUpdate }: GameFormatSec
     initial: templateInitial,
     skipInitialAutoSelect: true,
     formatWizardOpen: isWizardOpen,
+    entityType: game.entityType,
     onAfterTemplateApply: canEdit ? onAfterTemplateApply : undefined,
   });
   const { handleWizardClose, notifyFormatWizardOpen, runInitialBootstrap } = templateFlow;

@@ -223,10 +223,70 @@ function testStoredOutcomeOverridesTotals(): void {
   assert(explanation.summary.wins === 1 && explanation.summary.losses === 0, 'uses stored W/L');
 }
 
+function testAutomaticRelaxedMatchExplanation(): void {
+  const users = {
+    a: makeUser('a', 3.0),
+    b: makeUser('b', 3.5),
+    c: makeUser('c', 4.0),
+    d: makeUser('d', 4.5),
+  };
+
+  const match = {
+    id: 'm-auto',
+    winnerId: 'm-auto-t1',
+    metadata: { automaticRecordMode: 'AMERICANO_POINTS' },
+    teams: [
+      {
+        id: 'm-auto-t1',
+        teamNumber: 1,
+        players: ['a', 'b'].map((userId) => ({ userId, user: users[userId as keyof typeof users] })),
+      },
+      {
+        id: 'm-auto-t2',
+        teamNumber: 2,
+        players: ['c', 'd'].map((userId) => ({ userId, user: users[userId as keyof typeof users] })),
+      },
+    ],
+    sets: [
+      { teamAScore: 24, teamBScore: 18, isTieBreak: false, role: MatchSetRole.OFFICIAL },
+      { teamAScore: 24, teamBScore: 20, isTieBreak: false, role: MatchSetRole.OFFICIAL },
+    ],
+  };
+
+  const game = {
+    sport: Sport.PADEL,
+    entityType: EntityType.GAME,
+    affectsRating: true,
+    winnerOfGame: WinnerOfGame.BY_MATCHES_WON,
+    ballsInGames: true,
+    winnerOfMatch: WinnerOfMatch.BY_SETS,
+    fixedNumberOfSets: 3,
+    maxTotalPointsPerSet: null,
+    maxPointsPerTeam: null,
+    scoringPreset: 'CLASSIC_AUTOMATIC' as const,
+    deucesBeforeGoldenPoint: null,
+    pointsPerTie: 0,
+    matchTimerEnabled: false,
+    participants: Object.entries(users).map(([userId, user]) => ({ userId, user })),
+    outcomes: [],
+    rounds: [{ roundNumber: 1, matches: [match] }],
+  };
+
+  const explanation = buildOutcomeRatingExplanation(game, 'a', null);
+  assert(explanation.matches.length === 1, 'automatic match explanation produced');
+  const explained = explanation.matches[0];
+  assert(explained.automaticRecordMode === 'AMERICANO_POINTS', 'match record mode exposed');
+  assert(
+    explained.sets?.every((set) => set.scoreKind === 'AMERICANO_POINTS') === true,
+    'americano sets tagged for display',
+  );
+}
+
 function main(): void {
   testSourceUsesCalculatorParity();
   testMultiMatchMatchesCalculator();
   testStoredOutcomeOverridesTotals();
+  testAutomaticRelaxedMatchExplanation();
   console.log('outcome-explanation: OK');
 }
 

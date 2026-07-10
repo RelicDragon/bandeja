@@ -43,6 +43,16 @@ const CASES: Case[] = [
     createIntent: 'match',
   },
   {
+    label: 'padel social automatic classic',
+    sport: 'PADEL',
+    preset: 'CLASSIC_AUTOMATIC',
+    legal: true,
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    scoringMode: 'CLASSIC',
+    createIntent: 'social',
+  },
+  {
     label: 'padel points preset blocked on classic gameType',
     sport: 'PADEL',
     preset: 'POINTS_24',

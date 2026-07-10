@@ -217,6 +217,7 @@ export interface SetExplanation {
   userScore: number;
   opponentScore: number;
   isTieBreak?: boolean;
+  scoreKind?: 'GAMES' | 'AMERICANO_POINTS' | 'SUPER_TIEBREAK';
 }
 
 export interface MatchExplanation {
@@ -236,6 +237,7 @@ export interface MatchExplanation {
   teammates: Array<{ firstName?: string; lastName?: string; level: number }>;
   opponents: Array<{ firstName?: string; lastName?: string; level: number }>;
   sets?: SetExplanation[];
+  automaticRecordMode?: 'GAMES' | 'AMERICANO_POINTS';
 }
 
 export const getOutcomeExplanation = async (gameId: string, userId: string): Promise<OutcomeExplanation> => {

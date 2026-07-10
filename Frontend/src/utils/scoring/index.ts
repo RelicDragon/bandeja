@@ -7,4 +7,6 @@ export * from './keypad';
 export * from './scorePickerPresets';
 export * from './suggestFix';
 export * from './messages';
+export * from './automaticRelaxedScoring';
+export * from './setScoreDelta';
 export * from './scoreEntryExamples';

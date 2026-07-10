@@ -1,5 +1,5 @@
 import type { ScoringRules, SetKind } from './rulebook';
-import { isClassicRules, isClassicTimedRelaxedGameScores, isPointsRules } from './rulebook';
+import { isClassicRules, isClassicTimedRelaxedGameScores, isClassicAutomaticRelaxedScores, isPointsRules } from './rulebook';
 
 /** Colon-separated example scores for the score-entry modal hint row. */
 export function getScoreEntryExampleList(rules: ScoringRules, kind: SetKind): string | null {
@@ -14,6 +14,7 @@ export function getScoreEntryExampleList(rules: ScoringRules, kind: SetKind): st
     return `${ft}:${ft - wb}, ${ft + 1}:${ft - 1}, ${ft + 2}:${ft}`;
   }
   if (kind === 'REGULAR' && isClassicRules(rules)) {
+    if (isClassicAutomaticRelaxedScores(rules)) return '6:4, 24:18, 10:8';
     if (isClassicTimedRelaxedGameScores(rules)) return '6:4, 4:4, 3:6';
     const g = rules.gamesPerSet;
     const tb = rules.tieBreakGameAtGames;

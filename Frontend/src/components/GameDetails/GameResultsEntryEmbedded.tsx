@@ -26,6 +26,10 @@ import {
   trimTrailingEmptyAfterDecision,
   getStandingsMatchOutcome,
   isClassicRules,
+  isClassicAutomaticRelaxedScores,
+  automaticSetEntryUsesTieBreak,
+  mergeAutomaticMatchRecordMetadata,
+  type AutomaticMatchRecordMode,
   isResultsMatchFinished,
   isResultsMatchInProgressForResultsHeader,
   matchSetsHaveAnyNonZeroScore,
@@ -694,7 +698,8 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
     teamAScore: number,
     teamBScore: number,
     isTieBreak?: boolean,
-    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>
+    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>,
+    options?: { automaticRecordMode?: AutomaticMatchRecordMode },
   ) => {
     const setIndexError = validateSetIndex(setIndex);
     if (setIndexError) {
@@ -753,12 +758,16 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
       }
 
       const validation = isLegalSetScore(teamAScore, teamBScore, rules, setIndex, workingSets, isTieBreak);
-      if (!validation.ok && validation.reason) {
+      if (!validation.ok && validation.reason && !isClassicAutomaticRelaxedScores(rules)) {
         toast.error(validationMessage(t, validation.reason, validation.detail));
         return;
       }
 
-      const kind = validation.kind;
+      const kind = isClassicAutomaticRelaxedScores(rules)
+        ? (automaticSetEntryUsesTieBreak(setIndex, workingSets, rules, Boolean(isTieBreak))
+            ? 'SUPER_TIEBREAK'
+            : 'REGULAR')
+        : validation.kind;
       const finalIsTieBreak = kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
 
       workingSets[setIndex] = {
@@ -768,6 +777,11 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         isTieBreak: finalIsTieBreak,
         role: workingSets[setIndex].role ?? 'OFFICIAL',
       };
+
+      const metadata =
+        options?.automaticRecordMode != null
+          ? mergeAutomaticMatchRecordMetadata(match.metadata, options.automaticRecordMode)
+          : match.metadata;
 
       if (isClassicRules(rules) && rules.superTieBreakReplacesDeciderAtIndex === null) {
         for (let i = 0; i < workingSets.length; i++) {
@@ -793,6 +807,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         teamB: match.teamB,
         sets: nextSets,
         courtId: match.courtId,
+        metadata,
       });
     } catch (error: any) {
       console.error('Failed to update set result:', error);

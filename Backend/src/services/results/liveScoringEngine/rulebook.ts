@@ -5,6 +5,7 @@ import type { OfficiatingLevel } from '../../../shared/officiatingLevel';
 import { getStrictValidationForPreset, type StrictValidationId } from '../../../shared/sportPresetMeta';
 
 export type ScoringPreset =
+  | 'CLASSIC_AUTOMATIC'
   | 'CLASSIC_BEST_OF_3'
   | 'CLASSIC_BEST_OF_5'
   | 'CLASSIC_PRO_SET'
@@ -194,7 +195,13 @@ const customRule: RuleSkeleton = {
   allowRemoveSet: true,
 };
 
+const classicAutomatic: RuleSkeleton = {
+  ...classicSuperTb,
+  allowRemoveSet: true,
+};
+
 const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
+  CLASSIC_AUTOMATIC: classicAutomatic,
   CLASSIC_BEST_OF_3: classicBo3,
   CLASSIC_BEST_OF_5: classicBo5,
   CLASSIC_SUPER_TIEBREAK: classicSuperTb,
@@ -268,7 +275,8 @@ export const getRules = (game: RulesSource): ScoringRules => {
   const allowIncompleteRegularSetGames =
     Boolean(game?.matchTimerEnabled) ||
     preset === 'CLASSIC_TIMED' ||
-    strictValidation === 'CLASSIC_TIMED_RELAXED';
+    strictValidation === 'CLASSIC_TIMED_RELAXED' ||
+    strictValidation === 'CLASSIC_AUTOMATIC_RELAXED';
 
   return {
     ...base,

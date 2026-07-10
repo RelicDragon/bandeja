@@ -1,9 +1,11 @@
 import type { Sport } from '../../sport/sportIds';
 import { Sports } from '../../sport/sportIds';
+import { EntityType } from '@prisma/client';
 import { getSportConfig } from '../../sport/sportRegistry';
 import type { SportRatingModel } from '../../shared/createTemplates';
 import { getMatchScoresForDelta } from './setScoreDelta';
 import { calculateRatingUpdate, calculateReliabilityChange } from './rating.service';
+import type { RatingSetScore } from '@bandeja/shared/automaticRelaxedScoring';
 
 interface PlayerData {
   userId: string;
@@ -19,16 +21,13 @@ interface TeamScore {
   playerIds: string[];
 }
 
-interface SetScore {
-  teamAScore: number;
-  teamBScore: number;
-  isTieBreak?: boolean;
-}
+type SetScore = RatingSetScore;
 
 interface MatchResultData {
   teams: TeamScore[];
   winnerId?: string | null;
   sets?: SetScore[];
+  metadata?: Record<string, unknown> | null;
 }
 
 interface RoundResultData {
@@ -165,6 +164,7 @@ export function calculateByMatchesWonOutcomes(
   pointsPerLoose: number = 0,
   ballsInGames: boolean = false,
   sport: Sport = Sports.PADEL,
+  entityType?: EntityType,
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
@@ -221,6 +221,7 @@ export function calculateByMatchesWonOutcomes(
           },
           ratingBallsInGames,
           engine,
+          entityType,
         );
 
         roundPlayerOutcomes[player.userId] += update.levelChange;
@@ -253,6 +254,7 @@ export function calculateByMatchesWonOutcomes(
           },
           ratingBallsInGames,
           engine,
+          entityType,
         );
 
         roundPlayerOutcomes[player.userId] += update.levelChange;
@@ -298,6 +300,7 @@ export function calculateByPointsOutcomes(
   pointsPerLoose: number = 0,
   ballsInGames: boolean = false,
   sport: Sport = Sports.PADEL,
+  entityType?: EntityType,
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
@@ -360,6 +363,7 @@ export function calculateByPointsOutcomes(
           },
           ratingBallsInGames,
           engine,
+          entityType,
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;
@@ -395,6 +399,7 @@ export function calculateByPointsOutcomes(
           },
           ratingBallsInGames,
           engine,
+          entityType,
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;
@@ -440,6 +445,7 @@ export function calculateByScoresDeltaOutcomes(
   pointsPerLoose: number = 0,
   ballsInGames: boolean = false,
   sport: Sport = Sports.PADEL,
+  entityType?: EntityType,
 ): {
   gameOutcomes: GameOutcomeResult[];
   roundOutcomes: Record<number, RoundOutcomeResult[]>;
@@ -502,6 +508,7 @@ export function calculateByScoresDeltaOutcomes(
           },
           ratingBallsInGames,
           engine,
+          entityType,
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;
@@ -538,6 +545,7 @@ export function calculateByScoresDeltaOutcomes(
           },
           ratingBallsInGames,
           engine,
+          entityType,
         );
 
         roundPlayerOutcomes[playerId] += update.levelChange;

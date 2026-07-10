@@ -83,4 +83,12 @@ describe('isLegalSetScore with preset meta', () => {
     expect(isLegalSetScore(21, 19, rules, 0, emptySets).ok).toBe(true);
     expect(isLegalSetScore(22, 20, rules, 0, emptySets).ok).toBe(false);
   });
+
+  it('CLASSIC_AUTOMATIC_RELAXED on padel allows any games score', () => {
+    const rules = getRules({ sport: Sports.PADEL, scoringPreset: 'CLASSIC_AUTOMATIC' } as never);
+    expect(rules.strictValidation).toBe('CLASSIC_AUTOMATIC_RELAXED');
+    expect(isLegalSetScore(4, 3, rules, 0, emptySets).ok).toBe(true);
+    expect(isLegalSetScore(24, 18, rules, 0, emptySets).ok).toBe(true);
+    expect(isLegalSetScore(3, 3, rules, 0, emptySets).ok).toBe(true);
+  });
 });

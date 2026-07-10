@@ -191,8 +191,12 @@ export const CreateGame = ({
   const enabledSports = useMemo(() => listCreateFlowSports(user), [user]);
   const showTemplatePicker = showGameFormatTemplatePicker(entityType, selectedSport);
   const gameFormat = useGameFormat(
-    { ...initialGameData, maxParticipants },
-    { skipGenerationParticipantDefaults: showTemplatePicker },
+    { ...initialGameData, maxParticipants, sport: selectedSport },
+    {
+      skipGenerationParticipantDefaults: showTemplatePicker,
+      entityType,
+      sport: selectedSport,
+    },
   );
   const sportFormatLimits = useClampGameFormatToSport(
     selectedSport,
@@ -257,6 +261,7 @@ export const CreateGame = ({
     },
     skipInitialAutoSelect: !!initialCreateIntent || !!initialTemplateId,
     formatWizardOpen: isFormatWizardOpen,
+    entityType,
     onIntentSideEffects: (intent, template) => {
       applyIntentDefaults(intent);
       if (template) setIsRatingGame(template.affectsRating);

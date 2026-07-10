@@ -184,6 +184,11 @@ const isLegalSetScore = (
 
   if (a === 0 && b === 0) return ok(kind);
 
+  if (rules.strictValidation === 'CLASSIC_AUTOMATIC_RELAXED') {
+    if (a === b && a > 0) return ok(kind);
+    return ok(kind);
+  }
+
   if (kind === 'POINTS') return validatePointsSet(a, b, rules);
   if (kind === 'TIMED') return validateTimedSet();
   if (kind === 'CUSTOM') return validateCustomSet(a, b, rules);

@@ -13,6 +13,7 @@ import {
 import type { CreateTemplateId } from '@/sport/createFlow';
 
 export function getCreateTemplateIcon(id: CreateTemplateId): LucideIcon {
+  if (id === 'PADEL_AUTOMATIC' || id === 'PADEL_SINGLES_AUTOMATIC') return Users;
   if (id === 'PADEL_BEST_OF_3' || id.includes('MATCH_BO3') || id.includes('CLASSIC_BO3') || id === 'PADEL_SINGLES_BO3') return Trophy;
   if (id === 'PADEL_SINGLE_SET' || id === 'PADEL_SINGLES_SINGLE_SET') return Zap;
   if (id === 'PADEL_TIMED' || id.includes('_10') || id.includes('_20')) return Timer;

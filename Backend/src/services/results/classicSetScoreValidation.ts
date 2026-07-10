@@ -22,7 +22,13 @@ const classicBo3: ClassicGameRules = {
   tieBreakGameWinBy: 2,
 };
 
+const classicAutomatic: ClassicGameRules = {
+  ...classicBo3,
+  superTieBreakReplacesDeciderAtIndex: 2,
+};
+
 const PRESET_RULES: Partial<Record<ScoringPreset, ClassicGameRules>> = {
+  CLASSIC_AUTOMATIC: classicAutomatic,
   CLASSIC_BEST_OF_3: classicBo3,
   CLASSIC_BEST_OF_5: { ...classicBo3, superTieBreakReplacesDeciderAtIndex: null },
   CLASSIC_SUPER_TIEBREAK: { ...classicBo3, superTieBreakReplacesDeciderAtIndex: 2 },
@@ -161,7 +167,13 @@ export function validateMatchClassicSetScores(
         if (err) return `Set ${i + 1}: ${err}`;
       }
     } else {
-      if (game.matchTimerEnabled || game.scoringPreset === ScoringPreset.CLASSIC_TIMED) continue;
+      if (
+        game.matchTimerEnabled ||
+        game.scoringPreset === ScoringPreset.CLASSIC_TIMED ||
+        game.scoringPreset === ScoringPreset.CLASSIC_AUTOMATIC
+      ) {
+        continue;
+      }
       const err = validateClassicRegularGames(ta, tb, rules);
       if (err) return `Set ${i + 1}: ${err}`;
     }

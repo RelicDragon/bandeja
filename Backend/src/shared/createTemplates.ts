@@ -17,7 +17,8 @@ export type StrictValidationId =
   | 'BWF_21'
   | 'BWF_15'
   | 'PICKLEBALL_RALLY_11'
-  | 'CLASSIC_TIMED_RELAXED';
+  | 'CLASSIC_TIMED_RELAXED'
+  | 'CLASSIC_AUTOMATIC_RELAXED';
 
 export type SportPresetMeta = {
   preset: ScoringPreset;
@@ -515,6 +516,13 @@ export function getCreateTemplatesForSport(sport: Sport): CreateTemplate[] {
 }
 
 export const PADEL_PRESET_META: SportPresetMeta[] = [
+  {
+    preset: 'CLASSIC_AUTOMATIC',
+    tier: 'social',
+    labelKey: 'gameFormat.scoring.CLASSIC_AUTOMATIC.sport.PADEL',
+    defaultFor: 'social',
+    strictValidation: 'CLASSIC_AUTOMATIC_RELAXED',
+  },
   {
     preset: 'POINTS_24',
     tier: 'social',

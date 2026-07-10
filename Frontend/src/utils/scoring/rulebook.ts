@@ -166,7 +166,14 @@ const customRule: RuleSkeleton = {
   allowRemoveSet: true,
 };
 
+const classicAutomatic: RuleSkeleton = {
+  ...classicBo3,
+  superTieBreakReplacesDeciderAtIndex: 2,
+  allowRemoveSet: true,
+};
+
 const PRESETS: Record<ScoringPreset, RuleSkeleton> = {
+  CLASSIC_AUTOMATIC: classicAutomatic,
   CLASSIC_BEST_OF_3: classicBo3,
   CLASSIC_BEST_OF_5: classicBo5,
   CLASSIC_SUPER_TIEBREAK: classicSuperTb,
@@ -222,7 +229,8 @@ export const getRules = (game: RulesSource): ScoringRules => {
   const allowIncompleteRegularSetGames =
     Boolean(game?.matchTimerEnabled) ||
     preset === 'CLASSIC_TIMED' ||
-    getStrictValidationForPreset(game?.sport, preset) === 'CLASSIC_TIMED_RELAXED';
+    getStrictValidationForPreset(game?.sport, preset) === 'CLASSIC_TIMED_RELAXED' ||
+    getStrictValidationForPreset(game?.sport, preset) === 'CLASSIC_AUTOMATIC_RELAXED';
 
   const strictValidation = getStrictValidationForPreset(game?.sport, preset);
 
@@ -296,3 +304,7 @@ export const isTimedRules = (rules: ScoringRules): boolean => !rules.ballsInGame
 /** Timed one-set classic: any non-negative games score (e.g. at buzzer) except tiebreak rows stay strict. */
 export const isClassicTimedRelaxedGameScores = (rules: ScoringRules): boolean =>
   rules.allowIncompleteRegularSetGames === true;
+
+/** Casual automatic padel: flexible set/points entry with recommendation hints only. */
+export const isClassicAutomaticRelaxedScores = (rules: ScoringRules): boolean =>
+  rules.strictValidation === 'CLASSIC_AUTOMATIC_RELAXED';

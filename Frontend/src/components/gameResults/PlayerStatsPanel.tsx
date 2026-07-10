@@ -178,7 +178,7 @@ export const PlayerStatsPanel = ({ game, rounds }: PlayerStatsPanelProps) => {
           <div key={groupIndex} className="space-y-0">
             {group.standings.map((standing) => {
               const isExpanded = expandedPlayerIds.has(standing.user.id);
-              const details = buildPlayerMatchDetails(rounds, standing.user.id, playerNameById);
+              const details = buildPlayerMatchDetails(rounds, standing.user.id, playerNameById, game);
               const toggleExpanded = () => {
                 setExpandedPlayerIds((prev) => {
                   const next = new Set(prev);

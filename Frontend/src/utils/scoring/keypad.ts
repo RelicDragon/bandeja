@@ -5,6 +5,7 @@ import { getSetKind } from './setKind';
 import {
   isClassicRules,
   isClassicTimedRelaxedGameScores,
+  isClassicAutomaticRelaxedScores,
   isPointsRules,
   isRallyGameRules,
   isRallyPointsRules,
@@ -78,6 +79,11 @@ export const getKeypadOptions = (
   if (kind === 'TIEBREAK_GAME') {
     const max = rules.gamesPerSet + 1;
     return { values: range(max), mode: 'CLASSIC', max, kind: 'TIEBREAK_GAME' };
+  }
+
+  if (isClassicRules(rules) && isClassicAutomaticRelaxedScores(rules)) {
+    const max = rules.maxPointsPerTeam > 0 ? rules.maxPointsPerTeam : 999;
+    return { values: range(max), mode: 'FREE', max, kind };
   }
 
   if (isClassicRules(rules) && isClassicTimedRelaxedGameScores(rules) && kind === 'REGULAR') {

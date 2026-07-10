@@ -1,27 +1,17 @@
 import { Game, BasicUser, WinnerOfGame } from '@/types';
-import { Round, Match, SetResult } from '@/types/gameResults';
+import { Round, Match } from '@/types/gameResults';
 import { isOfficialMatchSet } from '@/utils/matchSetRole';
 import { getRules } from '@/utils/scoring/rulebook';
 import { getStandingsMatchOutcome } from '@/utils/scoring/matchWinnerLive';
+import { getMatchScoresForDeltaAsAB } from '@/utils/scoring/setScoreDelta';
 
 /** `user.level` on game participants is sport-projected for `game.sport`, not necessarily global User.level. */
 
-function getSetScoreForDelta(set: SetResult, side: 'A' | 'B'): number {
-  if (set.isTieBreak) {
-    const aWon = set.teamA > set.teamB;
-    return side === 'A' ? (aWon ? 1 : 0) : (aWon ? 0 : 1);
-  }
-  return side === 'A' ? set.teamA : set.teamB;
-}
-
-function getMatchScoresForDelta(sets: SetResult[]): { scoreA: number; scoreB: number } {
-  return sets.reduce(
-    (acc, set) => ({
-      scoreA: acc.scoreA + getSetScoreForDelta(set, 'A'),
-      scoreB: acc.scoreB + getSetScoreForDelta(set, 'B'),
-    }),
-    { scoreA: 0, scoreB: 0 }
-  );
+function scoreDeltaContext(game: Game, match: Match) {
+  return {
+    matchMetadata: match.metadata,
+    rules: getRules(game),
+  };
 }
 
 export interface PlayerStanding {
@@ -99,7 +89,10 @@ function calculatePlayerStats(
       }
 
       const matchWinner = calculateMatchWinner(match, game);
-      const { scoreA: totalScoreA, scoreB: totalScoreB } = getMatchScoresForDelta(validSets);
+      const { scoreA: totalScoreA, scoreB: totalScoreB } = getMatchScoresForDeltaAsAB(
+        validSets,
+        scoreDeltaContext(game, match),
+      );
 
       if (isInTeamA) {
         stats.scoresMade += totalScoreA;

@@ -657,6 +657,7 @@ class GameResultsEngineClass {
     teamB: string[];
     sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: import('@/utils/matchSetRole').MatchSetRole }>;
     courtId?: string;
+    metadata?: Record<string, unknown>;
   }): Promise<void> {
     const state = this.getState();
     if (!state.gameId || !state.userId) {
@@ -751,6 +752,7 @@ class GameResultsEngineClass {
                         teamB: match.teamB,
                         sets: match.sets,
                         courtId: match.courtId,
+                        ...(match.metadata !== undefined ? { metadata: match.metadata } : {}),
                       }
                     : m
                 ),

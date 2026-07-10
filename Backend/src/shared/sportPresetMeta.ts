@@ -6,7 +6,8 @@ export type StrictValidationId =
   | 'BWF_21'
   | 'BWF_15'
   | 'PICKLEBALL_RALLY_11'
-  | 'CLASSIC_TIMED_RELAXED';
+  | 'CLASSIC_TIMED_RELAXED'
+  | 'CLASSIC_AUTOMATIC_RELAXED';
 
 const STRICT_BY_SPORT_PRESET: Partial<Record<Sport, Partial<Record<string, StrictValidationId>>>> = {
   BADMINTON: {
@@ -27,6 +28,7 @@ const STRICT_BY_SPORT_PRESET: Partial<Record<Sport, Partial<Record<string, Stric
     CLASSIC_SINGLE_SET: 'CLASSIC_TIMED_RELAXED',
   },
   PADEL: {
+    CLASSIC_AUTOMATIC: 'CLASSIC_AUTOMATIC_RELAXED',
     CLASSIC_TIMED: 'CLASSIC_TIMED_RELAXED',
   },
 };

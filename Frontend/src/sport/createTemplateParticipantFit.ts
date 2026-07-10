@@ -1,4 +1,4 @@
-import type { GenderTeam, ScoringPreset } from '@/types';
+import type { GenderTeam, ScoringPreset, EntityType } from '@/types';
 import type { Sport } from '@shared/sport';
 import { Sports } from '@shared/sport';
 import {
@@ -103,19 +103,22 @@ export function pickDefaultTemplateId(
   allowedScoringPresets: ScoringPreset[],
   ctx: CreateTemplateParticipantContext,
   preferredId?: CreateTemplateId | null,
+  entityType?: EntityType,
 ): CreateTemplateId | null {
   const list = listTemplatesForParticipantSetup(sport, allowedScoringPresets, ctx);
   if (preferredId && list.some((t) => t.id === preferredId)) return preferredId;
-  if (sport === Sports.PADEL) {
+  if (entityType === 'GAME' && sport === Sports.PADEL) {
     if (ctx.playersPerMatch === 2) {
-      const singlesDefault: CreateTemplateId =
-        ctx.maxParticipants <= 4 ? 'PADEL_SINGLES_BO3' : 'PADEL_SINGLES_AMERICANO_24';
+      const singlesDefault: CreateTemplateId = 'PADEL_SINGLES_AUTOMATIC';
       if (list.some((t) => t.id === singlesDefault)) return singlesDefault;
     } else {
-      const padelDefault: FeLegacyPadelTemplateId =
-        ctx.maxParticipants <= 5 ? 'PADEL_BEST_OF_3' : 'PADEL_AMERICANO';
+      const padelDefault: FeLegacyPadelTemplateId = 'PADEL_AUTOMATIC';
       if (list.some((t) => t.id === padelDefault)) return padelDefault;
     }
+  }
+  if (entityType === 'LEAGUE') {
+    const matchTier = list.find((t) => t.tier === 'match');
+    return matchTier?.id ?? list[0]?.id ?? null;
   }
   return list[0]?.id ?? null;
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { clampDeucesBeforeGoldenPoint } from '@shared/gameFormat/goldenPoint';
 import type { DeucesBeforeGoldenPoint } from '@shared/gameFormat/goldenPoint';
-import { Game, GameSetupParams, GameType, ScoringMode, ScoringPreset, MatchGenerationType } from '@/types';
+import { Game, GameSetupParams, GameType, ScoringMode, ScoringPreset, MatchGenerationType, type EntityType } from '@/types';
 import {
   buildSetupFromFormat,
   detectScoringPreset,
@@ -17,6 +17,7 @@ import {
   getCompatibleScorings,
 } from '@/utils/gameFormat';
 import { getGameTypeTemplate } from '@/utils/gameTypeTemplates';
+import { Sports, type Sport } from '@shared/sport';
 
 /** Simple-points (Americano-style): same as game templates — net score / balls difference. */
 const POINTS_MODE_RANKING_DEFAULTS = {
@@ -61,11 +62,24 @@ export interface UseGameFormatResult {
 
 export interface UseGameFormatOptions {
   skipGenerationParticipantDefaults?: boolean;
+  entityType?: EntityType;
+  sport?: Sport;
+}
+
+function defaultScoringPresetForNewGame(
+  initial: Partial<Game> | undefined,
+  options?: UseGameFormatOptions,
+): ScoringPreset {
+  if (options?.entityType === 'GAME') {
+    const sport = options.sport ?? initial?.sport;
+    if (sport === Sports.PADEL) return 'CLASSIC_AUTOMATIC';
+  }
+  return 'CLASSIC_BEST_OF_3';
 }
 
 export const useGameFormat = (initial?: Partial<Game>, options?: UseGameFormatOptions): UseGameFormatResult => {
   const skipGenerationParticipantDefaults = options?.skipGenerationParticipantDefaults === true;
-  const initialPreset = detectScoringPreset(initial) ?? 'CLASSIC_BEST_OF_3';
+  const initialPreset = detectScoringPreset(initial) ?? defaultScoringPresetForNewGame(initial, options);
   const initialMode: ScoringMode = detectScoringMode(initial);
   const maxParticipants = initial?.maxParticipants;
 

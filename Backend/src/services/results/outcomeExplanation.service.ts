@@ -24,6 +24,13 @@ import {
   isPrismaMatchCountedForStandingsAndRating,
   prismaMatchSetsToLiveSets,
 } from './matchStandingsPrisma';
+import {
+  parseAutomaticMatchRecordMode,
+  resolveAutomaticSetScoringKind,
+  toRatingSetScores,
+  type AutomaticSetScoringKind,
+  type RatingSetScore,
+} from '@bandeja/shared/automaticRelaxedScoring';
 
 interface ExplanationData {
   userId: string;
@@ -68,6 +75,7 @@ interface SetExplanation {
   userScore: number;
   opponentScore: number;
   isTieBreak?: boolean;
+  scoreKind?: AutomaticSetScoringKind;
 }
 
 interface MatchExplanation {
@@ -87,6 +95,7 @@ interface MatchExplanation {
   teammates: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   opponents: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   sets?: SetExplanation[];
+  automaticRecordMode?: 'GAMES' | 'AMERICANO_POINTS';
 }
 
 export interface StoredOutcomeForExplanation {
@@ -110,7 +119,7 @@ interface PlayerRatingState {
   wins: number;
   ties: number;
   losses: number;
-  allSets: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>;
+  allSets: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean; automaticSetKind?: AutomaticSetScoringKind | null }>;
 }
 
 type ExplanationUser = {
@@ -137,6 +146,7 @@ type ExplanationMatchSet = {
 type ExplanationMatch = {
   id: string;
   winnerId: string | null;
+  metadata?: Prisma.JsonValue | null;
   teams: Array<{
     id: string;
     teamNumber: number;
@@ -284,8 +294,16 @@ export function buildOutcomeRatingExplanation(
   let opponentLevels: number[] = [];
   let userMatchNumber = 0;
 
+  const rules = getRules(game);
+
   for (const round of game.rounds) {
     for (const match of round.matches) {
+      const matchMetadata =
+        match.metadata && typeof match.metadata === 'object' && !Array.isArray(match.metadata)
+          ? (match.metadata as Record<string, unknown>)
+          : undefined;
+      const automaticRecordMode = parseAutomaticMatchRecordMode(matchMetadata);
+
       const validSets = match.sets.filter(
         (set) => (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role),
       );
@@ -314,6 +332,8 @@ export function buildOutcomeRatingExplanation(
           const setAWins = set.teamAScore > set.teamBScore;
           const setBWins = set.teamBScore > set.teamAScore;
           const setIsWinner = userTeam.teamNumber === 1 ? setAWins : setBWins;
+          const scoreKind =
+            resolveAutomaticSetScoringKind(setNumber - 1, validSets, matchMetadata, rules) ?? undefined;
           setExplanations.push({
             setNumber,
             isWinner: setIsWinner,
@@ -321,6 +341,7 @@ export function buildOutcomeRatingExplanation(
             userScore: userTeam.teamNumber === 1 ? set.teamAScore : set.teamBScore,
             opponentScore: userTeam.teamNumber === 1 ? set.teamBScore : set.teamAScore,
             isTieBreak: set.isTieBreak || false,
+            scoreKind,
           });
         }
       }
@@ -386,6 +407,13 @@ export function buildOutcomeRatingExplanation(
         states,
       );
 
+      const ratingSetScoresTeamA = toRatingSetScores(validSets, matchMetadata, rules);
+      const ratingSetScoresTeamB = ratingSetScoresTeamA.map((set) => ({
+        ...set,
+        teamAScore: set.teamBScore,
+        teamBScore: set.teamAScore,
+      }));
+
       const userMatchSnapshot = userInMatch
         ? {
             opponentLevel: opponentTeam
@@ -403,17 +431,7 @@ export function buildOutcomeRatingExplanation(
             isWinner: userTeam?.id === teamA.id ? teamAWins : teamBWins,
             isTie,
             setScores:
-              userTeam?.teamNumber === 1
-                ? validSets.map((set) => ({
-                    teamAScore: set.teamAScore,
-                    teamBScore: set.teamBScore,
-                    isTieBreak: set.isTieBreak || false,
-                  }))
-                : validSets.map((set) => ({
-                    teamAScore: set.teamBScore,
-                    teamBScore: set.teamAScore,
-                    isTieBreak: set.isTieBreak || false,
-                  })),
+              userTeam?.teamNumber === 1 ? ratingSetScoresTeamA : ratingSetScoresTeamB,
           }
         : null;
 
@@ -427,7 +445,7 @@ export function buildOutcomeRatingExplanation(
         opponentsAvg: number,
         isWinner: boolean,
         isLoss: boolean,
-        setScores: Array<{ teamAScore: number; teamBScore: number; isTieBreak?: boolean }>,
+        setScores: RatingSetScore[],
       ) => {
         for (const p of teamPlayers) {
           const state = states.get(p.userId)!;
@@ -447,6 +465,7 @@ export function buildOutcomeRatingExplanation(
             },
             ratingBallsInGames,
             ratingEngine,
+            game.entityType,
           );
 
           if (p.userId === userId && userMatchSnapshot) {
@@ -475,6 +494,10 @@ export function buildOutcomeRatingExplanation(
                 level: effectiveLevel(tp.userId, states),
               })),
               sets: setExplanations.length > 0 ? setExplanations : undefined,
+              automaticRecordMode:
+                rules.strictValidation === 'CLASSIC_AUTOMATIC_RELAXED'
+                  ? automaticRecordMode
+                  : undefined,
             });
           }
 
@@ -492,11 +515,7 @@ export function buildOutcomeRatingExplanation(
         teamBOwnAvg,
         teamAWins,
         teamBWins,
-        validSets.map((set) => ({
-          teamAScore: set.teamAScore,
-          teamBScore: set.teamBScore,
-          isTieBreak: set.isTieBreak || false,
-        })),
+        ratingSetScoresTeamA,
       );
 
       applyTeamRating(
@@ -505,11 +524,7 @@ export function buildOutcomeRatingExplanation(
         teamAOwnAvg,
         teamBWins,
         teamAWins,
-        validSets.map((set) => ({
-          teamAScore: set.teamBScore,
-          teamBScore: set.teamAScore,
-          isTieBreak: set.isTieBreak || false,
-        })),
+        ratingSetScoresTeamB,
       );
     }
   }

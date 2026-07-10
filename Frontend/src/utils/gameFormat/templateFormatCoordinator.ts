@@ -1,5 +1,5 @@
 import type { UseGameFormatResult } from '@/hooks/useGameFormat';
-import type { ScoringPreset } from '@/types';
+import type { ScoringPreset, EntityType } from '@/types';
 import type { Sport } from '@shared/sport';
 import type { Game } from '@/types';
 import {
@@ -33,6 +33,7 @@ export type TemplateFormatCoordinatorContext = {
   maxParticipants: number;
   allowedScoringPresets: ScoringPreset[];
   participantContext: CreateTemplateParticipantContext;
+  entityType?: EntityType;
 };
 
 export type TemplateFormatCoordinatorFlags = {
@@ -293,21 +294,23 @@ export function evaluateParticipantRepick(
   }
 
   const currentTemplateId = selection.templateId;
-  const stillValid =
-    currentTemplateId != null &&
-    pickDefaultTemplateId(
-      ctx.sport,
-      ctx.allowedScoringPresets,
-      ctx.participantContext,
-      currentTemplateId,
-    ) === currentTemplateId;
-  if (stillValid) return { type: 'skip' };
+  const defaultId = pickDefaultTemplateId(
+    ctx.sport,
+    ctx.allowedScoringPresets,
+    ctx.participantContext,
+    null,
+    ctx.entityType,
+  );
+  if (currentTemplateId != null && currentTemplateId === defaultId) {
+    return { type: 'skip' };
+  }
 
   const nextId = pickDefaultTemplateId(
     ctx.sport,
     ctx.allowedScoringPresets,
     ctx.participantContext,
     currentTemplateId,
+    ctx.entityType,
   );
   if (nextId) {
     const tpl = getTemplate(nextId);
@@ -336,6 +339,7 @@ export function evaluateSportChange(
     ctx.allowedScoringPresets,
     ctx.participantContext,
     null,
+    ctx.entityType,
   );
   if (nextId) {
     const tpl = getTemplate(nextId);

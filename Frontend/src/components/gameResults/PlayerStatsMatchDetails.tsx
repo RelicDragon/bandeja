@@ -1,6 +1,7 @@
 import { Fragment } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PlayerMatchDetail } from './playerStatsDetails';
+import { automaticSetScoreSuffix } from '@/utils/scoring/setScoreDelta';
 
 interface PlayerStatsMatchDetailsProps {
   detail: PlayerMatchDetail;
@@ -41,7 +42,7 @@ export const PlayerStatsMatchDetails = ({ detail }: PlayerStatsMatchDetailsProps
           <div key={`${detail.matchId}-set-${idx}`} className="text-[11px] text-gray-700 dark:text-gray-300">
             <span className="font-medium">{t('gameResults.set') || 'Set'} {idx + 1}:</span>{' '}
             {set.myScore}-{set.oppScore}
-            {set.isTieBreak ? ' TB' : ''}
+            {automaticSetScoreSuffix(set.scoreKind, set.isTieBreak)}
           </div>
         ))}
       </div>

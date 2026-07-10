@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import type { UseGameFormatResult } from '@/hooks/useGameFormat';
-import type { ScoringPreset } from '@/types';
+import type { ScoringPreset, EntityType } from '@/types';
 import {
   getTemplate,
   type CreateFlowIntent,
@@ -46,6 +46,7 @@ export type UseGameFormatTemplateFlowParams = {
   onIntentSideEffects?: (intent: CreateFlowIntent, template: CreateTemplate | null) => void;
   onAfterTemplateApply?: (template: CreateTemplate) => void | Promise<void>;
   formatWizardOpen?: boolean;
+  entityType?: EntityType;
 };
 
 export function useGameFormatTemplateFlow({
@@ -61,6 +62,7 @@ export function useGameFormatTemplateFlow({
   onIntentSideEffects,
   onAfterTemplateApply,
   formatWizardOpen = false,
+  entityType,
 }: UseGameFormatTemplateFlowParams) {
   const { t } = useTranslation();
   const [createIntent, setCreateIntent] = useState<CreateFlowIntent | null>(() => initial?.intent ?? null);
@@ -87,8 +89,9 @@ export function useGameFormatTemplateFlow({
       maxParticipants,
       allowedScoringPresets,
       participantContext,
+      entityType,
     }),
-    [sport, maxParticipants, allowedScoringPresets, participantContext],
+    [sport, maxParticipants, allowedScoringPresets, participantContext, entityType],
   );
 
   const selection = useMemo(

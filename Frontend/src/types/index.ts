@@ -71,6 +71,7 @@ export type MatchGenerationType =
   | 'KING_OF_COURT';
 export type ScoringMode = 'CLASSIC' | 'POINTS';
 export type ScoringPreset =
+  | 'CLASSIC_AUTOMATIC'
   | 'CLASSIC_BEST_OF_3'
   | 'CLASSIC_BEST_OF_5'
   | 'CLASSIC_PRO_SET'

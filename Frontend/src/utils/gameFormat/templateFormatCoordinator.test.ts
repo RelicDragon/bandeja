@@ -19,7 +19,9 @@ import { gameFormatSnapshotFromFormat } from '@/utils/gameFormat/gameFormatSnaps
 const PADEL_CTX: TemplateFormatCoordinatorContext = {
   sport: Sports.PADEL,
   maxParticipants: 4,
+  entityType: 'GAME',
   allowedScoringPresets: [
+    'CLASSIC_AUTOMATIC',
     'CLASSIC_BEST_OF_3',
     'CLASSIC_SINGLE_SET',
     'CLASSIC_TIMED',
@@ -82,6 +84,16 @@ describe('templateFormatCoordinator', () => {
   });
 
   describe('edit bootstrap via inferTemplateFromFormat', () => {
+    it('infers padel automatic from CLASSIC_AUTOMATIC format at 4 players', () => {
+      const format = mockFormat({
+        scoringPreset: 'CLASSIC_AUTOMATIC',
+        generationType: 'AUTOMATIC',
+      });
+      const inferred = inferTemplateFromFormat(PADEL_CTX, format);
+      expect(inferred.templateId).toBe('PADEL_AUTOMATIC');
+      expect(inferred.intent).toBe('social');
+    });
+
     it('infers padel americano from POINTS_32 automatic format at 4 players', () => {
       const format = mockFormat({
         scoringMode: 'POINTS',
@@ -274,7 +286,7 @@ describe('templateFormatCoordinator', () => {
   });
 
   describe('participant context change', () => {
-    it('demotes when roster shape no longer fits selected template', () => {
+    it('repicks singles Automatic when doubles template no longer fits', () => {
       const selection = { intent: 'match' as const, templateId: 'PADEL_BEST_OF_3' as const };
       const ctx2: TemplateFormatCoordinatorContext = {
         sport: Sports.PADEL,
@@ -295,7 +307,10 @@ describe('templateFormatCoordinator', () => {
         formatWizardOpen: false,
         initialParticipantContextKey: null,
       });
-      expect(repick.type).toBe('demote');
+      expect(repick.type).toBe('repick');
+      if (repick.type === 'repick') {
+        expect(repick.selection.templateId).toBe('PADEL_SINGLES_AUTOMATIC');
+      }
     });
   });
 

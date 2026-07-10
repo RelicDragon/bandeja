@@ -9,6 +9,7 @@ import {
 import { gameFormatSnapshotFromGame } from '@/utils/gameFormat/gameFormatSnapshot';
 
 const PADEL_PRESETS = [
+  'CLASSIC_AUTOMATIC',
   'CLASSIC_BEST_OF_3',
   'CLASSIC_BEST_OF_5',
   'CLASSIC_PRO_SET',
@@ -163,6 +164,16 @@ describe('edit flow reload — auto-pick guard', () => {
     );
     expect(autoPick).toBe('PADEL_AMERICANO');
     expect(autoPick).not.toBe('PADEL_BEST_OF_3');
+  });
+
+  it('defaults to Automatic for padel doubles GAME without preferred template', () => {
+    const autoPick = pickDefaultTemplateId(Sports.PADEL, [...PADEL_PRESETS], ROSTER_4, null, 'GAME');
+    expect(autoPick).toBe('PADEL_AUTOMATIC');
+  });
+
+  it('does not force Automatic default for padel LEAGUE', () => {
+    const leaguePick = pickDefaultTemplateId(Sports.PADEL, [...PADEL_PRESETS], ROSTER_4, null, 'LEAGUE');
+    expect(leaguePick).toBe('PADEL_BEST_OF_3');
   });
 
   it('allows auto-pick when roster shape changes', () => {

@@ -6,6 +6,8 @@ import { calculateByMatchesWonOutcomes, calculateByScoresDeltaOutcomes, calculat
 import { applySharedPlacementToOutcomes } from './outcomeComputation';
 import { updateMatchWinners } from './matchWinner.service';
 import { isPrismaMatchCountedForStandingsAndRating } from './matchStandingsPrisma';
+import { getRules } from './liveScoringEngine/rulebook';
+import { toRatingSetScores } from '@bandeja/shared/automaticRelaxedScoring';
 import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { projectGameUsersForSportContext } from '../game/read.service';
@@ -123,6 +125,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
     };
   });
 
+  const rules = getRules(game);
+
   const roundResults = game.rounds.map(round => ({
     matches: round.matches
       .map(match => {
@@ -132,8 +136,16 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
           set => (set.teamAScore > 0 || set.teamBScore > 0) && isOfficialMatchSetRole(set.role)
         );
         if (validSets.length === 0) return null;
-        
-        const { teamAScore: scoreA, teamBScore: scoreB } = getMatchScoresForDelta(validSets);
+
+        const matchMetadata =
+          match.metadata && typeof match.metadata === 'object' && !Array.isArray(match.metadata)
+            ? (match.metadata as Record<string, unknown>)
+            : undefined;
+
+        const { teamAScore: scoreA, teamBScore: scoreB } = getMatchScoresForDelta(validSets, {
+          matchMetadata,
+          rules,
+        });
         const teams = match.teams.map(team => {
           const totalScore = team.teamNumber === 1 ? scoreA : team.teamNumber === 2 ? scoreB : 0;
 
@@ -145,16 +157,21 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
           };
         });
 
-        const sets = validSets.map(set => ({
-          teamAScore: set.teamAScore,
-          teamBScore: set.teamBScore,
-          isTieBreak: set.isTieBreak || false,
-        }));
+        const sets = toRatingSetScores(
+          validSets.map(set => ({
+            teamAScore: set.teamAScore,
+            teamBScore: set.teamBScore,
+            isTieBreak: set.isTieBreak || false,
+          })),
+          matchMetadata,
+          rules,
+        );
 
         return {
           teams,
           winnerId: match.winnerId,
           sets,
+          metadata: matchMetadata,
         };
       })
       .filter((match): match is NonNullable<typeof match> => match !== null),
@@ -185,6 +202,7 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       pointsPerLoose,
       ballsInGames,
       game.sport,
+      game.entityType,
     );
   } else if (game.winnerOfGame === WinnerOfGame.BY_POINTS) {
     result = calculateByPointsOutcomes(
@@ -195,6 +213,7 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       pointsPerLoose,
       ballsInGames,
       game.sport,
+      game.entityType,
     );
   } else {
     result = calculateByMatchesWonOutcomes(
@@ -205,6 +224,7 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
       pointsPerLoose,
       ballsInGames,
       game.sport,
+      game.entityType,
     );
   }
 

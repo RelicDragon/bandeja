@@ -20,10 +20,12 @@ export type FeCreateTemplateExtras = {
 };
 
 export type FeLegacyPadelTemplateId =
+  | 'PADEL_AUTOMATIC'
   | 'PADEL_BEST_OF_3'
   | 'PADEL_SINGLE_SET'
   | 'PADEL_AMERICANO'
-  | 'PADEL_TIMED';
+  | 'PADEL_TIMED'
+  | 'PADEL_SINGLES_AUTOMATIC';
 
 export type FeCreateTemplate = Omit<SharedCreateTemplate, 'id'> &
   FeCreateTemplateExtras & {
@@ -183,6 +185,21 @@ export const SHARED_TEMPLATE_UI_EXTRAS: Record<SharedCreateTemplateId, FeCreateT
 };
 
 export const FE_LEGACY_PADEL_TEMPLATES: Record<FeLegacyPadelTemplateId, FeCreateTemplate> = {
+  PADEL_AUTOMATIC: {
+    id: 'PADEL_AUTOMATIC',
+    sport: Sports.PADEL,
+    tier: 'social',
+    labelKey: 'createGame.templates.PADEL_AUTOMATIC.title',
+    descriptionKey: 'createGame.templates.PADEL_AUTOMATIC.description',
+    scoringPreset: 'CLASSIC_AUTOMATIC',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 4,
+    suggestedMaxParticipants: 16,
+    suggestedCourts: 4,
+    affectsRating: false,
+    baselineRounds: 1,
+  },
   PADEL_BEST_OF_3: {
     id: 'PADEL_BEST_OF_3',
     sport: Sports.PADEL,
@@ -248,6 +265,21 @@ export const FE_LEGACY_PADEL_TEMPLATES: Record<FeLegacyPadelTemplateId, FeCreate
     matchTimedCapMinutes: 15,
     baselineRounds: 1,
     inlineConfig: { type: 'timed_duration', options: [10, 15, 20] },
+  },
+  PADEL_SINGLES_AUTOMATIC: {
+    id: 'PADEL_SINGLES_AUTOMATIC',
+    sport: Sports.PADEL,
+    tier: 'social',
+    labelKey: 'createGame.templates.PADEL_SINGLES_AUTOMATIC.title',
+    descriptionKey: 'createGame.templates.PADEL_SINGLES_AUTOMATIC.description',
+    scoringPreset: 'CLASSIC_AUTOMATIC',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 2,
+    suggestedMaxParticipants: 8,
+    suggestedCourts: 2,
+    affectsRating: false,
+    baselineRounds: 1,
   },
 };
 

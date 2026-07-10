@@ -394,6 +394,10 @@
       "empty": "No templates for this sport yet — use Customize format.",
       "durationApprox2h": "~2h",
       "durationApprox90m": "~90 min",
+      "PADEL_AUTOMATIC": {
+        "title": "Automatic",
+        "description": "Casual match — flexible set scoring, auto-pairing"
+      },
       "PADEL_BEST_OF_3": {
         "title": "Best-of-3",
         "description": "Standard three-set match",
@@ -415,6 +419,10 @@
         "title": "Best-of-3",
         "description": "Singles match — standard three-set format",
         "badge": "Official"
+      },
+      "PADEL_SINGLES_AUTOMATIC": {
+        "title": "Automatic",
+        "description": "Casual singles — flexible set scoring, auto-pairing"
       },
       "PADEL_SINGLES_SINGLE_SET": {
         "title": "Single set",
@@ -528,6 +536,7 @@
       "POINTS_21": "21-ball budget",
       "POINTS_24": "24-ball Americano",
       "POINTS_32": "Play to 32 (rotation)",
+      "CLASSIC_AUTOMATIC": "Automatic (casual)",
       "CLASSIC_BEST_OF_3": "Best of 3 sets",
       "CLASSIC_BEST_OF_5": "Best of 5 sets",
       "CLASSIC_PRO_SET": "Pro set",

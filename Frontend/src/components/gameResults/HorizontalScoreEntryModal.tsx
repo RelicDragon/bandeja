@@ -16,7 +16,19 @@ import {
   suggestLegalScores,
   getScoreEntryExampleList,
   isClassicTimedRelaxedGameScores,
+  isClassicAutomaticRelaxedScores,
+  canUseSuperTiebreakEntry,
+  parseAutomaticMatchRecordMode,
+  mergeAutomaticMatchRecordMetadata,
+  resolveAutomaticSetEntryMode,
+  automaticSetEntryUsesTieBreak,
+  recommendAutomaticSetScore,
+  type AutomaticMatchRecordMode,
 } from '@/utils/scoring';
+import {
+  AutomaticDeciderSetModeSwitch,
+  AutomaticMatchRecordModeSwitch,
+} from '@/components/gameResults/AutomaticRelaxedScoreEntryControls';
 import { capPlayerIds, maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { isSupplementalMatchSet, EXTRA_BALLS_SCORE_MAX, type MatchSetRole } from '@/utils/matchSetRole';
 
@@ -49,7 +61,8 @@ interface HorizontalScoreEntryModalProps {
     teamAScore: number,
     teamBScore: number,
     isTieBreak?: boolean,
-    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>
+    supplementalRole?: Extract<MatchSetRole, 'EXTRA_GAMES' | 'EXTRA_BALLS'>,
+    options?: { automaticRecordMode?: AutomaticMatchRecordMode },
   ) => void;
   onRemove?: (matchId: string, setIndex: number) => void;
   onClose: () => void;
@@ -104,6 +117,13 @@ export const HorizontalScoreEntryModal = ({
   const [teamAScore, setTeamAScore] = useState(currentSet.teamA);
   const [teamBScore, setTeamBScore] = useState(currentSet.teamB);
   const [isTieBreak, setIsTieBreak] = useState(currentSet.isTieBreak || false);
+  const isAutomaticRelaxed = isClassicAutomaticRelaxedScores(rules);
+  const [matchRecordMode, setMatchRecordMode] = useState<AutomaticMatchRecordMode>(() =>
+    parseAutomaticMatchRecordMode(match.metadata),
+  );
+  const [useSuperTiebreak, setUseSuperTiebreak] = useState(
+    () => Boolean(currentSet.isTieBreak) && canUseSuperTiebreakEntry(setIndex, match.sets, rules),
+  );
   const [numberPickerTeam, setNumberPickerTeam] = useState<'teamA' | 'teamB' | null>(null);
   const prevIsTieBreakRef = useRef(isTieBreak);
 
@@ -116,13 +136,34 @@ export const HorizontalScoreEntryModal = ({
     if (isSupplementalMatchSet(currentSet)) {
       setExtraRole(currentSet.role === 'EXTRA_BALLS' ? 'EXTRA_BALLS' : 'EXTRA_GAMES');
     }
-  }, [currentSet]);
+    if (isAutomaticRelaxed) {
+      setMatchRecordMode(parseAutomaticMatchRecordMode(match.metadata));
+      setUseSuperTiebreak(
+        Boolean(newIsTieBreak) && canUseSuperTiebreakEntry(setIndex, match.sets, rules),
+      );
+    }
+  }, [currentSet, isAutomaticRelaxed, match.metadata, match.sets, rules, setIndex]);
 
   useEffect(() => {
     if (!isSupplementalRow || extraRole !== 'EXTRA_BALLS') return;
     setTeamAScore((a) => Math.min(EXTRA_BALLS_SCORE_MAX, a));
     setTeamBScore((b) => Math.min(EXTRA_BALLS_SCORE_MAX, b));
   }, [extraRole, isSupplementalRow]);
+
+  const canUseSuperTiebreak = canUseSuperTiebreakEntry(setIndex, match.sets, rules);
+  const persistedRecordMode = parseAutomaticMatchRecordMode(match.metadata);
+  const effectiveRecordMode = setIndex === 0 ? matchRecordMode : persistedRecordMode;
+  const entryMode = isAutomaticRelaxed
+    ? resolveAutomaticSetEntryMode(
+        setIndex,
+        match.sets,
+        rules,
+        setIndex === 0
+          ? mergeAutomaticMatchRecordMetadata(match.metadata, matchRecordMode)
+          : match.metadata,
+        useSuperTiebreak,
+      )
+    : null;
 
   const kind = getSetKind(setIndex, match.sets, rules, { teamA: teamAScore, teamB: teamBScore, isTieBreak });
   const keypad = getKeypadOptions(rules, setIndex, match.sets, isTieBreak);
@@ -187,8 +228,13 @@ export const HorizontalScoreEntryModal = ({
 
   const validation = isSupplementalRow
     ? { ok: true, reason: undefined, detail: undefined }
-    : isLegalSetScore(teamAScore, teamBScore, rules, setIndex, match.sets, isTieBreak);
-  const suggestions = !validation.ok && (teamAScore > 0 || teamBScore > 0)
+    : isAutomaticRelaxed
+      ? { ok: true, kind }
+      : isLegalSetScore(teamAScore, teamBScore, rules, setIndex, match.sets, isTieBreak);
+  const recommendation = isAutomaticRelaxed && entryMode && (teamAScore > 0 || teamBScore > 0)
+    ? recommendAutomaticSetScore(teamAScore, teamBScore, rules, entryMode)
+    : validation;
+  const suggestions = !recommendation.ok && (teamAScore > 0 || teamBScore > 0)
     ? suggestLegalScores(teamAScore, teamBScore, rules, setIndex, match.sets)
     : [];
 
@@ -202,9 +248,15 @@ export const HorizontalScoreEntryModal = ({
       onClose();
       return;
     }
-    if (!validation.ok) return;
-    const finalIsTieBreak = kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
-    onSave(match.id, setIndex, teamAScore, teamBScore, finalIsTieBreak);
+    if (!validation.ok && !isAutomaticRelaxed) return;
+    const finalIsTieBreak = isAutomaticRelaxed
+      ? automaticSetEntryUsesTieBreak(setIndex, match.sets, rules, useSuperTiebreak)
+      : kind === 'TIEBREAK_GAME' || kind === 'SUPER_TIEBREAK';
+    const saveOptions =
+      isAutomaticRelaxed && setIndex === 0
+        ? { automaticRecordMode: matchRecordMode }
+        : undefined;
+    onSave(match.id, setIndex, teamAScore, teamBScore, finalIsTieBreak, undefined, saveOptions);
     onClose();
   };
 
@@ -240,11 +292,13 @@ export const HorizontalScoreEntryModal = ({
   const mainTitle = isSupplementalRow
     ? t('gameResults.extraSetTitle')
     : (rules.fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')) +
-      (kind === 'SUPER_TIEBREAK'
+      (entryMode === 'SUPER_TIEBREAK' || kind === 'SUPER_TIEBREAK'
         ? ` · ${t('gameResults.superTieBreak')}`
-        : kind === 'TIEBREAK_GAME'
-          ? ` · ${t('gameResults.tieBreak')}`
-          : '');
+        : effectiveRecordMode === 'AMERICANO_POINTS'
+          ? ` · ${t('gameResults.scoreEntryModeAmericanoPoints')}`
+          : kind === 'TIEBREAK_GAME'
+            ? ` · ${t('gameResults.tieBreak')}`
+            : '');
 
   const exampleList = useMemo(() => getScoreEntryExampleList(rules, kind), [rules, kind]);
 
@@ -296,6 +350,16 @@ export const HorizontalScoreEntryModal = ({
           <DialogDescription className="mt-0 max-w-full whitespace-normal text-left text-xs font-medium normal-case leading-snug text-gray-500 dark:text-gray-400 sm:text-sm">
             {descriptionLine}
           </DialogDescription>
+        ) : null}
+        {isAutomaticRelaxed && !isSupplementalRow && setIndex === 0 ? (
+          <AutomaticMatchRecordModeSwitch mode={matchRecordMode} onChange={setMatchRecordMode} />
+        ) : null}
+        {isAutomaticRelaxed && !isSupplementalRow && setIndex > 0 && canUseSuperTiebreak ? (
+          <AutomaticDeciderSetModeSwitch
+            matchRecordMode={persistedRecordMode}
+            useSuperTiebreak={useSuperTiebreak}
+            onChange={setUseSuperTiebreak}
+          />
         ) : null}
         {isSupplementalRow ? (
           <>
@@ -498,10 +562,11 @@ export const HorizontalScoreEntryModal = ({
         </div>
       )}
 
-      {!validation.ok && validation.reason && (teamAScore > 0 || teamBScore > 0) && (
+      {!recommendation.ok && recommendation.reason && (teamAScore > 0 || teamBScore > 0) && (
         <div className="px-3 sm:px-6 md:px-8 pb-2">
           <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
-            {validationMessage(t, validation.reason, validation.detail)}
+            {isAutomaticRelaxed ? t('gameResults.automaticScoreRecommendation') : null}{' '}
+            {validationMessage(t, recommendation.reason, recommendation.detail)}
             {suggestions.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1.5">
                 {suggestions.map((s, i) => (
@@ -543,7 +608,7 @@ export const HorizontalScoreEntryModal = ({
         )}
         <Button
           onClick={handleSave}
-          disabled={!validation.ok && (teamAScore > 0 || teamBScore > 0)}
+          disabled={!isAutomaticRelaxed && !validation.ok && (teamAScore > 0 || teamBScore > 0)}
           className="flex-1 h-10 sm:h-11 md:h-12 rounded-xl font-semibold bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {t('common.save')}

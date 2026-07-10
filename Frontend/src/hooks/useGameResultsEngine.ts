@@ -80,7 +80,13 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     GameResultsEngine.addPlayerToTeam(roundId, matchId, team, playerId), []);
   const removePlayerFromTeam = useCallback((roundId: string, matchId: string, team: 'teamA' | 'teamB', playerId: string) =>
     GameResultsEngine.removePlayerFromTeam(roundId, matchId, team, playerId), []);
-  const updateMatch = useCallback((roundId: string, matchId: string, match: { teamA: string[]; teamB: string[]; sets: Array<{ teamA: number; teamB: number }>; courtId?: string }) =>
+  const updateMatch = useCallback((roundId: string, matchId: string, match: {
+    teamA: string[];
+    teamB: string[];
+    sets: Array<{ teamA: number; teamB: number; isTieBreak?: boolean; role?: import('@/utils/matchSetRole').MatchSetRole }>;
+    courtId?: string;
+    metadata?: Record<string, unknown>;
+  }) =>
     GameResultsEngine.updateMatch(roundId, matchId, match), []);
   const setMatchCourt = useCallback((roundId: string, matchId: string, courtId: string) =>
     GameResultsEngine.setMatchCourt(roundId, matchId, courtId), []);

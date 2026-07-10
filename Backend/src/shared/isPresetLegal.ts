@@ -3,6 +3,7 @@ import type { Sport } from './sport';
 
 /** Canonical scoring preset IDs — keep in sync with Frontend/shared/isPresetLegal.ts and Prisma `ScoringPreset`. */
 export const SCORING_PRESETS = [
+  'CLASSIC_AUTOMATIC',
   'CLASSIC_BEST_OF_3',
   'CLASSIC_BEST_OF_5',
   'CLASSIC_PRO_SET',
@@ -93,6 +94,7 @@ const RALLY_PRESETS: ScoringPreset[] = [
 ];
 
 const CLASSIC_FAMILY: ScoringPreset[] = [
+  'CLASSIC_AUTOMATIC',
   'CLASSIC_BEST_OF_3',
   'CLASSIC_BEST_OF_5',
   'CLASSIC_PRO_SET',
@@ -192,6 +194,7 @@ export function isPresetLegalForScoringMode(preset: string, mode: ScoringMode): 
 }
 
 export function inferPresetTier(preset: ScoringPreset): PresetTier {
+  if (preset === 'CLASSIC_AUTOMATIC') return 'social';
   if (
     preset.startsWith('POINTS_') ||
     preset === 'TIMED' ||
