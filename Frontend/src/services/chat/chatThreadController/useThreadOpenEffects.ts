@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   chatApi,
   type ChatContextType,
@@ -110,10 +110,39 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
   initialChatTypeRef.current = initialChatType;
   const freshOpenSignalRef = useRef(freshOpenSignal);
   freshOpenSignalRef.current = freshOpenSignal;
+  const markReadDispatchedForLoadIdRef = useRef<string | null>(null);
+
+  const tryMarkReadOnEnter = useCallback(
+    (loadId: string, threadId: string, threadContextType: ChatContextType) => {
+      if (markReadDispatchedForLoadIdRef.current === loadId) return;
+      const activeUserId = userRef.current?.id;
+      if (!activeUserId) return;
+      const archived =
+        threadContextType === 'GAME' && isThreadArchivedInMemory('GAME', threadId);
+      if (archived || isGameChatArchived) return;
+      controllerRef.current.markReadOnEnter({
+        id: threadId,
+        contextType: threadContextType,
+        game: gameRef.current,
+        userId: activeUserId,
+        gameChatType: currentChatTypeRef.current,
+        groupChannelId: groupChannelIdRef.current,
+      });
+      markReadDispatchedForLoadIdRef.current = loadId;
+    },
+    [controllerRef, isGameChatArchived]
+  );
 
   useEffect(() => {
     const ac = new AbortController();
     const signal = ac.signal;
+    const sessionLoadId = id ? `${id}-${contextType}` : null;
+
+    const onVisibilityHidden = () => {
+      if (document.visibilityState !== 'hidden' || !sessionLoadId || !id) return;
+      tryMarkReadOnEnter(sessionLoadId, id, contextType);
+    };
+    document.addEventListener('visibilitychange', onVisibilityHidden);
 
     const loadData = async () => {
       if (!id || !user?.id) {
@@ -128,13 +157,16 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
         openPaintCommittedRef.current = false;
         loadingIdRef.current = undefined;
         isLoadingRef.current = false;
+        markReadDispatchedForLoadIdRef.current = null;
       }
 
       const currentLoadId = `${id}-${contextType}`;
       if (!freshOpenSignalRef.current && hasLoadedRef.current && loadingIdRef.current === currentLoadId) {
+        tryMarkReadOnEnter(currentLoadId, id, contextType);
         return;
       }
       if (isLoadingRef.current && loadingIdRef.current === currentLoadId && !freshOpenSignalRef.current) {
+        tryMarkReadOnEnter(currentLoadId, id, contextType);
         return;
       }
 
@@ -160,17 +192,8 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
           await dropArchivedGameOutbox(id);
         }
 
-        const loadedGame =
-          contextType === 'GAME' ? ((loadedContext as Game | null) ?? gameRef.current) : null;
         if (!contextArchived) {
-          controllerRef.current.markReadOnEnter({
-            id,
-            contextType,
-            game: loadedGame,
-            userId: user?.id,
-            gameChatType: currentChatTypeRef.current,
-            groupChannelId: groupChannelIdRef.current,
-          });
+          tryMarkReadOnEnter(currentLoadId, id, contextType);
         }
 
         if (contextType === 'USER' && user?.id) {
@@ -284,6 +307,10 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
     loadData();
 
     return () => {
+      document.removeEventListener('visibilitychange', onVisibilityHidden);
+      if (sessionLoadId && id) {
+        tryMarkReadOnEnter(sessionLoadId, id, contextType);
+      }
       ac.abort();
       if (loadingIdRef.current === `${id}-${contextType}`) isLoadingRef.current = false;
     };
@@ -308,5 +335,6 @@ export function useThreadOpenEffects(params: UseThreadOpenEffectsParams) {
     setIsLoadingContext,
     controllerRef,
     isGameChatArchived,
+    tryMarkReadOnEnter,
   ]);
 }

@@ -78,7 +78,7 @@ export function useGameUnreadCountsForIds(
 ): Record<string, number> {
   const warm = useUnreadStoreWarm();
   const fromStore = useUnreadStore(
-    useShallow((s) => gameUnreadCountsMap([...gameIds], s.byContext))
+    useShallow((s) => gameUnreadCountsMap([...gameIds], s.displayedByContext))
   );
   return warm ? fromStore : propFallback;
 }
@@ -112,7 +112,7 @@ export function useMarketItemUnread(
   legacyByChannelId: Record<string, number> = {}
 ): number {
   const warm = useUnreadStoreWarm();
-  const count = useUnreadStore((s) => marketItemUnreadCount(item, s.byContext));
+  const count = useUnreadStore((s) => marketItemUnreadCount(item, s.displayedByContext));
   if (!warm) {
     if (item.groupChannel) return legacyByChannelId[item.groupChannel.id] ?? 0;
     return (item.groupChannels ?? []).reduce((sum, channel) => sum + (legacyByChannelId[channel.id] ?? 0), 0);

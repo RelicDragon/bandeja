@@ -17,6 +17,11 @@ vi.mock('@/components/GameDetails/gameDetailsChromeStore', () => ({
 }));
 
 const getUnreadSnapshotMock = vi.fn();
+const syncBadgeMock = vi.fn();
+
+vi.mock('@/services/chat/syncAppIconBadgeFromStore', () => ({
+  syncAppIconBadgeFromStore: (...args: unknown[]) => syncBadgeMock(...args),
+}));
 
 vi.mock('@/api/chat', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/api/chat')>();
@@ -395,5 +400,22 @@ describe('chat:unread-invalidate handler (#241)', () => {
     const second = useUnreadStore.getState().refreshAll();
     await Promise.all([first, second]);
     expect(getUnreadSnapshotMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reconciles launcher badge after snapshot fetch completes', async () => {
+    syncBadgeMock.mockClear();
+    await useUnreadStore.getState().refreshAll();
+    expect(syncBadgeMock).toHaveBeenCalled();
+  });
+});
+
+describe('reset clears native launcher badge', () => {
+  beforeEach(() => {
+    syncBadgeMock.mockClear();
+  });
+
+  it('syncs badge to zero on reset', () => {
+    useUnreadStore.getState().reset();
+    expect(syncBadgeMock).toHaveBeenCalledWith(0);
   });
 });

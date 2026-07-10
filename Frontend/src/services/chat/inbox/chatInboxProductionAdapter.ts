@@ -56,7 +56,7 @@ export function createProductionChatInboxAdapter(
     },
 
     getMarketUnreadCounts(channelIds) {
-      return groupUnreadCountsMap(channelIds, useUnreadStore.getState().byContext);
+      return groupUnreadCountsMap(channelIds, useUnreadStore.getState().displayedByContext);
     },
 
     getListChatMessageSeq() {

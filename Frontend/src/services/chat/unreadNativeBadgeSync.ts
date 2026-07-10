@@ -1,6 +1,6 @@
 import { selectTotalAll, useUnreadStore } from '@/store/unreadStore';
-import { setAppIconBadgeCountNative } from '@/services/authBridge';
 import { isCapacitor } from '@/utils/capacitor';
+import { syncAppIconBadgeFromStore } from '@/services/chat/syncAppIconBadgeFromStore';
 
 let installed = false;
 
@@ -9,11 +9,13 @@ export function installUnreadNativeBadgeSync(): void {
   if (installed || !isCapacitor()) return;
   installed = true;
 
+  syncAppIconBadgeFromStore();
+
   let prevTotal = selectTotalAll(useUnreadStore.getState());
   useUnreadStore.subscribe((state) => {
     const nextTotal = selectTotalAll(state);
     if (nextTotal === prevTotal) return;
     prevTotal = nextTotal;
-    void setAppIconBadgeCountNative(nextTotal);
+    syncAppIconBadgeFromStore();
   });
 }

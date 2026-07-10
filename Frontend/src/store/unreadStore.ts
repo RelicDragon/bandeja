@@ -30,6 +30,7 @@ import {
   type UnreadProjectionState,
 } from '@/services/chat/unreadProjection';
 import { runUnreadProjectionEffects } from '@/services/chat/unreadProjectionEffects';
+import { syncAppIconBadgeFromStore } from '@/services/chat/syncAppIconBadgeFromStore';
 
 export type { ChatsSubtabFilter } from '@/services/chat/unreadSnapshot';
 export type { EnterContextParams };
@@ -120,6 +121,7 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
         if (dto) get().setSnapshot(dto);
       } finally {
         set({ ...endRefreshRepair(get()), refreshInFlight: null });
+        syncAppIconBadgeFromStore();
       }
     })();
 
@@ -238,6 +240,7 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
 
   reset: () => {
     set(initialStoreState());
+    syncAppIconBadgeFromStore(0);
   },
 }));
 

@@ -20,7 +20,7 @@ export function useChatListMarketUnread(chatsFilter: ChatsFilterType, chats: Cha
   // not the whole byContext map, so this re-renders only when one of these
   // channels' counts changes.
   const marketUnreadCounts = useUnreadStore(
-    useShallow((s) => (warm ? groupUnreadCountsMap(marketChannelIds, s.byContext) : {}))
+    useShallow((s) => (warm ? groupUnreadCountsMap(marketChannelIds, s.displayedByContext) : {}))
   );
   return { marketChannelIdsKey, marketUnreadCounts };
 }

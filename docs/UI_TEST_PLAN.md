@@ -118,7 +118,8 @@ Frontend/e2e/
 | G-08 | Profile name gate | User with `nameIsSet !== true` tries join/create | Name modal blocks action |
 | G-09 | Primary sport gate | User without enabled sports | Redirect from `/` and `/find` to `/profile` |
 | G-10 | Bottom tab navigation | Tap each tab | Correct route + active state |
-| G-11 | Tab unread badges | Seed unread game + chat + market | Badges on My, Chats, Market |
+| G-11 | Tab unread badges | Seed unread DM; open chats inbox | Chats badge on subtab or bottom tab |
+| G-29 | Chats badge clears after read | Seed unread DM; open thread from inbox; return | Row unread badge on that DM is gone |
 | G-20 | Tab badges stable on navigation | Seed unread; switch My → Find → Chats → Market without reconnect | Tab badge counts unchanged (no full unread snapshot refetch flicker) |
 | G-12 | Pull to refresh | Pull on My / Find / Profile | Spinner sits in blank gap below header (not over stories/content); list refreshes, no crash |
 | G-13 | Deep link game | Open `/games/:id` | Game details loads |

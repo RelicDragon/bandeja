@@ -180,8 +180,25 @@ export class ShellPage {
   }
 
   tabBadge(tab: 'my' | 'chats' | 'marketplace') {
-    const label = TAB_LABELS[tab];
-    return this.page.getByRole('button', { name: label }).locator('span').filter({ hasText: /\d+/ });
+    const tabIndex = { my: 0, chats: 2, marketplace: 3 } as const;
+    const byLabel = this.page
+      .getByRole('button', { name: TAB_LABELS[tab] })
+      .locator('span')
+      .filter({ hasText: /\d+/ });
+    const byOrder = this.bottomTabButtons()
+      .nth(tabIndex[tab])
+      .locator('span')
+      .filter({ hasText: /\d+/ });
+    return byLabel.or(byOrder);
+  }
+
+  chatsUsersSubtabBadge() {
+    return this.page
+      .locator('header')
+      .getByRole('tablist')
+      .getByRole('tab', { name: /^chats$/i })
+      .locator('span')
+      .filter({ hasText: /^\d+$/ });
   }
 }
 

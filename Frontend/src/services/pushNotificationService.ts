@@ -12,6 +12,7 @@ import { runWithProfileName } from '@/utils/runWithProfileName';
 import { parsePushChatContext } from '@/services/push/parsePushChatContext';
 import { sendChatReplyFromPush } from '@/services/push/sendChatReplyFromPush';
 import { applyPushUnreadBadgeFromNotification } from '@/services/push/applyPushUnreadBadge';
+import { useUnreadStore } from '@/store/unreadStore';
 import {
   PUSH_ACTION_ACCEPT,
   PUSH_ACTION_DECLINE,
@@ -152,6 +153,10 @@ class PushNotificationService {
       async (notification: PushNotificationSchema) => {
         console.log('Push notification received:', notification);
         await applyPushUnreadBadgeFromNotification(notification);
+        const auth = useAuthStore.getState();
+        if (auth.isAuthenticated && !auth.isInitializing) {
+          void useUnreadStore.getState().refreshAll();
+        }
         if (Capacitor.getPlatform() === 'android' && parsePushChatContext(notification.data)) {
           return;
         }
@@ -268,6 +273,13 @@ class PushNotificationService {
     return true;
   }
 
+  private refreshUnreadIfAuthenticated(): void {
+    const auth = useAuthStore.getState();
+    if (auth.isAuthenticated && !auth.isInitializing) {
+      void useUnreadStore.getState().refreshAll();
+    }
+  }
+
   private async handleNotificationAction(action: ActionPerformed) {
     const { actionId, notification } = action;
     const normalizedData = this.normalizeNotificationData(notification.data);
@@ -280,6 +292,7 @@ class PushNotificationService {
     if (actionId === 'tap') {
       this.pendingNotificationTap = { data: normalizedData, rawData: notification.data };
       await this.dispatchNotificationTap();
+      this.refreshUnreadIfAuthenticated();
     } else if (actionId === PUSH_ACTION_ACCEPT) {
       if (normalizedData.type === 'TEAM_INVITE') {
         await this.handleAcceptTeamInvite(normalizedData);

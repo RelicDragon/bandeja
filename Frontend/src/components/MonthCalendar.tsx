@@ -142,7 +142,7 @@ export const MonthCalendar = ({
   // whole byContext map, so the calendar re-renders only when one of these games'
   // counts changes.
   const gamesUnreadCounts = useUnreadStore(
-    useShallow((s) => gameUnreadCountsMap(availableGames.map((g) => g.id), s.byContext))
+    useShallow((s) => gameUnreadCountsMap(availableGames.map((g) => g.id), s.displayedByContext))
   );
   const locale = useMemo(() => {
     return localeMap[i18n.language as keyof typeof localeMap] || enGB;

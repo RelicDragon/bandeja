@@ -103,4 +103,9 @@ describe('groupUnreadCountsMap / gameUnreadCountsMap (narrow records for useShal
     });
     expect(before).toEqual(after);
   });
+
+  it('gameUnreadCountsMap omits games cleared in displayed map (optimistic mark-read)', () => {
+    const displayed = { [contextKey('GAME', 'g1')]: 0 };
+    expect(gameUnreadCountsMap(['g1'], displayed)).toEqual({});
+  });
 });

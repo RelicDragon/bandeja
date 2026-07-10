@@ -1,7 +1,6 @@
 import { runUnreadSnapshotSideEffects } from '@/services/chat/unreadSnapshotSideEffects';
 import type { SnapshotContextType } from '@/services/chat/unreadSnapshot';
-import { setAppIconBadgeCountNative } from '@/services/authBridge';
-import { isCapacitor } from '@/utils/capacitor';
+import { syncAppIconBadgeFromStore } from '@/services/chat/syncAppIconBadgeFromStore';
 import type { UnreadEffect } from '@/services/chat/unreadProjection';
 import { useUnreadStore } from '@/store/unreadStore';
 
@@ -24,9 +23,7 @@ export function runUnreadProjectionEffects(effects: readonly UnreadEffect[]): vo
         dispatchViewingClearUnread(effect.contextType, effect.contextId);
         break;
       case 'syncNativeBadge':
-        if (isCapacitor()) {
-          void setAppIconBadgeCountNative(effect.count);
-        }
+        syncAppIconBadgeFromStore(effect.count);
         break;
       case 'fetchSnapshotRepair':
         void useUnreadStore.getState().refreshAll();

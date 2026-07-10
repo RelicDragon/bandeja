@@ -58,18 +58,18 @@ export async function resolveGameUnreadCounts(gameIds: string[]): Promise<Record
   if (gameIds.length === 0) return {};
   await ensureUnreadStoreWarm();
   const state = useUnreadStore.getState();
-  return gameUnreadCountsMap(gameIds, state.byContext);
+  return gameUnreadCountsMap(gameIds, state.displayedByContext);
 }
 
 export async function resolveGroupUnreadCounts(channelIds: string[]): Promise<Record<string, number>> {
   if (channelIds.length === 0) return {};
   await ensureUnreadStoreWarm();
   const state = useUnreadStore.getState();
-  return groupUnreadCountsMap(channelIds, state.byContext);
+  return groupUnreadCountsMap(channelIds, state.displayedByContext);
 }
 
 export function userChatUnreadCount(chatId: string): number {
   const state = useUnreadStore.getState();
   if (!isUnreadStoreWarm(state)) return 0;
-  return state.byContext[contextKey('USER', chatId)] ?? 0;
+  return state.displayedByContext[contextKey('USER', chatId)] ?? 0;
 }

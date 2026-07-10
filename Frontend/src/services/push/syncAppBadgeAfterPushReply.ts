@@ -1,7 +1,6 @@
-import { Capacitor } from '@capacitor/core';
 import { chatApi } from '@/api/chat';
 import { selectTotalAll, useUnreadStore } from '@/store/unreadStore';
-import { getAppIconBadgeCountNative, setAppIconBadgeCountNative } from '@/services/authBridge';
+import { syncAppIconBadgeFromStore } from '@/services/chat/syncAppIconBadgeFromStore';
 
 async function resolvePushReplyBadgeCount(unreadBadgeCount?: number): Promise<number | undefined> {
   if (typeof unreadBadgeCount === 'number' && Number.isFinite(unreadBadgeCount)) {
@@ -25,12 +24,5 @@ export async function syncAppBadgeAfterPushReply(unreadBadgeCount?: number): Pro
   const badgeCount = await resolvePushReplyBadgeCount(unreadBadgeCount);
   if (typeof badgeCount !== 'number') return;
 
-  await setAppIconBadgeCountNative(badgeCount);
-
-  if (Capacitor.getPlatform() === 'android' && typeof unreadBadgeCount !== 'number') {
-    const storedCount = await getAppIconBadgeCountNative();
-    if (storedCount > 0) {
-      await setAppIconBadgeCountNative(storedCount);
-    }
-  }
+  syncAppIconBadgeFromStore(badgeCount);
 }
