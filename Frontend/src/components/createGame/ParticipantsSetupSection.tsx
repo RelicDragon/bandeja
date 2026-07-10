@@ -47,13 +47,21 @@ export const ParticipantsSetupSection = ({
         ? allowedParticipantOptions
         : gameLeagueSlots;
 
+  const isGame = entityType === 'GAME';
+  const showRosterSelector =
+    entityType !== 'BAR' &&
+    !isGame &&
+    (entityType === 'TOURNAMENT'
+      ? tournamentSlots.length > 0
+      : effectiveGameLeagueSlots.length > 0);
+
   const showMatchFormat =
-    (entityType === 'GAME' || entityType === 'LEAGUE') &&
+    (isGame || entityType === 'LEAGUE') &&
     playersPerMatch != null &&
     allowedPlayerCountsPerMatch != null &&
     allowedPlayerCountsPerMatch.length > 1 &&
     onPlayersPerMatchChange != null;
-  const shouldShowMatchFormat = showMatchFormat && maxParticipants > 2;
+  const shouldShowMatchFormat = showMatchFormat && (isGame || maxParticipants > 2);
 
   useEffect(() => {
     if (showMatchFormat && maxParticipants === 2 && playersPerMatch !== 2) {
@@ -81,8 +89,15 @@ export const ParticipantsSetupSection = ({
         </h2>
       </div>
       <div className="space-y-4">
-        {entityType !== 'BAR' && (
+        {showRosterSelector && (
           <div>
+            {entityType !== 'TRAINING' && (
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                {entityType === 'TOURNAMENT'
+                  ? t('createGame.numberOfParticipantsTournament')
+                  : t('createGame.numberOfParticipantsLeague')}
+              </label>
+            )}
             <div
               className={`grid gap-2 ${
                 entityType === 'TOURNAMENT'
@@ -96,6 +111,7 @@ export const ParticipantsSetupSection = ({
                 ? tournamentSlots.map((num) => (
                     <button
                       key={num}
+                      type="button"
                       onClick={() => handleParticipantsChange(num)}
                       className={`h-10 rounded-lg font-semibold text-sm transition-all ${
                         maxParticipants === num
@@ -109,6 +125,7 @@ export const ParticipantsSetupSection = ({
                 : effectiveGameLeagueSlots.map((num) => (
                     <button
                       key={num}
+                      type="button"
                       onClick={() => handleParticipantsChange(num)}
                       className={`h-10 rounded-lg font-semibold text-sm transition-all ${
                         maxParticipants === num
@@ -130,14 +147,12 @@ export const ParticipantsSetupSection = ({
               animate={{ opacity: 1, height: 'auto', y: 0 }}
               exit={{ opacity: 0, height: 0, y: -6 }}
               transition={{ duration: 0.2, ease: 'easeInOut' }}
-              className="overflow-hidden border-t border-gray-200 dark:border-gray-800 pt-4"
+              className={`overflow-hidden ${showRosterSelector ? 'border-t border-gray-200 dark:border-gray-800 pt-4' : ''}`}
             >
               <MatchFormatControl
                 playersPerMatch={playersPerMatch}
                 allowedCounts={allowedPlayerCountsPerMatch}
                 onChange={onPlayersPerMatchChange}
-                emphasized
-                label={t('createGame.teamFormat')}
                 labelSingles={t('sport.matchSingles')}
                 labelDoubles={t('sport.matchDoubles')}
                 hintSingles={t('sport.match1v1')}

@@ -13,42 +13,28 @@ interface MatchFormatControlProps {
   playersPerMatch: number;
   allowedCounts: number[];
   onChange: (count: number) => void;
-  label: string;
   labelSingles: string;
   labelDoubles: string;
   hintSingles: string;
   hintDoubles: string;
   /** Roster has 2 slots — show format but lock to singles (1v1). */
   disabled?: boolean;
-  /** Create-game Participants: stronger section label. */
-  emphasized?: boolean;
 }
 
 export const MatchFormatControl = ({
   playersPerMatch,
   allowedCounts,
   onChange,
-  label,
   labelSingles,
   labelDoubles,
   hintSingles,
   hintDoubles,
   disabled = false,
-  emphasized = false,
 }: MatchFormatControlProps) => {
   if (allowedCounts.length <= 1) return null;
 
   return (
     <div>
-      <label
-        className={
-          emphasized
-            ? 'block text-sm font-semibold text-gray-900 dark:text-white mb-2.5'
-            : 'block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2'
-        }
-      >
-        {label}
-      </label>
       <div
         className={`flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg ${
           disabled ? 'opacity-60' : ''

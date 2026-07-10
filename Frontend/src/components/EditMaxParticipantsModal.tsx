@@ -20,7 +20,7 @@ import {
 import { Game, GenderTeam } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { useSportConfig } from '@/hooks/useSportConfig';
-import { gameLeagueRosterOptions, trainingParticipantOptions } from '@/utils/userMaxParticipantsInGame';
+import { gameLeagueRosterOptions, gameRosterFromMatchFormat, trainingParticipantOptions } from '@/utils/userMaxParticipantsInGame';
 import { MatchFormatControl } from '@/components/createGame/MatchFormatControl';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { syncPlayersPerMatchOnRosterChange } from '@/utils/matchFormat';
@@ -95,6 +95,10 @@ export const EditMaxParticipantsModal = ({
     if (game.entityType !== 'GAME' && game.entityType !== 'LEAGUE') return;
     const prev = prevMaxParticipantsRef.current;
     if (prev !== newMaxParticipants) {
+      if (game.entityType === 'GAME') {
+        prevMaxParticipantsRef.current = newMaxParticipants;
+        return;
+      }
       const sync = syncPlayersPerMatchOnRosterChange(
         prev,
         newMaxParticipants,
@@ -240,24 +244,24 @@ export const EditMaxParticipantsModal = ({
     return new Set(Array.from(removedPlayerIds).filter(userId => currentParticipantIds.has(userId)));
   }, [removedPlayerIds, originalParticipants]);
 
-  const canUseTournamentCapacity = Boolean(user?.isAdmin || user?.canCreateTournament);
+  const hasUnlimitedTournamentCapacity = Boolean(user?.isAdmin || user?.canCreateTournament);
   const userParticipantCap = user?.maxParticipantsInGame ?? 12;
 
   const participantSliderMax = useMemo(() => {
     if (game.entityType === 'LEAGUE_SEASON') {
-      return canUseTournamentCapacity ? 128 : Math.min(128, userParticipantCap);
+      return hasUnlimitedTournamentCapacity ? 128 : Math.min(128, userParticipantCap);
     }
     if (game.entityType === 'TOURNAMENT') {
-      return canUseTournamentCapacity ? 32 : Math.min(32, userParticipantCap);
+      return hasUnlimitedTournamentCapacity ? 32 : 12;
     }
     if (game.entityType === 'GAME') {
-      return canUseTournamentCapacity ? 12 : userParticipantCap;
+      return 4;
     }
     if (game.entityType === 'TRAINING') {
       return 24;
     }
     return 8;
-  }, [canUseTournamentCapacity, game.entityType, userParticipantCap]);
+  }, [hasUnlimitedTournamentCapacity, game.entityType, userParticipantCap]);
 
   const minParticipants = game.entityType === 'TRAINING' ? 1 : 2;
 
@@ -265,7 +269,8 @@ export const EditMaxParticipantsModal = ({
     (game.entityType === 'GAME' || game.entityType === 'LEAGUE') &&
     sportConfig.allowedPlayerCountsPerMatch.length > 1;
 
-  const shouldShowTeamFormat = showTeamFormat && newMaxParticipants > 2;
+  const shouldShowTeamFormat =
+    showTeamFormat && (game.entityType === 'GAME' || newMaxParticipants > 2);
 
   const showFixedTeamsToggle =
     shouldShowTeamFormat &&
@@ -276,24 +281,40 @@ export const EditMaxParticipantsModal = ({
     if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE_SEASON') {
       const maxAllowed =
         game.entityType === 'LEAGUE_SEASON'
-          ? canUseTournamentCapacity
+          ? hasUnlimitedTournamentCapacity
             ? 128
             : Math.min(128, userParticipantCap)
-          : canUseTournamentCapacity
+          : hasUnlimitedTournamentCapacity
             ? 32
-            : Math.min(32, userParticipantCap);
+            : 12;
       if (maxAllowed < 8) return [8];
       return Array.from({ length: Math.floor((maxAllowed - 8) / 2) + 1 }, (_, i) => 8 + i * 2);
     }
-    if (game.entityType === 'GAME' || game.entityType === 'LEAGUE') {
-      const maxG = canUseTournamentCapacity ? 12 : userParticipantCap;
+    if (game.entityType === 'GAME') {
+      return [2, 4];
+    }
+    if (game.entityType === 'LEAGUE') {
+      const maxG = hasUnlimitedTournamentCapacity ? 12 : userParticipantCap;
       return gameLeagueRosterOptions(user).filter((n) => n <= maxG);
     }
     if (game.entityType === 'TRAINING') {
       return trainingParticipantOptions();
     }
     return [2, 4, 5, 6, 7, 8];
-  }, [canUseTournamentCapacity, game.entityType, user, userParticipantCap]);
+  }, [hasUnlimitedTournamentCapacity, game.entityType, user, userParticipantCap]);
+
+  const handlePlayersPerMatchChange = useCallback(
+    (count: number) => {
+      setPlayersPerMatch(count);
+      if (game.entityType === 'GAME') {
+        setNewMaxParticipants(gameRosterFromMatchFormat(count));
+      }
+      if (count === 2) {
+        setHasFixedTeams(false);
+      }
+    },
+    [game.entityType],
+  );
 
   const canSave = !needsRemoval && 
     (genderTeams === 'ANY' || 
@@ -445,6 +466,7 @@ export const EditMaxParticipantsModal = ({
         </DialogHeader>
 
         <div className="overflow-y-auto p-4 space-y-4">
+          {game.entityType !== 'GAME' && (
           <div className="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
             <div className="flex items-center gap-2 flex-1">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -463,7 +485,9 @@ export const EditMaxParticipantsModal = ({
               </span>
             </div>
           </div>
+          )}
 
+          {game.entityType !== 'GAME' && (
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               {t('gameDetails.newMaxParticipants', { defaultValue: 'New Max Participants' })}
@@ -576,6 +600,7 @@ export const EditMaxParticipantsModal = ({
               </div>
             )}
           </div>
+          )}
 
           <AnimatePresence initial={false}>
             {shouldShowTeamFormat ? (
@@ -585,14 +610,16 @@ export const EditMaxParticipantsModal = ({
                 animate={{ opacity: 1, height: 'auto', y: 0 }}
                 exit={{ opacity: 0, height: 0, y: -6 }}
                 transition={{ duration: 0.2, ease: 'easeInOut' }}
-                className="overflow-hidden border-t border-gray-200 pt-4 dark:border-gray-800"
+                className={
+                  game.entityType === 'GAME'
+                    ? 'overflow-hidden'
+                    : 'overflow-hidden border-t border-gray-200 pt-4 dark:border-gray-800'
+                }
               >
                 <MatchFormatControl
                   playersPerMatch={playersPerMatch}
                   allowedCounts={sportConfig.allowedPlayerCountsPerMatch}
-                  onChange={setPlayersPerMatch}
-                  emphasized
-                  label={t('createGame.teamFormat')}
+                  onChange={handlePlayersPerMatchChange}
                   labelSingles={t('sport.matchSingles')}
                   labelDoubles={t('sport.matchDoubles')}
                   hintSingles={t('sport.match1v1')}

@@ -1,7 +1,13 @@
 import type { Game } from '@/types';
+import { gameRosterFromMatchFormat } from '@/utils/userMaxParticipantsInGame';
 
 /** Fields copied when duplicating a game or “play again” from results. */
 export function buildDuplicateGameInitialData(game: Game): Partial<Game> {
+  const maxParticipants =
+    game.entityType === 'GAME'
+      ? gameRosterFromMatchFormat(game.playersPerMatch ?? 4)
+      : game.maxParticipants;
+
   const data: Partial<Game> = {
     entityType: game.entityType,
     gameType: game.gameType,
@@ -14,7 +20,7 @@ export function buildDuplicateGameInitialData(game: Game): Partial<Game> {
     sport: game.sport,
     scoringPreset: game.scoringPreset,
     scoringMode: game.scoringMode,
-    maxParticipants: game.maxParticipants,
+    maxParticipants,
     playersPerMatch: game.playersPerMatch,
     minParticipants: game.minParticipants,
     minLevel: game.minLevel,

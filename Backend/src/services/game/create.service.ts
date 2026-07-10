@@ -123,11 +123,8 @@ export class GameCreateService {
       throw new ApiError(400, 'mainPhotoId cannot be set when creating a game');
     }
 
-    let entityType = data.entityType || EntityType.GAME;
+    const entityType = data.entityType || EntityType.GAME;
     let maxParticipants = entityType === EntityType.BAR ? 999 : (data.maxParticipants || 4);
-    if (entityType === EntityType.GAME && maxParticipants >= 8) {
-      entityType = EntityType.TOURNAMENT;
-    }
 
     if (entityType !== EntityType.BAR) {
       const actor = await prisma.user.findUnique({

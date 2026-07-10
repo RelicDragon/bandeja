@@ -67,12 +67,8 @@ export const CreateMenuModal = ({
   useBackButtonModal(isOpen, handleClose, 'create-menu-modal');
 
   const getEntityTypes = (): EntityType[] => {
-    const types: EntityType[] = ['GAME'];
-    
-    if (user?.isAdmin || user?.canCreateTournament) {
-      types.push('TOURNAMENT');
-    }
-    
+    const types: EntityType[] = ['GAME', 'TOURNAMENT'];
+
     if (user?.isAdmin || user?.canCreateLeague) {
       types.push('LEAGUE');
     }

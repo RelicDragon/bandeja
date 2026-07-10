@@ -33,7 +33,12 @@ import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { syncRosterOnSportChange, syncPlayersPerMatchOnRosterChange } from '@/utils/matchFormat';
-import { gameLeagueRosterOptions, maxSlotsForUserGameOrLeague, maxSlotsForUserTournament } from '@/utils/userMaxParticipantsInGame';
+import {
+  gameLeagueRosterOptions,
+  gameRosterFromMatchFormat,
+  maxSlotsForUserGameOrLeague,
+  maxSlotsForUserTournament,
+} from '@/utils/userMaxParticipantsInGame';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { MarkCourtBookedModal } from '@/components/createGame/MarkCourtBookedModal';
 import { CreateFlowSportSelector } from '@/components/createGame/CreateFlowSportSelector';
@@ -134,12 +139,23 @@ export const CreateGame = ({
     return resolveCreateGameDefaultSport(user);
   });
   const [maxParticipants, setMaxParticipants] = useState<number>(() => {
-    if (initialGameData?.maxParticipants) return initialGameData.maxParticipants;
-    if (entityType === 'TOURNAMENT') return 8;
     const initialSport = getSportConfig(
-      initialGameData?.sport ?? (resolveCreateGameDefaultSport(user)),
+      initialGameData?.sport ?? resolveCreateGameDefaultSport(user),
     );
-    if (entityType === 'GAME' || entityType === 'LEAGUE') {
+    if (entityType === 'TOURNAMENT') {
+      return initialGameData?.maxParticipants ?? 8;
+    }
+    if (entityType === 'GAME') {
+      if (initialGameData?.playersPerMatch != null) {
+        return gameRosterFromMatchFormat(initialGameData.playersPerMatch);
+      }
+      if (initialGameData?.maxParticipants === 2 || initialGameData?.maxParticipants === 4) {
+        return initialGameData.maxParticipants;
+      }
+      return initialSport.defaultPlayersPerMatch === 2 ? 2 : 4;
+    }
+    if (initialGameData?.maxParticipants) return initialGameData.maxParticipants;
+    if (entityType === 'LEAGUE') {
       if (initialSport.defaultPlayersPerMatch === 2) return 2;
       if (initialSport.defaultPlayersPerMatch === 4) return 4;
     }
@@ -257,8 +273,7 @@ export const CreateGame = ({
   });
   const { notifyFormatWizardOpen, handleWizardClose } = templateFlow;
   const allowedParticipantOptions = useMemo(() => {
-    if (entityType === 'TRAINING') return undefined;
-    if (entityType !== 'GAME' && entityType !== 'LEAGUE') return undefined;
+    if (entityType !== 'LEAGUE') return undefined;
     return gameLeagueRosterOptions(user);
   }, [entityType, user]);
 
@@ -575,15 +590,17 @@ export const CreateGame = ({
         config.defaultEventRoster,
       );
       if (!sync) return;
-      prevMaxParticipantsRef.current = sync.maxParticipants;
-      setMaxParticipants(sync.maxParticipants);
+      const nextMax =
+        entityType === 'GAME' ? gameRosterFromMatchFormat(sync.playersPerMatch) : sync.maxParticipants;
+      prevMaxParticipantsRef.current = nextMax;
+      setMaxParticipants(nextMax);
       setPlayersPerMatch(sync.playersPerMatch);
       if (sync.resetFixedTeams) {
         setHasFixedTeams(false);
         setAllowUserInMultipleTeams(false);
       }
     },
-    [maxParticipants, playersPerMatch],
+    [entityType, maxParticipants, playersPerMatch],
   );
 
   const handleSportChange = useCallback(
@@ -787,7 +804,17 @@ export const CreateGame = ({
   }, [entityType, user]);
 
   useEffect(() => {
-    if (entityType !== 'GAME' && entityType !== 'LEAGUE') return;
+    if (entityType !== 'GAME') return;
+    const roster = gameRosterFromMatchFormat(playersPerMatch);
+    setMaxParticipants((prev) => {
+      if (prev === roster) return prev;
+      setParticipants((p) => (p.length > roster ? p.slice(0, roster) : p));
+      return roster;
+    });
+  }, [entityType, playersPerMatch]);
+
+  useEffect(() => {
+    if (entityType !== 'LEAGUE') return;
     const cap = maxSlotsForUserGameOrLeague(user);
     setMaxParticipants((prev) => {
       if (prev <= cap) return prev;
@@ -843,8 +870,10 @@ export const CreateGame = ({
       sportConfig.defaultEventRoster,
     );
     if (!sync) return;
-    prevMaxParticipantsRef.current = sync.maxParticipants;
-    setMaxParticipants(sync.maxParticipants);
+    const nextMax =
+      entityType === 'GAME' ? gameRosterFromMatchFormat(sync.playersPerMatch) : sync.maxParticipants;
+    prevMaxParticipantsRef.current = nextMax;
+    setMaxParticipants(nextMax);
     setPlayersPerMatch(sync.playersPerMatch);
     if (sync.resetFixedTeams) {
       setHasFixedTeams(false);
@@ -863,6 +892,10 @@ export const CreateGame = ({
     if (entityType !== 'GAME' && entityType !== 'LEAGUE') return;
     const prev = prevMaxParticipantsRef.current;
     if (prev !== maxParticipants) {
+      if (entityType === 'GAME') {
+        prevMaxParticipantsRef.current = maxParticipants;
+        return;
+      }
       const sync = syncPlayersPerMatchOnRosterChange(
         prev,
         maxParticipants,
@@ -1287,6 +1320,7 @@ export const CreateGame = ({
   };
 
   const handleMaxParticipantsChange = (num: number) => {
+    if (entityType === 'GAME') return;
     setMaxParticipants(num);
     if (participants.length > num) {
       setParticipants(participants.slice(0, num));
@@ -1304,6 +1338,13 @@ export const CreateGame = ({
 
   const handlePlayersPerMatchChange = (count: number) => {
     setPlayersPerMatch(count);
+    if (entityType === 'GAME') {
+      const roster = gameRosterFromMatchFormat(count);
+      setMaxParticipants(roster);
+      if (participants.length > roster) {
+        setParticipants(participants.slice(0, roster));
+      }
+    }
     if (count === 2) {
       setHasFixedTeams(false);
       setAllowUserInMultipleTeams(false);

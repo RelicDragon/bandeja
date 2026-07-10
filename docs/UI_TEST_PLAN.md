@@ -396,7 +396,7 @@ Frontend/e2e/
 | C-02 | Create GAME | Pick GAME intent | Wizard loads |
 | C-03 | Create BAR | Pick BAR | Bar-specific fields |
 | C-04 | Create TRAINING | Pick TRAINING | Trainer fields |
-| C-05 | Create TOURNAMENT | Pick TOURNAMENT | Roster/tournament defaults |
+| C-05 | Create TOURNAMENT | Pick TOURNAMENT (any logged-in user) | Roster/tournament defaults; cap 8–12 for normal users, up to 32 for `canCreateTournament` |
 | C-06 | Duplicate game | From game details duplicate | Pre-filled form |
 | C-07 | Bottom tabs hidden | On create page | Tab bar hidden |
 | C-08 | Back navigation | Back button | Returns home |
@@ -410,8 +410,8 @@ Frontend/e2e/
 | C-11 | Game format wizard | Open/close wizard | Scoring preset saved |
 | C-47 | Golden point deuce count | Create/edit classic game → Set structure step → pick Off / At 40–40 / After 1–4 deuces | Setting saved on game; live scoring uses advantage until threshold then sudden death at 40–40; watch matches web |
 | C-12 | Rating vs social game | Toggle affects rating | Flag persisted on create |
-| C-40 | Non-default match format | Padel → singles (1v1) or tennis → doubles (2v2) in participants setup | Format card summary shows Singles/Doubles; expanded details show Teams format row with 1v1/2v2 hint |
-| C-41 | Padel singles templates | Create padel game → participants 1v1 → open format templates | Match tab: Best-of-3 (Official) + Single set; Social tab: Singles Americano (24 pts) when roster ≥4 |
+| C-40 | Non-default match format | Padel → singles (1v1) or tennis → doubles (2v2) via team format control | Format card summary shows Singles/Doubles; roster is 2 or 4 |
+| C-41 | Padel singles templates | Create padel game → 1v1 → open format templates | Match tab: Best-of-3 (Official) + Single set; no large-roster social templates |
 | C-42 | What game collapsed | Create GAME with template picker → default load | “What game” section collapsed; only selected template card visible; gender + rating badges stay in section header row; setup-format button and inline pickers hidden |
 | C-44 | What game collapse scroll | Expand section → tap collapse chevron | Section scrolls to top; header stays visible |
 | C-45 | Create with participants-only chat | Enable “Participants-only chat” toggle → create game | Game chat has Participants + Organizers tabs with localized system messages |
@@ -499,7 +499,9 @@ Frontend/e2e/
 | C-14z | Edit multi-court shared slot hint | Edit integrated game → Reserve new; 2 courts; no intersecting slots | Amber hint: try different courts, date, or duration |
 | C-24 | Date/time | Change start + duration | End time updates |
 | C-25 | Level range slider | Adjust range | Min ≤ max |
-| C-26 | Max participants | Change count | Roster options update |
+| C-26 | Max participants (tournament/league) | Change tournament or league roster count | Roster options update within user cap |
+| C-49 | Game match format only | Create GAME on padel/tennis | No participant-count grid; 1v1/2v2 selector sets roster to 2 or 4 |
+| C-50 | Game fixed roster | Create GAME singles then doubles | Roster slots and `maxParticipants` follow format (2 ↔ 4) |
 | C-27 | Fixed teams toggle | Enable for doubles | Team setup shown |
 | C-28 | Game name & description | Fill name and description in one section | Saved on submit |
 | C-29 | Price section | Set price type/currency/total | Saved correctly |
@@ -621,7 +623,7 @@ Frontend/e2e/
 | GD-22b | Edit switch linked booking | Game linked to booking A → edit location/time → pick booking B or book new court → save | Booking A unlinked from game; only B linked; game no longer shows stale "Fully booked" for A |
 | GD-23 | Edit price | Price tab | Price fields updated |
 | GD-23 | Edit level range | Level modal | Min/max saved |
-| GD-24 | Edit max participants | Max participants modal | Capacity updated |
+| GD-24 | Edit max participants | Max participants modal | Capacity updated; GAME modal shows 1v1/2v2 only (no current/maximum summary) |
 | GD-25 | Edit game format | Format wizard (pre-results) | Format updated |
 | GD-95 | Format summary for read-only viewer | Open padel game pre-results as participant without format edit rights, or non-participant who can view the game | “What kind of game?” picker hidden; format card shows title + summary (includes gender label when not Any); tap help icon expands full format details; no pencil; no gender row below card |
 | GD-96 | Format picker for editor | Open same game as owner/admin or `resultsByAnyone` playing participant | “What kind of game?” picker shown; can change template / format |

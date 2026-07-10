@@ -91,11 +91,6 @@ describe('syncRosterOnSportChange', () => {
       playersPerMatch: 4,
       resetFixedTeams: true,
     });
-    expect(syncRosterOnSportChange(8, 2, 4, 4)).toEqual({
-      maxParticipants: 8,
-      playersPerMatch: 4,
-      resetFixedTeams: true,
-    });
   });
 
   it('does not change roster when already on target match format', () => {

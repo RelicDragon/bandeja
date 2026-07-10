@@ -18,11 +18,11 @@ export function syncRosterOnSportChange(
   maxParticipants: number,
   playersPerMatch: number,
   defaultPlayersPerMatch: number,
-  defaultEventRoster: number,
+  _defaultEventRoster: number,
 ): SportRosterFormatSync | null {
   if (maxParticipants === 2 && playersPerMatch === 2 && defaultPlayersPerMatch === 4) {
     return {
-      maxParticipants: Math.max(defaultEventRoster, 4),
+      maxParticipants: 4,
       playersPerMatch: 4,
       resetFixedTeams: true,
     };
@@ -37,10 +37,10 @@ export function syncRosterOnSportChange(
   if (
     defaultPlayersPerMatch === 4 &&
     playersPerMatch === 2 &&
-    maxParticipants >= 4
+    maxParticipants === 4
   ) {
     return {
-      maxParticipants,
+      maxParticipants: 4,
       playersPerMatch: 4,
       resetFixedTeams: true,
     };

@@ -23,13 +23,8 @@ export const GameTypeDropdown = ({ isOpen, onClose, onSelectType }: GameTypeDrop
   
   // Sort and filter entity types based on user permissions
   const getEntityTypes = (): EntityType[] => {
-    const types: EntityType[] = ['GAME'];
-    
-    // Add TOURNAMENT if user has permission
-    if (user?.isAdmin || user?.canCreateTournament) {
-      types.push('TOURNAMENT');
-    }
-    
+    const types: EntityType[] = ['GAME', 'TOURNAMENT'];
+
     // Add LEAGUE if user has permission
     if (user?.isAdmin || user?.canCreateLeague) {
       types.push('LEAGUE');

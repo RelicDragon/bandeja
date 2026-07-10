@@ -64,19 +64,27 @@ export const ParticipantsSection = ({
   const tournamentSlots = tournamentParticipantOptions(user);
   const gameLeagueSlots = gameLeagueRosterOptions(user);
   const trainingSlots = trainingParticipantOptions();
+  const isGame = entityType === 'GAME';
   const effectiveGameLeagueSlots =
     entityType === 'TRAINING'
       ? trainingSlots
       : allowedParticipantOptions && allowedParticipantOptions.length > 0
         ? allowedParticipantOptions
         : gameLeagueSlots;
+  const showRosterSelector =
+    showSetupControls &&
+    entityType !== 'BAR' &&
+    !isGame &&
+    (entityType === 'TOURNAMENT'
+      ? tournamentSlots.length > 0
+      : effectiveGameLeagueSlots.length > 0);
   const showMatchFormat =
-    (entityType === 'GAME' || entityType === 'LEAGUE') &&
+    (isGame || entityType === 'LEAGUE') &&
     playersPerMatch != null &&
     allowedPlayerCountsPerMatch != null &&
     allowedPlayerCountsPerMatch.length > 1 &&
     onPlayersPerMatchChange != null;
-  const shouldShowMatchFormat = showMatchFormat && maxParticipants > 2;
+  const shouldShowMatchFormat = showMatchFormat && (isGame || maxParticipants > 2);
 
   const renderParticipants = () => {
     const result = [];
@@ -181,7 +189,7 @@ export const ParticipantsSection = ({
               )}
             </div>
           )}
-        {showSetupControls && entityType !== 'BAR' && (
+        {showRosterSelector && (
           <div>
             <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
               {entityType === 'TOURNAMENT' ? t('createGame.numberOfParticipantsTournament') :
@@ -201,6 +209,7 @@ export const ParticipantsSection = ({
                 tournamentSlots.map((num) => (
                   <button
                     key={num}
+                    type="button"
                     onClick={() => onMaxParticipantsChange(num)}
                     className={`h-10 rounded-lg font-semibold text-sm transition-all ${
                       maxParticipants === num
@@ -215,6 +224,7 @@ export const ParticipantsSection = ({
                 effectiveGameLeagueSlots.map((num) => (
                   <button
                     key={num}
+                    type="button"
                     onClick={() => onMaxParticipantsChange(num)}
                     className={`h-10 rounded-lg font-semibold text-sm transition-all ${
                       maxParticipants === num
@@ -243,8 +253,6 @@ export const ParticipantsSection = ({
                 playersPerMatch={playersPerMatch}
                 allowedCounts={allowedPlayerCountsPerMatch}
                 onChange={onPlayersPerMatchChange}
-                emphasized
-                label={t('createGame.teamFormat')}
                 labelSingles={t('sport.matchSingles')}
                 labelDoubles={t('sport.matchDoubles')}
                 hintSingles={t('sport.match1v1')}

@@ -93,6 +93,17 @@ export function validateGameForSport(input: GameSportValidationInput): Sport {
     }
   }
 
+  if (
+    entityType === EntityType.GAME &&
+    maxParticipants != null &&
+    playersPerMatch != null
+  ) {
+    const expectedRoster = playersPerMatch === 2 ? 2 : 4;
+    if (maxParticipants !== expectedRoster) {
+      throw new ApiError(400, 'Game roster size must match match format (2 for 1v1, 4 for 2v2)');
+    }
+  }
+
   const gameType = input.gameType;
   if (gameType && !config.allowedGameTypes.includes(gameType as GameTypeStr)) {
     throw new ApiError(400, `gameType ${gameType} is not allowed for ${sport}`);
