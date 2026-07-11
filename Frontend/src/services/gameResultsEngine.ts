@@ -7,7 +7,13 @@ import { Round, Match, GameState } from '@/types/gameResults';
 import { ResultsStorage, LocalResults } from './resultsStorage';
 import { resultsApi } from '@/api/results';
 import { gamesApi } from '@/api';
-import { isUserGameAdminOrOwner, isUserGameParticipant, validateSetScores, validateSetIndexAgainstFixed, validateTieBreak } from '@/utils/gameResults';
+import {
+  canUserEditResults,
+  canUserSeeGame,
+  validateSetScores,
+  validateSetIndexAgainstFixed,
+  validateTieBreak,
+} from '@/utils/gameResults';
 import { getRules, initialSetsForRules } from '@/utils/scoring';
 import { matchTimerApi } from '@/api/matchTimer';
 import {
@@ -36,6 +42,7 @@ export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
 interface GameResultsState {
   gameId: string | null;
   userId: string | null;
+  isGlobalAdmin: boolean;
   game: Game | null;
   rounds: Round[];
   gameState: GameState | null;
@@ -55,6 +62,7 @@ interface GameResultsStore extends GameResultsState {
 const useGameResultsStore = create<GameResultsStore>((set) => ({
   gameId: null,
   userId: null,
+  isGlobalAdmin: false,
   game: null,
   rounds: [],
   gameState: null,
@@ -89,15 +97,22 @@ class GameResultsEngineClass {
     gameId: string,
     userId: string,
     t: (key: string) => string,
-    options?: { force?: boolean }
+    options?: { force?: boolean; isAdmin?: boolean }
   ): Promise<void> {
     const force = Boolean(options?.force);
+    const isGlobalAdmin = options?.isAdmin === true;
     const state = this.getState();
-    if (!force && state.initialized && state.gameId === gameId && state.userId === userId) {
+    if (
+      !force
+      && state.initialized
+      && state.gameId === gameId
+      && state.userId === userId
+      && state.isGlobalAdmin === isGlobalAdmin
+    ) {
       return;
     }
 
-    useGameResultsStore.setState({ loading: true, gameId, userId });
+    useGameResultsStore.setState({ loading: true, gameId, userId, isGlobalAdmin });
 
     try {
       const [gameResponse, localResults, serverProblem] = await Promise.all([
@@ -124,8 +139,9 @@ class GameResultsEngineClass {
       }
 
       const game = gameResponse.data;
-      const canEdit = this.canUserEditResults(game, userId);
-      const gameState = this.getGameState(game, userId);
+      const viewer = { id: userId, isAdmin: isGlobalAdmin };
+      const canEdit = canUserEditResults(game, viewer);
+      const gameState = this.getGameState(game, viewer);
 
       useGameResultsStore.setState({ game, canEdit, gameState, serverProblem });
 
@@ -261,8 +277,9 @@ class GameResultsEngineClass {
       if (gameResponse?.data) {
         const game = gameResponse.data;
         patch.game = game;
-        patch.canEdit = this.canUserEditResults(game, userId);
-        patch.gameState = this.getGameState(game, userId);
+        const viewer = { id: userId, isAdmin: liveState.isGlobalAdmin };
+        patch.canEdit = canUserEditResults(game, viewer);
+        patch.gameState = this.getGameState(game, viewer);
       }
 
       if (resultsResponse?.data) {
@@ -427,6 +444,7 @@ class GameResultsEngineClass {
     useGameResultsStore.setState({
       gameId: null,
       userId: null,
+      isGlobalAdmin: false,
       game: null,
       rounds: [],
       gameState: null,
@@ -826,8 +844,9 @@ class GameResultsEngineClass {
     const state = this.getState();
     if (!state.userId) return;
     
-    const canEdit = this.canUserEditResults(game, state.userId);
-    const gameState = this.getGameState(game, state.userId);
+    const viewer = { id: state.userId, isAdmin: state.isGlobalAdmin };
+    const canEdit = canUserEditResults(game, viewer);
+    const gameState = this.getGameState(game, viewer);
     
     useGameResultsStore.setState({ 
       game,
@@ -1003,23 +1022,10 @@ class GameResultsEngineClass {
     }
   }
 
-  private canUserEditResults(game: Game, userId: string): boolean {
-    if (isUserGameAdminOrOwner(game, userId)) {
-      return true;
-    }
-    
-    if (game.resultsByAnyone) {
-      const participant = game.participants?.find((p) => p.userId === userId);
-      return !!participant;
-    }
-    
-    return false;
-  }
+  private getGameState(game: Game, viewer: { id: string; isAdmin?: boolean }): GameState {
+    const canEdit = canUserEditResults(game, viewer);
 
-  private getGameState(game: Game, userId: string): GameState {
-    const canEdit = this.canUserEditResults(game, userId);
-    
-    if (!isUserGameParticipant(game, userId)) {
+    if (!canUserSeeGame(game, viewer)) {
       return {
         type: 'ACCESS_DENIED',
         message: 'games.results.problems.accessDenied',

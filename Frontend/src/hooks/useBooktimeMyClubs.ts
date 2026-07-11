@@ -9,7 +9,13 @@ const EMPTY_BOOKTIME_CLUBS: BooktimeMyClubsPayload = {
   clubs: [],
 };
 
-export function useBooktimeMyClubs(enabled = true) {
+type UseBooktimeMyClubsOptions = {
+  /** When false, clubs load only via explicit reload() (e.g. bookings panel open). */
+  autoLoad?: boolean;
+};
+
+export function useBooktimeMyClubs(enabled = true, options?: UseBooktimeMyClubsOptions) {
+  const autoLoad = options?.autoLoad ?? true;
   const userId = useAuthStore((s) => s.user?.id);
   const { data: myTabData, isPending: myTabPending } = useMyGamesQuery(userId, {
     enabled: enabled && !!userId,
@@ -44,6 +50,7 @@ export function useBooktimeMyClubs(enabled = true) {
       setData(null);
       return;
     }
+    if (!autoLoad) return;
     if (myTabPending) return;
 
     const booktimeConnected = myTabData?.booktimeConnected;
@@ -55,7 +62,7 @@ export function useBooktimeMyClubs(enabled = true) {
     }
 
     void reload();
-  }, [enabled, myTabPending, myTabData?.booktimeConnected, reload]);
+  }, [enabled, autoLoad, myTabPending, myTabData?.booktimeConnected, reload]);
 
   return { data, loading, error, reload };
 }

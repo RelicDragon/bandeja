@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { getHorizontalScrollFadeMaskStyle } from '@/components/HorizontalScrollFadeEdges';
 import { useAuthStore } from '@/store/authStore';
+import { useMyGamesQuery } from '@/queries/games/useMyGamesQuery';
 import { useHorizontalScrollFade } from '@/hooks/useHorizontalScrollFade';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useStoriesFeed } from '@/hooks/useStoriesFeed';
@@ -35,10 +36,16 @@ const bubbleVariants = {
 export function StoriesRail() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
+  const { data: myTabData, isFetched: myTabFetched } = useMyGamesQuery(user?.id);
   const reduceMotion = usePrefersReducedMotion();
   const railRootRef = useRef<HTMLDivElement>(null);
   const railVisible = useDeferredVisible(railRootRef);
-  const { feed, refresh, enabled } = useStoriesFeed({ enabled: railVisible });
+  const storiesCount = myTabData?.storiesCount;
+  const shouldFetchStoriesFeed =
+    railVisible &&
+    myTabFetched &&
+    storiesCount !== 0;
+  const { feed, refresh, enabled } = useStoriesFeed({ enabled: shouldFetchStoriesFeed });
   const carouselRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<PhotoMediaFile[] | null>(null);

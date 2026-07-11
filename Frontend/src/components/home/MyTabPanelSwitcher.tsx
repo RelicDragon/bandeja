@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Ticket, Trophy, Users } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -25,8 +25,14 @@ export function MyTabPanelSwitcher({
   const { t } = useTranslation();
   const [activeSwitch, setActiveSwitch] = useState<MyTabPanelId | null>(null);
   const booktime = useMyTabBooktime();
+  const { reloadMyClubs } = booktime;
   useUserTeamsBootstrap();
   const panelCounts = useMyTabPanelCounts(games, booktime);
+
+  useEffect(() => {
+    if (activeSwitch !== 'bookings') return;
+    void reloadMyClubs();
+  }, [activeSwitch, reloadMyClubs]);
   const reduceMotion = useReducedMotion();
   const panelTransition = reduceMotion
     ? { duration: 0 }

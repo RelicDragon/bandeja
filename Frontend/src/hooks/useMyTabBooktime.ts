@@ -15,7 +15,7 @@ export type MyTabBooktimeSnapshot = {
 };
 
 export function useMyTabBooktime(): MyTabBooktimeSnapshot {
-  const { data: myClubs, reload: reloadMyClubs } = useBooktimeMyClubs(true);
+  const { data: myClubs, reload: reloadMyClubs } = useBooktimeMyClubs(true, { autoLoad: false });
   const clubs = useMemo(() => myClubs?.clubs ?? [], [myClubs?.clubs]);
   const { bookings, loading: bookingsLoading, removeBooking, reload: reloadBookings } = useBooktimeAllUpcoming(
     clubs,

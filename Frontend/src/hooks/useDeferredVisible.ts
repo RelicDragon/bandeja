@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 
 type UseDeferredVisibleOptions = {
   rootMargin?: string;
+  /** When true, also require the document to have been scrolled before intersecting counts. */
+  requireScrollBeforeVisible?: boolean;
 };
 
 /**
@@ -13,10 +15,20 @@ export function useDeferredVisible(
   options?: UseDeferredVisibleOptions,
 ): boolean {
   const [visible, setVisible] = useState(false);
+  const [hasScrolled, setHasScrolled] = useState(false);
   const rootMargin = options?.rootMargin ?? '120px 0px';
+  const requireScroll = options?.requireScrollBeforeVisible === true;
+
+  useEffect(() => {
+    if (!requireScroll || hasScrolled) return;
+    const onScroll = () => setHasScrolled(true);
+    window.addEventListener('scroll', onScroll, { passive: true, once: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [requireScroll, hasScrolled]);
 
   useEffect(() => {
     if (visible) return;
+    if (requireScroll && !hasScrolled) return;
 
     let cancelled = false;
     let observer: IntersectionObserver | null = null;
@@ -51,7 +63,7 @@ export function useDeferredVisible(
       if (retryFrame) cancelAnimationFrame(retryFrame);
       observer?.disconnect();
     };
-  }, [visible, targetRef, rootMargin]);
+  }, [visible, targetRef, rootMargin, requireScroll, hasScrolled]);
 
   return visible;
 }

@@ -17,7 +17,7 @@ import { useLoadingState } from '@/hooks/useLoadingState';
 import { useOfflineMessage } from '@/hooks/useOfflineMessage';
 import { useGameResultsTabs } from '@/hooks/useGameResultsTabs';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
-import { validateSetIndex, isUserGameAdminOrOwner, canShowTournamentTableView } from '@/utils/gameResults';
+import { validateSetIndex, canUserEditResults, canShowTournamentTableView } from '@/utils/gameResults';
 import {
   getRules,
   isLegalSetScore,
@@ -619,14 +619,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
         
         let canEditValue = state.canEdit;
         if (!canEditValue) {
-          if (isUserGameAdminOrOwner(updatedGame, user.id)) {
-            canEditValue = true;
-          } else if (updatedGame.resultsByAnyone) {
-            const participant = updatedGame.participants?.find(p => p.userId === user.id);
-            canEditValue = !!participant;
-          } else {
-            canEditValue = false;
-          }
+          canEditValue = canUserEditResults(updatedGame, user);
         }
         
         const gameState = state.gameState || {
@@ -650,7 +643,7 @@ export const GameResultsEntryEmbedded = ({ game, onGameUpdate, onRoundAdded }: G
 
         await GameResultsEngine.syncToServer();
         await ResultsStorage.setServerProblem(game.id, false);
-        await GameResultsEngine.initialize(game.id, user.id, t);
+        await GameResultsEngine.initialize(game.id, user.id, t, { isAdmin: user.isAdmin });
         closeModal();
         setCanInitialize(true);
         onGameUpdate(updatedGame);

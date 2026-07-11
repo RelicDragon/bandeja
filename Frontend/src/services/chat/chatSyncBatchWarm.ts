@@ -38,6 +38,12 @@ type WarmDrainItem = {
 };
 const warmDrainQueue: WarmDrainItem[] = [];
 let warmDrainTimer: ReturnType<typeof setTimeout> | null = null;
+type HeldBootstrapOverflowItem = {
+  contextType: ChatContextType;
+  contextId: string;
+  expectedServerMaxSeq?: number;
+};
+const heldBootstrapOverflow: HeldBootstrapOverflowItem[] = [];
 
 let warmSerialTail: Promise<void> = Promise.resolve();
 let implicitWarmInFlight: Promise<void> | null = null;
@@ -117,6 +123,29 @@ function enqueueWarmOverflow(
     warmDrainQueue.push(item);
   }
   scheduleWarmDrain(initialDelayMs);
+}
+
+function holdBootstrapOverflow(
+  items: Array<{ contextType: ChatContextType; contextId: string; expectedServerMaxSeq?: number }>
+): void {
+  const seen = new Set(heldBootstrapOverflow.map((x) => `${x.contextType}:${x.contextId}`));
+  for (const it of items) {
+    const k = `${it.contextType}:${it.contextId}`;
+    if (seen.has(k)) continue;
+    seen.add(k);
+    const item: HeldBootstrapOverflowItem = {
+      contextType: it.contextType,
+      contextId: it.contextId,
+    };
+    if (it.expectedServerMaxSeq != null) item.expectedServerMaxSeq = it.expectedServerMaxSeq;
+    heldBootstrapOverflow.push(item);
+  }
+}
+
+function flushHeldBootstrapOverflow(): void {
+  if (heldBootstrapOverflow.length === 0) return;
+  const batch = heldBootstrapOverflow.splice(0);
+  enqueueWarmOverflow(batch, undefined, 0);
 }
 
 export function clearChatSyncWarmDrainQueue(): void {
@@ -214,6 +243,7 @@ export function resetChatSyncWarmSession(): void {
   pendingChatsTabFullWarm = false;
   implicitWarmCooldownUntil = 0;
   lastRunWarmBodyAt = 0;
+  heldBootstrapOverflow.length = 0;
   if (warmFromPayloadTimer) {
     clearTimeout(warmFromPayloadTimer);
     warmFromPayloadTimer = null;
@@ -253,7 +283,7 @@ async function warmChatSyncHeadsWithUnreadInnerRun(
   const list = [...map.values()];
   if (list.length === 0) return;
   try {
-    await runWarmBody(list, unreadKeys);
+    await runWarmBody(list, unreadKeys, { pullPolicy: 'tiered-bootstrap' });
   } catch {
     /* offline */
   }
@@ -465,7 +495,13 @@ async function runWarmBody(
       expectedServerMaxSeq: it.expectedServerMaxSeq,
     });
   }
-  if (overflow.length) enqueueWarmOverflow(overflow, unreadKeys, drainDelayMs);
+  if (overflow.length) {
+    if (pullPolicy === 'tiered-bootstrap') {
+      holdBootstrapOverflow(overflow);
+    } else {
+      enqueueWarmOverflow(overflow, unreadKeys, drainDelayMs);
+    }
+  }
 }
 
 export type WarmChatSyncHeadsOptions = {
@@ -546,6 +582,7 @@ export function runChatSyncBatchWarmOnConnect(): void {
 
 /** Full warm when user opens Chats tab — drains deferred bootstrap threads promptly. */
 export function warmChatSyncHeadsOnChatsTabIntent(): void {
+  flushHeldBootstrapOverflow();
   void warmChatSyncHeads(undefined, { enrichFromUnread: true, skipCooldown: true, pullPolicy: 'full' });
 }
 

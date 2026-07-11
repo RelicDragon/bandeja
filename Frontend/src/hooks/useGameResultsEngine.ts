@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GameResultsEngine, useGameResultsStore } from '@/services/gameResultsEngine';
 import { useSocketEventsStore } from '@/store/socketEventsStore';
+import { useAuthStore } from '@/store/authStore';
 
 interface UseGameResultsEngineProps {
   gameId: string | undefined;
@@ -10,6 +11,7 @@ interface UseGameResultsEngineProps {
 
 export function useGameResultsEngine({ gameId, userId }: UseGameResultsEngineProps) {
   const { t } = useTranslation();
+  const isGlobalAdmin = useAuthStore((state) => state.user?.isAdmin === true);
   const [error, setError] = useState<string | null>(null);
 
   const game = useGameResultsStore((state) => state.game);
@@ -33,10 +35,14 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
     const currentUserId = userId || '';
     
     const state = GameResultsEngine.getState();
-    const needsInit = !state.initialized || state.gameId !== gameId || state.userId !== currentUserId;
+    const needsInit =
+      !state.initialized
+      || state.gameId !== gameId
+      || state.userId !== currentUserId
+      || state.isGlobalAdmin !== isGlobalAdmin;
     
     if (needsInit) {
-      GameResultsEngine.initialize(gameId, currentUserId, t).catch((err) => {
+      GameResultsEngine.initialize(gameId, currentUserId, t, { isAdmin: isGlobalAdmin }).catch((err) => {
         if (err?.response?.status !== 401) {
           console.error('Failed to initialize GameResultsEngine:', err);
           setError(err.message || 'Failed to initialize');
@@ -53,7 +59,7 @@ export function useGameResultsEngine({ gameId, userId }: UseGameResultsEnginePro
         GameResultsEngine.cleanup();
       }
     };
-  }, [gameId, userId, t]);
+  }, [gameId, userId, isGlobalAdmin, t]);
 
   useEffect(() => {
     if (!lastGameResultsUpdated || lastGameResultsUpdated.gameId !== gameId) return;

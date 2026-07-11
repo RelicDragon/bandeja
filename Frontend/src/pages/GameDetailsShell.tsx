@@ -824,7 +824,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       setGame(updatedGame);
 
       await GameResultsEngine.cleanup();
-      await GameResultsEngine.initialize(id, user.id, t);
+      await GameResultsEngine.initialize(id, user.id, t, { isAdmin: user.isAdmin });
       GameResultsEngine.updateGame(updatedGame);
 
       toast.success(t('gameResults.resultsEntryStarted') || 'Results entry started');

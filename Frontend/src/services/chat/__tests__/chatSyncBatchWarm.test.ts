@@ -283,13 +283,18 @@ describe('chatSyncBatchWarm tiered bootstrap (#261)', () => {
     expect(keys).toContain('GAME:game-cold-2');
   });
 
-  it('deferred bootstrap overflow drains after bootstrap delay', async () => {
+  it('tiered bootstrap overflow stays held until chats tab intent', async () => {
     const warm = await import('../chatSyncBatchWarm');
     warm.resetChatSyncWarmSession();
     await warm.ensureChatSyncWarmBootstrap();
     enqueueChatSyncPullMock.mockClear();
 
-    await vi.advanceTimersByTimeAsync(4_000);
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    expect(enqueueChatSyncPullMock).not.toHaveBeenCalled();
+
+    warm.warmChatSyncHeadsOnChatsTabIntent();
+    await warm.awaitChatSyncWarmIdle();
 
     const drainedKeys = enqueueChatSyncPullMock.mock.calls.map((call) => `${call[0]}:${call[1]}`);
     expect(drainedKeys).toContain('GAME:game-cold-1');

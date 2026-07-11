@@ -15,7 +15,7 @@ export function useHeaderInvitesHydration() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isInitializing = useAuthStore((s) => s.isInitializing);
   const queryClient = useQueryClient();
-  const { data, isFetched } = useMyGamesQuery(userId, {
+  const { data, isFetched, isError } = useMyGamesQuery(userId, {
     enabled: isAuthenticated && !isInitializing && !!userId,
   });
 
@@ -27,7 +27,7 @@ export function useHeaderInvitesHydration() {
   useEffect(() => {
     if (!isFetched || !userId) return;
 
-    if (data?.invites) {
+    if (data != null && Array.isArray(data.invites)) {
       const count = countPendingInvites(data.invites);
       const { pendingInvites, setPendingInvitesFromServer } = useHeaderStore.getState();
       if (pendingInvites !== count) {
@@ -36,8 +36,10 @@ export function useHeaderInvitesHydration() {
       return;
     }
 
-    if (navigator.onLine) {
+    if (headerService.hydratePendingInvitesFromCache()) return;
+
+    if (isError && navigator.onLine) {
       headerService.fetchPendingInvites();
     }
-  }, [isFetched, userId, data?.invites]);
+  }, [isFetched, isError, userId, data]);
 }
