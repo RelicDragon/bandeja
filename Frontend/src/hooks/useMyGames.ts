@@ -51,7 +51,7 @@ export const useMyGames = (
     async (_showLoader = true, _force = false) => {
       if (!userId) return;
       if (_force) {
-        clearMyTabCache();
+        clearMyTabCache(userId);
         await queryClient.invalidateQueries({ queryKey: queryKeys.games.my(userId) });
       }
       await refetch();

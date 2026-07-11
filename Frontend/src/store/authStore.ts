@@ -95,6 +95,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
       clearExplicitLogoutMarker();
       markLoginCompleted();
       bumpApiAuthCredentialGeneration();
+      try {
+        const { clearOtherUsersMyTabCaches } = await import('@/api/me');
+        clearOtherUsersMyTabCaches(user.id);
+      } catch (e) {
+        console.warn('[auth:setAuth] my tab cache handoff failed', e);
+      }
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
       if (opts?.refreshToken) {
@@ -242,6 +248,21 @@ export const useAuthStore = create<AuthState>((set, get) => {
           invalidateBooktimeAllUpcomingCache();
         } catch (e) {
           console.warn('[auth:logout] booktime upcoming cache clear failed', e);
+        }
+        try {
+          const userId = get().user?.id;
+          const [{ clearAllMyTabCaches }, { queryClient }, { queryKeys }] = await Promise.all([
+            import('@/api/me'),
+            import('@/queries/queryClient'),
+            import('@/queries/queryKeys'),
+          ]);
+          clearAllMyTabCaches();
+          if (userId) {
+            queryClient.removeQueries({ queryKey: queryKeys.games.my(userId) });
+          }
+          queryClient.removeQueries({ queryKey: queryKeys.me.myTabData() });
+        } catch (e) {
+          console.warn('[auth:logout] my tab cache clear failed', e);
         }
         try {
           localStorage.removeItem('user');

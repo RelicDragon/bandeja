@@ -64,7 +64,13 @@ export function useMyTabPrefetch(opts?: { enabled?: boolean }) {
 
     queryClient.prefetchQuery({
       queryKey: queryKeys.me.myTabData({ includeStories: true, includeBooktime: true }),
-      queryFn: () => getMyTabData({ includeStories: true, includeBooktime: true, useCache: true }),
+      queryFn: () =>
+        getMyTabData({
+          userId: user.id,
+          includeStories: true,
+          includeBooktime: true,
+          useCache: true,
+        }),
       staleTime: 5 * 60 * 1000, // 5 minutes
     });
   }, [canPrefetch, user, queryClient]);

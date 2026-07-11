@@ -77,6 +77,12 @@ export class ChatThreadController {
     if (params) markContextReadOnUserActivity(params);
   }
 
+  /** Mark read for inbound messages while thread is open (bypass confirmed-key skip). */
+  markReadWhileViewing(input: ChatThreadMarkReadInput): void {
+    const params = buildGameChatMarkReadParams(input);
+    if (params) markContextReadOnUserActivity({ ...params, forceMarkReadNetwork: true });
+  }
+
   /** Tear down: cancel in-flight sends and reconcile outbox for prior context. */
   close(): ChatThreadOpenContext | null {
     const ctx = this.#state.openContext;

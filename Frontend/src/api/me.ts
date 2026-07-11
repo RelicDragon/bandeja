@@ -1,87 +1,123 @@
 import api from './axios';
-import type { Game, Invite, UserTeam } from '@/types';
+import { isCapacitor } from '@/utils/capacitor';
+import {
+  clearAllMyTabLocalCaches,
+  clearLegacyMyTabLocalCache,
+  clearMyTabCachesExcept,
+  clearMyTabLocalCache,
+  isMyTabCacheOwnedByUser,
+  isMyTabLocalCacheFresh,
+  readMyTabLocalCache,
+  resolveMyTabCacheUserId,
+  writeMyTabLocalCache,
+  type MyTabData,
+  type StoredMyTabData,
+} from './myTabLocalCache';
 
-// Types for My Tab aggregated endpoint
-export interface MyTabData {
-  games: Game[];
-  invites: Invite[];
-  teams: UserTeam[];
-  unreadCounts: Record<string, number>;
-  storiesCount?: number | null;
-  booktimeConnected?: boolean | null;
-  _meta?: {
-    etag?: string;
-    timestamp: string;
-  };
+export type { MyTabData, StoredMyTabData };
+
+const MY_TAB_CACHE_MAX_AGE_MS = 30 * 1000;
+
+function resolveUserId(userId?: string): string {
+  const resolved = userId ?? resolveMyTabCacheUserId();
+  if (!resolved) {
+    throw new Error('[me.getMyTabData] Missing authenticated user id');
+  }
+  return resolved;
 }
 
-// Local storage keys for caching
-const MY_TAB_ETAG_KEY = 'my_tab_etag';
-const MY_TAB_DATA_KEY = 'my_tab_data';
-const MY_TAB_TIMESTAMP_KEY = 'my_tab_timestamp';
+function shouldUseFallback(error: unknown): boolean {
+  const status = (error as { response?: { status?: number } })?.response?.status;
+  if (status === 503) return true;
+  if (typeof status === 'number' && status >= 500) return true;
+  if (!status) return true;
+  return false;
+}
 
-function getStorage(): Storage | null {
-  return typeof localStorage === 'undefined' ? null : localStorage;
+function hasMyTabListPayload(data: MyTabData | StoredMyTabData | null | undefined): boolean {
+  if (!data) return false;
+  return (data.games?.length ?? 0) > 0 || (data.invites?.length ?? 0) > 0;
 }
 
 /**
  * Get My Tab data from the aggregated endpoint with ETag support.
- *
- * @param options - Options for the request
- * @returns My Tab data
  */
 export async function getMyTabData(options?: {
+  userId?: string;
   includeStories?: boolean;
   includeBooktime?: boolean;
   useCache?: boolean;
+  forceRefresh?: boolean;
   signal?: AbortSignal;
 }): Promise<MyTabData> {
-  const storage = getStorage();
-  const cachedETag = storage?.getItem(MY_TAB_ETAG_KEY);
-  const cachedData = storage?.getItem(MY_TAB_DATA_KEY);
-  const cachedTimestamp = storage?.getItem(MY_TAB_TIMESTAMP_KEY);
-
-  // Check if cache is still valid (less than 30 seconds old)
-  const isCacheValid =
-    cachedData &&
-    cachedTimestamp &&
-    Date.now() - parseInt(cachedTimestamp) < 30 * 1000;
+  const userId = resolveUserId(options?.userId);
+  const localCache = readMyTabLocalCache(userId);
+  const isCacheValid = isMyTabLocalCacheFresh(localCache.timestampMs, MY_TAB_CACHE_MAX_AGE_MS);
 
   const headers: Record<string, string> = {};
-  if (options?.useCache && cachedETag && isCacheValid) {
-    headers['If-None-Match'] = cachedETag;
+  if (
+    options?.useCache &&
+    !options?.forceRefresh &&
+    localCache.etag &&
+    isCacheValid &&
+    localCache.data &&
+    hasMyTabListPayload(localCache.data)
+  ) {
+    headers['If-None-Match'] = localCache.etag;
+  }
+
+  const params: Record<string, string | number | undefined> = {
+    includeStories: options?.includeStories ? 'true' : undefined,
+    includeBooktime: options?.includeBooktime ? 'true' : undefined,
+  };
+  if (isCapacitor()) {
+    params._t = Date.now();
   }
 
   try {
-    const response = await api.get<any>('/me/my-tab-data', {
-      params: {
-        includeStories: options?.includeStories ? 'true' : undefined,
-        includeBooktime: options?.includeBooktime ? 'true' : undefined,
-      },
+    const response = await api.get<{ data: MyTabData }>('/me/my-tab-data', {
+      params,
       headers,
       signal: options?.signal,
     });
 
     const data = response.data.data;
-
-    // Cache the response and ETag
-    if (storage && data._meta?.etag) {
-      storage.setItem(MY_TAB_ETAG_KEY, data._meta.etag);
-      storage.setItem(MY_TAB_DATA_KEY, JSON.stringify(data));
-      storage.setItem(MY_TAB_TIMESTAMP_KEY, Date.now().toString());
+    if (data._meta?.etag) {
+      writeMyTabLocalCache(userId, data, data._meta.etag);
     }
 
     return data;
-  } catch (error: any) {
-    // Handle 304 Not Modified
-    if (error.response?.status === 304 && cachedData) {
-      return JSON.parse(cachedData);
+  } catch (error: unknown) {
+    const status = (error as { response?: { status?: number } })?.response?.status;
+
+    if (status === 304) {
+      if (
+        !options?.forceRefresh &&
+        localCache.data &&
+        isMyTabCacheOwnedByUser(localCache.data, userId) &&
+        hasMyTabListPayload(localCache.data)
+      ) {
+        return localCache.data;
+      }
+      if (!options?.forceRefresh) {
+        return getMyTabData({ ...options, userId, useCache: false, forceRefresh: true });
+      }
     }
 
-    // Handle 503 Service Unavailable - use fallback
-    if (error.response?.status === 503) {
-      console.warn('[me.getMyTabData] Service unavailable, using fallback');
-      return getMyTabDataFallback();
+    if (
+      localCache.data &&
+      isMyTabCacheOwnedByUser(localCache.data, userId) &&
+      (!status || status >= 500)
+    ) {
+      console.warn('[me.getMyTabData] Using local My Tab cache after request failure', {
+        status,
+      });
+      return localCache.data;
+    }
+
+    if (shouldUseFallback(error)) {
+      console.warn('[me.getMyTabData] Request failed, using fallback endpoints', { status });
+      return getMyTabDataFallback(userId);
     }
 
     throw error;
@@ -90,25 +126,19 @@ export async function getMyTabData(options?: {
 
 /**
  * Fallback to individual endpoints when aggregated endpoint fails.
- *
- * This ensures graceful degradation - users still get their data even if the
- * optimized endpoint is unavailable.
  */
-export async function getMyTabDataFallback(): Promise<MyTabData> {
-  // Import these dynamically to avoid circular dependencies
+export async function getMyTabDataFallback(userId?: string): Promise<MyTabData> {
   const [{ gamesApi }, { userTeamsApi }] = await Promise.all([
     import('./games'),
     import('./userTeams'),
   ]);
 
-  // Fetch data from individual endpoints in parallel
   const [gamesResponse, teamsResponse] = await Promise.all([
     gamesApi.getMyGamesWithUnread(),
     userTeamsApi.getMine(),
   ]);
   const gamesData = gamesResponse.data;
-
-  return {
+  const data: MyTabData = {
     games: gamesData.games ?? [],
     invites: gamesData.invites ?? [],
     teams: teamsResponse ?? [],
@@ -119,28 +149,47 @@ export async function getMyTabDataFallback(): Promise<MyTabData> {
       timestamp: new Date().toISOString(),
     },
   };
+
+  const resolvedUserId = userId ?? resolveMyTabCacheUserId();
+  if (resolvedUserId) {
+    writeMyTabLocalCache(resolvedUserId, data, `fallback-${Date.now()}`);
+  }
+
+  return data;
 }
 
 /**
- * Clear cached My Tab data.
- * Call this after mutations that affect the My Tab.
+ * Clear cached My Tab data for the current or specified user.
  */
-export function clearMyTabCache(): void {
-  const storage = getStorage();
-  if (!storage) return;
-  storage.removeItem(MY_TAB_ETAG_KEY);
-  storage.removeItem(MY_TAB_DATA_KEY);
-  storage.removeItem(MY_TAB_TIMESTAMP_KEY);
+export function clearMyTabCache(userId?: string): void {
+  const resolved = userId ?? resolveMyTabCacheUserId();
+  if (resolved) {
+    clearMyTabLocalCache(resolved);
+  }
+  clearLegacyMyTabLocalCache();
 }
 
-export function patchMyTabCacheUserNote(gameId: string, userNote: string | null): void {
-  const storage = getStorage();
-  if (!storage) return;
-  const cachedData = storage.getItem(MY_TAB_DATA_KEY);
-  if (!cachedData) return;
+export function clearAllMyTabCaches(): void {
+  clearAllMyTabLocalCaches();
+}
+
+export function clearOtherUsersMyTabCaches(keepUserId: string): void {
+  clearMyTabCachesExcept(keepUserId);
+}
+
+export function patchMyTabCacheUserNote(
+  gameId: string,
+  userNote: string | null,
+  userId?: string,
+): void {
+  const resolvedUserId = userId ?? resolveMyTabCacheUserId();
+  if (!resolvedUserId) return;
+
+  const cached = readMyTabLocalCache(resolvedUserId);
+  if (!cached.data) return;
 
   try {
-    const data = JSON.parse(cachedData) as MyTabData;
+    const data = cached.data;
     let changed = false;
 
     const games = data.games?.map((game) => {
@@ -157,16 +206,13 @@ export function patchMyTabCacheUserNote(gameId: string, userNote: string | null)
       return { ...invite, game: { ...invite.game, userNote } };
     });
 
-    if (!changed) return;
+    if (!changed || !cached.etag) return;
 
-    storage.setItem(
-      MY_TAB_DATA_KEY,
-      JSON.stringify({
-        ...data,
-        games: games ?? data.games,
-        invites: invites ?? data.invites,
-      }),
-    );
+    writeMyTabLocalCache(resolvedUserId, {
+      ...data,
+      games: games ?? data.games,
+      invites: invites ?? data.invites,
+    }, cached.etag);
   } catch {
     // ignore corrupt cache
   }

@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { PlayerAvatar, UnreadBadge } from '@/components';
 import { GameParticipant } from '@/types';
 import type { Sport } from '@shared/sport';
 import { useUnreadByUserIdBridge } from '@/hooks/useUnreadBridge';
+import { participantsLayoutKey, participantsRenderKey } from '@/utils/gameCardParticipants';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -68,7 +69,7 @@ function EmptyParticipantSlot({
   );
 }
 
-function ParticipantCarouselSlot({
+const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
   participant,
   propUnread = 0,
   userId,
@@ -134,7 +135,7 @@ function ParticipantCarouselSlot({
       <UnreadBadge count={unreadCount} className="absolute -top-1 -right-1 border-2 border-white dark:border-gray-900" />
     </motion.div>
   );
-}
+});
 
 interface PlayersCarouselProps {
   participants: GameParticipant[];
@@ -159,7 +160,7 @@ interface PlayersCarouselProps {
   levelSport?: Sport;
 }
 
-export const PlayersCarousel = ({
+function PlayersCarouselInner({
   participants,
   emptySlots = 0,
   showGenderIndicator = false,
@@ -180,7 +181,7 @@ export const PlayersCarousel = ({
   onTouchMove,
   onTouchEnd,
   levelSport,
-}: PlayersCarouselProps) => {
+}: PlayersCarouselProps) {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
   const [showRightFade, setShowRightFade] = useState(false);
@@ -189,14 +190,15 @@ export const PlayersCarousel = ({
   const [isPressed, setIsPressed] = useState(false);
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  const checkScrollPosition = () => {
+  const layoutKey = participantsLayoutKey(participants);
+
+  const checkScrollPosition = useCallback(() => {
     const container = carouselRef.current;
     if (!container) return;
     const { scrollLeft, scrollWidth, clientWidth } = container;
     setShowLeftFade(scrollLeft > 0);
     setShowRightFade(scrollLeft < scrollWidth - clientWidth - 1);
-  };
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -251,23 +253,23 @@ export const PlayersCarousel = ({
         clearTimeout(pressTimeoutRef.current);
       }
     };
-  }, [participants, emptySlots, autoHideNames, isMobile]);
+  }, [layoutKey, participants.length, emptySlots, autoHideNames, isMobile, checkScrollPosition]);
 
-  const scrollLeft = () => {
+  const scrollLeft = useCallback(() => {
     const container = carouselRef.current;
     if (!container) return;
     const scrollAmount = container.clientWidth * 0.8;
     container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-  };
+  }, []);
 
-  const scrollRight = () => {
+  const scrollRight = useCallback(() => {
     const container = carouselRef.current;
     if (!container) return;
     const scrollAmount = container.clientWidth * 0.8;
     container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-  };
+  }, []);
 
-  const handlePressStart = () => {
+  const handlePressStart = useCallback(() => {
     if (!autoHideNames) return;
     if (pressTimeoutRef.current) {
       clearTimeout(pressTimeoutRef.current);
@@ -275,16 +277,16 @@ export const PlayersCarousel = ({
     pressTimeoutRef.current = setTimeout(() => {
       setIsPressed(true);
     }, 300);
-  };
+  }, [autoHideNames]);
 
-  const handlePressEnd = () => {
+  const handlePressEnd = useCallback(() => {
     if (!autoHideNames) return;
     if (pressTimeoutRef.current) {
       clearTimeout(pressTimeoutRef.current);
       pressTimeoutRef.current = null;
     }
     setIsPressed(false);
-  };
+  }, [autoHideNames]);
 
   const renderGenderIndicator = (gender: 'MALE' | 'FEMALE') => (
     <div
@@ -388,4 +390,22 @@ export const PlayersCarousel = ({
       </div>
     </div>
   );
-};
+}
+
+function carouselPropsEqual(a: PlayersCarouselProps, b: PlayersCarouselProps): boolean {
+  if (a.userId !== b.userId) return false;
+  if (a.shouldShowCrowns !== b.shouldShowCrowns) return false;
+  if (a.autoHideNames !== b.autoHideNames) return false;
+  if (a.emptySlots !== b.emptySlots) return false;
+  if (a.showGenderIndicator !== b.showGenderIndicator) return false;
+  if (a.gender !== b.gender) return false;
+  if (a.genderCount !== b.genderCount) return false;
+  if (a.canInvitePlayers !== b.canInvitePlayers) return false;
+  if (a.draggable !== b.draggable) return false;
+  if (a.draggedPlayerId !== b.draggedPlayerId) return false;
+  if (a.levelSport !== b.levelSport) return false;
+  if (participantsRenderKey(a.participants) !== participantsRenderKey(b.participants)) return false;
+  return true;
+}
+
+export const PlayersCarousel = memo(PlayersCarouselInner, carouselPropsEqual);

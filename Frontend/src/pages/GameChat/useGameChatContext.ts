@@ -21,6 +21,7 @@ import {
   type ArchivedGameChatMeta,
 } from '@/utils/cancelledGameChatStub';
 import { hydrateThreadArchivedMemory, markThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle';
+import { useUnreadStore } from '@/store/unreadStore';
 import { resolveLoadedGameChatArchiveState } from './gameChatArchiveState';
 import { shouldInitializeGameChatContextLoading } from './gameChatRouteState';
 
@@ -86,6 +87,9 @@ export function useGameChatContext({
   const [isGameChatAccessDenied, setIsGameChatAccessDenied] = useState(false);
   const [archivedGameMeta, setArchivedGameMeta] = useState<ArchivedGameChatMeta | null>(null);
 
+  /** Synchronous game snapshot for mark-read (React `game` state lags behind `loadContext`). */
+  const gameMarkReadRef = useRef<Game | null>(null);
+
   const userChatRef = useRef(userChat);
   const groupChannelRef = useRef(groupChannel);
   const archivedGameMetaRef = useRef(archivedGameMeta);
@@ -113,6 +117,7 @@ export function useGameChatContext({
         setIsGameChatAccessDenied(false);
         setIsGameChatArchived(archiveState.isGameChatArchived);
         setArchivedGameMeta(archiveState.archivedGameMeta);
+        gameMarkReadRef.current = response.data;
         setGame(response.data);
         return response.data;
       }
@@ -158,6 +163,13 @@ export function useGameChatContext({
           setGroupChannelParticipantsCount(initialGroupChannel.participantsCount || 0);
           if (initialGroupChannel.bug) {
             setBug(initialGroupChannel.bug as Bug);
+            const bugId = initialGroupChannel.bug.id ?? initialGroupChannel.bugId;
+            if (bugId) {
+              useUnreadStore.getState().patchGroupChannelMeta(initialGroupChannel.id, {
+                bugId,
+                isChannel: true,
+              });
+            }
           }
           return initialGroupChannel;
         }
@@ -169,6 +181,10 @@ export function useGameChatContext({
         setGroupChannelParticipantsCount(merged.participantsCount || 0);
         if (merged.bug) {
           setBug(merged.bug as Bug);
+          const bugId = merged.bug.id ?? merged.bugId;
+          if (bugId) {
+            useUnreadStore.getState().patchGroupChannelMeta(merged.id, { bugId, isChannel: true });
+          }
         }
         return merged;
       }
@@ -247,6 +263,10 @@ export function useGameChatContext({
   ]);
 
   useEffect(() => {
+    gameMarkReadRef.current = null;
+  }, [id, contextType]);
+
+  useEffect(() => {
     if (!id || contextType !== 'GAME') return;
     let cancelled = false;
     void hydrateThreadArchivedMemory('GAME', id).then((archived) => {
@@ -284,6 +304,7 @@ export function useGameChatContext({
 
   return {
     game,
+    gameMarkReadRef,
     setGame,
     bug,
     setBug,

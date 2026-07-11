@@ -1,35 +1,32 @@
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapPin, Users, Plane, Check, CalendarOff } from 'lucide-react';
-import type { Game, GameParticipant } from '@/types';
+import type { Game } from '@/types';
 import { GameCardDateTile } from '@/components/gameCard/GameCardDateTile';
 
 interface GameCardInfoRowsProps {
   game: Game;
-  participants: GameParticipant[];
   /** "Today" / "Tomorrow" / "Yesterday" or null when the date is further away. */
   dayLabel: string | null;
   timeText?: string | null;
   hintText?: string | null;
   timezone: string | null;
   locale: string;
-  /** Right-side photo thumbnail, rendered inside the block to align with the tile. */
-  photoUrl?: string | null;
+  playingCount: number;
   className?: string;
 }
 
-export const GameCardInfoRows = ({
+export const GameCardInfoRows = memo(function GameCardInfoRows({
   game,
-  participants,
   dayLabel,
   timeText,
   hintText,
   timezone,
   locale,
-  photoUrl,
+  playingCount,
   className = '',
-}: GameCardInfoRowsProps) => {
+}: GameCardInfoRowsProps) {
   const { t } = useTranslation();
-  const playingCount = participants.filter((p) => p.status === 'PLAYING').length;
   const hasLevels = typeof game.minLevel === 'number' && typeof game.maxLevel === 'number';
   const fillRatio = game.maxParticipants
     ? Math.min(playingCount / game.maxParticipants, 1)
@@ -92,17 +89,6 @@ export const GameCardInfoRows = ({
             </span>
           )}
         </div>
-
-        {photoUrl && (
-          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl shadow-sm ring-1 ring-gray-200 transition-shadow duration-300 group-hover:shadow-md dark:ring-gray-700">
-            <img
-              src={photoUrl}
-              alt=""
-              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-              loading="lazy"
-            />
-          </div>
-        )}
       </div>
 
       {/* Capacity / level strip */}
@@ -149,4 +135,4 @@ export const GameCardInfoRows = ({
       </div>
     </div>
   );
-};
+});

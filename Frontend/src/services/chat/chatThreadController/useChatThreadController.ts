@@ -18,6 +18,7 @@ export type UseChatThreadControllerParams = UseThreadMessagesParams & {
   isEmbedded?: boolean;
   initialChatType: ChatType | undefined;
   game: import('@/types').Game | null;
+  gameMarkReadRef: React.RefObject<import('@/types').Game | null>;
   groupChannel: import('@/api/chat').GroupChannel | null;
   groupChannelId?: string;
   loadContext: (
@@ -44,6 +45,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     isEmbedded = false,
     initialChatType,
     game,
+    gameMarkReadRef,
     groupChannel,
     groupChannelId,
     loadContext,
@@ -147,7 +149,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     contextType,
     initialChatType,
     currentChatType,
-    game,
+    gameMarkReadRef,
     groupChannelId,
     loadContext,
     bootstrapThread: session.bootstrapThread,
@@ -173,6 +175,40 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     isGameChatArchived,
   });
 
+  const markReadInput = useCallback(
+    () => ({
+      id,
+      contextType,
+      game: gameMarkReadRef.current,
+      userId: user?.id,
+      gameChatType: effectiveChatType,
+      groupChannelId,
+    }),
+    [id, contextType, gameMarkReadRef, user?.id, effectiveChatType, groupChannelId]
+  );
+
+  const markRead = useCallback(() => {
+    if (isGameChatArchived) return;
+    if (contextType === 'GAME' && id && isThreadArchivedInMemory('GAME', id)) return;
+    controllerRef.current.markRead(markReadInput());
+  }, [id, contextType, isGameChatArchived, markReadInput]);
+
+  const markReadWhileViewing = useCallback(() => {
+    if (isGameChatArchived) return;
+    if (contextType === 'GAME' && id && isThreadArchivedInMemory('GAME', id)) return;
+    controllerRef.current.markReadWhileViewing(markReadInput());
+  }, [id, contextType, isGameChatArchived, markReadInput]);
+
+  const prevEffectiveChatTypeRef = useRef<ChatType | null>(null);
+  useEffect(() => {
+    if (contextType !== 'GAME' || !id) return;
+    const prev = prevEffectiveChatTypeRef.current;
+    prevEffectiveChatTypeRef.current = effectiveChatType;
+    if (prev !== null && prev !== effectiveChatType) {
+      markReadWhileViewing();
+    }
+  }, [contextType, id, effectiveChatType, markReadWhileViewing]);
+
   useThreadSocket({
     id,
     contextType,
@@ -182,6 +218,7 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
     setMessages: session.setMessages,
     messagesRef: session.messagesRef,
     onInboundMessage: domain.onInboundMessage,
+    onMarkReadWhileViewing: markReadWhileViewing,
     reloadMessagesFirstPage,
     onAfterSocketBatch: session.pinAfterSocketMergeIfAllowed,
     openPaintGeneration: session.openPaintGeneration,
@@ -237,22 +274,10 @@ export function useChatThreadController(params: UseChatThreadControllerParams) {
 
   useEffect(() => () => { controllerRef.current.close(); }, []);
 
-  const markRead = useCallback(() => {
-    if (isGameChatArchived) return;
-    if (contextType === 'GAME' && id && isThreadArchivedInMemory('GAME', id)) return;
-    controllerRef.current.markRead({
-      id,
-      contextType,
-      game,
-      userId: user?.id,
-      gameChatType: effectiveChatType,
-      groupChannelId,
-    });
-  }, [id, contextType, game, user?.id, effectiveChatType, groupChannelId, isGameChatArchived]);
-
   return {
     controller: controllerRef.current,
     markRead,
+    markReadWhileViewing,
     ...session,
     ...domain,
     handleAddOptimisticMessage,

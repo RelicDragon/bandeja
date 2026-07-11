@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Card } from '@/components';
@@ -11,7 +11,8 @@ import { GameCardHeaderTags } from '@/components/gameCard/GameCardHeaderTags';
 import { GameCardEntityIcon } from '@/components/gameCard/GameCardEntityIcon';
 import { GameCardTitle } from '@/components/gameCard/GameCardTitle';
 import { gameCardHasVisibleTitle } from '@/utils/gameCardVisibleTitle';
-import { GameCardActionCluster } from '@/components/gameCard/GameCardActionCluster';
+import { GameCardRightRail } from '@/components/gameCard/GameCardRightRail';
+import { GameCardPlayersPhoto } from '@/components/gameCard/GameCardPlayersPhoto';
 import { GameCardUserNote } from '@/components/gameCard/GameCardUserNote';
 import { GameCardJoinButton } from '@/components/gameCard/GameCardJoinButton';
 import { Game } from '@/types';
@@ -39,6 +40,12 @@ import {
 } from '@/utils/gameHasConfirmedClubBooking';
 import { getGameMainPhotoId } from '@/utils/gameMainPhoto';
 import { canViewGamePhotos } from '@shared/gamePhotos/permissions';
+import { gameCardReactionsEqual } from '@/utils/gameCardReactionsEqual';
+import {
+  getPlayingParticipants,
+  playingParticipantsKey,
+} from '@/utils/gameCardParticipants';
+import { gameCardPropsEqual } from '@/utils/gameCardPropsEqual';
 
 import { useAuthStore } from '@/store/authStore';
 import { useContextUnread } from '@/hooks/useUnreadBridge';
@@ -60,7 +67,7 @@ interface GameCardProps {
   findFilterSport?: FindSportFilterValue;
 }
 
-export const GameCard = ({
+export const GameCard = memo(function GameCard({
   game,
   user,
   onClick,
@@ -70,7 +77,7 @@ export const GameCard = ({
   onNoteSaved,
   unreadCount: unreadCountProp = 0,
   findFilterSport,
-}: GameCardProps) => {
+}: GameCardProps) {
   const displayUnread = useContextUnread('GAME', game.id, unreadCountProp);
   const { t } = useTranslation();
   const { translateCity } = useTranslatedGeo();
@@ -88,7 +95,7 @@ export const GameCard = ({
       setReactions(next);
       return;
     }
-    setReactions((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next));
+    setReactions((prev) => (gameCardReactionsEqual(prev, next) ? prev : next));
   }, [game.id, game.reactions]);
 
   const showPhotoPreview =
@@ -100,12 +107,32 @@ export const GameCard = ({
   const mainPhotoUrl = showPhotoPreview ? game.mainPhoto?.thumbnailUrl ?? null : null;
 
   const participants = game.participants ?? [];
+  const playingSig = playingParticipantsKey(participants);
+  const playingCacheRef = useRef({ sig: '', list: [] as typeof participants });
+  if (playingCacheRef.current.sig !== playingSig) {
+    playingCacheRef.current = { sig: playingSig, list: getPlayingParticipants(participants) };
+  }
+  const playingParticipants = playingCacheRef.current.list;
+
   const participation = getGameParticipationState(participants, effectiveUser?.id, game);
   const isParticipant = participation.isPlaying;
   const myParticipationBadge = getGameCardMyParticipationBadge(participants, effectiveUser?.id);
   const isLeagueSeasonGame = game.entityType === 'LEAGUE_SEASON';
   const shouldShowTiming = !isLeagueSeasonGame;
-  const displaySettings = effectiveUser ? resolveDisplaySettings(effectiveUser) : resolveDisplaySettings(null);
+  const displayPrefsKey = effectiveUser
+    ? `${effectiveUser.id ?? ''}:${effectiveUser.language ?? ''}:${effectiveUser.timeFormat ?? ''}:${effectiveUser.weekStart ?? ''}`
+    : 'guest';
+  const displayCacheRef = useRef({
+    key: '',
+    value: resolveDisplaySettings(null),
+  });
+  if (displayCacheRef.current.key !== displayPrefsKey) {
+    displayCacheRef.current = {
+      key: displayPrefsKey,
+      value: resolveDisplaySettings(effectiveUser),
+    };
+  }
+  const displaySettings = displayCacheRef.current.value;
 
   const hasUnoccupiedSlots = !participation.isFull;
   const owner = participants.find((p) => p.role === 'OWNER');
@@ -157,17 +184,19 @@ export const GameCard = ({
       ? participants.find((p) => p.userId === game.trainerId) ?? null
       : null;
 
-  const handleChatClick = (e: React.MouseEvent) => {
+  const gameId = game.id;
+
+  const handleChatClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    navigate(`/games/${game.id}/chat`);
-  };
+    navigate(`/games/${gameId}/chat`);
+  }, [gameId, navigate]);
 
-  const handleWeatherClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleWeatherClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     e.preventDefault();
     setShowWeatherModal(true);
-  };
+  }, []);
 
   const handleCloseWeatherModal = useCallback(() => {
     setShowWeatherModal(false);
@@ -177,33 +206,38 @@ export const GameCard = ({
   // Weather chip shows for every entity type except LEAGUE_SEASON,
   // regardless of participation (so it appears in Find too).
   const showWeatherChip = !isLeagueSeasonGame && Boolean(weatherSummary);
+  const railWeatherSummary = showWeatherChip ? weatherSummary : null;
 
-  const handleCardClick = () => {
+  const handleCardClick = useCallback(() => {
     if (onClick) {
       onClick();
     } else {
-      navigate(`/games/${game.id}`);
+      navigate(`/games/${gameId}`);
     }
-  };
+  }, [gameId, navigate, onClick]);
 
   const openNoteModal = useCallback(() => setShowNoteModal(true), []);
+  const closeNoteModal = useCallback(() => setShowNoteModal(false), []);
 
   const viewerPrimarySport = getViewerPrimarySport(effectiveUser);
   const showSportTag = shouldShowGameCardSportGlyph(game.sport, viewerPrimarySport, findFilterSport);
   const gameSport = parseGameSport(game.sport);
+  const playersPerMatch = playersPerMatchOf(game);
   const hasGameSportTags =
     showSportTag ||
-    (game.entityType !== 'TRAINING' &&
-      matchFormatSummaryPart(t, playersPerMatchOf(game), game.sport) != null);
-  const gameSportTags = hasGameSportTags ? (
-    <GameSportTagRow
-      sport={gameSport}
-      showSport={showSportTag}
-      playersPerMatch={playersPerMatchOf(game)}
-      showMatchFormat={game.entityType !== 'TRAINING'}
-      className="shrink-0"
-    />
-  ) : null;
+    (game.entityType !== 'TRAINING' && matchFormatSummaryPart(t, playersPerMatch, game.sport) != null);
+  const gameSportTags = useMemo(() => {
+    if (!hasGameSportTags) return null;
+    return (
+      <GameSportTagRow
+        sport={gameSport}
+        showSport={showSportTag}
+        playersPerMatch={playersPerMatch}
+        showMatchFormat={game.entityType !== 'TRAINING'}
+        className="shrink-0"
+      />
+    );
+  }, [hasGameSportTags, gameSport, showSportTag, playersPerMatch, game.entityType]);
 
   const isJoinButtonVisible =
     showJoinButton &&
@@ -218,6 +252,8 @@ export const GameCard = ({
 
   const hasVisibleTitle = gameCardHasVisibleTitle(game);
   const showNoteBookmark = !userNoteDisplay && Boolean(effectiveUser);
+  const showPlayersCarousel = !isLeagueSeasonGame || Boolean(mainPhotoUrl);
+  const carouselAutoHideNames = effectiveUser?.alwaysShowUserNames === false;
 
   const hasTagRow =
     hasGameSportTags ||
@@ -241,130 +277,126 @@ export const GameCard = ({
           <span className="absolute inset-y-0 left-0 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 dark:via-white/[0.06] to-transparent -translate-x-[150%] group-hover:translate-x-[350%] transition-transform duration-700 ease-out" />
         </span>
 
-        <GameCardActionCluster
-          game={game}
-          reactions={reactions}
-          onReactionsChange={setReactions}
-          currentUserId={effectiveUser?.id}
-          weatherSummary={showWeatherChip ? weatherSummary : null}
-          onWeatherClick={handleWeatherClick}
-          locale={displaySettings.locale}
-          showBookedTag={showConfirmedCourtBadge}
-          linkedExternalBooking={linkedExternalBooking}
-          showNoteBookmark={showNoteBookmark}
-          onNoteClick={openNoteModal}
-          showChat={showChatIndicator}
-          unreadCount={displayUnread}
-          onChatClick={handleChatClick}
-        />
+        {/* Two-column region: main info left, action rail + photo right */}
+        <div className="relative z-10 flex items-stretch gap-2">
+          <div className="min-w-0 flex-1">
+            {isDifferentCity && game.city?.name && (
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-lg border border-yellow-300 bg-gradient-to-r from-yellow-50 to-amber-50 px-1.5 py-0.5 shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:border-yellow-700 dark:from-yellow-900/30 dark:to-amber-900/30 dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
+                <Plane size={12} className="flex-shrink-0 text-yellow-600 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)] dark:text-yellow-400" />
+                <span className="whitespace-nowrap text-xs font-medium text-yellow-700 drop-shadow-[0_0_1px_rgba(234,179,8,0.6)] dark:text-yellow-300">
+                  {translateCity(game.city.id, game.city.name, game.city.country)}
+                </span>
+              </div>
+            )}
 
-        {/* Header */}
-        <div className="relative z-10 mb-1.5 pr-[5.5rem] sm:pr-24">
-          {isDifferentCity && game.city?.name && (
-            <div className="mb-2 inline-flex items-center gap-1.5 rounded-lg border border-yellow-300 bg-gradient-to-r from-yellow-50 to-amber-50 px-1.5 py-0.5 shadow-[0_0_8px_rgba(234,179,8,0.4)] dark:border-yellow-700 dark:from-yellow-900/30 dark:to-amber-900/30 dark:shadow-[0_0_8px_rgba(234,179,8,0.5)]">
-              <Plane size={12} className="flex-shrink-0 text-yellow-600 drop-shadow-[0_0_2px_rgba(234,179,8,0.8)] dark:text-yellow-400" />
-              <span className="whitespace-nowrap text-xs font-medium text-yellow-700 drop-shadow-[0_0_1px_rgba(234,179,8,0.6)] dark:text-yellow-300">
-                {translateCity(game.city.id, game.city.name, game.city.country)}
-              </span>
-            </div>
-          )}
+            {/* Title row: fire + entity icon + title + status.
+                Skipped entirely for unnamed games — its icons then join the tag row. */}
+            {hasVisibleTitle && (
+              <div className="flex items-start gap-2">
+                {showFireIcon && (
+                  <span className="flex h-6 shrink-0 items-center">
+                    <AnnouncedFireIcon />
+                  </span>
+                )}
+                {game.entityType !== 'GAME' && <GameCardEntityIcon entityType={game.entityType} />}
+                <h3 className="min-w-0 flex-1 text-sm font-semibold leading-6 text-gray-900 dark:text-white">
+                  <GameCardTitle game={game} />
+                </h3>
+                {showStatusIcon && (
+                  <span className="flex h-6 shrink-0 items-center">
+                    <GameStatusIcon status={game.status} />
+                  </span>
+                )}
+              </div>
+            )}
 
-          {/* Title row: fire + entity icon + title + status.
-              Skipped entirely for unnamed games — its icons then join the tag row. */}
-          {hasVisibleTitle && (
-            <div className="flex items-start gap-2">
-              {showFireIcon && (
-                <span className="flex h-6 shrink-0 items-center">
-                  <AnnouncedFireIcon />
-                </span>
-              )}
-              {game.entityType !== 'GAME' && <GameCardEntityIcon entityType={game.entityType} />}
-              <h3 className="min-w-0 flex-1 text-sm font-semibold leading-6 text-gray-900 dark:text-white">
-                <GameCardTitle game={game} />
-              </h3>
-              {showStatusIcon && (
-                <span className="flex h-6 shrink-0 items-center">
-                  <GameStatusIcon status={game.status} />
-                </span>
-              )}
-            </div>
-          )}
+            {/* Unified tag row */}
+            {(hasTagRow || (!hasVisibleTitle && (showFireIcon || showStatusIcon))) && (
+              <div className={`flex flex-wrap items-center gap-1.5 ${hasVisibleTitle ? 'mt-1.5' : ''}`}>
+                {!hasVisibleTitle && showFireIcon && (
+                  <span className="flex h-6 shrink-0 items-center">
+                    <AnnouncedFireIcon />
+                  </span>
+                )}
+                {!hasVisibleTitle && showStatusIcon && (
+                  <span className="flex h-6 shrink-0 items-center">
+                    <GameStatusIcon status={game.status} />
+                  </span>
+                )}
+                <GameCardHeaderTags
+                  game={game}
+                  sportTags={gameSportTags}
+                  myParticipationBadge={myParticipationBadge}
+                />
+              </div>
+            )}
 
-          {/* Unified tag row */}
-          {(hasTagRow || (!hasVisibleTitle && (showFireIcon || showStatusIcon))) && (
-            <div className={`flex flex-wrap items-center gap-1.5 ${hasVisibleTitle ? 'mt-1.5' : ''}`}>
-              {!hasVisibleTitle && showFireIcon && (
-                <span className="flex h-6 shrink-0 items-center">
-                  <AnnouncedFireIcon />
-                </span>
-              )}
-              {!hasVisibleTitle && showStatusIcon && (
-                <span className="flex h-6 shrink-0 items-center">
-                  <GameStatusIcon status={game.status} />
-                </span>
-              )}
-              <GameCardHeaderTags
+            <GameCardUserNote
+              note={userNoteDisplay && effectiveUser ? userNoteDisplay : null}
+              showQueueHint={showJoinQueueHint}
+              onOpenNote={openNoteModal}
+            />
+
+            {trainerParticipant ? (
+              <GameCardTrainerBadge trainer={trainerParticipant} className="mt-2" />
+            ) : null}
+            {!isLeagueSeasonGame && (
+              <GameCardInfoRows
                 game={game}
-                sportTags={gameSportTags}
-                myParticipationBadge={myParticipationBadge}
+                dayLabel={infoDayLabel}
+                timeText={infoTimeText}
+                hintText={infoHintText}
+                timezone={clubTz}
+                locale={displaySettings.locale}
+                playingCount={playingParticipants.length}
+                className="mt-2"
               />
-            </div>
-          )}
+            )}
+          </div>
 
-          <GameCardUserNote
-            note={userNoteDisplay && effectiveUser ? userNoteDisplay : null}
-            showQueueHint={showJoinQueueHint}
-            onOpenNote={openNoteModal}
+          <GameCardRightRail
+            entityType={game.entityType}
+            gameId={gameId}
+            reactions={reactions}
+            onReactionsChange={setReactions}
+            currentUserId={effectiveUser?.id}
+            weatherSummary={railWeatherSummary}
+            onWeatherClick={handleWeatherClick}
+            locale={displaySettings.locale}
+            showBookedTag={showConfirmedCourtBadge}
+            linkedExternalBooking={linkedExternalBooking}
+            showNoteBookmark={showNoteBookmark}
+            onNoteClick={openNoteModal}
+            showChat={showChatIndicator}
+            unreadCount={displayUnread}
+            onChatClick={handleChatClick}
           />
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 pb-2">
-          {trainerParticipant ? (
-            <GameCardTrainerBadge trainer={trainerParticipant} className="mb-2" />
-          ) : null}
-          {!isLeagueSeasonGame ? (
-            <GameCardInfoRows
-              game={game}
-              participants={participants}
-              dayLabel={infoDayLabel}
-              timeText={infoTimeText}
-              hintText={infoHintText}
-              timezone={clubTz}
-              locale={displaySettings.locale}
-              photoUrl={mainPhotoUrl}
-              className="mb-1"
-            />
-          ) : (
-            mainPhotoUrl && (
-              <div className="mb-2 h-24 w-24 overflow-hidden rounded-xl shadow-sm ring-2 ring-gray-200 transition-shadow duration-300 group-hover:shadow-md dark:ring-gray-700">
-                <img
-                  src={mainPhotoUrl}
-                  alt="Main photo"
-                  className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-                  loading="lazy"
-                />
-              </div>
-            )
-          )}
-          {!isLeagueSeasonGame && (
+        {/* Full-width bottom region: players + join CTA */}
+        <div className="relative z-10 pb-2 pt-1">
+          {showPlayersCarousel && (
             <div
               className={`space-y-1.5 text-sm text-gray-600 dark:text-gray-400 ${
+                !isLeagueSeasonGame &&
                 game.entityType === 'TRAINING' &&
-                participants.filter((p) => p.status === 'PLAYING').length >= 1
+                playingParticipants.length >= 1
                   ? 'mt-1.5 border-t border-gray-200 pt-1.5 dark:border-gray-700'
                   : ''
               }`}
             >
-              <div className="flex items-center gap-2 overflow-visible">
-                <div className="relative w-full min-w-0 flex-1 overflow-visible">
-                  <PlayersCarousel
-                    participants={participants.filter((p) => p.status === 'PLAYING')}
-                    userId={effectiveUser?.id}
-                    shouldShowCrowns={true}
-                    autoHideNames={effectiveUser?.alwaysShowUserNames === false}
-                  />
-                </div>
+              <div className="flex items-start gap-2.5">
+                {mainPhotoUrl ? <GameCardPlayersPhoto url={mainPhotoUrl} /> : null}
+                {!isLeagueSeasonGame ? (
+                  <div className="relative min-w-0 flex-1">
+                    <PlayersCarousel
+                      participants={playingParticipants}
+                      userId={effectiveUser?.id}
+                      shouldShowCrowns={true}
+                      autoHideNames={carouselAutoHideNames}
+                    />
+                  </div>
+                ) : null}
               </div>
             </div>
           )}
@@ -377,7 +409,7 @@ export const GameCard = ({
       {showNoteModal && effectiveUser && (
         <UserGameNoteModal
           isOpen={showNoteModal}
-          onClose={() => setShowNoteModal(false)}
+          onClose={closeNoteModal}
           gameId={game.id}
           initialContent={userNoteDisplay}
           onSaved={handleNoteSaved}
@@ -394,4 +426,4 @@ export const GameCard = ({
       ) : null}
     </SportLevelProvider>
   );
-};
+}, gameCardPropsEqual);

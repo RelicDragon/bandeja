@@ -32,6 +32,7 @@ export interface UseThreadSocketParams {
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   onInboundMessage?: (message: import('@/api/chat').ChatMessage) => void;
+  onMarkReadWhileViewing?: () => void;
   reloadMessagesFirstPage: () => void | Promise<void>;
   onAfterSocketBatch?: () => void;
   /** Bumps when open paint commits — re-flush pending socket batches queued before paint. */
@@ -50,6 +51,7 @@ export function useThreadSocket({
   setMessages,
   messagesRef,
   onInboundMessage,
+  onMarkReadWhileViewing,
   reloadMessagesFirstPage,
   onAfterSocketBatch,
   openPaintGeneration = 0,
@@ -91,6 +93,7 @@ export function useThreadSocket({
         setMessages,
         messagesRef,
         onInboundMessage,
+        onMarkReadWhileViewing,
         threadLiveConfig: threadLiveConfig!,
       };
     },
@@ -102,6 +105,7 @@ export function useThreadSocket({
       setMessages,
       messagesRef,
       onInboundMessage,
+      onMarkReadWhileViewing,
     ]
   );
 

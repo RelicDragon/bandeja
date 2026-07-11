@@ -34,6 +34,7 @@ export function useMyTabDataQuery(options: UseMyTabDataOptions = {}) {
     queryKey: queryKeys.me.myTabData(options),
     queryFn: () =>
       getMyTabData({
+        userId: user!.id,
         includeStories: options.includeStories,
         includeBooktime: options.includeBooktime,
         useCache: true,
@@ -83,6 +84,7 @@ export function usePrefetchMyTabData(options: UseMyTabDataOptions = {}) {
       queryKey: queryKeys.me.myTabData(options),
       queryFn: () =>
         getMyTabData({
+          userId: user.id,
           includeStories: options.includeStories,
           includeBooktime: options.includeBooktime,
           useCache: true,

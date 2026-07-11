@@ -34,6 +34,8 @@ export type ProcessChatRoomBatchCtx = {
   setMessages: React.Dispatch<React.SetStateAction<ChatMessageWithStatus[]>>;
   messagesRef: React.MutableRefObject<ChatMessageWithStatus[]>;
   onInboundMessage?: (message: ChatMessage) => void;
+  /** Sync server read cursor when inbound message arrives while thread is open. */
+  onMarkReadWhileViewing?: () => void;
   threadLiveConfig: ThreadLiveConfig;
 };
 
@@ -161,7 +163,8 @@ function executeThreadLiveEffects(
   contextType: ChatContextType,
   contextId: string,
   viewerUserId: string | undefined,
-  gameChatType: ChatType | undefined
+  gameChatType: ChatType | undefined,
+  onMarkReadWhileViewing?: () => void
 ): void {
   for (const effect of effects) {
     switch (effect.type) {
@@ -238,6 +241,7 @@ function executeThreadLiveEffects(
           applyUnreadSocketDelta({ contextType: 'GAME', contextId, unreadCount: 0 });
           void patchThreadIndexClearUnread('GAME', contextId);
         }
+        onMarkReadWhileViewing?.();
         break;
       }
       case 'l1Put': {
@@ -304,7 +308,8 @@ export function processChatRoomBatch(batch: ChatRoomEvent[], ctx: ProcessChatRoo
       contextType,
       id,
       userId,
-      contextType === 'GAME' ? effectiveChatType : undefined
+      contextType === 'GAME' ? effectiveChatType : undefined,
+      ctx.onMarkReadWhileViewing
     );
   }
 

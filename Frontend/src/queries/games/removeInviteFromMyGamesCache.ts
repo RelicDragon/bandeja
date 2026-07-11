@@ -10,7 +10,7 @@ export function removeInviteFromMyGamesCache(
 ): void {
   if (!userId) return;
 
-  clearMyTabCache();
+  clearMyTabCache(userId);
 
   queryClient.setQueryData<MyGamesData>(
     queryKeys.games.my(userId),

@@ -18,6 +18,7 @@ import { markThreadArchivedInMemory } from '@/services/chat/chatThreadLifecycle'
 import type { SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
 import type { ThreadViewValue } from './ThreadViewContext';
 import { createChatNearBottomStore } from './chatNearBottomStore';
+import { useThreadMarkReadOnNearBottom } from './useThreadMarkReadOnNearBottom';
 
 export function useThreadViewController({
   isEmbedded = false,
@@ -64,6 +65,7 @@ export function useThreadViewController({
 
   const {
     game,
+    gameMarkReadRef,
     setGame,
     bug,
     setBug,
@@ -133,6 +135,7 @@ export function useThreadViewController({
     isEmbedded,
     initialChatType,
     game,
+    gameMarkReadRef,
     groupChannel,
     groupChannelId: groupChannel?.id,
     loadContext,
@@ -150,6 +153,8 @@ export function useThreadViewController({
   });
 
   const { setPage, setHasMoreMessages, setReplyTo, setEditingMessage } = thread;
+
+  useThreadMarkReadOnNearBottom(subscribeChatNearBottom, getChatNearBottom, thread.markReadWhileViewing);
 
   const chrome = useThreadViewChrome({
     id,

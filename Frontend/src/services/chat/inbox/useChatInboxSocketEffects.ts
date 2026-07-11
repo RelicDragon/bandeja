@@ -3,7 +3,7 @@ import { matchDraftToChat } from '@/utils/chatListUtils';
 import { calculateLastMessageDate, deduplicateChats } from '@/utils/chatListHelpers';
 import { chatInboxThreadIndex } from './chatInboxProductionAdapter';
 import { usePlayersStore } from '@/store/playersStore';
-import { markContextReadOnUserActivity } from '@/services/chat/unreadCoordinator';
+import { markInboxContextReadWhileViewing } from '@/services/chat/inbox/inboxMarkReadWhileViewing';
 import {
   chatApi,
   type ChatContextType,
@@ -437,16 +437,8 @@ export function useChatInboxSocketEffects(p: SocketEventsParams) {
           )));
 
     for (const w of work) {
-      if (isViewingMessage(w.contextType, w.contextId, chatsRef.current) && w.contextType === 'USER') {
-        // Desktop split-pane: a new message arrived in the DM currently in view.
-        // Route through the single coordinator (server sync + optimistic clear +
-        // rollback + dedup) instead of a local-only clear the next snapshot reverts.
-        markContextReadOnUserActivity({
-          contextType: 'USER',
-          contextId: w.contextId,
-          rawContextType: 'USER',
-        });
-      }
+      if (!isViewingMessage(w.contextType, w.contextId, chatsRef.current)) continue;
+      markInboxContextReadWhileViewing(w.contextType, w.contextId, chatsRef.current, userId);
     }
 
     let needsUserListRefetch = false;

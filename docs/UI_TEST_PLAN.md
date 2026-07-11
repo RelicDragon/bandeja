@@ -138,6 +138,7 @@ Frontend/e2e/
 | G-26 | Overlay dismiss | Close player/item overlay | Query param removed, page unchanged |
 | G-27 | Re-tap Find tab | On Find, tap Find again | Jumps to today / current date |
 | G-28 | Cache clear on refresh | Pull-to-refresh on My/Find | Refetch without dropping unsynced results |
+| G-30 | My tab games after login | User with games logs out and back in (or fresh install login) | Home/My shows upcoming games, not empty state |
 
 ### 4.2 Onboarding gates & prompts
 
@@ -386,6 +387,7 @@ Frontend/e2e/
 | F-42 | Vertical scroll over participants strip (touch) | On a touch device, flick-scroll the game list vertically with the finger landing on a card's participant avatars row | List keeps scrolling vertically (not halted); a deliberate horizontal swipe on that row still scrolls the participants carousel |
 | F-45 | Game card unified header | View cards of each entity type (game, training, tournament, league, bar) | Title row shows color-coded entity glyph (non-GAME) + name (entity-type label as fallback when unnamed); all pills (sport, participation, private, gender, no-rating, fixed teams, results) sit in one wrap row under the title; no duplicate entity pill |
 | F-47 | Game card date tile | Cards with set time, today/tomorrow, and `timeIsSet=false` | Calendar tile (weekday/day/month) tinted by entity type; bold time range + club beside it; "Today"/"Tomorrow" chip for near dates; crossed-calendar tile + "not set" text when time unset |
+| F-48 | Game card photo beside players | Cards with main photo (with/without players; league-season photo-only) | Square photo sits left of the participants carousel, stretched to the full carousel row height; carousel scrolls independently to the right |
 
 ---
 
