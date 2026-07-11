@@ -526,7 +526,7 @@ Frontend/e2e/
 | C-36 | Floating summary bar | Fill club/time/etc., scroll down past those sections | Animated chip bar appears under header summarizing scrolled-out values (sport, roster, format, club, date·time·duration·court, participants/level, name, price) |
 | C-37 | Summary chip scroll-back | Tap a chip in the summary bar | Page smooth-scrolls back to that section; chip disappears once section is visible |
 | C-38 | Summary bar empty values | Scroll past sections with nothing entered (no name, price not known) | No chip shown for empty sections; bar hidden when no chips |
-| C-52 | Settings collapse | Create game → Settings section | Collapsed by default (title + chevron only); expand animates toggles and hints button in; collapse hides them again |
+| C-52 | Settings collapse | Create game → Settings section | Collapsed by default (title + chevron only); tap header, padding, or chevron to expand/collapse; toggle rows only flip their switch (do not collapse); expand animates toggles and hints button in |
 | C-53 | Numbered step headers | Open create game (any entity type) | Sections grouped under numbered headers (Game setup, Location & time, Players, Settings & details); BAR without multi-sport skips Game setup and renumbers from 1 |
 | C-54 | Sticky create footer | Open create game, scroll anywhere | Create button always visible in sticky bottom bar; not part of scroll content |
 | C-55 | Footer readiness hint | No club selected (then club but no time) | Amber hint in footer (“Choose a club to continue” / time-validation message); tap scrolls to and highlights the offending section; hint disappears when form is ready |
@@ -704,7 +704,7 @@ Frontend/e2e/
 | GD-54 | User game note | Add private note from game info card, game card, or modal | Note saved; only visible to self |
 | GD-55 | Edit/delete game note | Update note content | Persisted / deleted |
 | GD-56 | Game settings panel | Toggle anyoneCanInvite, visibility, etc. | Each toggle saves immediately; no Edit/Save on settings card |
-| GD-108 | Game settings collapse | Owner on game details → Settings card | Collapsed by default (title + chevron only); expand animates toggles and hints button in; collapse hides them again |
+| GD-108 | Game settings collapse | Owner on game details → Settings card | Collapsed by default (title + chevron only); tap header, padding, or chevron to expand/collapse; toggle rows only flip their switch (do not collapse); expand animates toggles and hints button in |
 | GD-57 | Manage users modal | Owner opens manage users | Roles/kick actions available |
 | GD-58 | Kick participant | Kick user from game | Removed from roster |
 | GD-59 | Kick admin | Owner kicks admin participant | Role change / removal |

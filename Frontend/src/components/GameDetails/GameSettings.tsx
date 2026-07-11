@@ -55,6 +55,7 @@ function SettingToggleRow({
 
   return (
     <div
+      data-settings-row
       className={`px-1 py-1 rounded-lg transition-colors ${
         hasError
           ? 'bg-red-50 dark:bg-red-950/25 ring-1 ring-red-300 dark:ring-red-800/80'

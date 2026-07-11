@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useCallback, useState, type MouseEvent, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronDown, type LucideIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +28,20 @@ export function CollapsibleSettingsShell({
   const reduceMotion = usePrefersReducedMotion();
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
 
+  const toggleCollapsed = useCallback(() => {
+    setIsCollapsed((prev) => !prev);
+  }, []);
+
+  const handleSectionClick = useCallback(
+    (event: MouseEvent<HTMLElement>) => {
+      const target = event.target as HTMLElement;
+      if (target.closest('[data-settings-row]')) return;
+      if (target.closest('[data-settings-interactive]')) return;
+      toggleCollapsed();
+    },
+    [toggleCollapsed],
+  );
+
   const expandTransition = reduceMotion
     ? { duration: 0 }
     : { duration: 0.32, ease: [0.21, 0.47, 0.32, 0.98] as const };
@@ -54,9 +68,10 @@ export function CollapsibleSettingsShell({
           ) : null}
           {hintsButton ? (
             <div
+              data-settings-interactive
               className={
                 title
-                  ? 'pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 shrink-0'
+                  ? 'absolute right-0 top-1/2 -translate-y-1/2 shrink-0'
                   : 'ml-auto shrink-0'
               }
             >
@@ -68,7 +83,6 @@ export function CollapsibleSettingsShell({
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.85 }}
                     transition={hintsTransition}
-                    className={title ? 'pointer-events-auto' : undefined}
                   >
                     {hintsButton}
                   </motion.div>
@@ -94,33 +108,39 @@ export function CollapsibleSettingsShell({
         ) : null}
       </AnimatePresence>
 
-      <button
-        type="button"
-        onClick={() => setIsCollapsed((prev) => !prev)}
-        aria-expanded={!isCollapsed}
-        className={`group relative z-10 flex w-full items-center justify-center border-t border-gray-100 py-1 text-gray-400 transition-colors duration-200 hover:bg-gray-50/80 hover:text-gray-600 dark:border-gray-800 dark:hover:bg-gray-800/50 dark:hover:text-gray-300 ${
+      <div
+        aria-hidden
+        className={`group relative z-10 flex w-full items-center justify-center border-t border-gray-100 py-1 text-gray-400 transition-colors duration-200 group-hover/section:text-gray-600 dark:border-gray-800 dark:group-hover/section:text-gray-300 ${
           variant === 'card'
             ? '-mx-2 -mb-2 mt-2 rounded-b-xl'
             : variant === 'section'
               ? '-mx-2 -mb-2 mt-2 w-[calc(100%+1rem)] rounded-b-xl'
               : '-mx-2 -mb-2 mt-2 w-[calc(100%+1rem)] rounded-b-lg'
         }`}
-        title={isCollapsed ? t('common.expand') : t('common.collapse')}
       >
         <motion.span
           animate={{ rotate: isCollapsed ? 0 : 180 }}
           transition={expandTransition}
-          className="transition-transform duration-200 group-active:scale-90"
+          className="transition-transform duration-200"
         >
           <ChevronDown size={18} />
         </motion.span>
-      </button>
+      </div>
     </>
   );
 
+  const shellClassName = `group/section cursor-pointer transition-all duration-300 ease-in-out hover:bg-gray-50/50 dark:hover:bg-gray-800/30 ${
+    isCollapsed ? 'relative z-[5]' : ''
+  }`;
+
   if (variant === 'card') {
     return (
-      <Card className={`transition-all duration-300 ease-in-out ${isCollapsed ? 'relative z-[5]' : ''}`}>
+      <Card
+        className={shellClassName}
+        onClick={handleSectionClick}
+        aria-expanded={!isCollapsed}
+        title={isCollapsed ? t('common.expand') : t('common.collapse')}
+      >
         {inner}
       </Card>
     );
@@ -129,14 +149,24 @@ export function CollapsibleSettingsShell({
   if (variant === 'section') {
     return (
       <div
-        className={`rounded-xl border border-gray-200 bg-white p-4 transition-all duration-300 ease-in-out dark:border-gray-800 dark:bg-gray-900 ${
-          isCollapsed ? 'relative z-[5]' : ''
-        }`}
+        className={`rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 ${shellClassName}`}
+        onClick={handleSectionClick}
+        aria-expanded={!isCollapsed}
+        title={isCollapsed ? t('common.expand') : t('common.collapse')}
       >
         {inner}
       </div>
     );
   }
 
-  return <div>{inner}</div>;
+  return (
+    <div
+      className={shellClassName}
+      onClick={handleSectionClick}
+      aria-expanded={!isCollapsed}
+      title={isCollapsed ? t('common.expand') : t('common.collapse')}
+    >
+      {inner}
+    </div>
+  );
 }

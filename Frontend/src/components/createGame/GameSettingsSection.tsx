@@ -77,7 +77,7 @@ export const GameSettingsSection = ({
     >
       <div className="space-y-2">
         {entityType !== 'BAR' && entityType !== 'TRAINING' && !hideRatingGame && (
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
                 {t('createGame.ratingGame.title')}
@@ -98,7 +98,7 @@ export const GameSettingsSection = ({
 
         {entityType !== 'BAR' && entityType !== 'TRAINING' && !hideRatingGame && <Divider />}
 
-        <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+        <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
               {entityType === 'TRAINING'
@@ -121,7 +121,7 @@ export const GameSettingsSection = ({
             </p>
           )}
         </div>
-        <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+        <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
               {entityType === 'TRAINING'
@@ -145,7 +145,7 @@ export const GameSettingsSection = ({
           )}
         </div>
         {entityType !== 'TOURNAMENT' && entityType !== 'TRAINING' && (
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
                 {t('createGame.resultsByAnyone.title')}
@@ -163,7 +163,7 @@ export const GameSettingsSection = ({
             )}
           </div>
         )}
-        <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+        <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
           <div className="flex items-center justify-between mb-1">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
               {entityType === 'TRAINING'
@@ -187,7 +187,7 @@ export const GameSettingsSection = ({
           )}
         </div>
         {entityType !== 'BAR' && (
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
                 {entityType === 'TRAINING'
@@ -212,7 +212,7 @@ export const GameSettingsSection = ({
           </div>
         )}
         {entityType !== 'BAR' && entityType !== 'TRAINING' && (
-          <div className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
+          <div data-settings-row className="px-3 py-1 bg-gray-50 dark:bg-gray-800/50 rounded-lg">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200 min-w-0 pr-2">
                 {t('createGame.participantsOnlyChat.title')}
