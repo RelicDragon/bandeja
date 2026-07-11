@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import assert from 'node:assert/strict';
 import { MyTabDataService, type MyTabDataOutput } from './myTabData.service';
 
 function emptyMyTabData(overrides?: Partial<MyTabDataOutput>): MyTabDataOutput {
@@ -14,43 +14,51 @@ function emptyMyTabData(overrides?: Partial<MyTabDataOutput>): MyTabDataOutput {
   };
 }
 
-describe('MyTabDataService.generateETag', () => {
-  it('changes when storiesCount changes', () => {
-    const base = emptyMyTabData();
-    const withStories = emptyMyTabData({ storiesCount: 3 });
+function testGenerateETagChangesWhenStoriesCountChanges(): void {
+  const base = emptyMyTabData();
+  const withStories = emptyMyTabData({ storiesCount: 3 });
 
-    expect(MyTabDataService.generateETag(base)).not.toBe(MyTabDataService.generateETag(withStories));
+  assert.notEqual(MyTabDataService.generateETag(base), MyTabDataService.generateETag(withStories));
+}
+
+function testGenerateETagChangesWhenBooktimeConnectedChanges(): void {
+  const disconnected = emptyMyTabData({ booktimeConnected: false });
+  const connected = emptyMyTabData({ booktimeConnected: true });
+
+  assert.notEqual(
+    MyTabDataService.generateETag(disconnected),
+    MyTabDataService.generateETag(connected),
+  );
+}
+
+function testGenerateETagChangesWhenMembershipsChange(): void {
+  const base = emptyMyTabData();
+  const withMembership = emptyMyTabData({
+    memberships: [{ id: 'm1', teamId: 't1', status: 'PENDING', updatedAt: '2026-01-01' }],
   });
 
-  it('changes when booktimeConnected changes', () => {
-    const disconnected = emptyMyTabData({ booktimeConnected: false });
-    const connected = emptyMyTabData({ booktimeConnected: true });
+  assert.notEqual(
+    MyTabDataService.generateETag(base),
+    MyTabDataService.generateETag(withMembership),
+  );
+}
 
-    expect(MyTabDataService.generateETag(disconnected)).not.toBe(
-      MyTabDataService.generateETag(connected),
-    );
-  });
+function testGenerateETagTreatsNullMembershipsDifferentlyFromEmpty(): void {
+  const empty = emptyMyTabData({ memberships: [] });
+  const failed = emptyMyTabData({ memberships: null });
 
-  it('changes when memberships change', () => {
-    const base = emptyMyTabData();
-    const withMembership = emptyMyTabData({
-      memberships: [{ id: 'm1', teamId: 't1', status: 'PENDING', updatedAt: '2026-01-01' }],
-    });
+  assert.notEqual(MyTabDataService.generateETag(empty), MyTabDataService.generateETag(failed));
+}
 
-    expect(MyTabDataService.generateETag(base)).not.toBe(
-      MyTabDataService.generateETag(withMembership),
-    );
-  });
+function testGenerateETagIsStableWhenOptionalFieldsUnchanged(): void {
+  const data = emptyMyTabData({ storiesCount: 2, booktimeConnected: true });
+  assert.equal(MyTabDataService.generateETag(data), MyTabDataService.generateETag({ ...data }));
+}
 
-  it('treats null memberships differently from empty memberships in etag', () => {
-    const empty = emptyMyTabData({ memberships: [] });
-    const failed = emptyMyTabData({ memberships: null });
+testGenerateETagChangesWhenStoriesCountChanges();
+testGenerateETagChangesWhenBooktimeConnectedChanges();
+testGenerateETagChangesWhenMembershipsChange();
+testGenerateETagTreatsNullMembershipsDifferentlyFromEmpty();
+testGenerateETagIsStableWhenOptionalFieldsUnchanged();
 
-    expect(MyTabDataService.generateETag(empty)).not.toBe(MyTabDataService.generateETag(failed));
-  });
-
-  it('is stable when optional fields are unchanged', () => {
-    const data = emptyMyTabData({ storiesCount: 2, booktimeConnected: true });
-    expect(MyTabDataService.generateETag(data)).toBe(MyTabDataService.generateETag({ ...data }));
-  });
-});
+console.log('ok: myTabData.service.test.ts');
