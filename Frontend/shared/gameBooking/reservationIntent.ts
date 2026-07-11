@@ -51,8 +51,10 @@ export function resolveInitialReservationIntent(input: {
   hasPreselectedBookings: boolean;
   clubBookingFlowActive: boolean;
   initialHasBookedCourt?: boolean;
+  hasReservationsForDate?: boolean;
 }): ReservationIntent {
   if (input.hasPreselectedBookings) return 'useExisting';
+  if (input.clubBookingFlowActive && input.hasReservationsForDate) return 'useExisting';
   if (input.clubBookingFlowActive) return 'reserveNow';
   if (input.initialHasBookedCourt) return 'manualBooked';
   return 'gameOnly';
@@ -77,7 +79,7 @@ export function resolveReservationIntentOptions(input: {
     options.push({
       id: 'reserveNow',
       enabled: true,
-      recommended: true,
+      recommended: !input.hasReservationsForDate,
     });
   }
 
@@ -85,6 +87,7 @@ export function resolveReservationIntentOptions(input: {
     options.push({
       id: 'useExisting',
       enabled: true,
+      recommended: true,
     });
   }
 

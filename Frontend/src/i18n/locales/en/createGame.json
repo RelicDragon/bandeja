@@ -263,6 +263,10 @@
       "summaryWindow": "{{start}} – {{end}}",
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Select {{min}}–{{max}} reservations ({{players}})",
+      "selectionProgress": "Select up to {{max}} courts ({{players}})",
+      "selectionCompleteOne": "1 court linked",
+      "selectionCompleteMany": "{{count}} courts linked",
+      "selectionAtMax": "Maximum selected for this format ({{players}}) — other reservations are unavailable",
       "emptyBookingsOnDate": "No reservations on this date",
       "emptyBookingsHint": "Try another date, reserve a new court, or create the game without linking a reservation.",
       "emptyBookingsReserveNow": "Reserve court now",
@@ -287,6 +291,7 @@
       "title": "How are you getting the court?",
       "otherOptions": "Other options",
       "recommended": "Recommended",
+      "recommendedShort": "Rec",
       "validation": {
         "selectCourt": "Select {{count}} court(s) first.",
         "selectBookableCourt": "Select {{count}} online-bookable court(s) first.",
@@ -297,19 +302,23 @@
       },
       "reserveNow": {
         "title": "Book a court",
+        "chipTitle": "Book court",
         "description": "Choose a time — we'll book it for you."
       },
       "useExisting": {
         "title": "I already have a booking",
+        "chipTitle": "My booking",
         "description": "Connect a reservation from your club account.",
         "contextAvailable": "{{count}} available on this date"
       },
       "gameOnly": {
         "title": "Skip court booking",
+        "chipTitle": "Game only",
         "description": "Just create the game — no court reserved."
       },
       "manualBooked": {
         "title": "Already booked manually",
+        "chipTitle": "Booked",
         "description": "Mark as booked without online reservation."
       },
       "summary": {

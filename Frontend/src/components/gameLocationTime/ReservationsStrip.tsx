@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion } from 'framer-motion';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
@@ -17,6 +16,7 @@ import { resolveBookingSelectionAfterDeselect } from '@/components/gameLocationT
 import { useReservationGridSync } from '@/components/gameLocationTime/useReservationGridSync';
 import { pruneSelectedBookingsToAvailable } from './pruneSelectedBookingsToAvailable';
 import { ExistingReservationEmptyState } from './ExistingReservationEmptyState';
+import { ReservationSelectionProgress } from './ReservationSelectionProgress';
 
 type ReservationsStripProps = {
   club: Club;
@@ -253,20 +253,14 @@ export function ReservationsStrip({
 
   return (
     <div className="space-y-2 pb-3 border-b border-gray-100 dark:border-gray-800">
-      {selectedBookingIds.length < selectionLimits.min ? (
-        <motion.p
-          key="selection-counter"
-          initial={{ scale: 0.96 }}
-          animate={{ scale: 1 }}
-          className="text-xs font-medium text-gray-600 dark:text-gray-400"
-          aria-live="polite"
-        >
-          {t('createGame.locationTime.selectionCounter', {
-            min: selectionLimits.min,
-            max: selectionLimits.max,
-            players: selectionLimits.playersPerCourt === 2 ? '1v1' : '2v2',
-          })}
-        </motion.p>
+      {selectionLimits.max > 1 ? (
+        <ReservationSelectionProgress
+          selectedCount={selectedBookingIds.length}
+          selectionLimits={selectionLimits}
+          derivedStartTime={derived.startTime}
+          derivedEndTime={derived.endTime}
+          atMax={atMax}
+        />
       ) : null}
       <ul className="space-y-2">
         {bookingEntries.map((entry) => {

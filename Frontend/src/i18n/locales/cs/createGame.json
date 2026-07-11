@@ -404,6 +404,10 @@
       "summaryWindow": "{{start}} – {{end}}",
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Vyberte {{min}}–{{max}} rezervací ({{players}} hráčů)",
+      "selectionProgress": "Vyberte až {{max}} kurtů ({{players}})",
+      "selectionCompleteOne": "1 kurt propojen",
+      "selectionCompleteMany": "{{count}} kurtů propojeno",
+      "selectionAtMax": "Maximum pro tento formát ({{players}}) — ostatní rezervace nejsou k dispozici",
       "emptyBookingsOnDate": "Na tento den nemáte žádné rezervace",
       "emptyBookingsHint": "Zkuste jiné datum, rezervujte kurt, nebo vytvořte hru bez propojení rezervace.",
       "emptyBookingsReserveNow": "Rezervovat kurt",
@@ -428,6 +432,7 @@
       "title": "Jak zajistíte kurt?",
       "otherOptions": "Další možnosti",
       "recommended": "Doporučeno",
+      "recommendedShort": "Dop",
       "validation": {
         "selectCourt": "Nejprve vyberte {{count}} kurt(ů).",
         "selectBookableCourt": "Nejprve vyberte {{count}} kurt(ů) s online rezervací.",
@@ -438,19 +443,23 @@
       },
       "reserveNow": {
         "title": "Rezervovat kurt",
+        "chipTitle": "Rezerv.|kurt",
         "description": "Vyberte čas — rezervujeme za vás."
       },
       "useExisting": {
         "title": "Už mám rezervaci",
+        "chipTitle": "Moje|rezerv.",
         "description": "Propojte rezervaci z účtu klubu.",
         "contextAvailable": "{{count}} k dispozici v tento den"
       },
       "gameOnly": {
         "title": "Bez rezervace kurtu",
+        "chipTitle": "Jen|hra",
         "description": "Jen vytvořit hru — kurt se nerezervuje."
       },
       "manualBooked": {
         "title": "Již rezervováno ručně",
+        "chipTitle": "Rezervováno",
         "description": "Označit jako rezervované bez online rezervace."
       },
       "summary": {

@@ -406,6 +406,10 @@
       "summaryWindow": "{{start}} – {{end}}",
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Выберите {{min}}–{{max}} броней ({{players}} игроков)",
+      "selectionProgress": "Выберите до {{max}} кортов ({{players}})",
+      "selectionCompleteOne": "1 корт привязан",
+      "selectionCompleteMany": "{{count}} кортов привязано",
+      "selectionAtMax": "Максимум для этого формата ({{players}}) — другие брони недоступны",
       "emptyBookingsOnDate": "Нет броней на эту дату",
       "emptyBookingsHint": "Выберите другую дату, забронируйте корт или создайте игру без привязки брони.",
       "emptyBookingsReserveNow": "Забронировать корт",
@@ -430,6 +434,7 @@
       "title": "Как вы берёте корт?",
       "otherOptions": "Другие варианты",
       "recommended": "Рекомендуется",
+      "recommendedShort": "Рек",
       "validation": {
         "selectCourt": "Сначала выберите {{count}} корт(а).",
         "selectBookableCourt": "Сначала выберите {{count}} корт(а) с онлайн-бронированием.",
@@ -439,20 +444,24 @@
         "bookingRecordsLoading": "Загружаем детали бронирований — подождите и попробуйте снова."
       },
       "reserveNow": {
-        "title": "Забронировать корт",
+        "title": "Резерв корта",
+        "chipTitle": "Резерв|корта",
         "description": "Выберите время — мы забронируем за вас."
       },
       "useExisting": {
         "title": "У меня уже есть бронь",
+        "chipTitle": "Моя|бронь",
         "description": "Привязать бронь из аккаунта клуба.",
         "contextAvailable": "{{count}} доступно на эту дату"
       },
       "gameOnly": {
         "title": "Без бронирования корта",
+        "chipTitle": "Только|игра",
         "description": "Только создать игру — корт не бронируется."
       },
       "manualBooked": {
         "title": "Уже забронировано вручную",
+        "chipTitle": "Забронировано",
         "description": "Отметить как забронированное без онлайн-брони."
       },
       "summary": {

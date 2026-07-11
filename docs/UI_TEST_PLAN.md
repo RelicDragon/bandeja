@@ -454,7 +454,7 @@ Frontend/e2e/
 | C-13u | BOOKTIME court name labels | Open club detail, availability sheet, or court picker for BOOKTIME club where Bandeja court name differs from BookTime resource name | Primary label shows Bandeja court name; smaller integration name on same row |
 | C-13v | BOOKTIME create-game time grid | Create GAME at BOOKTIME club on a day with gaps in `get-available-slots` (e.g. 08:00–10:00, 12:00–19:00) | Time picker shows only starts inside available ranges for selected duration; gap times (fiesta/blocked) absent; reserved gaps show as club-booked |
 | C-13w | Create-game scheduling layout | Open create-game, pick BOOKTIME club | Single location & time card: club → **How are you getting the court?** segmented chip picker (sliding selection + detail panel) → date → courts/time or reservation list per intent |
-| C-13x | Reservation intent (integrated club) | BOOKTIME club on create | **Book a court** (default), **Skip court booking**; **I already have a booking** only when user has club reservation(s) on selected date; no "Don't book real court" toggle |
+| C-13x | Reservation intent (integrated club) | BOOKTIME club on create | **Book a court** and **Skip court booking** always; **I already have a booking** only when user has club reservation(s) on selected date — **recommended** and auto-selected when reservations exist on date; no "Don't book real court" toggle |
 | C-13x1 | Reservation intent (non-integrated club) | Club without BOOKTIME integration on create | **Skip court booking** (default) and **Already booked manually** only; **Book a court** and **I already have a booking** hidden |
 | C-14p | No court yet time grid | BOOKTIME club, intent Skip court booking, tap "No court yet" | Full club schedule; red external cells selectable; bookable-days strip only for Book a court |
 | C-14q | Game only on external overlap | Intent Skip court booking; pick slot overlapping red external booking | Save succeeds (info banner ok); no hard-block toast |
@@ -486,13 +486,13 @@ Frontend/e2e/
 | C-16 | Mark court booked modal | Confirm booking | Court marked |
 | C-17 | Unified location-time panel (integrated club) | Pick BOOKTIME club on create | Intent-first scheduling; no "Pick a time" \| "Bookings" segmented switch; reservations list only when **I already have a booking** |
 | C-18 | Book a court flow | Intent Book a court; integrated courts + time | Summary states real reservation; confirm modal on create; no negative opt-out toggle |
-| C-19 | Reservations strip multi-select | Intent I already have a booking; connected user; reservations on date | Court-labeled cards; live min–max counter; select N per format |
+| C-19 | Reservations strip multi-select | Intent I already have a booking; connected user; reservations on date; multi-court format (max > 1) | Court-labeled cards; progress bar (N/max) while selecting; green completion chip with linked time when min met; at-max hint when further rows dimmed; no progress UI for single-court (max 1) games |
 | C-19a | Reservations strip club TZ display | Create-game at club whose city TZ ≠ Europe/Belgrade | Reservation row wall-clock matches My bookings for same reservation |
 | C-19b | useExisting hidden without reservations | Integrated club; connected; date with no user reservations | **I already have a booking** intent not shown in picker |
 | C-19c | Reservations strip adjacent group | 2+ consecutive same-court slots on selected date | Grouped card; tap selects/deselects all; different courts never group |
 | C-19d | Reservation grid overlay sync | Intent I already have a booking; reservations on selected date | Green cells on grid; selected reservations stronger green + check; legend under time label |
-| C-19e | Linked reservation row | Intent I already have a booking; select 1+ reservations | Selected row shows court + window; linked-game pills on row when applicable; no separate hint card |
-| C-19f | Schedule sync from reservations | Intent I already have a booking; select reservation(s) | Form date, time, duration, court chips update from booking union |
+| C-19e | Linked reservation row | Intent I already have a booking; select 1+ reservations | Selected row shows court name + time window + price when available; linked-game amber warning badge on row when applicable; no separate hint card |
+| C-19f | Schedule sync from reservations | Intent I already have a booking; select reservation(s) | Form date, time, duration, court chips update from booking union; completion chip shows linked window for 1 court; sticky summary bar for 2+ linked reservations |
 | C-19g | Multi-court link create | Intent I already have a booking; select 2 reservations on different courts | Game persists 2 linked bookings and both court IDs; no book confirm modal |
 | C-20 | Override time when linking | Intent I already have a booking; toggle adjust game time | Expand animates; create uses shorter window within reservation bounds |
 | C-21 | Multi-court confirm 2 steps | Intent Book a court; 2 integrated courts → Create | Stepper: 2 reserve steps + create; rollback on fail |

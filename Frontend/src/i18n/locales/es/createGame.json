@@ -401,6 +401,10 @@
       "summaryWindow": "{{start}} – {{end}}",
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Selecciona {{min}}–{{max}} reservas ({{players}} jugadores)",
+      "selectionProgress": "Selecciona hasta {{max}} pistas ({{players}})",
+      "selectionCompleteOne": "1 pista vinculada",
+      "selectionCompleteMany": "{{count}} pistas vinculadas",
+      "selectionAtMax": "Máximo seleccionado para este formato ({{players}}) — otras reservas no están disponibles",
       "emptyBookingsOnDate": "No hay reservas en esta fecha",
       "emptyBookingsHint": "Prueba otra fecha, reserva una cancha o crea el partido sin vincular una reserva.",
       "emptyBookingsReserveNow": "Reservar cancha ahora",
@@ -425,6 +429,7 @@
       "title": "¿Cómo tienes la pista?",
       "otherOptions": "Otras opciones",
       "recommended": "Recomendado",
+      "recommendedShort": "Rec",
       "validation": {
         "selectCourt": "Selecciona {{count}} cancha(s) primero.",
         "selectBookableCourt": "Selecciona {{count}} cancha(s) reservable(s) online primero.",
@@ -435,19 +440,23 @@
       },
       "reserveNow": {
         "title": "Reservar pista",
+        "chipTitle": "Reserv.|pista",
         "description": "Elige un horario — reservamos por ti."
       },
       "useExisting": {
         "title": "Ya tengo una reserva",
+        "chipTitle": "Mi|reserva",
         "description": "Vincula una reserva de tu cuenta del club.",
         "contextAvailable": "{{count}} disponibles en esta fecha"
       },
       "gameOnly": {
         "title": "Sin reserva de pista",
+        "chipTitle": "Solo|partido",
         "description": "Solo crear el partido — sin pista reservada."
       },
       "manualBooked": {
         "title": "Ya reservado manualmente",
+        "chipTitle": "Reservado",
         "description": "Marcar como reservado sin reserva online."
       },
       "summary": {

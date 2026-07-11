@@ -89,9 +89,9 @@ function PickerShell({
   return (
     <section
       data-testid={testId}
-      className="overflow-hidden rounded-2xl border border-gray-200/80 bg-gradient-to-b from-gray-50/90 to-white p-3 shadow-sm dark:border-gray-800 dark:from-gray-900/80 dark:to-gray-900"
+      className="@container overflow-hidden rounded-xl border border-gray-200/80 bg-gradient-to-b from-gray-50/90 to-white p-2 shadow-sm isolate dark:border-gray-800 dark:from-gray-900/80 dark:to-gray-900 sm:rounded-2xl sm:p-3"
     >
-      <div className="mb-3">
+      <div className="mb-2 sm:mb-3">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
         {subtitle ? (
           <p className="mt-0.5 text-xs leading-snug text-gray-500 dark:text-gray-400">{subtitle}</p>
@@ -135,12 +135,12 @@ function IntentDetailPanel({
         animate={{ opacity: 1, y: 0 }}
         exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
         transition={expandTransition}
-        className="mt-3 space-y-2"
+        className="mt-2 space-y-2 sm:mt-3"
       >
-        <div className="rounded-xl border border-primary-100/80 bg-gradient-to-br from-primary-50/70 via-white to-white px-3 py-2.5 dark:border-primary-500/20 dark:from-primary-950/25 dark:via-gray-900 dark:to-gray-900">
+        <div className="rounded-lg border border-primary-100/80 bg-gradient-to-br from-primary-50/70 via-white to-white px-2.5 py-2 dark:border-primary-500/20 dark:from-primary-950/25 dark:via-gray-900 dark:to-gray-900 sm:rounded-xl sm:px-3 sm:py-2.5">
           <p className="text-xs leading-snug text-gray-700 dark:text-gray-300">{description}</p>
           {contextHint ? (
-            <div className="mt-2">
+            <div className="mt-1.5 sm:mt-2">
               <ContextPill>{contextHint}</ContextPill>
             </div>
           ) : null}
@@ -150,7 +150,7 @@ function IntentDetailPanel({
             initial={reduceMotion ? false : { opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ ...layoutTransition, delay: reduceMotion ? 0 : 0.04 }}
-            className="flex gap-2 rounded-xl border border-gray-200/80 bg-white/80 px-3 py-2.5 dark:border-gray-700/80 dark:bg-gray-950/40"
+            className="flex gap-2 rounded-lg border border-gray-200/80 bg-white/80 px-2.5 py-2 dark:border-gray-700/80 dark:bg-gray-950/40 sm:rounded-xl sm:px-3 sm:py-2.5"
           >
             <ArrowRight
               size={14}
@@ -259,7 +259,7 @@ function ModernOptionPicker<T extends string>({
           options={segmentedOptions}
           onChange={onChange}
           scrollable={scrollable}
-          recommendedLabel={t('createGame.reservationIntent.recommended')}
+          recommendedLabel={t('createGame.reservationIntent.recommendedShort')}
           layoutId={layoutId}
         />
       </LayoutGroup>
@@ -296,6 +296,7 @@ export function ReservationIntentPicker({
       testId="reservation-intent-picker"
       title={t('createGame.reservationIntent.title')}
       titleKeyPrefix="createGame.reservationIntent"
+      chipTitleKeyPrefix="createGame.reservationIntent"
       descriptionKeyPrefix="createGame.reservationIntent"
       icons={INTENT_ICONS}
       onChange={onChange}

@@ -325,6 +325,7 @@ export function useCreateGameBookingFlow({
         hasPreselectedBookings: false,
         clubBookingFlowActive,
         initialHasBookedCourt: false,
+        hasReservationsForDate: false,
       }),
     );
   }, [selectedClub, clubBookingFlowActive]);
@@ -336,6 +337,7 @@ export function useCreateGameBookingFlow({
         hasPreselectedBookings: preselectedBookings,
         clubBookingFlowActive,
         initialHasBookedCourt,
+        hasReservationsForDate,
       }),
     );
   }, [
@@ -344,6 +346,7 @@ export function useCreateGameBookingFlow({
     preselectedBookings,
     clubBookingFlowActive,
     initialHasBookedCourt,
+    hasReservationsForDate,
   ]);
 
   useEffect(() => {
@@ -354,6 +357,7 @@ export function useCreateGameBookingFlow({
         hasPreselectedBookings: preselectedBookings,
         clubBookingFlowActive,
         initialHasBookedCourt,
+        hasReservationsForDate,
       }),
     );
   }, [
@@ -362,6 +366,7 @@ export function useCreateGameBookingFlow({
     preselectedBookings,
     clubBookingFlowActive,
     initialHasBookedCourt,
+    hasReservationsForDate,
   ]);
 
   useEffect(() => {

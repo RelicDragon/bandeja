@@ -53,6 +53,8 @@ describe('reservation intent resolvers', () => {
       'useExisting',
       'gameOnly',
     ]);
+    expect(withReservations.find((option) => option.id === 'useExisting')?.recommended).toBe(true);
+    expect(withReservations.find((option) => option.id === 'reserveNow')?.recommended).toBe(false);
   });
 
   it('hides edit reserveNew when the club has no external booking', () => {
@@ -96,6 +98,13 @@ describe('reservation intent resolvers', () => {
         clubBookingFlowActive: true,
       }),
     ).toBe('reserveNow');
+    expect(
+      resolveInitialReservationIntent({
+        hasPreselectedBookings: false,
+        clubBookingFlowActive: true,
+        hasReservationsForDate: true,
+      }),
+    ).toBe('useExisting');
     expect(
       resolveInitialReservationIntent({
         hasPreselectedBookings: false,

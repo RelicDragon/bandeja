@@ -404,6 +404,10 @@
       "summaryWindow": "{{start}} – {{end}}",
       "summaryCrossDate": "{{startDate}} {{start}} – {{endDate}} {{end}}",
       "selectionCounter": "Izaberi {{min}}–{{max}} rezervacija ({{players}} igrača)",
+      "selectionProgress": "Izaberi do {{max}} terena ({{players}})",
+      "selectionCompleteOne": "1 teren povezan",
+      "selectionCompleteMany": "{{count}} terena povezano",
+      "selectionAtMax": "Maksimum za ovaj format ({{players}}) — druge rezervacije nisu dostupne",
       "emptyBookingsOnDate": "Nema rezervacija za ovaj datum",
       "emptyBookingsHint": "Probajte drugi datum, rezervišite teren ili napravite igru bez povezivanja rezervacije.",
       "emptyBookingsReserveNow": "Rezerviši teren sada",
@@ -428,6 +432,7 @@
       "title": "Kako obezbeđuješ teren?",
       "otherOptions": "Druge opcije",
       "recommended": "Preporučeno",
+      "recommendedShort": "Pre",
       "validation": {
         "selectCourt": "Prvo izaberite {{count}} teren(a).",
         "selectBookableCourt": "Prvo izaberite {{count}} teren(a) sa online rezervacijom.",
@@ -438,19 +443,23 @@
       },
       "reserveNow": {
         "title": "Rezerviši teren",
+        "chipTitle": "Rezerv.|sada",
         "description": "Izaberi termin — mi rezervišemo za tebe."
       },
       "useExisting": {
         "title": "Već imam rezervaciju",
+        "chipTitle": "Moja|rezerv.",
         "description": "Poveži rezervaciju sa naloga kluba.",
         "contextAvailable": "{{count}} dostupno na ovaj datum"
       },
       "gameOnly": {
         "title": "Bez rezervacije terena",
+        "chipTitle": "Samo|igra",
         "description": "Samo kreiraj igru — teren se ne rezerviše."
       },
       "manualBooked": {
         "title": "Već ručno rezervisano",
+        "chipTitle": "Rezervisano",
         "description": "Označi kao rezervisano bez online rezervacije."
       },
       "summary": {

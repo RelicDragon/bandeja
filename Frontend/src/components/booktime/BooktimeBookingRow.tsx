@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Check, ExternalLink, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Check, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeLinkedGame } from '@/api/booktime';
@@ -72,9 +72,10 @@ function LinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
   if (games.length === 0) return null;
   const labels = games.map((g) => g.name?.trim() || g.id).join(', ');
   return (
-    <p className="text-[10px] text-primary-700 dark:text-primary-300 mt-1">
-      {t('createGame.locationTime.alsoUsedIn', { games: labels })}
-    </p>
+    <span className="mt-1.5 inline-flex max-w-full items-center gap-1 rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100">
+      <AlertTriangle size={10} className="shrink-0" aria-hidden />
+      <span className="truncate">{t('createGame.locationTime.alsoUsedIn', { games: labels })}</span>
+    </span>
   );
 }
 
@@ -209,7 +210,7 @@ export function BooktimeBookingRow({
       {showClubName && !nested ? (
         <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{club.clubName}</p>
       ) : null}
-      {!nested ? (
+      {!nested || selectable ? (
         <CourtDisplayName
           name={courtInfo.courtName}
           integrationName={courtInfo.integrationCourtName}
