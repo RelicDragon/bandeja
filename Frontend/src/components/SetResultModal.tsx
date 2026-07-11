@@ -285,6 +285,9 @@ export const SetResultModal = ({
   const canToggleTieBreak = false;
 
   const showTieBreakToggle = canToggleTieBreak && kind !== 'SUPER_TIEBREAK';
+  const showCourtSidebar = Boolean(courtLabel?.trim());
+  const showScoreValidation =
+    !recommendation.ok && Boolean(recommendation.reason) && (teamAScore > 0 || teamBScore > 0);
 
   const mainTitle = isSupplementalRow
     ? t('gameResults.extraSetTitle')
@@ -349,20 +352,24 @@ export const SetResultModal = ({
         </button>
       </DialogClose>
       <div className="overflow-hidden rounded-xl flex flex-row flex-1 min-h-0">
-      <div className="relative flex items-center justify-center w-7 sm:w-8 flex-shrink-0 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
-        <span className="absolute [writing-mode:vertical-lr] rotate-180 text-[10px] sm:text-xs font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase whitespace-nowrap select-none">
-          {courtLabel?.trim() ? courtLabel.trim() : t('gameResults.court')}
-        </span>
-      </div>
-      <div className="flex flex-col flex-1 min-w-0 min-h-0">
+      {showCourtSidebar ? (
+        <div className="relative flex items-center justify-center w-7 sm:w-8 flex-shrink-0 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+          <span className="absolute [writing-mode:vertical-lr] rotate-180 text-[10px] sm:text-xs font-semibold tracking-wider text-gray-500 dark:text-gray-400 uppercase whitespace-nowrap select-none">
+            {courtLabel!.trim()}
+          </span>
+        </div>
+      ) : null}
+      <div className="flex flex-col flex-1 min-w-0 min-h-0 relative">
       <div className="relative z-[1] shrink-0 px-3 sm:px-4 pt-3 pb-2 border-b border-gray-200/80 dark:border-gray-700/80 bg-white/95 dark:bg-gray-900/95">
         <DialogTitle className="mb-0 text-base sm:text-lg font-semibold leading-tight text-gray-900 dark:text-white pr-2">
           {mainTitle}
         </DialogTitle>
-        {descriptionLine && !isSupplementalRow ? (
-          <DialogDescription className="mt-0 max-w-full whitespace-normal text-xs font-medium normal-case leading-snug text-gray-500 dark:text-gray-400">
-            {descriptionLine}
-          </DialogDescription>
+        {!isSupplementalRow && descriptionLine ? (
+          <div className="mt-1 h-10 overflow-hidden">
+            <DialogDescription className="mt-0 max-w-full line-clamp-2 text-xs font-medium normal-case leading-snug text-gray-500 dark:text-gray-400">
+              {descriptionLine}
+            </DialogDescription>
+          </div>
         ) : null}
         {isAutomaticRelaxed && !isSupplementalRow && setIndex === 0 ? (
           <AutomaticMatchRecordModeSwitch mode={matchRecordMode} onChange={setMatchRecordMode} />
@@ -580,34 +587,32 @@ export const SetResultModal = ({
         </div>
       )}
       
-      {!recommendation.ok && recommendation.reason && (teamAScore > 0 || teamBScore > 0) && (
-        <div className="px-3 sm:px-4 pb-1">
-          <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200">
-            {isAutomaticRelaxed ? t('gameResults.automaticScoreRecommendation') : null}{' '}
-            {validationMessage(t, recommendation.reason, recommendation.detail)}
-            {suggestions.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-1.5">
-                {suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => {
-                      setTeamAScore(s.teamA);
-                      setTeamBScore(s.teamB);
-                      if (typeof s.isTieBreak === 'boolean') setIsTieBreak(s.isTieBreak);
-                    }}
-                    className="rounded-full bg-amber-200 px-2 py-0.5 font-mono font-semibold text-amber-900 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700"
-                  >
-                    {s.teamA}-{s.teamB}{s.isTieBreak ? ' (TB)' : ''}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+      {showScoreValidation ? (
+        <div className="absolute inset-x-3 sm:inset-x-4 bottom-[3.75rem] z-20 max-h-24 overflow-y-auto rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 shadow-md dark:border-amber-700 dark:bg-amber-900/95 dark:text-amber-200">
+          {isAutomaticRelaxed ? t('gameResults.automaticScoreRecommendation') : null}{' '}
+          {validationMessage(t, recommendation.reason!, recommendation.detail)}
+          {suggestions.length > 0 && (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {suggestions.map((s, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    setTeamAScore(s.teamA);
+                    setTeamBScore(s.teamB);
+                    if (typeof s.isTieBreak === 'boolean') setIsTieBreak(s.isTieBreak);
+                  }}
+                  className="rounded-full bg-amber-200 px-2 py-0.5 font-mono font-semibold text-amber-900 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700"
+                >
+                  {s.teamA}-{s.teamB}{s.isTieBreak ? ' (TB)' : ''}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      ) : null}
 
-      <DialogFooter className="flex gap-2 pt-2 px-3 sm:px-4 pb-3">
+      <DialogFooter className="relative z-10 flex gap-2 pt-2 px-3 sm:px-4 pb-3">
         <Button
           onClick={onClose}
           variant="outline"

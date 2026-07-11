@@ -26,15 +26,42 @@ const completedOfficialSetsForLive = (sets: SetResult[], rules: ScoringRules): S
   return out;
 };
 
-/**
- * Match winner using only rows that pass `isLegalSetScore` — for live UI/engine freeze so partial sets
- * do not count as decided.
- */
+const isAutomaticRelaxedBySets = (rules: ScoringRules): boolean =>
+  rules.strictValidation === 'CLASSIC_AUTOMATIC_RELAXED' && rules.winnerOfMatch === 'BY_SETS';
+
+const countSetsWonSides = (playedSets: SetResult[]): { a: number; b: number } => {
+  let a = 0;
+  let b = 0;
+  for (const set of playedSets) {
+    const w = setWinner(set);
+    if (w === 'A') a += 1;
+    else if (w === 'B') b += 1;
+  }
+  return { a, b };
+};
+
+const computeAutomaticRelaxedBySetsWinner = (playedSets: SetResult[]): MatchWinnerSide => {
+  if (playedSets.length === 0) return null;
+  const { a, b } = countSetsWonSides(playedSets);
+  if (playedSets.length === 1) {
+    if (a === 1) return 'A';
+    if (b === 1) return 'B';
+    return null;
+  }
+  if (a > b) return 'A';
+  if (b > a) return 'B';
+  return null;
+};
+
 export const computeMatchWinnerLiveScoring = (sets: SetResult[], rules: ScoringRules): MatchWinnerSide => {
   const playedSets = completedOfficialSetsForLive(sets, rules);
   if (playedSets.length === 0) return null;
 
   if (rules.winnerOfMatch === 'BY_SETS') {
+    if (isAutomaticRelaxedBySets(rules)) {
+      return computeAutomaticRelaxedBySetsWinner(playedSets);
+    }
+
     let a = 0;
     let b = 0;
     for (const set of playedSets) {
@@ -88,6 +115,12 @@ export function getStandingsMatchOutcome(
       b += s.teamB;
     }
     if (a === b && a > 0) return 'tie';
+    return null;
+  }
+
+  if (isAutomaticRelaxedBySets(rules) && played.length >= 2) {
+    const { a, b } = countSetsWonSides(played);
+    if (a === b) return 'tie';
     return null;
   }
 

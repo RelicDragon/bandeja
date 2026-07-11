@@ -8,7 +8,10 @@ import {
 } from '../../src/services/results/liveScoringEngine/core';
 import { getRules } from '../../src/services/results/liveScoringEngine/rulebook';
 import type { LiveScoringState } from '../../src/services/results/liveScoringEngine/types';
-import { computeMatchWinnerLiveScoring } from '../../src/services/results/liveScoringEngine/matchWinnerLive';
+import {
+  computeMatchWinnerLiveScoring,
+  getStandingsMatchOutcome,
+} from '../../src/services/results/liveScoringEngine/matchWinnerLive';
 
 const watchSportPath = join(
   __dirname,
@@ -140,6 +143,31 @@ function testOpenEndedFreezeAndValidate(): void {
   assert(
     computeMatchWinnerLiveScoring(partialSet, strictRules) === null,
     'strict classic ignores incomplete set',
+  );
+  const automaticRules = getRules({ sport: 'PADEL', scoringPreset: 'CLASSIC_AUTOMATIC' });
+  assert(
+    computeMatchWinnerLiveScoring([{ teamA: 0, teamB: 6 }], automaticRules) === 'B',
+    'CLASSIC_AUTOMATIC: single set decides match',
+  );
+  assert(
+    computeMatchWinnerLiveScoring(
+      [
+        { teamA: 6, teamB: 4 },
+        { teamA: 4, teamB: 6 },
+      ],
+      automaticRules,
+    ) === null,
+    'CLASSIC_AUTOMATIC: split sets undecided for live winner',
+  );
+  assert(
+    getStandingsMatchOutcome(
+      [
+        { teamA: 6, teamB: 4 },
+        { teamA: 4, teamB: 6 },
+      ],
+      automaticRules,
+    ) === 'tie',
+    'CLASSIC_AUTOMATIC: split sets is tie for standings',
   );
   console.log('ok: BE open-ended freeze + CLASSIC_TIMED_RELAXED validate');
 }
