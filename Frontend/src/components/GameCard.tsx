@@ -319,7 +319,7 @@ export const GameCard = ({
         </div>
 
         {/* Content */}
-        <div className="relative z-10">
+        <div className="relative z-10 pb-2">
           {trainerParticipant ? (
             <GameCardTrainerBadge trainer={trainerParticipant} className="mb-2" />
           ) : null}
@@ -349,7 +349,7 @@ export const GameCard = ({
           )}
           {!isLeagueSeasonGame && (
             <div
-              className={`space-y-1.5 pb-2 text-sm text-gray-600 dark:text-gray-400 ${
+              className={`space-y-1.5 text-sm text-gray-600 dark:text-gray-400 ${
                 game.entityType === 'TRAINING' &&
                 participants.filter((p) => p.status === 'PLAYING').length >= 1
                   ? 'mt-1.5 border-t border-gray-200 pt-1.5 dark:border-gray-700'

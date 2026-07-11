@@ -48,16 +48,23 @@ export function GameCardActionCluster({
   const { t } = useTranslation();
   const theme = getGameCardReactionTheme(game.entityType);
 
+  const showReactions = Boolean(currentUserId) || reactions.length > 0;
+  const showNoteChat = showNoteBookmark || showChat;
+  const hasContent = showReactions || Boolean(weatherSummary) || showBookedTag || showNoteChat;
+  if (!hasContent) return null;
+
   return (
     <div className="absolute top-2 right-2 z-20 flex flex-col items-end gap-1">
-      <GameCardReactions
-        entityType={game.entityType}
-        gameId={game.id}
-        reactions={reactions}
-        currentUserId={currentUserId}
-        onReactionsChange={onReactionsChange}
-        pickerOpens="below"
-      />
+      {showReactions && (
+        <GameCardReactions
+          entityType={game.entityType}
+          gameId={game.id}
+          reactions={reactions}
+          currentUserId={currentUserId}
+          onReactionsChange={onReactionsChange}
+          pickerOpens="below"
+        />
+      )}
       {weatherSummary ? (
         <GameCardWeatherTag
           entityType={game.entityType}
@@ -67,10 +74,8 @@ export function GameCardActionCluster({
         />
       ) : null}
       {showBookedTag ? <GameCardBookedTag linkedExternalBooking={linkedExternalBooking} /> : null}
-      {(showNoteBookmark || showChat) && (
-        <div
-          className={`pointer-events-auto flex min-h-[28px] items-center rounded-lg ${theme.panel}`}
-        >
+      {showNoteChat && (
+        <div className={`pointer-events-auto flex min-h-[28px] items-center rounded-lg ${theme.panel}`}>
           {showNoteBookmark && (
             <button
               type="button"
