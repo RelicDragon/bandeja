@@ -41,6 +41,10 @@ export function sigFromFixedTeam(game: Game, teamNumber: 1 | 2): string | null {
   return teamPlayerSig(ids);
 }
 
+export function gameHasFixturePairTeams(game: Game): boolean {
+  return Boolean(sigFromFixedTeam(game, 1) && sigFromFixedTeam(game, 2));
+}
+
 export type CellOutcome = 'W' | 'L' | 'T' | null;
 
 export function rowPerspectiveOutcome(
@@ -134,7 +138,7 @@ export function buildPairCellMap(
   const regularGames = rounds
     .filter((r) => (r.roundType ?? 'REGULAR') === 'REGULAR')
     .flatMap((r) => r.games)
-    .filter((g) => g.leagueGroupId === groupId && g.hasFixedTeams);
+    .filter((g) => g.leagueGroupId === groupId && (g.hasFixedTeams || gameHasFixturePairTeams(g)));
 
   for (const g of regularGames) {
     const s1 = sigFromFixedTeam(g, 1);
