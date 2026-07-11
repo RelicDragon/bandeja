@@ -161,24 +161,25 @@ export const CreateGameTimeSlots = memo(function CreateGameTimeSlots({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-          {t('createGame.selectTime')}
+      {timezoneLabel || onWeatherModeToggle ? (
+        <div className="mb-2 flex items-center justify-between gap-2 min-h-[1.5rem]">
           {timezoneLabel ? (
-            <span className="ml-2 text-gray-500 dark:text-gray-500 font-normal">
-              ({t('createGame.clubTime')} {timezoneLabel})
+            <span className="inline-flex items-center rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:text-gray-400">
+              {t('createGame.clubTime')} {timezoneLabel}
             </span>
+          ) : (
+            <span />
+          )}
+          {onWeatherModeToggle ? (
+            <MonthCalendarWeatherToggle
+              active={weatherMode}
+              disabled={weatherToggleDisabled}
+              onClick={onWeatherModeToggle}
+              compact
+            />
           ) : null}
-        </label>
-        {onWeatherModeToggle ? (
-          <MonthCalendarWeatherToggle
-            active={weatherMode}
-            disabled={weatherToggleDisabled}
-            onClick={onWeatherModeToggle}
-            compact
-          />
-        ) : null}
-      </div>
+        </div>
+      ) : null}
       {showReservationLegend ? (
         <p className="text-[10px] leading-snug text-gray-500 dark:text-gray-400 mb-2">
           {t('createGame.locationTime.gridLegend')}

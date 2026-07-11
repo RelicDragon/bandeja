@@ -1,6 +1,23 @@
 {
   "createGame": {
     "title": "Kreiraj igru",
+    "identity": {
+      "label": "Naziv i fotografija",
+      "optional": "Opciono"
+    },
+    "steps": {
+      "setup": "Podešavanje igre",
+      "location": "Mesto i vreme",
+      "players": "Igrači",
+      "details": "Podešavanja i detalji"
+    },
+    "footer": {
+      "selectClubHint": "Izaberite klub da nastavite"
+    },
+    "locationSteps": {
+      "date": "Datum",
+      "time": "Vreme početka"
+    },
     "createBar": "Kreiraj bar događaj",
     "createTraining": "Kreiraj trening",
     "createTournament": "Kreiraj Turnir",
@@ -208,7 +225,6 @@
     "startTime": "Vreme početka",
     "endTime": "Vreme kraja",
     "duration": "Trajanje",
-    "selectTime": "Izaberite vreme",
     "noTimeSlotsForDate": "Nema dostupnih termina za ovaj datum. Izaberi drugi dan.",
     "noTimeSlotsForDuration": "Nema termina za ovo trajanje. Izaberi drugo trajanje ili datum.",
     "clubTime": "vreme kluba",

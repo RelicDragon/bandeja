@@ -1,6 +1,23 @@
 {
   "createGame": {
     "title": "Crear juego",
+    "identity": {
+      "label": "Nombre y foto",
+      "optional": "Opcional"
+    },
+    "steps": {
+      "setup": "Configuración del juego",
+      "location": "Lugar y hora",
+      "players": "Jugadores",
+      "details": "Ajustes y detalles"
+    },
+    "footer": {
+      "selectClubHint": "Elige un club para continuar"
+    },
+    "locationSteps": {
+      "date": "Fecha",
+      "time": "Hora de inicio"
+    },
     "createBar": "Crear evento de bar",
     "createTraining": "Crear sesión de entrenamiento",
     "createTournament": "Crear Torneo",
@@ -208,7 +225,6 @@
     "startTime": "Hora de inicio",
     "endTime": "Hora de fin",
     "duration": "Duración",
-    "selectTime": "Selecciona hora",
     "noTimeSlotsForDate": "No hay horarios disponibles para esta fecha. Prueba otro día.",
     "noTimeSlotsForDuration": "No hay horarios para esta duración. Prueba otra duración o fecha.",
     "clubTime": "hora del club",

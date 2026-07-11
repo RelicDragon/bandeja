@@ -1,42 +1,31 @@
 import { useTranslation } from 'react-i18next';
-import { Calendar, MapPin, Users, Plane, Check } from 'lucide-react';
+import { MapPin, Users, Plane, Check, CalendarOff } from 'lucide-react';
 import type { Game, GameParticipant } from '@/types';
+import { GameCardDateTile } from '@/components/gameCard/GameCardDateTile';
 
 interface GameCardInfoRowsProps {
   game: Game;
   participants: GameParticipant[];
-  dateText: string;
+  /** "Today" / "Tomorrow" / "Yesterday" or null when the date is further away. */
+  dayLabel: string | null;
   timeText?: string | null;
   hintText?: string | null;
+  timezone: string | null;
+  locale: string;
+  /** Right-side photo thumbnail, rendered inside the block to align with the tile. */
+  photoUrl?: string | null;
   className?: string;
 }
-
-const InfoIcon = ({ children }: { children: React.ReactNode }) => (
-  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-gray-100/90 dark:bg-gray-800/90 text-gray-500 dark:text-gray-400 transition-colors duration-300 group-hover:bg-primary-50 group-hover:text-primary-600 dark:group-hover:bg-primary-900/30 dark:group-hover:text-primary-400">
-    {children}
-  </span>
-);
-
-const LevelRange = ({ min, max }: { min: number; max: number }) => {
-  const { t } = useTranslation();
-  return (
-    <>
-      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-        {t('games.level')}:
-      </span>
-      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
-        {min.toFixed(1)}-{max.toFixed(1)}
-      </span>
-    </>
-  );
-};
 
 export const GameCardInfoRows = ({
   game,
   participants,
-  dateText,
+  dayLabel,
   timeText,
   hintText,
+  timezone,
+  locale,
+  photoUrl,
   className = '',
 }: GameCardInfoRowsProps) => {
   const { t } = useTranslation();
@@ -46,51 +35,90 @@ export const GameCardInfoRows = ({
     ? Math.min(playingCount / game.maxParticipants, 1)
     : 0;
   const isFull = fillRatio >= 1;
+  const timeNotSet = game.timeIsSet === false;
+  const clubName = game.court?.club?.name || game.club?.name;
 
   return (
     <div className={className}>
-      <div className="flex items-center gap-2">
-        <InfoIcon><Calendar size={14} /></InfoIcon>
-        {game.timeIsSet === false ? (
-          <span className="text-gray-500 dark:text-gray-400 italic text-xs">
-            {t('gameDetails.datetimeNotSet')}
-          </span>
+      <div className="flex items-center gap-3">
+        {timeNotSet ? (
+          <div
+            className="flex h-14 w-12 shrink-0 flex-col items-center justify-center rounded-xl bg-gray-100/80 text-gray-400 dark:bg-gray-800/80 dark:text-gray-500"
+            aria-hidden
+          >
+            <CalendarOff size={18} />
+          </div>
         ) : (
-          <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-            <span>{dateText}</span>
-            {timeText ? <span className="whitespace-nowrap">{timeText}</span> : null}
-          </span>
+          <GameCardDateTile
+            date={game.startTime}
+            timezone={timezone}
+            locale={locale}
+            entityType={game.entityType}
+          />
         )}
-      </div>
-      {hintText && (
-        <div className="flex items-center gap-2 opacity-75">
-          <InfoIcon><Plane size={14} /></InfoIcon>
-          <span className="text-xs text-gray-500 dark:text-gray-400">{hintText}</span>
-        </div>
-      )}
-      {(game.court?.club || game.club) && (
-        <div className="flex items-center gap-2">
-          <InfoIcon><MapPin size={14} /></InfoIcon>
-          <span className="min-w-0">
-            {game.court?.club?.name || game.club?.name}
-            {game.court?.name && ` • ${game.court.name}`}
-          </span>
-          {game.entityType === 'BAR' && (
-            <>
-              <span className="text-gray-400 dark:text-gray-500">•</span>
-              <Users size={16} className="shrink-0" />
-              <span>{playingCount}</span>
-            </>
+
+        <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
+          {timeNotSet ? (
+            <span className="text-xs italic text-gray-500 dark:text-gray-400">
+              {t('gameDetails.datetimeNotSet')}
+            </span>
+          ) : (
+            <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+              {dayLabel && (
+                <span className="rounded-md bg-primary-100/90 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">
+                  {dayLabel}
+                </span>
+              )}
+              {timeText && (
+                <span className="whitespace-nowrap text-[15px] font-semibold tabular-nums text-gray-900 dark:text-white">
+                  {timeText}
+                </span>
+              )}
+            </div>
+          )}
+          {hintText && (
+            <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <Plane size={12} className="shrink-0" />
+              {hintText}
+            </span>
+          )}
+          {clubName && (
+            <span className="flex min-w-0 items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+              <MapPin size={13} className="shrink-0 text-gray-400 dark:text-gray-500" />
+              <span className="truncate">
+                {clubName}
+                {game.court?.name && ` • ${game.court.name}`}
+              </span>
+            </span>
           )}
         </div>
-      )}
-      {game.entityType !== 'BAR' && (
-        <>
-          <div className="flex min-w-0 items-center gap-2">
-            <InfoIcon><Users size={14} /></InfoIcon>
-            <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
-              <span className="tabular-nums">
-                {`${playingCount} / ${game.maxParticipants}`}
+
+        {photoUrl && (
+          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl shadow-sm ring-1 ring-gray-200 transition-shadow duration-300 group-hover:shadow-md dark:ring-gray-700">
+            <img
+              src={photoUrl}
+              alt=""
+              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+              loading="lazy"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* Capacity / level strip */}
+      <div className="mt-2 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-600 dark:text-gray-400">
+        <span className="flex items-center gap-1.5">
+          <Users size={14} className="shrink-0 text-gray-400 dark:text-gray-500" />
+          {game.entityType === 'BAR' ? (
+            <span className="tabular-nums">{playingCount}</span>
+          ) : (
+            <>
+              <span className="font-medium tabular-nums text-gray-800 dark:text-gray-200">
+                {playingCount}
+                <span className="font-normal text-gray-500 dark:text-gray-400">
+                  {' / '}
+                  {game.maxParticipants}
+                </span>
               </span>
               {Boolean(game.maxParticipants) &&
                 (isFull ? (
@@ -105,21 +133,20 @@ export const GameCardInfoRows = ({
                     />
                   </span>
                 ))}
-            </div>
-            {!game.trainerId && hasLevels && (
-              <>
-                <span className="shrink-0 text-gray-400 dark:text-gray-500">•</span>
-                <LevelRange min={game.minLevel as number} max={game.maxLevel as number} />
-              </>
-            )}
-          </div>
-          {game.trainerId && hasLevels && (
-            <div className="flex items-center gap-2">
-              <LevelRange min={game.minLevel as number} max={game.maxLevel as number} />
-            </div>
+            </>
           )}
-        </>
-      )}
+        </span>
+        {game.entityType !== 'BAR' && hasLevels && (
+          <span className="flex items-center gap-1 text-xs">
+            <span className="font-medium text-gray-500 dark:text-gray-400">
+              {t('games.level')}:
+            </span>
+            <span className="font-semibold tabular-nums text-gray-700 dark:text-gray-300">
+              {(game.minLevel as number).toFixed(1)}-{(game.maxLevel as number).toFixed(1)}
+            </span>
+          </span>
+        )}
+      </div>
     </div>
   );
 };

@@ -1,8 +1,10 @@
 import { useState, useEffect, useMemo, useRef, useCallback, createRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Plus } from 'lucide-react';
-import { Button, PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameInput, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, AvatarUpload, CreateGameIntentPicker } from '@/components';
+import { PlayerListModal, PlayerCardBottomSheet, CreateGameHeader, ParticipantsSection, ParticipantsSetupSection, GameSettingsSection, GameNameCommentsSection, GameStartSection, GameFormatCard, GameFormatWizard, CreateGameIntentPicker } from '@/components';
+import { CreateGameIdentityCard } from '@/components/createGame/CreateGameIdentityCard';
+import { CreateGameStepHeader } from '@/components/createGame/CreateGameStepHeader';
+import { CreateGameFooterBar } from '@/components/createGame/CreateGameFooterBar';
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useAuthStore } from '@/store/authStore';
@@ -1175,6 +1177,47 @@ export const CreateGame = ({
     [],
   );
 
+  const footerValidation = useMemo(
+    () =>
+      resolveReservationValidation({
+        intent: reservationIntent,
+        needsBooktimeAuth,
+        selectedBookingCount: selectedBookingIds.length,
+        selectedBookingRecordsCount: selectedBookingRecords.length,
+        selectedCourtCount: integratedCourtIds.length,
+        bookingSelectionMin: bookingSelectionLimits.min,
+        selectedTime: selectedTime || undefined,
+        duration: duration || undefined,
+      }),
+    [
+      reservationIntent,
+      needsBooktimeAuth,
+      selectedBookingIds.length,
+      selectedBookingRecords.length,
+      integratedCourtIds.length,
+      bookingSelectionLimits.min,
+      selectedTime,
+      duration,
+    ],
+  );
+
+  const footerHint = useMemo(() => {
+    if (!selectedClub) return t('createGame.footer.selectClubHint');
+    if (!footerValidation.ok) {
+      const message = resolveReservationValidationMessage(footerValidation, bookingSelectionLimits.min);
+      return t(message.key, message.values);
+    }
+    return null;
+  }, [selectedClub, footerValidation, bookingSelectionLimits.min, t]);
+
+  const handleFooterHintClick = () => {
+    if (selectedClub && !footerValidation.ok) {
+      scrollToReservationValidationIssue(footerValidation.reason);
+      return;
+    }
+    scrollToAndHighlightError(locationTimeSectionRef);
+  };
+
   const validatePrice = (): boolean => {
     if (priceType !== 'NOT_KNOWN' && priceType !== 'FREE') {
       if (priceTotal == null || priceTotal <= 0) return false;
@@ -1456,6 +1499,14 @@ export const CreateGame = ({
     },
   });
 
+  const showSetupStep = showSportSelector || entityType !== 'BAR';
+  const stepNumbers = {
+    setup: 1,
+    location: showSetupStep ? 2 : 1,
+    players: showSetupStep ? 3 : 2,
+    details: showSetupStep ? 4 : 3,
+  };
+
   return (
     <SportLevelProvider sport={selectedSport}>
     <div className="h-screen bg-gray-50 dark:bg-gray-900 flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
@@ -1470,16 +1521,22 @@ export const CreateGame = ({
       >
         <CreateGameSummaryBar chips={summaryChips} onChipClick={handleSummaryChipClick} />
         <div ref={scrollContainerRef} className="h-full overflow-y-auto">
-        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-6">
-        <div className="flex justify-center">
-          <AvatarUpload
-            currentAvatar={avatarPreviewUrl}
-            onUpload={handleAvatarUpload}
-            onRemove={handleAvatarRemove}
+        <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-8">
+        <div ref={summarySectionRefs.name}>
+          <CreateGameIdentityCard
+            entityType={entityType}
+            gameName={gameName}
+            onGameNameChange={setGameName}
+            avatarPreviewUrl={avatarPreviewUrl}
+            onAvatarUpload={handleAvatarUpload}
+            onAvatarRemove={handleAvatarRemove}
             disabled={loading}
-            isGameAvatar={true}
           />
         </div>
+
+        {showSetupStep && (
+          <CreateGameStepHeader step={stepNumbers.setup} title={t('createGame.steps.setup')} />
+        )}
 
         {showSportSelector && (
           <div ref={summarySectionRefs.sport}>
@@ -1492,14 +1549,6 @@ export const CreateGame = ({
             />
           </div>
         )}
-
-        <div ref={summarySectionRefs.name}>
-          <GameNameInput
-            value={gameName}
-            onChange={setGameName}
-            entityType={entityType}
-          />
-        </div>
 
         <div ref={summarySectionRefs.setup}>
         <ParticipantsSetupSection
@@ -1623,6 +1672,11 @@ export const CreateGame = ({
           />
           </div>
         ) : null}
+
+        <CreateGameStepHeader
+          step={stepNumbers.location}
+          title={t('createGame.steps.location')}
+        />
 
         <div ref={locationTimeSectionRef}>
           <div ref={durationSectionRef}>
@@ -1791,6 +1845,11 @@ export const CreateGame = ({
           </div>
         </div>
 
+        <CreateGameStepHeader
+          step={stepNumbers.players}
+          title={t('createGame.steps.players')}
+        />
+
         <div ref={summarySectionRefs.participants}>
         <ParticipantsSection
           participants={participants}
@@ -1830,6 +1889,11 @@ export const CreateGame = ({
         />
         </div>
 
+        <CreateGameStepHeader
+          step={stepNumbers.details}
+          title={t('createGame.steps.details')}
+        />
+
         <div ref={summarySectionRefs.settings}>
         <GameSettingsSection
           isPublic={isPublic}
@@ -1864,25 +1928,18 @@ export const CreateGame = ({
           onPriceCurrencyChange={setPriceCurrency}
           priceSectionRef={summarySectionRefs.price}
         />
-
-        <Button
-          onClick={handleCreateGame}
-          disabled={loading}
-          className="w-full py-3 text-base font-semibold mt-4 flex items-center justify-center gap-2"
-          size="lg"
-        >
-          {loading ? (
-            t('common.loading')
-          ) : (
-            <>
-              <Plus size={20} />
-              {createButtonLabel}
-            </>
-          )}
-        </Button>
         </div>
         </div>
       </div>
+
+      <CreateGameFooterBar
+        label={createButtonLabel}
+        loading={loading}
+        hint={footerHint}
+        onHintClick={handleFooterHintClick}
+        onCreate={handleCreateGame}
+        dimmed={Boolean(createOverlayPhase)}
+      />
 
       {selectedPlayerId && (
         <PlayerCardBottomSheet

@@ -1,6 +1,8 @@
 import { useTranslation } from 'react-i18next';
+import { ChevronRight, MapPin } from 'lucide-react';
 import { ClubModal, ClubAvatar } from '@/components';
 import { CourtLocationLinks } from '@/components/CourtLocationLinks';
+import { LocationTimeStepHeader } from '@/components/gameLocationTime/LocationTimeStepHeader';
 import type { Club, Court } from '@/types';
 
 interface CreateGameClubSectionProps {
@@ -37,19 +39,45 @@ export const CreateGameClubSection = ({
         onSelect={onSelectClub}
       />
       <div>
+        <LocationTimeStepHeader
+          icon={MapPin}
+          title={t('createGame.club')}
+          done={Boolean(club)}
+        />
         <button
           type="button"
           onClick={onOpenClubModal}
-          className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm text-left hover:border-primary-500 transition-colors flex items-center gap-3 min-w-0"
+          className={
+            club
+              ? 'w-full flex items-center gap-3 min-w-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-left transition-colors hover:border-primary-400 dark:hover:border-primary-600'
+              : 'w-full flex items-center gap-3 rounded-xl border-2 border-dashed border-primary-300 dark:border-primary-700 bg-primary-50/50 dark:bg-primary-950/20 px-3 py-3 text-left transition-colors hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-950/40'
+          }
         >
           {club ? (
             <>
               <ClubAvatar club={club} className="h-10 w-[3.75rem] shrink-0" />
-              <span className="truncate min-w-0">{club.name}</span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-medium text-gray-900 dark:text-white">
+                  {club.name}
+                </span>
+                {club.address ? (
+                  <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                    {club.address}
+                  </span>
+                ) : null}
+              </span>
             </>
           ) : (
-            t('createGame.selectClub')
+            <>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/40">
+                <MapPin size={18} className="text-primary-600 dark:text-primary-400" />
+              </span>
+              <span className="min-w-0 flex-1 text-sm font-semibold text-primary-700 dark:text-primary-300">
+                {t('createGame.selectClub')}
+              </span>
+            </>
           )}
+          <ChevronRight size={18} className="shrink-0 text-gray-400 dark:text-gray-500" />
         </button>
       </div>
       {selectedClub && (

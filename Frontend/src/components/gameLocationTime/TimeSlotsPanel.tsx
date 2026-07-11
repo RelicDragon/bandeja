@@ -35,10 +35,10 @@ export function TimeSlotsPanel({
 }: TimeSlotsPanelProps) {
   return (
     <div className="space-y-4">
-      {dateSection}
       {clubSection}
       {intentSection}
       {linkedReservationsSection}
+      {dateSection}
       {courtSection}
       {authGateSection}
       {!needsBooktimeAuth ? reservationsStrip : null}

@@ -141,7 +141,7 @@ export const CourtSelectionGrid = memo(function CourtSelectionGrid({
           onChange={handleSportTab}
           showOnlyActiveTabText={false}
           layoutId="court-grid-sport"
-          className="w-full"
+          fullWidth
         />
       )}
       {visibleCourts.length === 0 ? (

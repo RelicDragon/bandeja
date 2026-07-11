@@ -525,21 +525,16 @@ export function LocationTimeTab({
       className="space-y-4"
     >
       {pendingUnlinkIds.length > 0 ? <PendingBookingUnlinkHint /> : null}
-      <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-          {t('createGame.club')}
-        </label>
-        <CreateGameClubSection
-          clubs={clubsForSport}
-          courts={courts}
-          selectedClub={selectedClub}
-          selectedCourt={selectedCourt}
-          isClubModalOpen={isClubModalOpen}
-          onSelectClub={(id) => onSelectClub?.(id)}
-          onOpenClubModal={() => setIsClubModalOpen(true)}
-          onCloseClubModal={() => setIsClubModalOpen(false)}
-        />
-      </div>
+      <CreateGameClubSection
+        clubs={clubsForSport}
+        courts={courts}
+        selectedClub={selectedClub}
+        selectedCourt={selectedCourt}
+        isClubModalOpen={isClubModalOpen}
+        onSelectClub={(id) => onSelectClub?.(id)}
+        onOpenClubModal={() => setIsClubModalOpen(true)}
+        onCloseClubModal={() => setIsClubModalOpen(false)}
+      />
       <GameLocationTimePanel
         mode="edit"
         entityType={entityType}

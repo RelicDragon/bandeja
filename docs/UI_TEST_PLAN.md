@@ -384,6 +384,9 @@ Frontend/e2e/
 | F-40 | Booking row also-used-in pill | Link same booking to second game | Booking row shows soft pill with other game name(s) |
 | F-41 | Game card badge partial external link | Game with `bookingStatus=EXTERNAL_PARTIAL` | Blue “Booked” pill (no checkmark) after time on game card |
 | F-42 | Vertical scroll over participants strip (touch) | On a touch device, flick-scroll the game list vertically with the finger landing on a card's participant avatars row | List keeps scrolling vertically (not halted); a deliberate horizontal swipe on that row still scrolls the participants carousel |
+| F-45 | Game card unified header | View cards of each entity type (game, training, tournament, league, bar) | Title row shows color-coded entity glyph (non-GAME) + name (entity-type label as fallback when unnamed); all pills (sport, participation, private, gender, no-rating, fixed teams, results) sit in one wrap row under the title; no duplicate entity pill |
+| F-47 | Game card date tile | Cards with set time, today/tomorrow, and `timeIsSet=false` | Calendar tile (weekday/day/month) tinted by entity type; bold time range + club beside it; "Today"/"Tomorrow" chip for near dates; crossed-calendar tile + "not set" text when time unset |
+| F-46 | Game card note bookmark | Logged-in user, card without personal note | Bookmark sits with chat icon in one entity-tinted panel in the top-right cluster (under weather); tap opens note modal without opening the game; saved note renders as yellow tappable panel and bookmark hides |
 
 ---
 
@@ -501,7 +504,7 @@ Frontend/e2e/
 | C-14t | Multi-court shared slot hint | Intent Book a court; 2 courts selected; no intersecting Booktime slots | Amber hint: try different courts, date, or duration |
 | C-14u | Create validation toasts | Submit without court/time/auth per intent | Inline toast + scroll to location section (not silent abort) |
 | C-14v | Edit keep current reservation | Edit game with linked bookings | Default **Keep current reservation**; read-only linked list + consequence summary; no reservation picker |
-| C-14w | Edit reservation actions | Edit integrated game | Actions: keep current, change time only, use existing, reserve new, unlink, game only; picker only for use existing |
+| C-14w | Edit reservation actions | Edit integrated game | Actions: keep current, change time only, use existing, reserve new, unlink, game only — unavailable actions hidden (not greyed out); picker only for use existing |
 | C-14x | Edit unlink save | Edit → Unlink reservation → Save | Consequence warns club reservation stays active + policy; confirm before save |
 | C-14y | useExisting hidden without reservations | Integrated club; connected; selected date has no club bookings | **I already have a booking** intent not shown (not blank strip / empty-state card) |
 | C-14z | Edit multi-court shared slot hint | Edit integrated game → Reserve new; 2 courts; no intersecting slots | Amber hint: try different courts, date, or duration |
@@ -511,9 +514,9 @@ Frontend/e2e/
 | C-49 | Game match format only | Create GAME on padel/tennis | No participant-count grid; 1v1/2v2 selector sets roster to 2 or 4 |
 | C-50 | Game fixed roster | Create GAME singles then doubles | Roster slots and `maxParticipants` follow format (2 ↔ 4) |
 | C-27 | Fixed pairs segmented switch | Create GAME doubles → pick Rotating or Fixed pairs | Team setup shown when Fixed pairs selected |
-| C-28 | Game name & miscellaneous | Name input below sport selector; description and price in Miscellaneous section | Saved on submit |
+| C-28 | Game name & miscellaneous | Name input inside Name & photo card at top; description and price in Miscellaneous section | Saved on submit |
 | C-29 | Price fields | Set price type/currency/total under Miscellaneous | Saved correctly |
-| C-30 | Avatar upload | Upload game image | Preview shown |
+| C-30 | Avatar upload | Upload game image via Name & photo card (avatar left of name input) | Preview shown |
 | C-31 | Invite players | Open player list → select | Invites sent on create |
 | C-32 | Participants setup tags | Configure setup | Tags on game |
 | C-33 | Multiple courts | Enable multi-court | Court count selector |
@@ -523,6 +526,15 @@ Frontend/e2e/
 | C-37 | Summary chip scroll-back | Tap a chip in the summary bar | Page smooth-scrolls back to that section; chip disappears once section is visible |
 | C-38 | Summary bar empty values | Scroll past sections with nothing entered (no name, price not known) | No chip shown for empty sections; bar hidden when no chips |
 | C-52 | Settings collapse | Create game → Settings section | Collapsed by default (title + chevron only); expand animates toggles and hints button in; collapse hides them again |
+| C-53 | Numbered step headers | Open create game (any entity type) | Sections grouped under numbered headers (Game setup, Location & time, Players, Settings & details); BAR without multi-sport skips Game setup and renumbers from 1 |
+| C-54 | Sticky create footer | Open create game, scroll anywhere | Create button always visible in sticky bottom bar; not part of scroll content |
+| C-55 | Footer readiness hint | No club selected (then club but no time) | Amber hint in footer (“Choose a club to continue” / time-validation message); tap scrolls to and highlights the offending section; hint disappears when form is ready |
+| C-56 | Empty setup card hidden | Create BAR event | No empty “Participants” card rendered before location section |
+| C-57 | Location sub-step order | Open create game location block (with and without integrated club) | Order: Club → booking intent → Date → Court → Start time; date/court/time hidden until club selected (dashed “Select club first” hint below club picker) |
+| C-58 | Location sub-step completion ticks | Pick club, then court, then time | Each sub-step header (Club, Date, Court, Start time) flips its icon to a green check as it’s completed; Date is checked by default |
+| C-59 | Club picker states | View club picker before/after selection (create + edit location tab) | Unselected: dashed primary CTA with pin icon + “Select Club”; selected: club avatar, name, address, chevron; tap opens club modal |
+| C-60 | Location sub-step value pills | Pick date, court, time in location block (create + edit location tab) | Sub-step headers show current selection as right-aligned pill (Date: “Sat, Jul 12”; Court: name or “2/3” in multi-court; Start time: “18:00–19:30”); pill is green when the sub-step is done |
+| C-61 | Calendar picker dialog | Tap calendar tile in Date row | Calendar opens as modal dialog with title and close button; picking a date applies it and closes; X, outside tap, or hardware back dismiss without changing the date |
 
 ### 8.4 Create league (`/create-league`)
 
@@ -613,7 +625,7 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-19 | Edit general info | Edit modal → general tab | Name/description updated |
+| GD-19 | Edit general info | Edit modal → general tab | Modal shows "Edit details" title + full-width tabs; avatar and name on one row; name/description updated |
 | GD-20 | Edit location & time tab | Edit modal → Location & time | Single tab replaces Where+When; club picker visible; one scheduling panel (date, courts, time grid); no bookings/time segmented switch |
 | GD-20b | Edit opt-out full schedule | BOOKTIME game, integrated court, toggle "Don't book real court" ON (or Don't select court) | Full club time grid; red external cells selectable and saveable; same as create-game opt-out |
 | GD-20a | Edit game change club | Edit modal → Location & time → change club | Club modal opens; new club selected; courts refresh for new club |
@@ -622,7 +634,7 @@ Frontend/e2e/
 | GD-20e | Edit court grid sport filter | TENNIS game at multi-sport club → edit Location & time | Court grid shows TENNIS + null-sport courts only; courts API called with `sport=TENNIS` |
 | GD-20f | Edit prunes incompatible courts | Multi-sport game with padel court saved → club gains sport tags → reopen edit modal | Incompatible court selections cleared when modal opens |
 | GD-20g | Edit sport mismatch rejected | API: update game `clubId` or `courtId` to sport-incompatible venue | 400 with sport mismatch message |
-| GD-20h | Edit settings tab | Edit modal → Settings (gear) tab | Toggles save in place (checkmark on success); footer shows Close only, no Save |
+| GD-20h | Edit settings tab | Edit modal → Settings (gear) tab | Toggles save in place (checkmark on success); footer shows "saved automatically" note + Close only, no Save |
 | GD-21 | Edit with linked bookings | Game with 2 linked courts at BOOKTIME club → edit Location & time | Unified surface: reservations strip + green grid; both links pre-selected; rows show each linked court |
 | GD-21a | Edit add booking link | Edit game with 0 links → select reservation card | Schedule syncs from selected booking; save links game |
 | GD-21b | Edit partial unlink | Game with 2 linked courts → deselect one card → Save → confirm | Pending unlink hint; only deselected link removed; other link and courts preserved |
@@ -630,7 +642,9 @@ Frontend/e2e/
 | GD-22 | Edit unlink last booking | Deselect last linked reservation card | Pending unlink hint; after save manual time grid available; amber hint that club booking stays active; save asks confirm unlink |
 | GD-22a | Edit unlink save confirm | Edit modal → unlink reservation → Save | Confirm modal warns real booking is not cancelled; save unlinks only |
 | GD-22b | Edit switch linked booking | Game linked to booking A → edit location/time → pick booking B or book new court → save | Booking A unlinked from game; only B linked; game no longer shows stale "Fully booked" for A |
-| GD-23 | Edit price | Price tab | Price fields updated |
+| GD-23 | Edit price | Price tab | Price type shown as vertical radio list with icons; amount + currency row appears only for paid types; price fields updated |
+| GD-108 | Edit modal save gating | Open edit modal, change nothing, then edit name | Save disabled with no changes; after edit an "Unsaved changes" hint appears in footer and Save enables |
+| GD-109 | Edit modal discard confirm | Change any field → close via X / outside tap / Cancel | "Discard changes?" confirm shown; Keep editing returns to modal with edits intact; Discard closes without saving |
 | GD-23 | Edit level range | Level modal | Min/max saved |
 | GD-24 | Edit max participants | Max participants modal | Capacity updated; GAME modal shows 1v1/2v2 only (no current/maximum summary) |
 | GD-25 | Edit game format | Format wizard (pre-results) | Format updated |

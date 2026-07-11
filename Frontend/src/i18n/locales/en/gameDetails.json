@@ -37,6 +37,15 @@
       "settings": "Settings",
       "eraseTime": "Erase time"
     },
+    "editModal": {
+      "title": "Edit details",
+      "unsavedChanges": "Unsaved changes",
+      "autoSaveNote": "Changes here are saved automatically",
+      "discardTitle": "Discard changes?",
+      "discardMessage": "You have unsaved changes that will be lost if you close now.",
+      "discardConfirm": "Discard",
+      "keepEditing": "Keep editing"
+    },
     "locationTime": {
       "tabLabel": "Location & time",
       "partialSaveFailed": "Some changes were saved, but {{step}} could not be updated. Review and try again.",

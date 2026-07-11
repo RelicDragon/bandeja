@@ -57,6 +57,30 @@ describe('reservation intent resolvers', () => {
     expect(withReservations.find((option) => option.id === 'reserveNow')?.recommended).toBe(false);
   });
 
+  it('hides edit keepCurrent and unlink when the game has no linked bookings', () => {
+    const withoutLinks = resolveEditReservationActionOptions({
+      hasLinkedBookings: false,
+      clubBookingFlowActive: true,
+      hasBooktimeAuthPath: true,
+      hasReservationsForDate: false,
+    });
+    expect(withoutLinks.map((option) => option.id)).toEqual([
+      'changeGameTimeOnly',
+      'reserveNew',
+      'gameOnly',
+    ]);
+    expect(withoutLinks.every((option) => option.enabled)).toBe(true);
+
+    const withLinks = resolveEditReservationActionOptions({
+      hasLinkedBookings: true,
+      clubBookingFlowActive: true,
+      hasBooktimeAuthPath: true,
+      hasReservationsForDate: false,
+    });
+    expect(withLinks.map((option) => option.id)).toContain('keepCurrent');
+    expect(withLinks.map((option) => option.id)).toContain('unlink');
+  });
+
   it('hides edit reserveNew when the club has no external booking', () => {
     const nonIntegrated = resolveEditReservationActionOptions({
       hasLinkedBookings: false,

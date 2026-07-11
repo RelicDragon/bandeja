@@ -1,6 +1,23 @@
 {
   "createGame": {
     "title": "Vytvořit zápas",
+    "identity": {
+      "label": "Název a fotka",
+      "optional": "Volitelné"
+    },
+    "steps": {
+      "setup": "Nastavení hry",
+      "location": "Místo a čas",
+      "players": "Hráči",
+      "details": "Nastavení a detaily"
+    },
+    "footer": {
+      "selectClubHint": "Pro pokračování vyberte klub"
+    },
+    "locationSteps": {
+      "date": "Datum",
+      "time": "Čas začátku"
+    },
     "createBar": "Vytvořit bar",
     "createTraining": "Vytvořit trénink",
     "createTournament": "Vytvořit turnaj",
@@ -211,7 +228,6 @@
     "startTime": "Čas začátku",
     "endTime": "Čas konce",
     "duration": "Délka",
-    "selectTime": "Vybrat čas",
     "noTimeSlotsForDate": "Pro tento den nejsou dostupné časy. Zkuste jiný den.",
     "noTimeSlotsForDuration": "Pro tuto délku nejsou dostupné časy. Zkuste jinou délku nebo den.",
     "clubTime": "čas klubu",

@@ -27,6 +27,15 @@
       "settings": "Podešavanja",
       "eraseTime": "Ukloni vreme"
     },
+    "editModal": {
+      "title": "Izmeni detalje",
+      "unsavedChanges": "Nesačuvane izmene",
+      "autoSaveNote": "Izmene ovde se čuvaju automatski",
+      "discardTitle": "Odbaciti izmene?",
+      "discardMessage": "Imate nesačuvane izmene koje će biti izgubljene ako sada zatvorite.",
+      "discardConfirm": "Odbaci",
+      "keepEditing": "Nastavi sa izmenama"
+    },
     "locationTime": {
       "tabLabel": "Lokacija i vreme",
       "partialSaveFailed": "Neke izmene su sačuvane, ali {{step}} nije ažurirano. Proverite i pokušajte ponovo.",

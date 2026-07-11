@@ -69,6 +69,10 @@ export const ParticipantsSetupSection = ({
     }
   }, [showMatchFormat, maxParticipants, playersPerMatch, onPlayersPerMatchChange]);
 
+  if (!showRosterSelector && !shouldShowMatchFormat) {
+    return null;
+  }
+
   const handleParticipantsChange = (num: number) => {
     onMaxParticipantsChange(num);
     if (showMatchFormat && num === 2) {

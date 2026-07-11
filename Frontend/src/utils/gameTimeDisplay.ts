@@ -208,6 +208,24 @@ export type DateLabelInClubTzOptions = {
   compactWeekday?: boolean;
 };
 
+/** Localized "Today" / "Tomorrow" / "Yesterday" for the calendar day of `date` in `timezone`, else null. */
+export function getRelativeDayLabel(
+  date: Date | string,
+  timezone: string,
+  t: (key: string) => string
+): string | null {
+  const now = new Date();
+  const gameKey = getDateKeyInTimezone(date, timezone);
+  if (gameKey === getDateKeyInTimezone(now, timezone)) return t('createGame.today');
+  if (gameKey === getDateKeyInTimezone(new Date(now.getTime() + 86400000), timezone)) {
+    return t('createGame.tomorrow');
+  }
+  if (gameKey === getDateKeyInTimezone(new Date(now.getTime() - 86400000), timezone)) {
+    return t('createGame.yesterday');
+  }
+  return null;
+}
+
 export function getDateLabelInClubTz(
   date: Date | string,
   clubTz: string | null,
@@ -218,14 +236,8 @@ export function getDateLabelInClubTz(
   if (!clubTz) {
     return '';
   }
-  const now = new Date();
-  const gameKey = getDateKeyInTimezone(date, clubTz);
-  const todayKey = getDateKeyInTimezone(now, clubTz);
-  const tomorrowKey = getDateKeyInTimezone(new Date(now.getTime() + 86400000), clubTz);
-  const yesterdayKey = getDateKeyInTimezone(new Date(now.getTime() - 86400000), clubTz);
-  if (gameKey === todayKey) return t('createGame.today');
-  if (gameKey === tomorrowKey) return t('createGame.tomorrow');
-  if (gameKey === yesterdayKey) return t('createGame.yesterday');
+  const relative = getRelativeDayLabel(date, clubTz, t);
+  if (relative) return relative;
   const part = options?.compactWeekday ? 'weekdayShortAndDate' : 'weekdayAndDate';
   return formatDatePartInTimezone(date, clubTz, displaySettings, part);
 }

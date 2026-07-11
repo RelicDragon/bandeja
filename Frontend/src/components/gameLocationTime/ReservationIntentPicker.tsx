@@ -234,7 +234,7 @@ function ModernOptionPicker<T extends string>({
 
   const segmentedOptions = order
     .map((id) => byId.get(id))
-    .filter((option): option is NonNullable<typeof option> => option != null)
+    .filter((option): option is NonNullable<typeof option> => option != null && option.enabled)
     .map((option) => ({
       id: option.id,
       enabled: option.enabled,

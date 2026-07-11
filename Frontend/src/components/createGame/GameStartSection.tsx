@@ -1,4 +1,5 @@
-import { ArrowUp, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowUp, Clock } from 'lucide-react';
+import { LocationTimeStepHeader } from '@/components/gameLocationTime/LocationTimeStepHeader';
 import { useTranslation } from 'react-i18next';
 import { useCallback, useEffect, useMemo, useState, RefObject, type ReactNode } from 'react';
 import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSection';
@@ -300,8 +301,23 @@ export const GameStartSection = ({
     />
   );
 
+  const selectedTimeTrailing = (() => {
+    if (!selectedTime) return null;
+    if (entityType === 'BAR' || !duration) return selectedTime;
+    const [h, m] = selectedTime.split(':').map(Number);
+    const endMinutes = h * 60 + m + Math.round(duration * 60);
+    const endLabel = `${String(Math.floor(endMinutes / 60) % 24).padStart(2, '0')}:${String(endMinutes % 60).padStart(2, '0')}`;
+    return `${selectedTime}–${endLabel}`;
+  })();
+
   const timeSlotsSection = (
     <>
+      <LocationTimeStepHeader
+        icon={Clock}
+        title={t('createGame.locationSteps.time')}
+        done={Boolean(selectedTime)}
+        trailing={selectedTimeTrailing}
+      />
       {showDurationPicker ? (
         <CreateGameDurationSelector
           duration={duration}
@@ -407,15 +423,18 @@ export const GameStartSection = ({
   );
 
   const content = (
-    <div className={compact ? 'space-y-4' : 'space-y-4'}>
-      {dateSection}
+    <div className="space-y-4">
       {clubPickerSection}
       {showClubPicker && !selectedClub ? (
-        <div className="px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 text-sm text-center">
-          {t('createGame.selectClubFirst')}
+        <div className="flex items-center justify-center gap-2 rounded-lg border border-dashed border-gray-200 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-500 dark:text-gray-400">
+          <ArrowUp size={16} className="shrink-0" aria-hidden />
+          <span className="text-center">{t('createGame.selectClubFirst')}</span>
         </div>
       ) : (
-        afterClubScheduling
+        <>
+          {dateSection}
+          {afterClubScheduling}
+        </>
       )}
     </div>
   );
@@ -426,18 +445,6 @@ export const GameStartSection = ({
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <CalendarIcon size={18} className="text-gray-500 dark:text-gray-400" />
-        <h2 className="section-title">
-          {entityType === 'TOURNAMENT'
-            ? t('createGame.gameStartTournament')
-            : entityType === 'LEAGUE'
-              ? t('createGame.gameStartLeague')
-              : entityType === 'TRAINING'
-                ? t('createGame.gameStartTraining')
-                : t('createGame.gameStart')}
-        </h2>
-      </div>
       {content}
     </div>
   );

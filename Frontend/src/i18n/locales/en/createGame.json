@@ -1,6 +1,23 @@
 {
   "createGame": {
     "title": "Create Game",
+    "identity": {
+      "label": "Name & photo",
+      "optional": "Optional"
+    },
+    "steps": {
+      "setup": "Game setup",
+      "location": "Location & time",
+      "players": "Players",
+      "details": "Settings & details"
+    },
+    "footer": {
+      "selectClubHint": "Choose a club to continue"
+    },
+    "locationSteps": {
+      "date": "Date",
+      "time": "Start time"
+    },
     "pickSport": "Choose sport",
     "createBar": "Create Bar Event",
     "createTraining": "Create Training Session",
@@ -213,7 +230,6 @@
     "startTime": "Start Time",
     "endTime": "End Time",
     "duration": "Duration",
-    "selectTime": "Select Time",
     "noTimeSlotsForDate": "No available times for this date. Try another day.",
     "noTimeSlotsForDuration": "No available times for this duration. Try another duration or date.",
     "clubTime": "club time",

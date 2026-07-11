@@ -24,6 +24,15 @@
       "settings": "Nastavení",
       "eraseTime": "Zrušit čas"
     },
+    "editModal": {
+      "title": "Upravit údaje",
+      "unsavedChanges": "Neuložené změny",
+      "autoSaveNote": "Změny zde se ukládají automaticky",
+      "discardTitle": "Zahodit změny?",
+      "discardMessage": "Máte neuložené změny, které se zavřením ztratí.",
+      "discardConfirm": "Zahodit",
+      "keepEditing": "Pokračovat v úpravách"
+    },
     "locationTime": {
       "tabLabel": "Místo a čas",
       "partialSaveFailed": "Některé změny byly uloženy, ale {{step}} se nepodařilo aktualizovat. Zkontrolujte a zkuste to znovu.",

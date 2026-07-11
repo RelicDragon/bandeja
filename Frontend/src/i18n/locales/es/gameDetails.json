@@ -27,6 +27,15 @@
       "settings": "Ajustes",
       "eraseTime": "Quitar hora"
     },
+    "editModal": {
+      "title": "Editar detalles",
+      "unsavedChanges": "Cambios sin guardar",
+      "autoSaveNote": "Los cambios aquí se guardan automáticamente",
+      "discardTitle": "¿Descartar cambios?",
+      "discardMessage": "Tienes cambios sin guardar que se perderán si cierras ahora.",
+      "discardConfirm": "Descartar",
+      "keepEditing": "Seguir editando"
+    },
     "locationTime": {
       "tabLabel": "Ubicación y horario",
       "partialSaveFailed": "Algunos cambios se guardaron, pero no se pudo actualizar {{step}}. Revise e inténtelo de nuevo.",

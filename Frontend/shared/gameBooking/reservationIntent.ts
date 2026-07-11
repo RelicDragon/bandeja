@@ -130,17 +130,20 @@ export function resolveEditReservationActionOptions(input: {
     input.hasBooktimeAuthPath &&
     input.hasReservationsForDate === true;
 
-  const options: EditReservationActionOption[] = [
-    {
+  const options: EditReservationActionOption[] = [];
+
+  if (input.hasLinkedBookings) {
+    options.push({
       id: 'keepCurrent',
-      enabled: input.hasLinkedBookings,
-      recommended: input.hasLinkedBookings,
-    },
-    {
-      id: 'changeGameTimeOnly',
       enabled: true,
-    },
-  ];
+      recommended: true,
+    });
+  }
+
+  options.push({
+    id: 'changeGameTimeOnly',
+    enabled: true,
+  });
 
   if (showUseExisting) {
     options.push({
@@ -158,10 +161,14 @@ export function resolveEditReservationActionOptions(input: {
   }
 
   options.push(
-    {
-      id: 'unlink',
-      enabled: input.hasLinkedBookings,
-    },
+    ...(input.hasLinkedBookings
+      ? [
+          {
+            id: 'unlink' as const,
+            enabled: true,
+          },
+        ]
+      : []),
     {
       id: 'gameOnly',
       enabled: true,

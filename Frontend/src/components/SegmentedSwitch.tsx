@@ -30,6 +30,8 @@ interface SegmentedSwitchBaseProps {
   activeLabelMaxWidth?: number;
   /** `notification`: red corner badge (default). `inline`: gray pill on the same row as label/icon. */
   badgeStyle?: 'notification' | 'inline';
+  /** Stretch container to full width with equal-width tabs (horizontal only). */
+  fullWidth?: boolean;
 }
 
 type SegmentedSwitchProps = SegmentedSwitchBaseProps &
@@ -51,6 +53,7 @@ export const SegmentedSwitch = ({
   activeLabelMaxWidth = 96,
   allowDeselect = false,
   badgeStyle = 'notification',
+  fullWidth = false,
 }: SegmentedSwitchProps) => {
   const isVertical = orientation === 'vertical';
 
@@ -68,7 +71,7 @@ export const SegmentedSwitch = ({
     aria-label={ariaLabel}
     aria-orientation={isVertical ? 'vertical' : 'horizontal'}
     className={`relative flex items-stretch gap-1 overflow-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${
-      isVertical ? 'w-full flex-col' : 'w-fit'
+      isVertical ? 'w-full flex-col' : fullWidth ? 'w-full' : 'w-fit'
     } ${className}`.trim()}
   >
     {tabs.map((tab) => {
@@ -87,7 +90,7 @@ export const SegmentedSwitch = ({
           onClick={() => handleTabClick(tab.id, tab.disabled)}
           className={`relative flex min-w-0 items-center rounded-md py-2.5 text-sm font-medium transition-colors duration-200 ${
             isVertical ? 'w-full justify-start gap-2.5 text-left' : 'justify-center gap-1.5'
-          } ${pad} ${
+          } ${!isVertical && fullWidth ? 'flex-1' : ''} ${pad} ${
             disabled || tab.disabled
               ? 'cursor-not-allowed opacity-50'
               : isActive

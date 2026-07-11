@@ -146,6 +146,13 @@ export const EditGameInfoModal = ({
     () => game.linkedBookings?.map((b) => b.externalBookingId) ?? [],
     [game.linkedBookings],
   );
+  const initialLinkedCourtIdsKey = useMemo(
+    () =>
+      (game.gameCourts?.map((gc) => gc.courtId) ?? (game.courtId ? [game.courtId] : [])).join(','),
+    [game.gameCourts, game.courtId],
+  );
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+  const firstLocationDraftRef = useRef<EditLocationTimeDraft | null>(null);
   const hasLocationTimeDraft = locationTimeDraft != null;
   const pendingUnlinkIds = useMemo(
     () =>
@@ -165,6 +172,7 @@ export const EditGameInfoModal = ({
     ],
   );
   const handleLocationTimeDraftChange = useCallback((draft: EditLocationTimeDraft) => {
+    if (firstLocationDraftRef.current == null) firstLocationDraftRef.current = draft;
     setLocationTimeDraft((prev) => (areEditLocationTimeDraftsEqual(prev, draft) ? prev : draft));
   }, []);
   const [selectedCourtIds, setSelectedCourtIds] = useState<string[]>(() =>
@@ -267,6 +275,8 @@ export const EditGameInfoModal = ({
       );
       setPendingRemoveBookingIds([]);
       setLocationTimeDraft(null);
+      firstLocationDraftRef.current = null;
+      setShowDiscardConfirm(false);
       setConfirmModalOpen(false);
       setShowConfirmUnlinkSave(false);
       setTimeout(() => setDisableWhenAutoAdjust(false), 200);
@@ -519,6 +529,47 @@ export const EditGameInfoModal = ({
     (willBookOnEdit || bookingsModeActive) &&
     !needsBooktimeAuth &&
     selectedClubData?.integrationType === 'BOOKTIME';
+
+  const initialGeneral = useMemo(() => getInitialGeneralState(game), [game]);
+  const initialPrice = useMemo(() => getInitialPriceState(game, userCurrency), [game, userCurrency]);
+  const generalDirty =
+    general.name !== initialGeneral.name ||
+    general.description !== initialGeneral.description ||
+    general.pendingAvatar != null ||
+    general.removeAvatar;
+  const isPaidPriceType = price.priceType !== 'NOT_KNOWN' && price.priceType !== 'FREE';
+  const priceDirty =
+    price.priceType !== initialPrice.priceType ||
+    (isPaidPriceType &&
+      ((price.priceTotal ?? null) !== (initialPrice.priceTotal ?? null) ||
+        (price.priceCurrency ?? null) !== (initialPrice.priceCurrency ?? null)));
+  const scheduleDirty =
+    where.clubId !== (game.clubId || '') ||
+    where.hasBookedCourt !== (game.hasBookedCourt ?? false) ||
+    selectedCourtIds.join(',') !== initialLinkedCourtIdsKey ||
+    whenSelectedTime !== whenInitialValues.initialTime ||
+    whenDuration !== whenInitialValues.initialDuration ||
+    whenSelectedDate.toDateString() !== whenInitialValues.initialDate.toDateString() ||
+    pendingRemoveBookingIds.length > 0;
+  const firstDraft = firstLocationDraftRef.current;
+  const locationDraftDirty =
+    locationTimeDraft != null &&
+    firstDraft != null &&
+    (locationTimeDraft.editReservationAction !== firstDraft.editReservationAction ||
+      locationTimeDraft.timeOverride !== firstDraft.timeOverride ||
+      locationTimeDraft.overrideStartTime !== firstDraft.overrideStartTime ||
+      locationTimeDraft.overrideEndTime !== firstDraft.overrideEndTime ||
+      locationTimeDraft.selectedBookingIds.join(',') !== firstDraft.selectedBookingIds.join(','));
+  const isDirty = generalDirty || priceDirty || scheduleDirty || locationDraftDirty;
+
+  const handleRequestClose = useCallback(() => {
+    if (isSaving) return;
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    onClose();
+  }, [isSaving, isDirty, onClose]);
 
   const handleRemoveTime = async () => {
     if (!game.id) return;
@@ -798,10 +849,10 @@ export const EditGameInfoModal = ({
 
   return (
     <>
-    <Dialog open={isOpen} onClose={onClose} modalId="edit-game-info-modal">
+    <Dialog open={isOpen} onClose={handleRequestClose} modalId="edit-game-info-modal">
       <DialogContent className="max-w-[480px]">
-        <DialogHeader className="flex-col items-start gap-3 pt-10 pr-10">
-          <DialogTitle className="sr-only">{t('common.edit')}</DialogTitle>
+        <DialogHeader className="flex-col items-stretch gap-3 pb-3">
+          <DialogTitle>{t('gameDetails.editModal.title')}</DialogTitle>
           <SegmentedSwitch
             tabs={segmentedTabs}
             activeId={activeTab}
@@ -810,7 +861,7 @@ export const EditGameInfoModal = ({
             activeLabelMaxWidth={200}
             layoutId="edit-game-info-tabs"
             disabled={isSaving}
-            className="w-fit max-w-full"
+            fullWidth
           />
         </DialogHeader>
         <div ref={contentScrollRef} className="overflow-y-auto flex-1 min-h-0 px-6 py-4">
@@ -925,21 +976,31 @@ export const EditGameInfoModal = ({
           )}
         </div>
         {activeTab !== 'settings' ? (
-        <DialogFooter className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-800">
+        <DialogFooter className="flex items-center gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+          <span
+            aria-live="polite"
+            className={`flex-1 min-w-0 truncate text-xs transition-opacity duration-200 ${
+              isDirty && !isSaving
+                ? 'text-amber-600 dark:text-amber-400 opacity-100'
+                : 'opacity-0'
+            }`}
+          >
+            {t('gameDetails.editModal.unsavedChanges')}
+          </span>
           <button
             type="button"
-            onClick={onClose}
+            onClick={handleRequestClose}
             disabled={isSaving}
-            className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors disabled:opacity-50"
           >
             {t('common.cancel')}
           </button>
           <button
             type="button"
             onClick={handleSave}
-            disabled={isSaving}
+            disabled={isSaving || !isDirty}
             aria-busy={isSaving}
-            className="flex items-center justify-center gap-2 min-w-[6.5rem] px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 min-w-[6.5rem] px-5 py-2.5 text-sm font-semibold bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {isSaving ? (
               <Loader2 size={18} className="animate-spin shrink-0" aria-hidden />
@@ -950,11 +1011,14 @@ export const EditGameInfoModal = ({
           </button>
         </DialogFooter>
         ) : (
-          <div className="flex justify-end p-6 border-t border-gray-200 dark:border-gray-800">
+          <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+            <span className="flex-1 min-w-0 text-xs text-gray-500 dark:text-gray-400">
+              {t('gameDetails.editModal.autoSaveNote')}
+            </span>
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              onClick={handleRequestClose}
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
             >
               {t('common.close')}
             </button>
@@ -962,6 +1026,20 @@ export const EditGameInfoModal = ({
         )}
       </DialogContent>
     </Dialog>
+
+    <ConfirmationModal
+      isOpen={showDiscardConfirm}
+      onClose={() => setShowDiscardConfirm(false)}
+      onConfirm={() => {
+        setShowDiscardConfirm(false);
+        onClose();
+      }}
+      title={t('gameDetails.editModal.discardTitle')}
+      message={t('gameDetails.editModal.discardMessage')}
+      confirmText={t('gameDetails.editModal.discardConfirm')}
+      cancelText={t('gameDetails.editModal.keepEditing')}
+      confirmVariant="danger"
+    />
 
     <ConfirmationModal
       isOpen={softOverlapOpen}

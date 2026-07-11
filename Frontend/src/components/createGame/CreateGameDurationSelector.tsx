@@ -31,20 +31,23 @@ export function CreateGameDurationSelector({
   if (durationTabs.length === 0) return null;
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-        {t('createGame.duration')}
-      </label>
-      {connectedPhone ? (
-        <span className="text-[10px] font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/40 px-2 py-0.5 rounded-full">
-          {t('createGame.booktime.connectedChip', { phone: connectedPhone })}
-        </span>
-      ) : null}
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between gap-2">
+        <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+          {t('createGame.duration')}
+        </label>
+        {connectedPhone ? (
+          <span className="min-w-0 truncate text-[10px] font-medium text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/40 px-2 py-0.5 rounded-full">
+            {t('createGame.booktime.connectedChip', { phone: connectedPhone })}
+          </span>
+        ) : null}
+      </div>
       <SegmentedSwitch
         tabs={durationTabs}
         activeId={String(duration)}
         onChange={(id) => onDurationChange(Number(id))}
         showOnlyActiveTabText={false}
+        fullWidth
         layoutId="create-game-duration"
         ariaLabel={t('createGame.duration')}
       />

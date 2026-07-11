@@ -1,8 +1,12 @@
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { LayoutGrid } from 'lucide-react';
 import { ToggleSwitch } from '../ToggleSwitch';
 import { CourtSelectionGrid } from './CourtSelectionGrid';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
+import { computeRequiredCourtCount } from '@/utils/requiredCourtCount';
+import { resolveCourtNameParts } from '@/utils/courtDisplayName';
+import { LocationTimeStepHeader } from '@/components/gameLocationTime/LocationTimeStepHeader';
 import type { Club, Court, EntityType, Sport } from '@/types';
 
 interface CreateGameCourtSectionProps {
@@ -65,13 +69,28 @@ export const CreateGameCourtSection = memo(function CreateGameCourtSection({
     !courtHasActiveBookingIntegration(club, court) &&
     !multiSelectCourts;
 
+  const requiredCourtCount = computeRequiredCourtCount(maxParticipants, playersPerMatch);
+  const courtDone = multiSelectCourts
+    ? selectedCourtIds.length >= requiredCourtCount
+    : selectedCourt !== 'notBooked';
+  const courtTrailing = multiSelectCourts
+    ? selectedCourtIds.length > 0
+      ? `${selectedCourtIds.length}/${requiredCourtCount}`
+      : null
+    : court
+      ? resolveCourtNameParts(court.name, court.integrationCourtName).name
+      : null;
+
   return (
     <div className="space-y-3">
       {!(entityType === 'BAR' && courts.length === 1) && (
         <div>
-          <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">
-            {entityType === 'BAR' ? t('createGame.hall') : t('createGame.court')}
-          </label>
+          <LocationTimeStepHeader
+            icon={LayoutGrid}
+            title={entityType === 'BAR' ? t('createGame.hall') : t('createGame.court')}
+            done={courtDone}
+            trailing={courtTrailing}
+          />
           <CourtSelectionGrid
             club={club}
             courts={courts}
