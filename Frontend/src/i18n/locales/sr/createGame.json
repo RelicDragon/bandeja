@@ -425,7 +425,8 @@
       "syncInactiveEdit": "Sinhronizacija trenutno nije aktivna — ne možemo učitati termine niti rezervisati teren. Igru i dalje možete izmeniti u ovo vreme."
     },
     "reservationIntent": {
-      "title": "Rezervacija terena",
+      "title": "Kako obezbeđuješ teren?",
+      "otherOptions": "Druge opcije",
       "recommended": "Preporučeno",
       "validation": {
         "selectCourt": "Prvo izaberite {{count}} teren(a).",
@@ -436,20 +437,21 @@
         "bookingRecordsLoading": "Učitavamo detalje rezervacija — sačekajte trenutak i pokušajte ponovo."
       },
       "reserveNow": {
-        "title": "Rezerviši teren sada",
-        "description": "Izaberite slobodan termin i teren — aplikacija rezerviše pri kreiranju igre."
+        "title": "Rezerviši teren",
+        "description": "Izaberi termin — mi rezervišemo za tebe."
       },
       "useExisting": {
-        "title": "Koristi postojeću rezervaciju",
-        "description": "Poveži rezervaciju/e koje već imaš na nalogu kluba."
+        "title": "Već imam rezervaciju",
+        "description": "Poveži rezervaciju sa naloga kluba.",
+        "contextAvailable": "{{count}} dostupno na ovaj datum"
       },
       "gameOnly": {
-        "title": "Samo igra",
-        "description": "Kreiraj igru bez stvarne rezervacije ili oznake da je teren rezervisan."
+        "title": "Bez rezervacije terena",
+        "description": "Samo kreiraj igru — teren se ne rezerviše."
       },
       "manualBooked": {
         "title": "Već ručno rezervisano",
-        "description": "Označi igru kao rezervisanu bez online integracije."
+        "description": "Označi kao rezervisano bez online rezervacije."
       },
       "summary": {
         "reserveNow": {

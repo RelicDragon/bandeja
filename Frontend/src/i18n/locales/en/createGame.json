@@ -284,7 +284,8 @@
       "syncInactiveEdit": "Sync isn't active right now — we couldn't retrieve slots or make bookings here. You can still edit the game at this time."
     },
     "reservationIntent": {
-      "title": "Court reservation",
+      "title": "How are you getting the court?",
+      "otherOptions": "Other options",
       "recommended": "Recommended",
       "validation": {
         "selectCourt": "Select {{count}} court(s) first.",
@@ -295,20 +296,21 @@
         "bookingRecordsLoading": "Still loading your reservation details — try again in a moment."
       },
       "reserveNow": {
-        "title": "Reserve court now",
-        "description": "Pick available court time and the app will reserve it when you create."
+        "title": "Book a court",
+        "description": "Choose a time — we'll book it for you."
       },
       "useExisting": {
-        "title": "Use existing reservation",
-        "description": "Link reservation(s) already in your club account."
+        "title": "I already have a booking",
+        "description": "Connect a reservation from your club account.",
+        "contextAvailable": "{{count}} available on this date"
       },
       "gameOnly": {
-        "title": "Game only",
-        "description": "Create the game without making or marking a real court reservation."
+        "title": "Skip court booking",
+        "description": "Just create the game — no court reserved."
       },
       "manualBooked": {
         "title": "Already booked manually",
-        "description": "Mark the game as booked without using the online reservation integration."
+        "description": "Mark as booked without online reservation."
       },
       "summary": {
         "reserveNow": {

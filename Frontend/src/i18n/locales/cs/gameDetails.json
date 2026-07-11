@@ -36,31 +36,37 @@
       "unlinkNoCancelHint": "Rezervace kurtu u klubu zůstane aktivní — odebíráme jen propojení s touto hrou.",
       "unlinkSaveConfirmTitle": "Odebrat propojení rezervací?",
       "unlinkSaveConfirmMessage": "Odebíráte {{count}} propojení rezervací s touto hrou. Skutečné rezervace kurtů se automaticky nezruší.",
-      "reservationActionTitle": "Rezervace kurtu",
-      "reservationActionSubtitle": "Vyberte, co se má stát při uložení.",
+      "reservationActionTitle": "Co se má stát s kurtem?",
+      "reservationActionSubtitle": "Vyberte, co se změní při uložení.",
       "reservationAction": {
         "keepCurrent": {
           "title": "Ponechat současnou rezervaci",
+          "chipTitle": "Ponechat",
           "description": "Zachovat propojené rezervace a rozvrh."
         },
         "changeGameTimeOnly": {
           "title": "Změnit pouze čas hry",
+          "chipTitle": "Jen čas",
           "description": "Upravit rozvrh hry bez změny propojení rezervací."
         },
         "useExisting": {
           "title": "Použít existující rezervaci",
+          "chipTitle": "Propojit",
           "description": "Nahradit propojení rezervacemi z vašeho účtu klubu."
         },
         "reserveNew": {
           "title": "Rezervovat nový kurt",
+          "chipTitle": "Nová rez.",
           "description": "Při uložení vytvořit novou skutečnou rezervaci klubu."
         },
         "unlink": {
           "title": "Odpojit rezervaci",
+          "chipTitle": "Odpojit",
           "description": "Odebrat propojení rezervací pouze z této hry."
         },
         "gameOnly": {
           "title": "Pouze hra",
+          "chipTitle": "Bez rez.",
           "description": "Ponechat hru v kalendáři bez propojení se skutečnou rezervací."
         }
       },

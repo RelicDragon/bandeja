@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Court } from '@/types';
-import { resolveReservationPickerCourts } from './resolveReservationPickerCourts';
+import { resolveReservationFetchCourts, resolveReservationPickerCourts } from './resolveReservationPickerCourts';
 
 const courts = [
   { id: 'court-a', name: 'Court A' },
@@ -36,5 +36,29 @@ describe('resolveReservationPickerCourts', () => {
         bookingMatchCourts: courts,
       }).map((court) => court.id),
     ).toEqual(['court-b', 'court-a']);
+  });
+});
+
+describe('resolveReservationFetchCourts', () => {
+  it('uses all club courts when linking existing reservations', () => {
+    expect(
+      resolveReservationFetchCourts({
+        locationTimeMode: 'bookings',
+        selectedCourtIds: ['court-a'],
+        courts,
+        bookingMatchCourts: courts,
+      }).map((court) => court.id),
+    ).toEqual(['court-a', 'court-b']);
+  });
+
+  it('narrows courts for reserve-now scheduling', () => {
+    expect(
+      resolveReservationFetchCourts({
+        locationTimeMode: 'timeSlots',
+        selectedCourtIds: ['court-a'],
+        courts,
+        bookingMatchCourts: courts,
+      }).map((court) => court.id),
+    ).toEqual(['court-a']);
   });
 });

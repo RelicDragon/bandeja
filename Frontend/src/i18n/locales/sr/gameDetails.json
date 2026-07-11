@@ -39,31 +39,37 @@
       "unlinkNoCancelHint": "Rezervacija terena u klubu ostaje aktivna — uklanjamo samo vezu sa ovom igrom.",
       "unlinkSaveConfirmTitle": "Ukloniti veze rezervacija?",
       "unlinkSaveConfirmMessage": "Uklanjate {{count}} vezu(e) rezervacija sa ovom igrom. Stvarne rezervacije terena se automatski ne otkazuju.",
-      "reservationActionTitle": "Rezervacija terena",
-      "reservationActionSubtitle": "Izaberite šta treba da se desi pri čuvanju.",
+      "reservationActionTitle": "Šta treba da se desi sa terenom?",
+      "reservationActionSubtitle": "Izaberi šta se menja pri čuvanju.",
       "reservationAction": {
         "keepCurrent": {
           "title": "Zadrži trenutnu rezervaciju",
+          "chipTitle": "Zadrži",
           "description": "Sačuvaj povezane rezervacije i raspored."
         },
         "changeGameTimeOnly": {
           "title": "Promeni samo vreme igre",
+          "chipTitle": "Samo vreme",
           "description": "Ažuriraj raspored igre bez promene veza rezervacija."
         },
         "useExisting": {
           "title": "Koristi postojeću rezervaciju",
+          "chipTitle": "Poveži",
           "description": "Zameni veze rezervacijama sa tvog naloga kluba."
         },
         "reserveNew": {
           "title": "Rezerviši novi teren",
+          "chipTitle": "Nova rez.",
           "description": "Kreiraj novu stvarnu rezervaciju kluba pri čuvanju."
         },
         "unlink": {
           "title": "Ukloni vezu rezervacije",
+          "chipTitle": "Ukloni",
           "description": "Ukloni veze rezervacija samo sa ove igre."
         },
         "gameOnly": {
           "title": "Samo igra",
+          "chipTitle": "Bez rez.",
           "description": "Zadrži igru u rasporedu bez veze sa stvarnom rezervacijom."
         }
       },

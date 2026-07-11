@@ -955,6 +955,9 @@ export function useCreateGameBookingFlow({
     reservationIntent,
     setReservationIntent,
     reservationIntentOptions,
+    availableReservationCount: clubDateReservations.bookingsLoaded
+      ? clubDateReservations.dateBookings.length
+      : undefined,
   };
 }
 

@@ -85,8 +85,7 @@ test.describe('create game entry @auth', () => {
     await createGame.pickDefaultTemplateIfShown();
     await createGame.selectFirstClub();
     const intentVisible = await page
-      .getByText(/court reservation/i)
-      .first()
+      .getByTestId('reservation-intent-picker')
       .isVisible({ timeout: 5_000 })
       .catch(() => false);
     test.skip(!intentVisible, 'No BOOKTIME-integrated club in test city');

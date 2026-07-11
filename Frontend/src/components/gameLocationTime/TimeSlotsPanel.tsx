@@ -8,7 +8,6 @@ type TimeSlotsPanelProps = {
   timeSlotsChildren: ReactNode;
   reservationsStrip?: ReactNode;
   hintSection?: ReactNode;
-  linkHintSection?: ReactNode;
   overrideSection?: ReactNode;
   authGateSection?: ReactNode;
   summarySection?: ReactNode;
@@ -27,7 +26,6 @@ export function TimeSlotsPanel({
   timeSlotsChildren,
   reservationsStrip,
   hintSection,
-  linkHintSection,
   overrideSection,
   authGateSection,
   summarySection,
@@ -46,7 +44,6 @@ export function TimeSlotsPanel({
       {!needsBooktimeAuth ? reservationsStrip : null}
       {hintSection}
       {showTimeSlots ? timeSlotsChildren : null}
-      {linkHintSection}
       {overrideSection}
       {summarySection}
       {consequenceSection}

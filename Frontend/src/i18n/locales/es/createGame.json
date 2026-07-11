@@ -422,7 +422,8 @@
       "syncInactiveEdit": "La sincronización no está activa — no podemos obtener horarios ni reservar pista. Aún puedes editar el partido a esta hora."
     },
     "reservationIntent": {
-      "title": "Reserva de pista",
+      "title": "¿Cómo tienes la pista?",
+      "otherOptions": "Otras opciones",
       "recommended": "Recomendado",
       "validation": {
         "selectCourt": "Selecciona {{count}} cancha(s) primero.",
@@ -433,20 +434,21 @@
         "bookingRecordsLoading": "Cargando los detalles de tus reservas — inténtalo de nuevo en un momento."
       },
       "reserveNow": {
-        "title": "Reservar pista ahora",
-        "description": "Elige horario y cancha disponibles; la app reservará al crear el partido."
+        "title": "Reservar pista",
+        "description": "Elige un horario — reservamos por ti."
       },
       "useExisting": {
-        "title": "Usar reserva existente",
-        "description": "Vincula reserva(s) que ya tienes en tu cuenta del club."
+        "title": "Ya tengo una reserva",
+        "description": "Vincula una reserva de tu cuenta del club.",
+        "contextAvailable": "{{count}} disponibles en esta fecha"
       },
       "gameOnly": {
-        "title": "Solo partido",
-        "description": "Crea el partido sin hacer ni marcar una reserva real de pista."
+        "title": "Sin reserva de pista",
+        "description": "Solo crear el partido — sin pista reservada."
       },
       "manualBooked": {
         "title": "Ya reservado manualmente",
-        "description": "Marca el partido como reservado sin usar la integración online."
+        "description": "Marcar como reservado sin reserva online."
       },
       "summary": {
         "reserveNow": {

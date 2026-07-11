@@ -20,7 +20,6 @@ import { useGameTimeDuration, formatTimeInClubTimezone, createDateFromClubTime, 
 import { formatGameDurationLabel } from '@/utils/formatGameDurationLabel';
 import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocationTimePanel';
 import { ReservationIntentPicker } from '@/components/gameLocationTime/ReservationIntentPicker';
-import { ReservationSummaryCard } from '@/components/gameLocationTime/ReservationSummaryCard';
 import type { CreateGameBookingOverrides } from '@/hooks/createGameBookingFlow';
 import { useCreateGameBookingFlow } from '@/hooks/createGameBookingFlow';
 import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
@@ -465,6 +464,7 @@ export const CreateGame = ({
     reservationIntent,
     setReservationIntent,
     reservationIntentOptions,
+    availableReservationCount,
   } = bookingFlow;
 
   const booktimeScheduleConstrained = reservationIntent === 'reserveNow' && !needsBooktimeAuth;
@@ -1137,24 +1137,22 @@ export const CreateGame = ({
     ],
   );
 
+  const showReservationSummary =
+    reservationIntent === 'reserveNow'
+      ? !needsBooktimeAuth && Boolean(selectedTime)
+      : reservationIntent === 'gameOnly' || reservationIntent === 'manualBooked';
+
   const intentSection = (
     <ReservationIntentPicker
       value={reservationIntent}
       options={reservationIntentOptions}
       onChange={setReservationIntent}
-    />
-  );
-
-  const showReservationSummary =
-    reservationIntent !== 'reserveNow' || (!needsBooktimeAuth && Boolean(selectedTime));
-
-  const reservationSummarySection = showReservationSummary ? (
-    <ReservationSummaryCard
-      intent={reservationIntent}
       requiredCount={bookingSelectionLimits.min}
       selectedBookingCount={selectedBookingIds.length}
+      availableReservationCount={availableReservationCount}
+      showSummary={showReservationSummary}
     />
-  ) : null;
+  );
 
   const scrollToAndHighlightError = (ref: React.RefObject<HTMLDivElement | null>) => {
     if (ref.current) {
@@ -1660,7 +1658,6 @@ export const CreateGame = ({
                   onOverrideTimesChange={setOverrideTimes}
                   needsBooktimeAuth={needsBooktimeAuth}
                   intentSection={intentSection}
-                  summarySection={reservationSummarySection}
                   showDateSection={showReserveNowScheduling || reservationIntent !== 'reserveNow'}
                   showCourtSection={
                     reservationIntent === 'gameOnly' ||

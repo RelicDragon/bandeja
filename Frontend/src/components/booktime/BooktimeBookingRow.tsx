@@ -260,36 +260,39 @@ export function BooktimeBookingRow({
   }
 
   if (selectable) {
-    return (
-      <BooktimeBookingListItem entryVariants={entryVariants}>
-        <motion.button
-          type="button"
-          whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
-          disabled={dimmed || (selected && disableDeselect)}
-          onClick={onToggleSelect}
-          className={`relative w-full rounded-lg border px-3 py-2.5 flex items-center gap-3 text-left transition-opacity ${
+    const selectableRow = (
+      <motion.button
+        type="button"
+        whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
+        disabled={dimmed || (selected && disableDeselect)}
+        onClick={onToggleSelect}
+        className={`relative w-full rounded-lg border px-3 py-2.5 flex items-center gap-3 text-left transition-opacity ${
+          selected
+            ? 'border-primary-400 dark:border-primary-600 bg-primary-50/50 dark:bg-primary-950/30'
+            : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
+        } ${dimmed ? 'opacity-50 cursor-default' : ''} ${selected && disableDeselect ? 'cursor-default' : ''}`}
+      >
+        {cornerStack}
+        <span
+          className={`h-5 w-5 rounded-full border flex items-center justify-center shrink-0 ${
             selected
-              ? 'border-primary-400 dark:border-primary-600 bg-primary-50/50 dark:bg-primary-950/30'
-              : 'border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800'
-          } ${dimmed ? 'opacity-50 cursor-default' : ''} ${selected && disableDeselect ? 'cursor-default' : ''}`}
+              ? 'border-primary-500 bg-primary-500 text-white'
+              : 'border-gray-300 dark:border-gray-600'
+          }`}
         >
-          {cornerStack}
-          <span
-            className={`h-5 w-5 rounded-full border flex items-center justify-center shrink-0 ${
-              selected
-                ? 'border-primary-500 bg-primary-500 text-white'
-                : 'border-gray-300 dark:border-gray-600'
-            }`}
-          >
-            {selected ? (
-              <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 28 }}>
-                <Check size={12} />
-              </motion.span>
-            ) : null}
-          </span>
-          {rowContent}
-        </motion.button>
-      </BooktimeBookingListItem>
+          {selected ? (
+            <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 28 }}>
+              <Check size={12} />
+            </motion.span>
+          ) : null}
+        </span>
+        {rowContent}
+      </motion.button>
+    );
+    return nested ? (
+      selectableRow
+    ) : (
+      <BooktimeBookingListItem entryVariants={entryVariants}>{selectableRow}</BooktimeBookingListItem>
     );
   }
 

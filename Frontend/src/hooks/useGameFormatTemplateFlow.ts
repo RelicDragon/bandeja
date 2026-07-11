@@ -130,12 +130,16 @@ export function useGameFormatTemplateFlow({
   );
 
   const applyTemplateSelection = useCallback(
-    async (template: CreateTemplate, options?: { persist?: boolean }) => {
+    async (template: CreateTemplate, options?: { persist?: boolean; sync?: boolean }) => {
       explicitTemplatePickRef.current = true;
       userChoseManualRef.current = false;
       const next = { intent: template.tier, templateId: template.id } as const;
       applySelection(next, `${template.id}:${maxParticipants}`);
-      applyTemplateToFormatSync(template);
+      if (options?.sync === false) {
+        applyTemplateToFormat(template, gameFormatRef.current, maxParticipants);
+      } else {
+        applyTemplateToFormatSync(template);
+      }
       if (options?.persist) {
         await onAfterTemplateApply?.(template);
       }
@@ -280,7 +284,7 @@ export function useGameFormatTemplateFlow({
       skipInitialAutoSelect: false,
     });
     if (sportResult.type === 'repick') {
-      void applyTemplateSelection(getTemplate(sportResult.selection.templateId!));
+      void applyTemplateSelection(getTemplate(sportResult.selection.templateId!), { sync: false });
     } else {
       demoteToManualFormat();
     }
@@ -304,7 +308,7 @@ export function useGameFormatTemplateFlow({
     if (!enabled || repick.type === 'skip') return;
 
     if (repick.type === 'repick') {
-      void applyTemplateSelection(getTemplate(repick.selection.templateId!));
+      void applyTemplateSelection(getTemplate(repick.selection.templateId!), { sync: false });
     } else {
       demoteToManualFormat();
     }

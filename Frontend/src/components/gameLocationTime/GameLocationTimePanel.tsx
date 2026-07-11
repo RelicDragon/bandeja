@@ -6,7 +6,6 @@ import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { TimeSlotsPanel } from './TimeSlotsPanel';
 import { BooktimeRealBookingSection } from './BooktimeRealBookingSection';
 import { LocationTimeSummaryBar } from './LocationTimeSummaryBar';
-import { BookingLinkHintCard } from './BookingLinkHintCard';
 import { BookingTimeOverrideSection } from './BookingTimeOverrideSection';
 import { ReservationsStrip } from './ReservationsStrip';
 import { ReservationGridSyncProvider } from './ReservationGridSyncProvider';
@@ -19,7 +18,7 @@ import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration
 import { useAuthStore } from '@/store/authStore';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
 import { deriveGameTimeFromBookings } from '@shared/gameBooking/deriveGameTimeFromBookings';
-import { resolveReservationPickerCourts } from './resolveReservationPickerCourts';
+import { resolveReservationFetchCourts } from './resolveReservationPickerCourts';
 
 export type GameLocationTimePanelProps = {
   mode: 'create' | 'edit';
@@ -112,23 +111,6 @@ export function GameLocationTimePanel({
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const matchCourts = bookingMatchCourts ?? courts;
-  const reservationPickerCourts = useMemo(
-    () =>
-      resolveReservationPickerCourts({
-        selectedCourtIds,
-        courts,
-        bookingMatchCourts: matchCourts,
-      }),
-    [selectedCourtIds, courts, matchCourts],
-  );
-
-  const integratedCourts = useMemo(
-    () =>
-      selectedCourtIds
-        .map((id) => courts.find((c) => c.id === id))
-        .filter((c): c is Court => c != null && courtHasActiveBookingIntegration(club, c)),
-    [selectedCourtIds, courts, club],
-  );
 
   const reservationsEnabled =
     club != null &&
@@ -139,12 +121,31 @@ export function GameLocationTimePanel({
     booktimeConnected &&
     !needsBooktimeAuth;
 
+  const reservationFetchCourts = useMemo(
+    () =>
+      resolveReservationFetchCourts({
+        locationTimeMode,
+        selectedCourtIds,
+        courts,
+        bookingMatchCourts: matchCourts,
+      }),
+    [locationTimeMode, selectedCourtIds, courts, matchCourts],
+  );
+
+  const integratedCourts = useMemo(
+    () =>
+      selectedCourtIds
+        .map((id) => courts.find((c) => c.id === id))
+        .filter((c): c is Court => c != null && courtHasActiveBookingIntegration(club, c)),
+    [selectedCourtIds, courts, club],
+  );
+
   const clubReservations = useClubDateReservations({
     club,
     companyId: companyId ?? '',
     selectedDate: selectedDate ?? new Date(),
     enabled: reservationsEnabled,
-    matchCourts: reservationPickerCourts,
+    matchCourts: reservationFetchCourts,
   });
 
   const handleToggleBooking = useCallback(
@@ -226,21 +227,6 @@ export function GameLocationTimePanel({
     ],
   );
 
-  const linkHintSection =
-    locationTimeMode === 'bookings' &&
-    selectedBookings.length > 0 &&
-    club &&
-    companyId ? (
-      <BookingLinkHintCard
-        club={club}
-        courts={courts}
-        companyId={companyId}
-        clubTimezone={clubReservations.clubTimezone}
-        selectedBookings={selectedBookings}
-        displaySettings={displaySettings}
-      />
-    ) : null;
-
   const overrideSection =
     locationTimeMode === 'bookings' &&
     selectedBookings.length > 0 &&
@@ -316,7 +302,6 @@ export function GameLocationTimePanel({
             />
           ) : null
         }
-        linkHintSection={shouldShowReservations ? linkHintSection : null}
         overrideSection={overrideSection}
         summarySection={summarySection}
         consequenceSection={consequenceSection}
@@ -329,7 +314,7 @@ export function GameLocationTimePanel({
           startTime={derivedSummary.startTime}
           endTime={derivedSummary.endTime}
           displaySettings={displaySettings}
-          visible={derivedSummary.count > 0}
+          visible={derivedSummary.count > 1}
         />
       ) : null}
     </div>

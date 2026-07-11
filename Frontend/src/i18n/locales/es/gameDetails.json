@@ -39,31 +39,37 @@
       "unlinkNoCancelHint": "La reserva de pista en el club sigue activa — solo quitamos el vínculo con este partido.",
       "unlinkSaveConfirmTitle": "¿Quitar enlaces de reserva?",
       "unlinkSaveConfirmMessage": "Vas a desvincular {{count}} reserva(s) de este partido. Las reservas reales de pista no se cancelarán automáticamente.",
-      "reservationActionTitle": "Reserva de pista",
-      "reservationActionSubtitle": "Elige qué debe ocurrir al guardar.",
+      "reservationActionTitle": "¿Qué debe pasar con la pista?",
+      "reservationActionSubtitle": "Elige qué cambia al guardar.",
       "reservationAction": {
         "keepCurrent": {
           "title": "Mantener reserva actual",
+          "chipTitle": "Mantener",
           "description": "Conserva la(s) reserva(s) vinculada(s) y el horario."
         },
         "changeGameTimeOnly": {
           "title": "Cambiar solo horario del partido",
+          "chipTitle": "Solo hora",
           "description": "Actualiza el horario del partido sin cambiar los vínculos de reserva."
         },
         "useExisting": {
           "title": "Usar reserva existente",
+          "chipTitle": "Vincular",
           "description": "Sustituye los vínculos por reserva(s) de tu cuenta del club."
         },
         "reserveNew": {
           "title": "Reservar pista nueva",
+          "chipTitle": "Nueva",
           "description": "Crea una nueva reserva real del club al guardar."
         },
         "unlink": {
           "title": "Desvincular reserva",
+          "chipTitle": "Desvincular",
           "description": "Quita los vínculos de reserva solo de este partido."
         },
         "gameOnly": {
           "title": "Solo partido",
+          "chipTitle": "Sin reserva",
           "description": "Mantén el partido programado sin vínculo de reserva real."
         }
       },

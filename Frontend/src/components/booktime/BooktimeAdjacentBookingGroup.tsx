@@ -39,6 +39,7 @@ type Props = {
   actionsExpanded?: boolean;
   onToggleActions?: () => void;
   entryVariants?: Variants;
+  nested?: boolean;
 };
 
 function GroupLinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
@@ -86,6 +87,7 @@ export function BooktimeAdjacentBookingGroup({
   actionsExpanded = false,
   onToggleActions,
   entryVariants,
+  nested = false,
 }: Props) {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
@@ -218,41 +220,44 @@ export function BooktimeAdjacentBookingGroup({
   );
 
   if (selectable) {
-    return (
-      <BooktimeBookingListItem entryVariants={entryVariants}>
-        <motion.button
-          type="button"
-          whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
-          disabled={dimmed || (selected && disableDeselect)}
-          onClick={onToggleSelect}
-          className={`relative w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${shellClassName} flex flex-col transition-opacity ${
-            dimmed ? 'opacity-50 cursor-default' : ''
-          } ${selected && disableDeselect ? 'cursor-default' : ''}`}
-        >
-          <div className="relative flex w-full items-start gap-3">
-            {cornerStack}
-            <span
-              className={`mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center shrink-0 ${
-                selected
-                  ? 'border-primary-500 bg-primary-500 text-white'
-                  : 'border-gray-300 dark:border-gray-600'
-              }`}
-            >
-              {selected ? (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 28 }}
-                >
-                  <Check size={12} />
-                </motion.span>
-              ) : null}
-            </span>
-            {headerContent}
-          </div>
-          {childrenPanel}
-        </motion.button>
-      </BooktimeBookingListItem>
+    const selectableGroup = (
+      <motion.button
+        type="button"
+        whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
+        disabled={dimmed || (selected && disableDeselect)}
+        onClick={onToggleSelect}
+        className={`relative w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${shellClassName} flex flex-col transition-opacity ${
+          dimmed ? 'opacity-50 cursor-default' : ''
+        } ${selected && disableDeselect ? 'cursor-default' : ''}`}
+      >
+        <div className="relative flex w-full items-start gap-3">
+          {cornerStack}
+          <span
+            className={`mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center shrink-0 ${
+              selected
+                ? 'border-primary-500 bg-primary-500 text-white'
+                : 'border-gray-300 dark:border-gray-600'
+            }`}
+          >
+            {selected ? (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+              >
+                <Check size={12} />
+              </motion.span>
+            ) : null}
+          </span>
+          {headerContent}
+        </div>
+        {childrenPanel}
+      </motion.button>
+    );
+    return nested ? (
+      selectableGroup
+    ) : (
+      <BooktimeBookingListItem entryVariants={entryVariants}>{selectableGroup}</BooktimeBookingListItem>
     );
   }
 

@@ -425,7 +425,8 @@
       "syncInactiveEdit": "Synchronizace teď neběží — nemůžeme načíst sloty ani rezervovat kurt. Hru na tento čas stejně můžete upravit."
     },
     "reservationIntent": {
-      "title": "Rezervace kurtu",
+      "title": "Jak zajistíte kurt?",
+      "otherOptions": "Další možnosti",
       "recommended": "Doporučeno",
       "validation": {
         "selectCourt": "Nejprve vyberte {{count}} kurt(ů).",
@@ -436,20 +437,21 @@
         "bookingRecordsLoading": "Načítáme detaily rezervací — chvíli počkejte a zkuste znovu."
       },
       "reserveNow": {
-        "title": "Rezervovat kurt hned",
-        "description": "Vyberte volný termín a kurt — aplikace rezervuje při vytvoření hry."
+        "title": "Rezervovat kurt",
+        "description": "Vyberte čas — rezervujeme za vás."
       },
       "useExisting": {
-        "title": "Použít existující rezervaci",
-        "description": "Propojit rezervaci/e, které už máte v účtu klubu."
+        "title": "Už mám rezervaci",
+        "description": "Propojte rezervaci z účtu klubu.",
+        "contextAvailable": "{{count}} k dispozici v tento den"
       },
       "gameOnly": {
-        "title": "Pouze hra",
-        "description": "Vytvořit hru bez skutečné rezervace nebo označení „kurt rezervován“."
+        "title": "Bez rezervace kurtu",
+        "description": "Jen vytvořit hru — kurt se nerezervuje."
       },
       "manualBooked": {
         "title": "Již rezervováno ručně",
-        "description": "Označit hru jako rezervovanou bez online integrace."
+        "description": "Označit jako rezervované bez online rezervace."
       },
       "summary": {
         "reserveNow": {

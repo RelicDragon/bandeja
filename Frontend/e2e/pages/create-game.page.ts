@@ -194,7 +194,7 @@ export class CreateGamePage {
   }
 
   async expectReservationIntentSection() {
-    await expect(this.page.getByText(/court reservation/i).first()).toBeVisible({ timeout: 10_000 });
+    await expect(this.page.getByTestId('reservation-intent-picker')).toBeVisible({ timeout: 10_000 });
   }
 
   async selectReservationIntent(label: RegExp) {
