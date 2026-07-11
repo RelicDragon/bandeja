@@ -3,6 +3,8 @@ import { GroupChannel } from '@/api/chat';
 import { getRules, isPointsRules, isRallyGameRules, isRallyPointsRules } from '@/utils/scoring/rulebook';
 import { isLegalSetScore } from '@/utils/scoring/validateSet';
 
+type GameResultsViewer = Pick<User, 'id' | 'isAdmin'> | null;
+
 /**
  * Checks if a user is admin or owner of a game (including parent game)
  * 
@@ -82,7 +84,7 @@ export const isUserPlayingParticipant = (game: Game, userId: string): boolean =>
  * Whether the user may change game format (wizard, teams toggles, fixed teams).
  * Mirrors backend canModifyResults for format-only game updates.
  */
-export const canUserEditGameFormat = (game: Game, user: User | null): boolean => {
+export const canUserEditGameFormat = (game: Game, user: GameResultsViewer): boolean => {
   if (!game || !user || game.status === 'ARCHIVED') return false;
   if (!canUserSeeGame(game, user)) return false;
   if (user.isAdmin || isUserGameAdminOrOwner(game, user.id)) return true;
@@ -107,7 +109,7 @@ export const isUserGameParticipant = (game: Game, userId: string): boolean => {
  * @param user - The user object
  * @returns Object with message and canModify properties, or null if no status
  */
-export const getGameResultStatus = (game: Game, user: User | null): { message: string; canModify: boolean } | null => {
+export const getGameResultStatus = (game: Game, user: GameResultsViewer): { message: string; canModify: boolean } | null => {
   if (!game || !user) return null;
 
   // First check if user can see the game at all
@@ -192,7 +194,7 @@ export const getGameResultStatus = (game: Game, user: User | null): { message: s
  * @param user - The user object
  * @returns boolean indicating if the user can edit results
  */
-export const canUserEditResults = (game: Game, user: User | null): boolean => {
+export const canUserEditResults = (game: Game, user: GameResultsViewer): boolean => {
   const status = getGameResultStatus(game, user);
   return status?.canModify ?? false;
 };
@@ -204,7 +206,7 @@ export const canUserEditResults = (game: Game, user: User | null): boolean => {
  * @param user - The user object
  * @returns boolean indicating if the user can see the game
  */
-export const canUserSeeGame = (game: Game, user: User | null): boolean => {
+export const canUserSeeGame = (game: Game, user: GameResultsViewer): boolean => {
   if (!game) return false;
 
   // Public games are visible to everyone

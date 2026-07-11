@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createId } from '@paralleldrive/cuid2';
 import toast from 'react-hot-toast';
 import i18n from '@/i18n/config';
-import { Game } from '@/types';
+import { Game, User } from '@/types';
 import { Round, Match, GameState } from '@/types/gameResults';
 import { ResultsStorage, LocalResults } from './resultsStorage';
 import { resultsApi } from '@/api/results';
@@ -1022,7 +1022,7 @@ class GameResultsEngineClass {
     }
   }
 
-  private getGameState(game: Game, viewer: { id: string; isAdmin?: boolean }): GameState {
+  private getGameState(game: Game, viewer: Pick<User, 'id' | 'isAdmin'>): GameState {
     const canEdit = canUserEditResults(game, viewer);
 
     if (!canUserSeeGame(game, viewer)) {
