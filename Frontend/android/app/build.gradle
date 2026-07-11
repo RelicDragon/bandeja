@@ -38,8 +38,8 @@ android {
         applicationId "com.funified.bandeja"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 178
-        versionName "0.96.64"
+        versionCode 179
+        versionName "0.96.65"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
