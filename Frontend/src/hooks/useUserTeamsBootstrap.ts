@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
+import { useMyGamesQuery } from '@/queries/games/useMyGamesQuery';
 import { hasMyTabMembershipsSnapshot, readMyTabCache } from '@/services/myTabCacheReader';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 
@@ -13,9 +14,12 @@ export function useUserTeamsBootstrap() {
   const refreshAll = useUserTeamsStore((s) => s.refreshAll);
   const hydrateFromMyTabCache = useUserTeamsStore((s) => s.hydrateFromMyTabCache);
   const bootstrappedUserRef = useRef<string | null>(null);
+  const { isPending: myTabPending } = useMyGamesQuery(userId, { enabled: !!userId });
 
   useEffect(() => {
     if (!userId || bootstrappedUserRef.current === userId) return;
+    if (myTabPending) return;
+
     bootstrappedUserRef.current = userId;
 
     const cached = readMyTabCache(queryClient, userId);
@@ -26,5 +30,5 @@ export function useUserTeamsBootstrap() {
       return;
     }
     void refreshAll();
-  }, [userId, queryClient, hydrateFromMyTabCache, refreshAll]);
+  }, [userId, myTabPending, queryClient, hydrateFromMyTabCache, refreshAll]);
 }
