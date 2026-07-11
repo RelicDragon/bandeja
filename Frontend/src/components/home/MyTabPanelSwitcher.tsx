@@ -6,6 +6,7 @@ import type { Game } from '@/types';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { useMyTabPanelCounts } from '@/hooks/useMyTabPanelCounts';
 import { useMyTabBooktime } from '@/hooks/useMyTabBooktime';
+import { useUserTeamsBootstrap } from '@/hooks/useUserTeamsBootstrap';
 import { MyTabBookingsSection } from '@/components/booktime/MyTabBookingsSection';
 import { UserTeamsHomeSection } from './UserTeamsHomeSection';
 import { YourLeaguesHomeSection } from './YourLeaguesHomeSection';
@@ -24,6 +25,7 @@ export function MyTabPanelSwitcher({
   const { t } = useTranslation();
   const [activeSwitch, setActiveSwitch] = useState<MyTabPanelId | null>(null);
   const booktime = useMyTabBooktime();
+  useUserTeamsBootstrap();
   const panelCounts = useMyTabPanelCounts(games, booktime);
   const reduceMotion = useReducedMotion();
   const panelTransition = reduceMotion

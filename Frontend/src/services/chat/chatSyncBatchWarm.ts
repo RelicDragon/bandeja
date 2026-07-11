@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore';
 import { usePlayersStore } from '@/store/playersStore';
 import { chatCursorKey, chatLocalDb } from './chatLocalDb';
 import { getLocalCursorSeq } from './chatLocalApply';
+import { parseChatThreadCursorKey } from './chatThreadCursorKeyParse';
 import { enqueueChatSyncPull, SYNC_PRIORITY_UNREAD, SYNC_PRIORITY_WARM } from './chatSyncScheduler';
 import type { UnreadObjectsApiPayload, UnreadObjectsWarmInner } from './chatUnreadPayload';
 import { unreadApiEnvelopeData, unreadContextKeysFromPayload, unreadPayloadToWarmInner } from './chatUnreadPayload';
@@ -16,7 +17,14 @@ const MAX_SCHEDULED_PULL_IMMEDIATE = parsePositiveIntEnv(
 );
 const WARM_DRAIN_BATCH = parsePositiveIntEnv(import.meta.env.VITE_CHAT_SYNC_WARM_DRAIN_BATCH, 24);
 const WARM_DRAIN_INTERVAL_MS = parsePositiveIntEnv(import.meta.env.VITE_CHAT_SYNC_WARM_DRAIN_INTERVAL_MS, 1600);
+const WARM_DRAIN_BOOTSTRAP_INTERVAL_MS = parsePositiveIntEnv(
+  import.meta.env.VITE_CHAT_SYNC_WARM_DRAIN_BOOTSTRAP_INTERVAL_MS,
+  4000
+);
+const HOT_THREAD_TOP_K = parsePositiveIntEnv(import.meta.env.VITE_CHAT_SYNC_WARM_HOT_TOP_K, 5);
 const IMPLICIT_WARM_COOLDOWN_MS = 10_000;
+
+export type WarmPullPolicy = 'full' | 'tiered-bootstrap';
 
 export type UnreadObjectsInner = UnreadObjectsWarmInner;
 
@@ -34,6 +42,7 @@ let warmDrainTimer: ReturnType<typeof setTimeout> | null = null;
 let warmSerialTail: Promise<void> = Promise.resolve();
 let implicitWarmInFlight: Promise<void> | null = null;
 let lastRunWarmBodyAt = 0;
+let pendingChatsTabFullWarm = false;
 
 function isImplicitWarmCooldownActive(): boolean {
   return Date.now() < implicitWarmCooldownUntil;
@@ -90,7 +99,8 @@ function scheduleWarmDrain(delayMs: number): void {
 
 function enqueueWarmOverflow(
   items: Array<{ contextType: ChatContextType; contextId: string; expectedServerMaxSeq?: number }>,
-  unreadKeys?: Set<string>
+  unreadKeys?: Set<string>,
+  initialDelayMs = 0
 ): void {
   const seen = new Set(warmDrainQueue.map((x) => `${x.contextType}:${x.contextId}`));
   for (const it of items) {
@@ -106,7 +116,7 @@ function enqueueWarmOverflow(
     if (it.expectedServerMaxSeq != null) item.expectedServerMaxSeq = it.expectedServerMaxSeq;
     warmDrainQueue.push(item);
   }
-  scheduleWarmDrain(0);
+  scheduleWarmDrain(initialDelayMs);
 }
 
 export function clearChatSyncWarmDrainQueue(): void {
@@ -162,7 +172,9 @@ function mergeUnreadIntoContextMap(
   }
 }
 
-async function collectContextsWarmListWithUnreadKeys(): Promise<{
+async function collectContextsWarmListWithUnreadKeys(options?: {
+  skipUnreadFetch?: boolean;
+}): Promise<{
   list: Array<{ contextType: ChatContextType; contextId: string }>;
   unreadKeys: Set<string>;
 }> {
@@ -171,7 +183,13 @@ async function collectContextsWarmListWithUnreadKeys(): Promise<{
     map.set(`${it.contextType}:${it.contextId}`, it);
   }
   let unreadKeys = new Set<string>();
-  if (useAuthStore.getState().token) {
+  if (options?.skipUnreadFetch) {
+    const { useUnreadStore } = await import('@/store/unreadStore');
+    const { baseByContext } = useUnreadStore.getState();
+    for (const [key, count] of Object.entries(baseByContext)) {
+      if (count > 0) unreadKeys.add(key);
+    }
+  } else if (useAuthStore.getState().token) {
     try {
       const res = await chatApi.getUnreadObjects();
       const payload = unreadApiEnvelopeData(res);
@@ -193,6 +211,7 @@ export async function collectContextsForWarmEnriched(): Promise<
 
 export function resetChatSyncWarmSession(): void {
   sessionWarmBootstrapDone = false;
+  pendingChatsTabFullWarm = false;
   implicitWarmCooldownUntil = 0;
   lastRunWarmBodyAt = 0;
   if (warmFromPayloadTimer) {
@@ -254,9 +273,24 @@ export function ensureChatSyncWarmBootstrap(): Promise<void> {
     } catch {
       /* ignore */
     }
+    const { useUnreadStore, isUnreadStoreWarm } = await import('@/store/unreadStore');
+    const unreadState = useUnreadStore.getState();
+    if (unreadState.refreshInFlight) {
+      try {
+        await unreadState.refreshInFlight;
+      } catch {
+        /* refresh failed — still warm from local contexts */
+      }
+    } else if (!isUnreadStoreWarm(unreadState)) {
+      try {
+        await unreadState.refreshAll();
+      } catch {
+        /* refresh failed — still warm from local contexts */
+      }
+    }
     try {
-      const { list, unreadKeys } = await collectContextsWarmListWithUnreadKeys();
-      if (list.length > 0) await runWarmBody(list, unreadKeys);
+      const { list, unreadKeys } = await collectContextsWarmListWithUnreadKeys({ skipUnreadFetch: true });
+      if (list.length > 0) await runWarmBody(list, unreadKeys, { pullPolicy: 'tiered-bootstrap' });
     } catch {
       /* offline */
     } finally {
@@ -265,7 +299,8 @@ export function ensureChatSyncWarmBootstrap(): Promise<void> {
       scheduleChatHotThreadPrefetchFromIdle();
     }
   });
-  implicitWarmInFlight = run.finally(() => {
+  implicitWarmInFlight = run;
+  void run.finally(() => {
     if (implicitWarmInFlight === run) implicitWarmInFlight = null;
   });
   return run;
@@ -278,6 +313,84 @@ function pullPriorityForWarmItem(
   const k = `${it.contextType}:${it.contextId}`;
   if (unreadKeys?.has(k)) return SYNC_PRIORITY_UNREAD;
   return SYNC_PRIORITY_WARM;
+}
+
+function scoreWarmThreadRow(row: { openCount?: number; lastOpenedAt?: number }): number {
+  const oc = row.openCount ?? 0;
+  const la = row.lastOpenedAt ?? 0;
+  return oc * 1_000_000 + la;
+}
+
+async function collectHotThreadKeys(): Promise<Set<string>> {
+  try {
+    const openScores = new Map<string, number>();
+    const metaRows = await chatLocalDb.chatThreads.toArray();
+    for (const r of metaRows) {
+      if (r.lastOpenedAt == null || r.lastOpenedAt <= 0) continue;
+      const parsed = parseChatThreadCursorKey(r.key);
+      if (!parsed) continue;
+      const k = `${parsed.contextType}:${parsed.contextId}`;
+      openScores.set(k, Math.max(openScores.get(k) ?? 0, scoreWarmThreadRow(r)));
+    }
+
+    const hotKeys = new Set(
+      [...openScores.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, HOT_THREAD_TOP_K)
+        .map(([k]) => k)
+    );
+    if (hotKeys.size >= HOT_THREAD_TOP_K) return hotKeys;
+
+    const activityScores = new Map<string, number>();
+    const indexRows = await chatLocalDb.threadIndex.toArray();
+    for (const r of indexRows) {
+      const sortAt = r.sortAt ?? 0;
+      if (sortAt <= 0) continue;
+      const k = `${r.contextType}:${r.contextId}`;
+      if (openScores.has(k)) continue;
+      activityScores.set(k, Math.max(activityScores.get(k) ?? 0, sortAt));
+    }
+    const slotsLeft = HOT_THREAD_TOP_K - hotKeys.size;
+    for (const [k] of [...activityScores.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, slotsLeft)) {
+      hotKeys.add(k);
+    }
+    return hotKeys;
+  } catch {
+    return new Set();
+  }
+}
+
+async function partitionScheduledPulls(
+  toSchedule: Array<{ contextType: ChatContextType; contextId: string; expectedServerMaxSeq: number }>,
+  unreadKeys: Set<string> | undefined,
+  pullPolicy: WarmPullPolicy
+): Promise<{
+  immediate: typeof toSchedule;
+  overflow: typeof toSchedule;
+  drainDelayMs: number;
+}> {
+  if (pullPolicy === 'full') {
+    return {
+      immediate: toSchedule.slice(0, MAX_SCHEDULED_PULL_IMMEDIATE),
+      overflow: toSchedule.slice(MAX_SCHEDULED_PULL_IMMEDIATE),
+      drainDelayMs: 0,
+    };
+  }
+  const hotKeys = await collectHotThreadKeys();
+  const immediate: typeof toSchedule = [];
+  const overflow: typeof toSchedule = [];
+  for (const it of toSchedule) {
+    const k = `${it.contextType}:${it.contextId}`;
+    const tierEligible = unreadKeys?.has(k) === true || hotKeys.has(k);
+    if (tierEligible && immediate.length < MAX_SCHEDULED_PULL_IMMEDIATE) {
+      immediate.push(it);
+    } else {
+      overflow.push(it);
+    }
+  }
+  return { immediate, overflow, drainDelayMs: WARM_DRAIN_BOOTSTRAP_INTERVAL_MS };
 }
 
 async function messageContextHeadReferencesMissingRow(
@@ -307,7 +420,7 @@ async function messageContextHeadReferencesMissingRow(
 async function runWarmBody(
   list: Array<{ contextType: ChatContextType; contextId: string }>,
   unreadKeys?: Set<string>,
-  options?: { force?: boolean }
+  options?: { force?: boolean; pullPolicy?: WarmPullPolicy }
 ): Promise<void> {
   if (list.length === 0) return;
   const now = Date.now();
@@ -341,19 +454,26 @@ async function runWarmBody(
       if (max > local || headBroken) toSchedule.push({ ...it, expectedServerMaxSeq: max });
     }
   }
-  const immediate = toSchedule.slice(0, MAX_SCHEDULED_PULL_IMMEDIATE);
-  const overflow = toSchedule.slice(MAX_SCHEDULED_PULL_IMMEDIATE);
+  const pullPolicy = options?.pullPolicy ?? 'full';
+  const { immediate, overflow, drainDelayMs } = await partitionScheduledPulls(
+    toSchedule,
+    unreadKeys,
+    pullPolicy
+  );
   for (const it of immediate) {
     enqueueChatSyncPull(it.contextType, it.contextId, pullPriorityForWarmItem(it, unreadKeys), {
       expectedServerMaxSeq: it.expectedServerMaxSeq,
     });
   }
-  if (overflow.length) enqueueWarmOverflow(overflow, unreadKeys);
+  if (overflow.length) enqueueWarmOverflow(overflow, unreadKeys, drainDelayMs);
 }
 
 export type WarmChatSyncHeadsOptions = {
   skipCooldown?: boolean;
   enrichFromUnread?: boolean;
+  pullPolicy?: WarmPullPolicy;
+  /** Internal: set when chaining full warm after tiered bootstrap completes. */
+  chainedAfterImplicit?: boolean;
 };
 
 export function warmChatSyncHeads(
@@ -361,7 +481,27 @@ export function warmChatSyncHeads(
   options?: WarmChatSyncHeadsOptions
 ): Promise<void> {
   const explicit = !!(items && items.length > 0);
-  if (!explicit && implicitWarmInFlight) return implicitWarmInFlight;
+  const wantsChatsTabFullWarm =
+    !explicit &&
+    options?.skipCooldown === true &&
+    options?.pullPolicy === 'full' &&
+    !options?.chainedAfterImplicit;
+  if (!explicit && implicitWarmInFlight != null) {
+    if (wantsChatsTabFullWarm) {
+      pendingChatsTabFullWarm = true;
+      return implicitWarmInFlight.finally(() => {
+        if (!pendingChatsTabFullWarm) return;
+        pendingChatsTabFullWarm = false;
+        return warmChatSyncHeads(undefined, {
+          enrichFromUnread: true,
+          skipCooldown: true,
+          pullPolicy: 'full',
+          chainedAfterImplicit: true,
+        });
+      });
+    }
+    return implicitWarmInFlight;
+  }
   const run = enqueueWarmSerial(async () => {
     if (!useAuthStore.getState().token) return;
     const now = Date.now();
@@ -378,7 +518,12 @@ export function warmChatSyncHeads(
       list = await collectContextsForWarm();
     }
     try {
-      await runWarmBody(list, unreadKeys, { force: explicit });
+      const bypassRunBodyCooldown =
+        explicit || (options?.skipCooldown === true && options?.pullPolicy === 'full');
+      await runWarmBody(list, unreadKeys, {
+        force: bypassRunBodyCooldown,
+        pullPolicy: options?.pullPolicy ?? 'full',
+      });
       if (!explicit && !options?.skipCooldown) {
         implicitWarmCooldownUntil = Date.now() + IMPLICIT_WARM_COOLDOWN_MS;
       }
@@ -387,7 +532,8 @@ export function warmChatSyncHeads(
     }
   });
   if (!explicit) {
-    implicitWarmInFlight = run.finally(() => {
+    implicitWarmInFlight = run;
+    void run.finally(() => {
       if (implicitWarmInFlight === run) implicitWarmInFlight = null;
     });
   }
@@ -396,6 +542,11 @@ export function warmChatSyncHeads(
 
 export function runChatSyncBatchWarmOnConnect(): void {
   void warmChatSyncHeads();
+}
+
+/** Full warm when user opens Chats tab — drains deferred bootstrap threads promptly. */
+export function warmChatSyncHeadsOnChatsTabIntent(): void {
+  void warmChatSyncHeads(undefined, { enrichFromUnread: true, skipCooldown: true, pullPolicy: 'full' });
 }
 
 /** Awaits in-flight / queued implicit warm work (for tests). */

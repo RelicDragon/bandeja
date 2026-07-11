@@ -8,9 +8,10 @@ import {
   type AdPlacementPayload,
   type AdSportsByPlacement,
 } from '@/api/sponsorPlacements';
-import { AD_PLACEMENT_KEYS, type AdPlacementKey } from '@/shared/adPlacements';
+import { AD_PLACEMENT_KEYS, AD_PLACEMENTS, type AdPlacementKey } from '@/shared/adPlacements';
 import { useAuthStore } from '@/store/authStore';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { getViewerPrimarySport } from '@/utils/profileSports';
 import type { Sport } from '@/types';
 
 function createAdSessionId(): string {
@@ -102,6 +103,19 @@ function sportsContextKey(sports: AdSportsByPlacement, cityId: string | undefine
   return JSON.stringify({ cityId: cityId ?? null, sports });
 }
 
+/** Seed known defaults so the first placements fetch includes sport context before tab mounts. */
+export function buildEffectiveSportsByPlacement(
+  sportsByPlacement: AdSportsByPlacement,
+  primarySport: Sport,
+): AdSportsByPlacement {
+  return {
+    [AD_PLACEMENTS.HOME_HERO]: primarySport,
+    [AD_PLACEMENTS.LEADERBOARD_BANNER]: primarySport,
+    [AD_PLACEMENTS.FIND_TOP]: primarySport,
+    ...sportsByPlacement,
+  };
+}
+
 let lastFetchKey: string | null = null;
 
 /** Fetches placements once auth/city/sport context is ready — mount at app shell, not only inside AdSlot. */
@@ -116,6 +130,12 @@ export function useAdPlacementsFetcher() {
   const setLoading = useAdPlacementsStore((s) => s.setLoading);
 
   const userCityId = user?.currentCity?.id ?? user?.currentCityId;
+  const primarySport = getViewerPrimarySport(user);
+
+  const effectiveSportsByPlacement = useMemo(
+    () => buildEffectiveSportsByPlacement(sportsByPlacement, primarySport),
+    [sportsByPlacement, primarySport],
+  );
 
   useEffect(() => {
     setCityId(userCityId);
@@ -129,7 +149,7 @@ export function useAdPlacementsFetcher() {
       return;
     }
 
-    const fetchKey = sportsContextKey(sportsByPlacement, userCityId);
+    const fetchKey = sportsContextKey(effectiveSportsByPlacement, userCityId);
     if (lastFetchKey === fetchKey) return;
 
     let cancelled = false;
@@ -138,7 +158,7 @@ export function useAdPlacementsFetcher() {
       try {
         const response = await adsApi.getPlacements(AD_PLACEMENT_KEYS, adSessionId, {
           cityId: userCityId,
-          sportsByPlacement,
+          sportsByPlacement: effectiveSportsByPlacement,
         });
         if (cancelled) return;
         setPlacements(response.placements ?? {});
@@ -156,7 +176,7 @@ export function useAdPlacementsFetcher() {
     return () => {
       cancelled = true;
     };
-  }, [isInitializing, isAuthenticated, user?.id, isOnline, sportsByPlacement, userCityId, setLoading, setPlacements]);
+  }, [isInitializing, isAuthenticated, user?.id, isOnline, effectiveSportsByPlacement, userCityId, setLoading, setPlacements]);
 }
 
 export function useRegisterAdSportContext(placement: AdPlacementKey, sport: Sport | undefined) {

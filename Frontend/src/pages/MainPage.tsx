@@ -7,6 +7,7 @@ import { BottomTabBar } from '@/components/navigation/BottomTabBar';
 import { useDesktop } from '@/hooks/useDesktop';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { isChatShellPlace, isMarketplaceShellPlace, parseLocation } from '@/utils/urlSchema';
+import { warmChatSyncHeadsOnChatsTabIntent } from '@/services/chat/chatSyncBatchWarm';
 import { MyTab } from './MyTab';
 import { FindTab } from './FindTab';
 import { ChatsTab } from './ChatsTab';
@@ -74,6 +75,11 @@ export const MainPage = () => {
       navigate('/profile', { replace: true });
     }
   }, [showGameTabs, parsed.place, navigate]);
+
+  useEffect(() => {
+    if (!isChatShellPlace(parsed.place)) return;
+    warmChatSyncHeadsOnChatsTabIntent();
+  }, [parsed.place]);
 
   const isHomeDesktopShell = isDesktop && parsed.place === 'home';
   const isCalendarSplitView =

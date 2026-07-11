@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { Game, UserTeam, UserTeamMembership } from '@/types';
 import type { MyTabBooktimeSnapshot } from '@/hooks/useMyTabBooktime';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
@@ -27,11 +27,6 @@ export function useMyTabPanelCounts(
 
   const teams = useUserTeamsStore((s) => s.teams);
   const memberships = useUserTeamsStore((s) => s.memberships);
-  const refreshAll = useUserTeamsStore((s) => s.refreshAll);
-
-  useEffect(() => {
-    void refreshAll();
-  }, [refreshAll]);
 
   const bookingsCount = useMemo(() => {
     if (!myClubs || myClubs.connectedCount === 0) return 0;

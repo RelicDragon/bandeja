@@ -260,7 +260,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
           if (userId) {
             queryClient.removeQueries({ queryKey: queryKeys.games.my(userId) });
           }
-          queryClient.removeQueries({ queryKey: queryKeys.me.myTabData() });
+          queryClient.removeQueries({ queryKey: queryKeys.questionnaire.all });
         } catch (e) {
           console.warn('[auth:logout] my tab cache clear failed', e);
         }

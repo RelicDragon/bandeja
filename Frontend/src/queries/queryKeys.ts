@@ -34,6 +34,11 @@ export function buildAvailableUpcomingFilterHash(params: Omit<AvailableGamesFilt
 export const queryKeys = {
   userStats: (userId: string, sport?: Sport) =>
     ['users', 'stats', userId, sport ?? 'default'] as const,
+  questionnaire: {
+    all: ['questionnaire'] as const,
+    status: (userId: string, sport: Sport | 'inactive') =>
+      ['questionnaire', 'status', userId, sport] as const,
+  },
   games: {
     all: ['games'] as const,
     my: (userId: string) => ['games', 'my', userId] as const,
@@ -50,9 +55,5 @@ export const queryKeys = {
     game: (gameId: string, scope = 'game') => ['weather', 'game', gameId, scope] as const,
     preview: (cityId: string, startTime: string, endTime: string, scope = 'game') =>
       ['weather', 'preview', cityId, startTime, endTime, scope] as const,
-  },
-  me: {
-    myTabData: (options?: { includeStories?: boolean; includeBooktime?: boolean }) =>
-      ['me', 'myTabData', options ?? {}] as const,
   },
 };

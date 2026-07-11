@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useHorizontalScrollFade } from '@/hooks/useHorizontalScrollFade';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useStoriesFeed } from '@/hooks/useStoriesFeed';
+import { useDeferredVisible } from '@/hooks/useDeferredVisible';
 import { STAGGER_CHILDREN, STAGGER_ITEM_TRANSITION } from '@/components/motion/motionTokens';
 import { StoriesRailBubble } from './StoriesRailBubble';
 import { StoriesViewer } from './StoriesViewer';
@@ -35,7 +36,9 @@ export function StoriesRail() {
   const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const reduceMotion = usePrefersReducedMotion();
-  const { feed, refresh, enabled } = useStoriesFeed();
+  const railRootRef = useRef<HTMLDivElement>(null);
+  const railVisible = useDeferredVisible(railRootRef);
+  const { feed, refresh, enabled } = useStoriesFeed({ enabled: railVisible });
   const carouselRef = useRef<HTMLDivElement>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<PhotoMediaFile[] | null>(null);
@@ -138,7 +141,7 @@ export function StoriesRail() {
 
   return (
     <>
-      <div className="px-4 mb-3 max-w-md mx-auto min-h-[5.75rem]">
+      <div ref={railRootRef} className="px-4 mb-3 max-w-md mx-auto min-h-[5.75rem]">
         <AnimatePresence initial={false}>
           {onlySelf ? (
             <motion.p

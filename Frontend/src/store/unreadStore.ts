@@ -116,7 +116,7 @@ export const useUnreadStore = create<UnreadStoreState>((set, get) => ({
 
     const promise = (async () => {
       try {
-        const envelope = await chatApi.getUnreadSnapshot();
+        const envelope = await chatApi.getUnreadSnapshotObjects();
         const dto = envelope.data;
         if (dto) get().setSnapshot(dto);
       } finally {

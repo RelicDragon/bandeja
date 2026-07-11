@@ -3,6 +3,7 @@ import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { GameReadService } from '../game/read.service';
+import { UserTeamService } from '../userTeam.service';
 
 export interface MyTabDataOptions {
   includeStories?: boolean;
@@ -20,6 +21,7 @@ export interface MyTabDataOutput {
   games: any[];
   invites: any[];
   teams: any[];
+  memberships: any[] | null;
   unreadCounts: Record<string, number>;
   storiesCount?: number | null;
   booktimeConnected?: boolean | null;
@@ -56,6 +58,7 @@ export class MyTabDataService {
       const results = await Promise.allSettled([
         GameReadService.getMyGamesWithUnread(userId, userCityId),
         this.fetchUserTeams(userId),
+        UserTeamService.getMyMemberships(userId),
         options.includeStories ? this.fetchStoriesCount(userId) : Promise.resolve(null),
         options.includeBooktime ? this.fetchBooktimeStatus(userId) : Promise.resolve(null),
       ]);
@@ -91,9 +94,10 @@ export class MyTabDataService {
         games: gamesBundle.games,
         invites: gamesBundle.invites,
         teams: results[1].status === 'fulfilled' ? results[1].value : [],
+        memberships: results[2].status === 'fulfilled' ? results[2].value : null,
         unreadCounts: gamesBundle.gamesUnreadCounts ?? {},
-        storiesCount: results[2]?.status === 'fulfilled' ? results[2].value : null,
-        booktimeConnected: results[3]?.status === 'fulfilled' ? results[3].value : null,
+        storiesCount: results[3]?.status === 'fulfilled' ? results[3].value : null,
+        booktimeConnected: results[4]?.status === 'fulfilled' ? results[4].value : null,
         _meta: {
           timestamp: new Date().toISOString(),
         },
@@ -260,9 +264,28 @@ export class MyTabDataService {
         updatedAt: m.updatedAt,
       })),
     }));
+    const membershipKeys =
+      data.memberships === null
+        ? null
+        : data.memberships.map((m) => ({
+            id: m.id,
+            teamId: m.teamId,
+            status: m.status,
+            updatedAt: m.updatedAt,
+          }));
     const unreadKeys = Object.entries(data.unreadCounts).sort(([a], [b]) => a.localeCompare(b));
 
-    hash.update(JSON.stringify({ games: gameKeys, invites: inviteKeys, teams: teamKeys, unread: unreadKeys }));
+    hash.update(
+      JSON.stringify({
+        games: gameKeys,
+        invites: inviteKeys,
+        teams: teamKeys,
+        memberships: membershipKeys,
+        unread: unreadKeys,
+        storiesCount: data.storiesCount ?? null,
+        booktimeConnected: data.booktimeConnected ?? null,
+      }),
+    );
     return hash.digest('base64');
   }
 }

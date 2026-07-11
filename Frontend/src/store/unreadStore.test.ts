@@ -16,7 +16,7 @@ vi.mock('@/components/GameDetails/gameDetailsChromeStore', () => ({
   },
 }));
 
-const getUnreadSnapshotMock = vi.fn();
+const getUnreadSnapshotObjectsMock = vi.fn();
 const syncBadgeMock = vi.fn();
 
 vi.mock('@/services/chat/syncAppIconBadgeFromStore', () => ({
@@ -29,7 +29,7 @@ vi.mock('@/api/chat', async (importOriginal) => {
     ...actual,
     chatApi: {
       ...actual.chatApi,
-      getUnreadSnapshot: (...args: unknown[]) => getUnreadSnapshotMock(...args),
+      getUnreadSnapshotObjects: (...args: unknown[]) => getUnreadSnapshotObjectsMock(...args),
     },
   };
 });
@@ -309,8 +309,8 @@ describe('authority envelope revision passthrough (#238)', () => {
 describe('refreshAll in-flight dedupe (Phase 0 #233)', () => {
   beforeEach(() => {
     useUnreadStore.getState().reset();
-    getUnreadSnapshotMock.mockReset();
-    getUnreadSnapshotMock.mockImplementation(
+    getUnreadSnapshotObjectsMock.mockReset();
+    getUnreadSnapshotObjectsMock.mockImplementation(
       () =>
         new Promise((resolve) => {
           setTimeout(
@@ -334,7 +334,7 @@ describe('refreshAll in-flight dedupe (Phase 0 #233)', () => {
 
   it('coalesces concurrent refreshAll into one snapshot fetch', async () => {
     let resolveSnapshot: ((value: unknown) => void) | undefined;
-    getUnreadSnapshotMock.mockImplementation(
+    getUnreadSnapshotObjectsMock.mockImplementation(
       () =>
         new Promise((resolve) => {
           resolveSnapshot = resolve;
@@ -344,7 +344,7 @@ describe('refreshAll in-flight dedupe (Phase 0 #233)', () => {
     const first = useUnreadStore.getState().refreshAll();
     const second = useUnreadStore.getState().refreshAll();
 
-    expect(getUnreadSnapshotMock).toHaveBeenCalledTimes(1);
+    expect(getUnreadSnapshotObjectsMock).toHaveBeenCalledTimes(1);
 
     resolveSnapshot?.({
       data: {
@@ -365,8 +365,8 @@ describe('refreshAll in-flight dedupe (Phase 0 #233)', () => {
 describe('chat:unread-invalidate handler (#241)', () => {
   beforeEach(() => {
     useUnreadStore.getState().reset();
-    getUnreadSnapshotMock.mockReset();
-    getUnreadSnapshotMock.mockResolvedValue({
+    getUnreadSnapshotObjectsMock.mockReset();
+    getUnreadSnapshotObjectsMock.mockResolvedValue({
       data: {
         games: [],
         userChats: [],
@@ -383,14 +383,14 @@ describe('chat:unread-invalidate handler (#241)', () => {
   it('ignores stale invalidation at or below lastAppliedSnapshotRevision', () => {
     useUnreadStore.setState({ lastAppliedSnapshotRevision: 7, maxSeenUserUnreadRevision: 7 });
     useUnreadStore.getState().onUserInvalidated({ userUnreadRevision: 7, reason: 'auto_read' });
-    expect(getUnreadSnapshotMock).not.toHaveBeenCalled();
+    expect(getUnreadSnapshotObjectsMock).not.toHaveBeenCalled();
   });
 
   it('fetches deduped snapshot when invalidation revision is newer', async () => {
     useUnreadStore.setState({ lastAppliedSnapshotRevision: 2, maxSeenUserUnreadRevision: 2 });
     useUnreadStore.getState().onUserInvalidated({ userUnreadRevision: 5, reason: 'auto_read' });
     await useUnreadStore.getState().refreshInFlight;
-    expect(getUnreadSnapshotMock).toHaveBeenCalledTimes(1);
+    expect(getUnreadSnapshotObjectsMock).toHaveBeenCalledTimes(1);
     expect(useUnreadStore.getState().maxSeenUserUnreadRevision).toBe(5);
     expect(useUnreadStore.getState().lastAppliedSnapshotRevision).toBe(5);
   });
@@ -399,7 +399,7 @@ describe('chat:unread-invalidate handler (#241)', () => {
     const first = useUnreadStore.getState().refreshAll();
     const second = useUnreadStore.getState().refreshAll();
     await Promise.all([first, second]);
-    expect(getUnreadSnapshotMock).toHaveBeenCalledTimes(1);
+    expect(getUnreadSnapshotObjectsMock).toHaveBeenCalledTimes(1);
   });
 
   it('reconciles launcher badge after snapshot fetch completes', async () => {

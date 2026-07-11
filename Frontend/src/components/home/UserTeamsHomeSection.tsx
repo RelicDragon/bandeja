@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2, Plus, Users, X } from 'lucide-react';
@@ -30,10 +30,6 @@ export function UserTeamsHomeSection({ className = '', embedded = false }: UserT
   const [creating, setCreating] = useState(false);
   const [deleteTeamId, setDeleteTeamId] = useState<string | null>(null);
   const [deletingTeam, setDeletingTeam] = useState(false);
-
-  useEffect(() => {
-    refreshAll();
-  }, [refreshAll]);
 
   const pending = useMemo(
     () => memberships.filter((m) => !m.isOwner && m.status === 'PENDING'),

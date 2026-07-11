@@ -76,6 +76,7 @@ import { settleStoredAuthBeforeBootstrap } from '@/api/authStartup';
 import { ensureBooktimeProactiveRefresh } from '@/integrations/booktime/session';
 import { useUrlStoreSync } from './hooks/useUrlStoreSync';
 import { useMyTabPrefetch } from './hooks/useMyTabPrefetch';
+import { useHeaderInvitesHydration } from './hooks/useHeaderInvitesHydration';
 import { UnreadMyGamesScopeSync } from './components/UnreadMyGamesScopeSync';
 import { usePresenceSubscriptionManager } from './hooks/usePresenceSubscriptionManager';
 import { ReactionEmojiUsageBootstrap } from './components/ReactionEmojiUsageBootstrap';
@@ -148,12 +149,18 @@ function AppContent() {
     location.pathname === '/login' ||
     location.pathname === '/register' ||
     isTelegramAutoLoginPath(location.pathname);
+  const isPastGamesHomeTab =
+    location.pathname === '/' && new URLSearchParams(location.search).get('tab') === 'past-games';
 
   const { versionCheck, isChecking: isCheckingVersion } = useAppVersionCheck();
   
   useDeepLink();
   useUrlStoreSync();
-  useMyTabPrefetch({ enabled: !isAuthRouteForBootstraps });
+  useMyTabPrefetch({
+    enabled: !isAuthRouteForBootstraps,
+    prefetchPastGames: isPastGamesHomeTab,
+  });
+  useHeaderInvitesHydration();
 
   const pendingAuthPath = useDeepLinkStore((s) => s.pendingAuthPath);
   const setPendingAuthPath = useDeepLinkStore((s) => s.setPendingAuthPath);

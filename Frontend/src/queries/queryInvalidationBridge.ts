@@ -12,7 +12,6 @@ function invalidateGamesQueries(queryClient: QueryClient): void {
   if (!useNetworkStore.getState().isOnline) return;
   clearMyTabCache(useAuthStore.getState().user?.id);
   void queryClient.invalidateQueries({ queryKey: queryKeys.games.all });
-  void queryClient.invalidateQueries({ queryKey: queryKeys.me.myTabData() });
 }
 
 export function setupQueryInvalidationBridge(queryClient: QueryClient): void {

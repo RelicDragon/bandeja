@@ -70,7 +70,12 @@ describe('useMyGamesQuery', () => {
     const client = createTestClient();
     await client.fetchQuery(myGamesQueryOptions('user-1'));
 
-    expect(getMyTabData).toHaveBeenCalledWith({ userId: 'user-1', useCache: true });
+    expect(getMyTabData).toHaveBeenCalledWith({
+      userId: 'user-1',
+      includeStories: true,
+      includeBooktime: true,
+      useCache: true,
+    });
   });
 
   it('falls back to individual endpoints when getMyTabData throws', async () => {

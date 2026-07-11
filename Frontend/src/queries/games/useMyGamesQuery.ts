@@ -1,5 +1,5 @@
 import { queryOptions, useQuery } from '@tanstack/react-query';
-import type { Game, Invite } from '@/types';
+import type { Game, Invite, UserTeam, UserTeamMembership } from '@/types';
 import { getMyTabData, getMyTabDataFallback } from '@/api/me';
 import { queryKeys } from '../queryKeys';
 import { GAMES_LIST_STALE_TIME } from './constants';
@@ -9,18 +9,28 @@ export interface MyGamesData {
   games: Game[];
   invites: Invite[];
   unreadCounts: Record<string, number>;
+  teams?: UserTeam[];
+  memberships?: UserTeamMembership[] | null;
+  storiesCount?: number | null;
+  booktimeConnected?: boolean | null;
 }
 
 async function fetchMyGamesData(userId: string): Promise<MyGamesData> {
   try {
-    const { games: myGames, invites: invitesData, unreadCounts } = await getMyTabData({
+    const tabData = await getMyTabData({
       userId,
+      includeStories: true,
+      includeBooktime: true,
       useCache: true,
     });
     return {
-      games: sortGames([...(myGames || [])]),
-      invites: invitesData ?? [],
-      unreadCounts: unreadCounts ?? {},
+      games: sortGames([...(tabData.games || [])]),
+      invites: tabData.invites ?? [],
+      unreadCounts: tabData.unreadCounts ?? {},
+      teams: tabData.teams,
+      memberships: tabData.memberships,
+      storiesCount: tabData.storiesCount,
+      booktimeConnected: tabData.booktimeConnected,
     };
   } catch (error) {
     console.warn('[useMyGamesQuery] Primary My Tab fetch failed, using fallback', error);
@@ -29,6 +39,10 @@ async function fetchMyGamesData(userId: string): Promise<MyGamesData> {
       games: sortGames([...(fallback.games || [])]),
       invites: fallback.invites ?? [],
       unreadCounts: fallback.unreadCounts ?? {},
+      teams: fallback.teams,
+      memberships: fallback.memberships,
+      storiesCount: fallback.storiesCount,
+      booktimeConnected: fallback.booktimeConnected,
     };
   }
 }

@@ -142,6 +142,7 @@ export async function getMyTabDataFallback(userId?: string): Promise<MyTabData> 
     games: gamesData.games ?? [],
     invites: gamesData.invites ?? [],
     teams: teamsResponse ?? [],
+    memberships: [],
     unreadCounts: gamesData.gamesUnreadCounts || {},
     storiesCount: null,
     booktimeConnected: null,

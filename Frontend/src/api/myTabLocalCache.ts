@@ -1,9 +1,10 @@
-import type { Game, Invite, UserTeam } from '@/types';
+import type { Game, Invite, UserTeam, UserTeamMembership } from '@/types';
 
 export interface MyTabData {
   games: Game[];
   invites: Invite[];
   teams: UserTeam[];
+  memberships: UserTeamMembership[] | null;
   unreadCounts: Record<string, number>;
   storiesCount?: number | null;
   booktimeConnected?: boolean | null;

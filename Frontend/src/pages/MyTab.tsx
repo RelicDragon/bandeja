@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import type { InfiniteData } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { format, parse, startOfDay } from 'date-fns';
@@ -28,6 +30,14 @@ import { useHeaderStore } from '@/store/headerStore';
 import { useMyGames } from '@/hooks/useMyGames';
 import { CalendarSection } from '@/components/home/CalendarSection';
 import { usePastGames } from '@/hooks/usePastGames';
+import { usePastGamesPrefetch } from '@/hooks/useMyTabPrefetch';
+import { flattenPastGamesPages, type PastGamesPage } from '@/queries/games';
+import { GAMES_LIST_STALE_TIME } from '@/queries/games/constants';
+import { queryKeys } from '@/queries/queryKeys';
+import {
+  filterPastGamesForCalendarRange,
+  pastGamesCacheCoversRange,
+} from '@/utils/pastGamesCalendarRange';
 import { useHomeFromUrl } from '@/hooks/useHomeFromUrl';
 import { PullToRefreshShell } from '@/components/PullToRefreshShell';
 import { useDesktop } from '@/hooks/useDesktop';
@@ -124,6 +134,14 @@ export const MyTab = () => {
     loadPastGames,
     refetchGame,
   } = usePastGames(user, isPastGamesTab);
+  const { prefetchPastGames } = usePastGamesPrefetch();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (isPastGamesTab) {
+      prefetchPastGames();
+    }
+  }, [isPastGamesTab, prefetchPastGames]);
 
   const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
 
@@ -236,6 +254,29 @@ export const MyTab = () => {
       }
       setLoadingPastInRange(true);
       try {
+        const userId = user?.id;
+        if (userId) {
+          const queryState = queryClient.getQueryState(queryKeys.games.past(userId));
+          const cachedPages = queryClient.getQueryData<InfiniteData<PastGamesPage>>(
+            queryKeys.games.past(userId),
+          );
+          const cachedGames = flattenPastGamesPages(cachedPages?.pages);
+          const cacheAgeMs = queryState?.dataUpdatedAt
+            ? Date.now() - queryState.dataUpdatedAt
+            : Number.POSITIVE_INFINITY;
+          const cacheIsFresh = cacheAgeMs <= GAMES_LIST_STALE_TIME;
+          const fromCache = filterPastGamesForCalendarRange(cachedGames, rangeStart, end);
+
+          if (
+            cacheIsFresh &&
+            fromCache.length > 0 &&
+            pastGamesCacheCoversRange(cachedGames, rangeStart, end)
+          ) {
+            setPastGamesInRange(fromCache);
+            return;
+          }
+        }
+
         const response = await gamesApi.getPastGames({
           startDate: format(rangeStart, 'yyyy-MM-dd'),
           endDate: format(end, 'yyyy-MM-dd'),
@@ -253,7 +294,7 @@ export const MyTab = () => {
         setLoadingPastInRange(false);
       }
     },
-    []
+    [queryClient, user?.id]
   );
   const handleUpcomingsToggle = useCallback(() => {
     setMyGamesViewMode((prev) => (prev === 'list' ? 'calendar' : 'list'));
@@ -351,7 +392,7 @@ export const MyTab = () => {
     await Promise.all([
       refetchMyGames(),
       loadPastGames?.(),
-      useUserTeamsStore.getState().refreshAll(),
+      useUserTeamsStore.getState().refreshAll({ force: true }),
     ]);
   }, [refetchMyGames, loadPastGames]);
 
