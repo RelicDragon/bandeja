@@ -598,12 +598,13 @@ Frontend/e2e/
 | GD-92 | Delete game without linked bookings | Owner deletes game with no `linkedBookings` | Single confirm modal only; delete proceeds immediately |
 | GD-93 | Court cameras section visible | FINAL game on court(s) with `webCameraUrl` | “Court cameras” card lists each court with “Web camera” link; link opens URL |
 | GD-94 | Court cameras section hidden | Game not FINAL, or FINAL but no played court has `webCameraUrl` | Court cameras section absent; web camera link absent from game info club row |
-| GD-97 | Participants chat section visible | Owner opens game before participant chats enabled | “Participants-only chat” card with create button |
+| GD-97 | Participants chat section visible | Owner opens game with `resultsStatus` NONE before participant chats enabled | “Participants-only chat” card with create button |
 | GD-98 | Enable participant chats | Tap create → confirm | Section animates away; game chat shows Participants + Organizers tabs with system messages |
 | GD-99 | Parent admin enable participant chats | League owner opens child game | Same as GD-98 |
 | GD-100 | Participants chat section hidden | Open game after chats enabled | Section absent |
 | GD-101 | Non-admin no participants chat section | Regular playing participant | Section not shown |
 | GD-102 | NON_PLAYING private chat unread | NON_PLAYING participant; new message in Participants (PRIVATE) tab | Game chat badge increments; push delivered when not viewing chat |
+| GD-103 | Participants chat section hidden after results start | Owner opens game with `resultsStatus` IN_PROGRESS or FINAL | Section absent even if participant chats not yet enabled |
 
 ### 9.2 Participation
 
@@ -663,6 +664,10 @@ Frontend/e2e/
 |----|------|-------|----------|
 | GD-28 | Enter set results | Results tab → enter scores | Saved locally + server |
 | GD-84 | Rally match set score (TT Bo3×11) | Table tennis game with Bo3×11 template → enter set score 11:4 | Accepted and saved (first-to-11 per set, not americano total-11 budget) |
+| GD-109 | Score entry modal layouts | Open set score modal in portrait and landscape | Portrait: two team columns with vertical +/− steppers around a `vs` divider; landscape: stacked team rows with horizontal steppers; court name (if any) shows as chip in header |
+| GD-110 | Score entry number picker | Tap the big score value in score modal | Keypad grid replaces steppers; picking a number returns to steppers with value applied; Back link returns without change |
+| GD-111 | Score entry invalid score hint | Enter illegal set score (e.g. 6:5 classic) | Amber hint with reason + tappable suggestion chips; tapping a chip applies both scores; Save disabled while invalid |
+| GD-112 | Extra set entry switch | Add extra set → open its score modal | Games/Balls segmented switch in header; Balls caps score values |
 | GD-29 | Conflict resolution | Conflicting entries | Conflict modal |
 | GD-30 | Submit results | Finalize results | Status updates |
 | GD-31 | Recalculate results | Owner recalc | Standings update |
@@ -670,6 +675,8 @@ Frontend/e2e/
 | GD-33 | Live scoring link | Open live board | `/games/:id/live` |
 | GD-34 | TV mode | `?tv=1` on live | TV layout/theme |
 | GD-35 | Broadcast view | `/games/:id/broadcast` | Broadcast layout |
+| GD-113 | Round header match progress | Multi-round game with 2+ matches per round → finish some matches | Round header shows animated progress bar + `finished/total` counter; bar turns green when all matches complete |
+| GD-114 | Available players footer header | Edit a match with unassigned players in roster | Bottom sheet shows "Available Players" label with count badge above the draggable carousel |
 | GD-36 | Results share card hidden without photo | Final results, no game photo yet | No share card or share CTA; Play again still available |
 | GD-36b | Results share card with photo | Add/generate photo, open Results tab | Share card preview shows photo; Share results card succeeds |
 | GD-37 | Game results artifact | Photo/story from results | Artifact flow |

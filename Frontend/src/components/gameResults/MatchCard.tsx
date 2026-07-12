@@ -19,6 +19,8 @@ import {
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { MatchHeaderEditToggleButton } from '@/components/gameResults/MatchHeaderEditToggleButton';
+import { SetScoreTile } from '@/components/gameResults/SetScoreTile';
+import { getSetScoreTileState } from '@/components/gameResults/setScoreTileState';
 import { MatchResultsHeaderBadges } from '@/components/gameResults/MatchResultsHeaderBadges';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
 import { useScrollbarVisibleWhileScrolling } from '@/hooks/useScrollbarVisibleWhileScrolling';
@@ -108,7 +110,7 @@ export const MatchCard = ({
   const livePlayEnabled = canShowLivePlay && teamsFull;
 
   const matchActionRoundClass =
-    'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md transition hover:from-primary-600 hover:to-primary-700 active:scale-[0.98]';
+    'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md active:scale-95';
 
   const livePlayLink = canShowLivePlay && gameId ? (
     livePlayEnabled ? (
@@ -154,11 +156,11 @@ export const MatchCard = ({
   const showPlayerRemoveButton = isEditing && canEditResults;
 
   const teamDropClass = (team: 'teamA' | 'teamB') =>
-    `min-h-[36px] ${(isEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-md transition-colors' : ''} ${
-      canEditResults && draggedPlayer ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : ''
+    `min-h-[36px] ${(isEditing || draggedPlayer) && canEditResults ? 'border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors' : ''} ${
+      canEditResults && draggedPlayer ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20' : ''
     } ${
       resolvedWinnerTeam === team
-        ? 'rounded-md border border-emerald-200/90 bg-emerald-50/90 dark:border-emerald-800/50 dark:bg-emerald-950/35'
+        ? 'rounded-lg bg-gradient-to-r from-emerald-100/90 via-emerald-50/60 to-transparent ring-1 ring-inset ring-emerald-300/60 dark:from-emerald-900/40 dark:via-emerald-950/25 dark:to-transparent dark:ring-emerald-700/50'
         : ''
     }`;
 
@@ -227,85 +229,36 @@ export const MatchCard = ({
 
   const renderScoreButton = (team: 'teamA' | 'teamB', setIndex: number) => {
     const set = displaySets[setIndex];
-    const teamAScore = set.teamA;
-    const teamBScore = set.teamB;
+    const own = team === 'teamA' ? set.teamA : set.teamB;
+    const other = team === 'teamA' ? set.teamB : set.teamA;
     const isExtra = isSupplementalMatchSet(set);
-    const isEditable = canEditResults;
-    const isWinning =
-      team === 'teamA'
-        ? teamAScore > teamBScore && teamAScore > 0 && teamBScore >= 0
-        : teamBScore > teamAScore && teamBScore > 0 && teamAScore >= 0;
-    const isLosing =
-      team === 'teamA'
-        ? teamAScore < teamBScore && teamAScore >= 0 && teamBScore > 0
-        : teamBScore < teamAScore && teamBScore >= 0 && teamAScore > 0;
-    const isTie = teamAScore === teamBScore && teamAScore > 0 && teamBScore > 0;
-
     const shouldShowScore = set.teamA !== 0 || set.teamB !== 0 || !resultsFinal;
-    const extraCls = isExtra
-      ? ' !border-violet-400 border-dashed dark:!border-violet-500 bg-violet-50/80 dark:bg-violet-950/30'
-      : '';
+    const topBadge = set.isTieBreak
+      ? isSuperTieBreakDeciderRow(rules, setIndex, set.isTieBreak)
+        ? t('gameResults.superTieBreakAbbr')
+        : t('gameResults.tieBreakAbbr')
+      : null;
+    const bottomBadge = isExtra
+      ? set.role === 'EXTRA_BALLS'
+        ? t('gameResults.extraUnitBallsAbbr')
+        : t('gameResults.extraUnitGamesAbbr')
+      : null;
 
     return (
       <div key={`${team}-set-${setIndex}`} className="flex h-full min-h-[40px] items-center justify-center p-0.5">
         {shouldShowScore ? (
-          <button
-            type="button"
-            onClick={
-              isEditable
-                ? (e) => {
-                    e.stopPropagation();
-                    onSetClick(setIndex);
-                  }
-                : (e) => e.stopPropagation()
-            }
-            className="relative group"
-          >
-            <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 opacity-0 blur-lg transition-opacity duration-200 group-hover:opacity-20" />
-            <div
-              className={`relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border-2 shadow-lg transition-all duration-200 sm:h-11 sm:w-11 group-hover:scale-105 group-hover:shadow-xl active:scale-95 ${
-                isExtra
-                  ? extraCls + (isEditable ? ' cursor-pointer' : '')
-                  : isWinning
-                    ? 'border-green-300/70 bg-gradient-to-br from-green-100/90 to-green-200/80 shadow-green-500/30 dark:border-green-700/50 dark:from-green-900/40 dark:to-green-800/30'
-                    : isLosing
-                      ? 'border-red-200/50 bg-gradient-to-br from-red-50/60 to-red-100/40 shadow-red-500/20 dark:border-red-700/40 dark:from-red-900/30 dark:to-red-800/20'
-                      : isTie
-                        ? 'border-yellow-300/70 bg-gradient-to-br from-yellow-100/90 to-yellow-200/80 shadow-yellow-500/30 dark:border-yellow-700/50 dark:from-yellow-900/40 dark:to-yellow-800/30'
-                        : isEditable
-                          ? 'cursor-pointer border-blue-300/70 bg-gradient-to-br from-blue-50/80 to-blue-100/60 dark:border-blue-600/50 dark:from-blue-900/30 dark:to-blue-800/20'
-                          : 'cursor-default border-gray-200 bg-gradient-to-br from-white to-gray-50 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900'
-              }`}
-            >
-              <span
-                className={`min-w-0 tabular-nums bg-gradient-to-br bg-clip-text text-xl font-bold text-transparent sm:text-2xl ${
-                  isWinning
-                    ? 'from-green-700 to-green-600 dark:from-green-300 dark:to-green-400'
-                    : isLosing
-                      ? 'from-red-700 to-red-600 dark:from-red-300 dark:to-red-400'
-                      : isTie
-                        ? 'from-yellow-700 to-yellow-600 dark:from-yellow-300 dark:to-yellow-400'
-                        : 'from-gray-900 to-gray-700 dark:from-white dark:to-gray-300'
-                }`}
-              >
-                {team === 'teamA' ? teamAScore : teamBScore}
-              </span>
-            </div>
-            {set.isTieBreak && (
-              <span className="absolute right-0 -top-3 rounded bg-white px-1 text-[8px] font-bold text-primary-600 dark:bg-gray-800 dark:text-primary-400 sm:text-[9px]">
-                {isSuperTieBreakDeciderRow(rules, setIndex, set.isTieBreak)
-                  ? t('gameResults.superTieBreakAbbr')
-                  : t('gameResults.tieBreakAbbr')}
-              </span>
-            )}
-            {isExtra ? (
-              <span className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap text-[7px] font-bold uppercase tracking-tight text-violet-600 dark:text-violet-400">
-                {set.role === 'EXTRA_BALLS'
-                  ? t('gameResults.extraUnitBallsAbbr')
-                  : t('gameResults.extraUnitGamesAbbr')}
-              </span>
-            ) : null}
-          </button>
+          <SetScoreTile
+            value={own}
+            state={getSetScoreTileState(own, other)}
+            editable={canEditResults}
+            isExtra={isExtra}
+            topBadge={topBadge}
+            bottomBadge={bottomBadge}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (canEditResults) onSetClick(setIndex);
+            }}
+          />
         ) : null}
       </div>
     );
@@ -347,9 +300,9 @@ export const MatchCard = ({
               onCourtClick();
             }
           }}
-          className={`inline-flex shrink-0 items-center gap-1 rounded border px-2 py-0.5 text-xs transition-colors ${
+          className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all ${
             canEditResults
-              ? 'cursor-pointer border-blue-200 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-800 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50'
+              ? 'cursor-pointer border-blue-200 bg-blue-50 text-blue-700 hover:scale-105 hover:bg-blue-100 active:scale-95 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50'
               : 'cursor-default border-gray-200 bg-gray-100 text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400'
           }`}
         >
@@ -437,15 +390,22 @@ export const MatchCard = ({
   }
 
   return (
-    <div className="relative px-2 pb-2 pt-2" data-match-container>
-      {matchIndex > 0 && (
-        <div className="absolute left-0 right-0 top-0 h-px bg-gray-200 dark:bg-gray-700" />
-      )}
-
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+      className={`relative rounded-2xl border bg-white px-2.5 pb-2.5 pt-2 shadow-sm transition-[border-color,box-shadow] duration-200 dark:bg-gray-800 ${
+        isEditing && canEditResults
+          ? 'border-primary-300 shadow-lg shadow-primary-500/10 ring-1 ring-primary-300/60 dark:border-primary-700 dark:ring-primary-700/50'
+          : 'border-gray-200/90 hover:shadow-md dark:border-gray-700/80'
+      }`}
+      data-match-container
+    >
       <div
-        className={`mb-0.5 flex min-h-[1rem] flex-wrap items-center gap-x-1 gap-y-0.5 ${showHeaderEditButton || showDeleteButton ? 'pr-14' : ''}`}
+        className={`mb-1 flex min-h-[1rem] flex-wrap items-center gap-x-1.5 gap-y-0.5 ${showHeaderEditButton || showDeleteButton ? 'pr-14' : ''}`}
       >
-        <span className="text-[10px] font-medium tabular-nums leading-none text-gray-500 dark:text-gray-400">
+        <span className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide tabular-nums leading-none text-gray-500 dark:bg-gray-700/70 dark:text-gray-300">
           {t('gameResults.match', { number: matchIndex + 1 })}
         </span>
         <MatchResultsHeaderBadges
@@ -456,21 +416,19 @@ export const MatchCard = ({
       </div>
 
       {(headerEditButton || showDeleteButton) && (
-        <div className="absolute right-0 top-0 z-10 flex flex-row items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+        <div className="absolute right-2 top-1.5 z-10 flex flex-row items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
           {headerEditButton}
           {showDeleteButton ? (
-            <div className="pr-1">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemoveMatch();
-                }}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-red-500 bg-white text-red-500 shadow transition-colors hover:border-red-600 hover:text-red-600 dark:bg-gray-800"
-              >
-                <Trash2 size={12} strokeWidth={2} />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveMatch();
+              }}
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-500 shadow-sm transition-all hover:scale-105 hover:border-red-300 hover:bg-red-100 hover:text-red-600 active:scale-95 dark:border-red-900/60 dark:bg-red-950/40 dark:hover:bg-red-950/70"
+            >
+              <Trash2 size={12} strokeWidth={2} />
+            </button>
           ) : null}
         </div>
       )}
@@ -489,9 +447,9 @@ export const MatchCard = ({
       <motion.div
         layout
         transition={{ layout: { type: 'spring', stiffness: 380, damping: 32 } }}
-        className={`w-full transition-[padding,box-shadow,background-color] duration-200 ease-out ${
+        className={`w-full transition-[padding,background-color] duration-200 ease-out ${
           isEditing && canEditResults
-            ? 'rounded-lg bg-green-50 py-3 ring-2 ring-green-400 dark:bg-green-900/20 dark:ring-green-500'
+            ? 'rounded-xl bg-primary-50/60 py-3 dark:bg-primary-950/25'
             : ''
         } ${canEditResults ? 'cursor-pointer' : ''}`}
         onClick={
@@ -553,6 +511,6 @@ export const MatchCard = ({
           </AnimatePresence>
         </motion.div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };

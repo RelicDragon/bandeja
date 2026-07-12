@@ -387,6 +387,7 @@
       }
     },
     "scoringShort": {
+      "CLASSIC_AUTOMATIC": "Automaticky",
       "CLASSIC_BEST_OF_3": "Na 2 sety",
       "CLASSIC_BEST_OF_5": "Na 3 sety",
       "CLASSIC_PRO_SET": "Pro set",

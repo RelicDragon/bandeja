@@ -88,7 +88,7 @@ export function MatchTimerPanel({
 
   return (
     <div
-      className="mb-1 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/90 px-2 py-1.5 text-xs dark:border-zinc-700 dark:bg-zinc-900/50"
+      className="mb-1.5 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200/70 bg-zinc-50/80 px-2.5 py-1.5 text-xs backdrop-blur-sm dark:border-zinc-700/70 dark:bg-zinc-900/50"
       onClick={(e) => e.stopPropagation()}
     >
       <div

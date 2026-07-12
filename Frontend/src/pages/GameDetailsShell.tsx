@@ -46,8 +46,7 @@ import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal'
 import { EditGameInfoModal, type EditGameInfoInitialTabId } from '@/components/GameDetails/EditGameInfoModal';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
 import { ResultsTableView } from '@/components/gameResults/ResultsTableView';
-import { HorizontalScoreEntryModal, RoundAddedModal } from '@/components/gameResults';
-import { SetResultModal } from '@/components/SetResultModal';
+import { ScoreEntryModal, RoundAddedModal } from '@/components/gameResults';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
 import { TrainingResultsSection } from '@/components/GameDetails/TrainingResultsSection';
 import { PublicGamePrompt } from '@/components/GameDetails/PublicGamePrompt';
@@ -1290,17 +1289,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       canRemove: false,
     };
 
-    const modal = isLandscape ? (
-      <SetResultModal
+    const modal = (
+      <ScoreEntryModal
         {...commonProps}
+        layout={isLandscape ? 'stacked' : 'columns'}
         courtLabel={courtSideLabel}
-        ballsInGames={game.ballsInGames || false}
-        game={game}
-        onRemove={() => {}}
-      />
-    ) : (
-      <HorizontalScoreEntryModal
-        {...commonProps}
         ballsInGames={game.ballsInGames || false}
         game={game}
         onRemove={() => {}}
@@ -1471,7 +1464,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             </div>
           ) : null}
 
-          {user ? (
+          {user && game.resultsStatus === 'NONE' ? (
             <div key="participants-chat" className="contents">
               <ParticipantsOnlyChatSection game={game} userId={user.id} />
             </div>

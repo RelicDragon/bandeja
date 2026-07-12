@@ -29,7 +29,8 @@ export const ParticipantsOnlyChatSection = ({ game, userId }: ParticipantsOnlyCh
     game.entityType !== 'BAR' &&
     game.entityType !== 'TRAINING';
 
-  const visible = canManage && !isLoading && !bothEnabled && !dismissed;
+  const visible =
+    canManage && game.resultsStatus === 'NONE' && !isLoading && !bothEnabled && !dismissed;
 
   const handleConfirm = async () => {
     setIsEnabling(true);

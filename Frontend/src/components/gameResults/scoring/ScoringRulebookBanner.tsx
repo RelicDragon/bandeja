@@ -30,7 +30,7 @@ export const ScoringRulebookBanner = ({ game }: ScoringRulebookBannerProps) => {
 
   return (
     <div className="mb-2 flex justify-center">
-      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100/70 dark:bg-gray-800/70 border border-gray-200 dark:border-gray-700 text-xs font-medium text-gray-700 dark:text-gray-200">
+      <div className="inline-flex items-center gap-2 rounded-full border border-gray-200/80 bg-white/70 px-3.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm backdrop-blur-sm dark:border-gray-700/80 dark:bg-gray-800/70 dark:text-gray-200">
         <GameFormatSummary
           scoringMode={scoringMode}
           scoringPreset={game.scoringPreset}

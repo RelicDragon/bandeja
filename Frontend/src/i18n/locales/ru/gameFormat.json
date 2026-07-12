@@ -389,6 +389,7 @@
       }
     },
     "scoringShort": {
+      "CLASSIC_AUTOMATIC": "Автоматически",
       "CLASSIC_BEST_OF_3": "До 2 сетов",
       "CLASSIC_BEST_OF_5": "До 3 сетов",
       "CLASSIC_PRO_SET": "Про-сет",

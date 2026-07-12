@@ -16,6 +16,8 @@ import {
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 import { maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { MatchHeaderEditToggleButton } from '@/components/gameResults/MatchHeaderEditToggleButton';
+import { SetScoreTile } from '@/components/gameResults/SetScoreTile';
+import { getSetScoreTileState } from '@/components/gameResults/setScoreTileState';
 import { MatchResultsHeaderBadges } from '@/components/gameResults/MatchResultsHeaderBadges';
 import { MatchTimerPanel } from '@/components/gameResults/matchTimer/MatchTimerPanel';
 import type { MatchTimerAction } from '@/utils/matchTimer';
@@ -104,7 +106,7 @@ export const HorizontalMatchCard = ({
   const livePlayEnabled = canShowLivePlay && teamsFull;
 
   const matchActionRoundClass =
-    'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-sm transition hover:from-primary-600 hover:to-primary-700 active:scale-[0.98]';
+    'inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md active:scale-95';
 
   const livePlayLink = canShowLivePlay && gameId ? (
     livePlayEnabled ? (
@@ -159,12 +161,16 @@ export const HorizontalMatchCard = ({
         data-match-id={match.id}
         data-team={team}
         className={`relative flex min-h-[40px] w-full items-center justify-center px-0 py-2 ${
-          (isEditing || draggedPlayer) && canEditResults ? 'rounded-lg border-2 border-dashed border-gray-300 transition-colors dark:border-gray-600' : ''
+          (isEditing || draggedPlayer) && canEditResults ? 'rounded-xl border-2 border-dashed border-gray-300 transition-colors dark:border-gray-600' : ''
         } ${
-          canEditResults && draggedPlayer ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : ''
+          canEditResults && draggedPlayer ? 'border-primary-400 bg-primary-50 dark:bg-primary-900/20' : ''
         } ${
           isWinner
-            ? 'rounded-lg border border-emerald-200/90 bg-emerald-50/90 dark:border-emerald-800/50 dark:bg-emerald-950/35'
+            ? `rounded-xl ring-1 ring-inset ring-emerald-300/60 dark:ring-emerald-700/50 ${
+                team === 'teamA'
+                  ? 'bg-gradient-to-r from-emerald-100/90 to-transparent dark:from-emerald-900/40 dark:to-transparent'
+                  : 'bg-gradient-to-l from-emerald-100/90 to-transparent dark:from-emerald-900/40 dark:to-transparent'
+              }`
             : ''
         }`}
         onDragOver={canEditResults ? onDragOver : undefined}
@@ -222,15 +228,22 @@ export const HorizontalMatchCard = ({
   };
 
   return (
-    <div className="relative px-0 pt-2 pb-2" data-match-container>
-      {matchIndex > 0 && (
-        <div className="absolute top-0 left-0 right-0 h-px bg-gray-200 dark:bg-gray-700"></div>
-      )}
-
+    <motion.div
+      layout
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 340, damping: 30 }}
+      className={`relative rounded-2xl border bg-white px-2 pt-2 pb-2.5 shadow-sm transition-[border-color,box-shadow] duration-200 dark:bg-gray-800 ${
+        isEditing && canEditResults
+          ? 'border-primary-300 shadow-lg shadow-primary-500/10 ring-1 ring-primary-300/60 dark:border-primary-700 dark:ring-primary-700/50'
+          : 'border-gray-200/90 hover:shadow-md dark:border-gray-700/80'
+      }`}
+      data-match-container
+    >
       <div
-        className={`mb-0.5 flex min-h-[1rem] flex-wrap items-center gap-x-1 gap-y-0.5 px-1 ${showHeaderEditButton || showDeleteButton ? 'pr-14' : ''}`}
+        className={`mb-1 flex min-h-[1rem] flex-wrap items-center gap-x-1.5 gap-y-0.5 px-1 ${showHeaderEditButton || showDeleteButton ? 'pr-14' : ''}`}
       >
-        <span className="text-[10px] font-medium tabular-nums leading-none text-gray-500 dark:text-gray-400">
+        <span className="inline-flex items-center rounded-md bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide tabular-nums leading-none text-gray-500 dark:bg-gray-700/70 dark:text-gray-300">
           {t('gameResults.match', { number: matchIndex + 1 })}
         </span>
         <MatchResultsHeaderBadges
@@ -249,10 +262,10 @@ export const HorizontalMatchCard = ({
               onCourtClick();
             }
           }}
-          className={`absolute -top-1 left-1/2 -translate-x-1/2 z-10 flex items-center gap-1 px-2 py-1 text-xs rounded border transition-colors ${
+          className={`absolute top-1.5 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-all ${
             canEditResults
-              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 cursor-pointer'
-              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700 cursor-default'
+              ? 'cursor-pointer border-blue-200 bg-blue-50 text-blue-700 hover:scale-105 hover:bg-blue-100 active:scale-95 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-900/50'
+              : 'cursor-default border-gray-200 bg-gray-100 text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400'
           }`}
         >
           <MapPin size={10} />
@@ -262,22 +275,20 @@ export const HorizontalMatchCard = ({
 
       {(headerEditButton || showDeleteButton) && (
         <div
-          className="absolute right-0 top-0 z-10 flex flex-row items-center gap-1.5"
+          className="absolute right-2 top-1.5 z-10 flex flex-row items-center gap-1.5"
           onClick={(e) => e.stopPropagation()}
         >
           {headerEditButton}
           {showDeleteButton ? (
-            <div className="pr-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemoveMatch();
-                }}
-                className="flex h-6 w-6 items-center justify-center rounded-full border border-red-500 bg-white text-red-500 shadow transition-colors hover:border-red-600 hover:text-red-600 dark:bg-gray-800"
-              >
-                <Trash2 size={12} strokeWidth={2} />
-              </button>
-            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemoveMatch();
+              }}
+              className="flex h-6 w-6 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-500 shadow-sm transition-all hover:scale-105 hover:border-red-300 hover:bg-red-100 hover:text-red-600 active:scale-95 dark:border-red-900/60 dark:bg-red-950/40 dark:hover:bg-red-950/70"
+            >
+              <Trash2 size={12} strokeWidth={2} />
+            </button>
           ) : null}
         </div>
       )}
@@ -296,9 +307,9 @@ export const HorizontalMatchCard = ({
       <motion.div
         layout
         transition={{ layout: { type: 'spring', stiffness: 380, damping: 32 } }}
-        className={`w-full transition-[padding,box-shadow,background-color] duration-200 ease-out ${
+        className={`w-full transition-[padding,background-color] duration-200 ease-out ${
           isEditing && canEditResults
-            ? 'rounded-lg bg-green-50 py-4 ring-2 ring-green-400 dark:bg-green-900/20 dark:ring-green-500'
+            ? 'rounded-xl bg-primary-50/60 py-4 dark:bg-primary-950/25'
             : ''
         } ${canEditResults ? 'cursor-pointer' : ''}`}
         onClick={canEditResults ? (e) => {
@@ -325,22 +336,14 @@ export const HorizontalMatchCard = ({
             {showScores ? (
             <div className="flex items-center gap-2">
               {displaySets.map((set, setIndex) => {
-                const teamAScore = set.teamA;
-                const teamBScore = set.teamB;
                 const isExtra = isSupplementalMatchSet(set);
-                const isEditable = canEditResults;
-                const teamAIsWinning = teamAScore > teamBScore && teamAScore > 0 && teamBScore >= 0;
-                const teamAIsLosing = teamAScore < teamBScore && teamAScore >= 0 && teamBScore > 0;
-                const teamAIsTie = teamAScore === teamBScore && teamAScore > 0 && teamBScore > 0;
-                const teamBIsWinning = teamBScore > teamAScore && teamBScore > 0 && teamAScore >= 0;
-                const teamBIsLosing = teamBScore < teamAScore && teamBScore >= 0 && teamAScore > 0;
-                const teamBIsTie = teamAScore === teamBScore && teamAScore > 0 && teamBScore > 0;
                 const shouldShowScore = set.teamA !== 0 || set.teamB !== 0 || !resultsFinal;
-                const extraCls = isExtra
-                  ? ' !border-violet-400 border-dashed dark:!border-violet-500 bg-violet-50/80 dark:bg-violet-950/30'
-                  : '';
-
                 if (!shouldShowScore) return null;
+
+                const handleTileClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+                  e.stopPropagation();
+                  if (canEditResults) onSetClick(setIndex);
+                };
 
                 return (
                   <div key={setIndex} className="flex flex-col items-center gap-0.5">
@@ -352,85 +355,23 @@ export const HorizontalMatchCard = ({
                       </span>
                     ) : null}
                     <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      onClick={
-                        isEditable
-                          ? (e) => {
-                              e.stopPropagation();
-                              onSetClick(setIndex);
-                            }
-                          : (e) => e.stopPropagation()
-                      }
-                      className="relative group"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-200 blur-lg" />
-                      <div className={`relative w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-xl border-2 transition-all duration-200 shadow-lg group-hover:shadow-xl group-hover:scale-105 active:scale-95 ${
-                        isExtra
-                          ? extraCls + (isEditable ? ' cursor-pointer' : '')
-                          : teamAIsWinning
-                          ? 'bg-gradient-to-br from-green-100/90 to-green-200/80 dark:from-green-900/40 dark:to-green-800/30 border-green-300/70 dark:border-green-700/50 shadow-green-500/30'
-                          : teamAIsLosing
-                            ? 'bg-gradient-to-br from-red-50/60 to-red-100/40 dark:from-red-900/30 dark:to-red-800/20 border-red-200/50 dark:border-red-700/40 shadow-red-500/20'
-                            : teamAIsTie
-                              ? 'bg-gradient-to-br from-yellow-100/90 to-yellow-200/80 dark:from-yellow-900/40 dark:to-yellow-800/30 border-yellow-300/70 dark:border-yellow-700/50 shadow-yellow-500/30'
-                              : isEditable
-                                ? 'bg-gradient-to-br from-blue-50/80 to-blue-100/60 dark:from-blue-900/30 dark:to-blue-800/20 border-blue-300/70 dark:border-blue-600/50 cursor-pointer'
-                                : 'bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-gray-200 dark:border-gray-700 cursor-default'
-                      }`}>
-                        <span className={`font-bold bg-gradient-to-br bg-clip-text text-transparent ${
-                          teamAIsWinning
-                            ? 'from-green-700 to-green-600 dark:from-green-300 dark:to-green-400'
-                            : teamAIsLosing
-                              ? 'from-red-700 to-red-600 dark:from-red-300 dark:to-red-400'
-                              : teamAIsTie
-                                ? 'from-yellow-700 to-yellow-600 dark:from-yellow-300 dark:to-yellow-400'
-                                : 'from-gray-900 to-gray-700 dark:from-white dark:to-gray-300'
-                        } text-xl sm:text-2xl md:text-3xl`}>
-                          {teamAScore}
-                        </span>
-                      </div>
-                    </button>
-                    <span className="text-gray-400 dark:text-gray-600 text-xl sm:text-2xl md:text-3xl font-bold">:</span>
-                    <button
-                      type="button"
-                      onClick={
-                        isEditable
-                          ? (e) => {
-                              e.stopPropagation();
-                              onSetClick(setIndex);
-                            }
-                          : (e) => e.stopPropagation()
-                      }
-                      className="relative group"
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-200 blur-lg" />
-                      <div className={`relative w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 flex items-center justify-center rounded-xl border-2 transition-all duration-200 shadow-lg group-hover:shadow-xl group-hover:scale-105 active:scale-95 ${
-                        isExtra
-                          ? extraCls + (isEditable ? ' cursor-pointer' : '')
-                          : teamBIsWinning
-                          ? 'bg-gradient-to-br from-green-100/90 to-green-200/80 dark:from-green-900/40 dark:to-green-800/30 border-green-300/70 dark:border-green-700/50 shadow-green-500/30'
-                          : teamBIsLosing
-                            ? 'bg-gradient-to-br from-red-50/60 to-red-100/40 dark:from-red-900/30 dark:to-red-800/20 border-red-200/50 dark:border-red-700/40 shadow-red-500/20'
-                            : teamBIsTie
-                              ? 'bg-gradient-to-br from-yellow-100/90 to-yellow-200/80 dark:from-yellow-900/40 dark:to-yellow-800/30 border-yellow-300/70 dark:border-yellow-700/50 shadow-yellow-500/30'
-                              : isEditable
-                                ? 'bg-gradient-to-br from-blue-50/80 to-blue-100/60 dark:from-blue-900/30 dark:to-blue-800/20 border-blue-300/70 dark:border-blue-600/50 cursor-pointer'
-                                : 'bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 border-gray-200 dark:border-gray-700 cursor-default'
-                      }`}>
-                        <span className={`font-bold bg-gradient-to-br bg-clip-text text-transparent ${
-                          teamBIsWinning
-                            ? 'from-green-700 to-green-600 dark:from-green-300 dark:to-green-400'
-                            : teamBIsLosing
-                              ? 'from-red-700 to-red-600 dark:from-red-300 dark:to-red-400'
-                              : teamBIsTie
-                                ? 'from-yellow-700 to-yellow-600 dark:from-yellow-300 dark:to-yellow-400'
-                                : 'from-gray-900 to-gray-700 dark:from-white dark:to-gray-300'
-                        } text-xl sm:text-2xl md:text-3xl`}>
-                          {teamBScore}
-                        </span>
-                      </div>
-                    </button>
+                      <SetScoreTile
+                        value={set.teamA}
+                        state={getSetScoreTileState(set.teamA, set.teamB)}
+                        editable={canEditResults}
+                        isExtra={isExtra}
+                        size="lg"
+                        onClick={handleTileClick}
+                      />
+                      <span className="text-xl font-bold text-gray-300 dark:text-gray-600 sm:text-2xl">:</span>
+                      <SetScoreTile
+                        value={set.teamB}
+                        state={getSetScoreTileState(set.teamB, set.teamA)}
+                        editable={canEditResults}
+                        isExtra={isExtra}
+                        size="lg"
+                        onClick={handleTileClick}
+                      />
                     </div>
                   </div>
                 );
@@ -476,7 +417,7 @@ export const HorizontalMatchCard = ({
           </motion.div>
         </motion.div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 

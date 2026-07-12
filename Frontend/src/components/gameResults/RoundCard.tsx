@@ -7,7 +7,12 @@ import { BasicUser, Court, Game } from '@/types';
 import { MatchCard } from './MatchCard';
 import { HorizontalMatchCard } from './HorizontalMatchCard';
 import { ConfirmationModal } from '@/components';
-import { getRules, getRoundResultsHeaderTone, type RoundResultsHeaderTone } from '@/utils/scoring';
+import {
+  getRules,
+  getRoundResultsHeaderTone,
+  isResultsMatchFinished,
+  type RoundResultsHeaderTone,
+} from '@/utils/scoring';
 import { isSupplementalMatchSet } from '@/utils/matchSetRole';
 
 interface RoundCardProps {
@@ -125,6 +130,12 @@ export const RoundCard = ({
 
   const headerTone = useMemo(() => getRoundResultsHeaderTone(round, rules), [round, rules]);
 
+  const matchProgress = useMemo(() => {
+    const total = round.matches.length;
+    const finished = round.matches.filter((m) => isResultsMatchFinished(m, rules)).length;
+    return { total, finished };
+  }, [round.matches, rules]);
+
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -135,7 +146,7 @@ export const RoundCard = ({
   }, []);
 
   const matchesContent = (
-    <div className={hideFrame ? '' : 'py-2'}>
+    <div className={hideFrame ? 'space-y-2' : 'space-y-2 px-2 py-2.5'}>
               {round.matches.map((match, matchIndex) => {
                 const useHorizontalMatchCard =
                   fixedNumberOfSets === 1 &&
@@ -250,10 +261,10 @@ export const RoundCard = ({
   const toneStyle = ROUND_HEADER_TONE[headerTone];
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
+    <div className="overflow-hidden rounded-2xl border border-gray-200/80 bg-gray-50/80 shadow-sm transition-shadow hover:shadow-md dark:border-gray-700/80 dark:bg-gray-900/40">
       <div
-        className={`flex cursor-pointer items-center justify-between px-2 py-1.5 transition-colors ${toneStyle.bg} ${
-          isExpanded ? 'border-b border-gray-200 dark:border-gray-600' : toneStyle.borderIdle
+        className={`flex cursor-pointer items-center justify-between px-2.5 py-2 transition-colors ${toneStyle.bg} ${
+          isExpanded ? 'border-b border-gray-200/80 dark:border-gray-700' : toneStyle.borderIdle
         } ${toneStyle.hover}`}
         onClick={onToggleExpand}
       >
@@ -261,14 +272,14 @@ export const RoundCard = ({
           <motion.span
             animate={{ rotate: isExpanded ? 0 : -90 }}
             transition={{ type: 'spring', stiffness: 300, damping: 24 }}
-            className="flex text-gray-500 dark:text-gray-400"
+            className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-100/80 text-gray-500 dark:bg-gray-800/80 dark:text-gray-400"
           >
-            <ChevronDown size={16} />
+            <ChevronDown size={15} />
           </motion.span>
           <h3 className="flex items-center gap-1.5 font-semibold text-sm text-gray-900 dark:text-gray-100">
             {t('gameResults.round')}
             <span
-              className={`flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold ${toneStyle.badge}`}
+              className={`flex h-6 min-w-6 items-center justify-center rounded-lg px-1.5 text-xs font-bold shadow-sm ${toneStyle.badge}`}
             >
               {roundIndex + 1}
             </span>
@@ -279,6 +290,21 @@ export const RoundCard = ({
                 <span className={`absolute inline-flex h-full w-full animate-ping rounded-full opacity-60 ${toneStyle.dot}`} />
               )}
               <span className={`relative inline-flex h-2 w-2 rounded-full ${toneStyle.dot}`} />
+            </span>
+          )}
+          {matchProgress.total > 1 && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-semibold tabular-nums text-gray-400 dark:text-gray-500">
+              <span className="h-1 w-10 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                <motion.span
+                  className={`block h-full rounded-full ${
+                    matchProgress.finished === matchProgress.total ? 'bg-emerald-500' : 'bg-amber-500'
+                  }`}
+                  initial={false}
+                  animate={{ width: `${(matchProgress.finished / matchProgress.total) * 100}%` }}
+                  transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+                />
+              </span>
+              {matchProgress.finished}/{matchProgress.total}
             </span>
           )}
         </div>

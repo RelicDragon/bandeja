@@ -1,9 +1,8 @@
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
-import { SetResultModal } from '@/components/SetResultModal';
 import { CourtModal } from '@/components/CourtModal';
 import { TeamPlayerSelector, ConfirmationModal } from '@/components';
-import { HorizontalScoreEntryModal, SyncConflictModal } from '@/components/gameResults';
+import { ScoreEntryModal, SyncConflictModal } from '@/components/gameResults';
 import { OutcomeExplanationModal } from '@/components/OutcomeExplanationModal';
 import { ModalType } from '@/hooks/useModalManager';
 import { Game, BasicUser } from '@/types';
@@ -84,31 +83,11 @@ export const GameResultsModals = ({
       return match.sets.length > 1 && !(isLastSet && isZeroZero);
     })();
 
-    const modalContent = effectiveHorizontalLayout ? (
-      <HorizontalScoreEntryModal
-        key={`horizontal-${modal.matchId}-${modal.setIndex}`}
+    const modalContent = (
+      <ScoreEntryModal
+        key={`set-entry-${modal.matchId}-${modal.setIndex}`}
         isOpen={true}
-        match={match}
-        setIndex={modal.setIndex}
-        players={players}
-        roundNumber={roundNumber}
-        maxTotalPointsPerSet={currentGame?.maxTotalPointsPerSet}
-        maxPointsPerTeam={currentGame?.maxPointsPerTeam}
-        fixedNumberOfSets={currentGame?.fixedNumberOfSets}
-        ballsInGames={currentGame?.ballsInGames || false}
-        game={currentGame}
-        onSave={(matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options) => {
-          onUpdateSetResult(modal.roundId, matchId, setIndex, teamAScore, teamBScore, isTieBreak, supplementalRole, options);
-        }}
-        onRemove={(matchId, setIndex) => {
-          onRemoveSet(modal.roundId, matchId, setIndex);
-        }}
-        onClose={onClose}
-        canRemove={canRemove}
-      />
-    ) : (
-      <SetResultModal
-        isOpen={true}
+        layout={effectiveHorizontalLayout ? 'columns' : 'stacked'}
         match={match}
         setIndex={modal.setIndex}
         players={players}

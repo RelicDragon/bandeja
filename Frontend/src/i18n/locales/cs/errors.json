@@ -4,6 +4,8 @@
     "networkError": "Chyba sítě. Zkontrolujte připojení",
     "unauthorized": "Nejste oprávněni. Přihlaste se",
     "notFound": "Nenalezeno",
+    "userNotFound": "Uživatel nenalezen",
+    "invalidInput": "Neplatný vstup",
     "serverError": "Chyba serveru. Zkuste to později",
     "accessDenied": "Přístup odepřen. Nemáte oprávnění zobrazit tento obsah.",
     "navigationError": "Stránka se nenačetla správně. Vraťte se zpět nebo to zkuste znovu.",
@@ -20,11 +22,20 @@
       "alreadyProcessed": "Pozvánka již byla zpracována",
       "expired": "Pozvánka vypršela",
       "gameFull": "Zápas je plný",
+      "cannotSendAfterGameStarted": "Po začátku zápasu nelze posílat ani obnovovat pozvánky",
+      "notAuthorizedToAcceptQueue": "Nemáte oprávnění přijmout tohoto hráče z fronty",
       "gameNotFound": "Zápas nenalezen",
       "onlyParticipantsCanView": "Pozvánky k zápasu mohou zobrazit jen účastníci",
       "onlySenderCanCancel": "Tuto pozvánku může zrušit jen odesílatel",
       "canOnlyCancelPending": "Lze zrušit jen čekající pozvánky",
       "declineMessageTooLong": "Důvod odmítnutí nesmí přesáhnout 10 000 znaků"
+    },
+    "blockedUsers": {
+      "userIdRequired": "Je vyžadováno ID uživatele",
+      "cannotBlockYourself": "Nemůžete zablokovat sami sebe",
+      "userNotFound": "Uživatel nenalezen",
+      "alreadyBlocked": "Uživatel je již zablokován",
+      "userNotBlocked": "Uživatel není zablokován"
     },
     "userTeams": {
       "blocked": "Tohoto hráče nemůžete pozvat",

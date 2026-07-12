@@ -4,6 +4,8 @@
     "networkError": "Greška mreže. Proverite vezu",
     "unauthorized": "Niste ovlašćeni. Molimo prijavite se",
     "notFound": "Nije pronađeno",
+    "userNotFound": "Korisnik nije pronađen",
+    "invalidInput": "Neispravan unos",
     "serverError": "Greška servera. Pokušajte kasnije",
     "accessDenied": "Pristup odbijen. Nemate dozvolu da vidite ovaj sadržaj.",
     "navigationError": "Stranica se nije učitala ispravno. Vratite se nazad ili pokušajte ponovo.",
@@ -20,11 +22,20 @@
       "alreadyProcessed": "Poziv je već obrađen",
       "expired": "Poziv je istekao",
       "gameFull": "Igra je popunjena",
+      "cannotSendAfterGameStarted": "Pozivi nisu dozvoljeni nakon početka igre",
+      "notAuthorizedToAcceptQueue": "Niste ovlašćeni da prihvatite ovog igrača iz reda čekanja",
       "gameNotFound": "Igra nije pronađena",
       "onlyParticipantsCanView": "Samo učesnici mogu pregledati pozive igre",
       "onlySenderCanCancel": "Samo pošiljalac može otkazati ovaj poziv",
       "canOnlyCancelPending": "Može se otkazati samo poziv na čekanju",
       "declineMessageTooLong": "Razlog odbijanja ne može biti duži od 10.000 znakova"
+    },
+    "blockedUsers": {
+      "userIdRequired": "Potreban je ID korisnika",
+      "cannotBlockYourself": "Ne možete blokirati sebe",
+      "userNotFound": "Korisnik nije pronađen",
+      "alreadyBlocked": "Korisnik je već blokiran",
+      "userNotBlocked": "Korisnik nije blokiran"
     },
     "userTeams": {
       "blocked": "Ne možete pozvati ovog igrača",

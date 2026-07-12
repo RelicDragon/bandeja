@@ -13,19 +13,12 @@ const gridClass: Record<Density, string> = {
 function numButtonClass(density: Density, selected: boolean): string {
   const base =
     density === 'comfortable'
-      ? 'aspect-square rounded-lg sm:rounded-xl font-bold text-sm sm:text-base transition-all duration-200'
-      : 'aspect-square rounded-md sm:rounded-lg font-bold text-xs sm:text-sm transition-all duration-200';
+      ? 'aspect-square rounded-lg sm:rounded-xl font-bold tabular-nums text-sm sm:text-base transition-all duration-150'
+      : 'aspect-square rounded-md sm:rounded-lg font-bold tabular-nums text-xs sm:text-sm transition-all duration-150';
   if (selected) {
-    return `${base} bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-xl shadow-primary-500/40 scale-110 ring-2 ring-primary-400 ring-offset-1 sm:ring-offset-2 dark:ring-offset-gray-900`;
+    return `${base} bg-primary-600 text-white shadow-md shadow-primary-500/30 ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900`;
   }
-  return `${base} bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 hover:scale-110 active:scale-95 shadow-md hover:shadow-lg border border-gray-200 dark:border-gray-700`;
-}
-
-function numButtonClassCompactSelected(selected: boolean): string {
-  if (selected) {
-    return 'aspect-square rounded-md sm:rounded-lg font-bold text-xs sm:text-sm transition-all duration-200 bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/40 scale-105 ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900';
-  }
-  return 'aspect-square rounded-md sm:rounded-lg font-bold text-xs sm:text-sm transition-all duration-200 bg-gradient-to-br from-gray-100 to-gray-50 dark:from-gray-800 dark:to-gray-900 text-gray-700 dark:text-gray-300 hover:from-gray-200 hover:to-gray-100 dark:hover:from-gray-700 dark:hover:to-gray-800 hover:scale-105 active:scale-95 shadow border border-gray-200 dark:border-gray-700';
+  return `${base} border border-gray-200 bg-white text-gray-700 shadow-xs hover:bg-gray-50 hover:text-gray-900 active:scale-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white`;
 }
 
 export type ScorePickerNumberGridProps = {
@@ -76,8 +69,7 @@ export const ScorePickerNumberGrid = ({
     );
   };
 
-  const btnClass = (selected: boolean) =>
-    density === 'comfortable' ? numButtonClass('comfortable', selected) : numButtonClassCompactSelected(selected);
+  const btnClass = (selected: boolean) => numButtonClass(density, selected);
 
   return (
     <div className="flex w-full min-h-0 max-w-full flex-col items-stretch gap-2">
@@ -140,7 +132,7 @@ export const ScorePickerNumberGrid = ({
             <button
               type="button"
               onClick={applyCustom}
-              className="flex-1 py-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 text-sm font-semibold text-white shadow hover:from-primary-600 hover:to-primary-700"
+              className="flex-1 py-2 rounded-lg bg-primary-600 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-primary-700"
             >
               {t('common.ok')}
             </button>

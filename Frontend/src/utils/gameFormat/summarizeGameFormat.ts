@@ -77,7 +77,9 @@ export const summarizeGameFormat = (
         : t('gameFormat.goldenPoint.afterDeucesShort', { count: args.deucesBeforeGoldenPoint }),
     );
   }
-  if (args.generationType && args.generationType !== 'HANDMADE') {
+  const redundantAutomaticPairing =
+    args.scoringPreset === 'CLASSIC_AUTOMATIC' && args.generationType === 'AUTOMATIC';
+  if (args.generationType && args.generationType !== 'HANDMADE' && !redundantAutomaticPairing) {
     parts.push(t(`gameFormat.generation.${genKey(args.generationType)}.title`));
   }
   const rankBy = winnerOfGameSummaryPart(t, args.winnerOfGame);

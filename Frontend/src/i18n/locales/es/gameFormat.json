@@ -385,6 +385,7 @@
       }
     },
     "scoringShort": {
+      "CLASSIC_AUTOMATIC": "Automático",
       "CLASSIC_BEST_OF_3": "Mejor de 3",
       "CLASSIC_BEST_OF_5": "Mejor de 5",
       "CLASSIC_PRO_SET": "Pro set",
