@@ -27,7 +27,11 @@ export function isMatchEmpty(match: Round['matches'][number]): boolean {
   return !hasTeams && !hasScores;
 }
 
-export function shouldShowRoundAddedModal(round: Round | null | undefined): boolean {
+export function shouldShowRoundAddedModal(
+  round: Round | null | undefined,
+  participantCount?: number,
+): boolean {
+  if (participantCount !== undefined && participantCount <= 4) return false;
   if (!round?.matches?.length) return false;
   if (round.matches.length === 1 && isMatchEmpty(round.matches[0])) return false;
   return true;

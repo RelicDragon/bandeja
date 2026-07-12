@@ -20,8 +20,8 @@ export function AutomaticMatchRecordModeSwitch({ mode, onChange }: MatchRecordSw
   );
 
   return (
-    <div className="mt-2">
-      <p className="mb-1.5 text-xs font-medium text-gray-500 dark:text-gray-400">
+    <div className="mt-2.5">
+      <p className="mb-1.5 text-xs text-gray-500 dark:text-gray-400">
         {t('gameResults.automaticMatchRecordHint')}
       </p>
       <SegmentedSwitch
@@ -31,6 +31,7 @@ export function AutomaticMatchRecordModeSwitch({ mode, onChange }: MatchRecordSw
         showOnlyActiveTabText={false}
         layoutId="automatic-match-record-mode"
         className="w-full"
+        fullWidth
         ariaLabel={t('gameResults.automaticMatchRecordHint')}
       />
     </div>
@@ -65,7 +66,7 @@ export function AutomaticDeciderSetModeSwitch({
   );
 
   return (
-    <div className="mt-2">
+    <div className="mt-2.5">
       <SegmentedSwitch
         tabs={tabs}
         activeId={useSuperTiebreak ? 'SUPER_TIEBREAK' : 'MATCH_MODE'}
@@ -73,6 +74,7 @@ export function AutomaticDeciderSetModeSwitch({
         showOnlyActiveTabText={false}
         layoutId="automatic-decider-set-mode"
         className="w-full"
+        fullWidth
         ariaLabel={t('gameResults.automaticDeciderSetHint')}
       />
     </div>

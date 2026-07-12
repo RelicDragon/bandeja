@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PlayerAvatar } from '@/components';
 import { Round } from '@/types/gameResults';
 import { shouldShowRoundAddedModal } from '@/utils/fivePlayerMatchCombinations';
+import { isParticipantPlaying } from '@/utils/participantStatus';
 import { Game, BasicUser } from '@/types';
 
 interface RoundAddedModalProps {
@@ -17,6 +18,11 @@ interface RoundAddedModalProps {
 
 export function RoundAddedModal({ isOpen, onClose, round, game, roundNumber }: RoundAddedModalProps) {
   const { t } = useTranslation();
+
+  const participantCount = useMemo(
+    () => game?.participants?.filter(isParticipantPlaying).length ?? 0,
+    [game?.participants],
+  );
 
   const playerMap = useMemo(() => {
     const map = new Map<string, BasicUser>();
@@ -84,7 +90,7 @@ export function RoundAddedModal({ isOpen, onClose, round, game, roundNumber }: R
     return result;
   }, [round, game?.gameCourts, courtIdToName, t]);
 
-  if (!shouldShowRoundAddedModal(round)) return null;
+  if (!shouldShowRoundAddedModal(round, participantCount)) return null;
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="round-added-modal">

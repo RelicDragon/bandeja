@@ -414,7 +414,7 @@ Frontend/e2e/
 | C-10 | Template picker | Select template | Format + rating defaults applied |
 | C-10a | Padel Automatic default | Create padel doubles game (default load) | **Automatic** template selected (Match badge); `CLASSIC_AUTOMATIC` preset; generation Automatic; rating game on |
 | C-10b | Automatic customize demote | Automatic template → Customize format → change any param | Custom/advanced card; template no longer matches |
-| C-10c | Automatic set entry | Automatic game → set 1: SegmentedSwitch Set/games vs Americano points (match-level); set 2+ uses same mode; at 1–1 decider can pick super tiebreak; next match can differ | Any score saves; amber hint only |
+| C-10c | Automatic set entry | Automatic game → set 1: SegmentedSwitch Set/games vs Americano points (match-level); set 2+ uses same mode; at 1–1 decider can pick super tiebreak; next match can differ | Set/games 0–10; STB decider uses tiebreak point cap (first-to+5); hint/examples follow active mode; title shows STB suffix only when STB selected |
 | C-11 | Game format wizard | Open/close wizard | Scoring preset saved |
 | C-47 | Golden point deuce count | Create/edit classic game → Set structure step → pick Off / At 40–40 / After 1–4 deuces | Setting saved on game; live scoring uses advantage until threshold then sudden death at 40–40; watch matches web |
 | C-12 | Rating vs social game | Toggle affects rating | Flag persisted on create |
@@ -664,9 +664,9 @@ Frontend/e2e/
 |----|------|-------|----------|
 | GD-28 | Enter set results | Results tab → enter scores | Saved locally + server |
 | GD-84 | Rally match set score (TT Bo3×11) | Table tennis game with Bo3×11 template → enter set score 11:4 | Accepted and saved (first-to-11 per set, not americano total-11 budget) |
-| GD-109 | Score entry modal layouts | Open set score modal in portrait and landscape | Portrait: two team columns with vertical +/− steppers around a `vs` divider; landscape: stacked team rows with horizontal steppers; court name (if any) shows as chip in header |
-| GD-110 | Score entry number picker | Tap the big score value in score modal | Keypad grid replaces steppers; picking a number returns to steppers with value applied; Back link returns without change |
-| GD-111 | Score entry invalid score hint | Enter illegal set score (e.g. 6:5 classic) | Amber hint with reason + tappable suggestion chips; tapping a chip applies both scores; Save disabled while invalid |
+| GD-109 | Score entry modal layouts | Open set score modal in portrait and landscape | Portrait: 3-column grid — team avatars top row, aligned `− score +` row below with `:` center; landscape: two stacked team rows (avatars left, horizontal stepper right); no overlapping elements; leading score green |
+| GD-110 | Score entry number picker | Tap the big score value in score modal | Keypad expands below scoreboard; modal scrolls so keypad bottom is fully visible; header shows stacked avatars + player names for active team; Set/games 0–10; picking a number highlights the cell briefly before auto-advance; first pick on team A slides to team B, first pick on team B slides to team A; second pick closes keypad; closing scrolls back to scoreboard |
+| GD-111 | Score entry invalid score hint | Enter illegal set score (e.g. 6:5 classic) | Hint replaces header slot (title/mode switch hidden); scoreboard and keypad stay fixed; suggestion chips apply both scores; Save disabled while invalid |
 | GD-112 | Extra set entry switch | Add extra set → open its score modal | Games/Balls segmented switch in header; Balls caps score values |
 | GD-29 | Conflict resolution | Conflicting entries | Conflict modal |
 | GD-30 | Submit results | Finalize results | Status updates |
@@ -677,6 +677,7 @@ Frontend/e2e/
 | GD-35 | Broadcast view | `/games/:id/broadcast` | Broadcast layout |
 | GD-113 | Round header match progress | Multi-round game with 2+ matches per round → finish some matches | Round header shows animated progress bar + `finished/total` counter; bar turns green when all matches complete |
 | GD-114 | Available players footer header | Edit a match with unassigned players in roster | Bottom sheet shows "Available Players" label with count badge above the draggable carousel |
+| GD-115 | Round added summary modal | Add round in results entry with ≤4 playing participants vs 5+ | ≤4: round added inline with no summary modal; 5+: modal lists generated match pairings |
 | GD-36 | Results share card hidden without photo | Final results, no game photo yet | No share card or share CTA; Play again still available |
 | GD-36b | Results share card with photo | Add/generate photo, open Results tab | Share card preview shows photo; Share results card succeeds |
 | GD-37 | Game results artifact | Photo/story from results | Artifact flow |

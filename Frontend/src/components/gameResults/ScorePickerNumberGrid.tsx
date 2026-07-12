@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { splitScorePickerOptions, SCORE_PICKER_PRESET_LAST_INDEX } from '@/utils/scoring';
 
@@ -13,12 +14,12 @@ const gridClass: Record<Density, string> = {
 function numButtonClass(density: Density, selected: boolean): string {
   const base =
     density === 'comfortable'
-      ? 'aspect-square rounded-lg sm:rounded-xl font-bold tabular-nums text-sm sm:text-base transition-all duration-150'
-      : 'aspect-square rounded-md sm:rounded-lg font-bold tabular-nums text-xs sm:text-sm transition-all duration-150';
+      ? 'aspect-square rounded-lg font-bold tabular-nums text-sm sm:text-base transition-colors'
+      : 'aspect-square rounded-md font-bold tabular-nums text-xs sm:text-sm transition-colors';
   if (selected) {
-    return `${base} bg-primary-600 text-white shadow-md shadow-primary-500/30 ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900`;
+    return `${base} bg-primary-600 text-white ring-2 ring-primary-400 ring-offset-1 dark:ring-offset-gray-900`;
   }
-  return `${base} border border-gray-200 bg-white text-gray-700 shadow-xs hover:bg-gray-50 hover:text-gray-900 active:scale-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white`;
+  return `${base} border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 active:scale-95 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700`;
 }
 
 export type ScorePickerNumberGridProps = {
@@ -44,11 +45,22 @@ export const ScorePickerNumberGrid = ({
   const { presetValues, showMoreTile } = splitScorePickerOptions(numberOptions, keypadMax);
   const [customOpen, setCustomOpen] = useState(false);
   const [customInput, setCustomInput] = useState('');
+  const previousScoreRef = useRef(currentScore);
+  const [pulseScore, setPulseScore] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (currentScore !== previousScoreRef.current) {
+      setPulseScore(currentScore);
+      previousScoreRef.current = currentScore;
+    }
+  }, [currentScore]);
 
   useEffect(() => {
     setCustomOpen(false);
     setCustomInput('');
-  }, [pickerResetKey]);
+    previousScoreRef.current = currentScore;
+    setPulseScore(null);
+  }, [pickerResetKey, currentScore]);
 
   const moreSelected =
     showMoreTile &&
@@ -75,16 +87,25 @@ export const ScorePickerNumberGrid = ({
     <div className="flex w-full min-h-0 max-w-full flex-col items-stretch gap-2">
       <div className="max-h-[min(48dvh,320px)] min-h-0 touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
         <div className={gridClass[density]}>
-          {presetValues.map(number => (
-            <button
-              key={number}
-              type="button"
-              onClick={() => onSelect(number)}
-              className={btnClass(number === currentScore)}
-            >
-              {number}
-            </button>
-          ))}
+          {presetValues.map(number => {
+            const selected = number === currentScore;
+            const shouldPulse = pulseScore === number;
+            return (
+              <motion.button
+                key={number}
+                type="button"
+                onClick={() => onSelect(number)}
+                animate={
+                  shouldPulse
+                    ? { scale: [1, 1.12, 1], transition: { duration: 0.28, ease: [0.32, 0.72, 0, 1] } }
+                    : { scale: 1 }
+                }
+                className={btnClass(selected)}
+              >
+                {number}
+              </motion.button>
+            );
+          })}
           {showMoreTile && (
             <button
               type="button"

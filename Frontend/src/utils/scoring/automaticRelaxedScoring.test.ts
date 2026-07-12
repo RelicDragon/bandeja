@@ -4,6 +4,7 @@ import { Sports } from '@shared/sport';
 import {
   AUTOMATIC_RECORD_MODE_METADATA_KEY,
   canUseSuperTiebreakEntry,
+  getAutomaticRelaxedKeypadOptions,
   mergeAutomaticMatchRecordMetadata,
   parseAutomaticMatchRecordMode,
   recommendAutomaticSetScore,
@@ -45,5 +46,18 @@ describe('automaticRelaxedScoring', () => {
     expect(hint.ok).toBe(false);
     const relaxed = recommendAutomaticSetScore(24, 18, rules, 'AMERICANO_POINTS');
     expect(relaxed.ok).toBe(true);
+  });
+
+  it('keypad caps follow entry mode including super tiebreak on decider', () => {
+    const metadata = mergeAutomaticMatchRecordMetadata({}, 'GAMES');
+    const sets = [
+      { teamA: 6, teamB: 4, isTieBreak: false },
+      { teamA: 4, teamB: 6, isTieBreak: false },
+      { teamA: 0, teamB: 0, isTieBreak: false },
+    ];
+    expect(resolveAutomaticSetEntryMode(2, sets, rules, metadata, false)).toBe('GAMES');
+    expect(getAutomaticRelaxedKeypadOptions(rules, 'GAMES').max).toBe(10);
+    expect(resolveAutomaticSetEntryMode(2, sets, rules, metadata, true)).toBe('SUPER_TIEBREAK');
+    expect(getAutomaticRelaxedKeypadOptions(rules, 'SUPER_TIEBREAK').max).toBe(15);
   });
 });

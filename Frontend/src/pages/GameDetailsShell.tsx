@@ -1154,11 +1154,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     await GameResultsEngine.addRound();
     const rounds = useGameResultsStore.getState().rounds;
     const newRound = rounds[rounds.length - 1] ?? null;
-    if (shouldShowRoundAddedModal(newRound)) {
+    if (shouldShowRoundAddedModal(newRound, tablePlayers.length)) {
       setRoundAddedForModal(newRound);
       setRoundAddedModalRoundNumber(undefined);
     }
-  }, []);
+  }, [tablePlayers.length]);
   const handleTableDeleteRound = useCallback(
     (roundId: string) => {
       GameResultsEngine.removeRound(roundId, t);
@@ -1373,7 +1373,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
 
           {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' ? (
             <div key="results-entry" className="contents">
-              <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
+              <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r, tablePlayers.length)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
             </div>
           ) : null}
 
@@ -1657,7 +1657,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             onCellClick={handleTableCellClick}
             onDeleteRound={handleTableDeleteRound}
             onRoundHeaderClick={(round, roundNumber) => {
-              if (!shouldShowRoundAddedModal(round)) return;
+              if (!shouldShowRoundAddedModal(round, tablePlayers.length)) return;
               setRoundAddedForModal(round);
               setRoundAddedModalRoundNumber(roundNumber);
             }}
@@ -1674,7 +1674,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           roundNumber={roundAddedModalRoundNumber}
         />
         <div className="hidden" aria-hidden="true">
-          <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
+          <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r, tablePlayers.length)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
         </div>
       </AnimatedChildrenStagger>
       </AnimatedPresencePanel>

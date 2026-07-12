@@ -131,7 +131,7 @@ export const ResultsRoundsBoard = ({
     await engine.addRound();
     const nextRounds = useGameResultsStore.getState().rounds;
     const newRound = nextRounds.length > 0 ? nextRounds[nextRounds.length - 1] : undefined;
-    if (newRound && shouldShowRoundAddedModal(newRound)) onRoundAdded?.(newRound);
+    if (newRound && shouldShowRoundAddedModal(newRound, players.length)) onRoundAdded?.(newRound);
   };
 
   return (

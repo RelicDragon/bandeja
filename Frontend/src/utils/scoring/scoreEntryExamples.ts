@@ -1,9 +1,14 @@
+import type { AutomaticSetEntryMode } from '@shared/automaticRelaxedScoring';
 import type { ScoringRules, SetKind } from './rulebook';
 import { isClassicRules, isClassicTimedRelaxedGameScores, isClassicAutomaticRelaxedScores, isPointsRules } from './rulebook';
 
 /** Colon-separated example scores for the score-entry modal hint row. */
-export function getScoreEntryExampleList(rules: ScoringRules, kind: SetKind): string | null {
-  if (kind === 'SUPER_TIEBREAK') {
+export function getScoreEntryExampleList(
+  rules: ScoringRules,
+  kind: SetKind,
+  automaticEntryMode?: AutomaticSetEntryMode | null,
+): string | null {
+  if (automaticEntryMode === 'SUPER_TIEBREAK' || kind === 'SUPER_TIEBREAK') {
     const ft = rules.superTieBreakFirstTo;
     const wb = rules.superTieBreakWinBy;
     return `${ft}:${ft - wb}, ${ft + 1}:${ft - 1}, ${ft + 2}:${ft}`;
@@ -14,7 +19,21 @@ export function getScoreEntryExampleList(rules: ScoringRules, kind: SetKind): st
     return `${ft}:${ft - wb}, ${ft + 1}:${ft - 1}, ${ft + 2}:${ft}`;
   }
   if (kind === 'REGULAR' && isClassicRules(rules)) {
-    if (isClassicAutomaticRelaxedScores(rules)) return '6:4, 24:18, 10:8';
+    if (isClassicAutomaticRelaxedScores(rules)) {
+      if (automaticEntryMode === 'AMERICANO_POINTS') {
+        const budget =
+          rules.maxPointsPerTeam > 0
+            ? rules.maxPointsPerTeam * 2
+            : rules.totalPointsPerSet > 0
+              ? rules.totalPointsPerSet
+              : 24;
+        const half = Math.floor(budget / 2);
+        const hi = half + 2;
+        const lo = budget - hi;
+        return `${hi}:${lo}, ${half + 1}:${half - 1}, ${budget}:0`;
+      }
+      return '6:4, 7:5, 10:8';
+    }
     if (isClassicTimedRelaxedGameScores(rules)) return '6:4, 4:4, 3:6';
     const g = rules.gamesPerSet;
     const tb = rules.tieBreakGameAtGames;

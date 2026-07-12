@@ -69,4 +69,14 @@ describe('shouldShowRoundAddedModal', () => {
   it('returns true for multiple matches even if the first is empty', () => {
     expect(shouldShowRoundAddedModal({ id: 'r1', matches: [emptyMatch, filledMatch] })).toBe(true);
   });
+
+  it('returns false when participant count is 4 or fewer', () => {
+    expect(shouldShowRoundAddedModal({ id: 'r1', matches: [filledMatch] }, 4)).toBe(false);
+    expect(shouldShowRoundAddedModal({ id: 'r1', matches: [emptyMatch, filledMatch] }, 3)).toBe(false);
+  });
+
+  it('returns true for 5+ participants when round has generated matches', () => {
+    expect(shouldShowRoundAddedModal({ id: 'r1', matches: [filledMatch] }, 5)).toBe(true);
+    expect(shouldShowRoundAddedModal({ id: 'r1', matches: [emptyMatch, filledMatch] }, 6)).toBe(true);
+  });
 });

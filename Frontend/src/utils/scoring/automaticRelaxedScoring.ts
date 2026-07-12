@@ -1,11 +1,14 @@
 import type { SetResult } from '@/types/gameResults';
-import type { ScoringRules } from './rulebook';
+import type { ScoringRules, SetKind } from './rulebook';
 import { isClassicAutomaticRelaxedScores } from './rulebook';
 import {
   validateClassicRegularSet,
   validateSuperTiebreak,
   type ValidationResult,
 } from './validateSet';
+
+/** Max per-team score when automatic relaxed entry mode is Set / games. */
+export const AUTOMATIC_GAMES_ENTRY_MAX = 10;
 
 export {
   AUTOMATIC_RECORD_MODE_METADATA_KEY,
@@ -76,4 +79,26 @@ export function canUseSuperTiebreakEntry(
 ): boolean {
   if (!isClassicAutomaticRelaxedScores(rules)) return false;
   return canUseSuperTiebreakEntryShared(setIndex, sets, rules);
+}
+
+/** Keypad bounds for automatic-relaxed score entry — driven by entryMode, not set geometry alone. */
+export function getAutomaticRelaxedKeypadOptions(
+  rules: ScoringRules,
+  entryMode: import('@shared/automaticRelaxedScoring').AutomaticSetEntryMode,
+): { max: number; kind: SetKind } {
+  if (entryMode === 'SUPER_TIEBREAK') {
+    const target = rules.superTieBreakFirstTo;
+    const max = Math.max(target + 5, target);
+    return { max, kind: 'SUPER_TIEBREAK' };
+  }
+  if (entryMode === 'GAMES') {
+    return { max: AUTOMATIC_GAMES_ENTRY_MAX, kind: 'REGULAR' };
+  }
+  const max =
+    rules.maxPointsPerTeam > 0
+      ? rules.maxPointsPerTeam * 2
+      : rules.totalPointsPerSet > 0
+        ? rules.totalPointsPerSet
+        : 999;
+  return { max, kind: 'REGULAR' };
 }

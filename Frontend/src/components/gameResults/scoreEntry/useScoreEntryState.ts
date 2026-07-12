@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Match } from '@/types/gameResults';
 import { BasicUser, Game } from '@/types';
@@ -17,12 +17,15 @@ import {
   resolveAutomaticSetEntryMode,
   automaticSetEntryUsesTieBreak,
   recommendAutomaticSetScore,
+  getAutomaticRelaxedKeypadOptions,
+  AUTOMATIC_GAMES_ENTRY_MAX,
   type AutomaticMatchRecordMode,
   type ValidationResult,
   type ScoreSuggestion,
 } from '@/utils/scoring';
 import { capPlayerIds, maxPlayersPerTeamForGame } from '@/utils/matchFormat';
 import { isSupplementalMatchSet, EXTRA_BALLS_SCORE_MAX, type MatchSetRole } from '@/utils/matchSetRole';
+import { KEYPAD_SELECTION_CONFIRM_MS, resolveKeypadTeamAfterPick } from './scoreKeypadSlide';
 
 export type ScoreEntryGame = Pick<
   Game,
@@ -117,6 +120,24 @@ export function useScoreEntryState({
     () => Boolean(currentSet.isTieBreak) && canUseSuperTiebreakEntry(setIndex, match.sets, rules),
   );
   const [pickerTeam, setPickerTeam] = useState<'teamA' | 'teamB' | null>(null);
+  const keypadAdvanceTimerRef = useRef<ReturnType<typeof globalThis.setTimeout> | null>(null);
+  const keypadFirstPickDoneRef = useRef(false);
+
+  const clearKeypadAdvance = useCallback(() => {
+    if (keypadAdvanceTimerRef.current !== null) {
+      globalThis.clearTimeout(keypadAdvanceTimerRef.current);
+      keypadAdvanceTimerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!pickerTeam) {
+      clearKeypadAdvance();
+      keypadFirstPickDoneRef.current = false;
+    }
+  }, [pickerTeam, clearKeypadAdvance]);
+
+  useEffect(() => () => clearKeypadAdvance(), [clearKeypadAdvance]);
 
   useEffect(() => {
     setTeamAScore(currentSet.teamA);
@@ -139,10 +160,8 @@ export function useScoreEntryState({
     setTeamBScore((b) => Math.min(EXTRA_BALLS_SCORE_MAX, b));
   }, [extraRole, isSupplementalRow]);
 
-  const keypad = getKeypadOptions(rules, setIndex, match.sets, isTieBreak);
   const canUseSuperTiebreak = canUseSuperTiebreakEntry(setIndex, match.sets, rules);
   const persistedRecordMode = parseAutomaticMatchRecordMode(match.metadata);
-  const effectiveRecordMode = setIndex === 0 ? matchRecordMode : persistedRecordMode;
   const entryMode = isAutomaticRelaxed
     ? resolveAutomaticSetEntryMode(
         setIndex,
@@ -154,21 +173,38 @@ export function useScoreEntryState({
         useSuperTiebreak,
       )
     : null;
+  const relaxedKeypad =
+    isAutomaticRelaxed && entryMode ? getAutomaticRelaxedKeypadOptions(rules, entryMode) : null;
+  const keypad = relaxedKeypad
+    ? null
+    : getKeypadOptions(rules, setIndex, match.sets, isTieBreak);
+  const isAutomaticGamesEntry =
+    isAutomaticRelaxed && !isSupplementalRow && entryMode === 'GAMES';
   const kind = getSetKind(setIndex, match.sets, rules, { teamA: teamAScore, teamB: teamBScore, isTieBreak });
+  const hintKind = entryMode === 'SUPER_TIEBREAK' ? ('SUPER_TIEBREAK' as const) : kind;
+
+  useEffect(() => {
+    if (!isAutomaticGamesEntry) return;
+    setTeamAScore((a) => Math.min(AUTOMATIC_GAMES_ENTRY_MAX, a));
+    setTeamBScore((b) => Math.min(AUTOMATIC_GAMES_ENTRY_MAX, b));
+  }, [isAutomaticGamesEntry, matchRecordMode, useSuperTiebreak]);
 
   const extraBallsPicker = isSupplementalRow && extraRole === 'EXTRA_BALLS';
   const scoreMax = extraBallsPicker
     ? EXTRA_BALLS_SCORE_MAX
     : isSupplementalRow
       ? 9999
-      : keypad.max;
-  const scorePickerKeypadMax = extraBallsPicker ? EXTRA_BALLS_SCORE_MAX : keypad.max;
+      : (relaxedKeypad?.max ?? keypad?.max ?? 99);
+  const scorePickerKeypadMax = scoreMax;
 
   const clampToAllowed = (value: number): number => {
     if (extraBallsPicker) {
       return Math.max(0, Math.min(EXTRA_BALLS_SCORE_MAX, Math.round(value)));
     }
-    if (keypad.values.length === 0) return value;
+    if (relaxedKeypad) {
+      return Math.max(0, Math.min(relaxedKeypad.max, Math.round(value)));
+    }
+    if (!keypad || keypad.values.length === 0) return value;
     if (keypad.values.includes(value)) return value;
     return Math.max(keypad.values[0], Math.min(keypad.values[keypad.values.length - 1], value));
   };
@@ -183,7 +219,7 @@ export function useScoreEntryState({
     }
     const clamped = Math.max(0, clampToAllowed(newScore));
     setOwn(clamped);
-    if (keypad.mode === 'PAIRED' && keypad.pairedTotal !== undefined) {
+    if (keypad?.mode === 'PAIRED' && keypad.pairedTotal !== undefined) {
       setOther(Math.max(0, keypad.pairedTotal - clamped));
     }
   };
@@ -238,40 +274,88 @@ export function useScoreEntryState({
     .map((id) => players.find((p) => p.id === id))
     .filter(Boolean) as BasicUser[];
 
-  const numberOptions = extraBallsPicker
+  const baseNumberOptions = extraBallsPicker
     ? Array.from({ length: EXTRA_BALLS_SCORE_MAX + 1 }, (_, i) => i)
-    : keypad.values.filter((number) => {
-        if (keypad.mode !== 'PAIRED' && isTieBreak) {
-          if (pickerTeam === 'teamA') return number !== teamBScore;
-          if (pickerTeam === 'teamB') return number !== teamAScore;
-        }
-        return true;
-      });
+    : relaxedKeypad
+      ? Array.from({ length: relaxedKeypad.max + 1 }, (_, i) => i)
+      : (keypad?.values ?? []);
+
+  const teamANumberOptions =
+    keypad?.mode !== 'PAIRED' && isTieBreak && !extraBallsPicker && !relaxedKeypad
+      ? baseNumberOptions.filter((number) => number !== teamBScore)
+      : baseNumberOptions;
+
+  const teamBNumberOptions =
+    keypad?.mode !== 'PAIRED' && isTieBreak && !extraBallsPicker && !relaxedKeypad
+      ? baseNumberOptions.filter((number) => number !== teamAScore)
+      : baseNumberOptions;
+
+  const numberOptions = pickerTeam === 'teamB' ? teamBNumberOptions : teamANumberOptions;
 
   const handleNumberSelect = (number: number) => {
-    if (pickerTeam) setTeamScore(pickerTeam, number);
-    setPickerTeam(null);
+    if (!pickerTeam) return;
+    const team = pickerTeam;
+    setTeamScore(team, number);
+    clearKeypadAdvance();
+    keypadAdvanceTimerRef.current = globalThis.setTimeout(() => {
+      keypadAdvanceTimerRef.current = null;
+      const nextTeam = resolveKeypadTeamAfterPick({
+        pickedTeam: team,
+        firstPickDone: keypadFirstPickDoneRef.current,
+        isPaired: keypad?.mode === 'PAIRED',
+      });
+      if (nextTeam) {
+        keypadFirstPickDoneRef.current = true;
+        setPickerTeam(nextTeam);
+      } else {
+        setPickerTeam(null);
+      }
+    }, KEYPAD_SELECTION_CONFIRM_MS);
   };
 
   const mainTitle = isSupplementalRow
     ? t('gameResults.extraSetTitle')
     : (rules.fixedNumberOfSets === 1 ? t('gameResults.matchResult') : t('gameResults.setResult')) +
-      (entryMode === 'SUPER_TIEBREAK' || kind === 'SUPER_TIEBREAK'
+      (entryMode === 'SUPER_TIEBREAK'
         ? ` · ${t('gameResults.superTieBreak')}`
-        : effectiveRecordMode === 'AMERICANO_POINTS'
-          ? ` · ${t('gameResults.scoreEntryModeAmericanoPoints')}`
-          : kind === 'TIEBREAK_GAME'
-            ? ` · ${t('gameResults.tieBreak')}`
-            : '');
+        : kind === 'TIEBREAK_GAME'
+          ? ` · ${t('gameResults.tieBreak')}`
+          : '');
 
-  const exampleList = useMemo(() => getScoreEntryExampleList(rules, kind), [rules, kind]);
+  const exampleList = useMemo(
+    () => getScoreEntryExampleList(rules, hintKind, isAutomaticRelaxed ? entryMode : null),
+    [rules, hintKind, isAutomaticRelaxed, entryMode],
+  );
 
   const descriptionLine = useMemo(() => {
     const parts: string[] = [];
     if (roundNumber != null && roundNumber > 0) {
       parts.push(t('gameResults.roundNumber', { number: roundNumber }));
     }
-    if (isClassicTimedRelaxedGameScores(rules) && kind === 'REGULAR') {
+    if (entryMode === 'SUPER_TIEBREAK') {
+      parts.push(t('gameResults.scoreEntryTiebreakPointsShort'));
+      if (exampleList) {
+        parts.push(t('gameResults.scoreEntryExampleLabel', { examples: exampleList }));
+      }
+    } else if (isAutomaticRelaxed && entryMode === 'AMERICANO_POINTS') {
+      parts.push(t('gameResults.scoreEntryModeAmericanoPoints'));
+      if (exampleList) {
+        parts.push(t('gameResults.scoreEntryExampleLabel', { examples: exampleList }));
+      }
+    } else if (entryMode === 'GAMES') {
+      parts.push(t('gameResults.scoreEntryGamesInSetShort'));
+      const cap = game?.matchTimedCapMinutes;
+      if (cap != null && cap >= 1) {
+        parts.push(t('gameResults.classicTimedTimerMinutes', { minutes: cap }));
+      }
+      if (exampleList) {
+        parts.push(t('gameResults.scoreEntryExampleLabel', { examples: exampleList }));
+      }
+    } else if (
+      !isAutomaticRelaxed &&
+      isClassicTimedRelaxedGameScores(rules) &&
+      kind === 'REGULAR'
+    ) {
       parts.push(t('gameResults.scoreEntryGamesInSetShort'));
       const cap = game?.matchTimedCapMinutes;
       if (cap != null && cap >= 1) {
@@ -292,7 +376,16 @@ export function useScoreEntryState({
       parts.push(t('gameResults.scoreEntryExamples', { examples: exampleList }));
     }
     return parts.length > 0 ? parts.join(' · ') : null;
-  }, [roundNumber, exampleList, t, rules, kind, game?.matchTimedCapMinutes]);
+  }, [
+    roundNumber,
+    exampleList,
+    t,
+    rules,
+    kind,
+    game?.matchTimedCapMinutes,
+    isAutomaticRelaxed,
+    entryMode,
+  ]);
 
   const showScoreValidation =
     !recommendation.ok && Boolean(recommendation.reason) && (teamAScore > 0 || teamBScore > 0);
@@ -319,6 +412,8 @@ export function useScoreEntryState({
     scorePickerKeypadMax,
     clampToAllowed,
     numberOptions,
+    teamANumberOptions,
+    teamBNumberOptions,
     handleNumberSelect,
     recommendation,
     suggestions,

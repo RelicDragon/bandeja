@@ -1,23 +1,22 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Trash2, MapPin } from 'lucide-react';
-import { Button, SegmentedSwitch } from '@/components';
+import { AnimatePresence } from 'framer-motion';
 import { Match } from '@/types/gameResults';
 import { BasicUser } from '@/types';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
-import { ScorePickerNumberGrid } from '@/components/gameResults/ScorePickerNumberGrid';
-import {
-  AutomaticDeciderSetModeSwitch,
-  AutomaticMatchRecordModeSwitch,
-} from '@/components/gameResults/AutomaticRelaxedScoreEntryControls';
-import { ScoreEntryTeamPanel } from './ScoreEntryTeamPanel';
-import { ScoreStepper } from './ScoreStepper';
-import { ScoreValidationHint } from './ScoreValidationHint';
+import { Dialog, DialogContent } from '@/components/ui/Dialog';
+import { ScoreEntryHeader } from './ScoreEntryHeader';
+import { ScoreEntryFooter } from './ScoreEntryFooter';
+import { ScoreEntryBoard } from './ScoreEntryBoard';
+import { ScoreKeypadPanel } from './ScoreKeypadPanel';
 import {
   useScoreEntryState,
   type ScoreEntryGame,
   type ScoreEntrySaveHandler,
 } from './useScoreEntryState';
+import {
+  scheduleScrollToRevealBottom,
+  scrollToRevealBottom,
+} from './scoreEntryKeypadScroll';
 
 export type ScoreEntryLayout = 'stacked' | 'columns';
 
@@ -38,6 +37,24 @@ interface ScoreEntryModalProps {
   canRemove?: boolean;
   isOpen: boolean;
   roundNumber?: number;
+}
+
+function scrollWithinContainer(
+  container: HTMLElement,
+  target: HTMLElement,
+  edge: 'top' | 'bottom',
+  padding = 8,
+) {
+  if (edge === 'bottom') {
+    scrollToRevealBottom(container, target, padding, 'smooth');
+    return;
+  }
+  const c = container.getBoundingClientRect();
+  const t = target.getBoundingClientRect();
+  const overflow = t.top - c.top - padding;
+  if (overflow < 0) {
+    container.scrollBy({ top: overflow, behavior: 'smooth' });
+  }
 }
 
 export const ScoreEntryModal = ({
@@ -93,7 +110,8 @@ export const ScoreEntryModal = ({
     scoreMax,
     scorePickerKeypadMax,
     clampToAllowed,
-    numberOptions,
+    teamANumberOptions,
+    teamBNumberOptions,
     handleNumberSelect,
     recommendation,
     suggestions,
@@ -108,6 +126,59 @@ export const ScoreEntryModal = ({
     saveDisabled,
   } = entry;
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const scoreboardRef = useRef<HTMLDivElement>(null);
+  const keypadPanelRef = useRef<HTMLDivElement>(null);
+  const scrollBeforeKeypadRef = useRef(0);
+  const prevPickerTeamRef = useRef<'teamA' | 'teamB' | null>(null);
+  const cancelKeypadScrollRef = useRef<(() => void) | null>(null);
+
+  const revealKeypad = useCallback(() => {
+    const container = scrollContainerRef.current;
+    const panel = keypadPanelRef.current;
+    if (!container || !panel) return;
+    cancelKeypadScrollRef.current?.();
+    cancelKeypadScrollRef.current = scheduleScrollToRevealBottom(container, panel);
+  }, []);
+
+  const restoreScoreboardScroll = useCallback(() => {
+    const container = scrollContainerRef.current;
+    const board = scoreboardRef.current;
+    if (!container) return;
+    if (board) {
+      scrollWithinContainer(container, board, 'top');
+      return;
+    }
+    container.scrollTo({ top: scrollBeforeKeypadRef.current, behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    const prev = prevPickerTeamRef.current;
+    if (pickerTeam && !prev) {
+      scrollBeforeKeypadRef.current = scrollContainerRef.current?.scrollTop ?? 0;
+    }
+    prevPickerTeamRef.current = pickerTeam;
+  }, [pickerTeam]);
+
+  useEffect(() => {
+    return () => {
+      cancelKeypadScrollRef.current?.();
+      cancelKeypadScrollRef.current = null;
+    };
+  }, []);
+
+  const handleKeypadOpenComplete = useCallback(() => {
+    revealKeypad();
+  }, [revealKeypad]);
+
+  const handleTeamSlideComplete = useCallback(() => {
+    revealKeypad();
+  }, [revealKeypad]);
+
+  const handleKeypadExitComplete = useCallback(() => {
+    requestAnimationFrame(restoreScoreboardScroll);
+  }, [restoreScoreboardScroll]);
+
   const extraRoleTabs = useMemo(
     () => [
       { id: 'EXTRA_GAMES', label: t('gameResults.extraUnitGames') },
@@ -116,172 +187,92 @@ export const ScoreEntryModal = ({
     [t],
   );
 
-  const pickerPlayers = pickerTeam === 'teamA' ? teamAPlayers : teamBPlayers;
-  const pickerScore = pickerTeam === 'teamA' ? teamAScore : teamBScore;
-
-  const renderStepper = (team: 'teamA' | 'teamB') => (
-    <ScoreStepper
-      value={team === 'teamA' ? teamAScore : teamBScore}
-      onChange={(next) => setTeamScore(team, next)}
-      onValueClick={() => setPickerTeam(team)}
-      max={scoreMax}
-      orientation={layout === 'columns' ? 'vertical' : 'horizontal'}
-      valueAriaLabel={t('gameResults.scorePickerOtherScore')}
-    />
-  );
-
-  const divider =
-    layout === 'columns' ? (
-      <div className="relative flex w-8 shrink-0 items-stretch justify-center self-stretch" aria-hidden>
-        <div className="w-px bg-gradient-to-b from-transparent via-gray-200 to-transparent dark:via-gray-700" />
-        <span className="absolute top-1/2 -translate-y-1/2 rounded-full border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500">
-          {t('gameResults.vs')}
-        </span>
-      </div>
-    ) : (
-      <div className="relative flex w-full items-center justify-center py-1" aria-hidden>
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-gray-700" />
-        <span className="absolute rounded-full border border-gray-200 bg-white px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-gray-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-500">
-          {t('gameResults.vs')}
-        </span>
-      </div>
-    );
-
-  const scoreBody =
-    layout === 'columns' ? (
-      <div className="flex w-full flex-row items-stretch justify-center gap-1">
-        <div className="flex min-w-0 flex-1 flex-col items-center gap-3">
-          <ScoreEntryTeamPanel players={teamAPlayers} isLeading={teamAScore > teamBScore} className="w-full" />
-          {renderStepper('teamA')}
-        </div>
-        {divider}
-        <div className="flex min-w-0 flex-1 flex-col items-center gap-3">
-          <ScoreEntryTeamPanel players={teamBPlayers} isLeading={teamBScore > teamAScore} className="w-full" />
-          {renderStepper('teamB')}
-        </div>
-      </div>
-    ) : (
-      <div className="flex w-full flex-col items-stretch gap-1.5">
-        <div className="flex w-full flex-row items-center gap-3">
-          <ScoreEntryTeamPanel players={teamAPlayers} isLeading={teamAScore > teamBScore} className="min-w-0 flex-1" />
-          {renderStepper('teamA')}
-        </div>
-        {divider}
-        <div className="flex w-full flex-row items-center gap-3">
-          <ScoreEntryTeamPanel players={teamBPlayers} isLeading={teamBScore > teamAScore} className="min-w-0 flex-1" />
-          {renderStepper('teamB')}
-        </div>
-      </div>
-    );
-
-  const pickerBody = (
-    <div className="flex w-full flex-col items-center gap-3">
-      <ScoreEntryTeamPanel players={pickerPlayers} isLeading={false} className="w-full max-w-xs" />
-      <ScorePickerNumberGrid
-        numberOptions={numberOptions}
-        keypadMax={scorePickerKeypadMax}
-        currentScore={pickerScore}
-        onSelect={handleNumberSelect}
-        clampToAllowed={clampToAllowed}
-        density={layout === 'columns' ? 'comfortable' : 'compact'}
-        pickerResetKey={pickerTeam}
-      />
-      <button
-        type="button"
-        onClick={() => setPickerTeam(null)}
-        className="text-xs font-semibold text-gray-500 underline-offset-2 hover:text-gray-700 hover:underline dark:text-gray-400 dark:hover:text-gray-200"
-      >
-        {t('common.back')}
-      </button>
-    </div>
-  );
+  const togglePicker = (team: 'teamA' | 'teamB') =>
+    setPickerTeam(pickerTeam === team ? null : team);
 
   return (
     <Dialog open={isOpen} onClose={onClose} modalId="score-entry-modal">
-      <DialogContent>
-        <div className="shrink-0 border-b border-gray-100 px-4 pb-3 pt-4 dark:border-gray-800">
-          <div className="flex items-start justify-between gap-2 pr-8">
-            <DialogTitle className="mb-0 text-base font-semibold leading-tight text-gray-900 dark:text-white sm:text-lg">
-              {mainTitle}
-            </DialogTitle>
-            {courtLabel?.trim() ? (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
-                <MapPin size={11} aria-hidden />
-                {courtLabel.trim()}
-              </span>
-            ) : null}
-          </div>
-          {!isSupplementalRow && descriptionLine ? (
-            <DialogDescription className="mt-1 line-clamp-2 text-xs font-medium normal-case leading-snug text-gray-500 dark:text-gray-400">
-              {descriptionLine}
-            </DialogDescription>
-          ) : null}
-          {isAutomaticRelaxed && !isSupplementalRow && setIndex === 0 ? (
-            <AutomaticMatchRecordModeSwitch mode={matchRecordMode} onChange={setMatchRecordMode} />
-          ) : null}
-          {isAutomaticRelaxed && !isSupplementalRow && setIndex > 0 && canUseSuperTiebreak ? (
-            <AutomaticDeciderSetModeSwitch
-              matchRecordMode={persistedRecordMode}
-              useSuperTiebreak={useSuperTiebreak}
-              onChange={setUseSuperTiebreak}
+      <DialogContent className="gap-0 p-0">
+        <ScoreEntryHeader
+          mainTitle={mainTitle}
+          descriptionLine={descriptionLine}
+          courtLabel={courtLabel}
+          isSupplementalRow={isSupplementalRow}
+          isAutomaticRelaxed={isAutomaticRelaxed}
+          setIndex={setIndex}
+          canUseSuperTiebreak={canUseSuperTiebreak}
+          matchRecordMode={matchRecordMode}
+          persistedRecordMode={persistedRecordMode}
+          useSuperTiebreak={useSuperTiebreak}
+          extraRole={extraRole}
+          extraRoleTabs={extraRoleTabs}
+          extraSetHint={t('gameResults.extraSetHint')}
+          onMatchRecordModeChange={setMatchRecordMode}
+          onSuperTiebreakChange={setUseSuperTiebreak}
+          onExtraRoleChange={setExtraRole}
+          showScoreValidation={showScoreValidation}
+          validationReason={recommendation.reason}
+          validationDetail={recommendation.detail}
+          validationSuggestions={suggestions}
+          onApplySuggestion={applySuggestion}
+        />
+
+        <div
+          ref={scrollContainerRef}
+          className="min-h-0 flex-1 scroll-smooth overflow-y-auto overscroll-contain px-4 pb-4"
+        >
+          <div ref={scoreboardRef}>
+            <ScoreEntryBoard
+              layout={layout}
+              teamAPlayers={teamAPlayers}
+              teamBPlayers={teamBPlayers}
+              teamAScore={teamAScore}
+              teamBScore={teamBScore}
+              scoreMax={scoreMax}
+              pickerTeam={pickerTeam}
+              vsAriaLabel={t('gameResults.vs')}
+              valueAriaLabel={t('gameResults.scorePickerOtherScore')}
+              onTeamScoreChange={setTeamScore}
+              onTogglePicker={togglePicker}
             />
-          ) : null}
-          {isSupplementalRow ? (
-            <div className="mt-1.5">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {t('gameResults.extraSetHint')}
-              </p>
-              <SegmentedSwitch
-                tabs={extraRoleTabs}
-                activeId={extraRole}
-                onChange={(id) => setExtraRole(id as 'EXTRA_GAMES' | 'EXTRA_BALLS')}
-                showOnlyActiveTabText={false}
-                layoutId="score-entry-extra-role"
-                className="mt-2"
-                fullWidth
-                ariaLabel={t('gameResults.extraSetHint')}
-              />
-            </div>
-          ) : null}
+          </div>
+
+          <div>
+            <AnimatePresence initial={false} onExitComplete={handleKeypadExitComplete}>
+              {pickerTeam ? (
+                <ScoreKeypadPanel
+                  ref={keypadPanelRef}
+                  key="score-keypad"
+                  activeTeam={pickerTeam}
+                  teamAPlayers={teamAPlayers}
+                  teamBPlayers={teamBPlayers}
+                  teamANumberOptions={teamANumberOptions}
+                  teamBNumberOptions={teamBNumberOptions}
+                  teamAScore={teamAScore}
+                  teamBScore={teamBScore}
+                  keypadMax={scorePickerKeypadMax}
+                  onSelect={handleNumberSelect}
+                  clampToAllowed={clampToAllowed}
+                  density={layout === 'columns' ? 'comfortable' : 'compact'}
+                  onClose={() => setPickerTeam(null)}
+                  onOpenComplete={handleKeypadOpenComplete}
+                  onTeamSlideComplete={handleTeamSlideComplete}
+                />
+              ) : null}
+            </AnimatePresence>
+          </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-          {pickerTeam ? pickerBody : scoreBody}
-          {showScoreValidation && recommendation.reason ? (
-            <div className="mt-3">
-              <ScoreValidationHint
-                reason={recommendation.reason}
-                detail={recommendation.detail}
-                isRecommendation={isAutomaticRelaxed}
-                suggestions={suggestions}
-                onApplySuggestion={applySuggestion}
-              />
-            </div>
-          ) : null}
-        </div>
-
-        <div className="flex shrink-0 flex-row items-center gap-2 border-t border-gray-100 px-4 py-3 dark:border-gray-800">
-          <Button onClick={onClose} variant="ghost" className="h-11 flex-1 rounded-xl text-sm font-semibold">
-            {t('common.cancel')}
-          </Button>
-          {canRemove && onRemove ? (
-            <button
-              type="button"
-              onClick={handleRemove}
-              aria-label={t('common.delete')}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-red-500 transition-colors hover:bg-red-50 hover:text-red-600 active:scale-95 dark:hover:bg-red-950/40"
-            >
-              <Trash2 size={17} />
-            </button>
-          ) : null}
-          <Button
-            onClick={handleSave}
-            disabled={saveDisabled}
-            className="h-11 flex-1 rounded-xl text-sm font-semibold shadow-sm"
-          >
-            {t('common.save')}
-          </Button>
-        </div>
+        <ScoreEntryFooter
+          cancelLabel={t('common.cancel')}
+          saveLabel={t('common.save')}
+          deleteLabel={t('common.delete')}
+          saveDisabled={saveDisabled}
+          canRemove={canRemove && Boolean(onRemove)}
+          onCancel={onClose}
+          onSave={handleSave}
+          onRemove={onRemove ? handleRemove : undefined}
+        />
       </DialogContent>
     </Dialog>
   );
