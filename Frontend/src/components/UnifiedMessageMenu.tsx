@@ -8,7 +8,12 @@ import { Keyboard } from '@capacitor/keyboard';
 import { ChatMessage, chatApi } from '@/api/chat';
 import { DoubleTickIcon } from './DoubleTickIcon';
 import { formatDate } from '@/utils/dateFormat';
-import { computeMessageMenuTop, formatFullDateTime, getUserDisplayName } from '@/utils/messageMenuUtils';
+import {
+  computeMessageMenuTop,
+  formatFullDateTime,
+  getUserDisplayName,
+  hasUserDisplayName,
+} from '@/utils/messageMenuUtils';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { EmojiQuickStrip, type ReactionEmojiPickSource } from '@/components/reactions/EmojiQuickStrip';
 import {
@@ -17,9 +22,10 @@ import {
 } from '@/components/reactions/reactionPickerTypes';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import { useAuthStore } from '@/store/authStore';
-import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
+import { resolveDisplaySettings, formatGameTime, extractLanguageCode } from '@/utils/displayPreferences';
+import { getTranslationLanguageByCode } from '@/utils/translationLanguages';
 import { isCapacitor } from '@/utils/capacitor';
-import { FileText, Flag, Forward, Languages, Loader2, Pencil, Pin, PinOff } from 'lucide-react';
+import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff } from 'lucide-react';
 import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 import { usePlayersStore } from '@/store/playersStore';
@@ -94,6 +100,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const { user } = useAuthStore();
   const isSystemMessage = !message.senderId;
   const displaySettings = user ? resolveDisplaySettings(user) : null;
+  const preferredTranslationCode = user?.translateToLanguage ?? extractLanguageCode(user?.language ?? 'en');
+  const preferredTranslationLabel =
+    getTranslationLanguageByCode(preferredTranslationCode)?.label ?? preferredTranslationCode;
   const menuRef = useRef<HTMLDivElement>(null);
   const mainMenuRef = useRef<HTMLDivElement>(null);
   const detailsRef = useRef<HTMLDivElement>(null);
@@ -101,7 +110,6 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const [menuHeight, setMenuHeight] = useState(0);
   const [detailsHeight, setDetailsHeight] = useState(0);
   const [isTranslating, setIsTranslating] = useState(false);
-  const [detailsUsersLoading, setDetailsUsersLoading] = useState(false);
   const duplicateRef = useRef<HTMLDivElement>(null);
   const duplicateElRef = useRef<HTMLElement | null>(null);
   const openTimeRef = useRef(0);
@@ -112,7 +120,6 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
   const closeMenu = useCallback(() => {
     setShowDetails(false);
-    setDetailsUsersLoading(false);
     setVisible(false);
   }, []);
 
@@ -215,7 +222,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     if (nextDetailsHeight > 10) {
       setDetailsHeight((prev) => (prev === nextDetailsHeight ? prev : nextDetailsHeight));
     }
-  }, [showDetails, detailsAudienceRows, message.reactions, detailsUsersLoading]);
+  }, [showDetails, detailsAudienceRows, message.reactions, usersById]);
 
   const handleReply = () => {
     if (!onReply) return;
@@ -327,67 +334,69 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
   const handleBackToMenu = () => {
     setShowDetails(false);
-    setDetailsUsersLoading(false);
   };
+
+  const resolveDetailsUser = useCallback(
+    (userId: string, embedded?: BasicUser): BasicUser | undefined => {
+      const fromStore = usersById[userId];
+      if (userId === message.senderId) {
+        return mergeBasicUsers(message.sender ?? embedded, fromStore);
+      }
+      return mergeBasicUsers(embedded, fromStore);
+    },
+    [message.sender, message.senderId, usersById]
+  );
 
   useEffect(() => {
     if (!showDetails) return;
     let cancelled = false;
 
-    const hasAudience = detailsAudienceRows.length > 0;
-    const needsSender = Boolean(message.senderId && !message.sender);
-
-    if (!hasAudience && !needsSender) {
-      setDetailsUsersLoading(false);
-      return;
-    }
-
-    setDetailsUsersLoading(true);
-
     const run = async () => {
-      const idSet = new Set<string>();
-      if (hasAudience) {
-        for (const row of detailsAudienceRows) {
-          if (row.userId) idSet.add(row.userId);
-        }
-      }
-      if (needsSender && message.senderId) idSet.add(message.senderId);
-
-      const store = usePlayersStore.getState();
       const missing: string[] = [];
-      for (const id of idSet) {
-        const embedded =
-          id === message.senderId
-            ? message.sender
-            : detailsAudienceRows.find((row) => row.userId === id)?.user ??
-              message.reactions?.find((reaction) => reaction.userId === id)?.user;
-        if (embedded) continue;
-        if (!store.getUser(id)) missing.push(id);
-      }
+      const seen = new Set<string>();
 
-      if (missing.length > 0) {
-        try {
-          await fetchBasicUsersBatched(message.id, missing);
-        } catch (e: unknown) {
-          const err = e as { response?: { status?: number; data?: unknown } };
-          console.error('[UnifiedMessageMenu] basic users fetch failed', {
-            messageId: message.id,
-            status: err?.response?.status,
-            body: err?.response?.data,
-            error: e,
-          });
-          toast.error(t('common.error', { defaultValue: 'Something went wrong' }));
+      const queueIfUnresolved = (userId: string | null | undefined, embedded?: BasicUser) => {
+        if (!userId || seen.has(userId)) return;
+        seen.add(userId);
+        if (!hasUserDisplayName(resolveDetailsUser(userId, embedded))) {
+          missing.push(userId);
         }
+      };
+
+      queueIfUnresolved(message.senderId, message.sender ?? undefined);
+      for (const row of detailsAudienceRows) {
+        queueIfUnresolved(row.userId, row.user);
       }
 
-      if (!cancelled) setDetailsUsersLoading(false);
+      if (missing.length === 0 || cancelled) return;
+
+      try {
+        await fetchBasicUsersBatched(message.id, missing);
+      } catch (e: unknown) {
+        const err = e as { response?: { status?: number; data?: unknown } };
+        console.error('[UnifiedMessageMenu] basic users fetch failed', {
+          messageId: message.id,
+          status: err?.response?.status,
+          body: err?.response?.data,
+          error: e,
+        });
+        toast.error(t('common.error', { defaultValue: 'Something went wrong' }));
+      }
     };
 
     void run();
     return () => {
       cancelled = true;
     };
-  }, [showDetails, message.id, message.senderId, detailsAudienceRows, message.reactions, message.sender, t]);
+  }, [
+    showDetails,
+    message.id,
+    message.senderId,
+    message.sender,
+    detailsAudienceRows,
+    resolveDetailsUser,
+    t,
+  ]);
 
   const handleBackdropClick = () => {
     if (Date.now() - openTimeRef.current < 400) return;
@@ -395,12 +404,12 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   };
 
   const audienceDisplayUser = (row: { userId: string; user?: BasicUser }): BasicUser | undefined =>
-    mergeBasicUsers(row.user, usersById[row.userId]);
+    resolveDetailsUser(row.userId, row.user);
 
   const displaySenderUser = useMemo((): BasicUser | undefined => {
-    const fromStore = message.senderId ? usersById[message.senderId] : undefined;
-    return mergeBasicUsers(message.sender ?? undefined, fromStore);
-  }, [message.sender, message.senderId, usersById]);
+    if (!message.senderId) return undefined;
+    return resolveDetailsUser(message.senderId, message.sender ?? undefined);
+  }, [message.sender, message.senderId, resolveDetailsUser]);
 
   const formatAudienceTime = (iso: string) => {
     const readDate = new Date(iso);
@@ -629,7 +638,14 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Languages className="w-4 h-4" />
-                <span>{isTranslating ? t('chat.contextMenu.translating', { defaultValue: 'Translating...' }) : t('chat.contextMenu.translate', { defaultValue: 'Translate' })}</span>
+                <span>
+                  {isTranslating
+                    ? t('chat.contextMenu.translating', { defaultValue: 'Translating...' })
+                    : t('chat.contextMenu.translateTo', {
+                        defaultValue: 'Translate to {{language}}',
+                        language: preferredTranslationLabel,
+                      })}
+                </span>
               </button>
             )}
             
@@ -685,28 +701,20 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               <div className={`flex items-center min-h-[1.5rem] ${message.senderId ? 'gap-2' : ''}`}>
                 {message.senderId ? (
                   <div className="shrink-0 w-6 h-6 flex items-center justify-center">
-                    {displaySenderUser ? (
-                      <PlayerAvatar
-                        player={displaySenderUser}
-                        inlineFace
-                        asDiv
-                        subscribePresence={false}
-                        showName={false}
-                        fullHideName
-                      />
-                    ) : detailsUsersLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin text-gray-400" aria-hidden />
-                    ) : null}
+                    <PlayerAvatar
+                      player={displaySenderUser ?? null}
+                      inlineFace
+                      asDiv
+                      subscribePresence={false}
+                      showName={false}
+                      fullHideName
+                    />
                   </div>
                 ) : null}
                 <div className={`min-w-0 text-gray-700 dark:text-gray-200 ${message.senderId ? 'flex-1' : ''}`}>
-                  {displaySenderUser ? (
-                    getUserDisplayName(displaySenderUser)
-                  ) : detailsUsersLoading && message.senderId ? (
-                    <span className="text-gray-400">…</span>
-                  ) : (
-                    'Unknown User'
-                  )}
+                  {displaySenderUser && hasUserDisplayName(displaySenderUser)
+                    ? getUserDisplayName(displaySenderUser)
+                    : 'Unknown User'}
                 </div>
               </div>
             </div>
@@ -720,53 +728,47 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </div>
             )}
             {detailsAudienceRows.length > 0 ? (
-              detailsUsersLoading ? (
-                <div className="flex justify-center py-8 max-h-48">
-                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" aria-hidden />
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {detailsAudienceRows.map((row) => {
-                    const du = audienceDisplayUser(row);
-                    const statusTime = row.readAt ?? row.reaction?.createdAt;
-                    return (
-                      <div key={row.key} className="flex items-center gap-2">
-                        <PlayerAvatar
-                          player={du ?? null}
-                          inlineFace
-                          asDiv
-                          subscribePresence={false}
-                          showName={false}
-                          fullHideName
-                        />
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {detailsAudienceRows.map((row) => {
+                  const du = audienceDisplayUser(row);
+                  const statusTime = row.readAt ?? row.reaction?.createdAt;
+                  return (
+                    <div key={row.key} className="flex items-center gap-2">
+                      <PlayerAvatar
+                        player={du ?? null}
+                        inlineFace
+                        asDiv
+                        subscribePresence={false}
+                        showName={false}
+                        fullHideName
+                      />
 
-                        <div className="flex-1 min-w-0">
-                          <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-                            {du ? getUserDisplayName(du) : 'Unknown User'}
-                          </div>
-                          {statusTime ? (
-                            <div className="flex items-center space-x-1">
-                              {row.readAt ? (
-                                <DoubleTickIcon size={14} variant="double" className="text-gray-500" />
-                              ) : null}
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {row.readAt
-                                  ? formatAudienceTime(row.readAt)
-                                  : t('chat.contextMenu.reactedAt', {
-                                      defaultValue: 'Reacted {{time}}',
-                                      time: formatAudienceTime(statusTime),
-                                    })}
-                              </span>
-                            </div>
-                          ) : null}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                          {du && hasUserDisplayName(du) ? getUserDisplayName(du) : 'Unknown User'}
                         </div>
-
-                        {row.reaction ? <div className="text-sm">{row.reaction.emoji}</div> : null}
+                        {statusTime ? (
+                          <div className="flex items-center space-x-1">
+                            {row.readAt ? (
+                              <DoubleTickIcon size={14} variant="double" className="text-gray-500" />
+                            ) : null}
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {row.readAt
+                                ? formatAudienceTime(row.readAt)
+                                : t('chat.contextMenu.reactedAt', {
+                                    defaultValue: 'Reacted {{time}}',
+                                    time: formatAudienceTime(statusTime),
+                                  })}
+                            </span>
+                          </div>
+                        ) : null}
                       </div>
-                    );
-                  })}
-                </div>
-              )
+
+                      {row.reaction ? <div className="text-sm">{row.reaction.emoji}</div> : null}
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
               <div className="text-xs text-gray-500 dark:text-gray-400">
                 {t('chat.contextMenu.notReadYet', { defaultValue: 'Not read yet' })}

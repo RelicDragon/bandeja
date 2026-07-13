@@ -854,6 +854,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-34 | View poll voters | Open voters modal | Voter list |
 | CH-35 | Auto-translate | Enable translate on chat with foreign-language message | Only translated text shown (not original); label reads “Translated” |
 | CH-35a | Auto-translate toggle | Tap “Translated” on auto-translated message | Swaps to original with “Original” label; tap again restores translation |
+| CH-35b | Preferred incoming translation language | Open Translation modal (composer translate button) → top section → pick e.g. Spanish | Selection saved; reopening modal shows Spanish selected |
+| CH-35c | Translate message uses preferred language | Set preferred incoming language to Spanish (app UI may be English) → long-press foreign message → Translate | Menu shows “Translate to Spanish”; message appears in Spanish |
 | CH-36 | Draft persistence | Type without send → leave → return | Draft restored |
 | CH-37 | Offline send queue | `@offline` send | Queued state + retry on online |
 | CH-38 | Failed send retry | Force failure → resend | Message sends |
@@ -862,6 +864,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-71 | Own message read tick after peer reads | Two users in group; B reads A's message | A sees purple double tick; Details lists B with read time |
 | CH-72 | Parent league admin read on child match chat | League owner (not match participant) opens child match public chat with unread @mention | Unread clears; sender sees read receipt / double tick on own message |
 | CH-73 | Message details shows reactor without read receipt | Peer reacts before read receipt syncs (or legacy data) | Long-press own message → Details lists reactor with emoji and “Reacted …”; not “Not read yet” when reactions exist |
+| CH-81 | Message details resolves unknown users | Group chat → long-press own message → Details with read receipts/reactions from users not in local cache | Read-by list shows immediately (may include “Unknown User” placeholders); names/avatars fill in after background fetch without leaving Details |
 | CH-80 | Bulk mark-read updates all own ticks | Two-user DM or game chat: A sends two messages with thread open; B opens chat (bulk mark-read) | Both of A's messages show read ticks and Details read state without A refreshing |
 | CH-40 | Scroll to replied | Tap reply preview | Scrolls to original |
 | CH-41 | Load older messages | Scroll up | Pagination loads history |

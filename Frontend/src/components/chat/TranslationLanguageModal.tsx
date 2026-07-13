@@ -4,6 +4,7 @@ import { Check, X } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { TRANSLATION_LANGUAGES, getTranslationLanguageFlag } from '@/utils/translationLanguages';
 import { ChatAutoTranslateSlots } from './ChatAutoTranslateSlots';
+import { PreferredTranslationLanguageSection } from './PreferredTranslationLanguageSection';
 
 export interface TranslationModalAutoTranslateProps {
   languageCodes: string[];
@@ -19,6 +20,9 @@ interface TranslationLanguageModalProps {
   selectedLanguageCode: string | null;
   onRemoveLanguage?: () => void | Promise<void>;
   autoTranslate?: TranslationModalAutoTranslateProps | null;
+  preferredTranslationLanguage?: string | null;
+  appLanguageCode?: string;
+  onPreferredTranslationLanguageChange?: (languageCode: string | null) => void | Promise<void>;
 }
 
 export const TranslationLanguageModal: React.FC<TranslationLanguageModalProps> = ({
@@ -28,6 +32,9 @@ export const TranslationLanguageModal: React.FC<TranslationLanguageModalProps> =
   selectedLanguageCode,
   onRemoveLanguage,
   autoTranslate,
+  preferredTranslationLanguage,
+  appLanguageCode,
+  onPreferredTranslationLanguageChange,
 }) => {
   const { t } = useTranslation();
 
@@ -48,6 +55,13 @@ export const TranslationLanguageModal: React.FC<TranslationLanguageModalProps> =
           <DialogTitle>{t('chat.translationSettings', { defaultValue: 'Translation' })}</DialogTitle>
         </DialogHeader>
         <div className="max-h-[60vh] overflow-y-auto px-2 pb-4 space-y-4">
+          {onPreferredTranslationLanguageChange && appLanguageCode ? (
+            <PreferredTranslationLanguageSection
+              preferredLanguageCode={preferredTranslationLanguage ?? null}
+              appLanguageCode={appLanguageCode}
+              onChange={onPreferredTranslationLanguageChange}
+            />
+          ) : null}
           {autoTranslate ? (
             <section className="pb-4 border-b border-gray-200 dark:border-gray-700">
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
@@ -64,7 +78,7 @@ export const TranslationLanguageModal: React.FC<TranslationLanguageModalProps> =
           ) : null}
           <section>
             <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2">
-              {t('chat.translateToLanguage', { defaultValue: 'Translate before send' })}
+              {t('chat.translateToLanguage', { defaultValue: 'Translate new message to' })}
             </h3>
             <ul className="space-y-0.5">
               {selectedLanguageCode && onRemoveLanguage && (

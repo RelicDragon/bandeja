@@ -1164,14 +1164,16 @@ export const translateMessage = asyncHandler(async (req: AuthRequest, res: Respo
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { language: true },
+    select: { language: true, translateToLanguage: true },
   });
 
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
 
-  const languageCode = TranslationService.extractLanguageCode(user.language);
+  const languageCode = user.translateToLanguage
+    ? user.translateToLanguage.toLowerCase()
+    : TranslationService.extractLanguageCode(user.language);
 
   const translation = await TranslationService.getOrCreateTranslation(
     messageId,

@@ -48,6 +48,10 @@ export const getUserDisplayName = (user: { firstName?: string; lastName?: string
   return 'Unknown User';
 };
 
+export function hasUserDisplayName(user?: { firstName?: string; lastName?: string } | null): boolean {
+  return !!user && getUserDisplayName(user) !== 'Unknown User';
+}
+
 export const getUserInitials = (user: { firstName?: string; lastName?: string }): string => {
   const first = user.firstName?.charAt(0) || '';
   const last = user.lastName?.charAt(0) || '';

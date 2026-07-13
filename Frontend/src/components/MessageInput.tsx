@@ -20,6 +20,8 @@ import {
 import { TranslateToButton } from './chat/TranslateToButton';
 import { UndoTranslateButton } from './chat/UndoTranslateButton';
 import { useAuthStore } from '@/store/authStore';
+import { usersApi } from '@/api/users';
+import { extractLanguageCode } from '@/utils/displayPreferences';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { PollType } from '@/api/chat';
 import { deleteDraftFromComposer } from '@/components/chat/draftDeleteFlow';
@@ -94,7 +96,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   const translateToLanguage = translateToLanguageForChat ?? null;
   const userChatResolved = userChat ?? null;
   const { t } = useTranslation();
-  const { user } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
 
   const finalContextId = gameId || bugId || userChatId || groupChannelId;
   const resolvedChatType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
@@ -158,6 +160,24 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
     updateMultilineState,
     t,
   });
+
+  const appLanguageCode = extractLanguageCode(user?.language ?? 'en');
+  const preferredTranslationLanguage = user?.translateToLanguage ?? null;
+
+  const handlePreferredTranslationLanguageChange = useCallback(
+    async (languageCode: string | null) => {
+      try {
+        const response = await usersApi.updateProfile({ translateToLanguage: languageCode });
+        if (response.data) {
+          updateUser(response.data);
+        }
+      } catch (err) {
+        console.error('Update preferred translation language failed:', err);
+        toast.error(t('chat.sendFailed') || 'Failed to save');
+      }
+    },
+    [updateUser, t]
+  );
 
   const { debouncedSaveDraft, saveDraftTimeoutRef, hasLoadedDraftRef } = useMessageInputDraftSync({
     finalContextId,
@@ -509,6 +529,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
         selectedLanguageCode={translateToLanguage}
         onRemoveLanguage={translation.handleRemoveTranslateLanguage}
         autoTranslate={autoTranslate}
+        preferredTranslationLanguage={preferredTranslationLanguage}
+        appLanguageCode={appLanguageCode}
+        onPreferredTranslationLanguageChange={handlePreferredTranslationLanguageChange}
       />
       <MessageInputImagePreviewStrip
         imageFiles={selectedImages}
