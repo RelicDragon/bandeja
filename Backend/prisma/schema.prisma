@@ -28,7 +28,6 @@ model User {
   sportsEnabled                        Sport[]                     @default([PADEL])
   lastCreatedSport                     Sport?
   socialLevel                          Float                       @default(1.0)
-  reliabilityDecayPostGraceDaysApplied Int                         @default(0)
   totalPoints                          Int                         @default(0)
   wallet                               Int                         @default(0)
   currentCityId                        String?

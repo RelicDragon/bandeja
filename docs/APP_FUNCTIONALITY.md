@@ -979,7 +979,6 @@ Per-channel toggles (Telegram vs Push). Respects chat mute state.
 - **Bandeja ELO v1** rating engine per sport
 - Level change events stored and displayed
 - Score margin affects delta where configured
-- Reliability decay on idle sport profiles (daily scheduler)
 - Leaderboard by city/sport/period
 - Player comparison (head-to-head)
 - External rating display mappings (Playtomic, NTRP, DUPR, etc.)
@@ -1021,7 +1020,6 @@ Plain JS ops dashboard (no build step). Sections:
 | Chat drafts | Daily 03:00 | Expire old drafts |
 | Unread auto-read | Daily 04:00 | Auto-read messages >1 month old |
 | Bug lifecycle | Daily 04:30 | TEST→FINISHED→ARCHIVED |
-| Reliability decay | Daily 04:15 | Idle rating reliability decay |
 | Ad campaigns | Every 10 min | Activate/end campaigns |
 | Ad analytics | Daily 03:00 | Rollup + purge old events |
 | Bet payout reconcile | Every 5 min | Retry unresolved payouts |

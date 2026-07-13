@@ -1,7 +1,7 @@
 /**
  * Sport-scoped level display/calculation trust patches (outcome explanation, league groups, telegram results, merge).
  */
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Sport } from '@prisma/client';
 import { generateResultsHTML } from '../../src/services/telegram/results-html.service';
@@ -134,18 +134,9 @@ function testSourcePatches(): void {
     'resolveUserSportSnapshot does not read global User rating fields',
   );
 
-  const reliabilityDecay = readSrc('services/reliabilityDecay.service.ts');
   assert(
-    reliabilityDecay.includes('UserSportProfile') && reliabilityDecay.includes('Sport.PADEL'),
-    'reliability decay uses padel UserSportProfile',
-  );
-  assert(
-    reliabilityDecay.includes('reliabilityDecayPostGraceDaysApplied: newApplied'),
-    'reliability decay updates grace counter on User only',
-  );
-  assert(
-    !reliabilityDecay.includes('reliability: newRel,\n        reliabilityDecayPostGraceDaysApplied'),
-    'reliability decay does not dual-write User.reliability',
+    !existsSync(join(__dirname, '../../src/services/reliabilityDecay.service.ts')),
+    'reliability idle decay service removed',
   );
 
   const postJoin = readSrc('utils/postJoinOperations.ts');

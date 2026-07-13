@@ -40,7 +40,7 @@ export function useBooktimeUpcomingBookings(
 
   const reload = useCallback(async () => {
     if (!enabled || !connected || club.integrationType !== 'BOOKTIME') {
-      setBookings([]);
+      setBookings((prev) => (prev.length === 0 ? prev : []));
       setLoaded(true);
       lastLoadedCourtsKeyRef.current = filterCourtsKey;
       return;

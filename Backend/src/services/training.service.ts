@@ -1,6 +1,6 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
-import { EntityType, Sport } from '@prisma/client';
+import { EntityType } from '@prisma/client';
 import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
 import {
   ensureSportInEnabled,
@@ -144,18 +144,12 @@ export async function updateParticipantLevel(
       approvedLevel?: boolean;
       approvedById?: string;
       approvedWhen?: Date;
-      reliabilityDecayPostGraceDaysApplied?: number;
     } = {};
 
     if (user.isTrainer || user.isAdmin || isTrainerOrOwner) {
       userPatch.approvedLevel = true;
       userPatch.approvedById = userId;
       userPatch.approvedWhen = new Date();
-    }
-
-    // UserSportProfile is source of truth; decay grace counter remains on User (padel-only decay).
-    if (game.sport === Sport.PADEL) {
-      userPatch.reliabilityDecayPostGraceDaysApplied = 0;
     }
 
     await tx.userSportProfile.upsert({
@@ -293,12 +287,6 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
             reliability: outcome.reliabilityBefore,
           },
         });
-        if (game.sport === Sport.PADEL) {
-          await tx.user.update({
-            where: { id: outcome.userId },
-            data: { reliabilityDecayPostGraceDaysApplied: 0 },
-          });
-        }
       }
     }
 

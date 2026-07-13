@@ -43,7 +43,7 @@ export function usePadelooUpcomingBookings(
 
   const reload = useCallback(async () => {
     if (!enabled || !connected || !isPadelooClub(club) || padelooClubId == null) {
-      setBookings([]);
+      setBookings((prev) => (prev.length === 0 ? prev : []));
       setLoaded(true);
       lastLoadedCourtsKeyRef.current = filterCourtsKey;
       return;

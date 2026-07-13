@@ -14,7 +14,6 @@ import { DraftScheduler } from './services/draftScheduler.service';
 import { UnreadAutoReadScheduler } from './services/unreadAutoReadScheduler.service';
 import { BugArchivedScheduler } from './services/bugArchivedScheduler.service';
 import { ChatSyncStatsScheduler } from './services/chatSyncStatsScheduler.service';
-import { ReliabilityDecayScheduler } from './services/reliabilityDecayScheduler.service';
 import { AdCampaignScheduleScheduler } from './services/adCampaignScheduleScheduler.service';
 import { AdAnalyticsScheduler } from './services/adAnalyticsScheduler.service';
 import { BetPayoutReconcileScheduler } from './services/bets/betPayoutReconcileScheduler.service';
@@ -74,9 +73,6 @@ const startServer = async () => {
     const chatSyncStatsScheduler = new ChatSyncStatsScheduler();
     chatSyncStatsScheduler.start();
 
-    const reliabilityDecayScheduler = new ReliabilityDecayScheduler();
-    reliabilityDecayScheduler.start();
-
     const adCampaignScheduleScheduler = new AdCampaignScheduleScheduler();
     adCampaignScheduleScheduler.start();
 
@@ -135,7 +131,6 @@ const startServer = async () => {
         unreadAutoReadScheduler.stop();
         bugArchivedScheduler.stop();
         chatSyncStatsScheduler.stop();
-        reliabilityDecayScheduler.stop();
         adCampaignScheduleScheduler.stop();
         adAnalyticsScheduler.stop();
         betPayoutReconcileScheduler.stop();

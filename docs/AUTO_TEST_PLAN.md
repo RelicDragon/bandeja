@@ -136,7 +136,7 @@ Map routes in `Backend/src/routes/index.ts` to contract tests (status, body shap
 | Telegram | Bot commands, OTP, notifications, results HTML/image senders (mock grammy / HTTP). |
 | Club integration | Playtomic / club sync types and mapping. |
 | AI / LLM | Prompt assembly, parsing, guardrails (mock OpenAI). |
-| Schedulers / cron | `gameStatusScheduler`, `auctionScheduler`, `bugArchivedScheduler`, `reliabilityDecayScheduler`, `mediaCleanup`, `fileCleanup` — trigger with fake time + mocked DB slices. |
+| Schedulers / cron | `gameStatusScheduler`, `auctionScheduler`, `bugArchivedScheduler`, `mediaCleanup`, `fileCleanup` — trigger with fake time + mocked DB slices. |
 | Misc | `currency.service`, `ranking.service`, `faq`, `welcomeScreen`, `socket.service` (adapter in test). |
 
 ### 5.3 Backend — utilities and pure helpers (`Backend/src/utils/**`)

@@ -42,6 +42,7 @@
     "backfill:game-booking-status": "ts-node scripts/backfillGameBookingStatus.ts",
     "reconcile:sport-profile-level-from-events": "ts-node scripts/reconcileSportProfileLevelFromEvents.ts",
     "reconcile:sport-profile-game-stats": "ts-node scripts/reconcileSportProfileGameStats.ts",
+    "restore:reliability-from-latest-outcome": "ts-node scripts/restoreReliabilityFromLatestOutcome.ts",
     "audit:court-club-sports": "ts-node scripts/audit-court-club-sports.ts",
     "backfill:court-club-sports": "ts-node scripts/backfill-court-club-sports.ts",
     "seed:padeloo-avantura": "ts-node -r dotenv/config scripts/seed-padeloo-avantura.ts",

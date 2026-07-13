@@ -3,6 +3,14 @@ import { getBooktimeCompanyId, isPadelooClub } from '@shared/clubIntegration';
 import { useBooktimeUpcomingBookings } from '@/hooks/useBooktimeUpcomingBookings';
 import { usePadelooUpcomingBookings } from '@/hooks/usePadelooUpcomingBookings';
 
+const INACTIVE_CLUB_PLACEHOLDER: Club = {
+  id: '',
+  name: '',
+  address: '',
+  cityId: '',
+  integrationType: null,
+};
+
 export function useClubUpcomingBookings(
   club: Club | undefined,
   connected: boolean,
@@ -11,16 +19,10 @@ export function useClubUpcomingBookings(
   refreshKey = 0,
 ) {
   const companyId = getBooktimeCompanyId(club) ?? '';
-  const inactiveClub: Club = {
-    id: '',
-    name: '',
-    address: '',
-    cityId: '',
-    integrationType: null,
-  };
+  const resolvedClub = club ?? INACTIVE_CLUB_PLACEHOLDER;
 
   const booktime = useBooktimeUpcomingBookings(
-    club ?? inactiveClub,
+    resolvedClub,
     companyId,
     connected,
     enabled && Boolean(club) && !isPadelooClub(club),
@@ -29,7 +31,7 @@ export function useClubUpcomingBookings(
   );
 
   const padeloo = usePadelooUpcomingBookings(
-    club ?? inactiveClub,
+    resolvedClub,
     connected,
     enabled && Boolean(club) && isPadelooClub(club),
     filterCourts,
