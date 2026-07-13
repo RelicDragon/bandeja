@@ -74,6 +74,32 @@ export async function syncClubSportsFromCourt(
   await prisma.club.update({ where: { id: clubId }, data: { sports } });
 }
 
+/** Replace club.sports with the distinct sports of its active courts (drops schema default PADEL when unused). */
+export async function rebuildClubSportsFromCourts(clubId: string): Promise<Sport[] | null> {
+  const courts = await prisma.court.findMany({
+    where: { clubId, isActive: true },
+    select: { sport: true },
+  });
+  const courtSports = courts
+    .map((court) => court.sport)
+    .filter((sport): sport is Sport => sport != null);
+  if (courtSports.length === 0) return null;
+
+  const sports = normalizeClubSportsOrder([...new Set(courtSports)]);
+  const club = await prisma.club.findUnique({
+    where: { id: clubId },
+    select: { sports: true },
+  });
+  if (!club) return null;
+
+  const unchanged =
+    sports.length === club.sports.length && sports.every((sport, index) => sport === club.sports[index]);
+  if (!unchanged) {
+    await prisma.club.update({ where: { id: clubId }, data: { sports } });
+  }
+  return sports;
+}
+
 export function clubSupportsSport(
   clubSports: Sport[],
   courts: Array<{ sport: Sport | null }>,

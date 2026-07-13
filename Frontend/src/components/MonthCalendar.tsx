@@ -463,14 +463,6 @@ export const MonthCalendar = ({
         )}
         {upcomingsToggle ? (
           <>
-            {collapsed ? (
-              <MonthCalendarWeatherToggle
-                active={weatherMode}
-                compact
-                disabled={weatherToggleDisabled}
-                onClick={handleWeatherModeToggle}
-              />
-            ) : null}
             <div className="flex shrink-0 items-center gap-0.5">
               {!collapsed ? (
                 <MonthCalendarWeatherToggle

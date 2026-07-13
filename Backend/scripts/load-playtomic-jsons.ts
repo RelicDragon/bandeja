@@ -16,7 +16,7 @@ import {
   mapPlaytomicSportToSport,
   SUPPORTED_PLAYTOMIC_SPORT_IDS,
 } from '../src/sport/playtomicSport';
-import { mergeClubSports } from '../src/shared/clubSports';
+import { mergeClubSports, rebuildClubSportsFromCourts } from '../src/shared/clubSports';
 
 const JSON_DIR = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
 const DEFAULT_TIMEZONE = 'Europe/Paris';
@@ -292,6 +292,7 @@ export async function loadPlaytomicFile(filePath: string): Promise<LoadPlaytomic
       }
     }
     if (courtsCreatedForClub > 0) await refreshClubCourtsCount(club.id);
+    await rebuildClubSportsFromCourts(club.id);
   }
 
   return {
@@ -361,9 +362,11 @@ async function main(): Promise<void> {
   );
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
+if (require.main === module) {
+  main()
+    .then(() => process.exit(0))
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
+}

@@ -2032,7 +2032,7 @@
     "tenant_name": "TRK Zlatibor",
     "slug": "trk-zlatibor",
     "address": {
-      "street": "TRK Zlatibor",
+      "street": "Ulica Sportova bb",
       "postal_code": "31315",
       "city": "Zlatibor",
       "sub_administrative_area": "Čajetina",
@@ -2121,6 +2121,559 @@
       "PADEL"
     ],
     "communications_language": "en_US",
-    "description": "TRK Zlatibor (Turističko-rekreativni kompleks Zlatibor) is the main sports complex on Zlatibor mountain, offering padel courts alongside basketball, volleyball, handball, tennis, and other facilities. Host venue for ISF U15 Gymnasiade padel 2025."
+    "description": "TRK Zlatibor (Turističko-rekreativni kompleks Zlatibor) is the main sports complex on Zlatibor mountain, offering padel courts alongside basketball, volleyball, handball, tennis, and other facilities. Padel bookings are operated by Avantura Padel (+381 66 103 301). Host venue for ISF U15 Gymnasiade padel 2025."
+  },
+  {
+    "tenant_id": "c25014fb-2afc-4865-a016-680d1f0b0c48",
+    "tenant_name": "Avantura Padel Zlatibor — Avantura Park",
+    "slug": "avantura-padel-zlatibor-avantura-park",
+    "address": {
+      "street": "Miladina Pećinara bb",
+      "postal_code": "31315",
+      "city": "Zlatibor",
+      "sub_administrative_area": "Čajetina",
+      "administrative_area": "Zlatibor",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 43.724826,
+        "lon": 19.6971864
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38166103301",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_PADEL": "true",
+      "FACILITY_STORE": "false",
+      "WEBSITE_URL": "https://avanturapadel.rs"
+    },
+    "resources": [
+      {
+        "resourceId": "2789ddad-8de7-4b6c-8941-25e1838c6744",
+        "name": "Padel 1 - Outdoor Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "954d5ff8-1dae-4842-a0b2-c4e8be1f3281",
+        "name": "Padel 2 - Outdoor Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "communications_language": "en_US",
+    "description": "Avantura Padel operates professional outdoor panoramic padel courts at Avantura Park on Zlatibor mountain. Second location at TRK sports complex (Ulica Sportova bb). Equipment rental available; hourly rate 3,000 RSD."
+  },
+  {
+    "tenant_id": "98d40e0f-e13d-4cd9-a686-79f7821c8411",
+    "tenant_name": "Teniski klub Zlatibor Springs",
+    "slug": "teniski-klub-zlatibor-springs",
+    "address": {
+      "street": "Smiljanski zakosi bb",
+      "postal_code": "31315",
+      "city": "Zlatibor",
+      "sub_administrative_area": "Čajetina",
+      "administrative_area": "Zlatibor",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 43.6864145,
+        "lon": 19.7030205
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381641371310",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_TENNIS": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "21b3e63b-eff0-481e-a741-6ed2d4ef605d",
+        "name": "Clay court 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "f5f717e7-3b9d-4259-a1b0-207a15660c14",
+        "name": "Clay court 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "4b6bd6e7-b9bb-4d8b-965c-2b85cb4e4442",
+        "name": "Clay court 3",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "128f1ba8-d014-4eaf-9bd8-580df53002d6",
+        "name": "Clay court 4",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "60481b19-7192-442c-858c-9a7066f2f48b",
+        "name": "Clay court 5",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "e4ef7940-6596-4a20-bd9d-756f97ec5ef1",
+        "name": "Clay court 6",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "e1b143bc-b7af-4b24-b20c-53c70a6f4b95",
+        "name": "Clay court 7",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en_US",
+    "description": "Teniski klub Zlatibor Springs is a 4-hectare tennis center 2.5 km from the Belgrade–Podgorica highway, with seven outdoor clay courts, changing rooms, café, accommodation, and summer camps. Hosts ITF junior events and the Zlatibor Open."
+  },
+  {
+    "tenant_id": "2b41f125-2452-4204-9d60-d888e13d77f3",
+    "tenant_name": "Hotel Palisad Zlatibor",
+    "slug": "hotel-palisad-zlatibor",
+    "address": {
+      "street": "Panta Mijailovića 6",
+      "postal_code": "31315",
+      "city": "Zlatibor",
+      "sub_administrative_area": "Čajetina",
+      "administrative_area": "Zlatibor",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 43.7283044,
+        "lon": 19.7002716
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38131841151",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_TENNIS": "true",
+      "FACILITY_STORE": "false",
+      "WEBSITE_URL": "https://palisad.rs"
+    },
+    "resources": [
+      {
+        "resourceId": "c7849021-a912-41a6-9c05-27388e2eda64",
+        "name": "Clay court 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "801022ed-1771-41c4-90e7-7914542dc9bb",
+        "name": "Clay court 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "bc172ae5-dc47-430d-a921-8892dec735d6",
+        "name": "Clay court 3",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "5264fc41-e3f4-4655-9b69-08ffbf84f1b2",
+        "name": "Clay court 4",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "6ede1591-a734-4a06-b4f6-7ea7fb193c69",
+        "name": "Kids clay court",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en_US",
+    "description": "Hotel Palisad offers four outdoor clay tennis courts for adults and one children's clay court near the hotel, plus indoor halls for basketball, volleyball, and handball. Hosts seasonal kids' summer camps and the Zlatibor Open tennis tournament."
+  },
+  {
+    "tenant_id": "9bdfa24f-6831-4ed7-9d13-d605e6de007b",
+    "tenant_name": "Studentsko odmaralište Ratko Mitrović",
+    "slug": "studentsko-odmaraliste-ratko-mitrovic",
+    "address": {
+      "street": "Ulica sportova 13",
+      "postal_code": "31315",
+      "city": "Zlatibor",
+      "sub_administrative_area": "Čajetina",
+      "administrative_area": "Zlatibor",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 43.7262,
+        "lon": 19.7005
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+38131841369",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_TENNIS": "true",
+      "FACILITY_STORE": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "b52dc5c4-7041-4577-ace4-fffd5fe7fb71",
+        "name": "Tennis court 1 - Tartan",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "hard"
+        ]
+      },
+      {
+        "resourceId": "6e087f77-a9b3-42b1-bec2-787fb8603423",
+        "name": "Tennis court 2 - Tartan",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "hard"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en_US",
+    "description": "Studentsko odmaralište Ratko Mitrović is a student resort complex in pine forest near central Zlatibor with two outdoor tartan tennis courts alongside football, basketball, volleyball, and handball courts. Floodlit for evening play."
+  },
+  {
+    "tenant_id": "51e68faf-e5e0-4374-8a79-104716c9877d",
+    "tenant_name": "Sportski centar Rajevac",
+    "slug": "sportski-centar-rajevac",
+    "address": {
+      "street": "Aleksandra Karađorđevića 1",
+      "postal_code": "31310",
+      "city": "Čajetina",
+      "sub_administrative_area": "Čajetina",
+      "administrative_area": "Zlatibor",
+      "country": "Serbia",
+      "country_code": "RS",
+      "coordinate": {
+        "lat": 43.7526203,
+        "lon": 19.7192947
+      },
+      "timezone": "Europe/Belgrade"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+381653831378",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_LOCKERS": "true",
+      "SPORT_TENNIS": "true",
+      "FACILITY_STORE": "false",
+      "WEBSITE_URL": "https://scrajevac.com"
+    },
+    "resources": [
+      {
+        "resourceId": "26b26e53-1e4f-49f6-bd74-cd3199396007",
+        "name": "Clay court 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "clay"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS"
+    ],
+    "communications_language": "en_US",
+    "description": "Sportski centar Rajevac is a sports and recreation complex 5 km from Zlatibor in Čajetina, with one outdoor clay tennis court alongside football pitches, accommodation, restaurant, and team-building facilities."
   }
 ]

@@ -305,9 +305,9 @@ Frontend/e2e/
 | H-38f | Standalone booking card actions (My tab) | Connected user with at least one non-grouped upcoming booking | Tap standalone card → link/create/cancel actions animate in and card highlights; tap another standalone card → first collapses, second expands; tap same card again → actions collapse |
 | H-38k | Grouped booking card actions (My tab) | Connected user with adjacent same-court upcoming slots | Tap grouped card → per-slot rows animate in with link/create/cancel; only one card expanded at a time; tap again collapses |
 | H-38l | Bookings integrations shortcut (My tab) | Connected user with upcoming bookings on My tab | Gear icon beside "See all" → `/profile/connected-clubs?tab=integrations` with Integrations subtab active; "See all" still opens Bookings subtab |
-| H-58 | My tab list view | My tab → tap List in calendar header (list icon + label) | Calendar grid collapses to header row; UpcomingGamesList sections; preference persists after reload |
+| H-58 | My tab list view | My tab → tap List in calendar header (list icon + label) | Calendar grid collapses to header row; weather toggle hidden; UpcomingGamesList sections; preference persists after reload |
 | H-59 | My tab games calendar view | Tap Calendar in collapsed calendar header | Calendar grid expands; day selection works as before |
-| H-64 | Calendar weather toggle | My tab calendar → tap cloud/sun icon in header | Icon highlights; day cells show weather pill (icon + temp) instead of entity-type pill where forecast exists; date select/filter unchanged |
+| H-64 | Calendar weather toggle | My tab calendar expanded → tap cloud/sun icon in header | Icon highlights; day cells show weather pill (icon + temp) instead of entity-type pill where forecast exists; date select/filter unchanged |
 | H-65 | Calendar weather toggle off | With weather mode on → tap cloud/sun again | Entity-type pills return; weather pills hidden |
 | H-66 | Calendar weather toggle disabled | User without selected city | Cloud/sun control disabled; no weather requests; entity-type pills unchanged |
 | H-67 | Calendar weather mode persists | Enable weather on My tab → reload | Weather mode still active; pills restored after fetch |
@@ -323,9 +323,9 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | F-01 | Calendar view default | Open Find | Calendar + games |
-| F-02 | List view | Tap List in Find calendar header | Calendar collapses; upcoming games from today grouped by date |
+| F-02 | List view | Tap List in Find calendar header | Calendar collapses; weather toggle hidden; upcoming games from today grouped by date |
 | F-03 | List → calendar | Tap Calendar in collapsed header | Calendar expands; day-filtered games |
-| F-45 | Find calendar weather toggle | Find calendar → tap cloud/sun icon | Weather pills on forecast days replace entity-type pills; filters and day selection unchanged |
+| F-45 | Find calendar weather toggle | Find calendar expanded → tap cloud/sun icon | Weather pills on forecast days replace entity-type pills; filters and day selection unchanged |
 | F-46 | Find selected date weather row | Find calendar → pick date | Weather row below date heading shows day range pill; tap opens day forecast modal |
 | F-04 | Month calendar expand | Open month picker | Range changes |
 | F-05 | Go to today | Header action | Jumps to current date |
