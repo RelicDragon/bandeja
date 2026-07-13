@@ -14,7 +14,7 @@ import { usePresenceStore } from '@/store/presenceStore';
 import { PlayStreakChip } from '@/components/playStreak/PlayStreakChip';
 import { useAuthStore } from '@/store/authStore';
 import { MarketItem } from '@/types';
-import { ratingUncertaintyScale } from '@/utils/ratingUncertainty';
+import { PlayerCardRatingStatus } from '@/components/player/PlayerCardRatingStatus';
 
 export type PlayerCardProfileTab = 'statistics' | 'levels' | 'groups';
 
@@ -151,6 +151,11 @@ const PlayerCardProfileBodyComponent = ({
                 <PlayStreakChip streak={playStreak} isOwn={isOwnProfile} />
               </div>
             )}
+            <PlayerCardRatingStatus
+              settling={Boolean(user.ratingSettling)}
+              uncertainty={isAdmin ? user.ratingUncertainty : null}
+              t={t}
+            />
           </div>
         </div>
         {hasTelegram && (
@@ -166,19 +171,6 @@ const PlayerCardProfileBodyComponent = ({
           >
             <Send size={12} className="text-white flex-shrink-0" />
           </button>
-        )}
-        {(user.ratingSettling || (isAdmin && user.ratingUncertainty != null)) && (
-          <div className="absolute bottom-2 left-2 max-w-[70%] text-left text-[10px] font-medium text-white/90 space-y-0.5">
-            {user.ratingSettling && (
-              <div className="inline-flex rounded-md bg-black/25 px-1.5 py-0.5">{t('rating.settling')}</div>
-            )}
-            {isAdmin && user.ratingUncertainty != null && (
-              <div className="inline-flex rounded-md bg-black/25 px-1.5 py-0.5">
-                {t('rating.uncertainty')}: {user.ratingUncertainty.toFixed(0)} (
-                {ratingUncertaintyScale(user.ratingUncertainty).toFixed(2)}x)
-              </div>
-            )}
-          </div>
         )}
       </motion.div>
 

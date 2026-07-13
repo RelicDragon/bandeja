@@ -123,7 +123,7 @@ const OutcomeExplanationModalInner = ({
                   </span>
                 )}
               </div>
-              {isAdmin && explanation.ratingUncertainty != null && (
+              {isAdmin && explanation.ratingUncertainty != null && explanation.ratingUncertainty > 0 && (
                 <div>
                   <span className="text-gray-600 dark:text-gray-400">{t('gameResults.ratingUncertainty')}:</span>
                   <span className="ml-1.5 font-semibold text-amber-700 dark:text-amber-300">

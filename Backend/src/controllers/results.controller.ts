@@ -373,7 +373,9 @@ export const getOutcomeExplanation = asyncHandler(async (req: AuthRequest, res: 
   const { ratingUncertainty, ...rest } = explanation;
   const data = {
     ...rest,
-    ...(viewerIsAdmin ? { ratingUncertainty } : {}),
+    ...(viewerIsAdmin && ratingUncertainty != null && ratingUncertainty > 0
+      ? { ratingUncertainty }
+      : {}),
   };
 
   res.json({

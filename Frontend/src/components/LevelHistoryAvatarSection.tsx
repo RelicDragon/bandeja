@@ -80,17 +80,19 @@ export const LevelHistoryAvatarSection = ({
         </div>
       </div>
       {!showSocialLevel && showCompetitive && (
-        <div className="absolute bottom-3 right-3 text-white/80 text-xs text-right space-y-0.5">
-          <div>
+        <div className="absolute bottom-3 right-3 flex flex-col items-end gap-1.5 text-right">
+          <div className="text-white/80 text-xs">
             {t('rating.reliability')}: {reliability.toFixed(0)}%
           </div>
           {user.ratingSettling && (
-            <div className="text-amber-200">{t('rating.settling')}</div>
+            <div className="inline-flex items-center rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-white/25">
+              {t('rating.settling')}
+            </div>
           )}
-          {showRatingUncertainty && uncertainty != null && (
-            <div>
-              {t('rating.uncertainty')}: {uncertainty.toFixed(0)} (
-              {ratingUncertaintyScale(uncertainty).toFixed(2)}x)
+          {showRatingUncertainty && uncertainty != null && uncertainty > 0 && (
+            <div className="inline-flex items-center rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium tabular-nums text-white/95">
+              {t('rating.uncertainty')} {uncertainty.toFixed(0)} ·{' '}
+              {ratingUncertaintyScale(uncertainty).toFixed(2)}×
             </div>
           )}
         </div>

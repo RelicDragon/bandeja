@@ -271,7 +271,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
       where: { id: req.userId },
       select: { isAdmin: true },
     });
-    if (viewer?.isAdmin) {
+    if (viewer?.isAdmin && effectiveUncertainty > 0) {
       (projectedUser as { ratingUncertainty?: number }).ratingUncertainty = effectiveUncertainty;
     }
   }
