@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthRequest } from '../middleware/auth';
 import { ApiError } from '../utils/ApiError';
+import prisma from '../config/database';
 import * as resultsService from '../services/results.service';
 import * as roundGenerationService from '../services/results/roundGeneration.service';
 import { GameService } from '../services/game/game.service';
@@ -11,6 +12,7 @@ import * as matchLiveScoringService from '../services/results/matchLiveScoring.s
 import { LIVE_SCORING_REASON_CODE } from '../services/results/liveScoringEngine/liveScoringRejectReasons';
 import { liveSpectatorQueryTokenMaxBytes, signLiveSpectatorToken, verifyLiveSpectatorToken } from '../utils/jwt';
 import { assertMatchBelongsToGame } from '../services/results/liveSpectator.service';
+import { isRatingSettling } from '../services/results/ratingUncertainty';
 
 export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
@@ -360,9 +362,25 @@ export const getOutcomeExplanation = asyncHandler(async (req: AuthRequest, res: 
     throw new ApiError(404, 'Outcome not found');
   }
 
+  let viewerIsAdmin = false;
+  if (req.userId) {
+    const viewer = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { isAdmin: true },
+    });
+    viewerIsAdmin = Boolean(viewer?.isAdmin);
+  }
+
+  const { ratingUncertainty, ...rest } = explanation;
+  const data = {
+    ...rest,
+    ratingSettling: isRatingSettling(ratingUncertainty),
+    ...(viewerIsAdmin ? { ratingUncertainty } : {}),
+  };
+
   res.json({
     success: true,
-    data: explanation,
+    data,
   });
 });
 

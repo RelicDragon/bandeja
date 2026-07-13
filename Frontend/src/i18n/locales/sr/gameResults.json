@@ -234,6 +234,8 @@
     "multiplier": "Težina Meča",
     "endurance": "Izdržljivost",
     "reliabilityCoefficient": "Koeficijent Pouzdanosti",
+    "ratingUncertainty": "Neizvesnost",
+    "ratingSettling": "Rejting se ustaljuje",
     "veryClose": "veoma tesno",
     "close": "tesan meč",
     "normal": "normalno",

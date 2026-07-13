@@ -12,6 +12,7 @@ interface PlayerData {
   level: number;
   reliability: number;
   gamesPlayed: number;
+  ratingUncertainty: number;
 }
 
 interface TeamScore {
@@ -211,6 +212,7 @@ export function calculateByMatchesWonOutcomes(
             level: player.level + playerTotalChanges[player.userId].levelChange,
             reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
+            ratingUncertainty: player.ratingUncertainty,
           },
           {
             isWinner: teamAWins,
@@ -244,6 +246,7 @@ export function calculateByMatchesWonOutcomes(
             level: player.level + playerTotalChanges[player.userId].levelChange,
             reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
+            ratingUncertainty: player.ratingUncertainty,
           },
           {
             isWinner: teamBWins,
@@ -353,6 +356,7 @@ export function calculateByPointsOutcomes(
             level: player.level + playerTotalChanges[playerId].levelChange,
             reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
+            ratingUncertainty: player.ratingUncertainty,
           },
           {
             isWinner: teamAWins,
@@ -389,6 +393,7 @@ export function calculateByPointsOutcomes(
             level: player.level + playerTotalChanges[playerId].levelChange,
             reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
+            ratingUncertainty: player.ratingUncertainty,
           },
           {
             isWinner: teamBWins,
@@ -498,6 +503,7 @@ export function calculateByScoresDeltaOutcomes(
             level: player.level + playerTotalChanges[playerId].levelChange,
             reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
+            ratingUncertainty: player.ratingUncertainty,
           },
           {
             isWinner: teamAWins,
@@ -535,6 +541,7 @@ export function calculateByScoresDeltaOutcomes(
             level: player.level + playerTotalChanges[playerId].levelChange,
             reliability: player.reliability,
             gamesPlayed: player.gamesPlayed,
+            ratingUncertainty: player.ratingUncertainty,
           },
           {
             isWinner: teamBWins,

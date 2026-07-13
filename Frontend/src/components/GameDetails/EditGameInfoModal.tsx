@@ -27,16 +27,21 @@ import {
 import { PriceTab, type PriceTabState } from './editGameInfo/PriceTab';
 import { GameSettings } from './GameSettings';
 import { createDateFromClubTime, useGameTimeDuration } from '@/hooks/useGameTimeDuration';
-import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
+import { useClubTimeOptions } from '@/hooks/useClubTimeOptions';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
-import { clubHasBookingIntegration, parseBooktimeIntegrationConfig } from '@shared/clubIntegration';
-import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
+import {
+  clubHasBookingIntegration,
+  getPadelooClubId,
+  isPadelooClub,
+  parseBooktimeIntegrationConfig,
+} from '@shared/clubIntegration';
+import { useClubBookingAuth } from '@/hooks/useClubBookingAuth';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
-import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
-import { BooktimeCreateGameConfirmModal } from '@/components/createGame/BooktimeCreateGameConfirmModal';
-import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
+import { useClubSnapshotRefresh } from '@/hooks/useClubSnapshotRefresh';
+import { ClubCreateGameConfirmModal } from '@/components/createGame/ClubCreateGameConfirmModal';
+import { ClubBookingConnectInline } from '@/components/booktime/ClubBookingConnectInline';
 import type { BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { shouldUseBooktimeTimeOptions } from '@/hooks/createGameBookingFlow/shouldUseBooktimeTimeOptions';
@@ -376,13 +381,13 @@ export const EditGameInfoModal = ({
     if (!selectedClubData || !clubHasBookingIntegration(selectedClubData)) return null;
     return parseBooktimeIntegrationConfig(selectedClubData.integrationConfig);
   }, [selectedClubData]);
-  const { status: booktimeAuth, refresh: refreshBooktimeAuth } = useBooktimeClubAuth(
-    where.clubId || undefined,
-    clubBookingFlowActive && Boolean(booktimeIntegrationConfig),
+  const { status: clubBookingAuth, refresh: refreshClubBookingAuth } = useClubBookingAuth(
+    selectedClubData,
+    clubBookingFlowActive,
   );
   const needsBooktimeAuth = Boolean(
     clubBookingFlowActive &&
-      !booktimeAuth?.connected &&
+      !clubBookingAuth?.connected &&
       (willBookOnEdit ||
         locationTimeDraft?.editReservationAction === 'reserveNew' ||
         locationTimeDraft?.editReservationAction === 'useExisting'),
@@ -407,14 +412,13 @@ export const EditGameInfoModal = ({
     isOpen &&
     (willBookOnEdit || bookingsModeActive || confirmModalOpen) &&
     clubBookingFlowActive &&
-    Boolean(booktimeIntegrationConfig) &&
     !needsBooktimeAuth;
   const {
     refreshSnapshot,
     lastFetchedAt: snapshotLastFetchedAt,
     snapshotBanner,
     isRefreshingSnapshot,
-  } = useBooktimeSnapshotRefresh(
+  } = useClubSnapshotRefresh(
       selectedClubData,
       whenSelectedDate,
       snapshotRefreshEnabled,
@@ -422,7 +426,7 @@ export const EditGameInfoModal = ({
   const snapshotBlocked =
     snapshotBanner === 'noSyncToday' ||
     (snapshotBanner === 'scoutPoolEmpty' && !snapshotLastFetchedAt);
-  const booktimeTimeOptions = useBooktimeTimeOptions({
+  const booktimeTimeOptions = useClubTimeOptions({
     club: selectedClubData,
     courts: modalCourts,
     selectedDate: whenSelectedDate,
@@ -435,7 +439,8 @@ export const EditGameInfoModal = ({
       needsBooktimeAuth,
       locationTimeMode: locationTimeDraft?.locationTimeMode,
       willBookOnCreate: willBookOnEdit || reserveNewEditActive,
-      booktimeConnected: Boolean(booktimeAuth?.connected),
+      booktimeConnected: Boolean(clubBookingAuth?.connected),
+      isPadelooClub: isPadelooClub(selectedClubData),
     }) && isOpen,
   });
   const resolvedGenerateTimeOptions = booktimeTimeOptions.active
@@ -919,7 +924,7 @@ export const EditGameInfoModal = ({
                 onDraftChange={handleLocationTimeDraftChange}
                 clubBookingFlowActive={clubBookingFlowActive}
                 booktimeCompanyId={booktimeIntegrationConfig?.companyId ?? null}
-                booktimeConnected={Boolean(booktimeAuth?.connected)}
+                booktimeConnected={Boolean(clubBookingAuth?.connected)}
                 snapshotOverlayEnabled={editSnapshotOverlayEnabled}
                 snapshotLoading={isRefreshingSnapshot}
                 snapshotBannerState={snapshotBanner}
@@ -928,14 +933,14 @@ export const EditGameInfoModal = ({
                 booktimeFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
                 slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
                 booktimeSlotsActive={booktimeTimeOptions.active}
-                connectedPhone={booktimeAuth?.phoneNumber ?? null}
+                connectedPhone={clubBookingAuth?.phoneNumber ?? clubBookingAuth?.email ?? null}
                 bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
                 renderAuthGateSection={({ collapsed, onSkip, onCollapsedClick }) =>
-                  selectedClubData && booktimeIntegrationConfig ? (
-                    <BooktimeConnectInline
+                  selectedClubData ? (
+                    <ClubBookingConnectInline
                       club={selectedClubData}
-                      integrationConfig={booktimeIntegrationConfig}
-                      onConnected={() => void refreshBooktimeAuth()}
+                      integrationConfig={booktimeIntegrationConfig ?? undefined}
+                      onConnected={() => void refreshClubBookingAuth()}
                       onSkip={onSkip}
                       collapsed={collapsed}
                       onCollapsedClick={onCollapsedClick}
@@ -1081,8 +1086,9 @@ export const EditGameInfoModal = ({
       confirmVariant="danger"
     />
 
-    {selectedClubData && booktimeIntegrationConfig && confirmModalOpen ? (
-      <BooktimeCreateGameConfirmModal
+    {selectedClubData && confirmModalOpen && booktimeIntegrationConfig ? (
+      <ClubCreateGameConfirmModal
+        provider="BOOKTIME"
         open={confirmModalOpen}
         onOpenChange={setConfirmModalOpen}
         club={selectedClubData}
@@ -1093,11 +1099,54 @@ export const EditGameInfoModal = ({
           startTime: whenSelectedTime,
           durationMinutes: Math.round(whenDuration * 60),
         }))}
-        phoneNumber={booktimeAuth?.phoneNumber ?? null}
-        firstName={booktimeAuth?.firstName ?? null}
-        lastName={booktimeAuth?.lastName ?? null}
+        phoneNumber={clubBookingAuth?.phoneNumber ?? null}
+        firstName={clubBookingAuth?.firstName ?? null}
+        lastName={clubBookingAuth?.lastName ?? null}
         allowedHoursToCancel={booktimeCompanyMeta.allowedHoursToCancel}
         currency={booktimeCompanyMeta.currency}
+        sport={game.sport}
+        summaryChips={[]}
+        bookFlowContext={{
+          refreshSnapshot,
+          lastFetchedAt: snapshotLastFetchedAt,
+        }}
+        snapshotBlocked={snapshotBlocked}
+        onExecuteCreateGame={async (overrides) => {
+          await executeSave({
+            externalBookingIds: overrides.externalBookingIds,
+            bookingSnapshots: overrides.bookingSnapshots,
+          });
+        }}
+        onSlotTaken={() => {
+          setWhenSelectedTime('');
+          setHookTime('');
+          booktimeTimeOptions.reload();
+        }}
+        onSuccess={() => {
+          setConfirmModalOpen(false);
+        }}
+        flowMode="edit"
+      />
+    ) : null}
+    {selectedClubData &&
+    confirmModalOpen &&
+    isPadelooClub(selectedClubData) &&
+    getPadelooClubId(selectedClubData) != null ? (
+      <ClubCreateGameConfirmModal
+        provider="PADELOO"
+        padelooClubId={getPadelooClubId(selectedClubData)!}
+        email={clubBookingAuth?.email ?? null}
+        open={confirmModalOpen}
+        onOpenChange={setConfirmModalOpen}
+        club={selectedClubData}
+        bookings={integratedCourtsForConfirm.map((court) => ({
+          court,
+          date: whenSelectedDate,
+          startTime: whenSelectedTime,
+          durationMinutes: Math.round(whenDuration * 60),
+        }))}
+        firstName={clubBookingAuth?.firstName ?? null}
+        lastName={clubBookingAuth?.lastName ?? null}
         sport={game.sport}
         summaryChips={[]}
         bookFlowContext={{

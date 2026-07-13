@@ -212,7 +212,11 @@ export const USER_STATS_TARGET_SELECT = {
   ...USER_SELECT_FIELDS,
   sportsEnabled: true,
   sportProfiles: {
-    select: USER_SPORT_PROFILE_SELECT,
+    select: {
+      ...USER_SPORT_PROFILE_SELECT,
+      ratingUncertainty: true,
+      lastRatingActivityAt: true,
+    },
   },
   originalAvatar: true,
   telegramId: true,

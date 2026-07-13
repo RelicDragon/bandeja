@@ -191,6 +191,8 @@ export async function upsertPadelSportProfileFromUser(
 const EMPTY_SPORT_SNAPSHOT = {
   level: DEFAULT_NEW_SPORT_LEVEL,
   reliability: 0,
+  ratingUncertainty: 0,
+  lastRatingActivityAt: null as Date | null,
   gamesPlayed: 0,
   gamesWon: 0,
 } as const;
@@ -199,6 +201,8 @@ const EMPTY_SPORT_SNAPSHOT = {
 export function resolveUserSportSnapshot(user: UserWithSportProfiles, sport: Sport): {
   level: number;
   reliability: number;
+  ratingUncertainty: number;
+  lastRatingActivityAt: Date | null;
   gamesPlayed: number;
   gamesWon: number;
 } {
@@ -208,6 +212,16 @@ export function resolveUserSportSnapshot(user: UserWithSportProfiles, sport: Spo
     return {
       level: profile.level,
       reliability: profile.reliability,
+      ratingUncertainty:
+        'ratingUncertainty' in profile && typeof profile.ratingUncertainty === 'number'
+          ? profile.ratingUncertainty
+          : 0,
+      lastRatingActivityAt:
+        'lastRatingActivityAt' in profile && profile.lastRatingActivityAt instanceof Date
+          ? profile.lastRatingActivityAt
+          : 'lastRatingActivityAt' in profile && profile.lastRatingActivityAt
+            ? new Date(profile.lastRatingActivityAt as string | Date)
+            : null,
       gamesPlayed: profile.gamesPlayed,
       gamesWon: profile.gamesWon,
     };

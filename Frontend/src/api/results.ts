@@ -182,6 +182,10 @@ export interface OutcomeExplanation {
   levelChange: number;
   reliabilityChange: number;
   reliabilityCoefficient: number;
+  /** Accrued uncertainty used for reliability factor (admin only). */
+  ratingUncertainty?: number;
+  /** Soft public state when uncertainty ≥ threshold. */
+  ratingSettling?: boolean;
   matches: MatchExplanation[];
   summary: {
     totalMatches: number;

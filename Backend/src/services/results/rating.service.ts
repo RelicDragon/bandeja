@@ -5,11 +5,13 @@ import {
   ratingSetUsesTiebreakMargin,
   type RatingSetScore,
 } from '@bandeja/shared/automaticRelaxedScoring';
+import { computeReliabilityCoefficient } from './ratingUncertainty';
 
 interface PlayerStats {
   level: number;
   reliability: number;
   gamesPlayed: number;
+  ratingUncertainty?: number;
 }
 
 interface MatchResult {
@@ -192,8 +194,10 @@ export function calculateRatingUpdate(
   );
   levelChange = levelChange * enduranceCoefficient;
 
-  const clampedReliability = Math.max(0.0, Math.min(100.0, playerStats.reliability));
-  const reliabilityCoefficient = Math.max(0.1, Math.exp(-0.108 * Math.pow(clampedReliability, 0.68)));
+  const reliabilityCoefficient = computeReliabilityCoefficient(
+    playerStats.reliability,
+    playerStats.ratingUncertainty ?? 0,
+  );
   levelChange = levelChange * reliabilityCoefficient;
 
   const highLevelDampening = calculateHighLevelDampening(playerStats.level, levelChange > 0);

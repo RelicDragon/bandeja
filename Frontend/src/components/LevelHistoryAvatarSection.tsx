@@ -6,12 +6,14 @@ import {
   getUserPrimarySport,
   shouldShowSportLevelBadge,
 } from '@/utils/profileSports';
+import { ratingUncertaintyScale } from '@/utils/ratingUncertainty';
 
 export interface LevelHistoryAvatarSectionProps {
   user: User;
   sport?: Sport;
   showSocialLevel: boolean;
   embedded?: boolean;
+  showRatingUncertainty?: boolean;
 }
 
 export const LevelHistoryAvatarSection = ({
@@ -19,12 +21,14 @@ export const LevelHistoryAvatarSection = ({
   sport,
   showSocialLevel,
   embedded = false,
+  showRatingUncertainty = false,
 }: LevelHistoryAvatarSectionProps) => {
   const { t } = useTranslation();
   const levelSport = sport ?? getUserPrimarySport(user);
   const competitiveLevel = getDisplayLevelForSport(user, levelSport);
   const showCompetitive = shouldShowSportLevelBadge(user, levelSport);
   const reliability = getReliabilityForSport(user, levelSport);
+  const uncertainty = user.ratingUncertainty;
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
 
   return (
@@ -76,8 +80,19 @@ export const LevelHistoryAvatarSection = ({
         </div>
       </div>
       {!showSocialLevel && showCompetitive && (
-        <div className="absolute bottom-3 right-3 text-white/80 text-xs">
-          {t('rating.reliability')}: {reliability.toFixed(0)}%
+        <div className="absolute bottom-3 right-3 text-white/80 text-xs text-right space-y-0.5">
+          <div>
+            {t('rating.reliability')}: {reliability.toFixed(0)}%
+          </div>
+          {user.ratingSettling && (
+            <div className="text-amber-200">{t('rating.settling')}</div>
+          )}
+          {showRatingUncertainty && uncertainty != null && (
+            <div>
+              {t('rating.uncertainty')}: {uncertainty.toFixed(0)} (
+              {ratingUncertaintyScale(uncertainty).toFixed(2)}x)
+            </div>
+          )}
         </div>
       )}
     </div>

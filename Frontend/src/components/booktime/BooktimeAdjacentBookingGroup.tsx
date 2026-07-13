@@ -2,7 +2,8 @@ import { AlertTriangle, Check, ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, type Variants } from 'framer-motion';
-import type { BooktimeLinkedGame, BooktimeMyClubRow } from '@/api/booktime';
+import type { BooktimeLinkedGame } from '@/api/booktime';
+import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { useBooktimeLinkedGamesByBookingIds } from '@/hooks/useBooktimeLinkedGamesByBookingIds';
 import { linkedGamesBookingGroupSlotSegments } from '@/services/gameBooking/linkBookingToGame';
@@ -23,7 +24,7 @@ import {
 
 type Props = {
   bookings: BooktimeBookingRecord[];
-  club: BooktimeMyClubRow;
+  club: BookingListClubRow;
   showClubName?: boolean;
   allowedHoursToCancel?: number;
   compact?: boolean;

@@ -232,6 +232,8 @@
     "multiplier": "Dificultad del Partido",
     "endurance": "Resistencia",
     "reliabilityCoefficient": "Factor de Confiabilidad",
+    "ratingUncertainty": "Incertidumbre",
+    "ratingSettling": "Nivel estabilizándose",
     "veryClose": "muy ajustado",
     "close": "partido ajustado",
     "normal": "normal",

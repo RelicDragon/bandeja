@@ -7,6 +7,8 @@
     "gamesPlayed": "Игр сыграно",
     "gamesWon": "Игр выиграно",
     "winRate": "Процент побед",
-    "reliability": "Надежность"
+    "reliability": "Надежность",
+    "uncertainty": "Неопределённость",
+    "settling": "Рейтинг стабилизируется"
   }
 }

@@ -138,6 +138,10 @@ export interface BasicUser {
   socialLevel: number;
   /** @deprecated Prefer `sportProfiles` for the relevant sport. */
   reliability?: number;
+  /** Admin-only: accrued rating uncertainty (0–150) for current sport context. */
+  ratingUncertainty?: number;
+  /** Soft public state when accrued uncertainty ≥ threshold. */
+  ratingSettling?: boolean;
   gender: Gender;
   approvedLevel: boolean;
   isTrainer: boolean;

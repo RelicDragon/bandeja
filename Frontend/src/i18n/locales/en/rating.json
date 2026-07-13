@@ -7,6 +7,8 @@
     "gamesPlayed": "Games Played",
     "gamesWon": "Games Won",
     "winRate": "Win Rate",
-    "reliability": "Reliability"
+    "reliability": "Reliability",
+    "uncertainty": "Uncertainty",
+    "settling": "Rating settling"
   }
 }

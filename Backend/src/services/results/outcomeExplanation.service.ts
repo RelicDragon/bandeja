@@ -2,6 +2,11 @@ import prisma from '../../config/database';
 import { getSportConfig } from '../../sport/sportRegistry';
 import { calculateRatingUpdate, calculateReliabilityChange } from './rating.service';
 import {
+  accrueRatingUncertainty,
+  computeReliabilityCoefficient,
+} from './ratingUncertainty';
+import { readRatingUncertaintyMetadata } from './outcomeStatsSnapshot';
+import {
   LevelChangeEventType,
   EntityType,
   ParticipantRole,
@@ -40,6 +45,8 @@ interface ExplanationData {
   levelChange: number;
   reliabilityChange: number;
   reliabilityCoefficient: number;
+  /** Accrued uncertainty used for this game's reliability factor (admin UI). */
+  ratingUncertainty: number;
   matches: MatchExplanation[];
   summary: {
     totalMatches: number;
@@ -115,6 +122,7 @@ export interface StoredOutcomeForExplanation {
 interface PlayerRatingState {
   baseLevel: number;
   reliability: number;
+  ratingUncertainty: number;
   levelChange: number;
   wins: number;
   ties: number;
@@ -131,6 +139,8 @@ type ExplanationUser = {
     sport: Sport;
     level: number;
     reliability: number;
+    ratingUncertainty?: number;
+    lastRatingActivityAt?: Date | string | null;
     gamesPlayed: number;
     gamesWon: number;
   }>;
@@ -167,7 +177,12 @@ export type GameSnapshotForExplanation = GameRulesSource & {
     userId: string;
     user: ExplanationUser;
   }>;
-  outcomes: Array<{ userId: string; levelBefore: number; reliabilityBefore?: number }>;
+  outcomes: Array<{
+    userId: string;
+    levelBefore: number;
+    reliabilityBefore?: number;
+    metadata?: Prisma.JsonValue | null;
+  }>;
   rounds: Array<{
     roundNumber: number;
     matches: ExplanationMatch[];
@@ -176,7 +191,13 @@ export type GameSnapshotForExplanation = GameRulesSource & {
 
 const userSelectForExplanation = {
   ...USER_SELECT_FIELDS,
-  sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
+  sportProfiles: {
+    select: {
+      ...USER_SPORT_PROFILE_SELECT,
+      ratingUncertainty: true,
+      lastRatingActivityAt: true,
+    },
+  },
 } as const;
 
 function teamAverageLevelAtMatchStart(
@@ -204,6 +225,7 @@ function ensurePlayerState(
   sport: Sport,
   baseLevels: Map<string, number>,
   reliabilityByUser: Map<string, number>,
+  uncertaintyByUser: Map<string, number>,
   states: Map<string, PlayerRatingState>,
 ): PlayerRatingState {
   const existing = states.get(userId);
@@ -213,6 +235,7 @@ function ensurePlayerState(
   const state: PlayerRatingState = {
     baseLevel: baseLevels.get(userId) ?? snapshot.level,
     reliability: reliabilityByUser.get(userId) ?? snapshot.reliability,
+    ratingUncertainty: uncertaintyByUser.get(userId) ?? 0,
     levelChange: 0,
     wins: 0,
     ties: 0,
@@ -266,16 +289,29 @@ export function buildOutcomeRatingExplanation(
 
   const baseLevels = new Map<string, number>();
   const reliabilityByUser = new Map<string, number>();
+  const uncertaintyByUser = new Map<string, number>();
   if (game.outcomes.length > 0) {
     for (const outcome of game.outcomes) {
       baseLevels.set(outcome.userId, outcome.levelBefore);
       if (outcome.reliabilityBefore !== undefined) {
         reliabilityByUser.set(outcome.userId, outcome.reliabilityBefore);
       }
+      const meta = readRatingUncertaintyMetadata(outcome.metadata);
+      if (meta) {
+        uncertaintyByUser.set(outcome.userId, meta.ratingUncertaintyUsed);
+      }
     }
-  } else {
-    for (const p of game.participants) {
-      const snapshot = resolveUserSportSnapshot(p.user, game.sport);
+  }
+  for (const p of game.participants) {
+    if (uncertaintyByUser.has(p.userId)) continue;
+    const snapshot = resolveUserSportSnapshot(p.user, game.sport);
+    uncertaintyByUser.set(
+      p.userId,
+      game.affectsRating
+        ? accrueRatingUncertainty(snapshot.ratingUncertainty, snapshot.lastRatingActivityAt)
+        : 0,
+    );
+    if (!baseLevels.has(p.userId)) {
       baseLevels.set(p.userId, snapshot.level);
       reliabilityByUser.set(p.userId, snapshot.reliability);
     }
@@ -284,10 +320,26 @@ export function buildOutcomeRatingExplanation(
   const userSport = resolveUserSportSnapshot(participant.user, game.sport);
   const startingLevel = existingOutcome?.levelBefore ?? userSport.level;
   const startingReliability = existingOutcome?.reliabilityBefore ?? userSport.reliability;
+  const subjectUncertaintyMeta = readRatingUncertaintyMetadata(existingOutcome?.metadata);
+  const subjectUncertainty =
+    subjectUncertaintyMeta?.ratingUncertaintyUsed ??
+    uncertaintyByUser.get(userId) ??
+    (game.affectsRating
+      ? accrueRatingUncertainty(userSport.ratingUncertainty, userSport.lastRatingActivityAt)
+      : 0);
+  uncertaintyByUser.set(userId, subjectUncertainty);
 
   const states = new Map<string, PlayerRatingState>();
   for (const p of game.participants) {
-    ensurePlayerState(p.userId, p.user, game.sport, baseLevels, reliabilityByUser, states);
+    ensurePlayerState(
+      p.userId,
+      p.user,
+      game.sport,
+      baseLevels,
+      reliabilityByUser,
+      uncertaintyByUser,
+      states,
+    );
   }
 
   const matches: MatchExplanation[] = [];
@@ -395,7 +447,15 @@ export function buildOutcomeRatingExplanation(
       const isTie = !teamAWins && !teamBWins;
 
       for (const p of [...teamA.players, ...teamB.players]) {
-        ensurePlayerState(p.userId, p.user, game.sport, baseLevels, reliabilityByUser, states);
+        ensurePlayerState(
+          p.userId,
+          p.user,
+          game.sport,
+          baseLevels,
+          reliabilityByUser,
+          uncertaintyByUser,
+          states,
+        );
       }
 
       const teamAOwnAvg = teamAverageLevelAtMatchStart(
@@ -455,6 +515,7 @@ export function buildOutcomeRatingExplanation(
               level: playerLevel,
               reliability: state.reliability,
               gamesPlayed: resolveUserSportSnapshot(p.user, game.sport).gamesPlayed,
+              ratingUncertainty: state.ratingUncertainty,
             },
             {
               isWinner,
@@ -536,10 +597,9 @@ export function buildOutcomeRatingExplanation(
       ? opponentLevels.reduce((sum, l) => sum + l, 0) / opponentLevels.length
       : 0;
 
-  const clampedReliability = Math.max(0.0, Math.min(100.0, startingReliability));
-  const reliabilityCoefficient = Math.max(
-    0.1,
-    Math.exp(-0.108 * Math.pow(clampedReliability, 0.68)),
+  const reliabilityCoefficient = computeReliabilityCoefficient(
+    startingReliability,
+    subjectUncertainty,
   );
 
   let placementRatingFloor: ExplanationData['placementRatingFloor'] = undefined;
@@ -597,6 +657,7 @@ export function buildOutcomeRatingExplanation(
     levelChange,
     reliabilityChange,
     reliabilityCoefficient,
+    ratingUncertainty: subjectUncertainty,
     matches,
     summary: {
       totalMatches: summaryWins + summaryLosses + summaryDraws,
@@ -645,6 +706,7 @@ export async function getOutcomeExplanation(
           userId: true,
           levelBefore: true,
           reliabilityBefore: true,
+          metadata: true,
         },
       },
     },

@@ -7,6 +7,8 @@
     "gamesPlayed": "Juegos jugados",
     "gamesWon": "Juegos ganados",
     "winRate": "Porcentaje de victorias",
-    "reliability": "Confiabilidad"
+    "reliability": "Confiabilidad",
+    "uncertainty": "Incertidumbre",
+    "settling": "Nivel estabilizándose"
   }
 }

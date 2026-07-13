@@ -7,6 +7,8 @@
     "gamesPlayed": "Odigranih igara",
     "gamesWon": "Pobeđenih igara",
     "winRate": "Procenat pobeda",
-    "reliability": "Pouzdanost"
+    "reliability": "Pouzdanost",
+    "uncertainty": "Neizvesnost",
+    "settling": "Rejting se ustaljuje"
   }
 }

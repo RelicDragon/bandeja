@@ -7,6 +7,8 @@
     "gamesPlayed": "Odehrané zápasy",
     "gamesWon": "Vyhrané zápasy",
     "winRate": "Výherní poměr",
-    "reliability": "Spolehlivost"
+    "reliability": "Spolehlivost",
+    "uncertainty": "Nejistota",
+    "settling": "Rating se ustáluje"
   }
 }

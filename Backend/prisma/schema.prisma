@@ -437,6 +437,12 @@ model UserSportProfile {
   sport                    Sport
   level                    Float            @default(1.0)
   reliability              Float            @default(0)
+  /**
+   * Hidden 0–150 idle uncertainty. Scales reliability factor: 0→×1, 100→×2, 150→×3.
+   * Accrues +10 per 30 idle days; −10 per finished rating game. Not shown to non-admins.
+   */
+  ratingUncertainty        Float            @default(0)
+  lastRatingActivityAt     DateTime?
   gamesPlayed              Int              @default(0)
   gamesWon                 Int              @default(0)
   questionnaireCompletedAt DateTime?

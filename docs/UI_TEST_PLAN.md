@@ -727,6 +727,10 @@ Frontend/e2e/
 | GD-66 | Sync conflict modal | Local + server results diverge | Choose sync-to-server or load-from-server |
 | GD-67 | Outcome explanation | Tap level change explanation | `OutcomeExplanationModal` shows delta |
 | GD-67a | Automatic match explanation sets | Open explanation after Automatic-format match (games vs americano vs super TB) | Set chips show raw scores with `pts` for americano rows and `STB` for super tiebreak decider |
+| GD-67b | Admin rating uncertainty on explanation | `@admin` open outcome explanation after idle/rated game | Shows Uncertainty value + scale; reliability line unchanged; Reliability Factor includes uncertainty scale |
+| GD-67c | Non-admin hides uncertainty | Non-admin open same explanation | Reliability + Reliability Factor visible; Uncertainty line hidden |
+| GD-67d | Rating settling chip | Open explanation when accrued uncertainty ≥ 30 | Soft “Rating settling” chip on Reliability Factor; no raw uncertainty for non-admin |
+| GD-67e | Grace idle period | Profile with last rated activity &lt; 30 days ago | No uncertainty rise / settling from idle alone |
 | GD-68 | Finish results confirm | Finish results action | Confirmation modal |
 | GD-69 | Edit finalized results | Edit after finish | Danger confirm modal |
 | GD-70 | BAR level changes display | Finished BAR game | Per-player level before/after on list |
@@ -1006,6 +1010,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-18 | Sport levels display | Per-sport levels | Badges update |
 | PR-62 | Table tennis / squash questionnaire | Profile → add sport → Take questionnaire → answer all 5 questions | Completes without validation error; sport level assigned |
 | PR-70 | Profile sport questionnaire status | Profile → sport with 0 games → Show details | Card titled "{{sport}} questionnaire"; status + Fill out / Fill out again |
+| PR-71 | Admin player card uncertainty | `@admin` open `?player=` card → level hero | Shows Uncertainty under reliability; non-admin does not |
+| PR-72 | Player card rating settling | Open player card when accrued uncertainty ≥ 30 | “Rating settling” on card hero; raw Uncertainty only if viewer is admin |
 | PR-19 | Change city | City modal | City updated |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |

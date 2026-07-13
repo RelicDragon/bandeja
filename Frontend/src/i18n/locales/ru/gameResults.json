@@ -241,6 +241,8 @@
     "multiplier": "Сложность Матча",
     "endurance": "Выносливость",
     "reliabilityCoefficient": "Коэффициент Надежности",
+    "ratingUncertainty": "Неопределённость",
+    "ratingSettling": "Рейтинг стабилизируется",
     "veryClose": "очень близко",
     "close": "близкий матч",
     "normal": "нормально",

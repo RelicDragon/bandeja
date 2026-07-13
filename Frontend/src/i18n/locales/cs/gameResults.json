@@ -239,6 +239,8 @@
     "multiplier": "Obtížnost zápasu",
     "endurance": "Výdrž",
     "reliabilityCoefficient": "Faktor spolehlivosti",
+    "ratingUncertainty": "Nejistota",
+    "ratingSettling": "Rating se ustáluje",
     "veryClose": "velmi těsné",
     "close": "těsný zápas",
     "normal": "normální",

@@ -4,6 +4,7 @@ import { LevelHistoryLevelSelector, type LevelHistorySelection } from './LevelHi
 import { LevelHistoryAvatarSection } from './LevelHistoryAvatarSection';
 import { ConfirmedLevelSection } from './ConfirmedLevelSection';
 import { SocialLevelRating } from '@/components/profile/SocialLevelRating';
+import { useAuthStore } from '@/store/authStore';
 
 export type { LevelHistorySelection };
 
@@ -24,6 +25,7 @@ export function LevelHistoryLevelPanel({
   onChange,
   variant = 'compact',
 }: LevelHistoryLevelPanelProps) {
+  const isAdmin = Boolean(useAuthStore((s) => s.user)?.isAdmin);
   const showSocialLevel = selection.kind === 'social';
   const historySport =
     selection.kind === 'competitive' ? selection.sport : getUserPrimarySport(user);
@@ -48,6 +50,7 @@ export function LevelHistoryLevelPanel({
             sport={historySport}
             showSocialLevel={showSocialLevel}
             embedded
+            showRatingUncertainty={isAdmin}
           />
         </div>
         {!showSocialLevel && (

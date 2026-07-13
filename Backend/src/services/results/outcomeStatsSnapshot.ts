@@ -4,6 +4,10 @@ import { Prisma } from '@prisma/client';
 export const RATING_STATS_APPLIED_KEY = 'ratingStatsApplied';
 export const GAMES_PLAYED_DELTA_KEY = 'gamesPlayedDelta';
 export const GAMES_WON_DELTA_KEY = 'gamesWonDelta';
+export const RATING_UNCERTAINTY_BEFORE_KEY = 'ratingUncertaintyBefore';
+export const RATING_UNCERTAINTY_USED_KEY = 'ratingUncertaintyUsed';
+export const RATING_UNCERTAINTY_AFTER_KEY = 'ratingUncertaintyAfter';
+export const LAST_RATING_ACTIVITY_AT_BEFORE_KEY = 'lastRatingActivityAtBefore';
 
 export type SportStatsSnapshot = {
   level: number;
@@ -69,6 +73,49 @@ export function mergeSportStatsDeltasMetadata(
   base[GAMES_PLAYED_DELTA_KEY] = deltas.gamesPlayedDelta;
   base[GAMES_WON_DELTA_KEY] = deltas.gamesWonDelta;
   return base as Prisma.InputJsonValue;
+}
+
+export type RatingUncertaintyMetadata = {
+  ratingUncertaintyBefore: number;
+  ratingUncertaintyUsed: number;
+  ratingUncertaintyAfter: number;
+  lastRatingActivityAtBefore: string | null;
+};
+
+export function mergeRatingUncertaintyMetadata(
+  existing: Prisma.JsonValue | Prisma.InputJsonValue | null | undefined,
+  payload: RatingUncertaintyMetadata,
+): Prisma.InputJsonValue {
+  const base: Record<string, unknown> =
+    existing != null && typeof existing === 'object' && !Array.isArray(existing)
+      ? { ...(existing as Record<string, unknown>) }
+      : {};
+  base[RATING_UNCERTAINTY_BEFORE_KEY] = payload.ratingUncertaintyBefore;
+  base[RATING_UNCERTAINTY_USED_KEY] = payload.ratingUncertaintyUsed;
+  base[RATING_UNCERTAINTY_AFTER_KEY] = payload.ratingUncertaintyAfter;
+  base[LAST_RATING_ACTIVITY_AT_BEFORE_KEY] = payload.lastRatingActivityAtBefore;
+  return base as Prisma.InputJsonValue;
+}
+
+export function readRatingUncertaintyMetadata(
+  metadata: Prisma.JsonValue | null | undefined,
+): RatingUncertaintyMetadata | undefined {
+  const record = readMetadataRecord(metadata);
+  if (!record) return undefined;
+  const before = record[RATING_UNCERTAINTY_BEFORE_KEY];
+  const used = record[RATING_UNCERTAINTY_USED_KEY];
+  const after = record[RATING_UNCERTAINTY_AFTER_KEY];
+  const lastBefore = record[LAST_RATING_ACTIVITY_AT_BEFORE_KEY];
+  if (typeof before !== 'number' || typeof used !== 'number' || typeof after !== 'number') {
+    return undefined;
+  }
+  return {
+    ratingUncertaintyBefore: before,
+    ratingUncertaintyUsed: used,
+    ratingUncertaintyAfter: after,
+    lastRatingActivityAtBefore:
+      typeof lastBefore === 'string' || lastBefore === null ? lastBefore : null,
+  };
 }
 
 export function computeSportStatsDeltas(

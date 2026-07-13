@@ -17,7 +17,9 @@ import {
 import {
   parseSportParam,
   projectUserForSportContext,
+  resolveUserSportSnapshot,
 } from '../../services/user/userSportProfile.service';
+import { accrueRatingUncertainty, isRatingSettling } from '../../services/results/ratingUncertainty';
 import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { resolveSport } from '../../sport/sportRegistry';
 import type { Prisma } from '@prisma/client';
@@ -234,6 +236,24 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     isFavorite: !!isFavorite,
     approvedBy: approvedByUser,
   };
+
+  const snap = resolveUserSportSnapshot(user, sport);
+  const effectiveUncertainty = accrueRatingUncertainty(
+    snap.ratingUncertainty,
+    snap.lastRatingActivityAt,
+  );
+  (projectedUser as { ratingSettling?: boolean }).ratingSettling =
+    isRatingSettling(effectiveUncertainty);
+
+  if (req.userId) {
+    const viewer = await prisma.user.findUnique({
+      where: { id: req.userId },
+      select: { isAdmin: true },
+    });
+    if (viewer?.isAdmin) {
+      (projectedUser as { ratingUncertainty?: number }).ratingUncertainty = effectiveUncertainty;
+    }
+  }
   if (!req.userId) {
     delete (projectedUser as { telegramId?: unknown }).telegramId;
     delete (projectedUser as { telegramUsername?: unknown }).telegramUsername;

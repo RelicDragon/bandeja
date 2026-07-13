@@ -34,7 +34,9 @@ import {
   computeUndoSportStatsFromDeltas,
   computeUndoTotalPoints,
   mergeRatingStatsAppliedMetadata,
+  mergeRatingUncertaintyMetadata,
   mergeSportStatsDeltasMetadata,
+  readRatingUncertaintyMetadata,
   resolveRatingStatsAppliedForUndo,
   resolveSportStatsDeltasForUndo,
 } from './outcomeStatsSnapshot';
@@ -44,6 +46,10 @@ import {
   ensureSportInEnabled,
   resolveUserSportSnapshot,
 } from '../user/userSportProfile.service';
+import {
+  accrueRatingUncertainty,
+  ratingUncertaintyAfterFinishedGame,
+} from './ratingUncertainty';
 
 async function rebuildLeagueSeasonStandingsIfNeeded(
   gameId: string,
@@ -80,6 +86,8 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
                   sport: true,
                   level: true,
                   reliability: true,
+                  ratingUncertainty: true,
+                  lastRatingActivityAt: true,
                   gamesPlayed: true,
                   gamesWon: true,
                 },
@@ -117,11 +125,18 @@ export async function generateGameOutcomes(gameId: string, tx?: Prisma.Transacti
 
   const players = game.participants.map((p) => {
     const sportSnapshot = resolveUserSportSnapshot(p.user, game.sport);
+    const ratingUncertainty = game.affectsRating
+      ? accrueRatingUncertainty(
+          sportSnapshot.ratingUncertainty,
+          sportSnapshot.lastRatingActivityAt,
+        )
+      : 0;
     return {
       userId: p.userId,
       level: sportSnapshot.level,
       reliability: sportSnapshot.reliability,
       gamesPlayed: sportSnapshot.gamesPlayed,
+      ratingUncertainty,
     };
   });
 
@@ -288,6 +303,8 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
             sport: true,
             level: true,
             reliability: true,
+            ratingUncertainty: true,
+            lastRatingActivityAt: true,
             gamesPlayed: true,
             gamesWon: true,
           },
@@ -300,6 +317,16 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     const ratingStatsApplied = resolveRatingStatsAppliedForUndo(outcome.metadata, game.affectsRating);
     const undoDeltas = resolveSportStatsDeltasForUndo(outcome.metadata, outcome.isWinner, game.affectsRating);
     const undoStats = computeUndoSportStatsFromDeltas(undoSnapshot, undoDeltas);
+    const uncertaintyMeta = readRatingUncertaintyMetadata(outcome.metadata);
+    const undoUncertainty =
+      ratingStatsApplied && uncertaintyMeta
+        ? {
+            ratingUncertainty: uncertaintyMeta.ratingUncertaintyBefore,
+            lastRatingActivityAt: uncertaintyMeta.lastRatingActivityAtBefore
+              ? new Date(uncertaintyMeta.lastRatingActivityAtBefore)
+              : null,
+          }
+        : {};
 
     await tx.userSportProfile.upsert({
       where: { userId_sport: { userId: outcome.userId, sport: game.sport } },
@@ -312,6 +339,7 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
         reliability: outcome.reliabilityBefore,
         gamesPlayed: undoStats.gamesPlayed,
         gamesWon: undoStats.gamesWon,
+        ...undoUncertainty,
       },
       update: {
         level: ratingStatsApplied
@@ -320,6 +348,7 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
         reliability: outcome.reliabilityBefore,
         gamesPlayed: undoStats.gamesPlayed,
         gamesWon: undoStats.gamesWon,
+        ...undoUncertainty,
       },
     });
 
@@ -420,6 +449,8 @@ export async function applyGameOutcomes(
             sport: true,
             level: true,
             reliability: true,
+            ratingUncertainty: true,
+            lastRatingActivityAt: true,
             gamesPlayed: true,
             gamesWon: true,
           },
@@ -433,6 +464,13 @@ export async function applyGameOutcomes(
     const levelBefore = sportSnapshot.level;
     const reliabilityBefore = sportSnapshot.reliability;
     const ratingStatsApplied = game.affectsRating;
+    const uncertaintyBefore = sportSnapshot.ratingUncertainty;
+    const uncertaintyUsed = ratingStatsApplied
+      ? accrueRatingUncertainty(uncertaintyBefore, sportSnapshot.lastRatingActivityAt)
+      : uncertaintyBefore;
+    const uncertaintyAfter = ratingStatsApplied
+      ? ratingUncertaintyAfterFinishedGame(uncertaintyUsed)
+      : uncertaintyBefore;
     const levelAfter = computeLevelAfter(levelBefore, outcome.levelChange);
     const reliabilityAfter = clampReliability(reliabilityBefore + outcome.reliabilityChange);
     const actualLevelChange = levelAfter - levelBefore;
@@ -441,13 +479,23 @@ export async function applyGameOutcomes(
     const isWinner = outcome.isWinner ?? false;
 
     const sportStatsDeltas = computeSportStatsDeltas(ratingStatsApplied, isWinner);
-    const mergedMetadata = mergeSportStatsDeltasMetadata(
+    let mergedMetadata = mergeSportStatsDeltasMetadata(
       mergeRatingStatsAppliedMetadata(
         mergePlacementRatingFloorMetadata(undefined, uncappedLevelByUser.get(outcome.userId)),
         ratingStatsApplied,
       ),
       sportStatsDeltas,
     );
+    if (ratingStatsApplied) {
+      mergedMetadata = mergeRatingUncertaintyMetadata(mergedMetadata, {
+        ratingUncertaintyBefore: uncertaintyBefore,
+        ratingUncertaintyUsed: uncertaintyUsed,
+        ratingUncertaintyAfter: uncertaintyAfter,
+        lastRatingActivityAtBefore: sportSnapshot.lastRatingActivityAt
+          ? sportSnapshot.lastRatingActivityAt.toISOString()
+          : null,
+      });
+    }
 
     await tx.gameOutcome.upsert({
       where: {
@@ -510,12 +558,24 @@ export async function applyGameOutcomes(
         reliability: appliedStats.reliability,
         gamesPlayed: appliedStats.gamesPlayed,
         gamesWon: appliedStats.gamesWon,
+        ...(ratingStatsApplied
+          ? {
+              ratingUncertainty: uncertaintyAfter,
+              lastRatingActivityAt: new Date(),
+            }
+          : {}),
       },
       update: {
         level: appliedStats.level,
         reliability: appliedStats.reliability,
         gamesPlayed: appliedStats.gamesPlayed,
         gamesWon: appliedStats.gamesWon,
+        ...(ratingStatsApplied
+          ? {
+              ratingUncertainty: uncertaintyAfter,
+              lastRatingActivityAt: new Date(),
+            }
+          : {}),
       },
     });
 

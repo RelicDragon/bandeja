@@ -24,7 +24,7 @@ import { GameLocationTimePanel } from '@/components/gameLocationTime/GameLocatio
 import { ReservationIntentPicker } from '@/components/gameLocationTime/ReservationIntentPicker';
 import type { CreateGameBookingOverrides } from '@/hooks/createGameBookingFlow';
 import { useCreateGameBookingFlow } from '@/hooks/createGameBookingFlow';
-import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
+import { ClubBookingConnectInline } from '@/components/booktime/ClubBookingConnectInline';
 import { ClubCreateGameConfirmModal } from '@/components/createGame/ClubCreateGameConfirmModal';
 import {
   CreateGameProgressOverlay,
@@ -60,6 +60,7 @@ import {
   resolveReservationValidationMessage,
   type ReservationValidationResult,
 } from '@shared/gameBooking/reservationIntent';
+import { isPadelooClub } from '@shared/clubIntegration';
 import type { CreateGameAbortReason } from '@/hooks/createGameBookingFlow/types';
 import { MultiCourtTimeHint } from '@/components/gameLocationTime/MultiCourtTimeHint';
 import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
@@ -475,7 +476,7 @@ export const CreateGame = ({
     entityType !== 'BAR' &&
     Boolean(selectedClub) &&
     clubBookingFlowActive &&
-    Boolean(booktimeIntegrationConfig) &&
+    Boolean(booktimeIntegrationConfig || isPadelooClub(selectedClubData)) &&
     !clubBookingAuth?.connected &&
     (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting');
   const booktimeAuthPromptCollapsed = showBooktimeAuthPrompt && !needsBooktimeAuth;
@@ -1747,10 +1748,10 @@ export const CreateGame = ({
                   }
                   courtSection={courtSection}
                   authGateSection={
-                    showBooktimeAuthPrompt && booktimeIntegrationConfig ? (
-                      <BooktimeConnectInline
+                    showBooktimeAuthPrompt && selectedClubData ? (
+                      <ClubBookingConnectInline
                         club={selectedClubData}
-                        integrationConfig={booktimeIntegrationConfig}
+                        integrationConfig={booktimeIntegrationConfig ?? undefined}
                         onConnected={handleAuthConnected}
                         onSkip={() => setReservationIntent('gameOnly')}
                         collapsed={booktimeAuthPromptCollapsed}

@@ -49,6 +49,7 @@ export function useClubBookingAuth(club: (ClubIntegrationRef & { id: string }) |
       return null;
     }
 
+    setStatus(null);
     setLoading(true);
     try {
       if (isPadelooClub(club)) {

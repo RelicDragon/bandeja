@@ -4,6 +4,8 @@ import { OutcomeExplanation } from '@/api/results';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { OutcomeExplanationMatchCard } from '@/components/outcomeExplanation/OutcomeExplanationMatchCard';
 import { formatChange, formatNumber, getLevelChangeColor, groupMatchesByRound } from '@/components/outcomeExplanation/formatters';
+import { useAuthStore } from '@/store/authStore';
+import { ratingUncertaintyScale } from '@/utils/ratingUncertainty';
 
 interface OutcomeExplanationModalProps {
   explanation: OutcomeExplanation;
@@ -19,6 +21,7 @@ const OutcomeExplanationModalInner = ({
   onClose,
 }: OutcomeExplanationModalProps) => {
   const { t } = useTranslation();
+  const isAdmin = Boolean(useAuthStore((s) => s.user)?.isAdmin);
   const [isOpen, setIsOpen] = useState(true);
   const modalIdRef = useRef('outcome-explanation-modal');
 
@@ -114,7 +117,21 @@ const OutcomeExplanationModalInner = ({
                 <span className="ml-1.5 font-semibold text-purple-600 dark:text-purple-400">
                   {formatNumber(explanation.reliabilityCoefficient)}x
                 </span>
+                {explanation.ratingSettling && (
+                  <span className="ml-2 inline-flex items-center rounded-md bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200">
+                    {t('gameResults.ratingSettling')}
+                  </span>
+                )}
               </div>
+              {isAdmin && explanation.ratingUncertainty != null && (
+                <div>
+                  <span className="text-gray-600 dark:text-gray-400">{t('gameResults.ratingUncertainty')}:</span>
+                  <span className="ml-1.5 font-semibold text-amber-700 dark:text-amber-300">
+                    {formatNumber(explanation.ratingUncertainty)} (
+                    {formatNumber(ratingUncertaintyScale(explanation.ratingUncertainty))}x)
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 

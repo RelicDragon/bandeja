@@ -251,6 +251,8 @@
     "multiplier": "Match Difficulty",
     "endurance": "Endurance",
     "reliabilityCoefficient": "Reliability Factor",
+    "ratingUncertainty": "Uncertainty",
+    "ratingSettling": "Rating settling",
     "veryClose": "very close",
     "close": "close match",
     "normal": "normal",
