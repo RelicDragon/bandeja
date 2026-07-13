@@ -43,15 +43,16 @@ export function isRatingSettling(
 
 /**
  * Continuous idle accrual with grace:
+ * - no lastRatingActivityAt (never played) → always 0 (ignore any stored value)
  * - first GRACE_DAYS after lastRatingActivityAt → no rise
  * - then +(postGraceDays / IDLE_DAYS) * IDLE_STEP onto stored value, capped at MAX
- * - null lastRatingActivityAt → no idle (needs backfill / first activity)
  */
 export function accrueRatingUncertainty(
   current: number,
   lastRatingActivityAt: Date | null | undefined,
   now: Date = new Date(),
 ): number {
+  if (!lastRatingActivityAt) return 0;
   const base = clampRatingUncertainty(current);
   const postGraceDays = ratingPostGraceDays(lastRatingActivityAt, now);
   if (postGraceDays <= 0) return base;

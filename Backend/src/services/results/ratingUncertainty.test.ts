@@ -24,6 +24,7 @@ assert(clampRatingUncertainty(-5) === 0, 'clamp min');
 
 const t0 = new Date('2026-01-01T00:00:00.000Z');
 assert(accrueRatingUncertainty(0, null, t0) === 0, 'null activity no accrue');
+assert(accrueRatingUncertainty(50, null, daysAfter(t0, 200)) === 0, 'never played forces 0 even if stored');
 assert(accrueRatingUncertainty(0, t0, daysAfter(t0, 15)) === 0, 'grace 15d');
 assert(accrueRatingUncertainty(0, t0, daysAfter(t0, 30)) === 0, 'grace exactly 30d');
 assert(near(accrueRatingUncertainty(0, t0, daysAfter(t0, 45)), 5), '+5 at 15d post-grace');
