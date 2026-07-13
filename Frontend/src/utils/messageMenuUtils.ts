@@ -52,10 +52,12 @@ export function hasUserDisplayName(user?: { firstName?: string; lastName?: strin
   return !!user && getUserDisplayName(user) !== 'Unknown User';
 }
 
-export function mergeBasicUsers(
-  fromMessage?: { firstName?: string; lastName?: string; avatar?: string | null } | null,
-  fromStore?: { firstName?: string; lastName?: string; avatar?: string | null } | null
-): typeof fromMessage | typeof fromStore | undefined {
+type MergeableBasicUser = { firstName?: string; lastName?: string; avatar?: string | null };
+
+export function mergeBasicUsers<T extends MergeableBasicUser>(
+  fromMessage?: T | null,
+  fromStore?: T | null
+): T | undefined {
   if (!fromMessage) return fromStore ?? undefined;
   if (!fromStore) return fromMessage;
 
