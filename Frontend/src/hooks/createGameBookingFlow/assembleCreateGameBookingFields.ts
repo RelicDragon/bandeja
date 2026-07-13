@@ -2,6 +2,7 @@ import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import type { CreateGameBookingFields, CreateGameBookingOverrides } from './types';
 import type { LocationTimeMode } from '@/components/gameLocationTime/LocationTimeMode';
 import type { CreateGameBookingFields as SharedCreateGameBookingFields } from '@shared/gameBooking/contracts';
+import type { ClubIntegrationType } from '@shared/clubIntegration';
 import { mergeBookingSnapshotCourtIds } from '@shared/gameBooking/applyCourtIdsToBookingSnapshots';
 
 function uniqueCourtIds(...groups: Array<string[] | undefined>): string[] | undefined {
@@ -27,6 +28,7 @@ export type AssembleCreateGameBookingFieldsInput = {
   selectedCourt: string;
   selectedCourtIds: string[];
   hasBookedCourt: boolean;
+  integrationType?: ClubIntegrationType | null;
   overrides?: CreateGameBookingOverrides;
 };
 
@@ -68,7 +70,11 @@ export function assembleCreateGameBookingFields(
       bookingPayload?.hasBookedCourt ??
       input.hasBookedCourt,
     externalBookingIds,
-    externalBookingProvider: externalBookingIds?.length ? 'BOOKTIME' : undefined,
+    externalBookingProvider: externalBookingIds?.length
+      ? input.integrationType === 'PADELOO'
+        ? 'PADELOO'
+        : 'BOOKTIME'
+      : undefined,
     bookingSnapshots,
   };
 }

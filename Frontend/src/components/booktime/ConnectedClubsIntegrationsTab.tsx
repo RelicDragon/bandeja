@@ -1,12 +1,12 @@
 import { useTranslation } from 'react-i18next';
-import type { BooktimeMyClubRow } from '@/api/booktime';
+import type { ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
 import { Card } from '@/components';
 import { ConnectedClubCard } from './ConnectedClubCard';
 
 type Props = {
-  clubs: BooktimeMyClubRow[];
+  clubs: ConnectedBookingClubRow[];
   disconnectBusyId: string | null;
-  onConnect: (club: BooktimeMyClubRow) => void;
+  onConnect: (club: ConnectedBookingClubRow) => void;
   onDisconnect: (clubId: string) => void;
 };
 

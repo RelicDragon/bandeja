@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Game, UserTeam, UserTeamMembership } from '@/types';
-import type { MyTabBooktimeSnapshot } from '@/hooks/useMyTabBooktime';
+import type { MyTabClubBookingsSnapshot } from '@/hooks/useMyTabClubBookings';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { leagueSeasonHubsFromGames } from '@/utils/leagueSeasonHubsFromGames';
 
@@ -21,7 +21,7 @@ function countUserTeamTiles(teams: UserTeam[], memberships: UserTeamMembership[]
 
 export function useMyTabPanelCounts(
   games: Game[],
-  booktime: Pick<MyTabBooktimeSnapshot, 'myClubs' | 'bookings'>,
+  booktime: Pick<MyTabClubBookingsSnapshot, 'myClubs' | 'bookings'>,
 ): MyTabPanelCounts {
   const { myClubs, bookings } = booktime;
 

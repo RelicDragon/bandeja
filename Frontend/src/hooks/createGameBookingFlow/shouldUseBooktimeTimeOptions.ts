@@ -8,11 +8,13 @@ export function shouldUseBooktimeTimeOptions(params: {
   locationTimeMode: LocationTimeMode | undefined;
   willBookOnCreate: boolean;
   booktimeConnected: boolean;
+  isPadelooClub?: boolean;
 }): boolean {
   if (params.entityType === 'BAR') return false;
   if (!params.clubHasBookingIntegration) return false;
   if (params.needsBooktimeAuth) return false;
   if (params.locationTimeMode !== 'timeSlots') return false;
   if (!params.willBookOnCreate) return false;
+  if (params.isPadelooClub) return true;
   return params.booktimeConnected;
 }

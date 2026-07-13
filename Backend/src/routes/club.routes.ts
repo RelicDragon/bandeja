@@ -9,6 +9,8 @@ import * as clubController from '../controllers/club.controller';
 import * as clubReviewController from '../controllers/clubReview.controller';
 import * as booktimeAuthController from '../controllers/booktimeAuth.controller';
 import * as booktimeSnapshotController from '../controllers/booktimeSnapshot.controller';
+import * as padelooAuthController from '../controllers/padelooAuth.controller';
+import * as padelooSnapshotController from '../controllers/padelooSnapshot.controller';
 
 const router = Router();
 
@@ -64,6 +66,39 @@ router.put(
     body('courts').isArray().withMessage('courts must be an array'),
   ]),
   booktimeSnapshotController.putBooktimeSnapshot
+);
+
+router.get('/:clubId/padeloo/auth', authenticate, padelooAuthController.getPadelooAuth);
+router.put(
+  '/:clubId/padeloo/auth',
+  authenticate,
+  validate([
+    body('accessToken').isString().notEmpty().withMessage('accessToken is required'),
+    body('externalUserId').isString().notEmpty().withMessage('externalUserId is required'),
+    body('refreshToken').optional().isString(),
+    body('email').optional().isString(),
+  ]),
+  padelooAuthController.putPadelooAuth,
+);
+router.post(
+  '/:clubId/padeloo/session-token',
+  authenticate,
+  booktimeSessionTokenLimiter,
+  padelooAuthController.postPadelooSessionToken,
+);
+router.delete('/:clubId/padeloo/auth', authenticate, padelooAuthController.deletePadelooAuth);
+
+router.get('/:clubId/padeloo/snapshot', authenticate, padelooSnapshotController.getPadelooSnapshot);
+router.put(
+  '/:clubId/padeloo/snapshot',
+  authenticate,
+  validate([
+    body('date').isString().notEmpty().withMessage('date is required'),
+    body('fetchedAt').isISO8601().withMessage('fetchedAt must be ISO8601'),
+    body('force').optional().isBoolean(),
+    body('courts').isArray().withMessage('courts must be an array'),
+  ]),
+  padelooSnapshotController.putPadelooSnapshot,
 );
 
 router.get('/:id/reviews', optionalAuth, clubReviewController.getClubReviews);

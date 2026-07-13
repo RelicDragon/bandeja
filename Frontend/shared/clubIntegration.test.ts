@@ -3,10 +3,42 @@ import {
   clubHasBookingIntegration,
   courtHasActiveBookingIntegration,
   getBooktimeCompanyId,
+  getPadelooClubId,
   isBooktimeClub,
+  isPadelooClub,
   parseBooktimeIntegrationConfig,
+  parsePadelooIntegrationConfig,
   shouldUseBooktimeCompanyDurations,
 } from './clubIntegration';
+
+describe('parsePadelooIntegrationConfig', () => {
+  it('returns null for invalid raw config', () => {
+    expect(parsePadelooIntegrationConfig(null)).toBeNull();
+    expect(parsePadelooIntegrationConfig({ clubId: 0 })).toBeNull();
+    expect(parsePadelooIntegrationConfig({ clubId: 'abc' })).toBeNull();
+  });
+
+  it('parses numeric clubId', () => {
+    expect(parsePadelooIntegrationConfig({ clubId: 2 })).toEqual({ clubId: 2 });
+    expect(parsePadelooIntegrationConfig({ clubId: '3' })).toEqual({ clubId: 3 });
+  });
+});
+
+describe('padeloo club integration predicates', () => {
+  const integratedClub = {
+    integrationType: 'PADELOO' as const,
+    integrationConfig: { clubId: 2 },
+  };
+
+  it('detects Padeloo club and clubId', () => {
+    expect(isPadelooClub(integratedClub)).toBe(true);
+    expect(getPadelooClubId(integratedClub)).toBe(2);
+    expect(clubHasBookingIntegration(integratedClub)).toBe(true);
+    expect(
+      courtHasActiveBookingIntegration(integratedClub, { externalCourtId: '5' }),
+    ).toBe(true);
+  });
+});
 
 describe('parseBooktimeIntegrationConfig', () => {
   it('returns null for invalid raw config', () => {

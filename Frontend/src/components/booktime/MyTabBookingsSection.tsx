@@ -2,7 +2,9 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { RefreshCw, Settings } from 'lucide-react';
-import type { MyTabBooktimeSnapshot } from '@/hooks/useMyTabBooktime';
+import type { MyTabClubBookingsSnapshot } from '@/hooks/useMyTabClubBookings';
+import { connectedClubRowToBookingListClub } from '@/hooks/connectedBookingClubs';
+import { PADELOO_DEFAULT_CANCEL_HOURS } from '@/integrations/padeloo/config';
 import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsCardsSkeleton } from './BooktimeBookingsCardsSkeleton';
 import { MyTabConnectBanner } from './MyTabConnectBanner';
@@ -11,25 +13,42 @@ import { useBooktimeCancelPoliciesForClubs } from './useBooktimeCancelPolicy';
 const PREVIEW_LIMIT = 3;
 
 type Props = {
-  booktime: MyTabBooktimeSnapshot;
+  booktime: MyTabClubBookingsSnapshot;
 };
 
 export function MyTabBookingsSection({ booktime }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { myClubs, clubs, bookings, bookingsLoading, reloadBookings, removeBooking } = booktime;
-  const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
+  const bookingListRows = useMemo(() => clubs.map(connectedClubRowToBookingListClub), [clubs]);
+  const booktimeRows = useMemo(
+    () => bookingListRows.filter((c) => c.integrationType === 'BOOKTIME'),
+    [bookingListRows],
+  );
+  const clubById = useMemo(
+    () => new Map(bookingListRows.filter((c) => c.connected).map((c) => [c.clubId, c])),
+    [bookingListRows],
+  );
   const allowedHoursToCancelByClubId = useBooktimeCancelPoliciesForClubs(
-    clubs,
+    booktimeRows,
     myClubs != null && myClubs.connectedCount > 0,
   );
+  const cancelHoursByClubId = useMemo(() => {
+    const map = new Map(allowedHoursToCancelByClubId);
+    for (const club of clubs) {
+      if (club.integrationType === 'PADELOO' && club.connected && club.padelooClubId) {
+        map.set(club.clubId, PADELOO_DEFAULT_CANCEL_HOURS);
+      }
+    }
+    return map;
+  }, [allowedHoursToCancelByClubId, clubs]);
 
   if (!myClubs) {
     return <BooktimeBookingsCardsSkeleton count={PREVIEW_LIMIT} compact />;
   }
 
   const showConnectBanner =
-    myClubs.cityBooktimeClubCount > 0 && myClubs.connectedCount === 0;
+    myClubs.cityClubCount > 0 && myClubs.connectedCount === 0;
 
   if (showConnectBanner) {
     return <MyTabConnectBanner />;
@@ -82,7 +101,7 @@ export function MyTabBookingsSection({ booktime }: Props) {
               bookings={bookings}
               clubById={clubById}
               showClubName
-              allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
+              allowedHoursToCancelByClubId={cancelHoursByClubId}
               compact
               limit={PREVIEW_LIMIT}
               animateEntries

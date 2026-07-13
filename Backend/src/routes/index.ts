@@ -38,6 +38,7 @@ import clubAdminRoutes from './clubAdmin.routes';
 import storyRoutes from './story.routes';
 import adRoutes from './ad.routes';
 import booktimeRoutes from './booktime.routes';
+import padelooRoutes from './padeloo.routes';
 import weatherRoutes from './weather.routes';
 import meRoutes from './me.routes';
 import { buildHealthPayload } from '../utils/healthInfo';
@@ -88,6 +89,7 @@ router.use('/club-admin', clubAdminRoutes);
 router.use('/stories', storyRoutes);
 router.use('/ads', adRoutes);
 router.use('/booktime', booktimeRoutes);
+router.use('/padeloo', padelooRoutes);
 router.use('/weather', weatherRoutes);
 
 export default router;

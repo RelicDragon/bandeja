@@ -17,6 +17,8 @@ export const BOOKING_ERROR_KEYS = {
   bookingNotLinked: 'errors.booking.bookingNotLinked',
   legacyExternalBookingIdRejected: 'errors.booking.legacyExternalBookingIdRejected',
   companyIdRequired: 'errors.booking.companyIdRequired',
+  padelooClubIdRequired: 'errors.booking.padelooClubIdRequired',
+  externalProviderUnsupported: 'errors.booking.externalProviderUnsupported',
   integrationTypeMustBeOnlineBooking: 'errors.booking.integrationTypeMustBeOnlineBooking',
   rollbackFailed: 'errors.booking.rollbackFailed',
 } as const;

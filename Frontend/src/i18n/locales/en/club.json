@@ -141,6 +141,15 @@
       "noUpcomingAny": "No upcoming bookings across your connected clubs.",
       "tabBookings": "Bookings",
       "tabIntegrations": "Integrations"
+    },
+    "padeloo": {
+      "connectHint": "Sign in with your Padeloo email to link bookings.",
+      "otpSent": "Enter the code sent to {{email}}",
+      "connectedAs": "Signed in · {{email}}",
+      "providerLabel": "Padeloo",
+      "errors": {
+        "generic": "Something went wrong. Try again."
+      }
     }
   }
 }

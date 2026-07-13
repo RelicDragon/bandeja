@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BooktimeMyClubRow } from '@/api/booktime';
+import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
-import type { AggregatedBooktimeBooking } from '@/hooks/useBooktimeAllUpcoming';
+import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { useBooktimeLinkedGame } from '@/hooks/useBooktimeLinkedGame';
 import {
   linkedGamesBookingSlotSegments,
@@ -17,11 +17,17 @@ import { bookingPriceQuote } from './booktimeBookingPrices';
 import { formatBooktimeBookingWhen, resolveBooktimeMyClubTimezone, resolveCourtForBooking } from './booktimeBookingUtils';
 import { useBooktimeClubCurrency } from './useBooktimeClubCurrency';
 
+type PastBookingRow = BooktimeBookingRecord & {
+  clubId: string;
+  clubName: string;
+};
+
 type Props = {
-  booking: AggregatedBooktimeBooking;
-  club: BooktimeMyClubRow;
+  booking: PastBookingRow;
+  club: BookingListClubRow;
   displaySettings: ResolvedDisplaySettings;
   showClubName?: boolean;
+  providerLabel?: string;
   expandableActions?: boolean;
   actionsExpanded?: boolean;
   onToggleActions?: () => void;
@@ -32,6 +38,7 @@ export function BooktimePastBookingRow({
   club,
   displaySettings,
   showClubName = false,
+  providerLabel,
   expandableActions = false,
   actionsExpanded = false,
   onToggleActions,
@@ -68,7 +75,10 @@ export function BooktimePastBookingRow({
   const rowContent = (
     <div className={`min-w-0 ${priceQuote ? 'pr-14' : 'pr-12'}`}>
       {showClubName ? (
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate mb-0.5">{booking.clubName}</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate mb-0.5">
+          {booking.clubName}
+          {providerLabel ? ` · ${providerLabel}` : ''}
+        </p>
       ) : null}
       <CourtDisplayName
         name={courtInfo.courtName}

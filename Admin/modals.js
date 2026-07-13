@@ -263,6 +263,7 @@ async function editCenterModal(center) {
         ? center.integrationConfig
         : {};
     document.getElementById('centerBooktimeCompanyId').value = config.companyId || '';
+    document.getElementById('centerPadelooClubId').value = config.clubId != null ? String(config.clubId) : '';
     toggleCenterIntegrationFields();
     await loadClubAdminsForCenter(center.id);
 }
@@ -270,8 +271,12 @@ async function editCenterModal(center) {
 function toggleCenterIntegrationFields() {
     const type = document.getElementById('centerIntegrationType')?.value || '';
     const booktimeFields = document.getElementById('centerBooktimeFields');
+    const padelooFields = document.getElementById('centerPadelooFields');
     if (booktimeFields) {
         booktimeFields.style.display = type === 'BOOKTIME' ? 'block' : 'none';
+    }
+    if (padelooFields) {
+        padelooFields.style.display = type === 'PADELOO' ? 'block' : 'none';
     }
 }
 
@@ -288,6 +293,17 @@ function readCenterIntegrationPayload() {
         return {
             integrationType: 'BOOKTIME',
             integrationConfig: { companyId },
+        };
+    }
+    if (type === 'PADELOO') {
+        const clubIdRaw = document.getElementById('centerPadelooClubId')?.value?.trim() || '';
+        const clubId = Number(clubIdRaw);
+        if (!Number.isInteger(clubId) || clubId <= 0) {
+            throw new Error('Padeloo club ID must be a positive integer');
+        }
+        return {
+            integrationType: 'PADELOO',
+            integrationConfig: { clubId },
         };
     }
     throw new Error('Unsupported integration type');

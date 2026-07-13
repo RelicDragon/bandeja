@@ -3,17 +3,18 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
-import type { BooktimeMyClubRow } from '@/api/booktime';
+import type { ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
 import { clubsApi } from '@/api/clubs';
 import { SubPageHeader } from '@/components';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
-import { ConnectClubSheet } from '@/components/booktime/ConnectClubSheet';
+import { ConnectClubSheet, type BooktimeIntegrationConfig } from '@/components/booktime/ConnectClubSheet';
 import { ConnectedClubsBookingsTab } from '@/components/booktime/ConnectedClubsBookingsTab';
 import { ConnectedClubsIntegrationsTab } from '@/components/booktime/ConnectedClubsIntegrationsTab';
-import { useBooktimeMyClubs } from '@/hooks/useBooktimeMyClubs';
+import { useConnectedBookingClubs } from '@/hooks/useConnectedBookingClubs';
 import type { Club } from '@/types';
 import { disconnectBooktimeClub } from '@/integrations/booktime/session';
+import { disconnectPadelooClub } from '@/integrations/padeloo/session';
 import { handleBack } from '@/utils/backNavigation';
 
 type PageTab = 'bookings' | 'integrations';
@@ -27,10 +28,10 @@ export function ConnectedClubsBookingsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   useBackButtonHandler();
-  const { data, loading, reload } = useBooktimeMyClubs(true);
+  const { data, loading, reload } = useConnectedBookingClubs(true);
   const activeTab = parseConnectedClubsTab(searchParams.get('tab'));
   const [bookingsRefreshKey, setBookingsRefreshKey] = useState(0);
-  const [connectClub, setConnectClub] = useState<BooktimeMyClubRow | null>(null);
+  const [connectClub, setConnectClub] = useState<ConnectedBookingClubRow | null>(null);
   const [connectClubEntity, setConnectClubEntity] = useState<Club | null>(null);
   const [disconnectBusyId, setDisconnectBusyId] = useState<string | null>(null);
 
@@ -39,7 +40,7 @@ export function ConnectedClubsBookingsPage() {
       { id: 'bookings', label: t('club.booktime.tabBookings') },
       { id: 'integrations', label: t('club.booktime.tabIntegrations') },
     ],
-    [t]
+    [t],
   );
 
   useEffect(() => {
@@ -52,10 +53,14 @@ export function ConnectedClubsBookingsPage() {
     });
   }, [connectClub]);
 
-  const handleDisconnect = async (clubId: string) => {
-    setDisconnectBusyId(clubId);
+  const handleDisconnect = async (club: ConnectedBookingClubRow) => {
+    setDisconnectBusyId(club.clubId);
     try {
-      await disconnectBooktimeClub(clubId);
+      if (club.integrationType === 'PADELOO') {
+        await disconnectPadelooClub(club.clubId);
+      } else {
+        await disconnectBooktimeClub(club.clubId);
+      }
       await reload();
       setBookingsRefreshKey((k) => k + 1);
       toast.success(t('club.booktime.disconnected'));
@@ -67,6 +72,15 @@ export function ConnectedClubsBookingsPage() {
   };
 
   const clubs = data?.clubs ?? [];
+
+  const integrationConfig: BooktimeIntegrationConfig | undefined =
+    connectClub?.companyId
+      ? {
+          companyId: connectClub.companyId,
+          termsUrl: connectClubEntity?.integrationConfig?.termsUrl,
+          privacyUrl: connectClubEntity?.integrationConfig?.privacyUrl,
+        }
+      : undefined;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-safe">
@@ -99,28 +113,24 @@ export function ConnectedClubsBookingsPage() {
             <Loader2 className="animate-spin text-primary-600" size={32} />
           </div>
         ) : activeTab === 'bookings' ? (
-          <ConnectedClubsBookingsTab
-            clubs={clubs}
-            refreshKey={bookingsRefreshKey}
-          />
+          <ConnectedClubsBookingsTab clubs={clubs} refreshKey={bookingsRefreshKey} />
         ) : (
           <ConnectedClubsIntegrationsTab
             clubs={clubs}
             disconnectBusyId={disconnectBusyId}
             onConnect={setConnectClub}
-            onDisconnect={(clubId) => void handleDisconnect(clubId)}
+            onDisconnect={(clubId) => {
+              const club = clubs.find((row) => row.clubId === clubId);
+              if (club) void handleDisconnect(club);
+            }}
           />
         )}
       </div>
 
-      {connectClub && connectClubEntity && connectClub.companyId ? (
+      {connectClub && connectClubEntity ? (
         <ConnectClubSheet
           club={connectClubEntity}
-          integrationConfig={{
-            companyId: connectClub.companyId,
-            termsUrl: connectClubEntity.integrationConfig?.termsUrl,
-            privacyUrl: connectClubEntity.integrationConfig?.privacyUrl,
-          }}
+          integrationConfig={integrationConfig}
           open={!!connectClub}
           onOpenChange={(open) => !open && setConnectClub(null)}
           onConnected={() => {

@@ -17,6 +17,25 @@ import { canMutateGameBookings } from '../../shared/gameBooking/bookingLinkAutho
 
 type Tx = Prisma.TransactionClient;
 
+async function resolveGameClubBookingProvider(gameId: string, tx: Tx): Promise<ClubIntegrationType> {
+  const game = await tx.game.findUnique({
+    where: { id: gameId },
+    select: {
+      club: { select: { integrationType: true } },
+      court: { select: { club: { select: { integrationType: true } } } },
+    },
+  });
+  const integrationType =
+    game?.club?.integrationType ?? game?.court?.club?.integrationType ?? null;
+  if (
+    integrationType === ClubIntegrationType.BOOKTIME ||
+    integrationType === ClubIntegrationType.PADELOO
+  ) {
+    return integrationType;
+  }
+  return ClubIntegrationType.BOOKTIME;
+}
+
 /** Game PATCH fields that can change computed bookingStatus (keep in sync with update/create flows). */
 export const BOOKING_STATUS_AFFECTING_GAME_FIELDS = [
   'hasBookedCourt',
@@ -395,6 +414,8 @@ export async function patchGameBookings(
   }
 
   await prisma.$transaction(async (tx) => {
+    const provider = await resolveGameClubBookingProvider(gameId, tx);
+
     if (remove.length > 0) {
       await tx.gameExternalBooking.deleteMany({
         where: { gameId, externalBookingId: { in: remove } },
@@ -414,7 +435,7 @@ export async function patchGameBookings(
         data: add.map((externalBookingId) => ({
           gameId,
           externalBookingId,
-          externalBookingProvider: ClubIntegrationType.BOOKTIME,
+          externalBookingProvider: provider,
         })),
       });
     }
@@ -543,6 +564,8 @@ export async function linkBookingToGame(
       throw new ApiError(400, BOOKING_ERROR_KEYS.alreadyLinked);
     }
 
+    const provider = await resolveGameClubBookingProvider(gameId, tx);
+
     if (gamePatch) {
       const patchData = linkGamePatchToUpdateData(gamePatch, timeZone);
       if (Object.keys(patchData).length > 0) {
@@ -554,7 +577,7 @@ export async function linkBookingToGame(
       data: {
         gameId,
         externalBookingId,
-        externalBookingProvider: ClubIntegrationType.BOOKTIME,
+        externalBookingProvider: provider,
         ...snapshotToRowData(resolvedSnapshot, timeZone),
       },
     });

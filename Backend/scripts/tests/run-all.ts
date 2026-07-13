@@ -845,6 +845,22 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'padeloo no outbound HTTP',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'padeloo', 'padelooNoOutboundHttp.test.ts'),
+    ],
+  },
+  {
+    label: 'padeloo snapshot ingest',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'padeloo', 'padelooSnapshot.service.test.ts'),
+    ],
+  },
+  {
     label: 'chat notification media preview',
     command: process.execPath,
     args: [

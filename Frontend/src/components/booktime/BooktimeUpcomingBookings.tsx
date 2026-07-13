@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Club } from '@/types';
-import type { BooktimeMyClubRow } from '@/api/booktime';
+import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import { useBooktimeUpcomingBookings } from '@/hooks/useBooktimeUpcomingBookings';
 import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
@@ -16,7 +16,7 @@ type Props = {
   refreshKey?: number;
 };
 
-function clubToMyClubRow(club: Club, companyId: string, connected: boolean): BooktimeMyClubRow {
+function clubToMyClubRow(club: Club, companyId: string, connected: boolean): BookingListClubRow {
   return {
     clubId: club.id,
     clubName: club.name,
@@ -31,6 +31,7 @@ function clubToMyClubRow(club: Club, companyId: string, connected: boolean): Boo
       name: c.name,
       externalCourtId: c.externalCourtId ?? null,
     })),
+    integrationType: 'BOOKTIME',
   };
 }
 

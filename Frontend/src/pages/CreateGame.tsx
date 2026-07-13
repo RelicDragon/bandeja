@@ -25,7 +25,7 @@ import { ReservationIntentPicker } from '@/components/gameLocationTime/Reservati
 import type { CreateGameBookingOverrides } from '@/hooks/createGameBookingFlow';
 import { useCreateGameBookingFlow } from '@/hooks/createGameBookingFlow';
 import { BooktimeConnectInline } from '@/components/booktime/BooktimeConnectInline';
-import { BooktimeCreateGameConfirmModal } from '@/components/createGame/BooktimeCreateGameConfirmModal';
+import { ClubCreateGameConfirmModal } from '@/components/createGame/ClubCreateGameConfirmModal';
 import {
   CreateGameProgressOverlay,
   type CreateGameProgressPhase,
@@ -432,7 +432,7 @@ export const CreateGame = ({
     derivedBookingWindowLabel,
     effectiveDerivedSummary,
     needsBooktimeAuth,
-    booktimeAuth,
+    clubBookingAuth,
     booktimeIntegrationConfig,
     timeOverride,
     setTimeOverride,
@@ -476,7 +476,7 @@ export const CreateGame = ({
     Boolean(selectedClub) &&
     clubBookingFlowActive &&
     Boolean(booktimeIntegrationConfig) &&
-    !booktimeAuth?.connected &&
+    !clubBookingAuth?.connected &&
     (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting');
   const booktimeAuthPromptCollapsed = showBooktimeAuthPrompt && !needsBooktimeAuth;
 
@@ -1698,7 +1698,7 @@ export const CreateGame = ({
                   onSelectedBookingIdsChange={onSelectedBookingIdsChange}
                   bookingSelectionLimits={bookingSelectionLimits}
                   companyId={booktimeIntegrationConfig?.companyId}
-                  booktimeConnected={Boolean(booktimeAuth?.connected)}
+                  booktimeConnected={Boolean(clubBookingAuth?.connected)}
                   onDerivedTimeChange={onDerivedTimeChange}
                   preselectedBanner={preselectedBookings}
                   derivedSummary={{
@@ -1788,7 +1788,7 @@ export const CreateGame = ({
                       dateFixedDates={booktimeScheduleConstrained ? booktimeFixedDates : undefined}
                       hideCalendar={booktimeScheduleConstrained}
                       bookableDaysHint={booktimeScheduleConstrained ? booktimeCompanyMeta.bookableDays : null}
-                      connectedPhone={booktimeAuth?.phoneNumber ?? null}
+                      connectedPhone={clubBookingAuth?.phoneNumber ?? null}
                       slotsLoading={booktimeTimeOptions.active && booktimeTimeOptions.loading}
                       booktimeSlotsActive={booktimeTimeOptions.active}
                       snapshotOverlayEnabled={booktimeScheduleConstrained}
@@ -2031,7 +2031,7 @@ export const CreateGame = ({
         onSkip={handleSkipMarkCourt}
       />
 
-      {confirmModalProps ? <BooktimeCreateGameConfirmModal {...confirmModalProps} /> : null}
+      {confirmModalProps ? <ClubCreateGameConfirmModal {...confirmModalProps} /> : null}
     </div>
     </SportLevelProvider>
   );

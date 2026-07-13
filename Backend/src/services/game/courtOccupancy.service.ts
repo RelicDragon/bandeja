@@ -192,7 +192,10 @@ async function queryExternalBlocks(
     select: { integrationType: true },
   });
 
-  if (club?.integrationType !== ClubIntegrationType.BOOKTIME) {
+  if (
+    club?.integrationType !== ClubIntegrationType.BOOKTIME &&
+    club?.integrationType !== ClubIntegrationType.PADELOO
+  ) {
     return { blocks: [], isLoadingExternalSlots: false };
   }
 
@@ -203,6 +206,7 @@ async function queryExternalBlocks(
       rangeEnd,
       filterCourtId: courtId,
       includeUnmapped,
+      integrationType: club.integrationType,
     });
 
     const blocks: OccupancyBlock[] = busySlots.map((slot) => ({

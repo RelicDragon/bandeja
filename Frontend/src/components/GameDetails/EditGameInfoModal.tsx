@@ -528,7 +528,7 @@ export const EditGameInfoModal = ({
   const editSnapshotOverlayEnabled =
     (willBookOnEdit || bookingsModeActive) &&
     !needsBooktimeAuth &&
-    selectedClubData?.integrationType === 'BOOKTIME';
+    clubHasBookingIntegration(selectedClubData);
 
   const initialGeneral = useMemo(() => getInitialGeneralState(game), [game]);
   const initialPrice = useMemo(() => getInitialPriceState(game, userCurrency), [game, userCurrency]);

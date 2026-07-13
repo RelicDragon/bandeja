@@ -82,8 +82,12 @@ export class GameCreateService {
     const bookingSnapshots = parseBookingSnapshots(data);
     if (externalBookingIds.length > 0) {
       const provider = data.externalBookingProvider;
-      if (provider !== undefined && provider !== ClubIntegrationType.BOOKTIME) {
-        throw new ApiError(400, BOOKING_ERROR_KEYS.externalProviderMustBeBooktime);
+      const allowedProviders: ClubIntegrationType[] = [
+        ClubIntegrationType.BOOKTIME,
+        ClubIntegrationType.PADELOO,
+      ];
+      if (provider !== undefined && !allowedProviders.includes(provider)) {
+        throw new ApiError(400, BOOKING_ERROR_KEYS.externalProviderUnsupported);
       }
     }
 
@@ -91,7 +95,9 @@ export class GameCreateService {
       externalBookingIds.length > 0 ? true : Boolean(data.hasBookedCourt);
     const timeOverride = data.timeOverride === true;
     const externalBookingProvider =
-      externalBookingIds.length > 0 ? ClubIntegrationType.BOOKTIME : null;
+      externalBookingIds.length > 0
+        ? (data.externalBookingProvider ?? ClubIntegrationType.BOOKTIME)
+        : null;
 
     return GameCreateService.createGameBody(data, userId, jwtIsAdmin, {
       externalBookingIds,

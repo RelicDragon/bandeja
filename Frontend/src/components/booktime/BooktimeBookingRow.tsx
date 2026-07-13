@@ -4,20 +4,22 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { AlertTriangle, Check, ExternalLink, Plus, Trash2 } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
-import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { BooktimeLinkedGame } from '@/api/booktime';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import {
   canCancelByPolicy,
 } from '@/integrations/booktime/bookFlow';
-import { createHydratedBooktimeClubBookingProvider } from '@/integrations/booking/createBooktimeClubBookingProvider';
+import { createHydratedClubBookingProvider } from '@/integrations/booking/createClubBookingProvider';
+import {
+  bookingListClubRowToClub,
+  type BookingListClubRow,
+} from '@/hooks/connectedBookingClubs';
 import { useBooktimeLinkedGame } from '@/hooks/useBooktimeLinkedGame';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { CourtDisplayName } from '@/components/CourtDisplayName';
 import {
-  booktimeRowToClub,
   formatBooktimeBookingSlotRange,
   formatBooktimeBookingWhen,
   resolveCourtForBooking,
@@ -38,7 +40,7 @@ import { useBooktimeClubCurrency } from './useBooktimeClubCurrency';
 
 type Props = {
   booking: BooktimeBookingRecord;
-  club: BooktimeMyClubRow;
+  club: BookingListClubRow;
   showClubName?: boolean;
   allowedHoursToCancel?: number;
   onCanceled?: () => void;
@@ -152,13 +154,11 @@ export function BooktimeBookingRow({
   };
 
   const handleConfirmCancel = async () => {
-    if (!club.companyId) return;
+    const clubEntity = bookingListClubRowToClub(club);
+    const provider = await createHydratedClubBookingProvider(clubEntity);
+    if (!provider) return;
     setCancelBusy(true);
     try {
-      const provider = await createHydratedBooktimeClubBookingProvider(
-        booktimeRowToClub(club),
-        club.companyId,
-      );
       await provider.cancelBooking(
         booking.uuid,
         onRefreshSnapshot ?? (async () => true),
@@ -208,7 +208,12 @@ export function BooktimeBookingRow({
   const rowContent = (
     <div className={`min-w-0 flex-1 ${priceQuote ? 'pr-14' : 'pr-12'}`}>
       {showClubName && !nested ? (
-        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{club.clubName}</p>
+        <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">
+          {club.clubName}
+          {club.integrationType === 'PADELOO'
+            ? ` · ${t('club.padeloo.providerLabel', { defaultValue: 'Padeloo' })}`
+            : ''}
+        </p>
       ) : null}
       {!nested || selectable ? (
         <CourtDisplayName

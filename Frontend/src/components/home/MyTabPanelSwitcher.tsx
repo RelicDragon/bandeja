@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { Game } from '@/types';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { useMyTabPanelCounts } from '@/hooks/useMyTabPanelCounts';
-import { useMyTabBooktime } from '@/hooks/useMyTabBooktime';
+import { useMyTabClubBookings } from '@/hooks/useMyTabClubBookings';
 import { useUserTeamsBootstrap } from '@/hooks/useUserTeamsBootstrap';
 import { MyTabBookingsSection } from '@/components/booktime/MyTabBookingsSection';
 import { UserTeamsHomeSection } from './UserTeamsHomeSection';
@@ -24,7 +24,7 @@ export function MyTabPanelSwitcher({
 }: MyTabPanelSwitcherProps) {
   const { t } = useTranslation();
   const [activeSwitch, setActiveSwitch] = useState<MyTabPanelId | null>(null);
-  const booktime = useMyTabBooktime();
+  const booktime = useMyTabClubBookings();
   const { reloadMyClubs } = booktime;
   useUserTeamsBootstrap();
   const panelCounts = useMyTabPanelCounts(games, booktime);

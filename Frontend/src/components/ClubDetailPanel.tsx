@@ -13,18 +13,26 @@ import { getClubMapsSearchUrl } from '@/utils/clubMapsUrl';
 import { websiteDisplayHost } from '@/utils/websiteHostname';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
 import { useAuthStore } from '@/store/authStore';
-import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
+import { useClubBookingAuth } from '@/hooks/useClubBookingAuth';
 import { useBooktimeReconnectPrompt } from '@/hooks/useBooktimeReconnectPrompt';
 import {
   ConnectClubSheet,
   type BooktimeIntegrationConfig,
 } from '@/components/booktime/ConnectClubSheet';
 import { hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { hydratePadelooSession } from '@/integrations/padeloo/session';
 import { resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
-import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
+import { useClubSnapshotRefresh } from '@/hooks/useClubSnapshotRefresh';
+import {
+  clubHasBookingIntegration,
+  getPadelooClubId,
+  isBooktimeClub,
+  isPadelooClub,
+  parseBooktimeIntegrationConfig,
+} from '@shared/clubIntegration';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
-import { AvailabilitySheet } from '@/components/booktime/AvailabilitySheet';
-import { BooktimeUpcomingBookings } from '@/components/booktime/BooktimeUpcomingBookings';
+import { ClubAvailabilitySheet } from '@/components/booktime/ClubAvailabilitySheet';
+import { ClubUpcomingBookings } from '@/components/booktime/ClubUpcomingBookings';
 
 const ClubMiniMap = lazy(async () => {
   const m = await import('@/components/ClubMiniMap');
@@ -39,15 +47,7 @@ type ClubDetailPanelProps = {
 };
 
 function parseBooktimeConfig(raw: unknown): BooktimeIntegrationConfig | null {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  const companyId = (raw as Record<string, unknown>).companyId;
-  if (typeof companyId !== 'string' || !companyId.trim()) return null;
-  const config: BooktimeIntegrationConfig = { companyId: companyId.trim() };
-  const termsUrl = (raw as Record<string, unknown>).termsUrl;
-  const privacyUrl = (raw as Record<string, unknown>).privacyUrl;
-  if (typeof termsUrl === 'string' && termsUrl.trim()) config.termsUrl = termsUrl.trim();
-  if (typeof privacyUrl === 'string' && privacyUrl.trim()) config.privacyUrl = privacyUrl.trim();
-  return config;
+  return parseBooktimeIntegrationConfig(raw);
 }
 
 function amenityEntries(amenities: Record<string, unknown> | undefined | null): { key: string; label: string }[] {
@@ -64,18 +64,19 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
   const { t } = useTranslation();
   const { translateCity, translateCountry } = useTranslatedGeo();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const isBooktimeClub = club.integrationType === 'BOOKTIME';
+  const hasBookingIntegration = clubHasBookingIntegration(club);
+  const isBooktime = isBooktimeClub(club);
   const booktimeConfig = useMemo(
-    () => (isBooktimeClub ? parseBooktimeConfig(club.integrationConfig) : null),
-    [club.integrationConfig, isBooktimeClub]
+    () => (isBooktime ? parseBooktimeConfig(club.integrationConfig) : null),
+    [club.integrationConfig, isBooktime],
   );
-  const { status: booktimeAuth, loading: booktimeAuthLoading, refresh: refreshBooktimeAuth } = useBooktimeClubAuth(
-    club.id,
-    isAuthenticated && isBooktimeClub
+  const { status: clubAuth, loading: clubAuthLoading, refresh: refreshClubAuth } = useClubBookingAuth(
+    club,
+    isAuthenticated && hasBookingIntegration,
   );
   const { reconnectRequired, clearReconnectRequired } = useBooktimeReconnectPrompt(
     club.id,
-    isAuthenticated && isBooktimeClub
+    isAuthenticated && isBooktime,
   );
   const [connectOpen, setConnectOpen] = useState(false);
   const [availabilityDate, setAvailabilityDate] = useState(() => snapshotDate ?? new Date());
@@ -89,10 +90,10 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
     isRefreshingSnapshot,
     snapshotBanner,
     lastFetchedAt,
-  } = useBooktimeSnapshotRefresh(
+  } = useClubSnapshotRefresh(
     club,
     scheduleDate,
-    isAuthenticated && isBooktimeClub
+    isAuthenticated && hasBookingIntegration,
   );
 
   useEffect(() => {
@@ -100,9 +101,9 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
   }, [snapshotDate]);
 
   useEffect(() => {
-    if (!isAuthenticated || !isBooktimeClub) return;
+    if (!isAuthenticated || !hasBookingIntegration) return;
     void refreshSnapshot();
-  }, [isAuthenticated, isBooktimeClub, refreshSnapshot, scheduleDate]);
+  }, [isAuthenticated, hasBookingIntegration, refreshSnapshot, scheduleDate]);
 
   const photos = useMemo(() => normalizeClubPhotos(club.carouselPhotos ?? club.photos), [club.carouselPhotos, club.photos]);
   const courts = useMemo(
@@ -133,12 +134,11 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
   const amenities = amenityEntries(club.amenities as Record<string, unknown> | null | undefined);
   const hasLocationBody = !!(club.address?.trim() || cityLine || mapsUrl || hasCoords);
   const contactBlock = !!(telHref || website || email);
-  const showBooktimeConnect =
-    isBooktimeClub &&
+  const showBookingConnect =
+    hasBookingIntegration &&
     isAuthenticated &&
-    booktimeConfig &&
-    !booktimeAuthLoading &&
-    (!booktimeAuth?.connected || reconnectRequired);
+    !clubAuthLoading &&
+    (!clubAuth?.connected || (isBooktime && reconnectRequired));
 
   useEffect(() => {
     if (reconnectRequired && booktimeConfig) {
@@ -148,14 +148,19 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
 
   const handleConnected = async () => {
     clearReconnectRequired();
-    if (booktimeConfig) {
+    if (isBooktime && booktimeConfig) {
       await hydrateBooktimeSession(
         club.id,
         booktimeConfig.companyId,
         resolveBooktimeMyClubTimezone(club),
       );
+    } else if (isPadelooClub(club)) {
+      const padelooClubId = getPadelooClubId(club);
+      if (padelooClubId != null) {
+        await hydratePadelooSession(club.id, padelooClubId);
+      }
     }
-    await refreshBooktimeAuth();
+    await refreshClubAuth();
     await onClubRefresh?.();
   };
 
@@ -169,7 +174,7 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
         />
       </div>
 
-      {showBooktimeConnect ? (
+      {showBookingConnect ? (
         <div className="rounded-xl border border-primary-200 dark:border-primary-800/60 bg-primary-50/80 dark:bg-primary-950/30 p-3">
           <div className="flex items-start gap-3">
             <Link2 size={18} className="text-primary-600 dark:text-primary-400 shrink-0 mt-0.5" aria-hidden />
@@ -188,18 +193,17 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
         </div>
       ) : null}
 
-      {isBooktimeClub && isAuthenticated ? (
+      {hasBookingIntegration && isAuthenticated ? (
         <BooktimeAvailabilityBanner loading={isRefreshingSnapshot} banner={snapshotBanner} />
       ) : null}
 
-      {isBooktimeClub && booktimeConfig && isAuthenticated ? (
-        <AvailabilitySheet
+      {hasBookingIntegration && isAuthenticated ? (
+        <ClubAvailabilitySheet
           club={club}
-          companyId={booktimeConfig.companyId}
           selectedDate={scheduleDate}
           onDateChange={setAvailabilityDate}
           lastFetchedAt={lastFetchedAt}
-          connected={!!booktimeAuth?.connected}
+          connected={!!clubAuth?.connected}
           onConnectRequest={() => setConnectOpen(true)}
           onRefreshSnapshot={refreshSnapshot}
           onBooked={() => setBookingsRefreshKey((k) => k + 1)}
@@ -207,10 +211,9 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
         />
       ) : null}
 
-      {isBooktimeClub && booktimeConfig && isAuthenticated && booktimeAuth?.connected ? (
-        <BooktimeUpcomingBookings
+      {hasBookingIntegration && isAuthenticated && clubAuth?.connected ? (
+        <ClubUpcomingBookings
           club={club}
-          companyId={booktimeConfig.companyId}
           connected
           enabled
           onRefreshSnapshot={refreshSnapshot}
@@ -218,23 +221,28 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
         />
       ) : null}
 
-      {isBooktimeClub && booktimeAuth?.connected ? (
+      {clubAuth?.connected && hasBookingIntegration ? (
         <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-950/20 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
-          {t('club.booktime.connectedAs', { phone: booktimeAuth.phoneNumber ?? '—' })}
+          {isPadelooClub(club)
+            ? t('club.padeloo.connectedAs', {
+                email: clubAuth.email ?? '—',
+                defaultValue: `Connected as ${clubAuth.email ?? '—'}`,
+              })
+            : t('club.booktime.connectedAs', { phone: clubAuth.phoneNumber ?? '—' })}
         </div>
       ) : null}
 
-      {booktimeAuthLoading && isBooktimeClub && isAuthenticated ? (
+      {clubAuthLoading && hasBookingIntegration && isAuthenticated ? (
         <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
           <Loader2 size={16} className="animate-spin" />
           {t('common.loading')}
         </div>
       ) : null}
 
-      {booktimeConfig ? (
+      {(booktimeConfig || isPadelooClub(club)) && hasBookingIntegration ? (
         <ConnectClubSheet
           club={club}
-          integrationConfig={booktimeConfig}
+          integrationConfig={booktimeConfig ?? undefined}
           open={connectOpen}
           onOpenChange={setConnectOpen}
           onConnected={handleConnected}

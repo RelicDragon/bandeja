@@ -9,6 +9,10 @@ export interface BooktimeIntegrationConfig {
   serviceIds?: string[];
 }
 
+export interface PadelooIntegrationConfig {
+  clubId: number;
+}
+
 export function parseBooktimeIntegrationConfig(raw: unknown): BooktimeIntegrationConfig | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const companyId = (raw as Record<string, unknown>).companyId;
@@ -26,6 +30,19 @@ export function parseBooktimeIntegrationConfig(raw: unknown): BooktimeIntegratio
   return config;
 }
 
+export function parsePadelooIntegrationConfig(raw: unknown): PadelooIntegrationConfig | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const clubId = (raw as Record<string, unknown>).clubId;
+  if (typeof clubId === 'number' && Number.isInteger(clubId) && clubId > 0) {
+    return { clubId };
+  }
+  if (typeof clubId === 'string' && clubId.trim()) {
+    const parsed = Number(clubId);
+    if (Number.isInteger(parsed) && parsed > 0) return { clubId: parsed };
+  }
+  return null;
+}
+
 export function assertBooktimeIntegrationConfig(
   integrationType: ClubIntegrationType | null | undefined,
   integrationConfig: unknown
@@ -41,13 +58,38 @@ export function assertBooktimeIntegrationConfig(
   return config;
 }
 
+export function assertPadelooIntegrationConfig(
+  integrationType: ClubIntegrationType | null | undefined,
+  integrationConfig: unknown
+): PadelooIntegrationConfig | null {
+  if (!integrationType) return null;
+  if (integrationType !== ClubIntegrationType.PADELOO) {
+    throw new ApiError(400, 'Unsupported integration type');
+  }
+  const config = parsePadelooIntegrationConfig(integrationConfig);
+  if (!config) {
+    throw new ApiError(400, BOOKING_ERROR_KEYS.padelooClubIdRequired);
+  }
+  return config;
+}
+
 export function buildIntegrationConfigPayload(
   integrationType: ClubIntegrationType | null,
   integrationConfig: unknown
-): { integrationType: ClubIntegrationType | null; integrationConfig: BooktimeIntegrationConfig | null } {
+): {
+  integrationType: ClubIntegrationType | null;
+  integrationConfig: BooktimeIntegrationConfig | PadelooIntegrationConfig | null;
+} {
   if (!integrationType) {
     return { integrationType: null, integrationConfig: null };
   }
-  const config = assertBooktimeIntegrationConfig(integrationType, integrationConfig);
-  return { integrationType, integrationConfig: config };
+  if (integrationType === ClubIntegrationType.BOOKTIME) {
+    const config = assertBooktimeIntegrationConfig(integrationType, integrationConfig);
+    return { integrationType, integrationConfig: config };
+  }
+  if (integrationType === ClubIntegrationType.PADELOO) {
+    const config = assertPadelooIntegrationConfig(integrationType, integrationConfig);
+    return { integrationType, integrationConfig: config };
+  }
+  throw new ApiError(400, 'Unsupported integration type');
 }

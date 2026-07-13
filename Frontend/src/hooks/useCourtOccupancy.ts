@@ -3,9 +3,10 @@ import { gamesApi } from '@/api';
 import { Club, Court, BookedCourtSlot } from '@/types';
 import { getClubTimezone, createDateFromClubTime } from './useGameTimeDuration';
 import {
-  useBooktimeSnapshotRefresh,
-  type BooktimeSnapshotBanner,
-} from './useBooktimeSnapshotRefresh';
+  useClubSnapshotRefresh,
+  type ClubSnapshotBanner,
+} from './useClubSnapshotRefresh';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { useAuthStore } from '@/store/authStore';
 import { bookedCourtsEqual } from '@/utils/bookedCourts/bookedCourtsEqual';
 import {
@@ -50,16 +51,16 @@ export const useCourtOccupancy = ({
   const [isLoadingExternalSlots, setIsLoadingExternalSlots] = useState(false);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const isBooktimeClub = club?.integrationType === 'BOOKTIME';
+  const hasBookingIntegration = clubHasBookingIntegration(club);
   const refreshEnabled =
-    snapshotRefreshEnabled && isAuthenticated && isBooktimeClub && !!clubId && !!club;
+    snapshotRefreshEnabled && isAuthenticated && hasBookingIntegration && !!clubId && !!club;
 
   const {
     refreshSnapshot,
     isRefreshingSnapshot,
     snapshotBanner,
     liveApiLoading,
-  } = useBooktimeSnapshotRefresh(refreshEnabled ? club : undefined, selectedDate, refreshEnabled);
+  } = useClubSnapshotRefresh(refreshEnabled ? club : undefined, selectedDate, refreshEnabled);
 
   const refreshSnapshotRef = useRef(refreshSnapshot);
   refreshSnapshotRef.current = refreshSnapshot;
@@ -318,7 +319,7 @@ export const useCourtOccupancy = ({
   };
 };
 
-export type { BooktimeSnapshotBanner };
+export type { ClubSnapshotBanner };
 
 const formatTimeInClubTimezone = (date: Date, club?: Club): string => {
   const clubTimezone = getClubTimezone(club);

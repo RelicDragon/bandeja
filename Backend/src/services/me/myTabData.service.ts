@@ -217,16 +217,16 @@ export class MyTabDataService {
    * Fetch booktime connection status (optional).
    */
   private static async fetchBooktimeStatus(userId: string): Promise<boolean> {
-    const connections = await prisma.userClubBooktimeAuth.count({
-      where: {
-        userId,
-        club: {
-          isActive: true,
-        },
-      },
-    });
+    const activeClubFilter = {
+      userId,
+      club: { isActive: true },
+    };
+    const [booktimeCount, padelooCount] = await Promise.all([
+      prisma.userClubBooktimeAuth.count({ where: activeClubFilter }),
+      prisma.userClubPadelooAuth.count({ where: activeClubFilter }),
+    ]);
 
-    return connections > 0;
+    return booktimeCount > 0 || padelooCount > 0;
   }
 
   /**

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { motion, type Variants } from 'framer-motion';
-import type { BooktimeMyClubRow } from '@/api/booktime';
+import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { BooktimeAdjacentBookingGroup } from './BooktimeAdjacentBookingGroup';
 import { BooktimeBookingRow } from './BooktimeBookingRow';
@@ -14,9 +14,9 @@ type UpcomingBooking = BooktimeBookingRecord & { clubId?: string };
 
 function resolveClub(
   booking: UpcomingBooking,
-  clubById: Map<string, BooktimeMyClubRow>,
+  clubById: Map<string, BookingListClubRow>,
   clubIdOf: (booking: UpcomingBooking) => string | undefined,
-): BooktimeMyClubRow | undefined {
+): BookingListClubRow | undefined {
   const clubId = clubIdOf(booking);
   if (clubId) return clubById.get(clubId);
   if (clubById.size === 1) return clubById.values().next().value;
@@ -25,7 +25,7 @@ function resolveClub(
 
 type Props = {
   bookings: UpcomingBooking[];
-  clubById: Map<string, BooktimeMyClubRow>;
+  clubById: Map<string, BookingListClubRow>;
   showClubName?: boolean;
   allowedHoursToCancel?: number;
   allowedHoursToCancelByClubId?: ReadonlyMap<string, number>;
@@ -61,7 +61,7 @@ export function BooktimeUpcomingBookingsList({
   const resolveAllowedHours = (clubId: string | undefined) =>
     resolveBooktimeCancelHoursForClub(clubId, allowedHoursToCancelByClubId, allowedHoursToCancel);
   const resolveClubTimezone = useCallback(
-    (club: BooktimeMyClubRow) => clubTimezone ?? resolveBooktimeMyClubTimezone(club),
+    (club: BookingListClubRow) => clubTimezone ?? resolveBooktimeMyClubTimezone(club),
     [clubTimezone],
   );
   const entries = useMemo(

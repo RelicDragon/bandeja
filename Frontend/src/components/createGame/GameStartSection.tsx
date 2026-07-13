@@ -13,7 +13,8 @@ import { useCourtOccupancy } from '@/hooks/useCourtOccupancy';
 import { BooktimeAvailabilityBanner } from '@/components/booktime/BooktimeAvailabilityBanner';
 import { useClubIntegrationDurations } from '@/hooks/useClubIntegrationDurations';
 import { pickClosestDurationOption } from '@/integrations/booktime/durations';
-import type { BooktimeSnapshotBanner } from '@/hooks/useBooktimeSnapshotRefresh';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
+import type { ClubSnapshotBanner } from '@/hooks/useClubSnapshotRefresh';
 import {
   effectiveCourtSportFilter,
   filterCourtsByClubSports,
@@ -68,7 +69,7 @@ interface GameStartSectionProps {
   existingBookingBanner?: ReactNode;
   snapshotOverlayEnabled?: boolean;
   snapshotLoading?: boolean;
-  snapshotBannerState?: BooktimeSnapshotBanner;
+  snapshotBannerState?: ClubSnapshotBanner;
   panelMode?: 'create' | 'edit';
   clubs?: Club[];
   courts?: Court[];
@@ -254,19 +255,19 @@ export const GameStartSection = ({
 
   const showClubPicker = clubs != null && courts != null && onSelectClub && onOpenClubModal && onCloseClubModal;
 
-  const booktimeOccupancyOverlayEnabled =
+  const clubBookingOccupancyOverlayEnabled =
     !snapshotOverlayEnabled &&
     !needsBooktimeAuth &&
     entityType !== 'BAR' &&
     !bookCourtEnabled &&
-    club?.integrationType === 'BOOKTIME';
+    clubHasBookingIntegration(club);
 
-  const isAvailabilityWarning = (banner: BooktimeSnapshotBanner) =>
+  const isAvailabilityWarning = (banner: ClubSnapshotBanner) =>
     banner === 'noSyncToday' || banner === 'scoutPoolEmpty';
 
   const availabilityOverlayLoading = snapshotOverlayEnabled
     ? snapshotLoading
-    : booktimeOccupancyOverlayEnabled && isLoadingExternalSlots;
+    : clubBookingOccupancyOverlayEnabled && isLoadingExternalSlots;
 
   const availabilityOverlayBanner = snapshotOverlayEnabled
     ? snapshotBannerState
@@ -276,7 +277,7 @@ export const GameStartSection = ({
     !needsBooktimeAuth &&
     (snapshotOverlayEnabled
       ? availabilityOverlayLoading || isAvailabilityWarning(availabilityOverlayBanner)
-      : booktimeOccupancyOverlayEnabled &&
+      : clubBookingOccupancyOverlayEnabled &&
         (availabilityOverlayLoading || isAvailabilityWarning(availabilityOverlayBanner)));
 
   const availabilityOverlay = availabilityOverlayVisible ? (

@@ -12,8 +12,8 @@ import { CreateGameClubSection } from '@/components/createGame/CreateGameClubSec
 import { CreateGameCourtSection } from '@/components/createGame/CreateGameCourtSection';
 import { CreateGameDateSection } from '@/components/createGame/CreateGameDateSection';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
-import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import { clubHasBookingIntegration } from '@shared/clubIntegration';
+import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import { computePendingBookingUnlinks } from '@/components/gameLocationTime/computePendingBookingUnlinks';
 import { PendingBookingUnlinkHint } from '@/components/gameLocationTime/PendingBookingUnlinkHint';
 import {
@@ -336,15 +336,17 @@ export function LocationTimeTab({
     onDraftChange(draftPayload);
   }, [draftPayload, onDraftChange]);
 
+  const clubHasIntegration = club != null && clubHasBookingIntegration(club);
+
   const reservationsActive =
     clubBookingFlowActive &&
-    Boolean(booktimeCompanyId) &&
+    clubHasIntegration &&
     booktimeConnected &&
     !needsBooktimeAuth;
 
   const showBooktimeAuthPrompt =
     clubBookingFlowActive &&
-    Boolean(booktimeCompanyId) &&
+    clubHasIntegration &&
     !booktimeConnected &&
     (editReservationAction === 'reserveNew' || editReservationAction === 'useExisting');
   const resolvedAuthGateSection = showBooktimeAuthPrompt
@@ -378,7 +380,6 @@ export function LocationTimeTab({
 
   const clubDateReservations = useClubDateReservations({
     club,
-    companyId: booktimeCompanyId ?? '',
     selectedDate,
     enabled: reservationsActive,
     matchCourts: courts,
@@ -392,10 +393,10 @@ export function LocationTimeTab({
       resolveEditReservationActionOptions({
         hasLinkedBookings: initialLinkedBookingIds.length > 0,
         clubBookingFlowActive,
-        hasBooktimeAuthPath: Boolean(booktimeCompanyId),
+        hasBooktimeAuthPath: clubHasIntegration,
         hasReservationsForDate,
       }),
-    [initialLinkedBookingIds.length, clubBookingFlowActive, booktimeCompanyId, hasReservationsForDate],
+    [initialLinkedBookingIds.length, clubBookingFlowActive, clubHasIntegration, hasReservationsForDate],
   );
 
   useEffect(() => {

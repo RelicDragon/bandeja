@@ -304,7 +304,7 @@ Frontend/e2e/
 | H-38j | Booking slot occupancy pill | Upcoming booking with partial or full linked game coverage | Small % pill beside slot time; grouped adjacent card shows weighted % across all slots |
 | H-38f | Standalone booking card actions (My tab) | Connected user with at least one non-grouped upcoming booking | Tap standalone card → link/create/cancel actions animate in and card highlights; tap another standalone card → first collapses, second expands; tap same card again → actions collapse |
 | H-38k | Grouped booking card actions (My tab) | Connected user with adjacent same-court upcoming slots | Tap grouped card → per-slot rows animate in with link/create/cancel; only one card expanded at a time; tap again collapses |
-| H-38l | Bookings integrations shortcut (My tab) | Connected user with upcoming bookings on My tab | Gear icon beside "See all" → `/profile/connected-clubs?tab=integrations` with Integrations subtab active; "See all" still opens Bookings subtab |
+| H-38m | Padeloo upcoming (My tab) | User connected to Padeloo club (e.g. Avantura) with upcoming reservation | Bookings switch shows Padeloo booking card with provider label; cancel/link actions work |
 | H-58 | My tab list view | My tab → tap List in calendar header (list icon + label) | Calendar grid collapses to header row; weather toggle hidden; UpcomingGamesList sections; preference persists after reload |
 | H-59 | My tab games calendar view | Tap Calendar in collapsed calendar header | Calendar grid expands; day selection works as before |
 | H-64 | Calendar weather toggle | My tab calendar expanded → tap cloud/sun icon in header | Icon highlights; day cells show weather pill (icon + temp) instead of entity-type pill where forecast exists; date select/filter unchanged |
@@ -1063,7 +1063,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-57a1 | Adjacent booking group (settings) | Bookings → Bookings tab with consecutive same-court slots | Grouped card with date + per-slot time chips; tap highlights and expands each slot row; only one expanded at a time |
 | PR-57a2 | Standalone booking card actions (settings) | Bookings → Bookings tab with non-grouped upcoming booking | Tap standalone card → actions animate in; only one expanded at a time; tap again collapses |
 | PR-57a3 | Past booking card actions (settings) | Bookings → expand Past section; unlinked past booking | Same tap-to-expand "Link to game" behavior as upcoming standalone cards |
-| PR-57b | Integrations tab | Integrations tab | Club list with connect/disconnect state; hint card |
+| PR-57f | Padeloo Integrations tab | Integrations tab in city with Padeloo club (Zlatibor) | Avantura clubs listed; connect opens email OTP sheet; disconnect works |
+| PR-57g | Padeloo Bookings tab | Connected Padeloo user with upcoming reservation | Bookings tab lists Padeloo reservation alongside Booktime rows with provider badge |
 | PR-57c | Link booking to game (happy path) | My tab → Bookings → Link to game → pick game (confirm reschedule if times differ) | Single request succeeds; success toast; game shows linked booking with correct time/club |
 | PR-57d | Link booking to game (failure) | Link to game while offline or on already-linked booking | Error toast; no partial link (game unchanged if request failed) |
 | PR-57e | Bookings back navigation | My tab → See all → back; Profile → Bookings → back | Browser back returns to previous screen (My tab or Profile) |

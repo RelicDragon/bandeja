@@ -980,7 +980,12 @@ async function viewCenterCourts(centerId) {
     document.getElementById('courtsClubLocation').textContent = `${center.address}, ${center.city.name}`;
     const importBtn = document.getElementById('importBooktimeCourtsBtn');
     if (importBtn) {
-        importBtn.style.display = center.integrationType === 'BOOKTIME' ? 'inline-block' : 'none';
+        importBtn.style.display =
+            center.integrationType === 'BOOKTIME' || center.integrationType === 'PADELOO'
+                ? 'inline-block'
+                : 'none';
+        importBtn.textContent =
+            center.integrationType === 'PADELOO' ? 'Import Padeloo courts' : 'Import booking courts';
     }
     loadCourtsForCenter(center.id);
 }
@@ -1053,6 +1058,10 @@ async function importBooktimeCourtsForCenter() {
         alert('No club selected');
         return;
     }
+    if (currentCenter.integrationType === 'PADELOO') {
+        await importPadelooCourtsForCenter();
+        return;
+    }
     const config = currentCenter.integrationConfig && typeof currentCenter.integrationConfig === 'object'
         ? currentCenter.integrationConfig
         : null;
@@ -1093,6 +1102,41 @@ async function importBooktimeCourtsForCenter() {
         }
         const payload = await booktimeRes.json();
         const response = await apiRequest(`/admin/clubs/${currentCenter.id}/booktime/import-courts`, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        if (response.success) {
+            const summary = response.data;
+            toast(`Imported: ${summary.created} created, ${summary.updated} updated`, 'success');
+            loadCourtsForCenter(currentCenter.id);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function importPadelooCourtsForCenter() {
+    if (!currentCenter?.id) {
+        alert('No club selected');
+        return;
+    }
+    const config = currentCenter.integrationConfig && typeof currentCenter.integrationConfig === 'object'
+        ? currentCenter.integrationConfig
+        : null;
+    const padelooClubId = Number(config?.clubId);
+    if (!Number.isInteger(padelooClubId) || padelooClubId <= 0) {
+        alert('Padeloo clubId is not configured for this club');
+        return;
+    }
+    if (!confirm('Import courts from Padeloo? Existing courts will be matched by external ID or name.')) return;
+    try {
+        const padelooRes = await fetch(`https://api.padeloo.app/api/Club/${padelooClubId}`);
+        if (!padelooRes.ok) {
+            const text = await padelooRes.text().catch(() => '');
+            throw new Error(`Padeloo club fetch failed (${padelooRes.status})${text ? `: ${text.slice(0, 200)}` : ''}`);
+        }
+        const payload = await padelooRes.json();
+        const response = await apiRequest(`/admin/clubs/${currentCenter.id}/padeloo/import-courts`, {
             method: 'POST',
             body: JSON.stringify(payload),
         });

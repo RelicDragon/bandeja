@@ -331,9 +331,10 @@ export interface Club {
   amenities?: Record<string, any>;
   isBar?: boolean;
   isForPlaying?: boolean;
-  integrationType?: 'BOOKTIME' | null;
+  integrationType?: 'BOOKTIME' | 'PADELOO' | null;
   integrationConfig?: {
     companyId?: string;
+    clubId?: number;
     termsUrl?: string;
     privacyUrl?: string;
     serviceIds?: string[];

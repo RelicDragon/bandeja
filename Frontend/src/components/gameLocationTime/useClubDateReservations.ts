@@ -1,22 +1,14 @@
 import { useMemo } from 'react';
 import type { Club, Court } from '@/types';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
-import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
-import { useBooktimeUpcomingBookings } from '@/hooks/useBooktimeUpcomingBookings';
 import { filterBookingsForClubDate } from '@/components/booktime/filterBookingsForClubDate';
 import { getClubTimezone } from '@/hooks/useGameTimeDuration';
-
-const inactiveClubPlaceholder: Club = {
-  id: '',
-  name: '',
-  address: '',
-  cityId: '',
-  integrationType: 'BOOKTIME',
-};
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
+import { useClubBookingAuth } from '@/hooks/useClubBookingAuth';
+import { useClubUpcomingBookings } from '@/hooks/useClubUpcomingBookings';
 
 type UseClubDateReservationsArgs = {
   club: Club | undefined;
-  companyId: string;
   selectedDate: Date;
   enabled: boolean;
   matchCourts?: Court[];
@@ -24,17 +16,15 @@ type UseClubDateReservationsArgs = {
 
 export function useClubDateReservations({
   club,
-  companyId,
   selectedDate,
   enabled,
   matchCourts,
 }: UseClubDateReservationsArgs) {
-  const active = enabled && club != null && companyId.length > 0;
-  const { status: auth, loading: authLoading } = useBooktimeClubAuth(club?.id, active);
+  const active = enabled && club != null && clubHasBookingIntegration(club);
+  const { status: auth, loading: authLoading } = useClubBookingAuth(club, active);
   const connected = Boolean(auth?.connected);
-  const { bookings, loading: bookingsLoading, loaded: bookingsLoaded } = useBooktimeUpcomingBookings(
-    club ?? inactiveClubPlaceholder,
-    companyId,
+  const { bookings, loading: bookingsLoading, loaded: bookingsLoaded } = useClubUpcomingBookings(
+    club,
     connected,
     active,
     matchCourts,

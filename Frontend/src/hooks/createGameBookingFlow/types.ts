@@ -1,4 +1,4 @@
-import type { BookingSnapshotInput } from '@shared/gameBooking/contracts';
+import type { BookingSnapshotInput, ExternalBookingProvider } from '@shared/gameBooking/contracts';
 
 export type CreateGameBookingOverrides = {
   externalBookingIds?: string[];
@@ -18,7 +18,7 @@ export type CreateGameBookingFields = {
   timeOverride: boolean;
   hasBookedCourt: boolean;
   externalBookingIds?: string[];
-  externalBookingProvider?: 'BOOKTIME';
+  externalBookingProvider?: ExternalBookingProvider;
   bookingSnapshots?: BookingSnapshotInput[];
 };
 

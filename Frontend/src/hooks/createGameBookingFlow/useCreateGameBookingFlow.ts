@@ -15,10 +15,10 @@ import {
   areBookingRecordsEqual,
   areStringArraysEqual,
 } from '@/components/gameLocationTime/locationTimeDraft';
-import { useBooktimeTimeOptions } from '@/hooks/useBooktimeTimeOptions';
-import { useBooktimeClubAuth } from '@/hooks/useBooktimeClubAuth';
+import { useClubTimeOptions } from '@/hooks/useClubTimeOptions';
+import { useClubBookingAuth } from '@/hooks/useClubBookingAuth';
 import { useBooktimeLiveApiEnabled } from '@/hooks/useBooktimeLiveApiEnabled';
-import { useBooktimeSnapshotRefresh } from '@/hooks/useBooktimeSnapshotRefresh';
+import { useClubSnapshotRefresh } from '@/hooks/useClubSnapshotRefresh';
 import { useBooktimeCompanyMeta } from '@/hooks/useBooktimeCompanyMeta';
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import {
@@ -29,7 +29,7 @@ import {
   type ReservationIntent,
 } from '@shared/gameBooking/reservationIntent';
 import { mapCreateAbortReasonToValidationReason } from './resolveCreateGameBookingAction';
-import { clubHasBookingIntegration, parseBooktimeIntegrationConfig } from '@shared/clubIntegration';
+import { clubHasBookingIntegration, isPadelooClub, parseBooktimeIntegrationConfig, parsePadelooIntegrationConfig } from '@shared/clubIntegration';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { usePreselectedBookingHydration } from './usePreselectedBookingHydration';
@@ -145,18 +145,19 @@ export function useCreateGameBookingFlow({
     clubHasBookingIntegration(selectedClubData) &&
     supportsClubBookingFlow(entityType, 'create') &&
     Boolean(selectedClub);
-  const { apiEnabled: liveApiEnabled } = useBooktimeLiveApiEnabled(
+  const { apiEnabled: booktimeLiveApiEnabled } = useBooktimeLiveApiEnabled(
     selectedClub || undefined,
-    clubBookingFlowActive,
+    clubBookingFlowActive && !isPadelooClub(selectedClubData),
   );
+  const liveApiEnabled = isPadelooClub(selectedClubData) ? true : booktimeLiveApiEnabled;
 
-  const { status: booktimeAuth, refresh: refreshBooktimeAuth } = useBooktimeClubAuth(
-    selectedClub || undefined,
+  const { status: clubBookingAuth, refresh: refreshClubBookingAuth } = useClubBookingAuth(
+    selectedClubData,
     clubBookingFlowActive,
   );
   const needsBooktimeAuthForIntent = Boolean(
     clubBookingFlowActive &&
-      !booktimeAuth?.connected &&
+      !clubBookingAuth?.connected &&
       (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting'),
   );
 
@@ -200,7 +201,7 @@ export function useCreateGameBookingFlow({
 
   const needsBooktimeAuth = Boolean(
     clubBookingFlowActive &&
-      !booktimeAuth?.connected &&
+      !clubBookingAuth?.connected &&
       (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting' || willBookOnCreate),
   );
   const wantsReserveNowAvailability = reservationIntent === 'reserveNow';
@@ -217,9 +218,11 @@ export function useCreateGameBookingFlow({
     snapshotBanner: createGameSnapshotBanner,
     lastFetchedAt: snapshotLastFetchedAt,
     isRefreshingSnapshot,
-  } = useBooktimeSnapshotRefresh(selectedClubData, selectedDate, snapshotRefreshEnabled);
+  } = useClubSnapshotRefresh(selectedClubData, selectedDate, snapshotRefreshEnabled, {
+    durationMinutes: Math.round(duration * 60),
+  });
 
-  const booktimeTimeOptions = useBooktimeTimeOptions({
+  const booktimeTimeOptions = useClubTimeOptions({
     club: selectedClubData,
     courts,
     selectedDate,
@@ -232,7 +235,8 @@ export function useCreateGameBookingFlow({
       needsBooktimeAuth,
       locationTimeMode,
       willBookOnCreate: willBookOnCreate || wantsReserveNowAvailability,
-      booktimeConnected: Boolean(booktimeAuth?.connected),
+      booktimeConnected: Boolean(clubBookingAuth?.connected),
+      isPadelooClub: isPadelooClub(selectedClubData),
     }),
   });
 
@@ -262,14 +266,18 @@ export function useCreateGameBookingFlow({
     return parseBooktimeIntegrationConfig(selectedClubData.integrationConfig);
   }, [selectedClubData]);
 
+  const padelooIntegrationConfig = useMemo(() => {
+    if (!selectedClubData || !isPadelooClub(selectedClubData)) return null;
+    return parsePadelooIntegrationConfig(selectedClubData.integrationConfig);
+  }, [selectedClubData]);
+
   const clubDateReservationsEnabled =
     clubBookingFlowActive &&
-    Boolean(booktimeAuth?.connected) &&
-    Boolean(booktimeIntegrationConfig?.companyId);
+    Boolean(clubBookingAuth?.connected) &&
+    Boolean(booktimeIntegrationConfig?.companyId || padelooIntegrationConfig?.clubId);
 
   const clubDateReservations = useClubDateReservations({
     club: selectedClubData,
-    companyId: booktimeIntegrationConfig?.companyId ?? '',
     selectedDate,
     enabled: clubDateReservationsEnabled,
     matchCourts: bookingMatchCourts ?? courts,
@@ -303,11 +311,11 @@ export function useCreateGameBookingFlow({
     () =>
       resolveReservationIntentOptions({
         clubBookingFlowActive,
-        hasBooktimeAuthPath: Boolean(booktimeIntegrationConfig),
+        hasBooktimeAuthPath: Boolean(booktimeIntegrationConfig || padelooIntegrationConfig),
         manualBookedAvailable: !clubBookingFlowActive,
         hasReservationsForDate,
       }),
-    [clubBookingFlowActive, booktimeIntegrationConfig, hasReservationsForDate],
+    [clubBookingFlowActive, booktimeIntegrationConfig, padelooIntegrationConfig, hasReservationsForDate],
   );
 
   const resetOnClubChange = useCallback(() => {
@@ -405,14 +413,14 @@ export function useCreateGameBookingFlow({
     if (
       (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting') &&
       clubBookingFlowActive &&
-      !booktimeAuth?.connected
+      !clubBookingAuth?.connected
     ) {
       setSelectedTime('');
     }
   }, [
     reservationIntent,
     clubBookingFlowActive,
-    booktimeAuth?.connected,
+    clubBookingAuth?.connected,
     setSelectedTime,
   ]);
 
@@ -614,6 +622,7 @@ export function useCreateGameBookingFlow({
         selectedCourt,
         selectedCourtIds,
         hasBookedCourt: reservationIntent === 'manualBooked' ? true : hasBookedCourt,
+        integrationType: selectedClubData?.integrationType ?? null,
         overrides,
       });
     },
@@ -629,6 +638,7 @@ export function useCreateGameBookingFlow({
       selectedCourtIds,
       hasBookedCourt,
       reservationIntent,
+      selectedClubData?.integrationType,
     ],
   );
 
@@ -710,26 +720,23 @@ export function useCreateGameBookingFlow({
       }) => Promise<void>;
       onSuccess: () => void;
     }) => {
-      if (!selectedClubData || !booktimeIntegrationConfig || !confirmModalOpen) return null;
-      return {
+      if (!selectedClubData || !confirmModalOpen) return null;
+
+      const sharedBookings = integratedCourtIds
+        .map((id) => courts.find((c) => c.id === id))
+        .filter((court): court is Court => court != null)
+        .map((court) => ({
+          court,
+          date: selectedDate,
+          startTime: selectedTime,
+          durationMinutes: Math.round(duration * 60),
+        }));
+
+      const sharedTail = {
         open: confirmModalOpen,
         onOpenChange: setConfirmModalOpen,
         club: selectedClubData,
-        companyId: booktimeIntegrationConfig.companyId,
-        bookings: integratedCourtIds
-          .map((id) => courts.find((c) => c.id === id))
-          .filter((court): court is Court => court != null)
-          .map((court) => ({
-            court,
-            date: selectedDate,
-            startTime: selectedTime,
-            durationMinutes: Math.round(duration * 60),
-          })),
-        phoneNumber: booktimeAuth?.phoneNumber ?? null,
-        firstName: booktimeAuth?.firstName ?? null,
-        lastName: booktimeAuth?.lastName ?? null,
-        allowedHoursToCancel: booktimeCompanyMeta.allowedHoursToCancel,
-        currency: booktimeCompanyMeta.currency,
+        bookings: sharedBookings,
         sport,
         summaryChips: args.summaryChips,
         bookFlowContext: {
@@ -744,19 +751,45 @@ export function useCreateGameBookingFlow({
           args.onSuccess();
         },
       };
+
+      if (padelooIntegrationConfig) {
+        return {
+          provider: 'PADELOO' as const,
+          padelooClubId: padelooIntegrationConfig.clubId,
+          email: clubBookingAuth?.email ?? null,
+          firstName: clubBookingAuth?.firstName ?? null,
+          lastName: clubBookingAuth?.lastName ?? null,
+          ...sharedTail,
+        };
+      }
+
+      if (!booktimeIntegrationConfig) return null;
+
+      return {
+        provider: 'BOOKTIME' as const,
+        companyId: booktimeIntegrationConfig.companyId,
+        phoneNumber: clubBookingAuth?.phoneNumber ?? null,
+        firstName: clubBookingAuth?.firstName ?? null,
+        lastName: clubBookingAuth?.lastName ?? null,
+        allowedHoursToCancel: booktimeCompanyMeta.allowedHoursToCancel,
+        currency: booktimeCompanyMeta.currency,
+        ...sharedTail,
+      };
     },
     [
       selectedClubData,
       booktimeIntegrationConfig,
+      padelooIntegrationConfig,
       confirmModalOpen,
       integratedCourtIds,
       courts,
       selectedDate,
       selectedTime,
       duration,
-      booktimeAuth?.phoneNumber,
-      booktimeAuth?.firstName,
-      booktimeAuth?.lastName,
+      clubBookingAuth?.phoneNumber,
+      clubBookingAuth?.email,
+      clubBookingAuth?.firstName,
+      clubBookingAuth?.lastName,
       booktimeCompanyMeta.allowedHoursToCancel,
       booktimeCompanyMeta.currency,
       sport,
@@ -916,8 +949,8 @@ export function useCreateGameBookingFlow({
     derivedBookingWindowLabel,
     integratedCourtIds,
     needsBooktimeAuth,
-    booktimeAuth,
-    refreshBooktimeAuth,
+    clubBookingAuth,
+    refreshClubBookingAuth,
     booktimeIntegrationConfig,
     booktimeCompanyMeta,
     booktimeFixedDates,
@@ -946,7 +979,7 @@ export function useCreateGameBookingFlow({
     handleSkipMarkCourt: finishPendingNavigate,
     getConfirmModalProps,
     handleAuthConnected: () => {
-      void refreshBooktimeAuth();
+      void refreshClubBookingAuth();
       if (booktimeFixedDates?.length) {
         const clamped = clampBooktimeDate(selectedDate);
         if (format(clamped, 'yyyy-MM-dd') !== format(selectedDate, 'yyyy-MM-dd')) {

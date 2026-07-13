@@ -104,6 +104,8 @@
       "cancelFailed": "Could not cancel the booking.",
       "providerNotConfigured": "Booking provider is not configured.",
       "externalProviderMustBeBooktime": "Invalid booking provider for linked reservations.",
+      "externalProviderUnsupported": "This booking provider is not supported.",
+      "padelooClubIdRequired": "Padeloo club ID is required in integration config.",
       "cannotClearBookedCourtWithLinks": "Remove linked reservations before clearing the booked court flag.",
       "patchRequiresBookingId": "Specify at least one reservation to link or unlink.",
       "updateLinksForbidden": "Only owners and admins can manage linked reservations.",

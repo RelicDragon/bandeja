@@ -14,6 +14,7 @@ import { resolveBookingSelectionAfterDeselect } from './resolveBookingSelectionA
 import type { LocationTimeMode } from './LocationTimeMode';
 import type { BookingSelectionLimits } from '@shared/gameBooking/computeBookingSelectionLimits';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { clubHasBookingIntegration } from '@shared/clubIntegration';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { useAuthStore } from '@/store/authStore';
 import { buildBookingSnapshots } from '@shared/gameBooking/buildBookingSnapshots';
@@ -114,7 +115,7 @@ export function GameLocationTimePanel({
 
   const reservationsEnabled =
     club != null &&
-    companyId != null &&
+    clubHasBookingIntegration(club) &&
     selectedDate != null &&
     bookingSelectionLimits != null &&
     onSelectedBookingIdsChange != null &&
@@ -142,7 +143,6 @@ export function GameLocationTimePanel({
 
   const clubReservations = useClubDateReservations({
     club,
-    companyId: companyId ?? '',
     selectedDate: selectedDate ?? new Date(),
     enabled: reservationsEnabled,
     matchCourts: reservationFetchCourts,

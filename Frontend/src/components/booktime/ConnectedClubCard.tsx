@@ -1,9 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { Check, Loader2 } from 'lucide-react';
-import type { BooktimeMyClubRow } from '@/api/booktime';
+import type { ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
 import { ClubAvatar } from '@/components';
+
 type Props = {
-  club: BooktimeMyClubRow;
+  club: ConnectedBookingClubRow;
   disconnectBusy: boolean;
   onConnect: () => void;
   onDisconnect: () => void;
@@ -16,6 +17,10 @@ export function ConnectedClubCard({
   onDisconnect,
 }: Props) {
   const { t } = useTranslation();
+  const providerLabel =
+    club.integrationType === 'PADELOO'
+      ? t('club.padeloo.providerLabel', { defaultValue: 'Padeloo' })
+      : t('club.booktime.providerLabel', { defaultValue: 'Booktime' });
 
   return (
     <article
@@ -42,11 +47,16 @@ export function ConnectedClubCard({
             ) : null}
           </div>
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {t('club.courtsCount', { count: club.courts.length })}
+            {providerLabel} · {t('club.courtsCount', { count: club.courts.length })}
           </p>
           {club.connected && club.phoneNumber ? (
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {t('club.booktime.connectedAs', { phone: club.phoneNumber })}
+            </p>
+          ) : null}
+          {club.connected && club.email ? (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t('club.padeloo.connectedAs', { email: club.email, defaultValue: club.email })}
             </p>
           ) : null}
           {club.connected ? (

@@ -1,6 +1,6 @@
 /** Keep in sync with Backend/src/shared/clubIntegration.ts */
 
-export type ClubIntegrationType = 'BOOKTIME';
+export type ClubIntegrationType = 'BOOKTIME' | 'PADELOO';
 
 export interface BooktimeIntegrationConfig {
   companyId: string;
@@ -8,6 +8,12 @@ export interface BooktimeIntegrationConfig {
   privacyUrl?: string;
   serviceIds?: string[];
 }
+
+export interface PadelooIntegrationConfig {
+  clubId: number;
+}
+
+export type ClubIntegrationConfig = BooktimeIntegrationConfig | PadelooIntegrationConfig;
 
 export type ClubIntegrationRef = {
   integrationType?: ClubIntegrationType | null;
@@ -36,23 +42,51 @@ export function parseBooktimeIntegrationConfig(raw: unknown): BooktimeIntegratio
   return config;
 }
 
-/** Club uses Booktime integration (may lack companyId — club-level UI still needs companyId separately). */
+export function parsePadelooIntegrationConfig(raw: unknown): PadelooIntegrationConfig | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const clubId = (raw as Record<string, unknown>).clubId;
+  if (typeof clubId === 'number' && Number.isInteger(clubId) && clubId > 0) {
+    return { clubId };
+  }
+  if (typeof clubId === 'string' && clubId.trim()) {
+    const parsed = Number(clubId);
+    if (Number.isInteger(parsed) && parsed > 0) return { clubId: parsed };
+  }
+  return null;
+}
+
 export function isBooktimeClub(club: ClubIntegrationRef | undefined): boolean {
   return club?.integrationType === 'BOOKTIME';
 }
 
-/** Booktime company id when club integration config is valid; null otherwise. */
+export function isPadelooClub(club: ClubIntegrationRef | undefined): boolean {
+  return club?.integrationType === 'PADELOO';
+}
+
 export function getBooktimeCompanyId(club: ClubIntegrationRef | undefined): string | null {
   if (!isBooktimeClub(club)) return null;
   return parseBooktimeIntegrationConfig(club?.integrationConfig)?.companyId ?? null;
 }
 
-/** Club-level: integrated club with companyId — drives tabs / segmented UI mode. */
-export function clubHasBookingIntegration(club: ClubIntegrationRef | undefined): boolean {
-  return getBooktimeCompanyId(club) !== null;
+export function getPadelooClubId(club: ClubIntegrationRef | undefined): number | null {
+  if (!isPadelooClub(club)) return null;
+  return parsePadelooIntegrationConfig(club?.integrationConfig)?.clubId ?? null;
 }
 
-/** Court-level: integrated club + mapped externalCourtId — drives book-on-create per court. */
+export function getExternalVenueId(club: ClubIntegrationRef | undefined): string | null {
+  const booktimeId = getBooktimeCompanyId(club);
+  if (booktimeId) return booktimeId;
+  const padelooId = getPadelooClubId(club);
+  return padelooId != null ? String(padelooId) : null;
+}
+
+export function clubHasBookingIntegration(club: ClubIntegrationRef | undefined): boolean {
+  if (!club?.integrationType) return false;
+  if (isBooktimeClub(club)) return getBooktimeCompanyId(club) !== null;
+  if (isPadelooClub(club)) return getPadelooClubId(club) !== null;
+  return false;
+}
+
 export function courtHasActiveBookingIntegration(
   club: ClubIntegrationRef | undefined,
   court: CourtIntegrationRef | undefined,
@@ -62,13 +96,26 @@ export function courtHasActiveBookingIntegration(
   return Boolean(court.externalCourtId?.trim());
 }
 
-/** Booktime company durations apply when club is integrated and court selection still uses external booking. */
 export function shouldUseBooktimeCompanyDurations(
   club: ClubIntegrationRef | undefined,
   selectedCourtId: string | null | undefined,
   courts: CourtIntegrationRef[] | undefined,
 ): boolean {
-  if (!clubHasBookingIntegration(club)) return false;
+  if (!isBooktimeClub(club) || !clubHasBookingIntegration(club)) return false;
+  if (selectedCourtId === 'notBooked') return false;
+  if (selectedCourtId) {
+    const court = courts?.find((c) => c.id === selectedCourtId);
+    return courtHasActiveBookingIntegration(club, court);
+  }
+  return true;
+}
+
+export function shouldUsePadelooDurations(
+  club: ClubIntegrationRef | undefined,
+  selectedCourtId: string | null | undefined,
+  courts: CourtIntegrationRef[] | undefined,
+): boolean {
+  if (!isPadelooClub(club) || !clubHasBookingIntegration(club)) return false;
   if (selectedCourtId === 'notBooked') return false;
   if (selectedCourtId) {
     const court = courts?.find((c) => c.id === selectedCourtId);

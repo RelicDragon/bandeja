@@ -1,17 +1,18 @@
 import { Calendar } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { BooktimeMyClubRow } from '@/api/booktime';
+import { connectedClubRowToBooktimeRow, connectedClubRowToBookingListClub, type ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
+import { PADELOO_DEFAULT_CANCEL_HOURS } from '@/integrations/padeloo/config';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
-import { useBooktimeAllUpcoming } from '@/hooks/useBooktimeAllUpcoming';
+import { useAllUpcomingClubBookings } from '@/hooks/useAllUpcomingClubBookings';
 import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
-import { BooktimePastBookingsSection } from './BooktimePastBookingsSection';
+import { ClubPastBookingsSection } from './ClubPastBookingsSection';
 import { useBooktimeCancelPoliciesForClubs } from './useBooktimeCancelPolicy';
 
 type Props = {
-  clubs: BooktimeMyClubRow[];
+  clubs: ConnectedBookingClubRow[];
   refreshKey: number;
 };
 
@@ -20,14 +21,39 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey }: Props) {
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const [pastRefreshKey, setPastRefreshKey] = useState(0);
-  const connectedClubs = useMemo(() => clubs.filter((c) => c.connected && c.companyId), [clubs]);
-  const { bookings: upcoming, loading: upcomingLoading, removeBooking } = useBooktimeAllUpcoming(
+  const connectedClubs = useMemo(
+    () => clubs.filter((c) => c.connected && (c.companyId || c.padelooClubId)),
+    [clubs],
+  );
+  const { bookings: upcoming, loading: upcomingLoading, removeBooking } = useAllUpcomingClubBookings(
     clubs,
     true,
     refreshKey,
   );
-  const allowedHoursToCancelByClubId = useBooktimeCancelPoliciesForClubs(clubs, connectedClubs.length > 0);
-  const clubById = useMemo(() => new Map(clubs.map((c) => [c.clubId, c])), [clubs]);
+  const booktimeRows = useMemo(
+    () =>
+      clubs
+        .filter((c) => c.integrationType === 'BOOKTIME')
+        .map(connectedClubRowToBooktimeRow),
+    [clubs],
+  );
+  const bookingListClubById = useMemo(
+    () => new Map(clubs.filter((c) => c.connected).map((c) => [c.clubId, connectedClubRowToBookingListClub(c)])),
+    [clubs],
+  );
+  const allowedHoursToCancelByClubId = useBooktimeCancelPoliciesForClubs(
+    booktimeRows,
+    connectedClubs.length > 0,
+  );
+  const cancelHoursByClubId = useMemo(() => {
+    const map = new Map(allowedHoursToCancelByClubId);
+    for (const club of clubs) {
+      if (club.integrationType === 'PADELOO' && club.connected && club.padelooClubId) {
+        map.set(club.clubId, PADELOO_DEFAULT_CANCEL_HOURS);
+      }
+    }
+    return map;
+  }, [allowedHoursToCancelByClubId, clubs]);
 
   const handleCanceled = (bookingId: string) => {
     removeBooking(bookingId);
@@ -63,16 +89,16 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey }: Props) {
         ) : (
           <BooktimeUpcomingBookingsList
             bookings={upcoming}
-            clubById={clubById}
+            clubById={bookingListClubById}
             showClubName
-            allowedHoursToCancelByClubId={allowedHoursToCancelByClubId}
+            allowedHoursToCancelByClubId={cancelHoursByClubId}
             onCanceled={handleCanceled}
           />
         )}
       </section>
 
-      <BooktimePastBookingsSection
-        clubs={clubs}
+      <ClubPastBookingsSection
+        clubs={connectedClubs}
         displaySettings={displaySettings}
         refreshKey={refreshKey + pastRefreshKey}
         showClubName

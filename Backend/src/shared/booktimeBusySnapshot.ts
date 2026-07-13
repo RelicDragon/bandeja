@@ -107,16 +107,23 @@ export type SnapshotFreshness = {
 
 export async function getSnapshotFreshness(
   clubId: string,
-  dates: string[]
+  dates: string[],
+  integrationType: ClubIntegrationType = ClubIntegrationType.BOOKTIME,
 ): Promise<SnapshotFreshness> {
   if (dates.length === 0) {
     return { isStale: true, latestFetchedAt: null };
   }
 
-  const rows = await prisma.clubBooktimeBusySnapshot.findMany({
-    where: { clubId, date: { in: dates } },
-    select: { date: true, fetchedAt: true },
-  });
+  const rows =
+    integrationType === ClubIntegrationType.PADELOO
+      ? await prisma.clubPadelooBusySnapshot.findMany({
+          where: { clubId, date: { in: dates } },
+          select: { date: true, fetchedAt: true },
+        })
+      : await prisma.clubBooktimeBusySnapshot.findMany({
+          where: { clubId, date: { in: dates } },
+          select: { date: true, fetchedAt: true },
+        });
 
   const fetchedAtByDate = new Map<string, Date>();
   for (const row of rows) {
@@ -190,8 +197,16 @@ export async function loadMergedBusySlots(options: {
   rangeEnd: Date;
   filterCourtId?: string;
   includeUnmapped: boolean;
+  integrationType?: ClubIntegrationType;
 }): Promise<{ slots: MergedBusySlot[]; isLoading: boolean }> {
-  const { clubId, rangeStart, rangeEnd, filterCourtId, includeUnmapped } = options;
+  const {
+    clubId,
+    rangeStart,
+    rangeEnd,
+    filterCourtId,
+    includeUnmapped,
+    integrationType = ClubIntegrationType.BOOKTIME,
+  } = options;
 
   const club = await prisma.club.findUnique({
     where: { id: clubId },
@@ -199,17 +214,28 @@ export async function loadMergedBusySlots(options: {
   });
   const timeZone = club?.city?.timezone ?? 'Europe/Belgrade';
   const dates = datesInRangeForTimezone(rangeStart, rangeEnd, timeZone);
-  const { isStale } = await getSnapshotFreshness(clubId, dates);
+  const { isStale } = await getSnapshotFreshness(clubId, dates, integrationType);
 
-  const rows = await prisma.clubBooktimeBusySnapshot.findMany({
-    where: {
-      clubId,
-      date: { in: dates.length > 0 ? dates : ['__none__'] },
-    },
-    include: {
-      court: { select: { id: true, name: true, integrationCourtName: true } },
-    },
-  });
+  const rows =
+    integrationType === ClubIntegrationType.PADELOO
+      ? await prisma.clubPadelooBusySnapshot.findMany({
+          where: {
+            clubId,
+            date: { in: dates.length > 0 ? dates : ['__none__'] },
+          },
+          include: {
+            court: { select: { id: true, name: true, integrationCourtName: true } },
+          },
+        })
+      : await prisma.clubBooktimeBusySnapshot.findMany({
+          where: {
+            clubId,
+            date: { in: dates.length > 0 ? dates : ['__none__'] },
+          },
+          include: {
+            court: { select: { id: true, name: true, integrationCourtName: true } },
+          },
+        });
 
   const slots: MergedBusySlot[] = [];
 
