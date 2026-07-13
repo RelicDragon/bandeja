@@ -1,14 +1,12 @@
 const MS_PER_DAY = 86_400_000;
 
 export const RATING_UNCERTAINTY_MAX = 150;
-/** Days after last rated activity with zero idle accrual. */
+/** Days after last rating activity with zero idle accrual. */
 export const RATING_UNCERTAINTY_GRACE_DAYS = 30;
 /** After grace: +IDLE_STEP uncertainty per this many post-grace days (continuous). */
 export const RATING_UNCERTAINTY_IDLE_DAYS = 30;
 export const RATING_UNCERTAINTY_IDLE_STEP = 10;
 export const RATING_UNCERTAINTY_PLAY_STEP = 10;
-/** Public soft-state — raw uncertainty only for admins. */
-export const RATING_SETTLING_THRESHOLD = 30;
 
 export function clampRatingUncertainty(value: number): number {
   if (!Number.isFinite(value)) return 0;
@@ -22,15 +20,32 @@ export function ratingUncertaintyScale(uncertainty: number): number {
   return 2 + (u - 100) / 50;
 }
 
-export function isRatingSettling(uncertainty: number): boolean {
-  return clampRatingUncertainty(uncertainty) >= RATING_SETTLING_THRESHOLD;
+/** Idle days past the grace window (0 during grace / missing activity). */
+export function ratingPostGraceDays(
+  lastRatingActivityAt: Date | null | undefined,
+  now: Date = new Date(),
+): number {
+  if (!lastRatingActivityAt) return 0;
+  const idleDays = Math.max(
+    0,
+    (now.getTime() - lastRatingActivityAt.getTime()) / MS_PER_DAY,
+  );
+  return Math.max(0, idleDays - RATING_UNCERTAINTY_GRACE_DAYS);
+}
+
+/** Soft public “settling” when idle past grace (rise can start). */
+export function isRatingSettling(
+  lastRatingActivityAt: Date | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  return ratingPostGraceDays(lastRatingActivityAt, now) > 0;
 }
 
 /**
  * Continuous idle accrual with grace:
  * - first GRACE_DAYS after lastRatingActivityAt → no rise
  * - then +(postGraceDays / IDLE_DAYS) * IDLE_STEP onto stored value, capped at MAX
- * - null lastRatingActivityAt → no idle (needs backfill / first rated game)
+ * - null lastRatingActivityAt → no idle (needs backfill / first activity)
  */
 export function accrueRatingUncertainty(
   current: number,
@@ -38,19 +53,14 @@ export function accrueRatingUncertainty(
   now: Date = new Date(),
 ): number {
   const base = clampRatingUncertainty(current);
-  if (!lastRatingActivityAt) return base;
-  const idleDays = Math.max(
-    0,
-    (now.getTime() - lastRatingActivityAt.getTime()) / MS_PER_DAY,
-  );
-  const postGraceDays = Math.max(0, idleDays - RATING_UNCERTAINTY_GRACE_DAYS);
+  const postGraceDays = ratingPostGraceDays(lastRatingActivityAt, now);
   if (postGraceDays <= 0) return base;
   const idleContribution =
     (postGraceDays / RATING_UNCERTAINTY_IDLE_DAYS) * RATING_UNCERTAINTY_IDLE_STEP;
   return clampRatingUncertainty(base + idleContribution);
 }
 
-/** After one finished rating-affecting game. */
+/** After one finished rating-affecting competitive game (not training). */
 export function ratingUncertaintyAfterFinishedGame(accrued: number): number {
   return clampRatingUncertainty(accrued - RATING_UNCERTAINTY_PLAY_STEP);
 }

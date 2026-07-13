@@ -242,8 +242,9 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     snap.ratingUncertainty,
     snap.lastRatingActivityAt,
   );
-  (projectedUser as { ratingSettling?: boolean }).ratingSettling =
-    isRatingSettling(effectiveUncertainty);
+  (projectedUser as { ratingSettling?: boolean }).ratingSettling = isRatingSettling(
+    snap.lastRatingActivityAt,
+  );
 
   if (req.userId) {
     const viewer = await prisma.user.findUnique({

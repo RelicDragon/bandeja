@@ -7,11 +7,24 @@ import {
   resolveUserSportSnapshot,
 } from './user/userSportProfile.service';
 import { createSetEvent, revertForGame, clearSetEventsForUserInGame } from './levelChange';
+import {
+  mergeRatingUncertaintyMetadata,
+  readRatingUncertaintyMetadata,
+} from './results/outcomeStatsSnapshot';
 
 export async function finishTraining(gameId: string, _userId: string): Promise<void> {
   const game = await prisma.game.findUnique({
     where: { id: gameId },
-    select: { id: true, entityType: true, resultsStatus: true },
+    select: {
+      id: true,
+      entityType: true,
+      resultsStatus: true,
+      sport: true,
+      participants: {
+        where: { status: 'PLAYING' },
+        select: { userId: true },
+      },
+    },
   });
 
   if (!game) {
@@ -23,14 +36,31 @@ export async function finishTraining(gameId: string, _userId: string): Promise<v
   }
 
   const isFirstTimeFinal = game.resultsStatus !== 'FINAL';
-  
-  await prisma.game.update({
-    where: { id: gameId },
-    data: {
-      resultsStatus: 'FINAL',
-      status: 'FINISHED',
-      ...(isFirstTimeFinal && { finishedDate: new Date() }),
-    },
+  const now = new Date();
+
+  await prisma.$transaction(async (tx) => {
+    await tx.game.update({
+      where: { id: gameId },
+      data: {
+        resultsStatus: 'FINAL',
+        status: 'FINISHED',
+        ...(isFirstTimeFinal && { finishedDate: now }),
+      },
+    });
+
+    for (const p of game.participants) {
+      await tx.userSportProfile.upsert({
+        where: { userId_sport: { userId: p.userId, sport: game.sport } },
+        create: {
+          userId: p.userId,
+          sport: game.sport,
+          lastRatingActivityAt: now,
+        },
+        update: {
+          lastRatingActivityAt: now,
+        },
+      });
+    }
   });
   await cleanupInviteParticipantsForEndedGame(gameId);
 }
@@ -109,6 +139,8 @@ export async function updateParticipantLevel(
           sport: true,
           level: true,
           reliability: true,
+          ratingUncertainty: true,
+          lastRatingActivityAt: true,
           gamesPlayed: true,
           gamesWon: true,
         },
@@ -136,6 +168,15 @@ export async function updateParticipantLevel(
   const reliabilityAfter = Math.max(reliabilityBefore, Math.min(100.0, reliability));
   const actualLevelChange = levelAfter - levelBefore;
   const actualReliabilityChange = reliabilityAfter - reliabilityBefore;
+  const activityMeta = mergeRatingUncertaintyMetadata(existingOutcome?.metadata, {
+    ratingUncertaintyBefore: sportSnapshot.ratingUncertainty,
+    ratingUncertaintyUsed: sportSnapshot.ratingUncertainty,
+    ratingUncertaintyAfter: sportSnapshot.ratingUncertainty,
+    lastRatingActivityAtBefore: sportSnapshot.lastRatingActivityAt
+      ? sportSnapshot.lastRatingActivityAt.toISOString()
+      : null,
+  });
+  const now = new Date();
 
   await prisma.$transaction(async (tx) => {
     await clearSetEventsForUserInGame(gameId, participantUserId, tx);
@@ -159,10 +200,12 @@ export async function updateParticipantLevel(
         sport: game.sport,
         level: levelAfter,
         reliability: reliabilityAfter,
+        lastRatingActivityAt: now,
       },
       update: {
         level: levelAfter,
         reliability: reliabilityAfter,
+        lastRatingActivityAt: now,
       },
     });
 
@@ -198,6 +241,7 @@ export async function updateParticipantLevel(
         losses: 0,
         scoresMade: 0,
         scoresLost: 0,
+        metadata: activityMeta,
       },
       update: {
         levelBefore,
@@ -206,6 +250,7 @@ export async function updateParticipantLevel(
         reliabilityBefore,
         reliabilityAfter,
         reliabilityChange: actualReliabilityChange,
+        metadata: activityMeta,
       },
     });
 
@@ -274,6 +319,7 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
     if (game.outcomes.length > 0) {
       for (const outcome of game.outcomes) {
         const levelBefore = Math.max(1.0, Math.min(7.0, outcome.levelBefore));
+        const activityMeta = readRatingUncertaintyMetadata(outcome.metadata);
         await tx.userSportProfile.upsert({
           where: { userId_sport: { userId: outcome.userId, sport: game.sport } },
           create: {
@@ -281,10 +327,24 @@ export async function undoTraining(gameId: string, userId: string): Promise<void
             sport: game.sport,
             level: levelBefore,
             reliability: outcome.reliabilityBefore,
+            ...(activityMeta
+              ? {
+                  lastRatingActivityAt: activityMeta.lastRatingActivityAtBefore
+                    ? new Date(activityMeta.lastRatingActivityAtBefore)
+                    : null,
+                }
+              : {}),
           },
           update: {
             level: levelBefore,
             reliability: outcome.reliabilityBefore,
+            ...(activityMeta
+              ? {
+                  lastRatingActivityAt: activityMeta.lastRatingActivityAtBefore
+                    ? new Date(activityMeta.lastRatingActivityAtBefore)
+                    : null,
+                }
+              : {}),
           },
         });
       }

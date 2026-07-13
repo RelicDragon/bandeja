@@ -4,6 +4,7 @@ import { calculateRatingUpdate, calculateReliabilityChange } from './rating.serv
 import {
   accrueRatingUncertainty,
   computeReliabilityCoefficient,
+  isRatingSettling,
 } from './ratingUncertainty';
 import { readRatingUncertaintyMetadata } from './outcomeStatsSnapshot';
 import {
@@ -47,6 +48,8 @@ interface ExplanationData {
   reliabilityCoefficient: number;
   /** Accrued uncertainty used for this game's reliability factor (admin UI). */
   ratingUncertainty: number;
+  /** Soft public state: idle past grace at game time. */
+  ratingSettling: boolean;
   matches: MatchExplanation[];
   summary: {
     totalMatches: number;
@@ -117,6 +120,7 @@ export interface StoredOutcomeForExplanation {
   ties: number;
   losses: number;
   metadata: Prisma.JsonValue | null;
+  createdAt?: Date;
 }
 
 interface PlayerRatingState {
@@ -328,6 +332,12 @@ export function buildOutcomeRatingExplanation(
       ? accrueRatingUncertainty(userSport.ratingUncertainty, userSport.lastRatingActivityAt)
       : 0);
   uncertaintyByUser.set(userId, subjectUncertainty);
+
+  const settlingActivityAt = subjectUncertaintyMeta?.lastRatingActivityAtBefore
+    ? new Date(subjectUncertaintyMeta.lastRatingActivityAtBefore)
+    : userSport.lastRatingActivityAt;
+  const settlingAsOf = existingOutcome?.createdAt ?? new Date();
+  const ratingSettling = isRatingSettling(settlingActivityAt, settlingAsOf);
 
   const states = new Map<string, PlayerRatingState>();
   for (const p of game.participants) {
@@ -658,6 +668,7 @@ export function buildOutcomeRatingExplanation(
     reliabilityChange,
     reliabilityCoefficient,
     ratingUncertainty: subjectUncertainty,
+    ratingSettling,
     matches,
     summary: {
       totalMatches: summaryWins + summaryLosses + summaryDraws,
@@ -733,6 +744,7 @@ export async function getOutcomeExplanation(
       ties: true,
       losses: true,
       metadata: true,
+      createdAt: true,
     },
   });
 

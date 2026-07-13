@@ -50,6 +50,7 @@ import {
   accrueRatingUncertainty,
   ratingUncertaintyAfterFinishedGame,
 } from './ratingUncertainty';
+import { countsAsRatingActivity } from './ratingActivity';
 
 async function rebuildLeagueSeasonStandingsIfNeeded(
   gameId: string,
@@ -318,15 +319,14 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     const undoDeltas = resolveSportStatsDeltasForUndo(outcome.metadata, outcome.isWinner, game.affectsRating);
     const undoStats = computeUndoSportStatsFromDeltas(undoSnapshot, undoDeltas);
     const uncertaintyMeta = readRatingUncertaintyMetadata(outcome.metadata);
-    const undoUncertainty =
-      ratingStatsApplied && uncertaintyMeta
-        ? {
-            ratingUncertainty: uncertaintyMeta.ratingUncertaintyBefore,
-            lastRatingActivityAt: uncertaintyMeta.lastRatingActivityAtBefore
-              ? new Date(uncertaintyMeta.lastRatingActivityAtBefore)
-              : null,
-          }
-        : {};
+    const undoUncertainty = uncertaintyMeta
+      ? {
+          ratingUncertainty: uncertaintyMeta.ratingUncertaintyBefore,
+          lastRatingActivityAt: uncertaintyMeta.lastRatingActivityAtBefore
+            ? new Date(uncertaintyMeta.lastRatingActivityAtBefore)
+            : null,
+        }
+      : {};
 
     await tx.userSportProfile.upsert({
       where: { userId_sport: { userId: outcome.userId, sport: game.sport } },
@@ -464,6 +464,7 @@ export async function applyGameOutcomes(
     const levelBefore = sportSnapshot.level;
     const reliabilityBefore = sportSnapshot.reliability;
     const ratingStatsApplied = game.affectsRating;
+    const stampsActivity = countsAsRatingActivity(game);
     const uncertaintyBefore = sportSnapshot.ratingUncertainty;
     const uncertaintyUsed = ratingStatsApplied
       ? accrueRatingUncertainty(uncertaintyBefore, sportSnapshot.lastRatingActivityAt)
@@ -491,6 +492,15 @@ export async function applyGameOutcomes(
         ratingUncertaintyBefore: uncertaintyBefore,
         ratingUncertaintyUsed: uncertaintyUsed,
         ratingUncertaintyAfter: uncertaintyAfter,
+        lastRatingActivityAtBefore: sportSnapshot.lastRatingActivityAt
+          ? sportSnapshot.lastRatingActivityAt.toISOString()
+          : null,
+      });
+    } else if (stampsActivity) {
+      mergedMetadata = mergeRatingUncertaintyMetadata(mergedMetadata, {
+        ratingUncertaintyBefore: uncertaintyBefore,
+        ratingUncertaintyUsed: uncertaintyBefore,
+        ratingUncertaintyAfter: uncertaintyBefore,
         lastRatingActivityAtBefore: sportSnapshot.lastRatingActivityAt
           ? sportSnapshot.lastRatingActivityAt.toISOString()
           : null,
@@ -563,7 +573,9 @@ export async function applyGameOutcomes(
               ratingUncertainty: uncertaintyAfter,
               lastRatingActivityAt: new Date(),
             }
-          : {}),
+          : stampsActivity
+            ? { lastRatingActivityAt: new Date() }
+            : {}),
       },
       update: {
         level: appliedStats.level,
@@ -575,7 +587,9 @@ export async function applyGameOutcomes(
               ratingUncertainty: uncertaintyAfter,
               lastRatingActivityAt: new Date(),
             }
-          : {}),
+          : stampsActivity
+            ? { lastRatingActivityAt: new Date() }
+            : {}),
       },
     });
 

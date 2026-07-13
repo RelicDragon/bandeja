@@ -3,6 +3,7 @@ import {
   clampRatingUncertainty,
   computeReliabilityCoefficient,
   isRatingSettling,
+  ratingPostGraceDays,
   ratingUncertaintyAfterFinishedGame,
   ratingUncertaintyScale,
 } from './ratingUncertainty';
@@ -31,11 +32,15 @@ assert(near(accrueRatingUncertainty(20, t0, daysAfter(t0, 60)), 30), 'base+10 at
 assert(accrueRatingUncertainty(20, t0, daysAfter(t0, 20)) === 20, 'grace keeps stored base');
 assert(accrueRatingUncertainty(140, t0, daysAfter(t0, 200)) === 150, 'cap 150');
 
+assert(ratingPostGraceDays(null, t0) === 0, 'postGrace null');
+assert(ratingPostGraceDays(t0, daysAfter(t0, 30)) === 0, 'postGrace at grace');
+assert(near(ratingPostGraceDays(t0, daysAfter(t0, 45)), 15), 'postGrace 15');
+assert(!isRatingSettling(t0, daysAfter(t0, 30)), 'settling in grace');
+assert(isRatingSettling(t0, daysAfter(t0, 30.01)), 'settling past grace');
+assert(!isRatingSettling(null, t0), 'settling null activity');
+
 assert(ratingUncertaintyAfterFinishedGame(30) === 20, 'play -10');
 assert(ratingUncertaintyAfterFinishedGame(5) === 0, 'play floor 0');
-
-assert(!isRatingSettling(29.9), 'settling below');
-assert(isRatingSettling(30), 'settling at threshold');
 
 const base = computeReliabilityCoefficient(50, 0);
 const doubled = computeReliabilityCoefficient(50, 100);

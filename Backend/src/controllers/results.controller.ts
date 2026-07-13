@@ -12,7 +12,6 @@ import * as matchLiveScoringService from '../services/results/matchLiveScoring.s
 import { LIVE_SCORING_REASON_CODE } from '../services/results/liveScoringEngine/liveScoringRejectReasons';
 import { liveSpectatorQueryTokenMaxBytes, signLiveSpectatorToken, verifyLiveSpectatorToken } from '../utils/jwt';
 import { assertMatchBelongsToGame } from '../services/results/liveSpectator.service';
-import { isRatingSettling } from '../services/results/ratingUncertainty';
 
 export const recalculateOutcomes = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
@@ -374,7 +373,6 @@ export const getOutcomeExplanation = asyncHandler(async (req: AuthRequest, res: 
   const { ratingUncertainty, ...rest } = explanation;
   const data = {
     ...rest,
-    ratingSettling: isRatingSettling(ratingUncertainty),
     ...(viewerIsAdmin ? { ratingUncertainty } : {}),
   };
 
