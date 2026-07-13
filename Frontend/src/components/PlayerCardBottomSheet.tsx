@@ -443,6 +443,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         onOpenGame={handleOpenGame}
                         onMarketItemClick={handleMarketItemClick}
                         onStatsRefresh={setStats}
+                        playStreakAliveOnly
                       />
                     </motion.div>
                   ) : null}

@@ -36,6 +36,7 @@ export interface PlayerCardProfileBodyProps {
   onOpenGame: () => void;
   onMarketItemClick?: (item: MarketItem) => void;
   onStatsRefresh?: (stats: UserStats) => void;
+  playStreakAliveOnly?: boolean;
 }
 
 const containerVariants = {
@@ -66,6 +67,7 @@ const PlayerCardProfileBodyComponent = ({
   onOpenGame,
   onMarketItemClick,
   onStatsRefresh,
+  playStreakAliveOnly = false,
 }: PlayerCardProfileBodyProps) => {
   const { user } = stats;
   const authUserId = useAuthStore((s) => s.user?.id);
@@ -148,7 +150,7 @@ const PlayerCardProfileBodyComponent = ({
             )}
             {playStreak && (playStreak.current > 0 || playStreak.best > 0) && (
               <div className="mt-2">
-                <PlayStreakChip streak={playStreak} isOwn={isOwnProfile} />
+                <PlayStreakChip streak={playStreak} isOwn={isOwnProfile} aliveOnly={playStreakAliveOnly} />
               </div>
             )}
             <PlayerCardRatingStatus

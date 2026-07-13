@@ -7,14 +7,21 @@ import { PlayStreakSheet } from '@/components/playStreak/PlayStreakSheet';
 type PlayStreakChipProps = {
   streak: PlayStreakView;
   isOwn?: boolean;
+  /** When true, hide broken/empty chip (current must be > 0). */
+  aliveOnly?: boolean;
   className?: string;
 };
 
-export function PlayStreakChip({ streak, isOwn = false, className = '' }: PlayStreakChipProps) {
+export function PlayStreakChip({
+  streak,
+  isOwn = false,
+  aliveOnly = false,
+  className = '',
+}: PlayStreakChipProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
-  if (streak.current <= 0 && streak.best <= 0) return null;
+  if (aliveOnly ? streak.current <= 0 : streak.current <= 0 && streak.best <= 0) return null;
 
   const atRisk = isOwn && streak.atRisk && streak.current > 0;
   const label =

@@ -1018,7 +1018,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |
 | PR-streak-4 | New week while alive | Rated finish after open week, before deadline | Count +1; celebration banner once |
-| PR-streak-5 | Past deadline | Open own profile after missing deadline | Current shows broken/best only; best kept |
+| PR-streak-5 | Past deadline | Open player card (`?player=`) after missing deadline | Streak chip hidden (alive-only); fullscreen/profile sport panel may still show best |
 | PR-19 | Change city | City modal | City updated |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |
