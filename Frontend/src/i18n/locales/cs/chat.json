@@ -57,6 +57,7 @@
     "autoTranslateRemoveSlot": "Odebrat jazyk",
     "autoTranslateReadOnly": "Jazyky automatického překladu mohou měnit pouze administrátoři chatu.",
     "autoTranslatedLabel": "Přeloženo",
+    "autoTranslateOriginalLabel": "Originál",
     "translating": "Překládám…",
     "translateToLanguage": "Přeložit do",
     "dontUseTranslationInThisChat": "V tomto chatu nepoužívat překlad",

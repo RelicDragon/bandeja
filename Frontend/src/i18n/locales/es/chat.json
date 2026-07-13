@@ -57,6 +57,7 @@
     "autoTranslateRemoveSlot": "Quitar idioma",
     "autoTranslateReadOnly": "Solo los administradores del chat pueden cambiar los idiomas de traducción automática.",
     "autoTranslatedLabel": "Traducido",
+    "autoTranslateOriginalLabel": "Original",
     "translating": "Traduciendo…",
     "translateToLanguage": "Traducir a",
     "dontUseTranslationInThisChat": "No usar traducción en este chat",

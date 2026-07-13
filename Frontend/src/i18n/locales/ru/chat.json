@@ -58,6 +58,7 @@
     "autoTranslateRemoveSlot": "Убрать язык",
     "autoTranslateReadOnly": "Языки автоперевода могут менять только администраторы чата.",
     "autoTranslatedLabel": "Переведено",
+    "autoTranslateOriginalLabel": "Оригинал",
     "translating": "Переводится…",
     "translateToLanguage": "Перевести на",
     "dontUseTranslationInThisChat": "Не использовать перевод в этом чате",

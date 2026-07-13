@@ -852,7 +852,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-32 | Create poll | Poll composer | Poll message |
 | CH-33 | Vote on poll | Select option | Vote count updates |
 | CH-34 | View poll voters | Open voters modal | Voter list |
-| CH-35 | Auto-translate | Enable translate | Translated text shown |
+| CH-35 | Auto-translate | Enable translate on chat with foreign-language message | Only translated text shown (not original); label reads “Translated” |
+| CH-35a | Auto-translate toggle | Tap “Translated” on auto-translated message | Swaps to original with “Original” label; tap again restores translation |
 | CH-36 | Draft persistence | Type without send → leave → return | Draft restored |
 | CH-37 | Offline send queue | `@offline` send | Queued state + retry on online |
 | CH-38 | Failed send retry | Force failure → resend | Message sends |

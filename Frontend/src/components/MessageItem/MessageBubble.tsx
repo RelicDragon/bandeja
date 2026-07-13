@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ChatMessage } from '@/api/chat';
-import { Languages } from 'lucide-react';
 import { PollMessage } from '../chat/PollMessage';
 import { MessageContentBody, ContentVariant } from './MessageContentBody';
+import { MessageTranslationBody } from './MessageTranslationBody';
 import { MessageExternalLinkPreview } from './MessageExternalLinkPreview';
 import { MessageMediaGrid } from './MessageMediaGrid';
 import { AudioMessageBubble } from '../audio/AudioMessageBubble';
@@ -195,41 +195,24 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               {displayContent}
             </p>
           ) : hasTranslation ? (
-            <div className="space-y-2">
-              <div className="pb-2 border-b border-gray-300 dark:border-gray-600">
-                <MessageContentBody
-                  parts={parsedContent}
-                  fallbackContent={displayContent}
-                  variant={variant}
-                  mentionIds={mentionIds}
-                  currentUserId={currentUserId}
-                  onMentionClick={onMentionClick}
-                  onUrlClick={onUrlClick}
-                  threadSearchHighlightQuery={threadSearchHighlightQuery}
-                />
-              </div>
-              <motion.div
-                key={translationRevealKey ?? 'translation'}
-                initial={translationRevealKey ? { opacity: 0, y: 6 } : false}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, ease: 'easeOut' }}
-                className={isChannel ? 'text-gray-600 dark:text-gray-400' : isOwnMessage ? 'text-blue-50' : 'text-gray-600 dark:text-gray-400'}
-              >
-                <p className="text-[10px] uppercase tracking-wide opacity-70 mb-1 flex items-center gap-1">
-                  <Languages size={10} aria-hidden />
-                  {t('chat.autoTranslatedLabel', { defaultValue: 'Translated' })}
-                </p>
-                <MessageContentBody
-                  parts={translationContent}
-                  fallbackContent={message.translation?.translation}
-                  variant={contentVariantForTranslation}
-                  mentionIds={mentionIds}
-                  currentUserId={currentUserId}
-                  onMentionClick={onMentionClick}
-                  onUrlClick={onUrlClick}
-                />
-              </motion.div>
-            </div>
+            <MessageTranslationBody
+              messageId={message.id}
+              parsedContent={parsedContent}
+              translationContent={translationContent}
+              displayContent={displayContent}
+              translationFallback={message.translation?.translation}
+              variant={variant}
+              contentVariantForTranslation={contentVariantForTranslation}
+              mentionIds={mentionIds}
+              currentUserId={currentUserId}
+              onMentionClick={onMentionClick}
+              onUrlClick={onUrlClick}
+              threadSearchHighlightQuery={threadSearchHighlightQuery}
+              isChannel={isChannel}
+              isOwnMessage={isOwnMessage}
+              translationRevealKey={translationRevealKey}
+              t={t}
+            />
           ) : isTranslationLoading ? (
             <motion.div className="space-y-2" layout>
               <MessageContentBody

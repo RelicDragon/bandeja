@@ -57,6 +57,7 @@
     "autoTranslateRemoveSlot": "Ukloni jezik",
     "autoTranslateReadOnly": "Jezike automatskog prevoda mogu menjati samo administratori četa.",
     "autoTranslatedLabel": "Prevedeno",
+    "autoTranslateOriginalLabel": "Original",
     "translating": "Prevodi se…",
     "translateToLanguage": "Prevedi na",
     "dontUseTranslationInThisChat": "Ne koristi prevod u ovom ćaskanju",

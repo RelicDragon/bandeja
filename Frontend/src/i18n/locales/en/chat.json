@@ -58,6 +58,7 @@
     "autoTranslateRemoveSlot": "Remove language",
     "autoTranslateReadOnly": "Only chat admins can change auto-translate languages.",
     "autoTranslatedLabel": "Translated",
+    "autoTranslateOriginalLabel": "Original",
     "translating": "Translating…",
     "translateToLanguage": "Translate to",
     "dontUseTranslationInThisChat": "Don't use translation in this chat",
