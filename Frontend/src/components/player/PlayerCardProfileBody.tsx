@@ -11,6 +11,7 @@ import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePresenceStore } from '@/store/presenceStore';
+import { PlayStreakChip } from '@/components/playStreak/PlayStreakChip';
 import { useAuthStore } from '@/store/authStore';
 import { MarketItem } from '@/types';
 import { ratingUncertaintyScale } from '@/utils/ratingUncertainty';
@@ -67,11 +68,14 @@ const PlayerCardProfileBodyComponent = ({
   onStatsRefresh,
 }: PlayerCardProfileBodyProps) => {
   const { user } = stats;
+  const authUserId = useAuthStore((s) => s.user?.id);
   const isAdmin = Boolean(useAuthStore((s) => s.user)?.isAdmin);
+  const isOwnProfile = authUserId === user.id;
   const isFavorite = useFavoritesStore((state) => state.isFavorite(user.id));
   const isOnline = usePresenceStore((state) => state.isOnline(user.id));
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const hasTelegram = showTelegram && !!(user.telegramId || (user.telegramUsername && user.telegramUsername.trim()));
+  const playStreak = user.playStreak;
 
   const profileTabs = useMemo<SegmentedSwitchTab[]>(() => {
     const tabs: SegmentedSwitchTab[] = [
@@ -140,6 +144,11 @@ const PlayerCardProfileBodyComponent = ({
             {user.isTrainer && (
               <div className="flex items-center gap-1 mt-1">
                 <TrainerRatingBadge trainer={user} size="sm" showReviewCount={true} onClick={onRatingClick} variant="onPrimary" />
+              </div>
+            )}
+            {playStreak && (playStreak.current > 0 || playStreak.best > 0) && (
+              <div className="mt-2">
+                <PlayStreakChip streak={playStreak} isOwn={isOwnProfile} />
               </div>
             )}
           </div>

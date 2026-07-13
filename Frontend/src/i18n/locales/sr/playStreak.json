@@ -1,0 +1,19 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}} nedelja",
+    "chipWeeks_few": "{{count}} nedelje",
+    "chipWeeks_other": "{{count}} nedelja",
+    "chipBroken": "— · najbolji {{best}}",
+    "sheetTitle": "Serija igranja",
+    "rules": "Odigraj bar jednu ocenjenu utakmicu svakih 7 dana. Dodatne utakmice u istoj nedelji ne dodaju nedelje.",
+    "current": "Trenutna",
+    "best": "Najbolja",
+    "none": "—",
+    "weeks_one": "{{count}} nedelja",
+    "weeks_few": "{{count}} nedelje",
+    "weeks_other": "{{count}} nedelja",
+    "playBy": "Odigraj do {{date}} da zadržiš seriju",
+    "bannerStarted": "Serija počela!",
+    "bannerContinue": "Serija · {{count}} nedelja"
+  }
+}

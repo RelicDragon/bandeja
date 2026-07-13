@@ -5,6 +5,7 @@ import { ApiError } from '../../utils/ApiError';
 import { getImplementedSports, getSportConfig, resolveSport } from '../../sport/sportRegistry';
 import { isQuestionnaireSuggestedForProfile } from '../../sport/questionnaires/suggested';
 import { clampSportProfileGameStats } from '../results/outcomeStatsSnapshot';
+import { attachPlayStreaksToUser } from '../results/playStreak.service';
 
 export const MIN_SPORT_LEVEL = 1.0;
 export const MAX_SPORT_LEVEL = 7.0;
@@ -371,7 +372,8 @@ export async function loadProfileUser(userId: string) {
       user.primarySport = primarySport;
     }
   }
-  return enrichProfileUser(user);
+  const enriched = enrichProfileUser(user);
+  return attachPlayStreaksToUser(enriched);
 }
 
 /** ADR-Q9: ensure per-sport profile exists when user joins a game (invite, booking, league assign). */

@@ -445,6 +445,11 @@ model UserSportProfile {
   lastRatingActivityAt     DateTime?
   gamesPlayed              Int              @default(0)
   gamesWon                 Int              @default(0)
+  playStreakCount          Int              @default(0)
+  playStreakBest           Int              @default(0)
+  playStreakLastPlayAt     DateTime?
+  /** Start of local day of last streak-advancing play (algorithm week window). */
+  playStreakWeekStartAt    DateTime?
   questionnaireCompletedAt DateTime?
   questionnaireSkippedAt   DateTime?
   questionnaireVersion     String?

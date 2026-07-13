@@ -35,6 +35,7 @@ import { GameResultsTabs } from './GameResultsTabs';
 import { OfflineBanner } from './OfflineBanner';
 import { GameResultsModals } from './GameResultsModals';
 import { GameWorkoutSummaryCard } from './GameWorkoutSummaryCard';
+import { PlayStreakResultsBanner } from '@/components/playStreak/PlayStreakResultsBanner';
 import { GameResultsShareCard } from './GameResultsShareCard';
 import { useGameDetailsChromeStore } from './gameDetailsChromeStore';
 import { ResultsLoadingState } from './resultsEntry/ResultsLoadingState';
@@ -422,6 +423,10 @@ export const GameResultsEntryEmbedded = ({
           >
             {currentGame?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
               <div className="w-full">
+                <PlayStreakResultsBanner
+                  gameId={currentGame.id}
+                  outcomes={currentGame.outcomes || []}
+                />
                 <GameResultsShareCard game={currentGame} />
                 <div className="[&>div]:mx-0 [&>div]:max-w-none [&>div]:px-0">
                   <OutcomesDisplay

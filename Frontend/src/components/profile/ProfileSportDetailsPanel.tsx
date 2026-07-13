@@ -7,6 +7,8 @@ import { getSportPublicIcon } from '@/sport/sportPublicIcon';
 import { SportQuestionnaireProfileStatus } from '@/components/sportQuestionnaire/SportQuestionnaireProfileStatus';
 import { SportProfileLevelMeta } from '@/components/profile/SportProfileLevelMeta';
 import { SportProfileExternalRating } from '@/components/profile/SportProfileExternalRating';
+import { PlayStreakChip } from '@/components/playStreak/PlayStreakChip';
+import { findSportProfile } from '@/utils/profileSports';
 
 type ProfileSportDetailsPanelProps = {
   sport: Sport;
@@ -44,6 +46,7 @@ export function ProfileSportDetailsPanel({
   const { t } = useTranslation();
   const config = getSportConfig(sport);
   const label = t(config.labelKey);
+  const sportStreak = findSportProfile(user, sport)?.playStreak ?? user.playStreak;
 
   return (
     <div className="rounded-xl border-2 border-primary-300/80 bg-primary-50/80 p-4 shadow-sm dark:border-primary-600/50 dark:bg-primary-950/25">
@@ -59,6 +62,9 @@ export function ProfileSportDetailsPanel({
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {t('profile.sports.gamesCount', { count: gamesPlayed })}
               </span>
+              {sportStreak && (sportStreak.current > 0 || sportStreak.best > 0) && (
+                <PlayStreakChip streak={sportStreak} isOwn />
+              )}
             </div>
           </div>
         </div>

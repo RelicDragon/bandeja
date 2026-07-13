@@ -10,3 +10,14 @@ export function countsAsRatingActivity(game: {
   }
   return game.affectsRating || game.entityType === EntityType.TRAINING;
 }
+
+/** Play streak: rated finishes only. BAR / LEAGUE_SEASON / non-rating / training-only never qualify. LEAGUE fixtures do when affectsRating. */
+export function countsForPlayStreak(game: {
+  affectsRating: boolean;
+  entityType: EntityType;
+}): boolean {
+  if (game.entityType === EntityType.BAR || game.entityType === EntityType.LEAGUE_SEASON) {
+    return false;
+  }
+  return game.affectsRating === true;
+}

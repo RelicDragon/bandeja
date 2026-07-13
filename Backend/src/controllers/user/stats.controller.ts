@@ -19,6 +19,10 @@ import {
   projectUserForSportContext,
   resolveUserSportSnapshot,
 } from '../../services/user/userSportProfile.service';
+import {
+  buildPlayStreakViewForUser,
+  maybePersistBrokenPlayStreak,
+} from '../../services/results/playStreak.service';
 import { accrueRatingUncertainty, isRatingSettling } from '../../services/results/ratingUncertainty';
 import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { resolveSport } from '../../sport/sportRegistry';
@@ -245,6 +249,22 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   (projectedUser as { ratingSettling?: boolean }).ratingSettling = isRatingSettling(
     snap.lastRatingActivityAt,
   );
+
+  const sportProfile = user.sportProfiles.find((p) => p.sport === sport);
+  const playStreakFields = {
+    count: sportProfile?.playStreakCount ?? 0,
+    best: sportProfile?.playStreakBest ?? 0,
+    lastPlayAt: sportProfile?.playStreakLastPlayAt ?? null,
+  };
+  const playStreak = await buildPlayStreakViewForUser({
+    userId,
+    ...playStreakFields,
+    viewerUserId: req.userId,
+  });
+  if (req.userId === userId) {
+    await maybePersistBrokenPlayStreak(userId, sport, playStreakFields, playStreak);
+  }
+  (projectedUser as { playStreak?: typeof playStreak }).playStreak = playStreak;
 
   if (req.userId) {
     const viewer = await prisma.user.findUnique({

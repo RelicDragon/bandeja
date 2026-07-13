@@ -1,0 +1,21 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}} неделя",
+    "chipWeeks_few": "{{count}} недели",
+    "chipWeeks_many": "{{count}} недель",
+    "chipWeeks_other": "{{count}} недель",
+    "chipBroken": "— · лучший {{best}}",
+    "sheetTitle": "Игровая серия",
+    "rules": "Сыграйте хотя бы одну рейтинговую игру каждые 7 дней. Дополнительные игры в той же неделе не добавляют недели.",
+    "current": "Текущая",
+    "best": "Лучшая",
+    "none": "—",
+    "weeks_one": "{{count}} неделя",
+    "weeks_few": "{{count}} недели",
+    "weeks_many": "{{count}} недель",
+    "weeks_other": "{{count}} недель",
+    "playBy": "Сыграйте до {{date}}, чтобы сохранить серию",
+    "bannerStarted": "Серия началась!",
+    "bannerContinue": "Серия · {{count}} недель"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}} týden",
+    "chipWeeks_few": "{{count}} týdny",
+    "chipWeeks_other": "{{count}} týdnů",
+    "chipBroken": "— · rekord {{best}}",
+    "sheetTitle": "Herní série",
+    "rules": "Zahraj alespoň jednu hodnocenou hru každých 7 dní. Další hry ve stejném týdnu nepočítají nové týdny.",
+    "current": "Aktuální",
+    "best": "Nejlepší",
+    "none": "—",
+    "weeks_one": "{{count}} týden",
+    "weeks_few": "{{count}} týdny",
+    "weeks_other": "{{count}} týdnů",
+    "playBy": "Zahraj do {{date}}, ať udržís sérii",
+    "bannerStarted": "Série začala!",
+    "bannerContinue": "Série · {{count}} týdnů"
+  }
+}

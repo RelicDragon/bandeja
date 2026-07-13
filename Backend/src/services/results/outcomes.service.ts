@@ -47,10 +47,18 @@ import {
   resolveUserSportSnapshot,
 } from '../user/userSportProfile.service';
 import {
+  loadQualifyingPlayAts,
+  mergePlayStreakMetadata,
+  readPlayStreakAppliedFromMetadata,
+  recomputePlayStreakForUserSport,
+} from './playStreak.service';
+import { recomputePlayStreak } from './playStreak';
+import { getUserTimezone } from '../user-timezone.service';
+import {
   accrueRatingUncertainty,
   ratingUncertaintyAfterFinishedGame,
 } from './ratingUncertainty';
-import { countsAsRatingActivity } from './ratingActivity';
+import { countsAsRatingActivity, countsForPlayStreak } from './ratingActivity';
 
 async function rebuildLeagueSeasonStandingsIfNeeded(
   gameId: string,
@@ -292,6 +300,8 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
   await revertForGame(gameId, 'social', tx);
   await revertForGame(gameId, 'outcomes', tx);
 
+  const playStreakRecomputeUserIds = new Set<string>();
+
   for (const outcome of game.outcomes) {
     const user = await tx.user.findUnique({
       where: { id: outcome.userId },
@@ -327,6 +337,10 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
             : null,
         }
       : {};
+
+    if (readPlayStreakAppliedFromMetadata(outcome.metadata)) {
+      playStreakRecomputeUserIds.add(outcome.userId);
+    }
 
     await tx.userSportProfile.upsert({
       where: { userId_sport: { userId: outcome.userId, sport: game.sport } },
@@ -370,6 +384,10 @@ export async function undoGameOutcomes(gameId: string, tx: Prisma.TransactionCli
     where: { gameId },
   });
 
+  for (const userId of playStreakRecomputeUserIds) {
+    await recomputePlayStreakForUserSport(userId, game.sport, tx);
+  }
+
   if (isLeagueRoundGame && game.parentId) {
     await LeagueStandingsRecalculateService.recalculateFromPlayedGames(game.parentId, tx);
   }
@@ -408,6 +426,9 @@ export async function applyGameOutcomes(
       affectsRating: true,
       sport: true,
       winnerOfGame: true,
+      finishedDate: true,
+      endTime: true,
+      startTime: true,
       rounds: {
         orderBy: { roundNumber: 'asc' },
       },
@@ -417,6 +438,8 @@ export async function applyGameOutcomes(
   if (!game) {
     throw new ApiError(404, 'Game not found');
   }
+
+  const playAtForStreak = game.finishedDate ?? game.endTime ?? game.startTime ?? new Date();
 
   const uncappedLevelByUser = new Map<string, number>();
 
@@ -453,6 +476,10 @@ export async function applyGameOutcomes(
             lastRatingActivityAt: true,
             gamesPlayed: true,
             gamesWon: true,
+            playStreakCount: true,
+            playStreakBest: true,
+            playStreakLastPlayAt: true,
+            playStreakWeekStartAt: true,
           },
         },
       },
@@ -504,6 +531,46 @@ export async function applyGameOutcomes(
         lastRatingActivityAtBefore: sportSnapshot.lastRatingActivityAt
           ? sportSnapshot.lastRatingActivityAt.toISOString()
           : null,
+      });
+    }
+
+    const playAt = playAtForStreak;
+    let playStreakUpdate: {
+      playStreakCount: number;
+      playStreakBest: number;
+      playStreakLastPlayAt: Date;
+      playStreakWeekStartAt: Date;
+    } | null = null;
+
+    if (countsForPlayStreak(game) && sportStatsDeltas.gamesPlayedDelta > 0) {
+      const timezone = await getUserTimezone(outcome.userId);
+      const priorAts = await loadQualifyingPlayAts(outcome.userId, game.sport, tx, {
+        excludeGameId: gameId,
+      });
+      const beforeState = recomputePlayStreak(priorAts, timezone, playAt);
+      const afterState = recomputePlayStreak([...priorAts, playAt], timezone, playAt);
+      const advanced =
+        afterState.count > beforeState.count ||
+        (beforeState.count === 0 && afterState.count === 1);
+      playStreakUpdate = {
+        playStreakCount: afterState.count,
+        playStreakBest: afterState.best,
+        playStreakLastPlayAt: afterState.lastPlayAt ?? playAt,
+        playStreakWeekStartAt: afterState.weekStartAt ?? playAt,
+      };
+      mergedMetadata = mergePlayStreakMetadata(mergedMetadata, {
+        applied: true,
+        advanced,
+        before: {
+          count: beforeState.count,
+          best: beforeState.best,
+          lastPlayAt: beforeState.lastPlayAt ? beforeState.lastPlayAt.toISOString() : null,
+        },
+        after: {
+          count: afterState.count,
+          best: afterState.best,
+          lastPlayAt: afterState.lastPlayAt ? afterState.lastPlayAt.toISOString() : null,
+        },
       });
     }
 
@@ -568,13 +635,14 @@ export async function applyGameOutcomes(
         reliability: appliedStats.reliability,
         gamesPlayed: appliedStats.gamesPlayed,
         gamesWon: appliedStats.gamesWon,
+        ...(playStreakUpdate ?? {}),
         ...(ratingStatsApplied
           ? {
               ratingUncertainty: uncertaintyAfter,
-              lastRatingActivityAt: new Date(),
+              lastRatingActivityAt: playAt,
             }
           : stampsActivity
-            ? { lastRatingActivityAt: new Date() }
+            ? { lastRatingActivityAt: playAt }
             : {}),
       },
       update: {
@@ -582,13 +650,14 @@ export async function applyGameOutcomes(
         reliability: appliedStats.reliability,
         gamesPlayed: appliedStats.gamesPlayed,
         gamesWon: appliedStats.gamesWon,
+        ...(playStreakUpdate ?? {}),
         ...(ratingStatsApplied
           ? {
               ratingUncertainty: uncertaintyAfter,
-              lastRatingActivityAt: new Date(),
+              lastRatingActivityAt: playAt,
             }
           : stampsActivity
-            ? { lastRatingActivityAt: new Date() }
+            ? { lastRatingActivityAt: playAt }
             : {}),
       },
     });

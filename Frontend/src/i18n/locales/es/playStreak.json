@@ -1,0 +1,17 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}} semana",
+    "chipWeeks_other": "{{count}} semanas",
+    "chipBroken": "— · mejor {{best}}",
+    "sheetTitle": "Racha de juego",
+    "rules": "Juega al menos un partido con rating cada 7 días. Partidos extra en la misma semana no suman semanas.",
+    "current": "Actual",
+    "best": "Mejor",
+    "none": "—",
+    "weeks_one": "{{count}} semana",
+    "weeks_other": "{{count}} semanas",
+    "playBy": "Juega antes del {{date}} para mantener la racha",
+    "bannerStarted": "¡Racha empezada!",
+    "bannerContinue": "Racha · {{count}} semanas"
+  }
+}

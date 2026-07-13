@@ -16,6 +16,7 @@ export interface UserSportProfile {
   levelSource?: SportLevelSource;
   /** Manual or imported external scale (DUPR, NTRP, Playtomic, etc.) — profile only. */
   externalRatingHint?: string | null;
+  playStreak?: import('./playStreak').PlayStreakView;
 }
 
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
@@ -225,6 +226,7 @@ export interface User extends BasicUser {
   gamesPlayed: number;
   /** @deprecated Prefer `sportProfiles` for the relevant sport; API-populated from primary sport profile. */
   gamesWon: number;
+  playStreak?: import('./playStreak').PlayStreakView;
   approvedById?: string | null;
   approvedWhen?: Date | string | null;
   favoriteTrainerId?: string | null;
@@ -434,6 +436,13 @@ export interface GameOutcome {
   scoresMade: number;
   scoresLost: number;
   user: BasicUser;
+  metadata?: {
+    playStreakApplied?: boolean;
+    playStreakAdvanced?: boolean;
+    playStreakBefore?: { count: number; best: number; lastPlayAt: string | null };
+    playStreakAfter?: { count: number; best: number; lastPlayAt: string | null };
+    [key: string]: unknown;
+  } | null;
 }
 
 export interface Faq {

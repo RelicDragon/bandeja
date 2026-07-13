@@ -1,0 +1,17 @@
+{
+  "playStreak": {
+    "chipWeeks_one": "{{count}} week",
+    "chipWeeks_other": "{{count}} weeks",
+    "chipBroken": "— · best {{best}}",
+    "sheetTitle": "Play streak",
+    "rules": "Play at least one rated game every 7 days to keep your streak. Extra games in the same week don’t add weeks.",
+    "current": "Current",
+    "best": "Best",
+    "none": "—",
+    "weeks_one": "{{count}} week",
+    "weeks_other": "{{count}} weeks",
+    "playBy": "Play by {{date}} to keep your streak",
+    "bannerStarted": "Streak started!",
+    "bannerContinue": "Streak · {{count}} weeks"
+  }
+}

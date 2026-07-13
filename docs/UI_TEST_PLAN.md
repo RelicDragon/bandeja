@@ -670,6 +670,7 @@ Frontend/e2e/
 | GD-112 | Extra set entry switch | Add extra set → open its score modal | Games/Balls segmented switch in header; Balls caps score values |
 | GD-29 | Conflict resolution | Conflicting entries | Conflict modal |
 | GD-30 | Submit results | Finalize results | Status updates |
+| GR-streak-1 | Play streak banner on finalize | Rated finish that advances own weekly streak → Results tab | Banner once (“Streak started!” / “Streak · N weeks”); absent on same-week refresh |
 | GD-31 | Recalculate results | Owner recalc | Standings update |
 | GD-32 | Training level edit | Training game → level modal | Levels updated |
 | GD-33 | Live scoring link | Open live board | `/games/:id/live` |
@@ -1013,6 +1014,11 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-70 | Profile sport questionnaire status | Profile → sport with 0 games → Show details | Card titled "{{sport}} questionnaire"; status + Fill out / Fill out again |
 | PR-71 | Admin player card uncertainty | `@admin` open `?player=` card → level hero | Shows Uncertainty under reliability; non-admin does not |
 | PR-72 | Player card rating settling | Open player card when idle past 30-day grace | “Rating settling” on card hero; raw Uncertainty only if viewer is admin |
+| PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
+| PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
+| PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |
+| PR-streak-4 | New week while alive | Rated finish after open week, before deadline | Count +1; celebration banner once |
+| PR-streak-5 | Past deadline | Open own profile after missing deadline | Current shows broken/best only; best kept |
 | PR-19 | Change city | City modal | City updated |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |

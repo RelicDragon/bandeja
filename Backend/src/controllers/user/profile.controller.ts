@@ -28,6 +28,7 @@ import { validateAvailabilityBucketBoundaries } from '../../utils/validators/ava
 import { ensureRollingDoc, weeklyDocHasConfiguredSlots } from '../../utils/weeklyAvailabilityRolling';
 import { getUserTimezone } from '../../services/user-timezone.service';
 import { enrichProfileUser } from '../../services/user/userSportProfile.service';
+import { attachPlayStreaksToUser } from '../../services/results/playStreak.service';
 
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
@@ -80,11 +81,12 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
 
   const profile = enrichProfileUser({ ...user, weeklyAvailability: weeklyAvailabilityOut });
   delete (profile as { clubAdmins?: (typeof user)['clubAdmins'] }).clubAdmins;
+  const profileWithStreak = await attachPlayStreaksToUser(profile);
 
   res.json({
     success: true,
     data: {
-      ...profile,
+      ...profileWithStreak,
       blockedUserIds,
       clubAdminClubs,
     },
