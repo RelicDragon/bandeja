@@ -31,7 +31,9 @@ export const getCourtsByClub = asyncHandler(async (req: AuthRequest, res: Respon
       throw new ApiError(400, 'Invalid sport');
     }
     sportFilter = sportParam as Sport;
-    assertCourtSportInClub(club.sports, sportFilter);
+    if (club.sports.length > 0) {
+      assertCourtSportInClub(club.sports, sportFilter);
+    }
   }
 
   const courts = await prisma.court.findMany({

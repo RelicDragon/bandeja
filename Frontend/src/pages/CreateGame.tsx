@@ -703,8 +703,9 @@ export const CreateGame = ({
         return;
       }
       try {
+        const courtSportQuery = entityType === 'BAR' ? undefined : { sport: selectedSport };
         const [sportFilteredRes, allCourtsRes] = await Promise.all([
-          courtsApi.getByClubId(selectedClub, { sport: selectedSport }),
+          courtsApi.getByClubId(selectedClub, courtSportQuery),
           courtsApi.getByClubId(selectedClub),
         ]);
         const sportCourts = sportFilteredRes.data;
@@ -731,7 +732,7 @@ export const CreateGame = ({
       }
     };
     void fetchCourts();
-  }, [selectedClub, selectedSport, initialCourtId, initialHasBookedCourt, setHasBookedCourt]);
+  }, [selectedClub, selectedSport, entityType, initialCourtId, initialHasBookedCourt, setHasBookedCourt]);
 
   useEffect(() => {
     if (selectedCourt === 'notBooked') return;
