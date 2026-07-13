@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown } from 'lucide-react';
 import { TRANSLATION_LANGUAGES, getTranslationLanguageByCode, getTranslationLanguageFlag } from '@/utils/translationLanguages';
@@ -6,21 +6,31 @@ import { TRANSLATION_LANGUAGES, getTranslationLanguageByCode, getTranslationLang
 interface PreferredTranslationLanguageSectionProps {
   preferredLanguageCode: string | null;
   appLanguageCode: string;
+  modalOpen: boolean;
   onChange: (languageCode: string | null) => void | Promise<void>;
 }
 
 export const PreferredTranslationLanguageSection: React.FC<PreferredTranslationLanguageSectionProps> = ({
   preferredLanguageCode,
   appLanguageCode,
+  modalOpen,
   onChange,
 }) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
-  const effectiveCode = preferredLanguageCode ?? appLanguageCode;
+  useEffect(() => {
+    if (!modalOpen) {
+      setOpen(false);
+    }
+  }, [modalOpen]);
+
+  const normalizedPreferred = preferredLanguageCode?.toLowerCase() ?? null;
+
+  const effectiveCode = normalizedPreferred ?? appLanguageCode;
   const effectiveEntry = getTranslationLanguageByCode(effectiveCode);
   const effectiveLabel = effectiveEntry?.label ?? effectiveCode;
-  const isUsingAppDefault = !preferredLanguageCode;
+  const isUsingAppDefault = !normalizedPreferred;
 
   const handleSelect = async (code: string | null) => {
     await onChange(code);
@@ -87,7 +97,7 @@ export const PreferredTranslationLanguageSection: React.FC<PreferredTranslationL
             </button>
           </li>
           {TRANSLATION_LANGUAGES.map(({ code, label }) => {
-            const isSelected = preferredLanguageCode === code;
+            const isSelected = normalizedPreferred === code;
             return (
               <li key={code}>
                 <button

@@ -59,6 +59,7 @@ export const TranslationLanguageModal: React.FC<TranslationLanguageModalProps> =
             <PreferredTranslationLanguageSection
               preferredLanguageCode={preferredTranslationLanguage ?? null}
               appLanguageCode={appLanguageCode}
+              modalOpen={open}
               onChange={onPreferredTranslationLanguageChange}
             />
           ) : null}

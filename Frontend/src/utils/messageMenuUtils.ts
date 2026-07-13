@@ -52,6 +52,25 @@ export function hasUserDisplayName(user?: { firstName?: string; lastName?: strin
   return !!user && getUserDisplayName(user) !== 'Unknown User';
 }
 
+export function mergeBasicUsers(
+  fromMessage?: { firstName?: string; lastName?: string; avatar?: string | null } | null,
+  fromStore?: { firstName?: string; lastName?: string; avatar?: string | null } | null
+): typeof fromMessage | typeof fromStore | undefined {
+  if (!fromMessage) return fromStore ?? undefined;
+  if (!fromStore) return fromMessage;
+
+  const storeNamed = hasUserDisplayName(fromStore);
+  const messageNamed = hasUserDisplayName(fromMessage);
+  const primary = storeNamed ? fromStore : messageNamed ? fromMessage : fromStore;
+  const secondary = primary === fromStore ? fromMessage : fromStore;
+
+  return {
+    ...secondary,
+    ...primary,
+    avatar: fromMessage.avatar ?? fromStore.avatar ?? null,
+  };
+}
+
 export const getUserInitials = (user: { firstName?: string; lastName?: string }): string => {
   const first = user.firstName?.charAt(0) || '';
   const last = user.lastName?.charAt(0) || '';

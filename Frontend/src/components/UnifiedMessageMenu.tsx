@@ -13,6 +13,7 @@ import {
   formatFullDateTime,
   getUserDisplayName,
   hasUserDisplayName,
+  mergeBasicUsers,
 } from '@/utils/messageMenuUtils';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { EmojiQuickStrip, type ReactionEmojiPickSource } from '@/components/reactions/EmojiQuickStrip';
@@ -22,8 +23,11 @@ import {
 } from '@/components/reactions/reactionPickerTypes';
 import { useReactionEmojiUsageStore } from '@/store/reactionEmojiUsageStore';
 import { useAuthStore } from '@/store/authStore';
-import { resolveDisplaySettings, formatGameTime, extractLanguageCode } from '@/utils/displayPreferences';
-import { getTranslationLanguageByCode } from '@/utils/translationLanguages';
+import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
+import {
+  getTranslationLanguageByCode,
+  resolveIncomingTranslationTargetCode,
+} from '@/utils/translationLanguages';
 import { isCapacitor } from '@/utils/capacitor';
 import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff } from 'lucide-react';
 import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
@@ -41,13 +45,6 @@ import {
   CHAT_MESSAGE_MENU_SHELL,
   CHAT_MESSAGE_ROW_EXIT_MS,
 } from '@/components/chat/chatListMotion';
-
-function mergeBasicUsers(fromMessage: BasicUser | undefined, fromStore: BasicUser | undefined): BasicUser | undefined {
-  if (fromMessage && fromStore) {
-    return { ...fromStore, ...fromMessage, avatar: fromMessage.avatar ?? fromStore.avatar ?? null };
-  }
-  return fromMessage ?? fromStore;
-}
 
 interface UnifiedMessageMenuProps {
   message: ChatMessage;
@@ -100,7 +97,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const { user } = useAuthStore();
   const isSystemMessage = !message.senderId;
   const displaySettings = user ? resolveDisplaySettings(user) : null;
-  const preferredTranslationCode = user?.translateToLanguage ?? extractLanguageCode(user?.language ?? 'en');
+  const preferredTranslationCode = resolveIncomingTranslationTargetCode(user);
   const preferredTranslationLabel =
     getTranslationLanguageByCode(preferredTranslationCode)?.label ?? preferredTranslationCode;
   const menuRef = useRef<HTMLDivElement>(null);

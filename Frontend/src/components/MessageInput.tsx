@@ -21,7 +21,9 @@ import { TranslateToButton } from './chat/TranslateToButton';
 import { UndoTranslateButton } from './chat/UndoTranslateButton';
 import { useAuthStore } from '@/store/authStore';
 import { usersApi } from '@/api/users';
-import { extractLanguageCode } from '@/utils/displayPreferences';
+import {
+  resolveAppLanguageTranslationTargetCode,
+} from '@/utils/translationLanguages';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { PollType } from '@/api/chat';
 import { deleteDraftFromComposer } from '@/components/chat/draftDeleteFlow';
@@ -161,7 +163,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
     t,
   });
 
-  const appLanguageCode = extractLanguageCode(user?.language ?? 'en');
+  const appLanguageCode = resolveAppLanguageTranslationTargetCode(user);
   const preferredTranslationLanguage = user?.translateToLanguage ?? null;
 
   const handlePreferredTranslationLanguageChange = useCallback(

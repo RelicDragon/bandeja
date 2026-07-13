@@ -1171,9 +1171,11 @@ export const translateMessage = asyncHandler(async (req: AuthRequest, res: Respo
     throw new ApiError(404, 'User not found');
   }
 
-  const languageCode = user.translateToLanguage
-    ? user.translateToLanguage.toLowerCase()
-    : TranslationService.extractLanguageCode(user.language);
+  const languageCode =
+    user.translateToLanguage &&
+    TRANSLATE_TO_LANGUAGE_CODES.includes(user.translateToLanguage.toLowerCase())
+      ? user.translateToLanguage.toLowerCase()
+      : TranslationService.extractLanguageCode(user.language);
 
   const translation = await TranslationService.getOrCreateTranslation(
     messageId,
