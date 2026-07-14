@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.96.66 |
-| **Build** | 180 |
-| **Commit** | `ff0f84c47143a129cc2d9130cec13d78a94d491b` |
-| **Short** | `ff0f84c4` |
-| **Date** | 2026-07-12 |
-| **Message** | Refactor game results permissions handling to improve type safety |
+| **Version** | 0.97.1 |
+| **Build** | 183 |
+| **Commit** | `bce38b790bc5ad0b1455841a6c6ea377a6e13d91` |
+| **Short** | `bce38b79` |
+| **Date** | 2026-07-14 |
+| **Message** | Bump app release to 0.97.1 (build 183) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -68,6 +68,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.1 | 183 | `bce38b79` | 2026-07-14 |
 | 0.96.66 | 180 | `ff0f84c4` | 2026-07-12 |
 | 0.96.65 | 179 | `7ca6c6ac` | 2026-07-11 |
 | 0.96.63 | 177 | `3d5d85ac` | 2026-07-11 |
