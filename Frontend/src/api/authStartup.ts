@@ -106,6 +106,12 @@ async function clearLocalAuthCandidate(reason: string): Promise<void> {
   removeLocalAuthStorage();
   useAuthStore.setState({ user: null, token: null, isAuthenticated: false });
   syncLogoutToNative();
+  try {
+    const { clearWidgetNextGamesCache } = await import('@/services/widgetNextGamesSync');
+    await clearWidgetNextGamesCache();
+  } catch (e) {
+    console.warn('[auth:startup] widget cache clear failed', e);
+  }
   bumpApiAuthCredentialGeneration();
   console.info('[auth:startup] local auth cleared', { reason });
 }
@@ -121,6 +127,12 @@ async function suspendAccessTokenCandidate(reason: string): Promise<void> {
   }
   useAuthStore.setState({ token: null, isAuthenticated: false });
   syncLogoutToNative();
+  try {
+    const { clearWidgetNextGamesCache } = await import('@/services/widgetNextGamesSync');
+    await clearWidgetNextGamesCache();
+  } catch (e) {
+    console.warn('[auth:startup] widget cache clear failed', e);
+  }
   bumpApiAuthCredentialGeneration();
   console.info('[auth:startup] access token suspended', { reason });
 }

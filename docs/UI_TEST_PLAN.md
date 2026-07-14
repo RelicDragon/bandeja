@@ -15,6 +15,7 @@
 
 ### Out of scope / manual-only (initially)
 - Native Capacitor plugins (camera, push, Apple/Google sign-in on device)
+- Home screen Next Game widgets (iOS + Android) — covered as manual `@widget` checklist in §18.11
 - Real payment / wallet top-up with external providers
 - Telegram bot OTP flows (unless test env provides deterministic keys)
 - Full multisport matrix (run sampled sports, not every template × sport)
@@ -99,6 +100,7 @@ Frontend/e2e/
 - `@seed:games` — requires game fixtures
 - `@two devices` — iPhone (Capacitor or web) + paired Apple Watch on same account
 - `@watch` — Apple Watch scoring app (BandejaWatch)
+- `@widget` — Capacitor home-screen Next Game widget (iOS and/or Android device)
 
 ---
 
@@ -1280,6 +1282,24 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-52 | Keyboard dismiss restores layout | Any of above → dismiss keyboard | Surfaces return to resting position; no leftover bottom padding or shifted dialogs |
 | X-55 | Auth login keyboard (Android web) | Mobile Chrome → `/login` → focus phone field | Form sits directly above keyboard; no dark gray scroll gap between card and keyboard |
 
+### 18.11 Home screen Next Game widgets (Capacitor iOS + Android, `@widget` `@manual`)
+
+Cache-only: app writes next-games envelope after My games loads; widgets only read + schedule refresh. Run each case on **both** iOS (`systemSmall` / `systemMedium`) and Android (~2×2 / ~4×2) unless a row says platform-only. Deep links: game → `https://bandeja.me/games/{id}`; empty → `/`; signed out → `/login`.
+
+| ID | Test | Steps | Expected |
+|----|------|-------|----------|
+| X-56 | Add widget signed-out | `@guest` cold install or logged out → add Next Game widget (small + medium) | Sign-in copy shown (en: “Sign in to see your next game”); no game title/club |
+| X-57 | Tap signed-out widget → login | Widget in signed-out state → tap | App opens `/login` |
+| X-58 | Signed-in empty state | `@auth` user with no upcoming games → open My tab so cache syncs → view widget | Empty copy (en: “No upcoming games”); brand visible; no stale game from prior session |
+| X-59 | Tap empty widget → home | Empty authenticated widget → tap | App opens `/` (My tab) |
+| X-60 | Signed-in with upcoming game | `@auth` `@seed:games` user with upcoming game → open My tab → view widget (small + medium) | Shows game title, time (or relative countdown), and club/location; medium shows at least as much as small |
+| X-61 | Tap game widget → game details | Widget showing an upcoming game → tap | App opens `/games/{id}` for that game |
+| X-62 | Logout clears widget | Widget showing a game → Profile → Logout → return to home screen (no need to re-add widget) | Widget returns to signed-out / sign-in state; previous game data gone |
+| X-63 | Login restores next game | After X-62 → log in as user with upcoming game → open My tab once | Widget updates to that next game (title/time/club) without re-adding |
+| X-64 | Language sync (incl. cs) | `@auth` Profile → switch UI language to **cs** (also spot-check es/ru/sr) → return to My so sync runs → view widget | Widget chrome/empty/sign-in strings match locale (cs sign-in: “Přihlaste se a uvidíte další zápas”; empty: “Žádné nadcházející zápasy”) |
+| X-65 | iOS widget gallery labels | iOS only: long-press home → widgets → search Bandeja / Next Game | Display name + description localized (en: “Next Game” / “Shows your next Bandeja game.”) |
+| X-66 | Android widget picker labels | Android only: add widget → pick Next Game | Title + description localized for current app language |
+
 ---
 
 ## 19. Test matrices
@@ -1337,7 +1357,7 @@ Leagues, live scoring multisport sample, bets, stories, game subscriptions, user
 
 ### P3 — Edge / regression backlog
 
-Offline queues, deep links, OAuth merge, Holland auctions, broadcast/TV modes, delete account, admin-only filters, visual regression, URL overlays, push routing, locale matrix, entity type matrix
+Offline queues, deep links, OAuth merge, Holland auctions, broadcast/TV modes, delete account, admin-only filters, visual regression, URL overlays, push routing, locale matrix, entity type matrix, home Next Game widgets (`X-56`–`X-66`)
 
 ---
 
@@ -1383,7 +1403,7 @@ Config: `Frontend/playwright.config.ts` — starts Backend + Frontend dev server
 
 ### Coverage gaps to track
 - Playwright smoke in `Frontend/e2e/specs/smoke/` — expand toward §20 P0 list
-- Capacitor-native flows remain manual checklists
+- Capacitor-native flows remain manual checklists (incl. §18.11 home widgets)
 - Multisport: automate one sport deeply, sample others in matrix
 
 ---
@@ -1434,3 +1454,4 @@ Playwright project `two-user` runs specs under `Frontend/e2e/specs/two-user/` ta
 - Push tap routing: `Frontend/src/utils/pushNotificationBracketRouting.util.ts`
 - Playwright E2E: `Frontend/playwright.config.ts`, `Frontend/e2e/`
 - Automated test plan: `docs/AUTO_TEST_PLAN.md`
+- Home Next Game widgets: `Frontend/src/services/widgetNextGamesSync.ts`, iOS `BandejaHomeWidgets/`, Android `:bandeja-widgets`

@@ -290,6 +290,12 @@ export const useAuthStore = create<AuthState>((set, get) => {
           console.error('[auth:logout] Error clearing auth from localStorage:', error);
         }
         syncLogoutToNative();
+        try {
+          const { clearWidgetNextGamesCache } = await import('@/services/widgetNextGamesSync');
+          await clearWidgetNextGamesCache();
+        } catch (e) {
+          console.warn('[auth:logout] widget cache clear failed', e);
+        }
         void syncBrandingLogoToNative('padel');
         bumpApiAuthCredentialGeneration();
         console.info('[auth:logout] execute end');

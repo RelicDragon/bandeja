@@ -1,3 +1,4 @@
+import Foundation
 import BandejaWatchShared
 import XCTest
 
@@ -40,6 +41,111 @@ final class BandejaWatchSharedTests: XCTestCase {
         XCTAssertEqual(readBack[0].clubName, "Club A")
         NextGamesCache.clear(suite: suite)
         XCTAssertTrue(NextGamesCache.read(suite: suite).isEmpty)
+    }
+
+    func testNextGamesCacheReadsFractionalISO() {
+        let raw = """
+        [{"id":"g1","title":"T","clubName":null,"startTime":"2023-11-14T22:13:20.123Z","status":"READY","resultsStatus":"NONE","gameType":"MATCH","participantCount":1,"maxParticipants":4,"sport":"PADEL","playersPerMatch":4}]
+        """
+        suite.set(Data(raw.utf8), forKey: AppGroupStorage.Keys.nextGames)
+        let readBack = NextGamesCache.read(suite: suite)
+        XCTAssertEqual(readBack.count, 1)
+        XCTAssertEqual(readBack[0].id, "g1")
+        XCTAssertEqual(readBack[0].startTime.timeIntervalSince1970, 1_700_000_000.123, accuracy: 0.001)
+    }
+
+    func testNextGamesEnvelopeStoreRoundTrip() {
+        let game = CachedNextGame(
+            id: "g2",
+            title: "Evening tennis",
+            clubName: "Club B",
+            startTime: Date(timeIntervalSince1970: 1_700_100_000),
+            status: "READY",
+            resultsStatus: "NONE",
+            gameType: "MATCH",
+            participantCount: 4,
+            maxParticipants: 4,
+            sport: "TENNIS",
+            playersPerMatch: 4
+        )
+        XCTAssertTrue(
+            NextGamesEnvelopeStore.write(
+                NextGamesEnvelope(isAuthenticated: true, language: "es", games: [game]),
+                suite: suite
+            )
+        )
+        let readBack = NextGamesEnvelopeStore.read(suite: suite)
+        XCTAssertTrue(readBack.isAuthenticated)
+        XCTAssertEqual(readBack.language, "es")
+        XCTAssertEqual(readBack.games.count, 1)
+        XCTAssertEqual(readBack.games[0].id, "g2")
+        XCTAssertTrue(NextGamesEnvelopeStore.clear(suite: suite))
+        let cleared = NextGamesEnvelopeStore.read(suite: suite)
+        XCTAssertFalse(cleared.isAuthenticated)
+        XCTAssertEqual(cleared.language, "es")
+        XCTAssertTrue(cleared.games.isEmpty)
+    }
+
+    func testNextGamePickerSkipsFinishedAndPast() {
+        let now = Date(timeIntervalSince1970: 1_700_000_000)
+        let games = [
+            CachedNextGame(
+                id: "finished",
+                title: "Done",
+                clubName: nil,
+                startTime: now.addingTimeInterval(600),
+                status: "FINISHED",
+                resultsStatus: "NONE",
+                gameType: "MATCH",
+                participantCount: 4,
+                maxParticipants: 4
+            ),
+            CachedNextGame(
+                id: "too-old",
+                title: "Old",
+                clubName: nil,
+                startTime: now.addingTimeInterval(-4000),
+                status: "SCHEDULED",
+                resultsStatus: "NONE",
+                gameType: "MATCH",
+                participantCount: 2,
+                maxParticipants: 4
+            ),
+            CachedNextGame(
+                id: "soon",
+                title: "Soon",
+                clubName: nil,
+                startTime: now.addingTimeInterval(3600),
+                status: "READY",
+                resultsStatus: "NONE",
+                gameType: "MATCH",
+                participantCount: 3,
+                maxParticipants: 4
+            ),
+            CachedNextGame(
+                id: "later",
+                title: "Later",
+                clubName: nil,
+                startTime: now.addingTimeInterval(7200),
+                status: "ANNOUNCED",
+                resultsStatus: "NONE",
+                gameType: "MATCH",
+                participantCount: 1,
+                maxParticipants: 4
+            ),
+        ]
+        let next = NextGamePicker.pickNextDisplayable(from: games, reference: now)
+        XCTAssertEqual(next?.id, "soon")
+    }
+
+    func testNextGamesEnvelopeStoreRejectsMissingSuite() {
+        XCTAssertFalse(
+            NextGamesEnvelopeStore.write(
+                .unauthenticated(language: "en"),
+                suite: nil
+            )
+        )
+        XCTAssertFalse(NextGamesEnvelopeStore.clear(suite: nil))
     }
 
     func testLiveActiveSnapshotRoundTrip() {

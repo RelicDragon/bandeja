@@ -122,6 +122,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging'
     implementation 'me.leolin:ShortcutBadger:1.1.22@aar'
     implementation project(':capacitor-android')
+    implementation project(':bandeja-widgets')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

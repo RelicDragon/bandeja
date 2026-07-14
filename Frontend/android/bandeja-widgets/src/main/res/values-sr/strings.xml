@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="next_game_widget_title">Следећа игра</string>
+    <string name="next_game_widget_description">Приказује вашу следећу Bandeja игру.</string>
+</resources>

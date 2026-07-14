@@ -15,6 +15,7 @@ import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
 import com.funified.bandeja.auth.AuthBridgePlugin;
 import com.funified.bandeja.auth.BrandingLogoStorage;
+import com.funified.bandeja.widgets.WidgetBridgePlugin;
 import com.funified.bandeja.push.ChatNotificationHelper;
 import ee.forgr.capacitor.social.login.GoogleProvider;
 import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
@@ -38,6 +39,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(AuthBridgePlugin.class);
+        registerPlugin(WidgetBridgePlugin.class);
         applyBrandingLaunchTheme();
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !AuthBridgePlugin.isAppShellReady());

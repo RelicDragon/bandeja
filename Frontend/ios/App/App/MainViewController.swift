@@ -7,6 +7,7 @@ final class MainViewController: CAPBridgeViewController, UIGestureRecognizerDele
 
     override public func capacitorDidLoad() {
         bridge?.registerPluginInstance(AuthBridgePlugin())
+        bridge?.registerPluginInstance(WidgetBridgePlugin())
         bridge?.registerPluginInstance(LiveScoringBridgePlugin())
         bridge?.registerPluginInstance(BandejaPushDelegatePlugin())
         bridge?.registerPluginInstance(ChatIntentBridgePlugin())

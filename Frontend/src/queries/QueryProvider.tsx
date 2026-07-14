@@ -4,9 +4,11 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from './queryClient';
 import { setupOnlineManager } from './onlineManager';
 import { setupQueryInvalidationBridge } from './queryInvalidationBridge';
+import { setupWidgetNextGamesSync } from '@/services/widgetNextGamesSync';
 
 setupOnlineManager();
 setupQueryInvalidationBridge(queryClient);
+setupWidgetNextGamesSync(queryClient);
 
 export function QueryProvider({ children }: { children: ReactNode }) {
   return (

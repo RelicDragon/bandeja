@@ -24,6 +24,7 @@
 		99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		A1B2C3D4E5F60718293A501 /* LiveScoringBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */; };
+		D4E5F60718293A4B5C6D7E8 /* WidgetBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F60718293A4B5C6D7E0 /* WidgetBridgePlugin.swift */; };
 		B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */; };
 		B1A2C3D4E5F60718293A3C7 /* BandejaPushDelegatePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */; };
 		B79A10042F7443E0002D7100 /* BandejaWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -43,6 +44,8 @@
 		A1B400162F7A1000000D7100 /* CreateGameIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400172F7A1000000D7100 /* CreateGameIntent.swift */; };
 		A1B400182F7A1000000D7100 /* OpenNextGameIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400192F7A1000000D7100 /* OpenNextGameIntent.swift */; };
 		A1B4001A2F7A1000000D7100 /* BandejaAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4001B2F7A1000000D7100 /* BandejaAppShortcuts.swift */; };
+		F26900042F8A0000000D7100 /* BandejaHomeWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F26900012F8A0000000D7100 /* BandejaHomeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F269000F2F8A0000000D7100 /* BandejaWatchShared in Frameworks */ = {isa = PBXBuildFile; productRef = F26900102F8A0000000D7100 /* BandejaWatchShared */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +76,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = E14000032F7443E0002D7100;
 			remoteInfo = NotificationServiceExtension;
+		};
+		F26900072F8A0000000D7100 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F26900032F8A0000000D7100;
+			remoteInfo = BandejaHomeWidgets;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -106,6 +116,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				E14000042F7443E0002D7100 /* NotificationServiceExtension.appex in Embed App Extensions */,
+				F26900042F8A0000000D7100 /* BandejaHomeWidgets.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -130,6 +141,7 @@
 		99B2AB672EF1892700E5021A /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		99CD437F2F1BAEE700F7431D /* AppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppDebug.entitlements; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveScoringBridgePlugin.swift; sourceTree = "<group>"; };
+		D4E5F60718293A4B5C6D7E0 /* WidgetBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetBridgePlugin.swift; sourceTree = "<group>"; };
 		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicationNotificationHelper.swift; sourceTree = "<group>"; };
@@ -157,6 +169,7 @@
 		F14800192F7443E0002D7100 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F148001A2F7443E0002D7100 /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
+		F26900012F8A0000000D7100 /* BandejaHomeWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BandejaHomeWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -204,6 +217,17 @@
 			path = NotificationServiceExtension;
 			sourceTree = "<group>";
 		};
+		F26900022F8A0000000D7100 /* BandejaHomeWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = BandejaHomeWidgets;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -247,6 +271,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F26900082F8A0000000D7100 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F269000F2F8A0000000D7100 /* BandejaWatchShared in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -265,6 +297,7 @@
 				504EC3061FED79650016851F /* App */,
 				99414BE22F7443DE002D7100 /* BandejaWatch Watch App */,
 				B79A10022F7443E0002D7100 /* BandejaWatchWidgets */,
+				F26900022F8A0000000D7100 /* BandejaHomeWidgets */,
 				E14000022F7443E0002D7100 /* NotificationServiceExtension */,
 				C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */,
 				504EC3051FED79650016851F /* Products */,
@@ -281,6 +314,7 @@
 				99414BE12F7443DE002D7100 /* BandejaWatch Watch App.app */,
 				B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */,
 				E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */,
+				F26900012F8A0000000D7100 /* BandejaHomeWidgets.appex */,
 				C1A2B3C4D5E6F708192A3B4C /* BandejaWatchWatchTests.xctest */,
 			);
 			name = Products;
@@ -290,6 +324,7 @@
 			isa = PBXGroup;
 			children = (
 				99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */,
+				D4E5F60718293A4B5C6D7E0 /* WidgetBridgePlugin.swift */,
 				A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */,
 				C2A3B4D5E6F708192A3B5A0 /* ChatIntentBridgePlugin.swift */,
 				B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */,
@@ -360,6 +395,7 @@
 			dependencies = (
 				99414BEA2F7443E0002D7100 /* PBXTargetDependency */,
 				E14000052F7443E0002D7100 /* PBXTargetDependency */,
+				F26900062F8A0000000D7100 /* PBXTargetDependency */,
 			);
 			name = App;
 			packageProductDependencies = (
@@ -458,6 +494,29 @@
 			productReference = E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		F26900032F8A0000000D7100 /* BandejaHomeWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F269000D2F8A0000000D7100 /* Build configuration list for PBXNativeTarget "BandejaHomeWidgets" */;
+			buildPhases = (
+				F26900092F8A0000000D7100 /* Sources */,
+				F26900082F8A0000000D7100 /* Frameworks */,
+				F269000A2F8A0000000D7100 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F26900022F8A0000000D7100 /* BandejaHomeWidgets */,
+			);
+			name = BandejaHomeWidgets;
+			packageProductDependencies = (
+				F26900102F8A0000000D7100 /* BandejaWatchShared */,
+			);
+			productName = BandejaHomeWidgets;
+			productReference = F26900012F8A0000000D7100 /* BandejaHomeWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -482,6 +541,9 @@
 						TestTargetID = 99414BE02F7443DE002D7100;
 					};
 					E14000032F7443E0002D7100 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					F26900032F8A0000000D7100 = {
 						CreatedOnToolsVersion = 26.3;
 					};
 				};
@@ -510,6 +572,7 @@
 				99414BE02F7443DE002D7100 /* BandejaWatch Watch App */,
 				B79A10032F7443E0002D7100 /* BandejaWatchWidgets */,
 				E14000032F7443E0002D7100 /* NotificationServiceExtension */,
+				F26900032F8A0000000D7100 /* BandejaHomeWidgets */,
 				C1A2B3C4D5E6F708192A3B4E /* BandejaWatchWatchTests */,
 			);
 		};
@@ -552,6 +615,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E14000082F7443E0002D7100 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F269000A2F8A0000000D7100 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -607,6 +677,7 @@
 				99AF71D22F744E2000B32563 /* KeychainHelper.swift in Sources */,
 				99AF71D32F744E2000B32563 /* WatchSessionManager.swift in Sources */,
 				99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */,
+				D4E5F60718293A4B5C6D7E8 /* WidgetBridgePlugin.swift in Sources */,
 				A1B2C3D4E5F60718293A501 /* LiveScoringBridgePlugin.swift in Sources */,
 				C2A3B4D5E6F708192A3B5A1 /* ChatIntentBridgePlugin.swift in Sources */,
 				B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */,
@@ -654,6 +725,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F26900092F8A0000000D7100 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -676,6 +754,11 @@
 			isa = PBXTargetDependency;
 			target = E14000032F7443E0002D7100 /* NotificationServiceExtension */;
 			targetProxy = E14000092F7443E0002D7100 /* PBXContainerItemProxy */;
+		};
+		F26900062F8A0000000D7100 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F26900032F8A0000000D7100 /* BandejaHomeWidgets */;
+			targetProxy = F26900072F8A0000000D7100 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1195,6 +1278,73 @@
 			};
 			name = Release;
 		};
+		F269000B2F8A0000000D7100 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = BandejaHomeWidgets/BandejaHomeWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 181;
+				DEVELOPMENT_TEAM = N9634A623Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "BandejaHomeWidgetsExtension-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Bandeja;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.96.67;
+				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.homewidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		F269000C2F8A0000000D7100 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CODE_SIGN_ENTITLEMENTS = BandejaHomeWidgets/BandejaHomeWidgets.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 181;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = N9634A623Q;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "BandejaHomeWidgetsExtension-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Bandeja;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 0.96.67;
+				PRODUCT_BUNDLE_IDENTIFIER = com.funified.bandeja.homewidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1252,6 +1402,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		F269000D2F8A0000000D7100 /* Build configuration list for PBXNativeTarget "BandejaHomeWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F269000B2F8A0000000D7100 /* Debug */,
+				F269000C2F8A0000000D7100 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
@@ -1263,6 +1422,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		D1A2B3C4E5F60718293A602 /* BandejaWatchShared */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BandejaWatchShared;
+		};
+		F26900102F8A0000000D7100 /* BandejaWatchShared */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = BandejaWatchShared;
 		};
