@@ -146,37 +146,11 @@ export function isBooktimeFakeUtcIso(
 function normalizeFakeOrStoredUtcIso(
   trimmed: string,
   instant: Date,
-  parts: BooktimeLocalComponents,
   timeZone: string,
 ): string {
+  // Prefer wall-clock wire over Date.parse — morning fake-Z is ambiguous with stored UTC.
   const wireFromIso = booktimeWireFormatToStoredUtcIso(trimmed, timeZone);
   if (!wireFromIso) return instant.toISOString();
-
-  const belgradeOfInstant = formatHourMinuteInZone(instant, timeZone);
-  const fromBelgrade = booktimeWireFormatToStoredUtcIso(
-    buildFakeZFromComponents(parts.dateKey, belgradeOfInstant.hour, belgradeOfInstant.minute),
-    timeZone,
-  );
-  const wireFromParts = booktimeWireFormatToStoredUtcIso(
-    buildFakeZFromComponents(parts.dateKey, parts.hour, parts.minute),
-    timeZone,
-  );
-  const belgradeOfWireFromParts = wireFromParts
-    ? formatHourMinuteInZone(storedUtcIsoToInstant(wireFromParts)!, timeZone)
-    : null;
-  const alreadyStoredUtc =
-    wireFromIso !== trimmed
-    && fromBelgrade === trimmed
-    && wireFromIso !== fromBelgrade
-    && instant.toISOString() === fromBelgrade
-    && wireFromParts === wireFromIso
-    && belgradeOfInstant.hour !== parts.hour
-    && belgradeOfWireFromParts?.hour === parts.hour
-    && belgradeOfInstant.hour !== belgradeOfWireFromParts.hour
-    && parts.hour <= 8;
-  if (alreadyStoredUtc) {
-    return trimmed;
-  }
   if (wireFromIso !== instant.toISOString()) {
     return wireFromIso;
   }
@@ -205,7 +179,7 @@ export function booktimeIngestToStoredUtcIso(
   if (!instant || !parts) return null;
 
   if (FAKE_UTC_SUFFIX.test(trimmed)) {
-    return normalizeFakeOrStoredUtcIso(trimmed, instant, parts, timeZone);
+    return normalizeFakeOrStoredUtcIso(trimmed, instant, timeZone);
   }
 
   return instant.toISOString();

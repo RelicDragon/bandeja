@@ -43,9 +43,9 @@ describe('booktime timezone pipeline', () => {
     );
   });
 
-  it('does not double-convert stored UTC', () => {
+  it('does not double-convert stored UTC via booktimeIsoToUtcIso', () => {
     const stored = '2026-06-19T07:00:00.000Z';
-    expect(booktimeIngestToStoredUtcIso(stored, TZ)).toBe(stored);
+    expect(booktimeIsoToUtcIso(stored, TZ)).toBe(stored);
     expect(
       deriveGameTimeFromBookings(
         [{ bookingStart: stored, bookingEnd: '2026-06-19T08:00:00.000Z' }],
@@ -68,6 +68,13 @@ describe('booktime timezone pipeline', () => {
         { timeZone: TZ },
       ),
     ).toEqual({ startTime: storedStart, endTime: storedEnd });
+  });
+
+  it('displays morning fake-Z 08:00–10:00 as Belgrade wall clock', () => {
+    const booking = normalizeApiBooking('2026-06-14T08:00:00.000Z', '2026-06-14T10:00:00.000Z');
+    expect(belgradeTime(booking.bookingStart)).toBe('08:00');
+    expect(belgradeTime(booking.bookingEnd)).toBe('10:00');
+    expect(booking.bookingStart).not.toBe(booking.bookingEnd);
   });
 
   it('displays normalized UTC in Belgrade wall clock', () => {
@@ -115,9 +122,7 @@ describe('booktime timezone pipeline', () => {
   });
 
   it('parseBooktimeStoredOrNaive keeps stored UTC and converts naive', () => {
-    expect(booktimeIngestToStoredUtcIso('2026-06-19T07:00:00.000Z', TZ)).toBe(
-      '2026-06-19T07:00:00.000Z',
-    );
+    expect(booktimeIsoToUtcIso('2026-06-19T07:00:00.000Z', TZ)).toBe('2026-06-19T07:00:00.000Z');
     expect(booktimeIngestToStoredUtcIso('2026-06-14T09:00', TZ)).toBe('2026-06-14T07:00:00.000Z');
   });
 

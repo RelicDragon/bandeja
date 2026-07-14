@@ -5,7 +5,6 @@ import {
   booktimeIngestToStoredUtcIso,
   booktimeIsoToUtcIso,
   booktimeWireFormatToStoredUtcIso,
-  isAlreadyStoredUtcIso,
   isBooktimeFakeUtcIso,
   isBooktimeNaiveLocalIso,
   storedUtcIsoToBooktimeWireIso,
@@ -33,12 +32,9 @@ describe('booktime localTime', () => {
     expect(booktimeIngestToStoredUtcIso('2026-06-14T09:00', TZ)).toBe('2026-06-14T07:00:00.000Z');
   });
 
-  it('passes through stored UTC ISO strings', () => {
+  it('passes through stored UTC via booktimeIsoToUtcIso (not wire ingest)', () => {
     expect(booktimeIsoToUtcIso('2026-06-14T07:00:00.000Z', TZ)).toBe('2026-06-14T07:00:00.000Z');
     expect(booktimeIsoToUtcIso('2026-06-15T16:00:00.000Z', TZ)).toBe('2026-06-15T16:00:00.000Z');
-    expect(booktimeIngestToStoredUtcIso('2026-06-14T07:00:00.000Z', TZ)).toBe(
-      '2026-06-14T07:00:00.000Z',
-    );
   });
 
   it('converts fake-Z via ingest seam only (not booktimeIsoToUtcIso)', () => {
@@ -46,6 +42,21 @@ describe('booktime localTime', () => {
     expect(booktimeIngestToStoredUtcIso('2026-06-14T09:00:00.000Z', TZ)).toBe(
       '2026-06-14T07:00:00.000Z',
     );
+  });
+
+  it('converts morning fake-Z 08:00–10:00 without collapsing to 10:00–10:00', () => {
+    const start = booktimeIngestToStoredUtcIso('2026-06-14T08:00:00.000Z', TZ)!;
+    const end = booktimeIngestToStoredUtcIso('2026-06-14T10:00:00.000Z', TZ)!;
+    expect(start).toBe('2026-06-14T06:00:00.000Z');
+    expect(end).toBe('2026-06-14T08:00:00.000Z');
+    const fmt = (iso: string) =>
+      new Intl.DateTimeFormat('en-GB', {
+        timeZone: TZ,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }).format(new Date(iso));
+    expect(`${fmt(start)}-${fmt(end)}`).toBe('08:00-10:00');
   });
 
   it('handles DST spring-forward via wire seam', () => {
@@ -65,11 +76,10 @@ describe('booktime localTime', () => {
     expect(booktimeBookingStartMs(stored, TZ)).toBe(Date.parse('2026-06-14T07:00:00.000Z'));
   });
 
-  it('is idempotent for morning stored UTC on wire ingest (misuse guard)', () => {
+  it('documents morning wire re-ingest footgun — use booktimeIsoToUtcIso instead', () => {
     const stored = '2026-06-19T07:00:00.000Z';
-    expect(booktimeIngestToStoredUtcIso(stored, TZ)).toBe(stored);
-    expect(booktimeIngestToStoredUtcIso(stored, TZ)).toBe(stored);
-    expect(isAlreadyStoredUtcIso(stored, TZ)).toBe(true);
+    expect(booktimeIsoToUtcIso(stored, TZ)).toBe(stored);
+    expect(booktimeIngestToStoredUtcIso(stored, TZ)).toBe('2026-06-19T05:00:00.000Z');
   });
 
   it('passes afternoon stored UTC through booktimeIsoToUtcIso (not wire ingest)', () => {

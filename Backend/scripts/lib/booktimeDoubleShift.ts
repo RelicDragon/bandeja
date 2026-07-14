@@ -35,10 +35,6 @@ export function correctDoubleShiftedStoredUtc(
   const parts = parseBooktimeLocalComponents(storedIso);
   if (!instant || !parts) return null;
 
-  if (booktimeIngestToStoredUtcIso(storedIso, timeZone) === storedIso) {
-    return null;
-  }
-
   const wall = formatHourMinuteInZone(instant, timeZone);
   const fakeFromBelgradeWall = buildFakeZFromComponents(parts.dateKey, wall.hour, wall.minute);
   const wireFromBelgradeWall = booktimeWireFormatToStoredUtcIso(fakeFromBelgradeWall, timeZone);
