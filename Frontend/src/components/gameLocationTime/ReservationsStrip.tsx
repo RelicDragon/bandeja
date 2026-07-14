@@ -14,6 +14,7 @@ import { booktimeRowToClub } from '@/components/booktime/booktimeBookingUtils';
 import { buildSelectedBookingRecordsSyncKey } from '@/components/gameLocationTime/locationTimeDraft';
 import { useReservationGridSync } from '@/components/gameLocationTime/useReservationGridSync';
 import { pruneSelectedBookingsToAvailable } from './pruneSelectedBookingsToAvailable';
+import { isReservationSlotDimmed } from './reservationSlotSelection';
 import { ExistingReservationEmptyState } from './ExistingReservationEmptyState';
 import { ReservationSelectionProgress } from './ReservationSelectionProgress';
 
@@ -260,7 +261,7 @@ export function ReservationsStrip({
                   selectable
                   selectedBookingIds={selectedBookingIds}
                   onToggleBooking={onToggleBooking}
-                  atMaxSelection={atMax}
+                  selectionMax={selectionLimits.max}
                 />
               </li>
             );
@@ -268,7 +269,11 @@ export function ReservationsStrip({
 
           const booking = entry.booking;
           const selected = selectedBookingIds.includes(booking.uuid);
-          const dimmed = !selected && atMax;
+          const dimmed = isReservationSlotDimmed(
+            selected,
+            selectedBookingIds.length,
+            selectionLimits.max,
+          );
           return (
             <ReservationRowWithLinkedGames
               key={booking.uuid}

@@ -289,6 +289,7 @@
       "emptyBookingsGameOnly": "Create game only",
       "gridLegend": "Green = your reservation · Red/yellow = taken · Primary = selected time",
       "alsoUsedIn": "Also used in: {{games}}",
+      "pickAdjacentHour": "Pick one hour",
       "linkHintTitle": "Game will link to your reservations",
       "linkHintBody": "These court bookings will be linked when you create the game.",
       "linkHintLine": "{{court}} · {{window}}",

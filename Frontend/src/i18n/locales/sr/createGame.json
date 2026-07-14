@@ -430,6 +430,7 @@
       "emptyBookingsGameOnly": "Napravi samo igru",
       "gridLegend": "Zeleno = vaša rezervacija · Crveno/žuto = zauzeto · Primarno = izabrano vreme",
       "alsoUsedIn": "Takođe korišćeno u: {{games}}",
+      "pickAdjacentHour": "Izaberi jedan sat",
       "linkHintTitle": "Igra će biti povezana sa vašim rezervacijama",
       "linkHintBody": "Ove rezervacije terena biće povezane kada kreirate igru.",
       "linkHintLine": "{{court}} · {{window}}",

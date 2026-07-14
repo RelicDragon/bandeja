@@ -427,6 +427,7 @@
       "emptyBookingsGameOnly": "Crear solo el partido",
       "gridLegend": "Verde = tu reserva · Rojo/amarillo = ocupado · Primario = hora seleccionada",
       "alsoUsedIn": "También usado en: {{games}}",
+      "pickAdjacentHour": "Elige una hora",
       "linkHintTitle": "El juego se vinculará a tus reservas",
       "linkHintBody": "Estas reservas de pista se vincularán al crear el juego.",
       "linkHintLine": "{{court}} · {{window}}",
