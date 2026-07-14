@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 77;
+	objectVersion = 71;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -18,29 +18,12 @@
 		991B76F02FE9F3C000D55F76 /* BandejaWatchShared in Frameworks */ = {isa = PBXBuildFile; productRef = D1A2B3C4E5F60718293A602 /* BandejaWatchShared */; };
 		991B76F12FE9F3C000D55F76 /* BandejaWatchShared in Frameworks */ = {isa = PBXBuildFile; productRef = D1A2B3C4E5F60718293A602 /* BandejaWatchShared */; };
 		991B76F22FE9F3C000D55F76 /* BandejaWatchShared in Frameworks */ = {isa = PBXBuildFile; productRef = D1A2B3C4E5F60718293A602 /* BandejaWatchShared */; };
-		E5F60718293A4B5C6D7E911 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
-		E5F60718293A4B5C6D7E912 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
-		E5F60718293A4B5C6D7E913 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
 		99414BEB2F7443E0002D7100 /* BandejaWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 99414BE12F7443DE002D7100 /* BandejaWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		99AF71D22F744E2000B32563 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71D02F744E2000B32563 /* KeychainHelper.swift */; };
 		99AF71D32F744E2000B32563 /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71D12F744E2000B32563 /* WatchSessionManager.swift */; };
 		99AF71D42F744E2000B32563 /* AuthBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71CF2F744E2000B32563 /* AuthBridgePlugin.swift */; };
 		A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */; };
 		A1B2C3D4E5F60718293A501 /* LiveScoringBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */; };
-		D4E5F60718293A4B5C6D7E8 /* WidgetBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F60718293A4B5C6D7E0 /* WidgetBridgePlugin.swift */; };
-		B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */; };
-		B1A2C3D4E5F60718293A3C7 /* BandejaPushDelegatePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */; };
-		B79A10042F7443E0002D7100 /* BandejaWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		C1A2B3C4D5E6F708192A3B57 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */; };
-		C2A3B4D5E6F708192A3B5A1 /* ChatIntentBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A3B4D5E6F708192A3B5A0 /* ChatIntentBridgePlugin.swift */; };
-		E14000042F7443E0002D7100 /* NotificationServiceExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		E140000E2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */; };
-		F14800012F7443E0002D7100 /* NativeApiConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800102F7443E0002D7100 /* NativeApiConfig.swift */; };
-		F14800022F7443E0002D7100 /* ChatPushData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800112F7443E0002D7100 /* ChatPushData.swift */; };
-		F14800032F7443E0002D7100 /* ChatReplyApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */; };
-		F14800042F7443E0002D7100 /* ChatReplyHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800132F7443E0002D7100 /* ChatReplyHandler.swift */; };
-		F14800052F7443E0002D7100 /* BandejaPushNotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800142F7443E0002D7100 /* BandejaPushNotificationDelegate.swift */; };
-		F14800062F7443E0002D7100 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F14800152F7443E0002D7100 /* Localizable.strings */; };
 		A1B400102F7A1000000D7100 /* BandejaDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400112F7A1000000D7100 /* BandejaDeepLink.swift */; };
 		A1B400122F7A1000000D7100 /* FindGamesIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400132F7A1000000D7100 /* FindGamesIntent.swift */; };
 		A1B400142F7A1000000D7100 /* OpenMyGamesIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400152F7A1000000D7100 /* OpenMyGamesIntent.swift */; };
@@ -49,6 +32,23 @@
 		A1B4001A2F7A1000000D7100 /* BandejaAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4001B2F7A1000000D7100 /* BandejaAppShortcuts.swift */; };
 		A1B400202F7A1000000D7100 /* BandejaGameEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400212F7A1000000D7100 /* BandejaGameEntity.swift */; };
 		A1B400222F7A1000000D7100 /* BandejaAssistantIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400232F7A1000000D7100 /* BandejaAssistantIntents.swift */; };
+		B1A2C3D4E5F60718293A3C5 /* CommunicationNotificationHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */; };
+		B1A2C3D4E5F60718293A3C7 /* BandejaPushDelegatePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */; };
+		B79A10042F7443E0002D7100 /* BandejaWatchWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C1A2B3C4D5E6F708192A3B57 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */; };
+		C2A3B4D5E6F708192A3B5A1 /* ChatIntentBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A3B4D5E6F708192A3B5A0 /* ChatIntentBridgePlugin.swift */; };
+		D4E5F60718293A4B5C6D7E8 /* WidgetBridgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4E5F60718293A4B5C6D7E0 /* WidgetBridgePlugin.swift */; };
+		E14000042F7443E0002D7100 /* NotificationServiceExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E140000E2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */; };
+		E5F60718293A4B5C6D7E911 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
+		E5F60718293A4B5C6D7E912 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
+		E5F60718293A4B5C6D7E913 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
+		F14800012F7443E0002D7100 /* NativeApiConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800102F7443E0002D7100 /* NativeApiConfig.swift */; };
+		F14800022F7443E0002D7100 /* ChatPushData.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800112F7443E0002D7100 /* ChatPushData.swift */; };
+		F14800032F7443E0002D7100 /* ChatReplyApiClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */; };
+		F14800042F7443E0002D7100 /* ChatReplyHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800132F7443E0002D7100 /* ChatReplyHandler.swift */; };
+		F14800052F7443E0002D7100 /* BandejaPushNotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800142F7443E0002D7100 /* BandejaPushNotificationDelegate.swift */; };
+		F14800062F7443E0002D7100 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F14800152F7443E0002D7100 /* Localizable.strings */; };
 		F26900042F8A0000000D7100 /* BandejaHomeWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F26900012F8A0000000D7100 /* BandejaHomeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F269000F2F8A0000000D7100 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = F26900102F8A0000000D7100 /* BandejaNextGames */; };
 /* End PBXBuildFile section */
@@ -146,18 +146,6 @@
 		99B2AB672EF1892700E5021A /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 		99CD437F2F1BAEE700F7431D /* AppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AppDebug.entitlements; sourceTree = "<group>"; };
 		A1B2C3D4E5F60718293A500 /* LiveScoringBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveScoringBridgePlugin.swift; sourceTree = "<group>"; };
-		D4E5F60718293A4B5C6D7E0 /* WidgetBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetBridgePlugin.swift; sourceTree = "<group>"; };
-		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
-		B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicationNotificationHelper.swift; sourceTree = "<group>"; };
-		B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaPushDelegatePlugin.swift; sourceTree = "<group>"; };
-		B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BandejaWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		C1A2B3C4D5E6F708192A3B4C /* BandejaWatchWatchTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BandejaWatchWatchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/WatchOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
-		C2A3B4D5E6F708192A3B5A0 /* ChatIntentBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatIntentBridgePlugin.swift; sourceTree = "<group>"; };
-		E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ChatCommunicationIntentBuilder.swift; path = NotificationServiceExtension/ChatCommunicationIntentBuilder.swift; sourceTree = "<group>"; };
-		F14800102F7443E0002D7100 /* NativeApiConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeApiConfig.swift; sourceTree = "<group>"; };
 		A1B400112F7A1000000D7100 /* BandejaDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaDeepLink.swift; sourceTree = "<group>"; };
 		A1B400132F7A1000000D7100 /* FindGamesIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindGamesIntent.swift; sourceTree = "<group>"; };
 		A1B400152F7A1000000D7100 /* OpenMyGamesIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenMyGamesIntent.swift; sourceTree = "<group>"; };
@@ -166,6 +154,18 @@
 		A1B4001B2F7A1000000D7100 /* BandejaAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaAppShortcuts.swift; sourceTree = "<group>"; };
 		A1B400212F7A1000000D7100 /* BandejaGameEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaGameEntity.swift; sourceTree = "<group>"; };
 		A1B400232F7A1000000D7100 /* BandejaAssistantIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaAssistantIntents.swift; sourceTree = "<group>"; };
+		AF277DCFFFF123FFC6DF26C7 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF51FD2D460BCFE21FA515B2 /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
+		B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunicationNotificationHelper.swift; sourceTree = "<group>"; };
+		B1A2C3D4E5F60718293A3C6 /* BandejaPushDelegatePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaPushDelegatePlugin.swift; sourceTree = "<group>"; };
+		B79A10012F7443E0002D7100 /* BandejaWatchWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BandejaWatchWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1A2B3C4D5E6F708192A3B4C /* BandejaWatchWatchTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BandejaWatchWatchTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C1A2B3C4D5E6F708192A3B58 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Platforms/WatchOS.platform/Developer/Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		C2A3B4D5E6F708192A3B5A0 /* ChatIntentBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatIntentBridgePlugin.swift; sourceTree = "<group>"; };
+		D4E5F60718293A4B5C6D7E0 /* WidgetBridgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetBridgePlugin.swift; sourceTree = "<group>"; };
+		E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ChatCommunicationIntentBuilder.swift; path = NotificationServiceExtension/ChatCommunicationIntentBuilder.swift; sourceTree = "<group>"; };
+		F14800102F7443E0002D7100 /* NativeApiConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeApiConfig.swift; sourceTree = "<group>"; };
 		F14800112F7443E0002D7100 /* ChatPushData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatPushData.swift; sourceTree = "<group>"; };
 		F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyApiClient.swift; sourceTree = "<group>"; };
 		F14800132F7443E0002D7100 /* ChatReplyHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyHandler.swift; sourceTree = "<group>"; };
@@ -175,66 +175,16 @@
 		F14800182F7443E0002D7100 /* cs */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = cs; path = cs.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F14800192F7443E0002D7100 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		F148001A2F7443E0002D7100 /* sr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sr; path = sr.lproj/Localizable.strings; sourceTree = "<group>"; };
-		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 		F26900012F8A0000000D7100 /* BandejaHomeWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BandejaHomeWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		FC68EB0AF532CFC21C3344DD /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Pods/Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		99414BE22F7443DE002D7100 /* BandejaWatch Watch App */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = "BandejaWatch Watch App";
-			sourceTree = "<group>";
-		};
-		B79A10022F7443E0002D7100 /* BandejaWatchWidgets */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = BandejaWatchWidgets;
-			sourceTree = "<group>";
-		};
-		C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = BandejaWatchWatchTests;
-			sourceTree = "<group>";
-		};
-		E14000022F7443E0002D7100 /* NotificationServiceExtension */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = NotificationServiceExtension;
-			sourceTree = "<group>";
-		};
-		F26900022F8A0000000D7100 /* BandejaHomeWidgets */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
-			path = BandejaHomeWidgets;
-			sourceTree = "<group>";
-		};
+		99414BE22F7443DE002D7100 /* BandejaWatch Watch App */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = "BandejaWatch Watch App"; sourceTree = "<group>"; };
+		B79A10022F7443E0002D7100 /* BandejaWatchWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWidgets; sourceTree = "<group>"; };
+		C1A2B3C4D5E6F708192A3B4D /* BandejaWatchWatchTests */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaWatchWatchTests; sourceTree = "<group>"; };
+		E14000022F7443E0002D7100 /* NotificationServiceExtension */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = NotificationServiceExtension; sourceTree = "<group>"; };
+		F26900022F8A0000000D7100 /* BandejaHomeWidgets */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = BandejaHomeWidgets; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -673,8 +623,12 @@
 			);
 			inputFileListPaths = (
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -1300,6 +1254,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ENTITLEMENTS = BandejaHomeWidgets/BandejaHomeWidgets.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -1332,6 +1287,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CLANG_ENABLE_OBJC_WEAK = YES;
 				CODE_SIGN_ENTITLEMENTS = BandejaHomeWidgets/BandejaHomeWidgets.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";

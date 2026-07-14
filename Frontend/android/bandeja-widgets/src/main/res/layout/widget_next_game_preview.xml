@@ -2,20 +2,34 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#E8F6F8"
     android:orientation="vertical"
     android:padding="16dp">
-    <TextView
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/next_game_widget_title"
-        android:textColor="#1EB884"
-        android:textSize="11sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:contentDescription="@string/next_game_widget_title"
+            android:src="@drawable/ic_bandeja_logo" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:text="@string/next_game_widget_title"
+            android:textColor="#0EA5E9"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+    </LinearLayout>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:text="@string/next_game_widget_preview_title"
+        android:textColor="#082F49"
         android:textSize="16sp"
         android:textStyle="bold" />
     <TextView
@@ -23,5 +37,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:text="@string/next_game_widget_preview_time"
+        android:textColor="#0369A1"
         android:textSize="13sp" />
 </LinearLayout>

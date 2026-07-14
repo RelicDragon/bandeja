@@ -52,20 +52,31 @@ assert(
     ],
     true,
     EntityType.LEAGUE,
-  ) === 3,
-  'classic league endurance x set count (3 sets)',
+    true,
+  ) === 2.25,
+  'classic league endurance gain x3 sets',
 );
 assert(
   calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.GAME) === 0.1,
   'game endurance base',
 );
 assert(
-  calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.LEAGUE) === 0.4,
-  'league endurance x4',
+  Math.abs(
+    calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.LEAGUE, true) - 0.3,
+  ) < 1e-9,
+  'league endurance gain x3',
 );
 assert(
-  calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], true, EntityType.LEAGUE) === 1,
-  'classic league endurance',
+  calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.LEAGUE, false) === 0.1,
+  'league endurance loss x1',
+);
+assert(
+  calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], true, EntityType.LEAGUE, true) === 0.75,
+  'classic league endurance gain',
+);
+assert(
+  calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], true, EntityType.LEAGUE, false) === 0.25,
+  'classic league endurance loss',
 );
 assert(
   calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.TOURNAMENT) === 0.2,

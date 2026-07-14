@@ -25,16 +25,14 @@ private struct SmallNextGameView: View {
         Group {
             if !entry.isAuthenticated {
                 emptyState(
-                    icon: "person.crop.circle.badge.questionmark",
                     text: HomeWidgetCopy.signIn(entry.language),
                     url: HomeWidgetDeepLink.login
                 )
             } else if let game = entry.game {
                 VStack(alignment: .leading, spacing: 6) {
-                    Label(HomeWidgetCopy.brand(), systemImage: "sportscourt.fill")
+                    Text(HomeWidgetCopy.nextGameWidgetTitle(entry.language))
                         .font(.caption2.weight(.semibold))
-                        .foregroundStyle(Color.accentColor)
-                        .labelStyle(.titleAndIcon)
+                        .foregroundStyle(BandejaBrand.accent)
                         .lineLimit(1)
 
                     Text(game.title)
@@ -53,15 +51,14 @@ private struct SmallNextGameView: View {
                     Spacer(minLength: 0)
 
                     Text(game.relativeTimeString(lang: entry.language, reference: entry.date))
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(BandejaBrand.accent)
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .widgetURL(HomeWidgetDeepLink.game(id: game.id))
             } else {
                 emptyState(
-                    icon: "calendar.badge.clock",
                     text: HomeWidgetCopy.noUpcomingGames(entry.language),
                     url: HomeWidgetDeepLink.home
                 )
@@ -70,11 +67,9 @@ private struct SmallNextGameView: View {
         .padding(14)
     }
 
-    private func emptyState(icon: String, text: String, url: URL) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundStyle(Color.accentColor)
+    private func emptyState(text: String, url: URL) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            BandejaBrandMark(size: 36)
             Text(text)
                 .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
@@ -94,18 +89,15 @@ private struct MediumNextGameView: View {
         Group {
             if !entry.isAuthenticated {
                 emptyRow(
-                    icon: "person.crop.circle.badge.questionmark",
-                    title: HomeWidgetCopy.brand(),
                     detail: HomeWidgetCopy.signIn(entry.language),
                     url: HomeWidgetDeepLink.login
                 )
             } else if let game = entry.game {
                 HStack(alignment: .top, spacing: 14) {
                     VStack(alignment: .leading, spacing: 6) {
-                        Label(HomeWidgetCopy.nextGameWidgetTitle(entry.language), systemImage: "sportscourt.fill")
+                        Text(HomeWidgetCopy.nextGameWidgetTitle(entry.language))
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(Color.accentColor)
-                            .labelStyle(.titleAndIcon)
+                            .foregroundStyle(BandejaBrand.accent)
                             .lineLimit(1)
 
                         Text(game.title)
@@ -126,7 +118,7 @@ private struct MediumNextGameView: View {
                         HStack(spacing: 10) {
                             Text(game.relativeTimeString(lang: entry.language, reference: entry.date))
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.primary)
+                                .foregroundStyle(BandejaBrand.accent)
                             Text(game.absoluteTimeString(lang: entry.language))
                                 .font(.caption)
                                 .foregroundStyle(.tertiary)
@@ -136,20 +128,12 @@ private struct MediumNextGameView: View {
 
                     Spacer(minLength: 0)
 
-                    VStack(alignment: .trailing, spacing: 8) {
-                        playersBadge(game)
-                        Spacer(minLength: 0)
-                        Image(systemName: "chevron.right.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(Color.accentColor.opacity(0.85))
-                    }
+                    playersBadge(game)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                 .widgetURL(HomeWidgetDeepLink.game(id: game.id))
             } else {
                 emptyRow(
-                    icon: "calendar.badge.clock",
-                    title: HomeWidgetCopy.nextGameWidgetTitle(entry.language),
                     detail: HomeWidgetCopy.noUpcomingGames(entry.language),
                     url: HomeWidgetDeepLink.home
                 )
@@ -163,18 +147,17 @@ private struct MediumNextGameView: View {
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color.accentColor.opacity(0.15), in: Capsule())
-            .foregroundStyle(Color.accentColor)
+            .background(BandejaBrand.accent.opacity(0.14), in: Capsule())
+            .foregroundStyle(BandejaBrand.accent)
     }
 
-    private func emptyRow(icon: String, title: String, detail: String, url: URL) -> some View {
+    private func emptyRow(detail: String, url: URL) -> some View {
         HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.largeTitle)
-                .foregroundStyle(Color.accentColor)
+            BandejaBrandMark(size: 52)
             VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
+                Text(HomeWidgetCopy.brand())
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
                 Text(detail)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)

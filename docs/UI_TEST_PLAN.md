@@ -1305,7 +1305,7 @@ Cache-only: app writes next-games envelope after My games loads; widgets only re
 |----|------|-------|----------|
 | X-56 | Add widget signed-out | `@guest` cold install or logged out → add Next Game widget (small + medium) | Sign-in copy shown (en: “Sign in to see your next game”); no game title/club |
 | X-57 | Tap signed-out widget → login | Widget in signed-out state → tap | App opens `/login` |
-| X-58 | Signed-in empty state | `@auth` user with no upcoming games → open My tab so cache syncs → view widget | Empty copy (en: “No upcoming games”); brand visible; no stale game from prior session |
+| X-58 | Signed-in empty state | `@auth` user with no upcoming games → open My tab so cache syncs → view widget | Empty copy (en: “No upcoming games”); Bandeja logo + sky brand colors; no stale game from prior session |
 | X-59 | Tap empty widget → home | Empty authenticated widget → tap | App opens `/` (My tab) |
 | X-60 | Signed-in with upcoming game | `@auth` `@seed:games` user with upcoming game → open My tab → view widget (small + medium) | Shows game title, time (or relative countdown), and club/location; medium shows at least as much as small |
 | X-61 | Tap game widget → game details | Widget showing an upcoming game → tap | App opens `/games/{id}` for that game |

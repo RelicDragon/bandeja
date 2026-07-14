@@ -8,5 +8,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="@string/next_game_widget_loading"
+        android:textColor="#0EA5E9"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 </FrameLayout>

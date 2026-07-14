@@ -46,8 +46,11 @@ const ELO_SCALING_FACTOR = 0.8;
 const HIGH_LEVEL_THRESHOLD = 5.0;
 const MAX_ACHIEVABLE_LEVEL = 6.8;
 
-function enduranceEntityTypeMultiplier(entityType?: EntityType): number {
-  if (entityType === EntityType.LEAGUE) return 4;
+function enduranceEntityTypeMultiplier(
+  entityType?: EntityType,
+  isGainingRating = false,
+): number {
+  if (entityType === EntityType.LEAGUE) return isGainingRating ? 3 : 1;
   if (entityType === EntityType.TOURNAMENT) return 2;
   return 1;
 }
@@ -56,6 +59,7 @@ export function calculateEnduranceCoefficient(
   setScores: RatingSetScore[] | undefined,
   ballsInGames: boolean,
   entityType?: EntityType,
+  isGainingRating = false,
 ): number {
   const usesGamesEndurance =
     !setScores || setScores.length === 0
@@ -69,7 +73,11 @@ export function calculateEnduranceCoefficient(
   const setCountMultiplier =
     setScores && setScores.length > 0 ? setScores.length : 1;
 
-  return base * enduranceEntityTypeMultiplier(entityType) * setCountMultiplier;
+  return (
+    base *
+    enduranceEntityTypeMultiplier(entityType, isGainingRating) *
+    setCountMultiplier
+  );
 }
 
 export function calculateReliabilityChange(
@@ -191,6 +199,7 @@ export function calculateRatingUpdate(
     matchResult.setScores,
     marginBallsInGames,
     entityType,
+    levelChange > 0,
   );
   levelChange = levelChange * enduranceCoefficient;
 
