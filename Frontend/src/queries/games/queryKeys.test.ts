@@ -49,6 +49,15 @@ describe('games query keys', () => {
     const withoutPrivate = buildAvailableGamesFilterHash({ isAdmin: true, showPrivateGames: false });
     const withPrivate = buildAvailableGamesFilterHash({ isAdmin: true, showPrivateGames: true });
     expect(withoutPrivate).not.toBe(withPrivate);
-    expect(withPrivate.endsWith('-1')).toBe(true);
+  });
+
+  it('filterHash includes structural SQL params', () => {
+    const base = buildAvailableGamesFilterHash({ sport: 'PADEL', cityId: 'c1' });
+    const withClubs = buildAvailableGamesFilterHash({
+      sport: 'PADEL',
+      cityId: 'c1',
+      structural: { mode: 'calendar', clubIds: 'club-1', hideBar: true },
+    });
+    expect(base).not.toBe(withClubs);
   });
 });

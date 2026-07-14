@@ -11,13 +11,14 @@ import { getOwnerIsPremiumFromGame } from '../gameResultsArtifact/gameResultsArt
 import { getMaxArtifactPhotoGenerations } from '../gameResultsArtifact/gameResultsArtifact.photoLimit';
 import {
   projectUserForSportContext,
-  resolvePublicGamesSportFilter,
 } from '../user/userSportProfile.service';
 import {
   gameBaseInclude,
   gameWithRoundsAndOutcomes,
   MAIN_PHOTO_RELATION_SELECT,
 } from './gamePrismaIncludes';
+import { fetchAvailableGamesPage } from './availableGamesQuery';
+import type { AvailableStructuralFilters } from './availableGamesStructuralWhere';
 import { serializeLinkedBooking } from './gameExternalBooking.service';
 import { withLegacyGoldenPointField } from '../../shared/gameFormat/goldenPoint';
 import {
@@ -27,6 +28,7 @@ import {
 import { WeatherForecastService } from '../weatherForecast.service';
 
 export { MAIN_PHOTO_RELATION_SELECT };
+export { getAvailableGamesCardInclude } from './availableGamesCard.projection';
 
 function buildPhotoViewer(userId?: string, isAdmin?: boolean): GamePhotosViewer | undefined {
   if (!userId) return undefined;
@@ -68,6 +70,40 @@ export function projectGamePhotoPayload(game: any, viewer?: GamePhotosViewer | n
       },
       getMaxArtifactPhotoGenerations(getOwnerIsPremiumFromGame(game))
     ),
+  });
+}
+
+/** Find card photo projection — no resultsArtifacts / linkedBookings bloat. */
+export function projectAvailableGameCardPayload(game: any, viewer?: GamePhotosViewer | null): any {
+  const mainPhoto = game.mainPhoto;
+  const canViewPhotos = canViewGamePhotos(game, viewer);
+  const {
+    mainPhotoId: _mainPhotoId,
+    photos: _photos,
+    resultsArtifactJob: _resultsArtifactJob,
+    externalBookings: _externalBookings,
+    resultsArtifactsVersion: _resultsArtifactsVersion,
+    resultsArtifactsReadyAt: _resultsArtifactsReadyAt,
+    ...rest
+  } = game;
+  void _mainPhotoId;
+  void _photos;
+  void _resultsArtifactJob;
+  void _externalBookings;
+  void _resultsArtifactsVersion;
+  void _resultsArtifactsReadyAt;
+  return withLegacyGoldenPointField({
+    ...rest,
+    timeOverride: game.timeOverride ?? false,
+    photosCount: canViewPhotos ? (game.photosCount ?? 0) : 0,
+    mainPhoto:
+      canViewPhotos && mainPhoto
+        ? {
+            id: mainPhoto.id,
+            thumbnailUrl: mainPhoto.thumbnailUrl,
+            originalUrl: mainPhoto.originalUrl,
+          }
+        : null,
   });
 }
 
@@ -211,96 +247,6 @@ const getGamesParentInclude = () => ({
       leagueSeason: {
         include: getLeagueSeasonInclude(),
       },
-    },
-  },
-});
-
-const getAvailableGamesInclude = () => ({
-  city: {
-    select: {
-      id: true,
-      name: true,
-      country: true,
-      telegramGroupId: true,
-      timezone: true,
-    },
-  },
-  club: {
-    select: {
-      id: true,
-      name: true,
-      avatar: true,
-      address: true,
-      cityId: true,
-      integrationType: true,
-      integrationConfig: true,
-      city: {
-        select: {
-          timezone: true,
-        },
-      },
-    },
-  },
-  court: {
-    include: {
-      club: {
-        select: {
-          id: true,
-          name: true,
-          avatar: true,
-          address: true,
-          integrationType: true,
-          integrationConfig: true,
-          city: {
-            select: {
-              name: true,
-              timezone: true,
-            },
-          },
-        },
-      },
-    },
-  },
-  participants: {
-    include: {
-      user: {
-        select: USER_SELECT_WITH_SPORT_PROFILES,
-      },
-    },
-  },
-  leagueSeason: {
-    include: getLeagueSeasonInclude(),
-  },
-  leagueGroup: {
-    select: {
-      id: true,
-      name: true,
-      color: true,
-    },
-  },
-  leagueRound: {
-    select: {
-      id: true,
-      orderIndex: true,
-      roundType: true,
-      playoffFormat: true,
-      bracketScope: true,
-    },
-  },
-  parent: {
-    include: {
-      leagueSeason: {
-        include: getLeagueSeasonInclude(),
-      },
-    },
-  },
-  mainPhoto: MAIN_PHOTO_RELATION_SELECT,
-  resultsArtifactJob: {
-    select: {
-      status: true,
-      summaryStatus: true,
-      photoStatus: true,
-      photoGenerationsUsed: true,
     },
   },
 });
@@ -707,106 +653,40 @@ export class GameReadService {
     primarySport?: Sport | string | null,
     showPrivateGames?: boolean,
     isAdmin?: boolean,
+    structural?: AvailableStructuralFilters,
+    pagination?: { take?: number; cursor?: string },
+    enrich = false,
   ) {
     if (!userId) {
       throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
     }
 
-    let viewerPrimarySport = primarySport;
-    if (viewerPrimarySport === undefined) {
-      const viewer = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { primarySport: true },
-      });
-      viewerPrimarySport = viewer?.primarySport;
-    }
-    const sportFilter = resolvePublicGamesSportFilter(sportQuery, viewerPrimarySport);
-
-    const includeAllPrivate = Boolean(showPrivateGames && isAdmin);
-    const visibilityOr: any[] = [{ isPublic: true }];
-    if (includeAllPrivate) {
-      visibilityOr.push({ isPublic: false });
-    } else {
-      visibilityOr.push({
-        isPublic: false,
-        participants: {
-          some: { userId: userId },
-        },
-      });
-    }
-    if (includeLeagues) {
-      visibilityOr.push({ entityType: 'LEAGUE' }, { entityType: 'LEAGUE_SEASON' });
-    }
-
-    const where: any = {
-      OR: visibilityOr,
-    };
-
-    if (!showArchived) {
-      where.status = { not: 'ARCHIVED' };
-    }
-
-    if (startDate || endDate) {
-      const startTimeRange: { gte?: Date; lte?: Date } = {};
-      if (startDate) {
-        const start = new Date(startDate);
-        start.setHours(0, 0, 0, 0);
-        startTimeRange.gte = start;
-      }
-      if (endDate) {
-        const end = new Date(endDate);
-        end.setHours(23, 59, 59, 999);
-        startTimeRange.lte = end;
-      }
-      where.AND = [
-        ...(Array.isArray(where.AND) ? where.AND : []),
-        {
-          OR: [{ entityType: 'LEAGUE_SEASON' }, { startTime: startTimeRange }],
-        },
-      ];
-    }
-
-    const cityIdToFilter = userCityId;
-    if (cityIdToFilter) {
-      where.cityId = cityIdToFilter;
-    } else {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { currentCityId: true, isAdmin: true }
-      });
-      if (user && user.currentCityId) {
-        where.cityId = user.currentCityId;
-      }
-    }
-
-    if (sportFilter.mode === 'single') {
-      where.sport = sportFilter.sport;
-    }
-
     const photoViewer = buildPhotoViewer(userId, isAdmin ?? false);
-
-    const gamesRaw = await prisma.game.findMany({
-      where,
-      include: getAvailableGamesInclude() as any,
-      orderBy: { startTime: 'desc' },
-    });
-    const games = gamesRaw.map((g) =>
-      projectGamePhotoPayload(projectGameUsersForSportContext(g), photoViewer)
+    return fetchAvailableGamesPage(
+      {
+        userId,
+        userCityId,
+        startDate,
+        endDate,
+        showArchived,
+        includeLeagues,
+        sportQuery,
+        primarySport,
+        showPrivateGames,
+        isAdmin,
+        structural,
+        take: pagination?.take,
+        cursor: pagination?.cursor,
+        enrich,
+        kind: 'calendar',
+        order: 'asc',
+      },
+      (g) =>
+        projectAvailableGameCardPayload(
+          projectGameUsersForSportContext(g as any),
+          photoViewer,
+        ),
     );
-
-    if (games.length > 0) {
-      const gameIds = games.map(g => g.id);
-      const notesMap = await getUserNotesForGames(userId, gameIds);
-      const withNotes = games.map(game => ({
-        ...game,
-        userNote: notesMap.get(game.id) || null,
-      }));
-      const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
-      const reactionsMap = await fetchReactionsByGameIds(gameIds);
-      return attachReactionsToGames(withWeather, reactionsMap);
-    }
-
-    return WeatherForecastService.attachSummariesToGames(games);
   }
 
   static async getAvailableUpcomingGames(
@@ -817,97 +697,36 @@ export class GameReadService {
     primarySport?: Sport | string | null,
     showPrivateGames?: boolean,
     isAdmin?: boolean,
+    structural?: AvailableStructuralFilters,
+    pagination?: { take?: number; cursor?: string },
+    enrich = false,
   ) {
     if (!userId) {
       throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
     }
 
-    let viewerPrimarySport = primarySport;
-    if (viewerPrimarySport === undefined) {
-      const viewer = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { primarySport: true },
-      });
-      viewerPrimarySport = viewer?.primarySport;
-    }
-    const sportFilter = resolvePublicGamesSportFilter(sportQuery, viewerPrimarySport);
-
-    const includeAllPrivate = Boolean(showPrivateGames && isAdmin);
-    const visibilityOr: any[] = [{ isPublic: true }];
-    if (includeAllPrivate) {
-      visibilityOr.push({ isPublic: false });
-    } else {
-      visibilityOr.push({
-        isPublic: false,
-        participants: {
-          some: { userId },
-        },
-      });
-    }
-    if (includeLeagues) {
-      visibilityOr.push({ entityType: 'LEAGUE' }, { entityType: 'LEAGUE_SEASON' });
-    }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const horizon = new Date(today);
-    horizon.setFullYear(horizon.getFullYear() + 1);
-    horizon.setHours(23, 59, 59, 999);
-
-    const where: any = {
-      OR: visibilityOr,
-      status: { not: 'ARCHIVED' },
-      AND: [
-        {
-          OR: [
-            { entityType: 'LEAGUE_SEASON' },
-            { startTime: { gte: today, lte: horizon } },
-          ],
-        },
-      ],
-    };
-
-    const cityIdToFilter = userCityId;
-    if (cityIdToFilter) {
-      where.cityId = cityIdToFilter;
-    } else {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { currentCityId: true, isAdmin: true },
-      });
-      if (user?.currentCityId) {
-        where.cityId = user.currentCityId;
-      }
-    }
-
-    if (sportFilter.mode === 'single') {
-      where.sport = sportFilter.sport;
-    }
-
     const photoViewer = buildPhotoViewer(userId, isAdmin ?? false);
-
-    const gamesRaw = await prisma.game.findMany({
-      where,
-      include: getAvailableGamesInclude() as any,
-      orderBy: { startTime: 'asc' },
-      take: 300,
-    });
-    const games = gamesRaw.map((g) =>
-      projectGamePhotoPayload(projectGameUsersForSportContext(g), photoViewer),
+    return fetchAvailableGamesPage(
+      {
+        userId,
+        userCityId,
+        includeLeagues,
+        sportQuery,
+        primarySport,
+        showPrivateGames,
+        isAdmin,
+        structural,
+        take: pagination?.take,
+        cursor: pagination?.cursor,
+        enrich,
+        kind: 'upcoming',
+        order: 'asc',
+      },
+      (g) =>
+        projectAvailableGameCardPayload(
+          projectGameUsersForSportContext(g as any),
+          photoViewer,
+        ),
     );
-
-    if (games.length === 0) {
-      return games;
-    }
-
-    const gameIds = games.map((g) => g.id);
-    const notesMap = await getUserNotesForGames(userId, gameIds);
-    const withNotes = games.map((game) => ({
-      ...game,
-      userNote: notesMap.get(game.id) || null,
-    }));
-    const withWeather = await WeatherForecastService.attachSummariesToGames(withNotes);
-    const reactionsMap = await fetchReactionsByGameIds(gameIds);
-    return attachReactionsToGames(withWeather, reactionsMap);
   }
 }

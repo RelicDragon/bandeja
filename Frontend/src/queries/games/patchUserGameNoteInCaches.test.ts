@@ -14,6 +14,8 @@ import { patchUserGameNoteInCaches } from './patchUserGameNoteInCaches';
 import { queryKeys } from '../queryKeys';
 import type { MyGamesData } from './useMyGamesQuery';
 import type { PastGamesPage } from './usePastGamesQuery';
+import { getGamesFromAvailableCache } from './availableGamesCache';
+import { EMPTY_AVAILABLE_META } from './availableGamesPage';
 
 function sampleGame(id: string, userNote?: string | null): Game {
   return { id, userNote } as Game;
@@ -50,9 +52,10 @@ describe('patchUserGameNoteInCaches', () => {
       pageParams: [0],
     });
 
-    client.setQueryData(queryKeys.games.available('city-1-false-primary-0'), [
-      sampleGame('game-1', 'old'),
-    ]);
+    client.setQueryData(queryKeys.games.available('city-1-false-primary-0'), {
+      games: [sampleGame('game-1', 'old')],
+      meta: EMPTY_AVAILABLE_META,
+    });
 
     patchUserGameNoteInCaches(client, 'game-1', 'updated note');
 
@@ -66,8 +69,8 @@ describe('patchUserGameNoteInCaches', () => {
     const pastGames = client.getQueryData<{ pages: PastGamesPage[] }>(queryKeys.games.past('user-1'));
     expect(pastGames?.pages[0]?.games[0]?.userNote).toBe('updated note');
 
-    const availableGames = client.getQueryData<Game[]>(
-      queryKeys.games.available('city-1-false-primary-0'),
+    const availableGames = getGamesFromAvailableCache(
+      client.getQueryData(queryKeys.games.available('city-1-false-primary-0')),
     );
     expect(availableGames?.[0]?.userNote).toBe('updated note');
   });

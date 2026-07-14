@@ -1,5 +1,9 @@
 import { format } from 'date-fns';
 import type { Sport } from '@shared/sport';
+import {
+  buildStructuralFilterHashPart,
+  type FindStructuralApiParams,
+} from '@/utils/findStructuralApiParams';
 
 export interface AvailableGamesFilterParams {
   startDate?: Date;
@@ -9,6 +13,7 @@ export interface AvailableGamesFilterParams {
   showPrivateGames?: boolean;
   cityId?: string;
   isAdmin?: boolean;
+  structural?: FindStructuralApiParams;
 }
 
 export function buildAvailableGamesFilterHash(params: AvailableGamesFilterParams): string {
@@ -16,11 +21,12 @@ export function buildAvailableGamesFilterHash(params: AvailableGamesFilterParams
   const sport = params.sport ?? 'primary';
   const cityId = params.cityId ?? 'no-city';
   const includeLeagues = String(!!params.includeLeagues);
+  const structural = buildStructuralFilterHashPart(params.structural);
 
   if (params.startDate && params.endDate) {
-    return `${cityId}-${format(params.startDate, 'yyyy-MM-dd')}-${format(params.endDate, 'yyyy-MM-dd')}-${includeLeagues}-${sport}-${privateFlag}`;
+    return `${cityId}-${format(params.startDate, 'yyyy-MM-dd')}-${format(params.endDate, 'yyyy-MM-dd')}-${includeLeagues}-${sport}-${privateFlag}-${structural}`;
   }
-  return `${cityId}-${includeLeagues}-${sport}-${privateFlag}`;
+  return `${cityId}-${includeLeagues}-${sport}-${privateFlag}-${structural}`;
 }
 
 export function buildAvailableUpcomingFilterHash(params: Omit<AvailableGamesFilterParams, 'startDate' | 'endDate'>): string {
@@ -28,7 +34,8 @@ export function buildAvailableUpcomingFilterHash(params: Omit<AvailableGamesFilt
   const sport = params.sport ?? 'primary';
   const cityId = params.cityId ?? 'no-city';
   const includeLeagues = String(!!params.includeLeagues);
-  return `upcoming-${cityId}-${includeLeagues}-${sport}-${privateFlag}`;
+  const structural = buildStructuralFilterHashPart(params.structural);
+  return `upcoming-${cityId}-${includeLeagues}-${sport}-${privateFlag}-${structural}`;
 }
 
 export const queryKeys = {

@@ -410,6 +410,15 @@ Frontend/e2e/
 | F-45 | Game card unified header | View cards of each entity type (game, training, tournament, league, bar) | Title row shows color-coded entity glyph (non-GAME) + name (entity-type label as fallback when unnamed); all pills (sport, participation, private, gender, no-rating, fixed teams, results) sit in one wrap row under the title; no duplicate entity pill |
 | F-47 | Game card date tile | Cards with set time, today/tomorrow, and `timeIsSet=false` | Calendar tile (weekday/day/month) tinted by entity type; bold time range + club beside it; "Today"/"Tomorrow" chip for near dates; crossed-calendar tile + "not set" text when time unset |
 | F-48 | Game card photo beside players | Cards with main photo (with/without players; league-season photo-only) | Square photo sits left of the participants carousel, stretched to the full carousel row height; carousel scrolls independently to the right |
+| F-49 | Find load stable under socket noise | Open Find (calendar + list) while unrelated My/game room socket bumps arrive | Calendar day counts and upcoming list do not flash empty or refetch wholesale; games already on Find patch in place when that game updates |
+| F-50 | Find filter list/calendar parity | Apply entity + slots + suitable rating (+ optional private/no-rating) toggles | Day badge counts match the filtered games shown for that day; list view applies the same filters |
+| F-51 | Find progressive enrichment | Open Find cold; wait for cards then badges/weather/notes | Cards paint before notes/weather/reactions; enrichment failure leaves list intact |
+| F-52 | Find busy-city ceiling | Busy city month with >300 public games; watch calendar/list | First paint stays bounded; day badges stay accurate via light dayIndex; selected day loads day-scoped cards; “Load more games” when `meta.hasMore` |
+| F-53 | Find warm view / month switch | Open calendar, switch to list (and back); flip to prev/next month within ~30s | Inactive view and adjacent months often hit warm cache (no full cold spinner) |
+| F-54 | Find structural filters server-align | Toggle club / entity / hide BAR / level band / available slots | Results match prior UX; filter changes refetch with new hash (not silent client-only discard of a fat payload) |
+| F-55 | Find selected-day detail under truncate | Busy month truncated; pick a late-month day | Day list comes from day-scoped fetch (complete for that day / load more), not only the first month page |
+| F-56 | Find day switch no wrong-day flash | Calendar: tap day A then day B quickly | No wrong-day cards; while day fetch resolves, month-filtered day list or loading — not previous day’s cards |
+| F-57 | Find old app on new BE (enrich) | Store build that omits `format=card` against current API | Notes/weather/reactions still present on Find cards (inline enrich); month still capped ≤300 |
 
 ---
 

@@ -66,6 +66,9 @@ export class GameService {
     primarySport?: Sport | string | null,
     showPrivateGames?: boolean,
     isAdmin?: boolean,
+    structural?: Parameters<typeof GameReadService.getAvailableGames>[10],
+    pagination?: { take?: number; cursor?: string },
+    enrich = false,
   ) {
     return GameReadService.getAvailableGames(
       userId,
@@ -78,6 +81,9 @@ export class GameService {
       primarySport,
       showPrivateGames,
       isAdmin,
+      structural,
+      pagination,
+      enrich,
     );
   }
 
@@ -89,6 +95,9 @@ export class GameService {
     primarySport?: Sport | string | null,
     showPrivateGames?: boolean,
     isAdmin?: boolean,
+    structural?: Parameters<typeof GameReadService.getAvailableUpcomingGames>[7],
+    pagination?: { take?: number; cursor?: string },
+    enrich = false,
   ) {
     return GameReadService.getAvailableUpcomingGames(
       userId,
@@ -98,6 +107,9 @@ export class GameService {
       primarySport,
       showPrivateGames,
       isAdmin,
+      structural,
+      pagination,
+      enrich,
     );
   }
 

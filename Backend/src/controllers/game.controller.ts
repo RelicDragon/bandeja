@@ -30,6 +30,9 @@ import { GameReactionService } from '../services/game/gameReaction.service';
 import { patchMyWatchSession } from '../services/game/watchSession.service';
 import { WorkoutSessionSource } from '@prisma/client';
 import { ParticipantChatsService } from '../services/game/participantChats.service';
+import { parseStructuralFiltersFromQuery } from '../services/game/availableGamesStructuralWhere';
+import { enrichAvailableGamesByIds } from '../services/game/availableGamesEnrichment';
+import { resolveAvailableEnrich } from '../services/game/availableGamesProtocol';
 
 export const createGame = asyncHandler(async (req: AuthRequest, res: Response) => {
   const game = await GameService.createGame(req.body, req.userId!, req.user?.isAdmin || false);
@@ -296,8 +299,16 @@ export const getAvailableUpcomingGames = asyncHandler(async (req: AuthRequest, r
   const includeLeagues = req.query.includeLeagues === 'true';
   const sport = req.query.sport as string | undefined;
   const showPrivateGames = req.query.showPrivateGames === 'true';
+  const enrich = resolveAvailableEnrich(req.query);
+  const structural = parseStructuralFiltersFromQuery({
+    ...req.query,
+    mode: 'upcoming',
+    requireTimeSet: false,
+  });
+  structural.requireTimeSet = false;
+  structural.allowUnsetTimeLeagueSeason = true;
 
-  const games = await GameService.getAvailableUpcomingGames(
+  const { games, meta } = await GameService.getAvailableUpcomingGames(
     req.userId,
     req.user?.currentCityId,
     includeLeagues,
@@ -305,11 +316,18 @@ export const getAvailableUpcomingGames = asyncHandler(async (req: AuthRequest, r
     req.user?.primarySport,
     showPrivateGames,
     req.user?.isAdmin,
+    structural,
+    {
+      take: req.query.take != null ? Number(req.query.take) : undefined,
+      cursor: req.query.cursor as string | undefined,
+    },
+    enrich,
   );
 
   res.json({
     success: true,
     data: games,
+    meta,
     serverTime: new Date().toISOString(),
   });
 });
@@ -326,8 +344,13 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
 
   const sport = req.query.sport as string | undefined;
   const showPrivateGames = req.query.showPrivateGames === 'true';
+  const enrich = resolveAvailableEnrich(req.query);
+  const structural = parseStructuralFiltersFromQuery({
+    ...req.query,
+    mode: 'calendar',
+  });
 
-  const games = await GameService.getAvailableGames(
+  const { games, meta } = await GameService.getAvailableGames(
     req.userId,
     req.user?.currentCityId,
     startDate,
@@ -338,11 +361,39 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
     req.user?.primarySport,
     showPrivateGames,
     req.user?.isAdmin,
+    structural,
+    {
+      take: req.query.take != null ? Number(req.query.take) : undefined,
+      cursor: req.query.cursor as string | undefined,
+    },
+    enrich,
   );
 
   res.json({
     success: true,
     data: games,
+    meta,
+    serverTime: new Date().toISOString(),
+  });
+});
+
+export const enrichAvailableGames = asyncHandler(async (req: AuthRequest, res: Response) => {
+  if (!req.userId) {
+    throw new ApiError(401, 'Unauthorized');
+  }
+
+  const idsRaw = req.query.ids ?? req.body?.ids;
+  const ids = Array.isArray(idsRaw)
+    ? idsRaw.map(String)
+    : String(idsRaw ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+  const byGameId = await enrichAvailableGamesByIds(req.userId, ids);
+  res.json({
+    success: true,
+    data: { byGameId },
     serverTime: new Date().toISOString(),
   });
 });

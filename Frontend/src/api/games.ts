@@ -85,13 +85,63 @@ export const gamesApi = {
     return response.data;
   },
 
-  getAvailableUpcomingGames: async (params?: { includeLeagues?: boolean; sport?: string; showPrivateGames?: boolean }) => {
+  getAvailableUpcomingGames: async (params?: {
+    includeLeagues?: boolean;
+    sport?: string;
+    showPrivateGames?: boolean;
+    clubIds?: string;
+    entityTypes?: string;
+    hideBar?: boolean;
+    levelMin?: number;
+    levelMax?: number;
+    availableSlots?: boolean;
+    mode?: string;
+    /** New Find protocol — slim card + deferred enrichment. */
+    format?: 'card';
+    take?: number;
+    cursor?: string;
+    enrich?: boolean;
+  }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/available/upcoming', { params });
     return response.data;
   },
 
-  getAvailableGames: async (params?: { month?: number; year?: number; startDate?: string; endDate?: string; showArchived?: boolean; includeLeagues?: boolean; sport?: string; showPrivateGames?: boolean }) => {
+  getAvailableGames: async (params?: {
+    month?: number;
+    year?: number;
+    startDate?: string;
+    endDate?: string;
+    showArchived?: boolean;
+    includeLeagues?: boolean;
+    sport?: string;
+    showPrivateGames?: boolean;
+    clubIds?: string;
+    entityTypes?: string;
+    hideBar?: boolean;
+    levelMin?: number;
+    levelMax?: number;
+    availableSlots?: boolean;
+    mode?: string;
+    /** New Find protocol — slim card + deferred enrichment. */
+    format?: 'card';
+    take?: number;
+    cursor?: string;
+    enrich?: boolean;
+  }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/available', { params });
+    return response.data;
+  },
+
+  getAvailableGamesEnrichment: async (ids: string[]) => {
+    const response = await api.get<
+      ApiResponse<{ byGameId: Record<string, {
+        userNote?: string | null;
+        weatherSummary?: Game['weatherSummary'];
+        reactions?: Game['reactions'];
+      }> }>
+    >('/games/available/enrichment', {
+      params: { ids: ids.join(',') },
+    });
     return response.data;
   },
 

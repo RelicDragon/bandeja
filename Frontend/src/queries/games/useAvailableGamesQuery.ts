@@ -1,8 +1,17 @@
 import { format } from 'date-fns';
-import { keepPreviousData, queryOptions, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions, useQuery, useQueryClient } from '@tanstack/react-query';
 import { gamesApi } from '@/api';
 import type { Game } from '@/types';
+import { attachAvailableGamesEnrichment } from '@/utils/attachAvailableGamesEnrichment';
+import type { FindStructuralApiParams } from '@/utils/findStructuralApiParams';
 import { buildAvailableGamesFilterHash, queryKeys } from '../queryKeys';
+import {
+  mergeAvailableGamesPages,
+  parseAvailableGamesMeta,
+  structuralToApiParams,
+  type AvailableGamesPage,
+  type AvailableGamesPageMeta,
+} from './availableGamesPage';
 import { GAMES_LIST_STALE_TIME } from './constants';
 import { sortGames } from './sortGames';
 
@@ -15,12 +24,19 @@ export interface AvailableGamesQueryParams {
   showPrivateGames?: boolean;
   isAdmin?: boolean;
   cityId?: string;
+  structural?: FindStructuralApiParams;
 }
 
-function buildApiParams(params: AvailableGamesQueryParams) {
+export function buildAvailableGamesApiParams(
+  params: AvailableGamesQueryParams,
+  pagination?: { take?: number; cursor?: string },
+) {
   const apiParams: Parameters<typeof gamesApi.getAvailableGames>[0] = {
     showArchived: true,
     includeLeagues: !!params.includeLeagues,
+    mode: 'calendar',
+    format: 'card',
+    ...structuralToApiParams(params.structural),
   };
   if (params.startDate && params.endDate) {
     apiParams.startDate = format(params.startDate, 'yyyy-MM-dd');
@@ -32,7 +48,13 @@ function buildApiParams(params: AvailableGamesQueryParams) {
   if (params.isAdmin && params.showPrivateGames) {
     apiParams.showPrivateGames = true;
   }
+  if (pagination?.take != null) apiParams.take = pagination.take;
+  if (pagination?.cursor) apiParams.cursor = pagination.cursor;
   return apiParams;
+}
+
+function parseMeta(raw: unknown): AvailableGamesPageMeta {
+  return parseAvailableGamesMeta(raw);
 }
 
 export function availableGamesQueryOptions(
@@ -47,17 +69,28 @@ export function availableGamesQueryOptions(
     showPrivateGames: params.showPrivateGames,
     cityId: params.cityId,
     isAdmin: params.isAdmin,
+    structural: params.structural,
   });
   const isEnabled = enabled && !!params.userId;
+  const queryKey = queryKeys.games.available(filterHash);
+  // Day-scoped fetches must not keep previous day's rows as placeholder —
+  // Find filters by selectedDay and would flash EmptyState while fetching.
+  const dayScoped =
+    !!params.startDate &&
+    !!params.endDate &&
+    format(params.startDate, 'yyyy-MM-dd') === format(params.endDate, 'yyyy-MM-dd');
 
   return queryOptions({
-    queryKey: queryKeys.games.available(filterHash),
-    queryFn: async (): Promise<Game[]> => {
-      const response = await gamesApi.getAvailableGames(buildApiParams(params));
-      return sortGames(response.data || []);
+    queryKey,
+    queryFn: async ({ client }): Promise<AvailableGamesPage> => {
+      const response = await gamesApi.getAvailableGames(buildAvailableGamesApiParams(params));
+      const games = sortGames(response.data || []);
+      const meta = parseMeta(response.meta);
+      void attachAvailableGamesEnrichment(client, queryKey, games);
+      return { games, meta };
     },
     staleTime: GAMES_LIST_STALE_TIME,
-    placeholderData: keepPreviousData,
+    placeholderData: dayScoped ? undefined : keepPreviousData,
     enabled: isEnabled,
   });
 }
@@ -67,5 +100,32 @@ export function useAvailableGamesQuery(
   options?: { enabled?: boolean },
 ) {
   const enabled = options?.enabled ?? !!params.userId;
-  return useQuery(availableGamesQueryOptions(params, enabled));
+  const queryClient = useQueryClient();
+  const query = useQuery(availableGamesQueryOptions(params, enabled));
+
+  const loadMore = async () => {
+    const current = query.data;
+    if (!current?.meta.hasMore || !current.meta.nextCursor) return;
+    const response = await gamesApi.getAvailableGames(
+      buildAvailableGamesApiParams(params, { cursor: current.meta.nextCursor }),
+    );
+    const incoming = sortGames(response.data || []);
+    const meta = parseMeta(response.meta);
+    // Preserve dayIndex from the first page — later pages do not re-fetch it.
+    const games = mergeAvailableGamesPages(current.games, incoming);
+    const page: AvailableGamesPage = {
+      games,
+      meta: {
+        ...meta,
+        dayIndex: current.meta.dayIndex,
+        dayIndexTruncated: current.meta.dayIndexTruncated,
+      },
+    };
+    queryClient.setQueryData(query.queryKey, page);
+    void attachAvailableGamesEnrichment(queryClient, query.queryKey, incoming);
+  };
+
+  return { ...query, loadMore };
 }
+
+export type { AvailableGamesPage, AvailableGamesPageMeta, Game };

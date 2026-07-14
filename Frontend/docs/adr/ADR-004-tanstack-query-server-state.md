@@ -41,6 +41,12 @@ Adopt **TanStack Query v5** (`@tanstack/react-query`). Reject a thin in-house `c
 - Chat/presence events → no Query invalidation.
 - Add `setQueryData` optimistic patches only if scoped invalidation causes visible UX regression.
 
+**Footnote (Find cost, epic #280 / #283–#287):** The bridge must **not** prefix-invalidate `['games']`. Invites refresh **My** only (`['games','my',userId]`). Live `game-updated` payloads **patch by game id** into My / Find caches when present; My is invalidated only when the update cannot be patched onto the My slice. Find available / upcoming are left alone unless the game id is already in those caches (patch), so busy My/room traffic does not force Fat Find refetches. Invalidate-first remains at the slice level.
+
+Find available / upcoming caches store `{ games, meta }` (hard `take` ≤ 300, `cursor` pagination via `meta.nextCursor`). Calendar first page also carries light `meta.dayIndex` for accurate day badges without unbounded fat DTOs; selected day uses a day-scoped available query. Core list fetch does **not** await notes/weather/reactions — `GET /games/available/enrichment?ids=` merges afterward (chunked ≤100). Structural filters travel in the query string and filterHash. Prefetch inactive view + adjacent months while Find is ready (`staleTime` 30s).
+
+**TTFP (cold Find):** when the client sends `format=card` (current web/app FE), core available/upcoming returns after slim `findMany` + card project only — notes/weather/reactions merge via `GET /games/available/enrichment?ids=` after paint. Clients that omit `format` (older store builds) keep **inline enrich** on the same routes so Find cards still show notes/weather/reactions; hard `take` ≤ 300 still applies. Explicit `enrich=true|false` overrides the default. Expected server TTFP for Find core (`format=card`) ≈ Prisma card query time; enrichment must not clear the list on failure.
+
 ### 5. Offline / stale defaults (Capacitor + web)
 
 Wire Query `onlineManager` to existing `useNetworkStore`.

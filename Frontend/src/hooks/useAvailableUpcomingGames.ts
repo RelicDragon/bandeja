@@ -1,6 +1,8 @@
 import { useCallback } from 'react';
 import { useAvailableUpcomingGamesQuery } from '@/queries/games/useAvailableUpcomingGamesQuery';
 import { deriveAvailableGamesLoading } from '@/hooks/useAvailableGames';
+import type { FindStructuralApiParams } from '@/utils/findStructuralApiParams';
+import { EMPTY_AVAILABLE_META } from '@/queries/games/availableGamesPage';
 
 export const useAvailableUpcomingGames = (
   user: {
@@ -13,17 +15,23 @@ export const useAvailableUpcomingGames = (
   sport?: string,
   showPrivateGames?: boolean,
   queryEnabled = true,
+  structural?: FindStructuralApiParams,
 ) => {
-  const { data, isPending, isFetching, refetch } = useAvailableUpcomingGamesQuery({
-    userId: user?.id,
-    includeLeagues,
-    sport,
-    showPrivateGames,
-    isAdmin: user?.isAdmin,
-    cityId: user?.currentCity?.id || user?.currentCityId,
-  }, { enabled: queryEnabled });
+  const { data, isPending, isFetching, refetch, loadMore } = useAvailableUpcomingGamesQuery(
+    {
+      userId: user?.id,
+      includeLeagues,
+      sport,
+      showPrivateGames,
+      isAdmin: user?.isAdmin,
+      cityId: user?.currentCity?.id || user?.currentCityId,
+      structural,
+    },
+    { enabled: queryEnabled },
+  );
 
-  const availableGames = data ?? [];
+  const availableGames = data?.games ?? [];
+  const meta = data?.meta ?? EMPTY_AVAILABLE_META;
   const loading = deriveAvailableGamesLoading(
     queryEnabled,
     isPending,
@@ -38,5 +46,12 @@ export const useAvailableUpcomingGames = (
     [refetch],
   );
 
-  return { availableGames, loading, fetchData, refetch: fetchData };
+  return {
+    availableGames,
+    meta,
+    loading,
+    fetchData,
+    refetch: fetchData,
+    loadMore,
+  };
 };

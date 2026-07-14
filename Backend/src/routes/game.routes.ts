@@ -39,6 +39,8 @@ router.get('/past-games', authenticate, gameController.getPastGames);
 
 router.get('/available/upcoming', authenticate, gameController.getAvailableUpcomingGames);
 
+router.get('/available/enrichment', authenticate, gameController.enrichAvailableGames);
+
 router.get('/available', authenticate, gameController.getAvailableGames);
 
 router.get('/booked-courts', authenticate, gameController.getBookedCourts);

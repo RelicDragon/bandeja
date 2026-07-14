@@ -6,7 +6,8 @@ import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { normalizeFindSportFilter } from '@/utils/findSportFilter';
 
 export function passesFindAvailableSlotsFilter(game: Game, user: User | null | undefined): boolean {
-  const slotCount = game.participants.filter((p) => p.status === 'PLAYING').length;
+  const participants = game.participants ?? [];
+  const slotCount = participants.filter((p) => p.status === 'PLAYING').length;
   if (slotCount >= game.maxParticipants) {
     return false;
   }
@@ -24,7 +25,7 @@ export function passesFindAvailableSlotsFilter(game: Game, user: User | null | u
     if (genderTeams === 'WOMEN' && user.gender !== 'FEMALE') return false;
     if (genderTeams === 'MIX_PAIRS') {
       if (user.gender !== 'MALE' && user.gender !== 'FEMALE') return false;
-      const playing = game.participants?.filter((p) => p.status === 'PLAYING') ?? [];
+      const playing = participants.filter((p) => p.status === 'PLAYING');
       const maxPerGender = Math.floor((game.maxParticipants || 0) / 2);
       const sameGenderCount = playing.filter((p) => p.user?.gender === user.gender).length;
       if (sameGenderCount >= maxPerGender) return false;

@@ -11,18 +11,19 @@ import { Game } from '@/types';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { formatShortWeekday, formatCompactMonthHeader } from '@/utils/dateFormat';
-import { passesAvailableGamePanelFilters,
+import {
   DEFAULT_AVAILABLE_GAME_PANEL_FILTERS,
   type AvailableGamePanelFilterState,
 } from '@/utils/availableGamePanelFilters';
 import { useUnreadStore } from '@/store/unreadStore';
 import { gameUnreadCountsMap } from '@/utils/unreadCountsFromStore';
-import { passesFindNoRatingFilter } from '@/utils/findDiscovery';
 import {
-  passesFindAvailableSlotsFilter,
-  passesFindHideBarGamesFilter,
-  passesFindSuitableRatingFilter,
-} from '@/utils/findAvailabilityFilters';
+  aggregateFindGamesByDay,
+  resolveFindFilterViewer,
+  type FindDisplayEntityType,
+  type FindFilterState,
+} from '@/utils/findFilter';
+import { countFindDayIndexByDay, type FindDayIndexRow } from '@/utils/findDayIndexCounts';
 import { useMonthCalendarWeather } from '@/hooks/useMonthCalendarWeather';
 import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
 import { MonthCalendarWeatherToggle } from '@/components/MonthCalendarWeatherToggle';
@@ -33,7 +34,7 @@ import {
   type CalendarWeatherModeScope,
 } from '@/utils/calendarWeatherModeStorage';
 
-type DisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
+type DisplayEntityType = FindDisplayEntityType;
 
 const ENTITY_ICONS: Record<DisplayEntityType, typeof Users> = {
   GAME: Users,
@@ -53,14 +54,12 @@ const ENTITY_ICON_CLASS: Record<DisplayEntityType, string> = {
   BAR: 'text-yellow-500 dark:text-yellow-400',
 };
 
-function toDisplayEntityType(entityType: Game['entityType']): DisplayEntityType {
-  return entityType === 'LEAGUE_SEASON' ? 'LEAGUE' : entityType;
-}
-
 export interface MonthCalendarProps {
   selectedDate: Date | null;
   onDateSelect: (date: Date) => void;
   availableGames: Game[];
+  /** Cheap structural day index for accurate busy-city badge counts. */
+  dayIndex?: FindDayIndexRow[];
   filterAvailableSlots?: boolean;
   filterSuitableRating?: boolean;
   hideBarGames?: boolean;
@@ -97,6 +96,7 @@ export const MonthCalendar = ({
   selectedDate,
   onDateSelect,
   availableGames,
+  dayIndex,
   filterAvailableSlots = false,
   filterSuitableRating = false,
   hideBarGames = false,
@@ -160,93 +160,73 @@ export const MonthCalendar = ({
 
   const noEntityFilter = !gameFilter && !trainingFilter && !tournamentFilter && !leaguesFilter;
 
+  const findFilterState = useMemo<FindFilterState>(
+    () => ({
+      filterAvailableSlots,
+      filterSuitableRating,
+      hideBarGames,
+      gameFilter,
+      trainingFilter,
+      tournamentFilter,
+      leaguesFilter,
+      showPrivateGames,
+      findDiscoveryEnabled,
+      filterNoRating,
+      panel: panelFilters,
+      favoriteTrainerId,
+    }),
+    [
+      filterAvailableSlots,
+      filterSuitableRating,
+      hideBarGames,
+      gameFilter,
+      trainingFilter,
+      tournamentFilter,
+      leaguesFilter,
+      showPrivateGames,
+      findDiscoveryEnabled,
+      filterNoRating,
+      panelFilters,
+      favoriteTrainerId,
+    ],
+  );
+
+  const findFilterViewer = useMemo(
+    () => resolveFindFilterViewer(user, isAdmin),
+    [user, isAdmin],
+  );
+
   const dateCellData = useMemo(() => {
-    const dataMap = new Map<string, { gameCount: number; unreadCount: number; hasLeagueTournament: boolean; isUserParticipant: boolean; hasTraining: boolean; participantEntityTypes: Set<DisplayEntityType>; entityTypes: Set<DisplayEntityType> }>();
+    const fromCards = aggregateFindGamesByDay(
+      availableGames,
+      findFilterViewer,
+      findFilterState,
+      gamesUnreadCounts,
+    );
+    if (!dayIndex || dayIndex.length === 0) return fromCards;
 
-    availableGames.forEach(game => {
-      if (game.timeIsSet === false) return;
-
-      if (!passesAvailableGamePanelFilters(game, panelFilters)) return;
-
-      if (findDiscoveryEnabled) {
-        if (!passesFindNoRatingFilter(game, filterNoRating)) return;
+    const indexCounts = countFindDayIndexByDay(dayIndex, findFilterViewer, findFilterState);
+    const merged = new Map(fromCards);
+    for (const [day, count] of indexCounts) {
+      const existing = merged.get(day);
+      if (existing) {
+        existing.gameCount = count;
+        merged.set(day, existing);
+      } else {
+        merged.set(day, {
+          gameCount: count,
+          gameIds: [],
+          unreadCount: 0,
+          hasLeagueTournament: false,
+          isUserParticipant: false,
+          hasTraining: false,
+          participantEntityTypes: new Set(),
+          entityTypes: new Set(),
+        });
       }
-
-      if (!passesFindHideBarGamesFilter(game, hideBarGames)) return;
-
-      const organizer = game.entityType === 'TRAINING'
-        ? (game.trainerId ? game.participants?.find((p: any) => p.userId === game.trainerId) : null) || game.participants?.find((p: any) => p.role === 'OWNER')
-        : game.participants?.find((p: any) => p.role === 'OWNER');
-      if (organizer && user?.blockedUserIds?.includes(organizer.userId)) return;
-
-      const gameDate = format(startOfDay(new Date(game.startTime)), 'yyyy-MM-dd');
-      const isPublic = game.isPublic;
-      const isUserParticipantInGame = user?.id && game.participants.some((p: any) => p.userId === user.id);
-      const isLeagueGame = game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON';
-
-      const showPrivateAsAdmin = isAdmin && showPrivateGames;
-      if (!isPublic && !isUserParticipantInGame && !(leaguesFilter && isLeagueGame) && !showPrivateAsAdmin) {
-        return;
-      }
-
-      if (isUserParticipantInGame) {
-        const existing = dataMap.get(gameDate) || { gameCount: 0, unreadCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
-        existing.participantEntityTypes.add(toDisplayEntityType(game.entityType));
-        dataMap.set(gameDate, existing);
-      }
-
-      if (filterAvailableSlots && !passesFindAvailableSlotsFilter(game, user)) {
-        return;
-      }
-
-      if (filterSuitableRating && !passesFindSuitableRatingFilter(game, user)) {
-        return;
-      }
-
-      if (gameFilter && game.entityType !== 'GAME') {
-        return;
-      }
-
-      if (trainingFilter && game.entityType !== 'TRAINING') {
-        return;
-      }
-
-      if (trainingFilter && favoriteTrainerId) {
-        const trainer = game.trainerId === favoriteTrainerId ? game.participants?.find((p: any) => p.userId === favoriteTrainerId) : null;
-        if (!trainer) return;
-      }
-
-      if (tournamentFilter && game.entityType !== 'TOURNAMENT') {
-        return;
-      }
-
-      if (leaguesFilter && !isLeagueGame) {
-        return;
-      }
-
-      const existing = dataMap.get(gameDate) || { gameCount: 0, unreadCount: 0, hasLeagueTournament: false, isUserParticipant: false, hasTraining: false, participantEntityTypes: new Set<DisplayEntityType>(), entityTypes: new Set<DisplayEntityType>() };
-
-      existing.gameCount++;
-      existing.unreadCount += gamesUnreadCounts[game.id] || 0;
-      existing.entityTypes.add(toDisplayEntityType(game.entityType));
-
-      if (game.entityType === 'TOURNAMENT' || game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON') {
-        existing.hasLeagueTournament = true;
-      }
-
-      if (game.entityType === 'TRAINING') {
-        existing.hasTraining = true;
-      }
-
-      if (isUserParticipantInGame) {
-        existing.isUserParticipant = true;
-      }
-
-      dataMap.set(gameDate, existing);
-    });
-
-    return dataMap;
-  }, [availableGames, filterAvailableSlots, filterSuitableRating, hideBarGames, gameFilter, trainingFilter, tournamentFilter, leaguesFilter, favoriteTrainerId, user, panelFilters, showPrivateGames, isAdmin, gamesUnreadCounts, findDiscoveryEnabled, filterNoRating]);
+    }
+    return merged;
+  }, [availableGames, dayIndex, findFilterViewer, findFilterState, gamesUnreadCounts]);
 
   const notifyMonthChange = (month: Date) => {
     if (onMonthChange) {

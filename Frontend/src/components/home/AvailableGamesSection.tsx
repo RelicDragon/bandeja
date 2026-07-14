@@ -25,7 +25,6 @@ import { GamesLoadingSkeleton } from './GameCardSkeleton';
 import { EntityFilterChips } from './EntityFilterChips';
 import { SubscriptionsNudgeButton } from './SubscriptionsNudgeButton';
 import { GamesByDateList } from './GamesByDateList';
-import { passesAvailableGamePanelFilters } from '@/utils/availableGamePanelFilters';
 import { navigationService } from '@/services/navigationService';
 import { getViewerPrimarySport, resolveFindLevelFilterSport } from '@/utils/findSportFilter';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
@@ -34,21 +33,17 @@ import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
 import { getSportConfig } from '@/sport/sportRegistry';
 import { SportPublicIcon } from '@/components/sport/SportPublicIcon';
-import {
-  isFindDiscoveryEnabled,
-  passesFindNoRatingFilter,
-} from '@/utils/findDiscovery';
-import {
-  passesFindAvailableSlotsFilter,
-  passesFindHideBarGamesFilter,
-  passesFindSuitableRatingFilter,
-} from '@/utils/findAvailabilityFilters';
-import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
+import { isFindDiscoveryEnabled } from '@/utils/findDiscovery';
+import { filterFindGames, resolveFindFilterViewer, type FindFilterState } from '@/utils/findFilter';
+import type { FindDayIndexRow } from '@/utils/findDayIndexCounts';
 import { usePlayersStore } from '@/store/playersStore';
 import { formatTrainerDisplayName, resolveFindEmptyMessage } from './findTrainerEmptyMessage';
 
 interface AvailableGamesSectionProps {
   availableGames: Game[];
+  /** Calendar selected-day card list (day-scoped fetch). Falls back to availableGames. */
+  selectedDayGames?: Game[];
+  dayIndex?: FindDayIndexRow[];
   user: any;
   loading?: boolean;
   onJoin: (gameId: string, e: React.MouseEvent) => void;
@@ -59,10 +54,15 @@ interface AvailableGamesSectionProps {
   onFiltersChange?: (updates: Partial<GameFilters>) => void;
   onNoteSaved?: (gameId: string) => void;
   splitView?: boolean;
+  hasMoreAvailable?: boolean;
+  onLoadMoreAvailable?: () => void | Promise<void>;
+  availableBound?: number;
 }
 
 export const AvailableGamesSection = ({
   availableGames,
+  selectedDayGames,
+  dayIndex,
   user,
   loading,
   onJoin,
@@ -73,9 +73,13 @@ export const AvailableGamesSection = ({
   onFiltersChange,
   onNoteSaved,
   splitView = false,
+  hasMoreAvailable = false,
+  onLoadMoreAvailable,
+  availableBound = 300,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [loadingMore, setLoadingMore] = useState(false);
   const players = usePlayersStore((state) => state.users);
   const findViewMode = useShellNavStore((s) => s.findViewMode);
   const requestFindGoToCurrent = useShellNavStore((s) => s.requestFindGoToCurrent);
@@ -397,94 +401,59 @@ export const AvailableGamesSection = ({
     [filterClubIdsVal, filterTimeStartVal, filterTimeEndVal, filterLevelMinVal, filterLevelMaxVal]
   );
 
-  const applyCommonFilters = (game: Game) => {
-    if (game.timeIsSet === false && game.entityType !== 'LEAGUE_SEASON') {
-      return false;
-    }
+  const findFilterState = useMemo<FindFilterState>(
+    () => ({
+      filterAvailableSlots: filterAvailableSlotsVal,
+      filterSuitableRating: filterSuitableRatingVal,
+      hideBarGames: hideBarGamesVal,
+      gameFilter: gameFilterVal,
+      trainingFilter: trainingFilterVal,
+      tournamentFilter: tournamentFilterVal,
+      leaguesFilter: leaguesFilterVal,
+      showPrivateGames: showPrivateGamesVal,
+      findDiscoveryEnabled,
+      filterNoRating: filterNoRatingVal,
+      panel: panelFilterState,
+    }),
+    [
+      filterAvailableSlotsVal,
+      filterSuitableRatingVal,
+      hideBarGamesVal,
+      gameFilterVal,
+      trainingFilterVal,
+      tournamentFilterVal,
+      leaguesFilterVal,
+      showPrivateGamesVal,
+      findDiscoveryEnabled,
+      filterNoRatingVal,
+      panelFilterState,
+    ],
+  );
 
-    if (!passesAvailableGamePanelFilters(game, panelFilterState)) {
-      return false;
-    }
-
-    if (findDiscoveryEnabled) {
-      if (!passesFindNoRatingFilter(game, filterNoRatingVal)) {
-        return false;
-      }
-    }
-
-    if (!passesFindHideBarGamesFilter(game, hideBarGamesVal)) {
-      return false;
-    }
-
-    const organizer = game.entityType === 'TRAINING'
-      ? (game.trainerId ? game.participants.find((p: any) => p.userId === game.trainerId) : null) || game.participants.find((p: any) => p.role === 'OWNER')
-      : game.participants.find((p: any) => p.role === 'OWNER');
-    if (organizer && user?.blockedUserIds?.includes(organizer.userId)) {
-      return false;
-    }
-
-    const isPublic = game.isPublic;
-    const isParticipant = user?.id && game.participants.some((p: any) => p.userId === user.id);
-    const isLeagueGame = game.entityType === 'LEAGUE' || game.entityType === 'LEAGUE_SEASON';
-
-    const showPrivateAsAdmin = isAdmin && showPrivateGamesVal;
-    if (!isPublic && !isParticipant && !(leaguesFilterVal && isLeagueGame) && !showPrivateAsAdmin) {
-      return false;
-    }
-
-    const genderTeams = game.genderTeams ?? 'ANY';
-    if (genderTeams !== 'ANY' && user?.gender === 'PREFER_NOT_TO_SAY') {
-      return false;
-    }
-
-    if (filterAvailableSlotsVal && !passesFindAvailableSlotsFilter(game, user)) {
-      return false;
-    }
-
-    if (filterSuitableRatingVal && !passesFindSuitableRatingFilter(game, user)) {
-      return false;
-    }
-
-    if (gameFilterVal && game.entityType !== 'GAME') {
-      return false;
-    }
-
-    if (trainingFilterVal && game.entityType !== 'TRAINING') {
-      return false;
-    }
-
-    if (trainingFilterVal && user?.favoriteTrainerId) {
-      const trainer = game.trainerId === user.favoriteTrainerId ? game.participants.find((p: any) => p.userId === game.trainerId) : null;
-      if (!trainer) return false;
-    }
-
-    if (tournamentFilterVal && game.entityType !== 'TOURNAMENT') {
-      return false;
-    }
-
-    if (leaguesFilterVal && !isLeagueGame) {
-      return false;
-    }
-
-    return true;
-  };
-
-  const getFilteredGames = () => {
+  const filteredGames = useMemo(() => {
     if (findViewMode === 'calendar') {
-      return filterGamesForCalendarDay(availableGames, selectedDate).filter(applyCommonFilters);
+      const dayScoped = selectedDayGames != null;
+      return filterFindGames(
+        dayScoped ? selectedDayGames : availableGames,
+        resolveFindFilterViewer(user, isAdmin),
+        findFilterState,
+        {
+          mode: 'calendar',
+          // Day-scoped API already narrowed to one day; skip selectedDay re-cut.
+          selectedDay: dayScoped ? undefined : selectedDate,
+        },
+      );
     }
-    const today = startOfDay(new Date());
-    return availableGames.filter((game) => {
-      if (game.status === 'ARCHIVED') return false;
-      if (game.timeIsSet !== false) {
-        const gameDate = startOfDay(new Date(game.startTime));
-        if (gameDate < today) return false;
-      }
-      return applyCommonFilters(game);
-    });
-  };
-
-  const filteredGames = getFilteredGames();
+    return filterFindGames(
+      availableGames,
+      resolveFindFilterViewer(user, isAdmin),
+      findFilterState,
+      {
+        mode: 'list',
+        listFromToday: true,
+      },
+    );
+  }, [availableGames, selectedDayGames, user, isAdmin, findFilterState, findViewMode, selectedDate]);
   const findFilterSport = filterSportVal;
   const findSportTabs = useMemo<SegmentedSwitchTab[]>(() => {
     const enabledSports = listEnabledSports(user);
@@ -683,7 +652,12 @@ export const AvailableGamesSection = ({
     />
   );
 
-  const initialGamesLoading = Boolean(loading && availableGames.length === 0);
+  const initialGamesLoading = Boolean(
+    loading &&
+      (findViewMode === 'calendar'
+        ? (selectedDayGames ?? availableGames).length === 0
+        : availableGames.length === 0),
+  );
 
   const findListCollapsed = findViewMode === 'list';
   const handleFindListToggle = useCallback(() => {
@@ -696,6 +670,7 @@ export const AvailableGamesSection = ({
     selectedDate,
     onDateSelect: handleDateSelect,
     availableGames,
+    dayIndex,
     filterAvailableSlots: filterAvailableSlotsVal,
     filterSuitableRating: filterSuitableRatingVal,
     hideBarGames: hideBarGamesVal,
@@ -720,23 +695,64 @@ export const AvailableGamesSection = ({
     },
   };
 
+  const handleLoadMore = useCallback(async () => {
+    if (!onLoadMoreAvailable || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      await onLoadMoreAvailable();
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [onLoadMoreAvailable, loadingMore]);
+
+  const loadMoreFooter =
+    hasMoreAvailable && onLoadMoreAvailable ? (
+      <div className="mt-3 flex flex-col items-center gap-2 px-1">
+        <p className="text-center text-xs text-gray-500 dark:text-gray-400">
+          {t('games.availableBoundHint', {
+            defaultValue: 'Showing up to {{bound}} games per request in busy cities.',
+            bound: availableBound,
+          })}
+        </p>
+        <button
+          type="button"
+          onClick={() => void handleLoadMore()}
+          disabled={loadingMore}
+          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
+        >
+          {loadingMore
+            ? t('common.loading', { defaultValue: 'Loading…' })
+            : t('games.loadMore', { defaultValue: 'Load more games' })}
+        </button>
+      </div>
+    ) : null;
+
   const gamesContent = (
     <AnimatedLoadingSwap
       isLoading={initialGamesLoading}
       loading={<GamesLoadingSkeleton />}
     >
       {filteredGames.length === 0 ? (
-        <EmptyStateCard icon={SearchX} title={emptyMessage} />
+        <>
+          <EmptyStateCard icon={SearchX} title={emptyMessage} />
+          {loadMoreFooter}
+        </>
       ) : findViewMode === 'list' ? (
-        <GamesByDateList
-          games={filteredGames}
-          user={user}
-          onJoin={onJoin}
-          onNoteSaved={onNoteSaved}
-          findFilterSport={findFilterSport}
-        />
+        <>
+          <GamesByDateList
+            games={filteredGames}
+            user={user}
+            onJoin={onJoin}
+            onNoteSaved={onNoteSaved}
+            findFilterSport={findFilterSport}
+          />
+          {loadMoreFooter}
+        </>
       ) : (
-        gamesList
+        <>
+          {gamesList}
+          {loadMoreFooter}
+        </>
       )}
     </AnimatedLoadingSwap>
   );

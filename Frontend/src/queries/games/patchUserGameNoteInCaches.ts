@@ -2,6 +2,10 @@ import type { InfiniteData, QueryClient } from '@tanstack/react-query';
 import type { Game } from '@/types';
 import { patchMyTabCacheUserNote } from '@/api/me';
 import { queryKeys } from '../queryKeys';
+import {
+  getGamesFromAvailableCache,
+  withPatchedAvailableGames,
+} from './availableGamesCache';
 import type { MyGamesData } from './useMyGamesQuery';
 import type { PastGamesPage } from './usePastGamesQuery';
 
@@ -73,10 +77,11 @@ export function patchUserGameNoteInCaches(
     }
 
     if (keyParts[1] === 'available' || keyParts[1] === 'availableUpcoming') {
-      if (!Array.isArray(data)) continue;
-      const nextGames = patchGamesArray(data as Game[], gameId, userNote);
+      const list = getGamesFromAvailableCache(data);
+      if (!list) continue;
+      const nextGames = patchGamesArray(list, gameId, userNote);
       if (!nextGames) continue;
-      queryClient.setQueryData(key, nextGames);
+      queryClient.setQueryData(key, withPatchedAvailableGames(data, nextGames));
     }
   }
 }
