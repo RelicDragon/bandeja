@@ -9,6 +9,7 @@ import { isTelegramAutoLoginPath } from '@/utils/telegramAutoLoginPath';
 import { shouldHandleTelegramLoginDeepLink } from '@/utils/telegramDeepLinkDedupe';
 import { appendLevelSportQuery, parseLevelSportQuery } from '@/utils/levelSportQuery';
 import { bumpChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
+import { resolveNextGamePath } from '@/utils/resolveNextGamePath';
 
 function navigateFreshChat(
   navigate: ReturnType<typeof useNavigate>,
@@ -30,7 +31,7 @@ export const useDeepLink = () => {
         const url = new URL(urlString);
         if (!isBandejaDeepLinkHost(url.hostname)) return;
 
-        const pathname = url.pathname;
+        const pathname = url.pathname.replace(/\/+$/, '') || '/';
         if (isTelegramAutoLoginPath(pathname)) {
           useDeepLinkStore.getState().setPendingAuthPath(pathname);
         }
@@ -158,6 +159,13 @@ export const useDeepLink = () => {
         if (pathname.startsWith('/login/') && pathname !== '/login/phone' && pathname !== '/login/telegram') {
           if (!shouldHandleTelegramLoginDeepLink(pathname)) return;
           navigateWithTracking(navigate, pathname, { replace: true });
+          return;
+        }
+
+        if (pathname === '/next-game') {
+          void resolveNextGamePath().then((path) => {
+            navigateWithTracking(navigate, path, { replace: true });
+          });
           return;
         }
 

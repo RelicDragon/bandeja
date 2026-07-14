@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <capability android:name="actions.intent.OPEN_APP_FEATURE">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity">
+            <url-template android:value="https://bandeja.me/" />
+        </intent>
+        <shortcut-fulfillment>
+            <parameter android:name="feature" />
+        </shortcut-fulfillment>
+    </capability>
+
+    <shortcut
+        android:shortcutId="find_games"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_find_games_short"
+        android:shortcutLongLabel="@string/shortcut_find_games_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/find" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_find_games_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="my_games"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_my_games_short"
+        android:shortcutLongLabel="@string/shortcut_my_games_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_my_games_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="create_game"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_create_game_short"
+        android:shortcutLongLabel="@string/shortcut_create_game_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/create-game" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_create_game_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="next_game"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_next_game_short"
+        android:shortcutLongLabel="@string/shortcut_next_game_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/next-game" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_next_game_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+</shortcuts>

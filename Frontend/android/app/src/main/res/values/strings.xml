@@ -12,4 +12,12 @@
     <string name="invite_accept">Accept</string>
     <string name="invite_decline">Decline</string>
     <string name="api_base_url_default" translatable="false">https://bandeja.me/api</string>
+    <string name="shortcut_find_games_short">Find games</string>
+    <string name="shortcut_find_games_long">Browse available games</string>
+    <string name="shortcut_my_games_short">My games</string>
+    <string name="shortcut_my_games_long">Show your upcoming games</string>
+    <string name="shortcut_create_game_short">Create game</string>
+    <string name="shortcut_create_game_long">Start creating a new game</string>
+    <string name="shortcut_next_game_short">Next game</string>
+    <string name="shortcut_next_game_long">Open your next upcoming game</string>
 </resources>

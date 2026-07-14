@@ -139,6 +139,11 @@ Frontend/e2e/
 | G-27 | Re-tap Find tab | On Find, tap Find again | Jumps to today / current date |
 | G-28 | Cache clear on refresh | Pull-to-refresh on My/Find | Refetch without dropping unsynced results |
 | G-30 | My tab games after login | User with games logs out and back in (or fresh install login) | Home/My shows upcoming games, not empty state |
+| G-31 | Next-game deep link with upcoming | Auth’d user with upcoming game opens `/next-game` (web or Cap) | Navigates to that game’s details |
+| G-32 | Next-game deep link empty | Auth’d user with no upcoming/recent games opens `/next-game` | Lands on My tab (`/`) |
+| G-33 | Next-game deep link guest | Logged-out user opens `/next-game` | Lands on `/login` |
+| G-34 | Siri Find / Next game (iOS) | Cap iOS: “Find games in Bandeja” / “Open my next game in Bandeja” | Opens Find / next game (or My/login fallback) |
+| G-35 | Gemini/Assistant Find (Android) | Cap Android: ask Assistant/Gemini to open Find in Bandeja (or long-press Find shortcut) | Opens Find tab |
 
 ### 4.2 Onboarding gates & prompts
 

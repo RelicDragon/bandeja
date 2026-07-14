@@ -21,6 +21,9 @@
             android:launchMode="singleTask"
             android:exported="true"
             android:windowSoftInputMode="adjustNothing|stateAlwaysHidden">
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
             </intent-filter>

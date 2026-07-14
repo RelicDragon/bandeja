@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="shortcut_find_games_synonyms">
+        <item>Find games</item>
+        <item>Find padel</item>
+        <item>Browse games</item>
+        <item>Available games</item>
+        <item>Find</item>
+    </string-array>
+    <string-array name="shortcut_my_games_synonyms">
+        <item>My games</item>
+        <item>My schedule</item>
+        <item>Upcoming games</item>
+        <item>Home</item>
+    </string-array>
+    <string-array name="shortcut_create_game_synonyms">
+        <item>Create a game</item>
+        <item>Create game</item>
+        <item>New game</item>
+        <item>Host a game</item>
+    </string-array>
+    <string-array name="shortcut_next_game_synonyms">
+        <item>Next game</item>
+        <item>My next game</item>
+        <item>Open next game</item>
+        <item>Upcoming game</item>
+    </string-array>
+</resources>

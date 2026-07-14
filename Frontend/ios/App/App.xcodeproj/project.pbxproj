@@ -37,6 +37,12 @@
 		F14800042F7443E0002D7100 /* ChatReplyHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800132F7443E0002D7100 /* ChatReplyHandler.swift */; };
 		F14800052F7443E0002D7100 /* BandejaPushNotificationDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F14800142F7443E0002D7100 /* BandejaPushNotificationDelegate.swift */; };
 		F14800062F7443E0002D7100 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = F14800152F7443E0002D7100 /* Localizable.strings */; };
+		A1B400102F7A1000000D7100 /* BandejaDeepLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400112F7A1000000D7100 /* BandejaDeepLink.swift */; };
+		A1B400122F7A1000000D7100 /* FindGamesIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400132F7A1000000D7100 /* FindGamesIntent.swift */; };
+		A1B400142F7A1000000D7100 /* OpenMyGamesIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400152F7A1000000D7100 /* OpenMyGamesIntent.swift */; };
+		A1B400162F7A1000000D7100 /* CreateGameIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400172F7A1000000D7100 /* CreateGameIntent.swift */; };
+		A1B400182F7A1000000D7100 /* OpenNextGameIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400192F7A1000000D7100 /* OpenNextGameIntent.swift */; };
+		A1B4001A2F7A1000000D7100 /* BandejaAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4001B2F7A1000000D7100 /* BandejaAppShortcuts.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -135,6 +141,12 @@
 		E14000012F7443E0002D7100 /* NotificationServiceExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationServiceExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E140000F2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ChatCommunicationIntentBuilder.swift; path = NotificationServiceExtension/ChatCommunicationIntentBuilder.swift; sourceTree = "<group>"; };
 		F14800102F7443E0002D7100 /* NativeApiConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeApiConfig.swift; sourceTree = "<group>"; };
+		A1B400112F7A1000000D7100 /* BandejaDeepLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaDeepLink.swift; sourceTree = "<group>"; };
+		A1B400132F7A1000000D7100 /* FindGamesIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FindGamesIntent.swift; sourceTree = "<group>"; };
+		A1B400152F7A1000000D7100 /* OpenMyGamesIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenMyGamesIntent.swift; sourceTree = "<group>"; };
+		A1B400172F7A1000000D7100 /* CreateGameIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGameIntent.swift; sourceTree = "<group>"; };
+		A1B400192F7A1000000D7100 /* OpenNextGameIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenNextGameIntent.swift; sourceTree = "<group>"; };
+		A1B4001B2F7A1000000D7100 /* BandejaAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaAppShortcuts.swift; sourceTree = "<group>"; };
 		F14800112F7443E0002D7100 /* ChatPushData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatPushData.swift; sourceTree = "<group>"; };
 		F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyApiClient.swift; sourceTree = "<group>"; };
 		F14800132F7443E0002D7100 /* ChatReplyHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyHandler.swift; sourceTree = "<group>"; };
@@ -286,6 +298,12 @@
 				F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */,
 				F14800112F7443E0002D7100 /* ChatPushData.swift */,
 				F14800102F7443E0002D7100 /* NativeApiConfig.swift */,
+				A1B400112F7A1000000D7100 /* BandejaDeepLink.swift */,
+				A1B400132F7A1000000D7100 /* FindGamesIntent.swift */,
+				A1B400152F7A1000000D7100 /* OpenMyGamesIntent.swift */,
+				A1B400172F7A1000000D7100 /* CreateGameIntent.swift */,
+				A1B400192F7A1000000D7100 /* OpenNextGameIntent.swift */,
+				A1B4001B2F7A1000000D7100 /* BandejaAppShortcuts.swift */,
 				B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */,
 				99AF71D02F744E2000B32563 /* KeychainHelper.swift */,
 				99AF71D12F744E2000B32563 /* WatchSessionManager.swift */,
@@ -598,6 +616,12 @@
 				F14800032F7443E0002D7100 /* ChatReplyApiClient.swift in Sources */,
 				F14800022F7443E0002D7100 /* ChatPushData.swift in Sources */,
 				F14800012F7443E0002D7100 /* NativeApiConfig.swift in Sources */,
+				A1B400102F7A1000000D7100 /* BandejaDeepLink.swift in Sources */,
+				A1B400122F7A1000000D7100 /* FindGamesIntent.swift in Sources */,
+				A1B400142F7A1000000D7100 /* OpenMyGamesIntent.swift in Sources */,
+				A1B400162F7A1000000D7100 /* CreateGameIntent.swift in Sources */,
+				A1B400182F7A1000000D7100 /* OpenNextGameIntent.swift in Sources */,
+				A1B4001A2F7A1000000D7100 /* BandejaAppShortcuts.swift in Sources */,
 				E140000E2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
