@@ -85,7 +85,9 @@ export function useAvailableUpcomingGamesQuery(
 ) {
   const enabled = options?.enabled ?? !!params.userId;
   const queryClient = useQueryClient();
-  const query = useQuery(availableUpcomingGamesQueryOptions(params, enabled));
+  const optionsForQuery = availableUpcomingGamesQueryOptions(params, enabled);
+  const query = useQuery(optionsForQuery);
+  const queryKey = optionsForQuery.queryKey;
 
   const loadMore = async () => {
     const current = query.data;
@@ -96,8 +98,8 @@ export function useAvailableUpcomingGamesQuery(
     const incoming = response.data || [];
     const meta = parseMeta(response.meta);
     const games = mergeAvailableGamesPages(current.games, incoming);
-    queryClient.setQueryData(query.queryKey, { games, meta });
-    void attachAvailableGamesEnrichment(queryClient, query.queryKey, incoming);
+    queryClient.setQueryData(queryKey, { games, meta });
+    void attachAvailableGamesEnrichment(queryClient, queryKey, incoming);
   };
 
   return { ...query, loadMore };

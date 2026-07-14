@@ -101,7 +101,9 @@ export function useAvailableGamesQuery(
 ) {
   const enabled = options?.enabled ?? !!params.userId;
   const queryClient = useQueryClient();
-  const query = useQuery(availableGamesQueryOptions(params, enabled));
+  const optionsForQuery = availableGamesQueryOptions(params, enabled);
+  const query = useQuery(optionsForQuery);
+  const queryKey = optionsForQuery.queryKey;
 
   const loadMore = async () => {
     const current = query.data;
@@ -121,8 +123,8 @@ export function useAvailableGamesQuery(
         dayIndexTruncated: current.meta.dayIndexTruncated,
       },
     };
-    queryClient.setQueryData(query.queryKey, page);
-    void attachAvailableGamesEnrichment(queryClient, query.queryKey, incoming);
+    queryClient.setQueryData(queryKey, page);
+    void attachAvailableGamesEnrichment(queryClient, queryKey, incoming);
   };
 
   return { ...query, loadMore };
