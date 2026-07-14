@@ -1,6 +1,6 @@
 import SwiftUI
 import WidgetKit
-import BandejaWatchShared
+import BandejaNextGames
 
 enum HomeNextGameWidgetKind {
     static let id = HomeWidgetKinds.nextGame

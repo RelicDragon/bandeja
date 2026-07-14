@@ -23,19 +23,26 @@ public struct LiveActiveSnapshotPayload: Codable, Sendable {
 }
 
 public enum LiveActiveSnapshotStore {
-    public static func write(_ payload: LiveActiveSnapshotPayload, suite: UserDefaults? = AppGroupStorage.suite) {
-        guard let suite,
-              let data = try? JSONEncoder().encode(payload) else { return }
-        suite.set(data, forKey: AppGroupStorage.Keys.liveActiveSnapshot)
+    public static let suiteName = "group.com.funified.bandeja"
+    public static let storageKey = "watchLiveActiveScoringV1"
+
+    public static var suite: UserDefaults? {
+        UserDefaults(suiteName: suiteName)
     }
 
-    public static func read(suite: UserDefaults? = AppGroupStorage.suite) -> LiveActiveSnapshotPayload? {
+    public static func write(_ payload: LiveActiveSnapshotPayload, suite: UserDefaults? = suite) {
         guard let suite,
-              let data = suite.data(forKey: AppGroupStorage.Keys.liveActiveSnapshot) else { return nil }
+              let data = try? JSONEncoder().encode(payload) else { return }
+        suite.set(data, forKey: storageKey)
+    }
+
+    public static func read(suite: UserDefaults? = suite) -> LiveActiveSnapshotPayload? {
+        guard let suite,
+              let data = suite.data(forKey: storageKey) else { return nil }
         return try? JSONDecoder().decode(LiveActiveSnapshotPayload.self, from: data)
     }
 
-    public static func clear(suite: UserDefaults? = AppGroupStorage.suite) {
-        suite?.removeObject(forKey: AppGroupStorage.Keys.liveActiveSnapshot)
+    public static func clear(suite: UserDefaults? = suite) {
+        suite?.removeObject(forKey: storageKey)
     }
 }

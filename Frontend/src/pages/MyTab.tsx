@@ -98,6 +98,7 @@ export const MyTab = () => {
   const markAllBannerUnread = useTotalUnreadForMarkAllBanner();
   const { tab: homeTab } = useHomeFromUrl();
   const isCalendarTab = homeTab === 'calendar';
+  const requestFocusInvitesNonce = useShellNavStore((s) => s.requestFocusInvitesNonce);
   const isPastGamesTab = homeTab === 'past-games';
   const myGamesSelectedDay = useShellNavStore((s) => s.myGamesSelectedDay);
   const setMyGamesSelectedDay = useShellNavStore((s) => s.setMyGamesSelectedDay);
@@ -126,6 +127,18 @@ export const MyTab = () => {
     unreadCounts,
     refetch: refetchMyGames,
   } = useMyGames(user, setLoading);
+
+  useEffect(() => {
+    if (!requestFocusInvitesNonce || loading) return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('home-invites-section')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      useShellNavStore.getState().setBounceNotifications(true);
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [requestFocusInvitesNonce, loading]);
 
   const {
     pastGames,
@@ -440,13 +453,15 @@ export const MyTab = () => {
             <CityPromptBanner />
           </AnimatedMount>
           {!loading && (
-            <InvitesSection
-              invites={invites}
-              onAccept={handleAcceptInvite}
-              onDecline={handleDeclineInvite}
-              decliningInviteIds={decliningInviteIds}
-              onNoteSaved={() => refetchMyGames()}
-            />
+            <div id="home-invites-section">
+              <InvitesSection
+                invites={invites}
+                onAccept={handleAcceptInvite}
+                onDecline={handleDeclineInvite}
+                decliningInviteIds={decliningInviteIds}
+                onNoteSaved={() => refetchMyGames()}
+              />
+            </div>
           )}
           <AnimatedMount layout>
             <MyGamesSection
@@ -550,13 +565,15 @@ export const MyTab = () => {
             <CityPromptBanner />
           </AnimatedMount>
           {!loading && (
-            <InvitesSection
-              invites={invites}
-              onAccept={handleAcceptInvite}
-              onDecline={handleDeclineInvite}
-              decliningInviteIds={decliningInviteIds}
-              onNoteSaved={() => refetchMyGames()}
-            />
+            <div id="home-invites-section">
+              <InvitesSection
+                invites={invites}
+                onAccept={handleAcceptInvite}
+                onDecline={handleDeclineInvite}
+                decliningInviteIds={decliningInviteIds}
+                onNoteSaved={() => refetchMyGames()}
+              />
+            </div>
           )}
 
           {(loading || hasUpcomingGames) && (

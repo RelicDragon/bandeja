@@ -18,6 +18,9 @@
 		991B76F02FE9F3C000D55F76 /* BandejaWatchShared in Frameworks */ = {isa = PBXBuildFile; productRef = D1A2B3C4E5F60718293A602 /* BandejaWatchShared */; };
 		991B76F12FE9F3C000D55F76 /* BandejaWatchShared in Frameworks */ = {isa = PBXBuildFile; productRef = D1A2B3C4E5F60718293A602 /* BandejaWatchShared */; };
 		991B76F22FE9F3C000D55F76 /* BandejaWatchShared in Frameworks */ = {isa = PBXBuildFile; productRef = D1A2B3C4E5F60718293A602 /* BandejaWatchShared */; };
+		E5F60718293A4B5C6D7E911 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
+		E5F60718293A4B5C6D7E912 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
+		E5F60718293A4B5C6D7E913 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = E5F60718293A4B5C6D7E902 /* BandejaNextGames */; };
 		99414BEB2F7443E0002D7100 /* BandejaWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = 99414BE12F7443DE002D7100 /* BandejaWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		99AF71D22F744E2000B32563 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71D02F744E2000B32563 /* KeychainHelper.swift */; };
 		99AF71D32F744E2000B32563 /* WatchSessionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99AF71D12F744E2000B32563 /* WatchSessionManager.swift */; };
@@ -44,8 +47,10 @@
 		A1B400162F7A1000000D7100 /* CreateGameIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400172F7A1000000D7100 /* CreateGameIntent.swift */; };
 		A1B400182F7A1000000D7100 /* OpenNextGameIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400192F7A1000000D7100 /* OpenNextGameIntent.swift */; };
 		A1B4001A2F7A1000000D7100 /* BandejaAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B4001B2F7A1000000D7100 /* BandejaAppShortcuts.swift */; };
+		A1B400202F7A1000000D7100 /* BandejaGameEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400212F7A1000000D7100 /* BandejaGameEntity.swift */; };
+		A1B400222F7A1000000D7100 /* BandejaAssistantIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B400232F7A1000000D7100 /* BandejaAssistantIntents.swift */; };
 		F26900042F8A0000000D7100 /* BandejaHomeWidgets.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = F26900012F8A0000000D7100 /* BandejaHomeWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		F269000F2F8A0000000D7100 /* BandejaWatchShared in Frameworks */ = {isa = PBXBuildFile; productRef = F26900102F8A0000000D7100 /* BandejaWatchShared */; };
+		F269000F2F8A0000000D7100 /* BandejaNextGames in Frameworks */ = {isa = PBXBuildFile; productRef = F26900102F8A0000000D7100 /* BandejaNextGames */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -159,6 +164,8 @@
 		A1B400172F7A1000000D7100 /* CreateGameIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateGameIntent.swift; sourceTree = "<group>"; };
 		A1B400192F7A1000000D7100 /* OpenNextGameIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenNextGameIntent.swift; sourceTree = "<group>"; };
 		A1B4001B2F7A1000000D7100 /* BandejaAppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaAppShortcuts.swift; sourceTree = "<group>"; };
+		A1B400212F7A1000000D7100 /* BandejaGameEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaGameEntity.swift; sourceTree = "<group>"; };
+		A1B400232F7A1000000D7100 /* BandejaAssistantIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BandejaAssistantIntents.swift; sourceTree = "<group>"; };
 		F14800112F7443E0002D7100 /* ChatPushData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatPushData.swift; sourceTree = "<group>"; };
 		F14800122F7443E0002D7100 /* ChatReplyApiClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyApiClient.swift; sourceTree = "<group>"; };
 		F14800132F7443E0002D7100 /* ChatReplyHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatReplyHandler.swift; sourceTree = "<group>"; };
@@ -235,6 +242,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E5F60718293A4B5C6D7E911 /* BandejaNextGames in Frameworks */,
 				991B76F02FE9F3C000D55F76 /* BandejaWatchShared in Frameworks */,
 				A084ECDBA7D38E1E42DFC39D /* Pods_App.framework in Frameworks */,
 			);
@@ -244,6 +252,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E5F60718293A4B5C6D7E912 /* BandejaNextGames in Frameworks */,
 				991B76F12FE9F3C000D55F76 /* BandejaWatchShared in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -252,6 +261,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E5F60718293A4B5C6D7E913 /* BandejaNextGames in Frameworks */,
 				991B76F22FE9F3C000D55F76 /* BandejaWatchShared in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -275,7 +285,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F269000F2F8A0000000D7100 /* BandejaWatchShared in Frameworks */,
+				F269000F2F8A0000000D7100 /* BandejaNextGames in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -339,6 +349,8 @@
 				A1B400172F7A1000000D7100 /* CreateGameIntent.swift */,
 				A1B400192F7A1000000D7100 /* OpenNextGameIntent.swift */,
 				A1B4001B2F7A1000000D7100 /* BandejaAppShortcuts.swift */,
+				A1B400212F7A1000000D7100 /* BandejaGameEntity.swift */,
+				A1B400232F7A1000000D7100 /* BandejaAssistantIntents.swift */,
 				B1A2C3D4E5F60718293A3C4 /* CommunicationNotificationHelper.swift */,
 				99AF71D02F744E2000B32563 /* KeychainHelper.swift */,
 				99AF71D12F744E2000B32563 /* WatchSessionManager.swift */,
@@ -399,6 +411,7 @@
 			);
 			name = App;
 			packageProductDependencies = (
+				E5F60718293A4B5C6D7E902 /* BandejaNextGames */,
 				D1A2B3C4E5F60718293A602 /* BandejaWatchShared */,
 			);
 			productName = App;
@@ -424,6 +437,7 @@
 			);
 			name = "BandejaWatch Watch App";
 			packageProductDependencies = (
+				E5F60718293A4B5C6D7E902 /* BandejaNextGames */,
 				D1A2B3C4E5F60718293A602 /* BandejaWatchShared */,
 			);
 			productName = "BandejaWatch Watch App";
@@ -447,6 +461,7 @@
 			);
 			name = BandejaWatchWidgets;
 			packageProductDependencies = (
+				E5F60718293A4B5C6D7E902 /* BandejaNextGames */,
 				D1A2B3C4E5F60718293A602 /* BandejaWatchShared */,
 			);
 			productName = BandejaWatchWidgets;
@@ -511,7 +526,7 @@
 			);
 			name = BandejaHomeWidgets;
 			packageProductDependencies = (
-				F26900102F8A0000000D7100 /* BandejaWatchShared */,
+				F26900102F8A0000000D7100 /* BandejaNextGames */,
 			);
 			productName = BandejaHomeWidgets;
 			productReference = F26900012F8A0000000D7100 /* BandejaHomeWidgets.appex */;
@@ -562,6 +577,7 @@
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
+				E5F60718293A4B5C6D7E901 /* XCLocalSwiftPackageReference "BandejaNextGames" */,
 				D1A2B3C4E5F60718293A601 /* XCLocalSwiftPackageReference "BandejaWatchShared" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
@@ -693,6 +709,8 @@
 				A1B400162F7A1000000D7100 /* CreateGameIntent.swift in Sources */,
 				A1B400182F7A1000000D7100 /* OpenNextGameIntent.swift in Sources */,
 				A1B4001A2F7A1000000D7100 /* BandejaAppShortcuts.swift in Sources */,
+				A1B400202F7A1000000D7100 /* BandejaGameEntity.swift in Sources */,
+				A1B400222F7A1000000D7100 /* BandejaAssistantIntents.swift in Sources */,
 				E140000E2F7443E0002D7100 /* ChatCommunicationIntentBuilder.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1418,16 +1436,27 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = BandejaWatchShared;
 		};
+		E5F60718293A4B5C6D7E901 /* XCLocalSwiftPackageReference "BandejaNextGames" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = BandejaNextGames;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		D1A2B3C4E5F60718293A602 /* BandejaWatchShared */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = D1A2B3C4E5F60718293A601 /* XCLocalSwiftPackageReference "BandejaWatchShared" */;
 			productName = BandejaWatchShared;
 		};
-		F26900102F8A0000000D7100 /* BandejaWatchShared */ = {
+		E5F60718293A4B5C6D7E902 /* BandejaNextGames */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = BandejaWatchShared;
+			package = E5F60718293A4B5C6D7E901 /* XCLocalSwiftPackageReference "BandejaNextGames" */;
+			productName = BandejaNextGames;
+		};
+		F26900102F8A0000000D7100 /* BandejaNextGames */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E5F60718293A4B5C6D7E901 /* XCLocalSwiftPackageReference "BandejaNextGames" */;
+			productName = BandejaNextGames;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

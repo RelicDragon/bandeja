@@ -1,0 +1,97 @@
+{
+  "policy": "Soonest non-FINISHED/ARCHIVED game with startTime strictly after reference−1h; earliest startTime wins.",
+  "minCases": 5,
+  "cases": [
+    {
+      "name": "empty-list",
+      "reference": "2026-07-14T12:00:00.000Z",
+      "games": [],
+      "expectedId": null
+    },
+    {
+      "name": "one-upcoming",
+      "reference": "2026-07-14T12:00:00.000Z",
+      "games": [
+        {
+          "id": "upcoming",
+          "startTime": "2026-07-14T15:00:00.000Z",
+          "status": "ANNOUNCED"
+        }
+      ],
+      "expectedId": "upcoming"
+    },
+    {
+      "name": "in-now-minus-1h-window",
+      "reference": "2026-07-14T12:00:00.000Z",
+      "games": [
+        {
+          "id": "in-window",
+          "startTime": "2026-07-14T11:30:00.000Z",
+          "status": "PLAYING"
+        }
+      ],
+      "expectedId": "in-window"
+    },
+    {
+      "name": "finished-archived-excluded",
+      "reference": "2026-07-14T12:00:00.000Z",
+      "games": [
+        {
+          "id": "finished-soon",
+          "startTime": "2026-07-14T14:00:00.000Z",
+          "status": "FINISHED"
+        },
+        {
+          "id": "archived-soon",
+          "startTime": "2026-07-14T16:00:00.000Z",
+          "status": "ARCHIVED"
+        },
+        {
+          "id": "too-old",
+          "startTime": "2026-07-14T10:00:00.000Z",
+          "status": "SCHEDULED"
+        }
+      ],
+      "expectedId": null
+    },
+    {
+      "name": "tie-break-by-startTime",
+      "reference": "2026-07-14T12:00:00.000Z",
+      "games": [
+        {
+          "id": "later",
+          "startTime": "2026-07-14T18:00:00.000Z",
+          "status": "ANNOUNCED"
+        },
+        {
+          "id": "sooner",
+          "startTime": "2026-07-14T15:00:00.000Z",
+          "status": "READY"
+        },
+        {
+          "id": "finished-mid",
+          "startTime": "2026-07-14T14:00:00.000Z",
+          "status": "FINISHED"
+        }
+      ],
+      "expectedId": "sooner"
+    },
+    {
+      "name": "exactly-at-cutoff-excluded",
+      "reference": "2026-07-14T12:00:00.000Z",
+      "games": [
+        {
+          "id": "at-cutoff",
+          "startTime": "2026-07-14T11:00:00.000Z",
+          "status": "SCHEDULED"
+        },
+        {
+          "id": "just-after-cutoff",
+          "startTime": "2026-07-14T11:00:00.001Z",
+          "status": "SCHEDULED"
+        }
+      ],
+      "expectedId": "just-after-cutoff"
+    }
+  ]
+}

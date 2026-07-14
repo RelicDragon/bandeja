@@ -1,5 +1,5 @@
 import Foundation
-import BandejaWatchShared
+import BandejaNextGames
 
 enum HomeWidgetCopy {
     nonisolated static func widgetLang(_ preferred: String? = nil) -> String {

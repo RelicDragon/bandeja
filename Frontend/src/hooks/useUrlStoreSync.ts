@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useShellNavStore } from '@/store/shellNavStore';
+import { resolveFindDayKey } from '@/utils/findDayFromSearchParams';
 import { parseLocation } from '@/utils/urlSchema';
 
 export type HomeSubTab = 'calendar' | 'past-games';
@@ -24,6 +25,10 @@ export function useUrlStoreSync() {
     switch (parsed.place) {
       case 'home': {
         state.setActiveTab(homeSubTabFromParams(parsed.params.tab as string | undefined));
+        if (parsed.params.focus === 'invites') {
+          state.setActiveTab('calendar');
+          state.bumpRequestFocusInvites();
+        }
         break;
       }
       case 'find': {
@@ -32,6 +37,14 @@ export function useUrlStoreSync() {
         const rawTab = (parsed.params.tab as string) || 'my-games';
         const findTab = ['my-games', 'search'].includes(rawTab) ? rawTab : 'my-games';
         state.setActiveTab(findTab as 'my-games' | 'search');
+        const dayKey = resolveFindDayKey({
+          date: parsed.params.date as string | undefined,
+          dayOffset: parsed.params.dayOffset as string | undefined,
+        });
+        if (dayKey) {
+          state.setFindSelectedDay(dayKey);
+          state.setFindViewMode('calendar');
+        }
         break;
       }
       case 'chats': {

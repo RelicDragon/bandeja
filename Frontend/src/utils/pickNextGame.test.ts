@@ -1,68 +1,40 @@
+import { accessSync, constants } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { NEXT_GAME_DISPLAY_POLICY, NEXT_GAME_LOOKBACK_MS } from '@shared/nextGame/policy';
 import { pickNextGame } from './pickNextGame';
+import {
+  loadPickNextGameGoldenCatalog,
+  PICK_NEXT_GAME_GOLDEN_PATH,
+  PICK_NEXT_GAME_REQUIRED_CASES,
+  runPickNextGameGoldenCase,
+} from './pickNextGame.golden.harness';
 
 describe('pickNextGame', () => {
-  const ref = new Date('2026-07-14T12:00:00.000Z');
+  const catalog = loadPickNextGameGoldenCatalog();
 
-  it('picks earliest upcoming non-terminal game', () => {
-    const next = pickNextGame(
-      [
-        {
-          id: 'later',
-          startTime: '2026-07-14T18:00:00.000Z',
-          status: 'ANNOUNCED',
-        },
-        {
-          id: 'sooner',
-          startTime: '2026-07-14T15:00:00.000Z',
-          status: 'ANNOUNCED',
-        },
-        {
-          id: 'finished',
-          startTime: '2026-07-14T14:00:00.000Z',
-          status: 'FINISHED',
-        },
-      ],
-      ref,
-    );
-    expect(next?.id).toBe('sooner');
+  it('resolves golden catalog without relying on process.cwd()', () => {
+    expect(() => accessSync(PICK_NEXT_GAME_GOLDEN_PATH, constants.R_OK)).not.toThrow();
   });
 
-  it('includes games that started within the last hour', () => {
-    const next = pickNextGame(
-      [
-        {
-          id: 'in-progress',
-          startTime: '2026-07-14T11:30:00.000Z',
-          status: 'STARTED',
-        },
-      ],
-      ref,
-    );
-    expect(next?.id).toBe('in-progress');
+  it('locks the canonical display policy string', () => {
+    expect(catalog.policy).toBe(NEXT_GAME_DISPLAY_POLICY);
+    expect(NEXT_GAME_LOOKBACK_MS).toBe(3_600_000);
   });
 
-  it('excludes games older than one hour and archived', () => {
-    expect(
-      pickNextGame(
-        [
-          {
-            id: 'old',
-            startTime: '2026-07-14T10:00:00.000Z',
-            status: 'ANNOUNCED',
-          },
-          {
-            id: 'archived',
-            startTime: '2026-07-14T16:00:00.000Z',
-            status: 'ARCHIVED',
-          },
-        ],
-        ref,
-      ),
-    ).toBeUndefined();
+  it(`covers at least ${catalog.minCases} shared fixture cases`, () => {
+    expect(catalog.cases.length).toBeGreaterThanOrEqual(catalog.minCases);
+    const names = new Set(catalog.cases.map((c) => c.name));
+    for (const required of PICK_NEXT_GAME_REQUIRED_CASES) {
+      expect(names.has(required), required).toBe(true);
+    }
   });
 
-  it('skips invalid startTime values', () => {
+  it.each(catalog.cases)('golden: $name → $expectedId', (fixture) => {
+    expect(runPickNextGameGoldenCase(fixture) ?? null).toBe(fixture.expectedId);
+  });
+
+  it('skips invalid startTime values (JS-only; natives reject decode)', () => {
+    const ref = new Date('2026-07-14T12:00:00.000Z');
     expect(
       pickNextGame(
         [

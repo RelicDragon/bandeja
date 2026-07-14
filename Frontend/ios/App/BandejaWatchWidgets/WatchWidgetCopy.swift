@@ -1,5 +1,5 @@
 import Foundation
-import BandejaWatchShared
+import BandejaNextGames
 
 enum WatchWidgetCopy {
     nonisolated static func widgetLang() -> String {

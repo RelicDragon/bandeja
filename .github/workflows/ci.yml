@@ -44,6 +44,8 @@ jobs:
       - run: npm run build:contracts
       - run: node --test ../scripts/deploy-frontend.contract.test.mjs
       - run: npm run lint
+      - run: npm run test:deep-link-catalog
+      - run: npm run test:next-game
       - run: npm run test:chat-open
       - run: npm run test:chat-inbox-feed
       - run: npm run test:queries
@@ -51,9 +53,19 @@ jobs:
       - run: npm run test:live-scoring
       - run: npm run build
 
+  ios-shared-packages:
+    name: iOS shared packages (#275)
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - name: BandejaNextGames + BandejaWatchShared
+        working-directory: Frontend
+        run: npm run test:ios-shared-packages
+
   deploy:
     name: Deploy production
-    needs: [backend, frontend]
+    needs: [backend, frontend, ios-shared-packages]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
     runs-on: [self-hosted, linux, production]
     timeout-minutes: 60

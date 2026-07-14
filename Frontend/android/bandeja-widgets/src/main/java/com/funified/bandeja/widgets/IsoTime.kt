@@ -10,7 +10,7 @@ import java.util.regex.Pattern
  * Fast, thread-safe ISO-8601 parse for widget cache.
  * Normalizes variable fractional seconds so API timestamps always decode.
  */
-internal object IsoTime {
+object IsoTime {
     private val lock = Any()
     private val utc: TimeZone = TimeZone.getTimeZone("UTC")
     private val fractional = Pattern.compile(

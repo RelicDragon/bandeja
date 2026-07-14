@@ -1,7 +1,7 @@
 import Foundation
 import Observation
 import WidgetKit
-import BandejaWatchShared
+import BandejaNextGames
 
 @Observable
 @MainActor

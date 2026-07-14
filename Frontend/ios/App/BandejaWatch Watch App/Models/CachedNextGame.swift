@@ -1,5 +1,5 @@
 import Foundation
-import BandejaWatchShared
+import BandejaNextGames
 
 extension CachedNextGame {
     init(from game: WatchGame) {

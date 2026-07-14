@@ -1,5 +1,5 @@
 import Foundation
-import BandejaWatchShared
+import BandejaNextGames
 
 enum WidgetGameCache {
     static func read() -> [CachedNextGame] {

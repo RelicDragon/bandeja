@@ -1,6 +1,6 @@
 import Foundation
 import Capacitor
-import BandejaWatchShared
+import BandejaNextGames
 import WidgetKit
 
 @objc(WidgetBridgePlugin)
@@ -30,7 +30,7 @@ public class WidgetBridgePlugin: CAPPlugin, CAPBridgedPlugin {
         decoder.dateDecodingStrategy = .custom { decoder in
             let container = try decoder.singleValueContainer()
             let raw = try container.decode(String.self)
-            if let date = Self.parseISO8601(raw) {
+            if let date = WidgetBridgePlugin.parseISO8601(raw) {
                 return date
             }
             throw DecodingError.dataCorruptedError(
@@ -50,7 +50,7 @@ public class WidgetBridgePlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("App Group storage unavailable")
             return
         }
-        Self.reloadHomeWidgets()
+        Self.reloadHomeWidgetsAndAssistant()
         call.resolve()
     }
 
@@ -59,13 +59,15 @@ public class WidgetBridgePlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("App Group storage unavailable")
             return
         }
-        Self.reloadHomeWidgets()
+        Self.reloadHomeWidgetsAndAssistant()
         call.resolve()
     }
 
-    private static func reloadHomeWidgets() {
+    /// Widget timelines + parameterized App Shortcut entities in one main hop (#279).
+    private static func reloadHomeWidgetsAndAssistant() {
         DispatchQueue.main.async {
             WidgetCenter.shared.reloadTimelines(ofKind: HomeWidgetKinds.nextGame)
+            BandejaAppShortcuts.updateAppShortcutParameters()
         }
     }
 

@@ -3,6 +3,7 @@ package com.funified.bandeja;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -15,6 +16,8 @@ import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.PluginHandle;
 import com.funified.bandeja.auth.AuthBridgePlugin;
 import com.funified.bandeja.auth.BrandingLogoStorage;
+import com.funified.bandeja.widgets.NextGameDeepLink;
+import com.funified.bandeja.widgets.NextGamesEnvelopeStorage;
 import com.funified.bandeja.widgets.WidgetBridgePlugin;
 import com.funified.bandeja.push.ChatNotificationHelper;
 import ee.forgr.capacitor.social.login.GoogleProvider;
@@ -38,6 +41,8 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        rewriteNextGameLaunchIntent(getIntent());
+        setIntent(getIntent());
         registerPlugin(AuthBridgePlugin.class);
         registerPlugin(WidgetBridgePlugin.class);
         applyBrandingLaunchTheme();
@@ -115,6 +120,34 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
 
     @Override
     public void IHaveModifiedTheMainActivityForTheUseWithSocialLoginPlugin() {}
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        rewriteNextGameLaunchIntent(intent);
+        setIntent(intent);
+        // Cap Bridge captures launch URI at create + AppPlugin fires appUrlOpen from this intent.
+        super.onNewIntent(intent);
+    }
+
+    /**
+     * Cache-first open next game (#276): Assistant / static shortcuts still declare
+     * `/next-game`, but when the synced envelope already has a displayable next game,
+     * rewrite the launch URI to `/games/:id` (or chat/live) before Cap Bridge captures
+     * {@code intentUri} / fires {@code appUrlOpen}.
+     */
+    private void rewriteNextGameLaunchIntent(Intent intent) {
+        if (intent == null) {
+            return;
+        }
+        Uri data = intent.getData();
+        if (data == null) {
+            return;
+        }
+        Uri rewritten = NextGameDeepLink.rewrite(data, NextGamesEnvelopeStorage.read(this));
+        if (!rewritten.equals(data)) {
+            intent.setData(rewritten);
+        }
+    }
 
     private void applyBrandingLaunchTheme() {
         switch (BrandingLogoStorage.getLogoKey(this)) {

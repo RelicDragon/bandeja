@@ -1,0 +1,63 @@
+{
+  "origin": "https://bandeja.me",
+  "actions": {
+    "myGames": {
+      "path": "/",
+      "url": "https://bandeja.me/"
+    },
+    "login": {
+      "path": "/login",
+      "url": "https://bandeja.me/login"
+    },
+    "findToday": {
+      "path": "/find?view=calendar&dayOffset=0",
+      "url": "https://bandeja.me/find?view=calendar&dayOffset=0"
+    },
+    "findTomorrow": {
+      "path": "/find?view=calendar&dayOffset=1",
+      "url": "https://bandeja.me/find?view=calendar&dayOffset=1"
+    },
+    "createGame": {
+      "path": "/create-game",
+      "url": "https://bandeja.me/create-game"
+    },
+    "createLeague": {
+      "path": "/create-league",
+      "url": "https://bandeja.me/create-league"
+    },
+    "nextGame": {
+      "path": "/next-game",
+      "url": "https://bandeja.me/next-game"
+    },
+    "nextGameChat": {
+      "path": "/next-game?open=chat",
+      "url": "https://bandeja.me/next-game?open=chat"
+    },
+    "nextGameLive": {
+      "path": "/next-game?open=live",
+      "url": "https://bandeja.me/next-game?open=live"
+    },
+    "chats": {
+      "path": "/chats",
+      "url": "https://bandeja.me/chats"
+    },
+    "invites": {
+      "path": "/?focus=invites",
+      "url": "https://bandeja.me/?focus=invites"
+    }
+  },
+  "templates": {
+    "game": {
+      "pathTemplate": "/games/{id}",
+      "urlTemplate": "https://bandeja.me/games/{id}"
+    },
+    "gameChat": {
+      "pathTemplate": "/games/{id}/chat",
+      "urlTemplate": "https://bandeja.me/games/{id}/chat"
+    },
+    "gameLive": {
+      "pathTemplate": "/games/{id}/live",
+      "urlTemplate": "https://bandeja.me/games/{id}/live"
+    }
+  }
+}

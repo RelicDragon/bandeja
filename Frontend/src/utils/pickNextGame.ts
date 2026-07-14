@@ -1,15 +1,25 @@
+import {
+  NEXT_GAME_DISPLAY_POLICY,
+  NEXT_GAME_LOOKBACK_MS,
+} from '@shared/nextGame/policy';
+
+export { NEXT_GAME_DISPLAY_POLICY, NEXT_GAME_LOOKBACK_MS };
+
 export type NextGameCandidate = {
   id: string;
   startTime: string | Date;
   status: string;
 };
 
-/** Soonest non-finished/archived game starting after now−1h (matches Watch widget). O(n). */
+/**
+ * Displayable next game — widgets, `/next-game`, Assistant.
+ * Policy: {@link NEXT_GAME_DISPLAY_POLICY}. Parity: `shared/nextGame/pickNextGameGolden.json`.
+ */
 export function pickNextGame<T extends NextGameCandidate>(
   games: T[],
   reference: Date = new Date(),
 ): T | undefined {
-  const cutoffMs = reference.getTime() - 3600 * 1000;
+  const cutoffMs = reference.getTime() - NEXT_GAME_LOOKBACK_MS;
   let best: T | undefined;
   let bestStartMs = Number.POSITIVE_INFINITY;
 

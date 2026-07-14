@@ -1,5 +1,6 @@
 import AppIntents
 
+/// Feature layer (#279): My games home (`myGames`).
 struct OpenMyGamesIntent: AppIntent {
     static var title: LocalizedStringResource = "Open my games"
     static var description = IntentDescription("Show your upcoming games")

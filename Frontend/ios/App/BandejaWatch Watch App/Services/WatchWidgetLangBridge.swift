@@ -1,5 +1,5 @@
 import Foundation
-import BandejaWatchShared
+import BandejaNextGames
 
 enum WatchWidgetLangBridge {
     nonisolated static func normalizedFromStorageOrDevice() -> String {

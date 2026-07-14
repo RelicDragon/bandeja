@@ -1,5 +1,6 @@
 import AppIntents
 
+/// Feature layer (#279): create game (`createGame`).
 struct CreateGameIntent: AppIntent {
     static var title: LocalizedStringResource = "Create a game"
     static var description = IntentDescription("Start creating a new game")

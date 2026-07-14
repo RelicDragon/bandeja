@@ -20,4 +20,16 @@
     <string name="shortcut_create_game_long">Start creating a new game</string>
     <string name="shortcut_next_game_short">Next game</string>
     <string name="shortcut_next_game_long">Open your next upcoming game</string>
+    <string name="shortcut_find_tomorrow_short">Find tomorrow</string>
+    <string name="shortcut_find_tomorrow_long">Browse games for tomorrow</string>
+    <string name="shortcut_create_league_short">Create league</string>
+    <string name="shortcut_create_league_long">Start creating a new league</string>
+    <string name="shortcut_game_chat_short">Game chat</string>
+    <string name="shortcut_game_chat_long">Open chat for your next game</string>
+    <string name="shortcut_live_scoring_short">Live scoring</string>
+    <string name="shortcut_live_scoring_long">Open live scoring for your next game</string>
+    <string name="shortcut_chats_short">Chats</string>
+    <string name="shortcut_chats_long">Open your chats inbox</string>
+    <string name="shortcut_invites_short">Invites</string>
+    <string name="shortcut_invites_long">Show your game invites</string>
 </resources>

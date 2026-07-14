@@ -144,8 +144,23 @@ Frontend/e2e/
 | G-31 | Next-game deep link with upcoming | Auth’d user with upcoming game opens `/next-game` (web or Cap) | Navigates to that game’s details |
 | G-32 | Next-game deep link empty | Auth’d user with no upcoming/recent games opens `/next-game` | Lands on My tab (`/`) |
 | G-33 | Next-game deep link guest | Logged-out user opens `/next-game` | Lands on `/login` |
-| G-34 | Siri Find / Next game (iOS) | Cap iOS: “Find games in Bandeja” / “Open my next game in Bandeja” | Opens Find / next game (or My/login fallback) |
-| G-35 | Gemini/Assistant Find (Android) | Cap Android: ask Assistant/Gemini to open Find in Bandeja (or long-press Find shortcut) | Opens Find tab |
+| G-34 | Siri Find / Next game (iOS) | Cap iOS: “Find games in Bandeja” / “Open my next game in Bandeja” | Opens Find today / next game (or My/login fallback) |
+| G-35 | Gemini/Assistant Find (Android) | Cap Android: ask Assistant/Gemini to open Find in Bandeja (or long-press Find shortcut) | Opens Find tab (today via catalog `findToday` / dayOffset=0) |
+| G-36 | Cap Find dayOffset | Cap open `/find?view=calendar&dayOffset=1` | Find calendar on tomorrow’s day |
+| G-37 | Cap Find date | Cap open `/find?view=calendar&date=YYYY-MM-DD` | Find calendar on that day |
+| G-38 | Invites focus deep link | Auth’d open `/?focus=invites` | My calendar tab; invites section scrolled/highlighted |
+| G-39 | Next-game open=chat | Auth’d with upcoming game opens `/next-game?open=chat` | Game chat thread |
+| G-40 | Next-game open=live | Auth’d with upcoming game opens `/next-game?open=live` | Live scoring |
+| G-41 | Siri game chat / live (iOS) | “Open chat for my next game” / “Start scoring my next game” | Chat or live for next widget game (or resolve via `/next-game?open=`) |
+| G-42 | Siri open game by name (iOS) | “Open [title] in Bandeja” (title from widget cache) | `/games/:id` |
+| G-43 | Join phrase is open only | “Join my next game in Bandeja” | Opens game details — does **not** auto-join |
+| G-44 | Android dynamic game shortcuts | After My games sync with upcoming games | Long-press app icon shows up to 4 upcoming game shortcuts |
+| G-45 | Catalog deep-link parity (full set) | Run `npm run test:deep-link-catalog` | Passes: all named actions + game templates match TS mirror, iOS `BandejaDeepLink` / HomeWidget, Android shortcuts + `WidgetDeepLinks` |
+| G-46 | Catalog smoke (Assistant/widget URLs) | Cap: open catalog URLs for find tomorrow, invites, next game, create game (and long-press Android shortcuts) | Each lands on the matching Find/My/create/next-game screen |
+| G-47 | Android cache-first next game | Cap Android with synced next-games envelope: Assistant / long-press “Next game” (also chat / live scoring) | Opens `/games/:id` (or `/chat` / `/live`) from envelope without JS my-games re-resolve; empty/unauth still `/next-game` → My/login |
+| G-48 | Cap `/next-game` single owner | Cap launch / `appUrlOpen` for `/next-game` (`?open=chat\|live`) | Navigates to `/next-game` route; `NextGameRedirect` resolves (same destinations as web) |
+| G-49 | Assistant feature vs game-entity layers | Run `npm run test:deep-link-catalog`; Cap: after My-games sync, “Find games today” / “Open chat for my next game” / “Open [cached title] in Bandeja”; Android long-press static vs `dyn_game_*` | Suite green; Find/next-chat use feature intents; named game uses entity (Siri params refreshed on sync); static shortcuts ≠ dynamic open-game shortcuts |
+| G-50 | App Shortcuts priority cap (iOS) | Inspect Siri / App Shortcuts donated set after install | At most 10 donated shortcuts; Create league + entity chat/live not in donated set (still in Shortcuts library) |
 
 ### 4.2 Onboarding gates & prompts
 
@@ -1299,6 +1314,7 @@ Cache-only: app writes next-games envelope after My games loads; widgets only re
 | X-64 | Language sync (incl. cs) | `@auth` Profile → switch UI language to **cs** (also spot-check es/ru/sr) → return to My so sync runs → view widget | Widget chrome/empty/sign-in strings match locale (cs sign-in: “Přihlaste se a uvidíte další zápas”; empty: “Žádné nadcházející zápasy”) |
 | X-65 | iOS widget gallery labels | iOS only: long-press home → widgets → search Bandeja / Next Game | Display name + description localized (en: “Next Game” / “Shows your next Bandeja game.”) |
 | X-66 | Android widget picker labels | Android only: add widget → pick Next Game | Title + description localized for current app language |
+| X-67 | iOS Home widget ignores Watch shared | After Cap sync writes next-games envelope → Home Next Game widget timeline | Widget still reads envelope via `BandejaNextGames` (`NextGamesEnvelopeStore`); no dependency on `BandejaWatchShared` for cache |
 
 ---
 
@@ -1357,7 +1373,7 @@ Leagues, live scoring multisport sample, bets, stories, game subscriptions, user
 
 ### P3 — Edge / regression backlog
 
-Offline queues, deep links, OAuth merge, Holland auctions, broadcast/TV modes, delete account, admin-only filters, visual regression, URL overlays, push routing, locale matrix, entity type matrix, home Next Game widgets (`X-56`–`X-66`)
+Offline queues, deep links, OAuth merge, Holland auctions, broadcast/TV modes, delete account, admin-only filters, visual regression, URL overlays, push routing, locale matrix, entity type matrix, home Next Game widgets (`X-56`–`X-67`)
 
 ---
 
@@ -1454,4 +1470,5 @@ Playwright project `two-user` runs specs under `Frontend/e2e/specs/two-user/` ta
 - Push tap routing: `Frontend/src/utils/pushNotificationBracketRouting.util.ts`
 - Playwright E2E: `Frontend/playwright.config.ts`, `Frontend/e2e/`
 - Automated test plan: `docs/AUTO_TEST_PLAN.md`
-- Home Next Game widgets: `Frontend/src/services/widgetNextGamesSync.ts`, iOS `BandejaHomeWidgets/`, Android `:bandeja-widgets`
+- Home Next Game widgets: `Frontend/src/services/widgetNextGamesSync.ts`, iOS `BandejaHomeWidgets/` + `BandejaNextGames/`, Android `:bandeja-widgets`
+- Watch live-scoring relay (WatchConnectivity): iOS `BandejaWatchShared/` (payloads only; not next-games cache)

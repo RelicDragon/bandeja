@@ -9,7 +9,7 @@ import { isTelegramAutoLoginPath } from '@/utils/telegramAutoLoginPath';
 import { shouldHandleTelegramLoginDeepLink } from '@/utils/telegramDeepLinkDedupe';
 import { appendLevelSportQuery, parseLevelSportQuery } from '@/utils/levelSportQuery';
 import { bumpChatFreshOpenNonce } from '@/services/chat/chatOpenEntry';
-import { resolveNextGamePath } from '@/utils/resolveNextGamePath';
+import { resolveFindDeepLinkTarget, deepLinkActionPath } from '@/deepLinks';
 
 function navigateFreshChat(
   navigate: ReturnType<typeof useNavigate>,
@@ -162,32 +162,44 @@ export const useDeepLink = () => {
           return;
         }
 
-        if (pathname === '/next-game') {
-          void resolveNextGamePath().then((path) => {
-            navigateWithTracking(navigate, path, { replace: true });
-          });
+        if (pathname === deepLinkActionPath('nextGame').split('?')[0]) {
+          // Single owner: route only; NextGameRedirect resolves (same as web).
+          navigateWithTracking(navigate, `${pathname}${url.search || ''}`, { replace: true });
           return;
         }
 
-        // Simple routes (no parameters)
+        // Find tab — canonicalize catalog findToday; forward other Find queries as-is
+        if (pathname === '/find') {
+          navigateWithTracking(
+            navigate,
+            resolveFindDeepLinkTarget(pathname, url.search),
+            { replace: true },
+          );
+          return;
+        }
+
+        // Simple routes (no parameters) — catalog-backed where applicable
         const simpleRoutes: Record<string, string> = {
-          '/find': '/find',
-          '/chats': '/chats',
+          [deepLinkActionPath('chats')]: deepLinkActionPath('chats'),
           '/profile': '/profile',
           '/leaderboard': '/leaderboard',
           '/bugs': '/bugs',
           '/game-subscriptions': '/game-subscriptions',
-          '/create-game': '/create-game',
-          '/create-league': '/create-league',
-          '/login': '/login',
+          [deepLinkActionPath('createGame')]: deepLinkActionPath('createGame'),
+          [deepLinkActionPath('createLeague')]: deepLinkActionPath('createLeague'),
+          [deepLinkActionPath('login')]: deepLinkActionPath('login'),
           '/register': '/register',
           '/select-city': '/select-city',
-          '/': '/'
+          [deepLinkActionPath('myGames')]: deepLinkActionPath('myGames'),
         };
 
-        // Routes with search parameters
-        const routesWithSearchParams: string[] = ['/login'];
-        
+        // Routes with search parameters (assistant / invites focus)
+        const routesWithSearchParams: string[] = [
+          deepLinkActionPath('login'),
+          deepLinkActionPath('chats'),
+          deepLinkActionPath('myGames'),
+        ];
+
         if (simpleRoutes[pathname]) {
           const target = simpleRoutes[pathname];
           if (routesWithSearchParams.includes(pathname) && url.search) {

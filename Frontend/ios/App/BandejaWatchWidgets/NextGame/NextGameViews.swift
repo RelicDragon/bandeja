@@ -1,6 +1,6 @@
 import SwiftUI
 import WidgetKit
-import BandejaWatchShared
+import BandejaNextGames
 
 struct NextGameWidgetEntryView: View {
     let entry: NextGameEntry

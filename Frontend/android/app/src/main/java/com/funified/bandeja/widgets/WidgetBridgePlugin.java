@@ -31,6 +31,7 @@ public class WidgetBridgePlugin extends Plugin {
                 return;
             }
             NextGameWidgetUpdater.requestUpdate(context);
+            DynamicGameShortcuts.syncFromEnvelope(context);
             call.resolve();
         } catch (Exception error) {
             call.reject("Invalid next-games envelope", error);
@@ -49,6 +50,7 @@ public class WidgetBridgePlugin extends Plugin {
             return;
         }
         NextGameWidgetUpdater.requestUpdate(context);
+        DynamicGameShortcuts.syncFromEnvelope(context);
         call.resolve();
     }
 }

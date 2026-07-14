@@ -11,6 +11,7 @@ interface ShellNavState {
   marketplaceTab: 'market' | 'my';
   findViewMode: 'calendar' | 'list';
   requestFindGoToCurrent: 'calendar' | 'list' | null;
+  requestFocusInvitesNonce: number;
   bounceNotifications: boolean;
   pendingPlayerCardReopen: { playerId: string; sourceIdx: number } | null;
   myGamesCalendarDateAfterCreate: string | null;
@@ -28,6 +29,7 @@ interface ShellNavState {
   setMarketplaceTab: (tab: 'market' | 'my') => void;
   setFindViewMode: (mode: 'calendar' | 'list') => void;
   setRequestFindGoToCurrent: (mode: 'calendar' | 'list' | null) => void;
+  bumpRequestFocusInvites: () => void;
   setBounceNotifications: (bounce: boolean) => void;
   setPendingPlayerCardReopen: (data: { playerId: string; sourceIdx: number } | null) => void;
   setMyGamesCalendarDateAfterCreate: (date: string | null) => void;
@@ -48,6 +50,7 @@ export const useShellNavStore = create<ShellNavState>((set) => ({
   marketplaceTab: 'market',
   findViewMode: 'calendar',
   requestFindGoToCurrent: null,
+  requestFocusInvitesNonce: 0,
   bounceNotifications: false,
   pendingPlayerCardReopen: null,
   myGamesCalendarDateAfterCreate: null,
@@ -65,6 +68,8 @@ export const useShellNavStore = create<ShellNavState>((set) => ({
   setMarketplaceTab: (tab) => set({ marketplaceTab: tab }),
   setFindViewMode: (mode) => set({ findViewMode: mode }),
   setRequestFindGoToCurrent: (mode) => set({ requestFindGoToCurrent: mode }),
+  bumpRequestFocusInvites: () =>
+    set((s) => ({ requestFocusInvitesNonce: s.requestFocusInvitesNonce + 1 })),
   setBounceNotifications: (bounce) => set({ bounceNotifications: bounce }),
   setPendingPlayerCardReopen: (data) => set({ pendingPlayerCardReopen: data }),
   setMyGamesCalendarDateAfterCreate: (date) => set({ myGamesCalendarDateAfterCreate: date }),

@@ -6,6 +6,12 @@
         <item>Browse games</item>
         <item>Available games</item>
         <item>Find</item>
+        <item>Find games today</item>
+    </string-array>
+    <string-array name="shortcut_find_tomorrow_synonyms">
+        <item>Find games tomorrow</item>
+        <item>Find tomorrow</item>
+        <item>Tomorrow games</item>
     </string-array>
     <string-array name="shortcut_my_games_synonyms">
         <item>My games</item>
@@ -19,10 +25,39 @@
         <item>New game</item>
         <item>Host a game</item>
     </string-array>
+    <string-array name="shortcut_create_league_synonyms">
+        <item>Create a league</item>
+        <item>Create league</item>
+        <item>New league</item>
+    </string-array>
     <string-array name="shortcut_next_game_synonyms">
         <item>Next game</item>
         <item>My next game</item>
         <item>Open next game</item>
         <item>Upcoming game</item>
+        <item>Join my next game</item>
+    </string-array>
+    <string-array name="shortcut_game_chat_synonyms">
+        <item>Game chat</item>
+        <item>Open game chat</item>
+        <item>Chat for my next game</item>
+    </string-array>
+    <string-array name="shortcut_live_scoring_synonyms">
+        <item>Live scoring</item>
+        <item>Start scoring</item>
+        <item>Score my next game</item>
+        <item>Open live scoring</item>
+    </string-array>
+    <string-array name="shortcut_chats_synonyms">
+        <item>Chats</item>
+        <item>My chats</item>
+        <item>Open chats</item>
+        <item>Messages</item>
+    </string-array>
+    <string-array name="shortcut_invites_synonyms">
+        <item>Invites</item>
+        <item>My invites</item>
+        <item>Show invites</item>
+        <item>Game invites</item>
     </string-array>
 </resources>

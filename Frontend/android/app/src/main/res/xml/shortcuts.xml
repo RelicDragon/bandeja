@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Feature layer (#279): static OPEN_APP_FEATURE shortcuts → catalog deep-link URLs.
+  Game-entity shortcuts are dynamic only (DynamicGameShortcuts / dyn_game_*) — not listed here.
+  Launcher shows at most 5 static shortcuts (file order). Extra entries still feed App Actions.
+  URLs — keep equal to Frontend/src/deepLinks/catalog.mirror.json (#278).
+  Registry — Frontend/src/deepLinks/assistantRegistry.ts.
+-->
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
 
     <capability android:name="actions.intent.OPEN_APP_FEATURE">
@@ -23,11 +30,29 @@
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.funified.bandeja"
             android:targetClass="com.funified.bandeja.MainActivity"
-            android:data="https://bandeja.me/find" />
+            android:data="https://bandeja.me/find?view=calendar&amp;dayOffset=0" />
         <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
             <parameter-binding
                 android:key="feature"
                 android:value="@array/shortcut_find_games_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="next_game"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_next_game_short"
+        android:shortcutLongLabel="@string/shortcut_next_game_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/next-game" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_next_game_synonyms" />
         </capability-binding>
     </shortcut>
 
@@ -50,6 +75,60 @@
     </shortcut>
 
     <shortcut
+        android:shortcutId="chats"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_chats_short"
+        android:shortcutLongLabel="@string/shortcut_chats_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/chats" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_chats_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="invites"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_invites_short"
+        android:shortcutLongLabel="@string/shortcut_invites_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/?focus=invites" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_invites_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="find_tomorrow"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_find_tomorrow_short"
+        android:shortcutLongLabel="@string/shortcut_find_tomorrow_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/find?view=calendar&amp;dayOffset=1" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_find_tomorrow_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
         android:shortcutId="create_game"
         android:enabled="true"
         android:icon="@mipmap/ic_launcher"
@@ -68,20 +147,56 @@
     </shortcut>
 
     <shortcut
-        android:shortcutId="next_game"
+        android:shortcutId="create_league"
         android:enabled="true"
         android:icon="@mipmap/ic_launcher"
-        android:shortcutShortLabel="@string/shortcut_next_game_short"
-        android:shortcutLongLabel="@string/shortcut_next_game_long">
+        android:shortcutShortLabel="@string/shortcut_create_league_short"
+        android:shortcutLongLabel="@string/shortcut_create_league_long">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetPackage="com.funified.bandeja"
             android:targetClass="com.funified.bandeja.MainActivity"
-            android:data="https://bandeja.me/next-game" />
+            android:data="https://bandeja.me/create-league" />
         <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
             <parameter-binding
                 android:key="feature"
-                android:value="@array/shortcut_next_game_synonyms" />
+                android:value="@array/shortcut_create_league_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="game_chat"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_game_chat_short"
+        android:shortcutLongLabel="@string/shortcut_game_chat_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/next-game?open=chat" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_game_chat_synonyms" />
+        </capability-binding>
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="live_scoring"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_live_scoring_short"
+        android:shortcutLongLabel="@string/shortcut_live_scoring_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.funified.bandeja"
+            android:targetClass="com.funified.bandeja.MainActivity"
+            android:data="https://bandeja.me/next-game?open=live" />
+        <capability-binding android:key="actions.intent.OPEN_APP_FEATURE">
+            <parameter-binding
+                android:key="feature"
+                android:value="@array/shortcut_live_scoring_synonyms" />
         </capability-binding>
     </shortcut>
 

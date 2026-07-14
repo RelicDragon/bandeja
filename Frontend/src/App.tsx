@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from
 import { useEffect, lazy, Suspense, useState, useRef } from 'react';
 import { ProtectedRoute, AppLoadingScreen, NoInternetScreen, AppVersionModal } from './components';
 import { NavigationErrorBoundary } from './components/NavigationErrorBoundary';
+import { NextGameRedirect } from './pages/NextGameRedirect';
 
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
 const TelegramAutoLogin = lazy(() => import('./pages/TelegramAutoLogin').then(module => ({ default: module.TelegramAutoLogin })));
@@ -15,9 +16,6 @@ const ConnectedClubsBookingsPage = lazy(() =>
   }))
 );
 const SelectCity = lazy(() => import('./pages/SelectCity').then(module => ({ default: module.SelectCity })));
-const NextGameRedirect = lazy(() =>
-  import('./pages/NextGameRedirect').then((module) => ({ default: module.NextGameRedirect })),
-);
 const MainPage = lazy(() => import('./pages/MainPage').then(module => ({ default: module.MainPage })));
 const CreateGameWrapper = lazy(() => import('./pages/CreateGameWrapper').then(module => ({ default: module.CreateGameWrapper })));
 const CreateLeague = lazy(() => import('./pages/CreateLeague').then(module => ({ default: module.CreateLeague })));
@@ -564,14 +562,7 @@ function AppContent() {
           }
         />
         <Route path="/welcome" element={<Navigate to="/" replace />} />
-        <Route
-          path="/next-game"
-          element={
-            <Suspense fallback={routeLoadingFallback}>
-              <NextGameRedirect />
-            </Suspense>
-          }
-        />
+        <Route path="/next-game" element={<NextGameRedirect />} />
         <Route
           path="/"
           element={

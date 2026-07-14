@@ -5,7 +5,6 @@ public enum AppGroupStorage {
 
     public enum Keys {
         public static let nextGames = "bandeja.widget.nextGames.v1"
-        public static let liveActiveSnapshot = "watchLiveActiveScoringV1"
         public static let uiLanguage = "bandeja.widget.uiLanguage.v1"
         public static let isAuthenticated = "bandeja.widget.isAuthenticated.v1"
     }

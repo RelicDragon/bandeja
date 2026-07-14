@@ -1,5 +1,6 @@
 import Foundation
 import WatchConnectivity
+import BandejaNextGames
 import BandejaWatchShared
 
 final class WatchSessionManager: NSObject {

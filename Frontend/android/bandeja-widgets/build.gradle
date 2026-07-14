@@ -25,6 +25,13 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+
+    // Shared next-game golden (#273) — Frontend/shared/nextGame/pickNextGameGolden.json
+    sourceSets {
+        test {
+            resources.srcDirs += ["${rootProject.projectDir}/../shared/nextGame"]
+        }
+    }
 }
 
 dependencies {
