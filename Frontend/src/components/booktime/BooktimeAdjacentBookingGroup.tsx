@@ -1,8 +1,7 @@
-import { AlertTriangle, Check, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { motion, type Variants } from 'framer-motion';
-import type { BooktimeLinkedGame } from '@/api/booktime';
+import { type Variants } from 'framer-motion';
 import type { BookingListClubRow } from '@/hooks/connectedBookingClubs';
 import type { BooktimeBookingRecord } from '@/integrations/booktime/client';
 import { useBooktimeLinkedGamesByBookingIds } from '@/hooks/useBooktimeLinkedGamesByBookingIds';
@@ -32,44 +31,15 @@ type Props = {
   onCanceled?: (bookingId: string) => void;
   onRefreshSnapshot?: (options?: { force?: boolean }) => Promise<boolean>;
   selectable?: boolean;
-  selected?: boolean;
-  dimmed?: boolean;
-  disableDeselect?: boolean;
-  onToggleSelect?: () => void;
+  selectedBookingIds?: readonly string[];
+  onToggleBooking?: (bookingId: string) => void;
+  atMaxSelection?: boolean;
   expandableActions?: boolean;
   actionsExpanded?: boolean;
   onToggleActions?: () => void;
   entryVariants?: Variants;
   nested?: boolean;
 };
-
-function GroupLinkedGamesPills({ games }: { games: BooktimeLinkedGame[] }) {
-  const { t } = useTranslation();
-  if (games.length === 0) return null;
-  const labels = games.map((g) => g.name?.trim() || g.id).join(', ');
-  return (
-    <span className="mt-1.5 inline-flex max-w-full items-center gap-1 rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium leading-snug text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-100">
-      <AlertTriangle size={10} className="shrink-0" aria-hidden />
-      <span className="truncate">{t('createGame.locationTime.alsoUsedIn', { games: labels })}</span>
-    </span>
-  );
-}
-
-function uniqueLinkedGames(
-  linkedGamesByBookingId: ReadonlyMap<string, BooktimeLinkedGame[]>,
-  bookingIds: string[],
-): BooktimeLinkedGame[] {
-  const seen = new Set<string>();
-  const result: BooktimeLinkedGame[] = [];
-  for (const bookingId of bookingIds) {
-    for (const game of linkedGamesByBookingId.get(bookingId) ?? []) {
-      if (seen.has(game.id)) continue;
-      seen.add(game.id);
-      result.push(game);
-    }
-  }
-  return result;
-}
 
 export function BooktimeAdjacentBookingGroup({
   bookings,
@@ -81,10 +51,9 @@ export function BooktimeAdjacentBookingGroup({
   onCanceled,
   onRefreshSnapshot,
   selectable = false,
-  selected = false,
-  dimmed = false,
-  disableDeselect = false,
-  onToggleSelect,
+  selectedBookingIds = [],
+  onToggleBooking,
+  atMaxSelection = false,
   expandableActions = false,
   actionsExpanded = false,
   onToggleActions,
@@ -96,6 +65,7 @@ export function BooktimeAdjacentBookingGroup({
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const [expanded, setExpanded] = useState(false);
   const bookingIds = useMemo(() => bookings.map((booking) => booking.uuid), [bookings]);
+  const selectedIdSet = useMemo(() => new Set(selectedBookingIds), [selectedBookingIds]);
   const { linkedGamesByBookingId, loading: linkedGamesLoading, reload: reloadLinkedGames } =
     useBooktimeLinkedGamesByBookingIds(bookingIds);
   const courtInfo = resolveCourtForBooking(bookings[0]!, club, t('club.booktime.unknownCourt'));
@@ -116,15 +86,19 @@ export function BooktimeAdjacentBookingGroup({
     () => linkedGamesBookingGroupSlotSegments(bookings, linkedGamesByBookingId, clubTimezone),
     [bookings, linkedGamesByBookingId, clubTimezone],
   );
-  const groupLinkedGames = useMemo(
-    () => uniqueLinkedGames(linkedGamesByBookingId, bookingIds),
-    [linkedGamesByBookingId, bookingIds],
+  const anyChildSelected = useMemo(
+    () => bookings.some((booking) => selectedIdSet.has(booking.uuid)),
+    [bookings, selectedIdSet],
   );
 
-  const showChildren = selectable ? selected : expandableActions ? actionsExpanded : expanded;
+  const showChildren = selectable
+    ? true
+    : expandableActions
+      ? actionsExpanded
+      : expanded;
   const showChevron = !selectable && !expandableActions;
   const isHighlighted =
-    (selectable && selected) || (expandableActions && actionsExpanded);
+    (selectable && anyChildSelected) || (expandableActions && actionsExpanded);
   const actionRevealClass = (visible: boolean) =>
     `grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
       visible ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0 pointer-events-none'
@@ -170,7 +144,6 @@ export function BooktimeAdjacentBookingGroup({
       <p className="text-xs text-gray-500 dark:text-gray-400">
         <span>{whenLabel}</span>
       </p>
-      {selectable ? <GroupLinkedGamesPills games={groupLinkedGames} /> : null}
       {!showChildren ? (
         <div className={`min-h-0 overflow-hidden ${compact ? 'pt-1' : 'pt-1.5'}`}>
           <BooktimeSlotTimeCards bookings={bookings} clubTimezone={clubTimezone} />
@@ -181,27 +154,37 @@ export function BooktimeAdjacentBookingGroup({
 
   const childRows = (
     <ul className={`space-y-2 ${compact ? 'pt-2' : 'pt-2.5'}`}>
-      {bookings.map((booking) => (
-        <BooktimeBookingRow
-          key={booking.uuid}
-          booking={booking}
-          club={club}
-          allowedHoursToCancel={allowedHoursToCancel}
-          compact={compact}
-          clubTimezone={clubTimezone}
-          nested
-          readOnly={selectable}
-          linkedGames={
-            linkedGamesLoading
-              ? undefined
-              : (linkedGamesByBookingId.get(booking.uuid) ?? [])
-          }
-          onLinkedGamesReload={() => void reloadLinkedGames()}
-          priceQuote={priceById.get(booking.uuid) ?? null}
-          onRefreshSnapshot={onRefreshSnapshot}
-          onCanceled={() => onCanceled?.(booking.uuid)}
-        />
-      ))}
+      {bookings.map((booking) => {
+        const selected = selectedIdSet.has(booking.uuid);
+        return (
+          <BooktimeBookingRow
+            key={booking.uuid}
+            booking={booking}
+            club={club}
+            allowedHoursToCancel={allowedHoursToCancel}
+            compact={compact}
+            clubTimezone={clubTimezone}
+            nested
+            selectable={selectable}
+            selected={selected}
+            dimmed={selectable ? !selected && atMaxSelection : false}
+            disableDeselect={false}
+            onToggleSelect={
+              selectable && onToggleBooking ? () => onToggleBooking(booking.uuid) : undefined
+            }
+            readOnly={!selectable}
+            linkedGames={
+              linkedGamesLoading
+                ? undefined
+                : (linkedGamesByBookingId.get(booking.uuid) ?? [])
+            }
+            onLinkedGamesReload={() => void reloadLinkedGames()}
+            priceQuote={priceById.get(booking.uuid) ?? null}
+            onRefreshSnapshot={onRefreshSnapshot}
+            onCanceled={() => onCanceled?.(booking.uuid)}
+          />
+        );
+      })}
     </ul>
   );
 
@@ -210,7 +193,7 @@ export function BooktimeAdjacentBookingGroup({
       <div className="min-h-0 overflow-hidden">{showChildren ? childRows : null}</div>
     </div>
   ) : selectable ? (
-    showChildren ? childRows : null
+    childRows
   ) : (
     <div
       className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
@@ -223,38 +206,13 @@ export function BooktimeAdjacentBookingGroup({
 
   if (selectable) {
     const selectableGroup = (
-      <motion.button
-        type="button"
-        whileTap={dimmed || (selected && disableDeselect) ? undefined : { scale: 0.98 }}
-        disabled={dimmed || (selected && disableDeselect)}
-        onClick={onToggleSelect}
-        className={`relative w-full text-left outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${shellClassName} flex flex-col transition-opacity ${
-          dimmed ? 'opacity-50 cursor-default' : ''
-        } ${selected && disableDeselect ? 'cursor-default' : ''}`}
-      >
+      <div className={`relative w-full text-left ${shellClassName} flex flex-col`}>
         <div className="relative flex w-full items-start gap-3">
           {cornerStack}
-          <span
-            className={`mt-0.5 h-5 w-5 rounded-full border flex items-center justify-center shrink-0 ${
-              selected
-                ? 'border-primary-500 bg-primary-500 text-white'
-                : 'border-gray-300 dark:border-gray-600'
-            }`}
-          >
-            {selected ? (
-              <motion.span
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 28 }}
-              >
-                <Check size={12} />
-              </motion.span>
-            ) : null}
-          </span>
           {headerContent}
         </div>
         {childrenPanel}
-      </motion.button>
+      </div>
     );
     return nested ? (
       selectableGroup

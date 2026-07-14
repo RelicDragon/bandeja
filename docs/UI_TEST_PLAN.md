@@ -525,7 +525,7 @@ Frontend/e2e/
 | C-19 | Reservations strip multi-select | Intent I already have a booking; connected user; reservations on date; multi-court format (max > 1) | Court-labeled cards; progress bar (N/max) while selecting; green completion chip with linked time when min met; at-max hint when further rows dimmed; no progress UI for single-court (max 1) games |
 | C-19a | Reservations strip club TZ display | Create-game at club whose city TZ ≠ Europe/Belgrade | Reservation row wall-clock matches My bookings for same reservation |
 | C-19b | useExisting hidden without reservations | Integrated club; connected; date with no user reservations | **I already have a booking** intent not shown in picker |
-| C-19c | Reservations strip adjacent group | 2+ consecutive same-court slots on selected date | Grouped card; tap selects/deselects all; different courts never group |
+| C-19c | Reservations strip adjacent group | 2+ consecutive same-court slots on selected date | Grouped card with per-hour rows; each hour selectable independently; different courts never group |
 | C-19d | Reservation grid overlay sync | Intent I already have a booking; reservations on selected date | Green cells on grid; selected reservations stronger green + check; legend under time label |
 | C-19e | Linked reservation row | Intent I already have a booking; select 1+ reservations | Selected row shows court name + time window + price when available; linked-game amber warning badge on row when applicable; no separate hint card |
 | C-19f | Schedule sync from reservations | Intent I already have a booking; select reservation(s) | Form date, time, duration, court chips update from booking union; completion chip shows linked window for 1 court; sticky summary bar for 2+ linked reservations |
@@ -533,7 +533,7 @@ Frontend/e2e/
 | C-20 | Override time when linking | Intent I already have a booking; toggle adjust game time | Expand animates; create uses shorter window within reservation bounds |
 | C-21 | Multi-court confirm 2 steps | Intent Book a court; 2 integrated courts → Create | Stepper: 2 reserve steps + create; rollback on fail |
 | C-22 | Deep link bookingIds | `?bookingIds=uuid` | Intent defaults to I already have a booking; preselected banner; grid selected; create without book confirm |
-| C-22a | Adjacent reservations strip group | I already have a booking with 2+ consecutive same-court slots | Grouped card; tap selects all; deselect respects min selection |
+| C-22a | Adjacent reservations strip group | I already have a booking with 2+ consecutive same-court slots | Grouped card; select one hour inside group when max=1; remaining hours stay available for other games; deselect respects min selection |
 | C-14t | Multi-court shared slot hint | Intent Book a court; 2 courts selected; no intersecting Booktime slots | Amber hint: try different courts, date, or duration |
 | C-14u | Create validation toasts | Submit without court/time/auth per intent | Inline toast + scroll to location section (not silent abort) |
 | C-14v | Edit keep current reservation | Edit game with linked bookings | Default **Keep current reservation**; read-only linked list + consequence summary; no reservation picker |

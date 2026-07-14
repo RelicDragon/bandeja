@@ -215,7 +215,7 @@ export function BooktimeBookingRow({
             : ''}
         </p>
       ) : null}
-      {!nested || selectable ? (
+      {!nested ? (
         <CourtDisplayName
           name={courtInfo.courtName}
           integrationName={courtInfo.integrationCourtName}

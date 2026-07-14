@@ -12,7 +12,6 @@ import { BooktimeAdjacentBookingGroup } from '@/components/booktime/BooktimeAdja
 import { groupAdjacentBooktimeBookings } from '@/components/booktime/groupAdjacentBooktimeBookings';
 import { booktimeRowToClub } from '@/components/booktime/booktimeBookingUtils';
 import { buildSelectedBookingRecordsSyncKey } from '@/components/gameLocationTime/locationTimeDraft';
-import { resolveBookingSelectionAfterDeselect } from '@/components/gameLocationTime/resolveBookingSelectionAfterDeselect';
 import { useReservationGridSync } from '@/components/gameLocationTime/useReservationGridSync';
 import { pruneSelectedBookingsToAvailable } from './pruneSelectedBookingsToAvailable';
 import { ExistingReservationEmptyState } from './ExistingReservationEmptyState';
@@ -196,22 +195,6 @@ export function ReservationsStrip({
   };
   const clubRow = booktimeRowToClub(booktimeMyClubRow);
 
-  const handleGroupToggle = (groupIds: string[]) => {
-    const groupSelected = groupIds.every((id) => selectedBookingIds.includes(id));
-    if (groupSelected) {
-      const nextIds = resolveBookingSelectionAfterDeselect(
-        selectedBookingIds,
-        groupIds,
-        selectionLimits,
-      );
-      onSelectedBookingIdsChange(nextIds, bookings.filter((b) => nextIds.includes(b.uuid)));
-      return;
-    }
-    const nextIds = [...new Set([...selectedBookingIds, ...groupIds])];
-    if (nextIds.length > selectionLimits.max) return;
-    onSelectedBookingIdsChange(nextIds, bookings.filter((b) => nextIds.includes(b.uuid)));
-  };
-
   const bookingEntries = useMemo(
     () =>
       groupAdjacentBooktimeBookings(dateBookings, {
@@ -266,9 +249,6 @@ export function ReservationsStrip({
         {bookingEntries.map((entry) => {
           if (entry.kind === 'group') {
             const groupIds = entry.bookings.map((booking) => booking.uuid);
-            const groupSelected = groupIds.every((id) => selectedBookingIds.includes(id));
-            const slotsToAdd = groupIds.filter((id) => !selectedBookingIds.includes(id)).length;
-            const dimmed = !groupSelected && selectedBookingIds.length + slotsToAdd > selectionLimits.max;
             return (
               <li key={groupIds.join('-')} ref={registerCardRef(groupIds[0]!)}>
                 <BooktimeAdjacentBookingGroup
@@ -278,10 +258,9 @@ export function ReservationsStrip({
                   compact
                   clubTimezone={clubTimezone}
                   selectable
-                  selected={groupSelected}
-                  dimmed={dimmed}
-                  disableDeselect={false}
-                  onToggleSelect={() => handleGroupToggle(groupIds)}
+                  selectedBookingIds={selectedBookingIds}
+                  onToggleBooking={onToggleBooking}
+                  atMaxSelection={atMax}
                 />
               </li>
             );
