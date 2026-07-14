@@ -439,8 +439,9 @@ export const AvailableGamesSection = ({
         findFilterState,
         {
           mode: 'calendar',
-          // Day-scoped API already narrowed to one day; skip selectedDay re-cut.
-          selectedDay: dayScoped ? undefined : selectedDate,
+          // Always day-cut: BE calendar used to OR-bypass LEAGUE_SEASON past the range,
+          // and day-scoped responses must not skip that client safety net.
+          selectedDay: selectedDate,
         },
       );
     }

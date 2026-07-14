@@ -138,6 +138,7 @@ async function buildAvailableWhere(
     const horizon = new Date(today);
     horizon.setFullYear(horizon.getFullYear() + 1);
     horizon.setHours(23, 59, 59, 999);
+    // List: untied LEAGUE_SEASON shells stay visible; timed games stay in horizon.
     where.AND = [
       {
         OR: [
@@ -162,11 +163,9 @@ async function buildAvailableWhere(
         end.setHours(23, 59, 59, 999);
         startTimeRange.lte = end;
       }
-      where.AND = [
-        {
-          OR: [{ entityType: 'LEAGUE_SEASON' }, { startTime: startTimeRange }],
-        },
-      ];
+      // Calendar / day-scoped: every entity (incl. LEAGUE_SEASON) must fall in range.
+      // Do not OR-bypass by entityType — that made seasons appear on every selected day.
+      where.AND = [{ startTime: startTimeRange }];
     }
   }
 

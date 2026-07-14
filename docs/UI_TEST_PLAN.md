@@ -419,6 +419,7 @@ Frontend/e2e/
 | F-55 | Find selected-day detail under truncate | Busy month truncated; pick a late-month day | Day list comes from day-scoped fetch (complete for that day / load more), not only the first month page |
 | F-56 | Find day switch no wrong-day flash | Calendar: tap day A then day B quickly | No wrong-day cards; while day fetch resolves, month-filtered day list or loading — not previous day’s cards |
 | F-57 | Find old app on new BE (enrich) | Store build that omits `format=card` against current API | Notes/weather/reactions still present on Find cards (inline enrich); month still capped ≤300 |
+| F-58 | Find calendar LEAGUE_SEASON day bound | Open calendar; pick a day that is not the season’s startTime day | That day’s list does not show the LEAGUE_SEASON; it only appears on its actual calendar day (list/upcoming may still show shells) |
 
 ---
 
