@@ -35,22 +35,40 @@ export type ClubEligibleReviewGame = Pick<Game, 'id' | 'name' | 'startTime' | 'e
 
 const MAP_CLUBS_CACHE_MS = 5 * 60 * 1000;
 let mapClubsCache: { data: ClubMapItem[]; ts: number } | null = null;
+let mapClubsInflight: Promise<ClubMapItem[]> | null = null;
+
+export function peekCachedMapClubs(): ClubMapItem[] | null {
+  if (mapClubsCache && Date.now() - mapClubsCache.ts < MAP_CLUBS_CACHE_MS) {
+    return mapClubsCache.data;
+  }
+  return null;
+}
 
 export const clubsApi = {
   getForMap: async (bbox?: MapBbox | null) => {
-    if (!bbox && mapClubsCache && Date.now() - mapClubsCache.ts < MAP_CLUBS_CACHE_MS) {
-      return mapClubsCache.data;
+    if (!bbox) {
+      const cached = peekCachedMapClubs();
+      if (cached) return cached;
+      if (mapClubsInflight) return mapClubsInflight;
     }
     const params =
       bbox != null
         ? { minLat: bbox.minLat, maxLat: bbox.maxLat, minLng: bbox.minLng, maxLng: bbox.maxLng }
         : undefined;
-    const response = await api.get<ApiResponse<ClubMapItem[]>>('/clubs/map', { params });
-    const data = response.data?.data ?? [];
-    if (!bbox) {
-      mapClubsCache = { data, ts: Date.now() };
-    }
-    return data;
+    const request = api
+      .get<ApiResponse<ClubMapItem[]>>('/clubs/map', { params })
+      .then((response) => {
+        const data = response.data?.data ?? [];
+        if (!bbox) {
+          mapClubsCache = { data, ts: Date.now() };
+        }
+        return data;
+      })
+      .finally(() => {
+        if (!bbox) mapClubsInflight = null;
+      });
+    if (!bbox) mapClubsInflight = request;
+    return request;
   },
 
   getByCityId: async (cityId: string, entityType?: EntityType) => {

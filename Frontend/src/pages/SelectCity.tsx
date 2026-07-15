@@ -50,12 +50,15 @@ export const SelectCity = () => {
       <h2 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-white">
         {t('auth.selectCity')}
       </h2>
-      <p className="text-center text-gray-600 dark:text-gray-400 mb-4">
+      <p className="text-center text-gray-600 dark:text-gray-400 mb-3">
         {t('auth.selectCityDescription')}
       </p>
 
-      <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
-        <div className="flex-1 min-h-0 max-h-[min(24rem,50vh)] overflow-hidden mb-6 flex flex-col">
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col min-h-0 overflow-hidden"
+      >
+        <div className="mb-4 flex min-h-0 flex-col overflow-hidden h-[min(42rem,calc(100dvh-12.5rem))]">
           <CityListContent
             view={cityList.view}
             search={cityList.search}
@@ -73,7 +76,6 @@ export const SelectCity = () => {
             showError={true}
             submitting={submitting}
             citiesCount={cityList.cities.length}
-            onLocationError={cityList.setError}
           />
         </div>
 

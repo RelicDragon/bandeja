@@ -308,8 +308,11 @@ export async function loadPlaytomicFile(filePath: string): Promise<LoadPlaytomic
 }
 
 async function main(): Promise<void> {
-  const files = await fs.promises.readdir(JSON_DIR);
-  const jsonFiles = files.filter((f) => f.endsWith('.json'));
+  const onlyFiles = process.argv.slice(2).filter((a) => a.endsWith('.json'));
+  const files = onlyFiles.length
+    ? onlyFiles.map((f) => path.basename(f))
+    : (await fs.promises.readdir(JSON_DIR)).filter((f) => f.endsWith('.json'));
+  const jsonFiles = files;
   console.log(`[load-playtomic] Found ${jsonFiles.length} JSON files in ${JSON_DIR}`);
   console.log(
     `[load-playtomic] Supported Playtomic sports: ${SUPPORTED_PLAYTOMIC_SPORT_IDS.join(', ')}`

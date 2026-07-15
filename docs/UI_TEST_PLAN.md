@@ -216,6 +216,14 @@ Frontend/e2e/
 | A-17 | New user auto-city | Fresh user, sport confirmed, `cityIsSet: false`, auto-assigned city | `CityPromptBanner` on home; `/select-city` redirects home |
 | A-18 | City already set @auth | `cityIsSet: true` | Redirect home |
 | A-19 | Pick city | Auto-detect failed, after sport gate | Redirect to `/select-city`; profile updated |
+| A-30 | No Cities/Clubs switch | Open `/select-city` | No Cities/Clubs mode toggle; chrome is search hero + Near me + Map/List only |
+| A-31 | Browse countries → cities | Open `/select-city`, tap a country | City list for that country (not clubs); pick city → Confirm works |
+| A-32 | Near me → city | Tap Near me with location | Nearest **city** focused/scrolled (or map pending city); not a clubs list |
+| A-33 | Unified city/club search | On `/select-city`, type ≥2 chars matching a city and a club | One stream with soft Cities/Clubs(/Countries) headers; placeholder “Search city or club…” |
+| A-34 | Pick city via club search | Search a club name → tap club row | Onboarding selects that club’s **city** (Confirm still required); no home-club concept |
+| A-35 | Search hero primary | Open `/select-city` after load | Full-width search is the top control; Near me + Map sit below as secondary chrome |
+| A-36 | Suggested nearest/current | Open `/select-city` with empty search; nearest and/or selected city known | Suggested block shows one-tap nearest and/or current; hidden while searching |
+| A-37 | Near me calm failure | Tap Near me with location denied/unavailable | Soft hint under chrome (not stacked red banner); search/map still usable |
 
 ### 5.4 Logout & sessions
 
@@ -396,7 +404,10 @@ Frontend/e2e/
 | F-29 | Empty find results | Filters with no match | Empty state |
 | F-37 | Trainer without slots filters | Training filter → tap trainer chip body (no count badge) | “Trainings by …” banner; list empty with trainer-specific no-slots message |
 | F-38 | Trainer avatar opens profile | Training filter → tap trainer avatar (with or without slots) | Player card opens; trainer filter unchanged |
-| F-30 | Change city from header | Find header city button → `CityModal` | City changes; games refetch |
+| F-30 | Change city from header | Find header city button → `CityModal` | Tall bottom sheet opens (search hero + Near me + Map; no Cities/Clubs switch); dismiss via X / drag / outside (no Cancel footer) |
+| F-59 | Change-city no mode switch | Open change-city sheet from Find header | No Cities/Clubs toggle; browse is country → cities only |
+| F-60 | Change-city via club search | Open change-city → search club name → tap club | Commits that club’s city immediately (no Confirm); sheet closes |
+| F-61 | Change-city search hero + Suggested | Open change-city with empty search | Suggested is top of every browse list (countries and cities), then the rows; scrolls away with the list |
 | F-31 | Filter button active state | Apply any advanced filter | Filter button highlighted |
 | F-32 | Favorite trainer highlight | `@user with favoriteTrainerId` + training filter | Favorite trainer games emphasized on calendar |
 | F-33 | Gender-restricted game card | MEN/WOMEN/MIX game | Gender badge on card |
@@ -1051,7 +1062,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |
 | PR-streak-4 | New week while alive | Rated finish after open week, before deadline | Count +1; celebration banner once |
 | PR-streak-5 | Past deadline | Open player card (`?player=`) after missing deadline | Streak chip hidden (alive-only); fullscreen/profile sport panel may still show best |
-| PR-19 | Change city | City modal | City updated |
+| PR-19 | Change city | City modal | City updated; no Cities/Clubs switch; browse country → cities |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |
 | PR-22 | Theme selector | Light/dark/system | Theme applied |
@@ -1223,11 +1234,12 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 
 | ID | Test | Expected |
 |----|------|----------|
-| X-18 | City selector list view | City list searchable |
-| X-19 | City selector map view | `CityMap` renders clubs/markers |
-| X-20 | Map ↔ list toggle | Switch views without crash |
-| X-21 | Select city from map | Tap marker → city selected |
-| X-22 | City selector clubs tab | Clubs list shows avatar, name, address; info (i) opens club detail; tap card selects club's city |
+| X-18 | City selector list view | City list searchable; browse is country → cities only |
+| X-19 | City selector map view | `CityMap` shows cities and clubs together (no cities/clubs layer switch) |
+| X-20 | Map ↔ list toggle | Switch views without crash; no Cities/Clubs toggle |
+| X-21 | Select city from map | Tap city or club pin → sticky “Use {city}” → city selected |
+| X-68 | City selector no clubs browse | No Clubs mode/tab; clubs are not a parallel browse list under a country |
+| X-69 | Map club pin → city | Pending city is the club’s city; confirm commits city only |
 
 ### 18.6 Ads & sponsored content
 

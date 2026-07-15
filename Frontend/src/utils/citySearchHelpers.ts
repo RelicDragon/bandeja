@@ -58,23 +58,43 @@ export function cityMatchesListSearch(c: City, searchLower: string, useGeo: bool
   if (c.name.toLowerCase().includes(searchLower)) return true;
   if (c.administrativeArea?.toLowerCase().includes(searchLower) ?? false) return true;
   if (c.subAdministrativeArea?.toLowerCase().includes(searchLower) ?? false) return true;
+  if (searchLower.length < 3) return false;
   const maxLen = Math.max(c.name.length, searchLower.length);
   return maxLen > 0 && levenshtein(c.name.toLowerCase(), searchLower) / maxLen <= 0.35;
 }
 
-export function clubMatchesListSearch(
-  club: { name: string; cityName: string; country: string; cityId: string },
-  searchLower: string,
-  useGeo: boolean
-): boolean {
-  if (
-    club.name.toLowerCase().includes(searchLower) ||
-    club.cityName.toLowerCase().includes(searchLower) ||
-    club.country.toLowerCase().includes(searchLower)
-  ) {
-    return true;
+export const CITY_LIST_SEARCH_MIN_LENGTH = 2;
+
+export type ClubListSearchItem = {
+  id: string;
+  name: string;
+  cityId: string;
+  cityName: string;
+  country: string;
+};
+
+export function clubSearchRelevancyScore(club: ClubListSearchItem, searchLower: string): number {
+  const name = club.name.toLowerCase();
+  if (name === searchLower) return 0;
+  if (name.startsWith(searchLower)) return 1;
+  if (name.includes(searchLower)) return 2;
+  if (searchLower.length >= 3) {
+    const maxLen = Math.max(name.length, searchLower.length);
+    if (maxLen > 0 && levenshtein(name, searchLower) / maxLen <= 0.35) return 3;
   }
-  if (matchCountryForListSearch(club.country, searchLower, useGeo)) return true;
+  if (club.cityName.toLowerCase().includes(searchLower)) return 4;
+  return 6;
+}
+
+export function clubMatchesListSearch(club: ClubListSearchItem, searchLower: string, useGeo: boolean): boolean {
+  const name = club.name.toLowerCase();
+  if (name.includes(searchLower) || club.cityName.toLowerCase().includes(searchLower)) return true;
+  // Fuzzy only for longer queries — avoids O(n·L²) across all clubs on 2-char typing.
+  if (searchLower.length >= 3) {
+    const maxLen = Math.max(name.length, searchLower.length);
+    if (maxLen > 0 && levenshtein(name, searchLower) / maxLen <= 0.35) return true;
+  }
+  // Do not match clubs by country alone — that floods the Clubs section; Countries handle that.
   if (useGeo) {
     const names = getCitySearchNames(club.cityId, club.cityName, club.country);
     if (citySearchValues(names).some((v) => v.includes(searchLower))) return true;

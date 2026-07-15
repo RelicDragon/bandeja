@@ -89,7 +89,6 @@ export function useCityList({ enabled, currentCityId, onFetchError }: UseCityLis
   const [view, setView] = useState<CityListView>('country');
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [geoReady, setGeoReady] = useState(false);
-  const initialViewSetRef = useRef(false);
 
   useEffect(() => {
     if (enabled) ensureGeoDataLoaded().then(() => setGeoReady(getGeoDataLoaded()));
@@ -169,25 +168,20 @@ export function useCityList({ enabled, currentCityId, onFetchError }: UseCityLis
       setLoading(true);
       setError('');
       setCities([]);
-      initialViewSetRef.current = false;
+      setView('country');
+      setSelectedCountry(null);
       return;
     }
     setLoading(true);
     setError('');
+    setView('country');
+    setSelectedCountry(null);
     let cancelled = false;
     citiesApi
       .getAll()
       .then((res) => {
         if (cancelled) return;
         setCities(res.data);
-        if (currentCityId && res.data.length) {
-          const city = res.data.find((c) => c.id === currentCityId);
-          if (city) {
-            setView('city');
-            setSelectedCountry(city.country);
-            initialViewSetRef.current = true;
-          }
-        }
       })
       .catch(() => {
         if (!cancelled) onFetchErrorRef.current?.(setError);
@@ -199,16 +193,6 @@ export function useCityList({ enabled, currentCityId, onFetchError }: UseCityLis
       cancelled = true;
     };
   }, [enabled, currentCityId]);
-
-  useEffect(() => {
-    if (loading || initialViewSetRef.current || !currentCityId || cities.length === 0) return;
-    const city = cities.find((c) => c.id === currentCityId);
-    if (city) {
-      setView('city');
-      setSelectedCountry(city.country);
-      initialViewSetRef.current = true;
-    }
-  }, [loading, currentCityId, cities]);
 
   return {
     cities,

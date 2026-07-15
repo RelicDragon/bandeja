@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, type ReactNode } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 const VIRTUALIZE_THRESHOLD = 40;
@@ -15,6 +15,8 @@ export interface VirtualizedListProps<T> {
   getItemKey?: (item: T, index: number) => string | number;
   scrollToIndex?: number | null;
   onScrolledToIndex?: () => void;
+  /** Renders above items inside the scroll container (scrolls away with the list). */
+  header?: ReactNode;
 }
 
 export function VirtualizedList<T>({
@@ -26,6 +28,7 @@ export function VirtualizedList<T>({
   getItemKey,
   scrollToIndex,
   onScrolledToIndex,
+  header,
 }: VirtualizedListProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
@@ -44,12 +47,13 @@ export function VirtualizedList<T>({
     onScrolledToIndex?.();
   }, [scrollToIndex, items.length, virtualizer, onScrolledToIndex]);
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && !header) return null;
 
   if (items.length < VIRTUALIZE_THRESHOLD) {
     return (
       <div ref={parentRef} className={className}>
         <div className={contentClassName}>
+          {header}
           {items.map((item, index) => (
             <div key={getItemKey ? getItemKey(item, index) : index}>{renderItem(item, index)}</div>
           ))}
@@ -60,30 +64,32 @@ export function VirtualizedList<T>({
 
   return (
     <div ref={parentRef} className={className}>
-      <div
-        className={contentClassName}
-        style={{
-          height: `${virtualizer.getTotalSize()}px`,
-          width: '100%',
-          position: 'relative',
-        }}
-      >
-        {virtualItems.map((row) => (
-          <div
-            key={row.key}
-            data-index={row.index}
-            ref={virtualizer.measureElement}
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              transform: `translateY(${row.start}px)`,
-            }}
-          >
-            {renderItem(items[row.index], row.index)}
-          </div>
-        ))}
+      <div className={contentClassName}>
+        {header}
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {virtualItems.map((row) => (
+            <div
+              key={row.key}
+              data-index={row.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                transform: `translateY(${row.start}px)`,
+              }}
+            >
+              {renderItem(items[row.index], row.index)}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

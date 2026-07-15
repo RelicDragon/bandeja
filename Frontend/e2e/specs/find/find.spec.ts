@@ -1,7 +1,9 @@
 import { test, expect, devices } from '@playwright/test';
-import { e2eLogin } from '../../fixtures/api-client';
+import { e2eApi, e2eLogin } from '../../fixtures/api-client';
 import { createGameViaApi, deleteGameViaApi } from '../../fixtures/games.fixture';
+import { listMapClubs } from '../../fixtures/persona.fixture';
 import { FindPage } from '../../pages/find.page';
+import { ChangeCityModalPage } from '../../pages/select-city.page';
 
 test.use({ ...devices['Pixel 7'] });
 
@@ -143,6 +145,47 @@ test.describe('find discovery @auth', () => {
     await find.filtersButton().waitFor({ state: 'visible' });
     await find.cityButton().click();
     await expect(page.getByRole('dialog').filter({ hasText: /city|select city/i })).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('F-59–F-61 change-city modern selector', async ({ page }) => {
+    const { token, user } = await e2eLogin();
+    const clubs = await listMapClubs(token);
+    expect(clubs.length).toBeGreaterThan(0);
+
+    const originalCityId = user.currentCity?.id ?? null;
+    const club =
+      clubs.find((c) => c.name.trim().length >= 2 && c.cityId && c.cityId !== originalCityId) ??
+      clubs.find((c) => c.name.trim().length >= 2 && c.cityId);
+    expect(club).toBeTruthy();
+
+    const find = new FindPage(page);
+    await find.goto();
+    await find.filtersButton().waitFor({ state: 'visible' });
+    await find.cityButton().click();
+
+    const modal = new ChangeCityModalPage(page);
+    await modal.waitForReady();
+
+    // F-59
+    await modal.expectNoCitiesClubsModeSwitch();
+    await expect(modal.searchInput()).toHaveAttribute('placeholder', /search city or club/i);
+    await expect(modal.nearMeButton()).toBeVisible();
+    await expect(modal.mapToggleButton()).toBeVisible();
+
+    // F-61 — current city is always suggested in change-city
+    await expect(modal.suggestedSection()).toBeVisible({ timeout: 15_000 });
+
+    // F-60 — club search commits city immediately
+    try {
+      await modal.commitCityViaClubSearch(club!.name);
+    } finally {
+      if (originalCityId && club!.cityId !== originalCityId) {
+        await e2eApi(token, '/users/switch-city', {
+          method: 'POST',
+          body: JSON.stringify({ cityId: originalCityId }),
+        });
+      }
+    }
   });
 
   test('F-31 filter button active state', async ({ page }) => {

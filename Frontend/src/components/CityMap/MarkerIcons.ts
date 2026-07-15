@@ -17,12 +17,27 @@ export function getClubHouseIcon(): L.DivIcon {
 }
 
 let cityMarkerIcon: L.DivIcon | null = null;
+let cityPendingMarkerIcon: L.DivIcon | null = null;
 
-export function getCityMarkerIcon(): L.DivIcon {
+const CITY_PIN_SVG =
+  '<svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg>';
+
+export function getCityMarkerIcon(pending = false): L.DivIcon {
+  if (pending) {
+    if (cityPendingMarkerIcon) return cityPendingMarkerIcon;
+    cityPendingMarkerIcon = L.divIcon({
+      className: 'city-marker city-marker-pending',
+      html: `<div style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:#059669;border-radius:50%;box-shadow:0 0 0 4px rgba(5,150,105,0.35),0 2px 8px rgba(0,0,0,0.28);border:2px solid white;">${CITY_PIN_SVG}</div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 34],
+      popupAnchor: [0, -34],
+    });
+    return cityPendingMarkerIcon;
+  }
   if (cityMarkerIcon) return cityMarkerIcon;
   cityMarkerIcon = L.divIcon({
     className: 'city-marker',
-    html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:#059669;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.25);border:2px solid white;"><svg width="14" height="14" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/></svg></div>`,
+    html: `<div style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;background:#059669;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.25);border:2px solid white;">${CITY_PIN_SVG}</div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 28],
     popupAnchor: [0, -28],

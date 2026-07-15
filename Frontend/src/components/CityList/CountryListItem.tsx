@@ -4,6 +4,10 @@ import { getCountryFlag } from '@/utils/countryFlag';
 import { useGeoReady } from '@/hooks/useGeoReady';
 import { getCountryDisplayName, getCountryNativeName } from '@/utils/geoTranslations';
 import type { CountryWithClubs } from '@/hooks/useCityList';
+import {
+  CITY_SELECTOR_ROW_PAD,
+  citySelectorRowClassName,
+} from '@/components/CityList/citySelectorRowStyles';
 
 export interface CountryListItemProps {
   item: CountryWithClubs;
@@ -22,11 +26,8 @@ function CountryListItemInner({ item, isSelected, onSelect, className = '' }: Co
     <button
       type="button"
       onClick={() => onSelect(item.country)}
-      className={`w-full min-w-0 text-left flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border transition-colors ${
-        isSelected
-          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 ring-2 ring-primary-400/50 ring-offset-2 dark:ring-offset-gray-900'
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/50'
-      } ${className}`}
+      aria-pressed={isSelected}
+      className={citySelectorRowClassName(isSelected, `flex items-center justify-between gap-2 ${CITY_SELECTOR_ROW_PAD} ${className}`)}
     >
       <span className="flex items-center gap-2 font-medium text-sm text-gray-900 dark:text-white min-w-0 overflow-hidden">
         <span className="text-lg leading-none shrink-0">{getCountryFlag(item.country)}</span>

@@ -153,8 +153,24 @@ export async function createNoCityUser(): Promise<{
 
 export async function listCities(
   token: string,
-): Promise<Array<{ id: string; name: string; country?: string }>> {
-  return e2eApi<Array<{ id: string; name: string; country?: string }>>(token, '/cities');
+): Promise<Array<{ id: string; name: string; country?: string; latitude?: number | null; longitude?: number | null }>> {
+  return e2eApi<
+    Array<{ id: string; name: string; country?: string; latitude?: number | null; longitude?: number | null }>
+  >(token, '/cities');
+}
+
+export type MapClubSeed = {
+  id: string;
+  name: string;
+  cityId: string;
+  cityName: string;
+  country: string;
+};
+
+export async function listMapClubs(token: string): Promise<MapClubSeed[]> {
+  const raw = await e2eApi<MapClubSeed[] | { data?: MapClubSeed[] }>(token, '/clubs/map');
+  if (Array.isArray(raw)) return raw;
+  return Array.isArray(raw?.data) ? raw.data : [];
 }
 
 export async function createNoSportsUser(): Promise<{

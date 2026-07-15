@@ -331,77 +331,93 @@ function generateMap(clubs, outputFile) {
   console.log(`Generated map: ${mapFile}`);
 }
 
+async function scrapeCityWithDetails(cityName, rateLimiter, options = {}) {
+  const skipTenants = options.skipTenants || new Set();
+  const onClub = options.onClub || null;
+  const clubs = await scrapeCity(cityName, rateLimiter);
+  const detailedClubs = [];
+
+  for (let i = 0; i < clubs.length; i++) {
+    const club = clubs[i];
+    const tid = club.tenant_id != null ? String(club.tenant_id) : '';
+    if (tid && skipTenants.has(tid)) {
+      console.log(`Skipping known tenant ${tid}: ${club.name}`);
+      continue;
+    }
+    await rateLimiter.waitIfNeeded();
+    await randomDelay(20, 100);
+    try {
+      console.log(`Fetching details for club ${i + 1}/${clubs.length}: ${club.name}`);
+      const detailedClub = await fetchClubDetails(club.slug);
+      detailedClubs.push(detailedClub);
+      if (tid) skipTenants.add(tid);
+      if (onClub) onClub(detailedClub);
+    } catch (error) {
+      console.error(`Error fetching details for club ${club.name} (${club.slug}):`, error.message);
+    }
+  }
+  return detailedClubs;
+}
+
+function persistGlobalMeta(featuresSet, propertiesMap, sportIdsSet) {
+  const jsonsDataDir = path.join(SCRIPT_DIR, 'jsons-data');
+  if (!fs.existsSync(jsonsDataDir)) fs.mkdirSync(jsonsDataDir, { recursive: true });
+  const sortedProperties = Object.keys(propertiesMap)
+    .sort()
+    .reduce((acc, key) => {
+      acc[key] = propertiesMap[key];
+      return acc;
+    }, {});
+  fs.writeFileSync(
+    path.join(jsonsDataDir, 'playtomic-clubs-properties.json'),
+    JSON.stringify(sortedProperties, null, 2)
+  );
+  fs.writeFileSync(
+    path.join(jsonsDataDir, 'playtomic-clubs-features.json'),
+    JSON.stringify(Array.from(featuresSet).sort(), null, 2)
+  );
+  fs.writeFileSync(
+    path.join(jsonsDataDir, 'playtomic-clubs-sport-ids.json'),
+    JSON.stringify(Array.from(sportIdsSet).sort(), null, 2)
+  );
+}
+
 async function main() {
   try {
-    const cityName = await question('Enter city name: ');
-    
+    const argvCity = process.argv.slice(2).join(' ').trim();
+    const cityName = argvCity || (await question('Enter city name: '));
+
     if (!cityName.trim()) {
       console.error('City name cannot be empty');
       process.exit(1);
     }
-    
+
     const { featuresSet, propertiesMap, sportIdsSet } = loadGlobalData();
-    console.log(`Loaded existing data: ${featuresSet.size} features, ${Object.keys(propertiesMap).length} properties, ${sportIdsSet.size} sport_ids`);
-    
+    console.log(
+      `Loaded existing data: ${featuresSet.size} features, ${Object.keys(propertiesMap).length} properties, ${sportIdsSet.size} sport_ids`
+    );
+
     const rateLimiter = new RateLimiter(99, 60000);
-    const clubs = await scrapeCity(cityName.trim(), rateLimiter);
-    
-    console.log(`\nFetching detailed info for ${clubs.length} clubs...`);
-    const detailedClubs = [];
-    
-    const initialFeaturesCount = featuresSet.size;
-    const initialPropertiesCount = Object.keys(propertiesMap).length;
-    const initialSportIdsCount = sportIdsSet.size;
-    
-    for (let i = 0; i < clubs.length; i++) {
-      const club = clubs[i];
-      await rateLimiter.waitIfNeeded();
-      await randomDelay(20, 100);
-      try {
-        console.log(`Fetching details for club ${i + 1}/${clubs.length}: ${club.name}`);
-        const detailedClub = await fetchClubDetails(club.slug);
-        detailedClubs.push(detailedClub);
-        
+    const detailedClubs = await scrapeCityWithDetails(cityName.trim(), rateLimiter, {
+      onClub: (detailedClub) => {
         collectProperties(detailedClub, propertiesMap);
         collectFeatures(detailedClub, featuresSet);
         collectSportIds(detailedClub, sportIdsSet);
-      } catch (error) {
-        console.error(`Error fetching details for club ${club.name} (${club.slug}):`, error.message);
-      }
-    }
-    
+      },
+    });
+
     const baseFileName = cityName.toLowerCase().replace(/\s+/g, '-');
     const jsonsDir = path.join(SCRIPT_DIR, 'jsons');
-    const jsonsDataDir = path.join(SCRIPT_DIR, 'jsons-data');
+    if (!fs.existsSync(jsonsDir)) fs.mkdirSync(jsonsDir, { recursive: true });
     const outputFile = path.join(jsonsDir, `${baseFileName}-clubs.json`);
-    const globalPropertiesFile = path.join(jsonsDataDir, 'playtomic-clubs-properties.json');
-    const globalFeaturesFile = path.join(jsonsDataDir, 'playtomic-clubs-features.json');
-    const globalSportIdsFile = path.join(jsonsDataDir, 'playtomic-clubs-sport-ids.json');
-    
-    const sortedProperties = Object.keys(propertiesMap)
-      .sort()
-      .reduce((acc, key) => {
-        acc[key] = propertiesMap[key];
-        return acc;
-      }, {});
-    
+
     fs.writeFileSync(outputFile, JSON.stringify(detailedClubs, null, 2));
-    fs.writeFileSync(globalPropertiesFile, JSON.stringify(sortedProperties, null, 2));
-    fs.writeFileSync(globalFeaturesFile, JSON.stringify(Array.from(featuresSet).sort(), null, 2));
-    fs.writeFileSync(globalSportIdsFile, JSON.stringify(Array.from(sportIdsSet).sort(), null, 2));
-    
-    const newFeaturesCount = featuresSet.size - initialFeaturesCount;
-    const newPropertiesCount = Object.keys(propertiesMap).length - initialPropertiesCount;
-    const newSportIdsCount = sportIdsSet.size - initialSportIdsCount;
-    
+    persistGlobalMeta(featuresSet, propertiesMap, sportIdsSet);
+
     console.log(`\nSuccessfully scraped ${detailedClubs.length} clubs`);
     console.log(`Saved to: ${outputFile}`);
-    console.log(`Properties: ${Object.keys(propertiesMap).length} total (${newPropertiesCount > 0 ? `+${newPropertiesCount} new` : 'no new'}), updated ${globalPropertiesFile}`);
-    console.log(`Features: ${featuresSet.size} total (${newFeaturesCount > 0 ? `+${newFeaturesCount} new` : 'no new'}), updated ${globalFeaturesFile}`);
-    console.log(`Sport IDs: ${sportIdsSet.size} total (${newSportIdsCount > 0 ? `+${newSportIdsCount} new` : 'no new'}), updated ${globalSportIdsFile}`);
-    
+
     generateMap(detailedClubs, outputFile);
-    
   } catch (error) {
     console.error('Error:', error.message);
     process.exit(1);
@@ -410,4 +426,20 @@ async function main() {
   }
 }
 
-main();
+module.exports = {
+  RateLimiter,
+  scrapeCity,
+  scrapeCityWithDetails,
+  fetchClubDetails,
+  loadGlobalData,
+  collectProperties,
+  collectFeatures,
+  collectSportIds,
+  persistGlobalMeta,
+  generateMap,
+  SCRIPT_DIR,
+};
+
+if (require.main === module) {
+  main();
+}

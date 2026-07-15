@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { useRef, useEffect, useState, useMemo, useCallback } from 'react';
-import { Map as MapIcon, List, MapPin, Home } from 'lucide-react';
+import { useRef, useEffect, useState, useMemo, useCallback, useDeferredValue } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { City } from '@/types';
 import type { CountryWithClubs } from '@/hooks/useCityList';
@@ -8,33 +7,28 @@ import { CityMap } from '@/components/CityMap';
 import { CountryListItem } from '@/components/CityList/CountryListItem';
 import { CityListItem } from '@/components/CityList/CityListItem';
 import { ClubListItem } from '@/components/CityList/ClubListItem';
+import { UnifiedSearchSectionHeader } from '@/components/CityList/UnifiedSearchSectionHeader';
 import { VirtualizedList } from '@/components/CityList/VirtualizedList';
+import { CitySelectorSearchChrome } from '@/components/CityList/CitySelectorSearchChrome';
+import { SuggestedCitiesBlock } from '@/components/CityList/SuggestedCitiesBlock';
+import {
+  CITY_SELECTOR_CHECK,
+  citySelectorRowClassName,
+} from '@/components/CityList/citySelectorRowStyles';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { findNearestCity } from '@/utils/nearestCity';
-import { findNearestClub } from '@/utils/nearestClub';
 import { useGeoReady } from '@/hooks/useGeoReady';
+import { useCitySelectorClubs } from '@/hooks/useCitySelectorClubs';
 import {
   getCountryDisplayName,
   getCountryNativeName,
-  getCountrySearchNames,
-  getCitySearchNames,
   getGeoDataLoaded,
 } from '@/utils/geoTranslations';
-import {
-  citySearchRelevancyScore,
-  matchCountryForListSearch,
-  cityMatchesListSearch,
-  clubMatchesListSearch,
-} from '@/utils/citySearchHelpers';
+import { CITY_LIST_SEARCH_MIN_LENGTH } from '@/utils/citySearchHelpers';
+import { buildUnifiedCitySearchRows, type UnifiedSearchRow } from '@/utils/buildUnifiedCitySearchRows';
+import { buildSuggestedCityEntries } from '@/utils/buildSuggestedCityEntries';
 import { appApi } from '@/api/app';
-import { clubsApi, type ClubMapItem } from '@/api/clubs';
-import type { Club } from '@/types';
-import { ClubInfoDialog } from '@/components/ClubInfoDialog';
-
-type UnifiedSearchRow =
-  | { kind: 'country'; group: CountryWithClubs }
-  | { kind: 'city'; city: City }
-  | { kind: 'club'; club: ClubMapItem };
+import type { ClubMapItem } from '@/api/clubs';
 
 export interface CityListContentProps {
   view: 'country' | 'city';
@@ -59,14 +53,13 @@ export interface CityListContentProps {
   citiesCount?: number;
   className?: string;
   contentClassName?: string;
-  onLocationError?: (message: string) => void;
 }
 
-const LOCATION_ERROR_KEYS: Record<string, string> = {
-  permission_denied: 'auth.locationDenied',
-  position_unavailable: 'auth.locationUnavailable',
-  timeout: 'auth.locationTimeout',
-  unsupported: 'auth.locationUnsupported',
+const LOCATION_HINT_KEYS: Record<string, string> = {
+  permission_denied: 'city.locationHintDenied',
+  position_unavailable: 'city.locationHintUnavailable',
+  timeout: 'city.locationHintTimeout',
+  unsupported: 'city.locationHintUnsupported',
 };
 
 export const CityListContent = ({
@@ -92,79 +85,98 @@ export const CityListContent = ({
   citiesCount = 0,
   className = '',
   contentClassName = '',
-  onLocationError,
 }: CityListContentProps) => {
   const { t, i18n } = useTranslation();
   const geoReady = useGeoReady();
   const isLoading = showingLoading ?? loading;
   const selectedCityRef = useRef<HTMLButtonElement>(null);
   const scrollTargetRef = useRef<HTMLButtonElement>(null);
-  const scrollTargetClubRef = useRef<HTMLDivElement>(null);
   const lastScrolledToSelectedIdRef = useRef<string | null>(null);
-  const userLocationTargetRef = useRef<{ latitude: number; longitude: number } | null>(null);
   const skipListTransitionRef = useRef(false);
+  const nearestPrefetchDoneRef = useRef(false);
+  const locateGenRef = useRef(0);
+  const showMapRef = useRef(false);
+  const ipLocationCacheRef = useRef<{ latitude: number; longitude: number } | null>(null);
+  const ipLocationInflightRef = useRef<Promise<{ latitude: number; longitude: number } | null> | null>(null);
   const [allowTransition, setAllowTransition] = useState(false);
   const [showMap, setShowMap] = useState(false);
-  const [listMode, setListMode] = useState<'cities' | 'clubs'>('cities');
-  const [clubs, setClubs] = useState<ClubMapItem[]>([]);
-  const [listClubs, setListClubs] = useState<ClubMapItem[]>([]);
   const [pendingCityId, setPendingCityId] = useState<string | null>(null);
   const [scrollToCityId, setScrollToCityId] = useState<string | null>(null);
-  const [scrollToClubId, setScrollToClubId] = useState<string | null>(null);
   const [nearestCityIdInList, setNearestCityIdInList] = useState<string | null>(null);
-  const [nearestClubCityIdInList, setNearestClubCityIdInList] = useState<string | null>(null);
-  const [infoClub, setInfoClub] = useState<Club | null>(null);
+  const [suggestedNearestCityId, setSuggestedNearestCityId] = useState<string | null>(null);
   const [userLocationTarget, setUserLocationTarget] = useState<{ latitude: number; longitude: number } | null>(null);
-  userLocationTargetRef.current = userLocationTarget;
   const [userLocationIsApproximate, setUserLocationIsApproximate] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [locationMessage, setLocationMessage] = useState<string | null>(null);
   const { getPosition } = useGeolocation();
+
+  showMapRef.current = showMap;
+
+  const searchLower = search.trim().length >= CITY_LIST_SEARCH_MIN_LENGTH ? search.trim().toLowerCase() : '';
+  const deferredSearchLower = useDeferredValue(searchLower);
+  const unifiedSearchMode = !showMap && !!searchLower;
+  const clubs = useCitySelectorClubs(!isLoading);
+  const clubsById = useMemo(() => {
+    const m = new Map<string, ClubMapItem>();
+    for (const club of clubs) m.set(club.id, club);
+    return m;
+  }, [clubs]);
+
+  const resolveIpLocation = useCallback(async () => {
+    if (ipLocationCacheRef.current) return ipLocationCacheRef.current;
+    if (!ipLocationInflightRef.current) {
+      ipLocationInflightRef.current = appApi.getLocation().then((ipLoc) => {
+        if (ipLoc) ipLocationCacheRef.current = ipLoc;
+        ipLocationInflightRef.current = null;
+        return ipLoc;
+      });
+    }
+    return ipLocationInflightRef.current;
+  }, []);
 
   useEffect(() => {
     if (!showMap) {
       setPendingCityId(null);
       setUserLocationTarget(null);
       setUserLocationIsApproximate(false);
-      return;
     }
-    let cancelled = false;
-    const loc = userLocationTargetRef.current;
-    const bbox =
-      loc != null
-        ? {
-            minLat: loc.latitude - 2,
-            maxLat: loc.latitude + 2,
-            minLng: loc.longitude - 2,
-            maxLng: loc.longitude + 2,
-          }
-        : undefined;
-    clubsApi.getForMap(bbox).then((data) => {
-      if (!cancelled && data) setClubs(Array.isArray(data) ? data : []);
-    }).catch(() => {});
-    return () => { cancelled = true; };
   }, [showMap]);
-
-  useEffect(() => {
-    if (listMode !== 'clubs') return;
-    let cancelled = false;
-    clubsApi.getForMap(null).then((data) => {
-      if (!cancelled && data) setListClubs(Array.isArray(data) ? data : []);
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [listMode]);
 
   const mapCities = useMemo(
     () => allCities ?? (view === 'city' ? filteredCitiesForCountry : filteredCountries.flatMap((f) => f.cities)),
     [allCities, view, filteredCitiesForCountry, filteredCountries]
   );
 
-  const searchLower = search.trim().length >= 2 ? search.trim().toLowerCase() : '';
-  const unifiedSearchMode = !showMap && !!searchLower;
-
   const allCitiesSource = useMemo(() => {
     if (allCities && allCities.length > 0) return allCities;
     return filteredCountries.flatMap((f) => f.cities);
   }, [allCities, filteredCountries]);
+
+  useEffect(() => {
+    if (allCitiesSource.length === 0) {
+      nearestPrefetchDoneRef.current = false;
+      locateGenRef.current += 1;
+      setLocating(false);
+      setLocationMessage(null);
+      setSuggestedNearestCityId(null);
+      setNearestCityIdInList(null);
+      setScrollToCityId(null);
+      return;
+    }
+    if (nearestPrefetchDoneRef.current || suggestedNearestCityId) return;
+    let cancelled = false;
+    void (async () => {
+      const ipLoc = await resolveIpLocation();
+      if (cancelled) return;
+      nearestPrefetchDoneRef.current = true;
+      if (!ipLoc) return;
+      const nearest = findNearestCity(allCitiesSource, ipLoc.latitude, ipLoc.longitude);
+      if (!cancelled && nearest) setSuggestedNearestCityId(nearest.id);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [allCitiesSource, suggestedNearestCityId, resolveIpLocation]);
 
   const allCountryGroups = useMemo((): CountryWithClubs[] => {
     const m = new Map<string, City[]>();
@@ -173,77 +185,51 @@ export const CityListContent = ({
       list.push(c);
       m.set(c.country, list);
     }
-    for (const list of m.values()) list.sort((a, b) => a.name.localeCompare(b.name));
     return Array.from(m.entries())
       .map(([country, cities]) => ({
         country,
         cities,
-        clubsCount: cities.reduce((s, c) => s + (c.clubsCount ?? 0), 0),
+        clubsCount: cities.reduce((s, city) => s + (city.clubsCount ?? 0), 0),
       }))
       .sort((a, b) => a.country.localeCompare(b.country));
   }, [allCitiesSource]);
 
   const unifiedSearchRows = useMemo((): UnifiedSearchRow[] => {
-    if (!unifiedSearchMode || !searchLower) return [];
+    if (!unifiedSearchMode) return [];
+    // Prefer deferred query for smoothness; fall back so first keystroke never flashes empty.
+    const query = deferredSearchLower || searchLower;
+    if (!query) return [];
     const useGeo = geoReady && getGeoDataLoaded();
-    const countriesMatching = allCountryGroups.filter((g) =>
-      matchCountryForListSearch(g.country, searchLower, useGeo)
-    );
-    const countryRows: UnifiedSearchRow[] = countriesMatching.map((group) => ({ kind: 'country', group }));
-
-    if (listMode === 'cities') {
-      const citiesMatching = allCitiesSource
-        .filter((c) => cityMatchesListSearch(c, searchLower, useGeo))
-        .sort((a, b) => {
-          const namesA = getCitySearchNames(a.id, a.name, a.country);
-          const namesB = getCitySearchNames(b.id, b.name, b.country);
-          const diff =
-            citySearchRelevancyScore(a, searchLower, namesA) - citySearchRelevancyScore(b, searchLower, namesB);
-          return diff !== 0 ? diff : a.name.localeCompare(b.name);
-        });
-      return [...countryRows, ...citiesMatching.map((city) => ({ kind: 'city' as const, city }))];
-    }
-
-    const clubsMatching = listClubs
-      .filter((club) => clubMatchesListSearch(club, searchLower, useGeo))
-      .sort((a, b) => a.name.localeCompare(b.name));
-    return [...countryRows, ...clubsMatching.map((club) => ({ kind: 'club' as const, club }))];
-  }, [unifiedSearchMode, searchLower, listMode, listClubs, allCountryGroups, allCitiesSource, geoReady]);
-
-  const filteredMapCities = useMemo(() => {
-    if (!searchLower) return mapCities;
-    return mapCities.filter((c) => {
-      const countryNames = getCountrySearchNames(c.country);
-      const countryMatch = [countryNames.en, countryNames.es, countryNames.ru, countryNames.sr, countryNames.native]
-        .filter(Boolean)
-        .some((v) => v.toLowerCase().includes(searchLower));
-      if (countryMatch) return true;
-      const cityNames = getCitySearchNames(c.id, c.name, c.country);
-      const cityMatch = [cityNames.en, cityNames.es, cityNames.ru, cityNames.sr, cityNames.native]
-        .filter(Boolean)
-        .some((v) => v.toLowerCase().includes(searchLower));
-      if (cityMatch) return true;
-      return (
-        c.country.toLowerCase().includes(searchLower) ||
-        c.name.toLowerCase().includes(searchLower) ||
-        (c.administrativeArea?.toLowerCase().includes(searchLower) ?? false) ||
-        (c.subAdministrativeArea?.toLowerCase().includes(searchLower) ?? false)
-      );
+    return buildUnifiedCitySearchRows({
+      searchLower: query,
+      cities: allCitiesSource,
+      clubs,
+      countries: allCountryGroups,
+      useGeo,
     });
-  }, [mapCities, searchLower]);
+  }, [unifiedSearchMode, deferredSearchLower, searchLower, clubs, allCountryGroups, allCitiesSource, geoReady]);
 
-  const displaySelectedCountry = selectedCountry
-    ? getCountryDisplayName(selectedCountry, i18n.language)
-    : '';
+  const displaySelectedCountry = selectedCountry ? getCountryDisplayName(selectedCountry, i18n.language) : '';
   const selectedCountryNative = selectedCountry ? getCountryNativeName(selectedCountry) : null;
   const showSelectedCountryNative = selectedCountryNative && selectedCountryNative !== displaySelectedCountry;
 
-  const handleWhereAmI = async () => {
+  const selectCountryAndClearSearch = useCallback(
+    (country: string) => {
+      setSearch('');
+      selectCountry(country);
+    },
+    [selectCountry, setSearch]
+  );
+
+  const handleWhereAmI = useCallback(async () => {
+    const gen = ++locateGenRef.current;
     setLocating(true);
+    setLocationMessage(null);
     try {
       let lat: number;
       let lon: number;
-      const ipLoc = await appApi.getLocation();
+      const ipLoc = await resolveIpLocation();
+      if (gen !== locateGenRef.current) return;
       if (ipLoc) {
         lat = ipLoc.latitude;
         lon = ipLoc.longitude;
@@ -251,63 +237,54 @@ export const CityListContent = ({
         setUserLocationIsApproximate(true);
       } else {
         const posResult = await getPosition();
+        if (gen !== locateGenRef.current) return;
         if (posResult.position) {
           lat = posResult.position.latitude;
           lon = posResult.position.longitude;
           setUserLocationTarget({ latitude: lat, longitude: lon });
           setUserLocationIsApproximate(false);
         } else {
-          const key = LOCATION_ERROR_KEYS[posResult.errorCode ?? ''] ?? 'auth.locationUnavailable';
-          onLocationError?.(t(key));
+          const key = LOCATION_HINT_KEYS[posResult.errorCode ?? ''] ?? 'city.locationHintUnavailable';
+          setLocationMessage(t(key));
           return;
         }
       }
-      if (listMode === 'clubs') {
-        let clubsToSearch = showMap ? clubs : listClubs;
-        if (clubsToSearch.length === 0) {
-          const bbox = { minLat: lat - 2, maxLat: lat + 2, minLng: lon - 2, maxLng: lon + 2 };
-          const bboxClubs = await clubsApi.getForMap(bbox);
-          clubsToSearch = Array.isArray(bboxClubs) ? bboxClubs : [];
-          if (showMap) setClubs(clubsToSearch);
-        }
-        const nearest = findNearestClub(clubsToSearch, lat, lon);
-        if (nearest) {
-          if (showMap) {
-            setPendingCityId(nearest.cityId);
-          } else {
-            skipListTransitionRef.current = true;
-            setNearestClubCityIdInList(nearest.cityId);
-            setScrollToClubId(nearest.id);
-            selectCountryAndClearSearch(nearest.country);
-          }
+      const nearest = findNearestCity(allCitiesSource.length > 0 ? allCitiesSource : mapCities, lat, lon);
+      if (gen !== locateGenRef.current) return;
+      if (nearest) {
+        setSuggestedNearestCityId(nearest.id);
+        if (showMapRef.current) {
+          setPendingCityId(nearest.id);
         } else {
-          onLocationError?.(t('auth.noCityNearby'));
+          skipListTransitionRef.current = true;
+          setNearestCityIdInList(nearest.id);
+          selectCountryAndClearSearch(nearest.country);
+          setScrollToCityId(nearest.id);
         }
       } else {
-        const nearest = findNearestCity(mapCities, lat, lon);
-        if (nearest) {
-          if (showMap) {
-            setPendingCityId(nearest.id);
-          } else {
-            skipListTransitionRef.current = true;
-            setNearestCityIdInList(nearest.id);
-            selectCountryAndClearSearch(nearest.country);
-            setScrollToCityId(nearest.id);
-          }
-        } else {
-          onLocationError?.(t('auth.noCityNearby'));
-        }
+        setLocationMessage(t('city.locationHintNoCity'));
       }
     } catch {
-      onLocationError?.(t('auth.locationUnavailable'));
+      if (gen === locateGenRef.current) {
+        setLocationMessage(t('city.locationHintUnavailable'));
+      }
     } finally {
-      setLocating(false);
+      if (gen === locateGenRef.current) setLocating(false);
     }
-  };
+  }, [resolveIpLocation, getPosition, allCitiesSource, mapCities, selectCountryAndClearSearch, t]);
 
   useEffect(() => {
-    if (pendingCityId && !filteredMapCities.some((c) => c.id === pendingCityId)) setPendingCityId(null);
-  }, [pendingCityId, filteredMapCities]);
+    return () => {
+      locateGenRef.current += 1;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!pendingCityId) return;
+    const knownInCities = mapCities.some((c) => c.id === pendingCityId);
+    const knownInClubs = clubs.some((c) => c.cityId === pendingCityId);
+    if (!knownInCities && !knownInClubs) setPendingCityId(null);
+  }, [pendingCityId, mapCities, clubs]);
 
   useEffect(() => {
     if (scrollToCityId && view === 'city' && !filteredCitiesForCountry.some((c) => c.id === scrollToCityId)) {
@@ -327,8 +304,8 @@ export const CityListContent = ({
   }, [view]);
 
   useEffect(() => {
-    const t = requestAnimationFrame(() => setAllowTransition(true));
-    return () => cancelAnimationFrame(t);
+    const frame = requestAnimationFrame(() => setAllowTransition(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   useEffect(() => {
@@ -352,44 +329,27 @@ export const CityListContent = ({
     return () => cancelAnimationFrame(raf);
   }, [scrollToCityId, view, filteredCitiesForCountry]);
 
-  useEffect(() => {
-    if (!scrollToClubId || listMode !== 'clubs') return;
-    const raf = requestAnimationFrame(() => {
-      scrollTargetClubRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      setScrollToClubId(null);
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [scrollToClubId, listMode]);
-
-  const searchLowerClubs = search.trim().length >= 2 ? search.trim().toLowerCase() : '';
-  const filteredListClubsForCountry = useMemo(() => {
-    if (!selectedCountry) return [];
-    const byCountry = listClubs.filter((c) => c.country === selectedCountry);
-    if (!searchLowerClubs) return byCountry;
-    return byCountry.filter(
-      (c) =>
-        c.name.toLowerCase().includes(searchLowerClubs) ||
-        c.cityName.toLowerCase().includes(searchLowerClubs) ||
-        c.country.toLowerCase().includes(searchLowerClubs)
-    );
-  }, [listClubs, selectedCountry, searchLowerClubs]);
-
-  const searchPlaceholder = unifiedSearchMode
-    ? listMode === 'cities'
-      ? t('city.searchCountriesAndCities')
-      : t('city.searchCountriesAndClubs')
-    : view === 'country'
-      ? t('city.searchCountries')
-      : listMode === 'clubs'
-        ? t('city.searchClubs')
-        : t('city.searchCities');
+  const searchPlaceholder = t('city.searchCityOrClub');
   const selectedCityId = isSelectorMode ? selectedId : currentCityId;
+
+  useEffect(() => {
+    if (search.trim().length > 0) setLocationMessage(null);
+  }, [search]);
+
+  const showSuggested = !showMap && !unifiedSearchMode;
+  const suggestedEntries = useMemo(() => {
+    if (!showSuggested) return [];
+    return buildSuggestedCityEntries({
+      cities: allCitiesSource,
+      nearestCityId: suggestedNearestCityId,
+      currentCityId: selectedCityId,
+    });
+  }, [showSuggested, suggestedNearestCityId, selectedCityId, allCitiesSource]);
+
   const useVirtualizedCityList = filteredCitiesForCountry.length >= 40;
   const idxForScrollToCity = scrollToCityId != null ? filteredCitiesForCountry.findIndex((c) => c.id === scrollToCityId) : -1;
   const idxForSelected =
-    view === 'city' &&
-    selectedCityId &&
-    selectedCityId !== lastScrolledToSelectedIdRef.current
+    view === 'city' && selectedCityId && selectedCityId !== lastScrolledToSelectedIdRef.current
       ? filteredCitiesForCountry.findIndex((c) => c.id === selectedCityId)
       : -1;
   const cityScrollToIndex =
@@ -402,27 +362,22 @@ export const CityListContent = ({
           })()
         : -1;
   const countryOfSelected = useMemo(
-    () => (selectedCityId ? filteredCountries.find((item) => item.cities.some((c) => c.id === selectedCityId)) ?? null : null),
+    () =>
+      selectedCityId
+        ? (filteredCountries.find((item) => item.cities.some((c) => c.id === selectedCityId)) ?? null)
+        : null,
     [selectedCityId, filteredCountries]
   );
-  const pendingCityName = useMemo(
-    () =>
-      pendingCityId
-        ? filteredMapCities.find((c) => c.id === pendingCityId)?.name ?? clubs.find((c) => c.cityId === pendingCityId)?.cityName ?? null
-        : null,
-    [pendingCityId, filteredMapCities, clubs]
-  );
+  const pendingCityName = useMemo(() => {
+    if (!pendingCityId) return null;
+    const fromCity = mapCities.find((c) => c.id === pendingCityId)?.name;
+    if (fromCity) return fromCity;
+    return clubs.find((c) => c.cityId === pendingCityId)?.cityName ?? null;
+  }, [pendingCityId, mapCities, clubs]);
   const handleScrolledToCityIndex = useCallback(() => setScrollToCityId(null), []);
-  const handleClubClick = useCallback((id: string) => setPendingCityId(id), []);
+  const handlePendingCity = useCallback((id: string) => setPendingCityId(id), []);
   const handleMapClick = useCallback(() => setPendingCityId(null), []);
 
-  const selectCountryAndClearSearch = useCallback(
-    (country: string) => {
-      setSearch('');
-      selectCountry(country);
-    },
-    [selectCountry, setSearch]
-  );
   const onCityClickAndClearSearch = useCallback(
     (cityId: string) => {
       onCityClick(cityId);
@@ -430,113 +385,67 @@ export const CityListContent = ({
     },
     [onCityClick, setSearch]
   );
-  const onClubInfoClick = useCallback((club: ClubMapItem) => {
-    setInfoClub({
-      id: club.id,
-      name: club.name,
-      avatar: club.avatar ?? null,
-      address: club.address ?? '',
-      cityId: club.cityId,
-      phone: club.phone ?? undefined,
-      website: club.website ?? undefined,
-    });
+
+  const suggestedListHeader =
+    showSuggested && suggestedEntries.length > 0 ? (
+      <SuggestedCitiesBlock
+        entries={suggestedEntries}
+        selectedCityId={selectedCityId}
+        submitting={submitting}
+        onSelect={onCityClickAndClearSearch}
+      />
+    ) : null;
+
+  const countryBackRow =
+    selectedCountry && !unifiedSearchMode ? (
+      <button
+        type="button"
+        onClick={backToCountries}
+        className="mb-1.5 flex w-full min-w-0 items-center gap-1.5 truncate rounded-lg py-1.5 text-sm font-medium text-primary-600 hover:bg-primary-50/80 dark:text-primary-400 dark:hover:bg-primary-950/40"
+      >
+        <span className="min-w-0 truncate">
+          ← {displaySelectedCountry}
+          {showSelectedCountryNative && (
+            <span className="ml-1 text-xs font-normal text-gray-500 dark:text-gray-400">
+              {selectedCountryNative}
+            </span>
+          )}
+        </span>
+      </button>
+    ) : null;
+
+  const cityListHeader = (
+    <>
+      {suggestedListHeader}
+      {countryBackRow}
+    </>
+  );
+
+  const unifiedItemKey = useCallback((row: UnifiedSearchRow) => {
+    if (row.kind === 'section') return `sec:${row.section}`;
+    if (row.kind === 'country') return `co:${row.group.country}`;
+    if (row.kind === 'club') return `cl:${row.club.id}`;
+    return `ci:${row.city.id}`;
   }, []);
 
   return (
-    <div className={`space-y-2 p-1 pt-2 min-h-0 flex flex-col flex-1 overflow-hidden min-w-0 ${className}`}>
-      <ClubInfoDialog club={infoClub} onClose={() => setInfoClub(null)} />
+    <div className={`flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden p-0.5 pt-1 ${className}`}>
       {showError && error && (
-        <div className="shrink-0 p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded-xl text-sm">
+        <div className="shrink-0 rounded-xl bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
           {error}
         </div>
       )}
-      {!isLoading && (
-        <div className="shrink-0 flex items-center gap-2 min-w-0">
-          <div className="flex-1 min-w-0" />
-          <button
-            type="button"
-            onClick={handleWhereAmI}
-            disabled={locating}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 shrink-0 mr-2 disabled:opacity-60"
-          >
-            {locating ? (
-              <span className="w-4 h-4 shrink-0 border-2 border-primary-200 dark:border-primary-800 border-t-primary-500 rounded-full animate-spin" />
-            ) : (
-              <MapPin className="w-4 h-4 shrink-0" strokeWidth={2.25} />
-            )}
-            <span className="text-sm font-medium">{t('city.whereAmI')}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setListMode((m) => (m === 'cities' ? 'clubs' : 'cities'))}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-primary-400 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 shadow-sm transition-all duration-200 focus:ring-2 focus:ring-primary-500/30 focus:outline-none shrink-0"
-          >
-            {listMode === 'cities' ? (
-              <>
-                <Home className="w-4 h-4 shrink-0" strokeWidth={2.25} />
-                <span className="text-sm font-medium">{t('city.clubs')}</span>
-              </>
-            ) : (
-              <>
-                <MapPin className="w-4 h-4 shrink-0" strokeWidth={2.25} />
-                <span className="text-sm font-medium">{t('city.cities')}</span>
-              </>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowMap((v) => !v)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/80 hover:border-primary-400 dark:hover:border-primary-500 hover:text-primary-600 dark:hover:text-primary-400 shadow-sm transition-all duration-200 focus:ring-2 focus:ring-primary-500/30 focus:outline-none shrink-0"
-          >
-            {showMap ? (
-              <>
-                <List className="w-4 h-4 shrink-0" strokeWidth={2.25} />
-                <span className="text-sm font-medium">{t('city.list')}</span>
-              </>
-            ) : (
-              <>
-                <MapIcon className="w-4 h-4 shrink-0" strokeWidth={2.25} />
-                <span className="text-sm font-medium">{t('city.map')}</span>
-              </>
-            )}
-          </button>
-        </div>
-      )}
-      {!showMap && (
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder={searchPlaceholder}
-          disabled={isLoading}
-          className="w-full min-w-0 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 outline-none transition-shadow disabled:opacity-60 shrink-0"
-        />
-      )}
-      <AnimatePresence initial={false}>
-        {!showMap && view === 'city' && selectedCountry && !unifiedSearchMode && (
-          <motion.div
-            key="back-row"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-            className="shrink-0 overflow-hidden"
-          >
-            <button
-              type="button"
-              onClick={backToCountries}
-              className="w-full flex items-center gap-2 text-sm text-primary-600 dark:text-primary-400 hover:underline py-2 min-w-0 overflow-hidden truncate"
-            >
-              <span className="truncate min-w-0">
-                ← {displaySelectedCountry}
-                {showSelectedCountryNative && (
-                  <span className="text-gray-500 dark:text-gray-400 font-normal ml-1 text-xs">{selectedCountryNative}</span>
-                )}
-              </span>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <CitySelectorSearchChrome
+        search={search}
+        setSearch={setSearch}
+        searchPlaceholder={searchPlaceholder}
+        isLoading={isLoading}
+        showMap={showMap}
+        onToggleMap={() => setShowMap((v) => !v)}
+        locating={locating}
+        onNearMe={handleWhereAmI}
+        locationMessage={locationMessage}
+      />
       {isLoading ? (
         <div className="flex items-center justify-center py-10 flex-1 min-h-[8rem] shrink-0">
           <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary-200 dark:border-primary-800 border-t-primary-500" />
@@ -549,37 +458,45 @@ export const CityListContent = ({
               style={{ width: '200%', transform: showMap ? 'translateX(-50%)' : 'translateX(0)' }}
             >
               <div className="w-1/2 flex-shrink-0 min-w-0 min-h-0 overflow-hidden flex flex-col">
-              {unifiedSearchMode ? (
-                citiesCount === 0 && allCitiesSource.length === 0 ? (
-                  <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
-                    {t('createLeague.noCitiesAvailable')}
-                  </p>
-                ) : unifiedSearchRows.length === 0 ? (
-                  <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
-                ) : (
-                  <VirtualizedList
-                    items={unifiedSearchRows}
-                    getItemKey={(row) =>
-                      row.kind === 'country' ? `co:${row.group.country}` : row.kind === 'city' ? `ci:${row.city.id}` : `cl:${row.club.id}`
-                    }
-                    estimateSize={80}
-                    className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
-                    contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
-                    renderItem={(row) => {
-                      if (row.kind === 'country') {
-                        return (
-                          <CountryListItem
-                            item={row.group}
-                            isSelected={
-                              listMode === 'cities'
-                                ? countryOfSelected?.country === row.group.country
-                                : selectedCountry === row.group.country
-                            }
-                            onSelect={selectCountryAndClearSearch}
-                          />
-                        );
-                      }
-                      if (row.kind === 'city') {
+                {unifiedSearchMode ? (
+                  citiesCount === 0 && allCitiesSource.length === 0 ? (
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
+                      {t('createLeague.noCitiesAvailable')}
+                    </p>
+                  ) : unifiedSearchRows.length === 0 ? (
+                    <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
+                  ) : (
+                    <VirtualizedList
+                      items={unifiedSearchRows}
+                      getItemKey={unifiedItemKey}
+                      estimateSize={56}
+                      className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                      contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
+                      renderItem={(row) => {
+                        if (row.kind === 'section') {
+                          return <UnifiedSearchSectionHeader section={row.section} />;
+                        }
+                        if (row.kind === 'country') {
+                          return (
+                            <CountryListItem
+                              item={row.group}
+                              isSelected={countryOfSelected?.country === row.group.country}
+                              onSelect={selectCountryAndClearSearch}
+                            />
+                          );
+                        }
+                        if (row.kind === 'club') {
+                          const club = clubsById.get(row.club.id);
+                          if (!club) return null;
+                          return (
+                            <ClubListItem
+                              club={club}
+                              isSelected={false}
+                              isNearest={false}
+                              onSelect={onCityClickAndClearSearch}
+                            />
+                          );
+                        }
                         return (
                           <CityListItem
                             city={row.city}
@@ -593,191 +510,155 @@ export const CityListContent = ({
                             onSelect={onCityClickAndClearSearch}
                           />
                         );
-                      }
-                      return (
-                        <ClubListItem
-                          club={row.club}
-                          isSelected={row.club.cityId === selectedCityId}
-                          isNearest={row.club.cityId === nearestClubCityIdInList}
-                          onSelect={onCityClickAndClearSearch}
-                          onInfoClick={onClubInfoClick}
-                          scrollTargetRef={row.club.id === scrollToClubId ? scrollTargetClubRef : undefined}
-                        />
-                      );
-                    }}
-                  />
-                )
-              ) : (
-                <div
-                  className={`flex flex-1 min-h-0 w-full ${allowTransition && !skipListTransitionRef.current ? 'transition-transform duration-300 ease-out' : ''}`}
-                  style={{ width: '200%', transform: view === 'city' ? 'translateX(-50%)' : 'translateX(0)' }}
-                >
-                  <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
-                    {filteredCountries.length === 0 ? (
-                      <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
-                        {citiesCount === 0 ? t('createLeague.noCitiesAvailable') : t('common.noResults')}
-                      </p>
-                    ) : (
-                      <VirtualizedList
-                        items={filteredCountries}
-                        getItemKey={(item) => item.country}
-                        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
-                        contentClassName={`space-y-1.5 ${contentClassName}`}
-                        renderItem={(item) => (
-                          <CountryListItem
-                            item={item}
-                            isSelected={
-                              listMode === 'cities' ? countryOfSelected?.country === item.country : selectedCountry === item.country
-                            }
-                            onSelect={selectCountryAndClearSearch}
-                          />
-                        )}
-                      />
-                    )}
-                  </div>
-                  <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
-                    {listMode === 'cities' && (
-                      <>
-                        {showNoCityOption && isSelectorMode && (
-                          <button
-                            onClick={() => onCityClickAndClearSearch('')}
-                            className={`w-full text-left px-4 py-3 rounded-xl transition-all mb-1.5 ${
-                              !selectedId
-                                ? 'bg-primary-500 text-white'
-                                : 'bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }`}
-                          >
-                            <span className="font-medium text-sm">{t('createLeague.noCity')}</span>
-                          </button>
-                        )}
-                        {filteredCitiesForCountry.length === 0 ? (
-                          <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
-                        ) : useVirtualizedCityList ? (
-                          <VirtualizedList
-                            items={filteredCitiesForCountry}
-                            getItemKey={(item) => item.id}
-                            estimateSize={72}
-                            scrollToIndex={cityScrollToIndex >= 0 ? cityScrollToIndex : null}
-                            onScrolledToIndex={handleScrolledToCityIndex}
-                            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
-                            contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
-                            renderItem={(city) => (
-                              <CityListItem
-                                city={city}
-                                isSelected={city.id === selectedCityId}
-                                isNearest={city.id === nearestCityIdInList}
-                                isScrollTarget={false}
-                                submitting={submitting}
-                                isSelectorMode={isSelectorMode}
-                                selectedCityRef={selectedCityRef}
-                                scrollTargetRef={scrollTargetRef}
-                                onSelect={onCityClickAndClearSearch}
-                              />
-                            )}
-                          />
-                        ) : (
-                          <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5 p-1 ${contentClassName}`}>
-                            {filteredCitiesForCountry.map((city) => (
-                              <CityListItem
-                                key={city.id}
-                                city={city}
-                                isSelected={city.id === selectedCityId}
-                                isNearest={city.id === nearestCityIdInList}
-                                isScrollTarget={city.id === scrollToCityId}
-                                submitting={submitting}
-                                isSelectorMode={isSelectorMode}
-                                selectedCityRef={selectedCityRef}
-                                scrollTargetRef={scrollTargetRef}
-                                onSelect={onCityClickAndClearSearch}
-                              />
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {listMode === 'clubs' &&
-                      (filteredListClubsForCountry.length === 0 ? (
-                        <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
-                      ) : filteredListClubsForCountry.length >= 40 ? (
+                      }}
+                    />
+                  )
+                ) : (
+                  <div
+                    className={`flex flex-1 min-h-0 w-full ${allowTransition && !skipListTransitionRef.current ? 'transition-transform duration-300 ease-out' : ''}`}
+                    style={{ width: '200%', transform: view === 'city' ? 'translateX(-50%)' : 'translateX(0)' }}
+                  >
+                    <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
+                      {filteredCountries.length === 0 ? (
+                        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5">
+                          {suggestedListHeader}
+                          <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">
+                            {citiesCount === 0 ? t('createLeague.noCitiesAvailable') : t('common.noResults')}
+                          </p>
+                        </div>
+                      ) : (
                         <VirtualizedList
-                          items={filteredListClubsForCountry}
+                          items={filteredCountries}
+                          getItemKey={(item) => item.country}
+                          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
+                          contentClassName={`space-y-1.5 ${contentClassName}`}
+                          header={suggestedListHeader}
+                          renderItem={(item) => (
+                            <CountryListItem
+                              item={item}
+                              isSelected={countryOfSelected?.country === item.country}
+                              onSelect={selectCountryAndClearSearch}
+                            />
+                          )}
+                        />
+                      )}
+                    </div>
+                    <div className="w-1/2 min-w-0 shrink-0 min-h-0 overflow-hidden flex flex-col">
+                      {showNoCityOption && isSelectorMode && (
+                        <button
+                          type="button"
+                          onClick={() => onCityClickAndClearSearch('')}
+                          aria-pressed={!selectedId}
+                          className={`${citySelectorRowClassName(!selectedId, 'px-3 py-2.5')} mb-1.5`}
+                        >
+                          <span className="flex items-center justify-between gap-2 min-w-0">
+                            <span className="font-medium text-sm text-gray-900 dark:text-white">
+                              {t('createLeague.noCity')}
+                            </span>
+                            {!selectedId && (
+                              <span className={CITY_SELECTOR_CHECK} aria-hidden>
+                                ✓
+                              </span>
+                            )}
+                          </span>
+                        </button>
+                      )}
+                      {filteredCitiesForCountry.length === 0 ? (
+                        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5 p-1">
+                          {cityListHeader}
+                          <p className="text-center text-gray-500 dark:text-gray-400 py-6 text-sm">{t('common.noResults')}</p>
+                        </div>
+                      ) : useVirtualizedCityList ? (
+                        <VirtualizedList
+                          items={filteredCitiesForCountry}
                           getItemKey={(item) => item.id}
-                          estimateSize={88}
+                          estimateSize={52}
+                          scrollToIndex={cityScrollToIndex >= 0 ? cityScrollToIndex : null}
+                          onScrolledToIndex={handleScrolledToCityIndex}
                           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1"
                           contentClassName={`space-y-1.5 p-1 ${contentClassName}`}
-                          renderItem={(club) => (
-                            <ClubListItem
-                              club={club}
-                              isSelected={club.cityId === selectedCityId}
-                              isNearest={club.cityId === nearestClubCityIdInList}
+                          header={cityListHeader}
+                          renderItem={(city) => (
+                            <CityListItem
+                              city={city}
+                              isSelected={city.id === selectedCityId}
+                              isNearest={city.id === nearestCityIdInList}
+                              isScrollTarget={false}
+                              submitting={submitting}
+                              isSelectorMode={isSelectorMode}
+                              selectedCityRef={selectedCityRef}
+                              scrollTargetRef={scrollTargetRef}
                               onSelect={onCityClickAndClearSearch}
-                              onInfoClick={onClubInfoClick}
-                              scrollTargetRef={club.id === scrollToClubId ? scrollTargetClubRef : undefined}
                             />
                           )}
                         />
                       ) : (
                         <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 space-y-1.5 p-1 ${contentClassName}`}>
-                          {filteredListClubsForCountry.map((club) => (
-                            <ClubListItem
-                              key={club.id}
-                              club={club}
-                              isSelected={club.cityId === selectedCityId}
-                              isNearest={club.cityId === nearestClubCityIdInList}
+                          {cityListHeader}
+                          {filteredCitiesForCountry.map((city) => (
+                            <CityListItem
+                              key={city.id}
+                              city={city}
+                              isSelected={city.id === selectedCityId}
+                              isNearest={city.id === nearestCityIdInList}
+                              isScrollTarget={city.id === scrollToCityId}
+                              submitting={submitting}
+                              isSelectorMode={isSelectorMode}
+                              selectedCityRef={selectedCityRef}
+                              scrollTargetRef={scrollTargetRef}
                               onSelect={onCityClickAndClearSearch}
-                              onInfoClick={onClubInfoClick}
-                              scrollTargetRef={club.id === scrollToClubId ? scrollTargetClubRef : undefined}
                             />
                           ))}
                         </div>
-                      ))}
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-            <div className="w-1/2 flex-shrink-0 min-w-0 min-h-0 flex flex-col">
-              {showMap ? (
-                <>
-                  <CityMap
-                    mapLayer={listMode}
-                    cities={filteredMapCities}
-                    clubs={clubs}
-                    currentCityId={selectedCityId}
-                    pendingCityId={pendingCityId}
-                    onClubClick={handleClubClick}
-                    onCityClick={handleClubClick}
-                    onMapClick={handleMapClick}
-                    className="flex-1 min-h-0"
-                    userLocation={userLocationTarget}
-                    userLocationApproximate={userLocationIsApproximate}
-                  />
-                  <AnimatePresence>
-                    {pendingCityId && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 12 }}
-                        transition={{ duration: 0.2 }}
-                        className="shrink-0 pt-2"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            onCityClickAndClearSearch(pendingCityId);
-                            setPendingCityId(null);
-                          }}
-                          className="w-full py-2.5 px-8 rounded-xl text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 focus:ring-2 focus:ring-primary-500/30 focus:outline-none transition-colors"
+                )}
+              </div>
+              <div className="w-1/2 flex-shrink-0 min-w-0 min-h-0 flex flex-col">
+                {showMap ? (
+                  <>
+                    <CityMap
+                      cities={mapCities}
+                      clubs={clubs}
+                      currentCityId={selectedCityId}
+                      pendingCityId={pendingCityId}
+                      onCityClick={handlePendingCity}
+                      onClubClick={handlePendingCity}
+                      onMapClick={handleMapClick}
+                      className="flex-1 min-h-0"
+                      userLocation={userLocationTarget}
+                      userLocationApproximate={userLocationIsApproximate}
+                    />
+                    <AnimatePresence>
+                      {pendingCityId && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: 12 }}
+                          transition={{ duration: 0.2 }}
+                          className="shrink-0 pt-2"
                         >
-                          {pendingCityName ? t('city.selectCityName', { name: pendingCityName }) : t('city.selectCity')}
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              ) : (
-                <div className="flex-1 min-h-[280px]" />
-              )}
-            </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onCityClickAndClearSearch(pendingCityId);
+                              setPendingCityId(null);
+                            }}
+                            className="w-full rounded-2xl bg-primary-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-colors hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500/35"
+                          >
+                            {pendingCityName
+                              ? t('city.selectCityName', { name: pendingCityName })
+                              : t('city.selectCity')}
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
+                ) : (
+                  <div className="flex-1 min-h-[280px]" />
+                )}
+              </div>
             </div>
           </div>
         </div>
