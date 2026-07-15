@@ -17,6 +17,7 @@ import { useDebounce } from './useDebounce';
 import { SpatialIndex } from './spatialIndex';
 import { useVirtualizedMarkers, getViewportCenter } from './VirtualizedMarkers';
 import { FocusPendingCity } from './FocusPendingCity';
+import { CountryTintLayer } from './CountryTintLayer';
 import 'leaflet/dist/leaflet.css';
 
 const LOCATION_RADIUS_KM = 50;
@@ -293,6 +294,17 @@ export function CityMap({
     [cities]
   );
 
+  const tintCountries = useMemo(() => {
+    const set = new Set<string>();
+    for (const c of cities) {
+      if (c.country) set.add(c.country);
+    }
+    for (const club of clubs) {
+      if (club.country) set.add(club.country);
+    }
+    return [...set];
+  }, [cities, clubs]);
+
   const citiesBounds: LatLngBoundsLiteral | null = useMemo(() => {
     if (citiesWithCoords.length === 0) return null;
     let minLat = citiesWithCoords[0].latitude;
@@ -416,7 +428,10 @@ export function CityMap({
   }
 
   return (
-    <div className={`rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm ${className}`}>
+    <div
+      data-vaul-no-drag=""
+      className={`rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm ${className}`}
+    >
       <MapContainer
         center={DEFAULT_CENTER}
         zoom={DEFAULT_ZOOM}
@@ -434,6 +449,7 @@ export function CityMap({
         <HideAttribution />
         <MapClickHandler onMapClick={onMapClick} />
         <ViewportHandler onViewportChange={handleViewportChange} />
+        <CountryTintLayer countries={tintCountries} />
         {effectiveUserLocation && (
           <Marker
             position={[effectiveUserLocation.latitude, effectiveUserLocation.longitude]}

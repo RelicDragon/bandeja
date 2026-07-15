@@ -32,4 +32,6 @@ export {
   isMatchDecidedForLiveScoring,
   getStandingsMatchOutcome,
   isLiveMatchCompleteForScoring,
+  isAutomaticRelaxedBySets,
+  isMatchOfficialSetEntryComplete,
 } from './matchWinnerLive';

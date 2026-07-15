@@ -1,0 +1,27 @@
+/** Land-border adjacency for city-selector tint GeoJSON (110m). */
+
+export const COUNTRY_ADJACENCY: Readonly<Record<string, readonly string[]>> = {
+  Albania: ['Greece', 'Montenegro'],
+  'Bosnia and Herzegovina': ['Croatia', 'Montenegro', 'Serbia'],
+  Croatia: ['Bosnia and Herzegovina', 'Hungary', 'Montenegro', 'Serbia'],
+  Cyprus: [],
+  Czechia: ['Germany'],
+  Denmark: ['Germany'],
+  Finland: ['Norway', 'Sweden'],
+  France: ['Germany', 'Italy', 'Spain', 'Switzerland'],
+  Germany: ['Czechia', 'Denmark', 'France', 'Netherlands', 'Switzerland'],
+  Greece: ['Albania'],
+  Hungary: ['Croatia', 'Romania', 'Serbia'],
+  Italy: ['France', 'Switzerland'],
+  Montenegro: ['Albania', 'Bosnia and Herzegovina', 'Croatia', 'Serbia'],
+  Netherlands: ['Germany'],
+  Norway: ['Finland', 'Sweden'],
+  Portugal: ['Spain'],
+  Romania: ['Hungary', 'Serbia'],
+  Serbia: ['Bosnia and Herzegovina', 'Croatia', 'Hungary', 'Montenegro', 'Romania'],
+  'South Africa': [],
+  Spain: ['France', 'Portugal'],
+  Sweden: ['Finland', 'Norway'],
+  Switzerland: ['France', 'Germany', 'Italy'],
+  'United Kingdom': [],
+};

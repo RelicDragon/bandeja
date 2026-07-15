@@ -2,7 +2,11 @@ import type { SetResult } from '@/types/gameResults';
 import { isOfficialMatchSet, isSupplementalMatchSet, splitOfficialAndSupplementalSets } from '@/utils/matchSetRole';
 import type { ScoringRules } from './rulebook';
 import { isClassicRules, isPointsRules, isTimedRules } from './rulebook';
-import { countSetsWon, getStandingsMatchOutcome } from './matchWinner';
+import {
+  countSetsWon,
+  getStandingsMatchOutcome,
+  isMatchOfficialSetEntryComplete,
+} from './matchWinner';
 
 const emptySet = (isTieBreak = false): SetResult => ({ teamA: 0, teamB: 0, isTieBreak, role: 'OFFICIAL' });
 
@@ -66,7 +70,10 @@ export const expandSetsForDisplay = (
   }
 
   if (isClassicRules(rules)) {
-    const decided = getStandingsMatchOutcome(official, rules) !== null;
+    // While editing AUTOMATIC: standings may already have a 1-set winner; keep entry slots open.
+    const decided = options.canEditResults
+      ? isMatchOfficialSetEntryComplete(official, rules)
+      : getStandingsMatchOutcome(official, rules) !== null;
     const base = [...official];
     const scoredCount = base.filter(isScored).length;
 
@@ -132,7 +139,7 @@ export const expandSetsForDisplay = (
 export const shouldAppendSetAfterUpdate = (sets: SetResult[], rules: ScoringRules): SetResult | null => {
   if (!isClassicRules(rules) || rules.fixedNumberOfSets === 1) return null;
   const { official } = splitOfficialAndSupplementalSets(sets);
-  if (getStandingsMatchOutcome(official, rules) !== null) return null;
+  if (isMatchOfficialSetEntryComplete(official, rules)) return null;
   const cap = rules.fixedNumberOfSets > 0 ? rules.fixedNumberOfSets : 99;
   if (official.length >= cap) return null;
   const scoredCount = official.filter(isScored).length;
@@ -147,7 +154,7 @@ export const shouldAppendSetAfterUpdate = (sets: SetResult[], rules: ScoringRule
 
 export const trimTrailingEmptyAfterDecision = (sets: SetResult[], rules: ScoringRules): SetResult[] => {
   const { official, supplemental } = splitOfficialAndSupplementalSets(sets);
-  if (getStandingsMatchOutcome(official, rules) === null) return sets;
+  if (!isMatchOfficialSetEntryComplete(official, rules)) return sets;
   const trimmed: SetResult[] = [];
   for (const s of official) {
     if (isScored(s)) trimmed.push(s);

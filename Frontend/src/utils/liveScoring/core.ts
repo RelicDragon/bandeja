@@ -2,7 +2,7 @@ import { isGoldenPointActive } from '@shared/gameFormat/goldenPoint';
 import type { ScoringRules } from '@/utils/scoring';
 import { isClassicRules, isRallyGameRules, isRallyPointsRules } from '@/utils/scoring';
 import { trimTrailingEmptyAfterDecision } from '@/utils/scoring/displaySets';
-import { getStandingsMatchOutcome } from '@/utils/scoring/matchWinner';
+import { isMatchOfficialSetEntryComplete } from '@/utils/scoring/matchWinner';
 import { splitOfficialAndSupplementalSets } from '@/utils/matchSetRole';
 import { validatePointsSet } from '@/utils/scoring/validateSet';
 import type {
@@ -238,7 +238,7 @@ export const canAdvanceLiveSet = (state: LiveScoringState, rules: ScoringRules):
     return false;
   }
 
-  if (getStandingsMatchOutcome(official, rules) !== null) return false;
+  if (isMatchOfficialSetEntryComplete(official, rules)) return false;
 
   return true;
 };
@@ -364,7 +364,7 @@ const alignMandatedSuperTieBreakDecider = (state: LiveScoringState, rules: Scori
 const normalizeLiveSetsAfterDecision = (state: LiveScoringState, rules: ScoringRules): LiveScoringState => {
   if (state.mode !== 'classic') return state;
   const { official } = splitOfficialAndSupplementalSets(state.sets);
-  if (getStandingsMatchOutcome(official, rules) === null) return state;
+  if (!isMatchOfficialSetEntryComplete(official, rules)) return state;
   const trimmed = trimTrailingEmptyAfterDecision(state.sets, rules);
   state.sets = trimmed;
   const { official: off } = splitOfficialAndSupplementalSets(trimmed);

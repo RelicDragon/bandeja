@@ -2,7 +2,7 @@ import type { ScoringRules } from './rulebook';
 import { isClassicRules, isRallyGameRules, isRallyPointsRules } from './rulebook';
 import { isGoldenPointActive } from '../../../shared/gameFormat/goldenPoint';
 import { splitOfficialSupplementalLiveSets } from './matchWinner';
-import { getStandingsMatchOutcome } from './matchWinnerLive';
+import { isMatchOfficialSetEntryComplete } from './matchWinnerLive';
 import type {
   LiveClassicPointState,
   LiveOptionalDeciderFormat,
@@ -58,7 +58,7 @@ const validatePointsSetLive = (a: number, b: number, rules: ScoringRules): { ok:
 
 const trimTrailingEmptyOfficialAfterDecision = (sets: SetResult[], rules: ScoringRules): SetResult[] => {
   const { official, supplemental } = splitOfficialSupplementalLiveSets(sets);
-  if (getStandingsMatchOutcome(official, rules) === null) return sets;
+  if (!isMatchOfficialSetEntryComplete(official, rules)) return sets;
   const trimmed: SetResult[] = [];
   for (const s of official) {
     if (s.teamA > 0 || s.teamB > 0) trimmed.push(s);
@@ -267,7 +267,7 @@ export const canAdvanceLiveSet = (state: LiveScoringState, rules: ScoringRules):
     return false;
   }
 
-  if (getStandingsMatchOutcome(official, rules) !== null) return false;
+  if (isMatchOfficialSetEntryComplete(official, rules)) return false;
 
   return true;
 };
@@ -393,7 +393,7 @@ const alignMandatedSuperTieBreakDecider = (state: LiveScoringState, rules: Scori
 const normalizeLiveSetsAfterDecision = (state: LiveScoringState, rules: ScoringRules): LiveScoringState => {
   if (state.mode !== 'classic') return state;
   const { official } = splitOfficialSupplementalLiveSets(state.sets);
-  if (getStandingsMatchOutcome(official, rules) === null) return state;
+  if (!isMatchOfficialSetEntryComplete(official, rules)) return state;
   const trimmed = trimTrailingEmptyOfficialAfterDecision(state.sets, rules);
   state.sets = trimmed;
   const { official: off } = splitOfficialSupplementalLiveSets(trimmed);

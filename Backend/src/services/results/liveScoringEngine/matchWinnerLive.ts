@@ -218,7 +218,7 @@ const completedOfficialSetsForLive = (sets: SetResult[], rules: ScoringRules): S
   return out;
 };
 
-const isAutomaticRelaxedBySets = (rules: ScoringRules): boolean =>
+export const isAutomaticRelaxedBySets = (rules: ScoringRules): boolean =>
   rules.strictValidation === 'CLASSIC_AUTOMATIC_RELAXED' && rules.winnerOfMatch === 'BY_SETS';
 
 const countSetsWonSides = (playedSets: SetResult[]): { a: number; b: number } => {
@@ -245,6 +245,28 @@ const computeAutomaticRelaxedBySetsWinner = (playedSets: SetResult[]): MatchWinn
   if (b > a) return 'B';
   return null;
 };
+
+/**
+ * Whether more official set slots should be offered during entry / live advance.
+ * CLASSIC_AUTOMATIC standings may pick a winner after one set (early finish), but entry
+ * stays open until minSetsToWin or a played STB after 1–1.
+ */
+export function isMatchOfficialSetEntryComplete(sets: SetResult[], rules: ScoringRules): boolean {
+  if (!isAutomaticRelaxedBySets(rules)) {
+    return getStandingsMatchOutcome(sets, rules) !== null;
+  }
+  const official = sets.filter(isOfficialLiveMatchSet);
+  const played = official.filter(isSetPlayed);
+  const { a, b } = countSetsWonSides(played);
+  if (Math.max(a, b) >= rules.minSetsToWin) return true;
+  const stbIdx = rules.superTieBreakReplacesDeciderAtIndex;
+  if (a === b && a > 0 && stbIdx != null) {
+    const stb = official[stbIdx];
+    return Boolean(stb && isSetPlayed(stb));
+  }
+  if (rules.maxSetsPlayed > 0 && played.length >= rules.maxSetsPlayed) return true;
+  return false;
+}
 
 export const computeMatchWinnerLiveScoring = (sets: SetResult[], rules: ScoringRules): MatchWinnerSide => {
   const playedSets = completedOfficialSetsForLive(sets, rules);
@@ -286,9 +308,9 @@ export const computeMatchWinnerLiveScoring = (sets: SetResult[], rules: ScoringR
 export const isMatchDecidedForLiveScoring = (sets: SetResult[], rules: ScoringRules): boolean =>
   computeMatchWinnerLiveScoring(sets, rules) !== null;
 
-/** Match over for live UX / input lock: decisive winner or terminal draw (e.g. points tie). */
+/** Match over for live UX / input lock: set-entry complete (not provisional 1-set AUTOMATIC standings). */
 export const isLiveMatchCompleteForScoring = (sets: SetResult[], rules: ScoringRules): boolean =>
-  getStandingsMatchOutcome(sets, rules) !== null;
+  isMatchOfficialSetEntryComplete(sets, rules);
 
 /**
  * Outcome for standings / persisted winners: side winner, terminal draw, or no result (in progress or not finished by rules).

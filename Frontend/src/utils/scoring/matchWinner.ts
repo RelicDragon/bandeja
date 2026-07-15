@@ -15,6 +15,8 @@ export {
   isMatchDecidedForLiveScoring,
   getStandingsMatchOutcome,
   isLiveMatchCompleteForScoring,
+  isAutomaticRelaxedBySets,
+  isMatchOfficialSetEntryComplete,
 } from './matchWinnerLive';
 
 export type MatchWinnerSide = 'A' | 'B' | null;

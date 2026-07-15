@@ -1240,6 +1240,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-21 | Select city from map | Tap city or club pin → sticky “Use {city}” → city selected |
 | X-68 | City selector no clubs browse | No Clubs mode/tab; clubs are not a parallel browse list under a country |
 | X-69 | Map club pin → city | Pending city is the club’s city; confirm commits city only |
+| X-70 | Map pan does not dismiss sheet | Pan/drag map in change-city sheet; sheet stays open; dismiss still via handle/X/outside |
 
 ### 18.6 Ads & sponsored content
 
