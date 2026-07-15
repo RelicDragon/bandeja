@@ -1,0 +1,4116 @@
+[
+  {
+    "tenant_id": "c225479b-55bb-4d53-aef4-cccf8a3099a3",
+    "tenant_name": "Padel at Ballymascanlon",
+    "slug": "ballymascanlon-padel",
+    "address": {
+      "street": "CARLINGFORD ROAD (R173), DUNDALK, COUNTY LOUTH, IRELAND.",
+      "postal_code": "A91PF57",
+      "city": "Dundalk",
+      "sub_administrative_area": "",
+      "administrative_area": "County Louth",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 54.03421047,
+        "lon": -6.36274515
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1773817446/pro/tenants/c225479b-55bb-4d53-aef4-cccf8a3099a3/1773817445605.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1773817481/pro/tenants/c225479b-55bb-4d53-aef4-cccf8a3099a3/1773817481437.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://www.ballymascanlon.com/?gad_source=1&gad_campaignid=20032002395&gbraid=0AAAAAo_VDL4mWg3xTFo_nABht66ZPDEml&gclid=EAIaIQobChMIs47GxbPokgMVIZFQBh096TjWEAAYASAAEgKBxPD_BwE",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "DETAILS_PAGE_DESCRIPTION": "We are excited to introduce two brand-new panoramic padel courts at Ballymascanlon Hotel & Golf Resort, offering a premium playing experience in a stunning resort setting.\nOur courts feature high-quality artificial turf, professional glass walls, and lighting for evening play. Players can enjoy free parking, access to changing facilities, and on-site dining within the resort.\nSuitable for all levels, from beginners to experienced players, we aim to create a welcoming padel community with social games, coaching, and future events.",
+      "CONTACT_PHONE": "+353 9358209"
+    },
+    "resources": [
+      {
+        "resourceId": "5e0df508-c7a8-40d0-b335-ab519892576d",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0a4d0c6c-5c9c-444e-9f6a-4d0efb601e1d",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "b8c28b21-eccc-46a4-876b-22b1586f55c0",
+    "tenant_name": "Ballypatrick",
+    "slug": "ballypatrick",
+    "address": {
+      "street": "Clashanisky, Ballypatrick, Co. Tipperary, Ireland",
+      "postal_code": "E91 H393",
+      "city": "Clonmel",
+      "sub_administrative_area": "",
+      "administrative_area": "County Tipperary",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.391538,
+        "lon": -7.541313
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/b8c28b21-eccc-46a4-876b-22b1586f55c0/ballypatrick-_0001"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "CONTACT_PHONE": "+353 5212345",
+      "FACILITY_WIFI": "false",
+      "FACILITY_RESTAURANT": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "",
+      "WEBSITE_URL": "https://www.facebook.com/BallypatrickSportsCentre/"
+    },
+    "resources": [
+      {
+        "resourceId": "db55c1c1-58a3-4f5a-a017-4570d1b5ad66",
+        "name": "Tennis 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "799099c5-4e62-4a84-a1a0-034842549455",
+        "name": "Tennis 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "91d79ee0-a1a4-4aaa-857a-2a5816508b61",
+        "name": "Tennis 3",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "934d56ed-371a-460e-a82f-2c19078d7e54",
+        "name": "Tennis 4",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "32940416-96a7-48b4-bb86-11eba24ad7a0",
+        "name": "Squash 1",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "single"
+        ]
+      },
+      {
+        "resourceId": "c615c482-a7b1-4d7b-a9a1-86db45c2603c",
+        "name": "Squash 2",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "single"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "TENNIS",
+      "SQUASH"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "005f080e-4191-4437-a723-fed2c913164d",
+    "tenant_name": "Banner Padel ( Coming Soon )",
+    "slug": "banner-padel",
+    "address": {
+      "street": "Quin Rd Business Park ",
+      "postal_code": "V95 D592",
+      "city": "Ennis",
+      "sub_administrative_area": "",
+      "administrative_area": "County Clare",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.83888636,
+        "lon": -8.97456153
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1763926652/pro/tenants/005f080e-4191-4437-a723-fed2c913164d/1763926651978.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "d37fe720-2813-4021-a72e-944b8cbd1308",
+      "CONTACT_PHONE": "+353 852446686",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Banner Padel - Clare's first dedicated indoor padel club.\nFeaturing 6 premium Super panoramic Greenset courts, Banner Padel offers an exceptional indoor playing experience in the heart of Ennis.\nWhether you're taking your first lesson, joining a social event, competing in leagues, or simply enjoying a game with friends, our club is built for every level of player.\nWhy play at Banner Padel?\n• 6 indoor Super panoramic Greenset courts\n• Coaching for all abilities\n• Socials, leagues & tournaments\n• Equipment rental available\n• Coffee & refreshments\n• Free parking\nDiscover why padel is the world's fastest-growing sport. We look forward to welcoming you to Banner Padel.\n\n",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.bannerpadel.ie",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e6c9fcc5-4662-474d-a20f-95753e7fd8aa",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "21fe800f-6575-4934-8f7d-5e741b74dadb",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c408e6ee-343a-4453-9838-851123aac300",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b3c1d536-cd29-461f-9fbd-7773c400f4e1",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3c82ed5c-4f85-4347-9d4c-98e39b952e7b",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8341681d-4f2e-4b2d-ab68-b14fa5a567ce",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "cbc094a3-9a63-4a63-a1f0-e25ac7af9551",
+    "tenant_name": "Padel 100 - Borrisoleigh Town Park",
+    "slug": "borrisoleigh-gaa",
+    "address": {
+      "street": "Bishop Quinlan Park, Borrisoleigh, Co. Tipperary",
+      "postal_code": "E41 FE03",
+      "city": "Tipperary",
+      "sub_administrative_area": "",
+      "administrative_area": "County Tipperary",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.7507074,
+        "lon": -7.9542643
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782372206/pro/tenants/cbc094a3-9a63-4a63-a1f0-e25ac7af9551/1782372205270.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "WEBSITE_URL": "https://www.padel100.ie/",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Borrisoleigh Padel 100!! \nTeam will be on hand between 5pm-10pm weekdays and 9am-10pm on weekends. \nRent padels and buy balls/coffee/snacks etc...  \nAvailable to book directly through the Playtomic app.",
+      "CONTACT_PHONE": "+353 851406853"
+    },
+    "resources": [
+      {
+        "resourceId": "35c57d7c-448e-4bcf-9639-271d179be054",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c694ec85-e4a7-4991-bc2f-1886d1a501cb",
+        "name": "Court 2 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "6b798a80-8106-409a-bb4c-7d00d9786498",
+    "tenant_name": "Castle Oaks House Hotel",
+    "slug": "castle-oaks-hotel",
+    "address": {
+      "street": "Stradbally North, Castleconnell, Limerick",
+      "postal_code": "V94EH94",
+      "city": "Castleconnell",
+      "sub_administrative_area": "",
+      "administrative_area": "County Limerick",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.70929925,
+        "lon": -8.50712427
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1772996678/pro/tenants/6b798a80-8106-409a-bb4c-7d00d9786498/1772996678113.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Experience padel at its finest with our panoramic padel courts, designed to deliver a premium playing experience. Featuring full-height, pillar-free glass at the back of the court.\nBuilt to professional standards, these courts combine high-quality tempered glass, precision-engineered steel structures, and premium artificial turf to ensure exceptional performance, durability, and safety. \nPerfect for clubs, tournaments, and social play. Come, compete, and enjoy the game at The Castle Oaks House Hotel Padel Courts.",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+353 61377666",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.castleoaks.ie"
+    },
+    "resources": [
+      {
+        "resourceId": "c17b4370-94a1-4274-b98d-84356a7f4672",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2775931b-38d0-4497-a4f0-c6c10b6df93d",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3fde544b-e231-4115-8780-6122d6bbc4fc",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "19:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "19:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "19:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "90d86b83-9b1d-4248-81aa-51defa678deb",
+    "tenant_name": "**NOW also opening Mon-Wed 5pm to 10pm** The Pavilion Padel Club at Castle Durrow",
+    "slug": "castle-durrow",
+    "address": {
+      "street": "Castle Durrow, Durrow, Co. Laois",
+      "postal_code": "R32 EA02",
+      "city": "Durrow",
+      "sub_administrative_area": "",
+      "administrative_area": "County Laois",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.846301,
+        "lon": -7.40103
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1771284763/pro/tenants/90d86b83-9b1d-4248-81aa-51defa678deb/1771284763046.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1771324684/pro/tenants/90d86b83-9b1d-4248-81aa-51defa678deb/1771324683545.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Located on the estate of Castle Durrow Country House, The Pavilion Padel Club is surrounded by rolling parklands, tucked among mature woodland and framed by historic walled gardens and the gentle flow of the River Erkina.\n\nTop-tier courts in a setting steeped in old-world Irish heritage. A relaxed clubhouse with an understated, members-club feel. Confident, social and quietly refined.\n\nAfter your game, step into the castle for a cocktail by the fire or dinner at Coopers Restaurant. Padel, followed by something timeless.",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/thepavilionpadelclub?igsh=MW5jZWJobGE0YXMzNw%3D%3D&utm_source=qr",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "CONTACT_PHONE": "+353 871926556",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "c2d79e76-c952-4264-86ce-2a5e652420c8",
+        "name": "The Lady Florence Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3f47c5b3-7706-47f6-be81-8fc97a34737b",
+        "name": "The Lord Beau Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "17:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "0a97ecf2-6189-4337-9b1b-a49d1b405fb2",
+    "tenant_name": "Padel 100 - Charleville Padel Club",
+    "slug": "charleville-community-sports-complex-cork",
+    "address": {
+      "street": "Limerick Road, Moatville, Charleville, Co. Cork",
+      "postal_code": "P56 P922",
+      "city": "Cork",
+      "sub_administrative_area": "",
+      "administrative_area": "County Cork",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.3625153,
+        "lon": -8.6816841
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782372276/pro/tenants/0a97ecf2-6189-4337-9b1b-a49d1b405fb2/1782372275640.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "57484e33-4d8b-4315-8e61-e228c5b19957;fffbc648-b9fd-4190-b5d9-193f24579b75",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "WEBSITE_URL": "https://www.padel100.ie/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "CONTACT_PHONE": "+353 818543901"
+    },
+    "resources": [
+      {
+        "resourceId": "a895620c-a60b-492a-baba-9ff7579de499",
+        "name": "Charleville Padel 100 Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2f8e9f5b-7579-468d-bf43-ede031531f9a",
+        "name": "Charleville Padel 100 Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ef2eae9e-727a-4e26-a089-fb533efd502a",
+    "tenant_name": "Claregalway Handball Club",
+    "slug": "claregalway-handball-club",
+    "address": {
+      "street": "Lakeview",
+      "postal_code": "H91R52Y",
+      "city": "Claregalway",
+      "sub_administrative_area": "",
+      "administrative_area": "County Galway",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.3371752,
+        "lon": -8.9387869
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1666188202/pro/tenants/ef2eae9e-727a-4e26-a089-fb533efd502a/1666188201561.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1666299936/pro/tenants/ef2eae9e-727a-4e26-a089-fb533efd502a/1666299934947.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1666299938/pro/tenants/ef2eae9e-727a-4e26-a089-fb533efd502a/1666299936962.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1666299943/pro/tenants/ef2eae9e-727a-4e26-a089-fb533efd502a/1666299943270.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1666299946/pro/tenants/ef2eae9e-727a-4e26-a089-fb533efd502a/1666299945983.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "WEBSITE_URL": "https://www.claregalwaygaa.net",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "d657449f-af1c-4ef7-bb90-8a45a29db8e5;f5638b3e-5c14-4cd4-9f62-0d9425b4dbf5;75df1cc8-c2a8-4986-af23-7e63929d32d8",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "",
+      "DETAILS_PAGE_DESCRIPTION": "Local community GAA Handball Club",
+      "FACILITY_LOCKERS": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "8a01bc6e-e177-4a32-b814-8ce69b5c2ffc",
+        "name": "4 Wall",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "single",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PICKLEBALL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "62da5f13-f2c0-49a6-b0a2-2ce82a5c2c8c",
+    "tenant_name": "Club Whitford Padel",
+    "slug": "club-whitford-padel",
+    "address": {
+      "street": "Whitford House Hotel, New Line Road, Wexford",
+      "postal_code": "Y35 WD3C",
+      "city": "Clonard Great",
+      "sub_administrative_area": "Wexford",
+      "administrative_area": "County Wexford",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.3240905,
+        "lon": -6.4999627
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782808491/pro/tenants/62da5f13-f2c0-49a6-b0a2-2ce82a5c2c8c/1782808489775.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "www.whitfordhotelwexford.ie",
+      "FACILITY_RESTAURANT": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "644d41e0-d7fe-4b3f-b708-3070adceefd7",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "FACILITY_LOCKERS": "false",
+      "CONTACT_PHONE": "+353 9140404",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "95a6da22-1872-4314-b5ff-63f182b8de87",
+        "name": "Single Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "10c53db6-ff6d-4aee-99d2-c7152d2a1b09",
+        "name": "Double Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "baa65eed-a55e-4f19-84fe-a6edd58e60ec",
+        "name": "Double Padel Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "238b2ff9-44df-48c8-b429-1a217b10a09a",
+    "tenant_name": "Connemara Sands Padel Club",
+    "slug": "connemara-sands-padel-club",
+    "address": {
+      "street": "Mannin Bay",
+      "postal_code": "H71 TY79",
+      "city": "Clifden",
+      "sub_administrative_area": "",
+      "administrative_area": "County Galway",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.4375059,
+        "lon": -10.07823058
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1767006276/pro/tenants/238b2ff9-44df-48c8-b429-1a217b10a09a/1767006276079.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767006280/pro/tenants/238b2ff9-44df-48c8-b429-1a217b10a09a/1767006279104.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767006284/pro/tenants/238b2ff9-44df-48c8-b429-1a217b10a09a/1767006283177.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767006287/pro/tenants/238b2ff9-44df-48c8-b429-1a217b10a09a/1767006286621.jpg"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "1aeff421-892e-45ce-9dbd-efc6ceb54129;84ef36e3-bfe0-4f28-beec-3e0598826c40;72c6bcc3-d613-4d0a-804a-a395025f7473;58664901-9a17-4144-9e61-112b7170c01e",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.connemarasands-hotel.com/padel-courts/",
+      "FACILITY_STORE": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "true",
+      "CONTACT_PHONE": "+353 9523030",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Connemara Sands Padel Club. We are located just outside Clifden, Connemara in the heart of the Wild Atlantic Way and central to Slyne Head Peninsula special area of conservation. We have 2 brand new outdoor padel courts available to use by both hotel guests and non hotel guests.\nThe courts are manufactured by Jubo Padel and they are the Infinity Extreme hurricane proof version. Special attention has been paid to court drainage and the robustness of the manufacturing and installation process. The courts have full panoramic glass, door access control and bespoke LED lighting for winter play. "
+    },
+    "resources": [
+      {
+        "resourceId": "d1488777-7f54-41b1-a21d-b22698376444",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "69226396-fad7-41a4-affe-7057acf87b0d",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "5d932009-c2f1-403c-8344-c4a590673295",
+    "tenant_name": "Cumann Liathroid Laimhe Maigh Cuilinn",
+    "slug": "cumann-liathroid-laimhe-maigh-cuilinn",
+    "address": {
+      "street": "Baile Dóite, Moycullen, ",
+      "postal_code": "H91 WTW5",
+      "city": "Galway",
+      "sub_administrative_area": "",
+      "administrative_area": "County Galway",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.3582321,
+        "lon": -9.1775473
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1697497293/pro/tenants/5d932009-c2f1-403c-8344-c4a590673295/1697497292540.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+353 872764847",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Handball ( & Racquetball )",
+      "WEBSITE_URL": "https://www.facebook.com/MoycullenHandball/"
+    },
+    "resources": [
+      {
+        "resourceId": "43119a6e-6199-48b3-ad09-f9264a6da8e8",
+        "name": "Handball Court No 1 40 x 20",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "b717cd73-12a4-4a81-9612-e981e738647a",
+        "name": "Handball Court No 2 40 x 20",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "23ae61e1-5b29-478b-9c0c-b1111b3f27f9",
+        "name": "Handball Court No 3 60 x 30",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "12dbf498-bbff-459f-ba8d-d215a55b89d9",
+        "name": "One Wall Handball ( Outdoor ) ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ad9f4877-5230-45a3-8823-c7adaaaae8a8",
+    "tenant_name": "District 4 Padel Club",
+    "slug": "district-4",
+    "address": {
+      "street": "14/15 North Link Retail Park, Coes Rd, Dundalk Co Louth",
+      "postal_code": "A91PXE3",
+      "city": "Dundalk",
+      "sub_administrative_area": "",
+      "administrative_area": "County Louth",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 54.0024774,
+        "lon": -6.3883001
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1773344910/pro/tenants/ad9f4877-5230-45a3-8823-c7adaaaae8a8/1773344909612.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+353 838228291",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "www.district4padel.com",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "7484dd43-6383-4b53-bcca-47f3521435b2",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4f668ca5-2222-41d4-b798-9909110c9e5a",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9e1b6e3b-6445-4ae6-aa1e-e2c390b2996f",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6c8da20f-fe2a-4ac8-8aeb-0f1e98439e11",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "64e5d231-c8b6-4680-9274-181f2c82e75e",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "12:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "11:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "12:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "12:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "26e6656c-1f09-4e31-b849-24e0b5486e2b",
+    "tenant_name": "Druid Padel SPORTSCO (Members Only)",
+    "slug": "druid-padel-at-sportsco-members-only",
+    "address": {
+      "street": " Sportsco Leisure Centre, 4 S Lotts Rd",
+      "postal_code": "D04R6C2",
+      "city": "Dublin",
+      "sub_administrative_area": "",
+      "administrative_area": "County Dublin",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.3395259,
+        "lon": -6.2301407
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1768306312/pro/tenants/26e6656c-1f09-4e31-b849-24e0b5486e2b/1768306311145.jpg"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "775c5e12-109b-41d7-b258-2bb2b637ba23;b490a32c-c5cd-4efa-a8fc-fd7eccf530f1",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "https://druidpadel.com",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "false",
+      "IS_CAB_MEMBER": "false",
+      "CONTACT_PHONE": "+353 830556338",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Druid Padel at SPORTSCO!\n​Open to SPORTSCO members, a SPORTSCO member may bring 2 guests per booking. \nWe’re building a community around Play. Grow. Belong.​\n* ​2 outdoor Padel Galis courts​\n\n* Academy coaching, group sessions and social tournaments​\n\n* Private lessons: Contact coach Lukas (085 102 6641)​\n\n* Corporate bookings available: Contact corporate@druidpadel.com\n\n\nInstagram @druidpadel | TikTok @druid.padel | Facebook Druid Padel | www.druidpadel.com​"
+    },
+    "resources": [
+      {
+        "resourceId": "d2e68b71-887d-4477-8040-9e1063b77fdd",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "067a1374-9a8c-47b3-accd-d0bcda01d2e8",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "27bb100f-d20a-4e26-885c-99fd1be03755",
+    "tenant_name": "Druid Padel Kimmage",
+    "slug": "druid-padel-kimmage",
+    "address": {
+      "street": "52-54 Kimmage Rd W, Terenure, Dublin",
+      "postal_code": "D12 X379",
+      "city": "Dublin",
+      "sub_administrative_area": "",
+      "administrative_area": "County Dublin",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.3141583,
+        "lon": -6.3043503
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1768322029/pro/tenants/27bb100f-d20a-4e26-885c-99fd1be03755/1768322028818.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_WIFI": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "ce37409a-e86a-4d7c-9585-df2b78708aed;d3dcea67-f18e-4803-b8a4-30bddfc4d5ac",
+      "CONTACT_PHONE": "+353 830556338",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Druid Padel Kimmage!\n​Open to all, we’re building a community around Play. Grow. Belong.​\n* ​3 covered Padel Galis courts\n\n* Academy coaching, group sessions and social tournaments​\n\n* Private lessons: Contact coach Lukas (085 102 6641)​\n\n* Corporate bookings available​: Contact corporate@druidpadel.com\n\n\n​Instagram @druidpadel | TikTok @druid.padel | Facebook Druid Padel | www.druidpadel.com​",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.druidpadel.com/our-clubs/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_LOCKERS": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "aaba4cae-d8b7-46b1-af23-0d6e9d121f1a",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b570714f-ee30-403d-add1-0e42ebac2679",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e08a9ada-0429-4532-97b5-0c40f34e8942",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "cf947d57-0c59-499a-8530-d910ce4579a1",
+    "tenant_name": "Druid Padel Coolmine RFC",
+    "slug": "druid-padel-at-coolmine",
+    "address": {
+      "street": "6 River Road, Ashtown ",
+      "postal_code": "D15NV66",
+      "city": "Dublin",
+      "sub_administrative_area": "",
+      "administrative_area": "County Dublin",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.37855244,
+        "lon": -6.34369824
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782998204/pro/tenants/cf947d57-0c59-499a-8530-d910ce4579a1/1782998203818.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_WIFI": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "9963e8a9-7b66-4517-89f5-e8ceb3a55622;d8e2e29a-aea5-49fa-b375-9a03e9648f70;9e4e52e3-b4b2-444f-acc3-5a05133d10bf",
+      "CONTACT_PHONE": "+353 830556338",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Druid Padel Coolmine RFC!\nOpen to all, we’re building a community around Play. Grow. Belong.​\n* 3 Padel Galis courts + 1 ShowCourts (winter daytime access)​\n\n* Academy coaching, group sessions and social tournaments​\n\n* Private lessons: Ricardo (083 875 8862)​\n\n* Corporate bookings available​: Contact corporate@druidpadel.com\n\n\nInstagram @druidpadel | TikTok @druid.padel | Facebook Druid Padel | www.druidpadel.com​",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.druidpadel.com/our-clubs/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_LOCKERS": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "82e932ad-212e-45e5-b0fe-c702fdb3d3f9",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "430edac1-213b-4bf6-b71a-df11cf1b6ee8",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "85b3a2d9-b1cc-4422-ac4d-f2a5f027afdf",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "78546a5c-a6a8-47e6-9434-ec10f27b7aae",
+        "name": "The ShowCourt ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "732095a5-96ee-46a3-bbf6-b649533552d8",
+    "tenant_name": "House of Padel",
+    "slug": "house-of-padel",
+    "address": {
+      "street": "5 Old Belgard Rd",
+      "postal_code": "D24 WD00",
+      "city": "Dublin",
+      "sub_administrative_area": "",
+      "administrative_area": "County Dublin",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.297457,
+        "lon": -6.37331
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1761119210/pro/tenants/732095a5-96ee-46a3-bbf6-b649533552d8/1761119209377.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_DESCRIPTION": "House of Padel – Irelands Premier Indoor Padel Club\n\nWelcome to House of Padel, Ireland’s number one indoor padel facility — a premium destination designed for players of all levels.\nThe venue features four world-class indoor courts, ensuring perfect playing conditions all year round.\n\nBeyond the game, enjoy our modern café, serving specialty coffee, açaí bowls, smoothies, and fresh sandwiches — the ideal post-match spot to relax or socialise. We also offer equipment rental, pro coaching, and social events throughout the week.\n\nAt House of Padel, we’re more than just a club — we’re a community built around energy, fun, and quality experiences on and off the court.",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "www.houseofpadel.co",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "CONTACT_PHONE": "+353 870356077"
+    },
+    "resources": [
+      {
+        "resourceId": "8836f7fb-5452-49da-a3a4-f5d25dd2c69b",
+        "name": "CUPRA Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "80253fe0-52d1-4912-b2f1-11506050dda5",
+        "name": " Court 2 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a892d0e7-56f9-42a6-b81f-cce9d5ae1420",
+        "name": "Court 3 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1414ebb2-b2df-43b6-8702-a7b6f72464de",
+        "name": "CUPRA Formentor 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "edb5edb5-6331-4fc8-892b-1dc9ec117fcb",
+        "name": "PICKLEBALL COURT",
+        "sport": "PICKLEBALL",
+        "features": [
+          "indoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "c433fee6-8e08-444c-979d-6bf2f41868fe",
+        "name": "Single Court ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "PICKLEBALL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "2c6e147f-53d5-4275-be65-c74e86e47ca9",
+    "tenant_name": "Indoor Padel Ireland (Coming Soon)",
+    "slug": "indoor-padel-ireland",
+    "address": {
+      "street": "Indoor Padel Ireland, Unit 4, Mullaghboy Industrial Estate",
+      "postal_code": "C15 AD9E",
+      "city": "Navan",
+      "sub_administrative_area": "",
+      "administrative_area": "County Meath",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.64402603,
+        "lon": -6.71043547
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1775746974/pro/tenants/2c6e147f-53d5-4275-be65-c74e86e47ca9/1775746973465.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_LOCKERS": "true",
+      "CONTACT_PHONE": "+353 ",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "www.indoorpadelireland.ie",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ffc22837-4dd9-4ae6-9177-3a4b50bc141d",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "55a07648-7d7d-4e74-b04e-5ac65bfe6072",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "40f7b6fd-8326-4d55-b747-e9a205c6b0f2",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7341e326-7add-4545-9ae9-bf3b8dcc16eb",
+        "name": "Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5693c239-5522-4b30-9a4e-6fe6552c60ad",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "01ffb11c-3ac3-42c6-a46a-960aef2d5e27",
+        "name": "Single Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "06bff069-d994-4da2-b874-b093a72b24ee",
+    "tenant_name": "Leopardstown Golf Padel Range",
+    "slug": "leopardstown-golf-padel-range",
+    "address": {
+      "street": "Leopardstown Golf Centre",
+      "postal_code": "D18 R8K1",
+      "city": "Dublin",
+      "sub_administrative_area": "",
+      "administrative_area": "County Dublin",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.26620222,
+        "lon": -6.18785378
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1783076044/pro/tenants/06bff069-d994-4da2-b874-b093a72b24ee/1783076043913.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+353 12895341",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "4 open air Panormaic Padel Courts\nHead Padel Rackets available to hire for €5\n3 Head Padel Balls for sale for €10",
+      "WEBSITE_URL": "https://www.leopardstowngolfcentre.com"
+    },
+    "resources": [
+      {
+        "resourceId": "cc629c06-4e33-46eb-8ca8-0e7bdb5015ae",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "75da92bf-e8bc-4c83-920a-f52afb3b095c",
+        "name": "Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "32823a17-0349-496b-868b-17a2ea774a53",
+        "name": "Padel Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9ab4370b-d120-4cc9-906a-fc7e966af1eb",
+        "name": "Padel Court 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "19:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "19:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "19:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "90724036-a273-4eea-b2e4-1882f10235da",
+    "tenant_name": "OB Padel",
+    "slug": "ob-padel",
+    "address": {
+      "street": "28a Anglesea Rd, Ballsbridge, Dublin, Ireland",
+      "postal_code": "D04 HF60",
+      "city": "Dublin",
+      "sub_administrative_area": "",
+      "administrative_area": "County Dublin",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.3215722,
+        "lon": -6.2284057
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782372251/pro/tenants/90724036-a273-4eea-b2e4-1882f10235da/1782372250626.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**OB Padel is taking padel in Ireland to the next level.**\n______\n**Purpose-built for elite padel, our club combines world-class courts, exceptional coffee, and a vibrant community atmosphere in the heart of Dublin 4. Whether you're new to the game or a competitive player, OB Padel offers the perfect place to play, connect, and enjoy padel at its best.**",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+353 012631437",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://obpadel.ie/"
+    },
+    "resources": [
+      {
+        "resourceId": "9a0c93ca-aed9-4c36-a0d3-e9c90d0affca",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "86b5c1f8-8005-43c1-b023-07f115cee1fe",
+        "name": "Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ddc0e81c-c0b4-4f08-9343-07f10dcbc689",
+        "name": "Padel Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "de130c88-bf82-4eaf-b76d-15d1e5708c72",
+        "name": "Squash",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "double"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "SQUASH"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ae1dcfcf-7245-4b26-a521-3fa7dbe2089b",
+    "tenant_name": "Padel 100 Bohemians FC Waterford",
+    "slug": "padel-100-bohemians-fc-waterford-coming-soon",
+    "address": {
+      "street": "Poleberry, Waterford",
+      "postal_code": "X91 W288",
+      "city": "Waterford",
+      "sub_administrative_area": "",
+      "administrative_area": "County Waterford",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.2529202,
+        "lon": -7.1107283
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1783755727/pro/tenants/ae1dcfcf-7245-4b26-a521-3fa7dbe2089b/1783755726438.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Bohemians FC Padel 100!! \nTeam will be on hand between 5pm-10pm weekdays and 9am-10pm on weekends. \nRacket rental available on site. \nAvailable to book directly through the Padel 100 or Playtomic app ",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.padel100.ie/",
+      "CONTACT_PHONE": "+353 212031281",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_AVAILABILITY_GRID": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "0f158749-8302-47c1-b698-00f6017971ce",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ad51944a-2814-4d01-b38a-db1990d3292e",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "19867d6b-04a4-477b-9794-fb6d79e802b6",
+    "tenant_name": "Padel 100 Finn Valley AC Donegal",
+    "slug": "padel-100-finn-valley-ac-donegal",
+    "address": {
+      "street": "FINN VALLEY CAMPUS, Millbrae, Stranorlar, Co. Donegal",
+      "postal_code": "F93 NV0T",
+      "city": "Stranorlar",
+      "sub_administrative_area": "",
+      "administrative_area": "County Donegal",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 54.8021247,
+        "lon": -7.7656364
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1783502940/pro/tenants/19867d6b-04a4-477b-9794-fb6d79e802b6/1783502939605.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.padel100.ie/",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "CONTACT_PHONE": "+353 212031281",
+      "DETAILS_PAGE_DESCRIPTION": "We’re excited to announce that Padel 100 will be launching 3 brand new Padel courts in the coming weeks! These state-of-the-art courts will soon be available to book directly through the Playtomic app. Stay tuned for opening dates and early booking offers, Ireland’s Padel boom is only getting started!",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "21bc137d-1e1f-4179-8fb5-66d59662ac61",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3c018394-5cd4-415c-aa5a-39bba06bc40e",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3d0ff51d-dab2-4794-874e-a07feff84ecf",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "eb14266a-cb8f-4990-917e-42795299ea55",
+    "tenant_name": "Padel 100 - The Green Edgeworthstown – Longford",
+    "slug": "padel-100-the-green-edgeworthstown-longford",
+    "address": {
+      "street": "Ballymahon Road, Edgeworthstown, Co. Longford",
+      "postal_code": "N39 VW40",
+      "city": "Longford",
+      "sub_administrative_area": "",
+      "administrative_area": "County Longford",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.6969417,
+        "lon": -7.6141798
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782372509/pro/tenants/eb14266a-cb8f-4990-917e-42795299ea55/1782372509059.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.padel100.ie/",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "CONTACT_PHONE": "+353 212031281",
+      "DETAILS_PAGE_DESCRIPTION": "Padel 100 Longford – Now Open at The Green, Edgeworthstown\nPlayers must bring own racquets and balls . \nVending machine coming soon\nFree play ( 100% free but bookings need to be made via playtomic) til July 1st 2026\n\"The venue is located in Edgeworthstown's superb park, sport & recreation facility known as 'The Green', which is easily accessible with plenty of free parking.\nOur Two Fibre Glass Courts are open daily from 8 a.m. to 10 p.m., and you can book easily anytime through Playtomic using the link below\nFree play ( 100% free but bookings need to be made via playtomic) til July 1st 2026",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "d4f7539d-06b0-4057-a3b9-20aef63f8ac4",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a6373bb7-24a9-41ab-ba7e-88c0bdf3da1c",
+        "name": "Padel Court 2 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "11:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "11:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "11:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "11:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "11:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "09884d13-6c6d-42f2-bc20-4c1186e798d0",
+    "tenant_name": "Padel 100 - Monaghan United FC",
+    "slug": "padel-100-monaghan-united-fc",
+    "address": {
+      "street": "Gortakeeghan, Monaghan",
+      "postal_code": "H18 NY05",
+      "city": "Monaghan",
+      "sub_administrative_area": "",
+      "administrative_area": "County Monaghan",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 54.2393477,
+        "lon": -6.9969714
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1783502240/pro/tenants/09884d13-6c6d-42f2-bc20-4c1186e798d0/1783502239366.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "WEBSITE_URL": "https://www.padel100.ie/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Courts are available to book directly through the Padel 100 or Playtomic app App\nFor assistance, please contact our Club Manager, Jason, by phone, WhatsApp, or text on +353 86 409 1410 or chat in Playmomic App.\nKiosk is available on-site for racket and ball rental. \nKiosk opening hours -\nMon-Fri- 4:45PM-10PM\nSat & Sun - 8:45AM-10PM",
+      "CONTACT_PHONE": "+353 212031281"
+    },
+    "resources": [
+      {
+        "resourceId": "db987373-5250-4654-b8e8-0d1780fa182e",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9da8a66b-3142-4423-8d6f-8a25151e5b59",
+        "name": "Court 2 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "92cbc94b-7c23-4f37-b59c-81753096f7a2",
+        "name": "Court 3 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "656eeefb-7fa5-4607-a142-c091733f1bec",
+    "tenant_name": "Padel 100 Bloom HQ Padel Club",
+    "slug": "padel-100-bloom-hq-padel-club",
+    "address": {
+      "street": "Unit 1, Bloom HQ, Brigidine Convent, Patrick St, Dysartbeagh, Mountrath, Co. Laois",
+      "postal_code": "R32 DT9F",
+      "city": "Mountrath",
+      "sub_administrative_area": "",
+      "administrative_area": "County Laois",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.9983943,
+        "lon": -7.4761223
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782372709/pro/tenants/656eeefb-7fa5-4607-a142-c091733f1bec/1782372708450.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Available to book directly through the Playtomic app.\nContact **Club Manager (Darren)** via Phone, WhatsApp, Text at **(086) 107 3240** or the Chat Function in Playtomic if you need an** introduction to Padel** for your booking or if you need to **Rent or Purchase rackets and balls** for your game.",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+353 861073240",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "WEBSITE_URL": "https://www.padel100.ie",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "c8fdfb11-9ba7-4330-ab38-290e8a9cd006",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "34dee493-eb86-4a9e-9656-525e99c1ba35",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "aa99745d-d498-4373-aff6-685514325baf",
+    "tenant_name": "Padel 100 Tralee Padel Club",
+    "slug": "padel-100-tralee",
+    "address": {
+      "street": "Liosdara, Cloonalour, Tralee, Co. Kerry, ",
+      "postal_code": "V92 HX5T",
+      "city": "Tralee",
+      "sub_administrative_area": "",
+      "administrative_area": "County Kerry",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.2724401,
+        "lon": -9.6915626
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782372833/pro/tenants/aa99745d-d498-4373-aff6-685514325baf/1782372832383.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://www.padel100.ie/",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PLAYPARK": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Available to book directly through the Playtomic app.\nRental of padel Rackets in the Complex Reception.\nBalls for sale in the Complex Reception.",
+      "FACILITY_RESTAURANT": "false",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_WIFI": "false",
+      "CONTACT_PHONE": "+353 894060792"
+    },
+    "resources": [
+      {
+        "resourceId": "f319333f-1869-4b80-b836-5e524e99d6b8",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2a706327-7acc-443e-8919-e85518c00ecd",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "18:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "18:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "18:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "1512c3e9-f52e-476c-b2e3-3baad1883b69",
+    "tenant_name": "Padel at Fitzpatrick Castle Hotel",
+    "slug": "padel-at-fitzpatrick-castle-hotel",
+    "address": {
+      "street": "Fitzpatrick Castle Hotel",
+      "postal_code": "A96N125",
+      "city": "Killiney",
+      "sub_administrative_area": "",
+      "administrative_area": "County Dublin",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.26901911,
+        "lon": -6.11410203
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1693309768/pro/tenants/1512c3e9-f52e-476c-b2e3-3baad1883b69/1693309767310.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "CONTACT_PHONE": "+353 868378039",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "f886fe8c-7377-4e9b-a6cc-c88e22eb4576;982f610b-240c-4186-9518-8d2a5a12610c",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Play Padel on the grounds of our 4 star family run hotel.\nPadel lessons available ",
+      "WEBSITE_URL": "https://www.fitzpatrickcastle.com/",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "48711c2f-e657-4a6b-b58d-38be40f231f6",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "526cc9fc-b938-4755-9f2f-2e912ba63da7",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "601dbcdc-38b0-4345-8290-e930e6d81b49",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "631134a9-1784-4daf-bfe1-cb36a090360e",
+    "tenant_name": "Padel Park Letterkenny",
+    "slug": "padel-park-letterkenny",
+    "address": {
+      "street": "Rodgers Business Park, Dromore, Letterkenny, Co. Donegal",
+      "postal_code": "F92 PH4X",
+      "city": "Letterkenny",
+      "sub_administrative_area": "",
+      "administrative_area": "County Donegal",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 54.94735069,
+        "lon": -7.68477936
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1767351113/pro/tenants/631134a9-1784-4daf-bfe1-cb36a090360e/1767351113212.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+353 870025587",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Park Letterkenny is Donegal's 1st dedicated indoor padel club.\nOur modern facility features 4 Super Panoramic indoor courts, allowing for year-round play in a high-quality, welcoming environment. The club is designed for players of all levels, from first-timers to regular players.\nWe look forward to welcoming you on the court!",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "@padelparklk",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "af0892c3-83ee-4565-8704-953bb06baac5",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "63d67ab1-568f-4226-9e61-3a1ac26281b3",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a006d13e-19a5-46a1-9196-413f278b4e70",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ea3f4886-8068-497d-ac89-8b9f1975e375",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "11:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "a86aeef3-d38b-4435-901d-c82610cba598",
+    "tenant_name": "Padel & Pines",
+    "slug": "padel-pines",
+    "address": {
+      "street": "Ballybetagh Wood",
+      "postal_code": "D18 AC64",
+      "city": "Kilternan",
+      "sub_administrative_area": "",
+      "administrative_area": "County Dublin",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.224667,
+        "lon": -6.194395
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1779032438/pro/tenants/a86aeef3-d38b-4435-901d-c82610cba598/1779032436992.jpg"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "371436d4-4288-4f42-98c0-a5159d1ba25a;b4180b34-411d-4223-bc41-2a914ee92005",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "instagram.com/padelandpines",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "false",
+      "CONTACT_PHONE": "+353 851054105",
+      "DETAILS_PAGE_DESCRIPTION": "Private members padel club in Kilternan centered around padel, wellness, recovery and community. Designed to feel calm, elevated and exclusive. "
+    },
+    "resources": [
+      {
+        "resourceId": "a20301eb-92b3-4d5e-96f5-9ba55dbe0c9a",
+        "name": "Padel & Pines Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "6c8da998-3698-4938-a7d9-93a2bc5a3bda",
+    "tenant_name": "PadelZone Celbridge",
+    "slug": "padelzone-celbridge",
+    "address": {
+      "street": "O Hanlon Park,Celbridge Golf Range, Co. Kildare, Ireland",
+      "postal_code": "W23 YX30",
+      "city": "Dublin",
+      "sub_administrative_area": "",
+      "administrative_area": "County Kildare",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.34066525,
+        "lon": -6.51000553
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760392199/pro/tenants/6c8da998-3698-4938-a7d9-93a2bc5a3bda/1760392199503.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_LOCKERS": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "902acadf-af86-4965-8f38-e65aa1863829;d5d4167a-53ba-41ce-a2b5-09d85e4b6c4c",
+      "CONTACT_PHONE": "+353 876996996",
+      "DETAILS_PAGE_DESCRIPTION": "At O’Hanlon Park we have recently installed state of the art indoor Padel courts. 5 indoor courts the biggest in Ireland.",
+      "WEBSITE_URL": "https://ohanlonpark.ie",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "IS_CAB_MEMBER": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f12ff8ab-614e-4f6b-b28d-9637bc202431",
+        "name": "Head padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0d492d50-ff3b-4bed-9c85-e9b3113bedc6",
+        "name": "Head padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "55ec1bfc-661c-4d89-aa27-9807671e9d05",
+        "name": "Log house court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ea06a3ca-cb68-4be0-b6a2-c4ddf9da9448",
+        "name": "Kla Crofton motors court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5ac6a1b4-6cd0-47a5-8741-882c105138f2",
+        "name": "Head padel Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2ccb61a2-25ef-4c28-953e-68ead3b595c2",
+        "name": "Head Padel 6 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7e198d39-954f-4a9f-abea-e33b5c30fd03",
+        "name": "Head Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b4358e01-43b5-4f9d-9e71-fe7c197aa9d2",
+        "name": "Head Padel 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "20:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "121ed3c7-5012-4774-9e3e-2ad5f614003b",
+    "tenant_name": "Planet Padel - Athlone",
+    "slug": "planet-padel",
+    "address": {
+      "street": "Grace Road",
+      "postal_code": "N37R7Y4",
+      "city": "Athlone",
+      "sub_administrative_area": "",
+      "administrative_area": "County Westmeath",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.4290906,
+        "lon": -7.94986426
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1780061598/pro/tenants/121ed3c7-5012-4774-9e3e-2ad5f614003b/1780061597711.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "3 Indoor Padel courts located in the centre of Athlone.\nRackets/balls can be rented/purchased on site.",
+      "FACILITY_CAFETERIA": "false",
+      "WEBSITE_URL": "https://planetpadel.ie/",
+      "CONTACT_PHONE": "+353 0906494766",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "60ec491c-b8ac-4261-91fc-3ea831af5c51",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e9ec27ab-5698-4343-8694-d17cf3d055d2",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f6c446b3-b9f4-4ee1-a056-040959eb439a",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "5bfeae59-6f3a-40bf-ba1d-b01b27704d09",
+    "tenant_name": "Padel 100 - Radisson Blu Hotel & Spa – Limerick",
+    "slug": "radisson-blu-hotel-spa-limerick",
+    "address": {
+      "street": "Ennis Road, Limerick",
+      "postal_code": "V94 YA2R",
+      "city": "Limerick",
+      "sub_administrative_area": "",
+      "administrative_area": "County Limerick",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.6845802,
+        "lon": -8.7096291
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782372443/pro/tenants/5bfeae59-6f3a-40bf-ba1d-b01b27704d09/1782372442843.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.padel100.ie/",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "true",
+      "CONTACT_PHONE": "+353 212031281",
+      "DETAILS_PAGE_DESCRIPTION": "Courts are available to book directly through the Playtomic app.\nFor assistance, please contact our Club Manager, Franko, by phone, WhatsApp, or text on +353 83 438 2950, or via the chat function in Playtomic.\nNew to Padel? For introductory sessions, private coaching, or group coaching, please contact our coach, Luciano, on +353 83 028 9893.\n Kiosk is available on-site for racket and ball rental."
+    },
+    "resources": [
+      {
+        "resourceId": "e896e2d5-d65d-4331-83e3-811474e8e244",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "96632cf0-694d-42ad-859b-2824beb6615d",
+        "name": "Padel 2 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3824455e-ed76-4d29-a013-d39a6b14709e",
+        "name": "Padel 3 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "e51bce2d-0a83-4673-bb76-d84d2ed5521b",
+    "tenant_name": "River Valley Padel, Wicklow",
+    "slug": "river-valley-padel",
+    "address": {
+      "street": "River Valley, Redcross",
+      "postal_code": "A67H799",
+      "city": "Wicklow",
+      "sub_administrative_area": "",
+      "administrative_area": "County Wicklow",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.88893704,
+        "lon": -6.14411159
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1750152682/pro/tenants/e51bce2d-0a83-4673-bb76-d84d2ed5521b/1750152682331.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1752048747/pro/tenants/e51bce2d-0a83-4673-bb76-d84d2ed5521b/1752048746084.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "e1128def-73ab-4d55-ac4e-398163a39142;61591dec-20f9-4bb8-af6e-0d0bdad3bd6b;10e440c6-9a7a-4072-ba5f-bec07a19f5ca",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Three Outdoor Panoramic Padel Courts in a beautiful setting in the River Valley Resort in Redcross, Co. Wicklow. Open to residents and non-residents.\nJust 50 minutes drive from Dublin, 30 minutes from Greystones, 25 minutes from Gorey and 15 minutes from Wicklow and Arklow.\nSpoil yourself afterwards for lunch or dinner in the adjacent award winning Mickey Finn's Pub and Restaurant.\nThinking about a Padel weekend away, why not book some luxury Lodges or Glamping in River Valley Holiday Park. www.rivervalleypark.ie.\nPrivate Padel Lessons can be organised with Andres Martines (0034) 695 071133\nWhen Reception is closed, please call into Mickey Finn's Pub (located on-site) for Padel rental and ball purchase.  Mickey Finn's is open from 12.30 Wed - Sunday.  ",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "false",
+      "CONTACT_PHONE": "+353 876683216",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "www.rivervalleypark.ie/book-a-padel-court/",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "6165ed31-ff49-486d-bea5-5dc4f97cae36",
+        "name": "Padel 1:   Gate Code 2424#",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "118c193c-7572-4d4d-9662-f65f289de349",
+        "name": "Padel 2 :  Gate Code 2424#",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "10bb2ece-b690-45f1-94d0-622a91bcd301",
+        "name": "Padel 3 :  Gate Code 2424#",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "2db71aec-ef35-4bd8-a7e2-68d727a7ce0a",
+    "tenant_name": "Rosslare Community & Sports Centre",
+    "slug": "rosslare-community-sports-centre",
+    "address": {
+      "street": "Rosslare Community & Sports Centre",
+      "postal_code": "Y35CC9N",
+      "city": "Rosslare",
+      "sub_administrative_area": "",
+      "administrative_area": "County Wexford",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.2815856,
+        "lon": -6.3928503
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1686145815/pro/tenants/2db71aec-ef35-4bd8-a7e2-68d727a7ce0a/1686145814307.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1686145819/pro/tenants/2db71aec-ef35-4bd8-a7e2-68d727a7ce0a/1686145818967.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_LOCKERS": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "cb1fb5a7-583b-440a-a07e-ccd0c23461c2;85272a6c-558f-4105-b32a-60156f225469;215f30fe-5545-4422-85b0-79b71cb9d48b",
+      "CONTACT_PHONE": "+353 539132202",
+      "DETAILS_PAGE_DESCRIPTION": "The Rosslare Community & Sports Centre is at the centre of the vibrant village of Rosslare, with a host of activities on offer all year round. The Centre offers a wide range of onsite facilities including 2 Padel, 2 Tiger Turf & 1 Hard Court,  Playground, 18 hole Crazy Golf course, Bowls, Running Track, Basketball, All Weather Pitch, Football Pitch, Indoor hall, and spaces for a variety of fitness classes. We can also provide venues for meetings and training events, backed up by a comprehensive administrative service to include scanning, photocopying, correspondence etc.",
+      "WEBSITE_URL": "https://www.rosslareholidayresort.ie/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2b40482b-fef1-4094-928e-0ae9fca0cf0a",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4839d83a-ef8a-41f5-badb-ee6c05eef75e",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "67d47d92-dce4-416a-837d-fa9abae5ae08",
+        "name": "Grass Court 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "c42b2965-2064-4553-9460-3fb005947360",
+        "name": "Grass Court 2 ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "dae01ae5-a2c5-44f8-9a7e-164f51196095",
+        "name": "Hard Court ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "d4595a72-41e6-4d41-8690-d26c1564cb35",
+        "name": "All Weather Pitch  ",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "outdoor",
+          "football5",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "FOOTBALL_OTHERS"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "d7653b65-d1f6-40aa-a0ac-e853e92994c2",
+    "tenant_name": "Star Padel",
+    "slug": "star-padel-club",
+    "address": {
+      "street": "St. Mary's College RFC, Templeville Road, Templeogue, Dublin 6W, D6W X652, Ireland",
+      "postal_code": "D6W X652",
+      "city": "Dublin",
+      "sub_administrative_area": "",
+      "administrative_area": "County Dublin",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.3026479,
+        "lon": -6.3119186
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1783942460/pro/tenants/d7653b65-d1f6-40aa-a0ac-e853e92994c2/1783942459809.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://www.padelhubs.ie/",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "38a1474f-4622-46d6-b6a0-28c3b7c73634;9222115e-a042-48aa-94ff-c450052667e3",
+      "CONTACT_PHONE": "+353 894071198"
+    },
+    "resources": [
+      {
+        "resourceId": "86b9a4f5-1fb6-410a-9b12-8f80809b9e53",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "44e34263-a27b-4827-95b2-75140192c1bc",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1417edad-e38b-4020-b409-f20b5173e834",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "bafe4245-8e7e-4f18-a79a-f58a42cc635a",
+    "tenant_name": "Talbot Padel Club",
+    "slug": "talbot-padel-club",
+    "address": {
+      "street": "Talbot Hotel Carlow",
+      "postal_code": "R93Y504",
+      "city": "Carlow",
+      "sub_administrative_area": "",
+      "administrative_area": "County Carlow",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.84649498,
+        "lon": -6.94315023
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1756375297/pro/tenants/bafe4245-8e7e-4f18-a79a-f58a42cc635a/1756375297173.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_CAFETERIA": "false",
+      "WEBSITE_URL": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Get ready, Carlow & Laois — something truly exciting is arriving this **Friday, 10th October****!** Looking for padel courts in the Midlands or Southeast? Talbot Padel Club will be home to both counties’ very first padel courts, located on the grounds of **Talbot Hotel Carlow**. Whether you’re a seasoned athlete or trying something new, padel is the game everyone is talking about.",
+      "CONTACT_PHONE": "+353 599153838"
+    },
+    "resources": [
+      {
+        "resourceId": "fbf71604-e7b7-4881-9ac2-1808622ee6b0",
+        "name": "Court 2 (N80)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0fe496d1-f867-44ae-b3fb-b662137e33d0",
+        "name": "Court 1 (Dome)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "2b284aa4-2551-4878-b37c-e5c38c2b3f15",
+    "tenant_name": "Termonfeckin Tennis Club",
+    "slug": "termonfeckin-tennis-club",
+    "address": {
+      "street": "An Grianan, Termonfeckin, Co. Louth",
+      "postal_code": "A92X9TF",
+      "city": "Termonfeckin",
+      "sub_administrative_area": "",
+      "administrative_area": "County Louth",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.75908693,
+        "lon": -6.26902593
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/2b284aa4-2551-4878-b37c-e5c38c2b3f15/termonfeckin-tennis-club_0001"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "CONTACT_PHONE": "+353 879765193",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "01f8880b-5c3f-44b9-8360-2f5bd5e50e53",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "We offer 4 clay tennis courts, and 2 padel courts in the beautiful village of Termonfeckin, minutes from the town of Drogheda and very accessible to North Leinser and North Dublin via Drogheda Town Bypass. Padel court fees are offered at a reduced rate to Tennis Club members. See https://www.termonfeckintennisclub.ie. for more information, or find us on Facebook and Intsagram.\nNote: We do not rent padel rackets or balls.",
+      "WEBSITE_URL": "https://www.termonfeckintennisclub.ie"
+    },
+    "resources": [
+      {
+        "resourceId": "65cae8ff-81ee-4881-8011-b37c86fd90a9",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1f4e20bc-0038-45c2-972c-bd53ea715115",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "a12d9f1f-af04-4781-b97f-17c354f9d4c0",
+    "tenant_name": "The K Club - South",
+    "slug": "the-k-club-south",
+    "address": {
+      "street": "The K Club, Straffan ",
+      "postal_code": "W23 F863",
+      "city": "Kildare",
+      "sub_administrative_area": "",
+      "administrative_area": "County Kildare",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 53.307286,
+        "lon": -6.6249482
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741871141/pro/tenants/a12d9f1f-af04-4781-b97f-17c354f9d4c0/1741871139806.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "South Padel is open at The K Club with two flood lit covered courts, suitable for play in all weather. \nLocated on the South side of the resort, next to South Bar & Restaurant, as well as our two tennis courts and K Golf World, our indoor golf simulators. ",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.kclub.ie",
+      "CONTACT_PHONE": "+353 16017200",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "acff761e-eaa2-4d07-9e2c-2c1653748cda",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8b12cece-a6c0-484d-9d42-3b7e47ede567",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c3ed92f5-817d-41e5-a948-b83205943c86",
+    "tenant_name": "W7 Padel Wicklow",
+    "slug": "w7-padel-hub-wicklow",
+    "address": {
+      "street": "Station Road, Wicklow Town",
+      "postal_code": "A67HE33",
+      "city": "Wicklow",
+      "sub_administrative_area": "",
+      "administrative_area": "County Wicklow",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 52.98481914,
+        "lon": -6.05201206
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782159383/pro/tenants/c3ed92f5-817d-41e5-a948-b83205943c86/1782159382936.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782159392/pro/tenants/c3ed92f5-817d-41e5-a948-b83205943c86/1782159391628.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782159496/pro/tenants/c3ed92f5-817d-41e5-a948-b83205943c86/1782159495464.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "73d9b9f7-4602-4289-9414-ebd8ec454953;ec8c35c2-2f67-4476-9d65-33af2fc8ed29;96b87218-3e7d-44f0-8347-38d429127a37;85bf9189-1ad1-4cf2-add2-2e930ab5cab0;f9f14d89-f453-4115-8944-b45c702477de;a691a2fb-d73c-4503-a448-b60a5722de0a;4962939d-1e81-401c-8f24-09b378137406;7dfdef82-3b0f-4b33-8de6-2f23efe8a7f9;6d1b0ed8-3731-43a2-9002-6c97520507a6;f2166719-842a-4609-9db5-0e759f0df1df;8e6a16c0-5941-47dd-ba80-19583d95ea0c;ab9fb365-93f4-4576-bd25-a8e09311651a;21cc1f00-d4f4-4623-9d36-f3666258859e;4107591a-4ebe-45b8-a596-3e662faf2388;c2f33dc0-ed82-4963-b1f4-8b537b942d2c;3aa9a9e2-1321-4250-99b3-cf174a386dc7;97ba882f-36b9-49f1-963e-84628e222399;fb502fdc-8716-453e-b9ad-b630bbfcd88d",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "**Padel is arriving in Wicklow Town.**\nGet ready to experience the fastest-growing sport in the world, right here on your doorstep. Whether you’re new to the game or already hooked, W7 Padel will be the perfect place to play, compete, and connect.\n**Court Pricing**\n**Off-Peak: €30 per hour (€7.50pp)**\n**Peak: €45 per hour (€11.25pp)**\n**90 minutes peak (discounted): €60 (€15pp)**\nTo celebrate our launch, we’re offering** Exclusive Early Bird Discount Packages — t**he best way to guarantee your court time, save money, and be among the very first to play on Wicklow’s new padel courts.** These discounts are available for a limited time only.**",
+      "FACILITY_WIFI": "false",
+      "CONTACT_PHONE": "+353 851354570",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "WEBSITE_URL": "https://www.w7padel.com/",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "c8279a05-e28c-4291-91d2-d03fb111f0a3",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b45d32ab-dfed-40f6-beda-b2397aa79dc4",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "dfb697c0-7375-49a1-b1bd-39cecc15a8a8",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "6cb60726-b62b-4b77-9f2d-75622daf2736",
+    "tenant_name": "WePadel Monaghan",
+    "slug": "wepadel-monaghan",
+    "address": {
+      "street": "Coral Leisure Monaghan Ltd, Clones Rd, Monaghan ",
+      "postal_code": "H18 A384",
+      "city": "Monaghan",
+      "sub_administrative_area": "",
+      "administrative_area": "County Monaghan",
+      "country": "Ireland",
+      "country_code": "IE",
+      "coordinate": {
+        "lat": 54.24619241,
+        "lon": -6.97910742
+      },
+      "timezone": "Europe/Dublin"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1757499340/pro/tenants/6cb60726-b62b-4b77-9f2d-75622daf2736/1757499340023.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "339dab63-f94a-4062-8e38-44dac425320e",
+      "CONTACT_PHONE": "+353 ",
+      "DETAILS_PAGE_DESCRIPTION": "Monaghan’s first padel court in partnership with Coral Leisure.",
+      "FACILITY_STORE": "false",
+      "WEBSITE_URL": "https://wepadel.ie",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2ea6f65d-ece5-4253-8dea-fe1ad803cebd",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "20:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "17:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  }
+]

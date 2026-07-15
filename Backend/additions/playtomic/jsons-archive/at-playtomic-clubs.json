@@ -1,0 +1,1058 @@
+[
+  {
+    "tenant_id": "75041508-fbbd-4d48-8c27-99d71ab42ab3",
+    "tenant_name": "Alp Padel Tirol - Mutters",
+    "slug": "alp-padel-tirol-mutters",
+    "address": {
+      "street": "Birchfeld 52",
+      "postal_code": "6162",
+      "city": "Mutters",
+      "sub_administrative_area": "Innsbruck-Land",
+      "administrative_area": "Tirol",
+      "country": "Österreich",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.22570509,
+        "lon": 11.36905151
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1781074352/pro/tenants/75041508-fbbd-4d48-8c27-99d71ab42ab3/1781074351094.jpg"
+    ],
+    "properties": {
+      "WEBSITE_URL": "https://www.alp-padel.at",
+      "FACILITY_STORE": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true",
+      "CONTACT_PHONE": "+43 6602960380",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "affe5600-8af1-4664-81e1-2d7287db995f",
+        "name": "Court 1 - Ost",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "048b8098-b87c-4787-b750-5692e1a08768",
+        "name": "Court 2 - West",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "d6ccb9ce-74a0-4a03-aa1a-79d8f4db4612",
+    "tenant_name": "Casa Padel Seekirchl",
+    "slug": "casa-padel-seekirchl",
+    "address": {
+      "street": "Möserer Str. 120",
+      "postal_code": "6100",
+      "city": "Seefeld in Tirol",
+      "sub_administrative_area": "Innsbruck-Land",
+      "administrative_area": "Tirol",
+      "country": "Österreich",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.3277967,
+        "lon": 11.181932
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1783932577/pro/tenants/d6ccb9ce-74a0-4a03-aa1a-79d8f4db4612/1783932577291.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://casapadel.de",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "CONTACT_PHONE": "+43 512219509",
+      "DETAILS_PAGE_DESCRIPTION": "Casa Padel Seekirchl - 2 Outdoor Plätze in Seefeld\nKostenlose Parkplätze beim Tennisstüberl / Casa Padel Seefeld Indoor (500 Meter entfernt) \nKostenpflichtige Parkplätze im angrenzenden Parkhaus. \nAchtung: Momentan noch kein Schlägerverleih oder Ballverkauf!"
+    },
+    "resources": [
+      {
+        "resourceId": "e9083a48-076f-4f0b-932f-0ef8ac5e84cd",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4fbf1d41-b658-4751-b807-d481a9dfee0e",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "8f8c346a-cb01-47ee-922f-9e3121f32f14",
+    "tenant_name": "Casa Padel Seefeld",
+    "slug": "casa-padel-seefeld",
+    "address": {
+      "street": "Möserer Straße 632",
+      "postal_code": "6100",
+      "city": "Seefeld in Tirol",
+      "sub_administrative_area": "Innsbruck-Land",
+      "administrative_area": "Tirol",
+      "country": "Österreich",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.3265042,
+        "lon": 11.1763926
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1704387026/pro/tenants/8f8c346a-cb01-47ee-922f-9e3121f32f14/1704387025520.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1704387070/pro/tenants/8f8c346a-cb01-47ee-922f-9e3121f32f14/1704387069025.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "0827218a-86bf-4cf4-aee5-f7ae16b53bef;de0af582-c921-4749-b394-adfe5a9ead0c;321a66a5-6bb6-4802-a277-67f49b1ab6eb",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Casa Padel,\nTirol’s first indoor padel club!\nImmerse yourself in the world of padel, refined Spanish bites, refreshing drinks, and an exclusive club atmosphere. We warmly welcome you.",
+      "WEBSITE_URL": "https://casapadel.at",
+      "CONTACT_PHONE": "+43 6763775238",
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "07e63bf7-8c22-46b9-9590-956d32dc42fd",
+        "name": "Court 1 -  Jobheld.io",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ab57ef0d-c490-440c-ad85-d710070b81a9",
+        "name": "Court 2 - Casino Seefeld",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4ef30d88-b847-482a-ad6a-5b95de55e019",
+        "name": "Court 3 - Easy Motion Skin",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6e8a828d-5ad0-41b0-a8ea-8c304396c25c",
+        "name": "Court 4 - Name frei - partner@casapadel.de",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "06b63bb4-97d5-4645-a190-f7ad470cecdb",
+        "name": "Court 5 Single - Hypo Tirol Bank",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d3b8ea8a-1599-4a7b-9fc1-6e8fa914775a",
+        "name": "Court 6 Single - immo.alpenbau.tirol",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "0c64422c-ccdf-4771-a31d-c8673b9b13fc",
+    "tenant_name": "Lisi Family Hotel",
+    "slug": "lisi-family-hotel",
+    "address": {
+      "street": "Cordial Platz 1",
+      "postal_code": "6370",
+      "city": "Reith bei Kitzbühel",
+      "sub_administrative_area": "Kitzbühel",
+      "administrative_area": "Tirol",
+      "country": "Österreich",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.4671774,
+        "lon": 12.3494123
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1779966928/pro/tenants/0c64422c-ccdf-4771-a31d-c8673b9b13fc/1779966927404.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779968621/pro/tenants/0c64422c-ccdf-4771-a31d-c8673b9b13fc/1779968620837.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779970565/pro/tenants/0c64422c-ccdf-4771-a31d-c8673b9b13fc/1779970564482.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779970588/pro/tenants/0c64422c-ccdf-4771-a31d-c8673b9b13fc/1779970587696.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779970601/pro/tenants/0c64422c-ccdf-4771-a31d-c8673b9b13fc/1779970600736.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779970615/pro/tenants/0c64422c-ccdf-4771-a31d-c8673b9b13fc/1779970614165.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.lisihotel.com/",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_RESTAURANT": "true",
+      "CONTACT_PHONE": "+43 535666477",
+      "DETAILS_PAGE_DESCRIPTION": "### Tennis, Padel & Pickleball – jetzt Platz buchen und losspielen!\nEgal ob Match mit Freunden, Training oder einfach Spaß am Court: Bei uns findest du die perfekte Mischung aus Tennis, Padel und Pickleball für Anfänger und Fortgeschrittene.\nBuche deinen Platz jetzt ganz einfach über Playtomic und sichere dir deine Spielzeit direkt online.\n* Moderne Courts\n* Flexible Buchungszeiten\n* Schläger- & Ballverleih direkt vor Ort\n* Ideal für Einzelspieler, Gruppen & spontane Matches\n\n\nEinfach vorbeikommen, ausleihen und spielen – wir freuen uns auf euch! \nPadeltrainer auf Anfrage!"
+    },
+    "resources": [
+      {
+        "resourceId": "100af34d-ac2c-40e1-a2e8-e4d4f0d9ba7e",
+        "name": "Padel ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f507e018-d3e1-4039-806e-bc63fe471de4",
+        "name": "Tennis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "2a66f5f1-24b7-4004-9772-b7f58bf4f81f",
+        "name": "Pickleball ",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "hardwood"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "PICKLEBALL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c3f1722d-1d5a-493b-9a37-325b7283a43f",
+    "tenant_name": "Olympic Gym (Stans)",
+    "slug": "olympic-gym-stans",
+    "address": {
+      "street": "Schlagturn 27",
+      "postal_code": "6135",
+      "city": "Schlagturn",
+      "sub_administrative_area": "Schwaz",
+      "administrative_area": "Tirol",
+      "country": "Österreich",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.3633321,
+        "lon": 11.7120497
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1774874877/pro/tenants/c3f1722d-1d5a-493b-9a37-325b7283a43f/1774874875726.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774874981/pro/tenants/c3f1722d-1d5a-493b-9a37-325b7283a43f/1774874980121.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774875059/pro/tenants/c3f1722d-1d5a-493b-9a37-325b7283a43f/1774875058319.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774875070/pro/tenants/c3f1722d-1d5a-493b-9a37-325b7283a43f/1774875069507.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774875248/pro/tenants/c3f1722d-1d5a-493b-9a37-325b7283a43f/1774875247774.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774875312/pro/tenants/c3f1722d-1d5a-493b-9a37-325b7283a43f/1774875310709.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774875366/pro/tenants/c3f1722d-1d5a-493b-9a37-325b7283a43f/1774875360454.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.olympic-gym.at",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Spiele Padel im Olympic Gym Stans und genieße weit mehr als nur den Court.\nNeben unserem Indoor-Padel-Angebot erwarten Dich ein modernes Studio, ein großzügiger Wellnessbereich mit Sauna, Dampfbad und Infrarotkabine sowie ein gemütliches Café. Kostenlose Parkplätze, moderne Umkleiden, Schließfächer und ein praktischer Schlägerverleih sorgen dafür, dass Deinem Padel-Erlebnis nichts im Weg steht.",
+      "CONTACT_PHONE": "+43 524263589",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "25e44846-0c8d-49d4-911f-935e86635643"
+    },
+    "resources": [
+      {
+        "resourceId": "4b1bfae6-14fc-460c-9976-4542b8979f8c",
+        "name": "Padel Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "02f2c7bc-9dce-4291-8de4-5f9e4afb55e6",
+    "tenant_name": "Kitzbühel Padel - REITHER WIESE",
+    "slug": "padel-reither-wiese-reith-bei-kitzbuhel",
+    "address": {
+      "street": "Cordial-Platz 1",
+      "postal_code": "6370",
+      "city": "Reith bei Kitzbühel",
+      "sub_administrative_area": "Kitzbühel",
+      "administrative_area": "Tirol",
+      "country": "Österreich",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.4671774,
+        "lon": 12.3494123
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1753251528/pro/tenants/02f2c7bc-9dce-4291-8de4-5f9e4afb55e6/1753251528060.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "http://padel.kitzbuehel.com/",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Padel in Kitzbühel erleben \nAuf der idyllischen Reither Wiese erwartet Sie eine moderne Outdoor-Padel-Anlage mit alpinem Flair. Kombinieren Sie Ihr Berg- oder Urlaubsprogramm mit sportlichen Padel-Sessions – einzeln buchbar. Gönnen Sie sich hochwertige Bewegung in traumhafter Umgebung.\n**Verleih Schläger ab EUR 5,00 pro Stunde:**\n* Intersport Kitzsport – Jochberger Straße 7, 6370 Kitzbühel\n* Lisi Family Hotel – Cordial-Platz 1, 6370 Reith bei Kitzbühel (in der Zwischensaison geschlossen ⚠️)\n\n\nÖffnungszeiten beachten!",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "CONTACT_PHONE": "+43 535666660",
+      "FACILITY_CAFETERIA": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "fe0e0ce4-e55b-444b-b62d-f46f594223ea",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bfcb37db-840b-4fbe-958f-ee3435f61c80",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "12979538-ad79-479d-aeda-c62dae4742ba",
+    "tenant_name": "Padeldynamics Kainbach bei Graz",
+    "slug": "padeldynamics-kainbach-bei-graz",
+    "address": {
+      "street": "Hönigtaler Straße 46",
+      "postal_code": "8301",
+      "city": "Hönigtal",
+      "sub_administrative_area": "Graz-Umgebung",
+      "administrative_area": "Steiermark",
+      "country": "Österreich",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.0895199,
+        "lon": 15.5737998
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232620/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232618906.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232623/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232622259.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232624/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232624099.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232626/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232626134.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232629/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232628533.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232630/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232630158.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232634/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232632258.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232637/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232636475.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232639/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232638400.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232641/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232640427.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232643/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232642946.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232646/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232645195.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232648/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232647131.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232650/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232649489.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232652/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232651961.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1733232656/pro/tenants/12979538-ad79-479d-aeda-c62dae4742ba/1733232653764.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "www.padeldynamics.at",
+      "CONTACT_PHONE": "+43 6641344435",
+      "FACILITY_STORE": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "00460708-20fd-4a34-8108-511e1f3ca22c",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f1518cb5-0631-45da-aa52-d15be04f97f6",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8c006ce6-9812-49e4-a396-b6be0c8b6f86",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "fe2f362b-9612-4b19-954a-22a28ef2b7bc",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0175581f-5593-483d-8d8f-6840341881c9",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "9b95d67a-c7bb-4e98-8b7e-117b05f2bb2f",
+    "tenant_name": "PadelGoal",
+    "slug": "padelgoal",
+    "address": {
+      "street": "Liebfrauenweg 4",
+      "postal_code": "8280",
+      "city": "Fürstenfeld",
+      "sub_administrative_area": "Hartberg-Fürstenfeld",
+      "administrative_area": "Steiermark",
+      "country": "Österreich",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.0467893,
+        "lon": 16.0899389
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1751477517/pro/tenants/9b95d67a-c7bb-4e98-8b7e-117b05f2bb2f/1751477516283.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751477707/pro/tenants/9b95d67a-c7bb-4e98-8b7e-117b05f2bb2f/1751477706304.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_RESTAURANT": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "Padel Goal Fürstenfeld",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Tennis in Fürstenfeld – Doppelt so viel Action auf 2 Plätzen!Erlebe die Trendsportart Padel Tennis auf gleich zwei top-modernen Plätzen mitten in Fürstenfeld! Ob du gerade erst anfängst oder schon regelmäßig spielst – bei uns findest du ideale Bedingungen für Spaß, Bewegung und spannende Matches mit Freunden, Familie oder Kollegen.Das erwartet dich bei uns:\n* Zwei hochwertige, moderne Outdoor-Padelplätze\n* Flutlichtanlage – Spielen auch bei Abendstimmung\n\n* Lage direkt am Tennis Center in Fürstenfeld und gut erreichbar\n\n* Leihschläger & Bälle vor Ort – alles da, was du brauchst\n* Einfache Online-Buchung – spontan oder geplant\n\n* Ideal für 2:2, Firmenevents oder Turniere.\n\n\nPadel ist schnell, leicht zu lernen und macht richtig Laune! Sichere dir jetzt deinen Slot auf einem unserer beiden Plätze und werde Teil der PadelGoal - Community in Fürstenfeld!",
+      "CONTACT_PHONE": "+43 6645077511"
+    },
+    "resources": [
+      {
+        "resourceId": "89915e17-942c-4788-99e9-644a1e9f6881",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d0f3bc1a-f469-4a93-b8fc-0430cc3e70d3",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ff928bfa-64f7-45b7-8874-1f7dedcad6ac",
+    "tenant_name": "PADELPLAYZ (Leihschläger vor Ort) Sankt Georgen bei Salzburg",
+    "slug": "padelplayz",
+    "address": {
+      "street": "Sportplatzstraße 12",
+      "postal_code": "5113",
+      "city": "Sankt Georgen bei Salzburg",
+      "sub_administrative_area": "Salzburg-Umgebung",
+      "administrative_area": "Salzburg",
+      "country": "Austria",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.9769436,
+        "lon": 12.8956195
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1780821507/pro/tenants/ff928bfa-64f7-45b7-8874-1f7dedcad6ac/1780821506865.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780821510/pro/tenants/ff928bfa-64f7-45b7-8874-1f7dedcad6ac/1780821509545.jpg"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "c9021e1f-45fb-435d-ace2-2f2e3b6f0ff3;110848a1-eb26-4744-9fc0-ac28e714b413",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://padelplayz.at",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_RESTAURANT": "false",
+      "CONTACT_PHONE": "+43 6643435970",
+      "DETAILS_PAGE_DESCRIPTION": "**Padelplayz** Sankt Georgen bei Salzburg\n! keine Mitgliedschaft nötig !\n\n**LEIHSCHLÄGER vor Ort im Automaten**\n_*__*_\n**SOCIAL AREA ERÖFFNET inklusive Automaten**\n**Umkleiden noch kurz außer Betrieb**\n_*__*_\nSchnell. Intensiv. Emotional.Padel so, wie es sich anfühlen soll."
+    },
+    "resources": [
+      {
+        "resourceId": "c40c5ebb-ad0a-45fa-9e8d-53945b18eeae",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "055d801f-c83e-4ba7-aafd-a4f9ae82c3ff",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "e193cc71-46ad-46ea-b3ef-3897c94102b8",
+    "tenant_name": "Stanglwirt GmbH",
+    "slug": "stanglwirt-gmbh",
+    "address": {
+      "street": "Kaiserweg 1",
+      "postal_code": "6353",
+      "city": "Going am Wilden Kaiser",
+      "sub_administrative_area": "Kitzbühel",
+      "administrative_area": "Tirol",
+      "country": "Österreich",
+      "country_code": "AT",
+      "coordinate": {
+        "lat": 47.5152629,
+        "lon": 12.3438487
+      },
+      "timezone": "Europe/Vienna"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1778676719/pro/tenants/e193cc71-46ad-46ea-b3ef-3897c94102b8/1778676718263.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.stanglwirt.com/",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "485caee7-388c-4a22-9a18-95eddcd70dfd",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+43 535820007931",
+      "DETAILS_PAGE_DESCRIPTION": "Die Racketsportanlage des Bio- und Wellnessresort Stanglwirt bietet beste Bedingungen für Tennis- und Padelspieler inmitten der Tiroler Bergwelt.\n\nPadelspieler erwartet ein moderner Indoor Panorama Double Court sowie zwei Outdoor Padel Courts mit beeindruckendem Blick auf den Wilden Kaiser.\n\nFür Tennisspieler stehen insgesamt zwölf Plätze zur Verfügung:\n• 5 Hallentennisplätze\n• 4 Außen-Sandplätze\n• 3 Outdoor Allwetter-Courts\n\nOb intensives Training, entspannte Matches oder sportliche Urlaubstage auf höchstem Niveau: Die Kombination aus moderner Infrastruktur, alpiner Natur und exklusivem Ambiente macht die Stanglwirt Racketsportanlage zu einem besonderen Erlebnis für Anfänger, Hobbyspieler und ambitionierte Athleten.",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "12544214-762a-4099-99ff-febd30825374",
+        "name": "Padel 1 Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "de0d090d-41d9-414c-87da-08dfd236a538",
+        "name": "Padel 1 Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d5157087-4e3f-456e-aeb0-12b2cbb4dfa4",
+        "name": "Tennis 5 Outdoor Red Court",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "description": ""
+  }
+]

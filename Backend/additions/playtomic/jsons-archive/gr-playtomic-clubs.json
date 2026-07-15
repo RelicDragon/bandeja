@@ -1,0 +1,1042 @@
+[
+  {
+    "tenant_id": "f4f5e411-3b3a-406e-b585-0603f0ca40b6",
+    "tenant_name": "Baseline Sports Tennis & Padel Club",
+    "slug": "baseline-sports-tennis-padel-club",
+    "address": {
+      "street": "Adelianos Kampos Opposite Aquila Rithymna Beach Hotel",
+      "postal_code": "74100",
+      "city": "Ρέθυμνο",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 35.372854,
+        "lon": 24.54629328
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1767515819/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767515818385.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767515823/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767515822150.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767515826/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767515826077.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767515834/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767515833848.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767516045/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767516044343.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767597142/pro/tenants/f4f5e411-3b3a-406e-b585-0603f0ca40b6/1767597141555.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+30 2831074770",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "WEBSITE_URL": "https://baselinesports.gr/index.php/en/",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "cb973df3-f162-48ff-9e06-af0c40011873",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "efd15936-1d6a-4e71-84d6-dc5f3c9336cd",
+        "name": "Tennis 5",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "14:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "16:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "16:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "16:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "16:30"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "16:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "336cd481-4fe8-4063-83f9-61ced0c72c30",
+    "tenant_name": "Blue Avenue",
+    "slug": "blue-avenue",
+    "address": {
+      "street": "Paliouri",
+      "postal_code": "63085",
+      "city": "Παλιούρι",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 39.94772147,
+        "lon": 23.66311698
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782316214/pro/tenants/336cd481-4fe8-4063-83f9-61ced0c72c30/1782316213196.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "The padel court is located inside the resort of Blue Avenue, in the village of Paliouri Xalkidiki. \nIt includes one court \nThere is a bar inside the resort if anyone want to drink a coffee or drinks.\nIn our resort you will find also racquets and balls if you do not have with you",
+      "WEBSITE_URL": "https://blueavenue.gr/",
+      "CONTACT_PHONE": "+30 6979118676"
+    },
+    "resources": [
+      {
+        "resourceId": "2fca07f4-f266-417d-bf19-c6522519c672",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ddc64195-6f60-46c0-9e0e-d0815a9407d4",
+    "tenant_name": "Champion Padel Club Lavrio",
+    "slug": "champion-padel-club-lavrio",
+    "address": {
+      "street": "Ano Oria",
+      "postal_code": "19500",
+      "city": "Λαύριο",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 37.7164332,
+        "lon": 24.0464375
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ddc64195-6f60-46c0-9e0e-d0815a9407d4/champion-padel-club-lavrio_0001"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "championpadelclub",
+      "FACILITY_STORE": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "true",
+      "CONTACT_PHONE": "+30 2292069102",
+      "DETAILS_PAGE_DESCRIPTION": ""
+    },
+    "resources": [
+      {
+        "resourceId": "ce044e03-ebed-4852-836c-b15fd2ea411a",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c1dc8ce3-ab17-478d-a14f-895a31519920",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "15043efc-b977-42b0-b36c-d1eed06e8926",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0cc81760-e133-4612-b9a3-b8f37cdaeee4",
+        "name": "Basketball 4",
+        "sport": "BASKETBALL",
+        "features": [
+          "outdoor",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "585dc490-a3a7-49b5-a408-d1917f0519cc",
+        "name": "Football7 5",
+        "sport": "FOOTBALL7",
+        "features": [
+          "outdoor",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "17:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "FOOTBALL7",
+      "BASKETBALL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "e26c5b7f-acdb-4193-9aff-839db9e1c271",
+    "tenant_name": "Egalite Experience",
+    "slug": "egalite-experience",
+    "address": {
+      "street": "Doxopoulou 33",
+      "postal_code": "38446",
+      "city": "Νέα Ιωνία",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 39.3826212,
+        "lon": 22.9305014
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1777368650/pro/tenants/e26c5b7f-acdb-4193-9aff-839db9e1c271/1777368649597.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "The club has in its renovated and high standard facilities 8 fully equipped tennis and 4 padel tennis courts, changing rooms, indoor training area, sports equipment shop, indoor & outdoor playground and the Café snack bar of Egalite. Our team intends to provide continuous entertainment to our friends and the club community through the regular organization of championships and tournaments, both short and long term, at individual and team level with great prizes for the winners. Similar tournaments will be organized for the fastest growing sport in Europe, Padel Tennis, which Egalite was the first to bring to Thessaly. The announcements related to the tournaments will be made through the website and the club's social media in facebook and instagram, so stay informed! But the vision of the Egalite team doesn't stop here! The investment is ongoing and soon fans will be able to enjoy new benefits.",
+      "WEBSITE_URL": "https://egaliteclub.gr/en/",
+      "CONTACT_PHONE": "+30 6981122022",
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e089d2a1-9d74-43ce-a1c7-1c328479453d",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6eccc53e-862a-4d56-b557-ea322e99ca2b",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "baafd81f-20fc-411f-84da-e9f4209950a8",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7c93d861-72f3-4b81-868c-ed3fe833887c",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "16:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:30",
+        "closing_time": "16:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:30",
+        "closing_time": "16:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:30",
+        "closing_time": "16:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "16:00"
+      },
+      "SATURDAY": {
+        "opening_time": "14:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "acbcf133-9d36-49d6-b84c-b865ce4e58f0",
+    "tenant_name": "Elpida Padel",
+    "slug": "elpida-padel",
+    "address": {
+      "street": "Istro, Kalo Chorio",
+      "postal_code": "72100",
+      "city": "Agios Nikolaos",
+      "sub_administrative_area": "",
+      "administrative_area": "Crete",
+      "country": "Greece",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 35.1208703,
+        "lon": 25.7340424
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1781518270/pro/tenants/acbcf133-9d36-49d6-b84c-b865ce4e58f0/1781518269475.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781518275/pro/tenants/acbcf133-9d36-49d6-b84c-b865ce4e58f0/1781518274333.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781518288/pro/tenants/acbcf133-9d36-49d6-b84c-b865ce4e58f0/1781518287142.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+30 6981109380",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "A beatiful court located on top of a hill surrounded by trees, in the Elpida Village hotel. Hotel facilities such as pool, bar, showers are available to our padel players. Rackets and balls are available if needed.",
+      "WEBSITE_URL": "http://www.elpidavillage.gr",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "6e5a09d7-bd57-4494-885e-6e3d74c3b50f",
+        "name": "Padel",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "24d6edfc-5fbb-478f-b66e-5d34851e8111",
+    "tenant_name": "LOBA SPORTS CLUB",
+    "slug": "loba-sports-club",
+    "address": {
+      "street": "AGIAS ANASTASIAS 11, PATRIARXIKA ",
+      "postal_code": "55535",
+      "city": "Thessaloniki",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 40.5534148,
+        "lon": 22.9915146
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1783586653/pro/tenants/24d6edfc-5fbb-478f-b66e-5d34851e8111/1783586652452.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1783770750/pro/tenants/24d6edfc-5fbb-478f-b66e-5d34851e8111/1783770750016.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1783770757/pro/tenants/24d6edfc-5fbb-478f-b66e-5d34851e8111/1783770755977.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1783770797/pro/tenants/24d6edfc-5fbb-478f-b66e-5d34851e8111/1783770796214.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "### LOBA SPORTS CLUB\nLoba Sports Club is a modern sports destination for Padel fans in Thessaloniki. It has 10 latest generation Padel courts, 5 of which are outdoor and 5 indoor, offering the possibility of practicing all year round, regardless of the weather conditions. \nIn its facilities you will find lessons for children and adults, equipment rental, tournament organization and finding teammates for matches.\nAt the same time, the club has a café-bar, sports shop, changing rooms and free private parking, creating a complete sports and entertainment environment.",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+30 2310475191",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://www.lobasportsclub.gr",
+      "FACILITY_PLAYPARK": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "a2c62332-3cc6-49e7-b3c2-dbb83f78ed4f",
+        "name": "Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c2229273-41d1-47f8-87b7-8022abb63c0a",
+        "name": "Padel Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "57b6a31d-cd23-442e-9cc0-3c4be23eb800",
+        "name": "Padel Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "90ced377-af7f-4f40-ab01-3ed9537fd1ca",
+        "name": "Padel Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e41685ed-12f6-4f36-8f6c-6d3c99d766d6",
+        "name": "Padel Court 10",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ecf7a747-868c-4e19-a707-5685c3f41bec",
+        "name": "Padel Court 5 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b385d052-d8d4-4f2e-9418-1879dc7ebfcd",
+        "name": "Padel Court 6",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "04ead33f-9656-4887-bd5b-581feb673669",
+        "name": "Padel Court 7",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3209289a-36f5-4026-847e-93668dcd957c",
+        "name": "Padel Court 8",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c2009925-d70d-4d24-99f7-5e383806d8ae",
+        "name": "Padel Court 9",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "288589fd-0ec3-46fa-9c8e-f51ff6bff2be",
+    "tenant_name": "Mykonos Padel",
+    "slug": "mykonos-padel",
+    "address": {
+      "street": "Korfos Mykonos",
+      "postal_code": "84600",
+      "city": "Mykonos",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 37.42291531,
+        "lon": 25.31938256
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/288589fd-0ec3-46fa-9c8e-f51ff6bff2be/mykonos-padel_0001"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+30 6975532515",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://padelmykonos.com/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "740a6495-b158-488e-821c-4c627456eee7",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "863cd173-0763-4754-9106-2e8749ded822",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3edc574c-9ab4-49bd-adc5-7ee1faf5219e",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:30",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "98988d7c-d7f6-4ed0-b09d-ea57c2564922",
+    "tenant_name": "PLAYFIELD",
+    "slug": "playfield",
+    "address": {
+      "street": "Naousa - Asteras",
+      "postal_code": "84401",
+      "city": "Paros",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Greece",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 37.0792929,
+        "lon": 25.24408149
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1756823398/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756823397804.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756830134/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756830133570.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756830146/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756830140926.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756832245/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756832244170.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894476/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894475530.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894483/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894482318.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894490/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894488724.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894498/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894496805.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1756894506/pro/tenants/98988d7c-d7f6-4ed0-b09d-ea57c2564922/1756894504012.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "https://playfield.gr/el/Playfield-Paidotopos-Paros",
+      "CONTACT_PHONE": "+30 6946506146",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "9d959600-1a87-4418-abfe-b9c5d39cd0f0",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ce9f2405-a02f-4621-bc4a-5ba69be3293a",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "42417f44-362b-4e94-b45a-0afe84f8f143",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "21579932-ea02-4656-9195-d7d432d3d0ce",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "bb3a3b38-9119-4dbe-9866-271bc42fe58e",
+    "tenant_name": "South Padel Club",
+    "slug": "south-padel-club",
+    "address": {
+      "street": "-",
+      "postal_code": "70400",
+      "city": "Μοίρες",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Ελλάδα",
+      "country_code": "GR",
+      "coordinate": {
+        "lat": 35.04684602,
+        "lon": 24.87605836
+      },
+      "timezone": "Europe/Athens"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245589/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245588131.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245591/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245591125.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245594/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245593477.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245595/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245594435.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245599/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245598567.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245599/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245599120.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245601/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245601115.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1695245607/pro/tenants/bb3a3b38-9119-4dbe-9866-271bc42fe58e/1695245606094.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "",
+      "CONTACT_PHONE": "+30 6936644812",
+      "DETAILS_PAGE_DESCRIPTION": "South Padel Club @Mires\nthe first padel club in south Crete",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.southpadel.gr",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "a26d064c-e361-4f97-af81-938710ee1916",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "29d4ecdd-5328-4ea0-abf6-a7d73c8ec67a",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "82d911b8-9a8c-4118-b08c-8927a49ef254",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d6acd5bf-a415-4d3a-9b43-c18996f2d547",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5b5692de-53ba-4242-957b-4ff28f711cfe",
+        "name": "Beach 1",
+        "sport": "BEACH_VOLLEY",
+        "features": [
+          "outdoor",
+          "sand"
+        ]
+      },
+      {
+        "resourceId": "ae0e7fd1-c945-464e-8c9d-8417bd74ad1b",
+        "name": "Beach 2",
+        "sport": "BEACH_VOLLEY",
+        "features": [
+          "outdoor",
+          "sand"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "BEACH_VOLLEY"
+    ],
+    "description": ""
+  }
+]

@@ -7,6 +7,7 @@ import {
   getCountryWarmFillByIndex,
   getCountryWarmStrokeByIndex,
 } from '@/utils/countryWarmColor';
+import { splitAntimeridianFeatures } from './splitAntimeridian';
 
 type CountryFeature = Feature<Geometry, { name: string }>;
 type CountryCollection = FeatureCollection<Geometry, { name: string }>;
@@ -17,12 +18,12 @@ let loadPromise: Promise<CountryCollection | null> | null = null;
 function loadCountriesGeo(): Promise<CountryCollection | null> {
   if (cachedGeo) return Promise.resolve(cachedGeo);
   if (!loadPromise) {
-    loadPromise = fetch('/geo/countries-110m.geojson?v=5')
+    loadPromise = fetch('/geo/countries-110m.geojson?v=6')
       .then((res) => (res.ok ? res.json() : null))
       .then((data: CountryCollection | null) => {
         if (data?.type === 'FeatureCollection') {
-          cachedGeo = data;
-          return data;
+          cachedGeo = splitAntimeridianFeatures(data);
+          return cachedGeo;
         }
         return null;
       })

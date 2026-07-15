@@ -1,0 +1,2503 @@
+[
+  {
+    "tenant_id": "33f6673b-b2e6-40c3-9d1a-ba494db09ed1",
+    "tenant_name": "ABC PADEL  GYM",
+    "slug": "abc-padelgym",
+    "address": {
+      "street": "Pliederu iela 22",
+      "postal_code": "LV-2123",
+      "city": "Ķekava",
+      "sub_administrative_area": "Ķekavas pagasts",
+      "administrative_area": "Ķekavas novads",
+      "country": "Latvija",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.83205173,
+        "lon": 24.22772395
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1761297296/pro/tenants/33f6673b-b2e6-40c3-9d1a-ba494db09ed1/1761297296217.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1766131533/pro/tenants/33f6673b-b2e6-40c3-9d1a-ba494db09ed1/1766131532586.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767176695/pro/tenants/33f6673b-b2e6-40c3-9d1a-ba494db09ed1/1767176694018.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767176703/pro/tenants/33f6673b-b2e6-40c3-9d1a-ba494db09ed1/1767176702940.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767176707/pro/tenants/33f6673b-b2e6-40c3-9d1a-ba494db09ed1/1767176706837.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767176711/pro/tenants/33f6673b-b2e6-40c3-9d1a-ba494db09ed1/1767176711002.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767176713/pro/tenants/33f6673b-b2e6-40c3-9d1a-ba494db09ed1/1767176712887.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767176717/pro/tenants/33f6673b-b2e6-40c3-9d1a-ba494db09ed1/1767176716488.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1767176720/pro/tenants/33f6673b-b2e6-40c3-9d1a-ba494db09ed1/1767176720127.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.abcpadel.lv",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Mūsu klubs ir veidots ar mērķi dot tev to, ko tu jau sen esi pelnījis – vietu, kur ikviens var justies gaidīts, motivēts un iedvesmots. Šeit satiksies tie, kuri grib attīstīties, pārvarēt sevi un vienkārši izbaudīt sportošanu.\nTiekamies laukumos, Tiekamies treniņos!",
+      "CONTACT_PHONE": "+371 20267020",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "e4f403f6-483c-4aaa-aff3-3b6b8d83763c"
+    },
+    "resources": [
+      {
+        "resourceId": "8af1292c-7617-42a7-9dad-5ee606bd4d8a",
+        "name": "ĶEKAVA FOODS",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8f4b0beb-6696-4201-a92f-a85634a84cd5",
+        "name": "B",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "3b47f87d-3d3f-4dae-bf71-524b33f0a0fb",
+    "tenant_name": "City Padel / Padelstar City",
+    "slug": "city-padel",
+    "address": {
+      "street": "Gustava Zemgala gatve 77 ",
+      "postal_code": "LV-1004",
+      "city": "Riga",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.97545589,
+        "lon": 24.1636586
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1716486819/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716486818578.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716486865/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716486864609.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716486894/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716486893884.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716486983/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716486982594.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716487051/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716487050952.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716487059/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716487058893.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716487068/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716487067672.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716487079/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716487078485.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716487087/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716487087059.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716488096/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716488096062.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716488140/pro/tenants/3b47f87d-3d3f-4dae-bf71-524b33f0a0fb/1716488140027.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+371 26554468",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "https://www.citypadel.lv/lv/",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Closest Padel club to city center",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "false",
+      "ALLOWS_CASH_PAYMENT": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "2a622bd2-26d0-4e9d-b705-331f43d0ea54",
+        "name": "#1 MEŽPILS court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "15cd4619-ce84-451c-b3c7-2931dfda8f0a",
+        "name": "#2 MINI COOPER Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c3a7a0e3-1b05-4c55-81fd-e7432a300167",
+        "name": "#3 \"BRĪVA VIETA REKLĀMAI\" court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ad35f594-7665-4e22-88d5-1eb07d6ce01c",
+        "name": "#4 DECATHLON court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "360a8d22-230a-40a3-8419-dd702863860b",
+        "name": "#5 PADELHAUS.LV court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4ffd916e-7c42-44f5-a3e0-7604dc660de7",
+        "name": "#6 NOLIKTAVA1 court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "20:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "d8635c6c-1bd6-48d4-ac7f-f989367bf925",
+    "tenant_name": "FABRIKA PADEL CLUB",
+    "slug": "fabrika-padel-club",
+    "address": {
+      "street": "Atbrīvošanas Aleja 163a",
+      "postal_code": "LV4604",
+      "city": "Rēzekne",
+      "sub_administrative_area": "",
+      "administrative_area": "Rēzekne valstspilsēta",
+      "country": "Latvija",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.53222253,
+        "lon": 27.34321587
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1774436808/pro/tenants/d8635c6c-1bd6-48d4-ac7f-f989367bf925/1774436808061.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "ad6b146a-b63b-462b-a292-e4fc3243c48f",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "WEBSITE_URL": "https://www.instagram.com/fabrikapadel/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Izbaudi visstraujāk augošo rakešu sporta veidu pasaulē Rēzeknē. Lielisks sporta veids gan iesācējiem, gan pieredzējušiem spēlētājiem. Pavadi laiku kopā ar draugiem un ģimenes locekļiem kā arī satiec jaunus cilvēkus.",
+      "CONTACT_PHONE": "+371 22045312"
+    },
+    "resources": [
+      {
+        "resourceId": "2e25e2fd-d251-4afe-9d6a-965672093baa",
+        "name": "SELENAL.LV",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e4429ea7-a688-4ee1-8989-687559a01307",
+        "name": "CAFEBOX - PALLADIUM",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "10:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "de49bfd6-97aa-4079-9958-cb89109ac7dc",
+    "tenant_name": "Golden Point Arena",
+    "slug": "golden-point-arena",
+    "address": {
+      "street": "Gustava Zemgala 77 K-2",
+      "postal_code": "LV-1039",
+      "city": "Riga",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.97493289,
+        "lon": 24.1595377
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1770369957/pro/tenants/de49bfd6-97aa-4079-9958-cb89109ac7dc/1770369956999.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "728baf72-fe35-4b48-b4a4-a2c3309853c1;1a8bc2d1-12af-41f2-af43-56f67199f201;8ef3c5af-a092-4140-89bb-431e37736f4f",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel & Tennis Arena.\nPlay/Compete/Connect",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+371 26646838",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "WEBSITE_URL": "https://gparena.lv/",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2a7a4f76-f257-48be-9268-8a458cae489e",
+        "name": "Padel 1 - Double - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "85b7e314-7015-4bf8-9e01-770b00f16833",
+        "name": "CULT 2 - Double - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b6f995a1-d228-44f0-a2fc-743a83ab9ce3",
+        "name": "Padel 3 - Double - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d27bc670-5998-4fd9-92ae-1a235d06949a",
+        "name": "Padel 4 - Double - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "596fd775-ffef-48ff-85a5-cc46d82b5b41",
+        "name": "Padel 5 - Double - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ae31d7ac-9e66-4057-8f98-f6ecb5597941",
+        "name": "Padel 6 - Double - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5597fb61-11d4-4581-9937-d9f4bdc9501a",
+        "name": "Padel 7 - Double - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c4cfc13f-19b9-4873-9f74-b5f663382524",
+        "name": "Padel 8 - Double - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9d69005f-942d-40c4-a45a-9c4bcba98d12",
+        "name": "Tennis 1 - Hard Court - Indoor 1",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "quick"
+        ]
+      },
+      {
+        "resourceId": "bfd59675-68a2-43b4-8602-f75e5e271476",
+        "name": "Tennis 2 - Hard Court - Indoor 1",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "quick"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "e2aacb2b-de23-4726-ae58-b4c050d80c7e",
+    "tenant_name": "Infinity Padel",
+    "slug": "infinity-padel",
+    "address": {
+      "street": "Uriekstes iela 3",
+      "postal_code": "LV-1005",
+      "city": "Riga",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.98871191,
+        "lon": 24.11178868
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1777994771/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1777994770302.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1777994776/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1777994775327.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1777994894/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1777994892955.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1777994898/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1777994897542.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1777994902/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1777994901803.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1777994907/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1777994906335.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1777994912/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1777994911495.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1777994917/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1777994916191.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1777994923/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1777994921420.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013461/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013460201.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013574/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013573690.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013579/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013578284.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013584/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013583707.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013589/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013587920.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013593/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013592632.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013597/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013596988.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013603/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013602765.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013610/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013609450.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013615/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013614171.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013619/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013618791.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013624/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013623216.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1778013628/pro/tenants/e2aacb2b-de23-4726-ae58-b4c050d80c7e/1778013627397.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Indoor padel tennis club with 12 courts and a 15-meter ceiling height, ensuring a spacious environment, excellent visibility, and high-quality play all year round, equipped with a modern and professional LED lighting system (LGH13)",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+371 27338822",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "b1e068de-179a-4a0d-af5c-ad97623cb418",
+        "name": "1-Rudy's Kombucha Padle Tenisa Korts",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3715111f-50e4-4a0e-9159-952675323371",
+        "name": "2 - Radio SWH Padel Tenisa Korts",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8ee18d66-1d9b-44f8-a9a9-1a841d3b3966",
+        "name": "Padel 3 - Infinity ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "97463b70-c5fb-463d-aab2-0b81079805fe",
+        "name": "4 - BLV Padel korts",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "244ad95c-bdaf-4c26-85e8-358dd48d375b",
+        "name": "Padel 5 - Infinity",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b3f7791f-7796-4f92-b599-a8cd2012928f",
+        "name": "Padel 6 - Infinity ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "fdba5e57-cdec-4376-b28e-9d58ac9dfd41",
+        "name": "Padel 7 - Infinity ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "79d87194-7b72-452f-aff0-6984146541a3",
+        "name": "Padel 8 - Infinity ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4f4eddbf-5338-4f8e-ac71-f1ba93c4b873",
+        "name": "Padel 9 - Infinity",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d27637f3-de25-459b-a039-1440f48611f2",
+        "name": "Padel 10 - Infinity ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "14801c83-5c1b-4d0f-8786-e3d6cd305460",
+        "name": "11 - Balcia Insurance Padel Tenisa Korts!",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1509564f-69c9-4183-bbe3-111ba1d4d303",
+        "name": "12 - Heineken® 0.0",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c942d03a-880c-4984-8867-64fd62a82fba",
+    "tenant_name": "JD Padel Outdoors",
+    "slug": "jd-padel-outdoors",
+    "address": {
+      "street": "Burtnieku iela 10",
+      "postal_code": "LV-2107",
+      "city": "Vīkuļi",
+      "sub_administrative_area": "Babīte parish",
+      "administrative_area": "Mārupe Municipality",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.9398506,
+        "lon": 23.8706171
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1780988218/pro/tenants/c942d03a-880c-4984-8867-64fd62a82fba/1780988217025.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Probably the best outdoor courts in the Latvia.",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "CONTACT_PHONE": "+371 29335830",
+      "FACILITY_CAFETERIA": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "1d0b6e75-e8a3-467e-af2b-ca685d95391a",
+        "name": "Court J",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3f32a25b-aa08-49c8-b312-7d204249ad15",
+        "name": "Court D",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "a775e8e2-2465-4215-a52d-c1c04b6aecf8",
+    "tenant_name": "Kvartāls 86",
+    "slug": "kvartals-86",
+    "address": {
+      "street": "Dzirnavu iela 12A",
+      "postal_code": "LV-5201",
+      "city": "Jekabpils",
+      "sub_administrative_area": "",
+      "administrative_area": "Jēkabpils Municipality",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.486093,
+        "lon": 25.884629
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1776685234/pro/tenants/a775e8e2-2465-4215-a52d-c1c04b6aecf8/1776685233738.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1776685275/pro/tenants/a775e8e2-2465-4215-a52d-c1c04b6aecf8/1776685274698.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1776685290/pro/tenants/a775e8e2-2465-4215-a52d-c1c04b6aecf8/1776685289874.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1776685306/pro/tenants/a775e8e2-2465-4215-a52d-c1c04b6aecf8/1776685305512.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "www.kvartals86.lv",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PLAYPARK": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+371 20418866",
+      "FACILITY_PRIVATE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "0132fe5a-9b5d-4493-b002-d871b8a397a3",
+        "name": "1 - Mežpils 2:2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "81788064-8324-48a0-a01a-aa9f558e798e",
+        "name": "2 - Elyndi 2:2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a4335868-ba0c-4355-bfe1-f22ac026dc7e",
+        "name": "3 - Iesācēju 2:2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "fcca59ac-24df-4fc6-84bd-75253426ddb1",
+        "name": "4 - Skweezy 2:2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bb4b6aa1-b24e-45eb-86a4-7f524c11ecca",
+        "name": " 5 - Marteks 1:1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a31d3416-bad9-4f06-98a8-c8959ee11420",
+        "name": "VESARO simulators",
+        "sport": "CRICKET",
+        "features": [
+          "indoor",
+          "artificial_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "20:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "CRICKET"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "1b484689-3b66-45d7-ac5b-a3cd321ee09a",
+    "tenant_name": "Lil Padel | Automated court",
+    "slug": "lil-padel",
+    "address": {
+      "street": "Liepajas iela 3D",
+      "postal_code": "LV-1002",
+      "city": "Riga",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.93315666,
+        "lon": 24.07283157
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1776410944/pro/tenants/1b484689-3b66-45d7-ac5b-a3cd321ee09a/1776410943887.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+371 28367124",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Meet Lil Padel, private indoor court designed for games or events.\n✔️ Almost 12m high ceiling\n✔️ LED lighting\n✔️ Fully indoor and private\n✔️ Smart access",
+      "WEBSITE_URL": "https://lilpadel.lv/accesscode"
+    },
+    "resources": [
+      {
+        "resourceId": "6ae8ad3d-9e8c-413e-b15e-6f06a4e99f21",
+        "name": "Purple Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "370f02b2-a920-474e-97db-89f3097f7af2",
+    "tenant_name": "PADEL by MyFitness",
+    "slug": "myfitness-padel-saga",
+    "address": {
+      "street": "Biķeru iela 4, Ulbroka, Stopiņu pagasts, Ropažu novads",
+      "postal_code": "LV-1079",
+      "city": "Riga",
+      "sub_administrative_area": "",
+      "administrative_area": "Riga",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.9506378,
+        "lon": 24.2518386
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1780469815/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780469814468.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470748/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470747137.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470750/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470749889.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470753/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470752368.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470755/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470754823.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470757/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470757231.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470760/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470759731.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470763/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470762813.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470767/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470766103.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470769/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470768955.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470772/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470771718.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470776/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470775237.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470778/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470778304.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470781/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470780987.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780470784/pro/tenants/370f02b2-a920-474e-97db-89f3097f7af2/1780470783625.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://www.myfitness.lv/padel/",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Enjoy your game in a modern and comfortable club environment!\nIndividuals from the age of 15 who are not a MyFitness member, a €5 entrance fee applies at the club. \nYou’ll have access not only to Padel courts but also to the gym, group classes (as long as places are available), and the sauna for relaxation.\nUse of the Padel courts and/or watching games is permitted for individuals from the age of 7. Children aged 7 to 14 must be accompanied by an adult.\n\nRacket and ball rental – €5. Balls can be purchased on-site.\n\nBy entering MyFitness Sāga, you agree to comply with the MyFitness Sports Clubs Internal Rules (https://www.myfitness.lv/en/documents/myfitness-sports-clubs-regulations/)\nYou can read the Padel Booking Rules here (https://www.myfitness.lv/en/documents/myfitness-padel-rules/)\nPadel by MyFitness WhatsApp group is available here ( https://chat.whatsapp.com/Iw702Z5f04PJnKQuVT0YHV) .",
+      "CONTACT_PHONE": "+371 67280178",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "47d5ba38-f54d-489b-8066-3d47938248ac"
+    },
+    "resources": [
+      {
+        "resourceId": "6d932a98-fa13-455a-8c09-bcbe2bd66ca7",
+        "name": "Padel 1 - NB! 5€ entry fee for non-members",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2a53eb11-15ed-4b4e-b6da-a7fcebfacbce",
+        "name": "Padel 2 - NB! 5€ entry fee for non-members",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "54eaf45b-0098-4c04-be51-5958379f2c12",
+        "name": "Padel 3 - NB! 5€ entry fee for non-members",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:30",
+        "closing_time": "20:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:30",
+        "closing_time": "20:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "4935bafa-e6c4-47a2-8ccb-fa86148911c4",
+    "tenant_name": "MyPadel",
+    "slug": "mypadel",
+    "address": {
+      "street": "Grenču iela 5",
+      "postal_code": "LV-1029",
+      "city": "Rīga",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Latvija",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.93463211,
+        "lon": 24.001295
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1777302147/pro/tenants/4935bafa-e6c4-47a2-8ccb-fa86148911c4/1777302146641.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780464469/pro/tenants/4935bafa-e6c4-47a2-8ccb-fa86148911c4/1780464468343.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780464472/pro/tenants/4935bafa-e6c4-47a2-8ccb-fa86148911c4/1780464470918.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780464538/pro/tenants/4935bafa-e6c4-47a2-8ccb-fa86148911c4/1780464537982.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780464541/pro/tenants/4935bafa-e6c4-47a2-8ccb-fa86148911c4/1780464541010.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780464547/pro/tenants/4935bafa-e6c4-47a2-8ccb-fa86148911c4/1780464546590.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1780464550/pro/tenants/4935bafa-e6c4-47a2-8ccb-fa86148911c4/1780464550106.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "A new padel club in Pārdaugava featuring **15 courts** and a cozy, thoughtfully designed environment.\nA great atmosphere, saunas in the locker rooms, water stations between the courts, a comfortable lounge area, and professional coaches.\nCreated for players’ well-being.",
+      "WEBSITE_URL": "https://mypadel.lv",
+      "CONTACT_PHONE": "+371 27333305",
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2657e57d-7aa1-4920-b0e9-1d371bac14da",
+        "name": "01 - RIX Freight Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "cb6e328a-d828-4374-a02d-1502f61f6bc3",
+        "name": "02 - Compensa Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "1104c982-77fb-44c3-9727-d85276f705af",
+        "name": "03 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "d41f6ed0-40a6-45cb-b865-c2aa7903f7f8",
+        "name": "04 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "fbe417c3-8a1f-4c8d-b8b2-cf166582ad4b",
+        "name": "05 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "7ca8bfb2-98fe-4635-94ec-92102f43f4a3",
+        "name": "06 - Perlage Panoramic Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3671f5ff-87ee-4cfc-a452-fc25f8128141",
+        "name": "07 - Villeroy & Boch | Ideal Standard Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "06db0f97-61a6-4a68-a06a-db2e4266a853",
+        "name": "08 - ProHelp Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a050a559-d1fc-4633-af63-b8ad015380b8",
+        "name": "09 - BlackBox Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "de2b2c8f-e0fb-485a-9def-01defa74f3a8",
+        "name": "10 - Single",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "86ecd946-18e5-4251-916e-7ed259f90d4a",
+        "name": "11 - Go Botanicals Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "766e0155-7fed-456f-a654-6b290f8a4a78",
+        "name": "12 - Ciemats Asteres Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a428bd47-842f-4b44-9d1d-0ca35b68f5f5",
+        "name": "13 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "ff526efd-83df-4dee-a9f3-47a72277731f",
+        "name": "14 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "24d5b82f-9d8c-4d11-8fdc-9c810e8a55a0",
+        "name": "15 - Single",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "790e8e1d-8f8a-4432-ab14-901946a499e9",
+    "tenant_name": "O-Padel",
+    "slug": "o-padel",
+    "address": {
+      "street": "Grostonas iela 6b ",
+      "postal_code": "LV-1013",
+      "city": "Riga",
+      "sub_administrative_area": "",
+      "administrative_area": "Riga",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.96729,
+        "lon": 24.12454
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1759395335/pro/tenants/790e8e1d-8f8a-4432-ab14-901946a499e9/1759395335089.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760617411/pro/tenants/790e8e1d-8f8a-4432-ab14-901946a499e9/1760617410179.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760617618/pro/tenants/790e8e1d-8f8a-4432-ab14-901946a499e9/1760617617662.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760617620/pro/tenants/790e8e1d-8f8a-4432-ab14-901946a499e9/1760617619708.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760617623/pro/tenants/790e8e1d-8f8a-4432-ab14-901946a499e9/1760617622261.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760617627/pro/tenants/790e8e1d-8f8a-4432-ab14-901946a499e9/1760617626639.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760617629/pro/tenants/790e8e1d-8f8a-4432-ab14-901946a499e9/1760617628792.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "5a9a6a3e-7180-4b6a-8d19-4b010116f003;7448a435-fde3-47d4-a5fe-71f0936d0ea2;e0882d48-1755-457a-95a8-04a55d7b1472;8223262b-a72f-4b7c-b441-0f6416e74f5d;6d1aedb5-e2c8-4107-b414-1c1a5823752b;adc613e5-f861-4901-965b-a870d168e561",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "New indoor padel club located in the heart of Riga at Rimi Olympic Centre.\nWe offer 4 double courts and 1 single court, all with premium turf and full glass walls for the best playing experience.\nOpen daily, monday to sunday, 7:00AM -23:00PM — easy online booking on playtomic.io \nCome play at one of the top padel spots in Riga!",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+371 20256800",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "WEBSITE_URL": "https://www.instagram.com/o_padel_?igsh=MTI4ejMyenQybW1xaw==",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "9356851f-24a5-46c6-9415-ee0db6d41f89",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "faafe0b6-f9ae-4cb7-afbb-0a90248fae20",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "00035db5-1107-47ea-b116-42fdec517d98",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "68f54411-4f7a-40d6-b323-e54acd80f88a",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9c1447e0-0750-423a-901a-2e9b3ef4737b",
+        "name": "Padel 5 - Single",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "2019682e-b977-4db3-bc88-214383ceba84",
+    "tenant_name": "OpenPadel Ādaži",
+    "slug": "openpadel-adazi",
+    "address": {
+      "street": "Gaujas iela 26",
+      "postal_code": "LV-2164",
+      "city": "Ādaži",
+      "sub_administrative_area": "",
+      "administrative_area": "Ādaži Municipality",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 57.0793602,
+        "lon": 24.3353569
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1779174770/pro/tenants/2019682e-b977-4db3-bc88-214383ceba84/1779174769563.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781545032/pro/tenants/2019682e-b977-4db3-bc88-214383ceba84/1781545031265.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781545072/pro/tenants/2019682e-b977-4db3-bc88-214383ceba84/1781545071950.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "DETAILS_PAGE_DESCRIPTION": "## **OpenPadel Ādaži, Latvija — Āra padel laukumi**\nPirmie profesionālie āra padel laukumi ar modernu aprīkojumu Ādažos. Moderna infrastruktūra, vienkārša rezervācija un draudzīga atmosfēra.",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://openpadeladazi.lv",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "CONTACT_PHONE": "+371 29112240",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "308a1b7d-624a-45d5-b232-4ecd84d45937",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "43548ff6-98a8-4065-918c-c5cf616db182",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "82d16592-6a03-43f2-94cf-200a4d126279",
+    "tenant_name": "Padel 76 │ Valmiera",
+    "slug": "padel-76-valmiera",
+    "address": {
+      "street": "Matīšu šoseja 9 ",
+      "postal_code": "LV-4201",
+      "city": "Valmiera",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 57.543,
+        "lon": 25.393401
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1775029442/pro/tenants/82d16592-6a03-43f2-94cf-200a4d126279/1775029442197.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "false",
+      "CONTACT_PHONE": "+371 26356022",
+      "DETAILS_PAGE_DESCRIPTION": "Padel 76 Valmierā ir izcila vieta padela spēlētājiem ar kvalitatīvu laukumu, draudzīgu vidi un lielisku spēles pieredzi. Trenējies, sacenties un satiec domubiedrus – pievienojies padela kustībai!",
+      "WEBSITE_URL": "www.padel76.lv",
+      "FACILITY_WIFI": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "f8de0b10-1940-4c72-b27a-92b765dca258",
+        "name": "PADEL 76 │VALMIERA │PADELHAUS",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ad2eb24f-938a-4a48-b842-b7b51ddea23c",
+    "tenant_name": "Padel Ādaži",
+    "slug": "padel-adazi",
+    "address": {
+      "street": "Pirmā iela 42",
+      "postal_code": "LV-2164",
+      "city": "Ādaži",
+      "sub_administrative_area": "Ādažu pagasts",
+      "administrative_area": "Ādažu novads",
+      "country": "Latvija",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 57.08208775,
+        "lon": 24.32179875
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1716657525/pro/tenants/ad2eb24f-938a-4a48-b842-b7b51ddea23c/1716657524452.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1716657536/pro/tenants/ad2eb24f-938a-4a48-b842-b7b51ddea23c/1716657535099.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "https://padeladazi.lv/",
+      "FACILITY_STORE": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "false",
+      "CONTACT_PHONE": "+371 27800144",
+      "DETAILS_PAGE_DESCRIPTION": ""
+    },
+    "resources": [
+      {
+        "resourceId": "fef9de9d-07fd-41e1-9a75-fb2801ce7f35",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a216948f-1a9d-4781-9458-a69ad4994335",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "e5f2bf97-805f-4c5d-a696-6933a548abc2",
+    "tenant_name": "Padel Club Riga - K9",
+    "slug": "padel-club-riga-k9",
+    "address": {
+      "street": "Ķīsezera iela 9",
+      "postal_code": "1026",
+      "city": "Rīga",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.98742926,
+        "lon": 24.16353947
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1726294334/pro/tenants/e5f2bf97-805f-4c5d-a696-6933a548abc2/1726294334125.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1726294352/pro/tenants/e5f2bf97-805f-4c5d-a696-6933a548abc2/1726294351528.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1726294402/pro/tenants/e5f2bf97-805f-4c5d-a696-6933a548abc2/1726294402057.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736441125/pro/tenants/e5f2bf97-805f-4c5d-a696-6933a548abc2/1736441125207.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1752850605/pro/tenants/e5f2bf97-805f-4c5d-a696-6933a548abc2/1752850604429.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "www.padel.lv",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "6 state of the art Indoor Padel courts, 2 panorama outdoor courts. 3 indoor golf simulators. \nAuto stāvvietu izmaiņas K9!\nSākot no šodien (Ceturtdien 25.06) nomainīs bruģas K9 stāvvietā. \nKamēr notiek remonta darbi, varat A/M novietot Europark stāvvieta Ķīšezera iela 11 BEZ MAKSAS! Neko nav jāatzīmē, neko appā nav jareģistrē.",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "84941381-90d9-4d3b-8fc0-d942ff50a581;222ed434-d9a1-4a34-a374-babd7a4a2c24;ede78a5e-e186-4100-96c4-c2a62886c419;c4a2314d-36c0-40c1-ad1e-558d32694961;9abc42c8-1061-4234-a26f-e40fb5ff1c26",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "CONTACT_PHONE": "+371 26553324"
+    },
+    "resources": [
+      {
+        "resourceId": "c305ff06-20a1-4bc4-b6b3-3a93a92da7f3",
+        "name": "Lielvārdes Alus, #1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1ddb0417-2ec4-40c4-b116-fac97d46f80e",
+        "name": "Compensa Insurance, #2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3327577f-3f8e-4dee-87b6-26ac6e5b1cb6",
+        "name": "Siltumsūknis.lv, #3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "576509ba-35b0-43c9-b97c-4dfd2d8349bd",
+        "name": "Europcar, #4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "87ddc381-af7d-4ac4-85d7-6a410dcf072c",
+        "name": "Oysho, #5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3bf17bfd-65a5-445d-9319-dce04ac194ec",
+        "name": "Padel Concept #6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "977ab300-32e7-4b17-a3a1-b23eb5e4396f",
+        "name": "Outdoor 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "24da4179-d4d9-464c-85fe-99b549b50221",
+        "name": "Outdoor 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:30",
+        "closing_time": "20:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "86b6066a-361f-4241-87a2-4114ef284b94",
+    "tenant_name": "Padel Club Riga -  Beach Arena",
+    "slug": "padel-club-riga-beach-arena",
+    "address": {
+      "street": "Ganību Dambis 20a",
+      "postal_code": "1045",
+      "city": "Rīga",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.9751505,
+        "lon": 24.1155441
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1779096436/pro/tenants/86b6066a-361f-4241-87a2-4114ef284b94/1779096435939.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "a339421f-0df1-45c0-8956-4a102b653e21;f18c990b-ef8f-4a90-8192-f353979a1f6c;fdfebfd2-500d-4dca-9f70-650ae4e602d9;644bd279-4cf8-4b3e-b407-9c1669e7e1aa;9e21b8d4-65d1-4704-9f38-0a7b7d952508",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Padel Club Riga Ganību dambis - 2 outdoor courts!\nThe Club operates online, there are no staff on site. No locker rooms or toilets on site\n**No rental rackets available************!************! **Bring your own balls. Lights are not connected yet. \nAll payments are via Playtomic or bank transfer. \nNo cash payments\nPlease contact our admin if you have any questions: 26553324, info@padel.lv\nFor trainings and tournaments call 26553324",
+      "FACILITY_WIFI": "false",
+      "CONTACT_PHONE": "+371 26553324",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "padel.lv",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_SNACK_BAR": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "5603bbea-7e10-4bb5-8d4f-c6c2e63bf97b",
+        "name": "Outdoor 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "875f3a82-2d2a-44a5-b5a0-ca47408cdf3a",
+        "name": "Outdoor 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c67f58a5-f063-4431-832b-3235c0bfc828",
+    "tenant_name": "Padel Sigulda",
+    "slug": "padel-sigulda",
+    "address": {
+      "street": "O.Kalpaka 2a, Sigulda",
+      "postal_code": "LV-2150",
+      "city": "Sigulda",
+      "sub_administrative_area": "Sigulda pilsēta",
+      "administrative_area": "Sigulda Municipality",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 57.1586378,
+        "lon": 24.85356154
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1781179578/pro/tenants/c67f58a5-f063-4431-832b-3235c0bfc828/1781179577472.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781179601/pro/tenants/c67f58a5-f063-4431-832b-3235c0bfc828/1781179600979.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Beautiful court in the middle of the Sigulda scenery. Come and play on our Mondo turf and enjoy Sigulda in the sporty manner.",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "WEBSITE_URL": "https://padelsigulda.lv",
+      "CONTACT_PHONE": "+371 20911172",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_DISABLED_ACCESS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "373a20f2-f5a7-4a07-9c60-7b20d1aaddee",
+        "name": "Sigulda Padel Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "4049c1f8-090a-4dcd-8175-7426860c1345",
+    "tenant_name": "Padelstar Teika",
+    "slug": "padelstar-teika",
+    "address": {
+      "street": "Brīvības gatve 201, k-4",
+      "postal_code": "LV-1039",
+      "city": "Riga",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.97346316,
+        "lon": 24.160106
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1770155878/pro/tenants/4049c1f8-090a-4dcd-8175-7426860c1345/1770155877688.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1770155898/pro/tenants/4049c1f8-090a-4dcd-8175-7426860c1345/1770155897550.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1770155918/pro/tenants/4049c1f8-090a-4dcd-8175-7426860c1345/1770155917790.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "WEBSITE_URL": "",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "CONTACT_PHONE": "+371 28775779",
+      "DETAILS_PAGE_DESCRIPTION": "Brand new padel club in Teika district. \nParking for clents is FREE for 3 hours (need to register at the reception). ",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f5fed2a8-8c60-4cd4-959c-d52ec62e2861",
+        "name": "Central Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2381775b-d3a8-4254-ac8e-142f728c0fae",
+        "name": "#1 MEŽPILS Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "43abe730-7569-431f-8d15-75e09bf74382",
+        "name": "#2 HEPSOR Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a9bf5d59-a610-4481-bb45-fea12dfd0354",
+        "name": "#3 SYNTX.AI Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bb76b71b-5fd1-404f-920c-3e092d14b23c",
+        "name": "#4 NIKE Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "399f180b-591e-44af-85ae-99640bfb6c8a",
+        "name": "#5 NABEGHLAVI Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5fb2abf6-cca3-4619-8070-c79c9ec30202",
+        "name": "#6 MINI COOPER Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "1d71d830-484d-4862-81ac-44d3ca143af5",
+    "tenant_name": "RN PADEL CLUB",
+    "slug": "rn-padel-club",
+    "address": {
+      "street": "Brīvības iela 2C",
+      "postal_code": "LV-5201",
+      "city": "Jekabpils",
+      "sub_administrative_area": "",
+      "administrative_area": "Jēkabpils Municipality",
+      "country": "Latvia",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.48768387,
+        "lon": 25.88787596
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1751965471/pro/tenants/1d71d830-484d-4862-81ac-44d3ca143af5/1751965471137.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751965474/pro/tenants/1d71d830-484d-4862-81ac-44d3ca143af5/1751965473129.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751966424/pro/tenants/1d71d830-484d-4862-81ac-44d3ca143af5/1751966423560.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751966425/pro/tenants/1d71d830-484d-4862-81ac-44d3ca143af5/1751966425161.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751966428/pro/tenants/1d71d830-484d-4862-81ac-44d3ca143af5/1751966428250.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751966430/pro/tenants/1d71d830-484d-4862-81ac-44d3ca143af5/1751966430009.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1751968750/pro/tenants/1d71d830-484d-4862-81ac-44d3ca143af5/1751968749721.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+371 22446000",
+      "DETAILS_PAGE_DESCRIPTION": "RN PADEL CLUB piedāvā 2 modernus padel tenisa kortus, kā arī atpūtas zonu, kur sporta entuziasti, ģimenes un draugi var satikties, baudīt aktīvu atpūtu un piederību kopienai. ",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://www.instagram.com/rn_padel_club/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "28ba4ad3-6b49-4faf-b66f-bb0ac7f09302",
+        "name": "X3000 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a3f13968-174b-4909-bca6-9c90ef015654",
+        "name": "Cido Hydrate",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "29c881ae-e285-472f-8aac-fa0f84e4d8ff",
+        "name": "Āra korts 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "20:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "10:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "9bbd63c1-0af9-443e-ab62-f704e589d8f7",
+    "tenant_name": "TOSS Padel Club",
+    "slug": "toss-padel",
+    "address": {
+      "street": "Ķengaraga iela 6, Riga, Latvia, Latvija",
+      "postal_code": "LV-1063",
+      "city": "Rīga",
+      "sub_administrative_area": "",
+      "administrative_area": "",
+      "country": "Латвия",
+      "country_code": "LV",
+      "coordinate": {
+        "lat": 56.91755086,
+        "lon": 24.16916897
+      },
+      "timezone": "Europe/Riga"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1762517083/pro/tenants/9bbd63c1-0af9-443e-ab62-f704e589d8f7/1762517082576.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1762517085/pro/tenants/9bbd63c1-0af9-443e-ab62-f704e589d8f7/1762517084533.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1762517091/pro/tenants/9bbd63c1-0af9-443e-ab62-f704e589d8f7/1762517090551.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1762517387/pro/tenants/9bbd63c1-0af9-443e-ab62-f704e589d8f7/1762517387112.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1762517389/pro/tenants/9bbd63c1-0af9-443e-ab62-f704e589d8f7/1762517388789.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1762517394/pro/tenants/9bbd63c1-0af9-443e-ab62-f704e589d8f7/1762517393599.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "DETAILS_PAGE_DESCRIPTION": "New modern indoor padel club in Riga. Free parking, full kitchen and bar.",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://www.facebook.com/TossBoulingaHalle",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "cf976002-192a-4233-be14-d21be8a57b45;e5f8c03b-037a-4863-90ea-85fa062acbe6;a665da3e-1a13-4e6a-90a6-7cef3b4ef0c3;e5ea8357-c6f0-41fb-8c3e-ebd9b4ad8244",
+      "FACILITY_LOCKERS": "true",
+      "CONTACT_PHONE": "+371 27023023",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "5f2d82aa-78d7-4344-a213-c0b262d3ce90",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c1514557-1c47-4ecc-8072-8768089741ca",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "aaa3832a-d432-45ac-ac1f-6c7ab2cdac61",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:30",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  }
+]

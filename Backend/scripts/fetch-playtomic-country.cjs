@@ -1,14 +1,12 @@
 #!/usr/bin/env node
 /**
- * Fetch Playtomic tenants for a country → loader JSON.
- *
- * 1) Prefer public API (when CloudFront WAF allows)
- * 2) Fallback: playtomic.com sitemap + /clubs/{slug} RSC tenant blob
+ * Fetch Playtomic tenants → loader JSON (API if open, else website sitemap).
  *
  * Usage:
- *   node Backend/scripts/fetch-playtomic-country.cjs GB uk-clubs.json
- *   node Backend/scripts/fetch-playtomic-country.cjs ES spain-clubs.json --force-web
  *   node Backend/scripts/fetch-playtomic-country.cjs --probe
+ *   node Backend/scripts/fetch-playtomic-country.cjs GB
+ *   node Backend/scripts/fetch-playtomic-country.cjs AT,IE,GB,PL --force-web
+ *   node Backend/scripts/fetch-playtomic-country.cjs AT,IE --out-dir /tmp/pt
  */
 const fs = require('fs');
 const path = require('path');
@@ -18,10 +16,27 @@ const { URL } = require('url');
 const API_BASE = 'https://api.playtomic.io/v1/tenants';
 const SITE = 'https://playtomic.com';
 const PAGE_SIZE = 100;
-const WEB_CONCURRENCY = 4;
-const WEB_DELAY_MS = 120;
+const WEB_CONCURRENCY = Number(process.env.WEB_CONCURRENCY || 6);
+const WEB_DELAY_MS = Number(process.env.WEB_DELAY_MS || 80);
 const UA =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+
+const DEFAULT_NEW_COUNTRIES = [
+  'AT',
+  'IE',
+  'GB',
+  'PL',
+  'LT',
+  'TR',
+  'EE',
+  'LV',
+  'MD',
+  'BG',
+  'SI',
+  'SK',
+  'MK',
+  'GR',
+];
 
 function log(msg) {
   console.log(msg);
@@ -47,12 +62,10 @@ function httpGet(url, { headers = {}, timeoutMs = 60000 } = {}) {
         const chunks = [];
         res.on('data', (c) => chunks.push(c));
         res.on('end', () => {
-          const buf = Buffer.concat(chunks);
           resolve({
             status: res.statusCode || 0,
             headers: res.headers,
-            body: buf.toString('utf8'),
-            buf,
+            body: Buffer.concat(chunks).toString('utf8'),
           });
         });
       }
@@ -69,8 +82,14 @@ function httpGet(url, { headers = {}, timeoutMs = 60000 } = {}) {
 async function probeApi() {
   const url = `${API_BASE}?playtomic_status=ACTIVE&with_properties=true&size=1&page=0&country_code=ES`;
   const res = await httpGet(url, { headers: { Accept: 'application/json' } });
-  const ok = res.status === 200 && (res.body.trim().startsWith('[') || res.body.trim().startsWith('{'));
-  return { ok, status: res.status, snippet: res.body.slice(0, 120), total: res.headers.total || res.headers.Total };
+  const ok =
+    res.status === 200 && (res.body.trim().startsWith('[') || res.body.trim().startsWith('{'));
+  return {
+    ok,
+    status: res.status,
+    snippet: res.body.slice(0, 120),
+    total: res.headers.total || res.headers.Total,
+  };
 }
 
 async function fetchApiCountry(countryCode) {
@@ -82,15 +101,13 @@ async function fetchApiCountry(countryCode) {
       `${API_BASE}?playtomic_status=ACTIVE&with_properties=true` +
       `&size=${PAGE_SIZE}&page=${page}&country_code=${encodeURIComponent(countryCode)}`;
     const res = await httpGet(url, { headers: { Accept: 'application/json' } });
-    if (res.status !== 200) {
-      throw new Error(`API HTTP ${res.status}: ${res.body.slice(0, 160)}`);
-    }
+    if (res.status !== 200) throw new Error(`API HTTP ${res.status}: ${res.body.slice(0, 160)}`);
     const data = JSON.parse(res.body);
     if (!Array.isArray(data)) throw new Error('API response is not an array');
     clubs.push(...data);
     const total = parseInt(String(res.headers.total || res.headers.Total || '0'), 10);
     if (total > 0) totalPages = Math.ceil(total / PAGE_SIZE);
-    log(`[api] page ${page + 1}/${totalPages || '?'} +${data.length} have=${clubs.length} total=${total || '?'}`);
+    log(`[api ${countryCode}] page ${page + 1}/${totalPages || '?'} +${data.length} have=${clubs.length}`);
     page += 1;
     if (data.length === 0 || (total > 0 && page >= totalPages)) break;
     if (data.length < PAGE_SIZE && !total) break;
@@ -163,7 +180,7 @@ function extractTenantFromClubHtml(html) {
       const tenant = JSON.parse(un.slice(start, end));
       if (tenant && tenant.tenant_id && tenant.tenant_name && tenant.address) return tenant;
     } catch {
-      // keep looking
+      // continue
     }
   }
   return null;
@@ -192,11 +209,12 @@ function normalizeTenant(t) {
   };
 }
 
-async function fetchWebCountry(countryCode) {
-  const want = countryCode.toUpperCase();
+async function fetchWebCountries(countryCodes) {
+  const want = new Set(countryCodes.map((c) => c.toUpperCase()));
   const slugs = await listClubSlugsFromSitemap();
-  log(`[web] ${slugs.length} club slugs; filtering country_code=${want}`);
-  const out = [];
+  log(`[web] ${slugs.length} slugs; keep ${[...want].join(',')}`);
+  /** @type {Record<string, any[]>} */
+  const byCc = Object.fromEntries([...want].map((c) => [c, []]));
   let done = 0;
   let errors = 0;
   let idx = 0;
@@ -214,7 +232,7 @@ async function fetchWebCountry(countryCode) {
           const tenant = extractTenantFromClubHtml(res.body);
           if (tenant) {
             const cc = String(tenant.address?.country_code || '').toUpperCase();
-            if (cc === want) out.push(normalizeTenant(tenant));
+            if (want.has(cc)) byCc[cc].push(normalizeTenant(tenant));
           } else {
             errors++;
           }
@@ -223,15 +241,24 @@ async function fetchWebCountry(countryCode) {
         errors++;
       }
       done++;
-      if (done % 100 === 0 || done === slugs.length) {
-        log(`[web] ${done}/${slugs.length} matched=${out.length} errors=${errors}`);
+      if (done % 200 === 0 || done === slugs.length) {
+        const matched = Object.values(byCc).reduce((n, a) => n + a.length, 0);
+        log(`[web] ${done}/${slugs.length} matched=${matched} errors=${errors}`);
       }
       await delay(WEB_DELAY_MS);
     }
   }
 
   await Promise.all(Array.from({ length: WEB_CONCURRENCY }, () => worker()));
-  return out;
+  return byCc;
+}
+
+function dedupeByTenantId(clubs) {
+  const byId = new Map();
+  for (const c of clubs) {
+    if (c?.tenant_id) byId.set(c.tenant_id, c);
+  }
+  return [...byId.values()];
 }
 
 async function main() {
@@ -243,40 +270,47 @@ async function main() {
   }
 
   const forceWeb = args.includes('--force-web');
-  const positional = args.filter((a) => !a.startsWith('-'));
-  const countryCode = (positional[0] || '').toUpperCase();
-  const outName = positional[1] || `${countryCode.toLowerCase()}-clubs.json`;
-  if (!/^[A-Z]{2}$/.test(countryCode)) {
-    console.error('Usage: node fetch-playtomic-country.cjs <CC> [out.json] [--force-web|--probe]');
+  const outDirFlag = args.findIndex((a) => a === '--out-dir');
+  const outDir =
+    outDirFlag >= 0 && args[outDirFlag + 1]
+      ? args[outDirFlag + 1]
+      : path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const positional = args.filter((a, i) => !a.startsWith('-') && (outDirFlag < 0 || i !== outDirFlag + 1));
+  const codesRaw = (positional[0] || DEFAULT_NEW_COUNTRIES.join(',')).toUpperCase();
+  const codes = codesRaw === 'NEW' ? [...DEFAULT_NEW_COUNTRIES] : codesRaw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (!codes.length || codes.some((c) => !/^[A-Z]{2}$/.test(c))) {
+    console.error('Usage: node fetch-playtomic-country.cjs [CC,CC|NEW] [--force-web] [--out-dir DIR] [--probe]');
     process.exit(2);
   }
 
-  const outDir = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
-  fs.mkdirSync(outDir, { recursive: true });
-  const outPath = path.isAbsolute(outName) ? outName : path.join(outDir, outName);
-
-  let clubs;
+  let byCc = null;
   let source = 'api';
   if (!forceWeb) {
     const p = await probeApi();
     log(`[probe] api ok=${p.ok} status=${p.status}`);
     if (p.ok) {
-      clubs = await fetchApiCountry(countryCode);
+      byCc = {};
+      for (const cc of codes) {
+        byCc[cc] = await fetchApiCountry(cc);
+      }
     }
   }
-  if (!clubs) {
+  if (!byCc) {
     source = 'web-sitemap';
-    clubs = await fetchWebCountry(countryCode);
+    byCc = await fetchWebCountries(codes);
   }
 
-  // de-dupe by tenant_id
-  const byId = new Map();
-  for (const c of clubs) {
-    if (c?.tenant_id) byId.set(c.tenant_id, c);
+  const summary = {};
+  for (const cc of codes) {
+    const rows = dedupeByTenantId(byCc[cc] || []);
+    const outPath = path.join(outDir, `${cc.toLowerCase()}-playtomic-clubs.json`);
+    fs.writeFileSync(outPath, JSON.stringify(rows, null, 2));
+    summary[cc] = { n: rows.length, path: outPath };
+    log(`[done] source=${source} ${cc}=${rows.length} → ${outPath}`);
   }
-  const rows = [...byId.values()];
-  fs.writeFileSync(outPath, JSON.stringify(rows, null, 2));
-  log(`[done] source=${source} country=${countryCode} clubs=${rows.length} → ${outPath}`);
+  log(`[summary] ${JSON.stringify(summary)}`);
 }
 
 main().catch((e) => {

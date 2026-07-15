@@ -1,0 +1,71 @@
+[
+  {
+    "tenant_id": "2efbf8b9-2406-4975-8faf-64aedae14270",
+    "tenant_name": "Aurial Padel Bratislava",
+    "slug": "arena-padel-bratislava",
+    "address": {
+      "street": "Bajkalská 7",
+      "postal_code": "831 02",
+      "city": "Bratislava",
+      "sub_administrative_area": "Bratislava III",
+      "administrative_area": "Bratislavský kraj",
+      "country": "Slovensko",
+      "country_code": "SK",
+      "coordinate": {
+        "lat": 48.21622568,
+        "lon": 17.17570354
+      },
+      "timezone": "Europe/Bratislava"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1770389308/pro/tenants/2efbf8b9-2406-4975-8faf-64aedae14270/1770389307986.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "CONTACT_PHONE": "+421 907900234",
+      "DETAILS_PAGE_DESCRIPTION": "The largest operator of Spanish padel clubs — Aurial Padel — is coming to Slovakia too! Experience the atmosphere of today’s fastest-growing sport in Central Europe’s largest padel hall! Are you ready for it?\nWelcome to the National Padel Center of Slovakia!",
+      "WEBSITE_URL": "https://aurialpadel.sk",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "IS_CAB_MEMBER": "false"
+    },
+    "resources": [],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [],
+    "description": ""
+  }
+]

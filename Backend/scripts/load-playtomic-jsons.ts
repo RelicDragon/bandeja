@@ -20,6 +20,8 @@ import { mergeClubSports, rebuildClubSportsFromCourts } from '../src/shared/club
 
 const JSON_DIR = path.join(__dirname, '..', 'additions', 'playtomic', 'jsons');
 const DEFAULT_TIMEZONE = 'Europe/Paris';
+const SKIP_CITY_GROUP = process.env.SKIP_CITY_GROUP === '1';
+const SKIP_CITY_REFRESH = process.env.SKIP_CITY_REFRESH === '1';
 
 interface PtAddress {
   street?: string;
@@ -50,6 +52,7 @@ interface PtClub {
   opening_hours?: Record<string, { opening_time?: string; closing_time?: string }>;
   sport_ids?: string[];
   description?: string;
+  images?: string[];
 }
 
 export type LoadPlaytomicFileStats = {
@@ -108,7 +111,13 @@ async function getOrCreateCity(
     },
     select: { id: true },
   });
-  await CityGroupService.ensureCityGroupExists(city.id);
+  if (!SKIP_CITY_GROUP) {
+    try {
+      await CityGroupService.ensureCityGroupExists(city.id);
+    } catch (e) {
+      console.warn(`[load-playtomic] cityGroup skip for ${name}:`, (e as Error)?.message || e);
+    }
+  }
   return { id: city.id, created: true };
 }
 
@@ -124,16 +133,31 @@ async function getOrCreateClub(
   const phone = (props.CONTACT_PHONE || '').trim() || null;
   const website = (props.WEBSITE_URL || '').trim() || null;
   const description = (pt.description || '').trim() || null;
+  const avatar =
+    Array.isArray(pt.images) && typeof pt.images[0] === 'string' && pt.images[0].trim()
+      ? pt.images[0].trim()
+      : null;
   const ptMeta = JSON.parse(JSON.stringify(pt)) as Prisma.InputJsonValue;
+  const lat = coord != null ? Number(coord.lat) : null;
+  const lon = coord != null ? Number(coord.lon) : null;
 
   const existing = await prisma.club.findFirst({
     where: { cityId, normalizedName: normalized },
-    select: { id: true },
+    select: { id: true, avatar: true },
   });
   if (existing) {
     await prisma.club.update({
       where: { id: existing.id },
-      data: { ptMeta } as Prisma.ClubUncheckedUpdateInput,
+      data: {
+        ptMeta,
+        address,
+        description,
+        phone,
+        website,
+        latitude: lat,
+        longitude: lon,
+        ...(avatar && !existing.avatar ? { avatar } : {}),
+      } as Prisma.ClubUncheckedUpdateInput,
     });
     return { id: existing.id, created: false };
   }
@@ -147,8 +171,10 @@ async function getOrCreateClub(
       description,
       phone,
       website,
-      latitude: coord != null ? Number(coord.lat) : null,
-      longitude: coord != null ? Number(coord.lon) : null,
+      avatar,
+      latitude: lat,
+      longitude: lon,
+      sports: ['PADEL'],
       ptMeta,
     } as Prisma.ClubUncheckedCreateInput,
     select: { id: true },
@@ -359,7 +385,8 @@ async function main(): Promise<void> {
     );
   }
 
-  const citiesUpdated = await refreshAllCitiesFromClubs();
+  const citiesUpdated = SKIP_CITY_REFRESH ? 0 : await refreshAllCitiesFromClubs();
+  if (SKIP_CITY_REFRESH) console.log('[load-playtomic] skipping refreshAllCitiesFromClubs (SKIP_CITY_REFRESH=1)');
   console.log(
     `[load-playtomic] Done. clubsProcessed: ${totalClubs}, skipped: ${totalSkipped}, citiesCreated: ${totalCities}, clubsCreated: ${totalClubsCreated}, courtsCreated: ${totalCourts}, courtsSkippedUnsupported: ${totalCourtsSkippedUnsupported}, citiesRefreshed: ${citiesUpdated}`
   );

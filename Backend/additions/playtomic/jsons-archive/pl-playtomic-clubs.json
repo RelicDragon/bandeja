@@ -1,0 +1,5163 @@
+[
+  {
+    "tenant_id": "d949461f-fff4-4c1d-a801-ad86b80e323a",
+    "tenant_name": "Baltic Padel Club",
+    "slug": "baltic-padel-club",
+    "address": {
+      "street": "Hutnicza 5",
+      "postal_code": "81-061",
+      "city": "Gdynia",
+      "sub_administrative_area": "Powiat Gdynia",
+      "administrative_area": "Województwo pomorskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 54.5401463,
+        "lon": 18.4890879
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1781862141/pro/tenants/d949461f-fff4-4c1d-a801-ad86b80e323a/1781862141007.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781862146/pro/tenants/d949461f-fff4-4c1d-a801-ad86b80e323a/1781862145876.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781862150/pro/tenants/d949461f-fff4-4c1d-a801-ad86b80e323a/1781862149318.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781862155/pro/tenants/d949461f-fff4-4c1d-a801-ad86b80e323a/1781862154274.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781862159/pro/tenants/d949461f-fff4-4c1d-a801-ad86b80e323a/1781862158458.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781862162/pro/tenants/d949461f-fff4-4c1d-a801-ad86b80e323a/1781862161895.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781862166/pro/tenants/d949461f-fff4-4c1d-a801-ad86b80e323a/1781862165323.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1781862169/pro/tenants/d949461f-fff4-4c1d-a801-ad86b80e323a/1781862168504.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.balticpadelclub.pl/",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+48 889241736",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "7ef59919-d8c3-413a-98e2-0c80455ed5af",
+        "name": "5 - Full Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8fd28f67-a485-45e4-b92a-254d07ab7670",
+        "name": "6 - Full Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0b0de399-9706-439b-8fd6-0c23d4777adc",
+        "name": "9 - Baby Kort - Dla dzieci do lat 10.",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "828ccdaf-99e0-4989-86fb-a313529edc58",
+    "tenant_name": "City Padel Toruń",
+    "slug": "city-padel-torun",
+    "address": {
+      "street": "Równinna 28",
+      "postal_code": "87-100",
+      "city": "Toruń",
+      "sub_administrative_area": "Powiat Toruń",
+      "administrative_area": "Województwo kujawsko-pomorskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 53.0435316,
+        "lon": 18.6507168
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1762509120/pro/tenants/828ccdaf-99e0-4989-86fb-a313529edc58/1762509119850.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "http://www.citypadel.pl/",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Siłownia + Fitness\nStrefa Lounge\nStrefa Bawialni\nStrefa Core Food",
+      "CONTACT_PHONE": "+48 885451596",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "f0f777d5-5fb7-4841-afb9-69c897d02106;58b2630b-ca42-4c95-8882-40932b7463b1"
+    },
+    "resources": [
+      {
+        "resourceId": "9563ea96-dada-4b53-8cbd-17f3b79766ed",
+        "name": "1. LEMBUD court ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5fc26bc3-bd16-4544-ad1d-a744be750191",
+        "name": "2. ZEBRANO court ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e3d87ab3-6c90-4970-bece-804434004554",
+        "name": "3. PRENATALIUM pink court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8a2669b8-0115-47ee-9116-beea86b97207",
+        "name": "4. SWIMER court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "fedb5f77-896b-4431-a247-c7be382a3e6b",
+        "name": "5. INVEST-TECH court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d6de2792-b555-4fcc-a6cc-9c8e677cf651",
+        "name": "6. OUTDOOR court ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:30",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "4c0b171f-8e62-48a2-8fdc-46fb5b1073e9",
+    "tenant_name": "Fabryka Energii",
+    "slug": "fabryka-energii",
+    "address": {
+      "street": "Łukasińskiego 112",
+      "postal_code": "71-215",
+      "city": "Szczecin",
+      "sub_administrative_area": "Szczecin",
+      "administrative_area": "Zachodniopomorskie",
+      "country": "Poland",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 53.43871017,
+        "lon": 14.48045646
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1666804799/pro/tenants/4c0b171f-8e62-48a2-8fdc-46fb5b1073e9/1666804797883.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1666805274/pro/tenants/4c0b171f-8e62-48a2-8fdc-46fb5b1073e9/1666805273388.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "WEBSITE_URL": "http://www.fabryka-energii.com.pl",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Pierwsze 3 korty do padla w Szczecinie są w Fabryce Energii przy ul. Łukasińskiego 112 w Szczecinie, gdzie dodatkowo znajduje się kort tenisowy, 7 kortów do badmintona i 8 do tenisa stołowego. Szczegóły, rezerwacje na stronie www.fabryka-energii.com.pl.\nOrganizujemy turnieje (w tym \"mexicano\"), zawody, treningi, warsztaty sportowe, imprezy firmowe.\nNa miejscu wypożyczania sprzętu, sklep sportowy z rakietami, piłkami, obuwiem, odzieżą i akcesoriami.\nW ośrodku są szatnie, prysznice, sauna, obszerny parking\n\nFirst 3 padel courts in Szczecin are located in Fabryka Energii (Energy Factory) sport facility with 7 badminton courts, tennis court and 8 table tennis. Look at www.fabryka-energii.com.pl  \nWe started padel end of 2021 so now we have a lot of skilled players. Every week we organize \"Mexicano\" competition, every month tournaments. Convenient parking space, good location. ",
+      "CONTACT_PHONE": "+48 502758431"
+    },
+    "resources": [],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [],
+    "description": ""
+  },
+  {
+    "tenant_id": "cf58118a-353b-4ec1-a51e-ea52acc99063",
+    "tenant_name": "Fiesta Padel",
+    "slug": "fiesta-padel",
+    "address": {
+      "street": "Kozanowska 69",
+      "postal_code": "54-152",
+      "city": "Wrocław",
+      "sub_administrative_area": "Wrocław",
+      "administrative_area": "Dolnośląskie",
+      "country": "Poland",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 51.13946108,
+        "lon": 16.97328862
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1664715768/pro/tenants/cf58118a-353b-4ec1-a51e-ea52acc99063/1664715767754.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Pierwszy profesjonalny klub do gry w Padla we Wrocławiu.**\n_*__*_\n**The first professional indoor Padel Club in Wroclaw.**",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+48 733321153",
+      "FACILITY_WIFI": "false",
+      "FACILITY_RESTAURANT": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "e8b215f1-edc6-4d75-ab92-00e45ec6a408",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://tinyurl.com/4v89mm2r"
+    },
+    "resources": [
+      {
+        "resourceId": "c0a3d486-5401-49ae-bbb7-38907f67f08f",
+        "name": "Panoramic 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2d22bd70-b212-49f8-b627-6fccabd6f0cd",
+        "name": "Panoramic 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "31bca16b-3867-4294-94bf-23fbde19cf7b",
+    "tenant_name": "Interpadel Bydgoszcz",
+    "slug": "interpadel-bydgoszcz",
+    "address": {
+      "street": "Raczkowskiego 8",
+      "postal_code": "85-862",
+      "city": "Bydgoszcz",
+      "sub_administrative_area": "Powiat Bydgoszcz",
+      "administrative_area": "Województwo kujawsko-pomorskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 53.0940212,
+        "lon": 18.0642256
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782800547/pro/tenants/31bca16b-3867-4294-94bf-23fbde19cf7b/1782800545600.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+48 884297919",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": "https://interpadel.pl",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ee8e30fd-7493-4fe3-8447-1e46fa52b760",
+        "name": "Kort 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "192b8c25-52dc-4647-9039-7bb866cfe664",
+        "name": "Kort 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "67200107-3f53-4fe9-8192-c9bf3a689afe",
+        "name": "Kort 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e4505007-7f2d-4524-8078-be09ddfacee9",
+        "name": "Kort 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c37a39b7-2fb9-45f7-9471-91d2ef4f7f44",
+        "name": "Kort 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "174f5ee8-901c-495b-a314-7fb057a56d29",
+        "name": "Kort 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "771750da-74a9-407c-8c63-c9fe236b2117",
+        "name": "Kort 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "43c33bdc-a017-4d74-9e1f-9ed1d708a93f",
+        "name": "Kort 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "09fbf570-9346-4845-8494-b9c3d8e4da6a",
+        "name": "Kort 9 singlowy",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f396860f-ef9a-4547-a17d-8018d7563d8b",
+        "name": "Kort 10 singlowy",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "91a60f0a-1fef-4efc-9548-3a6b37ae25e0",
+    "tenant_name": "Interpadel Gdynia",
+    "slug": "interpadel-gdynia",
+    "address": {
+      "street": "Pucka 5 ",
+      "postal_code": "81-036",
+      "city": "Gdynia",
+      "sub_administrative_area": "Powiat Gdynia",
+      "administrative_area": "Województwo pomorskie",
+      "country": "Polen",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 54.54516338,
+        "lon": 18.46836375
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1752583905/pro/tenants/91a60f0a-1fef-4efc-9548-3a6b37ae25e0/1752583904240.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://interpadel.pl/interpadel-gdynia/",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+48 886158289",
+      "FACILITY_PRIVATE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "ef2a821e-3154-4bfc-bd52-c7fe42437668",
+        "name": "VW PLICHTA Kort nr 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3947fb52-6e2b-4c62-83a2-5b8c255dbbf1",
+        "name": "BRUNATH ESTHETIC STUDIO Kort nr 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5f42e8ed-f64e-49e0-a4aa-53352b761d23",
+        "name": "UNI-LOGISTICS Kort nr 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c287308e-38b5-4be0-9d42-fa162d67238a",
+        "name": "OSHEE Kort nr  4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "fcdb5190-6b0e-48b9-b09d-85106a03dcee",
+        "name": "BIKER GARAGE Kort nr 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bd070831-70b9-4b70-bb4f-e19ca656d3db",
+        "name": " BANK RUMIA Kort nr 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bbdabbf7-79c9-4385-acec-627656463b6b",
+        "name": "CAR LEASE POLSKA Kort nr  7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d45a4683-f2ea-4733-ac6b-0bb92e88a092",
+        "name": "RECMAN Kort nr 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d199b6f9-ca15-4509-9251-a4a832413203",
+        "name": "Kort nr 9 Singlowy",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "239c4131-36ad-4269-9eba-8df15ab640ae",
+        "name": "Kort nr 10 singlowy",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "08e4db64-8cdd-4ae1-b38e-a8f7a77bfdcc",
+    "tenant_name": "Interpadel Torun",
+    "slug": "interpadel-torun",
+    "address": {
+      "street": "Kociewska 24 - 26",
+      "postal_code": "87-100",
+      "city": "Toruń",
+      "sub_administrative_area": "Toruń",
+      "administrative_area": "Kujawsko-Pomorskie",
+      "country": "Polen",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 53.03961682,
+        "lon": 18.6391049
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1742246933/pro/tenants/08e4db64-8cdd-4ae1-b38e-a8f7a77bfdcc/1742246932437.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://interpadel.pl/",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "3f1289b6-20ee-4123-b5a4-4fb727ccbe9f;d4356a12-844f-427d-be01-2382c7649dcb;4b38ed50-0e36-4cfa-8568-8a83288a3690;38f923a7-556e-43e3-aca2-1c086b023b44;7793c143-41ca-4d09-8c33-3799a9044e31",
+      "CONTACT_PHONE": "+48 606461333",
+      "FACILITY_PRIVATE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "1e3dd5c9-cc5c-4b77-8233-6f5cbe6075ea",
+        "name": "Kort (1)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b03368c0-57c3-4979-84f3-44b98f262ff2",
+        "name": "Kort 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "59c1d18b-b02c-42c5-bcb4-1080b10568ef",
+        "name": "Kort 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "794d9187-75c0-4f8c-baf0-7e8052a9aaa8",
+        "name": "kort 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "818885b8-4222-42e0-8e59-705a5e2c75ec",
+        "name": "Kort 5 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "db781fbd-ad26-4aa6-80d5-a2328b2ec60f",
+        "name": "Kort 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "419a6263-05c6-428d-9624-e7fd76112a3b",
+        "name": "Oshee kort 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "83de26df-ca35-4156-8350-9e0a3bcc26a5",
+        "name": "Kort 8 Singiel ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "057c5f40-f54b-4e4d-977c-1f9547a25076",
+    "tenant_name": "Interpadel Warszawa",
+    "slug": "interpadel-warszawa",
+    "address": {
+      "street": "Bokserska 66A",
+      "postal_code": "02-690",
+      "city": "Warszawa",
+      "sub_administrative_area": "Warszawa",
+      "administrative_area": "Warszawa",
+      "country": "Polen",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.17282,
+        "lon": 20.988908
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1742284416/pro/tenants/057c5f40-f54b-4e4d-977c-1f9547a25076/1742284415650.jpg"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "5377d0d8-3fb2-4840-a0b3-322dd30747c3;4b99bd4a-8ea5-4a43-a376-584e9644d8fc;18fd3fa2-d8ae-47ed-860d-5cb1290a7cbe",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "interpadel.pl  interpadel_warszawa",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "false",
+      "CONTACT_PHONE": "+48 734433772",
+      "DETAILS_PAGE_DESCRIPTION": "$1e"
+    },
+    "resources": [
+      {
+        "resourceId": "6adbec60-7e35-4e8e-a9f4-b49810597547",
+        "name": " kort 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "fe346b27-20d2-4a06-b8cc-ea1b6807c033",
+        "name": "BMW Bawaria Motors kort 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "659f26e7-1409-40e5-b19d-f0cc05709223",
+        "name": "AQUA Carpatica kort 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "16956c5f-c8ac-409e-b461-14a13c4fe226",
+        "name": "kort 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "57dd9762-57ac-4746-8c0f-1ec7306cb1cb",
+        "name": "OSHEE kort 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "81863e50-95cd-4781-82c0-f074047ecd2f",
+        "name": "kort 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d7e15103-a57e-462a-9dbd-4c71c4e3f79c",
+        "name": "TRUE kort 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8fd738e8-341b-43d2-b5cb-e923f8acc60c",
+        "name": "RECMAN kort 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "846e12b4-8e94-4d3d-8273-5a00b0dc0eec",
+        "name": "WAAY kort 9",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "648a9a72-cc0e-4061-8f45-8fd42fe70338",
+        "name": "BMW Bawaria Motors kort 10 Singiel",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "dfc644f3-88ea-439f-9e2b-cbef817f59f8",
+        "name": "kort 11 Singiel",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "34f066f9-4292-4cce-923f-2fa95f1c7b47",
+    "tenant_name": "Interpadel Poznań",
+    "slug": "interpadel-poznan",
+    "address": {
+      "street": "Wolczynska 18",
+      "postal_code": "60-003",
+      "city": "Poznań",
+      "sub_administrative_area": "Powiat Poznań",
+      "administrative_area": "Województwo wielkopolskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.3725398,
+        "lon": 16.8384
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1756225931/pro/tenants/34f066f9-4292-4cce-923f-2fa95f1c7b47/1756225930279.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://interpadel.pl/",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "CONTACT_PHONE": "+48 736652232",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "480b341f-8603-4de9-ae11-0b7a1283d498",
+        "name": "Kort 1 Erste",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e94b6efa-5221-4391-acf5-160e4d53bed6",
+        "name": "Kort 2 CoDoGrama",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "36527eb2-937c-4677-8ddd-406eef6a869d",
+        "name": "Kort 3 Gomez.pl",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4d058b45-8cc5-48ab-b5e4-a4f6b2908f88",
+        "name": "Kort  4 JemSushi&Ramen",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b6b03de5-e8fb-4b72-973e-f94dfe5aeb16",
+        "name": "Kort 5 Recman",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1ed4978e-4c36-4d3d-baaf-fd5367e5ba75",
+        "name": "Kort 6 Sportofino",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "207d58d6-a1f5-48c6-8484-c0833fd07652",
+        "name": "Kort 7 Aqua Carpatica",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8bff274a-198f-47cc-832b-33db384d3a2b",
+        "name": "Kort 8 Oshee",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6672bcbf-2ba0-4f7f-9766-859cc5fc1d67",
+        "name": "Kort  9 singlowy Quanta Harmony",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "3ae6a706-eba4-42be-9cb3-074c7ade27bb",
+    "tenant_name": "Loba Padel",
+    "slug": "loba-padel",
+    "address": {
+      "street": "Smugowa 44",
+      "postal_code": "03-032",
+      "city": "Warszawa",
+      "sub_administrative_area": "Powiat Warszawa",
+      "administrative_area": "Województwo mazowieckie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.3245197,
+        "lon": 21.0076347
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1775032895/pro/tenants/3ae6a706-eba4-42be-9cb3-074c7ade27bb/1775032894971.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/lobapadel/",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "* 8 nowych kortów premium\n* Nowoczesne szatnie\n* Recepcja i bistro\n* Strefa Chill\n* Wypożyczalnia sprzętu\n* Mini sklep z akcesoriami\n* Duży darmowy parking\n",
+      "CONTACT_PHONE": "+48 885886675"
+    },
+    "resources": [
+      {
+        "resourceId": "45b5f6bc-6635-47f0-b061-b76e96e2cb5c",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c3a3259a-03af-4a8f-b48f-f8a68b2cb637",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "61bff1f9-c0e0-47b0-b5a1-10cca88290e5",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7bea1093-ce22-4106-8809-61c23f40ec1b",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a5cfae98-c67f-4d3f-b719-18dc6d9fbd37",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b3193edd-163e-42f9-9dcf-b3a3bf9cc1d9",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "aec61be4-afdd-4545-b463-4f767c9940d2",
+        "name": "Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b6335054-f70b-4cd8-88ff-b68ce33123af",
+        "name": "Padel 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "0473bd4b-2596-411a-afc1-aa8a39beddad",
+    "tenant_name": "MyPadel Złotniki",
+    "slug": "mypadel-zlotniki",
+    "address": {
+      "street": "Obornicka 2a",
+      "postal_code": "62-002",
+      "city": "Złotniki",
+      "sub_administrative_area": "Powiat poznański",
+      "administrative_area": "Województwo wielkopolskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.4871764,
+        "lon": 16.8555489
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1780406082/pro/tenants/0473bd4b-2596-411a-afc1-aa8a39beddad/1780406081489.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://mypadel.pl/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "CONTACT_PHONE": "+48 781804904"
+    },
+    "resources": [
+      {
+        "resourceId": "b10b3e97-a6dd-438f-bd5e-717765c0169f",
+        "name": "Kort 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2ab31870-1cfa-48f1-8c68-d19c6a84f34d",
+        "name": "Kort 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b4d188d6-af97-4f63-a4b0-96a0bb6c6e46",
+        "name": "Kort 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "426300ac-cfd9-4f5a-8f5c-406f108c6566",
+        "name": "Kort 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "04b6ad59-39be-4691-b54a-a7e563462a1c",
+    "tenant_name": "NET Padel Country Club",
+    "slug": "net-academy",
+    "address": {
+      "street": "Rzeczna",
+      "postal_code": "55-093",
+      "city": "Kiełczów",
+      "sub_administrative_area": "Powiat wrocławski",
+      "administrative_area": "Województwo dolnośląskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 51.17696451,
+        "lon": 17.19985028
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1776057481/pro/tenants/04b6ad59-39be-4691-b54a-a7e563462a1c/1776057480993.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Kids, Padel Ladies, Grupy, lekcje indywidualne i trening mieszany, strefa funkcjonalna, trening ogólnorozwojowy, Padel Fitnes",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+48 607556477",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.netpadel.pl"
+    },
+    "resources": [
+      {
+        "resourceId": "aa04ba26-6d16-4d63-b990-7d04557b62df",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ea695521-8911-457a-81dd-22f3f50bb3ea",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "65aa856e-1b75-480a-b25a-ae377df81e0e",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "9689aeab-29cc-474a-a070-076c0610a71a",
+    "tenant_name": "ONE PADEL CENTER",
+    "slug": "one-padel-center",
+    "address": {
+      "street": "HODOWCÓW 37",
+      "postal_code": "43-300",
+      "city": "Bielsko-Biała",
+      "sub_administrative_area": "Powiat Bielsko-Biała",
+      "administrative_area": "Województwo śląskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 49.84104806,
+        "lon": 18.99354046
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1772718889/pro/tenants/9689aeab-29cc-474a-a070-076c0610a71a/1772718888793.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "47a2395a-5824-48c7-8ee8-bb59806b3c26;2207682f-1d9b-4e92-8e80-17e337571530;a3c0966f-1368-40cf-80b9-c322c0f0e6d3",
+      "CONTACT_PHONE": "+48 507550555",
+      "DETAILS_PAGE_DESCRIPTION": "Witamy w ONE PADEL CENTER,\nOferujemy 7 nowoczesnych kortów, wypożyczalnię profesjonalnego sprzętu, sklep w którym możecie zakupić rakiety, piłki a nawet ubranie oraz pyszną kawę połączoną z deserem!\nZapraszamy na treningi, turnieje i wydarzenia.\nKontakt mailowy: info@onepadel.pl ",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.onepadel.pl",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2decfd01-e5f1-4c59-bca0-37018a64b349",
+        "name": "Padel 1 - GH ORTOPEDIA REHABILITACJA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2e3859b6-f496-4506-bdb4-3b7fbfa802be",
+        "name": "Padel 2 - RESI CAPITAL BY CAVATINA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6b17d6ca-8fb6-4380-ac6c-9c66c31b2bd3",
+        "name": "Padel 3 - LONTEX",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "37935f21-1dcb-4046-a358-ad3142a20633",
+        "name": "Padel 4 -   PSB CYROŃ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "131c7736-5d76-4c16-a19a-f03db653bfa5",
+        "name": "Padel 5 - CAVATINA HALL",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "741f323a-1629-4d95-a23e-622b136da451",
+        "name": "Padel 6 - CUPRA - AUTO GAZDA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "478e279b-c458-4e11-9d6b-7f57307293d1",
+        "name": "Padel 7 - BUD-MAX - CENTRUM BHP",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "90a61a6f-9dd9-42fa-a88d-2aebc8ed38ca",
+    "tenant_name": "PADEL ARENA PSR  | COMING SOON",
+    "slug": "padel-arena-psr",
+    "address": {
+      "street": "os. Piastowskie",
+      "postal_code": "63000",
+      "city": "Środa Wielkopolska",
+      "sub_administrative_area": "Powiat średzki",
+      "administrative_area": "Województwo wielkopolskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.2263507,
+        "lon": 17.29250241
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782734023/pro/tenants/90a61a6f-9dd9-42fa-a88d-2aebc8ed38ca/1782734022858.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782772124/pro/tenants/90a61a6f-9dd9-42fa-a88d-2aebc8ed38ca/1782772123980.jpg"
+    ],
+    "properties": {
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_WIFI": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Arena PSR   - 2 zewnętrzne korty do padla na osiedlu Piastowskim",
+      "WEBSITE_URL": "https://www.instagram.com/padelarenapsr/",
+      "CONTACT_PHONE": "+48 696366122",
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "25058f04-ff28-4ecb-8c97-9c719ced7abc",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0dd12ac9-44a8-4e00-9eec-17cf75ae04af",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "bda77733-e876-4f6b-8438-81f059d809e6",
+    "tenant_name": "Padel by Rumszewicz Olsztyn | Otwarte |",
+    "slug": "padel-by-rumszewicz-olsztyn",
+    "address": {
+      "street": " Słupy 49A",
+      "postal_code": "10-381",
+      "city": "Olsztyn",
+      "sub_administrative_area": "Powiat olsztyński",
+      "administrative_area": "Województwo warmińsko-mazurskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 53.84254114,
+        "lon": 20.53600651
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1778687275/pro/tenants/bda77733-e876-4f6b-8438-81f059d809e6/1778687275369.jpg"
+    ],
+    "properties": {
+      "WEBSITE_URL": "https://www.facebook.com/people/Padel-by-Rumszewicz/61572043293212/",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "CONTACT_PHONE": "+48 601685980",
+      "DETAILS_PAGE_DESCRIPTION": "**Już Otwarte, zapraszamy****!**\nRakiety do wypożyczenia w aplikacji!\nPiłki dostępne na miejscu.\n**Padel by Rumszewicz** to nowe miejsce do gry w padla w **Olsztynie, Słupy 49A**. To przestrzeń stworzona dla osób, które chcą aktywnie spędzać czas, grać ze znajomymi i odkrywać sport, który szybko wciąga. W naszym obiekcie znajdziesz:\n* prosty system rezerwacji i wejścia — **wybierasz kort, wpisujesz kod przy wejściu i grasz,**\n* komfortowe korty do padla w wysokiej hali,\n* przestrzeń idealną zarówno dla początkujących, jak i osób, które grają na poziomie zaawansowanym,\n* **nawierzchnię** Premier Supercourt X3 najwyższy standard firmy Mondo,\n* szatnie męskie i damskie,\n* **sprzęt marki Babolat** dostępny do bieżącego wypożyczania, testowania i zakupu na miejscu,\n* zajęcia z trenerem.\n\n\nSzukasz padla w Olsztynie? \n**Do zobaczenia w Padel by Rumszewicz — Słupy 49A**!",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "9953ae4c-a8b8-4043-9e91-fca01c300d6d",
+        "name": "Kort 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a8d0c7ef-db4d-4bba-9ed8-8c5c385cbd4d",
+        "name": "Kort 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "dd500ac3-5004-41ee-ab6c-c60545ae3ae4",
+    "tenant_name": "Padel Center & Academy",
+    "slug": "padel-center-academy",
+    "address": {
+      "street": " Lwowska 40",
+      "postal_code": "40-389",
+      "city": "Katowice",
+      "sub_administrative_area": "Powiat Katowice",
+      "administrative_area": "Województwo śląskie",
+      "country": "Poland",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 50.2510115,
+        "lon": 19.0899297
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1762526107/pro/tenants/dd500ac3-5004-41ee-ab6c-c60545ae3ae4/1762526106801.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "www.padelcenter.pl",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Witamy w Padel Center & Academy – Twoim lokalnym centrum padla!\nOferujemy nowoczesne korty, profesjonalny sprzęt i przyjazną atmosferę dla graczy na każdym poziomie zaawansowania.\nOrganizujemy treningi, turnieje i wydarzenia integracyjne – idealne dla firm, grup znajomych czy rodzin.\nElastyczne godziny otwarcia i łatwa rezerwacja online.\n\nDołącz do naszej społeczności pasjonatów padla – zagraj z nami!\nKontakt e-mailowy: info@padelcenter.pl",
+      "CONTACT_PHONE": "+48 886793507"
+    },
+    "resources": [
+      {
+        "resourceId": "955c228b-18a3-48db-a459-7a08086b8ad0",
+        "name": "Under Armour - Centre - Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "149ea8d4-5b83-4003-b598-937a4bbc3cd9",
+        "name": "IIMarbella - Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cf8310fe-7c73-44d4-82e6-d396d72b7753",
+        "name": "Sudvid Group - Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4bcdf870-c44c-46bf-b564-2c98863bca0a",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f517be09-5d34-4d7e-81e2-f0b689d599d1",
+        "name": "On Lemon - Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "956f3689-db5a-48a8-a621-4865d144fc09",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2ef1142e-8e6b-41ad-960f-15f41c53462b",
+        "name": "Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "397d967f-988c-4343-a344-0e7ca1a875ee",
+        "name": "STS - Padel 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "05d42a2e-30d4-4e2a-abb4-941bb3366367",
+        "name": "Bosco Studio - Single - Padel 9",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "8b616ddb-93a6-4629-a00a-b940a3f66e20",
+    "tenant_name": "Padel On",
+    "slug": "padel-on",
+    "address": {
+      "street": "ul Zofii Nałkowskiej 17",
+      "postal_code": "43200",
+      "city": "Pszczyna",
+      "sub_administrative_area": "Powiat pszczyński",
+      "administrative_area": "Województwo śląskie",
+      "country": "Poland",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 49.9722646,
+        "lon": 18.95640747
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1771417552/pro/tenants/8b616ddb-93a6-4629-a00a-b940a3f66e20/1771417551843.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://padel-on.pl/",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Padel ON** to nowoczesne centrum padla stworzone z pasji do sportu i dobrej energii. Profesjonalne korty, świetna atmosfera i przestrzeń, w której możesz połączyć rywalizację z relaksem. Niezależnie od tego, czy grasz rekreacyjnie, czy trenujesz regularnie… tutaj znajdziesz idealne warunki do gry i spotkań z ekipą. Dołącz do społeczności **Padel ON **i poczuj klimat gry na najwyższym poziomie!",
+      "CONTACT_PHONE": "+48 606427327"
+    },
+    "resources": [
+      {
+        "resourceId": "f066e386-a5da-49e3-8bec-a7c1ebb9d7cb",
+        "name": "Padel ON Kort 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ed191f95-040b-413c-865a-aa07eb6a3161",
+        "name": "NOX Kort 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3dc67ecc-6105-47dc-8aa0-98e29a5b135f",
+        "name": "Oshee Kort 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "363f26a9-d8ad-4780-89b8-8c25ab378aa2",
+        "name": "Cupra Kort 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "00:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "280bfe06-18e4-464f-a1f3-edc0bee96e35",
+    "tenant_name": "Padel Pl Wrocław",
+    "slug": "padel-pl-wroclaw",
+    "address": {
+      "street": "Żmigrodzka 242D",
+      "postal_code": "51-131",
+      "city": "Wrocław",
+      "sub_administrative_area": "Wrocław",
+      "administrative_area": "Województwo dolnośląskie",
+      "country": "Polen",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 51.16080948,
+        "lon": 17.02350386
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1750149823/pro/tenants/280bfe06-18e4-464f-a1f3-edc0bee96e35/1750149823038.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://padelpl.pl/",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel PL Wroclaw posiada 10 najnowocześniejszych krytych kortów panoramicznych\n\n8 kortów podwójnych (double, dla 4 osób) i 2 korty pojedyncze (single, dla 2 osób)\n\nWszystkie korty są wyposażone w Mondo World Padel Tour Supercourt XN i specjalne dźwiękochłonne szkło.\n\nZapraszamy Państwa do gry, którą pokochały największe gwiazdy sportu!\n\nWAŻNE: na miejscu mamy dostępne do wypożyczenia RAKIETY i PIŁKI ZA DARMO dla początkujących. W klubie jest szatnia z szafkami zamykanymi na kłódki (proszę przynieść swoją lub można zakupić taką na miejscu za 10pln)",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "fbeef9f5-291b-464b-b2bc-c9a0a9b10844",
+      "CONTACT_PHONE": "+48 574009414",
+      "FACILITY_PRIVATE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2bd7a12a-3a6b-493d-8d58-9cb2a2392514",
+        "name": "Kort 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "129107b6-c02a-4f01-b9ce-9903ec699bc6",
+        "name": "Kort 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "548add8f-a85d-411a-965c-d7246751ed7f",
+        "name": "Kort 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a3b8c567-46e5-4e49-a520-a97d6899e705",
+        "name": "Kort 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "449c7765-3d36-4a04-a59f-2c8b40058f51",
+        "name": "Kort 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ad5b4465-cd73-41c1-9999-f78ae6221f88",
+        "name": "Kort 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "67700b24-7fcf-4e4b-a593-d7c409bf403f",
+        "name": "Kort 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "74d3c2cf-1319-43ca-84db-5909cac98296",
+        "name": "Kort 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1b3b6674-e2e5-4f09-8c00-3ec7aa50c1d6",
+        "name": "Kort 9 (single)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "33904f46-1493-4640-aca5-83eddb058284",
+        "name": "Kort 10 (single)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "da579108-2e5a-4d16-aaef-bfcb66bc7b34",
+        "name": "Maszyna do piłek - Pamiętaj, by zarezerwować jeszcze osobno kort! ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "HOLIDAYS": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "05:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c0f22f5c-fa50-4f5b-bc45-ab68e730f570",
+    "tenant_name": "Padel Spot",
+    "slug": "padel-spot-poznan",
+    "address": {
+      "street": "Termalna 7",
+      "postal_code": "61-028",
+      "city": "Poznań",
+      "sub_administrative_area": "Poznań",
+      "administrative_area": "Wielkopolskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.4088842,
+        "lon": 16.9743054
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1780061814/pro/tenants/c0f22f5c-fa50-4f5b-bc45-ab68e730f570/1780061813032.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "e108830b-a5a6-4dd9-aee1-827c6bbdab4e",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Spot. Gramy drużynowo.",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+48 500084321",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "WEBSITE_URL": "http://www.padelspot.pl",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "58ff08e6-82d9-4a89-ac00-f75090f4e79a",
+        "name": "Padel 1 Fabryka Futbolu",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a0c642bf-9c84-446b-89e1-be36d7deb5ed",
+        "name": "Padel 2 Budchem",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e44eaee2-2dfe-4570-9bc4-90a9756a4fd9",
+        "name": "Padel 3 Dermatic",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "553f033a-6f34-4acf-ae0d-71fddd1ecbd0",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9758cd6a-5d52-45a8-b18b-46c062c51697",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d5003bac-0402-4d05-a3dd-6a1b12e0bcd5",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "185234bc-ac42-486d-b438-7dbd6f2022f4",
+        "name": "Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b74d8b4e-4628-45b0-bcdd-0230e5aec8ce",
+        "name": "Padel 8 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "05a9122e-d8ff-442d-a026-58b98170b4d8",
+    "tenant_name": "Reyon Bytom",
+    "slug": "padel-team-bytom",
+    "address": {
+      "street": "Dzierżonia 19",
+      "postal_code": "41-923",
+      "city": "Bytom",
+      "sub_administrative_area": "Powiat Bytom",
+      "administrative_area": "Województwo śląskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 50.3576904,
+        "lon": 18.846304
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1738941027/pro/tenants/05a9122e-d8ff-442d-a026-58b98170b4d8/1738941027101.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "IS_CAB_MEMBER": "false",
+      "FACILITY_RESTAURANT": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "57eda7fa-0e2c-4883-a66c-769a2e10c328;602d5ff8-ba30-47c6-bc98-8cbdbeb4ff7c",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "WEBSITE_URL": "https://www.padelteam.pl/klub-padel-team-bytom/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Klub Reyon Bytom oferuje klientom 4 korty wewnętrzne i 5 kortów zewnętrznych do padla, 1 zadaszony kort tenisowy oraz 4 korty do gry w squash. Oprócz tego w klubie znajduje się sauna i bilard. Dodatkowo dysponujemy niepowtarzalnym \"beach barem\" z kortami zewnętrznymi - idealnym na integracje lub wydarzenia okolicznościowe.",
+      "CONTACT_PHONE": "+48 691493100"
+    },
+    "resources": [
+      {
+        "resourceId": "a2aa9383-357e-48ab-ae7b-5bd6dd523480",
+        "name": "Tenis 1",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "0bd3e5d5-228b-498d-be3a-c4015465021c",
+        "name": "Squash 1",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "double"
+        ]
+      },
+      {
+        "resourceId": "618e45d7-6677-45af-83da-1377933b4e21",
+        "name": "Squash 2",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "double"
+        ]
+      },
+      {
+        "resourceId": "998ba4dd-7233-4298-9953-f9272947ad70",
+        "name": "Squash 3",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "double"
+        ]
+      },
+      {
+        "resourceId": "8363c6c0-6c95-4785-9dd5-b83eecc39eb8",
+        "name": "Squash 4",
+        "sport": "SQUASH",
+        "features": [
+          "indoor",
+          "double"
+        ]
+      },
+      {
+        "resourceId": "758fe378-8c01-49bb-8818-3efb4b15c4c3",
+        "name": "Padel 1 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cd68eb4b-4c74-4b75-a54d-03c4ca23374c",
+        "name": "Padel 2 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "35588641-60b5-45c0-96d2-475a46fa0213",
+        "name": "Padel 3 - Double ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "84a96bfd-2799-4642-9158-a9cd5620dbae",
+        "name": "Padel 4 - Double",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d2bdce64-5409-4bf4-b5eb-f557d55cdd3d",
+        "name": "Padel 1 - Zewnętrzny",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7e1c3d7d-75d1-47f7-9441-8c08cad34169",
+        "name": "Padel 2 - Zewnętrzny",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f86cc066-52fc-42f6-8b57-13af6a99b2ad",
+        "name": "Padel 3 - Zewnętrzny ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8e4959f5-a01a-426e-817a-0e2db67f7b45",
+        "name": "Padel 4 - Zewnętrzny ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "52366c8c-250e-4816-9e13-8203faaabf82",
+        "name": "Padel 5 - Zewnętrzny",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e29a6b01-0305-4f2e-a486-e27745fe55c5",
+        "name": "Padel Junior 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "SQUASH"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "d5a93847-b621-4852-9fa1-4a310afd3423",
+    "tenant_name": "Reyon Tychy",
+    "slug": "padel-team-tychy",
+    "address": {
+      "street": "Lawendowa 2",
+      "postal_code": "43-100",
+      "city": "Tychy",
+      "sub_administrative_area": "Tychy",
+      "administrative_area": "Województwo Śląskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 50.12995227,
+        "lon": 18.99969738
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1679503628/pro/tenants/d5a93847-b621-4852-9fa1-4a310afd3423/1679503626963.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1679503658/pro/tenants/d5a93847-b621-4852-9fa1-4a310afd3423/1679503657108.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1679503663/pro/tenants/d5a93847-b621-4852-9fa1-4a310afd3423/1679503662645.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1686132194/pro/tenants/d5a93847-b621-4852-9fa1-4a310afd3423/1686132193067.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782310107/pro/tenants/d5a93847-b621-4852-9fa1-4a310afd3423/1782310106783.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782310584/pro/tenants/d5a93847-b621-4852-9fa1-4a310afd3423/1782310584093.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782310588/pro/tenants/d5a93847-b621-4852-9fa1-4a310afd3423/1782310588258.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "5e8dd66f-a45d-47bb-950d-3dd9f928a2b0;e79e66c2-39b5-45b8-8bbf-e9049581b43a;52665727-b492-404c-8fde-af3b61a230cb",
+      "CONTACT_PHONE": "+48 660191151",
+      "DETAILS_PAGE_DESCRIPTION": "Klub Reyon Tychy oferuje 4 korty do gry w padel. Do dyspozycji jest 1 kort panoramiczny, oraz 3 korty deblowe typu standard. W klubie funkcjonują szatnie wraz z prysznicami i toaletami. Możliwy jest wynajem oraz zakup sprzętu różnych marek.",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "https://www.padelteam.pl/klub-padel-team-tychy/",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "8f728bcd-6f75-466d-8369-f40e551faaff",
+        "name": "Kort 1 - PASO XL",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "03fbe0cd-0196-46b5-90b4-18190b51d913",
+        "name": "Kort 2 - Panoramiczny",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "144b0371-5e72-4258-b2ce-dae41d70bc31",
+        "name": "Kort 3 - Medicover Sport",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "5714c073-2962-4cff-bbd8-6d56572a2335",
+        "name": "Kort 4 - INSPIRE by OKAM",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "b9f6d3c2-0435-49a3-96b0-72dc215c4c7f",
+    "tenant_name": "padel up kato",
+    "slug": "padel-up-kato",
+    "address": {
+      "street": "Żelazna 15A",
+      "postal_code": "40-851",
+      "city": "Katowice",
+      "sub_administrative_area": "Powiat Katowice",
+      "administrative_area": "Województwo śląskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 50.264987,
+        "lon": 19.0056426
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782562061/pro/tenants/b9f6d3c2-0435-49a3-96b0-72dc215c4c7f/1782562058978.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782562064/pro/tenants/b9f6d3c2-0435-49a3-96b0-72dc215c4c7f/1782562063680.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782562078/pro/tenants/b9f6d3c2-0435-49a3-96b0-72dc215c4c7f/1782562077358.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782562083/pro/tenants/b9f6d3c2-0435-49a3-96b0-72dc215c4c7f/1782562082381.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782562087/pro/tenants/b9f6d3c2-0435-49a3-96b0-72dc215c4c7f/1782562086898.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782562093/pro/tenants/b9f6d3c2-0435-49a3-96b0-72dc215c4c7f/1782562091705.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1782562097/pro/tenants/b9f6d3c2-0435-49a3-96b0-72dc215c4c7f/1782562096535.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padelup.kato/",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "CONTACT_PHONE": "+48 577232032"
+    },
+    "resources": [
+      {
+        "resourceId": "93e2941c-50d9-44fc-bbdc-50ec2c031207",
+        "name": "Kort 01",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8275fee4-244d-405b-8338-998536f90dbc",
+        "name": "Kort 02",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ad0a748a-3255-43d4-afc7-e04ed9d30a22",
+        "name": "Kort 03 - COSENTINO",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "dd4515db-7b17-4e58-8626-ee08768f27f8",
+        "name": "Kort 04",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "fb49028a-e124-47bf-b754-00731053afcb",
+        "name": "Kort 05 - Single",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "90779e1e-84b3-404f-820d-73a83a467b4e",
+    "tenant_name": "Reyon Zabrze",
+    "slug": "padelteam-zabrze",
+    "address": {
+      "street": "Piłsudskiego 83A",
+      "postal_code": "41-800",
+      "city": "Zabrze",
+      "sub_administrative_area": "Powiat Zabrze",
+      "administrative_area": "Województwo śląskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 50.2978909,
+        "lon": 18.7642584
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1772735519/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1772735518705.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1772735521/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1772735520506.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1772735523/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1772735522201.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1772841687/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1772841686863.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1772886781/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1772886780874.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1772886782/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1772886782326.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774284624/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1774284623620.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774284627/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1774284626405.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774284631/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1774284630499.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1774284633/pro/tenants/90779e1e-84b3-404f-820d-73a83a467b4e/1774284632962.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://padelteam.pl/padelteam-zabrze/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padelteam Zabrze oferuje grę na 7 kortach do padla. Aż 5 kortów wewnątrznych (4 korty Double i 1 kort Single) oraz 2 korty zewnętrzne (1 kort Double i 1 kort Single).\nPoza kortami do dyspozycji klubowiczów oddajemy w pełni wyposażone szatnie oraz przestrzeń restauracyjno-szkoleniową.",
+      "CONTACT_PHONE": "+48 539767538"
+    },
+    "resources": [
+      {
+        "resourceId": "c2501831-ba24-4b61-abc6-35aef87247ea",
+        "name": "Kort 1 - Superpanoramiczny",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2e60b3f8-26f9-4fda-a7df-3bf563b68d2e",
+        "name": "Kort 2 - Arena Zabrze",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ca3e8521-2ffe-44aa-8fbd-30cb6e96c8d5",
+        "name": "Kort 3 - DoPadla.pl",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3fc5e639-ab55-4f63-a23a-00ae418cf1d7",
+        "name": "Kort 4 - Superpanoramiczny",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0f861a01-24aa-4e47-b5f0-bb24ec05e8e8",
+        "name": "Kort 5 - Single",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7c3f15cf-fc70-4c8c-9e7d-56f46b5ca6c1",
+        "name": "Kort 6 - Superpanoramiczny",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "340b33d4-22a4-480c-a264-bf389a238e73",
+        "name": "Kort 7 - Single",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "98ee88f9-0ad1-4c0e-84ab-f620097ee1d2",
+    "tenant_name": "Passion Padel",
+    "slug": "passion-padel",
+    "address": {
+      "street": "28 Czerwca 1956 r. 390/A",
+      "postal_code": "61-441",
+      "city": "Poznań",
+      "sub_administrative_area": "Poznań",
+      "administrative_area": "Wielkopolskie",
+      "country": "Polen",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.36218197,
+        "lon": 16.9034489
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1701451964/pro/tenants/98ee88f9-0ad1-4c0e-84ab-f620097ee1d2/1701451963977.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "4bef394a-bdee-43f5-b944-8523168a89f3;4905fbc7-9d67-45a5-82b1-12ef060ac969;39b779e6-2f1c-41b7-82b4-10505dc79332;59d32775-de80-427b-9328-0396cf70afe7;26d68e4b-0a47-47ee-a9af-3f0735fbb8e0;90bab570-5a99-4671-bad1-7843319d089c;4d1fb53c-7e06-413b-8227-4c11967cbb0c;62b5fa5b-8849-482a-b1cc-4b198756c0ee;c56cf15e-bf7e-4eb3-bff9-b20b463ce3dd;57ba3372-fd1a-4bcc-a4d9-1ac6527db661;71b3e87e-bea7-40fa-9c54-e60b1a47406c",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "WEBSITE_URL": "https://passionpadel.pl",
+      "CONTACT_PHONE": "+48 570249229",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "443adeb3-7d97-4ff9-a80c-a78e3611097b",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f89ef18b-a8d4-42a4-8d0c-e394f1e0d9ca",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "caced9a5-932b-4c67-8f53-c85ccf952dbf",
+    "tenant_name": "Sportowy Reyon",
+    "slug": "plek-soccer",
+    "address": {
+      "street": "Margonińska 25",
+      "postal_code": "60-425",
+      "city": "Poznań",
+      "sub_administrative_area": "Powiat Poznań",
+      "administrative_area": "Województwo wielkopolskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.4299159,
+        "lon": 16.8381971
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1755004444/pro/tenants/caced9a5-932b-4c67-8f53-c85ccf952dbf/1755004443472.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765231536/pro/tenants/caced9a5-932b-4c67-8f53-c85ccf952dbf/1765231535014.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765231929/pro/tenants/caced9a5-932b-4c67-8f53-c85ccf952dbf/1765231929281.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765231951/pro/tenants/caced9a5-932b-4c67-8f53-c85ccf952dbf/1765231950569.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://www.centrumplek.pl",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Dok.",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+48 880562845",
+      "FACILITY_PRIVATE_PARKING": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "0544bb3b-88f4-45eb-98bf-8346ebacdf90",
+        "name": "Boisko 1 (40x20)",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football11",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "f07824e8-2fed-4d2b-af34-9925cc476332",
+        "name": "Boisko 2 (40x20)",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football5",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "5e8b7c0c-0cfd-4b65-aa51-8aebb05a5fa1",
+        "name": "Boisko 3 (40x20)",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football5",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "b205328d-4808-4eaa-b2de-8244ff18b847",
+        "name": "Boisko 4 (40x20)",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football5",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "47fa4df7-27ef-4c83-bb24-3e611cad6a01",
+        "name": "Boisko 5 (40x20)",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football5",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "9c05d15e-6245-483c-83f3-26f30776f56a",
+        "name": "Boisko 6 (40x20)",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football5",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "ebcaebea-b794-4b68-87db-55a3210e3953",
+        "name": "Boisko duże 1-3 (50x30)",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football11",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "db2be296-3313-41dc-b3c4-3c98b0c0ad20",
+        "name": "Boisko duże 4-6 (50x30)",
+        "sport": "FOOTBALL_OTHERS",
+        "features": [
+          "indoor",
+          "football11",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "1004f41a-e74e-45ac-8de1-fcb07eefed59",
+        "name": "Siatkówka plażowa boisko 1",
+        "sport": "BEACH_VOLLEY",
+        "features": [
+          "outdoor",
+          "sand"
+        ]
+      },
+      {
+        "resourceId": "bb3f0ac7-d652-4d3f-bf4a-bd115ec1872f",
+        "name": "Siatkówka plażowa boisko 2",
+        "sport": "BEACH_VOLLEY",
+        "features": [
+          "outdoor",
+          "sand"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "FOOTBALL_OTHERS",
+      "BEACH_VOLLEY"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "56e1531e-e108-42af-b877-834a53381efa",
+    "tenant_name": "Reyon Plek Smochowice",
+    "slug": "plek-poznan",
+    "address": {
+      "street": "Margonińska 25",
+      "postal_code": "60-425",
+      "city": "Poznań",
+      "sub_administrative_area": "Powiat Poznań",
+      "administrative_area": "Województwo wielkopolskie",
+      "country": "Polen",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.4299159,
+        "lon": 16.8381971
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1758924858/pro/tenants/56e1531e-e108-42af-b877-834a53381efa/1758924856941.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758924873/pro/tenants/56e1531e-e108-42af-b877-834a53381efa/1758924872639.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758924894/pro/tenants/56e1531e-e108-42af-b877-834a53381efa/1758924893918.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758924921/pro/tenants/56e1531e-e108-42af-b877-834a53381efa/1758924920558.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758924967/pro/tenants/56e1531e-e108-42af-b877-834a53381efa/1758924966882.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1758924983/pro/tenants/56e1531e-e108-42af-b877-834a53381efa/1758924982441.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+48 880562845",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "WEBSITE_URL": "www.reyon.pl",
+      "FACILITY_SNACK_BAR": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "7d062016-7d4a-454c-b1e3-41c67e6e542a",
+        "name": "Kort 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e737a278-7cbe-4720-9c4c-d7df8024a0a9",
+        "name": "Kort 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7192fa36-f371-4272-90e5-4db4b4c44b50",
+        "name": "Kort 3 singiel",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2fd38c6a-c4ad-49b2-bf0c-be5fbf49a84b",
+        "name": "Toyota Ukleja - Kort 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0eb75516-4617-4eb7-acd9-a25406dd44f4",
+        "name": "Lexus Poznań Lechicka 7 - Kort 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ac971721-0cc6-44c9-a165-0ab40bd62e8a",
+        "name": "Kort 6 - zewnętrzny",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1ba7633a-d324-4150-be80-5a7197c8f331",
+        "name": "Kort 7 - singiel zewnętrzny ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8ba2f08c-30f5-41ff-88bd-b9f77fd96637",
+        "name": "Kort 8 - zewnętrzny ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bb9e26f2-df87-487f-b69d-28d0dcf29c01",
+        "name": "Kort 9 - zewnętrzny",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7bbe6667-da5a-47a7-a956-34851e8ca777",
+        "name": "Kort 10 - zewnętrzny",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d6dcc6a0-d349-492f-8b95-5eb8a450f497",
+        "name": "Kort 11 - zewnętrzny Beach Tennis ",
+        "sport": "BEACH_TENNIS",
+        "features": [
+          "outdoor",
+          "sand"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "BEACH_TENNIS"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "68323d20-8d88-4653-9a50-148cb9a5b49e",
+    "tenant_name": "Pop Yard",
+    "slug": "pop-yard-padel",
+    "address": {
+      "street": "Kowalska 2",
+      "postal_code": "46-020",
+      "city": "Opole",
+      "sub_administrative_area": "Powiat Opole",
+      "administrative_area": "Województwo opolskie",
+      "country": "Polen",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 50.65608279,
+        "lon": 17.93085976
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1751824488/pro/tenants/68323d20-8d88-4653-9a50-148cb9a5b49e/1751824488166.jpg"
+    ],
+    "properties": {
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "www.popyard.pl",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "true",
+      "CONTACT_PHONE": "+48 574207237",
+      "DETAILS_PAGE_DESCRIPTION": "**POP YARD** to wyjątkowa przesztrzeń sportowo - rekreacyjno - eventowa, położona tuż nad Odrą - w miejscu, gdzie miasto spotyka się z naturą. \nSłychać tu śpiew ptaków i odgłosy zwierząt z pobliskiego Zoo, a zielone otoczenie sprzyja wypoczynkowi i aktywności na świeżym powietrzu.",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4e4f1468-050c-448d-b026-9f1c65b6c0a9",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "25b0279c-d337-44ba-ad76-3d2ffa3626a4",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8722e499-a66e-4ff9-a3eb-24cc80bf5b99",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "f3f86625-3c23-41fd-be77-526395fabe74",
+    "tenant_name": "Rakiety Aero - Padel Outdoor",
+    "slug": "rakiety-squash-padel-outdoor",
+    "address": {
+      "street": "Wał Miedzeszyński 646",
+      "postal_code": "03-994",
+      "city": "Warszawa",
+      "sub_administrative_area": "Powiat Warszawa",
+      "administrative_area": "Województwo mazowieckie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.22189332,
+        "lon": 21.08425495
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1740405716/pro/tenants/f3f86625-3c23-41fd-be77-526395fabe74/1740405716055.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1740483483/pro/tenants/f3f86625-3c23-41fd-be77-526395fabe74/1740483482550.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1741698203/pro/tenants/f3f86625-3c23-41fd-be77-526395fabe74/1741698202369.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1754312614/pro/tenants/f3f86625-3c23-41fd-be77-526395fabe74/1754312613468.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "CONTACT_PHONE": "+48 505455633",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "97a11e98-3a6e-4c21-8567-4fc94e524bbb;e820652d-b067-420d-81b6-c76c38e25bca",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://klubrakiety.pl/",
+      "FACILITY_WIFI": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_CHANGEROOM": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_TITLE": ""
+    },
+    "resources": [
+      {
+        "resourceId": "9f923d42-daf3-4cf1-b060-0554af432154",
+        "name": "Padel Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "21:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "153bbff6-abf6-4ffe-ad93-ba1045e9d43b",
+    "tenant_name": "Rakiety PGE Narodowy",
+    "slug": "rakiety-pge-narodowy",
+    "address": {
+      "street": "al. Księcia Józefa Poniatowskiego 1",
+      "postal_code": "03-901",
+      "city": "Warszawa",
+      "sub_administrative_area": "Powiat Warszawa",
+      "administrative_area": "Województwo mazowieckie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.24113912,
+        "lon": 21.04775185
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1754312670/pro/tenants/153bbff6-abf6-4ffe-ad93-ba1045e9d43b/1754312670267.jpg"
+    ],
+    "properties": {
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Klub Padla Rakiety PGE Narodowy**\n* adres : Błonia PGE Narodowego, wjazd od Siwca bądź Targowej\n* Pinezka : https://maps.app.goo.gl/qERznxrs8oRTosCw8\n* Mapa : https://klubrakiety.pl/rakiety-pge-narodowy-mapa/\n\n\nZlokalizowany na błoniach Stadionu PGE Narodowego, klub Rakiety PGE Narodowy to najnowszy punkt na sportowej mapie Warszawy, oferujący najwyższej klasy infrastrukturę do gry w padla.\nPołożenie na błoniach PGE Narodowego oznacza szybki dojazd z centrum, bliskość Wisły oraz atmosferę sportowego wydarzenia. Nasza infrastruktura została zaprojektowana z myślą o wygodzie, funkcjonalności i radości z gry.\nTo idealne miejsce zarówno dla początkujących, jak i doświadczonych graczy – gramy, szkolimy, integrujemy i bawimy się padlem 7 dni w tygodniu!",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+48 530168168",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "8e43e160-d640-43a0-bf85-4947c68bd3cf;c182feca-ed5b-4f37-8798-f72685e9e463;1ffd178a-d33d-47b2-886a-0c31c363dcc4;9158d779-d528-430f-8246-3c75a17284cf",
+      "WEBSITE_URL": "https://klubrakiety.pl/"
+    },
+    "resources": [
+      {
+        "resourceId": "2344aa0f-02f3-46be-980d-1e12f2a7f488",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2628f9de-5058-403e-b4e7-3070aa4227c8",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0fb56e90-9378-4ab5-a510-f65a4f1e3332",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e6d24d61-2151-45db-9630-2ddbef1b9263",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9021f2e3-6f1c-411e-a143-c5814beaa6bc",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "9ac2868b-0085-4e1b-b22e-229866a1ad62",
+    "tenant_name": "Rancho Padel Club",
+    "slug": "rancho-padel-club",
+    "address": {
+      "street": "Prosta 8",
+      "postal_code": "87-103 ",
+      "city": "Mała Nieszawka",
+      "sub_administrative_area": "Powiat toruński",
+      "administrative_area": "Województwo kujawsko-pomorskie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.9861163,
+        "lon": 18.5169627
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1771258769/pro/tenants/9ac2868b-0085-4e1b-b22e-229866a1ad62/1771258768898.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "b9048403-31ea-4e35-815e-e1d6ba22f418;822d495d-0b2f-4612-91d7-23dc2807a98e;b95c7bcd-5400-4cd0-829c-3455542d19bf;94dbea87-adf3-4e87-8978-009f36b7b0c2;291eb90c-b6bd-48a5-a4ae-9463d83736fd",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Ośrodek do gry w padla dla ludzi z pasją!\nRancho Padel Club jest położony, jak żaden inny!\nZlokalizowany w Małej Nieszawce, zaledwie 10 minut od toruńskiej starówki, tuż przy Puszczy Bydgoskiej, pozwala na grę w wyjątkowym otoczeniu natury.",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+48 534666596",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://ranchopadelclub.pl/"
+    },
+    "resources": [
+      {
+        "resourceId": "dd96ca26-fd12-456e-acab-04cf5d0c2a26",
+        "name": "Saloon (1)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7e715302-7e52-47f7-ada6-83b87f57a25a",
+        "name": "Biuro Szeryfa (2)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "00975bdb-a338-4c39-9c92-522eb80410ca",
+        "name": "Hacienda (3)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e0bffc4b-d448-4f47-949d-a21a8391004d",
+        "name": "El Paso (4)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e4193b85-241d-4795-a092-78958b6087be",
+        "name": "Dyliżans (5)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "44340c7a-0951-47bd-8a7e-ccbe0703cdc3",
+    "tenant_name": "RQT Spot",
+    "slug": "rqt-spot",
+    "address": {
+      "street": "Estrady 13K",
+      "postal_code": "05-080",
+      "city": "Warsaw",
+      "sub_administrative_area": "Warsaw",
+      "administrative_area": "Masovian Voivodeship",
+      "country": "Poland",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.29213636,
+        "lon": 20.87689692
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1755608667/pro/tenants/44340c7a-0951-47bd-8a7e-ccbe0703cdc3/1755608667253.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_LOCKERS": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "8116a6e3-bebb-4614-8a9c-f3237f778854;96462afe-69cd-451b-9fa8-c2cc1560b45b;8c5e06ce-decd-430a-a6ff-923f6b44e13a;f9fce98c-f446-4539-9684-13aa21339edd;b7aae857-cea4-48f0-b6ee-ad94add0f40b;8174035c-5579-468a-ac54-6c46db1a97de;db61d2fb-be1d-4a28-bdac-1e2afff2b51f",
+      "CONTACT_PHONE": "+48 538534373",
+      "DETAILS_PAGE_DESCRIPTION": "**RQT Spot – Twoje miejsce na sport i relaks blisko natury************! **\nZapraszamy do wyjątkowego, nowo otwartego klubu sportowego w otoczeniu Kampinoskiego Parku Narodowego, gdzie sport spotyka się z naturą i nowoczesnością.\n* 10 kortów do padla – z nawierzchnią najwyższej jakości Mondo Supercourt XN, oficjalnie wykorzystywaną podczas World Padel Tour. \n* 4 korty do pickleball – nawierzchnia typu hard, akrylowa, idealna do gry na każdym poziomie.\n* Darmowe lekcje wprowadzające – odkryj padla i pickleballa pod okiem naszych trenerów.\n* Bogata oferta zajęć – treningi indywidualne, grupowe i zajęcia dla każdego – od początkujących po zaawansowanych.\n* Wyjątkowa lokalizacja – sport w otoczeniu zieleni, tuż obok Parku Narodowego Kampinos.\n* Godziny otwarcia – od 07:00 do 00:00. Recepcja czynna w godzinach 07:00–23:00, 7 dni w tygodniu.\n\n\nDołącz do naszej społeczności i poczuj wyjątkową atmosferę RQT Spot.\nZarezerwuj swój kort już dziś i bądź częścią czegoś wyjątkowego!",
+      "WEBSITE_URL": "https://www.instagram.com/rqtspot/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "3feb7fb0-c93a-4c2a-9ff3-3668d91f142e",
+        "name": "Padel 1 (kryty)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7b59c7fc-9bb2-4497-82fa-04afdfe27631",
+        "name": "Padel 2 (kryty)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9a5e488d-dca8-4c46-adc2-e9852582c5d0",
+        "name": "Padel 3 (kryty)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8219d119-2505-4cdc-a162-6b8dfe7a604f",
+        "name": "Padel 4 (kryty)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d3495c85-d90b-4bad-8dcb-9d63efede1e3",
+        "name": "Padel 5 (zewnętrzny)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "523acb2c-95b3-4575-bb57-d38af2d109bf",
+        "name": "Padel 6 (zewnętrzny)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "49c36d0d-f395-4e5c-93e5-361682640e74",
+        "name": "Padel 9 (zewnętrzny) 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "90813a4b-0210-4def-91ab-79a06d143c92",
+        "name": "Padel 10 (zewnętrzny) 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "de539185-11f4-4c2b-bfd2-240bf37223f3",
+        "name": "Padel 7 Single (kryty)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0aa62aa3-66ea-4aa0-ba51-7795f0e50e72",
+        "name": "Padel 8 Single (kryty)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "61af9f16-0a44-4898-85e8-caa505c3444b",
+        "name": "Pickleball 1",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "2eb3079a-cff9-4eb5-b754-e7d21c8d5bbd",
+        "name": "Pickleball 2",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "9401ce4f-4e46-4bf0-bfe5-f51d50578620",
+        "name": "Pickleball 3",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "44fd7155-a125-40b8-bde7-3062fdd4e60d",
+        "name": "Pickleball 4",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "double",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "d62a0ce3-bafa-4d60-bcbc-9f648db0f931",
+        "name": "GRILL 1",
+        "sport": "CRICKET",
+        "features": [
+          "outdoor",
+          "grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "PICKLEBALL",
+      "CRICKET"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "f690a458-011d-4ad2-88c5-e8d175ccc31c",
+    "tenant_name": "San Padel",
+    "slug": "san-padel",
+    "address": {
+      "street": "Przedsiębiorców 1",
+      "postal_code": "05-500",
+      "city": "Warszawa",
+      "sub_administrative_area": "Powiat Warszawa",
+      "administrative_area": "Województwo mazowieckie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.1053931,
+        "lon": 21.0245651
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1778601699/pro/tenants/f690a458-011d-4ad2-88c5-e8d175ccc31c/1778601698793.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "386dd6c4-063e-4414-8d50-96a5c2db6313",
+      "CONTACT_PHONE": "+48 660482867",
+      "DETAILS_PAGE_DESCRIPTION": "Nowoczesny, największy indoorowy klub padlowy w Warszawie stworzony z myślą o graczach na każdym poziomie zaawansowania. Do dyspozycji oddajemy 12 kortów full panoramic z nawierzchnią Mondo, wysokością hali 12 m oraz profesjonalnym oświetleniem zapewniającym komfort gry przez cały dzień. W klubie znajduje się również strefa treningu motorycznego wyposażona w sprzęt Technogym, przestrzeń do relaksu oraz bar z kawą i jedzeniem. **SANPADEL** to więcej niż klub - to miejsce spotkań, sportu i community.\n\nA modern and biggest indoor padel club in Poland designed for players of all levels. The club features 12 full panoramic courts with premium Mondo turf, 12-meter ceiling height, and professional lighting for the best playing experience all day long. You will also find a performance training gym equipped with Technogym equipment, a chill zone, and a café serving coffee and food. **SANPADEL** is more than just a club - it’s a place for sport, people, and community.",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "https://sanpadel.pl/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2da8589f-bc1e-4ea6-adb5-45c361fc1ae1",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5677fa1f-3727-482c-8abc-ebc8efbe0205",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f698c16b-37ec-4ec1-9dd8-51bbdf574e99",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7ad624fc-5960-42fc-8fbc-8236ce6e0002",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "abfbe92f-1f19-4912-a741-beffbbf6f1b6",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e82f856e-4b97-4897-a63b-929b046250c3",
+        "name": "Padel 6 Single",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "dc1fe0a5-ba01-46c9-aa61-179b25c5f35c",
+        "name": "Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "df762f73-1a65-4847-b9ed-69efc4efdcaa",
+        "name": "Padel 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9a05b51a-7e5b-4996-bee3-dccf69c62094",
+        "name": "Padel 9",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3273956b-50b7-4fa2-bb60-30a56c7384f1",
+        "name": "Padel 10",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d9057a62-0727-440f-99ce-5ebf702e27c0",
+        "name": "Padel 11",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "46e65035-94d2-4749-8cdc-316856ac0b74",
+        "name": "Padel 12",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "588e876b-e2d4-4cf2-a3f3-2b6b44980058",
+    "tenant_name": "Solei Padel Club",
+    "slug": "solei-padel",
+    "address": {
+      "street": "Wałecka 2",
+      "postal_code": "60-461",
+      "city": "Poznań",
+      "sub_administrative_area": "Powiat Poznań",
+      "administrative_area": "Województwo wielkopolskie",
+      "country": "Polen",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.4636823,
+        "lon": 16.8367362
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1782913657/pro/tenants/588e876b-e2d4-4cf2-a3f3-2b6b44980058/1782913656314.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Witaj w SOLEI PADEL CLUB – wyjątkowym miejscu położonym w malowniczej części Poznania, tuż nad Jeziorem Strzeszyńskim. Stworzyliśmy klub dla wszystkich, którzy chcą aktywnie spędzać czas, rozwijać swoje umiejętności i czerpać radość z gry w przepięknej scenerii.\n\n",
+      "FACILITY_LOCKERS": "false",
+      "CONTACT_PHONE": "+48 509211633",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "3d71f37e-d947-4d17-9eb8-c8f273053cb4",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "68e2ced6-6671-48ef-b30e-ab130d811398",
+    "tenant_name": "Sporteum Power Padel",
+    "slug": "sporteum",
+    "address": {
+      "street": "Zawiślańska 27",
+      "postal_code": "03-068",
+      "city": "Warszawa",
+      "sub_administrative_area": "Powiat Warszawa",
+      "administrative_area": "Województwo mazowieckie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.35531339,
+        "lon": 20.97280048
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1780949875/pro/tenants/68e2ced6-6671-48ef-b30e-ab130d811398/1780949874864.jpg"
+    ],
+    "properties": {
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://sporteum.pl/padel/",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "CONTACT_PHONE": "+48 796165501",
+      "DETAILS_PAGE_DESCRIPTION": "Szukasz nowoczesnych kortów do padla w Warszawie? Poznaj Sporteum Power Padel na Białołęce! Nasz kompleks to dwa profesjonalne korty do gry w padla na świeżym powietrzu, które powstały w 2025 roku dzięki połączeniu sportowej pasji Agencji Eventowej Power oraz Klubu Sporteum.",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "36356653-ad85-41dd-a6df-e25b1855983d",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bf2b5876-0487-49af-87ed-a88672cee7a9",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "18:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "18:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "84b91836-ee5b-42f1-8c44-77cde714d2e9",
+    "tenant_name": "Viva Padel Katowice",
+    "slug": "viva-padel-katowice",
+    "address": {
+      "street": "Józefa Mackiewicza 1",
+      "postal_code": "40-315",
+      "city": "Katowice",
+      "sub_administrative_area": "Katowice",
+      "administrative_area": "Silesian Voivodeship",
+      "country": "Poland",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 50.2700586,
+        "lon": 19.0692057
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760256262/pro/tenants/84b91836-ee5b-42f1-8c44-77cde714d2e9/1760256262326.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "instagram.com/vivapadel_katowice",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Viva Padel Katowice\n8 kortów deblowych\n1 kort singlowy\n1 kort tenisowy\nSiłownia",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "287a6fcc-059e-4f2a-b901-ede931a6bd74",
+      "CONTACT_PHONE": "+48 883893333",
+      "FACILITY_PRIVATE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e2119ca9-9461-41e1-a2e8-d0a263a74ce0",
+        "name": "Kort centralny 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d5383eb9-86f3-4c31-877d-db0386dc3d44",
+        "name": "Kort 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "48cb11af-9c40-4f95-a1da-20a493e0d7c5",
+        "name": "Kort 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "a83c363f-7c47-4a0f-a5c1-82ec9c745129",
+        "name": "Kort 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b3c2c359-ae25-4c86-a2e8-a704b49e2285",
+        "name": "Kort 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7a68c3f3-9c3b-459a-bddb-59dabdc4701b",
+        "name": "Kort 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "103bad85-c8ba-45db-968c-a465ee077109",
+        "name": "Kort 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "87351664-c98c-43dc-9fad-b80e9fd9e0fe",
+        "name": "Kort 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3ba140a1-70c5-4098-8ef1-5a876a7cee3e",
+        "name": "Kort 9 - singiel",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bcd947a5-35fa-49ba-a803-5fb76830ea4e",
+        "name": "Kort tenisowy",
+        "sport": "TENNIS",
+        "features": [
+          "indoor",
+          "single",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ee750121-3840-41cf-a95b-4bbc4ee91eb3",
+    "tenant_name": "Warsaw Padel Club – Squash",
+    "slug": "warsaw-padel-club-squash",
+    "address": {
+      "street": "Annopol 3",
+      "postal_code": "03-236",
+      "city": "Warszawa",
+      "sub_administrative_area": "Powiat Warszawa",
+      "administrative_area": "Województwo mazowieckie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.30257,
+        "lon": 21.01963
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1742562043/pro/tenants/ee750121-3840-41cf-a95b-4bbc4ee91eb3/1742562042698.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+48 602500498",
+      "DETAILS_PAGE_DESCRIPTION": "Uwaga. Prysznice na terenie obiektu są już dostępne!\n**Zagraj w najnowocześniejszym obiekcie w Polsce.**\n______\n5 kortów do squasha jest do Waszej dyspozycji.  \n\nOferujemy karnety = doładowanie portfela, które możesz wykorzystać na dowolne godziny w naszym klubie.\nWpłać 500 PLN, graj za 550 PLN lub wpłać 800 PLN graj za 900 PLN.\nMożliwość doładowania w recepcji klubu lub w aplikacji Playtomic w zakładce Home.\n\n*Honorujemy karty partnerskie w obiekcie - Multisport, VanityStyle i Medicover \n\nPo meczu, zapraszamy do strefy Lounge, na świeżo przygotowane lekkie i smaczne smoothies, shakes, jedzenie i kawę.\n\nNa miejscu znajdziesz wypożyczalnie sprzętu.\nJeśli chcesz wykorzystać zniżkę z kart partnerskich przy 1 wizycie, skontaktuj się z recepcją w celu omówienia szczegółów. \nNa ten moment klub otwarty jest w godzinach 7:00-1:00, 7 dni w tygodniu. Recepcja i wypożyczalnia od 7:00 do 1:00.",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.warsawpadelclub.pl/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [],
+    "description": ""
+  },
+  {
+    "tenant_id": "e7284c78-e269-44ad-8f3d-a4d63089c80c",
+    "tenant_name": "Warsaw Padel Club",
+    "slug": "warsaw-padel-club",
+    "address": {
+      "street": "Annopol 3",
+      "postal_code": "03-236",
+      "city": "Warszawa",
+      "sub_administrative_area": "Powiat Warszawa",
+      "administrative_area": "Województwo mazowieckie",
+      "country": "Polska",
+      "country_code": "PL",
+      "coordinate": {
+        "lat": 52.30257,
+        "lon": 21.01963
+      },
+      "timezone": "Europe/Warsaw"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1731694435/pro/tenants/e7284c78-e269-44ad-8f3d-a4d63089c80c/1731694434730.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_DESCRIPTION": "**Zagraj w najnowocześniejszym i największym obiekcie w Polsce.**\n______\n11 panoramicznych kortów do padla z topową nawierzchnią Premier Mondo Supercourt X3.\n\nNawierzchnia opracowana wspólnie przez International Padel Federation oraz Premier Padel, jest oficjalną nawierzchnią World Padel Tour. Wszystkie korty w obiekcie są panoramicznie, dając wam niespotykane uczucie przestrzeni.\n\nPo meczu, zapraszamy do strefy Lounge, na świeżo przygotowane lekkie i smaczne smoothies, shakes, jedzenie i kawę.\n\nAby opłacić 1/4 rezerwacji, konieczne jest pobranie aplikacji na smartfon. W razie potrzeby skontaktuj się z nami pod numerem 602 500 498.\n\nNa miejscu znajdziesz wypożyczalnie sprzętu, gdzie będziesz mógł sprawdzić pełen wachlarz najnowszych rakiet z większości renomowanych firm w Polsce: NOX, Head, BullPadel, Oxdog, Technifibre, Adidas\n\nNa ten moment klub otwarty jest w godzinach 6:00-1:00, 7 dni w tygodniu. Recepcja i wypożyczalnia od 6:00 do 1:00.",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "7ef2f853-6d10-4b0f-b582-8754d0682cec;527b5f05-51ae-4018-bf67-35ebc21858b6;720753c2-bdb1-484c-a996-d904d80156e6",
+      "CONTACT_PHONE": "+48 602500498",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "warsawpadelclub.pl",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_LOCKERS": "true",
+      "PUBLIC_TRANSPORT_METRO": ""
+    },
+    "resources": [
+      {
+        "resourceId": "1cec001d-ef04-4539-b91e-1f934d642272",
+        "name": "1 - Full Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5ee466f6-aae7-4488-b52c-25686fd05424",
+        "name": "2 - Full Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c47e8d6b-677f-4afc-b29e-29917354c326",
+        "name": "3 - LaCava - palarnia kawy specialty",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "644f3cf9-f1ea-43c1-b8b7-4df84d5e1286",
+        "name": "4 - Bombilla Yerba Mate",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "64ca5ec4-2455-4954-b45c-b08dbe4ddd05",
+        "name": "5 - Full Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b6e15946-1bf0-49fd-b567-f0d3b4f9544f",
+        "name": "6 - Jaguar",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f0c8b4e9-bace-4c08-8bdd-7f1575d14221",
+        "name": "7 - OYSHO",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8ddd9aca-b709-4bc5-95b5-52890bc7a31e",
+        "name": "8 - 4FLEX",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "edfdcbae-079c-4747-b421-159e7a097dc0",
+        "name": "9 - AZZARO x Douglas",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0617a689-2983-476a-9377-246c9cc046ae",
+        "name": "10 - Full Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "01490464-f32d-451b-aaf0-9a3fadeb256f",
+        "name": "11 - Single Full Panoramic",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  }
+]
