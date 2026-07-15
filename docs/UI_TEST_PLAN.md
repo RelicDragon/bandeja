@@ -225,6 +225,8 @@ Frontend/e2e/
 | A-36 | Suggested nearest/current | Open `/select-city` with empty search; nearest and/or selected city known | Suggested block shows one-tap nearest and/or current; hidden while searching |
 | A-37 | Near me calm failure | Tap Near me with location denied/unavailable | Soft hint under chrome (not stacked red banner); search/map still usable |
 | A-38 | RU/SR club count plurals | App language RU (or SR); open country list | Counts ending in 1 but not 11 (e.g. Austria 131, Argentina 1401) show full number (`131 клуб` / `1401 клуб`), not literal `1 клуб` |
+| A-39 | Country name localization | App language RU; open country list; scroll past Andorra/Belgium/Czechia | Primary names localized (Андорра, Бельгия, Чехия), not English keys; native endonym shown when different |
+| A-39 | Map chrome overlay | Tap Map (list or change-city modal) | Map fills content; Near me + List overlay inside map (not above); List returns to search list |
 
 ### 5.4 Logout & sessions
 

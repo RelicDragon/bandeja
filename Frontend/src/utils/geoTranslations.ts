@@ -30,7 +30,7 @@ async function loadGeoData(): Promise<void> {
   loadPromise = (async () => {
     try {
       const [countriesRes, citiesRes] = await Promise.all([
-        fetch('/geo/countries.json'),
+        fetch('/geo/countries.json?v=2'),
         fetch('/geo/cities.json'),
       ]);
       if (countriesRes.ok) countriesData = await countriesRes.json();

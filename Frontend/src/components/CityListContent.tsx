@@ -10,6 +10,7 @@ import { ClubListItem } from '@/components/CityList/ClubListItem';
 import { UnifiedSearchSectionHeader } from '@/components/CityList/UnifiedSearchSectionHeader';
 import { VirtualizedList } from '@/components/CityList/VirtualizedList';
 import { CitySelectorSearchChrome } from '@/components/CityList/CitySelectorSearchChrome';
+import { CityMapChromeOverlay } from '@/components/CityList/CityMapChromeOverlay';
 import { SuggestedCitiesBlock } from '@/components/CityList/SuggestedCitiesBlock';
 import {
   CITY_SELECTOR_CHECK,
@@ -429,7 +430,11 @@ export const CityListContent = ({
   }, []);
 
   return (
-    <div className={`flex min-h-0 min-w-0 flex-1 flex-col gap-2 overflow-hidden p-0.5 pt-1 ${className}`}>
+    <div
+      className={`flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden ${
+        showMap ? 'gap-0 p-0' : 'gap-2 p-0.5 pt-1'
+      } ${className}`}
+    >
       {showError && error && (
         <div className="shrink-0 rounded-xl bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
           {error}
@@ -617,7 +622,7 @@ export const CityListContent = ({
               </div>
               <div className="w-1/2 flex-shrink-0 min-w-0 min-h-0 flex flex-col">
                 {showMap ? (
-                  <>
+                  <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl">
                     <CityMap
                       cities={mapCities}
                       clubs={clubs}
@@ -626,9 +631,16 @@ export const CityListContent = ({
                       onCityClick={handlePendingCity}
                       onClubClick={handlePendingCity}
                       onMapClick={handleMapClick}
-                      className="flex-1 min-h-0"
+                      className="min-h-0 flex-1"
                       userLocation={userLocationTarget}
                       userLocationApproximate={userLocationIsApproximate}
+                    />
+                    <CityMapChromeOverlay
+                      locating={locating}
+                      onNearMe={handleWhereAmI}
+                      onToggleMap={() => setShowMap(false)}
+                      locationMessage={locationMessage}
+                      isLoading={isLoading}
                     />
                     <AnimatePresence>
                       {pendingCityId && (
@@ -637,7 +649,7 @@ export const CityListContent = ({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: 12 }}
                           transition={{ duration: 0.2 }}
-                          className="shrink-0 pt-2"
+                          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1000] p-3"
                         >
                           <button
                             type="button"
@@ -645,7 +657,7 @@ export const CityListContent = ({
                               onCityClickAndClearSearch(pendingCityId);
                               setPendingCityId(null);
                             }}
-                            className="w-full rounded-2xl bg-primary-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-colors hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500/35"
+                            className="pointer-events-auto w-full rounded-2xl bg-primary-500 px-8 py-3 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-colors hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500/35"
                           >
                             {pendingCityName
                               ? t('city.selectCityName', { name: pendingCityName })
@@ -654,7 +666,7 @@ export const CityListContent = ({
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </>
+                  </div>
                 ) : (
                   <div className="flex-1 min-h-[280px]" />
                 )}
