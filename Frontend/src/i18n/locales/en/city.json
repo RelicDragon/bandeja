@@ -1,7 +1,7 @@
 {
   "city": {
     "clubsCount_zero": "No clubs",
-    "clubsCount_one": "1 club",
+    "clubsCount_one": "{{count}} club",
     "clubsCount_other": "{{count}} clubs",
     "searchCityOrClub": "Search city or club…",
     "searchSectionCities": "Cities",

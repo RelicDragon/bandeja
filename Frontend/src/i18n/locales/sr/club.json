@@ -1,7 +1,7 @@
 {
   "club": {
     "courtsCount_zero": "Nema terena",
-    "courtsCount_one": "1 teren",
+    "courtsCount_one": "{{count}} teren",
     "courtsCount_few": "{{count}} terena",
     "courtsCount_many": "{{count}} terena",
     "courtsCount_other": "{{count}} terena",

@@ -1,7 +1,7 @@
 {
   "club": {
     "courtsCount_zero": "Žádné kurty",
-    "courtsCount_one": "1 kurt",
+    "courtsCount_one": "{{count}} kurt",
     "courtsCount_few": "{{count}} kurty",
     "courtsCount_many": "{{count}} kurtů",
     "courtsCount_other": "{{count}} kurtů",

@@ -224,6 +224,7 @@ Frontend/e2e/
 | A-35 | Search hero primary | Open `/select-city` after load | Full-width search is the top control; Near me + Map sit below as secondary chrome |
 | A-36 | Suggested nearest/current | Open `/select-city` with empty search; nearest and/or selected city known | Suggested block shows one-tap nearest and/or current; hidden while searching |
 | A-37 | Near me calm failure | Tap Near me with location denied/unavailable | Soft hint under chrome (not stacked red banner); search/map still usable |
+| A-38 | RU/SR club count plurals | App language RU (or SR); open country list | Counts ending in 1 but not 11 (e.g. Austria 131, Argentina 1401) show full number (`131 клуб` / `1401 клуб`), not literal `1 клуб` |
 
 ### 5.4 Logout & sessions
 
@@ -408,6 +409,7 @@ Frontend/e2e/
 | F-59 | Change-city no mode switch | Open change-city sheet from Find header | No Cities/Clubs toggle; browse is country → cities only |
 | F-60 | Change-city via club search | Open change-city → search club name → tap club | Commits that club’s city immediately (no Confirm); sheet closes |
 | F-61 | Change-city search hero + Suggested | Open change-city with empty search | Suggested is top of every browse list (countries and cities), then the rows; scrolls away with the list |
+| F-62 | Belgium / microstates in city picker | Change-city → browse/search Belgium, Andorra, Luxembourg, Monaco, Malta, Liechtenstein, San Marino, or Iceland | Country appears; cities with clubs open (e.g. Brussels, Andorra la Vella) |
 | F-31 | Filter button active state | Apply any advanced filter | Filter button highlighted |
 | F-32 | Favorite trainer highlight | `@user with favoriteTrainerId` + training filter | Favorite trainer games emphasized on calendar |
 | F-33 | Gender-restricted game card | MEN/WOMEN/MIX game | Gender badge on card |

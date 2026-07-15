@@ -1,7 +1,7 @@
 {
   "club": {
     "courtsCount_zero": "Нет кортов",
-    "courtsCount_one": "1 корт",
+    "courtsCount_one": "{{count}} корт",
     "courtsCount_few": "{{count}} корта",
     "courtsCount_many": "{{count}} кортов",
     "courtsCount_other": "{{count}} кортов",

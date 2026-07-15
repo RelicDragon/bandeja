@@ -1,7 +1,7 @@
 {
   "city": {
     "clubsCount_zero": "Нет клубов",
-    "clubsCount_one": "1 клуб",
+    "clubsCount_one": "{{count}} клуб",
     "clubsCount_few": "{{count}} клуба",
     "clubsCount_many": "{{count}} клубов",
     "clubsCount_other": "{{count}} клубов",

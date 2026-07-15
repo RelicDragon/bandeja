@@ -1,7 +1,7 @@
 {
   "city": {
     "clubsCount_zero": "Žádné kluby",
-    "clubsCount_one": "1 klub",
+    "clubsCount_one": "{{count}} klub",
     "clubsCount_other": "{{count}} klubů",
     "searchCityOrClub": "Hledat město nebo klub…",
     "searchSectionCities": "Města",

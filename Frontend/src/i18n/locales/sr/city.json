@@ -1,7 +1,7 @@
 {
   "city": {
     "clubsCount_zero": "Nema klubova",
-    "clubsCount_one": "1 klub",
+    "clubsCount_one": "{{count}} klub",
     "clubsCount_few": "{{count}} kluba",
     "clubsCount_many": "{{count}} klubova",
     "clubsCount_other": "{{count}} klubova",

@@ -1,7 +1,7 @@
 {
   "club": {
     "courtsCount_zero": "Sin pistas",
-    "courtsCount_one": "1 pista",
+    "courtsCount_one": "{{count}} pista",
     "courtsCount_other": "{{count}} pistas",
     "openInMaps": "Abrir en mapas",
     "courtsTitle": "Pistas",
