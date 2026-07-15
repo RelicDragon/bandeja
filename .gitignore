@@ -257,4 +257,6 @@ Frontend/vite.config.d.ts
 
 # Court/club sports backfill rollback snapshots
 Backend/scripts/snapshots/
+# Country import working dumps (re-fetch or use jsons-archive/)
+Backend/scripts/data/
 Frontend/fastlane/report.xml

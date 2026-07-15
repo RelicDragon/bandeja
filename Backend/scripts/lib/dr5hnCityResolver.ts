@@ -19,21 +19,34 @@ interface Dr5hnCity {
   id: number;
   name: string;
   country_code: string;
+  latitude?: string | number | null;
+  longitude?: string | number | null;
   native?: string | null;
   translations?: Record<string, string>;
 }
+
+export type CityCoords = { name: string; lat: number; lon: number };
 
 const COUNTRY_ALIASES: Record<string, string> = {
   'Czech Republic': 'Czechia',
 };
 
 function normalize(s: string): string {
-  return (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  return (s || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{M}/gu, '')
+    .replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 let countryByIso2: Map<string, Dr5hnCountry> | null = null;
 let countryByName: Map<string, Dr5hnCountry> | null = null;
 let cityLookup: Map<string, string> | null = null;
+let cityCoordsLookup: Map<string, CityCoords> | null = null;
 
 function ensureDr5hnData(): void {
   const jsonDir = path.join(DR5HN_DATA_DIR, 'json');
@@ -86,11 +99,18 @@ function loadCities(): void {
   }
   const list = JSON.parse(raw) as Dr5hnCity[];
   cityLookup = new Map();
+  cityCoordsLookup = new Map();
   for (const pc of list) {
     const iso2 = (pc.country_code || (pc as { countryCode?: string }).countryCode || '').toUpperCase();
     if (!iso2) continue;
     const englishName = (pc.name || '').trim();
     if (!englishName) continue;
+    const lat = pc.latitude != null ? Number(pc.latitude) : NaN;
+    const lon = pc.longitude != null ? Number(pc.longitude) : NaN;
+    const coords =
+      Number.isFinite(lat) && Number.isFinite(lon) && !(lat === 0 && lon === 0)
+        ? { name: englishName, lat, lon }
+        : null;
     const keys: string[] = [normalize(englishName)];
     if (pc.native && String(pc.native).trim()) keys.push(normalize(String(pc.native)));
     const t = pc.translations || {};
@@ -98,6 +118,7 @@ function loadCities(): void {
     for (const k of keys) {
       const key = `${iso2}:${k}`;
       if (!cityLookup!.has(key)) cityLookup!.set(key, englishName);
+      if (coords && !cityCoordsLookup!.has(key)) cityCoordsLookup!.set(key, coords);
     }
   }
 }
@@ -118,4 +139,18 @@ export function resolveCityName(countryName: string, countryCode: string | null,
   const key = `${iso2}:${normalize(cityName)}`;
   const canonical = cityLookup!.get(key);
   return canonical ?? cityName.trim();
+}
+
+export function resolveCityCoords(
+  countryName: string,
+  countryCode: string | null,
+  cityName: string
+): CityCoords | null {
+  loadCities();
+  const iso2 =
+    (countryCode && countryCode.trim().length === 2 ? countryCode.trim().toUpperCase() : null) ??
+    getCountryIso2(countryName);
+  if (!iso2) return null;
+  const key = `${iso2}:${normalize(cityName)}`;
+  return cityCoordsLookup!.get(key) ?? null;
 }
