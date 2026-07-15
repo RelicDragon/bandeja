@@ -17,7 +17,7 @@ let loadPromise: Promise<CountryCollection | null> | null = null;
 function loadCountriesGeo(): Promise<CountryCollection | null> {
   if (cachedGeo) return Promise.resolve(cachedGeo);
   if (!loadPromise) {
-    loadPromise = fetch('/geo/countries-110m.geojson?v=4')
+    loadPromise = fetch('/geo/countries-110m.geojson?v=5')
       .then((res) => (res.ok ? res.json() : null))
       .then((data: CountryCollection | null) => {
         if (data?.type === 'FeatureCollection') {

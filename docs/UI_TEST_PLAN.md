@@ -1241,6 +1241,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-68 | City selector no clubs browse | No Clubs mode/tab; clubs are not a parallel browse list under a country |
 | X-69 | Map club pin → city | Pending city is the club’s city; confirm commits city only |
 | X-70 | Map pan does not dismiss sheet | Pan/drag map in change-city sheet; sheet stays open; dismiss still via handle/X/outside |
+| X-71 | Map country tint zones | Open city map with clubs in Austria/Poland (and other countries with cities); warm fill polygons match those countries; missing GeoJSON country → no tint for that land only |
 
 ### 18.6 Ads & sponsored content
 
