@@ -1,0 +1,24 @@
+[
+  {
+    "id": 160741,
+    "slug": "aurial-padel-bratislava",
+    "name": "Aurial Padel Bratislava",
+    "link": "https://padellands.com/pistas-de-padel/aurial-padel-bratislava/",
+    "avatarUrl": "https://padellands.com/wp-content/uploads/2024/12/Aurial-Padel.png",
+    "courtsNumber": 12,
+    "cityFromDesc": "Bratislava",
+    "description": "Aurial Padel Bratislava. Cadena Aurial Padel. 12 pistas de padel en Bratislava, Eslovaquia. 12 padel courts in Bratislava, Slovakia.",
+    "sourceUrl": "https://padellands.com/pistas-de-padel/aurial-padel-bratislava/"
+  },
+  {
+    "id": 125000,
+    "slug": "arena-padel-2",
+    "name": "Arena padel",
+    "link": "https://padellands.com/pistas-de-padel/arena-padel-2/",
+    "avatarUrl": "https://padellands.com/wp-content/uploads/2023/09/ac1d7d244e944c83673e38f7bcbaf925.png",
+    "courtsNumber": null,
+    "cityFromDesc": null,
+    "description": "",
+    "sourceUrl": "https://padellands.com/pistas-de-padel/arena-padel-2/"
+  }
+]

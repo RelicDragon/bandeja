@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch Poland clubs from padellands.com → scripts/data/poland-padellands-clubs.json"""
+"""Fetch Estonia clubs from padellands.com → scripts/data/estonia-padellands-clubs.json"""
 from __future__ import annotations
 
 import json
@@ -10,17 +10,19 @@ import urllib.request
 from pathlib import Path
 
 OUT_DIR = Path(__file__).resolve().parent / "data"
-OUT_PATH = OUT_DIR / "poland-padellands-clubs.json"
-INDEX_PATH = OUT_DIR / "poland-padellands-index.json"
-UA = "BandejaPolandImport/1.0"
-EUROPA_PL = 6401  # padellands europa term: Polonia
+OUT_PATH = OUT_DIR / "estonia-padellands-clubs.json"
+INDEX_PATH = OUT_DIR / "estonia-padellands-index.json"
+UA = "BandejaEstoniaImport/1.0"
+EUROPA_EE = 6381  # padellands europa term: Estonia
+REGION_SLUG = "estonia"
+REGION_NAME = "Estonia"
 
 
 def log(msg: str) -> None:
     print(msg, flush=True)
 
 
-def http_json(url: str, retries: int = 5):
+def http_json(url: str, retries: int = 6):
     last = None
     for attempt in range(retries):
         try:
@@ -32,9 +34,9 @@ def http_json(url: str, retries: int = 5):
                 return json.loads(r.read().decode("utf-8", "ignore")), headers
         except Exception as e:
             last = e
-            wait = 4 + attempt * 5
+            wait = 15 + attempt * 10
             if "503" in str(e) or "429" in str(e):
-                wait = 12 + attempt * 6
+                wait = 25 + attempt * 12
             log(f"[http_json] retry {attempt + 1} wait={wait}s ({e})")
             time.sleep(wait)
     raise last  # type: ignore[misc]
@@ -51,7 +53,7 @@ def http_text(url: str, retries: int = 5) -> str:
             last = e
             wait = 4 + attempt * 5
             if "503" in str(e) or "429" in str(e):
-                wait = 12 + attempt * 6
+                wait = 20 + attempt * 10
             log(f"[http] retry {attempt + 1} wait={wait}s ({e})")
             time.sleep(wait)
     raise last  # type: ignore[misc]
@@ -59,27 +61,20 @@ def http_text(url: str, retries: int = 5) -> str:
 
 def slug_to_city(slug: str) -> str:
     special = {
-        "warszawa": "Warszawa",
-        "warsaw": "Warszawa",
-        "krakow": "Kraków",
-        "poznan": "Poznań",
-        "wroclaw": "Wrocław",
-        "gdansk": "Gdańsk",
-        "lodz": "Łódź",
-        "torun": "Toruń",
-        "bialystok": "Białystok",
-        "rzeszow": "Rzeszów",
-        "czestochowa": "Częstochowa",
-        "gdynia": "Gdynia",
-        "katowice": "Katowice",
-        "bydgoszcz": "Bydgoszcz",
-        "lublin": "Lublin",
-        "szczecin": "Szczecin",
-        "sopot": "Sopot",
-        "gliwice": "Gliwice",
-        "olsztyn": "Olsztyn",
-        "kielce": "Kielce",
-        "radom": "Radom",
+        "tallinn": "Tallinn",
+        "tallin": "Tallinn",
+        "tartu": "Tartu",
+        "parnu": "Pärnu",
+        "pärnu": "Pärnu",
+        "narva": "Narva",
+        "haapsalu": "Haapsalu",
+        "viljandi": "Viljandi",
+        "rakvere": "Rakvere",
+        "kuressaare": "Kuressaare",
+        "voru": "Võru",
+        "võru": "Võru",
+        "johvi": "Jõhvi",
+        "jõhvi": "Jõhvi",
     }
     if slug in special:
         return special[slug]
@@ -92,7 +87,7 @@ def fetch_index():
     while True:
         url = (
             "https://padellands.com/wp-json/wp/v2/pistas-de-padel"
-            f"?europa={EUROPA_PL}&per_page=100&page={page}"
+            f"?europa={EUROPA_EE}&per_page=100&page={page}"
             "&_fields=id,slug,title,link,featured_media,yoast_head_json"
         )
         data, headers = http_json(url)
@@ -119,15 +114,16 @@ def parse_yoast(p: dict) -> dict:
     if m:
         courts = int(m.group(1))
     city_from_desc = None
+    m2 = re.search(r"(?:en|in)\s+([^.,]+?)(?:,|\.|$)", desc, re.I)
     m3 = re.search(
-        r"(?:en|in)\s+([A-ZÁÉÍÓÚÜÑĄĆĘŁŃÓŚŹŻ][^,]{1,40}),\s*(?:Poland|Polonia|Polska|Pologne)",
+        r"(?:en|in)\s+([^,]+),\s*(?:Estonia|Eesti|Estonie)",
         desc,
         re.I,
     )
     if m3:
-        city = m3.group(1).strip()
-        if "pista" not in city.lower() and "padel" not in city.lower() and len(city) < 40:
-            city_from_desc = city
+        city_from_desc = m3.group(1).strip()
+    elif m2:
+        city_from_desc = m2.group(1).strip()
     return {
         "id": int(p["id"]),
         "slug": p.get("slug"),
@@ -142,7 +138,7 @@ def parse_yoast(p: dict) -> dict:
 
 
 def extract_slugs(html: str) -> set[str]:
-    skip = {"europa", "espana", "feed", "otros-paises", "page", "polonia", "poland"}
+    skip = {"europa", "espana", "feed", "otros-paises", "page", REGION_SLUG}
     slugs = set()
     for m in re.finditer(r'href="https://padellands\.com/pistas-de-padel/([a-z0-9\-]+)/"', html):
         s = m.group(1)
@@ -152,20 +148,24 @@ def extract_slugs(html: str) -> set[str]:
 
 
 def locality_map(by_slug: dict) -> dict[int, str]:
-    region_url = "https://padellands.com/pistas-de-padel/europa/polonia/"
+    region_url = f"https://padellands.com/pistas-de-padel/europa/{REGION_SLUG}/"
     html = http_text(region_url)
     locs = sorted(set(re.findall(r"_localidad_pistas-([a-z0-9\-]+)/", html)))
     log(f"[locality] {len(locs)} localities")
     city_by_id: dict[int, str] = {}
 
     def one(city_slug: str):
-        url = f"https://padellands.com/pistas-de-padel/europa/polonia/_localidad_pistas-{city_slug}/"
+        url = (
+            f"https://padellands.com/pistas-de-padel/europa/{REGION_SLUG}/"
+            f"_localidad_pistas-{city_slug}/"
+        )
         h = http_text(url)
         slugs = extract_slugs(h)
         pages = [
             int(x)
             for x in re.findall(
-                rf"_localidad_pistas-{re.escape(city_slug)}/page/(\d+)/", h
+                rf"_localidad_pistas-{re.escape(city_slug)}/page/(\d+)/",
+                h,
             )
         ]
         for page in range(2, (max(pages) if pages else 1) + 1):
@@ -173,21 +173,18 @@ def locality_map(by_slug: dict) -> dict[int, str]:
             time.sleep(0.15)
         return city_slug, slugs
 
-    done = 0
-    for city_slug in locs:
+    for done, city_slug in enumerate(locs, start=1):
         try:
             _, slugs = one(city_slug)
         except Exception as e:
             log(f"[locality] fail {city_slug}: {e}")
-            done += 1
-            time.sleep(3)
+            time.sleep(8)
             continue
         city = slug_to_city(city_slug)
         for slug in slugs:
             meta = by_slug.get(slug)
             if meta:
                 city_by_id[int(meta["id"])] = city
-        done += 1
         if done % 5 == 0 or done == len(locs):
             log(f"[locality] {done}/{len(locs)} mapped={len(city_by_id)}")
         time.sleep(1.5)
@@ -214,17 +211,15 @@ def scrape_detail(meta: dict) -> dict:
     text = re.sub(r"<style.*?</style>", " ", text, flags=re.S | re.I)
     lines = [re.sub(r"\s+", " ", l).strip() for l in re.sub("<.*?>", "\n", text).splitlines()]
     lines = [l for l in lines if l]
-    address = after_label(lines, "Dirección", "Address", "Adresse", "Adres")
-    phone = after_label(lines, "Teléfono", "Phone", "Telefon", "Telefon")
-    city = after_label(lines, "Localidad", "Location", "Ort", "Miasto")
+    address = after_label(lines, "Dirección", "Address", "Adresse")
+    phone = after_label(lines, "Teléfono", "Phone", "Telefon")
+    city = after_label(lines, "Localidad", "Location", "Ort")
     courts_raw = after_label(lines, "Nº de pistas", "N° de pistas", "Number of courts", "Pistas")
     courts_n = None
     if courts_raw:
         m = re.search(r"\d+", courts_raw)
         courts_n = int(m.group()) if m else None
-    og = re.search(
-        r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)', html, re.I
-    )
+    og = re.search(r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)', html, re.I)
     avatar = og.group(1) if og else meta.get("avatarUrl")
     return {
         **meta,
@@ -241,7 +236,7 @@ def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     if INDEX_PATH.exists() and __import__("os").environ.get("REUSE_INDEX") == "1":
         index = json.loads(INDEX_PATH.read_text())
-        log(f"[index] reused {len(index)} from {INDEX_PATH}")
+        log(f"[index] reuse {len(index)} from {INDEX_PATH}")
     else:
         posts = fetch_index()
         index = [parse_yoast(p) for p in posts]
@@ -249,11 +244,7 @@ def main():
         log(f"[index] {len(index)} clubs")
     by_slug = {c["slug"]: c for c in index if c.get("slug")}
 
-    if __import__("os").environ.get("SKIP_LOCALITY") == "1":
-        city_by_id: dict[int, str] = {}
-        log("[locality] skipped")
-    else:
-        city_by_id = locality_map(by_slug)
+    city_by_id = locality_map(by_slug)
 
     out: dict[int, dict] = {}
     missing = []
@@ -268,8 +259,8 @@ def main():
             "website": None,
             "latitude": None,
             "longitude": None,
-            "regionSlug": "polonia",
-            "regionName": "Poland",
+            "regionSlug": REGION_SLUG,
+            "regionName": REGION_NAME,
         }
         if city:
             out[cid] = row
@@ -282,12 +273,10 @@ def main():
         if club.get("cityRaw") and not club.get("error"):
             out[int(club["id"])] = {
                 **club,
-                "regionSlug": "polonia",
-                "regionName": "Poland",
+                "regionSlug": REGION_SLUG,
+                "regionName": REGION_NAME,
             }
-        else:
-            log(f"[detail] miss {club.get('slug')} err={club.get('error')}")
-        time.sleep(0.8)
+        time.sleep(1.2)
 
     rows = list(out.values())
     OUT_PATH.write_text(json.dumps(rows, ensure_ascii=False, indent=2))

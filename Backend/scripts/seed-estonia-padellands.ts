@@ -1,7 +1,7 @@
 /**
- * Append Poland clubs from Padel Lands JSON (dedupe by cityId + normalizedName).
+ * Append Estonia clubs from Padel Lands JSON (dedupe by cityId + normalizedName).
  *
- *   DB_URL=... DB_SCHEMA=padelpulse npx ts-node -r dotenv/config scripts/seed-poland-padellands.ts
+ *   DB_URL=... DB_SCHEMA=padelpulse npx ts-node -r dotenv/config scripts/seed-estonia-padellands.ts
  *   DRY_RUN=1 ...
  */
 import dotenv from 'dotenv';
@@ -16,39 +16,26 @@ import { resolveCityName } from './lib/dr5hnCityResolver';
 import { CityGroupService } from '../src/services/chat/cityGroup.service';
 import { refreshAllCitiesFromClubs } from '../src/utils/updateCityCenter';
 
-const DATA_PATH = path.join(__dirname, 'data', 'poland-padellands-clubs.json');
-const COUNTRY = 'Poland';
-const COUNTRY_CODE = 'PL';
+const DATA_PATH = path.join(__dirname, 'data', 'estonia-padellands-clubs.json');
+const COUNTRY = 'Estonia';
+const COUNTRY_CODE = 'EE';
 const DRY_RUN = process.env.DRY_RUN === '1';
 
 const CITY_ALIASES: Record<string, string> = {
-  warsaw: 'Warszawa',
-  warszawa: 'Warszawa',
-  varsovia: 'Warszawa',
-  vaesovia: 'Warszawa',
-  'klub miedzeszyn': 'Miedzeszyn',
-  krakow: 'Kraków',
-  cracow: 'Kraków',
-  cracovia: 'Kraków',
-  poznan: 'Poznań',
-  wroclaw: 'Wrocław',
-  breslau: 'Wrocław',
-  gdansk: 'Gdańsk',
-  danzig: 'Gdańsk',
-  lodz: 'Łódź',
-  torun: 'Toruń',
-  bialystok: 'Białystok',
-  rzeszow: 'Rzeszów',
-  czestochowa: 'Częstochowa',
-  chorzow: 'Chorzów',
-  zory: 'Żory',
-  zlotniki: 'Złotniki',
-  kielczow: 'Kiełczów',
-  pogorze: 'Pogórze',
-  'trabki wielkie': 'Trąbki Wielkie',
-  blonie: 'Błonie',
-  mysiadlo: 'Mysiadło',
-  'pruszcz gdanski': 'Pruszcz Gdański',
+  tallin: 'Tallinn',
+  tallinn: 'Tallinn',
+  reval: 'Tallinn',
+  parnu: 'Pärnu',
+  'pärnu': 'Pärnu',
+  voru: 'Võru',
+  'võru': 'Võru',
+  johvi: 'Jõhvi',
+  'jõhvi': 'Jõhvi',
+  torvandi: 'Tõrvandi',
+  'tõrvandi': 'Tõrvandi',
+  'kasmu kula vihula vald': 'Käsmu',
+  kasmu: 'Käsmu',
+  'käsmu': 'Käsmu',
 };
 
 type PlClub = {
@@ -104,7 +91,7 @@ async function getOrCreateCity(
     data: {
       name,
       country: COUNTRY,
-      timezone: 'Europe/Warsaw',
+      timezone: 'Europe/Tallinn',
     },
     select: { id: true, latitude: true, longitude: true },
   });
@@ -118,7 +105,7 @@ async function main(): Promise<void> {
   if (!fs.existsSync(DATA_PATH)) throw new Error(`Missing ${DATA_PATH}`);
   const raw = JSON.parse(fs.readFileSync(DATA_PATH, 'utf-8')) as PlClub[];
   const clubs = raw.filter((c) => c?.name && c?.cityRaw && !c.error);
-  console.log(`[poland-pl] loaded ${raw.length}, usable ${clubs.length}, dryRun=${DRY_RUN}`);
+  console.log(`[estonia-pl] loaded ${raw.length}, usable ${clubs.length}, dryRun=${DRY_RUN}`);
 
   const existing = await prisma.club.findMany({
     where: { city: { country: COUNTRY } },
@@ -133,7 +120,7 @@ async function main(): Promise<void> {
   const byCityNameNorm = new Set(
     existing.map((c) => `${c.city.name.toLowerCase()}|${c.normalizedName}`)
   );
-  console.log(`[poland-pl] existing Poland clubs ${existing.length}`);
+  console.log(`[estonia-pl] existing Estonia clubs ${existing.length}`);
 
   const cityCache = new Map<string, { id: string; lat: number | null; lon: number | null }>();
   let citiesCreated = 0;
@@ -158,9 +145,7 @@ async function main(): Promise<void> {
     if (city.created) citiesCreated++;
 
     const keyId = `${city.id}|${normalized}`;
-    const keyName = `${(
-      resolveCityName(COUNTRY, COUNTRY_CODE, cityRaw) || cityRaw
-    ).toLowerCase()}|${normalized}`;
+    const keyName = `${(resolveCityName(COUNTRY, COUNTRY_CODE, cityRaw) || cityRaw).toLowerCase()}|${normalized}`;
     if (byCityNorm.has(keyId) || byCityNameNorm.has(keyName)) {
       skippedDupe++;
       continue;
@@ -216,19 +201,16 @@ async function main(): Promise<void> {
 
     if (clubsCreated % 50 === 0) {
       console.log(
-        `[poland-pl] progress created=${clubsCreated} citiesCreated=${citiesCreated} skippedDupe=${skippedDupe}`
+        `[estonia-pl] progress created=${clubsCreated} citiesCreated=${citiesCreated} skippedDupe=${skippedDupe}`
       );
     }
   }
 
   let citiesRefreshed = 0;
-  const skipRefresh = process.env.SKIP_REFRESH === '1';
-  if (!DRY_RUN && !skipRefresh) {
-    citiesRefreshed = await refreshAllCitiesFromClubs();
-  }
+  if (!DRY_RUN) citiesRefreshed = await refreshAllCitiesFromClubs();
 
   console.log(
-    `[poland-pl] done created=${clubsCreated} citiesCreated=${citiesCreated} skippedDupe=${skippedDupe} skippedBad=${skippedBad} citiesRefreshed=${citiesRefreshed} skipRefresh=${skipRefresh}`
+    `[estonia-pl] done created=${clubsCreated} citiesCreated=${citiesCreated} skippedDupe=${skippedDupe} skippedBad=${skippedBad} citiesRefreshed=${citiesRefreshed}`
   );
 }
 
