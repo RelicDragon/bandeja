@@ -8,7 +8,13 @@ import { gamesApi, courtsApi, mediaApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { resolveUserCurrency } from '@/utils/currency';
 import toast from 'react-hot-toast';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/Dialog';
+import {
+  Drawer,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerFooter,
+} from '@/components/ui/Drawer';
+import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
 import { GeneralTab, type GeneralTabState } from './editGameInfo/GeneralTab';
 import { LocationTimeTab } from './editGameInfo/LocationTimeTab';
@@ -576,6 +582,8 @@ export const EditGameInfoModal = ({
     onClose();
   }, [isSaving, isDirty, onClose]);
 
+  useBackButtonModal(isOpen, handleRequestClose, 'edit-game-info-modal');
+
   const handleRemoveTime = async () => {
     if (!game.id) return;
     setIsSaving(true);
@@ -854,10 +862,27 @@ export const EditGameInfoModal = ({
 
   return (
     <>
-    <Dialog open={isOpen} onClose={handleRequestClose} modalId="edit-game-info-modal">
-      <DialogContent className="max-w-[480px]">
-        <DialogHeader className="flex-col items-stretch gap-3 pb-3">
-          <DialogTitle>{t('gameDetails.editModal.title')}</DialogTitle>
+    <Drawer
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) handleRequestClose();
+      }}
+    >
+      <DrawerContent
+        className="!mt-10 !max-h-[min(94dvh,960px)] flex h-[min(94dvh,960px)] flex-col overflow-hidden bg-white dark:bg-gray-900"
+        aria-labelledby="edit-game-info-modal-title"
+      >
+        <div className="mx-auto mt-2.5 h-1 w-10 shrink-0 rounded-full bg-gray-300/90 dark:bg-gray-600" aria-hidden />
+        <div className="flex shrink-0 items-center gap-3 px-4 pb-2 pt-3">
+          <h2
+            id="edit-game-info-modal-title"
+            className="min-w-0 flex-1 text-left text-lg font-semibold tracking-tight text-gray-900 dark:text-white"
+          >
+            {t('gameDetails.editModal.title')}
+          </h2>
+          <DrawerCloseButton aria-label={t('common.close')} className="shrink-0" />
+        </div>
+        <div className="shrink-0 px-4 pb-3">
           <SegmentedSwitch
             tabs={segmentedTabs}
             activeId={activeTab}
@@ -868,8 +893,8 @@ export const EditGameInfoModal = ({
             disabled={isSaving}
             fullWidth
           />
-        </DialogHeader>
-        <div ref={contentScrollRef} className="overflow-y-auto flex-1 min-h-0 px-6 py-4">
+        </div>
+        <div ref={contentScrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
           {activeTab === 'general' && (
             <GeneralTab
               game={game}
@@ -981,7 +1006,7 @@ export const EditGameInfoModal = ({
           )}
         </div>
         {activeTab !== 'settings' ? (
-        <DialogFooter className="flex items-center gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+        <DrawerFooter className="mt-0 flex shrink-0 flex-row items-center gap-3 border-t border-gray-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-gray-800">
           <span
             aria-live="polite"
             className={`flex-1 min-w-0 truncate text-xs transition-opacity duration-200 ${
@@ -1014,9 +1039,9 @@ export const EditGameInfoModal = ({
             )}
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
-        </DialogFooter>
+        </DrawerFooter>
         ) : (
-          <div className="flex items-center gap-3 px-6 py-4 border-t border-gray-200 dark:border-gray-800">
+          <div className="flex shrink-0 items-center gap-3 border-t border-gray-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-gray-800">
             <span className="flex-1 min-w-0 text-xs text-gray-500 dark:text-gray-400">
               {t('gameDetails.editModal.autoSaveNote')}
             </span>
@@ -1029,8 +1054,8 @@ export const EditGameInfoModal = ({
             </button>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
 
     <ConfirmationModal
       isOpen={showDiscardConfirm}
