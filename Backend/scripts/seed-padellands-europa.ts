@@ -47,9 +47,44 @@ const CONFIGS: Record<string, CountryCfg> = {
       pozsony: 'Bratislava',
     },
   },
+  uk: {
+    key: 'uk',
+    country: 'United Kingdom',
+    countryCode: 'GB',
+    timezone: 'Europe/London',
+    cityAliases: {
+      londres: 'London',
+      london: 'London',
+      edimburgo: 'Edinburgh',
+      edinburgh: 'Edinburgh',
+      manchester: 'Manchester',
+      birmingham: 'Birmingham',
+      liverpool: 'Liverpool',
+      glasgow: 'Glasgow',
+      cardiff: 'Cardiff',
+      belfast: 'Belfast',
+      bristol: 'Bristol',
+      leeds: 'Leeds',
+    },
+  },
+  ireland: {
+    key: 'ireland',
+    country: 'Ireland',
+    countryCode: 'IE',
+    timezone: 'Europe/Dublin',
+    cityAliases: {
+      dublin: 'Dublin',
+      dublín: 'Dublin',
+      cork: 'Cork',
+      galway: 'Galway',
+      limerick: 'Limerick',
+      waterford: 'Waterford',
+    },
+  },
 };
 
 const DRY_RUN = process.env.DRY_RUN === '1';
+const SKIP_CITY_GROUP = process.env.SKIP_CITY_GROUP === '1';
 
 type PlClub = {
   id: number;
@@ -108,7 +143,13 @@ async function getOrCreateCity(
     },
     select: { id: true, latitude: true, longitude: true },
   });
-  await CityGroupService.ensureCityGroupExists(city.id);
+  if (!SKIP_CITY_GROUP) {
+    try {
+      await CityGroupService.ensureCityGroupExists(city.id);
+    } catch (e) {
+      console.warn(`[${cfg.key}-pl] cityGroup skip for ${name}:`, (e as Error)?.message || e);
+    }
+  }
   const row = { id: city.id, lat: city.latitude, lon: city.longitude };
   cache.set(key, row);
   return { ...row, created: true };
