@@ -1,0 +1,93 @@
+[
+  {
+    "tenant_id": "2b55b9c3-c7b0-4025-a410-a74a4ae7734b",
+    "tenant_name": "Academia Santo Padel Nacional",
+    "slug": "academia-santo-padel-nacional",
+    "address": {
+      "street": "Av. Marquês de São Vicente, 2477 - Barra Funda, São Paulo - SP, 05036-040, Brazil",
+      "postal_code": "05036-040",
+      "city": "São Paulo",
+      "sub_administrative_area": "São Paulo",
+      "administrative_area": "São Paulo",
+      "country": "Brazil",
+      "country_code": "BR",
+      "coordinate": {
+        "lat": -23.51644781,
+        "lon": -46.68567292
+      },
+      "timezone": "America/Sao_Paulo"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/2b55b9c3-c7b0-4025-a410-a74a4ae7734b/santopadel_0001"
+    ],
+    "properties": {
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_PRIVATE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "325546f6-9e17-49e1-a781-f0ec0d5faa86",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "17d6e3c7-bc9a-4908-ae0c-24e58cebc11e",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  }
+]

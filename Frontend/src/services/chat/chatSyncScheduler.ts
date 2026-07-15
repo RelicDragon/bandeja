@@ -39,6 +39,7 @@ type Job = {
   contextId: string;
   priority: number;
   expectedServerMaxSeq?: number;
+  forcePull?: boolean;
 };
 const pending = new Map<string, Job>();
 let running = 0;
@@ -137,9 +138,12 @@ function pump(): void {
         await pullAndApplyChatSyncEvents(
           job.contextType,
           job.contextId,
-          job.expectedServerMaxSeq != null
-            ? { expectedServerMaxSeq: job.expectedServerMaxSeq }
-            : undefined
+          {
+            ...(job.expectedServerMaxSeq != null
+              ? { expectedServerMaxSeq: job.expectedServerMaxSeq }
+              : {}),
+            ...(job.forcePull ? { forcePull: true } : {}),
+          }
         );
         await markPullEnd(key);
       } catch {
@@ -158,7 +162,7 @@ export function enqueueChatSyncPull(
   contextType: ChatContextType,
   contextId: string,
   priority: number = SYNC_PRIORITY_WARM,
-  options?: { expectedServerMaxSeq?: number }
+  options?: { expectedServerMaxSeq?: number; forcePull?: boolean }
 ): void {
   const key = chatCursorKey(contextType, contextId);
   const prev = pending.get(key);
@@ -170,12 +174,19 @@ export function enqueueChatSyncPull(
     };
     const expectedServerMaxSeq = options?.expectedServerMaxSeq ?? prev?.expectedServerMaxSeq;
     if (expectedServerMaxSeq != null) next.expectedServerMaxSeq = expectedServerMaxSeq;
+    if (options?.forcePull || prev?.forcePull) next.forcePull = true;
     pending.set(key, next);
   } else if (
     options?.expectedServerMaxSeq != null &&
     (prev.expectedServerMaxSeq == null || options.expectedServerMaxSeq > prev.expectedServerMaxSeq)
   ) {
-    pending.set(key, { ...prev, expectedServerMaxSeq: options.expectedServerMaxSeq });
+    pending.set(key, {
+      ...prev,
+      expectedServerMaxSeq: options.expectedServerMaxSeq,
+      ...(options.forcePull || prev.forcePull ? { forcePull: true } : {}),
+    });
+  } else if (options?.forcePull && !prev.forcePull) {
+    pending.set(key, { ...prev, forcePull: true });
   }
   if (import.meta.env.DEV && pending.size > 40) {
     console.warn('[chatSync] pull queue depth', pending.size);

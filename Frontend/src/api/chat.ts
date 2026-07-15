@@ -81,9 +81,17 @@ const syncEventsInFlight = new Map<string, Promise<{
 let syncBatchHeadDrain: Promise<Record<string, number>> | null = null;
 let syncBatchHeadPending: Map<string, { contextType: ChatContextType; contextId: string }> | null = null;
 
+const BATCH_HEAD_COALESCE_MS = 24;
+
+function delayMs(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function drainChatSyncBatchHeadQueue(): Promise<Record<string, number>> {
   if (syncBatchHeadDrain) return syncBatchHeadDrain;
   syncBatchHeadDrain = (async () => {
+    // Let same-tick / near-concurrent getChatSyncHead callers enqueue before first POST.
+    await delayMs(BATCH_HEAD_COALESCE_MS);
     const merged: Record<string, number> = {};
     while (syncBatchHeadPending && syncBatchHeadPending.size > 0) {
       const items = [...syncBatchHeadPending.values()];
@@ -1083,16 +1091,14 @@ export const chatApi = {
 
   getChatSyncHead: async (contextType: ChatContextType, contextId: string): Promise<number> => {
     const headKey = `${contextType}:${contextId}`;
-    return singleFlight(syncHeadInFlight, headKey, () =>
-      withChatSyncRetry('head', () =>
-        api
-          .get<ApiResponse<{ maxSeq: number }>>('/chat/sync/head', {
-            params: { contextType, contextId },
-            timeout: 25_000,
-          })
-          .then((response) => response.data.data.maxSeq)
-      )
-    );
+    return singleFlight(syncHeadInFlight, headKey, async () => {
+      const pending =
+        syncBatchHeadPending ?? new Map<string, { contextType: ChatContextType; contextId: string }>();
+      syncBatchHeadPending = pending;
+      pending.set(headKey, { contextType, contextId });
+      const heads = await drainChatSyncBatchHeadQueue();
+      return heads[headKey] ?? 0;
+    });
   },
 
   getChatSyncEvents: async (

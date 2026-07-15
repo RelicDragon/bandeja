@@ -1,0 +1,2465 @@
+[
+  {
+    "tenant_id": "25805898-554f-43a0-b3ab-5560e27666cf",
+    "tenant_name": "243 Padel Club",
+    "slug": "243-padel-club",
+    "address": {
+      "street": "Avenida 19 de Abril, local N-5, Maracay, Venezuela",
+      "postal_code": "2101",
+      "city": "Maracay",
+      "sub_administrative_area": "Maracay",
+      "administrative_area": "Maracay",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.257338,
+        "lon": -67.603387
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/25805898-554f-43a0-b3ab-5560e27666cf/243padelclub_0001"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padelclub243/",
+      "FACILITY_STORE": "true",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_RESTAURANT": "true",
+      "CONTACT_PHONE": "+58 4124808304",
+      "DETAILS_PAGE_DESCRIPTION": "TU CLUB DE PADEL EN MARACAY.\n"
+    },
+    "resources": [
+      {
+        "resourceId": "23e3d019-ecde-4e71-9872-43cc24d5d184",
+        "name": "Pista Pizza Mia",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "020a4def-a2eb-43a6-b6ac-566155f61b7e",
+        "name": "Pista Mundo MAC",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "09a308b7-9e99-4ccf-afb2-0bd8a142cc1a",
+        "name": "Pista Full Queso",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4044615c-69f3-4445-8e81-bfd6dd255a86",
+        "name": "Pista Grupo Satelite",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "049f45de-b89f-45e1-a497-57e98cd9f4b6",
+    "tenant_name": "Ace Padel Center",
+    "slug": "ace-padel-center",
+    "address": {
+      "street": "Final Calle Imboca, Caracas, Venezuela",
+      "postal_code": "1071",
+      "city": "Caracas",
+      "sub_administrative_area": "Caracas",
+      "administrative_area": "Miranda",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.498925,
+        "lon": -66.822889
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/049f45de-b89f-45e1-a497-57e98cd9f4b6/acepadelcentervz_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/049f45de-b89f-45e1-a497-57e98cd9f4b6/acepadelcentervz_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/049f45de-b89f-45e1-a497-57e98cd9f4b6/acepadelcentervz_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/049f45de-b89f-45e1-a497-57e98cd9f4b6/acepadelcentervz_0004"
+    ],
+    "properties": {
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "www.acepadelcenter.com",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_RESTAURANT": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+584242153834",
+      "DETAILS_PAGE_DESCRIPTION": "Somos una opción de disfrute y ocio para familias e individuos. Sin dejar de lado nuestro pasión de ser referentes como el Primer Centro de Alto Rendimiento\n"
+    },
+    "resources": [
+      {
+        "resourceId": "0c7a1c2f-0a94-46ab-a471-0007ddb668a6",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "df1491f4-3fd4-4442-93da-9b34c64107e0",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7a8f2d99-5dab-46e1-9753-f05a136eec6a",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "8804c067-56a2-4f7a-97c0-0a6cc9db7876",
+    "tenant_name": "Blue Padel Vzla",
+    "slug": "blue-padel-vzla",
+    "address": {
+      "street": "Centro Comercial Macaracuay, Caracas, Venezuela",
+      "postal_code": "1071",
+      "city": "Caracas",
+      "sub_administrative_area": "Caracas",
+      "administrative_area": "Caracas",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.469471,
+        "lon": -66.818781
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/8804c067-56a2-4f7a-97c0-0a6cc9db7876/bluepadelvz_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/8804c067-56a2-4f7a-97c0-0a6cc9db7876/bluepadelvz_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/8804c067-56a2-4f7a-97c0-0a6cc9db7876/bluepadelvz_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/8804c067-56a2-4f7a-97c0-0a6cc9db7876/bluepadelvz_0004"
+    ],
+    "properties": {
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "false",
+      "WEBSITE_URL": "https://www.instagram.com/bluepadel.vzla/",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Todas nuestras canchas son indoor\n",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "CONTACT_PHONE": "+584127110336",
+      "FACILITY_PRIVATE_PARKING": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "6089cd3e-9b27-47a4-95f6-217aa16e4f77",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a6225465-aba0-4149-ad23-52b2c5e8ca98",
+        "name": "Pista Cerveza Zulia",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1763e6a1-f9c5-4290-ae08-deb3dda9e1f6",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4264d373-6ded-4e53-9e12-daf036ec429e",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "HOLIDAYS": {
+        "opening_time": "08:30",
+        "closing_time": "19:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:30",
+        "closing_time": "19:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:30",
+        "closing_time": "19:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ce368355-7c8e-41b8-9611-fc7f6e8325c3",
+    "tenant_name": "PADEL UCAB Caracas",
+    "slug": "club-padel-ucab",
+    "address": {
+      "street": "Av. Teherán. Urb. Montalbán, Universidad Católica Andrés Bello.",
+      "postal_code": "1020",
+      "city": "Caracas",
+      "sub_administrative_area": "Caracas",
+      "administrative_area": "Caracas",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.464817,
+        "lon": -66.976483
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ce368355-7c8e-41b8-9611-fc7f6e8325c3/clubpadelucab_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ce368355-7c8e-41b8-9611-fc7f6e8325c3/clubpadelucab_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ce368355-7c8e-41b8-9611-fc7f6e8325c3/clubpadelucab_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ce368355-7c8e-41b8-9611-fc7f6e8325c3/clubpadelucab_0004",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ce368355-7c8e-41b8-9611-fc7f6e8325c3/clubpadelucab_0005",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ce368355-7c8e-41b8-9611-fc7f6e8325c3/clubpadelucab_0006"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "Conviértete en el Smash y ven a jugar en Pádel UCAB. ",
+      "SPORT_BEACH_VOLLEY": "true",
+      "SPORT_TENNIS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "CONTACT_PHONE": "+58 424-2192421",
+      "WEBSITE_URL": "https://www.instagram.com/padelsedeucab?igsh=ZWdscjFmNDMyaHZ4"
+    },
+    "resources": [
+      {
+        "resourceId": "9ac799e3-936d-40ba-8c02-1c758bc2c6a5",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ac05dfe1-0468-4124-87ba-2aa138f2b899",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "38003b45-50cb-4047-abe4-1774f15ee7f8",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "839e2d42-73fc-47e8-ade8-fece45176440",
+        "name": "Pista ESTEI",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "81110886-92a0-4ec6-a952-9e574666821e",
+        "name": "Beach Tennis & Volley Playa ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "19:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "2e194726-a869-4408-b942-39bf9dbb830f",
+    "tenant_name": "Gallery Padel Club",
+    "slug": "gallery-padel-club-caracas",
+    "address": {
+      "street": "Av Principal de los Naranjos, Centro Comercial Galerias Los Naranjos, Estacionamiento Nivel C2",
+      "postal_code": "1061",
+      "city": "Caracas",
+      "sub_administrative_area": "Caracas",
+      "administrative_area": "Caracas",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.439961,
+        "lon": -66.836013
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/2e194726-a869-4408-b942-39bf9dbb830f/gallerypadelclub_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/2e194726-a869-4408-b942-39bf9dbb830f/gallerypadelclub_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/2e194726-a869-4408-b942-39bf9dbb830f/gallerypadelclub_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/2e194726-a869-4408-b942-39bf9dbb830f/gallerypadelclub_0004"
+    ],
+    "properties": {
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Gallery Padel Club es un complejo deportivo techado que cuenta con 4 pistas para la actividad del pádel, contamos con estacionamiento privado, baños y un cafetín para todos nuestros usuarios.\n",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "CONTACT_PHONE": " +584142338551",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.instagram.com/gallerypadelclub/"
+    },
+    "resources": [
+      {
+        "resourceId": "bb01452d-e75d-449d-b633-bc4080b70b6a",
+        "name": "PISTA LASER ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0c1d2a29-e15e-41c1-a269-29218ca9aa45",
+        "name": "PISTA NACHI",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2ec72ce3-d084-440f-a5a7-34778d232854",
+        "name": "PISTA SOLERA",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "380f43bd-5a95-486d-9020-25190bbf0564",
+        "name": "PISTA MERCANTIL",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "6dff6ad9-ed74-49c8-99bf-4dfa34dc454a",
+    "tenant_name": "Garana Padel Club",
+    "slug": "garana-padel-club",
+    "address": {
+      "street": "Avenida Andrés Bello, Urb el Corral",
+      "postal_code": "5101",
+      "city": "Merida",
+      "sub_administrative_area": "Merida",
+      "administrative_area": "Merida",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 8.5755374,
+        "lon": -71.1727376
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_WIFI": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "WEBSITE_URL": "https://www.instagram.com/garana.ve/",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_LOCKERS": "false",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_STORE": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_PLAYPARK": "false",
+      "ALLOWS_CASH_PAYMENT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "cdd417d5-21d0-4165-a993-26344bef9edf",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d384c961-88b7-421b-9624-414db0e27d21",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b5571f77-b707-4cb5-a15d-9b333390997c",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "15f55087-ef9c-489e-b919-ad87daa5e4db",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3fba2839-c095-4e87-9ca4-3ced9a3f4fb7",
+        "name": "Futbol ",
+        "sport": "FOOTBALL7",
+        "features": [
+          "outdoor",
+          "football7",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "FOOTBALL7"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "1cdd6e38-7d0f-484d-a7be-4c2ee79d7110",
+    "tenant_name": "La Central Del Morro",
+    "slug": "green-padel-golf",
+    "address": {
+      "street": "Av. Americo Vespucio, Campo de Golf, Lecheria, Venezuela",
+      "postal_code": "6016",
+      "city": "Lecheria",
+      "sub_administrative_area": "Anzoategui",
+      "administrative_area": "Anzoategui",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.200323,
+        "lon": -64.67318
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/1cdd6e38-7d0f-484d-a7be-4c2ee79d7110/greenpadelvzla_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/1cdd6e38-7d0f-484d-a7be-4c2ee79d7110/greenpadelvzla_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/1cdd6e38-7d0f-484d-a7be-4c2ee79d7110/greenpadelvzla_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/1cdd6e38-7d0f-484d-a7be-4c2ee79d7110/greenpadelvzla_0004",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/1cdd6e38-7d0f-484d-a7be-4c2ee79d7110/greenpadelvzla_0005",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/1cdd6e38-7d0f-484d-a7be-4c2ee79d7110/greenpadelvzla_0006"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "El primer club de Padel de nuestra ciudad, perfecto para TODA la familia que aparte combina un ambiente increible, excelente gastronomia y otras actividades tales como Driving Range y minigolf\n",
+      "FACILITY_CHANGEROOM": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "CONTACT_PHONE": "+58 414 814 1226",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "www.greenpadelandgolf.com"
+    },
+    "resources": [
+      {
+        "resourceId": "329a21fa-2017-458f-a11f-e03eb9fdb1ac",
+        "name": "PISTA BIZZA",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2b0d568b-fa2c-4053-80c0-8778bde889d5",
+        "name": "PADEL POINT 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5bfb81fd-3549-450e-a8f6-c5bc88326cbf",
+        "name": "PADEL POINT 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "9ffda3ad-30b7-4990-8e6c-7c239493f4c5",
+    "tenant_name": "La Marina Sport Club",
+    "slug": "la-marina-sport-club",
+    "address": {
+      "street": "Final Avenida Américo Vespucio. Marina Américo Vespucio",
+      "postal_code": "6016",
+      "city": "Lecheria",
+      "sub_administrative_area": "Lecheria",
+      "administrative_area": "Anzoategui",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.201144,
+        "lon": -64.665696
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/9ffda3ad-30b7-4990-8e6c-7c239493f4c5/lamarinasportclub_0001"
+    ],
+    "properties": {
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "La Marina Sport Club es el destino ideal para los amantes del deporte y la diversión en familia. Estamos ubicado en la Marina Américo Vespucio, Lechería, Anzoátegui. Contamos con un ambiente relajado, acogedor y seguro que hará sentir a quienes nos visiten como en casa.\n\n",
+      "FACILITY_WIFI": "true",
+      "WEBSITE_URL": "https://www.instagram.com/lamarinasportclub/",
+      "CONTACT_PHONE": " +584248302078",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "97c5ad5f-7edb-44cc-ad2b-0fbaee9b6694",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8b92fe58-7fb8-4aa3-bd80-186042dd4c45",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "064bb754-b360-4dd1-8a44-4adcb2aa8267",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "70ef8c42-3100-48b6-9698-197272b39a4d",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "931984c4-4294-4dd4-a05a-a71bf09627a8",
+        "name": "Padel 5 Exterior",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "145f3125-0d5c-4d75-a910-1d7abe336ff0",
+    "tenant_name": "La Mulera Padel Club",
+    "slug": "la-mulera-padel-club",
+    "address": {
+      "street": "Av. Bolivar, Maracay, Venezuela",
+      "postal_code": "2101",
+      "city": "Maracay",
+      "sub_administrative_area": "Maracay",
+      "administrative_area": "Maracay",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.24685567,
+        "lon": -67.58255081
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/145f3125-0d5c-4d75-a910-1d7abe336ff0/lamulerapc_0001"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/mulerapadelclub/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "CONTAMOS CON:\nAMPLIO ESTACIONAMIENTO PRIVADO\nPET FRIENDLY\nZONA WI FI \nRESTAURANT\nCANTINA \nVIGILANCIA Y SEGURIDAD 24H\nRESERVAMOS EL DERECHO DE ADMISION\nPLANTA ELECTRICA\nRENTA DE EQUIPOS DEPORTIVOS\nTIENDA DE ACCESORIOS\nOTROS DEPORTES DISPONIBLES EN EL CLUB: BEACH TENIS, CORN HOLE, BOLAS CRIOLLAS, DOMINO, VOLEYBALL DE PLAYA\n\n",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "CONTACT_PHONE": " 584243158156"
+    },
+    "resources": [
+      {
+        "resourceId": "c3f98a54-1804-4d94-9309-85342411cdb6",
+        "name": "DIGITEL",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "71d8a8e7-3934-482a-b197-310ce965c9f9",
+        "name": "ULTRA",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "76d755da-0874-427d-a751-385fb37ca701",
+        "name": "KSA HOME CENTER",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7cdeea96-2976-4867-8425-5b61e64226ad",
+        "name": "ANDIDOL",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "dc54f627-eb4c-49bc-ad1f-30b8373dce7e",
+    "tenant_name": "Matchpoint Lecheria",
+    "slug": "matchpoint-lecheria",
+    "address": {
+      "street": "Calle Arismendi Detras de Ciao Pasta",
+      "postal_code": "6016",
+      "city": "Lecheria",
+      "sub_administrative_area": "Lecheria",
+      "administrative_area": "Lecheria",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.192039,
+        "lon": -64.688434
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/dc54f627-eb4c-49bc-ad1f-30b8373dce7e/matchpointlecheria_0001"
+    ],
+    "properties": {
+      "SHOW_AVAILABILITY_GRID": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_LOCKERS": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "CONTACT_PHONE": "",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "https://www.instagram.com/matchpointlecheria/",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_META_DESCRIPTION": ""
+    },
+    "resources": [
+      {
+        "resourceId": "3cab070c-204a-4443-b3e7-c35ab4167714",
+        "name": "Pista Solera",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ef55dc74-5080-4b0d-a7dc-89980237a08f",
+        "name": "Padel 2 (Black)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "93555bec-6a43-4411-b801-3700af61f829",
+        "name": "Padel 3 (Black)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "1baccad1-dbe6-40e4-8620-05932294f21b",
+    "tenant_name": "Olympus Sport Club",
+    "slug": "olympus-sport-club",
+    "address": {
+      "street": "Av. Dr Montoya Parcela No 55 ",
+      "postal_code": "2115",
+      "city": "Turmero",
+      "sub_administrative_area": "Turmero",
+      "administrative_area": "Turmero",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.22218,
+        "lon": -67.543136
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/1baccad1-dbe6-40e4-8620-05932294f21b/olympus_0001"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+50766912821",
+      "DETAILS_PAGE_DESCRIPTION": "Canchas de Padel, Beach Tenis, Voley Beach, Parque infantil, Gimnasio, Areas Comerciales _(tienda deportiva, Area food, Area drink) estacionamiento privado vehicular, sala Show sport/bar)\n",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.instagram.com/olympussportclubve/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e8836c9c-d9da-4117-904e-d05591625abe",
+        "name": "Pista Mansión de New York",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "699ddb03-5b60-42e1-a87f-82a9201862f1",
+        "name": "Pista Pawer",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "abd7ecba-3d6d-4571-8b88-c2d655e6f367",
+        "name": "Pista  Agrohamilton",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "14a403c8-f212-4efc-a37d-3bd0880bc11a",
+        "name": "Pista 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "642f6bf8-c7cf-4ab5-bcdc-facd404b013f",
+        "name": "Pista Solera ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "57ff6ed9-ca17-4386-af0a-d7824d3204c2",
+        "name": "Pista Ferre Jumbo",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "68cbfb62-1189-49d9-aad8-063809ab0414",
+        "name": "Pista  Bera",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3169b0b2-78bc-4482-aec2-6a1b00d1c42c",
+        "name": "Tenis Playa 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "8324cbf3-0876-4b6a-ab77-2b0aa724f2d2",
+        "name": "Tenis Playa 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "2a8cf988-1af2-441a-aa90-a7790608ac6e",
+        "name": "Tenis Playa 3",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "6acd0016-6b86-47d7-aacf-b0bc045b29f7",
+        "name": "Tenis Playa 4",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "32e5763c-4344-41a3-a3d8-85085167e267",
+        "name": "Tenis Playa 5",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "46535298-c193-4a1f-9731-c256718a1af3",
+        "name": "Tenis Playa 6",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "691454aa-2851-4ae9-b4dd-97e0414e7037",
+        "name": "Tenis Playa 7",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "b52ad7d5-bcd5-4a96-b5f0-cf0544b69882",
+        "name": "Tenis Playa 8",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "8f8be248-830a-4f70-aaaa-a56b8eccba26",
+        "name": "Tenis Playa 9",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "00228098-b0fc-45d2-bea1-c9a2b55e3f08",
+        "name": "Tenis Playa 10",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "44430f9d-2384-4985-9f8f-531ab70c1fc3",
+        "name": "Voley Playa 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "6855169f-a287-4457-9d57-f61675d951c3",
+        "name": "Voley Playa 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "664b17ae-a55c-4939-bbcc-2a5a0094d6e6",
+        "name": "Voley Playa 3",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "cbc8192a-54db-45fe-9dcb-40369c4d5fa9",
+        "name": "Voley Playa 4",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "e513a314-947a-40fa-b80f-a6e131967972",
+        "name": "Voley Playa 5",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "634f799a-a14f-47a9-b188-013880656f32",
+        "name": "Voley Playa 6",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "0e8c74b5-9d13-4f10-ab3f-8f1d5221ee12",
+        "name": "Voley Playa 7",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "466f29f0-5c30-4f03-ba99-ec5d05745c22",
+        "name": "Voley Playa 8",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "dfb5775f-21e8-4485-aec3-f493504a2d69",
+        "name": "Voley Playa 9",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      },
+      {
+        "resourceId": "8411591f-0eaf-4846-b1e8-8dc7a169f45d",
+        "name": "Voley Playa 10",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "bec5edca-82fb-4b1f-9761-abdcbb9357bd",
+    "tenant_name": "Padel Maracaibo",
+    "slug": "padel-maracaibo",
+    "address": {
+      "street": "Av Fuerzas Armadas Complejo Deportivo",
+      "postal_code": "4001",
+      "city": "Maracaibo",
+      "sub_administrative_area": "Maracaibo",
+      "administrative_area": "Zulia",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.7104743,
+        "lon": -71.62399733
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/bec5edca-82fb-4b1f-9761-abdcbb9357bd/padelmaracaibo_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/bec5edca-82fb-4b1f-9761-abdcbb9357bd/padelmaracaibo_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/bec5edca-82fb-4b1f-9761-abdcbb9357bd/padelmaracaibo_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/bec5edca-82fb-4b1f-9761-abdcbb9357bd/padelmaracaibo_0004",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/bec5edca-82fb-4b1f-9761-abdcbb9357bd/padelmaracaibo_0005",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/bec5edca-82fb-4b1f-9761-abdcbb9357bd/padelmaracaibo_0006",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/bec5edca-82fb-4b1f-9761-abdcbb9357bd/padelmaracaibo_0007",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/bec5edca-82fb-4b1f-9761-abdcbb9357bd/padelmaracaibo_0008",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/bec5edca-82fb-4b1f-9761-abdcbb9357bd/padelmaracaibo_0009"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padelmaracaibo/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Maracaibo, es el complejo de padel pionero en nuestra ciudad, desarrollamos de forma integral el desarrollo del padel en la ciudad, contamos con entrenadores a disposición y todo lo necesario para la práctica del padel\n\nInstalaciones cómodas y seguras, con 3 canchas oficiales, elaboradas en España, con instalaciones para hidratación, compartir en comunidad, superestacionamiento con amplia capacidad, y seguridad, además contamos con aliados que permitirán que toda la familia disfrute del Padel, y del complejo deportivo a su alrededor",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "CONTACT_PHONE": "+584143603744"
+    },
+    "resources": [
+      {
+        "resourceId": "6727797c-a998-42e8-ab43-ba88cb530549",
+        "name": " PISTA 12",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9165b791-fa8c-4659-8782-3eedc89a0d69",
+        "name": "Techada 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bbe078b0-fa1b-49e2-b986-eb72e22b120d",
+        "name": "Techada 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5d833c4d-2fc0-4b6b-ad35-bf1a66858d87",
+        "name": "Techada 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "66d77088-2fe4-41cd-8781-766e542b35ee",
+        "name": "Techada 4",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "04b85f67-6bb3-4a1c-ab81-1bf8611cd3ab",
+        "name": "Techada 5",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3adab8fc-7fdc-433b-a4a4-ce4ef281cdca",
+        "name": "Techada 6",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8f2f1163-9c28-4aee-991a-e2305cd94770",
+        "name": "Techada 7",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "383fe593-c726-4dca-8022-1505200800b5",
+        "name": "Techada 8 ",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b43d862c-f2e4-47a9-a4a0-2f1050dec032",
+        "name": "Padel 9",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "203b0bac-d89c-4f70-8304-a45ea7a5a9a1",
+        "name": "Padel 10",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "192f3449-8ee7-44bf-864c-0313c4033894",
+        "name": "Padel 11",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "9b21a47b-35f1-443d-b64c-68dafe476d53",
+    "tenant_name": "Padel Zone",
+    "slug": "padel-zone",
+    "address": {
+      "street": "AVENIDA JORGE RODRIGUEZ LOCAL GALPON DEL IUTIRLA SECTOR LAS GARZAS ",
+      "postal_code": "6016",
+      "city": "Lecheria",
+      "sub_administrative_area": "Lecheria",
+      "administrative_area": "Anzoategui",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.181367,
+        "lon": -64.670366
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/9b21a47b-35f1-443d-b64c-68dafe476d53/padelzonevzla_0001"
+    ],
+    "properties": {
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "WEBSITE_URL": "https://www.instagram.com/padelzone.ve/",
+      "FACILITY_STORE": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_RESTAURANT": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "CONTACT_PHONE": "",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "1cb468fb-7063-4413-b903-c81d44895c9e",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c7e3d27f-f4e2-4c4b-9f5e-e69786dfbbb1",
+        "name": "Pista Zulia",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "84883f8c-b4ea-484b-9f68-6b5f9f955e76",
+    "tenant_name": "Royal Padel Club - Maracay",
+    "slug": "royal-padel-club-maracay",
+    "address": {
+      "street": "Calle principal, el bosque con calle los pinos, Maracay, Venezuela",
+      "postal_code": "2102",
+      "city": "Maracay",
+      "sub_administrative_area": "Maracay",
+      "administrative_area": "Maracay",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.259024,
+        "lon": -67.589977
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/84883f8c-b4ea-484b-9f68-6b5f9f955e76/royalpadelclub_0001"
+    ],
+    "properties": {
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_LOCKERS": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/royalpadelmaracay/",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Somos un club que ofrece exclusividad y privacidad a nuestros clientes con canchas de la mejor calidad y un agradable espacio para compartir y poder disfrutar de nuestro menú de comidas y bebidas.\n",
+      "CONTACT_PHONE": "+584243061639",
+      "PUBLIC_TRANSPORT_BUS": ""
+    },
+    "resources": [
+      {
+        "resourceId": "e80f6930-56eb-4d49-9bc5-844578a9c03e",
+        "name": "Pista BFimca",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3ce18144-57d1-4a25-a994-fda9ba44b243",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "5bab5b02-8693-49cc-ad4f-95d25afd40bc",
+    "tenant_name": "Saque Padel Club",
+    "slug": "saque-padel-club",
+    "address": {
+      "street": "SAN MIGUEL COUNTRY CLUB, MATURIN",
+      "postal_code": "6201",
+      "city": "Maturin",
+      "sub_administrative_area": "Maturin",
+      "administrative_area": "Maturin",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 9.818918,
+        "lon": -63.211616
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+584141925060",
+      "DETAILS_PAGE_DESCRIPTION": "OFRECEMOS PISTAS CERTIFICADAS POR LA FEDERACION ESPAÑOLA DE PADEL Y UN RESTAURAN CON TERRAZA PARA DISFRUTAR MIENTRAS ESPERAS PARA JUGAR O LUEGO DE JUGAR\n",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.instagram.com/saquepadelclub/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "c1763b98-fe47-4e77-987b-aed775c1f582",
+        "name": "La Preferida",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0c36003b-ee0a-437c-b53c-60dc39cffc8d",
+        "name": "Pista 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d23b91e3-9ac4-44e7-805e-584b82f24d8e",
+        "name": "Farmadon",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "363160fe-329d-40f1-99e7-ea21f970ca66",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c80c3636-6542-46c2-94c9-a075e51a80ee",
+        "name": "Industrias Bravo",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "4b4e6e36-549a-4aa8-bfad-c829e609cfb7",
+    "tenant_name": "Smash Sport Club",
+    "slug": "smash-sport-club",
+    "address": {
+      "street": "Av. Intercomunal Las Garzas, Lecheria, Venezuela",
+      "postal_code": "6016",
+      "city": "Lecheria",
+      "sub_administrative_area": "Anzoategui",
+      "administrative_area": "Anzoategui",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.182976,
+        "lon": -64.66797
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/4b4e6e36-549a-4aa8-bfad-c829e609cfb7/smashsportclubvzla_0001"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.instagram.com/smash.sportclub/",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "COMPLEJO DEPORTIVO DE RAQUETAS CON PADEL BEACH TENNIS Y PICLKLEBALL , ENTRETEMINIENTO Y COMIDA \n",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+584143815881",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2211d850-b2fb-48bd-b31e-9a5b66d1bfe1",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a61fe6d9-cfc9-4c00-9cf0-eb152dff325a",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "33e010e4-1722-476d-b94e-0c3d20911bcc",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "da14a215-041e-46aa-b303-36fc4330135e",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:30",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "9da25d0f-68c7-4071-be4c-96d926b57cb9",
+    "tenant_name": "PADEL UCAB Guayana",
+    "slug": "unipadel-ucab-guayana",
+    "address": {
+      "street": "VIA COLOMBIA",
+      "postal_code": "8050",
+      "city": "Guayana",
+      "sub_administrative_area": "Puerto Ordaz",
+      "administrative_area": "Bolivar",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 8.296132,
+        "lon": -62.713186
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/9da25d0f-68c7-4071-be4c-96d926b57cb9/unipadelucabguy_0001"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "WEBSITE_URL": "https://www.instagram.com/unipadel.club/",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "SHOW_AVAILABILITY_GRID": "false",
+      "DETAILS_PAGE_DESCRIPTION": "2 CANCHAS DE PADEL",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "true",
+      "ALLOWS_CASH_PAYMENT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "13d5ffa4-d59f-492f-a698-15fa93c4b88f",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3edf6962-4986-48d9-98b0-835e8f974e09",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c29206ba-1c9f-4c40-9d14-c0c0a3a0a7a1",
+    "tenant_name": "We Padel",
+    "slug": "we-padel-valencia",
+    "address": {
+      "street": "Av Universidad, Edif El Carabobeño, Piso Terraza, La Granja, Naguanagua",
+      "postal_code": "2005",
+      "city": "Valencia",
+      "sub_administrative_area": "Valencia",
+      "administrative_area": "Carabobo",
+      "country": "Venezuela",
+      "country_code": "VE",
+      "coordinate": {
+        "lat": 10.241474,
+        "lon": -68.011629
+      },
+      "timezone": "America/Caracas"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/c29206ba-1c9f-4c40-9d14-c0c0a3a0a7a1/unitedpc_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/c29206ba-1c9f-4c40-9d14-c0c0a3a0a7a1/unitedpc_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/c29206ba-1c9f-4c40-9d14-c0c0a3a0a7a1/unitedpc_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/c29206ba-1c9f-4c40-9d14-c0c0a3a0a7a1/unitedpc_0004",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/c29206ba-1c9f-4c40-9d14-c0c0a3a0a7a1/unitedpc_0005",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/c29206ba-1c9f-4c40-9d14-c0c0a3a0a7a1/unitedpc_0006"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "www.somosunitedpadel.com",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Único centro de padel rooftop de la ciudad, con estacionamiento privado. \n",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "CONTACT_PHONE": "58 412 440 1919"
+    },
+    "resources": [
+      {
+        "resourceId": "972c7210-9278-4fd3-9f9b-3064d90e6e47",
+        "name": "Pista 1 (Central)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "09e44754-498a-4c0c-b2c5-603ae138106a",
+        "name": "Pista 2 (Techada)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "322a5758-3119-4d1a-9603-8b44e5e0cf5e",
+        "name": "Pista 3 (Techada)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e0ec756d-7622-4dae-a4be-bf3de75a105d",
+        "name": "Pista 4 (Techada)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "11:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "11:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "11:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "11:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "11:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  }
+]

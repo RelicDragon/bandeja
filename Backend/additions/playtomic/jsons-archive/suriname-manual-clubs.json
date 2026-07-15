@@ -1,0 +1,25 @@
+[
+  {
+    "id": "manual-sr-1",
+    "name": "Torarica Resort Padel",
+    "cityRaw": "Paramaribo",
+    "address": "Torarica Resort, Paramaribo, Suriname",
+    "website": "https://www.torarica.com/",
+    "courtsNumber": 2,
+    "sports": ["PADEL"],
+    "source": "manual",
+    "sourceUrl": "https://surinamehub.com/padel-suriname/",
+    "description": "2 padel courts at Torarica Resort (repurposed tennis court)."
+  },
+  {
+    "id": "manual-sr-2",
+    "name": "Padel X Suriname",
+    "cityRaw": "Paramaribo",
+    "address": "Ringweg-Zuid 199, Paramaribo, Suriname",
+    "courtsNumber": 5,
+    "sports": ["PADEL"],
+    "source": "manual",
+    "sourceUrl": "https://surinamehub.com/listing/padel-x-suriname/",
+    "description": "Padel X Suriname Social Club — 5 courts (3 covered, 2 outdoor)."
+  }
+]

@@ -1,0 +1,3912 @@
+[
+  {
+    "tenant_id": "f9cf7e29-f29a-4b9c-bef9-02d5504a205c",
+    "tenant_name": "2padel",
+    "slug": "2padel",
+    "address": {
+      "street": "Wadi Hanifa",
+      "postal_code": "0000",
+      "city": "Riyadh",
+      "sub_administrative_area": "Riyadh",
+      "administrative_area": "Riyadh",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.62847932,
+        "lon": 46.64768444
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/f9cf7e29-f29a-4b9c-bef9-02d5504a205c/2padelksa_0001"
+    ],
+    "properties": {
+      "PUBLIC_TRANSPORT_METRO": "",
+      "CONTACT_PHONE": "+966532024271",
+      "DETAILS_PAGE_DESCRIPTION": "\n"
+    },
+    "resources": [
+      {
+        "resourceId": "7ae5716f-7bb9-47c1-8fa6-330319ee1fd6",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8d905f0b-ded7-49ec-8ab6-072615a1c500",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "18:00",
+        "closing_time": "06:00"
+      },
+      "MONDAY": {
+        "opening_time": "18:00",
+        "closing_time": "06:00"
+      },
+      "FRIDAY": {
+        "opening_time": "18:00",
+        "closing_time": "06:00"
+      },
+      "SUNDAY": {
+        "opening_time": "18:00",
+        "closing_time": "06:00"
+      },
+      "SATURDAY": {
+        "opening_time": "18:00",
+        "closing_time": "06:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "18:00",
+        "closing_time": "06:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "18:00",
+        "closing_time": "06:00"
+      },
+      "TUESDAY": {
+        "opening_time": "18:00",
+        "closing_time": "06:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "75558203-ee0d-4e0d-9a99-58c5273e9bf0",
+    "tenant_name": "4Padel",
+    "slug": "4padel",
+    "address": {
+      "street": "Alsahafa - Racket 10 riyals ",
+      "postal_code": "0000",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "منطقة الرياض",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.8041654,
+        "lon": 46.6332876
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1732287007/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732287007009.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732287010/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732287009409.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732288069/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732288068510.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732454205/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732454204573.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732454206/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732454206228.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732454208/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732454207874.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732454210/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732454209637.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732454212/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732454211630.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732454390/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732454389486.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732454392/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732454391685.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732454395/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732454394736.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732454398/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732454397167.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732455193/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732455193120.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732455195/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732455195188.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732455197/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732455197021.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732455199/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732455198816.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1732455201/pro/tenants/75558203-ee0d-4e0d-9a99-58c5273e9bf0/1732455201132.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Racket 10 riyals . ",
+      "FACILITY_CHANGEROOM": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_CAFETERIA": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "CONTACT_PHONE": "+966 554044210",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": ""
+    },
+    "resources": [
+      {
+        "resourceId": "3f72d7ff-befe-481b-a613-c3e4e8f83d13",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f0057549-175a-44da-935e-d29145e8e8fb",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "833ecc9e-5bc4-4f7e-b39e-50bfedc7bec3",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:30",
+        "closing_time": "04:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "04:30"
+      },
+      "THURSDAY": {
+        "opening_time": "07:30",
+        "closing_time": "04:30"
+      },
+      "FRIDAY": {
+        "opening_time": "07:30",
+        "closing_time": "04:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:30",
+        "closing_time": "04:30"
+      },
+      "TUESDAY": {
+        "opening_time": "07:30",
+        "closing_time": "04:30"
+      },
+      "MONDAY": {
+        "opening_time": "07:30",
+        "closing_time": "04:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "4fcbd185-c60a-44ee-a8b5-4d6866c837eb",
+    "tenant_name": "Atlas House",
+    "slug": "atlas-house",
+    "address": {
+      "street": "Level 5, Building 2.08, King Abdullah Financial District, Riyadh",
+      "postal_code": "13519",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.76853377,
+        "lon": 46.64019062
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1779712966/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779712965099.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779713953/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779713952628.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779714016/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779714014872.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779714066/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779714065455.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779714083/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779714081992.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779714123/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779714122137.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779714184/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779714182596.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779714235/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779714234368.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715103/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715101893.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715116/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715115276.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715249/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715248691.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715302/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715300735.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715351/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715349733.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715378/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715376854.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715415/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715414561.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715445/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715444351.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715464/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715463732.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715496/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715495674.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715499/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715498476.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715515/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715513767.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715514/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715513870.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715532/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715531017.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1779715609/pro/tenants/4fcbd185-c60a-44ee-a8b5-4d6866c837eb/1779715608100.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "**Atlas House Padel - KAFD**\nA rooftop padel court on Building 2.08 in the heart of KAFD, featuring a cooling system to keep you comfortable, on‑site racket and ball rentals, and convenient showers. It’s perfect for an early‑morning hit or a quick lunchtime match with a colleague. After playing, Atlas House Café is just steps away for a relaxed coffee or lunch.",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+966115106700",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "5197d29d-cc4b-43f1-887a-24e8d101e0be",
+        "name": "50% Off Summer Offer",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "19:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "19:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "19:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "19:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "19:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "4feb5d26-32b7-4e5c-9602-697dbae62da5",
+    "tenant_name": "Hala Padel",
+    "slug": "hala-padel",
+    "address": {
+      "street": "Arid District",
+      "postal_code": "11234",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.904543,
+        "lon": 46.6141755
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1772479248/pro/tenants/4feb5d26-32b7-4e5c-9602-697dbae62da5/1772479248237.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1772479251/pro/tenants/4feb5d26-32b7-4e5c-9602-697dbae62da5/1772479250486.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1772479445/pro/tenants/4feb5d26-32b7-4e5c-9602-697dbae62da5/1772479445122.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_DESCRIPTION": "It is forbidden to play with the Saudi dress!\nيمنع اللعب بالثوب منعا باتا",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "1c3b0358-a23c-4e01-9ddf-cddcf96e080a",
+      "CONTACT_PHONE": "+966 552023072",
+      "FACILITY_SNACK_BAR": "false",
+      "WEBSITE_URL": "https://instagram.com/halapadel.sa?igshid=YmMyMTA2M2Y",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_LOCKERS": "true",
+      "PUBLIC_TRANSPORT_METRO": ""
+    },
+    "resources": [
+      {
+        "resourceId": "7cd24066-db54-4b5f-a3e7-0f7128a1743c",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d3a33144-0955-40b9-9845-969184cb69c8",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "454270b7-6845-45a8-bb16-eef0f0162b58",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "785b89b7-c7a4-4c72-a785-cee1b449293e",
+        "name": "Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "06:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "06:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "06:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "06:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "06:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "06:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "06:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "def55bbd-7a52-4760-912f-eb9775ed6daa",
+    "tenant_name": "Padelx KACST",
+    "slug": "kacst-padel",
+    "address": {
+      "street": "https://maps.app.goo.gl/TJ9zHp8RTqZTKvZe6 الموقع بطريق الأمير تركي الأول  بن عبدالعزيز بعد مجمع ذا اسبلاند عند بوابة الأسكان",
+      "postal_code": "13315",
+      "city": "Riyadh",
+      "sub_administrative_area": "Riyadh Principality",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.72253338,
+        "lon": 46.64168339
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760896078/pro/tenants/def55bbd-7a52-4760-912f-eb9775ed6daa/1760896077024.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760896089/pro/tenants/def55bbd-7a52-4760-912f-eb9775ed6daa/1760896088800.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760896103/pro/tenants/def55bbd-7a52-4760-912f-eb9775ed6daa/1760896102109.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760896117/pro/tenants/def55bbd-7a52-4760-912f-eb9775ed6daa/1760896116118.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760897266/pro/tenants/def55bbd-7a52-4760-912f-eb9775ed6daa/1760897265750.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1770220711/pro/tenants/def55bbd-7a52-4760-912f-eb9775ed6daa/1770220710626.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_CHANGEROOM": "false",
+      "WEBSITE_URL": "",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_STORE": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Padelx KACST!",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_WIFI": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+966 595215019",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_MATERIAL_RENTING": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "42cc6c4d-41c0-4a2c-89b2-35c965ae7383",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "cb0ac937-2bd2-48f0-82ed-364570715f7e",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2dfff7a4-f54b-4fb7-b17b-929aaf897e88",
+        "name": "Private Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "37ac9330-21ff-4257-9586-6970013209d7",
+        "name": "Padel 4 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "609527af-6982-49ac-b33f-8463eff3737a",
+        "name": "Tennis ",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "quick"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "473552eb-601f-46d3-a9ba-64835a1d8634",
+    "tenant_name": "Matcha club Riyadh",
+    "slug": "matcha-club-riyadh",
+    "address": {
+      "street": "Roshn front",
+      "postal_code": "NA",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.8464184,
+        "lon": 46.7369654
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1775805529/pro/tenants/473552eb-601f-46d3-a9ba-64835a1d8634/1775805528868.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://matcha-club.ae/",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "true",
+      "CONTACT_PHONE": "+966 506062101",
+      "FACILITY_CAFETERIA": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4b46487a-2c50-471c-99ad-08a1f56c005e",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cfa3e813-719a-40ca-953c-4c518a4c84d3",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5ab1116c-d822-4b6c-998e-f1b2c3d11f82",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0b4f4e61-8808-47a7-a44a-fe41bf24dbb8",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7db4e7fc-d43f-485e-b051-b81a036538f4",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bb71f748-68ac-4c4f-bb79-d9f921cfc7b6",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "64483909-3692-4ff9-94a7-af965793ac70",
+        "name": "Padel 7 Female",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "01:00"
+      },
+      "THURSDAY": {
+        "opening_time": "17:00",
+        "closing_time": "01:00"
+      },
+      "SATURDAY": {
+        "opening_time": "17:00",
+        "closing_time": "01:00"
+      },
+      "MONDAY": {
+        "opening_time": "17:00",
+        "closing_time": "01:00"
+      },
+      "FRIDAY": {
+        "opening_time": "17:00",
+        "closing_time": "01:00"
+      },
+      "TUESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "01:00"
+      },
+      "SUNDAY": {
+        "opening_time": "17:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "33436d5f-2744-46fa-9b32-6ec0a6adf368",
+    "tenant_name": "N1 Padel",
+    "slug": "n1-padel",
+    "address": {
+      "street": "King Fahad ",
+      "postal_code": "11352",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.86283355,
+        "lon": 46.58378295
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1728229013/pro/tenants/33436d5f-2744-46fa-9b32-6ec0a6adf368/1728229013519.jpg"
+    ],
+    "properties": {
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_STORE": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Indoor padel courts ",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "1b3b371b-eed7-4300-9088-d17c7d86c35e",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/n1.padel/",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "DETAILS_PAGE_TITLE": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "CONTACT_PHONE": "+966 559400877",
+      "PUBLIC_TRANSPORT_BUS": ""
+    },
+    "resources": [
+      {
+        "resourceId": "970a8f8c-1fb2-48fd-a8fc-59c9cfc4938f",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "e4ebdd99-b6d8-48f3-8b5c-c7a1a3a06a42",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "233e4e2a-0290-49cc-b8ca-56dab01794d6",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "242322ff-e65e-4932-b07a-b8fa5c52735c",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "01:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "16:00",
+        "closing_time": "01:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "01:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "01:00"
+      },
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "8d0991cf-566e-4e81-9867-9c54fc17db93",
+    "tenant_name": "Padel Bolt",
+    "slug": "padel-bolt",
+    "address": {
+      "street": "King Abdulaziz Rd, Alrabwah, Ar Rass 58891",
+      "postal_code": "58891",
+      "city": "Ar Rass",
+      "sub_administrative_area": "",
+      "administrative_area": "Al Qassim Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 25.87709523,
+        "lon": 43.52992218
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760464575/pro/tenants/8d0991cf-566e-4e81-9867-9c54fc17db93/1760464574751.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://linktr.ee/padelboltsa",
+      "FACILITY_RESTAURANT": "false",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "413ef288-1b02-4a8d-b8c7-0f32253e802b;5de50413-4268-4fe5-b9ff-463c7350295b",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "false",
+      "CONTACT_PHONE": "+966 595303676",
+      "FACILITY_CAFETERIA": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "bcd1c8dd-565f-48d1-bc6a-70d176c420b7",
+        "name": "Court 1 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6ee1f882-1b1c-43ad-a643-6233a196c97c",
+        "name": "Private Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "770a2bf9-119b-476e-a67e-c2796114dcb5",
+    "tenant_name": "PADEL IN JEDDAH PARK",
+    "slug": "padel-in-jeddah-ksa",
+    "address": {
+      "street": "Cenomi Jeddah Park Tahlia Street, Jeddah",
+      "postal_code": "23334",
+      "city": "Jeddah",
+      "sub_administrative_area": "",
+      "administrative_area": "Makkah Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 21.55529,
+        "lon": 39.18443
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1775221410/pro/tenants/770a2bf9-119b-476e-a67e-c2796114dcb5/1775221409552.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1775416584/pro/tenants/770a2bf9-119b-476e-a67e-c2796114dcb5/1775416583532.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1775416589/pro/tenants/770a2bf9-119b-476e-a67e-c2796114dcb5/1775416589059.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1775416595/pro/tenants/770a2bf9-119b-476e-a67e-c2796114dcb5/1775416594691.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1775416601/pro/tenants/770a2bf9-119b-476e-a67e-c2796114dcb5/1775416600620.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+966 544635548",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Padel IN Jeddah club!\n**“By the players for the players”**",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "https://padelin.com/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "0977b658-b100-4933-bb5c-bfe3bfb3bb56",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6b912e0d-f09e-4390-af38-c2f70f5e354b",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0197e480-f998-4bef-9d10-779a0917eb27",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4a3a843c-1b6a-4796-8580-ff90d99af7a8",
+        "name": "Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d031d022-3a21-4b73-9e03-38e8c156074d",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "98281113-9773-444e-b379-5cdedf4c8685",
+        "name": "Court 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "946e9329-0608-4027-b7ab-ce80e0ddcbdd",
+        "name": "Court 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b339d23d-09fa-4fb8-b835-93b08377cf5e",
+        "name": "Court 8",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2e59ce5d-5174-4ad1-b245-8b846e44c84c",
+        "name": "Central Court",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "42792bf9-e0b3-4a0d-a8c7-505f9f582f11",
+        "name": "Court 10 - 2nd Floor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "32ef5dea-0b8b-4adb-b649-eb2470f6a186",
+        "name": "Court 11 - 2nd Floor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "48e5caed-b5c6-4fe0-ad3e-1843812d715c",
+        "name": "Court 12 - 2nd Floor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b5beda08-f686-467c-9681-f8c34bbdc5d8",
+        "name": "Court 13 - 2nd Floor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "04:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "04:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "04:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "04:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "04:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "04:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "04:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "b2d5bfde-f955-4d9e-b3e0-562918b64308",
+    "tenant_name": "PADEL IN (AL QASSIM)",
+    "slug": "padel-in-qassim",
+    "address": {
+      "street": "Buraydah,  حي مبروكة, 4135 علي ابن الحسين",
+      "postal_code": "52389",
+      "city": "Buraydah",
+      "sub_administrative_area": "Buraydah Principality",
+      "administrative_area": "Al Qassim Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 26.41769031,
+        "lon": 43.93701546
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1755789375/pro/tenants/b2d5bfde-f955-4d9e-b3e0-562918b64308/1755789375255.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1755789380/pro/tenants/b2d5bfde-f955-4d9e-b3e0-562918b64308/1755789379298.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1755789383/pro/tenants/b2d5bfde-f955-4d9e-b3e0-562918b64308/1755789382808.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://padelinksa.com/",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Padel IN Al Qassim club!\n“By the players for the players”",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "false",
+      "CONTACT_PHONE": "+966 549322589",
+      "FACILITY_PRIVATE_PARKING": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "a8088e9b-d83e-4b1c-855d-f981fef9afec",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "85956c38-db93-4fb9-9eb4-a44f18086b82",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "fc20ec30-cd9c-44bc-84da-316417b113cd",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "302fb555-f6d4-4f89-a5c7-38bf90e50fdf",
+        "name": "Court 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4e26441f-57e4-4b24-b690-52d007fb560f",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "12:30",
+        "closing_time": "04:00"
+      },
+      "TUESDAY": {
+        "opening_time": "13:00",
+        "closing_time": "04:00"
+      },
+      "SUNDAY": {
+        "opening_time": "13:00",
+        "closing_time": "04:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "13:00",
+        "closing_time": "04:00"
+      },
+      "SATURDAY": {
+        "opening_time": "12:30",
+        "closing_time": "04:00"
+      },
+      "MONDAY": {
+        "opening_time": "13:00",
+        "closing_time": "04:00"
+      },
+      "THURSDAY": {
+        "opening_time": "13:00",
+        "closing_time": "04:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "1e63a8fd-18e0-4752-b120-614e9faed0b7",
+    "tenant_name": "PADEL IN (AL RABWAH)",
+    "slug": "padel-in-rabwah",
+    "address": {
+      "street": "Umar Ibn Abdul Aziz Br Rd, Ar Rabwah",
+      "postal_code": "12824",
+      "city": "Riyadh",
+      "sub_administrative_area": "Riyadh Principality",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.69216587,
+        "lon": 46.76483851
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1755789827/pro/tenants/1e63a8fd-18e0-4752-b120-614e9faed0b7/1755789826435.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "https://padelinksa.com/",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "false",
+      "CONTACT_PHONE": "+966 544633188",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to Padel IN Al Rabwah club!\n“By the players for the players”"
+    },
+    "resources": [
+      {
+        "resourceId": "c83c188b-a700-4a69-8830-61ac258c78f7",
+        "name": "Central Court ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "490b13e0-73d6-479a-a108-03f8939275ed",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bdb2508c-d6ff-41b3-a2c4-3717950b3b2d",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b50c1404-7d59-4d75-861f-6455b8910962",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6e6acb85-1727-4a7b-801d-abb9f36cedf3",
+        "name": "Court 4 (Private Court)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2cd60290-4987-489c-8560-6bc04cb1e6f3",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "10:00",
+        "closing_time": "03:00"
+      },
+      "SUNDAY": {
+        "opening_time": "10:00",
+        "closing_time": "03:00"
+      },
+      "TUESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "03:00"
+      },
+      "MONDAY": {
+        "opening_time": "10:00",
+        "closing_time": "03:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "10:00",
+        "closing_time": "03:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "03:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "03:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "54613bc0-e9a1-4a5d-ba43-c7171d49bf3d",
+    "tenant_name": "Padel It Dome",
+    "slug": "padel-it-dome",
+    "address": {
+      "street": "Alamria waseel Road ",
+      "postal_code": "13931",
+      "city": "الرياض",
+      "sub_administrative_area": "الدرعية",
+      "administrative_area": "منطقة الرياض",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.80847,
+        "lon": 46.52156
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741162104/pro/tenants/54613bc0-e9a1-4a5d-ba43-c7171d49bf3d/1741162103986.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_DESCRIPTION": "ملاعب داخلية مكيفة بالكامل\nتشمل حجوزاتنا:\n• كرات اللعب\n• مياه\n• مناشف معقمة\nخدماتنا:\n• مواقف سيارات\n• كوفي شوب\n• غرف تبديل ملابس\n• دورات مياه مجهزة مع أجهزة تسخين\n• منطقة استشفاء عضلي (Recovery)\nتنويه:يرجى من جميع الزوار الكرام الالتزام بالزي الرياضي المناسب والمحتشم داخل المنشأة، وذلك حفاظًا على الذوق العام وراحة الجميع\nFully air-conditioned indoor courts\n\nOur bookings include:\n• Playing balls\n• Water\n• Sanitized towels\n\nOur services:\n• Parking\n• Coffee shop\n• Changing rooms\n• Fully equipped restrooms with heating system\n• Recovery area\n\nNotice:\nAll valued guests are kindly requested to adhere to appropriate and modest sportswear inside the facility, in order to maintain public decorum and ensure everyone’s comfort.",
+      "CONTACT_PHONE": "+966 581237027",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "ed98ddd2-bfc2-43b4-88af-1900ee38b5bb;23a2f2df-69e2-4b82-b44d-cc96af58d012;5bc63bbd-7bbc-40a5-a720-1e97ab4f04bc",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://linktr.ee/PadelIT.ksa",
+      "FACILITY_WIFI": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_CHANGEROOM": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_TITLE": ""
+    },
+    "resources": [
+      {
+        "resourceId": "e4b9a434-4abc-4a89-ac8b-017589893cd9",
+        "name": "AD Digital 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5d7f43ee-8b7e-4d9d-93e8-6f83ad958ed4",
+        "name": "STC Bank 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "7172c29c-6b9a-4417-987b-f251c596dc34",
+        "name": "Qminc 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "135a0d20-1e7b-4656-b253-29e722488e80",
+        "name": "Padel.it 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0fb85794-e9d5-4a46-81b0-685ef825d3d6",
+        "name": "Invest Saudi 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "299d67e2-7f13-41f5-b1f5-f48a5e775939",
+        "name": "Golato 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3f939ba4-8356-49d7-b472-ac01a62a6589",
+        "name": "Touch 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "03:30"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "03:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:30",
+        "closing_time": "04:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "03:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:30",
+        "closing_time": "04:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "03:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "03:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "b7664e84-5ac4-419c-b1ec-45ad011b59cb",
+    "tenant_name": "PADEL LAND",
+    "slug": "padel-land",
+    "address": {
+      "street": "Aljazeerah",
+      "postal_code": "4562",
+      "city": "بريدة",
+      "sub_administrative_area": "بريدة",
+      "administrative_area": "منطقة القصيم",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 26.40881144,
+        "lon": 43.89669666
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760343645/pro/tenants/b7664e84-5ac4-419c-b1ec-45ad011b59cb/1760343644640.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padel_land2022?igsh=OHgyNzdqNDllcTA1&utm_source=qr",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "CONTACT_PHONE": "+966 551643539"
+    },
+    "resources": [
+      {
+        "resourceId": "9b9218f1-286f-446c-9c67-f83785dd93c2",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "e6a55dbd-436e-4638-a346-631e087936f6",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "06:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "06:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "06:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "06:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "06:00"
+      },
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "06:00"
+      },
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "06:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "0fce212c-19c1-4a67-9c03-ad450c962bce",
+    "tenant_name": "Padel Masters Marriott",
+    "slug": "padel-masters-marriot",
+    "address": {
+      "street": "King saud road",
+      "postal_code": "12622",
+      "city": "Riyadh",
+      "sub_administrative_area": "Riyadh Principality",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.68692614,
+        "lon": 46.71269421
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1711806853/pro/tenants/0fce212c-19c1-4a67-9c03-ad450c962bce/1711806853105.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1711806855/pro/tenants/0fce212c-19c1-4a67-9c03-ad450c962bce/1711806854627.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1711806856/pro/tenants/0fce212c-19c1-4a67-9c03-ad450c962bce/1711806856105.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1711806858/pro/tenants/0fce212c-19c1-4a67-9c03-ad450c962bce/1711806857758.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+966 506711884",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Marriot Branch\n 3 Outdoor courts, Free parking\nToilets,showers\n(Booking included Rackets, balls And water)",
+      "WEBSITE_URL": ""
+    },
+    "resources": [
+      {
+        "resourceId": "4ea13d45-662c-4c61-a438-58d76cabbb14",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "794532a8-f32d-4c73-ae3b-6e6f3667f744",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c9d5daba-2573-4edb-ad7e-4d799628ee3d",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "b53198ac-3856-4438-806a-cec383da1a2a",
+    "tenant_name": "Padel Plus 1",
+    "slug": "padel-plus-1",
+    "address": {
+      "street": "Faisal Bin Bandar Street , Alnarjis",
+      "postal_code": "11411",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.85842106,
+        "lon": 46.676571
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1769878940/pro/tenants/b53198ac-3856-4438-806a-cec383da1a2a/1769878939781.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1769878952/pro/tenants/b53198ac-3856-4438-806a-cec383da1a2a/1769878951959.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1769878963/pro/tenants/b53198ac-3856-4438-806a-cec383da1a2a/1769878963298.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1769879493/pro/tenants/b53198ac-3856-4438-806a-cec383da1a2a/1769879492525.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Court 2 -Private court for Ladies/Mix ,Curtain covered for Privacy !\n",
+      "WEBSITE_URL": "",
+      "CONTACT_PHONE": "+966 501587614"
+    },
+    "resources": [
+      {
+        "resourceId": "2211f580-cc2b-4f46-b6ef-b3db039c4024",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "af609f19-7349-480e-b732-eecb317e46cc",
+        "name": "Padel 2 Private and non private",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "d35d62be-4a28-4f90-8b09-34a0b68f29a8",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "12:00",
+        "closing_time": "04:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "12:00",
+        "closing_time": "04:00"
+      },
+      "TUESDAY": {
+        "opening_time": "12:00",
+        "closing_time": "04:00"
+      },
+      "MONDAY": {
+        "opening_time": "12:00",
+        "closing_time": "04:00"
+      },
+      "SUNDAY": {
+        "opening_time": "12:00",
+        "closing_time": "04:00"
+      },
+      "FRIDAY": {
+        "opening_time": "12:00",
+        "closing_time": "04:00"
+      },
+      "SATURDAY": {
+        "opening_time": "12:00",
+        "closing_time": "04:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "92af76b6-9d80-44ce-abd7-91addd2caf40",
+    "tenant_name": "Padel Rush",
+    "slug": "padel-rush",
+    "address": {
+      "street": "QJC3+73R, Hittin",
+      "postal_code": "13516",
+      "city": "Riyadh",
+      "sub_administrative_area": "Ar-Riyad",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.7708146,
+        "lon": 46.6026454
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1747034956/pro/tenants/92af76b6-9d80-44ce-abd7-91addd2caf40/1747034955811.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1747034975/pro/tenants/92af76b6-9d80-44ce-abd7-91addd2caf40/1747034974701.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1747035030/pro/tenants/92af76b6-9d80-44ce-abd7-91addd2caf40/1747035028848.jpg"
+    ],
+    "properties": {
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "742ecff7-d3ed-471f-8ab4-243181622fce;f25a903f-969a-498b-aec3-04163c4a075b",
+      "DETAILS_PAGE_TITLE": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "DETAILS_PAGE_DESCRIPTION": "الوجهة النهائية للاعبي البادل في المملكة الذين يتطلعون إما إلى تعلم الرياضة أو تحسين مهاراتهم أو الاستمتاع مع بعض الأصدقاء في منشأة مجهزة بالكامل.\n\nThe ultimate destination for Padel players in Saudi Arabia looking to either learn the sport,improve their skills, or have some fun with friends in a fully equipped facility.",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "CONTACT_PHONE": "+966 533729699",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "WEBSITE_URL": "https://instagram.com/padelrush?igshid=YmMyMTA2M2Y="
+    },
+    "resources": [
+      {
+        "resourceId": "6444ba1d-0cf8-4678-ac32-f587d1755438",
+        "name": "Court 1 - Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "8c12bdc0-f644-4859-953a-dc62449b356b",
+        "name": "Court 2 Indoor",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "b0d50d2d-d64f-4e30-8312-cfef9ebfeb61",
+        "name": "Court 3 Indoor ( Private court )",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a1230ae9-7c98-4a69-9310-594e28dae1bd",
+        "name": "Court 1 Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "030798cb-b5d8-4037-aced-af30838296e5",
+        "name": "Court 2 Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "27defec7-0788-446d-bb1e-884e00fe35ec",
+        "name": "Court 3 Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "2e0a0397-2875-41c8-9eb0-2f7e45dd6064",
+        "name": "Court 4 Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "bf5b8487-e89c-4399-814e-fa701765d3ae",
+        "name": "Court 5 Outdoor",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "f177ea7b-3534-4bb5-9a58-f87e2b9c4530",
+        "name": "Central Court  ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "2d61e61e-06bc-4b1b-89c4-978f5991fa4c",
+    "tenant_name": "Padel UP - Indoor",
+    "slug": "padel-up-indoor-arena",
+    "address": {
+      "street": "",
+      "postal_code": "12372",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.7285626,
+        "lon": 46.6250807
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1776262029/pro/tenants/2d61e61e-06bc-4b1b-89c4-978f5991fa4c/1776262028967.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padel_up?igsh=MXZybndwaWI0d2ZibQ==",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Premium indoor & outdoor padel court designed for performance and comfort. Enjoy high-quality turf, and a spacious layout that delivers the perfect playing experience for all levels.",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+966 564259717",
+      "FACILITY_PRIVATE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2f8edec3-c30b-45c3-ba51-d1f463aaeeac",
+        "name": "Court 1 (Indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "686ced57-e9f4-4208-bf2d-abf3943e263c",
+        "name": "Court 2 (Indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "347f65d3-18ad-40de-b99c-a6f93acd5192",
+        "name": "Court 3 (Indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2a35153c-e753-4f88-9315-1dfa928ca9a0",
+        "name": "Court 4  (Indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4fd65b54-9bfc-4236-8153-288006e5fa9b",
+        "name": "Court 5 (Indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "93e114dc-58d7-438d-a3f5-4f0b4255c950",
+        "name": "Court 6 (Indoor)",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ca0061ec-660f-4884-a740-4fc430279afb",
+        "name": "Court 7 (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "356fdcd9-1088-4223-ad6e-351c9078b031",
+        "name": "Court 8 (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "1ff082eb-5341-4c6b-8607-69f769252f01",
+        "name": "Court 9 (Outdoor)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "91b97f64-d98b-4d46-a154-91143c151651",
+    "tenant_name": "Padel UP-Ad-Deriya",
+    "slug": "padel-up-riyadh",
+    "address": {
+      "street": "Al Shaikh Mohammed Ibn Ibrahim, Al Diriyah ",
+      "postal_code": "13734",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.74728,
+        "lon": 46.521995
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1744290252/pro/tenants/91b97f64-d98b-4d46-a154-91143c151651/1744290251256.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1744290253/pro/tenants/91b97f64-d98b-4d46-a154-91143c151651/1744290253336.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1744653988/pro/tenants/91b97f64-d98b-4d46-a154-91143c151651/1744653987582.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padel_up/?hl=en",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_STORE": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Padel Up – Get Your Game On\nIn the heart of Diriyah, Padel Up delivers a premium padel experience with high quality courts, extended hours, and a vibrant community. Whether you’re a beginner or a pro, everything here is designed to keep you playing at your best.\nPlay like A Hero.",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_WIFI": "true",
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "fb340dee-a502-47d6-bdc5-31ee3565af35;d12e1325-22de-4971-8ce0-15720a1e01cd;8672e10c-3321-47c2-8f93-285bc790f19e",
+      "CONTACT_PHONE": "+966 506940479"
+    },
+    "resources": [
+      {
+        "resourceId": "2f5d6d8b-89a6-4780-9833-47cc0ae6af44",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "00f21a54-1279-4e28-901f-0c2d163f8e37",
+        "name": "Court  2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "634d1ba4-19ee-4e80-9617-c1eaefe98cce",
+        "name": "Court 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8e57a11c-a163-4148-950d-9e659de97c41",
+        "name": "Court 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2adb9356-f748-4186-b11f-9b573eb4ace4",
+        "name": "Court 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f7b71141-cbf0-4dd7-85ff-c7a6a2b95de5",
+        "name": "Court 6 (Private Court)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "39f9f9c5-a28a-48df-b4b3-b53c2e3aa44f",
+        "name": "Court 7 (Private Court)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4caa2d75-7f72-437e-9a04-6c30013f3be9",
+        "name": "Court 8 (Private Court)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "15:00",
+        "closing_time": "04:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "SATURDAY": {
+        "opening_time": "15:00",
+        "closing_time": "03:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "03:00"
+      },
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "04:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "6dbd218a-6b4e-457b-8c97-d3b66a343f08",
+    "tenant_name": "Padel Way",
+    "slug": "padel-way-2026",
+    "address": {
+      "street": "Ali Kamal",
+      "postal_code": "32275",
+      "city": "الرياض",
+      "sub_administrative_area": "",
+      "administrative_area": "منطقة الرياض",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.85767209,
+        "lon": 46.60704365
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1775061950/pro/tenants/6dbd218a-6b4e-457b-8c97-d3b66a343f08/1775061949644.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1775062063/pro/tenants/6dbd218a-6b4e-457b-8c97-d3b66a343f08/1775062063146.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "Al-Aardh neighborhood. The price includes rackets, balls, towels, and water. There are two private courts for women. Reservations via WhatsApp: 055 744 7422. We have restrooms for both genders with showers. Professional rackets are available for rent at nominal prices starting from 5 riyals. An additional discount is available during off-peak hours only, from 3:00 PM to 6:00 PM.",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "true",
+      "CONTACT_PHONE": "+966 557447422",
+      "FACILITY_WIFI": "true",
+      "FACILITY_RESTAURANT": "false",
+      "WEBSITE_URL": ""
+    },
+    "resources": [
+      {
+        "resourceId": "79cab02f-2f30-495e-8b6e-060c9ac8353f",
+        "name": "Way 2 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "054625a5-8422-4bf5-8142-9e133d30d234",
+        "name": "Way 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "da548492-61ba-4dd2-b603-1b268d35ba35",
+        "name": "Way 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "71bd12a1-6a79-437f-9d71-25add953e486",
+        "name": "Way 6",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "368555a6-aa13-4b73-ae85-a0ffb2c6fc7a",
+        "name": "Way 7",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ad232ce0-8f2b-4624-a135-e778080b0642",
+        "name": "Way 8",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "850e4747-94fa-4b0b-86ee-ec664ec5dfa2",
+        "name": " (ملعب نساء وعوائل)-Way 1 ( Women's and family Court )",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a2024de1-45fe-42db-9dff-2ce92c206ba3",
+        "name": " (ملعب نساء وعوائل)-Way 5 ( Women's and family Court )",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "15:00",
+        "closing_time": "06:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "15:00",
+        "closing_time": "06:00"
+      },
+      "THURSDAY": {
+        "opening_time": "15:00",
+        "closing_time": "06:00"
+      },
+      "FRIDAY": {
+        "opening_time": "15:00",
+        "closing_time": "06:00"
+      },
+      "SUNDAY": {
+        "opening_time": "15:00",
+        "closing_time": "06:00"
+      },
+      "TUESDAY": {
+        "opening_time": "15:00",
+        "closing_time": "06:00"
+      },
+      "MONDAY": {
+        "opening_time": "15:00",
+        "closing_time": "06:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "cf75b4e5-6e39-4949-a74b-a5a582f59b97",
+    "tenant_name": "Padel4all",
+    "slug": "padel4all",
+    "address": {
+      "street": "King Abdulaziz Road",
+      "postal_code": "52713",
+      "city": "Al Khabra",
+      "sub_administrative_area": "",
+      "administrative_area": "Al Qassim Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 26.09836548,
+        "lon": 43.64261954
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760451386/pro/tenants/cf75b4e5-6e39-4949-a74b-a5a582f59b97/1760451385845.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760543854/pro/tenants/cf75b4e5-6e39-4949-a74b-a5a582f59b97/1760543853870.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_LOCKERS": "false",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+966 0535154885",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_STORE": "false",
+      "WEBSITE_URL": "",
+      "FACILITY_WIFI": "false",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "808eddce-4377-4869-a634-ba24461a1863",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "2cd0627a-ee79-477a-8b06-354bc0e7ce6c",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "19:30",
+        "closing_time": "03:00"
+      },
+      "FRIDAY": {
+        "opening_time": "19:30",
+        "closing_time": "03:00"
+      },
+      "SUNDAY": {
+        "opening_time": "19:30",
+        "closing_time": "03:00"
+      },
+      "MONDAY": {
+        "opening_time": "19:30",
+        "closing_time": "03:00"
+      },
+      "THURSDAY": {
+        "opening_time": "19:30",
+        "closing_time": "03:00"
+      },
+      "TUESDAY": {
+        "opening_time": "19:30",
+        "closing_time": "03:00"
+      },
+      "SATURDAY": {
+        "opening_time": "19:30",
+        "closing_time": "03:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ef11189a-745b-4e5e-a485-0a6446f8d4dc",
+    "tenant_name": "Padelx - Ghernatah",
+    "slug": "padelx-ghernatah",
+    "address": {
+      "street": "Al Qaed, Aziziyah , Jeddah Saudi Arabia",
+      "postal_code": "23333",
+      "city": "Jeddah",
+      "sub_administrative_area": "Jeddah",
+      "administrative_area": "Makkah Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 21.54286765,
+        "lon": 39.18095914
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1749477317/pro/tenants/ef11189a-745b-4e5e-a485-0a6446f8d4dc/1749477316435.jpg"
+    ],
+    "properties": {
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "WEBSITE_URL": "",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_STORE": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_TITLE": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+966 553021575",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to the Social Racquet Club!!!"
+    },
+    "resources": [
+      {
+        "resourceId": "fdfeb0a6-9377-47f3-8a79-53e930e33b1d",
+        "name": "Court 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "21fe13f8-fe28-45bb-aa39-cc10ef9acccf",
+        "name": "Court 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bd60b430-65c3-4501-8f98-af09eaf45b67",
+        "name": "Private Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "95c6ce53-0aed-4906-b870-d3f3e5c5a1ad",
+    "tenant_name": "Padelx - Alyasmein",
+    "slug": "padelx-alyasmein",
+    "address": {
+      "street": "Al Qadisiyah, Al Yasmin, Riyadh ",
+      "postal_code": "13326",
+      "city": "Riyadh",
+      "sub_administrative_area": "Riyadh Principality",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.82613489,
+        "lon": 46.65246913
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1750948691/pro/tenants/95c6ce53-0aed-4906-b870-d3f3e5c5a1ad/1750948690734.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750948887/pro/tenants/95c6ce53-0aed-4906-b870-d3f3e5c5a1ad/1750948886470.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1750949311/pro/tenants/95c6ce53-0aed-4906-b870-d3f3e5c5a1ad/1750949310274.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_WIFI": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "WEBSITE_URL": "https://www.instagram.com/padelx_ksa/",
+      "FACILITY_STORE": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to the fun side of sport. We feel sport has got lost. Pressure is replacing fun. That’s why we’re on a mission to make sports playful again. Good vibes and good health only. We’re Padelx – a social racquet club.",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "CONTACT_PHONE": "+966 595214969",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "7c73ed4e-2b05-46f3-afff-33f38fc8ed3d",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9f6554ba-ef7a-4e81-ba32-6e386471d422",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      },
+      "THURSDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      },
+      "FRIDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      },
+      "MONDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      },
+      "TUESDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      },
+      "SATURDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "8f9fdb82-e38e-4033-96ef-f154fbcba930",
+    "tenant_name": "Padelx - Mohammadiyyah",
+    "slug": "padelx-mohammadiyyah",
+    "address": {
+      "street": "J4PQ+W5R, Al Mohammadiyyah, Jeddah ",
+      "postal_code": "23621",
+      "city": "Jeddah",
+      "sub_administrative_area": "Jeddah",
+      "administrative_area": "Makkah Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 21.6373625,
+        "lon": 39.1378906
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1727770609/pro/tenants/8f9fdb82-e38e-4033-96ef-f154fbcba930/1727770608476.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to the fun side of sport. We feel sport has got lost. Pressure is replacing fun. That’s why we’re on a mission to make sports playful again. Good vibes and good health only. We’re Padelx – a social racquet club.",
+      "CONTACT_PHONE": "+966 595201510",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_CAFETERIA": "false",
+      "WEBSITE_URL": "https://padelx.com/?fbclid=PAAab-rLcSKa_BBbkScr1SQpVuZDrJH8JHNAAP9kzLWjMEgArAVxyVCQiRolY_aem_AbCus7MP0FXEa0dd5bz8clBaKS7LGNOHVJS-pteXx8aw-UYRfYpc0TuwbRLTMZcWHMU",
+      "FACILITY_WIFI": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_CHANGEROOM": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_TITLE": ""
+    },
+    "resources": [
+      {
+        "resourceId": "f8c857d6-fd32-420f-a86d-75600cb2606d",
+        "name": "Court 1  ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "58d93962-98ab-4109-9c54-4cc0623cb311",
+    "tenant_name": "Padelx - Andalus",
+    "slug": "padelx-andalus",
+    "address": {
+      "street": "Al Andalus, Jeddah",
+      "postal_code": "22232",
+      "city": "Jeddah",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 21.49094024,
+        "lon": 39.17425482
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1749477456/pro/tenants/58d93962-98ab-4109-9c54-4cc0623cb311/1749477455811.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padelx_ksa/",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_STORE": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to the fun side of sport. We feel sport has got lost. Pressure is replacing fun. That’s why we’re on a mission to make sports playful again. Good vibes and good health only. We’re Padelx – a social racquet club.",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_WIFI": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+966 595201510",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_MATERIAL_RENTING": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "d2a583cc-8d23-4250-bb08-56e80b6a48e6",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "8ef205a7-65e9-4233-8740-dc68b2958bab",
+    "tenant_name": "Padelx - Taawon",
+    "slug": "padelx-taawon",
+    "address": {
+      "street": "Al Withailan, Taawon ",
+      "postal_code": "12478",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.78132812,
+        "lon": 46.7043892
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1704757239/pro/tenants/8ef205a7-65e9-4233-8740-dc68b2958bab/1704757239069.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1748623996/pro/tenants/8ef205a7-65e9-4233-8740-dc68b2958bab/1748623996074.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padelx_ksa/",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to the fun side of sport. We feel sport has got lost. Pressure is replacing fun. That’s why we’re on a mission to make sports playful again. Good vibes and good health only. We’re Padelx – a social racquet club.",
+      "CONTACT_PHONE": "+966 568235130"
+    },
+    "resources": [
+      {
+        "resourceId": "64a55a99-535b-42f9-bb66-06a5e332016e",
+        "name": "Private Court",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5c488c62-cf8c-4c81-91ed-27840cb5c027",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "124fd2eb-be26-4bb3-a40a-e1f5ae0f13d3",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "87a7e201-6f9f-4df1-9bc3-a5f1e828460e",
+    "tenant_name": "Padelx - Buhraydah",
+    "slug": "padelx-buhraydah",
+    "address": {
+      "street": "Al muntazah, buraydah ",
+      "postal_code": "52381",
+      "city": "Buraydah",
+      "sub_administrative_area": "Buraydah Principality",
+      "administrative_area": "Al Qassim Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 26.36534861,
+        "lon": 43.9308807
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1749477392/pro/tenants/87a7e201-6f9f-4df1-9bc3-a5f1e828460e/1749477391635.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+966 595214044",
+      "DETAILS_PAGE_DESCRIPTION": "WE ARE THE SOCIAL ATHLETES!",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_STORE": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "WEBSITE_URL": "https://www.instagram.com/padelx_ksa/",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "PUBLIC_TRANSPORT_METRO": ""
+    },
+    "resources": [
+      {
+        "resourceId": "21aba99f-e85e-442e-b689-730f3806a051",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "61ccb0df-3e66-4f60-b735-2d790aaeb80d",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "3361b5cf-b25f-4301-ba5e-30e8d348bd9b",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "86425bf5-3093-4b87-81e6-4c37d879c5cd",
+        "name": "Single court (1v1)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "single",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "2e38ab4f-9e6f-440b-8d4c-c9455297ebd8",
+    "tenant_name": "Padelx - Laban",
+    "slug": "padelx-laban",
+    "address": {
+      "street": "Laban, Riyadh ",
+      "postal_code": "12765",
+      "city": "Riyadh",
+      "sub_administrative_area": "Riyadh Principality",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.63008673,
+        "lon": 46.54012571
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1765745327/pro/tenants/2e38ab4f-9e6f-440b-8d4c-c9455297ebd8/1765745326308.jpg"
+    ],
+    "properties": {
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "WEBSITE_URL": "https://www.instagram.com/padelx_ksa/",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_TITLE": "",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+966 591574830",
+      "DETAILS_PAGE_DESCRIPTION": "Welcome to the fun side of sport. We feel sport has got lost. Pressure is replacing fun. That’s why we’re on a mission to make sports playful again. Good vibes and good health only. We’re Padelx – a social racquet club."
+    },
+    "resources": [
+      {
+        "resourceId": "30c55135-6a43-4795-84d5-2c485a8f65ad",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "090d6cd4-84cb-4f9a-99d9-03baa7fa1512",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "3c9e1a61-6f9c-4456-a3f9-a6754f8ae8d3",
+    "tenant_name": "QF PADEL",
+    "slug": "qf-padel",
+    "address": {
+      "street": "IBN AL QAZAZ",
+      "postal_code": "23731",
+      "city": "Jeddah",
+      "sub_administrative_area": "",
+      "administrative_area": "Makkah Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 21.71550261,
+        "lon": 39.11195685
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1781660612/pro/tenants/3c9e1a61-6f9c-4456-a3f9-a6754f8ae8d3/1781660612055.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/qf.padell?igsh=MXc1cHdkcWE5NDUx",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "false",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "Why Train at QF?\n\n Fully indoor and enclosed facility\n 6 premium padel courts\n 4 spectator stands for tournaments and events\n Around 5 different training levels available, from beginners to advanced players\n Daily training sessions for all levels\n Professional coaching team\n Dedicated training programs and player development pathways\n On-site café for players and visitors\n Friendly and competitive community atmosphere\n\nWhether you're just starting out or looking to compete at a higher level, QF provides the perfect environment to train, improve, and enjoy the game.",
+      "CONTACT_PHONE": "+966 561711109"
+    },
+    "resources": [
+      {
+        "resourceId": "494df46a-ed2c-4a22-bbac-661e041618c9",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "02157491-1371-4eaf-a34f-e06eb5556a55",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "9351db3e-8e5e-4b37-8ab5-e5f494eefa8a",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "68aeb3f7-7bc8-4b6c-b1c0-53da1f9d476b",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2f60b696-4e3b-43c0-b759-8dd64b8b420b",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f31b96b8-2c2a-47b1-9c98-623894bcde48",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c72052f6-95ea-4328-8108-1cf8f30cc2e7",
+    "tenant_name": "Quattro Club",
+    "slug": "quattro-club",
+    "address": {
+      "street": "Al oliyah St",
+      "postal_code": "53333",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.8533071,
+        "lon": 46.60928039
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1739169432/pro/tenants/c72052f6-95ea-4328-8108-1cf8f30cc2e7/1739169431765.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1739169441/pro/tenants/c72052f6-95ea-4328-8108-1cf8f30cc2e7/1739169440364.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1739169449/pro/tenants/c72052f6-95ea-4328-8108-1cf8f30cc2e7/1739169448710.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1739169452/pro/tenants/c72052f6-95ea-4328-8108-1cf8f30cc2e7/1739169452240.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1739169456/pro/tenants/c72052f6-95ea-4328-8108-1cf8f30cc2e7/1739169455673.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1739169459/pro/tenants/c72052f6-95ea-4328-8108-1cf8f30cc2e7/1739169459342.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1739170007/pro/tenants/c72052f6-95ea-4328-8108-1cf8f30cc2e7/1739170006350.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_DESCRIPTION": "(WE ARE BACK) Quattro, Where Movement Meet Community, Quattro Club",
+      "CONTACT_PHONE": "+966 595634688",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.instagram.com/quattroruh?igsh=MXJ1NzBlMTRlOGR5eQ==",
+      "FACILITY_WIFI": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_CHANGEROOM": "true",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_TITLE": ""
+    },
+    "resources": [
+      {
+        "resourceId": "e1feaf5a-3142-450b-8b9a-1dc1c1db6a29",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8fa9b869-a79b-4cd6-8b98-1432075f25d0",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "d98ed89d-ed09-464d-a920-d437b6e7b8d7",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "02:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc",
+    "tenant_name": "The Padel Place",
+    "slug": "the-padel-place",
+    "address": {
+      "street": "المحمدية - احمد بن حنبل",
+      "postal_code": "23624",
+      "city": "Jeddah",
+      "sub_administrative_area": "",
+      "administrative_area": "Makkah Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 21.6596464,
+        "lon": 39.1161693
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603503/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603501873.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603511/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603510756.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603513/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603511986.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603514/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603513363.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603516/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603515471.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603519/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603517840.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603520/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603518901.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603534/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603533716.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603540/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603538696.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603546/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603545126.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1682603548/pro/tenants/fef01d5b-ddcb-4a23-a85a-33cae1c9d5bc/1682603547611.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_LOCKERS": "false",
+      "DETAILS_PAGE_TITLE": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "CONTACT_PHONE": "+966 532049468",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "FACILITY_STORE": "false",
+      "WEBSITE_URL": "https://www.instagram.com/padelplace.jed/",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "782975ed-0bfe-4c49-9b70-a8fe7a0a2c73",
+        "name": "Court 1 ( Ladies )",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "17:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "6beedced-e699-4ac1-9fbb-feed4d51f0ad",
+    "tenant_name": "Ultimate Padel",
+    "slug": "ultimate-pade",
+    "address": {
+      "street": "Abu bakr road",
+      "postal_code": "8553",
+      "city": "Unaizah",
+      "sub_administrative_area": "Unayzah",
+      "administrative_area": "Al Qassim Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 26.0957669,
+        "lon": 43.9595651
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1760527552/pro/tenants/6beedced-e699-4ac1-9fbb-feed4d51f0ad/1760527552210.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1760550296/pro/tenants/6beedced-e699-4ac1-9fbb-feed4d51f0ad/1760550295990.jpg"
+    ],
+    "properties": {
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_CAFETERIA": "false",
+      "FACILITY_RESTAURANT": "false",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "WEBSITE_URL": "",
+      "CONTACT_PHONE": "+966 531214471"
+    },
+    "resources": [
+      {
+        "resourceId": "31f24af5-3987-4028-a46a-ff64f2dba3c5",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "8099c6b3-57cb-410e-88ed-f7dfecafbeee",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "00:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "811798f7-6e52-43cd-993f-521521baaa62",
+    "tenant_name": "Valley Padel (indoor)                              50 Sar Off",
+    "slug": "valley-padel-indoor-50-sar-off",
+    "address": {
+      "street": "Hanifa Valley ",
+      "postal_code": "121222",
+      "city": "Riyadh",
+      "sub_administrative_area": "",
+      "administrative_area": "Riyadh Province",
+      "country": "Saudi Arabia",
+      "country_code": "SA",
+      "coordinate": {
+        "lat": 24.65560328,
+        "lon": 46.60454656
+      },
+      "timezone": "Asia/Riyadh"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1722151516/pro/tenants/811798f7-6e52-43cd-993f-521521baaa62/1722151516100.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1722869318/pro/tenants/811798f7-6e52-43cd-993f-521521baaa62/1722869317552.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_CAFETERIA": "false",
+      "WEBSITE_URL": "https://www.instagram.com/invites/contact/?i=eyirnhtdo3k5&utm_content=mk925sn",
+      "FACILITY_WIFI": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "FACILITY_CHANGEROOM": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_DESCRIPTION": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "CONTACT_PHONE": "+966 534349569",
+      "DETAILS_PAGE_TITLE": ""
+    },
+    "resources": [
+      {
+        "resourceId": "172a2d75-50c5-4d85-9b43-f9bcf3773666",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "cb6e7eae-91aa-4210-bc67-5d1ce87abdad",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "d5c08361-750a-4ffc-9f9f-17334fd9118e",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      },
+      {
+        "resourceId": "a76c68fd-8dab-4002-86c7-e26afdfe8dba",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "wall"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "17:30",
+        "closing_time": "04:00"
+      },
+      "THURSDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      },
+      "SATURDAY": {
+        "opening_time": "15:00",
+        "closing_time": "04:00"
+      },
+      "MONDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      },
+      "FRIDAY": {
+        "opening_time": "15:00",
+        "closing_time": "04:00"
+      },
+      "TUESDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      },
+      "SUNDAY": {
+        "opening_time": "18:00",
+        "closing_time": "04:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  }
+]

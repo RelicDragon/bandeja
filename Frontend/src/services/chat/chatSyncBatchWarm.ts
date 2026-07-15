@@ -35,6 +35,7 @@ type WarmDrainItem = {
   contextId: string;
   priority: number;
   expectedServerMaxSeq?: number;
+  forcePull?: boolean;
 };
 const warmDrainQueue: WarmDrainItem[] = [];
 let warmDrainTimer: ReturnType<typeof setTimeout> | null = null;
@@ -42,6 +43,7 @@ type HeldBootstrapOverflowItem = {
   contextType: ChatContextType;
   contextId: string;
   expectedServerMaxSeq?: number;
+  forcePull?: boolean;
 };
 const heldBootstrapOverflow: HeldBootstrapOverflowItem[] = [];
 
@@ -89,14 +91,12 @@ function scheduleWarmDrain(delayMs: number): void {
       const k = `${it.contextType}:${it.contextId}`;
       if (seen.has(k)) continue;
       seen.add(k);
-      enqueueChatSyncPull(
-        it.contextType,
-        it.contextId,
-        it.priority,
-        it.expectedServerMaxSeq != null
+      enqueueChatSyncPull(it.contextType, it.contextId, it.priority, {
+        ...(it.expectedServerMaxSeq != null
           ? { expectedServerMaxSeq: it.expectedServerMaxSeq }
-          : undefined
-      );
+          : {}),
+        ...(it.forcePull ? { forcePull: true } : {}),
+      });
       n++;
     }
     if (warmDrainQueue.length > 0) scheduleWarmDrain(WARM_DRAIN_INTERVAL_MS);
@@ -104,7 +104,12 @@ function scheduleWarmDrain(delayMs: number): void {
 }
 
 function enqueueWarmOverflow(
-  items: Array<{ contextType: ChatContextType; contextId: string; expectedServerMaxSeq?: number }>,
+  items: Array<{
+    contextType: ChatContextType;
+    contextId: string;
+    expectedServerMaxSeq?: number;
+    forcePull?: boolean;
+  }>,
   unreadKeys?: Set<string>,
   initialDelayMs = 0
 ): void {
@@ -120,13 +125,19 @@ function enqueueWarmOverflow(
       priority,
     };
     if (it.expectedServerMaxSeq != null) item.expectedServerMaxSeq = it.expectedServerMaxSeq;
+    if (it.forcePull) item.forcePull = true;
     warmDrainQueue.push(item);
   }
   scheduleWarmDrain(initialDelayMs);
 }
 
 function holdBootstrapOverflow(
-  items: Array<{ contextType: ChatContextType; contextId: string; expectedServerMaxSeq?: number }>
+  items: Array<{
+    contextType: ChatContextType;
+    contextId: string;
+    expectedServerMaxSeq?: number;
+    forcePull?: boolean;
+  }>
 ): void {
   const seen = new Set(heldBootstrapOverflow.map((x) => `${x.contextType}:${x.contextId}`));
   for (const it of items) {
@@ -138,6 +149,7 @@ function holdBootstrapOverflow(
       contextId: it.contextId,
     };
     if (it.expectedServerMaxSeq != null) item.expectedServerMaxSeq = it.expectedServerMaxSeq;
+    if (it.forcePull) item.forcePull = true;
     heldBootstrapOverflow.push(item);
   }
 }
@@ -465,7 +477,9 @@ async function runWarmBody(
   for (let i = 0; i < unique.length; i += MAX_BATCH) {
     chunks.push(unique.slice(i, i + MAX_BATCH));
   }
-  const toSchedule: Array<(typeof unique)[number] & { expectedServerMaxSeq: number }> = [];
+  const toSchedule: Array<
+    (typeof unique)[number] & { expectedServerMaxSeq: number; forcePull?: boolean }
+  > = [];
   for (const chunk of chunks) {
     const heads = await chatApi.postChatSyncBatchHead(chunk);
     for (const it of chunk) {
@@ -481,7 +495,13 @@ async function runWarmBody(
       const local = await getLocalCursorSeq(it.contextType, it.contextId);
       const headBroken =
         max > 0 && (await messageContextHeadReferencesMissingRow(it.contextType, it.contextId));
-      if (max > local || headBroken) toSchedule.push({ ...it, expectedServerMaxSeq: max });
+      if (max > local || headBroken) {
+        toSchedule.push({
+          ...it,
+          expectedServerMaxSeq: max,
+          ...(headBroken ? { forcePull: true } : {}),
+        });
+      }
     }
   }
   const pullPolicy = options?.pullPolicy ?? 'full';
@@ -493,6 +513,7 @@ async function runWarmBody(
   for (const it of immediate) {
     enqueueChatSyncPull(it.contextType, it.contextId, pullPriorityForWarmItem(it, unreadKeys), {
       expectedServerMaxSeq: it.expectedServerMaxSeq,
+      ...(it.forcePull ? { forcePull: true } : {}),
     });
   }
   if (overflow.length) {

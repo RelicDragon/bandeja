@@ -18,7 +18,7 @@ import type { ChatSyncEventDTO } from '@/services/chat/chatSyncEventTypes';
 import { notifyInboundMessageSeen } from '@/services/chat/unreadInboundMessage';
 import { withChatLocalBulkApply } from './chatLocalApplyBulk';
 import { persistChatMessagesFromApiDirect } from './chatLocalApplyWrite';
-import { getLocalCursorSeq, reconcileCursorWithServerHead } from './chatLocalApplyCursor';
+import { getLocalCursorSeq, reconcileCursorWithServerHead, BATCH_HEAD_CACHE_MS } from './chatLocalApplyCursor';
 import {
   clearPendingSocketSeqReconcileTimer,
   markChatPullCompleted,
@@ -75,6 +75,36 @@ export type PullEventsLoopResult = {
   threadArchived: boolean;
   eventsApplied: number;
 };
+
+export type PullChatSyncOptions = {
+  expectedServerMaxSeq?: number;
+  forcePull?: boolean;
+};
+
+const EMPTY_PULL_RESULT: PullEventsLoopResult = {
+  repairedStaleCursor: false,
+  threadInvalidated: false,
+  threadArchived: false,
+  eventsApplied: 0,
+};
+
+async function shouldSkipCaughtUpSyncPull(
+  contextType: ChatContextType,
+  contextId: string,
+  options?: PullChatSyncOptions
+): Promise<boolean> {
+  if (options?.forcePull) return false;
+  const local = await getLocalCursorSeq(contextType, contextId);
+  if (options?.expectedServerMaxSeq != null) {
+    return local >= options.expectedServerMaxSeq;
+  }
+  const key = chatCursorKey(contextType, contextId);
+  const threadRow = await chatLocalDb.chatThreads.get(key);
+  const cachedMax = threadRow?.serverMaxSeq;
+  if (cachedMax == null) return false;
+  const age = threadRow?.updatedAt != null ? Date.now() - threadRow.updatedAt : Infinity;
+  return age < BATCH_HEAD_CACHE_MS && local >= cachedMax;
+}
 
 export async function pullEventsLoop(
   contextType: ChatContextType,
@@ -196,8 +226,13 @@ export async function pullEventsLoop(
 export async function pullAndApplyChatSyncEventsDirect(
   contextType: ChatContextType,
   contextId: string,
-  options?: { expectedServerMaxSeq?: number }
+  options?: PullChatSyncOptions
 ): Promise<PullEventsLoopResult> {
+  if (await shouldSkipCaughtUpSyncPull(contextType, contextId, options)) {
+    markChatPullCompleted(contextType, contextId);
+    clearPendingSocketSeqReconcileTimer(contextType, contextId);
+    return EMPTY_PULL_RESULT;
+  }
   const result = await pullEventsLoop(contextType, contextId);
   const { repairedStaleCursor, threadInvalidated } = result;
   markChatPullCompleted(contextType, contextId);
@@ -219,7 +254,7 @@ export async function pullAndApplyChatSyncEventsDirect(
 export async function pullAndApplyChatSyncEvents(
   contextType: ChatContextType,
   contextId: string,
-  options?: { expectedServerMaxSeq?: number }
+  options?: PullChatSyncOptions
 ): Promise<number> {
   const { applyThreadEvent } = await import('./chatLocalApplyThreadEvent');
   return applyThreadEvent({
@@ -229,5 +264,6 @@ export async function pullAndApplyChatSyncEvents(
     ...(options?.expectedServerMaxSeq != null
       ? { expectedServerMaxSeq: options.expectedServerMaxSeq }
       : {}),
+    ...(options?.forcePull ? { forcePull: true } : {}),
   });
 }

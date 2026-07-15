@@ -50,8 +50,17 @@ describe('reconcileCursorWithServerHead', () => {
     expect(getChatSyncHeadMock).not.toHaveBeenCalled();
   });
 
-  it('fetches head when caught up locally but server may have advanced', async () => {
+  it('trusts fresh batch-head cache when caught up locally', async () => {
     threadRows.set('USER:u1', { serverMaxSeq: 12, updatedAt: Date.now() });
+    cursorRows.set('USER:u1', 12);
+
+    await reconcileCursorWithServerHead('USER', 'u1');
+
+    expect(getChatSyncHeadMock).not.toHaveBeenCalled();
+  });
+
+  it('fetches head when cache is stale even if local matches cached max', async () => {
+    threadRows.set('USER:u1', { serverMaxSeq: 12, updatedAt: Date.now() - 60_000 });
     cursorRows.set('USER:u1', 12);
     getChatSyncHeadMock.mockResolvedValue(12);
 

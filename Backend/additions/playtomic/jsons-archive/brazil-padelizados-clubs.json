@@ -1,0 +1,2682 @@
+[
+  {
+    "id": 2770,
+    "name": "SOVA - Olympic Society Venâncio Aires",
+    "cityRaw": "Venâncio Aires",
+    "address": "R. Cel. Agra, 949",
+    "phone": "+555193300-3841",
+    "website": "https://br.padelizados.net/pt-br/i/2770-sova-olympic-society-venncio-aires/",
+    "latitude": -29.6080477,
+    "longitude": -52.1967501,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2770-SOVA-Olympic-Society-Venncio-Aires-f5xwo.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2770-sova-olympic-society-venncio-aires/",
+    "regionName": "Brazil",
+    "postalCode": "95800-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2768,
+    "name": "Blu Padel e Esportes de Areia Ltda",
+    "cityRaw": "Blumenau",
+    "address": "R. São Paulo, 2815",
+    "phone": "+554798872-4664",
+    "website": "https://br.padelizados.net/pt-br/i/2768-blu-padel-e-esportes-de-areia-ltda/",
+    "latitude": -26.894097,
+    "longitude": -49.0816459,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2768-Blu-Padel-e-Esportes-de-Areia-Ltda-n9XCN.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2768-blu-padel-e-esportes-de-areia-ltda/",
+    "regionName": "Brazil",
+    "postalCode": "89030-001",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2769,
+    "name": "Delta Padel Brasil",
+    "cityRaw": "Camboriú",
+    "address": "R. Antônio Lopes Gonçalves Bastos, Rodovia SC 102, 1043",
+    "phone": "+55473050-9550",
+    "website": "https://br.padelizados.net/pt-br/i/2769-delta-padel-brasil/",
+    "latitude": -27.0378043,
+    "longitude": -48.6274543,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2769-Delta-Padel-Brasil-y6rCk.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2769-delta-padel-brasil/",
+    "regionName": "Brazil",
+    "postalCode": "88343-412",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2767,
+    "name": "Loja Tenis Bard",
+    "cityRaw": "Curitiba",
+    "address": "Fernando Simas - Praça Espanha, 47",
+    "phone": "+55413222-2719",
+    "website": "https://br.padelizados.net/pt-br/i/2767-loja-tenis-bard/",
+    "latitude": -25.4353489,
+    "longitude": -49.2872126,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2767-loja-tenis-bard/",
+    "regionName": "Brazil",
+    "postalCode": "80430-190",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2772,
+    "name": "Curitiba Pádel",
+    "cityRaw": "Curitiba",
+    "address": "Rua Manoel Hygino dos Santos, 157",
+    "phone": "+554199564-7788",
+    "website": "https://br.padelizados.net/pt-br/i/2772-curitiba-padel/",
+    "latitude": -25.466698,
+    "longitude": -49.2673422,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2772-curitiba-padel/",
+    "regionName": "Brazil",
+    "postalCode": "80630-230",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2771,
+    "name": "VILA VERDE COMPLEXO",
+    "cityRaw": "Caxias do Sul",
+    "address": "R. Ito Ruschel Rauber, 270",
+    "phone": "+555499971-2049",
+    "website": "https://br.padelizados.net/pt-br/i/2771-vila-verde-complexo/",
+    "latitude": -29.1887692,
+    "longitude": -51.1781949,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2771-vila-verde-complexo/",
+    "regionName": "Brazil",
+    "postalCode": "95080-170",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2773,
+    "name": "G3 Academia de Padel",
+    "cityRaw": "Joinville",
+    "address": "R. Benjamin Constant, 1171",
+    "phone": "+554798484-3661",
+    "website": "https://br.padelizados.net/pt-br/i/2773-g3-academia-de-padel/",
+    "latitude": -26.2851263,
+    "longitude": -48.8605035,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2773-g3-academia-de-padel/",
+    "regionName": "Brazil",
+    "postalCode": "89204-361",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2774,
+    "name": "Elite Padelclub",
+    "cityRaw": "Santa Maria",
+    "address": "R. Pinheiro Brasileiro, 961",
+    "phone": "+555599600-0961",
+    "website": "https://br.padelizados.net/pt-br/i/2774-elite-padelclub/",
+    "latitude": -29.7180004,
+    "longitude": -53.7755928,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2774-Elite-Padelclub-eg3px.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2774-elite-padelclub/",
+    "regionName": "Brazil",
+    "postalCode": "97060-489",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2776,
+    "name": "New Padel",
+    "cityRaw": "Passo Fundo",
+    "address": "Av. Dr. Álvaro Severo de Miranda, 328",
+    "phone": "+555499710-6107",
+    "website": "https://br.padelizados.net/pt-br/i/2776-new-padel/",
+    "latitude": -28.2391425,
+    "longitude": -52.4191318,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2776-new-padel/",
+    "regionName": "Brazil",
+    "postalCode": "99022-032",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2775,
+    "name": "CESLA",
+    "cityRaw": "Santa Maria",
+    "address": "R. Antônio Gonçalves do Amaral, 1547",
+    "phone": "+555599714-5395",
+    "website": "https://br.padelizados.net/pt-br/i/2775-cesla/",
+    "latitude": -29.701195,
+    "longitude": -53.7507662,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2775-CESLA-F1HkE.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2775-cesla/",
+    "regionName": "Brazil",
+    "postalCode": "97110-070",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2777,
+    "name": "BR Padel",
+    "cityRaw": "Curitiba",
+    "address": "BR-116, 15499",
+    "phone": "+554199518-6238",
+    "website": "https://br.padelizados.net/pt-br/i/2777-br-padel/",
+    "latitude": -25.4931249,
+    "longitude": -49.2716659,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2777-BR-Padel-7qqW8.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2777-br-padel/",
+    "regionName": "Brazil",
+    "postalCode": "81690-300",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2778,
+    "name": "TS Pádel Parolin",
+    "cityRaw": "Curitiba",
+    "address": "Rua Dr. Pamphilo D'Assumpção, 1561",
+    "phone": "+554199571-4217",
+    "website": "https://br.padelizados.net/pt-br/i/2778-ts-padel-parolin/",
+    "latitude": -25.4616376,
+    "longitude": -49.2600304,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2778-TS-Padel-Parolin-SiiFK.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2778-ts-padel-parolin/",
+    "regionName": "Brazil",
+    "postalCode": "80220-041",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2779,
+    "name": "OPEN PADEL",
+    "cityRaw": "Santana do Livramento",
+    "address": "R. Gen. Câmara, 2303",
+    "phone": "+555599650-7766",
+    "website": "https://br.padelizados.net/pt-br/i/2779-open-padel/",
+    "latitude": -30.8937098,
+    "longitude": -55.5285579,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2779-open-padel/",
+    "regionName": "Brazil",
+    "postalCode": "97574-150",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2780,
+    "name": "Euro Padel Campinas",
+    "cityRaw": "Campinas",
+    "address": "R. Carlos Martins, 17",
+    "phone": "+551997120-3080",
+    "website": "https://br.padelizados.net/pt-br/i/2780-euro-padel-campinas/",
+    "latitude": -22.819649,
+    "longitude": -47.0816001,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2780-Euro-Padel-Campinas-zyWvc.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2780-euro-padel-campinas/",
+    "regionName": "Brazil",
+    "postalCode": "13084-125",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2781,
+    "name": "Base Beach Tennis",
+    "cityRaw": "João Pessoa",
+    "address": "Avenida João Cirilo da Silva, s/n",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2781-base-beach-tennis/",
+    "latitude": -7.127648,
+    "longitude": -34.8273212,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2781-Base-Beach-Tennis-8Bj6s.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2781-base-beach-tennis/",
+    "regionName": "Brazil",
+    "postalCode": "58046-005",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2782,
+    "name": "Estacao Padel",
+    "cityRaw": "Chapecó",
+    "address": "R. Severino Zani",
+    "phone": "+554998403-9154",
+    "website": "https://br.padelizados.net/pt-br/i/2782-estacao-padel/",
+    "latitude": -27.0887089,
+    "longitude": -52.5902102,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2782-estacao-padel/",
+    "regionName": "Brazil",
+    "postalCode": "89806-258",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2783,
+    "name": "GPA - Padel - Dranix",
+    "cityRaw": "Porto Alegre",
+    "address": "R. João Moreira Maciel, 470",
+    "phone": "+555198412-1417",
+    "website": "https://br.padelizados.net/pt-br/i/2783-gpa-padel-dranix/",
+    "latitude": -29.9936255,
+    "longitude": -51.2061435,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2783-gpa-padel-dranix/",
+    "regionName": "Brazil",
+    "postalCode": "90250-680",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2784,
+    "name": "Floripa Padel",
+    "cityRaw": "São Jose",
+    "address": "R. José Antônio Pereira, 176",
+    "phone": "+554899915-8623",
+    "website": "https://br.padelizados.net/pt-br/i/2784-floripa-padel/",
+    "latitude": -27.5700774,
+    "longitude": -48.6350184,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2784-Floripa-Padel-dQZC0.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2784-floripa-padel/",
+    "regionName": "Brazil",
+    "postalCode": "88113-477",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2787,
+    "name": "Padelmania BR",
+    "cityRaw": "Santana do Livramento",
+    "address": "BR-293, 4186",
+    "phone": "+555599913-4580",
+    "website": "https://br.padelizados.net/pt-br/i/2787-padelmania-br/",
+    "latitude": -30.8546092,
+    "longitude": -55.5428132,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2787-padelmania-br/",
+    "regionName": "Brazil",
+    "postalCode": "97571-282",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2785,
+    "name": "Aqua Padel Cristal",
+    "cityRaw": "Rio Grande",
+    "address": "Av. Itália, 1720",
+    "phone": "+555398417-1166",
+    "website": "https://br.padelizados.net/pt-br/i/2785-aqua-padel-cristal/",
+    "latitude": -32.0814706,
+    "longitude": -52.1559831,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2785-aqua-padel-cristal/",
+    "regionName": "Brazil",
+    "postalCode": "96203-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2786,
+    "name": "Vivant Sports & Wellness",
+    "cityRaw": "Passo Fundo",
+    "address": "R. João Biazus, 460",
+    "phone": "+555499191-6565",
+    "website": "https://br.padelizados.net/pt-br/i/2786-vivant-sports-wellness/",
+    "latitude": -28.2785437,
+    "longitude": -52.407449,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2786-vivant-sports-wellness/",
+    "regionName": "Brazil",
+    "postalCode": "99072-820",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2788,
+    "name": "4Padel Clube: Pádel, Fortaleza CE",
+    "cityRaw": "Fortaleza",
+    "address": "Av. Chanceler Edson Queiroz, 345",
+    "phone": "+558599453-5593",
+    "website": "https://br.padelizados.net/pt-br/i/2788-4padel-clube-padel-fortaleza-ce/",
+    "latitude": -3.7669019,
+    "longitude": -38.4879747,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2788-4padel-clube-padel-fortaleza-ce/",
+    "regionName": "Brazil",
+    "postalCode": "60810-145",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2789,
+    "name": "Blue Padel Center",
+    "cityRaw": "Rio Grande",
+    "address": "Av. Maj. Carlos Pinto, 390",
+    "phone": "+555399141-6830",
+    "website": "https://br.padelizados.net/pt-br/i/2789-blue-padel-center/",
+    "latitude": -32.0360221,
+    "longitude": -52.1061973,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2789-blue-padel-center/",
+    "regionName": "Brazil",
+    "postalCode": "96211-021",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2791,
+    "name": "Joinville Padel",
+    "cityRaw": "Joinville",
+    "address": "R. Tuiuti, 1010 - sl 2",
+    "phone": "+55473305-9331",
+    "website": "https://br.padelizados.net/pt-br/i/2791-joinville-padel/",
+    "latitude": -26.2624131,
+    "longitude": -48.8188209,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2791-Joinville-Padel-3sNYn.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2791-joinville-padel/",
+    "regionName": "Brazil",
+    "postalCode": "89227-473",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2790,
+    "name": "TS Pádel Positivo - Quadras de Padel e Beach Tennis",
+    "cityRaw": "Curitiba",
+    "address": "R. Carlos Muller, 315",
+    "phone": "+554199571-4217",
+    "website": "https://br.padelizados.net/pt-br/i/2790-ts-padel-positivo-quadras-de-padel-e-beach-tennis/",
+    "latitude": -25.4488687,
+    "longitude": -49.3603905,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2790-ts-padel-positivo-quadras-de-padel-e-beach-tennis/",
+    "regionName": "Brazil",
+    "postalCode": "81280-380",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2792,
+    "name": "Er Padel",
+    "cityRaw": "Gravataí",
+    "address": "Av. Pres. Kenedy, 1130",
+    "phone": "+555199401-9980",
+    "website": "https://br.padelizados.net/pt-br/i/2792-er-padel/",
+    "latitude": -29.9459386,
+    "longitude": -51.0218119,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2792-Er-Padel-qRbN3.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2792-er-padel/",
+    "regionName": "Brazil",
+    "postalCode": "94045-160",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2793,
+    "name": "Porto Padel",
+    "cityRaw": "Montenegro",
+    "address": "Estr. Reinaldo Hörlle, 1917",
+    "phone": "+555199929-0747",
+    "website": "https://br.padelizados.net/pt-br/i/2793-porto-padel/",
+    "latitude": -29.6594772,
+    "longitude": -51.4381179,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2793-Porto-Padel-IBSQf.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2793-porto-padel/",
+    "regionName": "Brazil",
+    "postalCode": "92516-410",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2794,
+    "name": "Techset Academy",
+    "cityRaw": "Rio de Janeiro",
+    "address": "Vogue Square - Av. das Américas, 8585",
+    "phone": "+552197172-9087",
+    "website": "https://br.padelizados.net/pt-br/i/2794-techset-academy/",
+    "latitude": -23.000748,
+    "longitude": -43.396071,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2794-Techset-Academy-yUieG.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2794-techset-academy/",
+    "regionName": "Brazil",
+    "postalCode": "22793-081",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2795,
+    "name": "Arena Set Point",
+    "cityRaw": "Erechim",
+    "address": "R. Euclides da Cunha, 81",
+    "phone": "+555499707-8923",
+    "website": "https://br.padelizados.net/pt-br/i/2795-arena-set-point/",
+    "latitude": -27.6413478,
+    "longitude": -52.2715225,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2795-Arena-Set-Point-jsZie.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2795-arena-set-point/",
+    "regionName": "Brazil",
+    "postalCode": "99700-228",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2796,
+    "name": "Aqua Padel Cassino",
+    "cityRaw": "Rio Grande",
+    "address": "R. José Ferreira dos Santos, 356-926",
+    "phone": "+555398417-1166",
+    "website": "https://br.padelizados.net/pt-br/i/2796-aqua-padel-cassino/",
+    "latitude": -32.1853741,
+    "longitude": -52.1568462,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2796-aqua-padel-cassino/",
+    "regionName": "Brazil",
+    "postalCode": "96207-460",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2797,
+    "name": "Padel Center Chapecó",
+    "cityRaw": "Chapecó",
+    "address": "R. Gonçalves Dias, 130E",
+    "phone": "+554999935-5400",
+    "website": "https://br.padelizados.net/pt-br/i/2797-padel-center-chapeco/",
+    "latitude": -27.0861367,
+    "longitude": -52.6209347,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2797-padel-center-chapeco/",
+    "regionName": "Brazil",
+    "postalCode": "89805-053",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2798,
+    "name": "Padel Team",
+    "cityRaw": "Garibaldi",
+    "address": "CEP Rua Olinto - R. Olindo Antônio Bortolini, 78",
+    "phone": "+555499183-3952",
+    "website": "https://br.padelizados.net/pt-br/i/2798-padel-team/",
+    "latitude": -29.2755718,
+    "longitude": -51.5180778,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2798-Padel-Team-v0njE.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2798-padel-team/",
+    "regionName": "Brazil",
+    "postalCode": "95720-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2799,
+    "name": "Cuco Pádel",
+    "cityRaw": "Itajaí",
+    "address": "R. Theodoro Lino Martins, 60",
+    "phone": "+554798803-5663",
+    "website": "https://br.padelizados.net/pt-br/i/2799-cuco-padel/",
+    "latitude": -26.9541657,
+    "longitude": -48.6396752,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2799-Cuco-Padel-blq5x.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2799-cuco-padel/",
+    "regionName": "Brazil",
+    "postalCode": "88306-002",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2800,
+    "name": "Padel Pro Santo Antão",
+    "cityRaw": "Bento Gonçalves",
+    "address": "R. Humberto Luigi Giacomelo, 215",
+    "phone": "+555498402-9951",
+    "website": "https://br.padelizados.net/pt-br/i/2800-padel-pro-santo-antao/",
+    "latitude": -29.1905994,
+    "longitude": -51.5067558,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2800-padel-pro-santo-antao/",
+    "regionName": "Brazil",
+    "postalCode": "95702-632",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2801,
+    "name": "Dunas Racket Club",
+    "cityRaw": "Mogi das Cruzes",
+    "address": "Av. Cavalheiro Nami Jafet, 1150",
+    "phone": "+551198163-2000",
+    "website": "https://br.padelizados.net/pt-br/i/2801-dunas-racket-club/",
+    "latitude": -23.5155369,
+    "longitude": -46.2107789,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2801-dunas-racket-club/",
+    "regionName": "Brazil",
+    "postalCode": "08770-040",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2802,
+    "name": "One Paddle Sports Ltd.",
+    "cityRaw": "Bento Gonçalves",
+    "address": "Av. Planalto, 1283",
+    "phone": "+55543451-5377",
+    "website": "https://br.padelizados.net/pt-br/i/2802-one-paddle-sports-ltd/",
+    "latitude": -29.1694212,
+    "longitude": -51.5052458,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2802-one-paddle-sports-ltd/",
+    "regionName": "Brazil",
+    "postalCode": "95700-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2803,
+    "name": "Padel Sports Center",
+    "cityRaw": "Timbó",
+    "address": "R. Itália, 66",
+    "phone": "+554799171-0715",
+    "website": "https://br.padelizados.net/pt-br/i/2803-padel-sports-center/",
+    "latitude": -26.8259257,
+    "longitude": -49.2690152,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2803-padel-sports-center/",
+    "regionName": "Brazil",
+    "postalCode": "89120-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2804,
+    "name": "MVB Tênis e Pádel",
+    "cityRaw": "Balneário de Camboriú",
+    "address": "R. Biguaçu, 15",
+    "phone": "+554799964-0587",
+    "website": "https://br.padelizados.net/pt-br/i/2804-mvb-tenis-e-padel/",
+    "latitude": -27.0030332,
+    "longitude": -48.6358639,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2804-MVB-Tenis-e-Padel-UWbv9.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2804-mvb-tenis-e-padel/",
+    "regionName": "Brazil",
+    "postalCode": "88337-450",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2805,
+    "name": "Inove Pádel e Esportes de Areia",
+    "cityRaw": "Gaspar",
+    "address": "R. Flor de Lótus",
+    "phone": "+554799928-1556",
+    "website": "https://br.padelizados.net/pt-br/i/2805-inove-padel-e-esportes-de-areia/",
+    "latitude": -26.9425256,
+    "longitude": -48.9525728,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2805-Inove-Padel-e-Esportes-de-Areia-wAW32.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2805-inove-padel-e-esportes-de-areia/",
+    "regionName": "Brazil",
+    "postalCode": "89112-565",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2807,
+    "name": "Riomafra Padel",
+    "cityRaw": "Mafra",
+    "address": "R. Pereira Oliveira, 644",
+    "phone": "+554799238-0510",
+    "website": "https://br.padelizados.net/pt-br/i/2807-riomafra-padel/",
+    "latitude": -26.1162757,
+    "longitude": -49.8057975,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2807-Riomafra-Padel-DCdBX.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2807-riomafra-padel/",
+    "regionName": "Brazil",
+    "postalCode": "89300-160",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2806,
+    "name": "Arena Gaúcha",
+    "cityRaw": "Torres",
+    "address": "R. Inácio Felisberto Magnus, 333",
+    "phone": "+555198997-3221",
+    "website": "https://br.padelizados.net/pt-br/i/2806-arena-gaucha/",
+    "latitude": -29.3238344,
+    "longitude": -49.7561198,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2806-arena-gaucha/",
+    "regionName": "Brazil",
+    "postalCode": "95560-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2808,
+    "name": "Chaminé Norte - Passaúna",
+    "cityRaw": "Curitiba",
+    "address": "Curitiba",
+    "phone": "+55413350-8484",
+    "website": "https://br.padelizados.net/pt-br/i/2808-chamine-norte-passauna/",
+    "latitude": -25.458665,
+    "longitude": -49.3815587,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2808-chamine-norte-passauna/",
+    "regionName": "Brazil",
+    "postalCode": "81265-060",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2809,
+    "name": "Padel Life Capão da Canoa",
+    "cityRaw": "Capão da Canoa",
+    "address": "Av. Paraguassu, 240",
+    "phone": "+555199934-9900",
+    "website": "https://br.padelizados.net/pt-br/i/2809-padel-life-capao-da-canoa/",
+    "latitude": -29.7285039,
+    "longitude": -50.001943,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2809-Padel-Life-Capao-da-Canoa-WS8Hv.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2809-padel-life-capao-da-canoa/",
+    "regionName": "Brazil",
+    "postalCode": "95555-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2811,
+    "name": "Fair Play Arena - Quadra de Padel e Beach Tennis em Santa Maria RS",
+    "cityRaw": "Santa Maria",
+    "address": "BR-158, 1800",
+    "phone": "+555599216-2472",
+    "website": "https://br.padelizados.net/pt-br/i/2811-fair-play-arena-quadra-de-padel-e-beach-tennis-em-santa-maria-rs/",
+    "latitude": -29.7047453,
+    "longitude": -53.7971959,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2811-Fair-Play-Arena-Quadra-de-Padel-e-Beach-Tennis-em-Santa-Maria-RS-vxWIy.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2811-fair-play-arena-quadra-de-padel-e-beach-tennis-em-santa-maria-rs/",
+    "regionName": "Brazil",
+    "postalCode": "97060-220",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2810,
+    "name": "Sport Club Itapuí",
+    "cityRaw": "Guaíba",
+    "address": "R. Gaspar Martins, 153",
+    "phone": "+55513491-1494",
+    "website": "https://br.padelizados.net/pt-br/i/2810-sport-club-itapui/",
+    "latitude": -30.108183,
+    "longitude": -51.3187567,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2810-Sport-Club-Itapui-qp4Yk.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2810-sport-club-itapui/",
+    "regionName": "Brazil",
+    "postalCode": "92500-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2812,
+    "name": "Jurerê Padel",
+    "cityRaw": "Florianópolis",
+    "address": "Servidão Manoel da Luz Virgílio, 133 - e 163",
+    "phone": "+555198411-2369",
+    "website": "https://br.padelizados.net/pt-br/i/2812-jurere-padel/",
+    "latitude": -27.4431763,
+    "longitude": -48.4822962,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2812-Jurere-Padel-iDvc1.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2812-jurere-padel/",
+    "regionName": "Brazil",
+    "postalCode": "88053-780",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2813,
+    "name": "Moove Padel Center",
+    "cityRaw": "Concórdia",
+    "address": "Estr. p/ São José, 268",
+    "phone": "+554999928-0283",
+    "website": "https://br.padelizados.net/pt-br/i/2813-moove-padel-center/",
+    "latitude": -27.2233978,
+    "longitude": -51.9648298,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2813-moove-padel-center/",
+    "regionName": "Brazil",
+    "postalCode": "89700-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2814,
+    "name": "X3 Alegrete Padel",
+    "cityRaw": "Alegrete",
+    "address": "Av. Ibicuí, 893",
+    "phone": "+555599645-4866",
+    "website": "https://br.padelizados.net/pt-br/i/2814-x3-alegrete-padel/",
+    "latitude": -29.7870853,
+    "longitude": -55.7656469,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2814-x3-alegrete-padel/",
+    "regionName": "Brazil",
+    "postalCode": "97546-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2815,
+    "name": "Tie Break Padel Caxias",
+    "cityRaw": "Caxias do Sul",
+    "address": "BR116, Km 152 - 2, Nº. 21501/3",
+    "phone": "+555498159-6705",
+    "website": "https://br.padelizados.net/pt-br/i/2815-tie-break-padel-caxias/",
+    "latitude": -29.1834505,
+    "longitude": -51.1700336,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2815-Tie-Break-Padel-Caxias-nHbyO.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2815-tie-break-padel-caxias/",
+    "regionName": "Brazil",
+    "postalCode": "95070-070",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2816,
+    "name": "Jardim padel",
+    "cityRaw": "Uruguaiana",
+    "address": "R. Domingos de Almeida, 3898",
+    "phone": "+555598414-0783",
+    "website": "https://br.padelizados.net/pt-br/i/2816-jardim-padel/",
+    "latitude": -29.7744383,
+    "longitude": -57.0848088,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2816-Jardim-padel-ptxrP.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2816-jardim-padel/",
+    "regionName": "Brazil",
+    "postalCode": "97502-854",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2817,
+    "name": "Clube Curitibano - Sede Mario Monteiro",
+    "cityRaw": "Curitiba",
+    "address": "R. Lamenha Lins, 2580",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2817-clube-curitibano-sede-mario-monteiro/",
+    "latitude": -25.4594707,
+    "longitude": -49.2669334,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2817-clube-curitibano-sede-mario-monteiro/",
+    "regionName": "Brazil",
+    "postalCode": "80220-080",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2818,
+    "name": "Plus Padel",
+    "cityRaw": "Bagé",
+    "address": "R. Gomes Carneiro, 1525",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2818-plus-padel/",
+    "latitude": -31.3235603,
+    "longitude": -54.1107991,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2818-plus-padel/",
+    "regionName": "Brazil",
+    "postalCode": "96400-130",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2819,
+    "name": "Estação Padel & Beach",
+    "cityRaw": "Ijuí",
+    "address": "R. do Comércio, 2440",
+    "phone": "+555599140-2307",
+    "website": "https://br.padelizados.net/pt-br/i/2819-estacao-padel-beach/",
+    "latitude": -28.388929,
+    "longitude": -53.940156,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2819-Estacao-Padel-Beach-XQsqm.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2819-estacao-padel-beach/",
+    "regionName": "Brazil",
+    "postalCode": "98700-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2821,
+    "name": "Padel Center 232",
+    "cityRaw": "Santa Rosa",
+    "address": "R. Euclides da Cunha, 232",
+    "phone": "+555599138-7002",
+    "website": "https://br.padelizados.net/pt-br/i/2821-padel-center-232/",
+    "latitude": -27.8625297,
+    "longitude": -54.4768753,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2821-Padel-Center-232-7AEpK.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2821-padel-center-232/",
+    "regionName": "Brazil",
+    "postalCode": "98780-672",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2822,
+    "name": "Vitta Padel",
+    "cityRaw": "Passo Fundo",
+    "address": "R. Alonso de Camargo, 1.000",
+    "phone": "+555493505-9197",
+    "website": "https://br.padelizados.net/pt-br/i/2822-vitta-padel/",
+    "latitude": -28.2516092,
+    "longitude": -52.4584306,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2822-vitta-padel/",
+    "regionName": "Brazil",
+    "postalCode": "",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2820,
+    "name": "INPADEL CENTER",
+    "cityRaw": "Santiago",
+    "address": "Rua Pinheiro Machado, 2740 InPadel Center",
+    "phone": "+555599690-7225",
+    "website": "https://br.padelizados.net/pt-br/i/2820-inpadel-center/",
+    "latitude": -29.196705,
+    "longitude": -54.8706689,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2820-inpadel-center/",
+    "regionName": "Brazil",
+    "postalCode": "97709-005",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2823,
+    "name": "Nosso Padel",
+    "cityRaw": "Itajaí",
+    "address": "Beco do Moreira, 131",
+    "phone": "+554798419-6861",
+    "website": "https://br.padelizados.net/pt-br/i/2823-nosso-padel/",
+    "latitude": -26.9140471,
+    "longitude": -48.6660406,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2823-Nosso-Padel-L3EeU.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2823-nosso-padel/",
+    "regionName": "Brazil",
+    "postalCode": "88302-008",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2826,
+    "name": "Mais Sports",
+    "cityRaw": "Joinville",
+    "address": "R. Alberto Bornschein, 143",
+    "phone": "+55473030-2332",
+    "website": "https://br.padelizados.net/pt-br/i/2826-mais-sports/",
+    "latitude": -26.3001896,
+    "longitude": -48.8754728,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2826-Mais-Sports-W7HqZ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2826-mais-sports/",
+    "regionName": "Brazil",
+    "postalCode": "89216-440",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2825,
+    "name": "MatchBall Beach & Padel (Cardoso de Melo)",
+    "cityRaw": "Sao Paulo",
+    "address": "Av. Dr. Cardoso de Melo, 1080",
+    "phone": "+551199413-0101",
+    "website": "https://br.padelizados.net/pt-br/i/2825-matchball-beach-padel-cardoso-de-melo/",
+    "latitude": -23.5985646,
+    "longitude": -46.6839227,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2825-MatchBall-Beach-Padel-Cardoso-de-Melo-sibfJ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2825-matchball-beach-padel-cardoso-de-melo/",
+    "regionName": "Brazil",
+    "postalCode": "04548-004",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2824,
+    "name": "BABITONGA PADEL",
+    "cityRaw": "São Francisco do Sul",
+    "address": "R. Tedesco, 22",
+    "phone": "+554799601-3314",
+    "website": "https://br.padelizados.net/pt-br/i/2824-babitonga-padel/",
+    "latitude": -26.2506415,
+    "longitude": -48.6330731,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2824-BABITONGA-PADEL-3Rnjh.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2824-babitonga-padel/",
+    "regionName": "Brazil",
+    "postalCode": "89240-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2827,
+    "name": "EQI Racket Clube",
+    "cityRaw": "Itajaí",
+    "address": "R. Delfim Mário de Pádua Peixoto, 1551",
+    "phone": "+554799219-3196",
+    "website": "https://br.padelizados.net/pt-br/i/2827-eqi-racket-clube/",
+    "latitude": -26.9545189,
+    "longitude": -48.6315166,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2827-EQI-Racket-Clube-Sx8mb.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2827-eqi-racket-clube/",
+    "regionName": "Brazil",
+    "postalCode": "88306-842",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2828,
+    "name": "Bravo Padel Club",
+    "cityRaw": "Campos Novos",
+    "address": "R. Assis Camargo Costa, 1000",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2828-bravo-padel-club/",
+    "latitude": -27.3817478,
+    "longitude": -51.2094292,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2828-Bravo-Padel-Club-EbFl8.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2828-bravo-padel-club/",
+    "regionName": "Brazil",
+    "postalCode": "89620-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2829,
+    "name": "Padel Leste",
+    "cityRaw": "São Lourenço do Sul",
+    "address": "Av. Santos Abreu, 546",
+    "phone": "+555398406-9919",
+    "website": "https://br.padelizados.net/pt-br/i/2829-padel-leste/",
+    "latitude": -31.3696183,
+    "longitude": -51.9709554,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2829-Padel-Leste-yxOxE.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2829-padel-leste/",
+    "regionName": "Brazil",
+    "postalCode": "96170-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2830,
+    "name": "Arena ST - Padel & Beach Tennis",
+    "cityRaw": "Caràzinho",
+    "address": "R. Ipanema, 453",
+    "phone": "+555499680-2998",
+    "website": "https://br.padelizados.net/pt-br/i/2830-arena-st-padel-beach-tennis/",
+    "latitude": -28.3027769,
+    "longitude": -52.7957539,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2830-arena-st-padel-beach-tennis/",
+    "regionName": "Brazil",
+    "postalCode": "99500-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2831,
+    "name": "Winner Padel Clube",
+    "cityRaw": "São Miguel do Oeste",
+    "address": "R. Marcílio Dias, 2595",
+    "phone": "+554999109-0286",
+    "website": "https://br.padelizados.net/pt-br/i/2831-winner-padel-clube/",
+    "latitude": -26.7389717,
+    "longitude": -53.5201873,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2831-Winner-Padel-Clube-p0f2R.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2831-winner-padel-clube/",
+    "regionName": "Brazil",
+    "postalCode": "89900-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2832,
+    "name": "Ponto Padel",
+    "cityRaw": "Rio de Janeiro",
+    "address": "dentro da Techset, Vogue Square Life Experience - Av. das Américas, 8585",
+    "phone": "+552199574-9958",
+    "website": "https://br.padelizados.net/pt-br/i/2832-ponto-padel/",
+    "latitude": -23.0007825,
+    "longitude": -43.395579,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2832-Ponto-Padel-vsnjQ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2832-ponto-padel/",
+    "regionName": "Brazil",
+    "postalCode": "22793-081",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2834,
+    "name": "Soul Padel",
+    "cityRaw": "Passo Fundo",
+    "address": "Loteamento Leosul",
+    "phone": "+555498133-3217",
+    "website": "https://br.padelizados.net/pt-br/i/2834-soul-padel/",
+    "latitude": -28.3922188,
+    "longitude": -51.8378938,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2834-Soul-Padel-bF7lA.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2834-soul-padel/",
+    "regionName": "Brazil",
+    "postalCode": "99980-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2835,
+    "name": "Espaço Padel",
+    "cityRaw": "Porto Alegre",
+    "address": "Av. Cel. Marcos, 1345",
+    "phone": "+555199239-7700",
+    "website": "https://br.padelizados.net/pt-br/i/2835-espaco-padel/",
+    "latitude": -30.1263508,
+    "longitude": -51.2441254,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2835-Espaco-Padel-PaCWB.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2835-espaco-padel/",
+    "regionName": "Brazil",
+    "postalCode": "91760-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2836,
+    "name": "Vivo Pádel",
+    "cityRaw": "Santana do Livramento",
+    "address": "R. Vitórino Soares Pinto, 575",
+    "phone": "+555599221-9460",
+    "website": "https://br.padelizados.net/pt-br/i/2836-vivo-padel/",
+    "latitude": -30.878168,
+    "longitude": -55.5258119,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2836-vivo-padel/",
+    "regionName": "Brazil",
+    "postalCode": "97572-718",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2837,
+    "name": "922 Padel Club",
+    "cityRaw": "Palmeira das Missões",
+    "address": "R. Miguel Wodzik, 111",
+    "phone": "+555599632-8195",
+    "website": "https://br.padelizados.net/pt-br/i/2837-922-padel-club/",
+    "latitude": -27.4899123,
+    "longitude": -53.3904346,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2837-922-padel-club/",
+    "regionName": "Brazil",
+    "postalCode": "98380-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2838,
+    "name": "Full Padel SB",
+    "cityRaw": "São Borja",
+    "address": "R. João Palmeiro, 1787",
+    "phone": "+555599673-6817",
+    "website": "https://br.padelizados.net/pt-br/i/2838-full-padel-sb/",
+    "latitude": -28.6555159,
+    "longitude": -56.0079038,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2838-Full-Padel-SB-Jd5PK.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2838-full-padel-sb/",
+    "regionName": "Brazil",
+    "postalCode": "97670-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2839,
+    "name": "Copacabana Esportes | Futebol | Socity | Socity 7| Beatch tennis | Futvolei | Vôlei de praia | Locação de quadra | Padel |",
+    "cityRaw": "Joinville",
+    "address": "R. Copacabana, 1920",
+    "phone": "+554799979-7779",
+    "website": "https://br.padelizados.net/pt-br/i/2839-copacabana-esportes-futebol-socity-socity-7-beatch-tennis-futvolei-volei-de-praia-locacao-de-quadra-padel-/",
+    "latitude": -26.3404502,
+    "longitude": -48.8579406,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2839-Copacabana-Esportes-Futebol-Socity-Socity-7-Beatch-tennis-Futvolei-Volei-de-praia-Locacao-de-quadra-Padel--R58vY.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2839-copacabana-esportes-futebol-socity-socity-7-beatch-tennis-futvolei-volei-de-praia-locacao-de-quadra-padel-/",
+    "regionName": "Brazil",
+    "postalCode": "89211-380",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2841,
+    "name": "Sunset Padel",
+    "cityRaw": "Rio Grande",
+    "address": "R. Visc. do Rio Grande, 01",
+    "phone": "+555399139-1686",
+    "website": "https://br.padelizados.net/pt-br/i/2841-sunset-padel/",
+    "latitude": -32.0295558,
+    "longitude": -52.1124326,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2841-Sunset-Padel-XRWay.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2841-sunset-padel/",
+    "regionName": "Brazil",
+    "postalCode": "96211-490",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2840,
+    "name": "Paladino Tênis Clube",
+    "cityRaw": "Gravataí",
+    "address": "R. João Maria da Fonseca, 1000",
+    "phone": "+55513488-1522",
+    "website": "https://br.padelizados.net/pt-br/i/2840-paladino-tenis-clube/",
+    "latitude": -29.9469804,
+    "longitude": -50.9995873,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2840-paladino-tenis-clube/",
+    "regionName": "Brazil",
+    "postalCode": "94035-190",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2842,
+    "name": "Winner Academia de Tênis",
+    "cityRaw": "Santa Bárbara d'Oeste",
+    "address": "Av. Interdistrital Comendador Emílio Romi, 22",
+    "phone": "+551999344-4811",
+    "website": "https://br.padelizados.net/pt-br/i/2842-winner-academia-de-tenis/",
+    "latitude": -22.7541999,
+    "longitude": -47.3871002,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2842-Winner-Academia-de-Tenis-i8b26.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2842-winner-academia-de-tenis/",
+    "regionName": "Brazil",
+    "postalCode": "13456-120",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2843,
+    "name": "Arena JF (amigos do fut)",
+    "cityRaw": "Campo Grande",
+    "address": "R. Anhanguera, 1047",
+    "phone": "+556798137-8091",
+    "website": "https://br.padelizados.net/pt-br/i/2843-arena-jf-amigos-do-fut/",
+    "latitude": -20.4994938,
+    "longitude": -54.6267271,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2843-Arena-JF-amigos-do-fut-nbuFV.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2843-arena-jf-amigos-do-fut/",
+    "regionName": "Brazil",
+    "postalCode": "79080-740",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2844,
+    "name": "Club Campestre Maccabi",
+    "cityRaw": "Porto Alegre",
+    "address": "Av. Cel. Marcos, 1345",
+    "phone": "+55513012-6235",
+    "website": "https://br.padelizados.net/pt-br/i/2844-club-campestre-maccabi/",
+    "latitude": -30.1269842,
+    "longitude": -51.2440359,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2844-Club-Campestre-Maccabi-JhETq.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2844-club-campestre-maccabi/",
+    "regionName": "Brazil",
+    "postalCode": "91760-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2846,
+    "name": "Top 10 Padel",
+    "cityRaw": "Pelotas",
+    "address": "R. Gonçalves Chaves, 4721",
+    "phone": "+555399903-2711",
+    "website": "https://br.padelizados.net/pt-br/i/2846-top-10-padel/",
+    "latitude": -31.7457275,
+    "longitude": -52.3268203,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2846-top-10-padel/",
+    "regionName": "Brazil",
+    "postalCode": "96015-560",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2845,
+    "name": "4 Set Arena | Padel | Beach Tênis | Vôlei de Praia | Casa de Festas | Futevôlei | Loja Esportiva | Local para eventos",
+    "cityRaw": "Joinville",
+    "address": "R. Cooperativa Tupy, 219",
+    "phone": "+554799212-2421",
+    "website": "https://br.padelizados.net/pt-br/i/2845-4-set-arena-padel-beach-tenis-volei-de-praia-casa-de-festas-futevolei-loja-esportiva-local-para-eventos/",
+    "latitude": -26.2897832,
+    "longitude": -48.8147922,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2845-4-Set-Arena-Padel-Beach-Tenis-Volei-de-Praia-Casa-de-Festas-Futevolei-Loja-Esportiva-Local-para-eventos-bwVB3.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2845-4-set-arena-padel-beach-tenis-volei-de-praia-casa-de-festas-futevolei-loja-esportiva-local-para-eventos/",
+    "regionName": "Brazil",
+    "postalCode": "89206-001",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2847,
+    "name": "Batata Padel",
+    "cityRaw": "Canoas",
+    "address": "R. José do Patrocínio, 101",
+    "phone": "+555199833-8473",
+    "website": "https://br.padelizados.net/pt-br/i/2847-batata-padel/",
+    "latitude": -29.9455057,
+    "longitude": -51.1758587,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2847-batata-padel/",
+    "regionName": "Brazil",
+    "postalCode": "92120-080",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2849,
+    "name": "Catena Padel",
+    "cityRaw": "Caxias do Sul",
+    "address": "R. Jacob Luchesi, 2371",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2849-catena-padel/",
+    "latitude": -29.1530506,
+    "longitude": -51.2059538,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2849-Catena-Padel-DRN0S.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2849-catena-padel/",
+    "regionName": "Brazil",
+    "postalCode": "95032-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2848,
+    "name": "Sportfan | Artigos Esportivos em Campo Grande",
+    "cityRaw": "Campo Grande",
+    "address": "R. Joaquim Murtinho, 2205",
+    "phone": "+556799153-0729",
+    "website": "https://br.padelizados.net/pt-br/i/2848-sportfan-artigos-esportivos-em-campo-grande/",
+    "latitude": -20.4673636,
+    "longitude": -54.5922504,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2848-Sportfan-Artigos-Esportivos-em-Campo-Grande-on4Hg.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2848-sportfan-artigos-esportivos-em-campo-grande/",
+    "regionName": "Brazil",
+    "postalCode": "79031-001",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2850,
+    "name": "Padel Lobby",
+    "cityRaw": "Rio Grande",
+    "address": "Praça Sete Setembro, 184",
+    "phone": "+555399168-2313",
+    "website": "https://br.padelizados.net/pt-br/i/2850-padel-lobby/",
+    "latitude": -32.0333574,
+    "longitude": -52.0924098,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2850-Padel-Lobby-g2Bnv.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2850-padel-lobby/",
+    "regionName": "Brazil",
+    "postalCode": "96200-120",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2851,
+    "name": "Escola Guga | Aulas de Tênis e Beach Tennis em Campo Grande",
+    "cityRaw": "Campo Grande",
+    "address": "R. Joaquim Murtinho, 2205",
+    "phone": "+55673383-3753",
+    "website": "https://br.padelizados.net/pt-br/i/2851-escola-guga-aulas-de-tenis-e-beach-tennis-em-campo-grande/",
+    "latitude": -20.4673539,
+    "longitude": -54.5922217,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2851-Escola-Guga-Aulas-de-Tenis-e-Beach-Tennis-em-Campo-Grande-s556W.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2851-escola-guga-aulas-de-tenis-e-beach-tennis-em-campo-grande/",
+    "regionName": "Brazil",
+    "postalCode": "79003-020",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2854,
+    "name": "Infinity Padel Club",
+    "cityRaw": "Santa Rosa",
+    "address": "Av. Ayrton Silva Capaverde, 2161",
+    "phone": "+555599941-0178",
+    "website": "https://br.padelizados.net/pt-br/i/2854-infinity-padel-club/",
+    "latitude": -27.8393029,
+    "longitude": -54.4692375,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2854-infinity-padel-club/",
+    "regionName": "Brazil",
+    "postalCode": "98785-560",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2852,
+    "name": "Clube de Leituras",
+    "cityRaw": "Venâncio Aires",
+    "address": "R. Júlio de Castilhos, 464",
+    "phone": "+55513741-1680",
+    "website": "https://br.padelizados.net/pt-br/i/2852-clube-de-leituras/",
+    "latitude": -29.6040245,
+    "longitude": -52.1929759,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2852-clube-de-leituras/",
+    "regionName": "Brazil",
+    "postalCode": "95800-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2853,
+    "name": "Arena Win - Esportes de Areia e Padel",
+    "cityRaw": "Francisco Beltrão",
+    "address": "R. São Paulo, 2017",
+    "phone": "+554699138-0888",
+    "website": "https://br.padelizados.net/pt-br/i/2853-arena-win-esportes-de-areia-e-padel/",
+    "latitude": -26.0861836,
+    "longitude": -53.0457177,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2853-arena-win-esportes-de-areia-e-padel/",
+    "regionName": "Brazil",
+    "postalCode": "85601-010",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2855,
+    "name": "TENISPADEL",
+    "cityRaw": "Rio Grande",
+    "address": "R. Taufik Abdo Nader, 274",
+    "phone": "+555398131-4581",
+    "website": "https://br.padelizados.net/pt-br/i/2855-tenispadel/",
+    "latitude": -32.1727358,
+    "longitude": -52.1703054,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2855-tenispadel/",
+    "regionName": "Brazil",
+    "postalCode": "",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2857,
+    "name": "Compadel",
+    "cityRaw": "Cachoeira do Sul",
+    "address": "R. Mal. Hermes, 1625",
+    "phone": "+555199974-1314",
+    "website": "https://br.padelizados.net/pt-br/i/2857-compadel/",
+    "latitude": -30.0217742,
+    "longitude": -52.9139595,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2857-compadel/",
+    "regionName": "Brazil",
+    "postalCode": "96501-154",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2858,
+    "name": "Central Pádel BR",
+    "cityRaw": "Itajaí",
+    "address": "R. Lauro Muller, n. 1317",
+    "phone": "+554799189-1317",
+    "website": "https://br.padelizados.net/pt-br/i/2858-central-padel-br/",
+    "latitude": -26.9167074,
+    "longitude": -48.6534094,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2858-Central-Padel-BR-AlhSv.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2858-central-padel-br/",
+    "regionName": "Brazil",
+    "postalCode": "88301-401",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2856,
+    "name": "Padel Beach Panamericana",
+    "cityRaw": "Sao Paulo",
+    "address": "Praça Arcipreste Anselmo de Oliveira, 285 B",
+    "phone": "+551199407-5922",
+    "website": "https://br.padelizados.net/pt-br/i/2856-padel-beach-panamericana/",
+    "latitude": -23.5562439,
+    "longitude": -46.7109234,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2856-Padel-Beach-Panamericana-oH6VW.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2856-padel-beach-panamericana/",
+    "regionName": "Brazil",
+    "postalCode": "05463-080",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2859,
+    "name": "Texas Padel",
+    "cityRaw": "São Borja",
+    "address": "Av. Júlio Tróis, 1965",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2859-texas-padel/",
+    "latitude": -28.6473471,
+    "longitude": -56.0109646,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2859-texas-padel/",
+    "regionName": "Brazil",
+    "postalCode": "97670-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2860,
+    "name": "Pardus Sports",
+    "cityRaw": "São Bento do Sul",
+    "address": "Av. São Bento, 2000",
+    "phone": "+554798842-1641",
+    "website": "https://br.padelizados.net/pt-br/i/2860-pardus-sports/",
+    "latitude": -26.2307878,
+    "longitude": -49.4014258,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2860-pardus-sports/",
+    "regionName": "Brazil",
+    "postalCode": "89288-100",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2861,
+    "name": "Arena RN",
+    "cityRaw": "Rio Negrinho",
+    "address": "R. da Paz, 217",
+    "phone": "+554799191-2550",
+    "website": "https://br.padelizados.net/pt-br/i/2861-arena-rn/",
+    "latitude": -26.252313,
+    "longitude": -49.5139079,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2861-Arena-RN-oq1PZ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2861-arena-rn/",
+    "regionName": "Brazil",
+    "postalCode": "89295-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2863,
+    "name": "PASSARINHO PADEL CLUB",
+    "cityRaw": "Jaguarão",
+    "address": "Jaguarão",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2863-passarinho-padel-club/",
+    "latitude": -32.5609222,
+    "longitude": -53.3764409,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2863-PASSARINHO-PADEL-CLUB-J2Yei.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2863-passarinho-padel-club/",
+    "regionName": "Brazil",
+    "postalCode": "96300-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2862,
+    "name": "Padel Joaçaba",
+    "cityRaw": "Joaçaba",
+    "address": "Joaçaba",
+    "phone": "+554999159-4049",
+    "website": "https://br.padelizados.net/pt-br/i/2862-padel-joacaba/",
+    "latitude": -27.1789855,
+    "longitude": -51.5285949,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2862-Padel-Joacaba-VQdvb.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2862-padel-joacaba/",
+    "regionName": "Brazil",
+    "postalCode": "89600-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2864,
+    "name": "Beach Padel Arena",
+    "cityRaw": "Sao Paulo",
+    "address": "Rua Constantino de Sousa, 1279",
+    "phone": "+551199739-9956",
+    "website": "https://br.padelizados.net/pt-br/i/2864-beach-padel-arena/",
+    "latitude": -23.6223883,
+    "longitude": -46.6781227,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2864-Beach-Padel-Arena-wCry3.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2864-beach-padel-arena/",
+    "regionName": "Brazil",
+    "postalCode": "04605-003",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2865,
+    "name": "Marbella Pádel Club",
+    "cityRaw": "Balneário de Camboriú",
+    "address": "R. 902, 940",
+    "phone": "+554799729-7879",
+    "website": "https://br.padelizados.net/pt-br/i/2865-marbella-padel-club/",
+    "latitude": -26.9939287,
+    "longitude": -48.6419093,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2865-marbella-padel-club/",
+    "regionName": "Brazil",
+    "postalCode": "88330-596",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2867,
+    "name": "Senhor Padel",
+    "cityRaw": "Lajeado",
+    "address": "R. Oswaldo Mathias Ely, 287",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2867-senhor-padel/",
+    "latitude": -29.4434651,
+    "longitude": -51.9890686,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2867-senhor-padel/",
+    "regionName": "Brazil",
+    "postalCode": "95905-290",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2866,
+    "name": "Zucca Padel",
+    "cityRaw": "Videira",
+    "address": "R. Antônio Pícoli",
+    "phone": "+554999903-6371",
+    "website": "https://br.padelizados.net/pt-br/i/2866-zucca-padel/",
+    "latitude": -27.0314282,
+    "longitude": -51.1439726,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2866-Zucca-Padel-TkrxM.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2866-zucca-padel/",
+    "regionName": "Brazil",
+    "postalCode": "89560-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2868,
+    "name": "Arena RD Padel Capao da Canoa",
+    "cityRaw": "Capão da Canoa",
+    "address": "R. Gaspar Grizza, 934",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2868-arena-rd-padel-capao-da-canoa/",
+    "latitude": -29.7577923,
+    "longitude": -50.0303182,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2868-Arena-RD-Padel-Capao-da-Canoa-rovEX.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2868-arena-rd-padel-capao-da-canoa/",
+    "regionName": "Brazil",
+    "postalCode": "95555-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2870,
+    "name": "Padel RJ",
+    "cityRaw": "Niterói",
+    "address": "Av. Dr. Raul de Oliveira Rodrigues, 1288",
+    "phone": "+552199855-6535",
+    "website": "https://br.padelizados.net/pt-br/i/2870-padel-rj/",
+    "latitude": -22.9385929,
+    "longitude": -43.0677144,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2870-Padel-RJ-1zu8w.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2870-padel-rj/",
+    "regionName": "Brazil",
+    "postalCode": "24350-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2869,
+    "name": "Escola Guga | Aulas de Tênis e Beach tennis em Sorocaba",
+    "cityRaw": "Sorocaba",
+    "address": "R. Luiza Matiello Hanser, 425",
+    "phone": "+551599833-4972",
+    "website": "https://br.padelizados.net/pt-br/i/2869-escola-guga-aulas-de-tenis-e-beach-tennis-em-sorocaba/",
+    "latitude": -23.5243806,
+    "longitude": -47.4822036,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2869-Escola-Guga-Aulas-de-Tenis-e-Beach-tennis-em-Sorocaba-CNhdL.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2869-escola-guga-aulas-de-tenis-e-beach-tennis-em-sorocaba/",
+    "regionName": "Brazil",
+    "postalCode": "18046-166",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2871,
+    "name": "Expresso Padel Club",
+    "cityRaw": "Santo Ângelo",
+    "address": "R. Santos Dumont, 542",
+    "phone": "+555599633-4805",
+    "website": "https://br.padelizados.net/pt-br/i/2871-expresso-padel-club/",
+    "latitude": -28.2835132,
+    "longitude": -54.2599586,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2871-expresso-padel-club/",
+    "regionName": "Brazil",
+    "postalCode": "98803-310",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2872,
+    "name": "Rocket Padel e Beach",
+    "cityRaw": "Passo Fundo",
+    "address": ": Rua Arno Otto Kiehl, 270",
+    "phone": "+555499707-1960",
+    "website": "https://br.padelizados.net/pt-br/i/2872-rocket-padel-e-beach/",
+    "latitude": -28.2678125,
+    "longitude": -52.3961211,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2872-Rocket-Padel-e-Beach-TVqC9.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2872-rocket-padel-e-beach/",
+    "regionName": "Brazil",
+    "postalCode": "99074-480",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2873,
+    "name": "Brasília Padel",
+    "cityRaw": "Brasília",
+    "address": "Setor de Clubes Sul, Trecho 2, na ASTCU",
+    "phone": "+55613201-3104",
+    "website": "https://br.padelizados.net/pt-br/i/2873-brasilia-padel/",
+    "latitude": -15.8188986,
+    "longitude": -47.8434584,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2873-brasilia-padel/",
+    "regionName": "Brazil",
+    "postalCode": "70200-002",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2874,
+    "name": "Wolf Padel",
+    "cityRaw": "Rio Grande",
+    "address": "R. dos Dragões, 76",
+    "phone": "+555399930-6638",
+    "website": "https://br.padelizados.net/pt-br/i/2874-wolf-padel/",
+    "latitude": -32.0537834,
+    "longitude": -52.1233901,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2874-wolf-padel/",
+    "regionName": "Brazil",
+    "postalCode": "96202-200",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2875,
+    "name": "Santo Sports",
+    "cityRaw": "Santo Augusto",
+    "address": "Av. Ângelo Santi, 1220",
+    "phone": "+555599682-3388",
+    "website": "https://br.padelizados.net/pt-br/i/2875-santo-sports/",
+    "latitude": -27.8661062,
+    "longitude": -53.7746989,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2875-Santo-Sports-MyAOT.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2875-santo-sports/",
+    "regionName": "Brazil",
+    "postalCode": "98590-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2876,
+    "name": "Arena Cesoca Beach Tennis e Padel",
+    "cityRaw": "Garopaba",
+    "address": "Rua Sol Poente Areias de Palhocinha",
+    "phone": "+554899160-1347",
+    "website": "https://br.padelizados.net/pt-br/i/2876-arena-cesoca-beach-tennis-e-padel/",
+    "latitude": -28.0505857,
+    "longitude": -48.6466113,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2876-arena-cesoca-beach-tennis-e-padel/",
+    "regionName": "Brazil",
+    "postalCode": "88495-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2878,
+    "name": "Padel Balls",
+    "cityRaw": "São Borja",
+    "address": "R. Sd. Mancias Alves, 1181",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2878-padel-balls/",
+    "latitude": -28.6503838,
+    "longitude": -55.9920158,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2878-padel-balls/",
+    "regionName": "Brazil",
+    "postalCode": "97670-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2877,
+    "name": "Little School and School Club Guga Criciuma",
+    "cityRaw": "Criciúma",
+    "address": "Rua Dr, R. José Tarquínio Balsini, 245",
+    "phone": "+554899192-3388",
+    "website": "https://br.padelizados.net/pt-br/i/2877-little-school-and-school-club-guga-criciuma/",
+    "latitude": -28.6708491,
+    "longitude": -49.368202,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2877-Little-School-and-School-Club-Guga-Criciuma-37QRl.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2877-little-school-and-school-club-guga-criciuma/",
+    "regionName": "Brazil",
+    "postalCode": "88811-060",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2879,
+    "name": "Smart Padel",
+    "cityRaw": "Campo Grande",
+    "address": "R. Maranhão, 372",
+    "phone": "+556799825-7070",
+    "website": "https://br.padelizados.net/pt-br/i/2879-smart-padel/",
+    "latitude": -20.4447881,
+    "longitude": -54.5979724,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2879-smart-padel/",
+    "regionName": "Brazil",
+    "postalCode": "79022-560",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2880,
+    "name": "Arena New Sports",
+    "cityRaw": "Cruz Alta",
+    "address": "Residencial Ebenézer Rua n°1",
+    "phone": "+555399970-6042",
+    "website": "https://br.padelizados.net/pt-br/i/2880-arena-new-sports/",
+    "latitude": -28.6240928,
+    "longitude": -53.6075463,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2880-arena-new-sports/",
+    "regionName": "Brazil",
+    "postalCode": "98020-140",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2882,
+    "name": "Arena Beach Tennis e Padel",
+    "cityRaw": "Belém",
+    "address": "Vila Rio, 222",
+    "phone": "+559199160-6998",
+    "website": "https://br.padelizados.net/pt-br/i/2882-arena-beach-tennis-e-padel/",
+    "latitude": -1.4681571,
+    "longitude": -48.5056033,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2882-arena-beach-tennis-e-padel/",
+    "regionName": "Brazil",
+    "postalCode": "66023-420",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2881,
+    "name": "Dupont Padel",
+    "cityRaw": "Porto Belo",
+    "address": "R. Antônio Walendowski, 538",
+    "phone": null,
+    "website": "https://br.padelizados.net/pt-br/i/2881-dupont-padel/",
+    "latitude": -27.1592586,
+    "longitude": -48.5700137,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2881-dupont-padel/",
+    "regionName": "Brazil",
+    "postalCode": "88210-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2883,
+    "name": "Estação O2",
+    "cityRaw": "Florianópolis",
+    "address": "R. Pedro Cunha, 915",
+    "phone": "+554898846-5859",
+    "website": "https://br.padelizados.net/pt-br/i/2883-estacao-o2/",
+    "latitude": -27.5901052,
+    "longitude": -48.5898737,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2883-estacao-o2/",
+    "regionName": "Brazil",
+    "postalCode": "88070-500",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2884,
+    "name": "Ymp Padel",
+    "cityRaw": "Santo Cristo",
+    "address": "R. La Salle, 180",
+    "phone": "+555598128-0033",
+    "website": "https://br.padelizados.net/pt-br/i/2884-ymp-padel/",
+    "latitude": -27.8225963,
+    "longitude": -54.6624334,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2884-Ymp-Padel-opgBQ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2884-ymp-padel/",
+    "regionName": "Brazil",
+    "postalCode": "98960-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2886,
+    "name": "Lob Sports Arena",
+    "cityRaw": "Brusque",
+    "address": "R. Luiz Gonzaga Werner, 70",
+    "phone": "+554799991-5859",
+    "website": "https://br.padelizados.net/pt-br/i/2886-lob-sports-arena/",
+    "latitude": -27.0707741,
+    "longitude": -48.8882925,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2886-lob-sports-arena/",
+    "regionName": "Brazil",
+    "postalCode": "88355-330",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2887,
+    "name": "Arena Emporium Padel",
+    "cityRaw": "Sao Paulo",
+    "address": "Estacionamento Emporium - Av. Jurema, 271",
+    "phone": "+551194101-0021",
+    "website": "https://br.padelizados.net/pt-br/i/2887-arena-emporium-padel/",
+    "latitude": -23.6074519,
+    "longitude": -46.6594114,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2887-Arena-Emporium-Padel-ZjQ8t.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2887-arena-emporium-padel/",
+    "regionName": "Brazil",
+    "postalCode": "04079-001",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2885,
+    "name": "Padel Beach Leopoldina",
+    "cityRaw": "Sao Paulo",
+    "address": "Av. Mofarrej, 205 B",
+    "phone": "+551199407-5922",
+    "website": "https://br.padelizados.net/pt-br/i/2885-padel-beach-leopoldina/",
+    "latitude": -23.5258538,
+    "longitude": -46.7383978,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2885-Padel-Beach-Leopoldina-Alfm7.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2885-padel-beach-leopoldina/",
+    "regionName": "Brazil",
+    "postalCode": "05311-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2889,
+    "name": "Fazenda Verde {Padel Praia do Rosa}",
+    "cityRaw": "Imbituba",
+    "address": "Rua da Pousada Verde do Rosa",
+    "phone": "+554898804-5754",
+    "website": "https://br.padelizados.net/pt-br/i/2889-fazenda-verde-padel-praia-do-rosa/",
+    "latitude": -28.131113,
+    "longitude": -48.6441212,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2889-Fazenda-Verde-Padel-Praia-do-Rosa-y5IgW.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2889-fazenda-verde-padel-praia-do-rosa/",
+    "regionName": "Brazil",
+    "postalCode": "88780-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2890,
+    "name": "Grand Padel",
+    "cityRaw": "Palmeira das Missões",
+    "address": "RS-569",
+    "phone": "+555599211-2791",
+    "website": "https://br.padelizados.net/pt-br/i/2890-grand-padel/",
+    "latitude": -27.8872667,
+    "longitude": -53.2971737,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2890-grand-padel/",
+    "regionName": "Brazil",
+    "postalCode": "",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2891,
+    "name": "CP Padel",
+    "cityRaw": "Caçapava do Sul",
+    "address": "Av. Santos Dumont, 525",
+    "phone": "+555599949-0777",
+    "website": "https://br.padelizados.net/pt-br/i/2891-cp-padel/",
+    "latitude": -30.5238761,
+    "longitude": -53.4797062,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2891-CP-Padel-4ez4S.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2891-cp-padel/",
+    "regionName": "Brazil",
+    "postalCode": "96570-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2893,
+    "name": "Acapulco Padel",
+    "cityRaw": "Santana do Livramento",
+    "address": "R. Achiles Gazapina Costa, 514",
+    "phone": "+555599117-8094",
+    "website": "https://br.padelizados.net/pt-br/i/2893-acapulco-padel/",
+    "latitude": -30.8970889,
+    "longitude": -55.5173911,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2893-Acapulco-Padel-gD8S3.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2893-acapulco-padel/",
+    "regionName": "Brazil",
+    "postalCode": "97574-630",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2894,
+    "name": "Arena Mania",
+    "cityRaw": "Horizontina",
+    "address": "R. Dahne de Abreu, 865",
+    "phone": "+555599955-1414",
+    "website": "https://br.padelizados.net/pt-br/i/2894-arena-mania/",
+    "latitude": -27.632916,
+    "longitude": -54.3087928,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2894-arena-mania/",
+    "regionName": "Brazil",
+    "postalCode": "98920-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2897,
+    "name": "Escola Guga LIC | Aulas de tênis em Florianópolis",
+    "cityRaw": "Florianópolis",
+    "address": "Rua Hipólito do Vale Pereira , 620 - LIC",
+    "phone": "+554899182-7491",
+    "website": "https://br.padelizados.net/pt-br/i/2897-escola-guga-lic-aulas-de-tenis-em-florianopolis/",
+    "latitude": -27.6098593,
+    "longitude": -48.476266,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2897-Escola-Guga-LIC-Aulas-de-tenis-em-Florianopolis-RUU6L.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2897-escola-guga-lic-aulas-de-tenis-em-florianopolis/",
+    "regionName": "Brazil",
+    "postalCode": "88062-210",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2896,
+    "name": "IMPACTO PADEL",
+    "cityRaw": "Veranópolis",
+    "address": "R. São Paulo, 537",
+    "phone": "+555499655-9662",
+    "website": "https://br.padelizados.net/pt-br/i/2896-impacto-padel/",
+    "latitude": -28.9577685,
+    "longitude": -51.5478563,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2896-impacto-padel/",
+    "regionName": "Brazil",
+    "postalCode": "95330-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2898,
+    "name": "Four Padel Casca",
+    "cityRaw": "Casca",
+    "address": "Avenida João Cleto Dagnoluzzo",
+    "phone": "+555499680-1983",
+    "website": "https://br.padelizados.net/pt-br/i/2898-four-padel-casca/",
+    "latitude": -28.5732779,
+    "longitude": -51.9806401,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2898-four-padel-casca/",
+    "regionName": "Brazil",
+    "postalCode": "99260-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2899,
+    "name": "Rancho Padel Club Ltda",
+    "cityRaw": "Três Passos",
+    "address": "ESTRADA LINHA TURVO, NÚMERO 30",
+    "phone": "+555599999-1050",
+    "website": "https://br.padelizados.net/pt-br/i/2899-rancho-padel-club-ltda/",
+    "latitude": -27.4219848,
+    "longitude": -53.9198661,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2899-Rancho-Padel-Club-Ltda-w9c6V.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2899-rancho-padel-club-ltda/",
+    "regionName": "Brazil",
+    "postalCode": "98600-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2903,
+    "name": "Villa Sport Padel Club",
+    "cityRaw": "Passo Fundo",
+    "address": "ERS 332, n° 1050",
+    "phone": "+555498135-4892",
+    "website": "https://br.padelizados.net/pt-br/i/2903-villa-sport-padel-club/",
+    "latitude": -28.652573,
+    "longitude": -52.8629895,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2903-villa-sport-padel-club/",
+    "regionName": "Brazil",
+    "postalCode": "99490-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2900,
+    "name": "Padel Veranópolis",
+    "cityRaw": "Veranópolis",
+    "address": "R. Vinte e Quatro de Maio",
+    "phone": "+555499637-9778",
+    "website": "https://br.padelizados.net/pt-br/i/2900-padel-veranopolis/",
+    "latitude": -28.9361835,
+    "longitude": -51.5486993,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2900-Padel-Veranopolis-9aRWL.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2900-padel-veranopolis/",
+    "regionName": "Brazil",
+    "postalCode": "95330-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2904,
+    "name": "Padel São Chico",
+    "cityRaw": "São Francisco do Sul",
+    "address": "R. Felipe Musse, 600",
+    "phone": "+554799931-2301",
+    "website": "https://br.padelizados.net/pt-br/i/2904-padel-sao-chico/",
+    "latitude": -26.2234207,
+    "longitude": -48.5260849,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2904-padel-sao-chico/",
+    "regionName": "Brazil",
+    "postalCode": "89240-000",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2905,
+    "name": "PrimeVille Padel Club",
+    "cityRaw": "Chapecó",
+    "address": "R. Rosas, 12E",
+    "phone": "+554998887-9119",
+    "website": "https://br.padelizados.net/pt-br/i/2905-primeville-padel-club/",
+    "latitude": -27.1220188,
+    "longitude": -52.6160173,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2905-primeville-padel-club/",
+    "regionName": "Brazil",
+    "postalCode": "89814-550",
+    "countryCode": "BR"
+  },
+  {
+    "id": 2906,
+    "name": "World Padel Club",
+    "cityRaw": "Ajuricaba",
+    "address": "R. do Progresso, 300",
+    "phone": "+555599693-6295",
+    "website": "https://br.padelizados.net/pt-br/i/2906-world-padel-club/",
+    "latitude": -28.2410426,
+    "longitude": -53.756497,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2906-World-Padel-Club-Tzug2.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://br.padelizados.net/pt-br/i/2906-world-padel-club/",
+    "regionName": "Brazil",
+    "postalCode": "98750-000",
+    "countryCode": "BR"
+  }
+]

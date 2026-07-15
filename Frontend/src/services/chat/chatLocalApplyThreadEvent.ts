@@ -92,6 +92,7 @@ export type ThreadApplyEvent =
       contextType: ChatContextType;
       contextId: string;
       expectedServerMaxSeq?: number;
+      forcePull?: boolean;
     }
   | { kind: 'httpMessages'; messages: ChatMessage[] }
   | { kind: 'sendSuccess'; message: ChatMessage }
@@ -202,9 +203,12 @@ async function applyThreadEventUnqueued(event: ThreadApplyEvent): Promise<number
       const pullResult = await pullAndApplyChatSyncEventsDirect(
         event.contextType,
         event.contextId,
-        event.expectedServerMaxSeq != null
-          ? { expectedServerMaxSeq: event.expectedServerMaxSeq }
-          : undefined
+        {
+          ...(event.expectedServerMaxSeq != null
+            ? { expectedServerMaxSeq: event.expectedServerMaxSeq }
+            : {}),
+          ...(event.forcePull ? { forcePull: true } : {}),
+        }
       );
       await syncLastMessageIdsToStoreFromLocalHeadsForContext(event.contextType, event.contextId);
       if (

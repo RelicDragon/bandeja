@@ -5,6 +5,8 @@ import { broadcastChatPullHint } from './chatLocalCoop';
 
 const BATCH_HEAD_CACHE_MS = 30_000;
 
+export { BATCH_HEAD_CACHE_MS };
+
 export type ReconcileCursorOptions = {
   expectedServerMaxSeq?: number;
 };
@@ -23,9 +25,15 @@ export async function reconcileCursorWithServerHead(
       const threadRow = await chatLocalDb.chatThreads.get(key);
       const cachedMax = threadRow?.serverMaxSeq;
       const warmHeadAge = threadRow?.updatedAt != null ? Date.now() - threadRow.updatedAt : Infinity;
-      const canUseCachedGap =
-        cachedMax != null && warmHeadAge < BATCH_HEAD_CACHE_MS && local < cachedMax;
-      head = canUseCachedGap ? cachedMax : await chatApi.getChatSyncHead(contextType, contextId);
+      const cacheFresh = cachedMax != null && warmHeadAge < BATCH_HEAD_CACHE_MS;
+      if (cacheFresh && local < cachedMax) {
+        head = cachedMax;
+      } else if (cacheFresh && local >= cachedMax) {
+        // Recent batch-head already says we are caught up; skip per-thread /head.
+        return;
+      } else {
+        head = await chatApi.getChatSyncHead(contextType, contextId);
+      }
     }
     if (head > local) {
       if (import.meta.env.DEV) {

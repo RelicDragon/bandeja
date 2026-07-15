@@ -1,0 +1,3222 @@
+[
+  {
+    "id": 2990,
+    "name": "Austral Park Gym",
+    "cityRaw": "Coyhaique",
+    "address": "Ogana 1475",
+    "phone": "+56964733320",
+    "website": "https://cl.padelizados.net/es-cl/i/2990-austral-park-gym/",
+    "latitude": -45.5854229,
+    "longitude": -72.0761699,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2990-Austral-Park-Gym-anGcP.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2990-austral-park-gym/",
+    "regionName": "Chile",
+    "postalCode": "5950000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2988,
+    "name": "Complejo Royal Antofagasta",
+    "cityRaw": "Antofagasta",
+    "address": "Vladimir Saavedra 841",
+    "phone": "+56552425608",
+    "website": "https://cl.padelizados.net/es-cl/i/2988-complejo-royal-antofagasta/",
+    "latitude": -23.5724814,
+    "longitude": -70.383061,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2988-Complejo-Royal-Antofagasta-X2sIh.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2988-complejo-royal-antofagasta/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2987,
+    "name": "Mundo Joven Futbolito Y Padel",
+    "cityRaw": "Puente Alto",
+    "address": "Av. Gabriela 3915",
+    "phone": "+56955258731",
+    "website": "https://cl.padelizados.net/es-cl/i/2987-mundo-joven-futbolito-y-padel/",
+    "latitude": -33.5828828,
+    "longitude": -70.6070315,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2987-mundo-joven-futbolito-y-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2989,
+    "name": "Club Anachena",
+    "cityRaw": "Maipú",
+    "address": "Jorge Guerra Parcela 85. Santa Ana de Chena",
+    "phone": "+56942368571",
+    "website": "https://cl.padelizados.net/es-cl/i/2989-club-anachena/",
+    "latitude": -33.550695,
+    "longitude": -70.776489,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2989-Club-Anachena-OCIOG.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2989-club-anachena/",
+    "regionName": "Chile",
+    "postalCode": "9280330",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2993,
+    "name": "Old Grangonian Club",
+    "cityRaw": "Quilicura",
+    "address": "Av. El Valle 11300",
+    "phone": "+56999669511",
+    "website": "https://cl.padelizados.net/es-cl/i/2993-old-grangonian-club/",
+    "latitude": -33.303042,
+    "longitude": -70.6830307,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2993-old-grangonian-club/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2992,
+    "name": "All Play Centro Deportivo",
+    "cityRaw": "Quilpué",
+    "address": "V Centenario 1750",
+    "phone": "+56996449650",
+    "website": "https://cl.padelizados.net/es-cl/i/2992-all-play-centro-deportivo/",
+    "latitude": -33.0470516,
+    "longitude": -71.4230881,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2992-All-Play-Centro-Deportivo-4ux6Y.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2992-all-play-centro-deportivo/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2994,
+    "name": "Espacio Brooklyn",
+    "cityRaw": "Pudahuel",
+    "address": "Av. Camino Apacible 592",
+    "phone": "+56983632446",
+    "website": "https://cl.padelizados.net/es-cl/i/2994-espacio-brooklyn/",
+    "latitude": -33.4474241,
+    "longitude": -70.8438167,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2994-espacio-brooklyn/",
+    "regionName": "Chile",
+    "postalCode": "9061775",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2991,
+    "name": "Club La Chimba",
+    "cityRaw": "Copiapó",
+    "address": "Av. Cancha Rayada 799",
+    "phone": "+56964898955",
+    "website": "https://cl.padelizados.net/es-cl/i/2991-club-la-chimba/",
+    "latitude": -27.3472675,
+    "longitude": -70.3483464,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2991-Club-La-Chimba-XxJtJ.jpg",
+    "courtsNumber": 4,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2991-club-la-chimba/",
+    "regionName": "Chile",
+    "postalCode": "1532413",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2995,
+    "name": "Alto Padel",
+    "cityRaw": "Las Condes",
+    "address": "Las Condes",
+    "phone": "+56973630575",
+    "website": "https://cl.padelizados.net/es-cl/i/2995-alto-padel/",
+    "latitude": -33.3762922,
+    "longitude": -70.5206167,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2995-alto-padel/",
+    "regionName": "Chile",
+    "postalCode": "7590960",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2996,
+    "name": "LAS MARIAS PADEL",
+    "cityRaw": "Valdivia",
+    "address": "Av españa s/n, Aerodromo las Marias",
+    "phone": "+56949072308",
+    "website": "https://cl.padelizados.net/es-cl/i/2996-las-marias-padel/",
+    "latitude": -39.8001245,
+    "longitude": -73.2453963,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2996-LAS-MARIAS-PADEL-XclUl.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2996-las-marias-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2998,
+    "name": "Todo Padel Club",
+    "cityRaw": "San Pedro de la Paz",
+    "address": "Calle Ing. Ernesto Pinto Lagarrigue 480",
+    "phone": "+56948983690",
+    "website": "https://cl.padelizados.net/es-cl/i/2998-todo-padel-club/",
+    "latitude": -36.8481994,
+    "longitude": -73.0736158,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2998-Todo-Padel-Club-4mjGB.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2998-todo-padel-club/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2997,
+    "name": "BioBio Padel Club",
+    "cityRaw": "Penco",
+    "address": "Ruta 150 320",
+    "phone": "+56934685695",
+    "website": "https://cl.padelizados.net/es-cl/i/2997-biobio-padel-club/",
+    "latitude": -36.774798,
+    "longitude": -73.0157452,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2997-BioBio-Padel-Club-5RkC2.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2997-biobio-padel-club/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 2999,
+    "name": "Padel Point",
+    "cityRaw": "Peñalolén",
+    "address": "El Acueducto 2998",
+    "phone": null,
+    "website": "https://cl.padelizados.net/es-cl/i/2999-padel-point/",
+    "latitude": -33.4906196,
+    "longitude": -70.5424804,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/2999-Padel-Point-6jeWe.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/2999-padel-point/",
+    "regionName": "Chile",
+    "postalCode": "7940939",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3000,
+    "name": "Match Point Padel",
+    "cityRaw": "Puente Alto",
+    "address": "Av. Camilo Henríquez 1904",
+    "phone": "+56988408585",
+    "website": "https://cl.padelizados.net/es-cl/i/3000-match-point-padel/",
+    "latitude": -33.58263,
+    "longitude": -70.5488127,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3000-match-point-padel/",
+    "regionName": "Chile",
+    "postalCode": "8207847",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3001,
+    "name": "Padel Country",
+    "cityRaw": "Concepción",
+    "address": "Los Copihues 235",
+    "phone": "+56921968211",
+    "website": "https://cl.padelizados.net/es-cl/i/3001-padel-country/",
+    "latitude": -36.8528862,
+    "longitude": -73.0462264,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3001-Padel-Country-smxzZ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3001-padel-country/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3002,
+    "name": "Green Padel Santiago",
+    "cityRaw": "Santiago",
+    "address": "Av. Pedro Montt 1468",
+    "phone": "+56987902245",
+    "website": "https://cl.padelizados.net/es-cl/i/3002-green-padel-santiago/",
+    "latitude": -33.4730637,
+    "longitude": -70.6537273,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3002-Green-Padel-Santiago-x9r8V.jpg",
+    "courtsNumber": 5,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3002-green-padel-santiago/",
+    "regionName": "Chile",
+    "postalCode": "8361277",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3003,
+    "name": "Club de Pádel La Florida",
+    "cityRaw": "La Florida",
+    "address": "Av. San José de la Estrella 816",
+    "phone": "+56961331442",
+    "website": "https://cl.padelizados.net/es-cl/i/3003-club-de-padel-la-florida/",
+    "latitude": -33.5523414,
+    "longitude": -70.5769577,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3003-Club-de-Padel-La-Florida-yXGbg.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3003-club-de-padel-la-florida/",
+    "regionName": "Chile",
+    "postalCode": "8150215",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3004,
+    "name": "ESPACIO ACTIVE",
+    "cityRaw": "San Miguel",
+    "address": "Carlos Silva Vildósola 790",
+    "phone": "+56922423675",
+    "website": "https://cl.padelizados.net/es-cl/i/3004-espacio-active/",
+    "latitude": -33.4778274,
+    "longitude": -70.6432924,
+    "avatarUrl": null,
+    "courtsNumber": 3,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3004-espacio-active/",
+    "regionName": "Chile",
+    "postalCode": "8900014",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3005,
+    "name": "Padel Estoril",
+    "cityRaw": "Vitacura",
+    "address": "Av. Las Condes 10480",
+    "phone": "+56988237776",
+    "website": "https://cl.padelizados.net/es-cl/i/3005-padel-estoril/",
+    "latitude": -33.3824954,
+    "longitude": -70.5330727,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3005-Padel-Estoril-FikDo.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3005-padel-estoril/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3006,
+    "name": "Chicureo Padel",
+    "cityRaw": "Colina",
+    "address": "Alba 3 Ote. 4",
+    "phone": "+56953272777",
+    "website": "https://cl.padelizados.net/es-cl/i/3006-chicureo-padel/",
+    "latitude": -33.28759,
+    "longitude": -70.6685156,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3006-Chicureo-Padel-NeBXL.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3006-chicureo-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3008,
+    "name": "Terra Club",
+    "cityRaw": "Talca",
+    "address": "Cerro La Virgen - K-60 S/N",
+    "phone": "+56998240109",
+    "website": "https://cl.padelizados.net/es-cl/i/3008-terra-club/",
+    "latitude": -35.4207965,
+    "longitude": -71.6978827,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3008-terra-club/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3007,
+    "name": "Club de Pádel y Tenis Los Domos de Batuco",
+    "cityRaw": "Colina",
+    "address": "Sta. Sara Siete, parcela 8",
+    "phone": "+56949215948",
+    "website": "https://cl.padelizados.net/es-cl/i/3007-club-de-padel-y-tenis-los-domos-de-batuco/",
+    "latitude": -33.2387414,
+    "longitude": -70.7701861,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3007-Club-de-Padel-y-Tenis-Los-Domos-de-Batuco-r0LAk.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3007-club-de-padel-y-tenis-los-domos-de-batuco/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3009,
+    "name": "PadelBreak",
+    "cityRaw": "Las Condes",
+    "address": "Monseñor Álvaro del Portillo 12455",
+    "phone": "+56934877168",
+    "website": "https://cl.padelizados.net/es-cl/i/3009-padelbreak/",
+    "latitude": -33.4053854,
+    "longitude": -70.5052882,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3009-PadelBreak-Rk6At.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3009-padelbreak/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3010,
+    "name": "Hyundai Padel Center",
+    "cityRaw": "Colina",
+    "address": "Av. Chicureo km 3",
+    "phone": "+56985101314",
+    "website": "https://cl.padelizados.net/es-cl/i/3010-hyundai-padel-center/",
+    "latitude": -33.286736,
+    "longitude": -70.669904,
+    "avatarUrl": null,
+    "courtsNumber": 14,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3010-hyundai-padel-center/",
+    "regionName": "Chile",
+    "postalCode": "7630000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3012,
+    "name": "Padel City Chicureo",
+    "cityRaw": "Quilicura",
+    "address": "Condominio Casas del Alba uno, Lote 13, Alba 3 Oriente, Chicureo Colina",
+    "phone": "+56965518263",
+    "website": "https://cl.padelizados.net/es-cl/i/3012-padel-city-chicureo/",
+    "latitude": -33.2917438,
+    "longitude": -70.6691614,
+    "avatarUrl": null,
+    "courtsNumber": 6,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3012-padel-city-chicureo/",
+    "regionName": "Chile",
+    "postalCode": "9340000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3011,
+    "name": "Club Palo Alto Los Ángeles",
+    "cityRaw": "Los Ángeles",
+    "address": "Sta Clara, Km 2.2",
+    "phone": "+56963080233",
+    "website": "https://cl.padelizados.net/es-cl/i/3011-club-palo-alto-los-angeles/",
+    "latitude": -37.4231678,
+    "longitude": -72.3181673,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3011-Club-Palo-Alto-Los-angeles-DelOH.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3011-club-palo-alto-los-angeles/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3013,
+    "name": "R4 Club Padel",
+    "cityRaw": "Villa Alemana",
+    "address": "Manuel Montt 75c",
+    "phone": "+56974407141",
+    "website": "https://cl.padelizados.net/es-cl/i/3013-r4-club-padel/",
+    "latitude": -33.0513247,
+    "longitude": -71.3420522,
+    "avatarUrl": null,
+    "courtsNumber": 4,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3013-r4-club-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3014,
+    "name": "Canchapoal Club De Padel",
+    "cityRaw": "Rancagua",
+    "address": "Cachapoal 1361",
+    "phone": "+56967263542",
+    "website": "https://cl.padelizados.net/es-cl/i/3014-canchapoal-club-de-padel/",
+    "latitude": -34.1889072,
+    "longitude": -70.7518566,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3014-Canchapoal-Club-De-Padel-Fc38C.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3014-canchapoal-club-de-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3015,
+    "name": "PadelMilagro",
+    "cityRaw": "La Serena",
+    "address": "Cam. El Milagro 524",
+    "phone": "+56998870325",
+    "website": "https://cl.padelizados.net/es-cl/i/3015-padelmilagro/",
+    "latitude": -29.9506652,
+    "longitude": -71.2392301,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3015-PadelMilagro-EFpmC.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3015-padelmilagro/",
+    "regionName": "Chile",
+    "postalCode": "1700000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3017,
+    "name": "Élite Padel Club",
+    "cityRaw": "San Bernardo",
+    "address": "El Barrancón 4455",
+    "phone": "+56966951759",
+    "website": "https://cl.padelizados.net/es-cl/i/3017-elite-padel-club/",
+    "latitude": -33.6317147,
+    "longitude": -70.7290553,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3017-elite-padel-club/",
+    "regionName": "Chile",
+    "postalCode": "8050000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3018,
+    "name": "Quebrada Padel Club",
+    "cityRaw": "Peñalolén",
+    "address": "Av. Quebrada de Macul 7339",
+    "phone": "+56957897017",
+    "website": "https://cl.padelizados.net/es-cl/i/3018-quebrada-padel-club/",
+    "latitude": -33.5073058,
+    "longitude": -70.5570306,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3018-Quebrada-Padel-Club-57Rim.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3018-quebrada-padel-club/",
+    "regionName": "Chile",
+    "postalCode": "7910000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3016,
+    "name": "Club K-FIT",
+    "cityRaw": "Santiago",
+    "address": "Sta. Elena 2035",
+    "phone": "+56972177277",
+    "website": "https://cl.padelizados.net/es-cl/i/3016-club-k-fit/",
+    "latitude": -33.4703456,
+    "longitude": -70.6275697,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3016-Club-K-FIT-Hd4HV.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3016-club-k-fit/",
+    "regionName": "Chile",
+    "postalCode": "8361022",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3021,
+    "name": "Borderío Padel",
+    "cityRaw": "Villarrica",
+    "address": "Monseñor Francisco Valdes Subercaseaux 40",
+    "phone": "+56981637001",
+    "website": "https://cl.padelizados.net/es-cl/i/3021-borderio-padel/",
+    "latitude": -39.2737402,
+    "longitude": -72.2310016,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3021-borderio-padel/",
+    "regionName": "Chile",
+    "postalCode": "4930000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3019,
+    "name": "Costanera Padel Club",
+    "cityRaw": "Limache",
+    "address": "5 de Abril 17",
+    "phone": "+56989034899",
+    "website": "https://cl.padelizados.net/es-cl/i/3019-costanera-padel-club/",
+    "latitude": -32.9982184,
+    "longitude": -71.2665755,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3019-Costanera-Padel-Club-oEyfQ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3019-costanera-padel-club/",
+    "regionName": "Chile",
+    "postalCode": "2240000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3022,
+    "name": "Tuniche Padel",
+    "cityRaw": "Rancagua",
+    "address": "Cam. A Tuniche 2433",
+    "phone": "+56998677516",
+    "website": "https://cl.padelizados.net/es-cl/i/3022-tuniche-padel/",
+    "latitude": -34.1306531,
+    "longitude": -70.7507834,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3022-Tuniche-Padel-n4ltU.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3022-tuniche-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3020,
+    "name": "Club de Tenis Santuario del Valle",
+    "cityRaw": "Lo Barnechea",
+    "address": "Blvd. Jardín de Los Pájaros Nte. 4666",
+    "phone": "+56229430390",
+    "website": "https://cl.padelizados.net/es-cl/i/3020-club-de-tenis-santuario-del-valle/",
+    "latitude": -33.3253779,
+    "longitude": -70.5441179,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3020-Club-de-Tenis-Santuario-del-Valle-07RjN.jpg",
+    "courtsNumber": 6,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3020-club-de-tenis-santuario-del-valle/",
+    "regionName": "Chile",
+    "postalCode": "7690000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3023,
+    "name": "Padel Del Lago",
+    "cityRaw": "Villarrica",
+    "address": "ruta 199ch km11 Villarrica",
+    "phone": "+56940054066",
+    "website": "https://cl.padelizados.net/es-cl/i/3023-padel-del-lago/",
+    "latitude": -39.2997509,
+    "longitude": -72.1163941,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3023-Padel-Del-Lago-9Yxjr.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3023-padel-del-lago/",
+    "regionName": "Chile",
+    "postalCode": "4930000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3024,
+    "name": "GIMNASIO PHYSICAL PADDLE & GYM",
+    "cityRaw": "Valdivia",
+    "address": "Sotomayor 1175",
+    "phone": "+56995279477",
+    "website": "https://cl.padelizados.net/es-cl/i/3024-gimnasio-physical-paddle-gym/",
+    "latitude": -39.8223169,
+    "longitude": -73.2468264,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3024-GIMNASIO-PHYSICAL-PADDLE-GYM-rub2l.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3024-gimnasio-physical-paddle-gym/",
+    "regionName": "Chile",
+    "postalCode": "5110813",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3026,
+    "name": "King Padel",
+    "cityRaw": "Quillota",
+    "address": "O'Higgins 1725",
+    "phone": "+56999669722",
+    "website": "https://cl.padelizados.net/es-cl/i/3026-king-padel/",
+    "latitude": -32.898571,
+    "longitude": -71.2503887,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3026-King-Padel-PuwUH.jpg",
+    "courtsNumber": 4,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3026-king-padel/",
+    "regionName": "Chile",
+    "postalCode": "2260000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3025,
+    "name": "Padel Encina",
+    "cityRaw": "La Reina",
+    "address": "Valenzuela Puelma 8631",
+    "phone": "+56979890613",
+    "website": "https://cl.padelizados.net/es-cl/i/3025-padel-encina/",
+    "latitude": -33.4338299,
+    "longitude": -70.5401073,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3025-padel-encina/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3027,
+    "name": "Padel Home Limache",
+    "cityRaw": "Limache",
+    "address": "El Pangal Lote 20 Limache",
+    "phone": "+56935740433",
+    "website": "https://cl.padelizados.net/es-cl/i/3027-padel-home-limache/",
+    "latitude": -33.0286903,
+    "longitude": -71.2787475,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3027-Padel-Home-Limache-wtxTZ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3027-padel-home-limache/",
+    "regionName": "Chile",
+    "postalCode": "2240000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3028,
+    "name": "Mistica Padel",
+    "cityRaw": "Copiapó",
+    "address": "Cancha Rayada 10 / Sector",
+    "phone": "+56956501401",
+    "website": "https://cl.padelizados.net/es-cl/i/3028-mistica-padel/",
+    "latitude": -27.3524025,
+    "longitude": -70.3555834,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3028-Mistica-Padel-OHB3K.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3028-mistica-padel/",
+    "regionName": "Chile",
+    "postalCode": "1530000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3029,
+    "name": "Parque Padel Pucón",
+    "cityRaw": "Pucón",
+    "address": "Los Calabozos Pucón",
+    "phone": "+56982801463",
+    "website": "https://cl.padelizados.net/es-cl/i/3029-parque-padel-pucon/",
+    "latitude": -39.299221,
+    "longitude": -71.940773,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3029-Parque-Padel-Pucon-6co2Y.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3029-parque-padel-pucon/",
+    "regionName": "Chile",
+    "postalCode": "4920000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3030,
+    "name": "Black Padel Center",
+    "cityRaw": "Pucón",
+    "address": "Camino Villarrica a Pucon KM 10.4 - Interior 4.1 km Villarrica",
+    "phone": "+56978098751",
+    "website": "https://cl.padelizados.net/es-cl/i/3030-black-padel-center/",
+    "latitude": -39.3326043,
+    "longitude": -72.0942994,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3030-Black-Padel-Center-kSIVN.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3030-black-padel-center/",
+    "regionName": "Chile",
+    "postalCode": "4930000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3032,
+    "name": "CLUB INDOOR",
+    "cityRaw": "Punta Arenas",
+    "address": "Pasaje Los Acacios 2020",
+    "phone": "+56971554987",
+    "website": "https://cl.padelizados.net/es-cl/i/3032-club-indoor/",
+    "latitude": -53.1279694,
+    "longitude": -70.8922976,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3032-CLUB-INDOOR-0mq71.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3032-club-indoor/",
+    "regionName": "Chile",
+    "postalCode": "6200000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3031,
+    "name": "Costanera 365",
+    "cityRaw": "Hualpén",
+    "address": "Av. Costanera 520",
+    "phone": "+56966161294",
+    "website": "https://cl.padelizados.net/es-cl/i/3031-costanera-365/",
+    "latitude": -36.8064222,
+    "longitude": -73.0981332,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3031-Costanera-365-iv8Fi.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3031-costanera-365/",
+    "regionName": "Chile",
+    "postalCode": "4600000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3033,
+    "name": "Match Padel",
+    "cityRaw": "Los Ángeles",
+    "address": "Camino a Santa Clara, km 0.5",
+    "phone": "+56950920319",
+    "website": "https://cl.padelizados.net/es-cl/i/3033-match-padel/",
+    "latitude": -37.4339884,
+    "longitude": -72.3285438,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3033-Match-Padel-WFgBR.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3033-match-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3034,
+    "name": "Play Padel Club Curicó",
+    "cityRaw": "Curicó",
+    "address": "Av. Colón",
+    "phone": "+56999160870",
+    "website": "https://cl.padelizados.net/es-cl/i/3034-play-padel-club-curico/",
+    "latitude": -34.9759579,
+    "longitude": -71.2598581,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3034-Play-Padel-Club-Curico-5joV2.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3034-play-padel-club-curico/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3035,
+    "name": "Estación Padel",
+    "cityRaw": "Estación Central",
+    "address": "Cjón. Ugarte 1450",
+    "phone": "+56978544861",
+    "website": "https://cl.padelizados.net/es-cl/i/3035-estacion-padel/",
+    "latitude": -33.4627896,
+    "longitude": -70.694332,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3035-estacion-padel/",
+    "regionName": "Chile",
+    "postalCode": "9160000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3036,
+    "name": "Fontova padel",
+    "cityRaw": "Huechuraba",
+    "address": "Av. Pedro Fontova 6441",
+    "phone": null,
+    "website": "https://cl.padelizados.net/es-cl/i/3036-fontova-padel/",
+    "latitude": -33.3630523,
+    "longitude": -70.6703063,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3036-fontova-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3040,
+    "name": "Alameda Padel Club",
+    "cityRaw": "Copiapó",
+    "address": "Los Carrera 131",
+    "phone": "+56953049421",
+    "website": "https://cl.padelizados.net/es-cl/i/3040-alameda-padel-club/",
+    "latitude": -27.3616273,
+    "longitude": -70.3381368,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3040-Alameda-Padel-Club-7w3hj.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3040-alameda-padel-club/",
+    "regionName": "Chile",
+    "postalCode": "1532023",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3037,
+    "name": "Polo Padel",
+    "cityRaw": "Colina",
+    "address": "Av. El Valle 542",
+    "phone": "+56975706662",
+    "website": "https://cl.padelizados.net/es-cl/i/3037-polo-padel/",
+    "latitude": -33.2790826,
+    "longitude": -70.655543,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3037-Polo-Padel-qi7YZ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3037-polo-padel/",
+    "regionName": "Chile",
+    "postalCode": "9340000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3038,
+    "name": "BOOM PADEL",
+    "cityRaw": "Lo Barnechea",
+    "address": "San Lucas 230",
+    "phone": "+56940929926",
+    "website": "https://cl.padelizados.net/es-cl/i/3038-boom-padel/",
+    "latitude": -33.3628376,
+    "longitude": -70.5120838,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3038-BOOM-PADEL-ETs0m.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3038-boom-padel/",
+    "regionName": "Chile",
+    "postalCode": "7690493",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3039,
+    "name": "Club Valle Alto Padel",
+    "cityRaw": "Huechuraba",
+    "address": "Av. del Valle Nte. 760",
+    "phone": "+56974793003",
+    "website": "https://cl.padelizados.net/es-cl/i/3039-club-valle-alto-padel/",
+    "latitude": -33.3906508,
+    "longitude": -70.6134776,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3039-club-valle-alto-padel/",
+    "regionName": "Chile",
+    "postalCode": "8580702",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3041,
+    "name": "Llacolen Club",
+    "cityRaw": "Antofagasta",
+    "address": "Av. Jaime Guzmán Errázuriz 4050",
+    "phone": null,
+    "website": "https://cl.padelizados.net/es-cl/i/3041-llacolen-club/",
+    "latitude": -23.7163603,
+    "longitude": -70.4334978,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3041-Llacolen-Club-1DWAs.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3041-llacolen-club/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3042,
+    "name": "Padel Consistorial",
+    "cityRaw": "Peñalolén",
+    "address": "Av. Consistorial 2105",
+    "phone": "+56931057873",
+    "website": "https://cl.padelizados.net/es-cl/i/3042-padel-consistorial/",
+    "latitude": -33.4784179,
+    "longitude": -70.5448299,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3042-Padel-Consistorial-x00h6.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3042-padel-consistorial/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3043,
+    "name": "Go Padel Curico",
+    "cityRaw": "Curicó",
+    "address": "Avenida Manuel Labra Lillo 385 esquina con Villa Labranza de Alquería Curicó",
+    "phone": "+56987300458",
+    "website": "https://cl.padelizados.net/es-cl/i/3043-go-padel-curico/",
+    "latitude": -34.986308,
+    "longitude": -71.2132138,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3043-go-padel-curico/",
+    "regionName": "Chile",
+    "postalCode": "3340000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3044,
+    "name": "Linares Pádel",
+    "cityRaw": "Linares",
+    "address": "Januario Espinoza 1610, Interior",
+    "phone": "+56983192397",
+    "website": "https://cl.padelizados.net/es-cl/i/3044-linares-padel/",
+    "latitude": -35.8350095,
+    "longitude": -71.5817963,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3044-Linares-Padel-CgCeh.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3044-linares-padel/",
+    "regionName": "Chile",
+    "postalCode": "3581499",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3045,
+    "name": "Palmilla Padel",
+    "cityRaw": "La Cruz",
+    "address": "La palmilla 2005",
+    "phone": "+56951781900",
+    "website": "https://cl.padelizados.net/es-cl/i/3045-palmilla-padel/",
+    "latitude": -32.8082527,
+    "longitude": -71.2113438,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3045-Palmilla-Padel-LDSie.jpg",
+    "courtsNumber": 4,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3045-palmilla-padel/",
+    "regionName": "Chile",
+    "postalCode": "2260000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3046,
+    "name": "Arica Padel",
+    "cityRaw": "Arica",
+    "address": "Orégano 43",
+    "phone": null,
+    "website": "https://cl.padelizados.net/es-cl/i/3046-arica-padel/",
+    "latitude": -18.5136615,
+    "longitude": -70.2689528,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3046-Arica-Padel-09DOY.jpg",
+    "courtsNumber": 2,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3046-arica-padel/",
+    "regionName": "Chile",
+    "postalCode": "1000000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3047,
+    "name": "SUPRA Padel",
+    "cityRaw": "Temuco",
+    "address": "Esquina - Valle de Robles, Av. San Martín 961",
+    "phone": "+56965973737",
+    "website": "https://cl.padelizados.net/es-cl/i/3047-supra-padel/",
+    "latitude": -38.732428,
+    "longitude": -72.640147,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3047-supra-padel/",
+    "regionName": "Chile",
+    "postalCode": "4780000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3048,
+    "name": "Club de Padel Chicureo",
+    "cityRaw": "Colina",
+    "address": "Av. Chicureo 2500",
+    "phone": "+56983248738",
+    "website": "https://cl.padelizados.net/es-cl/i/3048-club-de-padel-chicureo/",
+    "latitude": -33.2847851,
+    "longitude": -70.6754242,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3048-Club-de-Padel-Chicureo-BThy9.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3048-club-de-padel-chicureo/",
+    "regionName": "Chile",
+    "postalCode": "9340000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3049,
+    "name": "Nativo Padel Club",
+    "cityRaw": "Olmué",
+    "address": "Ruta F10G",
+    "phone": "+56949760473",
+    "website": "https://cl.padelizados.net/es-cl/i/3049-nativo-padel-club/",
+    "latitude": -33.0213341,
+    "longitude": -71.1678461,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3049-nativo-padel-club/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3050,
+    "name": "Arena La Cruz Club de Pádel",
+    "cityRaw": "La Cruz",
+    "address": "Independencia 66",
+    "phone": "+56937131749",
+    "website": "https://cl.padelizados.net/es-cl/i/3050-arena-la-cruz-club-de-padel/",
+    "latitude": -32.8232463,
+    "longitude": -71.2330012,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3050-Arena-La-Cruz-Club-de-Padel-bjI12.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3050-arena-la-cruz-club-de-padel/",
+    "regionName": "Chile",
+    "postalCode": "2280000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3051,
+    "name": "Padel Rosario",
+    "cityRaw": "Coquimbo",
+    "address": "El Rosario 3954",
+    "phone": "+56990633794",
+    "website": "https://cl.padelizados.net/es-cl/i/3051-padel-rosario/",
+    "latitude": -29.9679183,
+    "longitude": -71.2979498,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3051-Padel-Rosario-poyGR.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3051-padel-rosario/",
+    "regionName": "Chile",
+    "postalCode": "1780000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3052,
+    "name": "Club de Padel Punto de Oro",
+    "cityRaw": "Los Ángeles",
+    "address": "Av. Las Industrias 13850",
+    "phone": "+56974030221",
+    "website": "https://cl.padelizados.net/es-cl/i/3052-club-de-padel-punto-de-oro/",
+    "latitude": -37.5090942,
+    "longitude": -72.3260574,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3052-Club-de-Padel-Punto-de-Oro-jxQlb.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3052-club-de-padel-punto-de-oro/",
+    "regionName": "Chile",
+    "postalCode": "4440000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3053,
+    "name": "Garden Padel",
+    "cityRaw": "San Bernardo",
+    "address": "Los Cóndores 1326",
+    "phone": "+56949450071",
+    "website": "https://cl.padelizados.net/es-cl/i/3053-garden-padel/",
+    "latitude": -33.6348266,
+    "longitude": -70.6761169,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3053-Garden-Padel-MPz5q.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3053-garden-padel/",
+    "regionName": "Chile",
+    "postalCode": "8082054",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3054,
+    "name": "Padel Center Antofagasta",
+    "cityRaw": "Antofagasta",
+    "address": "Oficina Francisco Puelma 216",
+    "phone": "+56987981398",
+    "website": "https://cl.padelizados.net/es-cl/i/3054-padel-center-antofagasta/",
+    "latitude": -23.551624,
+    "longitude": -70.3946639,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3054-Padel-Center-Antofagasta-xmnY0.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3054-padel-center-antofagasta/",
+    "regionName": "Chile",
+    "postalCode": "1265550",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3055,
+    "name": "Padel Condoroma",
+    "cityRaw": "Los Andes",
+    "address": "Los Villares 3602",
+    "phone": "+56993684740",
+    "website": "https://cl.padelizados.net/es-cl/i/3055-padel-condoroma/",
+    "latitude": -32.8327337,
+    "longitude": -70.6378493,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3055-Padel-Condoroma-1jFnf.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3055-padel-condoroma/",
+    "regionName": "Chile",
+    "postalCode": "2100000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3056,
+    "name": "Siete Padel",
+    "cityRaw": "Talcahuano",
+    "address": "C. B 5931",
+    "phone": "+56995711694",
+    "website": "https://cl.padelizados.net/es-cl/i/3056-siete-padel/",
+    "latitude": -36.7704658,
+    "longitude": -73.065628,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3056-Siete-Padel-zOe0p.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3056-siete-padel/",
+    "regionName": "Chile",
+    "postalCode": "4301033",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3057,
+    "name": "Punto de Quiebre, Club de Padel Quebradilla",
+    "cityRaw": "La Ligua",
+    "address": "Puente Quebradilla, sitio 7",
+    "phone": "+56962186121",
+    "website": "https://cl.padelizados.net/es-cl/i/3057-punto-de-quiebre-club-de-padel-quebradilla/",
+    "latitude": -32.4908853,
+    "longitude": -71.2599559,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3057-punto-de-quiebre-club-de-padel-quebradilla/",
+    "regionName": "Chile",
+    "postalCode": "2030000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3058,
+    "name": "OPTIMUSPADEL",
+    "cityRaw": "Isla de Maipo",
+    "address": "Jaime Guzmán 2900",
+    "phone": "+56937396462",
+    "website": "https://cl.padelizados.net/es-cl/i/3058-optimuspadel/",
+    "latitude": -33.7324036,
+    "longitude": -70.9167543,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3058-OPTIMUSPADEL-lVG0h.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3058-optimuspadel/",
+    "regionName": "Chile",
+    "postalCode": "9790000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3059,
+    "name": "Ecopadel La Florida",
+    "cityRaw": "La Florida",
+    "address": "Alonso de Ercilla 8136",
+    "phone": null,
+    "website": "https://cl.padelizados.net/es-cl/i/3059-ecopadel-la-florida/",
+    "latitude": -33.5277186,
+    "longitude": -70.5848019,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3059-ecopadel-la-florida/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3061,
+    "name": "Quivolgo Padel",
+    "cityRaw": "Constitución",
+    "address": "35.32493928806584, -72.38657075909947, MJG6+4C",
+    "phone": "+56962867053",
+    "website": "https://cl.padelizados.net/es-cl/i/3061-quivolgo-padel/",
+    "latitude": -35.3250205,
+    "longitude": -72.3863049,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3061-Quivolgo-Padel-1Fn61.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3061-quivolgo-padel/",
+    "regionName": "Chile",
+    "postalCode": "3560000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3060,
+    "name": "Club Raquetazo Buin",
+    "cityRaw": "Buin",
+    "address": "Ubicado al costado del Colegio Campanario - Camino Linderos/Alto Jahuel, s/n Parcela 20",
+    "phone": "+56965789922",
+    "website": "https://cl.padelizados.net/es-cl/i/3060-club-raquetazo-buin/",
+    "latitude": -33.7383685,
+    "longitude": -70.6927451,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3060-club-raquetazo-buin/",
+    "regionName": "Chile",
+    "postalCode": "9500000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3062,
+    "name": "Club de padel Maipú",
+    "cityRaw": "Maipú",
+    "address": "Jorge Andrés Guerra 89",
+    "phone": "+56975291727",
+    "website": "https://cl.padelizados.net/es-cl/i/3062-club-de-padel-maipu/",
+    "latitude": -33.5544647,
+    "longitude": -70.7771617,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3062-Club-de-padel-Maipu-qaKQw.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3062-club-de-padel-maipu/",
+    "regionName": "Chile",
+    "postalCode": "9280456",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3065,
+    "name": "Activa Rengo SportCafé",
+    "cityRaw": "Rengo",
+    "address": "Calle San José, Calle San José Villa de Las Hojas 315",
+    "phone": "+56979599160",
+    "website": "https://cl.padelizados.net/es-cl/i/3065-activa-rengo-sportcafe/",
+    "latitude": -34.3939814,
+    "longitude": -70.8720425,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3065-Activa-Rengo-SportCafe-ICXIw.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3065-activa-rengo-sportcafe/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3064,
+    "name": "NativoClub",
+    "cityRaw": "Frutillar",
+    "address": "Ruta 5 Sur, km. 986, Frutillar Caletera Frutillar - Los Pellines",
+    "phone": "+56931977556",
+    "website": "https://cl.padelizados.net/es-cl/i/3064-nativoclub/",
+    "latitude": -41.1697574,
+    "longitude": -73.0707434,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3064-NativoClub-to6bl.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3064-nativoclub/",
+    "regionName": "Chile",
+    "postalCode": "5620000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3063,
+    "name": "Padel SB",
+    "cityRaw": "San Bernardo",
+    "address": "Av. Portales 4226",
+    "phone": "+56921911410",
+    "website": "https://cl.padelizados.net/es-cl/i/3063-padel-sb/",
+    "latitude": -33.6366836,
+    "longitude": -70.7075029,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3063-Padel-SB-2FZXb.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3063-padel-sb/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3066,
+    "name": "Santiago Padel",
+    "cityRaw": "Santiago",
+    "address": "Centenario 2717",
+    "phone": "+56982429820",
+    "website": "https://cl.padelizados.net/es-cl/i/3066-santiago-padel/",
+    "latitude": -33.4757373,
+    "longitude": -70.6705766,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3066-santiago-padel/",
+    "regionName": "Chile",
+    "postalCode": "8320000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3067,
+    "name": "Club de Padel Cauquenes",
+    "cityRaw": "Cauquenes",
+    "address": "Montt 665",
+    "phone": "+56932021128",
+    "website": "https://cl.padelizados.net/es-cl/i/3067-club-de-padel-cauquenes/",
+    "latitude": -35.9644508,
+    "longitude": -72.3253326,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3067-club-de-padel-cauquenes/",
+    "regionName": "Chile",
+    "postalCode": "3690336",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3069,
+    "name": "Padel40cero",
+    "cityRaw": "Talca",
+    "address": "K-511 - Las Rastras, 45 oriente 3467",
+    "phone": null,
+    "website": "https://cl.padelizados.net/es-cl/i/3069-padel40cero/",
+    "latitude": -35.4209883,
+    "longitude": -71.5987143,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3069-Padel40cero-LFTlO.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3069-padel40cero/",
+    "regionName": "Chile",
+    "postalCode": "3481147",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3068,
+    "name": "Sporting Padel Maipú",
+    "cityRaw": "Maipú",
+    "address": "Av. Alberto Llona 730, Maipú",
+    "phone": "+56963212719",
+    "website": "https://cl.padelizados.net/es-cl/i/3068-sporting-padel-maipu/",
+    "latitude": -33.5207818,
+    "longitude": -70.7559331,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3068-sporting-padel-maipu/",
+    "regionName": "Chile",
+    "postalCode": "9252745",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3071,
+    "name": "nomade padel store",
+    "cityRaw": "Hualpén",
+    "address": "Av. Pdte. Jorge Alessandri Rodriguez 5500",
+    "phone": "+56927641321",
+    "website": "https://cl.padelizados.net/es-cl/i/3071-nomade-padel-store/",
+    "latitude": -36.7756525,
+    "longitude": -73.0562774,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3071-nomade-padel-store-o7PUd.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3071-nomade-padel-store/",
+    "regionName": "Chile",
+    "postalCode": "4300818",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3072,
+    "name": "Casona Padel",
+    "cityRaw": "Temuco",
+    "address": "Av. San Martín 0751",
+    "phone": "+56999611939",
+    "website": "https://cl.padelizados.net/es-cl/i/3072-casona-padel/",
+    "latitude": -38.7389985,
+    "longitude": -72.6129105,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3072-Casona-Padel-oTXPi.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3072-casona-padel/",
+    "regionName": "Chile",
+    "postalCode": "4780000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3074,
+    "name": "Oasis Padel, La Florida",
+    "cityRaw": "La Florida",
+    "address": "C. Dr. Sotero del Rio 77",
+    "phone": "+56923719629",
+    "website": "https://cl.padelizados.net/es-cl/i/3074-oasis-padel-la-florida/",
+    "latitude": -33.5390126,
+    "longitude": -70.5924119,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3074-Oasis-Padel-La-Florida-GbNTq.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3074-oasis-padel-la-florida/",
+    "regionName": "Chile",
+    "postalCode": "8240000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3070,
+    "name": "Padel Antofagasta",
+    "cityRaw": "Antofagasta",
+    "address": "Sta. Rita 2479",
+    "phone": "+56996793061",
+    "website": "https://cl.padelizados.net/es-cl/i/3070-padel-antofagasta/",
+    "latitude": -23.6978217,
+    "longitude": -70.4131402,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3070-Padel-Antofagasta-9WUF2.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3070-padel-antofagasta/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3076,
+    "name": "La Campana padel & futbolito",
+    "cityRaw": "Constitución",
+    "address": "Sector La Poza - Echeverría 5",
+    "phone": "+56931355011",
+    "website": "https://cl.padelizados.net/es-cl/i/3076-la-campana-padel-futbolito/",
+    "latitude": -35.3226281,
+    "longitude": -72.4100991,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3076-La-Campana-padel-futbolito-5BpJG.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3076-la-campana-padel-futbolito/",
+    "regionName": "Chile",
+    "postalCode": "3560193",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3078,
+    "name": "Club de campo Estancilla",
+    "cityRaw": "Codegua",
+    "address": "Estancilla 1207",
+    "phone": "+56995011846",
+    "website": "https://cl.padelizados.net/es-cl/i/3078-club-de-campo-estancilla/",
+    "latitude": -34.0369784,
+    "longitude": -70.6516081,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3078-club-de-campo-estancilla/",
+    "regionName": "Chile",
+    "postalCode": "2900000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3077,
+    "name": "Hyundai Padel Los Trapenses",
+    "cityRaw": "Lo Barnechea",
+    "address": "Av. José Alcalde Délano 10557",
+    "phone": "+56973886214",
+    "website": "https://cl.padelizados.net/es-cl/i/3077-hyundai-padel-los-trapenses/",
+    "latitude": -33.35624,
+    "longitude": -70.5385,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3077-hyundai-padel-los-trapenses/",
+    "regionName": "Chile",
+    "postalCode": "7690324",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3075,
+    "name": "Curauma Padel Park",
+    "cityRaw": "Valparaíso",
+    "address": "Av. Cardenal Samoré 3063",
+    "phone": "+56983630589",
+    "website": "https://cl.padelizados.net/es-cl/i/3075-curauma-padel-park/",
+    "latitude": -33.137418,
+    "longitude": -71.5636649,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3075-curauma-padel-park/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3079,
+    "name": "Club ALTO PADEL",
+    "cityRaw": "Alto Hospicio",
+    "address": "Av. Iquique 4360",
+    "phone": "+56931820018",
+    "website": "https://cl.padelizados.net/es-cl/i/3079-club-alto-padel/",
+    "latitude": -20.2792086,
+    "longitude": -70.0859824,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3079-club-alto-padel/",
+    "regionName": "Chile",
+    "postalCode": "1130000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3080,
+    "name": "Pádel Pirque Oficial",
+    "cityRaw": "Pirque",
+    "address": "Las Parcelas 8",
+    "phone": "+56952285543",
+    "website": "https://cl.padelizados.net/es-cl/i/3080-padel-pirque-oficial/",
+    "latitude": -33.665142,
+    "longitude": -70.60453,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3080-padel-pirque-oficial/",
+    "regionName": "Chile",
+    "postalCode": "9480119",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3084,
+    "name": "Smash La Reina by Epadel",
+    "cityRaw": "La Reina",
+    "address": "Nueva Larraín 8381",
+    "phone": "+56932035759",
+    "website": "https://cl.padelizados.net/es-cl/i/3084-smash-la-reina-by-epadel/",
+    "latitude": -33.4504485,
+    "longitude": -70.5443334,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3084-Smash-La-Reina-by-Epadel-7N4y9.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3084-smash-la-reina-by-epadel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3083,
+    "name": "Ceres Pádel Club",
+    "cityRaw": "La Serena",
+    "address": "Los Arándanos, Ceres s/n",
+    "phone": "+56939590523",
+    "website": "https://cl.padelizados.net/es-cl/i/3083-ceres-padel-club/",
+    "latitude": -29.9223948,
+    "longitude": -71.1997534,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3083-Ceres-Padel-Club-AU8D6.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3083-ceres-padel-club/",
+    "regionName": "Chile",
+    "postalCode": "1700000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3085,
+    "name": "Padel Rocas de Santo Domingo",
+    "cityRaw": "Santo Domingo",
+    "address": "Av. del Golf 130",
+    "phone": "+56942905778",
+    "website": "https://cl.padelizados.net/es-cl/i/3085-padel-rocas-de-santo-domingo/",
+    "latitude": -33.6363678,
+    "longitude": -71.6214828,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3085-Padel-Rocas-de-Santo-Domingo-mUeoD.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3085-padel-rocas-de-santo-domingo/",
+    "regionName": "Chile",
+    "postalCode": "2720000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3087,
+    "name": "Padel Lobos",
+    "cityRaw": "Pichilemu",
+    "address": "I-504",
+    "phone": "+56953305578",
+    "website": "https://cl.padelizados.net/es-cl/i/3087-padel-lobos/",
+    "latitude": -34.4295968,
+    "longitude": -72.0332128,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3087-Padel-Lobos-vkG1T.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3087-padel-lobos/",
+    "regionName": "Chile",
+    "postalCode": "3220118",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3086,
+    "name": "Maiclub Padel Club Hípico",
+    "cityRaw": "Santiago",
+    "address": "Club Hípico 875 frente a Tupper",
+    "phone": null,
+    "website": "https://cl.padelizados.net/es-cl/i/3086-maiclub-padel-club-hipico/",
+    "latitude": -33.458395,
+    "longitude": -70.6651709,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3086-maiclub-padel-club-hipico/",
+    "regionName": "Chile",
+    "postalCode": "8320000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3088,
+    "name": "Portal Padel Club",
+    "cityRaw": "La Serena",
+    "address": "Av. Raúl Bitrán 1550",
+    "phone": "+56944775740",
+    "website": "https://cl.padelizados.net/es-cl/i/3088-portal-padel-club/",
+    "latitude": -29.9186192,
+    "longitude": -71.2358732,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3088-Portal-Padel-Club-Al5nF.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3088-portal-padel-club/",
+    "regionName": "Chile",
+    "postalCode": "1780000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3089,
+    "name": "NATIVO PADEL MAULE",
+    "cityRaw": "Maule",
+    "address": "PARQUE HO - CAMINO VIEJO A",
+    "phone": "+56951476733",
+    "website": "https://cl.padelizados.net/es-cl/i/3089-nativo-padel-maule/",
+    "latitude": -35.4825082,
+    "longitude": -71.7045916,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3089-nativo-padel-maule/",
+    "regionName": "Chile",
+    "postalCode": "3530078",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3090,
+    "name": "Padel Sagrado.",
+    "cityRaw": "Santa Cruz",
+    "address": "psj - Quinahue, Pasaje San Isidro",
+    "phone": "+56991690547",
+    "website": "https://cl.padelizados.net/es-cl/i/3090-padel-sagrado/",
+    "latitude": -34.6743388,
+    "longitude": -71.3143476,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3090-Padel-Sagrado-PI8vp.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3090-padel-sagrado/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3091,
+    "name": "Padel Domo Arena",
+    "cityRaw": "Colina",
+    "address": "Avenida Chicureo KM 1,7 Interior 100 metros",
+    "phone": "+56999972515",
+    "website": "https://cl.padelizados.net/es-cl/i/3091-padel-domo-arena/",
+    "latitude": -33.284497,
+    "longitude": -70.6836875,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3091-Padel-Domo-Arena-tNaTy.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3091-padel-domo-arena/",
+    "regionName": "Chile",
+    "postalCode": "7774545",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3092,
+    "name": "Club de Pádel La Colonia",
+    "cityRaw": "Peñaflor",
+    "address": "Peñaflor",
+    "phone": null,
+    "website": "https://cl.padelizados.net/es-cl/i/3092-club-de-padel-la-colonia/",
+    "latitude": -33.6286008,
+    "longitude": -70.8901657,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3092-club-de-padel-la-colonia/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3093,
+    "name": "Club de Padel x4",
+    "cityRaw": "Quillota",
+    "address": "Callejon La Glorieta",
+    "phone": "+56964916254",
+    "website": "https://cl.padelizados.net/es-cl/i/3093-club-de-padel-x4/",
+    "latitude": -32.9162245,
+    "longitude": -71.2859087,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3093-Club-de-Padel-x4-gRmTE.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3093-club-de-padel-x4/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3094,
+    "name": "Plaza 7, Canchas Futbol",
+    "cityRaw": "Concepción",
+    "address": "Vasco Nuñez de Balboa 1955",
+    "phone": "+56959206233",
+    "website": "https://cl.padelizados.net/es-cl/i/3094-plaza-7-canchas-futbol/",
+    "latitude": -36.8010455,
+    "longitude": -73.0744531,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3094-Plaza-7-Canchas-Futbol-h4xFf.jpg",
+    "courtsNumber": 2,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3094-plaza-7-canchas-futbol/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3096,
+    "name": "YMCA Temuco",
+    "cityRaw": "Temuco",
+    "address": "Av. Olimpia 1401",
+    "phone": "+56452377210",
+    "website": "https://cl.padelizados.net/es-cl/i/3096-ymca-temuco/",
+    "latitude": -38.7417121,
+    "longitude": -72.6237037,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3096-YMCA-Temuco-g70tY.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3096-ymca-temuco/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3095,
+    "name": "Club Recrear Florida",
+    "cityRaw": "La Florida",
+    "address": "Av. Diego Portales 897",
+    "phone": "+56222882400",
+    "website": "https://cl.padelizados.net/es-cl/i/3095-club-recrear-florida/",
+    "latitude": -33.5619421,
+    "longitude": -70.5732654,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3095-Club-Recrear-Florida-UcGbF.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3095-club-recrear-florida/",
+    "regionName": "Chile",
+    "postalCode": "8301685",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3097,
+    "name": "Terra Soccer 2",
+    "cityRaw": "Macul",
+    "address": "Av. Marathón 2209",
+    "phone": "+56222370967",
+    "website": "https://cl.padelizados.net/es-cl/i/3097-terra-soccer-2/",
+    "latitude": -33.475579,
+    "longitude": -70.6137218,
+    "avatarUrl": null,
+    "courtsNumber": 3,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3097-terra-soccer-2/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3098,
+    "name": "Canchas Cereceda",
+    "cityRaw": "Maipú",
+    "address": "Camino Los Talaveras 453 (ex parcela 38",
+    "phone": "+56932395176",
+    "website": "https://cl.padelizados.net/es-cl/i/3098-canchas-cereceda/",
+    "latitude": -33.554573,
+    "longitude": -70.788948,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3098-Canchas-Cereceda-v9sSd.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3098-canchas-cereceda/",
+    "regionName": "Chile",
+    "postalCode": "0000925",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3099,
+    "name": "Padel 4 Esquinas",
+    "cityRaw": "La Serena",
+    "address": "Cuatro Esquinas 53",
+    "phone": "+56998012394",
+    "website": "https://cl.padelizados.net/es-cl/i/3099-padel-4-esquinas/",
+    "latitude": -29.9282489,
+    "longitude": -71.273099,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3099-Padel-4-Esquinas-RgBQI.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3099-padel-4-esquinas/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3101,
+    "name": "Pro Club Valle Grande",
+    "cityRaw": "Lampa",
+    "address": "La Montaña Sur 1957",
+    "phone": "+56933760855",
+    "website": "https://cl.padelizados.net/es-cl/i/3101-pro-club-valle-grande/",
+    "latitude": -33.3247909,
+    "longitude": -70.7409973,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3101-Pro-Club-Valle-Grande-s2yww.jpg",
+    "courtsNumber": 3,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3101-pro-club-valle-grande/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3100,
+    "name": "Padel Plus",
+    "cityRaw": "Macul",
+    "address": "Av. Rodrigo de Araya",
+    "phone": "+56935581316",
+    "website": "https://cl.padelizados.net/es-cl/i/3100-padel-plus/",
+    "latitude": -33.4754597,
+    "longitude": -70.6151506,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3100-padel-plus/",
+    "regionName": "Chile",
+    "postalCode": "7810000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3102,
+    "name": "Refugio Chicureo",
+    "cityRaw": "Colina",
+    "address": "Av. Chicureo 2300",
+    "phone": "+56229530322",
+    "website": "https://cl.padelizados.net/es-cl/i/3102-refugio-chicureo/",
+    "latitude": -33.285205,
+    "longitude": -70.677394,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3102-refugio-chicureo/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3103,
+    "name": "SPORTCENTER Villa Alemana",
+    "cityRaw": "Villa Alemana",
+    "address": "San enrique 470 San enrique 400 Villa Alemana",
+    "phone": "+56935096755",
+    "website": "https://cl.padelizados.net/es-cl/i/3103-sportcenter-villa-alemana/",
+    "latitude": -33.0495294,
+    "longitude": -71.378957,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3103-sportcenter-villa-alemana/",
+    "regionName": "Chile",
+    "postalCode": "2400000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3104,
+    "name": "Sur Padel Center",
+    "cityRaw": "Hualpén",
+    "address": "Vasco de Núñez Balboa 6786 Talcahuano",
+    "phone": "+56931207674",
+    "website": "https://cl.padelizados.net/es-cl/i/3104-sur-padel-center/",
+    "latitude": -36.7766609,
+    "longitude": -73.0766143,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3104-Sur-Padel-Center-1NwW4.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3104-sur-padel-center/",
+    "regionName": "Chile",
+    "postalCode": "4260000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3105,
+    "name": "Los Tres Vientos",
+    "cityRaw": "Los Ángeles",
+    "address": "Q-20",
+    "phone": "+56961717978",
+    "website": "https://cl.padelizados.net/es-cl/i/3105-los-tres-vientos/",
+    "latitude": -37.4472575,
+    "longitude": -72.397429,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3105-los-tres-vientos/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3106,
+    "name": "Más Que Pádel Maipú",
+    "cityRaw": "Maipú",
+    "address": "Central Gonzalo Pérez Llona 450",
+    "phone": "+56988823189",
+    "website": "https://cl.padelizados.net/es-cl/i/3106-mas-que-padel-maipu/",
+    "latitude": -33.4999542,
+    "longitude": -70.7526016,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3106-Mas-Que-Padel-Maipu-SLk4e.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3106-mas-que-padel-maipu/",
+    "regionName": "Chile",
+    "postalCode": "9250000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3107,
+    "name": "Padel Indoor Curico",
+    "cityRaw": "Curicó",
+    "address": "Cam. a Sarmiento",
+    "phone": "+56945061393",
+    "website": "https://cl.padelizados.net/es-cl/i/3107-padel-indoor-curico/",
+    "latitude": -34.9500845,
+    "longitude": -71.2259893,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3107-padel-indoor-curico/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3108,
+    "name": "ESPACIO PADEL",
+    "cityRaw": "Valdivia",
+    "address": "Av. Pedro Aguirre Cerda 05",
+    "phone": "+56991270872",
+    "website": "https://cl.padelizados.net/es-cl/i/3108-espacio-padel/",
+    "latitude": -39.8163141,
+    "longitude": -73.2273746,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3108-espacio-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3109,
+    "name": "Campo Deportivo Antivero",
+    "cityRaw": "San Fernando",
+    "address": "El trapiche sn",
+    "phone": "+56957080088",
+    "website": "https://cl.padelizados.net/es-cl/i/3109-campo-deportivo-antivero/",
+    "latitude": -34.5745414,
+    "longitude": -70.974348,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3109-Campo-Deportivo-Antivero-N5jom.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3109-campo-deportivo-antivero/",
+    "regionName": "Chile",
+    "postalCode": "1250000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3110,
+    "name": "Cabañas Padel Bullileo",
+    "cityRaw": "Parral",
+    "address": "El Parron Lote 1 Bullileo Parral",
+    "phone": "+56998624758",
+    "website": "https://cl.padelizados.net/es-cl/i/3110-cabanas-padel-bullileo/",
+    "latitude": -36.2688446,
+    "longitude": -71.4168913,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3110-Cabanas-Padel-Bullileo-1TLmQ.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3110-cabanas-padel-bullileo/",
+    "regionName": "Chile",
+    "postalCode": "3630000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3112,
+    "name": "Propadel Chile",
+    "cityRaw": "Copiapó",
+    "address": "Parcela 7, Av. Copayapu 6250",
+    "phone": "+56933864652",
+    "website": "https://cl.padelizados.net/es-cl/i/3112-propadel-chile/",
+    "latitude": -27.4138141,
+    "longitude": -70.2902249,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3112-propadel-chile/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3111,
+    "name": "Padel Club Palestino",
+    "cityRaw": "Las Condes",
+    "address": "Las Condes",
+    "phone": "+56975489262",
+    "website": "https://cl.padelizados.net/es-cl/i/3111-padel-club-palestino/",
+    "latitude": -33.3877127,
+    "longitude": -70.5417905,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3111-padel-club-palestino/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3113,
+    "name": "Top Padel Chicureo",
+    "cityRaw": "Quilicura",
+    "address": "El Alba 2, Casas del Alba, Parcela 7",
+    "phone": "+56957799800",
+    "website": "https://cl.padelizados.net/es-cl/i/3113-top-padel-chicureo/",
+    "latitude": -33.2966804,
+    "longitude": -70.67415,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3113-Top-Padel-Chicureo-yChab.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3113-top-padel-chicureo/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3114,
+    "name": "Club Los Aromos Chillán",
+    "cityRaw": "Chillán",
+    "address": "Variante Nahueltoro KM 3.6 Chillán",
+    "phone": "+56940051085",
+    "website": "https://cl.padelizados.net/es-cl/i/3114-club-los-aromos-chillan/",
+    "latitude": -36.5706211,
+    "longitude": -72.0570044,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3114-Club-Los-Aromos-Chillan-reaek.jpg",
+    "courtsNumber": 3,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3114-club-los-aromos-chillan/",
+    "regionName": "Chile",
+    "postalCode": "3780000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3115,
+    "name": "Club Bravo Padel",
+    "cityRaw": "Hualpén",
+    "address": "Av. Cristóbal Colón 8579",
+    "phone": "+56989920047",
+    "website": "https://cl.padelizados.net/es-cl/i/3115-club-bravo-padel/",
+    "latitude": -36.7946148,
+    "longitude": -73.086374,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3115-club-bravo-padel/",
+    "regionName": "Chile",
+    "postalCode": "4603086",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3116,
+    "name": "Rancho Santa Ines",
+    "cityRaw": "Calera de Tango",
+    "address": "y el Barrancón - Camino Santa Inés S/N Parcela Asturias Entre Alfoson, Alfonso Ruiz Tagle",
+    "phone": "+56987790785",
+    "website": "https://cl.padelizados.net/es-cl/i/3116-rancho-santa-ines/",
+    "latitude": -33.6435889,
+    "longitude": -70.7553196,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3116-rancho-santa-ines/",
+    "regionName": "Chile",
+    "postalCode": "9560000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3117,
+    "name": "Arena Sport Iquique",
+    "cityRaw": "Alto Hospicio",
+    "address": "Calle 6 con vía 5, Bajo Molle Iquique",
+    "phone": "+56985177014",
+    "website": "https://cl.padelizados.net/es-cl/i/3117-arena-sport-iquique/",
+    "latitude": -20.2898235,
+    "longitude": -70.118172,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3117-Arena-Sport-Iquique-n5bMV.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3117-arena-sport-iquique/",
+    "regionName": "Chile",
+    "postalCode": "1100000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3118,
+    "name": "Academia Padel Chicureo",
+    "cityRaw": "Colina",
+    "address": "San José",
+    "phone": "+56949216568",
+    "website": "https://cl.padelizados.net/es-cl/i/3118-academia-padel-chicureo/",
+    "latitude": -33.2613152,
+    "longitude": -70.7126387,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3118-academia-padel-chicureo/",
+    "regionName": "Chile",
+    "postalCode": "9351745",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3119,
+    "name": "Go Padel",
+    "cityRaw": "Punta Arenas",
+    "address": "Pdte. Julio A.Roca 935",
+    "phone": "+56957824214",
+    "website": "https://cl.padelizados.net/es-cl/i/3119-go-padel/",
+    "latitude": -53.1642548,
+    "longitude": -70.905624,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3119-Go-Padel-D9Frs.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3119-go-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3120,
+    "name": "Padel Haus Del Lago",
+    "cityRaw": "Llanquihue",
+    "address": "Ruta, V-351",
+    "phone": "+56952348392",
+    "website": "https://cl.padelizados.net/es-cl/i/3120-padel-haus-del-lago/",
+    "latitude": -41.2167347,
+    "longitude": -73.0353506,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3120-Padel-Haus-Del-Lago-4tdhw.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3120-padel-haus-del-lago/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3121,
+    "name": "La Curva Padel Maitencillo",
+    "cityRaw": "Puchuncaví",
+    "address": "San Alfonso 535, Maitencillo",
+    "phone": "+56950959503",
+    "website": "https://cl.padelizados.net/es-cl/i/3121-la-curva-padel-maitencillo/",
+    "latitude": -32.6350972,
+    "longitude": -71.4239803,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3121-la-curva-padel-maitencillo/",
+    "regionName": "Chile",
+    "postalCode": "2500000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3122,
+    "name": "Patagonia Padel",
+    "cityRaw": "Temuco",
+    "address": "Av. Gabriela Mistral 0830",
+    "phone": "+56968788906",
+    "website": "https://cl.padelizados.net/es-cl/i/3122-patagonia-padel/",
+    "latitude": -38.7289699,
+    "longitude": -72.6125,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3122-Patagonia-Padel-Aos2Z.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3122-patagonia-padel/",
+    "regionName": "Chile",
+    "postalCode": "4801015",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3123,
+    "name": "River Padel",
+    "cityRaw": "Valdivia",
+    "address": "Arica 2753",
+    "phone": "+56975798007",
+    "website": "https://cl.padelizados.net/es-cl/i/3123-river-padel/",
+    "latitude": -39.8396202,
+    "longitude": -73.2577051,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3123-River-Padel-ouMQL.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3123-river-padel/",
+    "regionName": "Chile",
+    "postalCode": "5090000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3125,
+    "name": "Npadel Club",
+    "cityRaw": "Macul",
+    "address": "Ramón Toro Ibáñez 5931",
+    "phone": "+56935164791",
+    "website": "https://cl.padelizados.net/es-cl/i/3125-npadel-club/",
+    "latitude": -33.5067601,
+    "longitude": -70.5985796,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3125-npadel-club/",
+    "regionName": "Chile",
+    "postalCode": "7820793",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3124,
+    "name": "Del Ranco Padel",
+    "cityRaw": "Río Bueno",
+    "address": "Ejército Libertador 2558",
+    "phone": "+56949424696",
+    "website": "https://cl.padelizados.net/es-cl/i/3124-del-ranco-padel/",
+    "latitude": -40.3370285,
+    "longitude": -72.9367675,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3124-Del-Ranco-Padel-LLGTG.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3124-del-ranco-padel/",
+    "regionName": "Chile",
+    "postalCode": "5240000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3126,
+    "name": "Buin Padel Center",
+    "cityRaw": "Buin",
+    "address": "Linderos",
+    "phone": "+56998879439",
+    "website": "https://cl.padelizados.net/es-cl/i/3126-buin-padel-center/",
+    "latitude": -33.7639103,
+    "longitude": -70.7432187,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3126-Buin-Padel-Center-bJFyH.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3126-buin-padel-center/",
+    "regionName": "Chile",
+    "postalCode": "9500000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3127,
+    "name": "Pádel Pie Andino",
+    "cityRaw": "Lo Barnechea",
+    "address": "Av. Paseo Pie Andino 5800",
+    "phone": "+56973569989",
+    "website": "https://cl.padelizados.net/es-cl/i/3127-padel-pie-andino/",
+    "latitude": -33.3221302,
+    "longitude": -70.5373439,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3127-padel-pie-andino/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3129,
+    "name": "Espacio Deportivo Ruta 5",
+    "cityRaw": "Victoria",
+    "address": "Ruta 5 sur km 612 Victoria",
+    "phone": "+56984831876",
+    "website": "https://cl.padelizados.net/es-cl/i/3129-espacio-deportivo-ruta-5/",
+    "latitude": -38.2551524,
+    "longitude": -72.3595525,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3129-Espacio-Deportivo-Ruta-5-wtaLs.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3129-espacio-deportivo-ruta-5/",
+    "regionName": "Chile",
+    "postalCode": "4720000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3128,
+    "name": "Campo Deportivo La Liga",
+    "cityRaw": "Viña del Mar",
+    "address": "Jose M. Carrera 498",
+    "phone": "+56967863393",
+    "website": "https://cl.padelizados.net/es-cl/i/3128-campo-deportivo-la-liga/",
+    "latitude": -33.0313593,
+    "longitude": -71.5711753,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3128-Campo-Deportivo-La-Liga-DdEva.jpg",
+    "courtsNumber": 7,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3128-campo-deportivo-la-liga/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3130,
+    "name": "Padel Games",
+    "cityRaw": "Colina",
+    "address": "Santa Sara s/n , Parcela 7, Lote 9",
+    "phone": "+56995415623",
+    "website": "https://cl.padelizados.net/es-cl/i/3130-padel-games/",
+    "latitude": -33.2366508,
+    "longitude": -70.769082,
+    "avatarUrl": null,
+    "courtsNumber": 2,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3130-padel-games/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3131,
+    "name": "Trañipadel Temuco",
+    "cityRaw": "Temuco",
+    "address": "Camino Trañi Trañi, km 0.5",
+    "phone": "+56946294513",
+    "website": "https://cl.padelizados.net/es-cl/i/3131-tranipadel-temuco/",
+    "latitude": -38.7542938,
+    "longitude": -72.7041882,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3131-Tranipadel-Temuco-7Ow0E.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3131-tranipadel-temuco/",
+    "regionName": "Chile",
+    "postalCode": "4780000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3132,
+    "name": "Padel Del Valle",
+    "cityRaw": "Paine",
+    "address": "camino padre hurtado parcela 8b-1",
+    "phone": "+56979843610",
+    "website": "https://cl.padelizados.net/es-cl/i/3132-padel-del-valle/",
+    "latitude": -33.7671199,
+    "longitude": -70.6634392,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3132-Padel-Del-Valle-jnxVY.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3132-padel-del-valle/",
+    "regionName": "Chile",
+    "postalCode": "9540000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3133,
+    "name": "ZOUT tenis y padel",
+    "cityRaw": "Los Ángeles",
+    "address": "Av. Almte. Latorre 0455",
+    "phone": "+56934508080",
+    "website": "https://cl.padelizados.net/es-cl/i/3133-zout-tenis-y-padel/",
+    "latitude": -37.4586317,
+    "longitude": -72.3400627,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3133-ZOUT-tenis-y-padel-nHrrW.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3133-zout-tenis-y-padel/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3134,
+    "name": "Tunca Padel",
+    "cityRaw": "San Vicente de Tagua Tagua",
+    "address": "HWR3+C7R Tunca El Molino",
+    "phone": "+56988928878",
+    "website": "https://cl.padelizados.net/es-cl/i/3134-tunca-padel/",
+    "latitude": -34.4088645,
+    "longitude": -71.0967964,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3134-Tunca-Padel-0HGKw.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3134-tunca-padel/",
+    "regionName": "Chile",
+    "postalCode": "2970000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3135,
+    "name": "Hamburg Padel Center",
+    "cityRaw": "Villa Alemana",
+    "address": "San Enrique 470",
+    "phone": "+56968643117",
+    "website": "https://cl.padelizados.net/es-cl/i/3135-hamburg-padel-center/",
+    "latitude": -33.0501771,
+    "longitude": -71.379528,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3135-Hamburg-Padel-Center-1e3bJ.jpg",
+    "courtsNumber": 4,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3135-hamburg-padel-center/",
+    "regionName": "Chile",
+    "postalCode": "2450100",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3137,
+    "name": "Indoor Padel",
+    "cityRaw": "Linares",
+    "address": "Cam. Real s/n",
+    "phone": null,
+    "website": "https://cl.padelizados.net/es-cl/i/3137-indoor-padel/",
+    "latitude": -35.8357708,
+    "longitude": -71.6281792,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3137-Indoor-Padel-9jTkn.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3137-indoor-padel/",
+    "regionName": "Chile",
+    "postalCode": "3580000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3139,
+    "name": "Padel Carampangue",
+    "cityRaw": "Talagante",
+    "address": "Cam. Carampangue 980-44",
+    "phone": "+56962285773",
+    "website": "https://cl.padelizados.net/es-cl/i/3139-padel-carampangue/",
+    "latitude": -33.6857296,
+    "longitude": -70.9134476,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3139-padel-carampangue/",
+    "regionName": "Chile",
+    "postalCode": "9670000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3138,
+    "name": "Costa padel",
+    "cityRaw": "Viña del Mar",
+    "address": "C. Limache 4215",
+    "phone": "+56999556381",
+    "website": "https://cl.padelizados.net/es-cl/i/3138-costa-padel/",
+    "latitude": -33.0495075,
+    "longitude": -71.5075086,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3138-Costa-padel-aLRhq.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3138-costa-padel/",
+    "regionName": "Chile",
+    "postalCode": "2562130",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3140,
+    "name": "Rubber & grass - Canchas Deportivas y Caucho In Situ",
+    "cityRaw": "El Bosque",
+    "address": "María Antonieta",
+    "phone": "+56984148351",
+    "website": "https://cl.padelizados.net/es-cl/i/3140-rubber-grass-canchas-deportivas-y-caucho-in-situ/",
+    "latitude": -33.5479013,
+    "longitude": -70.6685234,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3140-Rubber-grass-Canchas-Deportivas-y-Caucho-In-Situ-v7sXI.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3140-rubber-grass-canchas-deportivas-y-caucho-in-situ/",
+    "regionName": "Chile",
+    "postalCode": "8030022",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3142,
+    "name": "La Herradura Padel",
+    "cityRaw": "Coquimbo",
+    "address": "El Faro 11",
+    "phone": "+56963119110",
+    "website": "https://cl.padelizados.net/es-cl/i/3142-la-herradura-padel/",
+    "latitude": -29.9815935,
+    "longitude": -71.3518427,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3142-La-Herradura-Padel-GTKin.jpg",
+    "courtsNumber": 2,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3142-la-herradura-padel/",
+    "regionName": "Chile",
+    "postalCode": "1780000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3141,
+    "name": "Kilantur PadelHouse",
+    "cityRaw": "Calama",
+    "address": "Calama",
+    "phone": "+56988852520",
+    "website": "https://cl.padelizados.net/es-cl/i/3141-kilantur-padelhouse/",
+    "latitude": -22.4672088,
+    "longitude": -68.9221275,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3141-Kilantur-PadelHouse-i09DF.jpg",
+    "courtsNumber": 4,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3141-kilantur-padelhouse/",
+    "regionName": "Chile",
+    "postalCode": "1390000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3143,
+    "name": "Chile Pastos",
+    "cityRaw": "San Pedro de la Paz",
+    "address": "Calle Ing. Ernesto Pinto Lagarrigue",
+    "phone": "+56953875734",
+    "website": "https://cl.padelizados.net/es-cl/i/3143-chile-pastos/",
+    "latitude": -36.8481517,
+    "longitude": -73.073614,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3143-Chile-Pastos-81zw3.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3143-chile-pastos/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3144,
+    "name": "Lana Negra Padel Center",
+    "cityRaw": "Villa Alemana",
+    "address": "José Miguel Carrera 570",
+    "phone": "+56986724699",
+    "website": "https://cl.padelizados.net/es-cl/i/3144-lana-negra-padel-center/",
+    "latitude": -33.0501491,
+    "longitude": -71.3713721,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3144-Lana-Negra-Padel-Center-f2hbx.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3144-lana-negra-padel-center/",
+    "regionName": "Chile",
+    "postalCode": "",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3145,
+    "name": "Infinity Padel Antofagasta",
+    "cityRaw": "Antofagasta",
+    "address": "Av. Pedro Aguirre Cerda 10578, Local 403 A",
+    "phone": "+56989348954",
+    "website": "https://cl.padelizados.net/es-cl/i/3145-infinity-padel-antofagasta/",
+    "latitude": -23.5654717,
+    "longitude": -70.3903069,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3145-Infinity-Padel-Antofagasta-o969L.jpg",
+    "courtsNumber": 4,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3145-infinity-padel-antofagasta/",
+    "regionName": "Chile",
+    "postalCode": "1240000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3146,
+    "name": "Pádel Estación Cauquenes",
+    "cityRaw": "Cauquenes",
+    "address": "Ramiro Méndez 540",
+    "phone": "+56951590150",
+    "website": "https://cl.padelizados.net/es-cl/i/3146-padel-estacion-cauquenes/",
+    "latitude": -35.9822194,
+    "longitude": -72.3122779,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3146-Padel-Estacion-Cauquenes-Sz79K.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3146-padel-estacion-cauquenes/",
+    "regionName": "Chile",
+    "postalCode": "3690270",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3147,
+    "name": "Blue Padel Chillán",
+    "cityRaw": "Chillán",
+    "address": "Camino a Río Cato Chillán",
+    "phone": "+56985964826",
+    "website": "https://cl.padelizados.net/es-cl/i/3147-blue-padel-chillan/",
+    "latitude": -36.5595316,
+    "longitude": -72.0608128,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3147-Blue-Padel-Chillan-yEfRj.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3147-blue-padel-chillan/",
+    "regionName": "Chile",
+    "postalCode": "3780000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3148,
+    "name": "Club Conecta Padel Canchas",
+    "cityRaw": "Cerrillos",
+    "address": "Cerrillos",
+    "phone": "+56995479521",
+    "website": "https://cl.padelizados.net/es-cl/i/3148-club-conecta-padel-canchas/",
+    "latitude": -33.5195748,
+    "longitude": -70.7188511,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3148-club-conecta-padel-canchas/",
+    "regionName": "Chile",
+    "postalCode": "9200000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3149,
+    "name": "Requinoa Padel",
+    "cityRaw": "Requínoa",
+    "address": "Cam. Los Perales 80",
+    "phone": "+56951495552",
+    "website": "https://cl.padelizados.net/es-cl/i/3149-requinoa-padel/",
+    "latitude": -34.2876119,
+    "longitude": -70.8252002,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3149-requinoa-padel/",
+    "regionName": "Chile",
+    "postalCode": "2930000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3150,
+    "name": "peralillo padel",
+    "cityRaw": "Illapel",
+    "address": "peralillo",
+    "phone": "+56976195282",
+    "website": "https://cl.padelizados.net/es-cl/i/3150-peralillo-padel/",
+    "latitude": -31.7277313,
+    "longitude": -71.1239269,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3150-peralillo-padel-zy3Cp.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3150-peralillo-padel/",
+    "regionName": "Chile",
+    "postalCode": "1930000",
+    "countryCode": "CL"
+  },
+  {
+    "id": 3151,
+    "name": "MY Padel Academy",
+    "cityRaw": "Lo Barnechea",
+    "address": "Av. José Alcalde Délano 10557",
+    "phone": "+56942835970",
+    "website": "https://cl.padelizados.net/es-cl/i/3151-my-padel-academy/",
+    "latitude": -33.35624,
+    "longitude": -70.5385,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3151-MY-Padel-Academy-Xxvf0.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://cl.padelizados.net/es-cl/i/3151-my-padel-academy/",
+    "regionName": "Chile",
+    "postalCode": "7690324",
+    "countryCode": "CL"
+  }
+]

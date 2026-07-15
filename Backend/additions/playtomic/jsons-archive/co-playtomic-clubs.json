@@ -1,0 +1,1158 @@
+[
+  {
+    "tenant_id": "b4d1fd41-6fc5-4bff-b107-ce5451fd6fc9",
+    "tenant_name": "Hyper Indoor Padel Club",
+    "slug": "hyper-indoor-padel-club-cali",
+    "address": {
+      "street": "Cra. 125 #2A - 396, Barrio Pance, Cali, Valle del Cauca",
+      "postal_code": "760001",
+      "city": "Cali",
+      "sub_administrative_area": "Cali",
+      "administrative_area": "Valle del Cauca",
+      "country": "Colombia",
+      "country_code": "CO",
+      "coordinate": {
+        "lat": 3.33691314,
+        "lon": -76.55137873
+      },
+      "timezone": "America/Bogota"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1783652406/pro/tenants/b4d1fd41-6fc5-4bff-b107-ce5451fd6fc9/1783652405481.jpg"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "WEBSITE_URL": "https://hyperindoorpadelclub.com/",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Hyper Indoor Padel Club, ubicado en Padel Cali, Colombia, redefine la experiencia del pádel en el país con las mejores instalaciones y servicios premium. Con más de 2,200 m², nuestro club alberga siete canchas cubiertas de última generación, tecnología innovadora y comodidades diseñadas para jugadores de todos los niveles, desde aficionados hasta profesionales. Te compartimos las principales ventajas que convierten a Hyper Indoor Padel Club en el destino predilecto para los amantes del pádel, destacando la integración tecnología para optimizar la práctica y el entrenamiento.",
+      "CONTACT_PHONE": "+57 3112116747"
+    },
+    "resources": [
+      {
+        "resourceId": "d85f85b5-95b5-44bb-b761-0659f36616f9",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "4d1695a8-4ffa-4a46-b98d-debf3c733660",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d915e8ed-4cd3-4eb9-a670-fbba857f7015",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "befd1663-0e5d-46c6-b070-38f9f08e3299",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "16e74887-27d3-446b-aa6d-65b7bbdd7050",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ec18cf52-774f-4809-ba59-649fd17175e0",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b9c5ae41-b545-451c-b549-4c6bdba148a9",
+        "name": "Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "single",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ea0d99f0-f9d3-4328-9568-c6fb53310f59",
+    "tenant_name": "Just Pádel Club",
+    "slug": "just-padel-club-cali",
+    "address": {
+      "street": "Calle 10 # 34 - 00",
+      "postal_code": "76000001",
+      "city": "Cali",
+      "sub_administrative_area": "Cali",
+      "administrative_area": "Valle del Cauca",
+      "country": "Colombia",
+      "country_code": "CO",
+      "coordinate": {
+        "lat": 3.50622378,
+        "lon": -76.52247274
+      },
+      "timezone": "America/Bogota"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1735692397/pro/tenants/ea0d99f0-f9d3-4328-9568-c6fb53310f59/1735692397107.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1735692401/pro/tenants/ea0d99f0-f9d3-4328-9568-c6fb53310f59/1735692400668.jpg"
+    ],
+    "properties": {
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_MATERIAL_RENTING": "false",
+      "FACILITY_WIFI": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_DESCRIPTION": " Just Pádel Club\nBienvenidos al lugar donde la pasión por el pádel se vive al máximo. Just Pádel Club cuenta con 4 modernas pistas cubiertas con una altura de 13 metros, ideales para garantizar la mejor experiencia de juego sin importar el nivel. Disfruta de clases para todos los niveles, desde principiantes hasta avanzados, impartidas por entrenadores de alto nivel.\n\nAdemás, sumérgete en nuestra comunidad vibrante participando en torneos y ligas para todas las categorías. Al terminar tus partidos, relájate en nuestro restaurante / bar, el lugar perfecto para compartir y celebrar en grande.\n\nPara tu comodidad, contamos con parqueadero gratuito, porque en Just Pádel Club pensamos en todo para que solo te preocupes por disfrutar. Ven y únete a la comunidad más apasionada del pádel. ¡Te esperamos!",
+      "WEBSITE_URL": "https://www.instagram.com/justpadelcali/profilecard/?igsh=NHJnc2VvbW92OXd0",
+      "CONTACT_PHONE": "+57 3022261178",
+      "FACILITY_STORE": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "0f0fc2b4-204e-4170-8b82-e9e4806fcd44",
+        "name": "Cancha 1",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "51b0e5f9-a3fb-443e-a6f5-5878d913b3b2",
+        "name": "Cancha central",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d0f11bba-7708-49ab-ae20-285c52836816",
+        "name": "Cancha 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "57ed7c3e-bf1a-4a92-b839-cb168e739ce7",
+        "name": "Cancha 4",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "07:30",
+        "closing_time": "21:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:30",
+        "closing_time": "21:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:30",
+        "closing_time": "21:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "dc836816-0004-4ce0-9642-e447f6eb776d",
+    "tenant_name": "La Pala Club de Pádel Villavo",
+    "slug": "la-pala-villavo-padel-club",
+    "address": {
+      "street": "Vanguardia pasando el puente frente a la estación Biomax",
+      "postal_code": "11001",
+      "city": "Villavicencio",
+      "sub_administrative_area": "Villavicencio",
+      "administrative_area": "Meta",
+      "country": "Colombia",
+      "country_code": "CO",
+      "coordinate": {
+        "lat": 4.16482852,
+        "lon": -73.62483744
+      },
+      "timezone": "America/Bogota"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1768423549/pro/tenants/dc836816-0004-4ce0-9642-e447f6eb776d/1768423548494.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1768423668/pro/tenants/dc836816-0004-4ce0-9642-e447f6eb776d/1768423667251.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1768423673/pro/tenants/dc836816-0004-4ce0-9642-e447f6eb776d/1768423672378.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1768423677/pro/tenants/dc836816-0004-4ce0-9642-e447f6eb776d/1768423677041.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1768423682/pro/tenants/dc836816-0004-4ce0-9642-e447f6eb776d/1768423681747.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://lapalapadel.com/inicio",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "La Pala Club de Pádel Villavo es un espacio diseñado para vivir el pádel al máximo. Ofrecemos una experiencia premium con canchas cubiertas, atención personalizada y un ambiente exclusivo. \nReserva, juega y disfruta un servicio de primer nivel dentro de una gran comunidad.",
+      "CONTACT_PHONE": "+57 3209272377"
+    },
+    "resources": [
+      {
+        "resourceId": "e2b0eb9b-6d85-420b-9eaf-bfdd8668b7e0",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "76018b23-1ff4-4af4-b872-c7320e452bfa",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6b78b392-6f54-4f2a-92a5-e2cfbc60ec4f",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "c3546134-b7fb-41d8-8a7d-f3bc92c8c37f",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "84c1c78a-7f6e-4224-a4da-9d1416754cfb",
+    "tenant_name": "La Pala Club de Pádel",
+    "slug": "la-pala-club-de-padel",
+    "address": {
+      "street": "Avenida Calle 127 #45 -61",
+      "postal_code": "110111",
+      "city": "Bogotá",
+      "sub_administrative_area": "",
+      "administrative_area": "Bogotá",
+      "country": "Colombia",
+      "country_code": "CO",
+      "coordinate": {
+        "lat": 4.7109886,
+        "lon": -74.072092
+      },
+      "timezone": "America/Bogota"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1765908978/pro/tenants/84c1c78a-7f6e-4224-a4da-9d1416754cfb/1765908977507.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765908980/pro/tenants/84c1c78a-7f6e-4224-a4da-9d1416754cfb/1765908979743.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765908982/pro/tenants/84c1c78a-7f6e-4224-a4da-9d1416754cfb/1765908981942.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765908985/pro/tenants/84c1c78a-7f6e-4224-a4da-9d1416754cfb/1765908984255.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765908987/pro/tenants/84c1c78a-7f6e-4224-a4da-9d1416754cfb/1765908986298.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1768925216/pro/tenants/84c1c78a-7f6e-4224-a4da-9d1416754cfb/1768925216309.jpg"
+    ],
+    "properties": {
+      "FACILITY_FREE_PARKING": "false",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_LOCKERS": "false",
+      "CONTACT_PHONE": "+57 3208519204",
+      "DETAILS_PAGE_DESCRIPTION": "La Pala Club de Pádel es un espacio diseñado para vivir el pádel al máximo. Ofrecemos una experiencia premium con canchas cubiertas, atención personalizada y un ambiente exclusivo. \nReserva, juega y disfruta un servicio de primer nivel dentro de una gran comunidad.",
+      "FACILITY_STORE": "true",
+      "WEBSITE_URL": "https://lapalapadel.com/inicio",
+      "FACILITY_WIFI": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "d23173ea-86ca-4822-a31b-b529c717a3c5",
+        "name": "Itaú 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "373e1c33-cf68-4a57-84b8-892510a1e2c4",
+        "name": "Itaú 2",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8d9d3bbf-bc26-4785-b6ad-5ddba38b1366",
+        "name": "Itaú 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "926a3a43-ef84-4886-8396-8a18698b184f",
+        "name": "Itaú 4",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c38969c7-a0bc-4671-af9e-df7c804771b8",
+        "name": "Itaú 5",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "20bf053a-f112-4350-ba1c-50e51e9979d6",
+    "tenant_name": "Matchpoint Club",
+    "slug": "matchpoint-club",
+    "address": {
+      "street": "Avenida almirante brion Hotel Hilton ",
+      "postal_code": "130001",
+      "city": "Cartagena de Indias",
+      "sub_administrative_area": "Provincia de Cartagena",
+      "administrative_area": "Bolívar",
+      "country": "Colombia",
+      "country_code": "CO",
+      "coordinate": {
+        "lat": 10.393727,
+        "lon": -75.5592099
+      },
+      "timezone": "America/Bogota"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1749598529/pro/tenants/20bf053a-f112-4350-ba1c-50e51e9979d6/1749598528481.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1749598532/pro/tenants/20bf053a-f112-4350-ba1c-50e51e9979d6/1749598532309.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.matchpointctg.com/",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Matchpoint Padel Club ofrece una experiencia deportiva integral con 3 canchas de pádel (2 cubiertas y 1 al aire libre), ideales para jugar sin importar el clima. Además, contamos con una cancha de pickleball, una de tenis y un kiosko de comida y bebida para disfrutar después del juego. Un espacio pensado para el deporte, la recreación y la buena compañía.",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "+57 3103463416",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f2818507-9150-4340-8efa-da9719fc22af",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "acc9bc0e-ae5c-4483-8124-20f8eff60f7a",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "27959f58-ba98-4134-aa7b-eef9c15cea56",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e6909ff8-1234-4ba5-805d-7d6cee677718",
+        "name": "Tennis 4",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "single",
+          "concrete"
+        ]
+      },
+      {
+        "resourceId": "d99aa11c-7509-476a-9e85-221cae05c219",
+        "name": "Pickleball 5",
+        "sport": "PICKLEBALL",
+        "features": [
+          "outdoor",
+          "single",
+          "concrete"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "05:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS",
+      "PICKLEBALL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c512ff3e-2fac-490b-97ce-84943ab80831",
+    "tenant_name": "MUCHO PADEL",
+    "slug": "mucho-padel",
+    "address": {
+      "street": "Via Manzanillo, Kilometro 1 Complejo Deportivo Mucho Padel",
+      "postal_code": "130003",
+      "city": "Cartagena",
+      "sub_administrative_area": "Cartagena Province",
+      "administrative_area": "Bolivar",
+      "country": "Colombia",
+      "country_code": "CO",
+      "coordinate": {
+        "lat": 10.51969787,
+        "lon": -75.48130015
+      },
+      "timezone": "America/Bogota"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1741384726/pro/tenants/c512ff3e-2fac-490b-97ce-84943ab80831/1741384725330.jpg"
+    ],
+    "properties": {
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PRIVATE_PARKING": "false",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/muchopadel.col/",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_VENDING_MACHINE": "false",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Club de Padel en Cartagena",
+      "CONTACT_PHONE": "+57 3181620482",
+      "PUBLIC_TRANSPORT_BUS": ""
+    },
+    "resources": [
+      {
+        "resourceId": "c5930a9c-ce06-475f-8d25-9001bfbec343",
+        "name": "Cancha SkyTrips (1)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "34f0f3d8-6ddc-4040-bdfd-cd544a25db04",
+        "name": "Cancha Drogueria Inglesa (2)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0e6374d0-242d-45c2-ba57-e0f7c88b5a91",
+        "name": "Cancha 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3947ec00-25ab-4c1a-aabd-6142e92aba83",
+        "name": "Cancha 4",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "3bd2783c-1045-4689-9f99-95e30dbb4814",
+        "name": "Cancha 6",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "19:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "20:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "af20d215-5be7-4107-8929-00021a37f259",
+    "tenant_name": "PADELMANIA CARTAGENA",
+    "slug": "padelmania-cartagena",
+    "address": {
+      "street": "KM 11 Via al Mar, Plaza comercial puerta de las americas",
+      "postal_code": "130001",
+      "city": "Cartagena de Indias",
+      "sub_administrative_area": "Provincia de Cartagena",
+      "administrative_area": "Bolívar",
+      "country": "Colombia",
+      "country_code": "CO",
+      "coordinate": {
+        "lat": 10.53490552,
+        "lon": -75.46096742
+      },
+      "timezone": "America/Bogota"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1765915060/pro/tenants/af20d215-5be7-4107-8929-00021a37f259/1765915059563.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765915126/pro/tenants/af20d215-5be7-4107-8929-00021a37f259/1765915124918.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1765915129/pro/tenants/af20d215-5be7-4107-8929-00021a37f259/1765915128001.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1766438531/pro/tenants/af20d215-5be7-4107-8929-00021a37f259/1766438530893.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://padelmaniacartagena.com",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+57 3142283307",
+      "DETAILS_PAGE_DESCRIPTION": "Vive el padel, Siente la energia, Disfruta en padelmania.\nContamos con 2 pistas para que disfrutes tu juego, en un excelente ambiente y multiples facilidades a tu alrededor.",
+      "FACILITY_LOCKERS": "false"
+    },
+    "resources": [
+      {
+        "resourceId": "de1e1be0-34ea-4219-bbdc-199ab28d6c78",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "32c30793-e287-4549-9ce6-e1b644ad4b8f",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:00"
+      },
+      "THURSDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "17:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "16:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "12208e6a-cb31-4c48-8c97-4dc612c783ec",
+    "tenant_name": "Prime Padel",
+    "slug": "prime-padel-club",
+    "address": {
+      "street": "Cra. 35 #10-300",
+      "postal_code": "760042",
+      "city": "Yumbo",
+      "sub_administrative_area": "Yumbo",
+      "administrative_area": "Valle del Cauca",
+      "country": "Colombia",
+      "country_code": "CO",
+      "coordinate": {
+        "lat": 3.50392715,
+        "lon": -76.51876768
+      },
+      "timezone": "America/Bogota"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1771816401/pro/tenants/12208e6a-cb31-4c48-8c97-4dc612c783ec/1771816400403.jpg"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "99f80b3c-9204-4ac6-90bc-8730a0bea0fd",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "https://www.instagram.com/primepadelx?igsh=MXBzemYxZGo5MHMyYQ==",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "CONTACT_PHONE": "+57 3164821003",
+      "DETAILS_PAGE_DESCRIPTION": "Experimenta la emoción del pádel en un entorno exclusivo en Prime Padel, el destino definitivo para los amantes del deporte!"
+    },
+    "resources": [
+      {
+        "resourceId": "8d99e54d-6740-4669-9719-d1cc66e8a2e1",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "33605b95-6e43-4e07-8eab-7043ce516212",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "d2867299-65fe-4262-9842-2bf3d79e12c0",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "05b6556f-0d7e-41d9-bc5f-ad2e5c701bfb",
+        "name": "MC FIT NUTRITION 5",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "20:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "20:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "fb5da2e8-c9b2-401f-b631-1c93ad03680e",
+    "tenant_name": "ULTIMATE PADEL CALI",
+    "slug": "ultimate-padel-cali",
+    "address": {
+      "street": "Carrera 125 # 19-59",
+      "postal_code": "760001",
+      "city": "Cali",
+      "sub_administrative_area": "Cali",
+      "administrative_area": "Valle del Cauca",
+      "country": "Colombia",
+      "country_code": "CO",
+      "coordinate": {
+        "lat": 3.33856988,
+        "lon": -76.52981625
+      },
+      "timezone": "America/Bogota"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1736307992/pro/tenants/fb5da2e8-c9b2-401f-b631-1c93ad03680e/1736307991804.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736309337/pro/tenants/fb5da2e8-c9b2-401f-b631-1c93ad03680e/1736309336760.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1736309339/pro/tenants/fb5da2e8-c9b2-401f-b631-1c93ad03680e/1736309338863.jpg"
+    ],
+    "properties": {
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "FACILITY_STORE": "true",
+      "FACILITY_VENDING_MACHINE": "false",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_RESTAURANT": "true",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "DETAILS_PAGE_DESCRIPTION": "Ultimate Padel Cali es el club de pádel más grande de Cali y uno de los más destacados de Colombia, reconocido por sus modernas instalaciones de nivel mundial. Contamos con 6 pistas, incluyendo las primeras moradas del país, un espectacular Spot Central, y una infraestructura que combina deporte y estilo de vida. Nuestros servicios exclusivos incluyen un Gastro-Bar, Café Viajero, pro shop, fisioterapia y espacios diseñados para brindar una experiencia deportiva y social única.",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "FACILITY_SNACK_BAR": "true",
+      "DETAILS_PAGE_TITLE": "",
+      "CONTACT_PHONE": "+57 3173725231"
+    },
+    "resources": [
+      {
+        "resourceId": "29a5c03b-3f87-4c06-b3d6-754cd6fdfadd",
+        "name": "Pista 1",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "bb1cd3e9-03c2-49ba-ad0f-ca1b85e1c0d3",
+        "name": "Pista 2 Deo Pies",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "16f4b4ef-5fea-496a-a64d-ef2696edde31",
+        "name": "Pista 3",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "03f5c3f6-586f-4317-b406-fbfb95f8eb84",
+        "name": "Pista 4 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "315c341f-06b3-438b-8026-6f4d02cc4793",
+        "name": "Pista 5 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c8035f62-2634-4671-a249-e0dd85506c52",
+        "name": "Pista 6 ",
+        "sport": "PADEL",
+        "features": [
+          "indoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "21:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  }
+]

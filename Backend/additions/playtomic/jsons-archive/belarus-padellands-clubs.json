@@ -1,0 +1,50 @@
+[
+  {
+    "id": 169482,
+    "slug": "360-padel-arena",
+    "name": "360 Padel Arena",
+    "link": "https://padellands.com/pistas-de-padel/360-padel-arena/",
+    "avatarUrl": "https://padellands.com/wp-content/uploads/2025/08/360-Padel-Arena-.png",
+    "courtsNumber": 7,
+    "cityFromDesc": "Minsk",
+    "description": "360 Padel Arena dispone de 7 pistas de padel en la ciudad de Minsk, Bielorrusia. 7 padel courts in Minsk, Bielorrusia.",
+    "sourceUrl": "https://padellands.com/pistas-de-padel/360-padel-arena/",
+    "address": "Novaya Borovaya, Sports Complex “Triumph”",
+    "phone": "+375 29 378 04 00",
+    "cityRaw": "Minsk",
+    "regionSlug": "bielorrusia",
+    "regionName": "Belarus"
+  },
+  {
+    "id": 166136,
+    "slug": "padel-klub-ilo",
+    "name": "Padel Klub Ilo",
+    "link": "https://padellands.com/pistas-de-padel/padel-klub-ilo/",
+    "avatarUrl": "https://padellands.com/wp-content/uploads/2025/05/Padel-Klub-Ilo.webp",
+    "courtsNumber": 1,
+    "cityFromDesc": "Ratamka",
+    "description": "Padel Klub Ilo pone a vuestra disposición una pista de padel en Ratamka, Bielorrusia. Padel court in Ratamka, Belarus.",
+    "sourceUrl": "https://padellands.com/pistas-de-padel/padel-klub-ilo/",
+    "address": "Аг, Ulitsa Perspektivnaya 12",
+    "phone": "+375 29 615-71-33",
+    "cityRaw": "Ratamka",
+    "regionSlug": "bielorrusia",
+    "regionName": "Belarus"
+  },
+  {
+    "id": 127557,
+    "slug": "padel-club-minsk",
+    "name": "Padel Club  Minsk",
+    "link": "https://padellands.com/pistas-de-padel/padel-club-minsk/",
+    "avatarUrl": "https://padellands.com/wp-content/uploads/2024/01/Padel-Club-Minsk.jpg",
+    "courtsNumber": 2,
+    "cityFromDesc": null,
+    "description": "",
+    "sourceUrl": "https://padellands.com/pistas-de-padel/padel-club-minsk/",
+    "address": "Saperov street, 5, Minsk",
+    "phone": "375447781234",
+    "cityRaw": "Minsk",
+    "regionSlug": "bielorrusia",
+    "regionName": "Belarus"
+  }
+]

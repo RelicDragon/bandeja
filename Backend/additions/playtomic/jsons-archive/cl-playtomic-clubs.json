@@ -1,0 +1,2317 @@
+[
+  {
+    "tenant_id": "1f327194-e275-47fe-bfdb-09142aab7a47",
+    "tenant_name": "Academia Padel Chicureo",
+    "slug": "academia-padel-chicureo",
+    "address": {
+      "street": "Calle San José, Parcela 1, CP 9340000, Chicureo, Chile",
+      "postal_code": "9340000",
+      "city": "Chicureo",
+      "sub_administrative_area": "Chicureo",
+      "administrative_area": "Chicureo",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -33.251203,
+        "lon": -70.705408
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/1f327194-e275-47fe-bfdb-09142aab7a47/academiapadelc_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/1f327194-e275-47fe-bfdb-09142aab7a47/academiapadelc_0002"
+    ],
+    "properties": {
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Club y Academia de Padel con 4 canchas panoramicas, cuenta con instructores Argentinos de primera categoria, ubicado en Calle San Jose, Parcela 1, Chicureo",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "academiapadelch",
+      "CONTACT_PHONE": "949216568",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "646a8276-5d4d-41a2-9da5-8b27d44d7839",
+        "name": "Cancha 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "28071138-1f86-4438-8e2b-af14ff225583",
+        "name": "Cancha 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ecb42104-62af-4a7c-8707-2fe43c0214c0",
+        "name": "Cancha 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "035cdd91-e22f-48a4-b0dd-7519a2b695ec",
+        "name": "Cancha 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {},
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "467e8933-1e7b-4b2b-be4e-5af9405033e2",
+    "tenant_name": "Antivero Padel Club",
+    "slug": "antivero-padel-club",
+    "address": {
+      "street": "El Trapiche S/N, San Fernando",
+      "postal_code": "3070000",
+      "city": "San Fernando",
+      "sub_administrative_area": "San Fernando",
+      "administrative_area": "San Fernando",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.578257,
+        "lon": -70.977807
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/467e8933-1e7b-4b2b-be4e-5af9405033e2/antiveropadelclub_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/467e8933-1e7b-4b2b-be4e-5af9405033e2/antiveropadelclub_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/467e8933-1e7b-4b2b-be4e-5af9405033e2/antiveropadelclub_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/467e8933-1e7b-4b2b-be4e-5af9405033e2/antiveropadelclub_0004",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/467e8933-1e7b-4b2b-be4e-5af9405033e2/antiveropadelclub_0005"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+56974956929",
+      "DETAILS_PAGE_DESCRIPTION": "\n",
+      "ALLOWS_CASH_PAYMENT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f1c8d9b8-d9ae-43dd-881d-61779a04c853",
+        "name": "Juan Pablo Mora Nocetti (JP)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "6977bee5-699b-4d62-8bdf-2abfcec1f97a",
+        "name": "Salazar Abogados",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "95a7728e-fa02-4172-b32a-e1d6e1f080e3",
+        "name": "Cancha 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "2ae283b7-628e-47e1-8fcb-86d420d7863c",
+        "name": "Korde",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {},
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "9aec4cda-c8b5-4159-9f25-e0ab2ca8f168",
+    "tenant_name": "Blue Padel Chile",
+    "slug": "blue-padel-chile",
+    "address": {
+      "street": "Camino a roma 3600, San Fernando, Chile",
+      "postal_code": "00000",
+      "city": "San Fernando",
+      "sub_administrative_area": "San Fernando",
+      "administrative_area": "San Fernando",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.595371,
+        "lon": -70.961356
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/9aec4cda-c8b5-4159-9f25-e0ab2ca8f168/bluepadelchile_0001"
+    ],
+    "properties": {
+      "FACILITY_MATERIAL_RENTING": "true",
+      "WEBSITE_URL": "https://www.instagram.com/bluewellness/",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_WIFI": "true",
+      "CONTACT_PHONE": "984618353",
+      "DETAILS_PAGE_DESCRIPTION": "Tenemos 2 cancha panorámica, y un muy buen ambiente para poder disfrutar del pádel! \n",
+      "FACILITY_CHANGEROOM": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "f50322c2-14a9-4d90-ab9b-252351c5f16c",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "17cbb574-e11e-4203-912b-b1f5e1bf2e0b",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6c055333-f815-4fa6-b304-950e6d85ab79",
+        "name": "Court Central (C3)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "f51346eb-de68-49a1-bc26-ea6e3ee93591",
+    "tenant_name": "Canchapoal Club De Padel",
+    "slug": "canchapoal-club-de-padel",
+    "address": {
+      "street": "Av. Cachapoal n° 1361 Rancagua",
+      "postal_code": "2842319",
+      "city": "Chile",
+      "sub_administrative_area": "Chile",
+      "administrative_area": "Chile",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.190431,
+        "lon": -70.75294
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+56 9 67263542"
+    },
+    "resources": [
+      {
+        "resourceId": "2d74d45c-c951-4803-87ca-232e5d791e86",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7b13bc48-4a76-49ec-ad55-a7742120205b",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "5a498e8c-9d2c-42e8-9d10-e353e50b0251",
+        "name": "Padel 3 Techada",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "76f8ebb0-6c63-42ad-afea-d46167d337ac",
+        "name": "Padel 4 Techada",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1fb8eafe-5cb8-455a-851a-397964536dc3",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {},
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "308623b9-03bc-4466-80bd-31dd3c2c1154",
+    "tenant_name": "Central Padel San Vicente",
+    "slug": "central-padel-san-vicente",
+    "address": {
+      "street": "San Vicente de Taguatagua, San Vicente, O'Higgins",
+      "postal_code": "0159",
+      "city": "San Vicente",
+      "sub_administrative_area": "VI Region",
+      "administrative_area": "VI Region",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.43727897,
+        "lon": -71.07067933
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/308623b9-03bc-4466-80bd-31dd3c2c1154/cpsanvicente_0001"
+    ],
+    "properties": {
+      "CONTACT_PHONE": "+56962020778"
+    },
+    "resources": [
+      {
+        "resourceId": "3aad9013-39ae-4f7f-8980-6dc6e7fda5f2",
+        "name": "CANCHA 4 ZAPPING TV",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e677d7d0-0694-48d1-8743-47eb58d13977",
+        "name": "CANCHA 3 SEMBRASOL",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "03d5bb68-2419-4fca-9f95-e9ff03f30ba4",
+        "name": "CANCHA 2 SOFRUCO",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f109b8b5-bc13-4ccf-ae34-da45ca9c6caa",
+        "name": "CANCHA 1 AWALINA",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "28d40c3a-0f2b-4878-9c15-4f2acf21cfe5",
+        "name": "COURT CENTRAL MARIAM ZENATI",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {},
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "7e6e9933-79f7-4c43-954b-e90738c99ddc",
+    "tenant_name": "Centro Español Padel Club",
+    "slug": "centro-espanol-padel-club",
+    "address": {
+      "street": "av bernardo O`higgins sur 1070, San Ferando, Chile",
+      "postal_code": "3070000",
+      "city": "San Fernando",
+      "sub_administrative_area": "San Fernando",
+      "administrative_area": "Ohiggins",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.583138,
+        "lon": -70.982907
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/7e6e9933-79f7-4c43-954b-e90738c99ddc/centroespanolpadelclub_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/7e6e9933-79f7-4c43-954b-e90738c99ddc/centroespanolpadelclub_0002"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_WIFI": "false",
+      "CONTACT_PHONE": "985274950",
+      "DETAILS_PAGE_DESCRIPTION": "\n",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "false",
+      "WEBSITE_URL": "https://www.instagram.com/centroespanolpadelclub/",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2fb2d61a-bfda-4bed-b6d8-b31abd01496c",
+        "name": "TECHADA 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c72c99aa-056b-4dd5-b9bd-f77d0a4ed2e5",
+        "name": "TECHADA 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7d00a704-3928-413d-9241-52c332c453dd",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c11c4b8e-a610-4891-af2c-ee0121649ba7",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:30"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:30"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "01:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "01:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "2c30cb78-c7a4-45cf-b834-0faeaa925311",
+    "tenant_name": "Club Los Quillayes",
+    "slug": "club-los-quillayes",
+    "address": {
+      "street": "Carretera del Cobre Km 6,5",
+      "postal_code": "2910000",
+      "city": "Machalí",
+      "sub_administrative_area": "",
+      "administrative_area": "Libertador General Bernardo O'Higgins",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.1952366,
+        "lon": -70.67751314
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/2c30cb78-c7a4-45cf-b834-0faeaa925311/quillayes_0001"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "SPORT_PADEL": "true",
+      "CONTACT_PHONE": "+56995083637",
+      "SPORT_TENNIS": "true",
+      "DETAILS_PAGE_TITLE": "Reserva pista en Club Los Quillayes con Playtomic.",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "WEBSITE_URL": "http://clublosquillayes.cl/",
+      "ALLOWS_CASH_PAYMENT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "4ecb30dd-83b7-49d6-b491-bdb0a900bd60",
+        "name": "Padel 1 ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6636fa26-f17f-4680-b9a4-bfb5dec6afc8",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "04f8e2d6-d980-4d9f-88b5-97f8308990c9",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "76b62e31-7648-4989-a6a8-788bb4b1d535",
+        "name": "Tenis 1",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      },
+      {
+        "resourceId": "3bc20310-2045-42f0-a6ac-f0f035c4c375",
+        "name": "Tenis 2",
+        "sport": "TENNIS",
+        "features": [
+          "outdoor",
+          "double",
+          "clay"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "TENNIS"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "ba1fc237-8008-4097-b2e8-208b915c5920",
+    "tenant_name": "Cornejo Padel Center Machali",
+    "slug": "cornejo-padel-center-machali",
+    "address": {
+      "street": "Carretera del cobre 2521, Machali, Chile",
+      "postal_code": "2910000",
+      "city": "Machali",
+      "sub_administrative_area": "",
+      "administrative_area": "Libertador General Bernardo O'Higgins",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.19064,
+        "lon": -70.70507
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/ba1fc237-8008-4097-b2e8-208b915c5920/cornejopcmachali_0001"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "Club de padel con 5 canchas full panorámicas, cuenta con tienda deportiva, ubicado en street center boulevard nogales.\n",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_STORE": "true",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "CONTACT_PHONE": "+5696950497",
+      "FACILITY_WIFI": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "WEBSITE_URL": "https://www.instagram.com/cornejopadelcenter.machali/"
+    },
+    "resources": [
+      {
+        "resourceId": "a7798247-b0fb-4afd-bbe4-7c7463cf59bc",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f9cd5292-6ebd-41e1-9f59-dd2fd28c83f7",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "339dc9f6-eb2e-44c1-bead-6694670851b3",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4bccfcd2-dc95-469f-8290-ee613818387e",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1df307aa-6ac9-4916-9af4-474871a8fce3",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "07:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "47c73fca-6c38-4731-ba27-949d0e8d2d0f",
+    "tenant_name": "El ENCUENTRO",
+    "slug": "el-encuentro",
+    "address": {
+      "street": "Camino Guay Guay 9535 parcela 7",
+      "postal_code": "9340000",
+      "city": "Colina",
+      "sub_administrative_area": "Chacabuco",
+      "administrative_area": "Región Metropolitana",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -33.27073897,
+        "lon": -70.64627841
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1748549321/pro/tenants/47c73fca-6c38-4731-ba27-949d0e8d2d0f/1748549321053.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1748549324/pro/tenants/47c73fca-6c38-4731-ba27-949d0e8d2d0f/1748549324354.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1748549455/pro/tenants/47c73fca-6c38-4731-ba27-949d0e8d2d0f/1748549454810.jpg",
+      "https://res.cloudinary.com/playtomic/image/upload/v1748549456/pro/tenants/47c73fca-6c38-4731-ba27-949d0e8d2d0f/1748549455955.jpg"
+    ],
+    "properties": {
+      "DISABLE_AUTO_SPLIT_PAYMENT_FOR_TENANT_TAGS": "f187fbca-346d-4259-8607-65e2e7f387ca",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_EXTRA_INFO_ON_HOVER_CALENDAR": "false",
+      "WEBSITE_URL": "",
+      "FACILITY_STORE": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_RESTAURANT": "true",
+      "CONTACT_PHONE": "+56 934297553",
+      "DETAILS_PAGE_DESCRIPTION": ""
+    },
+    "resources": [
+      {
+        "resourceId": "5d31f875-c987-4cc8-a441-1103c227620b",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "f5f0893a-8355-488b-bd5a-f333d56326f7",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5e0e9b8b-713d-4f61-afda-d22601f4cd77",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "eb6536c5-7db7-49af-87dc-cf6f7b3e183b",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "15ce4760-0de8-4844-ba30-7ae9a215e36c",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "ac5271a3-3e1d-4f6d-9528-bf04b0af7336",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "15:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "18:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "23:00"
+      },
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "15:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "95d2ab77-3cfc-4d1d-bd18-75a668648557",
+    "tenant_name": "Espacio Arena Machali",
+    "slug": "espacio-arena-machali",
+    "address": {
+      "street": "LT Cpc 1 snjdel",
+      "postal_code": "29100000",
+      "city": "Machalí",
+      "sub_administrative_area": "",
+      "administrative_area": "Libertador General Bernardo O'Higgins",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.18786,
+        "lon": -70.705596
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/95d2ab77-3cfc-4d1d-bd18-75a668648557/arenapadelmachali_0001"
+    ],
+    "properties": {
+      "SPORT_BADMINTON": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "e4235683-9f96-4c34-aaef-931f8a1a178a",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "78cc96bf-326a-4934-93bd-8cc9fa1fb80e",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "40199c38-133a-4ecc-b77d-746a9491f075",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "86555cfd-df1f-40d4-97d2-9032af4e0323",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "78ab5625-f95c-4615-9f1a-408bbf63e09b",
+        "name": "Voley 1",
+        "sport": "BADMINTON",
+        "features": [
+          "outdoor"
+        ]
+      },
+      {
+        "resourceId": "d7425d14-c77c-4cd3-86ea-5ffd73be03df",
+        "name": "Voley 2",
+        "sport": "BADMINTON",
+        "features": [
+          "outdoor"
+        ]
+      }
+    ],
+    "opening_hours": {},
+    "sport_ids": [
+      "PADEL",
+      "BADMINTON"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "04d07555-c515-417d-8d47-87cd9a6c4f64",
+    "tenant_name": "Hamburg Pádel Center",
+    "slug": "hamburg-padel-center",
+    "address": {
+      "street": "Calle San Enrique 470, Villa alemena",
+      "postal_code": "470",
+      "city": "valparaiso",
+      "sub_administrative_area": "",
+      "administrative_area": "V region",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -33.049757,
+        "lon": -71.378738
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [],
+    "properties": {
+      "CONTACT_PHONE": "+56968643117"
+    },
+    "resources": [
+      {
+        "resourceId": "471d20f7-1022-4241-a59b-d1ff741f4d85",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "68646eea-f24d-4585-8f73-ba55ef48301a",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "36030add-04c4-456c-9e89-e5ace38f5687",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "b58cb73e-da43-40a4-886e-061fd69ca225",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {},
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c90cff30-d417-49fe-9da3-0347e8bc4c6f",
+    "tenant_name": "Olivar Padel Chile",
+    "slug": "olivar-padel-chile",
+    "address": {
+      "street": "Ruta H-40 #280",
+      "postal_code": "2920000",
+      "city": "Comuna de olivar",
+      "sub_administrative_area": "Chile",
+      "administrative_area": "Chile",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.2238908,
+        "lon": -70.8191816
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/c90cff30-d417-49fe-9da3-0347e8bc4c6f/olivarpadel_0001"
+    ],
+    "properties": {
+      "DETAILS_PAGE_TITLE": "Reserva pista en Olivar Padel Chile con Playtomic",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.olivarpadel.cl",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "CONTACT_PHONE": "+56954081264",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "SHOW_AVAILABILITY_GRID": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "1d03daf5-d0b0-4c56-8590-ff2fbf84fa75",
+        "name": "Cancha Techada AGREDUCAM",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "667b2235-3745-4c7e-9189-635406cfd908",
+        "name": "Cancha Techada Korde",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "dce711d6-eb17-4e84-8087-01587b488e81",
+        "name": "Cancha Go Panel Aire Libre",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "22:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "2b623d9f-644a-44cf-b15b-7c6f4f6cb7ff",
+    "tenant_name": "PADEL 7",
+    "slug": "padel-7",
+    "address": {
+      "street": "DIEGO DE ALMAGRO 1035",
+      "postal_code": "2820000",
+      "city": "Rancagua",
+      "sub_administrative_area": "Cachapoal",
+      "administrative_area": "O'Higgins",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.17979174,
+        "lon": -70.73492307
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1728494292/pro/tenants/2b623d9f-644a-44cf-b15b-7c6f4f6cb7ff/1728494291932.jpg"
+    ],
+    "properties": {
+      "FACILITY_PRIVATE_PARKING": "true",
+      "FACILITY_LOCKERS": "false",
+      "FACILITY_PLAYPARK": "false",
+      "DETAILS_PAGE_TITLE": "",
+      "FACILITY_CHANGEROOM": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padel7club/",
+      "PUBLIC_TRANSPORT_BUS": "",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_RESTAURANT": "false",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "false",
+      "FACILITY_SNACK_BAR": "false",
+      "DETAILS_PAGE_VERSION": "2.0.0",
+      "ALLOWS_CASH_PAYMENT": "false",
+      "FACILITY_FREE_PARKING": "true",
+      "PUBLIC_TRANSPORT_METRO": "",
+      "DETAILS_PAGE_DESCRIPTION": "Bienvenidos a Club Pádel 7!\n-4 canchas de pádel\n-Venta y arriendo de indumentaria\n-Estacionamientos\n-Baños y camarines\n-Clases particulares",
+      "FACILITY_VENDING_MACHINE": "false",
+      "FACILITY_WIFI": "false",
+      "PUBLIC_TRANSPORT_TRAIN": "",
+      "CONTACT_PHONE": "+56 950723639",
+      "DETAILS_PAGE_META_DESCRIPTION": "",
+      "FACILITY_MATERIAL_RENTING": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "5381534d-a499-43f8-9ce6-d8fa9e40c430",
+        "name": "Cancha Meds 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "cee7d2e4-1898-4a5b-baa5-dfe4725ee462",
+        "name": "Cancha Costa 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0da8e333-5421-43df-abd7-7f6c3af70d3c",
+        "name": "Cancha Gatorade 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5ff6e5dc-df76-43bd-bea2-9be62fc7c3e3",
+        "name": "Cancha 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "MONDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "FRIDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "SUNDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "SATURDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      },
+      "TUESDAY": {
+        "opening_time": "08:30",
+        "closing_time": "23:30"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "149ea57a-d7a4-4858-93cd-f2d0d6051f57",
+    "tenant_name": "Padel House Malloa",
+    "slug": "padel-house-malloa",
+    "address": {
+      "street": "LT 1-8 Panquehue, Malloa, Chile",
+      "postal_code": "00000",
+      "city": "Malloa",
+      "sub_administrative_area": "Malloa",
+      "administrative_area": "Malloa",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.403764,
+        "lon": -70.908426
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/149ea57a-d7a4-4858-93cd-f2d0d6051f57/padelhousemalloa_0001"
+    ],
+    "properties": {
+      "ALLOWS_CASH_PAYMENT": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "https://www.instagram.com/padelhousemalloa/",
+      "FACILITY_PLAYPARK": "true",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Nuestro Club cuenta con 4 canchas full panorámicas, amplio estacionamiento, cafetería, baños, sector para niños\n",
+      "CONTACT_PHONE": "+56958280105"
+    },
+    "resources": [
+      {
+        "resourceId": "1da03a37-2cf6-4547-8a14-ecb090efab48",
+        "name": "Cancha 1 (TECHADA)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "80f822ed-2e57-42b0-b1ed-f640936025a1",
+        "name": "Cancha 2 (TECHADA)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ee202073-b012-4338-83fc-73f7d35d9812",
+        "name": "Cancha 3 (Court Central) (TECHADA)",
+        "sport": "PADEL",
+        "features": [
+          "roofed",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "1ccf5f90-a2f8-4a1a-ae90-e8185ad65dd0",
+        "name": "Cancha 4 (OUTDOOR)",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "9139d7c0-bc27-4318-949c-073f598d1b33",
+    "tenant_name": "Pádel San Juan",
+    "slug": "padel-san-juan",
+    "address": {
+      "street": "Avenida San Juan n°1619 Comuna Machali Cuidad libertador Bernardo ",
+      "postal_code": " ",
+      "city": "Ohiggins",
+      "sub_administrative_area": "Rancagua",
+      "administrative_area": "Rancagua",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.17073041,
+        "lon": -70.6628274
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/9139d7c0-bc27-4318-949c-073f598d1b33/padelsanjuan_0001"
+    ],
+    "properties": {
+      "DETAILS_PAGE_TITLE": "Reserva cancha en Pádel San Juan con Playtomic",
+      "FACILITY_CHANGEROOM": "true",
+      "ALLOWS_CASH_PAYMENT": "true",
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "https://www.padelsanjuan.cl",
+      "CONTACT_PHONE": "+56931997698",
+      "FACILITY_FREE_PARKING": "true",
+      "SHOW_AVAILABILITY_GRID": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "dfac90c7-afb3-4b89-8c0f-0ffb0d7b6778",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "a98de8b3-fd88-4756-bf5f-51f30dc99dc9",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6a427ec4-cf96-45ca-8bc2-918cd9dc95aa",
+        "name": "Pádel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "bf4b7766-e261-46b1-b244-e7cbf5470d11",
+    "tenant_name": "Palmilla Padel Chile",
+    "slug": "palmilla-padel-chile",
+    "address": {
+      "street": "La Palmilla 2005 las Cruz, 5ta region Chile.",
+      "postal_code": "3160000",
+      "city": "Chile",
+      "sub_administrative_area": "Chile",
+      "administrative_area": "Chile",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -32.811401,
+        "lon": -71.21386
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "$1e",
+      "CONTACT_PHONE": "+56951781900"
+    },
+    "resources": [
+      {
+        "resourceId": "7d2bb269-52ad-478c-b6b0-58c40483aea2",
+        "name": "Central ",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "0462fee7-ab0c-4b99-a9d8-c591ac22ef2d",
+        "name": "Cancha 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "f92fecac-db82-4a59-9487-44e7fa5ac27c",
+        "name": "Cancha 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "66ba4ebc-44b0-4f3c-95a5-a79a0e8e5124",
+        "name": "Cancha 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {},
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "0950d32b-07c9-40a6-b9ff-1c9d82abee6d",
+    "tenant_name": "Peñuelas Padel Club",
+    "slug": "penuelas-padel-club",
+    "address": {
+      "street": "Avenida Peñuelas Sur, Parcela 65 A,",
+      "postal_code": "1804001",
+      "city": "Ciudad Coquimbo",
+      "sub_administrative_area": "Chile",
+      "administrative_area": "Chile",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -29.954335,
+        "lon": -71.300215
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/0950d32b-07c9-40a6-b9ff-1c9d82abee6d/penuelaspc_0001",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/0950d32b-07c9-40a6-b9ff-1c9d82abee6d/penuelaspc_0002",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/0950d32b-07c9-40a6-b9ff-1c9d82abee6d/penuelaspc_0003",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/0950d32b-07c9-40a6-b9ff-1c9d82abee6d/penuelaspc_0004",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/0950d32b-07c9-40a6-b9ff-1c9d82abee6d/penuelaspc_0005",
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/0950d32b-07c9-40a6-b9ff-1c9d82abee6d/penuelaspc_0006"
+    ],
+    "properties": {
+      "DETAILS_PAGE_DESCRIPTION": "Peñuelas Pádel Club en conjunto con la corporación de deportes de Coquimbo realizará el primer torneo regional puntuable para el ranking de la Federación de Pádel Chile (FEPACHI).\n1 millón de pesos a repartir entre todas las categorías hombres y mujeres.\nPara más información consulta de forma directa en el club o al teléfono +56971908206.\n\n¡No te quedes fuera!\nCupos limitados\n\n\nTe esperamos",
+      "CONTACT_PHONE": "+56971908206"
+    },
+    "resources": [
+      {
+        "resourceId": "f8e13aef-c315-4418-b393-e0414fdc4e27",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "7497f0f2-af43-4cc0-babc-d75f71a2f5b5",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4c39ab2e-d009-434a-9875-a9cf03786d45",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "e65ccaad-1dca-4c80-8795-79cec2ee6700",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {},
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "95d6e576-126c-4e3d-b8db-ec1adc5a0dee",
+    "tenant_name": "ProPadel Rancagua",
+    "slug": "propadel-rancagua",
+    "address": {
+      "street": "Rabanal 1411",
+      "postal_code": "2821271",
+      "city": "Rancagua",
+      "sub_administrative_area": "Cachapoal",
+      "administrative_area": "O'Higgins",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.1898017,
+        "lon": -70.7295738
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1775853317/pro/tenants/95d6e576-126c-4e3d-b8db-ec1adc5a0dee/1775853317367.jpg"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "WEBSITE_URL": "",
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "CONTACT_PHONE": "+56 933842019",
+      "DETAILS_PAGE_DESCRIPTION": "4 canchas de padel y 1 de futbolito",
+      "FACILITY_LOCKERS": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "d21e298c-295c-4b61-a871-65dc501e953e",
+        "name": "Hyundai",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "aee3f3a3-740a-4381-bbae-0e20aa0ed11d",
+        "name": "Mc Donald",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "72a51bed-1040-4eb8-a995-96583b5089d1",
+        "name": "Costa",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bf2b508c-d876-489c-8c86-7d082f2bbe1a",
+        "name": "Gatorade",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "930acfe9-c9a3-4ce6-a646-5a5a73d431ed",
+        "name": "Futbolito",
+        "sport": "FOOTBALL7",
+        "features": [
+          "outdoor",
+          "synthetic_grass"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL",
+      "FOOTBALL7"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "7acd0700-459d-4bf7-bdf6-677c373a1a27",
+    "tenant_name": "ProPadel Machalí",
+    "slug": "propadel-machali",
+    "address": {
+      "street": "avenida comunidad bravo 091",
+      "postal_code": "2910000",
+      "city": "Machalí",
+      "sub_administrative_area": "Cachapoal",
+      "administrative_area": "O'Higgins",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.1648181,
+        "lon": -70.6666486
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/v1775855185/pro/tenants/7acd0700-459d-4bf7-bdf6-677c373a1a27/1775855185034.jpg"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+56 991592404",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_LOCKERS": "true",
+      "DETAILS_PAGE_DESCRIPTION": "5 canchas de padel",
+      "WEBSITE_URL": ""
+    },
+    "resources": [
+      {
+        "resourceId": "0966777f-54d2-450f-8734-b061ca8f5c20",
+        "name": "Hyundai",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "bfbee801-5483-48e1-9000-abbba2ab225a",
+        "name": "Kunstmann",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "5f1ae3ca-ee1d-4381-b5b0-63cf0974ddd2",
+        "name": "Costa",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "8e2b2b58-9ff1-4d88-8ce0-d66a6dc995c6",
+        "name": "Snickers",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      },
+      {
+        "resourceId": "16930c18-d592-4e92-aa7a-e93294fd7e14",
+        "name": "Mc Donald",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "panoramic"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "09:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "c7eb712d-0ad5-43e6-950c-80f5a3710992",
+    "tenant_name": "Rustica Padel Club",
+    "slug": "rustica-padel-club",
+    "address": {
+      "street": "Ruta i 90 km 22",
+      "postal_code": "3110000",
+      "city": "Nancagua",
+      "sub_administrative_area": "Nancagua",
+      "administrative_area": "Sexta Region",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.65294912,
+        "lon": -71.18287547
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/c7eb712d-0ad5-43e6-950c-80f5a3710992/rusticapadelclub_0001"
+    ],
+    "properties": {
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "FACILITY_WIFI": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "CONTACT_PHONE": "+56995598663",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "Club de Pádel ubicado en Nancagua, en el corazón del Valle de Colchagua, con acceso directo por carretera principal.\n\nRústica es una empresa familiar, que alberga la posibilidad de practicar este lindo deporte entre viñedos, árboles nativos y una excelente vista panorámica del cordón montañoso, destacando el cerro Rucatalca.\n\n. Cancha profesional en óptimas condiciones.\n. Profesores de pádel para todos los niveles.\n. Arriendo de palas y pelotas.\n. Ven a disfrutar del deporte, en un grato ambiente y en pleno valle de Colchagua.\n\n",
+      "WEBSITE_URL": "https://www.instagram.com/rustica_padel_nancagua/",
+      "FACILITY_SNACK_BAR": "true",
+      "ALLOWS_CASH_PAYMENT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "211417d3-316f-4d69-81c2-d27616c29051",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c68f18a2-1202-48a9-9ad0-70bdf5420d0f",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "dd3fda4a-4028-4a60-97a0-9d5bc17b28ab",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "FRIDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "MONDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "THURSDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "SUNDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      },
+      "TUESDAY": {
+        "opening_time": "08:00",
+        "closing_time": "23:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "7974428a-9e23-4314-b5e5-88b452b082b0",
+    "tenant_name": "Sport 9 Padel",
+    "slug": "sport-9-padel",
+    "address": {
+      "street": "San Joaquin de los Mayos, Parcela 33",
+      "postal_code": "2910000",
+      "city": "Machalí",
+      "sub_administrative_area": "Machalí",
+      "administrative_area": "Libertador General Bernardo O'Higgins",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.193645,
+        "lon": -70.706948
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/7974428a-9e23-4314-b5e5-88b452b082b0/sportnuevepadel_0001"
+    ],
+    "properties": {
+      "FACILITY_RESTAURANT": "true",
+      "FACILITY_CAFETERIA": "true",
+      "FACILITY_CHANGEROOM": "true",
+      "DETAILS_PAGE_DESCRIPTION": "9 canchas disponibles, próximamente 1 más.\n",
+      "FACILITY_STORE": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "CONTACT_PHONE": "+56956484041",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "FACILITY_VENDING_MACHINE": "true",
+      "WEBSITE_URL": "https://www.instagram.com/sport9padel/",
+      "FACILITY_SNACK_BAR": "true",
+      "ALLOWS_CASH_PAYMENT": "true"
+    },
+    "resources": [
+      {
+        "resourceId": "2ad81d43-d470-4005-856a-2a278ad3726b",
+        "name": "Padel 1",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "0c0502df-6d90-4226-971a-0cb9ee6763e4",
+        "name": "Padel 2",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "71a39fd7-26c4-45be-bd36-c343944a20da",
+        "name": "Padel 3",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "4f773f91-b162-4e61-ac13-6919aa64f7c1",
+        "name": "Padel 4",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "9aa4b1f2-b2a5-4f49-b4a4-75e9d888fd09",
+        "name": "Padel 5",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ce04aa08-e689-4e14-ac52-0deba8a00ce4",
+        "name": "Padel 6",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "6c221ba8-bd37-49bd-8e97-ce08ae105d3d",
+        "name": "Padel 7",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ad33722a-1b60-4b0f-a01e-8f8c744066e8",
+        "name": "Padel 8",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "8a9bfa16-32a6-40f1-be6f-c3d540e98343",
+        "name": "Padel 9",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  },
+  {
+    "tenant_id": "7803c084-9612-4f8b-94b2-670fb5559196",
+    "tenant_name": "Win Pádel Club",
+    "slug": "win-padel-club",
+    "address": {
+      "street": "Arturo Prat 169, ",
+      "postal_code": "2910000",
+      "city": "Machalí",
+      "sub_administrative_area": "Machalí",
+      "administrative_area": "Chile",
+      "country": "Chile",
+      "country_code": "CL",
+      "coordinate": {
+        "lat": -34.178048,
+        "lon": -70.651787
+      },
+      "timezone": "America/Santiago"
+    },
+    "images": [
+      "https://res.cloudinary.com/playtomic/image/upload/c_limit,w_1600/v1/pro/tenants/7803c084-9612-4f8b-94b2-670fb5559196/winpadelclub_0001"
+    ],
+    "properties": {
+      "FACILITY_CHANGEROOM": "true",
+      "FACILITY_LOCKERS": "true",
+      "FACILITY_CAFETERIA": "true",
+      "SHOW_AVAILABILITY_GRID": "true",
+      "FACILITY_DISABLED_ACCESS": "true",
+      "WEBSITE_URL": "+56955182107",
+      "FACILITY_STORE": "true",
+      "FACILITY_SNACK_BAR": "true",
+      "FACILITY_WIFI": "true",
+      "DETAILS_PAGE_TITLE": "Reserva cancha en Win Pádel Club con Playtomic",
+      "FACILITY_MATERIAL_RENTING": "true",
+      "FACILITY_FREE_PARKING": "true",
+      "DETAILS_PAGE_DESCRIPTION": "$1e"
+    },
+    "resources": [
+      {
+        "resourceId": "5d2768c9-cc51-4215-bf6a-7803558b0f7f",
+        "name": "CANCHA 4 \"Casa Gamovi\"",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "b7701d0b-e301-4eb8-8050-21afe39bb119",
+        "name": "CANCHA 3 \"KORDE\"",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "c7f53930-b8c1-4b4c-8555-bfa90573c574",
+        "name": "CANCHA 2 \"Casa Gamovi\"",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      },
+      {
+        "resourceId": "ed4f6dfd-7778-47b9-9fab-7addfd7c5cbc",
+        "name": "CANCHA 1 \"MANGATA\"",
+        "sport": "PADEL",
+        "features": [
+          "outdoor",
+          "double",
+          "crystal"
+        ]
+      }
+    ],
+    "opening_hours": {
+      "THURSDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "WEDNESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "HOLIDAYS": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "TUESDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "MONDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SUNDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "FRIDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      },
+      "SATURDAY": {
+        "opening_time": "06:00",
+        "closing_time": "00:00"
+      }
+    },
+    "sport_ids": [
+      "PADEL"
+    ],
+    "description": ""
+  }
+]

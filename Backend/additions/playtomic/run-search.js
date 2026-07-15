@@ -43,14 +43,44 @@ if (!process.env.TAVILY_API_KEY) {
   process.exit(1);
 }
 
+function russiaListSeeds(cityName) {
+  const c = (cityName || "").trim();
+  if (!c) {
+    return [
+      "Use Russian country-wide queries: падел клубы Россия, корты падел Россия, где играть в падел в России — cover all major cities.",
+      "Search Saint Petersburg, Nizhny Novgorod, Krasnodar, Sochi, Kazan, Yekaterinburg, Rostov-on-Don, Samara, Kaliningrad padel clubs.",
+    ];
+  }
+  const ruHints = {
+    moscow: "Москва",
+    "saint petersburg": "Санкт-Петербург",
+    "st petersburg": "Санкт-Петербург",
+    petersburg: "Санкт-Петербург",
+    "nizhny novgorod": "Нижний Новгород",
+    novgorod: "Нижний Новгород",
+    "veliky novgorod": "Великий Новгород",
+    krasnodar: "Краснодар",
+    sochi: "Сочи",
+    kazan: "Казань",
+    yekaterinburg: "Екатеринбург",
+    "rostov-on-don": "Ростов-на-Дону",
+    rostov: "Ростов-на-Дону",
+    samara: "Самара",
+    kaliningrad: "Калининград",
+  };
+  const key = c.toLowerCase();
+  const ru = ruHints[key] || c;
+  return [
+    `Use Russian search queries: падел ${ru}, корты падел ${ru}, падел клубы ${ru}, где играть в падел ${ru}, падел ${ru} запись.`,
+    `Use English queries: padel clubs ${c}, padel courts ${c} Russia, where to play padel ${c}.`,
+  ];
+}
+
 const expandListSeeds =
   process.env.EXPAND_LIST_SEEDS != null && process.env.EXPAND_LIST_SEEDS !== ""
     ? JSON.parse(process.env.EXPAND_LIST_SEEDS)
     : country && country.toLowerCase() === "russia"
-      ? [
-          "Use Russian search queries: падел Москва, корты падел Москва, падел клубы Москва, где играть в падел Москва.",
-          "Use: padel courts Moscow list, padel centers Moscow, where to play padel Moscow.",
-        ]
+      ? russiaListSeeds(city)
       : null;
 
 const state = {

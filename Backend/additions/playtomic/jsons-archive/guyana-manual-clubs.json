@@ -1,0 +1,15 @@
+[
+  {
+    "id": "manual-gy-1",
+    "name": "The Pádel Club Georgetown",
+    "cityRaw": "Georgetown",
+    "address": "Georgetown, Guyana",
+    "phone": "+592 699 2657",
+    "website": "https://padelclubgeorgetown-gy.matchpoint.com.es/",
+    "courtsNumber": 2,
+    "sports": ["PADEL"],
+    "source": "manual",
+    "sourceUrl": "https://padelclubgeorgetown-gy.matchpoint.com.es/",
+    "description": "First dedicated padel club in Guyana (opening 2026); 2 indoor courts."
+  }
+]

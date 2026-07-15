@@ -1,0 +1,802 @@
+[
+  {
+    "id": 3155,
+    "name": "MetPadel/ fútbol",
+    "cityRaw": "Chía",
+    "address": "Cl. 7 #2e-01 lote 2",
+    "phone": "+573135308929",
+    "website": "https://co.padelizados.net/es-co/i/3155-metpadel-futbol/",
+    "latitude": 4.8519384,
+    "longitude": -74.0489488,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3155-MetPadel-futbol-tMj7S.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3155-metpadel-futbol/",
+    "regionName": "Colombia",
+    "postalCode": "250001",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3153,
+    "name": "Stringing and Rackets",
+    "cityRaw": "Medellín",
+    "address": "Cra. 41 #10-14",
+    "phone": "+573194040520",
+    "website": "https://co.padelizados.net/es-co/i/3153-stringing-and-rackets/",
+    "latitude": 6.2100727,
+    "longitude": -75.5685905,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3153-Stringing-and-Rackets-uKEpS.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3153-stringing-and-rackets/",
+    "regionName": "Colombia",
+    "postalCode": "050021",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3154,
+    "name": "Arena Pádel Club Santa Marta",
+    "cityRaw": "Santa Marta",
+    "address": "Sector Tres Cazuelas, CR 67 67D",
+    "phone": "+573007655566",
+    "website": "https://co.padelizados.net/es-co/i/3154-arena-padel-club-santa-marta/",
+    "latitude": 11.1828468,
+    "longitude": -74.2257178,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3154-Arena-Padel-Club-Santa-Marta-9kx8n.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3154-arena-padel-club-santa-marta/",
+    "regionName": "Colombia",
+    "postalCode": "470006",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3152,
+    "name": "La Caldera Club de Padel",
+    "cityRaw": "Cali",
+    "address": "6to Piso La 14 Avenida 6ta Avenida 6N #30N-47",
+    "phone": "+573148880595",
+    "website": "https://co.padelizados.net/es-co/i/3152-la-caldera-club-de-padel/",
+    "latitude": 3.4723617,
+    "longitude": -76.5270284,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3152-La-Caldera-Club-de-Padel-JZ3jD.jpg",
+    "courtsNumber": 2,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3152-la-caldera-club-de-padel/",
+    "regionName": "Colombia",
+    "postalCode": "6",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3159,
+    "name": "Padel Zenter BAQ",
+    "cityRaw": "Barranquilla",
+    "address": "Via 40 #85-630",
+    "phone": "+573011884688",
+    "website": "https://co.padelizados.net/es-co/i/3159-padel-zenter-baq/",
+    "latitude": 11.0317725,
+    "longitude": -74.8064406,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3159-Padel-Zenter-BAQ-wUeDr.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3159-padel-zenter-baq/",
+    "regionName": "Colombia",
+    "postalCode": "",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3156,
+    "name": "Bahia Sport Center Palmira",
+    "cityRaw": "Palmira",
+    "address": "Cra. 37 #26-105 a 26-1",
+    "phone": "+573127080184",
+    "website": "https://co.padelizados.net/es-co/i/3156-bahia-sport-center-palmira/",
+    "latitude": 3.5260674,
+    "longitude": -76.3090442,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3156-Bahia-Sport-Center-Palmira-0bvEl.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3156-bahia-sport-center-palmira/",
+    "regionName": "Colombia",
+    "postalCode": "763533",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3157,
+    "name": "Just Pádel Club",
+    "cityRaw": "Yumbo",
+    "address": "Cl. 10 #34 00",
+    "phone": "+573171827971",
+    "website": "https://co.padelizados.net/es-co/i/3157-just-padel-club/",
+    "latitude": 3.5071651,
+    "longitude": -76.5218355,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3157-Just-Padel-Club-QUy8o.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3157-just-padel-club/",
+    "regionName": "Colombia",
+    "postalCode": "",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3158,
+    "name": "Bogotá Pádel Center",
+    "cityRaw": "Bogotá",
+    "address": "Cra. 45 #169-81",
+    "phone": "+573504414548",
+    "website": "https://co.padelizados.net/es-co/i/3158-bogota-padel-center/",
+    "latitude": 4.7516558,
+    "longitude": -74.0477711,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3158-bogota-padel-center/",
+    "regionName": "Colombia",
+    "postalCode": "111156",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3162,
+    "name": "SLICE BCA PÁDEL CLUB",
+    "cityRaw": "Barrancabermeja",
+    "address": "Cra. 13 #67-79",
+    "phone": "+573224346733",
+    "website": "https://co.padelizados.net/es-co/i/3162-slice-bca-padel-club/",
+    "latitude": 7.0728934,
+    "longitude": -73.8657742,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3162-SLICE-BCA-PaDEL-CLUB-9g1gj.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3162-slice-bca-padel-club/",
+    "regionName": "Colombia",
+    "postalCode": "687031",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3160,
+    "name": "Play Pádel Club Cali",
+    "cityRaw": "Cali",
+    "address": "Centro Deportivo Luz Mery Tristán, Cl. 18 #180-00",
+    "phone": "+573112396467",
+    "website": "https://co.padelizados.net/es-co/i/3160-play-padel-club-cali/",
+    "latitude": 3.300797,
+    "longitude": -76.5436499,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3160-Play-Padel-Club-Cali-sWpM1.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3160-play-padel-club-cali/",
+    "regionName": "Colombia",
+    "postalCode": "760008",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3163,
+    "name": "Padel Park",
+    "cityRaw": "Montería",
+    "address": "Cl. 72 #1c-17",
+    "phone": null,
+    "website": "https://co.padelizados.net/es-co/i/3163-padel-park/",
+    "latitude": 8.7828342,
+    "longitude": -75.8640356,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3163-padel-park/",
+    "regionName": "Colombia",
+    "postalCode": "",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3161,
+    "name": "Padel house club de Padel",
+    "cityRaw": "Pereira",
+    "address": "Vda. Galicia #00",
+    "phone": "+573215578983",
+    "website": "https://co.padelizados.net/es-co/i/3161-padel-house-club-de-padel/",
+    "latitude": 4.8107014,
+    "longitude": -75.7968371,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3161-padel-house-club-de-padel/",
+    "regionName": "Colombia",
+    "postalCode": "",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3165,
+    "name": "Padelante Pádel Club",
+    "cityRaw": "Cajicá",
+    "address": "Mila de Oro, Cajicá - Chía",
+    "phone": "+573202599742",
+    "website": "https://co.padelizados.net/es-co/i/3165-padelante-padel-club/",
+    "latitude": 4.8992376,
+    "longitude": -74.030644,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3165-Padelante-Padel-Club-h2fzF.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3165-padelante-padel-club/",
+    "regionName": "Colombia",
+    "postalCode": "250247",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3167,
+    "name": "Padel Club Cartagena",
+    "cityRaw": "Cartagena de Indias",
+    "address": "Cra. 4 #7-28",
+    "phone": "+573104107649",
+    "website": "https://co.padelizados.net/es-co/i/3167-padel-club-cartagena/",
+    "latitude": 10.4011292,
+    "longitude": -75.5545262,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3167-Padel-Club-Cartagena-XYTcu.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3167-padel-club-cartagena/",
+    "regionName": "Colombia",
+    "postalCode": "130001",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3166,
+    "name": "Padel Planet Colombia",
+    "cityRaw": "Cajicá",
+    "address": "Comienzo, Cam. del Remolino",
+    "phone": "+573142953263",
+    "website": "https://co.padelizados.net/es-co/i/3166-padel-planet-colombia/",
+    "latitude": 4.921329,
+    "longitude": -74.0138801,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3166-Padel-Planet-Colombia-sZpGa.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3166-padel-planet-colombia/",
+    "regionName": "Colombia",
+    "postalCode": "250240",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3168,
+    "name": "La Caldera INDOOR Padel Club",
+    "cityRaw": "Cali",
+    "address": "Cali",
+    "phone": "+573242097473",
+    "website": "https://co.padelizados.net/es-co/i/3168-la-caldera-indoor-padel-club/",
+    "latitude": 3.3683854,
+    "longitude": -76.522921,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3168-la-caldera-indoor-padel-club/",
+    "regionName": "Colombia",
+    "postalCode": "",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3170,
+    "name": "Cali Padel Club",
+    "cityRaw": "Cali",
+    "address": "Av. 4 Nte. #15 - 57",
+    "phone": "+573022858345",
+    "website": "https://co.padelizados.net/es-co/i/3170-cali-padel-club/",
+    "latitude": 3.4578106,
+    "longitude": -76.5318317,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3170-cali-padel-club/",
+    "regionName": "Colombia",
+    "postalCode": "760045",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3169,
+    "name": "Proyectos y Montajes",
+    "cityRaw": "Bucaramanga",
+    "address": "Cl 36 #24 - 49",
+    "phone": "+573115927029",
+    "website": "https://co.padelizados.net/es-co/i/3169-proyectos-y-montajes/",
+    "latitude": 7.1206596,
+    "longitude": -73.1186147,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3169-Proyectos-y-Montajes-bPhZy.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3169-proyectos-y-montajes/",
+    "regionName": "Colombia",
+    "postalCode": "680003",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3171,
+    "name": "Pádel 94",
+    "cityRaw": "Bogotá",
+    "address": "Cra. 11 #94-2",
+    "phone": null,
+    "website": "https://co.padelizados.net/es-co/i/3171-padel-94/",
+    "latitude": 4.677607,
+    "longitude": -74.0457162,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3171-padel-94/",
+    "regionName": "Colombia",
+    "postalCode": "110221",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3172,
+    "name": "Padel Drop",
+    "cityRaw": "Bogotá",
+    "address": "Cl. 91 #15-34",
+    "phone": "+573204899649",
+    "website": "https://co.padelizados.net/es-co/i/3172-padel-drop/",
+    "latitude": 4.6755539,
+    "longitude": -74.0529961,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3172-padel-drop/",
+    "regionName": "Colombia",
+    "postalCode": "110221",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3173,
+    "name": "Spin Padel",
+    "cityRaw": "Bogotá",
+    "address": "Cl. 134 #55 - 30",
+    "phone": null,
+    "website": "https://co.padelizados.net/es-co/i/3173-spin-padel/",
+    "latitude": 4.7230129,
+    "longitude": -74.0621409,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3173-Spin-Padel-xpq52.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3173-spin-padel/",
+    "regionName": "Colombia",
+    "postalCode": "111111",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3174,
+    "name": "Padel city Ruitoque",
+    "cityRaw": "Piedecuesta",
+    "address": "Valle de Menzuly, Terrazas De Menzuly #Km 7",
+    "phone": "+573106851918",
+    "website": "https://co.padelizados.net/es-co/i/3174-padel-city-ruitoque/",
+    "latitude": 7.0366196,
+    "longitude": -73.0684605,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3174-Padel-city-Ruitoque-aAXjb.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3174-padel-city-ruitoque/",
+    "regionName": "Colombia",
+    "postalCode": "681017",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3176,
+    "name": "Ultimate Padel",
+    "cityRaw": "Cali",
+    "address": "Cra. 125 #19-59",
+    "phone": "+573173725231",
+    "website": "https://co.padelizados.net/es-co/i/3176-ultimate-padel/",
+    "latitude": 3.3386689,
+    "longitude": -76.5299426,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3176-Ultimate-Padel-6zXjJ.jpg",
+    "courtsNumber": 6,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3176-ultimate-padel/",
+    "regionName": "Colombia",
+    "postalCode": "760031",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3175,
+    "name": "Padel DC",
+    "cityRaw": "Bogotá",
+    "address": "Cl. 21 #1-77",
+    "phone": "+573138834984",
+    "website": "https://co.padelizados.net/es-co/i/3175-padel-dc/",
+    "latitude": 4.604297,
+    "longitude": -74.0669582,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3175-padel-dc/",
+    "regionName": "Colombia",
+    "postalCode": "110311",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3178,
+    "name": "Padel del Café",
+    "cityRaw": "Armenia",
+    "address": "Contiguo a Mall del Rio, Padel del Café, Cra. 6",
+    "phone": "+573024967067",
+    "website": "https://co.padelizados.net/es-co/i/3178-padel-del-cafe/",
+    "latitude": 4.5377402,
+    "longitude": -75.6613314,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3178-padel-del-cafe/",
+    "regionName": "Colombia",
+    "postalCode": "630002",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3177,
+    "name": "Panoramic Padel Cali",
+    "cityRaw": "Cali",
+    "address": "Cra. 125 #16a - 02",
+    "phone": "+573168337987",
+    "website": "https://co.padelizados.net/es-co/i/3177-panoramic-padel-cali/",
+    "latitude": 3.3376689,
+    "longitude": -76.5361909,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3177-Panoramic-Padel-Cali-CL6zy.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3177-panoramic-padel-cali/",
+    "regionName": "Colombia",
+    "postalCode": "760031",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3180,
+    "name": "Padel Club Dinametrics",
+    "cityRaw": "Villamaría",
+    "address": "Cra. 1 #77-266",
+    "phone": "+573332814473",
+    "website": "https://co.padelizados.net/es-co/i/3180-padel-club-dinametrics/",
+    "latitude": 5.0286521,
+    "longitude": -75.4781558,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3180-Padel-Club-Dinametrics-AgjzE.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3180-padel-club-dinametrics/",
+    "regionName": "Colombia",
+    "postalCode": "176001",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3181,
+    "name": "Pro Padel Club",
+    "cityRaw": "Villa del Rosario",
+    "address": "VGCF+3P",
+    "phone": null,
+    "website": "https://co.padelizados.net/es-co/i/3181-pro-padel-club/",
+    "latitude": 7.8702067,
+    "longitude": -72.4756267,
+    "avatarUrl": null,
+    "courtsNumber": 3,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3181-pro-padel-club/",
+    "regionName": "Colombia",
+    "postalCode": "",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3182,
+    "name": "Club Deportivo Canaán - Canchas Sintéticas Fútbol, Tenis, Padel.",
+    "cityRaw": "Pereira",
+    "address": "Armenia - Pereira",
+    "phone": "+573113307572",
+    "website": "https://co.padelizados.net/es-co/i/3182-club-deportivo-canaan-canchas-sinteticas-futbol-tenis-padel/",
+    "latitude": 4.7898988,
+    "longitude": -75.6929736,
+    "avatarUrl": null,
+    "courtsNumber": 4,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3182-club-deportivo-canaan-canchas-sinteticas-futbol-tenis-padel/",
+    "regionName": "Colombia",
+    "postalCode": "",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3183,
+    "name": "Locos Por Pádel",
+    "cityRaw": "Bogotá",
+    "address": "Cl. 147 #58c - 04",
+    "phone": "+573160234639",
+    "website": "https://co.padelizados.net/es-co/i/3183-locos-por-padel/",
+    "latitude": 4.7352528,
+    "longitude": -74.0651183,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3183-Locos-Por-Padel-WsMcg.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3183-locos-por-padel/",
+    "regionName": "Colombia",
+    "postalCode": "110111",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3184,
+    "name": "La Jaula del Ángel Canchas El Tesoro",
+    "cityRaw": "Medellín",
+    "address": "El Tesoro Parque Comercial Etapa 3, Cra. 25a #1A SUR - 45 piso 4",
+    "phone": "+573174373254",
+    "website": "https://co.padelizados.net/es-co/i/3184-la-jaula-del-angel-canchas-el-tesoro/",
+    "latitude": 6.1961062,
+    "longitude": -75.5605174,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3184-La-Jaula-del-angel-Canchas-El-Tesoro-fsvMe.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3184-la-jaula-del-angel-canchas-el-tesoro/",
+    "regionName": "Colombia",
+    "postalCode": "050022",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3185,
+    "name": "Bogotá Pádel Club",
+    "cityRaw": "Bogotá",
+    "address": "Ak 7 #69-41",
+    "phone": "+573165306717",
+    "website": "https://co.padelizados.net/es-co/i/3185-bogota-padel-club/",
+    "latitude": 4.652345,
+    "longitude": -74.0572072,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3185-Bogota-Padel-Club-Ad8xi.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3185-bogota-padel-club/",
+    "regionName": "Colombia",
+    "postalCode": "100221",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3186,
+    "name": "PADEL SHOT/SOCIAL SPACE",
+    "cityRaw": "Bogotá",
+    "address": "Cra 15 #63-81",
+    "phone": "+573152197341",
+    "website": "https://co.padelizados.net/es-co/i/3186-padel-shotsocial-space/",
+    "latitude": 4.6506138,
+    "longitude": -74.0657665,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3186-PADEL-SHOTSOCIAL-SPACE-A1SgF.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3186-padel-shotsocial-space/",
+    "regionName": "Colombia",
+    "postalCode": "110111",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3187,
+    "name": "La Jaula del Ángel Canchas Viva Envigado",
+    "cityRaw": "Envigado",
+    "address": "Centro Comercial Viva Envigado, Cra. 48 #32B Sur-139 Piso 4",
+    "phone": "+573045301236",
+    "website": "https://co.padelizados.net/es-co/i/3187-la-jaula-del-angel-canchas-viva-envigado/",
+    "latitude": 6.1763365,
+    "longitude": -75.5909199,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3187-La-Jaula-del-angel-Canchas-Viva-Envigado-nYlvH.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3187-la-jaula-del-angel-canchas-viva-envigado/",
+    "regionName": "Colombia",
+    "postalCode": "055422",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3188,
+    "name": "Padel Club Llanogrande",
+    "cityRaw": "Rionegro",
+    "address": "VEREDA LLANOGRANDE PARAJE GUAYABITO VI ENTRADA POR, Via Lago Grande",
+    "phone": "+573332267262",
+    "website": "https://co.padelizados.net/es-co/i/3188-padel-club-llanogrande/",
+    "latitude": 6.1192364,
+    "longitude": -75.4442382,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3188-padel-club-llanogrande/",
+    "regionName": "Colombia",
+    "postalCode": "054040",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3189,
+    "name": "Padel Chia - Total Zone",
+    "cityRaw": "Chía",
+    "address": "Cl. 29 #2-206",
+    "phone": "+573105480024",
+    "website": "https://co.padelizados.net/es-co/i/3189-padel-chia-total-zone/",
+    "latitude": 4.8752738,
+    "longitude": -74.0456173,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3189-Padel-Chia-Total-Zone-lWf7Q.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3189-padel-chia-total-zone/",
+    "regionName": "Colombia",
+    "postalCode": "250002",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3190,
+    "name": "PZD | Pro Padel Zone",
+    "cityRaw": "Bogotá",
+    "address": "Cra. 19a #78 - 99 Parqueadero Piso 2",
+    "phone": "+573142821407",
+    "website": "https://co.padelizados.net/es-co/i/3190-pzd-pro-padel-zone/",
+    "latitude": 4.6666171,
+    "longitude": -74.0600834,
+    "avatarUrl": null,
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3190-pzd-pro-padel-zone/",
+    "regionName": "Colombia",
+    "postalCode": "110221",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3191,
+    "name": "Gran Padel Social Club",
+    "cityRaw": "Barranquilla",
+    "address": "Centro comercial Le Meridiem Golf Rooftop, Cra. 59b #81- 158",
+    "phone": "+573102105284",
+    "website": "https://co.padelizados.net/es-co/i/3191-gran-padel-social-club/",
+    "latitude": 11.0110395,
+    "longitude": -74.8100953,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3191-Gran-Padel-Social-Club-ooLHL.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3191-gran-padel-social-club/",
+    "regionName": "Colombia",
+    "postalCode": "080001",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3192,
+    "name": "Padelhub Club El Rodeo",
+    "cityRaw": "Medellín",
+    "address": "Avenida 80, Cl. 2 Sur #65-535",
+    "phone": "+573208323013",
+    "website": "https://co.padelizados.net/es-co/i/3192-padelhub-club-el-rodeo/",
+    "latitude": 6.2068518,
+    "longitude": -75.5962687,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3192-Padelhub-Club-El-Rodeo-txP1A.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3192-padelhub-club-el-rodeo/",
+    "regionName": "Colombia",
+    "postalCode": "",
+    "countryCode": "CO"
+  },
+  {
+    "id": 3193,
+    "name": "La Bodega del Padel",
+    "cityRaw": "Medellín",
+    "address": "Cra 44 #25 59",
+    "phone": "+573052274979",
+    "website": "https://co.padelizados.net/es-co/i/3193-la-bodega-del-padel/",
+    "latitude": 6.2270124,
+    "longitude": -75.5730144,
+    "avatarUrl": "https://cdn.hostsrg.com/padelizados/media/items/3193-La-Bodega-del-Padel-0CIb3.jpg",
+    "courtsNumber": null,
+    "sports": [
+      "PADEL"
+    ],
+    "source": "padelizados",
+    "sourceUrl": "https://co.padelizados.net/es-co/i/3193-la-bodega-del-padel/",
+    "regionName": "Colombia",
+    "postalCode": "050021",
+    "countryCode": "CO"
+  }
+]
