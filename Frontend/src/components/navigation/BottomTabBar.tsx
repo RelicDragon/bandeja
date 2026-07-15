@@ -48,7 +48,6 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
         label: t('bottomTab.my', { defaultValue: 'My' }),
         icon: Home,
         path: '/',
-        badge: tabBadges.my,
       },
       {
         id: 'find' as const,
@@ -68,7 +67,6 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
         label: t('bottomTab.marketplace', { defaultValue: 'Market' }),
         icon: ShoppingBag,
         path: '/marketplace',
-        badge: tabBadges.market,
       },
       {
         id: 'leaderboard' as const,
@@ -81,7 +79,7 @@ const BottomTabBarInner = ({ containerPosition = false, tabOverride, previousPat
       return all.filter((tab) => tab.id !== 'my' && tab.id !== 'find');
     }
     return all;
-  }, [t, tabBadges.my, tabBadges.chats, tabBadges.market, showGameTabs]);
+  }, [t, tabBadges.chats, showGameTabs]);
 
 
   const handleTabClick = (tab: BottomTabId, path: string) => {
