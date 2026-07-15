@@ -12,7 +12,7 @@ import * as path from 'path';
 import { Prisma } from '@prisma/client';
 import prisma from '../src/config/database';
 import { normalizeClubName } from '../src/utils/normalizeClubName';
-import { resolveCityName } from './lib/dr5hnCityResolver';
+import { resolveCityName, resolveCityCoords } from './lib/dr5hnCityResolver';
 import { CityGroupService } from '../src/services/chat/cityGroup.service';
 import { refreshAllCitiesFromClubs } from '../src/utils/updateCityCenter';
 
@@ -79,6 +79,155 @@ const CONFIGS: Record<string, CountryCfg> = {
       galway: 'Galway',
       limerick: 'Limerick',
       waterford: 'Waterford',
+    },
+  },
+  belgium: {
+    key: 'belgium',
+    country: 'Belgium',
+    countryCode: 'BE',
+    timezone: 'Europe/Brussels',
+    cityAliases: {
+      bruselas: 'Brussels',
+      bruxelles: 'Brussels',
+      brussels: 'Brussels',
+      brussel: 'Brussels',
+      amberes: 'Antwerp',
+      antwerp: 'Antwerp',
+      antwerpen: 'Antwerp',
+      anvers: 'Antwerp',
+      gand: 'Ghent',
+      gent: 'Ghent',
+      ghent: 'Ghent',
+      lieja: 'Liège',
+      liege: 'Liège',
+      'liège': 'Liège',
+      brugge: 'Bruges',
+      bruges: 'Bruges',
+      brujas: 'Bruges',
+      lovaina: 'Leuven',
+      leuven: 'Leuven',
+      louvain: 'Leuven',
+      namur: 'Namur',
+      namen: 'Namur',
+      charleroi: 'Charleroi',
+      mons: 'Mons',
+      bergen: 'Mons',
+      hasselt: 'Hasselt',
+      kortrijk: 'Kortrijk',
+      courtrai: 'Kortrijk',
+      ostende: 'Ostend',
+      oostende: 'Ostend',
+      ostend: 'Ostend',
+      mechelen: 'Mechelen',
+      malinas: 'Mechelen',
+      wavre: 'Wavre',
+      waterloo: 'Waterloo',
+      zaventem: 'Zaventem',
+    },
+  },
+  andorra: {
+    key: 'andorra',
+    country: 'Andorra',
+    countryCode: 'AD',
+    timezone: 'Europe/Andorra',
+    cityAliases: {
+      'andorra la vella': 'Andorra la Vella',
+      'escaldes-engordany': 'Escaldes-Engordany',
+      'escaldes engordany': 'Escaldes-Engordany',
+      encamp: 'Encamp',
+      'la massana': 'La Massana',
+      ordino: 'Ordino',
+      canillo: 'Canillo',
+      "sant julià de lòria": 'Sant Julià de Lòria',
+      'sant julia de loria': 'Sant Julià de Lòria',
+      'pas de la casa': 'Pas de la Casa',
+    },
+  },
+  luxembourg: {
+    key: 'luxembourg',
+    country: 'Luxembourg',
+    countryCode: 'LU',
+    timezone: 'Europe/Luxembourg',
+    cityAliases: {
+      luxemburgo: 'Luxembourg',
+      luxembourg: 'Luxembourg',
+      'luxembourg city': 'Luxembourg',
+      'esch-sur-alzette': 'Esch-sur-Alzette',
+      'esch sur alzette': 'Esch-sur-Alzette',
+      differdange: 'Differdange',
+      dudelange: 'Dudelange',
+    },
+  },
+  monaco: {
+    key: 'monaco',
+    country: 'Monaco',
+    countryCode: 'MC',
+    timezone: 'Europe/Monaco',
+    cityAliases: {
+      monaco: 'Monaco',
+      'monte carlo': 'Monaco',
+      montecarlo: 'Monaco',
+    },
+  },
+  malta: {
+    key: 'malta',
+    country: 'Malta',
+    countryCode: 'MT',
+    timezone: 'Europe/Malta',
+    cityAliases: {
+      valletta: 'Valletta',
+      sliema: 'Sliema',
+      "st. julian's": "St. Julian's",
+      "st julian's": "St. Julian's",
+      'st julians': "St. Julian's",
+      mosta: 'Mosta',
+      birkirkara: 'Birkirkara',
+      mdina: 'Mdina',
+      victoria: 'Victoria',
+      gozo: 'Victoria',
+      marsaskala: 'Marsaskala',
+      "st. paul's bay": "St. Paul's Bay",
+      naxxar: 'Naxxar',
+      gżira: 'Gżira',
+      gzira: 'Gżira',
+    },
+  },
+  liechtenstein: {
+    key: 'liechtenstein',
+    country: 'Liechtenstein',
+    countryCode: 'LI',
+    timezone: 'Europe/Vaduz',
+    cityAliases: {
+      vaduz: 'Vaduz',
+      schaan: 'Schaan',
+      triesen: 'Triesen',
+      balzers: 'Balzers',
+    },
+  },
+  sanmarino: {
+    key: 'sanmarino',
+    country: 'San Marino',
+    countryCode: 'SM',
+    timezone: 'Europe/San_Marino',
+    cityAliases: {
+      'san marino': 'San Marino',
+      serravalle: 'Serravalle',
+      'borgo maggiore': 'Borgo Maggiore',
+      domagnano: 'Domagnano',
+    },
+  },
+  iceland: {
+    key: 'iceland',
+    country: 'Iceland',
+    countryCode: 'IS',
+    timezone: 'Atlantic/Reykjavik',
+    cityAliases: {
+      reikiavik: 'Reykjavik',
+      reykjavik: 'Reykjavik',
+      reykjavík: 'Reykjavik',
+      kópavogur: 'Kópavogur',
+      kopavogur: 'Kópavogur',
+      akureyri: 'Akureyri',
     },
   },
   uae: {
@@ -358,16 +507,26 @@ async function getOrCreateCity(
   }
 
   if (DRY_RUN) {
-    const fake = { id: `dry-${key}`, lat: null as number | null, lon: null as number | null };
+    const coords = resolveCityCoords(cfg.country, cfg.countryCode, name);
+    const fake = {
+      id: `dry-${key}`,
+      lat: coords?.lat ?? null,
+      lon: coords?.lon ?? null,
+    };
     cache.set(key, fake);
     return { ...fake, created: true };
   }
 
+  const coords = resolveCityCoords(cfg.country, cfg.countryCode, name);
   const city = await prisma.city.create({
     data: {
       name,
       country: cfg.country,
       timezone: cfg.timezone,
+      latitude: coords?.lat ?? null,
+      longitude: coords?.lon ?? null,
+      // /cities API only returns isCorrect=true — imported clubs must be visible
+      isCorrect: true,
     },
     select: { id: true, latitude: true, longitude: true },
   });
