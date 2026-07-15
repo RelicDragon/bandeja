@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v1305';
+const CACHE_VERSION = 'v1307';
 const CACHE_NAME = `bandeja-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `bandeja-runtime-${CACHE_VERSION}`;
 
@@ -129,18 +129,26 @@ function isStaticMedia(pathname) {
 
 async function putInCache(request, response, cacheName = CACHE_NAME) {
   if (!response || response.status !== 200 || response.type !== 'basic') return;
-  const clone = response.clone();
-  const cache = await caches.open(cacheName);
-  await cache.put(request, clone);
+  try {
+    const clone = response.clone();
+    const cache = await caches.open(cacheName);
+    await cache.put(request, clone);
+  } catch (err) {
+    console.warn('Failed to cache response:', err);
+  }
 }
 
-async function networkFirst(request, { offlineDocumentFallback = false } = {}) {
+function scheduleCachePut(event, request, response) {
+  event.waitUntil(putInCache(request, response));
+}
+
+async function networkFirst(event, request, { offlineDocumentFallback = false } = {}) {
   try {
     const networkRequest = request.mode === 'navigate'
       ? new Request(request, { cache: 'reload' })
       : request;
     const response = await fetch(networkRequest);
-    await putInCache(request, response);
+    scheduleCachePut(event, request, response);
     return response;
   } catch {
     const cached = await caches.match(request);
@@ -153,19 +161,19 @@ async function networkFirst(request, { offlineDocumentFallback = false } = {}) {
   }
 }
 
-async function cacheFirst(request) {
+async function cacheFirst(event, request) {
   const cached = await caches.match(request);
   if (cached) return cached;
   const response = await fetch(request);
-  await putInCache(request, response);
+  scheduleCachePut(event, request, response);
   return response;
 }
 
-async function staleWhileRevalidate(request) {
+async function staleWhileRevalidate(event, request) {
   const cached = await caches.match(request);
   const networkPromise = fetch(request)
-    .then(async (response) => {
-      await putInCache(request, response);
+    .then((response) => {
+      scheduleCachePut(event, request, response);
       return response;
     })
     .catch(() => null);
@@ -195,17 +203,17 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (isNavigationRequest(event.request, pathname)) {
-    event.respondWith(networkFirst(event.request, { offlineDocumentFallback: true }));
+    event.respondWith(networkFirst(event, event.request, { offlineDocumentFallback: true }));
     return;
   }
 
   if (isHashedBuildAsset(pathname)) {
-    event.respondWith(cacheFirst(event.request));
+    event.respondWith(cacheFirst(event, event.request));
     return;
   }
 
   if (isStaticMedia(pathname) || pathname === '/manifest.json') {
-    event.respondWith(staleWhileRevalidate(event.request));
+    event.respondWith(staleWhileRevalidate(event, event.request));
     return;
   }
 });
