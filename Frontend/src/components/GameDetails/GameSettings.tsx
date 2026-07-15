@@ -368,12 +368,21 @@ export const GameSettings = ({ game, canEdit, onGameUpdate, embedded = false }: 
     </div>
   );
 
+  if (embedded) {
+    return (
+      <div className="space-y-3">
+        <div className="flex justify-end">{hintsButton}</div>
+        {toggleList}
+      </div>
+    );
+  }
+
   return (
     <CollapsibleSettingsShell
-      title={embedded ? undefined : settingsTitle}
+      title={settingsTitle}
       icon={Settings}
       hintsButton={hintsButton}
-      variant={embedded ? 'plain' : 'card'}
+      variant="card"
     >
       {toggleList}
     </CollapsibleSettingsShell>

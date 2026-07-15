@@ -674,8 +674,8 @@ Frontend/e2e/
 
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
-| GD-19 | Edit general info | Edit drawer → general tab | Nearly fullscreen bottom drawer (city-selector style drag handle + close); "Edit details" title + full-width tabs; avatar and name on one row; name/description updated |
-| GD-116 | Edit game info drawer height | Open edit on mobile viewport | Drawer uses most of viewport (`~94dvh`), not a small centered dialog |
+| GD-19 | Edit general info | Edit drawer → general tab | Nearly fullscreen bottom drawer (city-selector style drag handle + close); "Edit details" title; fit-content centered tabs (active tab shows icon+label); avatar and name on one row; name/description updated |
+| GD-116 | Edit game info drawer height | Open edit on mobile viewport | Drawer uses most of viewport (`~94dvh`), not a small centered dialog; footer actions sit above home-indicator safe area |
 | GD-20 | Edit location & time tab | Edit modal → Location & time | Single tab replaces Where+When; club picker visible; one scheduling panel (date, courts, time grid); no bookings/time segmented switch |
 | GD-20b | Edit opt-out full schedule | BOOKTIME game, integrated court, toggle "Don't book real court" ON (or Don't select court) | Full club time grid; red external cells selectable and saveable; same as create-game opt-out |
 | GD-20a | Edit game change club | Edit modal → Location & time → change club | Club modal opens; new club selected; courts refresh for new club |
@@ -684,7 +684,7 @@ Frontend/e2e/
 | GD-20e | Edit court grid sport filter | TENNIS game at multi-sport club → edit Location & time | Court grid shows TENNIS + null-sport courts only; courts API called with `sport=TENNIS` |
 | GD-20f | Edit prunes incompatible courts | Multi-sport game with padel court saved → club gains sport tags → reopen edit modal | Incompatible court selections cleared when modal opens |
 | GD-20g | Edit sport mismatch rejected | API: update game `clubId` or `courtId` to sport-incompatible venue | 400 with sport mismatch message |
-| GD-20h | Edit settings tab | Edit modal → Settings (gear) tab | Toggles save in place (checkmark on success); footer shows "saved automatically" note + Close only, no Save |
+| GD-20h | Edit settings tab | Edit drawer → Settings (gear) tab | Settings always expanded (no collapse chevron, no gear title icon); hints button only; toggles save in place; footer shows "saved automatically" note + Close only, no Save |
 | GD-21 | Edit with linked bookings | Game with 2 linked courts at BOOKTIME club → edit Location & time | Unified surface: reservations strip + green grid; both links pre-selected; rows show each linked court |
 | GD-21a | Edit add booking link | Edit game with 0 links → select reservation card | Schedule syncs from selected booking; save links game |
 | GD-21b | Edit partial unlink | Game with 2 linked courts → deselect one card → Save → confirm | Pending unlink hint; only deselected link removed; other link and courts preserved |

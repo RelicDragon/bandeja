@@ -12,7 +12,6 @@ import {
   Drawer,
   DrawerCloseButton,
   DrawerContent,
-  DrawerFooter,
 } from '@/components/ui/Drawer';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
 import { SegmentedSwitch } from '@/components/SegmentedSwitch';
@@ -882,7 +881,7 @@ export const EditGameInfoModal = ({
           </h2>
           <DrawerCloseButton aria-label={t('common.close')} className="shrink-0" />
         </div>
-        <div className="shrink-0 px-4 pb-3">
+        <div className="flex shrink-0 justify-center px-4 pb-3">
           <SegmentedSwitch
             tabs={segmentedTabs}
             activeId={activeTab}
@@ -891,7 +890,6 @@ export const EditGameInfoModal = ({
             activeLabelMaxWidth={200}
             layoutId="edit-game-info-tabs"
             disabled={isSaving}
-            fullWidth
           />
         </div>
         <div ref={contentScrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
@@ -1006,7 +1004,7 @@ export const EditGameInfoModal = ({
           )}
         </div>
         {activeTab !== 'settings' ? (
-        <DrawerFooter className="mt-0 flex shrink-0 flex-row items-center gap-3 border-t border-gray-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-gray-800">
+        <div className="mt-auto flex shrink-0 items-center gap-3 border-t border-gray-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] dark:border-gray-800">
           <span
             aria-live="polite"
             className={`flex-1 min-w-0 truncate text-xs transition-opacity duration-200 ${
@@ -1039,9 +1037,9 @@ export const EditGameInfoModal = ({
             )}
             {isSaving ? t('common.saving') : t('common.save')}
           </button>
-        </DrawerFooter>
+        </div>
         ) : (
-          <div className="flex shrink-0 items-center gap-3 border-t border-gray-200 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-gray-800">
+          <div className="mt-auto flex shrink-0 items-center gap-3 border-t border-gray-200 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] dark:border-gray-800">
             <span className="flex-1 min-w-0 text-xs text-gray-500 dark:text-gray-400">
               {t('gameDetails.editModal.autoSaveNote')}
             </span>
