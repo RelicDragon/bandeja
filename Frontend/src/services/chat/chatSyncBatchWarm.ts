@@ -405,7 +405,12 @@ async function collectHotThreadKeys(): Promise<Set<string>> {
 }
 
 async function partitionScheduledPulls(
-  toSchedule: Array<{ contextType: ChatContextType; contextId: string; expectedServerMaxSeq: number }>,
+  toSchedule: Array<{
+    contextType: ChatContextType;
+    contextId: string;
+    expectedServerMaxSeq: number;
+    forcePull?: boolean;
+  }>,
   unreadKeys: Set<string> | undefined,
   pullPolicy: WarmPullPolicy
 ): Promise<{
