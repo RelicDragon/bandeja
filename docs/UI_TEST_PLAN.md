@@ -665,6 +665,7 @@ Frontend/e2e/
 | GD-13 | Owner decline queue | Decline queued user | Removed from queue |
 | GD-14 | Cancel own queue request | Cancel queue | Removed |
 | GD-15 | Invite players | Owner opens player list → invite | Pending invites shown |
+| GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
 | GD-16 | Cancel invite | Owner cancels pending | Invite removed |
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
 | GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |

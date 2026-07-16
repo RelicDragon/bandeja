@@ -12,6 +12,7 @@ import {
 import { projectEmbeddedUserByPrimarySport } from '../../services/user/projectEmbeddedBasicUsers';
 import { BasicUser } from '../../types/user.types';
 import { CommonChatsService } from '../../services/user/commonChats.service';
+import { expandNameSearchTerms } from '../../utils/nameSearchTerms';
 
 const INVITE_PICKER_BLOCKING_PARTICIPANT_STATUSES = new Set<ParticipantStatus>([
   ParticipantStatus.PLAYING,
@@ -30,11 +31,11 @@ export const getInvitablePlayers = asyncHandler(async (req: AuthRequest, res: Re
     searchTerms.length > 0
       ? {
           AND: searchTerms.map((term) => ({
-            OR: [
-              { firstName: { contains: term, mode: 'insensitive' } },
-              { lastName: { contains: term, mode: 'insensitive' } },
-              { telegramUsername: { contains: term, mode: 'insensitive' } },
-            ],
+            OR: expandNameSearchTerms(term).flatMap((variant) => [
+              { firstName: { contains: variant, mode: 'insensitive' as const } },
+              { lastName: { contains: variant, mode: 'insensitive' as const } },
+              { telegramUsername: { contains: variant, mode: 'insensitive' as const } },
+            ]),
           })),
         }
       : {};
