@@ -62,7 +62,7 @@ export interface Poll {
 
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER' | 'GROUP';
-export type MessageType = 'TEXT' | 'IMAGE' | 'VOICE' | 'VIDEO' | 'POLL';
+export type MessageType = 'TEXT' | 'IMAGE' | 'VOICE' | 'VIDEO' | 'POLL' | 'STICKER';
 
 const UNREAD_COUNT_CACHE_TTL = 1000;
 const UNREAD_OBJECTS_IN_FLIGHT_TTL_MS = 1800;
@@ -141,6 +141,8 @@ export interface ChatMessage {
   state: MessageState;
   chatType: ChatType;
   messageType?: MessageType;
+  stickerId?: string | null;
+  stickerEmoji?: string | null;
   audioDurationMs?: number | null;
   videoDurationMs?: number | null;
   videoWidth?: number | null;
@@ -157,6 +159,8 @@ export interface ChatMessage {
     content: string;
     messageType?: MessageType;
     mediaUrls?: string[];
+    stickerId?: string | null;
+    stickerEmoji?: string | null;
     audioDurationMs?: number | null;
     videoDurationMs?: number | null;
     sender: {
@@ -233,7 +237,13 @@ export function getLastMessageTime(m: ChatMessage | LastMessagePreview | null | 
 
 export function getLastMessageText(m: ChatMessage | LastMessagePreview | null | undefined): string {
   if (!m) return '';
-  return isLastMessagePreview(m) ? m.preview : ((m as ChatMessage).content ?? '');
+  if (isLastMessagePreview(m)) return m.preview;
+  const msg = m as ChatMessage;
+  if (msg.messageType === 'STICKER') {
+    const emoji = msg.stickerEmoji?.trim();
+    return emoji ? `[TYPE:STICKER]${emoji}` : '[TYPE:STICKER]';
+  }
+  return msg.content ?? '';
 }
 
 export interface OptimisticMessagePayload {
@@ -245,6 +255,8 @@ export interface OptimisticMessagePayload {
   chatType: ChatType;
   mentionIds: string[];
   messageType?: MessageType;
+  stickerId?: string;
+  stickerEmoji?: string;
   audioDurationMs?: number;
   videoDurationMs?: number;
   videoWidth?: number;
@@ -264,6 +276,7 @@ export interface CreateMessageRequest {
   chatType?: ChatType;
   mentionIds?: string[];
   messageType?: MessageType;
+  stickerId?: string;
   audioDurationMs?: number;
   videoDurationMs?: number;
   videoWidth?: number;

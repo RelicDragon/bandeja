@@ -157,6 +157,8 @@ export function useThreadOptimistic({
         state: 'SENT',
         chatType: payload.chatType,
         messageType: payload.messageType,
+        stickerId: payload.stickerId,
+        stickerEmoji: payload.stickerEmoji,
         audioDurationMs: payload.audioDurationMs,
         videoDurationMs: payload.videoDurationMs,
         videoWidth: payload.videoWidth,

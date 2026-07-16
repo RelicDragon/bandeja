@@ -22,6 +22,7 @@ import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
 import {
   ChatListGenericMediaRow,
   ChatListPreviewContent,
+  ChatListStickerRow,
   ChatListVideoRow,
 } from '@/components/chat/ChatListPreviewContent';
 import { useTranslatedGeo } from '@/hooks/useTranslatedGeo';
@@ -301,15 +302,27 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
                 : '';
             const isFullVoice = fullMsg?.messageType === 'VOICE';
             const isFullVideo = fullMsg?.messageType === 'VIDEO';
+            const isFullSticker = fullMsg?.messageType === 'STICKER';
             const voiceAsTextOnly = isFullVoice && !!(fullMsg?.content?.trim());
             const showVoiceRow = isFullVoice && !voiceAsTextOnly;
             const showVideoRow = isFullVideo;
+            const showStickerRow = isFullSticker;
             const hasMediaUrls = (fullMsg?.mediaUrls?.length ?? 0) > 0;
             const mt = fullMsg?.messageType;
             const showGenericMediaRow =
-              !isPreviewOnly && !isFullVoice && !isFullVideo && hasMediaUrls && mt === undefined;
+              !isPreviewOnly &&
+              !isFullVoice &&
+              !isFullVideo &&
+              !isFullSticker &&
+              hasMediaUrls &&
+              mt === undefined;
             const showPhotoRow =
-              !isPreviewOnly && !isFullVoice && !isFullVideo && hasMediaUrls && mt !== undefined;
+              !isPreviewOnly &&
+              !isFullVoice &&
+              !isFullVideo &&
+              !isFullSticker &&
+              hasMediaUrls &&
+              mt !== undefined;
             const previewLm = isPreviewOnly ? (lastMessage as LastMessagePreview) : null;
             const sender =
               fullMsg?.sender ?? (previewLm?.sender != null ? previewLm.sender : null);
@@ -368,6 +381,15 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
                           </span>
                         )}
                         <ChatListVideoRow t={t} durationMs={fullMsg?.videoDurationMs} />
+                      </>
+                    ) : showStickerRow ? (
+                      <>
+                        {groupChannel.isChannel && sender && (
+                          <span className="font-medium">
+                            {sender.firstName} {sender.lastName}:{' '}
+                          </span>
+                        )}
+                        <ChatListStickerRow t={t} emoji={fullMsg?.stickerEmoji} />
                       </>
                     ) : showPhotoRow ? (
                       <span className="flex items-center gap-1">

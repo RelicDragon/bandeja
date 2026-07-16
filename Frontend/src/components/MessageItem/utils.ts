@@ -73,3 +73,19 @@ export function getImageGridLayout(count: number): ImageGridLayout {
   }
   return { gridTemplateColumns: 'repeat(3, 1fr)', gridTemplateRows: 'auto', gap: '0' };
 }
+
+/** Prefer full original for GIF so animation plays (thumbs are static JPEG). */
+export function isAnimatedChatImageUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const path = url.split(/[?#]/)[0]?.toLowerCase() ?? '';
+  return path.endsWith('.gif');
+}
+
+export function resolveChatImageDisplayUrl(
+  mediaUrl: string | undefined,
+  thumbnailUrl: string | undefined
+): string {
+  const original = mediaUrl || '';
+  if (isAnimatedChatImageUrl(original)) return original;
+  return thumbnailUrl || original;
+}

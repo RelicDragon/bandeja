@@ -1,14 +1,20 @@
 import { formatDate } from '@/utils/dateFormat';
 import { resolveDisplaySettings, formatGameTime } from '@/utils/displayPreferences';
 import { User } from '@/types';
+import { formatStickerPreviewText } from '@/utils/stickerPreview';
 
 export interface MessagePreviewLike {
   content?: string | null;
   mediaUrls?: string[];
   poll?: { question?: string };
+  messageType?: string;
+  stickerEmoji?: string | null;
 }
 
 export function getMessagePreviewText(message: MessagePreviewLike): string {
+  if (message.messageType === 'STICKER') {
+    return formatStickerPreviewText(message.stickerEmoji);
+  }
   if (message.content && message.content.trim()) {
     return message.content.trim();
   }

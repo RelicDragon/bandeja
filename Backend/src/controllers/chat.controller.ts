@@ -96,6 +96,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     mentionIds = [],
     poll,
     messageType: rawMessageType,
+    stickerId: rawStickerId,
     audioDurationMs: rawAudioDurationMs,
     videoDurationMs: rawVideoDurationMs,
     videoWidth: rawVideoWidth,
@@ -137,7 +138,11 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       ? MessageType.VOICE
       : rawMessageType === 'VIDEO'
         ? MessageType.VIDEO
-        : undefined;
+        : rawMessageType === 'STICKER'
+          ? MessageType.STICKER
+          : undefined;
+  const stickerId =
+    typeof rawStickerId === 'string' && rawStickerId.trim() ? rawStickerId.trim() : undefined;
   const audioDurationMs =
     rawAudioDurationMs != null && rawAudioDurationMs !== '' ? Number(rawAudioDurationMs) : undefined;
   const videoDurationMs =
@@ -151,14 +156,21 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     : undefined;
   console.log('[createMessage] Final mediaUrls:', finalMediaUrls);
 
-  // Validate that message has content, media, or poll
+  // Validate that message has content, media, poll, or sticker
   const hasContent = content && content.trim();
   const hasMedia = finalMediaUrls.length > 0;
   const hasPoll = poll && poll.question && poll.options && poll.options.length >= 2;
-  console.log('[createMessage] Validation:', { hasContent, hasMedia, hasPoll, contentLength: content?.length });
-  if (!hasContent && !hasMedia && !hasPoll) {
-    console.error('[createMessage] Message has no content, media, or poll');
-    throw new ApiError(400, 'Message must have content, media, or poll');
+  const hasSticker = messageType === MessageType.STICKER || Boolean(stickerId);
+  console.log('[createMessage] Validation:', {
+    hasContent,
+    hasMedia,
+    hasPoll,
+    hasSticker,
+    contentLength: content?.length,
+  });
+  if (!hasContent && !hasMedia && !hasPoll && !hasSticker) {
+    console.error('[createMessage] Message has no content, media, poll, or sticker');
+    throw new ApiError(400, 'Message must have content, media, poll, or sticker');
   }
 
   try {
@@ -189,6 +201,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       mentionIds: Array.isArray(mentionIds) ? mentionIds : [],
       poll,
       messageType,
+      stickerId,
       audioDurationMs: audioDurationMs !== undefined && !Number.isNaN(audioDurationMs) ? audioDurationMs : undefined,
       videoDurationMs:
         videoDurationMs !== undefined && !Number.isNaN(videoDurationMs) ? videoDurationMs : undefined,

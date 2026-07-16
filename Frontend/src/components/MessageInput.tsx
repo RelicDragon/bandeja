@@ -39,11 +39,16 @@ import { useMessageInputMultiline } from '@/components/chat/useMessageInputMulti
 import { useMessageInputTranslation } from '@/components/chat/useMessageInputTranslation';
 import { useMessageInputVoiceSend } from '@/components/chat/useMessageInputVoiceSend';
 import { useMessageInputVideoSend } from '@/components/chat/useMessageInputVideoSend';
+import { useMessageInputStickerSend } from '@/components/chat/useMessageInputStickerSend';
+import { useMessageInputGiphySend } from '@/components/chat/useMessageInputGiphySend';
 import { useMessageInputSubmit, type SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
 import { uploadChatImageSlotWithRetry } from '@/components/chat/messageInputImageUpload';
 import { useTypingIndicator } from '@/hooks/useTypingIndicator';
 import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { MessageInputScrollFab } from '@/components/chat/MessageInputScrollFab';
+import { ChatStickerTray } from '@/components/chat/ChatStickerTray';
+import { ChatStickerTrayButton } from '@/components/chat/ChatStickerTrayButton';
+import { GiphySearchSheet } from '@/components/chat/GiphySearchSheet';
 import { useThreadComposer, useThreadMessageActions } from '@/pages/GameChat/useThreadView';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -128,6 +133,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   const [retryingImageSlot, setRetryingImageSlot] = useState<number | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
+  const [isStickerTrayOpen, setIsStickerTrayOpen] = useState(false);
+  const [isGiphySheetOpen, setIsGiphySheetOpen] = useState(false);
   const [isComposerSearchExpanded, setIsComposerSearchExpanded] = useState(false);
   const voiceRecorder = useAudioRecorder();
   const lastAppliedEditIdRef = useRef<string | null>(null);
@@ -233,6 +240,46 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
     onSendQueued,
     onMessageSent,
     onCancelReply,
+    t,
+  });
+
+  const sticker = useMessageInputStickerSend({
+    isDisabled,
+    inputBlocked,
+    finalContextId,
+    contextType,
+    userChatId,
+    chatType,
+    replyTo,
+    propContextType,
+    propContextId,
+    userId: user?.id,
+    onOptimisticMessage,
+    onSendQueued,
+    onMessageSent,
+    onCancelReply,
+    onSendFailed,
+    onStopTyping: stopTyping,
+    t,
+  });
+
+  const giphy = useMessageInputGiphySend({
+    isDisabled,
+    inputBlocked,
+    finalContextId,
+    contextType,
+    userChatId,
+    chatType,
+    replyTo,
+    propContextType,
+    propContextId,
+    userId: user?.id,
+    onOptimisticMessage,
+    onSendQueued,
+    onMessageSent,
+    onCancelReply,
+    onSendFailed,
+    onStopTyping: stopTyping,
     t,
   });
 
@@ -479,7 +526,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
       !replyTo &&
       !editingMessage &&
       lastOwnMessage &&
-      onStartEditMessage
+      onStartEditMessage &&
+      lastOwnMessage.messageType !== 'VOICE' &&
+      lastOwnMessage.messageType !== 'VIDEO' &&
+      lastOwnMessage.messageType !== 'STICKER' &&
+      !lastOwnMessage.poll
     ) {
       e.preventDefault();
       onStartEditMessage(lastOwnMessage);
@@ -573,6 +624,27 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                     onAddImages={(files) => setSelectedImages((prev) => [...prev, ...files])}
                     onAddVideo={(file) => void video.handleVideoFile(file)}
                     onOpenPoll={() => setIsPollModalOpen(true)}
+                    onOpenGiphy={() => setIsGiphySheetOpen(true)}
+                  />
+                </motion.div>
+                <motion.div
+                  layout={!isComposerSearchExpanded}
+                  initial={false}
+                  animate={{
+                    opacity: isComposerSearchExpanded ? 0 : 1,
+                    scale: isComposerSearchExpanded ? 0.88 : 1,
+                  }}
+                  transition={toolbarTransition}
+                  className="shrink-0 overflow-visible"
+                  style={{
+                    pointerEvents: isComposerSearchExpanded ? 'none' : 'auto',
+                    position: isComposerSearchExpanded ? 'absolute' : 'relative',
+                  }}
+                >
+                  <ChatStickerTrayButton
+                    disabled={isDisabled || inputBlocked || voice.voiceMode || sticker.stickerBusy}
+                    active={isStickerTrayOpen}
+                    onClick={() => setIsStickerTrayOpen(true)}
                   />
                 </motion.div>
                 <MessageInputSearchToggle
@@ -777,6 +849,19 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
         </div>
       </form>
       <PollCreationModal isOpen={isPollModalOpen} onClose={() => setIsPollModalOpen(false)} onSubmit={handlePollCreate} />
+      <GiphySearchSheet
+        open={isGiphySheetOpen}
+        onClose={() => setIsGiphySheetOpen(false)}
+        onSelect={(item) => void giphy.sendGiphy(item)}
+        busy={giphy.giphyBusy}
+      />
+      <ChatStickerTray
+        open={isStickerTrayOpen}
+        onClose={() => setIsStickerTrayOpen(false)}
+        onSelectSticker={(s) => void sticker.sendSticker(s)}
+        sport={game?.sport ?? null}
+        busy={sticker.stickerBusy}
+      />
     </div>
   );
 };

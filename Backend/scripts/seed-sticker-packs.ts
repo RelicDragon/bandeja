@@ -2,7 +2,7 @@
  * Official sticker pack seed (repo assets → DB + optional S3).
  *
  * Ops:
- *   1. npm run generate:sticker-assets   # if placeholders need regen; commit binaries
+ *   1. npm run generate:sticker-assets   # download Fluent 3D → WebP; commit binaries
  *   2. npm run seed:sticker-packs        # upload + upsert on env with AWS
  *      npm run seed:sticker-packs -- --skip-upload   # CI/local without AWS
  *

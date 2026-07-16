@@ -29,7 +29,7 @@ import {
   resolveIncomingTranslationTargetCode,
 } from '@/utils/translationLanguages';
 import { isCapacitor } from '@/utils/capacitor';
-import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff } from 'lucide-react';
+import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff, Sticker } from 'lucide-react';
 import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 import { usePlayersStore } from '@/store/playersStore';
@@ -38,8 +38,13 @@ import type { BasicUser } from '@/types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { buildMessageDetailsAudienceRows } from '@/utils/messageDetailsAudience';
 import {
+  isEligibleSaveAsStickerMessage,
+  saveChatImageAsSticker,
+} from '@/utils/saveAsSticker';
+import {
   CHAT_MESSAGE_MENU_BACKDROP,
   CHAT_MESSAGE_MENU_INNER,
+  CHAT_MESSAGE_MENU_PREVIEW,
   CHAT_MESSAGE_MENU_ROOT,
   CHAT_MESSAGE_MENU_SECTION,
   CHAT_MESSAGE_MENU_SHELL,
@@ -107,8 +112,8 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   const [menuHeight, setMenuHeight] = useState(0);
   const [detailsHeight, setDetailsHeight] = useState(0);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isSavingSticker, setIsSavingSticker] = useState(false);
   const duplicateRef = useRef<HTMLDivElement>(null);
-  const duplicateElRef = useRef<HTMLElement | null>(null);
   const openTimeRef = useRef(0);
   const [visible, setVisible] = useState(true);
   const reduceMotion = usePrefersReducedMotion();
@@ -239,6 +244,19 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     if (!onForward || !canForward) return;
     onForward(message);
     closeMenu();
+  };
+
+  const canSaveAsSticker = !isSystemMessage && isEligibleSaveAsStickerMessage(message);
+
+  const handleSaveAsSticker = async () => {
+    if (!canSaveAsSticker || isSavingSticker) return;
+    setIsSavingSticker(true);
+    try {
+      const ok = await saveChatImageAsSticker(message, t);
+      if (ok) closeMenu();
+    } finally {
+      setIsSavingSticker(false);
+    }
   };
 
   const translateSourceText = (): string => {
@@ -437,14 +455,9 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     const duplicate = originalElement.cloneNode(true) as HTMLElement;
     const originalWidth = originalElement.offsetWidth || originalElement.getBoundingClientRect().width;
 
-    duplicate.style.position = 'fixed';
-    duplicate.style.left = '50%';
-    duplicate.style.transform = 'translateX(-50%) scale(1)';
-    duplicate.style.zIndex = '9999';
     duplicate.style.width = `${originalWidth}px`;
     duplicate.style.maxWidth = 'none';
     duplicate.style.overflow = 'hidden';
-    duplicate.style.opacity = '1';
     duplicate.style.pointerEvents = 'none';
 
     const messageContent = duplicate.querySelector('p');
@@ -458,20 +471,11 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
     duplicateHost.innerHTML = '';
     duplicateHost.appendChild(duplicate);
-    duplicateElRef.current = duplicate;
 
     return () => {
-      duplicateElRef.current = null;
       duplicateHost.innerHTML = '';
     };
   }, [messageElementRef]);
-
-  useLayoutEffect(() => {
-    const duplicate = duplicateElRef.current;
-    if (!duplicate) return;
-    duplicate.style.bottom = `${window.innerHeight - messageBottomPosition}px`;
-    duplicate.style.maxHeight = `${messageBottomPosition}px`;
-  }, [messageBottomPosition]);
 
   const content = (
     <AnimatePresence onExitComplete={onClose}>
@@ -492,7 +496,18 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
             onClick={handleBackdropClick}
           />
 
-          <div ref={duplicateRef} className="pointer-events-none" style={{ zIndex: 9999 }} />
+          <motion.div
+            className="pointer-events-none fixed left-1/2 z-[9999]"
+            variants={CHAT_MESSAGE_MENU_PREVIEW}
+            transition={instantTransition}
+            style={{
+              x: '-50%',
+              bottom: window.innerHeight - messageBottomPosition,
+              maxHeight: messageBottomPosition,
+            }}
+          >
+            <div ref={duplicateRef} />
+          </motion.div>
 
           <motion.div
             ref={menuRef}
@@ -564,7 +579,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 <span>{t('chat.contextMenu.reply')}</span>
               </button>
             )}
-            {isOwnMessage && onEdit && !isSystemMessage && message.content != null && !message.poll && message.messageType !== 'VOICE' && message.messageType !== 'VIDEO' && (
+            {isOwnMessage && onEdit && !isSystemMessage && message.content != null && !message.poll && message.messageType !== 'VOICE' && message.messageType !== 'VIDEO' && message.messageType !== 'STICKER' && (
               <button
                 onClick={() => { onEdit(message); closeMenu(); }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"
@@ -590,6 +605,22 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               >
                 <Forward className="w-4 h-4" />
                 <span>{t('chat.contextMenu.forward', { defaultValue: 'Forward' })}</span>
+              </button>
+            )}
+            {canSaveAsSticker && (
+              <button
+                type="button"
+                onClick={() => void handleSaveAsSticker()}
+                disabled={isSavingSticker}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="chat-save-as-sticker"
+              >
+                <Sticker className="w-4 h-4" />
+                <span>
+                  {isSavingSticker
+                    ? t('chat.contextMenu.savingAsSticker', { defaultValue: 'Saving…' })
+                    : t('chat.contextMenu.saveAsSticker', { defaultValue: 'Save as sticker' })}
+                </span>
               </button>
             )}
             {onPin && !isPinned && !isSystemMessage && (

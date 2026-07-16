@@ -272,7 +272,17 @@ export function useThreadReactions({
 
   const handleReplyMessage = useCallback((message: ChatMessage) => setReplyTo(message), []);
   const handleCancelReply = useCallback(() => setReplyTo(null), []);
-  const handleEditMessage = useCallback((message: ChatMessage) => setEditingMessage(message), []);
+  const handleEditMessage = useCallback((message: ChatMessage) => {
+    if (
+      message.messageType === 'VOICE' ||
+      message.messageType === 'VIDEO' ||
+      message.messageType === 'STICKER' ||
+      message.poll
+    ) {
+      return;
+    }
+    setEditingMessage(message);
+  }, []);
   const handleCancelEdit = useCallback(() => setEditingMessage(null), []);
 
   const handleMessageUpdated = useCallback(

@@ -8,6 +8,8 @@ interface MessageMediaGridProps {
   onImageClick: (url: string) => void;
   hasContentBelow?: boolean;
   loadEager?: boolean;
+  /** Lone GIF: round the asset itself, no bubble chrome. */
+  floating?: boolean;
 }
 
 export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
@@ -16,12 +18,13 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
   onImageClick,
   hasContentBelow = false,
   loadEager = false,
+  floating = false,
 }) => {
   const layout = getImageGridLayout(mediaUrls.length);
 
   return (
     <div
-      className="w-full"
+      className={floating ? 'w-auto max-w-[280px]' : 'w-full'}
       style={{
         display: 'grid',
         ...layout,
@@ -35,7 +38,7 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
         return (
           <div
             key={index}
-            className="relative overflow-hidden"
+            className={`relative overflow-hidden ${floating ? 'rounded-xl' : ''}`}
             style={{
               gridColumn: isFirstInThreeLayout ? '1 / -1' : 'auto',
               aspectRatio: isSingleImage ? undefined : (isFirstInThreeLayout ? '16/9' : '1'),
@@ -47,7 +50,13 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
             <ChatMediaImage
               src={getThumbnailUrl(index)}
               alt={`Media ${index + 1}`}
-              className={isSingleImage ? 'w-full h-auto object-cover' : 'w-full h-full object-cover'}
+              className={
+                floating
+                  ? 'w-full h-auto object-contain bg-transparent'
+                  : isSingleImage
+                    ? 'w-full h-auto object-cover'
+                    : 'w-full h-full object-cover'
+              }
               style={{ display: 'block', maxHeight: isSingleImage ? '400px' : undefined }}
               loading={loadEager ? 'eager' : 'lazy'}
             />

@@ -11,6 +11,7 @@ interface MessageForPreview {
   messageType?: string;
   audioDurationMs?: number | null;
   videoDurationMs?: number | null;
+  stickerEmoji?: string | null;
   storyReply?: unknown;
 }
 
@@ -31,6 +32,13 @@ export function extractPreviewFromMessage(message: MessageForPreview): string {
   }
   if (message.messageType === 'VIDEO' && message.videoDurationMs != null) {
     return `[TYPE:VIDEO]${formatVoicePreviewLabel(message.videoDurationMs)}`;
+  }
+  if (message.messageType === 'STICKER') {
+    const emoji =
+      typeof message.stickerEmoji === 'string' && message.stickerEmoji.trim()
+        ? message.stickerEmoji.trim()
+        : '';
+    return emoji ? `[TYPE:STICKER]${emoji}` : '[TYPE:STICKER]';
   }
 
   const hasMedia = Array.isArray(message.mediaUrls) && message.mediaUrls.length > 0;
@@ -88,6 +96,7 @@ export async function updateLastMessagePreview(
       messageType: true,
       audioDurationMs: true,
       videoDurationMs: true,
+      stickerEmoji: true,
       storyReply: true,
       senderId: true,
     },

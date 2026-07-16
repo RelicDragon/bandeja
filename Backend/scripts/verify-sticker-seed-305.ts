@@ -40,7 +40,7 @@ async function assertAssetsTrackedInGit() {
   });
   assert.strictEqual(listed.status, 0, listed.stderr);
   const files = listed.stdout.split('\n').filter(Boolean);
-  assert.ok(files.length >= 26, `expected ≥26 tracked assets, got ${files.length}`);
+  assert.ok(files.length >= 37, `expected ≥37 tracked assets, got ${files.length}`);
   console.log(`PASS assets tracked in git (${files.length})`);
 }
 
@@ -56,8 +56,8 @@ async function assertCatalog() {
   assert.ok(padel);
   assert.strictEqual(reactions!.sport, null);
   assert.strictEqual(padel!.sport, 'PADEL');
-  assert.strictEqual(reactions!.stickerCount, 8);
-  assert.strictEqual(padel!.stickerCount, 14);
+  assert.strictEqual(reactions!.stickerCount, 16);
+  assert.strictEqual(padel!.stickerCount, 16);
 
   for (const p of [reactions!, padel!]) {
     assert.ok(p.coverSticker?.staticUrl.includes('/uploads/stickers/packs/'));
@@ -66,7 +66,7 @@ async function assertCatalog() {
   }
 
   const detail = await getStickerPackById(padel!.id);
-  assert.strictEqual(detail.stickers.length, 14);
+  assert.strictEqual(detail.stickers.length, 16);
   assert.ok(detail.stickers.every((s) => s.isActive));
 
   console.log('PASS catalog sports/counts/CF');
@@ -131,10 +131,33 @@ async function assertIdempotentSkipUpload() {
 async function assertKeys() {
   assert.strictEqual(STICKER_STORAGE_PREFIX, 'uploads/stickers/');
   assert.strictEqual(
-    stickerStaticS3Key('reactions', 'ball'),
-    'uploads/stickers/packs/reactions/ball.webp'
+    stickerStaticS3Key('reactions', 'ball', 'abc'),
+    'uploads/stickers/packs/reactions/ball.abc.webp'
   );
   console.log('PASS s3 key shape');
+}
+
+async function assertAnimatedUrlsInDb() {
+  const expected = OFFICIAL_PACK_MANIFESTS.flatMap((pack) =>
+    pack.stickers.filter((s) => s.animated).map((s) => ({ packSlug: pack.slug, slug: s.slug }))
+  );
+  assert.ok(expected.length >= 4, 'manifest should mark ≥4 animated stickers');
+
+  for (const { packSlug, slug } of expected) {
+    const row = await prisma.sticker.findFirst({
+      where: { slug, pack: { slug: packSlug }, isActive: true },
+      select: { animatedUrl: true, staticUrl: true },
+    });
+    assert.ok(row, `missing active sticker ${packSlug}/${slug}`);
+    assert.ok(row!.animatedUrl, `${packSlug}/${slug} animatedUrl null`);
+    assert.ok(
+      row!.animatedUrl!.includes('.anim.webp'),
+      `${packSlug}/${slug} animatedUrl missing .anim.webp: ${row!.animatedUrl}`
+    );
+    assert.ok(row!.staticUrl.includes(`${slug}.webp`));
+    assert.ok(!row!.staticUrl.includes('.anim.webp'));
+  }
+  console.log(`PASS animatedUrl in DB (${expected.length})`);
 }
 
 async function assertNoRuntimeSvgInSeed() {
@@ -160,6 +183,7 @@ async function main() {
   await assertAssetsTrackedInGit();
   await assertNoRuntimeSvgInSeed();
   await assertCatalog();
+  await assertAnimatedUrlsInDb();
   await assertInactiveHydrate();
   await assertDeactivateMissing();
   await assertIdempotentSkipUpload();

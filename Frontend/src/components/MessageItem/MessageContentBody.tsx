@@ -2,6 +2,7 @@ import React from 'react';
 import { ParsedContentPart } from './types';
 import { splitTextForThreadSearchHighlight } from '@/services/chat/chatLocalMessageSearchText';
 import { getThreadSearchTextHighlightClass } from './threadSearchHighlightStyles';
+import { isAllMentionId } from '@/utils/mentionAll';
 
 export type ContentVariant = 'channel' | 'own' | 'other';
 
@@ -25,8 +26,10 @@ function renderThreadSearchHighlightedText(
   );
 }
 
-function getMentionClassName(variant: ContentVariant, isMentioned: boolean): string {
-  const base = 'font-semibold cursor-pointer hover:underline ';
+function getMentionClassName(variant: ContentVariant, isMentioned: boolean, clickable: boolean): string {
+  const base = clickable
+    ? 'font-semibold cursor-pointer hover:underline '
+    : 'font-semibold ';
   if (variant === 'channel') {
     return base + (isMentioned ? 'text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900/30 px-1 rounded' : 'text-blue-600 dark:text-blue-400');
   }
@@ -79,15 +82,18 @@ export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
       {parts ? (
         parts.map((part, index) => {
           if (part.type === 'mention') {
-            const isMentioned = mentionIds.includes(part.userId || '') || currentUserId === part.userId;
+            const isAll = isAllMentionId(part.userId);
+            const isMentioned = isAll
+              ? !!(currentUserId && mentionIds.includes(currentUserId))
+              : mentionIds.includes(part.userId || '') || currentUserId === part.userId;
             return (
               <span
                 key={index}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (part.userId) onMentionClick(part.userId);
+                  if (part.userId && !isAll) onMentionClick(part.userId);
                 }}
-                className={getMentionClassName(variant, isMentioned)}
+                className={getMentionClassName(variant, isMentioned, !isAll)}
               >
                 @{part.display}
               </span>

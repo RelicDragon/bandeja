@@ -63,6 +63,26 @@ function testVoiceNoPreview(): void {
   assert.equal(preview.previewImageUrl, undefined);
 }
 
+function testStickerWithEmoji(): void {
+  const preview = resolveChatNotificationMediaPreview({
+    messageType: 'STICKER',
+    stickerEmoji: '🎾',
+  }, 'en');
+
+  assert.equal(preview.body, '🎾 Sticker');
+  assert.equal(preview.previewImageUrl, undefined);
+  assert.equal(preview.mediaCount, 0);
+}
+
+function testStickerWithoutEmoji(): void {
+  const preview = resolveChatNotificationMediaPreview({
+    messageType: 'STICKER',
+  }, 'en');
+
+  assert.equal(preview.body, '🔖 Sticker');
+  assert.equal(preview.previewImageUrl, undefined);
+}
+
 function testTextOnly(): void {
   const preview = resolveChatNotificationMediaPreview({
     messageType: 'TEXT',
@@ -133,6 +153,8 @@ void (async () => {
   testMultiImageCount();
   testVideoPoster();
   testVoiceNoPreview();
+  testStickerWithEmoji();
+  testStickerWithoutEmoji();
   testTextOnly();
   testMissingThumbFallbackLabel();
   testNeverUsesOriginalUrl();

@@ -4,12 +4,22 @@ import { S3Service } from '../s3.service';
 import { config } from '../../config/env';
 import { STICKER_STORAGE_PREFIX } from './stickerConstants';
 
-export function stickerStaticS3Key(packSlug: string, stickerSlug: string): string {
-  return `${STICKER_STORAGE_PREFIX}packs/${packSlug}/${stickerSlug}.webp`;
+export function stickerAssetHashSuffix(contentHash: string): string {
+  return contentHash.slice(0, 12);
 }
 
-export function stickerAnimatedS3Key(packSlug: string, stickerSlug: string): string {
-  return `${STICKER_STORAGE_PREFIX}packs/${packSlug}/${stickerSlug}.anim.webp`;
+export function stickerStaticS3Key(packSlug: string, stickerSlug: string, contentHash?: string): string {
+  const hash = contentHash?.trim() ? `.${stickerAssetHashSuffix(contentHash)}` : '';
+  return `${STICKER_STORAGE_PREFIX}packs/${packSlug}/${stickerSlug}${hash}.webp`;
+}
+
+export function stickerAnimatedS3Key(
+  packSlug: string,
+  stickerSlug: string,
+  contentHash?: string
+): string {
+  const hash = contentHash?.trim() ? `.${stickerAssetHashSuffix(contentHash)}` : '';
+  return `${STICKER_STORAGE_PREFIX}packs/${packSlug}/${stickerSlug}.anim${hash}.webp`;
 }
 
 export function contentHashOf(buffer: Buffer): string {

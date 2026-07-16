@@ -61,9 +61,9 @@ async function resolveUrls(params: {
   prevAnimatedUrl: string | null;
   contentHash: string;
 }): Promise<{ staticUrl: string; animatedUrl: string | null; uploaded: number }> {
-  const staticKey = stickerStaticS3Key(params.packSlug, params.stickerSlug);
+  const staticKey = stickerStaticS3Key(params.packSlug, params.stickerSlug, params.contentHash);
   const animatedKey = params.animatedBuffer
-    ? stickerAnimatedS3Key(params.packSlug, params.stickerSlug)
+    ? stickerAnimatedS3Key(params.packSlug, params.stickerSlug, params.contentHash)
     : null;
   const hashChanged = params.prevContentHash !== params.contentHash;
   const expectedStatic = publicUrlForKey(staticKey);
@@ -95,11 +95,10 @@ async function resolveUrls(params: {
     ]);
 
     if (!staticMissing && !animMissing) {
+      // Prefer canonical hashed keys (busts CloudFront immutable cache on old paths).
       return {
-        staticUrl: params.prevStaticUrl!,
-        animatedUrl: params.animatedBuffer
-          ? (params.prevAnimatedUrl ?? expectedAnimated)
-          : null,
+        staticUrl: expectedStatic,
+        animatedUrl: expectedAnimated,
         uploaded: 0,
       };
     }
@@ -114,12 +113,8 @@ async function resolveUrls(params: {
     }
 
     return {
-      staticUrl: staticMissing ? expectedStatic : params.prevStaticUrl!,
-      animatedUrl: params.animatedBuffer
-        ? animMissing
-          ? expectedAnimated
-          : (params.prevAnimatedUrl ?? expectedAnimated)
-        : null,
+      staticUrl: expectedStatic,
+      animatedUrl: expectedAnimated,
       uploaded,
     };
   }

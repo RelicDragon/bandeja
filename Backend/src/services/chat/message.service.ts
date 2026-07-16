@@ -44,6 +44,16 @@ import { getChatNotifier } from './chatNotifier';
 import { scheduleMessageCreateUnreadNotify } from './messageCreateUnreadNotify.service';
 import { hasStoryReplyPayload } from './storyReplySanitize';
 import { validateStoryReplyForUserChatMessage } from './storyReplyValidate.service';
+import {
+  tryConsumeGiphyIngestRateLimit,
+  detectGiphyUrlOnly,
+  tryConvertGiphyPasteToImage,
+} from '../giphyIngest';
+import {
+  assertSendableSticker,
+  bumpStickerRecent,
+  isStickerCatalogUrl,
+} from '../stickers';
 
 const VOICE_MESSAGE_MAX_MS = 30 * 60 * 1000;
 
@@ -342,6 +352,8 @@ export class MessageService {
           content: true,
           messageType: true,
           mediaUrls: true,
+          stickerId: true,
+          stickerEmoji: true,
           audioDurationMs: true,
           videoDurationMs: true,
           sender: {
@@ -578,6 +590,7 @@ export class MessageService {
     chatType: ChatType;
     mentionIds?: string[];
     messageType?: MessageType;
+    stickerId?: string | null;
     audioDurationMs?: number | null;
     videoDurationMs?: number | null;
     videoWidth?: number | null;
@@ -605,6 +618,7 @@ export class MessageService {
       mentionIds = [],
       poll,
       messageType: requestedMessageType,
+      stickerId: rawStickerId,
       audioDurationMs,
       videoDurationMs,
       videoWidth,
@@ -614,6 +628,8 @@ export class MessageService {
       ...data,
       clientThumbnailUrls: data.thumbnailUrls ?? [],
     };
+    const requestedStickerId =
+      typeof rawStickerId === 'string' && rawStickerId.trim() ? rawStickerId.trim() : null;
 
     const cid = normalizeChatClientMutationId(data.clientMutationId);
 
@@ -670,94 +686,7 @@ export class MessageService {
         ? await validateStoryReplyForUserChatMessage(data.storyReply, senderId, userChat!)
         : null;
 
-    const resolvedMessageType = resolveOutgoingChatMessageType({
-      poll,
-      requestedMessageType,
-      mediaUrls,
-    });
-
-    if (poll && mediaUrls.length > 0) {
-      throw new ApiError(400, 'Poll messages cannot include media');
-    }
-
-    let voiceWaveform: number[] = [];
-    if (resolvedMessageType === MessageType.VOICE) {
-      if (poll) {
-        throw new ApiError(400, 'Voice messages cannot include a poll');
-      }
-      if (mediaUrls.length !== 1) {
-        throw new ApiError(400, 'Voice message requires exactly one audio URL');
-      }
-      if (audioDurationMs == null || audioDurationMs < 500 || audioDurationMs > VOICE_MESSAGE_MAX_MS) {
-        throw new ApiError(400, 'Invalid voice message duration');
-      }
-      const wf = Array.isArray(waveformData) ? waveformData : [];
-      if (wf.length < 1 || wf.length > 80) {
-        throw new ApiError(400, 'Invalid waveform data');
-      }
-      if (!wf.every((x) => typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= 1)) {
-        throw new ApiError(400, 'Invalid waveform values');
-      }
-      const url = mediaUrls[0];
-      if (!url || !isAllowedChatVoiceMediaUrl(url)) {
-        throw new ApiError(400, 'Invalid voice audio URL');
-      }
-      voiceWaveform = wf;
-    } else if (requestedMessageType === MessageType.VOICE) {
-      throw new ApiError(400, 'Invalid voice message payload');
-    }
-
-    let videoMeta: { durationMs: number; width?: number; height?: number } | null = null;
-    if (resolvedMessageType === MessageType.VIDEO) {
-      if (poll) {
-        throw new ApiError(400, 'Video messages cannot include a poll');
-      }
-      if (mediaUrls.length !== 1) {
-        throw new ApiError(400, 'Video message requires exactly one video URL');
-      }
-      if (
-        videoDurationMs == null ||
-        videoDurationMs < MIN_VIDEO_DURATION_MS ||
-        videoDurationMs > VIDEO_MESSAGE_MAX_MS
-      ) {
-        throw new ApiError(400, 'Invalid video message duration');
-      }
-      const url = mediaUrls[0];
-      if (!url || !isAllowedChatVideoMediaUrl(url)) {
-        throw new ApiError(400, 'Invalid video URL');
-      }
-      const thumbs = Array.isArray(clientThumbnailUrls) ? clientThumbnailUrls : [];
-      if (thumbs.length !== 1 || !isAllowedChatVideoThumbnailUrl(thumbs[0]!)) {
-        throw new ApiError(400, 'Video message requires a valid poster thumbnail URL');
-      }
-      videoMeta = {
-        durationMs: videoDurationMs,
-        width: videoWidth ?? undefined,
-        height: videoHeight ?? undefined,
-      };
-    } else if (requestedMessageType === MessageType.VIDEO) {
-      throw new ApiError(400, 'Invalid video message payload');
-    }
-
-    const thumbnailUrls =
-      resolvedMessageType === MessageType.VOICE
-        ? []
-        : resolvedMessageType === MessageType.VIDEO
-          ? (Array.isArray(clientThumbnailUrls) ? clientThumbnailUrls : []).slice(0, 1)
-          : this.generateThumbnailUrls(mediaUrls);
-
-    const contentForStore =
-      resolvedMessageType === MessageType.VOICE || resolvedMessageType === MessageType.VIDEO
-        ? ''
-        : content?.startsWith('[TYPE:')
-          ? content.substring(1)
-          : (content ?? '');
-
-    const contentSearchableValue =
-      resolvedMessageType === MessageType.VOICE && audioDurationMs != null
-        ? computeVoiceContentSearchable(audioDurationMs)
-        : computeContentSearchable(content ?? null, poll?.question);
-
+    // Dedupe before Giphy ingest so retries do not re-fetch / re-upload / burn rate limit.
     if (cid) {
       const existing = await prisma.chatMessage.findFirst({
         where: { senderId, clientMutationId: cid },
@@ -787,6 +716,160 @@ export class MessageService {
       }
     }
 
+    // Mutable create payload — Giphy URL-only paste may re-host → IMAGE before type resolve.
+    let workingContent = content;
+    let workingMediaUrls = [...mediaUrls];
+    let workingClientThumbnails = Array.isArray(clientThumbnailUrls)
+      ? [...clientThumbnailUrls]
+      : [];
+    let resolvedStickerId: string | null = null;
+    let resolvedStickerEmoji: string | null = null;
+
+    if (
+      (requestedMessageType === MessageType.STICKER || requestedStickerId) &&
+      workingMediaUrls.length > 0
+    ) {
+      throw new ApiError(400, 'Sticker messages cannot include mediaUrls', true, {
+        code: 'sticker.mediaConflict',
+      });
+    }
+
+    if (requestedMessageType === MessageType.STICKER || requestedStickerId) {
+      if (!requestedStickerId) {
+        throw new ApiError(400, 'stickerId is required for sticker messages', true, {
+          code: 'sticker.idRequired',
+        });
+      }
+      if (poll) {
+        throw new ApiError(400, 'Sticker messages cannot include a poll', true, {
+          code: 'sticker.pollConflict',
+        });
+      }
+      const sticker = await assertSendableSticker(requestedStickerId, senderId);
+      resolvedStickerId = sticker.id;
+      resolvedStickerEmoji = sticker.emoji;
+      workingContent = '';
+      workingMediaUrls = [];
+      workingClientThumbnails = [];
+    }
+
+    const canTryGiphy =
+      !poll &&
+      !resolvedStickerId &&
+      requestedMessageType !== MessageType.VOICE &&
+      requestedMessageType !== MessageType.VIDEO &&
+      workingMediaUrls.length === 0;
+
+    let giphyUploaded: { mediaUrl: string; thumbnailUrl: string } | null = null;
+
+    if (canTryGiphy) {
+      const giphyUrl = detectGiphyUrlOnly(workingContent);
+      if (giphyUrl && tryConsumeGiphyIngestRateLimit(senderId)) {
+        const ingested = await tryConvertGiphyPasteToImage(giphyUrl);
+        if (ingested) {
+          giphyUploaded = ingested;
+          workingMediaUrls = [ingested.mediaUrl];
+          workingClientThumbnails = [ingested.thumbnailUrl];
+          workingContent = '';
+        }
+      }
+    }
+
+    const resolvedMessageType = resolveOutgoingChatMessageType({
+      poll,
+      requestedMessageType,
+      stickerId: resolvedStickerId,
+      mediaUrls: workingMediaUrls,
+    });
+
+    if (poll && workingMediaUrls.length > 0) {
+      throw new ApiError(400, 'Poll messages cannot include media');
+    }
+
+    let voiceWaveform: number[] = [];
+    if (resolvedMessageType === MessageType.VOICE) {
+      if (poll) {
+        throw new ApiError(400, 'Voice messages cannot include a poll');
+      }
+      if (workingMediaUrls.length !== 1) {
+        throw new ApiError(400, 'Voice message requires exactly one audio URL');
+      }
+      if (audioDurationMs == null || audioDurationMs < 500 || audioDurationMs > VOICE_MESSAGE_MAX_MS) {
+        throw new ApiError(400, 'Invalid voice message duration');
+      }
+      const wf = Array.isArray(waveformData) ? waveformData : [];
+      if (wf.length < 1 || wf.length > 80) {
+        throw new ApiError(400, 'Invalid waveform data');
+      }
+      if (!wf.every((x) => typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= 1)) {
+        throw new ApiError(400, 'Invalid waveform values');
+      }
+      const url = workingMediaUrls[0];
+      if (!url || !isAllowedChatVoiceMediaUrl(url)) {
+        throw new ApiError(400, 'Invalid voice audio URL');
+      }
+      voiceWaveform = wf;
+    } else if (requestedMessageType === MessageType.VOICE) {
+      throw new ApiError(400, 'Invalid voice message payload');
+    }
+
+    let videoMeta: { durationMs: number; width?: number; height?: number } | null = null;
+    if (resolvedMessageType === MessageType.VIDEO) {
+      if (poll) {
+        throw new ApiError(400, 'Video messages cannot include a poll');
+      }
+      if (workingMediaUrls.length !== 1) {
+        throw new ApiError(400, 'Video message requires exactly one video URL');
+      }
+      if (
+        videoDurationMs == null ||
+        videoDurationMs < MIN_VIDEO_DURATION_MS ||
+        videoDurationMs > VIDEO_MESSAGE_MAX_MS
+      ) {
+        throw new ApiError(400, 'Invalid video message duration');
+      }
+      const url = workingMediaUrls[0];
+      if (!url || !isAllowedChatVideoMediaUrl(url)) {
+        throw new ApiError(400, 'Invalid video URL');
+      }
+      const thumbs = workingClientThumbnails;
+      if (thumbs.length !== 1 || !isAllowedChatVideoThumbnailUrl(thumbs[0]!)) {
+        throw new ApiError(400, 'Video message requires a valid poster thumbnail URL');
+      }
+      videoMeta = {
+        durationMs: videoDurationMs,
+        width: videoWidth ?? undefined,
+        height: videoHeight ?? undefined,
+      };
+    } else if (requestedMessageType === MessageType.VIDEO) {
+      throw new ApiError(400, 'Invalid video message payload');
+    }
+
+    const thumbnailUrls =
+      resolvedMessageType === MessageType.VOICE || resolvedMessageType === MessageType.STICKER
+        ? []
+        : resolvedMessageType === MessageType.VIDEO
+          ? workingClientThumbnails.slice(0, 1)
+          : workingClientThumbnails.length > 0
+            ? workingClientThumbnails
+            : this.generateThumbnailUrls(workingMediaUrls);
+
+    const contentForStore =
+      resolvedMessageType === MessageType.VOICE ||
+      resolvedMessageType === MessageType.VIDEO ||
+      resolvedMessageType === MessageType.STICKER
+        ? ''
+        : workingContent?.startsWith('[TYPE:')
+          ? workingContent.substring(1)
+          : (workingContent ?? '');
+
+    const contentSearchableValue =
+      resolvedMessageType === MessageType.VOICE && audioDurationMs != null
+        ? computeVoiceContentSearchable(audioDurationMs)
+        : resolvedMessageType === MessageType.STICKER
+          ? (resolvedStickerEmoji ?? 'sticker')
+          : computeContentSearchable(workingContent ?? null, poll?.question);
+
     let result: { message: any; syncSeq: number };
     try {
       result = await prisma.$transaction(async (tx) => {
@@ -799,7 +882,7 @@ export class MessageService {
           senderId,
           content: contentForStore,
           contentSearchable: contentSearchableValue,
-          mediaUrls,
+          mediaUrls: workingMediaUrls,
           thumbnailUrls,
           replyToId,
           storyReply: storyReply ?? undefined,
@@ -807,6 +890,8 @@ export class MessageService {
           mentionIds: mentionIds || [],
           state: MessageState.SENT,
           messageType: resolvedMessageType,
+          stickerId: resolvedMessageType === MessageType.STICKER ? resolvedStickerId : null,
+          stickerEmoji: resolvedMessageType === MessageType.STICKER ? resolvedStickerEmoji : null,
           audioDurationMs: resolvedMessageType === MessageType.VOICE ? audioDurationMs ?? null : null,
           videoDurationMs: resolvedMessageType === MessageType.VIDEO ? videoMeta?.durationMs ?? null : null,
           videoWidth: resolvedMessageType === MessageType.VIDEO ? videoMeta?.width ?? null : null,
@@ -869,6 +954,12 @@ export class MessageService {
       return { message: (withSeq ?? finalMessage) as any, syncSeq };
     });
     } catch (e) {
+      if (giphyUploaded) {
+        void ImageProcessor.deleteFilePair(giphyUploaded.mediaUrl, giphyUploaded.thumbnailUrl).catch(
+          (err) => console.warn('[giphyIngest] orphan cleanup failed', err)
+        );
+        giphyUploaded = null;
+      }
       if (cid && isPrismaUniqueViolation(e)) {
         const recovered = await prisma.chatMessage.findFirst({
           where: { senderId, clientMutationId: cid },
@@ -884,6 +975,14 @@ export class MessageService {
           (recovered as { syncSeq?: number; _deduped?: boolean }).syncSeq = orderingSeq;
           (recovered as { _deduped?: boolean })._deduped = true;
           MessageService.scheduleSenderContextReadAfterSend(chatContextType, contextId, senderId);
+          // Retries must still bump Recent (first attempt may have created the row then failed mid-bump).
+          if (recovered.messageType === MessageType.STICKER && recovered.stickerId) {
+            try {
+              await bumpStickerRecent(senderId, recovered.stickerId);
+            } catch (err) {
+              console.error('[MessageService] bumpStickerRecent failed (dedupe)', err);
+            }
+          }
           return recovered as any;
         }
       }
@@ -892,6 +991,14 @@ export class MessageService {
 
     const message = result.message as typeof result.message & { syncSeq: number };
     (message as { syncSeq: number }).syncSeq = result.syncSeq;
+
+    if (resolvedMessageType === MessageType.STICKER && resolvedStickerId) {
+      try {
+        await bumpStickerRecent(senderId, resolvedStickerId);
+      } catch (err) {
+        console.error('[MessageService] bumpStickerRecent failed', err);
+      }
+    }
 
     // Post-creation logic (notifications, counts, etc.)
     if (chatContextType === 'GAME' && game) {
@@ -999,6 +1106,7 @@ export class MessageService {
     chatType: ChatType;
     mentionIds?: string[];
     messageType?: MessageType;
+    stickerId?: string | null;
     audioDurationMs?: number | null;
     videoDurationMs?: number | null;
     videoWidth?: number | null;
@@ -1498,6 +1606,14 @@ export class MessageService {
       throw new ApiError(400, 'Voice messages cannot be edited');
     }
 
+    if (message.messageType === MessageType.VIDEO) {
+      throw new ApiError(400, 'Video messages cannot be edited');
+    }
+
+    if (message.messageType === MessageType.STICKER) {
+      throw new ApiError(400, 'Sticker messages cannot be edited');
+    }
+
     await this.validateMessageAccess(message, userId, true);
 
     const content = (data.content ?? '').trim();
@@ -1760,8 +1876,14 @@ export class MessageService {
 
     await updateLastMessagePreview(message.chatContextType, message.contextId);
 
-    if (message.mediaUrls && message.mediaUrls.length > 0) {
+    const skipMediaDelete =
+      message.messageType === MessageType.STICKER ||
+      (Array.isArray(message.mediaUrls) &&
+        message.mediaUrls.some((u) => isStickerCatalogUrl(u)));
+
+    if (!skipMediaDelete && message.mediaUrls && message.mediaUrls.length > 0) {
       for (const mediaUrl of message.mediaUrls) {
+        if (isStickerCatalogUrl(mediaUrl)) continue;
         try {
           await ImageProcessor.deleteFile(mediaUrl);
         } catch (error) {
@@ -1770,8 +1892,9 @@ export class MessageService {
       }
     }
 
-    if (message.thumbnailUrls && message.thumbnailUrls.length > 0) {
+    if (!skipMediaDelete && message.thumbnailUrls && message.thumbnailUrls.length > 0) {
       for (const thumbnailUrl of message.thumbnailUrls) {
+        if (isStickerCatalogUrl(thumbnailUrl)) continue;
         try {
           await ImageProcessor.deleteFile(thumbnailUrl);
         } catch (error) {

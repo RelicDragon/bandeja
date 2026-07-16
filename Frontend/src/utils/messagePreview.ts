@@ -29,6 +29,12 @@ export function parseMessagePreview(preview: string | null | undefined, t: TFunc
             : t('chat.videoMessage', 'Video');
     }
 
+    if (preview.startsWith('[TYPE:STICKER]')) {
+        const emoji = preview.slice('[TYPE:STICKER]'.length).trim();
+        const label = t('chat.stickerMessage', 'Sticker');
+        return emoji ? `${emoji} ${label}` : label;
+    }
+
     if (preview.startsWith('[TYPE:STORY_REPLY]')) {
         const text = preview.slice('[TYPE:STORY_REPLY]'.length);
         const label = t('chat.storyReply.toYourStory', { defaultValue: 'Replied to your story' });

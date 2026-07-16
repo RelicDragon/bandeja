@@ -900,17 +900,37 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-26 | Forward message | Forward to another chat | Appears in target |
 | CH-27 | Copy text | Copy action | Clipboard content |
 | CH-28 | Send image | Attach image | Image message renders |
-| CH-96 | Giphy URL-only paste → GIF | In GAME/USER/GROUP/BUG chat, paste only an allowlisted Giphy HTTPS URL (e.g. `https://giphy.com/gifs/...` or `https://media.giphy.com/media/.../giphy.gif`) and send | Message becomes `IMAGE` with re-hosted media (our CDN/`uploads/chat/…`, not giphy.com); GIF animates in existing image bubble/gallery |
+| CH-96 | Giphy URL-only paste → GIF | In GAME/USER/GROUP/BUG chat, paste only an allowlisted Giphy HTTPS URL (e.g. `https://giphy.com/gifs/...` or `https://media.giphy.com/media/.../giphy.gif`) and send | Message becomes `IMAGE` with re-hosted media (our CDN/`uploads/chat/…`, not giphy.com); GIF animates with fully transparent bubble panel (Telegram-style, no colored/white chrome); time/ticks overlay the GIF |
 | CH-97 | Giphy URL + text stays text | Paste Giphy URL inside a longer sentence (or with other text) and send | Stays `TEXT` with the original URL; no conversion / no media bubble |
 | CH-98 | Giphy convert soft-fail | Paste a Giphy URL that cannot be fetched/validated (dead id, oversize, blocked) or spam pastes past ingest rate limit; send | Create succeeds as `TEXT` with the original URL kept; no hard error that drops the message |
 | CH-99 | Send sticker by stickerId | Authenticated create with `messageType: STICKER` + valid `stickerId` (catalog pack seeded) | Message persists as `STICKER`, empty `mediaUrls`, `stickerEmoji` set; chat list preview shows emoji or “Sticker” |
 | CH-100 | Sticker + mediaUrls rejected | Create with both `stickerId` and `mediaUrls` | `400` / no message created |
 | CH-101 | Delete sticker message keeps catalog | Send sticker → delete own sticker message | Message removed; pack/sticker still listed via `GET /stickers/packs` and asset URL still loads |
-| CH-102 | View sticker bubble (not photo) | Open thread with a `STICKER` message (seeded catalog) | Transparent sticker layout (asset or emoji); not `MessageMediaGrid`; tap does not open photo fullscreen gallery |
+| CH-102 | View sticker bubble (not photo) | Open thread with a `STICKER` message (seeded catalog) | Fully transparent panel (no blue/white bubble chrome); asset or emoji only; not `MessageMediaGrid`; tap does not open photo fullscreen gallery; time/ticks overlay sticker |
 | CH-103 | Sticker list / thread preview | Send or receive sticker → return to chat list | Row shows sticker emoji and/or localized “Sticker”, not blank / “[Media]” / “No message” |
 | CH-104 | Reply-to-sticker preview | Long-press sticker → Reply | Composer reply strip shows emoji + “Sticker” (usable, not empty) |
 | CH-105 | Missing sticker catalog fallback | Open thread with `STICKER` whose catalog id 404s / is unknown | Bubble shows `stickerEmoji` or generic sticker fallback; no crash / blank bubble |
-| CH-106 | Official packs after seed | Run `seed:sticker-packs` (or use seeded env) → open sticker tray / `GET /stickers/packs` | `reactions` (sport null, ~8) and `padel` (`sport=PADEL`, ~12–16); cover URLs under `uploads/stickers/packs/...`; list does not auto-create packs |
+| CH-106 | Official packs after seed | Run `seed:sticker-packs` (or use seeded env) → open sticker tray / `GET /stickers/packs` | `reactions` (sport null, 16) and `padel` (`sport=PADEL`, 16); Fluent 3D WebP covers under `uploads/stickers/packs/...`; list does not auto-create packs |
+| CH-107 | Giphy search → send GIF | With `GIPHY_API_KEY` set: attach → GIF → search or pick trending → tap a result | Sheet closes; message sends as `IMAGE` with re-hosted media (our CDN/`uploads/chat/…`, not giphy.com); GIF animates with transparent panel (no bubble chrome), same as CH-96 |
+| CH-108 | Giphy search hidden without key | Without `GIPHY_API_KEY` (or `/giphy/status` available=false): open attach flyout | No GIF entry in attach menu; app does not crash; URL-only paste (#CH-96) still works |
+| CH-117 | Open sticker tray from composer | In GAME/USER/GROUP/BUG chat with media allowed → tap sticker button next to attach | Tray opens with Recent · Favorites · Packs; Packs lists seeded packs and stickers; grid cells have no gray/white tile chrome (sticker floats on tray background) |
+| CH-118 | Tap sticker sends via outbox | Open tray → tap a sticker in Packs | Optimistic sticker appears in thread immediately (fully transparent panel, no bubble chrome); create confirms via sync; no image upload / pending blobs |
+| CH-119 | Sticker send offline retry | Go briefly offline → send sticker from tray → come online | Outbox retries create-only (no media upload); sticker confirms when network returns |
+| CH-119a | Sticker cannot be edited | Own sticker → context menu / ArrowUp | No Edit action; API rejects content update if attempted |
+| CH-120 | Favorite sticker | Open tray → tap ★ or long-press a sticker → Favorites tab | Sticker shows ★ and appears under Favorites; still there after app relaunch |
+| CH-121 | Unfavorite sticker | Favorites tab → tap ★ or long-press favorited sticker | Removed from Favorites; ★ cleared |
+| CH-122 | Recent after send | Send sticker → reopen tray → Recent | Sent sticker is first in Recent (server prefs + optimistic reorder) |
+| CH-127 | Sticker prefs caps | Favorite >100 distinct stickers / send >40 stickers | Favorites list stays ≤100; Recent stays ≤40 (MRU) |
+| CH-123 | Sport pack order in game chat | Open tray in a PADEL game chat | `padel` pack appears before general `reactions` |
+| CH-124 | Default pack order outside game | Open tray in DM / group (no game sport) | Pack order matches catalog sortOrder (stable) |
+| CH-125 | Tray search hit/miss | Tray search “smash” / nonsense string | Hit shows matching stickers; miss shows empty state |
+| CH-126 | Animated sticker + reduced motion | Tray Packs → send `padel/ball` or `padel/smash` (has `animatedUrl`); toggle OS “Reduce motion” | Motion on: tray cell + bubble use `.anim.webp` (`data-sticker-motion=animated`) with transparent canvas (no opaque fill behind glyph); reduced motion: both use static `.webp` (`data-sticker-motion=static`) |
+| CH-126a | Animated WebP on Capacitor | Same stickers as CH-126 on iOS/Android (min iOS 16 / Android 24 WebViews) | `.anim.webp` decodes and animates when motion allowed; static frame when reduced motion; static-only stickers still render |
+| CH-128 | Save image as personal sticker | Long-press eligible chat `IMAGE` (PNG/WebP/GIF with transparency; alpha formats are not JPEG-compressed on upload) → Save as sticker | Toast success; tray (even if already open) shows “My stickers” with the new sticker; sendable via same STICKER path |
+
+| CH-129 | Save as sticker rejects invalid | Save JPEG or fully opaque PNG / undersized image as sticker | Clear error toast (format / alpha / size); no personal sticker created |
+| CH-130 | Personal stickers owner-only in tray | User A saves personal sticker; User B opens sticker tray | B does not see A’s “My stickers” pack; B can still view A’s sent personal sticker bubble in thread |
+| CH-131 | Delete message keeps personal catalog | Send personal sticker → delete message | Message gone; personal sticker still in owner tray; asset still loads |
 | CH-29 | Send video | Attach video | Upload + transcode state |
 | CH-30 | Fullscreen media | Tap image/video | Viewer opens |
 | CH-30a | Copy fullscreen image | Open image viewer → tap copy | Desktop/native: “Image copied” toast; paste works. Mobile web without clipboard image API: share sheet opens with “Choose Copy or Save…” toast |

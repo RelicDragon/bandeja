@@ -53,6 +53,12 @@ export function computeChatLocalSearchText(m: ChatMessage): string | null {
     if (fromText && video) return `${fromText} ${video}`;
     return video ?? fromText;
   }
+  if (m.messageType === 'STICKER') {
+    const stickerBits = [m.stickerEmoji?.trim(), 'sticker'].filter(Boolean).join(' ');
+    const sticker = normalizeForSearch(stickerBits);
+    if (fromText && sticker) return `${fromText} ${sticker}`;
+    return sticker ?? fromText;
+  }
   return fromText;
 }
 

@@ -334,6 +334,14 @@ export function sendWithTimeout(
         } else if (finalMedia.length === 0 && row?.mediaUrls?.length) {
           finalMedia = [...row.mediaUrls];
           finalThumb = [...(row.thumbnailUrls ?? [])];
+        } else if (finalMedia.length === 0 && payload.mediaUrls?.length) {
+          finalMedia = [...payload.mediaUrls];
+          finalThumb = [...(payload.thumbnailUrls ?? [])];
+        }
+        // Never create IMAGE messages that hotlink Giphy CDN.
+        if (finalMedia.some((u) => /giphy\.com/i.test(u))) {
+          await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'giphy_hotlink');
+          return;
         }
       }
 
@@ -371,6 +379,7 @@ export function sendWithTimeout(
         chatType: p.chatType ? normalizeChatType(p.chatType) : undefined,
         mentionIds: p.mentionIds?.length ? p.mentionIds : undefined,
         messageType: p.messageType,
+        ...(p.stickerId ? { stickerId: p.stickerId } : {}),
         audioDurationMs: p.audioDurationMs,
         videoDurationMs: p.videoDurationMs,
         videoWidth: p.videoWidth,

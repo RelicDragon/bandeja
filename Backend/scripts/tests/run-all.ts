@@ -777,11 +777,51 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'giphy search service unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'giphyIngest', 'giphySearch.service.test.ts'),
+    ],
+  },
+  {
     label: 'sticker asset keys unit',
     command: process.execPath,
     args: [
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'src', 'services', 'stickers', 'stickerAsset.service.test.ts'),
+    ],
+  },
+  {
+    label: 'sticker prefs normalize unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'stickers', 'stickerPrefsNormalize.test.ts'),
+    ],
+  },
+  {
+    label: 'sticker pack sport sort unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'stickers', 'stickerPackSort.test.ts'),
+    ],
+  },
+  {
+    label: 'personal sticker validate unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'stickers', 'personalStickerValidate.test.ts'),
+    ],
+  },
+  {
+    label: 'sticker pack access unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'stickers', 'stickerPackAccess.test.ts'),
     ],
   },
   {

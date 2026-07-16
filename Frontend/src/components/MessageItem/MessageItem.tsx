@@ -19,7 +19,7 @@ import { translationEqualsSource } from '@/utils/translationOutputNormalize';
 import { useChatAutoTranslateSlots } from '@/contexts/ChatAutoTranslateContext';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MessageItemProps } from './types';
-import { parseContentWithMentionsAndUrls, formatMessageTime as formatMessageTimeUtil } from './utils';
+import { parseContentWithMentionsAndUrls, formatMessageTime as formatMessageTimeUtil, resolveChatImageDisplayUrl } from './utils';
 import { formatVoiceTranscriptionForDisplay, isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 import { SystemMessageBlock } from './SystemMessageBlock';
 import { SystemMessageReactionMotion } from './SystemMessageReactionMotion';
@@ -260,10 +260,11 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     }
   }, [currentMessage.id, isTranscribing, t]);
 
-  const getThumbnailUrl = (index: number): string => {
-    if (currentMessage.thumbnailUrls?.[index]) return currentMessage.thumbnailUrls[index] || '';
-    return currentMessage.mediaUrls?.[index] || '';
-  };
+  const getThumbnailUrl = (index: number): string =>
+    resolveChatImageDisplayUrl(
+      currentMessage.mediaUrls?.[index],
+      currentMessage.thumbnailUrls?.[index]
+    );
 
   const handleImageClick = (url: string) => setFullscreenImage(url || null);
   const handleVideoOpen = (videoUrl: string, posterUrl: string) =>

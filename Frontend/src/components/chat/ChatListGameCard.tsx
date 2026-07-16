@@ -11,7 +11,7 @@ import { formatChatTime } from '@/utils/dateFormat';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import type { ChatItem } from './chatListTypes';
 import { ChatListOutboxAnimated } from './ChatListOutboxAnimated';
-import { ChatListPreviewContent } from './ChatListPreviewContent';
+import { ChatListPreviewContent, ChatListStickerRow } from './ChatListPreviewContent';
 import { ChatListPreviewText } from './ChatListPreviewText';
 import { ChatListDraftPreview } from './ChatListDraftPreview';
 import {
@@ -199,6 +199,9 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
                   ) : (
                     (() => {
                       const full = lastMessage as ChatMessage;
+                      if (full.messageType === 'STICKER') {
+                        return <ChatListStickerRow t={t} emoji={full.stickerEmoji} />;
+                      }
                       const text = full.senderId
                         ? full.content || ''
                         : formatSystemMessageForDisplay(full.content || '', t, game.entityType);

@@ -186,6 +186,8 @@ export async function applyQueuedMessagesToState(params: {
     state: 'SENT',
     chatType: q.payload.chatType,
     messageType: q.payload.messageType,
+    stickerId: q.payload.stickerId,
+    stickerEmoji: q.payload.stickerEmoji,
     audioDurationMs: q.payload.audioDurationMs,
     videoDurationMs: q.payload.videoDurationMs,
     videoWidth: q.payload.videoWidth,

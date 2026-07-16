@@ -4,6 +4,7 @@ import { CHAT_DATE_SEPARATOR_ESTIMATE_PX } from '@/utils/chatDateSeparator';
 import {
   ROW_ESTIMATE_IMAGE_PX,
   ROW_ESTIMATE_PX,
+  ROW_ESTIMATE_STICKER_PX,
   ROW_ESTIMATE_VIDEO_PX,
   estimateMessageRowHeightPx,
   resolveMessageRowEstimateWithDateSeparator,
@@ -41,6 +42,14 @@ describe('estimateMessageRowHeightPx', () => {
 
   it('uses video estimate for video messages', () => {
     expect(estimateMessageRowHeightPx(msg({ id: 'v1', messageType: 'VIDEO' }))).toBe(ROW_ESTIMATE_VIDEO_PX);
+  });
+
+  it('uses sticker estimate for sticker messages', () => {
+    expect(
+      estimateMessageRowHeightPx(
+        msg({ id: 's1', messageType: 'STICKER', stickerId: 'st1', stickerEmoji: '🎾' })
+      )
+    ).toBe(ROW_ESTIMATE_STICKER_PX);
   });
 
   it('uses default for plain text', () => {

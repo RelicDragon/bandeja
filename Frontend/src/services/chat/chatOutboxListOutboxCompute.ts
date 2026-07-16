@@ -4,12 +4,16 @@ import { chatLocalDb } from './chatLocalDb';
 
 function outboxPreviewFromPayload(payload: OptimisticMessagePayload): {
   preview?: string;
-  previewKind?: 'text' | 'voice' | 'media' | 'video';
+  previewKind?: 'text' | 'voice' | 'media' | 'video' | 'sticker';
 } {
   const text = (payload.content || '').trim();
   if (text) return { preview: text.slice(0, 80), previewKind: 'text' };
   if (payload.messageType === 'VOICE') return { previewKind: 'voice' };
   if (payload.messageType === 'VIDEO') return { previewKind: 'video' };
+  if (payload.messageType === 'STICKER') {
+    const emoji = payload.stickerEmoji?.trim();
+    return { preview: emoji || undefined, previewKind: 'sticker' };
+  }
   if (payload.messageType === 'IMAGE' || (payload.mediaUrls?.length ?? 0) > 0) return { previewKind: 'media' };
   return {};
 }

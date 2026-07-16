@@ -27,9 +27,11 @@ export function ChatListOutboxLine({ listOutbox, onRetry, onDismiss }: Props) {
         ? t('chat.listOutboxVoice', { defaultValue: 'Voice message' })
         : listOutbox.previewKind === 'video'
           ? t('chat.listOutboxVideo', { defaultValue: 'Video' })
-          : listOutbox.previewKind === 'media'
-            ? t('chat.listOutboxMedia', { defaultValue: 'Photo' })
-            : null;
+          : listOutbox.previewKind === 'sticker'
+            ? t('chat.stickerMessage', { defaultValue: 'Sticker' })
+            : listOutbox.previewKind === 'media'
+              ? t('chat.listOutboxMedia', { defaultValue: 'Photo' })
+              : null;
   const showFailedActions = listOutbox.state === 'failed' && (onRetry || onDismiss);
   const showProgress = listOutbox.state === 'sending' || listOutbox.state === 'queued';
   return (

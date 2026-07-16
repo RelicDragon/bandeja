@@ -35,7 +35,7 @@ Do **not** implement stickers as a flag on `IMAGE`.
 | Giphy fail | Soft fail → keep as normal `TEXT` with the original URL |
 | Sticker caption (v1) | No |
 | Sticker contexts | All chat contexts that already allow media: `GAME`, `USER`, `GROUP`, `BUG` |
-| Pack ownership (v1) | Admin / seed only (`isOfficial`). No user-created packs. |
+| Pack ownership (v1) | Admin / seed official (`isOfficial`). Personal packs via `#306` (`ownerUserId`, not listed to others). |
 | Giphy resolve | Server-side on create (authoritative). Client may pre-detect for UX only. |
 | Sticker URL on row | Denormalize `mediaUrls[0]` for sync/old UI, but **identity is `stickerId`** |
 | Hotlink Giphy | Never persist Giphy CDN URLs in `mediaUrls` |
@@ -176,7 +176,7 @@ Cache aggressively on FE (IndexedDB or memory + TTL). Pack list is small.
 
 ### Stickers — non-goals (v1)
 
-- User-created packs / custom stickers  
+- User-created multi-pack catalogs / Lottie (personal single pack shipped in #306)
 - Lottie  
 - Paid / gated packs  
 - Caption on sticker  
@@ -250,6 +250,8 @@ Do **not** fetch arbitrary user URLs — only allowlisted Giphy patterns.
 
 Attach-menu search via Giphy API → user picks → client uploads returned file through **existing** `uploadChatImage` → normal `IMAGE` create (no paste detector needed). Paste path remains for shared links.
 
+**Shipped (#304):** Composer attach → GIF sheet. Backend proxies `GET /giphy/search|trending` (API key server-side). Pick calls `POST /giphy/import` (SSRF-safe re-host into chat media) then normal `IMAGE` outbox create. Without `GIPHY_API_KEY`, attach entry is hidden; paste path unchanged.
+
 ---
 
 ## Client surfaces checklist
@@ -297,7 +299,12 @@ Attach-menu search via Giphy API → user picks → client uploads returned file
 
 ### P3 — Expansion
 
-- Personal “Save as sticker”
+- Personal “Save as sticker” — **shipped (#306)**
+  - `StickerPack.ownerUserId` + `isOfficial=false` private pack (`personal-{userId}`)
+  - `POST /stickers/me/from-message` from eligible chat `IMAGE` (PNG/WebP/GIF + alpha → normalize WebP ≤512)
+  - Catalog list/detail owner-scoped for personal packs; `assertSendableSticker` owner-only for personal
+  - Storage under `uploads/stickers/packs/personal-…`; message delete never removes catalog objects (same as official)
+  - Soft-deactivate (`DELETE /stickers/me/:stickerId`) keeps row/S3 for historical hydrate
 - Giphy search sheet
 - Tenor (same ingest pattern, new allowlist)
 - Lottie (only with renderer budget)
@@ -313,7 +320,7 @@ Issue: https://github.com/RelicDragon/bandeja/issues/305 (AFK, not HITL).
 | Ownership | AFK agent ships placeholders — no designer gate |
 | Asset source | Repo-bundled under `Backend/assets/stickers/{packSlug}/` |
 | Art style | Emoji on transparent/simple canvas ~512² WebP |
-| Packs | Keep slug `reactions` (general, ~8); add `padel` (`sport=PADEL`, ~12–16) |
+| Packs | `reactions` (general, 16) + `padel` (`sport=PADEL`, 16); Fluent UI Emoji 3D (MIT) |
 | Animated | Mix: ~1–2 animated in `reactions`, ~1–2 in `padel`; rest static |
 | Generate vs seed | `npm run generate:sticker-assets` writes/commits binaries; `npm run seed:sticker-packs` upserts only |
 | Upload | Upload when AWS works; `--skip-upload` for CI/local |

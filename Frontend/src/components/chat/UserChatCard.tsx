@@ -22,6 +22,7 @@ import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated
 import {
   ChatListGenericMediaRow,
   ChatListPreviewContent,
+  ChatListStickerRow,
   ChatListVideoRow,
 } from '@/components/chat/ChatListPreviewContent';
 import type { ChatListOutbox } from '@/utils/chatListSort';
@@ -190,15 +191,27 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
             const fullLm = previewOnly ? null : (lm as ChatMessage);
             const isFullVoice = fullLm?.messageType === 'VOICE';
             const isFullVideo = fullLm?.messageType === 'VIDEO';
+            const isFullSticker = fullLm?.messageType === 'STICKER';
             const voiceAsTextOnly = isFullVoice && !!(fullMessage?.content?.trim());
             const showVoiceRow = isFullVoice && !voiceAsTextOnly;
             const showVideoRow = isFullVideo;
+            const showStickerRow = isFullSticker;
             const hasMediaUrls = (fullLm?.mediaUrls?.length ?? 0) > 0;
             const mt = fullLm?.messageType;
             const showGenericMediaRow =
-              !previewOnly && !isFullVoice && !isFullVideo && hasMediaUrls && mt === undefined;
+              !previewOnly &&
+              !isFullVoice &&
+              !isFullVideo &&
+              !isFullSticker &&
+              hasMediaUrls &&
+              mt === undefined;
             const showPhotoRow =
-              !previewOnly && !isFullVoice && !isFullVideo && hasMediaUrls && mt !== undefined;
+              !previewOnly &&
+              !isFullVoice &&
+              !isFullVideo &&
+              !isFullSticker &&
+              hasMediaUrls &&
+              mt !== undefined;
 
             return (
               <div className="flex items-center justify-between">
@@ -222,6 +235,8 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
                     </span>
                   ) : showVideoRow ? (
                     <ChatListVideoRow t={t} durationMs={fullLm?.videoDurationMs} />
+                  ) : showStickerRow ? (
+                    <ChatListStickerRow t={t} emoji={fullLm?.stickerEmoji} />
                   ) : showPhotoRow ? (
                     <span className="flex items-center gap-1">
                       <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>

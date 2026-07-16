@@ -39,6 +39,22 @@ export function ChatListVideoRow({
   );
 }
 
+export function ChatListStickerRow({
+  t,
+  emoji,
+}: {
+  t: TFunction;
+  emoji?: string | null;
+}) {
+  const e = emoji?.trim();
+  return (
+    <span className="inline-flex items-center gap-1">
+      {e ? <span aria-hidden>{e}</span> : null}
+      <span>{t('chat.stickerMessage', { defaultValue: 'Sticker' })}</span>
+    </span>
+  );
+}
+
 export function ChatListPreviewContent({ preview, t, entityType }: Props) {
   if (!preview) return null;
 
@@ -62,6 +78,11 @@ export function ChatListPreviewContent({ preview, t, entityType }: Props) {
   if (preview.startsWith('[TYPE:VIDEO]')) {
     const dur = preview.slice(12);
     return <ChatListVideoRow t={t} durationLabel={dur || undefined} />;
+  }
+
+  if (preview.startsWith('[TYPE:STICKER]')) {
+    const emoji = preview.slice('[TYPE:STICKER]'.length).trim();
+    return <ChatListStickerRow t={t} emoji={emoji || null} />;
   }
 
   if (preview.startsWith('[TYPE:STORY_REPLY]')) {

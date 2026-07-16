@@ -46,12 +46,19 @@ export const ReplyPreview: React.FC<ReplyPreviewProps> = ({
   };
 
   const raw = convertMentionsToPlaintext(replyTo.content || '');
+  const replyType = replyTo.messageType;
+  const stickerEmoji = replyTo.stickerEmoji?.trim();
+  const stickerLabel = t('chat.stickerMessage', { defaultValue: 'Sticker' });
   const displayContent =
-    (replyTo as ChatMessage['replyTo'])?.messageType === 'VOICE'
+    replyType === 'VOICE'
       ? t('chat.voiceMessage', { defaultValue: 'Voice message' })
-      : (replyTo as ChatMessage['replyTo'])?.messageType === 'VIDEO'
+      : replyType === 'VIDEO'
         ? t('chat.videoMessage', { defaultValue: 'Video' })
-        : truncate(raw, REPLY_TRUNCATE_LEN);
+        : replyType === 'STICKER'
+          ? stickerEmoji
+            ? `${stickerEmoji} ${stickerLabel}`
+            : stickerLabel
+          : truncate(raw, REPLY_TRUNCATE_LEN);
 
   return (
     <div className={`bg-gray-50 dark:bg-gray-700 border-l-4 border-green-500 p-2 rounded-lg cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors ${className}`}>

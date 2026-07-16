@@ -52,6 +52,8 @@
     "seed:sticker-packs": "ts-node -r dotenv/config scripts/seed-sticker-packs.ts",
     "test:chat-message-type": "ts-node --transpile-only src/services/chat/resolveOutgoingChatMessageType.test.ts",
     "test:sticker-assets": "ts-node --transpile-only src/services/stickers/stickerAsset.service.test.ts",
+    "test:sticker-prefs": "ts-node --transpile-only src/services/stickers/stickerPrefsNormalize.test.ts",
+    "test:sticker-pack-sort": "ts-node --transpile-only src/services/stickers/stickerPackSort.test.ts",
     "test:court-club-sports-reconcile": "ts-node scripts/lib/courtClubSportsReconcile.test.ts",
     "sunset:user-rating-columns": "ts-node scripts/sunsetUserRatingColumns.ts",
     "backfill:non-rating-game-level-events": "ts-node scripts/backfillNonRatingGameLevelEvents.ts",

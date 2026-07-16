@@ -23,6 +23,7 @@ export interface ChatMessageForMediaPreview {
   thumbnailUrls?: string[];
   audioDurationMs?: number | null;
   videoDurationMs?: number | null;
+  stickerEmoji?: string | null;
   storyReply?: unknown;
 }
 
@@ -143,6 +144,19 @@ function formatVoiceBody(message: ChatMessageForMediaPreview): string {
   return '🎤 Voice message';
 }
 
+function formatStickerBody(message: ChatMessageForMediaPreview, lang: string): string {
+  const stickerKey = 'notifications.sticker';
+  const stickerLabel = t(stickerKey, lang);
+  const fallbackLabel = stickerLabel !== stickerKey ? stickerLabel : '🔖 Sticker';
+  const emoji =
+    typeof message.stickerEmoji === 'string' && message.stickerEmoji.trim()
+      ? message.stickerEmoji.trim()
+      : '';
+  if (!emoji) return fallbackLabel;
+  const plain = fallbackLabel.replace(/^🔖\s*/, '').trim() || 'Sticker';
+  return `${emoji} ${plain}`;
+}
+
 export function resolveChatNotificationMediaPreview(
   message: ChatMessageForMediaPreview,
   lang = 'en'
@@ -162,6 +176,10 @@ export function resolveChatNotificationMediaPreview(
 
   if (message.messageType === 'VOICE') {
     return { body: formatVoiceBody(message), mediaCount };
+  }
+
+  if (message.messageType === 'STICKER') {
+    return { body: formatStickerBody(message, normalizedLang), mediaCount };
   }
 
   if (message.messageType === 'VIDEO') {

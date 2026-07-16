@@ -1,7 +1,9 @@
 import prisma from '../../config/database';
 import type { Sport } from '@prisma/client';
-import { MAX_STICKER_FAVORITES, MAX_STICKER_RECENT } from './stickerConstants';
 import { ApiError } from '../../utils/ApiError';
+import { bumpRecentIdList, normalizeFavoritesInput, normalizeRecentInput } from './stickerPrefsNormalize';
+import { sortStickerPacksForSport } from './stickerPackSort';
+import { isPersonalStickerSendableBy, isStickerPackVisibleToUser } from './stickerPackAccess';
 
 export type StickerPackListItem = {
   id: string;
@@ -10,6 +12,7 @@ export type StickerPackListItem = {
   sport: Sport | null;
   locale: string | null;
   isOfficial: boolean;
+  ownerUserId: string | null;
   sortOrder: number;
   stickerCount: number;
   coverSticker: {
@@ -37,7 +40,17 @@ export type StickerDto = {
   isActive: boolean;
 };
 
-function mapSticker(s: {
+/** Bust CDN/browser cache when seed rewrites the same S3 key. */
+function withAssetVersion(url: string | null | undefined, contentHash: string | null | undefined): string | null {
+  if (!url?.trim()) return null;
+  const hash = contentHash?.trim();
+  if (!hash) return url.trim();
+  const base = url.trim();
+  const sep = base.includes('?') ? '&' : '?';
+  return `${base}${sep}v=${hash.slice(0, 16)}`;
+}
+
+export function mapStickerDto(s: {
   id: string;
   packId: string;
   slug: string;
@@ -49,6 +62,7 @@ function mapSticker(s: {
   height: number;
   sortOrder: number;
   isActive: boolean;
+  contentHash?: string | null;
 }): StickerDto {
   return {
     id: s.id,
@@ -56,8 +70,8 @@ function mapSticker(s: {
     slug: s.slug,
     emoji: s.emoji,
     title: s.title,
-    staticUrl: s.staticUrl,
-    animatedUrl: s.animatedUrl,
+    staticUrl: withAssetVersion(s.staticUrl, s.contentHash) ?? s.staticUrl,
+    animatedUrl: withAssetVersion(s.animatedUrl, s.contentHash),
     width: s.width,
     height: s.height,
     sortOrder: s.sortOrder,
@@ -72,6 +86,7 @@ function mapPackListItem(p: {
   sport: Sport | null;
   locale: string | null;
   isOfficial: boolean;
+  ownerUserId: string | null;
   sortOrder: number;
   coverSticker: {
     id: string;
@@ -81,6 +96,7 @@ function mapPackListItem(p: {
     animatedUrl: string | null;
     width: number;
     height: number;
+    contentHash?: string | null;
   } | null;
   _count: { stickers: number };
 }): StickerPackListItem {
@@ -91,6 +107,7 @@ function mapPackListItem(p: {
     sport: p.sport,
     locale: p.locale,
     isOfficial: p.isOfficial,
+    ownerUserId: p.ownerUserId,
     sortOrder: p.sortOrder,
     stickerCount: p._count.stickers,
     coverSticker: p.coverSticker
@@ -98,8 +115,8 @@ function mapPackListItem(p: {
           id: p.coverSticker.id,
           slug: p.coverSticker.slug,
           emoji: p.coverSticker.emoji,
-          staticUrl: p.coverSticker.staticUrl,
-          animatedUrl: p.coverSticker.animatedUrl,
+          staticUrl: withAssetVersion(p.coverSticker.staticUrl, p.coverSticker.contentHash) ?? p.coverSticker.staticUrl,
+          animatedUrl: withAssetVersion(p.coverSticker.animatedUrl, p.coverSticker.contentHash),
           width: p.coverSticker.width,
           height: p.coverSticker.height,
         }
@@ -117,35 +134,44 @@ const packInclude = {
       animatedUrl: true,
       width: true,
       height: true,
+      contentHash: true,
     },
   },
   _count: { select: { stickers: { where: { isActive: true } } } },
 } as const;
 
+function assertPackVisibleToUser(
+  pack: { isOfficial: boolean; ownerUserId: string | null },
+  userId: string | undefined
+): void {
+  if (isStickerPackVisibleToUser(pack, userId)) return;
+  throw new ApiError(404, 'Sticker pack not found', true, { code: 'sticker.packNotFound' });
+}
+
 export async function listStickerPacks(opts?: {
+  userId?: string;
   sport?: Sport | null;
 }): Promise<StickerPackListItem[]> {
+  const userId = opts?.userId;
   const packs = await prisma.stickerPack.findMany({
-    where: { isActive: true },
+    where: userId
+      ? {
+          isActive: true,
+          OR: [{ isOfficial: true, ownerUserId: null }, { ownerUserId: userId }],
+        }
+      : { isActive: true, isOfficial: true, ownerUserId: null },
     orderBy: [{ sortOrder: 'asc' }, { title: 'asc' }],
     include: packInclude,
   });
 
-  const sport = opts?.sport ?? null;
-  const sorted =
-    sport == null
-      ? packs
-      : [...packs].sort((a, b) => {
-          const aMatch = a.sport === sport ? 0 : a.sport == null ? 1 : 2;
-          const bMatch = b.sport === sport ? 0 : b.sport == null ? 1 : 2;
-          if (aMatch !== bMatch) return aMatch - bMatch;
-          return a.sortOrder - b.sortOrder;
-        });
-
+  const sorted = sortStickerPacksForSport(packs, opts?.sport ?? null);
   return sorted.map(mapPackListItem);
 }
 
-export async function getStickerPackById(packId: string): Promise<{
+export async function getStickerPackById(
+  packId: string,
+  userId?: string
+): Promise<{
   pack: StickerPackListItem;
   stickers: StickerDto[];
 }> {
@@ -162,10 +188,11 @@ export async function getStickerPackById(packId: string): Promise<{
   if (!pack) {
     throw new ApiError(404, 'Sticker pack not found', true, { code: 'sticker.packNotFound' });
   }
+  assertPackVisibleToUser(pack, userId);
 
   return {
     pack: mapPackListItem(pack),
-    stickers: pack.stickers.map(mapSticker),
+    stickers: pack.stickers.map(mapStickerDto),
   };
 }
 
@@ -181,22 +208,33 @@ export async function getStickerById(
     throw new ApiError(404, 'Sticker not found', true, { code: 'sticker.notFound' });
   }
   return {
-    ...mapSticker(sticker),
+    ...mapStickerDto(sticker),
     isActive: sticker.isActive,
     packActive: sticker.pack.isActive,
   };
 }
 
-/** Load active sticker for message create; throws if missing/inactive. */
-export async function assertSendableSticker(stickerId: string): Promise<{
+/**
+ * Load active sticker for message create.
+ * Official packs: any sender. Personal packs: owner only.
+ */
+export async function assertSendableSticker(
+  stickerId: string,
+  senderUserId: string
+): Promise<{
   id: string;
   emoji: string;
 }> {
   const sticker = await prisma.sticker.findFirst({
     where: { id: stickerId, isActive: true },
-    include: { pack: { select: { isActive: true } } },
+    include: {
+      pack: { select: { isActive: true, isOfficial: true, ownerUserId: true } },
+    },
   });
   if (!sticker || !sticker.pack.isActive) {
+    throw new ApiError(400, 'Sticker not available', true, { code: 'sticker.unavailable' });
+  }
+  if (!isPersonalStickerSendableBy(sticker.pack, senderUserId)) {
     throw new ApiError(400, 'Sticker not available', true, { code: 'sticker.unavailable' });
   }
   return { id: sticker.id, emoji: sticker.emoji };
@@ -204,12 +242,9 @@ export async function assertSendableSticker(stickerId: string): Promise<{
 
 export async function bumpStickerRecent(userId: string, stickerId: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`sticker-recent:${userId}`}))`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`sticker-prefs:${userId}`}))`;
     const prefs = await tx.userStickerPrefs.findUnique({ where: { userId } });
-    const recent = [stickerId, ...(prefs?.recent ?? []).filter((id) => id !== stickerId)].slice(
-      0,
-      MAX_STICKER_RECENT
-    );
+    const recent = bumpRecentIdList(prefs?.recent, stickerId);
     await tx.userStickerPrefs.upsert({
       where: { userId },
       create: { userId, recent, favorites: [] },
@@ -233,31 +268,24 @@ export async function putUserStickerPrefs(
   userId: string,
   body: { favorites?: string[]; recent?: string[] }
 ): Promise<{ favorites: string[]; recent: string[] }> {
-  const favorites = Array.isArray(body.favorites)
-    ? [...new Set(body.favorites.filter((id) => typeof id === 'string' && id.length > 0))].slice(
-        0,
-        MAX_STICKER_FAVORITES
-      )
-    : undefined;
-  const recent = Array.isArray(body.recent)
-    ? [...new Set(body.recent.filter((id) => typeof id === 'string' && id.length > 0))].slice(
-        0,
-        MAX_STICKER_RECENT
-      )
-    : undefined;
+  const favorites = normalizeFavoritesInput(body.favorites);
+  const recent = normalizeRecentInput(body.recent);
 
-  const existing = await prisma.userStickerPrefs.findUnique({ where: { userId } });
-  const next = await prisma.userStickerPrefs.upsert({
-    where: { userId },
-    create: {
-      userId,
-      favorites: favorites ?? existing?.favorites ?? [],
-      recent: recent ?? existing?.recent ?? [],
-    },
-    update: {
-      ...(favorites !== undefined ? { favorites } : {}),
-      ...(recent !== undefined ? { recent } : {}),
-    },
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`sticker-prefs:${userId}`}))`;
+    const existing = await tx.userStickerPrefs.findUnique({ where: { userId } });
+    const next = await tx.userStickerPrefs.upsert({
+      where: { userId },
+      create: {
+        userId,
+        favorites: favorites ?? existing?.favorites ?? [],
+        recent: recent ?? existing?.recent ?? [],
+      },
+      update: {
+        ...(favorites !== undefined ? { favorites } : {}),
+        ...(recent !== undefined ? { recent } : {}),
+      },
+    });
+    return { favorites: next.favorites, recent: next.recent };
   });
-  return { favorites: next.favorites, recent: next.recent };
 }

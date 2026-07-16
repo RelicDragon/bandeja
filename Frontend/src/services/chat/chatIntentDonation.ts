@@ -40,7 +40,20 @@ function resolveSenderAvatarUrl(avatar: string | null | undefined): string | und
 }
 
 function messageBodyForIntent(message: ChatMessage): string {
-  return message.content?.trim() ?? '';
+  if (message.messageType === 'STICKER') {
+    const emoji = message.stickerEmoji?.trim();
+    return emoji ? `${emoji} Sticker` : 'Sticker';
+  }
+  if (message.messageType === 'VOICE') {
+    return 'Voice message';
+  }
+  if (message.messageType === 'VIDEO') {
+    return 'Video';
+  }
+  const text = message.content?.trim() ?? '';
+  if (text) return text;
+  if ((message.mediaUrls?.length ?? 0) > 0) return 'Photo';
+  return '';
 }
 
 export function shouldDonateChatIntent(message: ChatMessage): boolean {

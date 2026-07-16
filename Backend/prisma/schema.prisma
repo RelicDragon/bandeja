@@ -74,6 +74,7 @@ model User {
   sendTelegramWalletNotifications      Boolean                     @default(true)
   chatMessages                         ChatMessage[]
   stickerPrefs                         UserStickerPrefs?
+  ownedStickerPacks                    StickerPack[]
   participateInGames                   GameParticipant[]           @relation("ParticipantUser")
   cancelledGameParticipants            CancelledGameParticipant[]
   participantsInvitedByMe              GameParticipant[]           @relation("ParticipantInvitedBy")
@@ -1361,7 +1362,10 @@ model StickerPack {
   title          String
   sport          Sport?
   locale         String?
+  /// Official catalog packs are true; personal “My stickers” packs are false.
   isOfficial     Boolean   @default(true)
+  /// Owner of a personal pack. Null for official packs. At most one personal pack per user.
+  ownerUserId    String?
   isActive       Boolean   @default(true)
   coverStickerId String?   @unique
   sortOrder      Int       @default(0)
@@ -1369,9 +1373,12 @@ model StickerPack {
   updatedAt      DateTime  @updatedAt
   stickers       Sticker[] @relation("StickerInPack")
   coverSticker   Sticker?  @relation("StickerPackCover", fields: [coverStickerId], references: [id], onDelete: SetNull)
+  owner          User?     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
 
+  @@unique([ownerUserId])
   @@index([isActive, sortOrder])
   @@index([sport])
+  @@index([ownerUserId])
 }
 
 model Sticker {

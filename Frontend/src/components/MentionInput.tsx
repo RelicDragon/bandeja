@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react';
 import { MentionsInput, Mention, SuggestionDataItem, MentionData } from 'react-mentions';
+import { Users } from 'lucide-react';
 import { MentionSuggestionsContainer } from './MentionSuggestionsContainer';
 import { chatApi, ChatContextType, GroupChannel } from '@/api/chat';
 import { Game, Bug } from '@/types';
@@ -13,7 +14,15 @@ import {
   buildGroupMentionableUsers,
   type MentionableUser,
 } from '@/utils/mentionableUsers';
+import {
+  ALL_MENTION_DISPLAY,
+  ALL_MENTION_ID,
+  expandMentionIds,
+  isAllMentionId,
+  matchesAllMentionQuery,
+} from '@/utils/mentionAll';
 import { getClipboardTextForPaste } from '@/utils/clipboardText';
+import { useAuthStore } from '@/store/authStore';
 
 interface MentionInputProps {
   value: string;
@@ -49,6 +58,7 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const pasteCleanupRef = useRef<(() => void) | null>(null);
+  const currentUserId = useAuthStore((s) => s.user?.id);
   const [suggestionsWidth, setSuggestionsWidth] = useState(300);
   const [suggestionsPortalHost, setSuggestionsPortalHost] = useState<HTMLElement | null>(null);
   const [gameParticipants, setGameParticipants] = useState<GameParticipant[] | null>(null);
@@ -187,8 +197,17 @@ export const MentionInput: React.FC<MentionInputProps> = ({
     groupParticipants,
   ]);
 
+  const mentionableUserIds = useMemo(
+    () => mentionableUsers.map((u) => u.id),
+    [mentionableUsers]
+  );
+
   const handleChange = (_e: unknown, newValue: string, _newPlainTextValue: string, mentions: MentionData[]) => {
-    const ids = mentions.map((m) => m.id);
+    const ids = expandMentionIds(
+      mentions.map((m) => m.id),
+      mentionableUserIds,
+      currentUserId
+    );
     onChange(newValue, ids);
   };
 
@@ -208,13 +227,18 @@ export const MentionInput: React.FC<MentionInputProps> = ({
           })
         : mentionableUsers;
 
-      callback(
-        filtered.map((user) => ({
+      const items: SuggestionDataItem[] = [];
+      if (mentionableUsers.length > 0 && matchesAllMentionQuery(trimmed)) {
+        items.push({ id: ALL_MENTION_ID, display: ALL_MENTION_DISPLAY });
+      }
+      for (const user of filtered) {
+        items.push({
           id: user.id,
           display: user.display,
           user,
-        }))
-      );
+        } as SuggestionDataItem & { user: MentionableUser });
+      }
+      callback(items);
     },
     [mentionableUsers]
   );
@@ -225,6 +249,17 @@ export const MentionInput: React.FC<MentionInputProps> = ({
   );
 
   const renderSuggestion = (entry: SuggestionDataItem) => {
+    if (isAllMentionId(String(entry.id))) {
+      return (
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300">
+            <Users size={14} />
+          </div>
+          <span>{ALL_MENTION_DISPLAY}</span>
+        </div>
+      );
+    }
+
     const user =
       (entry as SuggestionDataItem & { user?: MentionableUser }).user ||
       mentionableUsers.find((u) => u.id === entry.id);

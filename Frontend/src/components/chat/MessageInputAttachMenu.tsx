@@ -6,12 +6,13 @@ import {
   CHAT_ATTACH_FLYOUT_CONTAINER,
   CHAT_ATTACH_FLYOUT_ITEM,
 } from '@/components/chat/chatListMotion';
-import { Paperclip, Image, ListPlus, Video } from 'lucide-react';
+import { Paperclip, Image, ListPlus, Video, Clapperboard } from 'lucide-react';
 import { isValidVideo } from '@/components/chat/messageInputDraftUtils';
 import { pickImages } from '@/utils/photoCapture';
 import { pickVideo } from '@/utils/videoCapture';
 import { isCapacitor } from '@/utils/capacitor';
 import { isValidImage } from '@/components/chat/messageInputDraftUtils';
+import { getGiphyStatus } from '@/api/giphy';
 
 type MessageInputAttachMenuProps = {
   isDisabled: boolean;
@@ -20,6 +21,7 @@ type MessageInputAttachMenuProps = {
   onAddImages: (files: File[]) => void;
   onAddVideo: (file: File) => void;
   onOpenPoll: () => void;
+  onOpenGiphy?: () => void;
   videoBusy?: boolean;
 };
 
@@ -30,12 +32,24 @@ export function MessageInputAttachMenu({
   onAddImages,
   onAddVideo,
   onOpenPoll,
+  onOpenGiphy,
   videoBusy = false,
 }: MessageInputAttachMenuProps) {
   const { t } = useTranslation();
   const attachMenuRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAttachExpanded, setIsAttachExpanded] = useState(false);
+  const [giphyAvailable, setGiphyAvailable] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getGiphyStatus().then((available) => {
+      if (!cancelled) setGiphyAvailable(available);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -110,6 +124,14 @@ export function MessageInputAttachMenu({
     setIsAttachExpanded(false);
   };
 
+  const handleGiphyButtonClick = () => {
+    if (isDisabled || inputBlocked || !onOpenGiphy) return;
+    onOpenGiphy();
+    setIsAttachExpanded(false);
+  };
+
+  const showGiphy = giphyAvailable && !!onOpenGiphy;
+
   return (
     <>
       <div ref={attachMenuRef} className="relative flex flex-shrink-0 items-end flex-col-reverse">
@@ -119,6 +141,7 @@ export function MessageInputAttachMenu({
           disabled={isDisabled || inputBlocked || voiceMode}
           className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)]"
           title={t('chat.attach', { defaultValue: 'Attach' })}
+          data-testid="chat-attach-button"
         >
           <Paperclip size={20} className="text-gray-700 dark:text-gray-300" />
         </button>
@@ -131,6 +154,7 @@ export function MessageInputAttachMenu({
               animate="visible"
               exit="hidden"
               variants={CHAT_ATTACH_FLYOUT_CONTAINER}
+              data-testid="chat-attach-flyout"
             >
               <motion.button
                 type="button"
@@ -152,6 +176,19 @@ export function MessageInputAttachMenu({
               >
                 <Image size={20} className="text-gray-700 dark:text-gray-300" />
               </motion.button>
+              {showGiphy ? (
+                <motion.button
+                  type="button"
+                  variants={CHAT_ATTACH_FLYOUT_ITEM}
+                  onClick={handleGiphyButtonClick}
+                  disabled={isDisabled || inputBlocked || voiceMode}
+                  className="w-11 h-11 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-[0_2px_6px_rgba(0,0,0,0.16),0_6px_16px_rgba(0,0,0,0.2)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.5),0_8px_20px_rgba(0,0,0,0.45)] hover:scale-105"
+                  title={t('chat.giphy.attach', { defaultValue: 'GIF' })}
+                  data-testid="chat-attach-giphy"
+                >
+                  <Clapperboard size={20} className="text-gray-700 dark:text-gray-300" />
+                </motion.button>
+              ) : null}
               <motion.button
                 type="button"
                 variants={CHAT_ATTACH_FLYOUT_ITEM}

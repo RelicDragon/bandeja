@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useRef, useReducer, type ReactNode, type 
 import { useTranslation } from 'react-i18next';
 import { chatApi, SearchMessageResult, ChatMessage, getLastMessageText } from '@/api/chat';
 import { getSystemMessageText } from '@/utils/systemMessages';
+import { formatStickerPreviewText } from '@/utils/stickerPreview';
 import { formatSearchResultDate, formatDate } from '@/utils/dateFormat';
 import { MessageCircle, Gamepad2, Swords, Trophy, Dumbbell, Beer, Bug, User, ShoppingBag, Hash } from 'lucide-react';
 import { CollapsibleSection } from './CollapsibleSection';
@@ -99,12 +100,18 @@ function getChatIcon(chatContextType: string, result: SearchMessageResult) {
   return MessageCircle;
 }
 
-function getMessagePreview(message: ChatMessage): string {
+function getMessagePreview(message: ChatMessage, t: TFunction): string {
   if (message.content?.trim().startsWith('{')) {
     const text = getSystemMessageText(message.content);
     if (text) return text;
   }
   if (message.poll?.question) return message.poll.question;
+  if (message.messageType === 'STICKER') {
+    return formatStickerPreviewText(
+      message.stickerEmoji,
+      t('chat.stickerMessage', { defaultValue: 'Sticker' })
+    );
+  }
   return getLastMessageText(message) || '';
 }
 
@@ -121,7 +128,7 @@ function ResultItem({ r, onResultClick, t }: { r: SearchMessageResult; onResultC
             ? 'game'
             : 'group';
   const ctxLabel = getContextLabel(r, t);
-  const preview = getMessagePreview(r.message);
+  const preview = getMessagePreview(r.message, t);
   return (
     <button
       type="button"

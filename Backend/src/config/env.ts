@@ -158,5 +158,9 @@ export const config = {
       ),
     },
   },
+  /** Optional — when set, Giphy page URLs resolve via API; CDN rewrite still used as fallback. */
+  giphy: {
+    apiKey: (process.env.GIPHY_API_KEY || '').trim(),
+  },
 };
 

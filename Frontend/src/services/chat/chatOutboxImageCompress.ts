@@ -2,14 +2,33 @@ const MAX_EDGE_PX = 2048;
 const JPEG_QUALITY = 0.82;
 const SKIP_BELOW_BYTES = 350_000;
 
-function isCompressibleImage(blob: Blob): boolean {
-  const t = (blob.type || '').toLowerCase();
-  if (t.includes('gif')) return false;
-  return t.startsWith('image/');
+function mimeOf(blob: Blob): string {
+  return (blob.type || '').toLowerCase();
+}
+
+/** GIF / PNG / WebP keep alpha — never re-encode as JPEG (breaks Save as sticker). */
+export function preservesAlphaChannel(blob: Blob, fileName?: string): boolean {
+  const t = mimeOf(blob);
+  if (t.includes('gif') || t.includes('png') || t.includes('webp')) return true;
+  if (fileName) {
+    return /\.(gif|png|webp)$/i.test(fileName);
+  }
+  return false;
+}
+
+function isJpegOrHeic(blob: Blob, fileName?: string): boolean {
+  const t = mimeOf(blob);
+  if (t.includes('jpeg') || t.includes('jpg') || t.includes('heic') || t.includes('heif')) {
+    return true;
+  }
+  if (fileName) {
+    return /\.(jpe?g|heic|heif)$/i.test(fileName);
+  }
+  return t.startsWith('image/') && !preservesAlphaChannel(blob, fileName);
 }
 
 function hasImageFileExtension(name: string): boolean {
-  return /\.(jpe?g|png|webp|heic|heif)$/i.test(name);
+  return /\.(jpe?g|png|webp|heic|heif|gif)$/i.test(name);
 }
 
 async function blobToJpegBlob(blob: Blob, maxEdge: number, quality: number): Promise<Blob> {
@@ -38,7 +57,9 @@ async function blobToJpegBlob(blob: Blob, maxEdge: number, quality: number): Pro
 /** Resize/compress chat photo blobs before Dexie outbox storage. */
 export async function compressChatOutboxImageBlob(blob: Blob): Promise<Blob> {
   if (typeof document === 'undefined' || typeof createImageBitmap !== 'function') return blob;
-  if (!isCompressibleImage(blob) || blob.size <= SKIP_BELOW_BYTES) return blob;
+  if (preservesAlphaChannel(blob)) return blob;
+  if (!isJpegOrHeic(blob) && !mimeOf(blob).startsWith('image/')) return blob;
+  if (blob.size <= SKIP_BELOW_BYTES) return blob;
   try {
     return await blobToJpegBlob(blob, MAX_EDGE_PX, JPEG_QUALITY);
   } catch {
@@ -56,11 +77,19 @@ export async function compressChatImageFile(file: File): Promise<File> {
     return file;
   }
 
+  if (preservesAlphaChannel(file, file.name)) return file;
+
   const shouldCompress =
-    (isCompressibleImage(file) || hasImageFileExtension(file.name)) && !file.type.toLowerCase().includes('gif');
+    (isJpegOrHeic(file, file.name) || hasImageFileExtension(file.name)) &&
+    !mimeOf(file).includes('gif');
   if (!shouldCompress) return file;
 
-  if (file.size <= SKIP_BELOW_BYTES && isCompressibleImage(file) && !file.type.toLowerCase().includes('heic') && !file.type.toLowerCase().includes('heif')) {
+  if (
+    file.size <= SKIP_BELOW_BYTES &&
+    isJpegOrHeic(file, file.name) &&
+    !mimeOf(file).includes('heic') &&
+    !mimeOf(file).includes('heif')
+  ) {
     return file;
   }
 

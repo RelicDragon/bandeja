@@ -43,6 +43,8 @@ export function MessageInputComposerContextStrip({
               id: replyTo!.id,
               content: replyTo!.content,
               messageType: replyTo!.messageType,
+              stickerId: replyTo!.stickerId,
+              stickerEmoji: replyTo!.stickerEmoji,
               sender: replyTo!.sender || { id: 'system', firstName: 'System' },
             }}
             onCancel={onCancelReply}
@@ -73,6 +75,8 @@ export function MessageInputComposerContextStrip({
                 id: replyTo!.id,
                 content: replyTo!.content,
                 messageType: replyTo!.messageType,
+                stickerId: replyTo!.stickerId,
+                stickerEmoji: replyTo!.stickerEmoji,
                 sender: replyTo!.sender || { id: 'system', firstName: 'System' },
               }}
               onCancel={onCancelReply}
