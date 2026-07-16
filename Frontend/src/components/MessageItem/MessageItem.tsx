@@ -33,6 +33,7 @@ import { MessageItemReactionStrip, MESSAGE_REACTION_GUTTER_CLASS } from './Messa
 import { messageRowPropsEqual } from './messageRowPropsEqual';
 import { MessageRowDeleteMotion } from './MessageRowDeleteMotion';
 import { LayoutGroup } from 'framer-motion';
+import { isEligibleExternalLinkPreviewUrl } from './linkPreview/eligibility';
 
 export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem({
   message,
@@ -157,12 +158,8 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
     for (const part of parsedContent) {
       if (part.type !== 'url' || !part.url) continue;
       if (part.urlType && part.urlType !== 'other') continue;
-      try {
-        const u = new URL(part.url);
-        if (u.protocol === 'http:' || u.protocol === 'https:') return part.url;
-      } catch {
-        /* skip */
-      }
+      if (!isEligibleExternalLinkPreviewUrl(part.url)) continue;
+      return part.url;
     }
     return null;
   }, [parsedContent]);

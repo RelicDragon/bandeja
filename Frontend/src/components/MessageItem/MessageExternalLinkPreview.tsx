@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import type { ContentVariant } from './MessageContentBody';
+import { LinkPreviewCard } from './linkPreview/LinkPreviewCard';
+import { useLinkPreview } from './linkPreview/useLinkPreview';
+import { isEligibleExternalLinkPreviewUrl } from './linkPreview/eligibility';
 
 function hostnameOnly(url: string): string | null {
   try {
@@ -17,10 +20,21 @@ type MessageExternalLinkPreviewProps = {
   variant: ContentVariant;
 };
 
-export const MessageExternalLinkPreview: React.FC<MessageExternalLinkPreviewProps> = ({ url, variant }) => {
+export const MessageExternalLinkPreview: React.FC<MessageExternalLinkPreviewProps> = ({
+  url,
+  variant,
+}) => {
   const host = hostnameOnly(url);
   const [imgErr, setImgErr] = useState(false);
-  if (!host) return null;
+  const eligible = isEligibleExternalLinkPreviewUrl(url);
+  const { status, preview } = useLinkPreview(eligible ? url : null);
+
+  if (!host || !eligible) return null;
+
+  if (status === 'ready' && preview) {
+    return <LinkPreviewCard url={url} preview={preview} variant={variant} />;
+  }
+
   const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`;
   const subtle =
     variant === 'own'
@@ -33,6 +47,7 @@ export const MessageExternalLinkPreview: React.FC<MessageExternalLinkPreviewProp
       target="_blank"
       rel="noopener noreferrer"
       onClick={(e) => e.stopPropagation()}
+      data-testid="chat-link-preview-chip"
       className={`mt-1.5 flex items-center gap-2 rounded-xl border px-2.5 py-1.5 text-left text-xs max-w-full min-w-0 ${subtle}`}
     >
       {!imgErr ? (

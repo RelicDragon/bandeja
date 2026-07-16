@@ -931,6 +931,10 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-128 | Save image as personal sticker | Long-press eligible chat `IMAGE` (PNG/WebP/GIF with transparency; alpha formats are not JPEG-compressed on upload) → Save as sticker | Toast success; tray (even if already open) shows “My stickers” with the new sticker; sendable via same STICKER path |
 
 | CH-129 | Save as sticker rejects invalid | Save JPEG or fully opaque PNG / undersized image as sticker | Clear error toast (format / alpha / size); no personal sticker created |
+| CH-130 | External URL host chip | Send TEXT with a public https URL (not bandeja / giphy) | Under bubble: small host chip with favicon (`chat-link-preview-chip`) appears immediately |
+| CH-131 | Rich link preview card | Same message; wait for `/link-preview` success with og:title/image | Chip upgrades to rich card (`chat-link-preview-card`) with title and optional image; tap opens URL in new tab |
+| CH-132 | Link preview soft-fail | URL that times out / has no OG / rate-limited | Chip stays; no rich card; message still readable |
+| CH-133 | No preview for bandeja/giphy | Message with only bandeja.me or giphy.com URL | No external link chip/card (bandeja deep-link / giphy flows unchanged) |
 | CH-130 | Personal stickers owner-only in tray | User A saves personal sticker; User B opens sticker tray | B does not see A’s “My stickers” pack; B can still view A’s sent personal sticker bubble in thread |
 | CH-131 | Delete message keeps personal catalog | Send personal sticker → delete message | Message gone; personal sticker still in owner tray; asset still loads |
 | CH-29 | Send video | Attach video | Upload + transcode state |
