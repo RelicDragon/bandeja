@@ -5,6 +5,7 @@ import {
   isOurCircularAvatarUrl,
   isOurAvatarOriginalUrl,
 } from '../utils/userAvatarTiny';
+import { isStickerCatalogUrl } from './stickers';
 
 export class MediaCleanupService {
   /**
@@ -70,6 +71,7 @@ export class MediaCleanupService {
       if (game && game.mediaUrls && game.mediaUrls.length > 0) {
         // Clean up game media files
         for (const mediaUrl of game.mediaUrls) {
+          if (isStickerCatalogUrl(mediaUrl)) continue;
           await ImageProcessor.deleteFile(mediaUrl);
         }
       }
@@ -85,6 +87,7 @@ export class MediaCleanupService {
     // Clean up media files
     if (mediaUrls && mediaUrls.length > 0) {
       for (const mediaUrl of mediaUrls) {
+        if (isStickerCatalogUrl(mediaUrl)) continue;
         try {
           await ImageProcessor.deleteFile(mediaUrl);
         } catch (error) {
@@ -96,6 +99,7 @@ export class MediaCleanupService {
     // Clean up thumbnail files
     if (thumbnailUrls && thumbnailUrls.length > 0) {
       for (const thumbnailUrl of thumbnailUrls) {
+        if (isStickerCatalogUrl(thumbnailUrl)) continue;
         try {
           await ImageProcessor.deleteFile(thumbnailUrl);
         } catch (error) {
@@ -148,6 +152,15 @@ export class MediaCleanupService {
         if (message.thumbnailUrls) {
           message.thumbnailUrls.forEach(url => referencedFiles.add(url));
         }
+      });
+
+      // Sticker catalog (official + personal) — never treat as orphan chat media
+      const stickers = await prisma.sticker.findMany({
+        select: { staticUrl: true, animatedUrl: true },
+      });
+      stickers.forEach((s) => {
+        if (s.staticUrl) referencedFiles.add(s.staticUrl);
+        if (s.animatedUrl) referencedFiles.add(s.animatedUrl);
       });
     } catch (error) {
       console.error('Error getting referenced files:', error);

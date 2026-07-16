@@ -17,6 +17,9 @@ npm -v
 cd "$BACKEND"
 npm ci
 npx prisma migrate deploy
+# Official sticker packs (idempotent upsert + S3 when AWS configured).
+# Without this, tray stays empty after STICKER migrations.
+npm run seed:sticker-packs
 npx prisma generate
 npm run build
 pm2 restart backend

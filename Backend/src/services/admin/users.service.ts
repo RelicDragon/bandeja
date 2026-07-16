@@ -16,6 +16,7 @@ import {
   removeUserSport,
   setUserPrimarySport,
 } from '../user/userSportProfile.service';
+import { preparePersonalStickersForUserHardDelete } from '../stickers';
 
 const USERS_PAGE_SIZE = 50;
 
@@ -455,6 +456,9 @@ export class AdminUsersService {
     if (user.isAdmin) {
       throw new ApiError(403, 'Cannot delete admin users');
     }
+
+    // Detach personal sticker FKs + remove personal catalog S3 before cascade
+    await preparePersonalStickersForUserHardDelete(userId);
 
     // Clean up user's media files before deletion
     await MediaCleanupService.cleanupUserMedia(userId);

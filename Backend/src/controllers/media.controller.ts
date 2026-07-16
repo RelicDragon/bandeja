@@ -19,6 +19,7 @@ import { GroupChannelService } from '../services/chat/groupChannel.service';
 import { UserTeamService } from '../services/userTeam.service';
 import { parseClubPhotosJson } from '../utils/clubPhotosJson';
 import * as clubReviewService from '../services/clubReview.service';
+import { isStickerCatalogUrl } from '../services/stickers';
 
 const MAX_CLUB_PHOTOS = 24;
 
@@ -682,6 +683,12 @@ export const deleteFile = asyncHandler(async (req: AuthRequest, res: Response) =
   
   if (!filePath) {
     throw new ApiError(400, 'File path is required');
+  }
+
+  if (isStickerCatalogUrl(String(filePath))) {
+    throw new ApiError(403, 'Sticker catalog assets cannot be deleted via this endpoint', true, {
+      code: 'media.stickerCatalogProtected',
+    });
   }
 
   const deleted = await ImageProcessor.deleteFile(filePath);

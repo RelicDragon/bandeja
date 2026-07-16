@@ -78,12 +78,15 @@ On `back.bandeja.com`:
 cd Backend
 npm ci
 npx prisma migrate deploy
+npm run seed:sticker-packs   # official reactions + padel packs (idempotent)
 npx prisma generate
 npm run build
 pm2 restart backend
 ```
 
-Migrations run as part of every backend deploy.
+Migrations run as part of every backend deploy. Sticker seed upserts catalog rows and uploads/reuses assets under `uploads/stickers/packs/…` when AWS/S3 is configured. Safe to re-run.
+
+**Giphy:** paste URL→GIF works without a key (CDN rewrite). Composer GIF search needs `GIPHY_API_KEY` in Backend `.env` on the server; without it the attach-menu GIF entry stays hidden.
 
 ### Frontend deploy (`scripts/deploy-frontend.sh`)
 

@@ -1,6 +1,7 @@
 import { MessageType } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { ImageProcessor } from '../../utils/imageProcessor';
 import { S3Service } from '../s3.service';
 import {
   MAX_PERSONAL_STICKERS,
@@ -283,5 +284,44 @@ export async function deactivatePersonalSticker(
       where: { id: sticker.pack.id },
       data: { coverStickerId: nextCover?.id ?? null },
     });
+  }
+}
+
+/**
+ * Before admin hard-delete of a user: detach ChatMessage.stickerId (Restrict FK)
+ * and remove personal pack S3 objects so pack Cascade cannot fail / leave orphans.
+ * Keeps denorm `stickerEmoji` on remaining messages if any survive sender cascade.
+ */
+export async function preparePersonalStickersForUserHardDelete(userId: string): Promise<void> {
+  const pack = await prisma.stickerPack.findFirst({
+    where: { ownerUserId: userId },
+    select: {
+      id: true,
+      stickers: { select: { id: true, staticUrl: true, animatedUrl: true } },
+    },
+  });
+  if (!pack) return;
+
+  const stickerIds = pack.stickers.map((s) => s.id);
+  if (stickerIds.length > 0) {
+    await prisma.chatMessage.updateMany({
+      where: { stickerId: { in: stickerIds } },
+      data: { stickerId: null },
+    });
+  }
+
+  for (const s of pack.stickers) {
+    try {
+      await ImageProcessor.deleteFile(s.staticUrl);
+    } catch {
+      /* best-effort */
+    }
+    if (s.animatedUrl) {
+      try {
+        await ImageProcessor.deleteFile(s.animatedUrl);
+      } catch {
+        /* best-effort */
+      }
+    }
   }
 }

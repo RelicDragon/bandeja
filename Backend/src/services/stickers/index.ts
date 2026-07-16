@@ -56,6 +56,7 @@ export {
   savePersonalStickerFromMessage,
   deactivatePersonalSticker,
   ensurePersonalStickerPack,
+  preparePersonalStickersForUserHardDelete,
 } from './personalSticker.service';
 export {
   detectStickerSourceMagic,
