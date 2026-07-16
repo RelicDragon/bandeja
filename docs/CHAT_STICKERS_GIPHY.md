@@ -304,6 +304,28 @@ Attach-menu search via Giphy API → user picks → client uploads returned file
 
 ---
 
+## Official pack seed (#305) — locked (AFK)
+
+Issue: https://github.com/RelicDragon/bandeja/issues/305 (AFK, not HITL).
+
+| Decision | Choice |
+|---|---|
+| Ownership | AFK agent ships placeholders — no designer gate |
+| Asset source | Repo-bundled under `Backend/assets/stickers/{packSlug}/` |
+| Art style | Emoji on transparent/simple canvas ~512² WebP |
+| Packs | Keep slug `reactions` (general, ~8); add `padel` (`sport=PADEL`, ~12–16) |
+| Animated | Mix: ~1–2 animated in `reactions`, ~1–2 in `padel`; rest static |
+| Generate vs seed | `npm run generate:sticker-assets` writes/commits binaries; `npm run seed:sticker-packs` upserts only |
+| Upload | Upload when AWS works; `--skip-upload` for CI/local |
+| S3 keys | `uploads/stickers/packs/{packSlug}/{stickerSlug}.webp` (catalog prefix; never chat originals) |
+| Sticker identity | Add `Sticker.slug` + `@@unique([packId, slug])` |
+| Re-seed | Upsert by slug; re-upload on `contentHash` change; removed → `isActive=false` |
+| Catalog reads | No auto-ensure on list/get — seed script only |
+| Inactive hydrate | `GET` by id returns inactive with `isActive: false`; tray active-only |
+| Legacy code | Remove runtime Sharp SVG generation from seed path once assets committed |
+
+---
+
 ## Migration order
 
 1. **P0 Giphy** — no enum change; ship independently.  

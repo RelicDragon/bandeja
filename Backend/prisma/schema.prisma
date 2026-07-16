@@ -73,6 +73,7 @@ model User {
   sendTelegramReminders                Boolean                     @default(true)
   sendTelegramWalletNotifications      Boolean                     @default(true)
   chatMessages                         ChatMessage[]
+  stickerPrefs                         UserStickerPrefs?
   participateInGames                   GameParticipant[]           @relation("ParticipantUser")
   cancelledGameParticipants            CancelledGameParticipant[]
   participantsInvitedByMe              GameParticipant[]           @relation("ParticipantInvitedBy")
@@ -1294,6 +1295,10 @@ model ChatMessage {
   videoWidth         Int?
   videoHeight        Int?
   waveformData       Float[]               @default([])
+  /// Set iff messageType = STICKER; catalog identity (mediaUrls stay empty).
+  stickerId          String?
+  /// Denormalized emoji for list preview / old clients without catalog join.
+  stickerEmoji       String?
   createdAt          DateTime              @default(now())
   updatedAt          DateTime              @updatedAt
   editedAt           DateTime?
@@ -1307,6 +1312,7 @@ model ChatMessage {
   replyTo            ChatMessage?          @relation("MessageReply", fields: [replyToId], references: [id])
   replies            ChatMessage[]         @relation("MessageReply")
   sender             User?                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  sticker            Sticker?              @relation(fields: [stickerId], references: [id], onDelete: Restrict)
   reactions          MessageReaction[]
   readReceipts       MessageReadReceipt[]
   reports            MessageReport[]
@@ -1329,6 +1335,7 @@ model ChatMessage {
   @@index([chatType])
   @@index([contextId])
   @@index([deletedAt])
+  @@index([stickerId])
 }
 
 model PinnedMessage {
@@ -1346,6 +1353,58 @@ model PinnedMessage {
   @@unique([chatContextType, contextId, chatType, messageId])
   @@index([chatContextType, contextId, chatType])
   @@index([messageId])
+}
+
+model StickerPack {
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  title          String
+  sport          Sport?
+  locale         String?
+  isOfficial     Boolean   @default(true)
+  isActive       Boolean   @default(true)
+  coverStickerId String?   @unique
+  sortOrder      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  stickers       Sticker[] @relation("StickerInPack")
+  coverSticker   Sticker?  @relation("StickerPackCover", fields: [coverStickerId], references: [id], onDelete: SetNull)
+
+  @@index([isActive, sortOrder])
+  @@index([sport])
+}
+
+model Sticker {
+  id           String        @id @default(cuid())
+  packId       String
+  slug         String
+  emoji        String
+  title        String?
+  staticUrl    String
+  animatedUrl  String?
+  width        Int           @default(512)
+  height       Int           @default(512)
+  contentHash  String
+  sortOrder    Int           @default(0)
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  pack         StickerPack   @relation("StickerInPack", fields: [packId], references: [id], onDelete: Cascade)
+  coverForPack StickerPack?  @relation("StickerPackCover")
+  messages     ChatMessage[]
+
+  @@unique([packId, slug])
+  @@index([packId, sortOrder])
+  @@index([isActive])
+  @@index([contentHash])
+}
+
+model UserStickerPrefs {
+  userId    String   @id
+  favorites String[] @default([])
+  recent    String[] @default([])
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Poll {
@@ -1826,6 +1885,7 @@ enum MessageType {
   VOICE
   VIDEO
   POLL
+  STICKER
 }
 
 enum StorySourceType {

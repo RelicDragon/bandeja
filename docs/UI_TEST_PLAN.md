@@ -889,6 +889,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | CH-18 | Send text message | Type + send | Optimistic + confirmed |
+| CH-95 | Mention @all | In game/group chat composer type `@` → pick `all` → send | Message shows `@all`; all other participants get mention notification |
 | CH-19 | Send emoji | Emoji picker | Emoji in message |
 | CH-20 | Reply to message | Reply action | Threaded reply |
 | CH-21 | Edit message | Edit own message | Updated content |
@@ -899,6 +900,17 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-26 | Forward message | Forward to another chat | Appears in target |
 | CH-27 | Copy text | Copy action | Clipboard content |
 | CH-28 | Send image | Attach image | Image message renders |
+| CH-96 | Giphy URL-only paste → GIF | In GAME/USER/GROUP/BUG chat, paste only an allowlisted Giphy HTTPS URL (e.g. `https://giphy.com/gifs/...` or `https://media.giphy.com/media/.../giphy.gif`) and send | Message becomes `IMAGE` with re-hosted media (our CDN/`uploads/chat/…`, not giphy.com); GIF animates in existing image bubble/gallery |
+| CH-97 | Giphy URL + text stays text | Paste Giphy URL inside a longer sentence (or with other text) and send | Stays `TEXT` with the original URL; no conversion / no media bubble |
+| CH-98 | Giphy convert soft-fail | Paste a Giphy URL that cannot be fetched/validated (dead id, oversize, blocked) or spam pastes past ingest rate limit; send | Create succeeds as `TEXT` with the original URL kept; no hard error that drops the message |
+| CH-99 | Send sticker by stickerId | Authenticated create with `messageType: STICKER` + valid `stickerId` (catalog pack seeded) | Message persists as `STICKER`, empty `mediaUrls`, `stickerEmoji` set; chat list preview shows emoji or “Sticker” |
+| CH-100 | Sticker + mediaUrls rejected | Create with both `stickerId` and `mediaUrls` | `400` / no message created |
+| CH-101 | Delete sticker message keeps catalog | Send sticker → delete own sticker message | Message removed; pack/sticker still listed via `GET /stickers/packs` and asset URL still loads |
+| CH-102 | View sticker bubble (not photo) | Open thread with a `STICKER` message (seeded catalog) | Transparent sticker layout (asset or emoji); not `MessageMediaGrid`; tap does not open photo fullscreen gallery |
+| CH-103 | Sticker list / thread preview | Send or receive sticker → return to chat list | Row shows sticker emoji and/or localized “Sticker”, not blank / “[Media]” / “No message” |
+| CH-104 | Reply-to-sticker preview | Long-press sticker → Reply | Composer reply strip shows emoji + “Sticker” (usable, not empty) |
+| CH-105 | Missing sticker catalog fallback | Open thread with `STICKER` whose catalog id 404s / is unknown | Bubble shows `stickerEmoji` or generic sticker fallback; no crash / blank bubble |
+| CH-106 | Official packs after seed | Run `seed:sticker-packs` (or use seeded env) → open sticker tray / `GET /stickers/packs` | `reactions` (sport null, ~8) and `padel` (`sport=PADEL`, ~12–16); cover URLs under `uploads/stickers/packs/...`; list does not auto-create packs |
 | CH-29 | Send video | Attach video | Upload + transcode state |
 | CH-30 | Fullscreen media | Tap image/video | Viewer opens |
 | CH-30a | Copy fullscreen image | Open image viewer → tap copy | Desktop/native: “Image copied” toast; paste works. Mobile web without clipboard image API: share sheet opens with “Choose Copy or Save…” toast |

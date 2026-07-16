@@ -753,6 +753,38 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'giphy url detect unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'giphyIngest', 'giphyUrlDetect.test.ts'),
+    ],
+  },
+  {
+    label: 'giphy ssrf fetch unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'giphyIngest', 'ssrfSafeFetch.test.ts'),
+    ],
+  },
+  {
+    label: 'giphy ingest service unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'giphyIngest', 'giphyIngest.service.test.ts'),
+    ],
+  },
+  {
+    label: 'sticker asset keys unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'stickers', 'stickerAsset.service.test.ts'),
+    ],
+  },
+  {
     label: 'game chat archive delete',
     command: process.execPath,
     args: [
