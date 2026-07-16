@@ -25,6 +25,9 @@ export function groupGamesByDate(
   }
   const result: GamesDateGroup[] = [];
   for (const [dateStr, dateGames] of map) {
+    dateGames.sort(
+      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime(),
+    );
     const sample = dateGames[0];
     const clubTz = getClubTimezone(sample);
     const label = clubTz

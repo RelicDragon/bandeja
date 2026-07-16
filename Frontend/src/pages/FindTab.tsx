@@ -29,33 +29,7 @@ import { runWithProfileName } from '@/utils/runWithProfileName';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
 import { availableGamesQueryOptions } from '@/queries/games/useAvailableGamesQuery';
 import { availableUpcomingGamesQueryOptions } from '@/queries/games/useAvailableUpcomingGamesQuery';
-
-const sortGamesByStatusAndDateTime = <T extends { status?: string; startTime: string }>(list: T[] = []): T[] => {
-  const getStatusPriority = (status?: string): number => {
-    if (status === 'ANNOUNCED' || status === 'STARTED') return 0;
-    if (status === 'FINISHED') return 1;
-    if (status === 'ARCHIVED') return 2;
-    return 3;
-  };
-
-  return [...list].sort((a, b) => {
-    const statusPriorityA = getStatusPriority(a.status);
-    const statusPriorityB = getStatusPriority(b.status);
-
-    if (statusPriorityA !== statusPriorityB) {
-      return statusPriorityA - statusPriorityB;
-    }
-
-    const dateTimeA = new Date(a.startTime).getTime();
-    const dateTimeB = new Date(b.startTime).getTime();
-
-    if (statusPriorityA === 0) {
-      return dateTimeA - dateTimeB;
-    }
-
-    return dateTimeB - dateTimeA;
-  });
-};
+import { sortGamesByStatusAndStartTime } from '@/queries/games/sortGames';
 
 export const FindTab = () => {
   const { t } = useTranslation();
@@ -278,9 +252,15 @@ export const FindTab = () => {
       : loadingCalendarGames || (dayScopedEnabled && loadingSelectedDayGames && selectedDayGames.length === 0);
 
   const filteredAvailableGames = useMemo(() => {
-    if (findViewMode === 'list') return upcomingGames;
-    return sortGamesByStatusAndDateTime(calendarGames);
+    if (findViewMode === 'list') return sortGamesByStatusAndStartTime(upcomingGames);
+    return sortGamesByStatusAndStartTime(calendarGames);
   }, [findViewMode, upcomingGames, calendarGames]);
+
+  const sortedSelectedDayGames = useMemo(() => {
+    if (!dayScopedEnabled) return undefined;
+    if (loadingSelectedDayGames && selectedDayGames.length === 0) return undefined;
+    return sortGamesByStatusAndStartTime(selectedDayGames);
+  }, [dayScopedEnabled, loadingSelectedDayGames, selectedDayGames]);
 
   const pageMeta =
     findViewMode === 'list'
@@ -359,10 +339,7 @@ export const FindTab = () => {
   const sectionProps = {
     availableGames: filteredAvailableGames,
     // While day-scoped fetch is in flight (empty), omit so UI falls back to month day slice.
-    selectedDayGames:
-      dayScopedEnabled && !(loadingSelectedDayGames && selectedDayGames.length === 0)
-        ? selectedDayGames
-        : undefined,
+    selectedDayGames: sortedSelectedDayGames,
     dayIndex: calendarMeta.dayIndex,
     user,
     loading: loadingAvailableGames,

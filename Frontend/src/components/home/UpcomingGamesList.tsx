@@ -92,6 +92,7 @@ export const UpcomingGamesList = ({
     }
     stale.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
     finished.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+    upcoming.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
     return { staleGames: stale, finishedGames: finished, upcomingGames: upcoming };
   }, [gamesWithoutLeagueSeasonHub]);
 

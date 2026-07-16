@@ -85,14 +85,14 @@ export const MyGamesSection = ({
       .sort((a, b) => {
         if (a.timeIsSet === false && b.timeIsSet !== false) return 1;
         if (a.timeIsSet !== false && b.timeIsSet === false) return -1;
-        return 0;
+        return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
       });
     const finishedGames = displayGames
       .filter((game) => game.status === 'FINISHED' || game.status === 'ARCHIVED')
       .sort((a, b) => {
         if (a.timeIsSet === false && b.timeIsSet !== false) return 1;
         if (a.timeIsSet !== false && b.timeIsSet === false) return -1;
-        return 0;
+        return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
       });
 
     return (

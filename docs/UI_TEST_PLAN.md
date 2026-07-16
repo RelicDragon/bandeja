@@ -287,6 +287,7 @@ Frontend/e2e/
 | H-19 | Create game entry | Header/FAB create | `/create-game` with entity picker |
 | H-20 | Create from calendar date | Select date → create | Pre-filled date |
 | H-36 | Selected date shows archived/finished | User with FINISHED and ARCHIVED games on a past calendar day | Select that day on My tab calendar; both FINISHED and ARCHIVED games appear under Finished section |
+| H-64 | Same-day start-time order | Day with ≥2 active My games at different times | Active games earliest-first; finished/archived after active |
 
 ### 6.4 Stories
 
@@ -435,6 +436,7 @@ Frontend/e2e/
 | F-56 | Find day switch no wrong-day flash | Calendar: tap day A then day B quickly | No wrong-day cards; while day fetch resolves, month-filtered day list or loading — not previous day’s cards |
 | F-57 | Find old app on new BE (enrich) | Store build that omits `format=card` against current API | Notes/weather/reactions still present on Find cards (inline enrich); month still capped ≤300 |
 | F-58 | Find calendar LEAGUE_SEASON day bound | Open calendar; pick a day that is not the season’s startTime day | That day’s list does not show the LEAGUE_SEASON; it only appears on its actual calendar day (list/upcoming may still show shells) |
+| F-63 | Same-day start-time order | Day with ≥2 active games at different times (e.g. 19:00 and 20:00); calendar selected day + list view | Active games list earliest-first (19:00 above 20:00); finished/archived remain after active |
 
 ---
 

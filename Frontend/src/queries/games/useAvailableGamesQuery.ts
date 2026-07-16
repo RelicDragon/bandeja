@@ -13,7 +13,7 @@ import {
   type AvailableGamesPageMeta,
 } from './availableGamesPage';
 import { GAMES_LIST_STALE_TIME } from './constants';
-import { sortGames } from './sortGames';
+import { sortGamesByStartTimeAsc } from './sortGames';
 
 export interface AvailableGamesQueryParams {
   userId: string | undefined;
@@ -84,7 +84,7 @@ export function availableGamesQueryOptions(
     queryKey,
     queryFn: async ({ client }): Promise<AvailableGamesPage> => {
       const response = await gamesApi.getAvailableGames(buildAvailableGamesApiParams(params));
-      const games = sortGames(response.data || []);
+      const games = sortGamesByStartTimeAsc(response.data || []);
       const meta = parseMeta(response.meta);
       void attachAvailableGamesEnrichment(client, queryKey, games);
       return { games, meta };
@@ -111,7 +111,7 @@ export function useAvailableGamesQuery(
     const response = await gamesApi.getAvailableGames(
       buildAvailableGamesApiParams(params, { cursor: current.meta.nextCursor }),
     );
-    const incoming = sortGames(response.data || []);
+    const incoming = sortGamesByStartTimeAsc(response.data || []);
     const meta = parseMeta(response.meta);
     // Preserve dayIndex from the first page — later pages do not re-fetch it.
     const games = mergeAvailableGamesPages(current.games, incoming);

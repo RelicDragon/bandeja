@@ -3,7 +3,7 @@ import type { Game, Invite, UserTeam, UserTeamMembership } from '@/types';
 import { getMyTabData, getMyTabDataFallback } from '@/api/me';
 import { queryKeys } from '../queryKeys';
 import { GAMES_LIST_STALE_TIME } from './constants';
-import { sortGames } from './sortGames';
+import { sortGamesByStatusAndStartTime } from './sortGames';
 
 export interface MyGamesData {
   games: Game[];
@@ -24,7 +24,7 @@ async function fetchMyGamesData(userId: string): Promise<MyGamesData> {
       useCache: true,
     });
     return {
-      games: sortGames([...(tabData.games || [])]),
+      games: sortGamesByStatusAndStartTime([...(tabData.games || [])]),
       invites: tabData.invites ?? [],
       unreadCounts: tabData.unreadCounts ?? {},
       teams: tabData.teams,
@@ -36,7 +36,7 @@ async function fetchMyGamesData(userId: string): Promise<MyGamesData> {
     console.warn('[useMyGamesQuery] Primary My Tab fetch failed, using fallback', error);
     const fallback = await getMyTabDataFallback(userId);
     return {
-      games: sortGames([...(fallback.games || [])]),
+      games: sortGamesByStatusAndStartTime([...(fallback.games || [])]),
       invites: fallback.invites ?? [],
       unreadCounts: fallback.unreadCounts ?? {},
       teams: fallback.teams,
