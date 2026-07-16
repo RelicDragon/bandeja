@@ -78,8 +78,8 @@ On `back.bandeja.com`:
 cd Backend
 npm ci
 npx prisma migrate deploy
-npm run seed:sticker-packs   # official reactions + padel packs (idempotent)
 npx prisma generate
+npm run seed:sticker-packs   # official reactions + padel packs (idempotent)
 npm run build
 pm2 restart backend
 ```

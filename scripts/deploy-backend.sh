@@ -17,9 +17,10 @@ npm -v
 cd "$BACKEND"
 npm ci
 npx prisma migrate deploy
+# Client must exist before seed (ts-node typechecks / uses Prisma models).
+npx prisma generate
 # Official sticker packs (idempotent upsert + S3 when AWS configured).
 # Without this, tray stays empty after STICKER migrations.
 npm run seed:sticker-packs
-npx prisma generate
 npm run build
 pm2 restart backend

@@ -49,7 +49,7 @@
     "backfill:court-club-sports": "ts-node scripts/backfill-court-club-sports.ts",
     "seed:padeloo-avantura": "ts-node -r dotenv/config scripts/seed-padeloo-avantura.ts",
     "generate:sticker-assets": "ts-node --transpile-only scripts/generate-sticker-assets.ts",
-    "seed:sticker-packs": "ts-node -r dotenv/config scripts/seed-sticker-packs.ts",
+    "seed:sticker-packs": "ts-node --transpile-only -r dotenv/config scripts/seed-sticker-packs.ts",
     "test:chat-message-type": "ts-node --transpile-only src/services/chat/resolveOutgoingChatMessageType.test.ts",
     "test:sticker-assets": "ts-node --transpile-only src/services/stickers/stickerAsset.service.test.ts",
     "test:sticker-prefs": "ts-node --transpile-only src/services/stickers/stickerPrefsNormalize.test.ts",

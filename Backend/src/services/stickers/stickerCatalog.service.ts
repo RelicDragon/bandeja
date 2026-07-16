@@ -1,5 +1,5 @@
 import prisma from '../../config/database';
-import type { Sport } from '@prisma/client';
+import type { Prisma, Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
 import { bumpRecentIdList, normalizeFavoritesInput, normalizeRecentInput } from './stickerPrefsNormalize';
 import { sortStickerPacksForSport } from './stickerPackSort';
@@ -165,7 +165,7 @@ export async function listStickerPacks(opts?: {
   });
 
   const sorted = sortStickerPacksForSport(packs, opts?.sport ?? null);
-  return sorted.map(mapPackListItem);
+  return sorted.map((p) => mapPackListItem(p));
 }
 
 export async function getStickerPackById(
@@ -241,7 +241,7 @@ export async function assertSendableSticker(
 }
 
 export async function bumpStickerRecent(userId: string, stickerId: string): Promise<void> {
-  await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`sticker-prefs:${userId}`}))`;
     const prefs = await tx.userStickerPrefs.findUnique({ where: { userId } });
     const recent = bumpRecentIdList(prefs?.recent, stickerId);
@@ -271,7 +271,7 @@ export async function putUserStickerPrefs(
   const favorites = normalizeFavoritesInput(body.favorites);
   const recent = normalizeRecentInput(body.recent);
 
-  return prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`sticker-prefs:${userId}`}))`;
     const existing = await tx.userStickerPrefs.findUnique({ where: { userId } });
     const next = await tx.userStickerPrefs.upsert({
