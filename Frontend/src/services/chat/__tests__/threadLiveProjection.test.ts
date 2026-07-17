@@ -438,6 +438,23 @@ describe('reduceThreadLiveSnapshot', () => {
       expect(deletedResult.effects.map((effect) => effect.type)).toEqual(['persist', 'l1Put']);
     });
 
+    it('preserves translation when a non-content field is updated', () => {
+      const original = createMessage({
+        id: 'msg-preview',
+        content: 'Hola',
+        translation: { languageCode: 'en', translation: 'Hello' },
+      });
+      const updated = { ...original, linkPreviewDisabled: true, translation: undefined };
+      const result = reduceThreadLiveSnapshot(
+        [original],
+        [{ type: 'messageUpdated', messageId: original.id, message: updated }],
+        USER_CONFIG
+      );
+
+      expect(result.next[0]?.linkPreviewDisabled).toBe(true);
+      expect(result.next[0]?.translation?.translation).toBe('Hello');
+    });
+
     it('applies reaction events', () => {
       const prev = [createMessage({ id: 'msg-1' })];
 

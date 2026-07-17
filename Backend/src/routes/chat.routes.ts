@@ -7,6 +7,7 @@ import {
   getBugMessages,
   getGameParticipants,
   updateMessage,
+  updateMessageLinkPreview,
   updateMessageState,
   markMessageAsRead,
   addReaction,
@@ -229,7 +230,10 @@ router.post(
     body('replyToId').optional().isString().withMessage('Reply to ID must be a string'),
     body('storyReply').optional().isObject().withMessage('Story reply must be an object'),
     body('mentionIds').optional().isArray().withMessage('Mention IDs must be an array'),
-    body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type')
+    body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type'),
+    body('linkPreviewDisabled').optional().isBoolean().withMessage('linkPreviewDisabled must be boolean'),
+    body('linkPreviewUrl').optional().isString().isLength({ max: 2048 }).withMessage('Invalid linkPreviewUrl'),
+    body('linkPreviewToken').optional().isString().isLength({ max: 32768 }).withMessage('Invalid linkPreviewToken')
   ]),
   createMessage
 );
@@ -330,6 +334,16 @@ router.patch(
     body('state').isIn(['SENT', 'DELIVERED', 'READ']).withMessage('Invalid message state')
   ]),
   updateMessageState
+);
+
+router.patch(
+  '/messages/:messageId/link-preview',
+  createMessageLimiter,
+  validate([
+    param('messageId').notEmpty().withMessage('Message ID is required'),
+    body('disabled').isBoolean().withMessage('disabled must be boolean')
+  ]),
+  updateMessageLinkPreview
 );
 
 router.post('/messages/:messageId/read', markMessageAsRead);

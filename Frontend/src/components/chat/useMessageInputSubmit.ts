@@ -78,6 +78,10 @@ type Params = {
   onImageBatchUploadFailed?: (failedIndices: number[], recoveredFiles: File[]) => void;
   onClearImageUploadFailures?: () => void;
   onStopTyping?: () => void;
+  linkPreviewUrl: string | null;
+  linkPreviewDisabled: boolean;
+  linkPreview: import('@/api/linkPreview').LinkPreviewData | null;
+  linkPreviewToken: string | null;
 };
 
 export function useMessageInputSubmit(params: Params) {
@@ -233,6 +237,10 @@ export function useMessageInputSubmit(params: Params) {
         : undefined,
       chatType: p.userChatId ? 'PUBLIC' : normalizeChatType(p.chatType),
       mentionIds: [...p.mentionIds],
+      linkPreviewUrl: p.linkPreviewUrl,
+      linkPreviewDisabled: p.linkPreviewDisabled,
+      linkPreview: p.linkPreview,
+      linkPreviewToken: p.linkPreviewToken,
     };
 
     const useQueue =
@@ -317,6 +325,9 @@ export function useMessageInputSubmit(params: Params) {
               replyToId: p.replyTo?.id,
               chatType: p.userChatId ? 'PUBLIC' : normalizeChatType(p.chatType),
               mentionIds: p.mentionIds.length > 0 ? p.mentionIds : undefined,
+              linkPreviewUrl: p.linkPreviewUrl ?? undefined,
+              linkPreviewDisabled: p.linkPreviewDisabled,
+              linkPreviewToken: p.linkPreviewToken ?? undefined,
             };
             const created = await chatApi.createMessage(messageData);
             if (useOptimistic && optimisticId && p.onMessageCreated) {

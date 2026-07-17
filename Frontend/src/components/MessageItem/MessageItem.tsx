@@ -33,7 +33,13 @@ import { MessageItemReactionStrip, MESSAGE_REACTION_GUTTER_CLASS } from './Messa
 import { messageRowPropsEqual } from './messageRowPropsEqual';
 import { MessageRowDeleteMotion } from './MessageRowDeleteMotion';
 import { LayoutGroup } from 'framer-motion';
-import { isEligibleExternalLinkPreviewUrl } from './linkPreview/eligibility';
+import { isAppLinkPreviewHost, isEligibleLinkPreviewUrl } from './linkPreview/eligibility';
+import { parseStoredLinkPreview } from './linkPreview/parseStoredLinkPreview';
+import { OfflineIntent } from '@/services/chat/offlineIntent';
+import {
+  isRetryableMutationError,
+  shouldQueueChatMutation,
+} from '@/services/chat/chatMutationNetwork';
 
 export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem({
   message,
@@ -155,14 +161,21 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const parsedContent = isSystemMessage ? null : parseContentWithMentionsAndUrls(displayContent);
   const firstExternalHttpUrl = useMemo(() => {
     if (!parsedContent) return null;
+    const eligibleUrls: string[] = [];
     for (const part of parsedContent) {
       if (part.type !== 'url' || !part.url) continue;
-      if (part.urlType && part.urlType !== 'other') continue;
-      if (!isEligibleExternalLinkPreviewUrl(part.url)) continue;
-      return part.url;
+      if (!isEligibleLinkPreviewUrl(part.url)) continue;
+      eligibleUrls.push(part.url);
     }
-    return null;
-  }, [parsedContent]);
+    if (currentMessage.linkPreviewUrl && eligibleUrls.includes(currentMessage.linkPreviewUrl)) {
+      return currentMessage.linkPreviewUrl;
+    }
+    return eligibleUrls[0] ?? null;
+  }, [parsedContent, currentMessage.linkPreviewUrl]);
+  const storedLinkPreview = useMemo(
+    () => parseStoredLinkPreview(currentMessage.linkPreview),
+    [currentMessage.linkPreview]
+  );
   const userLanguageCode = user?.language ? extractLanguageCode(user.language).toLowerCase() : 'en';
   const autoTranslateSlots = useChatAutoTranslateSlots();
 
@@ -294,21 +307,64 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
 
   const handleUrlClick = useCallback(
     (url: string, e: React.MouseEvent) => {
-      if (
-        url &&
-        (url.includes(window.location.origin) || url.includes('bandeja.me') || url.includes('localhost'))
-      ) {
-        e.preventDefault();
-        try {
-          const urlObj = new URL(url);
+      if (!url) return;
+      try {
+        const urlObj = new URL(url);
+        if (isAppLinkPreviewHost(urlObj.hostname)) {
+          e.preventDefault();
           navigate(urlObj.pathname + urlObj.search + urlObj.hash);
-        } catch {
-          window.open(url, '_blank');
+          return;
         }
+      } catch {
+        /* fall through to default <a> */
       }
     },
     [navigate]
   );
+
+  const handleDismissLinkPreview = useCallback(async () => {
+    setCurrentMessage((current) => ({ ...current, linkPreviewDisabled: true }));
+    try {
+      if (shouldQueueChatMutation()) {
+        await OfflineIntent.enqueue({
+          kind: 'link_preview',
+          contextType: currentMessage.chatContextType,
+          contextId: currentMessage.contextId,
+          messageId: currentMessage.id,
+          disabled: true,
+        });
+        return;
+      }
+      const updated = await chatApi.setMessageLinkPreviewDisabled(currentMessage.id, true);
+      setCurrentMessage(updated);
+    } catch (error) {
+      if (isRetryableMutationError(error)) {
+        try {
+          await OfflineIntent.enqueue({
+            kind: 'link_preview',
+            contextType: currentMessage.chatContextType,
+            contextId: currentMessage.contextId,
+            messageId: currentMessage.id,
+            disabled: true,
+          });
+          return;
+        } catch {
+          // Show the normal failure below.
+        }
+      }
+      setCurrentMessage((current) => ({ ...current, linkPreviewDisabled: false }));
+      toast.error(
+        t('chat.linkPreview.removeFailed', {
+          defaultValue: 'Could not remove the preview. Please try again.',
+        })
+      );
+    }
+  }, [
+    currentMessage.chatContextType,
+    currentMessage.contextId,
+    currentMessage.id,
+    t,
+  ]);
 
   const parsedRequest =
     isSystemMessage && currentMessage.content
@@ -501,7 +557,10 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                       optimisticId={optimisticId}
                       onResendQueued={onResendQueued}
                       onRemoveFromQueue={onRemoveFromQueue}
-                      firstExternalHttpUrl={!isOffline ? firstExternalHttpUrl : null}
+                      firstExternalHttpUrl={firstExternalHttpUrl}
+                      initialLinkPreview={storedLinkPreview}
+                      canDismissLinkPreview={isOwnMessage && !isOffline && !isSending}
+                      onDismissLinkPreview={handleDismissLinkPreview}
                       loadMediaEager={loadMediaEager}
                       t={t}
                       isThreadSearchOutline={isThreadSearchOutline}

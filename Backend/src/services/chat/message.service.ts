@@ -45,6 +45,13 @@ import { scheduleMessageCreateUnreadNotify } from './messageCreateUnreadNotify.s
 import { hasStoryReplyPayload } from './storyReplySanitize';
 import { validateStoryReplyForUserChatMessage } from './storyReplyValidate.service';
 import {
+  extractEligiblePreviewUrls,
+  normalizeEligiblePreviewSelection,
+  verifyLinkPreviewSnapshotToken,
+  isPersistableLinkPreview,
+  resolveLinkPreviewForOutgoingMessage,
+} from '../linkPreview';
+import {
   tryConsumeGiphyIngestRateLimit,
   detectGiphyUrlOnly,
   tryConvertGiphyPasteToImage,
@@ -605,6 +612,9 @@ export class MessageService {
       quizCorrectOptionIndex?: number;
     };
     clientMutationId?: string | null;
+    linkPreviewDisabled?: boolean;
+    linkPreviewUrl?: string | null;
+    linkPreviewToken?: string | null;
   }) {
     const {
       chatContextType,
@@ -624,6 +634,9 @@ export class MessageService {
       videoWidth,
       videoHeight,
       waveformData,
+      linkPreviewDisabled = false,
+      linkPreviewUrl: requestedLinkPreviewUrl,
+      linkPreviewToken,
     } = {
       ...data,
       clientThumbnailUrls: data.thumbnailUrls ?? [],
@@ -870,6 +883,42 @@ export class MessageService {
           ? (resolvedStickerEmoji ?? 'sticker')
           : computeContentSearchable(workingContent ?? null, poll?.question);
 
+    let linkPreviewSnapshot: Awaited<ReturnType<typeof resolveLinkPreviewForOutgoingMessage>> = null;
+    const eligiblePreviewUrls = extractEligiblePreviewUrls(contentForStore);
+    const requestedPreviewUrl = normalizeEligiblePreviewSelection(
+      requestedLinkPreviewUrl,
+      eligiblePreviewUrls
+    );
+    const linkPreviewUrl =
+      !linkPreviewDisabled && requestedPreviewUrl
+        ? requestedPreviewUrl
+        : !linkPreviewDisabled
+          ? (eligiblePreviewUrls[0] ?? null)
+          : null;
+    if (
+      !linkPreviewDisabled &&
+      resolvedMessageType === MessageType.TEXT &&
+      contentForStore &&
+      !poll &&
+      workingMediaUrls.length === 0
+    ) {
+      linkPreviewSnapshot = resolveLinkPreviewForOutgoingMessage(
+        contentForStore,
+        linkPreviewUrl
+      );
+      if (!linkPreviewSnapshot && linkPreviewToken && linkPreviewUrl) {
+        const tokenPreview = verifyLinkPreviewSnapshotToken(linkPreviewToken);
+        if (
+          tokenPreview &&
+          normalizeEligiblePreviewSelection(tokenPreview.url, [linkPreviewUrl]) ===
+            linkPreviewUrl &&
+          isPersistableLinkPreview(tokenPreview)
+        ) {
+          linkPreviewSnapshot = tokenPreview;
+        }
+      }
+    }
+
     let result: { message: any; syncSeq: number };
     try {
       result = await prisma.$transaction(async (tx) => {
@@ -886,6 +935,9 @@ export class MessageService {
           thumbnailUrls,
           replyToId,
           storyReply: storyReply ?? undefined,
+          linkPreview: linkPreviewSnapshot ?? undefined,
+          linkPreviewUrl,
+          linkPreviewDisabled,
           chatType,
           mentionIds: mentionIds || [],
           state: MessageState.SENT,
@@ -1121,6 +1173,9 @@ export class MessageService {
       quizCorrectOptionIndex?: number;
     };
     clientMutationId?: string | null;
+    linkPreviewDisabled?: boolean;
+    linkPreviewUrl?: string | null;
+    linkPreviewToken?: string | null;
   }) {
     const message = await this.createMessage(data);
 
@@ -1623,6 +1678,18 @@ export class MessageService {
 
     const mentionIds = Array.isArray(data.mentionIds) ? data.mentionIds : message.mentionIds;
     const contentSearchable = computeContentSearchable(content, message.poll?.question);
+    const eligiblePreviewUrls = extractEligiblePreviewUrls(content);
+    const linkPreviewUrl = message.linkPreviewDisabled
+      ? null
+      : message.linkPreviewUrl && eligiblePreviewUrls.includes(message.linkPreviewUrl)
+        ? message.linkPreviewUrl
+        : (eligiblePreviewUrls[0] ?? null);
+    const cachedLinkPreview = message.linkPreviewDisabled
+      ? null
+      : resolveLinkPreviewForOutgoingMessage(content, linkPreviewUrl);
+    const linkPreview =
+      cachedLinkPreview ??
+      (linkPreviewUrl === message.linkPreviewUrl ? message.linkPreview : null);
 
     const { updated, syncSeq } = await prisma.$transaction(async (tx) => {
       const u = await tx.chatMessage.update({
@@ -1631,6 +1698,8 @@ export class MessageService {
           content,
           mentionIds,
           contentSearchable,
+          linkPreviewUrl,
+          linkPreview: linkPreview ?? Prisma.DbNull,
           editedAt: new Date()
         },
         include: this.getMessageInclude()
@@ -1646,6 +1715,9 @@ export class MessageService {
           mentionIds: u.mentionIds,
           editedAt: u.editedAt,
           updatedAt: u.updatedAt,
+          linkPreviewDisabled: u.linkPreviewDisabled,
+          linkPreviewUrl: u.linkPreviewUrl,
+          linkPreview: u.linkPreview,
         })
       );
       await tx.chatMessage.update({
@@ -1667,6 +1739,52 @@ export class MessageService {
       console.error('[auto-translate] re-enqueue on edit failed', { messageId, err });
     });
 
+    return updated;
+  }
+
+  static async updateMessageLinkPreview(
+    messageId: string,
+    userId: string,
+    disabled: boolean
+  ) {
+    const message = await prisma.chatMessage.findUnique({ where: { id: messageId } });
+    if (!message || message.deletedAt) throw new ApiError(404, 'Message not found');
+    if (message.senderId !== userId) {
+      throw new ApiError(403, 'You can only change previews on your own messages');
+    }
+    await this.validateMessageAccess(message, userId, true);
+
+    const { updated, syncSeq } = await prisma.$transaction(async (tx) => {
+      const row = await tx.chatMessage.update({
+        where: { id: messageId },
+        data: { linkPreviewDisabled: disabled },
+        include: this.getMessageInclude(),
+      });
+      const seq = await ChatSyncEventService.appendEventInTransaction(
+        tx,
+        row.chatContextType,
+        row.contextId,
+        ChatSyncEventType.MESSAGE_UPDATED,
+        chatSyncMessageUpdatedCompactPayload({
+          id: row.id,
+          content: row.content,
+          mentionIds: row.mentionIds,
+          editedAt: row.editedAt,
+          updatedAt: row.updatedAt,
+          linkPreviewDisabled: row.linkPreviewDisabled,
+        })
+      );
+      await tx.chatMessage.update({
+        where: { id: messageId },
+        data: { serverSyncSeq: seq },
+      });
+      const fresh = await tx.chatMessage.findUnique({
+        where: { id: messageId },
+        include: this.getMessageInclude(),
+      });
+      return { updated: fresh ?? row, syncSeq: seq };
+    });
+    (updated as { syncSeq?: number }).syncSeq = syncSeq;
     return updated;
   }
 

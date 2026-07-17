@@ -72,6 +72,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
           const u = URL.createObjectURL(blob);
           revoked = u;
           setDisplayUrl(u);
+          return;
         }
       } catch {
         /* keep network src */

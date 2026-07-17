@@ -18,6 +18,7 @@ import {
 } from '@/components/chat/chatListMotion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
+import { getMessageGroupPosition } from '@/utils/chatMessageGrouping';
 
 export type { MessageListHandle, MessageListProps };
 
@@ -234,16 +235,20 @@ const MessageListInner = forwardRef<MessageListHandle, MessageListProps>(functio
               const dateSeparatorLabel = message
                 ? getChatDateSeparatorLabel(messages, row.index)
                 : null;
+              const groupPosition = message
+                ? getMessageGroupPosition(messages, row.index)
+                : 'single';
               return (
                 <MessageListRow
                   key={row.key}
                   row={row}
                   rowStyle={ctx.rowStyles.get(String(row.key)) ?? { transform: `translateY(${row.start}px)` }}
                   message={message}
-                  messages={messages}
-                  rowCount={ctx.rowCount}
+                  isEndSpacer={row.index === ctx.rowCount - 1}
+                  dateSeparatorLabel={dateSeparatorLabel}
+                  groupPosition={groupPosition}
                   measureElement={ctx.measureElement}
-                  eagerMediaMessageIds={ctx.eagerMediaMessageIds}
+                  loadMediaEager={!!message && ctx.eagerMediaMessageIds.has(message.id)}
                   replyCount={message ? (replyCountMap.get(message.id) ?? 0) : 0}
                   isPinned={message ? pinnedSet.has(message.id) : false}
                   isNew={message ? newMessageKeys.has(rowKey) : false}

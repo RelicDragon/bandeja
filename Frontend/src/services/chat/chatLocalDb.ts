@@ -118,6 +118,7 @@ export type ChatMutationKind =
   | 'reaction_remove'
   | 'pin'
   | 'unpin'
+  | 'link_preview'
   | 'mark_read_batch';
 
 export type ChatMutationQueueRow = {

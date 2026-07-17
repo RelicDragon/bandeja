@@ -28,7 +28,7 @@ export const ThreadScrollViewport = forwardRef<MessageListHandle, ThreadScrollVi
         <div
           ref={containerRef}
           className="thread-message-scroll relative flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto p-4 min-h-0 overscroll-contain h-full"
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          style={{ WebkitOverflowScrolling: 'touch', overflowAnchor: 'none' }}
         >
         {input.isSwitchingChatType ? (
           <div

@@ -21,6 +21,7 @@ interface MessageTranslationBodyProps {
   isChannel: boolean;
   isOwnMessage: boolean;
   translationRevealKey?: string;
+  hiddenUrl?: string | null;
   t: TFunction;
 }
 
@@ -40,6 +41,7 @@ export const MessageTranslationBody: React.FC<MessageTranslationBodyProps> = ({
   isChannel,
   isOwnMessage,
   translationRevealKey,
+  hiddenUrl = null,
   t,
 }) => {
   const [showOriginal, setShowOriginal] = useState(false);
@@ -101,6 +103,7 @@ export const MessageTranslationBody: React.FC<MessageTranslationBodyProps> = ({
             onMentionClick={onMentionClick}
             onUrlClick={onUrlClick}
             threadSearchHighlightQuery={showOriginal ? threadSearchHighlightQuery : null}
+            hiddenUrl={hiddenUrl}
           />
         </motion.div>
       </AnimatePresence>

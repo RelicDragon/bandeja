@@ -31,6 +31,8 @@ import { VoiceRecordingOverlay } from './audio/VoiceRecordingOverlay';
 import { VoiceRecordButton } from './audio/VoiceRecordButton';
 import { useAudioRecorder } from './audio/useAudioRecorder';
 import { isValidImage } from '@/components/chat/messageInputDraftUtils';
+import { prefetchLinkPreview } from '@/components/MessageItem/linkPreview/useLinkPreview';
+import { isEligibleLinkPreviewUrl } from '@/components/MessageItem/linkPreview/eligibility';
 import { MessageInputImagePreviewStrip } from '@/components/chat/MessageInputImagePreviewStrip';
 import { MessageInputAttachMenu } from '@/components/chat/MessageInputAttachMenu';
 import { MessageInputSearchToggle } from '@/components/chat/MessageInputSearchToggle';
@@ -54,6 +56,8 @@ import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CHAT_PANEL_TRANSITION, COMPOSER_TOOLBAR_SPRING } from '@/components/chat/chatListMotion';
 import { PANEL_ENTER_Y, PANEL_EXIT_Y } from '@/components/motion/motionTokens';
+import { ComposerLinkPreview } from '@/components/chat/ComposerLinkPreview';
+import { useComposerLinkPreview } from '@/components/chat/useComposerLinkPreview';
 
 export type { SendQueuedParams };
 
@@ -206,6 +210,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   });
 
   const inputBlocked = isLoading && !queueSendRef.current;
+  const composerPreview = useComposerLinkPreview(
+    editingMessage ? '' : message,
+    `${contextType}:${finalContextId ?? 'none'}:${resolvedChatType}`
+  );
 
   const voice = useMessageInputVoiceSend({
     voiceRecorder,
@@ -321,6 +329,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
     setIsLoading,
     t,
     queueSendRef,
+    linkPreviewUrl: composerPreview.selectedUrl,
+    linkPreviewDisabled: composerPreview.disabled,
+    linkPreview: composerPreview.preview,
+    linkPreviewToken: composerPreview.snapshotToken,
     onImageBatchUploadFailed: (failedIndices, files) => {
       setSelectedImages(files);
       setImageUploadFailedSlots(new Set(failedIndices));
@@ -433,6 +445,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
       if (imageFiles.length > 0) {
         e.preventDefault();
         setSelectedImages((prev) => [...prev, ...imageFiles]);
+        return;
+      }
+      const text = e.clipboardData?.getData('text/plain')?.trim();
+      if (text) {
+        const urlMatch = text.match(/https?:\/\/[^\s<>"']+/i);
+        if (urlMatch?.[0]) {
+          const cleaned = urlMatch[0].replace(/[.,);\]}>]+$/g, '');
+          if (isEligibleLinkPreviewUrl(cleaned)) prefetchLinkPreview(cleaned);
+        }
       }
     },
     [isDisabled, inputBlocked]
@@ -717,6 +738,18 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
             replyTo={replyTo ?? null}
             onCancelEdit={onCancelEdit}
             onCancelReply={onCancelReply}
+          />
+          <ComposerLinkPreview
+            urls={composerPreview.urls}
+            selectedUrl={composerPreview.selectedUrl}
+            preview={composerPreview.preview}
+            loading={composerPreview.loading}
+            outcome={composerPreview.outcome}
+            disabled={composerPreview.disabled}
+            canRetry={composerPreview.canRetry}
+            onSelect={composerPreview.selectUrl}
+            onRemove={composerPreview.remove}
+            onRetry={composerPreview.retry}
           />
           <div
             ref={inputContainerRef}

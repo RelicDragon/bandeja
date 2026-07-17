@@ -103,6 +103,9 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     videoHeight: rawVideoHeight,
     waveformData: rawWaveformData,
     clientMutationId: rawClientMutationId,
+    linkPreviewDisabled: rawLinkPreviewDisabled,
+    linkPreviewUrl: rawLinkPreviewUrl,
+    linkPreviewToken: rawLinkPreviewToken,
   } = req.body;
   const senderId = req.userId;
 
@@ -209,6 +212,10 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       videoHeight: videoHeight !== undefined && !Number.isNaN(videoHeight) ? videoHeight : undefined,
       waveformData,
       clientMutationId: clientMutationId || undefined,
+      linkPreviewDisabled: rawLinkPreviewDisabled === true,
+      linkPreviewUrl: typeof rawLinkPreviewUrl === 'string' ? rawLinkPreviewUrl.trim() : undefined,
+      linkPreviewToken:
+        typeof rawLinkPreviewToken === 'string' ? rawLinkPreviewToken.trim() : undefined,
     });
 
     console.log('[createMessage] Message created successfully:', message.id);
@@ -485,6 +492,32 @@ export const updateMessage = asyncHandler(async (req: AuthRequest, res: Response
     }
     throw e;
   }
+});
+
+export const updateMessageLinkPreview = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.userId;
+  if (!userId) {
+    throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
+  }
+  const updatedMessage = await MessageService.updateMessageLinkPreview(
+    req.params.messageId,
+    userId,
+    req.body.disabled === true
+  );
+  const notifyUserIds =
+    updatedMessage.chatContextType === ChatContextType.USER
+      ? await notifyUserIdsForUserChat(updatedMessage.contextId)
+      : undefined;
+  getChatNotifier().emitChatEvent(
+    updatedMessage.chatContextType,
+    updatedMessage.contextId,
+    'message-updated',
+    { message: updatedMessage },
+    updatedMessage.id,
+    (updatedMessage as { syncSeq?: number }).syncSeq,
+    notifyUserIds
+  );
+  res.json({ success: true, data: updatedMessage });
 });
 
 export const updateMessageState = asyncHandler(async (req: AuthRequest, res: Response) => {

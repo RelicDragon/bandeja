@@ -144,6 +144,25 @@ export async function enqueueUnpin(params: {
   await putMutationRow(row);
 }
 
+export async function enqueueLinkPreview(params: {
+  contextType: ChatContextType;
+  contextId: string;
+  messageId: string;
+  disabled: boolean;
+}): Promise<void> {
+  const { contextType, contextId, messageId, disabled } = params;
+  const existing = (await chatLocalDb.mutationQueue.toArray()).filter(
+    (row) => row.messageId === messageId && row.kind === 'link_preview'
+  );
+  await Promise.all(existing.map((row) => chatLocalDb.mutationQueue.delete(row.id)));
+  const row = baseRow('link_preview', contextType, contextId, messageId, { disabled });
+  await putMutationRow(row);
+  const local = await chatLocalDb.messages.get(messageId);
+  if (local) {
+    await putLocalMessage({ ...local.payload, linkPreviewDisabled: disabled });
+  }
+}
+
 export async function enqueueMarkReadBatch(params: {
   contextType: ChatContextType;
   contextId: string;
@@ -232,6 +251,13 @@ async function executeMutation(row: ChatMutationQueueRow): Promise<void> {
       if (!mid) throw new Error('missing messageId');
       await chatApi.unpinMessage(mid, cid);
       dispatchPinHint(row);
+      break;
+    }
+    case 'link_preview': {
+      if (!mid) throw new Error('missing messageId');
+      const disabled = row.payload.disabled === true;
+      const updated = await chatApi.setMessageLinkPreviewDisabled(mid, disabled);
+      await putLocalMessage(updated);
       break;
     }
     case 'mark_read_batch': {

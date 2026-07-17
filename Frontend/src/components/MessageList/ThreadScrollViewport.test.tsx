@@ -68,4 +68,11 @@ describe('ThreadScrollViewport', () => {
     );
     expect(html).toMatch(/animate-spin/);
   });
+
+  it('disables native anchoring because the virtual list owns scroll compensation', () => {
+    const html = renderToStaticMarkup(
+      <ThreadScrollViewport {...baseInput}>{() => null}</ThreadScrollViewport>
+    );
+    expect(html).toContain('overflow-anchor:none');
+  });
 });

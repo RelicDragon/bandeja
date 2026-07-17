@@ -6,7 +6,7 @@ export function snapshotMeasurements(
   return measurements.map((m) => ({ start: m.start, size: m.size }));
 }
 
-/** Sum size deltas for rows whose top edge is above the scroll offset (TanStack rule). */
+/** Sum size deltas for rows fully above the scroll offset. */
 export function sumSizeDeltaAboveScrollTop(
   prev: MeasurementSnapshot,
   next: MeasurementSnapshot,
@@ -18,7 +18,7 @@ export function sumSizeDeltaAboveScrollTop(
     const p = prev[i];
     const n = next[i];
     if (!p || !n || p.size === n.size) continue;
-    if (p.start < scrollTop) {
+    if (p.start + p.size <= scrollTop) {
       delta += n.size - p.size;
     }
   }

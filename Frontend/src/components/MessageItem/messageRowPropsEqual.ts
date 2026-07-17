@@ -38,6 +38,9 @@ function messageContentEqual(a: ChatMessage, b: ChatMessage): boolean {
   if (!reactionsEqual(a.reactions, b.reactions)) return false;
   if (a.replyToId !== b.replyToId) return false;
   if (!storyReplyEqual(a.storyReply, b.storyReply)) return false;
+  if (a.linkPreview !== b.linkPreview) {
+    if (JSON.stringify(a.linkPreview ?? null) !== JSON.stringify(b.linkPreview ?? null)) return false;
+  }
   if (a.poll !== b.poll) return false;
   const aStatus = (a as ChatMessageWithStatus)._status;
   const bStatus = (b as ChatMessageWithStatus)._status;

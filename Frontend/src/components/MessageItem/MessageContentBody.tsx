@@ -3,6 +3,7 @@ import { ParsedContentPart } from './types';
 import { splitTextForThreadSearchHighlight } from '@/services/chat/chatLocalMessageSearchText';
 import { getThreadSearchTextHighlightClass } from './threadSearchHighlightStyles';
 import { isAllMentionId } from '@/utils/mentionAll';
+import { matchesMessageUrl } from './messageUrlMatch';
 
 export type ContentVariant = 'channel' | 'own' | 'other';
 
@@ -61,6 +62,7 @@ interface MessageContentBodyProps {
   onUrlClick: (url: string, e: React.MouseEvent) => void;
   className?: string;
   threadSearchHighlightQuery?: string | null;
+  hiddenUrl?: string | null;
 }
 
 export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
@@ -73,6 +75,7 @@ export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
   onUrlClick,
   className = '',
   threadSearchHighlightQuery = null,
+  hiddenUrl = null,
 }) => {
   const paragraphClass = 'text-sm whitespace-pre-wrap break-words break-all overflow-visible';
   const style = { wordBreak: 'break-word' as const, overflowWrap: 'break-word' as const };
@@ -100,6 +103,7 @@ export const MessageContentBody: React.FC<MessageContentBodyProps> = ({
             );
           }
           if (part.type === 'url') {
+            if (matchesMessageUrl(part.url, hiddenUrl)) return null;
             const isAppLink = part.urlType && part.urlType !== 'other';
             return (
               <a

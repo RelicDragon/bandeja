@@ -517,8 +517,14 @@ function reduceMessageUpdated(
     const patch = event.message
       ? {
           ...event.message,
-          translation: undefined,
-          translations: undefined,
+          translation:
+            event.message.content === message.content
+              ? (event.message.translation ?? message.translation)
+              : undefined,
+          translations:
+            event.message.content === message.content
+              ? (event.message.translations ?? message.translations)
+              : undefined,
         }
       : {
           ...(event.content !== undefined ? { content: event.content } : {}),
@@ -744,6 +750,14 @@ function projectionMessagesEqual(
     if (left.deletedAt !== right.deletedAt) return false;
     if (left.state !== right.state) return false;
     if (left.content !== right.content) return false;
+    if (left.linkPreviewDisabled !== right.linkPreviewDisabled) return false;
+    if (left.linkPreviewUrl !== right.linkPreviewUrl) return false;
+    if (JSON.stringify(left.linkPreview ?? null) !== JSON.stringify(right.linkPreview ?? null)) {
+      return false;
+    }
+    if (JSON.stringify(left.translation ?? null) !== JSON.stringify(right.translation ?? null)) {
+      return false;
+    }
     if (JSON.stringify(left.audioTranscription ?? null) !== JSON.stringify(right.audioTranscription ?? null)) {
       return false;
     }

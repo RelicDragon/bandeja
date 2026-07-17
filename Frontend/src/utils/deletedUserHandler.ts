@@ -2,6 +2,12 @@ import i18n from '@/i18n/config';
 
 const DELETED_USER_MARKER = '###DELETED';
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (value === null || typeof value !== 'object') return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
 function processDeletedUser(obj: any): any {
   if (obj.firstName === DELETED_USER_MARKER) {
     return {
@@ -22,7 +28,7 @@ export function processDeletedUsers(data: any): any {
     return data.map((item) => processDeletedUsers(item));
   }
 
-  if (typeof data === 'object') {
+  if (isPlainObject(data)) {
     const processed = processDeletedUser(data);
     
     const result: any = {};

@@ -385,6 +385,9 @@ export function sendWithTimeout(
         videoWidth: p.videoWidth,
         videoHeight: p.videoHeight,
         waveformData: p.waveformData,
+        linkPreviewUrl: p.linkPreviewUrl,
+        linkPreviewDisabled: p.linkPreviewDisabled,
+        linkPreviewToken: p.linkPreviewToken ?? undefined,
         ...(resolvedClientMutationId ? { clientMutationId: resolvedClientMutationId } : {}),
       };
 

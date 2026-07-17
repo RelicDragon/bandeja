@@ -10,6 +10,7 @@ export type {
   OfflineDeleteIntent,
   OfflineEditIntent,
   OfflineIntentContext,
+  OfflineLinkPreviewIntent,
   OfflineIntentPayload,
   OfflineIntentSource,
   OfflineIntentStatus,
@@ -50,6 +51,9 @@ async function dispatchEnqueue(intent: OfflineIntentPayload): Promise<void> {
       return;
     case 'unpin':
       await mutationAdapter.enqueueUnpin(intent);
+      return;
+    case 'link_preview':
+      await mutationAdapter.enqueueLinkPreview(intent);
       return;
     case 'mark_read_batch':
       await mutationAdapter.enqueueMarkReadBatch(intent);

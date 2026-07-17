@@ -2,8 +2,7 @@ import { memo } from 'react';
 import type { VirtualItem } from '@tanstack/react-virtual';
 import type { ChatMessage } from '@/api/chat';
 import { AnimatedMessageItem } from '@/components/AnimatedMessageItem';
-import { getChatDateSeparatorLabel } from '@/utils/chatDateSeparator';
-import { getMessageGroupPosition } from '@/utils/chatMessageGrouping';
+import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 import { messageMatchesThreadSearchQuery } from '@/services/chat/chatLocalMessageSearchText';
 import type { MessageListProps } from './types';
 
@@ -13,10 +12,11 @@ type MessageListRowProps = {
   row: VirtualItem;
   rowStyle: VirtualRowStyle;
   message?: ChatMessage;
-  messages: ChatMessage[];
-  rowCount: number;
+  isEndSpacer: boolean;
+  dateSeparatorLabel: string | null;
+  groupPosition: MessageGroupPosition;
   measureElement: (node: Element | null) => void;
-  eagerMediaMessageIds: Set<string>;
+  loadMediaEager: boolean;
   replyCount: number;
   isPinned: boolean;
   isNew: boolean;
@@ -51,10 +51,11 @@ export const MessageListRow = memo(function MessageListRow({
   row,
   rowStyle,
   message,
-  messages,
-  rowCount,
+  isEndSpacer,
+  dateSeparatorLabel,
+  groupPosition,
   measureElement,
-  eagerMediaMessageIds,
+  loadMediaEager,
   replyCount,
   isPinned,
   isNew,
@@ -65,7 +66,7 @@ export const MessageListRow = memo(function MessageListRow({
   entityType,
   threadSearchOutlineQuery = null,
 }: MessageListRowProps) {
-  if (row.index === rowCount - 1) {
+  if (isEndSpacer) {
     return (
       <div
         key={row.key}
@@ -82,8 +83,6 @@ export const MessageListRow = memo(function MessageListRow({
 
   if (!message) return null;
 
-  const dateSeparatorLabel = getChatDateSeparatorLabel(messages, row.index);
-  const groupPosition = getMessageGroupPosition(messages, row.index);
   const isThreadSearchOutline =
     threadSearchOutlineQuery != null &&
     messageMatchesThreadSearchQuery(message, threadSearchOutlineQuery);
@@ -104,7 +103,7 @@ export const MessageListRow = memo(function MessageListRow({
         staggerIndex={staggerIndex}
         dateSeparatorLabel={dateSeparatorLabel ?? undefined}
         fadeDateSeparator={fadeDateSeparator}
-        loadMediaEager={eagerMediaMessageIds.has(message.id)}
+        loadMediaEager={loadMediaEager}
         groupPosition={groupPosition}
         onAddReaction={handlers.onAddReaction}
         onRemoveReaction={handlers.onRemoveReaction}
@@ -139,14 +138,15 @@ export const MessageListRow = memo(function MessageListRow({
   if (prev.rowStyle.transition !== next.rowStyle.transition) return false;
   if (prev.row.index !== next.row.index) return false;
   if (prev.message !== next.message) return false;
-  if (prev.messages !== next.messages) return false;
-  if (prev.rowCount !== next.rowCount) return false;
+  if (prev.isEndSpacer !== next.isEndSpacer) return false;
+  if (prev.dateSeparatorLabel !== next.dateSeparatorLabel) return false;
+  if (prev.groupPosition !== next.groupPosition) return false;
+  if (prev.loadMediaEager !== next.loadMediaEager) return false;
   if (prev.replyCount !== next.replyCount) return false;
   if (prev.isPinned !== next.isPinned) return false;
   if (prev.isNew !== next.isNew) return false;
   if (prev.staggerIndex !== next.staggerIndex) return false;
   if (prev.fadeDateSeparator !== next.fadeDateSeparator) return false;
-  if (prev.eagerMediaMessageIds !== next.eagerMediaMessageIds) return false;
   if (prev.handlers !== next.handlers) return false;
   if (prev.threadSearchOutlineQuery !== next.threadSearchOutlineQuery) return false;
   return true;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ChatMessage } from '@/api/chat';
+import { useChatMediaAsset } from '@/hooks/useChatMediaAsset';
 import { useStickerAsset } from '@/hooks/useStickerAsset';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { useVisibleRef } from '@/hooks/useVisibleRef';
@@ -19,7 +20,7 @@ type Props = {
 function StickerEmojiFallback({ emoji }: { emoji: string }) {
   return (
     <div
-      className="flex items-center justify-center py-2 px-3 text-5xl leading-none select-none"
+      className="flex h-40 w-40 items-center justify-center text-5xl leading-none select-none"
       data-sticker-message="true"
       data-sticker-fallback="emoji"
       aria-label={emoji}
@@ -37,7 +38,7 @@ export function StickerMessageBubble({
 }: Props) {
   const emoji = message.stickerEmoji?.trim() || '🔖';
   const reduceMotion = usePrefersReducedMotion();
-  const { setNode, visible } = useVisibleRef();
+  const { setNode, visible } = useVisibleRef({ rootMargin: '600px 0px' });
   // Always hydrate by id so incomplete props still resolve.
   const hydrated = useStickerAsset(message.stickerId);
 
@@ -61,12 +62,13 @@ export function StickerMessageBubble({
   useEffect(() => {
     setUrl(preferredUrl);
   }, [preferredUrl]);
+  const { asset, recordDimensions } = useChatMediaAsset(url ?? '');
 
   if (hydrated.loading && !url) {
     return (
       <div
         ref={setNode}
-        className="flex items-center justify-center py-2 px-3 min-h-[5rem] min-w-[5rem]"
+        className="flex h-40 w-40 items-center justify-center"
         data-sticker-message="true"
         data-sticker-loading="true"
         aria-busy="true"
@@ -86,18 +88,24 @@ export function StickerMessageBubble({
   return (
     <div
       ref={setNode}
-      className="flex items-center justify-center bg-transparent"
+      className="flex h-40 w-40 items-center justify-center bg-transparent"
       data-sticker-message="true"
       data-sticker-id={message.stickerId ?? undefined}
       data-sticker-motion={motionMode}
     >
       <img
-        src={url}
+        src={asset?.displayUrl ?? url}
+        width={asset?.dimensions?.width ?? hydrated.sticker?.width}
+        height={asset?.dimensions?.height ?? hydrated.sticker?.height}
         alt={emoji}
         className="max-h-40 max-w-[10rem] w-auto h-auto object-contain select-none pointer-events-none"
         draggable={false}
         loading="lazy"
         decoding="async"
+        onLoad={(event) => {
+          const image = event.currentTarget;
+          recordDimensions(image.naturalWidth, image.naturalHeight);
+        }}
         onError={() => {
           const next = nextStickerUrlAfterImgError({
             failedUrl: url,

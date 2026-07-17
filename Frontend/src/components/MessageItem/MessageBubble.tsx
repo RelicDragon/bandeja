@@ -11,12 +11,14 @@ import { ChatVideoBubble } from './ChatVideoBubble';
 import { StickerMessageBubble } from './StickerMessageBubble';
 import { getThreadSearchBubbleRingClass } from './threadSearchHighlightStyles';
 import { isAnimatedChatImageUrl } from './utils';
+import { peekCachedLinkPreview } from './linkPreview/useLinkPreview';
 import { Pencil } from 'lucide-react';
 import { MessageSendStatusIcon } from './MessageSendStatusIcon';
 import { resolveOwnMessageTicks } from '@/services/chat/messageTickState';
 import { TFunction } from 'i18next';
 import type { MessageGroupPosition } from '@/utils/chatMessageGrouping';
 import type { ParsedContentPart } from './types';
+import { matchesMessageUrl } from './messageUrlMatch';
 
 interface MessageBubbleProps {
   message: ChatMessage;
@@ -48,6 +50,9 @@ interface MessageBubbleProps {
   onTranscribe?: () => void;
   isTranscribing?: boolean;
   firstExternalHttpUrl?: string | null;
+  initialLinkPreview?: import('@/api/linkPreview').LinkPreviewData | null;
+  canDismissLinkPreview?: boolean;
+  onDismissLinkPreview?: () => Promise<void> | void;
   voiceTranscriptionNoSpeech?: boolean;
   onVideoOpen?: (videoUrl: string, posterUrl: string) => void;
   inlineVideoPlaybackPaused?: boolean;
@@ -87,6 +92,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onTranscribe,
   isTranscribing,
   firstExternalHttpUrl,
+  initialLinkPreview,
+  canDismissLinkPreview = false,
+  onDismissLinkPreview,
   voiceTranscriptionNoSpeech,
   onVideoOpen,
   inlineVideoPlaybackPaused = false,
@@ -115,10 +123,31 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     ? ({ filter: 'drop-shadow(0 0 2px #000) drop-shadow(0 0 4px #000) drop-shadow(1px 1px 2px #000) drop-shadow(-1px -1px 2px #000)' } as const)
     : undefined;
   const variant: ContentVariant = isChannel ? 'channel' : isOwnMessage ? 'own' : 'other';
+  const [loadedBandejaPreview, setLoadedBandejaPreview] = React.useState(() => {
+    if (message.linkPreviewDisabled) return false;
+    if (initialLinkPreview?.source === 'bandeja') return true;
+    return (
+      !!firstExternalHttpUrl &&
+      peekCachedLinkPreview(firstExternalHttpUrl)?.source === 'bandeja'
+    );
+  });
+  React.useEffect(() => {
+    if (message.linkPreviewDisabled) setLoadedBandejaPreview(false);
+  }, [message.linkPreviewDisabled]);
+  const isPreviewOnlyMessage =
+    loadedBandejaPreview &&
+    !!firstExternalHttpUrl &&
+    (parsedContent
+      ? parsedContent.every(
+          (part) =>
+            (part.type === 'text' && !part.content.trim()) ||
+            (part.type === 'url' && matchesMessageUrl(part.url, firstExternalHttpUrl))
+        )
+      : matchesMessageUrl(message.content?.trim(), firstExternalHttpUrl));
   const { tickRead, tickDelivered } = resolveOwnMessageTicks(message, currentUserId);
   const contentVariantForTranslation = isOwnMessage ? 'own' : 'other';
   const hasMediaOrVoice = isVoice || isVideo || isSticker || hasMedia;
-  const paddingClass = isFloatingMedia
+  const paddingClass = isFloatingMedia || isPreviewOnlyMessage
     ? 'p-0'
     : hasTranslation
       ? 'pt-2 pb-4'
@@ -149,7 +178,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           : groupPosition === 'last'
             ? 'rounded-tl-md'
             : '';
-  const chromeClass = isFloatingMedia
+  const chromeClass = isFloatingMedia || isPreviewOnlyMessage
     ? 'bg-transparent border-0 shadow-none rounded-none min-w-0 overflow-visible'
     : [
         'rounded-2xl shadow-sm min-w-[120px]',
@@ -161,7 +190,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             : 'bg-white dark:bg-gray-700 border border-gray-200/80 dark:border-gray-600/60 text-gray-800 dark:text-gray-200',
       ].join(' ');
   const bubbleClass = [
-    hasMediaOrVoice || isFloatingMedia ? '' : 'px-4',
+    hasMediaOrVoice || isFloatingMedia || isPreviewOnlyMessage ? '' : 'px-4',
     paddingClass,
     groupedCornerClass,
     'relative',
@@ -171,7 +200,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   ]
     .filter(Boolean)
     .join(' ');
-  const timeRowClass = [
+  const timeRowClass = isPreviewOnlyMessage
+    ? 'flex justify-end mt-0.5 px-2 text-gray-400 dark:text-gray-500'
+    : [
     overlayMeta ? 'absolute bottom-1 right-2' : 'flex justify-end mt-0.5',
     hasMediaAndContent ? 'px-4' : '',
     isVoice && !isFloatingMedia ? 'px-3' : '',
@@ -183,9 +214,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     overlayMeta
       ? 'drop-shadow-[0_0_3px_rgba(0,0,0,1)] drop-shadow-[0_0_6px_rgba(0,0,0,0.9)] drop-shadow-[0_1px_1px_rgba(0,0,0,1)]'
       : '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+      ]
+        .filter(Boolean)
+        .join(' ');
   const timeSpanStyle = overlayMeta
     ? {
         textShadow:
@@ -194,7 +225,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     : undefined;
 
   return (
-    <div data-message-bubble="true" data-floating-media={isFloatingMedia ? 'true' : undefined} className={bubbleClass}>
+    <div
+      data-message-bubble="true"
+      data-floating-media={isFloatingMedia ? 'true' : undefined}
+      className={bubbleClass}
+    >
       {message.poll && (
         <div className="py-1">
           <PollMessage poll={message.poll} messageId={message.id} onPollUpdated={onPollUpdated} />
@@ -266,6 +301,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               isChannel={isChannel}
               isOwnMessage={isOwnMessage}
               translationRevealKey={translationRevealKey}
+              hiddenUrl={loadedBandejaPreview ? firstExternalHttpUrl : null}
               t={t}
             />
           ) : isTranslationLoading ? (
@@ -279,6 +315,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 onMentionClick={onMentionClick}
                 onUrlClick={onUrlClick}
                 threadSearchHighlightQuery={threadSearchHighlightQuery}
+                hiddenUrl={loadedBandejaPreview ? firstExternalHttpUrl : null}
               />
               <p className="text-xs italic opacity-80">
                 {t('chat.translating', { defaultValue: 'Translating…' })}
@@ -294,9 +331,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               onMentionClick={onMentionClick}
               onUrlClick={onUrlClick}
               threadSearchHighlightQuery={threadSearchHighlightQuery}
+              hiddenUrl={loadedBandejaPreview ? firstExternalHttpUrl : null}
             />
           )}
-          {firstExternalHttpUrl && <MessageExternalLinkPreview url={firstExternalHttpUrl} variant={variant} />}
+          {firstExternalHttpUrl && !message.linkPreviewDisabled && (
+            <MessageExternalLinkPreview
+              url={firstExternalHttpUrl}
+              variant={variant}
+              initialPreview={initialLinkPreview}
+              onUrlClick={onUrlClick}
+              canDismiss={canDismissLinkPreview}
+              onDismiss={onDismissLinkPreview}
+              onLoadedBandejaChange={setLoadedBandejaPreview}
+              standalone={isPreviewOnlyMessage}
+            />
+          )}
         </div>
       )}
 

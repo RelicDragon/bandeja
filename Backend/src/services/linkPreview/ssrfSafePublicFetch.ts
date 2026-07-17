@@ -1,4 +1,5 @@
 import dns from 'node:dns/promises';
+import { Agent, fetch as undiciFetch } from 'undici';
 import {
   isBlockedIpAddress,
   readResponseBodyCapped,
@@ -28,10 +29,10 @@ function isAbortError(err: unknown): boolean {
   return name === 'AbortError' || name === 'TimeoutError';
 }
 
-async function assertHostnameResolvesPublic(
+async function resolveHostnamePublic(
   hostname: string,
   lookupFn: DnsLookupFn
-): Promise<void> {
+): Promise<{ address: string; family: 4 | 6 }> {
   let results: Array<{ address: string; family: 4 | 6 }>;
   try {
     results = await lookupFn(hostname);
@@ -44,6 +45,7 @@ async function assertHostnameResolvesPublic(
       throw new SsrfFetchError('Resolved IP is not allowed');
     }
   }
+  return results[0]!;
 }
 
 export function assertPublicHttpsUrl(urlString: string): URL {
@@ -117,22 +119,48 @@ export async function ssrfSafePublicFetchBytes(
 
     while (true) {
       assertNotTimedOut();
-      await assertHostnameResolvesPublic(current.hostname, lookupFn);
+      const resolved = await resolveHostnamePublic(current.hostname, lookupFn);
       assertNotTimedOut();
 
       let res: Response;
+      let dispatcher: Agent | null = null;
       try {
-        res = await fetchFn(current.toString(), {
+        const requestInit = {
           method: 'GET',
-          redirect: 'manual',
+          redirect: 'manual' as const,
           signal: ac.signal,
           headers: {
             Accept: options.accept ?? 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
             'User-Agent': options.userAgent ?? 'BandejaLinkPreview/1.0',
             'Accept-Language': 'en-US,en;q=0.8',
           },
-        });
+        };
+        if (options.fetchFn) {
+          res = await fetchFn(current.toString(), requestInit);
+        } else {
+          dispatcher = new Agent({
+            connect: {
+              lookup: (_hostname, _lookupOptions, callback) => {
+                if (_lookupOptions.all) {
+                  (
+                    callback as unknown as (
+                      error: null,
+                      addresses: Array<{ address: string; family: 4 | 6 }>
+                    ) => void
+                  )(null, [resolved]);
+                  return;
+                }
+                callback(null, resolved.address, resolved.family);
+              },
+            },
+          });
+          res = (await undiciFetch(current.toString(), {
+            ...requestInit,
+            dispatcher,
+          })) as unknown as Response;
+        }
       } catch (err) {
+        await dispatcher?.close();
         if (isAbortError(err)) throw new SsrfFetchError('Fetch timed out');
         throw new SsrfFetchError('Fetch failed');
       }
@@ -140,6 +168,7 @@ export async function ssrfSafePublicFetchBytes(
       if (res.status >= 300 && res.status < 400) {
         const loc = res.headers.get('location');
         await cancelBody(res);
+        await dispatcher?.close();
         if (!loc) throw new SsrfFetchError('Redirect without Location');
         redirects += 1;
         if (redirects > maxRedirects) throw new SsrfFetchError('Too many redirects');
@@ -155,10 +184,16 @@ export async function ssrfSafePublicFetchBytes(
 
       if (!res.ok) {
         await cancelBody(res);
+        await dispatcher?.close();
         throw new SsrfFetchError(`HTTP ${res.status}`);
       }
 
-      const buffer = await readResponseBodyCapped(res, maxBytes, ac.signal);
+      let buffer: Buffer;
+      try {
+        buffer = await readResponseBodyCapped(res, maxBytes, ac.signal);
+      } finally {
+        await dispatcher?.close();
+      }
       return {
         buffer,
         finalUrl: current.toString(),

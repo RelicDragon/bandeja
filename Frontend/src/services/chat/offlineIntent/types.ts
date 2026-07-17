@@ -62,6 +62,14 @@ export type OfflineUnpinIntent = {
   chatType: ChatType;
 };
 
+export type OfflineLinkPreviewIntent = {
+  kind: 'link_preview';
+  contextType: ChatContextType;
+  contextId: string;
+  messageId: string;
+  disabled: boolean;
+};
+
 export type OfflineMarkReadBatchIntent = {
   kind: 'mark_read_batch';
   contextType: ChatContextType;
@@ -77,6 +85,7 @@ export type OfflineIntentPayload =
   | OfflineReactionRemoveIntent
   | OfflinePinIntent
   | OfflineUnpinIntent
+  | OfflineLinkPreviewIntent
   | OfflineMarkReadBatchIntent;
 
 export type OfflineIntentContext = {

@@ -36,10 +36,10 @@ import { handleMessageListContextMenuScrollStart } from './messageListContextMen
 import { resolveMessageListLayoutMotion } from './messageListLayoutMotion';
 import { useMessageListNearBottom } from './useMessageListNearBottom';
 import { useMessageListPrependCompensation } from './useMessageListPrependCompensation';
-import { useMessageListScrollAnchor } from './useMessageListScrollAnchor';
 import { useMessageListScrollTarget } from './useMessageListScrollTarget';
 import { useMessageListTailHeightPreload } from './useMessageListTailHeightPreload';
 import { useThreadScrollContainerEvents } from './useThreadScrollContainerEvents';
+import { shouldAdjustForMessageRowResize } from './messageListResizeAnchorPolicy';
 import type {
   ThreadScrollViewportInput,
   ThreadScrollViewportRenderContext,
@@ -47,7 +47,7 @@ import type {
 } from './threadScrollViewportTypes';
 
 const OPEN_TAIL_EAGER_MEDIA = 60;
-const VIRTUAL_OVERSCAN = 12;
+const VIRTUAL_OVERSCAN = 40;
 const PIN_BOTTOM_SKIP_GAP_PX = 20;
 
 export function useThreadScrollViewport({
@@ -106,7 +106,12 @@ export function useThreadScrollViewport({
       index === rowCount - 1 ? '__end__' : (messages[index] ? getMessageRowKey(messages[index]) : `i-${index}`),
   });
 
-  virtualizer.shouldAdjustScrollPositionOnItemSizeChange = () => false;
+  virtualizer.shouldAdjustScrollPositionOnItemSizeChange = (item, _delta, instance) =>
+    shouldAdjustForMessageRowResize({
+      isScrolling: instance.isScrolling,
+      itemStart: item.start,
+      scrollOffset: instance.scrollOffset ?? 0,
+    });
 
   const virtualizerRef = useRef(virtualizer);
   virtualizerRef.current = virtualizer;
@@ -190,7 +195,7 @@ export function useThreadScrollViewport({
     containerEvents,
   });
 
-  const { justLoadedOlderMessagesRef, prependCompensationEpochRef } = useMessageListPrependCompensation({
+  useMessageListPrependCompensation({
     containerRef: messagesContainerRef,
     messages,
     isLoadingMore,
@@ -212,16 +217,6 @@ export function useThreadScrollViewport({
     virtualMeasureKey,
     reduceMotion,
     onScrollTargetReached,
-  });
-
-  useMessageListScrollAnchor({
-    containerRef: messagesContainerRef,
-    virtualizer,
-    isLoadingMoreRef,
-    justLoadedOlderMessagesRef,
-    prependCompensationEpochRef,
-    threadScrollKey,
-    measurementRevision: virtualizer.getTotalSize(),
   });
 
   const pinBottomRafRef = useRef<number | null>(null);

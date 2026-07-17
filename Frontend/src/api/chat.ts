@@ -154,6 +154,9 @@ export interface ChatMessage {
   deletedAt?: string | null;
   replyToId?: string;
   storyReply?: StoryReplyInfo | null;
+  linkPreview?: import('@/api/linkPreview').LinkPreviewData | null;
+  linkPreviewDisabled?: boolean;
+  linkPreviewUrl?: string | null;
   replyTo?: {
     id: string;
     content: string;
@@ -263,6 +266,10 @@ export interface OptimisticMessagePayload {
   videoHeight?: number;
   waveformData?: number[];
   storyReply?: StoryReplyInfo;
+  linkPreviewDisabled?: boolean;
+  linkPreviewUrl?: string | null;
+  linkPreview?: import('@/api/linkPreview').LinkPreviewData | null;
+  linkPreviewToken?: string | null;
 }
 
 export interface CreateMessageRequest {
@@ -283,6 +290,9 @@ export interface CreateMessageRequest {
   videoHeight?: number;
   waveformData?: number[];
   clientMutationId?: string;
+  linkPreviewDisabled?: boolean;
+  linkPreviewUrl?: string | null;
+  linkPreviewToken?: string | null;
   poll?: {
     question: string;
     type: PollType;
@@ -445,6 +455,14 @@ export const chatApi = {
     body: { content: string; mentionIds?: string[]; clientMutationId?: string }
   ) => {
     const response = await api.patch<ApiResponse<ChatMessage>>(`/chat/messages/${messageId}`, body);
+    return response.data.data;
+  },
+
+  setMessageLinkPreviewDisabled: async (messageId: string, disabled: boolean) => {
+    const response = await api.patch<ApiResponse<ChatMessage>>(
+      `/chat/messages/${messageId}/link-preview`,
+      { disabled }
+    );
     return response.data.data;
   },
 

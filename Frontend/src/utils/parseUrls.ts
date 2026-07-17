@@ -45,8 +45,15 @@ function formatAppUrl(url: string): { displayText: string; urlType: 'channel' | 
       return { displayText: i18n.t('common.viewGame'), urlType: 'game' };
     } else if (path.startsWith('/user-chat/')) {
       return { displayText: i18n.t('common.openChat'), urlType: 'user-chat' };
-    } else if (path.startsWith('/profile/')) {
+    } else if (path.startsWith('/user-profile/') || path.startsWith('/profile/')) {
       return { displayText: i18n.t('common.viewProfile'), urlType: 'profile' };
+    } else if (
+      path.startsWith('/marketplace/') &&
+      path !== '/marketplace/create' &&
+      path !== '/marketplace/my' &&
+      !path.endsWith('/edit')
+    ) {
+      return { displayText: i18n.t('common.openLink', { defaultValue: 'Marketplace' }), urlType: 'other' };
     }
     
     return { displayText: i18n.t('common.openLink'), urlType: 'other' };
