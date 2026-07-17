@@ -8,6 +8,7 @@ import { favoritesApi } from '@/api/favorites';
 import type { Club } from '@/types';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { clubMatchesFindSportFilter } from '@/utils/findAvailabilityFilters';
+import { buildFindFilterAllowedClubIds, pruneFindFilterClubIds } from '@/utils/pruneFindFilterClubIds';
 import type { Sport } from '@shared/sport';
 
 interface FiltersPanelProps {
@@ -86,6 +87,7 @@ export const FiltersPanel = ({
   const [clubs, setClubs] = useState<Club[]>([]);
   const [barsInCity, setBarsInCity] = useState<Club[]>([]);
   const [favoriteClubIds, setFavoriteClubIds] = useState<string[]>([]);
+  const [clubCatalogsReady, setClubCatalogsReady] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -105,10 +107,12 @@ export const FiltersPanel = ({
 
   useEffect(() => {
     let cancelled = false;
+    setClubCatalogsReady(false);
     const fetchClubs = async () => {
       if (!cityId) {
         setClubs([]);
         setBarsInCity([]);
+        if (!cancelled) setClubCatalogsReady(true);
         return;
       }
       try {
@@ -119,11 +123,13 @@ export const FiltersPanel = ({
         if (!cancelled) {
           setClubs(allRes.data ?? []);
           setBarsInCity(barRes.data ?? []);
+          setClubCatalogsReady(true);
         }
       } catch {
         if (!cancelled) {
           setClubs([]);
           setBarsInCity([]);
+          setClubCatalogsReady(true);
         }
       }
     };
@@ -167,12 +173,14 @@ export const FiltersPanel = ({
   const anyBarSelected = useMemo(() => clubIds.some((id) => barIdSet.has(id)), [clubIds, barIdSet]);
 
   useEffect(() => {
-    const allowedIds = new Set([...sortedVenueClubs.map((c) => c.id), ...(hideBarGames ? [] : sortedBars.map((c) => c.id))]);
-    const next = clubIds.filter((id) => allowedIds.has(id));
-    if (next.length !== clubIds.length) {
-      onClubIdsChange(next);
-    }
-  }, [clubIds, hideBarGames, onClubIdsChange, sortedBars, sortedVenueClubs]);
+    const allowedIds = buildFindFilterAllowedClubIds(
+      sortedVenueClubs.map((c) => c.id),
+      sortedBars.map((c) => c.id),
+      hideBarGames,
+    );
+    const next = pruneFindFilterClubIds(clubIds, allowedIds, clubCatalogsReady);
+    if (next) onClubIdsChange(next);
+  }, [clubCatalogsReady, clubIds, hideBarGames, onClubIdsChange, sortedBars, sortedVenueClubs]);
 
   const toggleId = (id: string) => {
     onClubIdsChange(clubIds.includes(id) ? clubIds.filter((x) => x !== id) : [...clubIds, id]);

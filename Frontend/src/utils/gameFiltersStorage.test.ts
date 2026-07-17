@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getGameFilters, setGameFilters, type GameFilters } from './gameFiltersStorage';
+import {
+  getGameFilters,
+  peekGameFiltersMemory,
+  resetGameFiltersMemoryCacheForTests,
+  setGameFilters,
+  type GameFilters,
+} from './gameFiltersStorage';
 
 const idbStore = new Map<string, unknown>();
 
@@ -32,6 +38,7 @@ const base = (overrides: Partial<GameFilters> = {}): GameFilters => ({
 describe('gameFiltersStorage', () => {
   beforeEach(() => {
     idbStore.clear();
+    resetGameFiltersMemoryCacheForTests();
   });
 
   it('round-trips entity and panel filters', async () => {
@@ -57,5 +64,27 @@ describe('gameFiltersStorage', () => {
     const loaded = await getGameFilters();
     expect(loaded.gameFilter).toBe(true);
     expect(loaded.filterLevelMin).toBe(3);
+  });
+
+  it('keeps memory snapshot across slow IDB so game→Back reads the latest total state', async () => {
+    const write = setGameFilters(
+      base({
+        filterAvailableSlots: false,
+        filterSuitableRating: false,
+        hideBarGames: false,
+        gameFilter: false,
+        trainingFilter: false,
+        filterLevelMin: 1,
+        filterLevelMax: 7,
+        filterClubIds: [],
+      }),
+    );
+    expect(peekGameFiltersMemory()?.filterLevelMin).toBe(1);
+    expect(peekGameFiltersMemory()?.gameFilter).toBe(false);
+
+    const loadedWhileWriting = await getGameFilters();
+    expect(loadedWhileWriting.gameFilter).toBe(false);
+    expect(loadedWhileWriting.filterLevelMin).toBe(1);
+    await write;
   });
 });

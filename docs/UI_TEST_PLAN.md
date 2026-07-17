@@ -385,7 +385,9 @@ Frontend/e2e/
 | ID | Test | Steps | Expected |
 |----|------|-------|----------|
 | F-13 | Open filters panel | Tap filter icon | Panel opens |
+| F-64 | Panel closed when no filters | Leave panel open with no criteria → leave Find → return (or reload) | Filters panel stays closed |
 | F-14 | Club filter | Select club(s) | Games at club only |
+| F-65 | Filters persist game→Back | Set panel filters (slots/rating/hide-bar/clubs/bars/time/level/no-rating/private) + entity chip + sport → open game → Back | Same total filter state restored in panel and chips |
 | F-15 | Favorite clubs shortcut | Use favorites in panel | Clubs pre-selected |
 | F-16 | Time range filter | Set start/end time | Games outside range hidden |
 | F-17 | Level range filter | Adjust min/max level | Out-of-range hidden |
@@ -393,7 +395,7 @@ Frontend/e2e/
 | F-20 | No-rating filter | Enable no-rating | Only casual games |
 | F-21 | Show private games | `@admin` toggle | Private games appear |
 | F-22 | Reset filters | Reset button | Defaults restored |
-| F-23 | Filter persistence | Set filters → reload; also set filters → leave Find → return | Filters restored from storage (reload and tab remount) |
+| F-23 | Filter persistence | Set filters → reload; leave Find and return | Filters restored from storage |
 | F-42 | Available slots filter | Enable available slots toggle | Full games hidden |
 | F-43 | Suitable rating filter | Enable suitable rating toggle | Out-of-band level games hidden |
 | F-44 | Hide bar games | Enable hide bar games toggle | Bars section hidden; bar games excluded |

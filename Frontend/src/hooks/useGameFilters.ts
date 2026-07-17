@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { format, parse, startOfDay } from 'date-fns';
-import { getGameFilters, setGameFilters, GameFilters } from '@/utils/gameFiltersStorage';
+import {
+  getGameFilters,
+  peekGameFiltersMemory,
+  setGameFilters,
+  GameFilters,
+} from '@/utils/gameFiltersStorage';
+import { hasFindPanelFiltersApplied } from '@/utils/findPanelFiltersApplied';
 import { useShellNavStore } from '@/store/shellNavStore';
 
 const DEFAULT_FILTERS: GameFilters = {
@@ -32,6 +38,9 @@ function sanitizeLoadedFilters(f: GameFilters): GameFilters {
     if (merged.trainingFilter) merged.tournamentFilter = merged.leaguesFilter = false;
     else if (merged.tournamentFilter) merged.leaguesFilter = false;
   }
+  if (!hasFindPanelFiltersApplied(merged)) {
+    merged.filtersPanelOpen = false;
+  }
   return merged;
 }
 
@@ -62,8 +71,11 @@ function buildFiltersToPersist(
 }
 
 export const useGameFilters = () => {
-  const [filters, setFilters] = useState<GameFilters>(DEFAULT_FILTERS);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const memory = peekGameFiltersMemory();
+  const [filters, setFilters] = useState<GameFilters>(() =>
+    memory ? sanitizeLoadedFilters(memory) : DEFAULT_FILTERS,
+  );
+  const [isHydrated, setIsHydrated] = useState(() => memory != null);
   const findViewMode = useShellNavStore((s) => s.findViewMode);
   const findListWeekStartDay = useShellNavStore((s) => s.findListWeekStartDay);
   const findSelectedDay = useShellNavStore((s) => s.findSelectedDay);
@@ -72,7 +84,7 @@ export const useGameFilters = () => {
   const findViewModeRef = useRef(findViewMode);
   const findListWeekStartDayRef = useRef(findListWeekStartDay);
   const findSelectedDayRef = useRef(findSelectedDay);
-  const isHydratedRef = useRef(false);
+  const isHydratedRef = useRef(isHydrated);
 
   filtersRef.current = filters;
   findViewModeRef.current = findViewMode;
@@ -92,11 +104,15 @@ export const useGameFilters = () => {
   }, []);
 
   useEffect(() => {
+    if (isHydratedRef.current && peekGameFiltersMemory()) {
+      return;
+    }
     let cancelled = false;
     getGameFilters().then((f) => {
       if (cancelled) return;
       const merged = sanitizeLoadedFilters(f);
       setFilters(merged);
+      filtersRef.current = merged;
       setIsHydrated(true);
     });
     return () => {

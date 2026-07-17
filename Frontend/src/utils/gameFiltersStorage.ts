@@ -60,14 +60,12 @@ function normalizeStoredFilters(filters: GameFilters | undefined): GameFilters {
   return merged;
 }
 
-export const getGameFilters = async (): Promise<GameFilters> => {
-  const filters = await get<GameFilters>(GAME_FILTERS_KEY);
+function withDateTtl(filters: GameFilters | undefined): GameFilters {
   const now = Date.now();
-
   if (filters?.dateSavedAt && now - filters.dateSavedAt < ONE_HOUR_MS) {
     return {
       ...normalizeStoredFilters(filters),
-      activeTab: filters?.activeTab || 'calendar',
+      activeTab: filters.activeTab || 'calendar',
     };
   }
 
@@ -78,11 +76,29 @@ export const getGameFilters = async (): Promise<GameFilters> => {
     calendarSelectedDate: undefined,
     dateSavedAt: undefined,
   };
-};
+}
+
+/** Sync mirror so Find remount (game → Back) keeps the last known total filter state. */
+let memoryCache: GameFilters | null = null;
 
 /** Latest-wins queue so a slow older write cannot overwrite a newer filter snapshot. */
 let writeEpoch = 0;
 let writeChain: Promise<void> = Promise.resolve();
+
+/** Immediate read for SPA remounts; null on cold start before first load/save. */
+export function peekGameFiltersMemory(): GameFilters | null {
+  return memoryCache ? withDateTtl(memoryCache) : null;
+}
+
+export const getGameFilters = async (): Promise<GameFilters> => {
+  await writeChain;
+  if (memoryCache) {
+    return withDateTtl(memoryCache);
+  }
+  const filters = await get<GameFilters>(GAME_FILTERS_KEY);
+  memoryCache = filters ? { ...filters } : { ...DEFAULT_FILTERS };
+  return withDateTtl(memoryCache);
+};
 
 export const setGameFilters = async (filters: GameFilters): Promise<void> => {
   const epoch = ++writeEpoch;
@@ -90,6 +106,7 @@ export const setGameFilters = async (filters: GameFilters): Promise<void> => {
     ...filters,
     dateSavedAt: filters.listViewStartDate || filters.calendarSelectedDate ? Date.now() : undefined,
   };
+  memoryCache = filtersToSave;
 
   writeChain = writeChain.then(async () => {
     if (epoch !== writeEpoch) return;
@@ -98,3 +115,10 @@ export const setGameFilters = async (filters: GameFilters): Promise<void> => {
 
   await writeChain;
 };
+
+/** Test-only: drop in-memory mirror. */
+export function resetGameFiltersMemoryCacheForTests(): void {
+  memoryCache = null;
+  writeEpoch = 0;
+  writeChain = Promise.resolve();
+}
