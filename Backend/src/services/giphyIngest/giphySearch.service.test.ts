@@ -10,6 +10,14 @@ import {
   resetGiphySearchRateLimitForTests,
   GIPHY_SEARCH_MAX_PER_WINDOW,
 } from './giphySearch.rateLimit';
+import {
+  GIPHY_SEARCH_CACHE_TTL_SECONDS,
+  GIPHY_TRENDING_CACHE_TTL_SECONDS,
+  giphySearchCacheKey,
+  readGiphySearchCache,
+  writeGiphySearchCache,
+  type GiphySearchCacheStore,
+} from './giphySearch.cache';
 
 async function main() {
   resetGiphySearchRateLimitForTests();
@@ -22,6 +30,58 @@ async function main() {
   assert.equal(isGiphySearchConfigured(''), false);
   assert.equal(isGiphySearchConfigured('   '), false);
   assert.equal(isGiphySearchConfigured('abc123'), true);
+
+  {
+    const values = new Map<string, { response: unknown; expiresAt: Date }>();
+    const cache: GiphySearchCacheStore = {
+      findUnique: async ({ where }) => values.get(where.key) ?? null,
+      upsert: async ({ where, create, update }) => {
+        const current = values.get(where.key);
+        values.set(
+          where.key,
+          current
+            ? { response: update.response, expiresAt: update.expiresAt }
+            : { response: create.response, expiresAt: create.expiresAt }
+        );
+      },
+    };
+    const page = {
+      items: [],
+      offset: 0,
+      nextOffset: 0,
+      limit: 24,
+      totalCount: 0,
+      hasMore: false,
+    };
+    const trendingIdentity = { query: '', offset: 0, limit: 24 };
+    const searchIdentity = { query: '  Padel  ', offset: 0, limit: 24 };
+
+    await writeGiphySearchCache(trendingIdentity, page, cache);
+    await writeGiphySearchCache(searchIdentity, page, cache);
+
+    const now = Date.now();
+    const trendingTtl = Math.round(
+      (values.get(giphySearchCacheKey(trendingIdentity))!.expiresAt.getTime() - now) / 1_000
+    );
+    const searchTtl = Math.round(
+      (values.get(giphySearchCacheKey(searchIdentity))!.expiresAt.getTime() - now) / 1_000
+    );
+    assert.equal(trendingTtl, GIPHY_TRENDING_CACHE_TTL_SECONDS);
+    assert.equal(searchTtl, GIPHY_SEARCH_CACHE_TTL_SECONDS);
+    assert.deepEqual(await readGiphySearchCache(searchIdentity, cache), page);
+    assert.equal(
+      giphySearchCacheKey(searchIdentity),
+      giphySearchCacheKey({ query: 'padel', offset: 0, limit: 24 })
+    );
+
+    const fetchFn = async (): Promise<Response> => {
+      throw new Error('provider should not be called on cache hit');
+    };
+    assert.deepEqual(
+      await searchGiphyGifs('padel', {}, { apiKey: '', cache, fetchFn }),
+      page
+    );
+  }
 
   {
     let calledUrl = '';

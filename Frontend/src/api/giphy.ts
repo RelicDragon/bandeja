@@ -78,12 +78,15 @@ export async function trendingGiphy(options?: {
   return data.data;
 }
 
-export async function importGiphyGif(downloadUrl: string): Promise<GiphyImportResult> {
+export async function importGiphyGif(
+  downloadUrl: string,
+  options?: { signal?: AbortSignal }
+): Promise<GiphyImportResult> {
   // Import can fetch up to ~8s + validate + S3; keep above default 10s axios timeout.
   const { data } = await api.post<ApiResponse<GiphyImportResult>>(
     '/giphy/import',
     { downloadUrl },
-    { timeout: 45_000 }
+    { timeout: 45_000, signal: options?.signal }
   );
   return data.data;
 }

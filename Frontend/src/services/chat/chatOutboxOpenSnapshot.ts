@@ -12,6 +12,7 @@ import { logChatOutboxBlobMismatch } from '@/services/chat/chatDiagnostics';
 import { reconcileUnsendableOutboxRow } from '@/services/chat/chatOutboxReconcile';
 import { registerOutboxRehydrateBlobUrls } from '@/services/chat/chatOutboxRehydrateUrls';
 import { serverMessageMatchesQueuedItem } from '@/services/applyQueuedMessagesToState';
+import { primeChatMediaDimensions } from '@/services/chat/chatMediaAssetCache';
 
 type HydrateOk = { kind: 'ok'; q: QueuedMessage; mediaUrls: string[]; thumbnailUrls: string[] };
 
@@ -59,6 +60,12 @@ export async function buildOutboxOptimisticsForOpen(params: {
 
   const hydrateResults = await Promise.all(
     queueForTabFiltered.map(async (q): Promise<HydrateOk | { kind: 'broken'; q: QueuedMessage }> => {
+      if (q.pendingGiphy) {
+        primeChatMediaDimensions(q.pendingGiphy.previewUrl, {
+          width: q.pendingGiphy.width,
+          height: q.pendingGiphy.height,
+        });
+      }
       let mediaUrls = q.payload.mediaUrls ?? q.mediaUrls ?? [];
       let thumbnailUrls = q.payload.thumbnailUrls ?? q.thumbnailUrls ?? [];
       const imgCount = q.pendingImageBlobCount ?? 0;

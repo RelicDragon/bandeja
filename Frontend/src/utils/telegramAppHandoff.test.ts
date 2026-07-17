@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ANDROID_APP_PACKAGE,
+  ANDROID_APP_SCHEME,
   buildTelegramAndroidIntentUrl,
   buildTelegramAppFallbackUrl,
   buildTelegramBrowserContinueUrl,
@@ -38,7 +39,9 @@ describe('telegram app handoff', () => {
 
     expect(fallbackUrl).toBe(`https://bandeja.me/login/${key}?tg_app=1&tg_fallback=1`);
     expect(browserUrl).toBe(`https://bandeja.me/login/${key}?tg_web=1`);
-    expect(intentUrl).toContain(`intent://bandeja.me/login/${key}#Intent;scheme=https`);
+    expect(intentUrl).toContain(
+      `intent://bandeja.me/login/${key}#Intent;scheme=${ANDROID_APP_SCHEME}`
+    );
     expect(intentUrl).toContain(`package=${ANDROID_APP_PACKAGE}`);
     expect(intentUrl).toContain(encodeURIComponent(fallbackUrl));
   });

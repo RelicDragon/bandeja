@@ -38,13 +38,24 @@ import { createMessageWithSocketAck } from '@/services/chat/chatSendMessageCreat
 import { CHAT_OUTBOX_FAILED_EVENT, dispatchChatOutboxSuccess } from '@/services/chat/chatOutboxEvents';
 import { resumeOrFailSupersededChatSend as resumeSupersededOutboxSend } from '@/services/chat/chatOutboxSendResume';
 import { useVideoUploadProgressStore } from '@/store/videoUploadProgressStore';
+import {
+  importPendingGiphyOutboxMedia,
+  persistSentGiphyRecent,
+} from '@/services/chat/chatOutboxGiphy';
+import type { PendingGiphyOutboxMedia } from '@/services/chat/chatLocalDb';
+import { primeChatMediaDimensions } from '@/services/chat/chatMediaAssetCache';
+
 function completeChatSendSuccess(
   tempId: string,
   contextType: ChatContextType,
   contextId: string,
   created: ChatMessage,
-  callbacks: SendQueuedCallbacks
+  callbacks: SendQueuedCallbacks,
+  pendingGiphy?: PendingGiphyOutboxMedia
 ): void {
+  if (pendingGiphy) {
+    persistSentGiphyRecent(pendingGiphy, useAuthStore.getState().user?.id);
+  }
   callbacks.onSuccess?.(created);
   dispatchChatOutboxSuccess({ tempId, contextType, contextId, message: created });
   void messageQueueStorage.remove(tempId, contextType, contextId).catch((err) => {
@@ -68,6 +79,7 @@ function rowNeedsMediaUpload(row: QueuedMessage | undefined): boolean {
   return !!(
     row.hasPendingVoiceBlob ||
     row.hasPendingVideoBlob ||
+    (row.pendingGiphy && !(row.mediaUrls?.length ?? 0)) ||
     (row.pendingImageBlobCount ?? 0) > 0
   );
 }
@@ -201,7 +213,47 @@ export function sendWithTimeout(
         });
       }
 
-      if (row?.hasPendingVideoBlob) {
+      const pendingGiphy = row?.pendingGiphy;
+      if (pendingGiphy && !(row?.mediaUrls?.length ?? 0)) {
+        try {
+          const imported = await runWithAbort(signal, () =>
+            importPendingGiphyOutboxMedia(pendingGiphy, signal)
+          );
+          if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed))
+            return;
+          finalMedia = [imported.mediaUrl];
+          finalThumb = [imported.thumbnailUrl];
+          primeChatMediaDimensions(imported.mediaUrl, {
+            width: pendingGiphy.width,
+            height: pendingGiphy.height,
+          });
+          primeChatMediaDimensions(imported.thumbnailUrl, {
+            width: pendingGiphy.width,
+            height: pendingGiphy.height,
+          });
+          await messageQueueStorage.commitPendingGiphyImported(
+            tempId,
+            imported.mediaUrl,
+            imported.thumbnailUrl
+          );
+        } catch (e) {
+          if (isAbortError(e)) {
+            await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);
+            return;
+          }
+          if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed))
+            return;
+          await failSendAttempt(
+            tempId,
+            generation,
+            contextType,
+            contextId,
+            onFailed,
+            'giphy_import_failed'
+          );
+          return;
+        }
+      } else if (row?.hasPendingVideoBlob) {
         const vb = await loadOutboxVideoBlob(tempId);
         const poster = await loadOutboxVideoPosterBlob(tempId);
         throwIfAborted(signal);
@@ -402,7 +454,7 @@ export function sendWithTimeout(
       const generationStale = !isActiveSendGeneration(tempId, generation);
       if (generationStale) {
         sealChatSendAttempt(tempId);
-        completeChatSendSuccess(tempId, contextType, contextId, created, callbacks);
+        completeChatSendSuccess(tempId, contextType, contextId, created, callbacks, pendingGiphy);
         return;
       }
       sealChatSendAttempt(tempId);
@@ -417,7 +469,7 @@ export function sendWithTimeout(
         uploadBytes: videoUploadBytes,
         durationMs: Date.now() - startedAt,
       });
-      completeChatSendSuccess(tempId, contextType, contextId, created, callbacks);
+      completeChatSendSuccess(tempId, contextType, contextId, created, callbacks, pendingGiphy);
     } catch (e) {
       if (isAbortError(e)) {
         await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);

@@ -10,9 +10,11 @@ type UseGiphySearchResult = {
   items: GiphySearchItem[];
   loading: boolean;
   loadingMore: boolean;
+  loadMoreError: boolean;
   error: 'unavailable' | 'failed' | 'rateLimited' | null;
   hasMore: boolean;
   loadMore: () => void;
+  retryLoadMore: () => void;
   refresh: () => void;
 };
 
@@ -27,10 +29,11 @@ function mapError(err: unknown): 'unavailable' | 'failed' | 'rateLimited' {
 }
 
 export function useGiphySearch(open: boolean): UseGiphySearchResult {
-  const [query, setQuery] = useState('');
+  const [query, setQueryState] = useState('');
   const [items, setItems] = useState<GiphySearchItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState(false);
   const [error, setError] = useState<'unavailable' | 'failed' | 'rateLimited' | null>(null);
   const [hasMore, setHasMore] = useState(false);
   const [nextOffset, setNextOffset] = useState(0);
@@ -41,6 +44,7 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
     const reqId = ++requestIdRef.current;
     if (append) setLoadingMore(true);
     else setLoading(true);
+    setLoadMoreError(false);
     setError(null);
     try {
       const page: GiphySearchPage = await searchGiphy(q, { offset, limit: PAGE_SIZE });
@@ -51,7 +55,10 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
     } catch (err) {
       if (reqId !== requestIdRef.current) return;
       setError(mapError(err));
-      if (!append) {
+      if (append) {
+        setLoadMoreError(true);
+        setHasMore(false);
+      } else {
         setItems([]);
         setHasMore(false);
         setNextOffset(0);
@@ -67,13 +74,14 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
   useEffect(() => {
     if (!open) {
       requestIdRef.current += 1;
-      setQuery('');
+      setQueryState('');
       setItems([]);
       setError(null);
       setHasMore(false);
       setNextOffset(0);
       setLoading(false);
       setLoadingMore(false);
+      setLoadMoreError(false);
       debouncedQueryRef.current = '';
       return;
     }
@@ -87,6 +95,16 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
     return () => window.clearTimeout(handle);
   }, [open, query, fetchPage]);
 
+  const setQuery = useCallback((value: string) => {
+    requestIdRef.current += 1;
+    setQueryState(value);
+    setItems([]);
+    setError(null);
+    setHasMore(false);
+    setLoadMoreError(false);
+    setLoading(value.trim().length > 0);
+  }, []);
+
   const loadMore = useCallback(() => {
     if (!open || loading || loadingMore || !hasMore) return;
     void fetchPage(debouncedQueryRef.current, nextOffset, true);
@@ -97,15 +115,22 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
     void fetchPage(query, 0, false);
   }, [open, query, fetchPage]);
 
+  const retryLoadMore = useCallback(() => {
+    if (!open || loading || loadingMore) return;
+    void fetchPage(debouncedQueryRef.current, nextOffset, true);
+  }, [open, loading, loadingMore, nextOffset, fetchPage]);
+
   return {
     query,
     setQuery,
     items,
     loading,
     loadingMore,
+    loadMoreError,
     error,
     hasMore,
     loadMore,
+    retryLoadMore,
     refresh,
   };
 }

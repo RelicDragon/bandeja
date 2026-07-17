@@ -1,4 +1,18 @@
 import { MAX_STICKER_FAVORITES, MAX_STICKER_RECENT } from './stickerConstants';
+import { isAllowedGiphyHost } from '../giphyIngest/giphyHosts';
+
+export type ChatMediaRecent =
+  | { kind: 'STICKER'; stickerId: string }
+  | {
+      kind: 'GIF';
+      provider: 'GIPHY';
+      id: string;
+      title: string;
+      previewUrl: string;
+      downloadUrl: string;
+      width: number;
+      height: number;
+    };
 
 /** Dedupe preserving first-seen order (MRU-first lists), trim, cap. */
 export function normalizeStickerIdList(ids: unknown, max: number): string[] | undefined {
@@ -20,17 +34,74 @@ export function normalizeFavoritesInput(ids: unknown): string[] | undefined {
   return normalizeStickerIdList(ids, MAX_STICKER_FAVORITES);
 }
 
-export function normalizeRecentInput(ids: unknown): string[] | undefined {
-  return normalizeStickerIdList(ids, MAX_STICKER_RECENT);
+function normalizeGiphyUrl(raw: unknown): string | null {
+  if (typeof raw !== 'string' || raw.length > 2048) return null;
+  try {
+    const url = new URL(raw.trim());
+    return url.protocol === 'https:' && isAllowedGiphyHost(url.hostname) ? url.toString() : null;
+  } catch {
+    return null;
+  }
 }
 
-/** MRU bump: stickerId first, then prior ids, capped. */
-export function bumpRecentIdList(
-  current: string[] | null | undefined,
-  stickerId: string,
-  max: number = MAX_STICKER_RECENT
-): string[] {
-  const id = stickerId.trim();
-  if (!id) return [...(current ?? [])].slice(0, max);
-  return [id, ...(current ?? []).filter((x) => x !== id)].slice(0, max);
+export function normalizeChatMediaRecentItem(raw: unknown): ChatMediaRecent | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const item = raw as Record<string, unknown>;
+  if (item.kind === 'STICKER') {
+    const stickerId = typeof item.stickerId === 'string' ? item.stickerId.trim() : '';
+    return stickerId && stickerId.length <= 100 ? { kind: 'STICKER', stickerId } : null;
+  }
+  if (item.kind !== 'GIF' || item.provider !== 'GIPHY') return null;
+  const id = typeof item.id === 'string' ? item.id.trim() : '';
+  const previewUrl = normalizeGiphyUrl(item.previewUrl);
+  const downloadUrl = normalizeGiphyUrl(item.downloadUrl);
+  if (!id || id.length > 100 || !previewUrl || !downloadUrl) return null;
+  const dimension = (value: unknown) =>
+    typeof value === 'number' && Number.isFinite(value)
+      ? Math.min(8192, Math.max(1, Math.floor(value)))
+      : 200;
+  return {
+    kind: 'GIF',
+    provider: 'GIPHY',
+    id,
+    title: typeof item.title === 'string' ? item.title.trim().slice(0, 200) || 'GIF' : 'GIF',
+    previewUrl,
+    downloadUrl,
+    width: dimension(item.width),
+    height: dimension(item.height),
+  };
+}
+
+export function normalizeRecentMediaInput(value: unknown): ChatMediaRecent[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const result: ChatMediaRecent[] = [];
+  const seen = new Set<string>();
+  for (const raw of value) {
+    const item = normalizeChatMediaRecentItem(raw);
+    if (!item) continue;
+    const key = item.kind === 'STICKER' ? `sticker:${item.stickerId}` : `gif:${item.provider}:${item.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(item);
+    if (result.length >= MAX_STICKER_RECENT) break;
+  }
+  return result;
+}
+
+export function bumpRecentMedia(
+  current: unknown,
+  item: ChatMediaRecent
+): ChatMediaRecent[] {
+  const normalized = normalizeRecentMediaInput(current) ?? [];
+  const key = item.kind === 'STICKER' ? `sticker:${item.stickerId}` : `gif:${item.provider}:${item.id}`;
+  return [
+    item,
+    ...normalized.filter((existing) => {
+      const existingKey =
+        existing.kind === 'STICKER'
+          ? `sticker:${existing.stickerId}`
+          : `gif:${existing.provider}:${existing.id}`;
+      return existingKey !== key;
+    }),
+  ].slice(0, MAX_STICKER_RECENT);
 }

@@ -13,6 +13,8 @@ import {
 import {
   acquireChatMediaAsset,
   clearChatMediaAssetMemoryCache,
+  peekChatMediaAsset,
+  primeChatMediaDimensions,
   releaseChatMediaAsset,
 } from './chatMediaAssetCache';
 
@@ -93,5 +95,15 @@ describe('chatMediaAssetCache', () => {
     const asset = await acquireChatMediaAsset('https://cdn.example.com/chat/d.gif');
 
     expect(asset.dimensions).toEqual({ width: 320, height: 180 });
+  });
+
+  it('reserves queued GIF dimensions before the image loads', () => {
+    const src = 'https://media.giphy.com/preview.gif';
+    primeChatMediaDimensions(src, { width: 320, height: 180 });
+
+    expect(peekChatMediaAsset(src)).toEqual({
+      displayUrl: src,
+      dimensions: { width: 320, height: 180 },
+    });
   });
 });

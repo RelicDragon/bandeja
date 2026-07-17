@@ -39,9 +39,22 @@ export type StickerPackListItem = {
   } | null;
 };
 
+export type ChatMediaRecent =
+  | { kind: 'STICKER'; stickerId: string }
+  | {
+      kind: 'GIF';
+      provider: 'GIPHY';
+      id: string;
+      title: string;
+      previewUrl: string;
+      downloadUrl: string;
+      width: number;
+      height: number;
+    };
+
 export type UserStickerPrefs = {
   favorites: string[];
-  recent: string[];
+  recentMedia: ChatMediaRecent[];
 };
 
 export async function listStickerPacks(sport?: Sport | null): Promise<StickerPackListItem[]> {
@@ -75,6 +88,11 @@ export async function putMyStickerPrefs(
   prefs: Partial<UserStickerPrefs>
 ): Promise<UserStickerPrefs> {
   const { data } = await api.put<ApiResponse<UserStickerPrefs>>('/stickers/me/prefs', prefs);
+  return data.data;
+}
+
+export async function bumpMyChatMediaRecent(item: ChatMediaRecent): Promise<UserStickerPrefs> {
+  const { data } = await api.post<ApiResponse<UserStickerPrefs>>('/stickers/me/recents', { item });
   return data.data;
 }
 

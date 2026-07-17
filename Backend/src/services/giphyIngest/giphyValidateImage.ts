@@ -58,6 +58,17 @@ export function extensionForKind(kind: DetectedImageKind): string {
   }
 }
 
+export function resolveGiphyImageDimensions(meta: {
+  width?: number;
+  height?: number;
+  pageHeight?: number;
+}): { width: number; height: number } {
+  return {
+    width: meta.width ?? 0,
+    height: meta.pageHeight ?? meta.height ?? 0,
+  };
+}
+
 /**
  * Validate magic bytes, size, and that sharp can read dimensions.
  * Prefer keeping GIF bytes as-is (animated).
@@ -84,8 +95,7 @@ export async function validateGiphyImageBuffer(
     throw new GiphyValidateError('Invalid image data');
   }
 
-  const width = meta.width ?? 0;
-  const height = meta.height ?? 0;
+  const { width, height } = resolveGiphyImageDimensions(meta);
   if (width < 1 || height < 1 || width > 8192 || height > 8192) {
     throw new GiphyValidateError('Invalid image dimensions');
   }

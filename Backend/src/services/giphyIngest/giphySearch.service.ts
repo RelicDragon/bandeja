@@ -5,6 +5,11 @@ import {
   ssrfSafeFetchBytes,
   type DnsLookupFn,
 } from './ssrfSafeFetch';
+import {
+  readGiphySearchCache,
+  writeGiphySearchCache,
+  type GiphySearchCacheStore,
+} from './giphySearch.cache';
 
 export const GIPHY_SEARCH_DEFAULT_LIMIT = 24;
 export const GIPHY_SEARCH_MAX_LIMIT = 50;
@@ -32,6 +37,7 @@ export type GiphySearchDeps = {
   fetchFn?: typeof fetch;
   lookupFn?: DnsLookupFn;
   apiKey?: string | null;
+  cache?: GiphySearchCacheStore | null;
 };
 
 type GiphyApiImage = {
@@ -188,6 +194,29 @@ async function fetchGiphyList(
   return { items, offset, nextOffset, limit: pageCount, totalCount, hasMore };
 }
 
+function cacheStoreForDeps(
+  deps: GiphySearchDeps
+): GiphySearchCacheStore | null | undefined {
+  if (deps.cache !== undefined) return deps.cache;
+  return deps.fetchFn || deps.lookupFn ? null : undefined;
+}
+
+async function cachedGiphyList(
+  query: string,
+  offset: number,
+  limit: number,
+  fetchPage: () => Promise<GiphySearchPage>,
+  deps: GiphySearchDeps
+): Promise<GiphySearchPage> {
+  const identity = { query, offset, limit };
+  const cache = cacheStoreForDeps(deps);
+  const cached = await readGiphySearchCache(identity, cache);
+  if (cached) return cached;
+  const page = await fetchPage();
+  await writeGiphySearchCache(identity, page, cache);
+  return page;
+}
+
 export async function searchGiphyGifs(
   query: string,
   options: { offset?: number; limit?: number } = {},
@@ -200,8 +229,15 @@ export async function searchGiphyGifs(
   const offset = clampOffset(options.offset);
   const limit = clampLimit(options.limit);
   try {
-    return await fetchGiphyList(
-      `/v1/gifs/search?q=${encodeURIComponent(q)}&offset=${offset}&limit=${limit}&rating=pg-13&lang=en`,
+    return await cachedGiphyList(
+      q,
+      offset,
+      limit,
+      () =>
+        fetchGiphyList(
+          `/v1/gifs/search?q=${encodeURIComponent(q)}&offset=${offset}&limit=${limit}&rating=pg-13&lang=en`,
+          deps
+        ),
       deps
     );
   } catch (err) {
@@ -218,8 +254,15 @@ export async function trendingGiphyGifs(
   const offset = clampOffset(options.offset);
   const limit = clampLimit(options.limit);
   try {
-    return await fetchGiphyList(
-      `/v1/gifs/trending?offset=${offset}&limit=${limit}&rating=pg-13`,
+    return await cachedGiphyList(
+      '',
+      offset,
+      limit,
+      () =>
+        fetchGiphyList(
+          `/v1/gifs/trending?offset=${offset}&limit=${limit}&rating=pg-13`,
+          deps
+        ),
       deps
     );
   } catch (err) {

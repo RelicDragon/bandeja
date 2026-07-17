@@ -24,6 +24,16 @@ export type ChatLocalCursorRow = {
 
 export type QueuedMessageStatus = 'queued' | 'sending' | 'failed';
 
+export type PendingGiphyOutboxMedia = {
+  provider: 'GIPHY';
+  id: string;
+  title: string;
+  previewUrl: string;
+  downloadUrl: string;
+  width: number;
+  height: number;
+};
+
 export type ChatOutboxRow = {
   tempId: string;
   contextType: ChatContextType;
@@ -43,6 +53,8 @@ export type ChatOutboxRow = {
   videoDurationMs?: number;
   /** Client transcode time (ms) for metrics; set when video is prepared for send. */
   videoTranscodeMs?: number;
+  /** Provider media awaiting server-side import/re-host before message creation. */
+  pendingGiphy?: PendingGiphyOutboxMedia;
 };
 
 export type OutboxMediaBlobRow = {

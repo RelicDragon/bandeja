@@ -50,7 +50,6 @@ import { TypingIndicator } from '@/components/chat/TypingIndicator';
 import { MessageInputScrollFab } from '@/components/chat/MessageInputScrollFab';
 import { ChatStickerTray } from '@/components/chat/ChatStickerTray';
 import { ChatStickerTrayButton } from '@/components/chat/ChatStickerTrayButton';
-import { GiphySearchSheet } from '@/components/chat/GiphySearchSheet';
 import { useThreadComposer, useThreadMessageActions } from '@/pages/GameChat/useThreadView';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
@@ -138,7 +137,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isStickerTrayOpen, setIsStickerTrayOpen] = useState(false);
-  const [isGiphySheetOpen, setIsGiphySheetOpen] = useState(false);
+  const [mediaTrayInitialTab, setMediaTrayInitialTab] = useState<'recent' | 'gifs'>('recent');
   const [isComposerSearchExpanded, setIsComposerSearchExpanded] = useState(false);
   const voiceRecorder = useAudioRecorder();
   const lastAppliedEditIdRef = useRef<string | null>(null);
@@ -645,7 +644,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                     onAddImages={(files) => setSelectedImages((prev) => [...prev, ...files])}
                     onAddVideo={(file) => void video.handleVideoFile(file)}
                     onOpenPoll={() => setIsPollModalOpen(true)}
-                    onOpenGiphy={() => setIsGiphySheetOpen(true)}
+                    onOpenGiphy={() => {
+                      setMediaTrayInitialTab('gifs');
+                      setIsStickerTrayOpen(true);
+                    }}
                   />
                 </motion.div>
                 <motion.div
@@ -665,7 +667,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                   <ChatStickerTrayButton
                     disabled={isDisabled || inputBlocked || voice.voiceMode || sticker.stickerBusy}
                     active={isStickerTrayOpen}
-                    onClick={() => setIsStickerTrayOpen(true)}
+                    onClick={() => {
+                      setMediaTrayInitialTab('recent');
+                      setIsStickerTrayOpen(true);
+                    }}
                   />
                 </motion.div>
                 <MessageInputSearchToggle
@@ -882,18 +887,14 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
         </div>
       </form>
       <PollCreationModal isOpen={isPollModalOpen} onClose={() => setIsPollModalOpen(false)} onSubmit={handlePollCreate} />
-      <GiphySearchSheet
-        open={isGiphySheetOpen}
-        onClose={() => setIsGiphySheetOpen(false)}
-        onSelect={(item) => void giphy.sendGiphy(item)}
-        busy={giphy.giphyBusy}
-      />
       <ChatStickerTray
         open={isStickerTrayOpen}
         onClose={() => setIsStickerTrayOpen(false)}
         onSelectSticker={(s) => void sticker.sendSticker(s)}
+        onSelectGif={(item) => void giphy.sendGiphy(item)}
+        initialTab={mediaTrayInitialTab}
         sport={game?.sport ?? null}
-        busy={sticker.stickerBusy}
+        busy={sticker.stickerBusy || giphy.giphyBusy}
       />
     </div>
   );

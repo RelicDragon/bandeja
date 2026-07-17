@@ -195,7 +195,7 @@ Frontend/e2e/
 | A-08 | Telegram auto-login route | `/login/:telegramKey` | Auto login or error |
 | A-09 | EULA link | Open terms | External/legal page opens |
 | A-27 | Android Google login stable session | Capacitor Android: logout → Google sign-in → complete | Lands on My tab; no bounce back to `/login` within 10s |
-| A-28 | Android Telegram login stable session | Capacitor Android: logout → Telegram bot link → open app deep link | Lands on My tab; no bounce back to `/login` within 10s |
+| A-28 | Android Telegram login stable session | Capacitor Android: logout → Telegram bot link opens Chrome → tap Open Bandeja app | Native app opens, lands on My tab, and does not return to the browser handoff or `/login` within 10s |
 
 ### 5.2 Register (`/register`)
 
@@ -913,19 +913,24 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-104 | Reply-to-sticker preview | Long-press sticker → Reply | Composer reply strip shows emoji + “Sticker” (usable, not empty) |
 | CH-105 | Missing sticker catalog fallback | Open thread with `STICKER` whose catalog id 404s / is unknown | Bubble shows `stickerEmoji` or generic sticker fallback; no crash / blank bubble |
 | CH-106 | Official packs after seed | Run `seed:sticker-packs` (or use seeded env) → open sticker tray / `GET /stickers/packs` | `reactions` (sport null, 16) and `padel` (`sport=PADEL`, 16); Fluent 3D WebP covers under `uploads/stickers/packs/...`; list does not auto-create packs |
-| CH-107 | Giphy search → send GIF | With `GIPHY_API_KEY` set: attach → GIF → search or pick trending → tap a result | Sheet closes; message sends as `IMAGE` with re-hosted media (our CDN/`uploads/chat/…`, not giphy.com); GIF animates with transparent panel (no bubble chrome), same as CH-96 |
-| CH-108 | Giphy search hidden without key | Without `GIPHY_API_KEY` (or `/giphy/status` available=false): open attach flyout | No GIF entry in attach menu; app does not crash; URL-only paste (#CH-96) still works |
-| CH-117 | Open sticker tray from composer | In GAME/USER/GROUP/BUG chat with media allowed → tap sticker button next to attach | Tray opens with Recent · Favorites · Packs; Packs lists seeded packs and stickers; grid cells have no gray/white tile chrome (sticker floats on tray background) |
+| CH-107 | Giphy search → send GIF | With `GIPHY_API_KEY` set: open media tray at 300px width → GIFs → scroll results → tap a result | Results render three per row, edge-to-edge with no gaps or rounded corners, remain painted without blinking while scrolling, and add responsive columns on wider screens; tray closes; message sends as `IMAGE` with re-hosted media (our CDN/`uploads/chat/…`, not giphy.com); GIF animates with transparent panel (no bubble chrome), same as CH-96 |
+| CH-108 | Giphy unavailable without key | Without `GIPHY_API_KEY` (or `/giphy/status` available=false): open media tray → GIFs | Stickers and mixed Recent remain usable; GIFs shows unavailable state without blocking tray open; URL-only paste (#CH-96) still works |
+| CH-117 | Open sticker and GIF tray from composer | In GAME/USER/GROUP/BUG chat with media allowed → tap sticker button next to attach | Tray opens immediately with search and Recent · Favorites · Packs · GIFs; GIF trending fetch runs in background; Packs lists seeded stickers |
 | CH-118 | Tap sticker sends via outbox | Open tray → tap a sticker in Packs | Optimistic sticker appears in thread immediately (fully transparent panel, no bubble chrome); create confirms via sync; no image upload / pending blobs |
 | CH-119 | Sticker send offline retry | Go briefly offline → send sticker from tray → come online | Outbox retries create-only (no media upload); sticker confirms when network returns |
 | CH-119a | Sticker cannot be edited | Own sticker → context menu / ArrowUp | No Edit action; API rejects content update if attempted |
 | CH-120 | Favorite sticker | Open tray → tap ★ or long-press a sticker → Favorites tab | Sticker shows ★ and appears under Favorites; still there after app relaunch |
 | CH-121 | Unfavorite sticker | Favorites tab → tap ★ or long-press favorited sticker | Removed from Favorites; ★ cleared |
-| CH-122 | Recent after send | Send sticker → reopen tray → Recent | Sent sticker is first in Recent (server prefs + optimistic reorder) |
+| CH-122 | Mixed Recent after send | Send a sticker, then a GIF → reopen tray → Recent | GIF is first and sticker follows in one MRU list; selecting either moves it to first; order persists after relaunch |
+| CH-122a | Failed GIF is not recent | Select a GIF while import/send is forced to fail → reopen Recent | Failed GIF is absent; previous mixed Recent order is unchanged |
+| CH-122b | GIF offline queue and retry | Load GIF results → go offline → select a GIF → reload chat → reconnect or tap Retry | GIF remains as an optimistic outbox message across reload; reconnect/retry imports, re-hosts, and sends it once with the same reply context |
+| CH-122c | Sent GIF stays visible at chat tail | From any scroll position → select a GIF with a tall/animated preview | Chat immediately scrolls to the optimistic GIF and remains pinned below it while media dimensions resolve |
 | CH-127 | Sticker prefs caps | Favorite >100 distinct stickers / send >40 stickers | Favorites list stays ≤100; Recent stays ≤40 (MRU) |
 | CH-123 | Sport pack order in game chat | Open tray in a PADEL game chat | `padel` pack appears before general `reactions` |
 | CH-124 | Default pack order outside game | Open tray in DM / group (no game sport) | Pack order matches catalog sortOrder (stable) |
-| CH-125 | Tray search hit/miss | Tray search “smash” / nonsense string | Hit shows matching stickers; miss shows empty state |
+| CH-125 | Contextual tray search hit/miss | Search stickers for “smash”; switch to GIFs and search “celebrate”; enter nonsense | Sticker tabs filter sticker catalog; GIFs performs debounced provider search; each miss shows its own empty state |
+| CH-125a | GIF background loading | Open tray on Recent/Packs with slow Giphy network, then switch to GIFs | Sticker UI opens and remains interactive; GIF skeletons/results appear asynchronously without blocking or replacing sticker content |
+| CH-125b | Media tray keyboard and modal behavior | Open tray with keyboard → use Tab, Shift+Tab, arrow keys, Escape → reopen | Focus stays in tray, arrows move tabs, Escape closes, opener regains focus, and background page does not scroll while open |
 | CH-126 | Animated sticker + reduced motion | Tray Packs → send `padel/ball` or `padel/smash` (has `animatedUrl`); toggle OS “Reduce motion” | Motion on: tray cell + bubble use `.anim.webp` (`data-sticker-motion=animated`) with transparent canvas (no opaque fill behind glyph); reduced motion: both use static `.webp` (`data-sticker-motion=static`) |
 | CH-126a | Animated WebP on Capacitor | Same stickers as CH-126 on iOS/Android (min iOS 16 / Android 24 WebViews) | `.anim.webp` decodes and animates when motion allowed; static frame when reduced motion; static-only stickers still render |
 | CH-128 | Save image as personal sticker | Long-press eligible chat `IMAGE` (PNG/WebP/GIF with transparency; alpha formats are not JPEG-compressed on upload) → Save as sticker | Toast success; tray (even if already open) shows “My stickers” with the new sticker; sendable via same STICKER path |

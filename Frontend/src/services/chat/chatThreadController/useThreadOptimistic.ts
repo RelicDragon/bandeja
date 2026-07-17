@@ -27,6 +27,7 @@ import {
 } from '@/services/chat/chatOutboxEvents';
 import { revokeChatBlobUrls } from '@/utils/chatBlobUrls';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
+import type { PendingGiphyOutboxMedia } from '@/services/chat/chatLocalDb';
 import { shouldApplyGameChatMessageDespiteTabMismatch } from '@/pages/GameChat/chatOptimisticMatch';
 import {
   reduceThreadLiveSnapshot,
@@ -137,7 +138,8 @@ export function useThreadOptimistic({
       pendingVoiceBlob?: Blob,
       pendingVideoBlob?: Blob,
       pendingVideoPosterBlob?: Blob,
-      videoTranscodeMs?: number
+      videoTranscodeMs?: number,
+      pendingGiphy?: PendingGiphyOutboxMedia
     ): string => {
       if (!id) return '';
       const tempId = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -204,6 +206,7 @@ export function useThreadOptimistic({
                 videoTranscodeMs,
               }
             : {}),
+          ...(pendingGiphy ? { pendingGiphy } : {}),
         },
       }).catch((err) => console.error('[messageQueue] add', err));
       requestAnimationFrame(() => {
@@ -257,8 +260,9 @@ export function useThreadOptimistic({
     (tempId: string, created: ChatMessage) => {
       handleReplaceOptimisticWithServerMessage(tempId, created);
       handleNewMessageRef.current?.(created);
+      requestAnimationFrame(() => scrollToBottom());
     },
-    [handleReplaceOptimisticWithServerMessage]
+    [handleReplaceOptimisticWithServerMessage, scrollToBottom]
   );
 
   const handleSendQueued = useCallback(
@@ -305,12 +309,21 @@ export function useThreadOptimistic({
         messagesRef.current = next;
         return next;
       });
+      requestAnimationFrame(() => scrollToBottom());
       resend(tempId, contextType, id, {
         onFailed: handleMarkFailed,
         onSuccess: (created) => finishQueuedSendSuccess(tempId, created),
       }).catch((err) => console.error('[messageQueue] resend', err));
     },
-    [id, contextType, handleMarkFailed, setMessages, messagesRef, finishQueuedSendSuccess]
+    [
+      id,
+      contextType,
+      handleMarkFailed,
+      setMessages,
+      messagesRef,
+      finishQueuedSendSuccess,
+      scrollToBottom,
+    ]
   );
 
   const handleRemoveFromQueue = useCallback(

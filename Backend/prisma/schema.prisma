@@ -1414,11 +1414,21 @@ model Sticker {
 }
 
 model UserStickerPrefs {
-  userId    String   @id
-  favorites String[] @default([])
-  recent    String[] @default([])
+  userId      String   @id
+  favorites   String[] @default([])
+  recentMedia Json     @default("[]")
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GiphySearchCache {
+  key       String   @id
+  response  Json
+  expiresAt DateTime
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
 }
 
 model Poll {

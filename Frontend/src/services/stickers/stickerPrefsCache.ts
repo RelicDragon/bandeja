@@ -1,7 +1,11 @@
-import type { UserStickerPrefs } from '@/api/stickers';
-import { MAX_STICKER_FAVORITES, MAX_STICKER_RECENT } from '@/utils/stickerPrefsOrder';
+import type { ChatMediaRecent, UserStickerPrefs } from '@/api/stickers';
+import {
+  MAX_STICKER_FAVORITES,
+  MAX_STICKER_RECENT,
+  bumpChatMediaRecent,
+} from '@/utils/stickerPrefsOrder';
 
-const STORAGE_KEY = 'bandeja.stickerPrefs.v1';
+const STORAGE_KEY = 'bandeja.stickerPrefs.v2';
 
 type CacheBlob = {
   byUser: Record<string, UserStickerPrefs>;
@@ -34,13 +38,23 @@ function sanitizePrefs(prefs: UserStickerPrefs): UserStickerPrefs {
         MAX_STICKER_FAVORITES
       )
     : [];
-  const recent = Array.isArray(prefs.recent)
-    ? prefs.recent.filter((id): id is string => typeof id === 'string' && id.length > 0).slice(
-        0,
-        MAX_STICKER_RECENT
-      )
+  const recentMedia = Array.isArray(prefs.recentMedia)
+    ? prefs.recentMedia
+        .filter((item): item is ChatMediaRecent => {
+          if (!item || typeof item !== 'object') return false;
+          if (item.kind === 'STICKER') return typeof item.stickerId === 'string' && !!item.stickerId;
+          return (
+            item.kind === 'GIF' &&
+            item.provider === 'GIPHY' &&
+            typeof item.id === 'string' &&
+            !!item.id &&
+            typeof item.previewUrl === 'string' &&
+            typeof item.downloadUrl === 'string'
+          );
+        })
+        .slice(0, MAX_STICKER_RECENT)
     : [];
-  return { favorites, recent };
+  return { favorites, recentMedia };
 }
 
 export function readCachedStickerPrefs(userId: string): UserStickerPrefs | null {
@@ -55,4 +69,13 @@ export function writeCachedStickerPrefs(userId: string, prefs: UserStickerPrefs)
   const blob = readBlob();
   blob.byUser[userId] = sanitizePrefs(prefs);
   writeBlob(blob);
+}
+
+export function bumpCachedChatMediaRecent(userId: string, item: ChatMediaRecent): void {
+  if (!userId) return;
+  const current = readCachedStickerPrefs(userId) ?? { favorites: [], recentMedia: [] };
+  writeCachedStickerPrefs(userId, {
+    ...current,
+    recentMedia: bumpChatMediaRecent(current.recentMedia, item),
+  });
 }

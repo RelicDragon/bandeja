@@ -142,6 +142,24 @@ export const messageQueueStorage = {
     await flushOutboxToThreadIndex(row.contextType, row.contextId);
   },
 
+  async commitPendingGiphyImported(
+    tempId: string,
+    mediaUrl: string,
+    thumbnailUrl: string
+  ): Promise<void> {
+    const row = await chatLocalDb.outbox.get(tempId);
+    if (!row) return;
+    const mediaUrls = [mediaUrl];
+    const thumbnailUrls = [thumbnailUrl];
+    await chatLocalDb.outbox.put({
+      ...row,
+      mediaUrls,
+      thumbnailUrls,
+      payload: { ...row.payload, mediaUrls, thumbnailUrls },
+    });
+    await flushOutboxToThreadIndex(row.contextType, row.contextId);
+  },
+
   async commitPendingVideoUploaded(
     tempId: string,
     videoUrl: string,

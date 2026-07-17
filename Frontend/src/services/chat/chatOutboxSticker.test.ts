@@ -70,3 +70,31 @@ describe('sticker outbox (issue 300)', () => {
     await expect(reconcileUnsendableOutboxRow(stickerOutboxRow())).resolves.toBe('needs_send');
   });
 });
+
+describe('Giphy outbox', () => {
+  const row = stickerOutboxRow({
+    tempId: 'opt-giphy-1',
+    payload: {
+      content: '',
+      mediaUrls: ['https://media.giphy.com/preview.gif'],
+      thumbnailUrls: ['https://media.giphy.com/preview.gif'],
+      chatType: 'PUBLIC',
+      mentionIds: [],
+      messageType: 'IMAGE',
+    },
+    pendingGiphy: {
+      provider: 'GIPHY',
+      id: 'gif-1',
+      title: 'Padel win',
+      previewUrl: 'https://media.giphy.com/preview.gif',
+      downloadUrl: 'https://media.giphy.com/original.gif',
+      width: 320,
+      height: 180,
+    },
+  });
+
+  it('keeps provider metadata sendable without local blobs', async () => {
+    await expect(outboxRowHasLocalMediaBlobs(row)).resolves.toBe(true);
+    await expect(reconcileUnsendableOutboxRow(row)).resolves.toBe('needs_send');
+  });
+});

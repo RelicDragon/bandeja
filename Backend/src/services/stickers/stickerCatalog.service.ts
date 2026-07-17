@@ -1,7 +1,12 @@
 import prisma from '../../config/database';
 import type { Prisma, Sport } from '@prisma/client';
 import { ApiError } from '../../utils/ApiError';
-import { bumpRecentIdList, normalizeFavoritesInput, normalizeRecentInput } from './stickerPrefsNormalize';
+import {
+  bumpRecentMedia,
+  normalizeFavoritesInput,
+  normalizeRecentMediaInput,
+  type ChatMediaRecent,
+} from './stickerPrefsNormalize';
 import { sortStickerPacksForSport } from './stickerPackSort';
 import { isPersonalStickerSendableBy, isStickerPackVisibleToUser } from './stickerPackAccess';
 
@@ -241,35 +246,46 @@ export async function assertSendableSticker(
 }
 
 export async function bumpStickerRecent(userId: string, stickerId: string): Promise<void> {
-  await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+  await bumpUserChatMediaRecent(userId, { kind: 'STICKER', stickerId });
+}
+
+export async function bumpUserChatMediaRecent(
+  userId: string,
+  item: ChatMediaRecent
+): Promise<{ favorites: string[]; recentMedia: ChatMediaRecent[] }> {
+  return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`sticker-prefs:${userId}`}))`;
     const prefs = await tx.userStickerPrefs.findUnique({ where: { userId } });
-    const recent = bumpRecentIdList(prefs?.recent, stickerId);
-    await tx.userStickerPrefs.upsert({
+    const recentMedia = bumpRecentMedia(prefs?.recentMedia, item);
+    const saved = await tx.userStickerPrefs.upsert({
       where: { userId },
-      create: { userId, recent, favorites: [] },
-      update: { recent },
+      create: { userId, recentMedia, favorites: [] },
+      update: { recentMedia },
     });
+    return {
+      favorites: saved.favorites,
+      recentMedia: normalizeRecentMediaInput(saved.recentMedia) ?? [],
+    };
   });
 }
 
 export async function getUserStickerPrefs(userId: string): Promise<{
   favorites: string[];
-  recent: string[];
+  recentMedia: ChatMediaRecent[];
 }> {
   const prefs = await prisma.userStickerPrefs.findUnique({ where: { userId } });
   return {
     favorites: prefs?.favorites ?? [],
-    recent: prefs?.recent ?? [],
+    recentMedia: normalizeRecentMediaInput(prefs?.recentMedia) ?? [],
   };
 }
 
 export async function putUserStickerPrefs(
   userId: string,
-  body: { favorites?: string[]; recent?: string[] }
-): Promise<{ favorites: string[]; recent: string[] }> {
+  body: { favorites?: string[]; recentMedia?: unknown }
+): Promise<{ favorites: string[]; recentMedia: ChatMediaRecent[] }> {
   const favorites = normalizeFavoritesInput(body.favorites);
-  const recent = normalizeRecentInput(body.recent);
+  const recentMedia = normalizeRecentMediaInput(body.recentMedia);
 
   return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`sticker-prefs:${userId}`}))`;
@@ -279,13 +295,16 @@ export async function putUserStickerPrefs(
       create: {
         userId,
         favorites: favorites ?? existing?.favorites ?? [],
-        recent: recent ?? existing?.recent ?? [],
+        recentMedia: recentMedia ?? existing?.recentMedia ?? [],
       },
       update: {
         ...(favorites !== undefined ? { favorites } : {}),
-        ...(recent !== undefined ? { recent } : {}),
+        ...(recentMedia !== undefined ? { recentMedia } : {}),
       },
     });
-    return { favorites: next.favorites, recent: next.recent };
+    return {
+      favorites: next.favorites,
+      recentMedia: normalizeRecentMediaInput(next.recentMedia) ?? [],
+    };
   });
 }

@@ -6,8 +6,18 @@ import {
 } from './giphyIngest.rateLimit';
 import { resolveGiphyMediaDownloadUrl, tryConvertGiphyPasteToImage } from './giphyIngest.service';
 import { detectGiphyUrlOnly } from './giphyUrlDetect';
+import { resolveGiphyImageDimensions } from './giphyValidateImage';
 
 async function run(): Promise<void> {
+  assert.deepEqual(
+    resolveGiphyImageDimensions({
+      width: 270,
+      height: 35_040,
+      pageHeight: 480,
+    }),
+    { width: 270, height: 480 }
+  );
+
   resetGiphyIngestRateLimitForTests();
   for (let i = 0; i < GIPHY_INGEST_MAX_PER_WINDOW; i++) {
     assert.equal(tryConsumeGiphyIngestRateLimit('user-rate'), true);

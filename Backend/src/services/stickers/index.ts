@@ -29,6 +29,7 @@ export {
   getStickerById,
   assertSendableSticker,
   bumpStickerRecent,
+  bumpUserChatMediaRecent,
   getUserStickerPrefs,
   putUserStickerPrefs,
   mapStickerDto,
@@ -38,8 +39,10 @@ export {
 export {
   normalizeStickerIdList,
   normalizeFavoritesInput,
-  normalizeRecentInput,
-  bumpRecentIdList,
+  normalizeRecentMediaInput,
+  normalizeChatMediaRecentItem,
+  bumpRecentMedia,
+  type ChatMediaRecent,
 } from './stickerPrefsNormalize';
 export { sortStickerPacksForSport, type StickerPackSortable } from './stickerPackSort';
 export {

@@ -2,6 +2,7 @@ export const TELEGRAM_APP_HANDOFF_PARAM = 'tg_app';
 export const TELEGRAM_APP_FALLBACK_PARAM = 'tg_fallback';
 export const TELEGRAM_WEB_CONTINUE_PARAM = 'tg_web';
 export const ANDROID_APP_PACKAGE = 'com.funified.bandeja';
+export const ANDROID_APP_SCHEME = 'com.funified.bandeja';
 
 export function isAndroidUserAgent(userAgent: string | undefined): boolean {
   return /Android/i.test(userAgent || '');
@@ -49,10 +50,7 @@ export function buildTelegramAndroidIntentUrl(
   fallbackUrl: string
 ): string {
   const appUrl = new URL(`/login/${telegramKey}`, origin);
-  return `intent://${appUrl.host}${appUrl.pathname}#Intent;scheme=${appUrl.protocol.replace(
-    ':',
-    ''
-  )};package=${ANDROID_APP_PACKAGE};S.browser_fallback_url=${encodeURIComponent(
+  return `intent://${appUrl.host}${appUrl.pathname}#Intent;scheme=${ANDROID_APP_SCHEME};package=${ANDROID_APP_PACKAGE};S.browser_fallback_url=${encodeURIComponent(
     fallbackUrl
   )};end`;
 }

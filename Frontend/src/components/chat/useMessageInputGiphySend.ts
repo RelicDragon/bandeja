@@ -2,15 +2,17 @@ import { useCallback, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import type { TFunction } from 'i18next';
 import type { ChatContextType, ChatMessage, OptimisticMessagePayload } from '@/api/chat';
-import { importGiphyGif, type GiphySearchItem } from '@/api/giphy';
+import type { GiphySearchItem } from '@/api/giphy';
 import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { lightHaptic } from '@/utils/lightHaptic';
 import { deleteDraftFromComposer } from '@/components/chat/draftDeleteFlow';
-import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
-import { waitForOutboxReady } from '@/services/chat/chatOutboxEnqueue';
+import type { PendingGiphyOutboxMedia } from '@/services/chat/chatLocalDb';
+import { toPendingGiphyOutboxMedia } from '@/services/chat/chatOutboxGiphy';
+import { primeChatMediaDimensions } from '@/services/chat/chatMediaAssetCache';
+import { useNetworkStore } from '@/utils/networkStatus';
 
 type Params = {
   isDisabled: boolean;
@@ -26,7 +28,11 @@ type Params = {
   onOptimisticMessage?: (
     payload: OptimisticMessagePayload,
     pendingImageBlobs?: Blob[],
-    pendingVoiceBlob?: Blob
+    pendingVoiceBlob?: Blob,
+    pendingVideoBlob?: Blob,
+    pendingVideoPosterBlob?: Blob,
+    videoTranscodeMs?: number,
+    pendingGiphy?: PendingGiphyOutboxMedia
   ) => string;
   onSendQueued?: (params: {
     tempId: string;
@@ -42,10 +48,6 @@ type Params = {
   onStopTyping?: () => void;
   t: TFunction;
 };
-
-function isGiphyCdnUrl(url: string): boolean {
-  return /giphy\.com/i.test(url);
-}
 
 export function useMessageInputGiphySend({
   isDisabled,
@@ -93,23 +95,18 @@ export function useMessageInputGiphySend({
       const sendGen = ++sendGenRef.current;
       lightHaptic();
       setGiphyBusy(true);
-      const loadingToast = toast.loading(
-        t('chat.giphy.sending', { defaultValue: 'Sending GIF…' })
-      );
 
       let optimisticId: string | undefined;
       try {
-        // Import first so outbox never stores Giphy CDN URLs (no hotlink / empty-IMAGE races).
-        const imported = await importGiphyGif(item.downloadUrl);
-        if (sendGen !== sendGenRef.current) return;
-        if (isGiphyCdnUrl(imported.mediaUrl) || isGiphyCdnUrl(imported.thumbnailUrl)) {
-          throw new Error('giphy_hotlink_rejected');
-        }
-
+        const pendingGiphy = toPendingGiphyOutboxMedia(item);
+        primeChatMediaDimensions(item.previewUrl, {
+          width: item.width,
+          height: item.height,
+        });
         const payload: OptimisticMessagePayload = {
           content: '',
-          mediaUrls: [imported.mediaUrl],
-          thumbnailUrls: [imported.thumbnailUrl],
+          mediaUrls: [item.previewUrl],
+          thumbnailUrls: [item.previewUrl],
           replyToId: replyTo?.id,
           replyTo: replyTo
             ? {
@@ -124,38 +121,33 @@ export function useMessageInputGiphySend({
           messageType: 'IMAGE',
         };
 
-        optimisticId = onOptimisticMessage!(payload);
+        optimisticId = onOptimisticMessage!(
+          payload,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          pendingGiphy
+        );
         if (!optimisticId) {
           toast.error(t('chat.sendFailed'));
           return;
         }
 
-        const ready = await waitForOutboxReady(optimisticId, 5_000);
-        if (sendGen !== sendGenRef.current) {
-          if (onSendFailed) onSendFailed(optimisticId);
-          return;
-        }
-        // Persist re-hosted URLs on the outbox row (payload + top-level) for retries.
-        // sendWithTimeout also waits if the row is still materializing.
-        if (ready || (await messageQueueStorage.getByTempId(optimisticId))) {
-          await messageQueueStorage.commitPendingImagesUploaded(
-            optimisticId,
-            [imported.mediaUrl],
-            [imported.thumbnailUrl]
-          );
-        }
-
         onMessageSent?.();
         onCancelReply?.();
         onStopTyping?.();
-        onSendQueued!({
-          tempId: optimisticId,
-          contextType: propContextType!,
-          contextId: propContextId!,
-          payload,
-          mediaUrls: [imported.mediaUrl],
-          thumbnailUrls: [imported.thumbnailUrl],
-        });
+        if (useNetworkStore.getState().isOnline) {
+          onSendQueued!({
+            tempId: optimisticId,
+            contextType: propContextType!,
+            contextId: propContextId!,
+            payload,
+            mediaUrls: [],
+            thumbnailUrls: [],
+          });
+        }
 
         if (finalContextId && userId) {
           const resolvedType = userChatId ? 'PUBLIC' : normalizeChatType(chatType);
@@ -175,31 +167,10 @@ export function useMessageInputGiphySend({
         if (optimisticId && onSendFailed) onSendFailed(optimisticId);
         if (sendGen !== sendGenRef.current) return;
         console.error('Giphy send failed:', err);
-        const status =
-          err && typeof err === 'object'
-            ? (err as { response?: { status?: number; data?: { code?: string } } }).response?.status
-            : undefined;
-        const code =
-          err && typeof err === 'object'
-            ? (err as { response?: { data?: { code?: string } } }).response?.data?.code
-            : undefined;
-        if (status === 429 || code === 'giphy.importRateLimited') {
-          toast.error(
-            t('chat.giphy.rateLimited', { defaultValue: 'Too many GIFs — try again shortly' })
-          );
-        } else if (status === 503 || code === 'giphy.searchUnavailable') {
-          toast.error(
-            t('chat.giphy.unavailable', { defaultValue: 'GIF search is unavailable right now' })
-          );
-        } else {
-          toast.error(t('chat.giphy.sendFailed', { defaultValue: 'Could not send GIF' }));
-        }
+        toast.error(t('chat.giphy.sendFailed', { defaultValue: 'Could not queue GIF' }));
       } finally {
         if (sendGen === sendGenRef.current) {
-          toast.dismiss(loadingToast);
           setGiphyBusy(false);
-        } else {
-          toast.dismiss(loadingToast);
         }
       }
     },

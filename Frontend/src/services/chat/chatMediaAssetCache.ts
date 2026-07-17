@@ -90,9 +90,34 @@ export function peekChatMediaAsset(src: string): ChatMediaAsset | null {
   if (isLocalUrl(src)) return { displayUrl: src, dimensions: null };
   const cacheKey = mediaCacheKeyForSrc(src);
   const entry = entries.get(cacheKey);
-  if (!entry?.displayUrl) return null;
+  if (!entry) return null;
+  if (!entry.displayUrl && entry.dimensions) {
+    return { displayUrl: cacheKey, dimensions: entry.dimensions };
+  }
+  if (!entry.displayUrl) return null;
   touch(entry);
   return { displayUrl: entry.displayUrl, dimensions: entry.dimensions };
+}
+
+export function primeChatMediaDimensions(
+  src: string,
+  dimensions: ChatMediaDimensions
+): void {
+  if (!src || isLocalUrl(src) || dimensions.width <= 0 || dimensions.height <= 0) return;
+  const cacheKey = mediaCacheKeyForSrc(src);
+  const entry = entries.get(cacheKey);
+  if (entry) {
+    entry.dimensions = dimensions;
+    touch(entry);
+    return;
+  }
+  entries.set(cacheKey, {
+    displayUrl: null,
+    dimensions,
+    promise: null,
+    references: 0,
+    lastUsed: Date.now(),
+  });
 }
 
 export async function acquireChatMediaAsset(src: string): Promise<ChatMediaAsset> {

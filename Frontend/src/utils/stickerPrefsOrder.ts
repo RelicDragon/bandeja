@@ -1,14 +1,22 @@
+import type { ChatMediaRecent } from '@/api/stickers';
+
 /** Keep in sync with Backend `stickerConstants`. */
 export const MAX_STICKER_FAVORITES = 100;
 export const MAX_STICKER_RECENT = 40;
 
-export function bumpStickerRecentIds(
-  recent: string[],
-  stickerId: string,
+export function chatMediaRecentKey(item: ChatMediaRecent): string {
+  return item.kind === 'STICKER'
+    ? `sticker:${item.stickerId}`
+    : `gif:${item.provider}:${item.id}`;
+}
+
+export function bumpChatMediaRecent(
+  recent: ChatMediaRecent[],
+  item: ChatMediaRecent,
   max: number = MAX_STICKER_RECENT
-): string[] {
-  if (!stickerId) return recent.slice(0, max);
-  return [stickerId, ...recent.filter((id) => id !== stickerId)].slice(0, max);
+): ChatMediaRecent[] {
+  const key = chatMediaRecentKey(item);
+  return [item, ...recent.filter((existing) => chatMediaRecentKey(existing) !== key)].slice(0, max);
 }
 
 /**
@@ -17,31 +25,31 @@ export function bumpStickerRecentIds(
  * Once an id appears on the server, server order wins for the rest.
  */
 export function mergeRecentPrefs(
-  localRecent: string[],
-  serverRecent: string[],
+  localRecent: ChatMediaRecent[],
+  serverRecent: ChatMediaRecent[],
   max: number = MAX_STICKER_RECENT
-): string[] {
-  const serverSet = new Set(serverRecent);
-  const pendingHead: string[] = [];
-  for (const id of localRecent) {
-    if (serverSet.has(id)) break;
-    pendingHead.push(id);
+): ChatMediaRecent[] {
+  const serverSet = new Set(serverRecent.map(chatMediaRecentKey));
+  const pendingHead: ChatMediaRecent[] = [];
+  for (const item of localRecent) {
+    if (serverSet.has(chatMediaRecentKey(item))) break;
+    pendingHead.push(item);
   }
   let merged = serverRecent.slice(0, max);
-  for (const id of [...pendingHead].reverse()) {
-    merged = bumpStickerRecentIds(merged, id, max);
+  for (const item of [...pendingHead].reverse()) {
+    merged = bumpChatMediaRecent(merged, item, max);
   }
   return merged;
 }
 
 /** Apply server prefs without dropping optimistic Recent heads. */
 export function mergeServerStickerPrefs(
-  server: { favorites: string[]; recent: string[] },
-  localRecent: string[]
-): { favorites: string[]; recent: string[] } {
+  server: { favorites: string[]; recentMedia: ChatMediaRecent[] },
+  localRecent: ChatMediaRecent[]
+): { favorites: string[]; recentMedia: ChatMediaRecent[] } {
   return {
     favorites: server.favorites,
-    recent: mergeRecentPrefs(localRecent, server.recent),
+    recentMedia: mergeRecentPrefs(localRecent, server.recentMedia),
   };
 }
 

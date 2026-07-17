@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Sport } from '@shared/sport';
 import {
   getMyStickerPrefs,
   putMyStickerPrefs,
+  type ChatMediaRecent,
   type StickerDto,
   type StickerPackListItem,
   type UserStickerPrefs,
@@ -25,20 +26,24 @@ import {
 } from '@/services/stickers/stickerPrefsCache';
 import {
   MAX_STICKER_RECENT,
-  bumpStickerRecentIds,
+  bumpChatMediaRecent,
   mergeServerStickerPrefs,
   toggleStickerFavoriteIds,
 } from '@/utils/stickerPrefsOrder';
 import { filterStickersByQuery, sortPacksForSport } from '@/utils/stickerTrayPacks';
 import { useAuthStore } from '@/store/authStore';
 
-export type StickerTrayTab = 'recent' | 'favorites' | 'packs';
+export type StickerTrayTab = 'recent' | 'favorites' | 'packs' | 'gifs';
 
-const EMPTY_PREFS: UserStickerPrefs = { favorites: [], recent: [] };
+const EMPTY_PREFS: UserStickerPrefs = { favorites: [], recentMedia: [] };
 
-export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
+export function useChatStickerTrayData(
+  open: boolean,
+  sport?: Sport | null,
+  initialTab: StickerTrayTab = 'recent'
+) {
   const userId = useAuthStore((s) => s.user?.id);
-  const [tab, setTab] = useState<StickerTrayTab>('recent');
+  const [tab, setTab] = useState<StickerTrayTab>(initialTab);
   const [catalogPacks, setCatalogPacks] = useState<StickerPackListItem[]>([]);
   const [selectedPackId, setSelectedPackId] = useState<string | null>(null);
   const [packStickers, setPackStickers] = useState<StickerDto[]>([]);
@@ -48,7 +53,10 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
   const [recentStickers, setRecentStickers] = useState<StickerDto[]>([]);
   const [favoriteStickers, setFavoriteStickers] = useState<StickerDto[]>([]);
   const [loading, setLoading] = useState(false);
+  const [prefsReady, setPrefsReady] = useState(false);
   const [packLoading, setPackLoading] = useState(false);
+  const [packError, setPackError] = useState(false);
+  const [packReloadKey, setPackReloadKey] = useState(0);
   const [searchIndexing, setSearchIndexing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -70,10 +78,10 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
 
   const favoriteIds = useMemo(() => new Set(prefs.favorites), [prefs.favorites]);
 
-  const searchResults = useMemo(
-    () => filterStickersByQuery(catalogStickers, searchQuery),
-    [catalogStickers, searchQuery]
-  );
+  const searchResults = useMemo(() => {
+    if (tab === 'favorites') return filterStickersByQuery(favoriteStickers, searchQuery);
+    return filterStickersByQuery(catalogStickers, searchQuery);
+  }, [tab, favoriteStickers, catalogStickers, searchQuery]);
 
   const isSearching = searchQuery.trim().length > 0;
 
@@ -89,7 +97,9 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
   const loadPrefsStickers = useCallback(async (next: UserStickerPrefs) => {
     const gen = ++hydrateGenRef.current;
     const [recent, favorites] = await Promise.all([
-      hydrateStickersByIds(next.recent),
+      hydrateStickersByIds(
+        next.recentMedia.flatMap((item) => (item.kind === 'STICKER' ? [item.stickerId] : []))
+      ),
       hydrateStickersByIds(next.favorites),
     ]);
     if (gen !== hydrateGenRef.current) return;
@@ -97,13 +107,29 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
     setFavoriteStickers(favorites);
   }, []);
 
-  const readLocalRecent = useCallback((): string[] => {
+  const readLocalRecent = useCallback((): ChatMediaRecent[] => {
     if (userId) {
       const cached = readCachedStickerPrefs(userId);
-      if (cached) return cached.recent;
+      if (cached) return cached.recentMedia;
     }
-    return prefsRef.current.recent;
+    return prefsRef.current.recentMedia;
   }, [userId]);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    setTab(initialTab);
+    setSearchQuery('');
+    const cached = userId ? readCachedStickerPrefs(userId) : null;
+    if (cached) {
+      applyPrefs(cached);
+      void loadPrefsStickers(cached);
+      setLoading(false);
+      setPrefsReady(true);
+    } else {
+      setLoading(true);
+      setPrefsReady(false);
+    }
+  }, [open, initialTab, userId, applyPrefs, loadPrefsStickers]);
 
   // Open / user change: fetch catalog once. Sport only re-sorts via `packs` memo.
   useEffect(() => {
@@ -113,7 +139,6 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
     }
     const gen = ++loadGenRef.current;
     setError(null);
-    setSearchQuery('');
     setCatalogStickers([]);
     searchIndexedRef.current = false;
     searchIndexGenRef.current += 1;
@@ -132,20 +157,23 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
         // Fresh catalog each open — avoids stale mock URLs after seed/regenerate.
         clearStickerCatalogCaches();
         const [packList, nextPrefs] = await Promise.all([
-          listStickerPacksCached({ force: true }),
+          listStickerPacksCached({ force: true }).catch(() => null),
           getMyStickerPrefs().catch(() => cached ?? EMPTY_PREFS),
         ]);
         if (gen !== loadGenRef.current) return;
 
-        setCatalogPacks(packList);
+        if (packList) setCatalogPacks(packList);
+        else setError('catalog_load_failed');
         const merged = mergeServerStickerPrefs(nextPrefs, readLocalRecent());
         applyPrefs(merged);
         setLoading(false);
+        setPrefsReady(true);
         void loadPrefsStickers(merged);
       } catch {
         if (gen === loadGenRef.current) {
           setError('load_failed');
           setLoading(false);
+          setPrefsReady(true);
         }
       }
     })();
@@ -153,7 +181,7 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
     return () => {
       loadGenRef.current += 1;
     };
-  }, [open, userId, applyPrefs, loadPrefsStickers, readLocalRecent]);
+  }, [open, userId, initialTab, applyPrefs, loadPrefsStickers, readLocalRecent]);
 
   // Live-refresh catalog when a personal sticker is saved (menu) while tray is open.
   useEffect(() => {
@@ -176,8 +204,11 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
           setSelectedPackId(detail.packId);
           setTab('packs');
           const prefsNow = prefsRef.current;
-          const nextRecent = bumpStickerRecentIds(prefsNow.recent, detail.stickerId);
-          const nextPrefs = { ...prefsNow, recent: nextRecent };
+          const nextRecent = bumpChatMediaRecent(prefsNow.recentMedia, {
+            kind: 'STICKER',
+            stickerId: detail.stickerId,
+          });
+          const nextPrefs = { ...prefsNow, recentMedia: nextRecent };
           applyPrefs(nextPrefs);
           void loadPrefsStickers(nextPrefs);
         } catch {
@@ -206,7 +237,7 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
 
   // Search index once per open session (even if result set is empty).
   useEffect(() => {
-    if (!open || !isSearching || catalogPacks.length === 0) return;
+    if (!open || tab !== 'packs' || !isSearching || catalogPacks.length === 0) return;
     if (searchIndexedRef.current) return;
     let cancelled = false;
     const gen = ++searchIndexGenRef.current;
@@ -233,7 +264,7 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
       cancelled = true;
       setSearchIndexing(false);
     };
-  }, [open, isSearching, catalogPacks]);
+  }, [open, tab, isSearching, catalogPacks]);
 
   useEffect(() => {
     if (!open || !selectedPackId || tab !== 'packs') return;
@@ -241,18 +272,20 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
     if (cached) {
       setPackStickers(cached);
       setPackLoading(false);
+      setPackError(false);
       return;
     }
     let cancelled = false;
     setPackStickers([]);
     setPackLoading(true);
+    setPackError(false);
     void (async () => {
       try {
         const stickers = await fetchAndCachePackStickers(selectedPackId);
         if (cancelled) return;
         setPackStickers(stickers);
       } catch {
-        if (!cancelled) setPackStickers([]);
+        if (!cancelled) setPackError(true);
       } finally {
         if (!cancelled) setPackLoading(false);
       }
@@ -260,7 +293,7 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
     return () => {
       cancelled = true;
     };
-  }, [open, selectedPackId, tab]);
+  }, [open, selectedPackId, tab, packReloadKey]);
 
   const toggleFavorite = useCallback(
     (sticker: StickerDto) => {
@@ -300,7 +333,10 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
       const prev = prefsRef.current;
       const next: UserStickerPrefs = {
         ...prev,
-        recent: bumpStickerRecentIds(prev.recent, sticker.id),
+        recentMedia: bumpChatMediaRecent(prev.recentMedia, {
+          kind: 'STICKER',
+          stickerId: sticker.id,
+        }),
       };
       applyPrefs(next);
     },
@@ -315,6 +351,7 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
     setSelectedPackId,
     packStickers,
     recentStickers,
+    recentMedia: prefs.recentMedia,
     favoriteStickers,
     favoriteIds,
     searchQuery,
@@ -323,7 +360,10 @@ export function useChatStickerTrayData(open: boolean, sport?: Sport | null) {
     isSearching,
     searchIndexing,
     loading,
+    prefsReady,
     packLoading,
+    packError,
+    retryPack: () => setPackReloadKey((value) => value + 1),
     error,
     toggleFavorite,
     bumpRecentLocal,
