@@ -162,6 +162,8 @@ export interface ChatMessage {
     content: string;
     messageType?: MessageType;
     mediaUrls?: string[];
+    /** Optional; used for reply-preview thumbs when present (composer / optimistic). */
+    thumbnailUrls?: string[];
     stickerId?: string | null;
     stickerEmoji?: string | null;
     audioDurationMs?: number | null;

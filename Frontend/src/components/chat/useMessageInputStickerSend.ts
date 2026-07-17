@@ -10,6 +10,7 @@ import { putCachedSticker } from '@/services/stickers/stickerCatalogCache';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { lightHaptic } from '@/utils/lightHaptic';
+import { buildReplyToRef } from '@/utils/buildReplyToRef';
 
 type Params = {
   isDisabled: boolean;
@@ -90,16 +91,7 @@ export function useMessageInputStickerSend({
         mediaUrls: [],
         thumbnailUrls: [],
         replyToId: replyTo?.id,
-        replyTo: replyTo
-          ? {
-              id: replyTo.id,
-              content: replyTo.content ?? '',
-              sender: replyTo.sender || { id: 'system', firstName: 'System' },
-              messageType: replyTo.messageType,
-              stickerId: replyTo.stickerId,
-              stickerEmoji: replyTo.stickerEmoji,
-            }
-          : undefined,
+        replyTo: replyTo ? buildReplyToRef(replyTo) : undefined,
         chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
         mentionIds: [],
         messageType: 'STICKER',

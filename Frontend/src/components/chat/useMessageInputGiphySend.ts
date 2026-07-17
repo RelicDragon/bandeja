@@ -15,6 +15,7 @@ import { primeChatMediaDimensions } from '@/services/chat/chatMediaAssetCache';
 import { useNetworkStore } from '@/utils/networkStatus';
 import { waitForOutboxReady } from '@/services/chat/chatOutboxEnqueue';
 import { isGifProviderHostedUrl } from '@/utils/gifProviderUrl';
+import { buildReplyToRef } from '@/utils/buildReplyToRef';
 
 type Params = {
   isDisabled: boolean;
@@ -119,14 +120,7 @@ export function useMessageInputGiphySend({
           mediaUrls: [item.previewUrl],
           thumbnailUrls: [item.previewUrl],
           replyToId: replyTo?.id,
-          replyTo: replyTo
-            ? {
-                id: replyTo.id,
-                content: replyTo.content,
-                sender: replyTo.sender || { id: 'system', firstName: 'System' },
-                messageType: replyTo.messageType,
-              }
-            : undefined,
+          replyTo: replyTo ? buildReplyToRef(replyTo) : undefined,
           chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
           mentionIds: [],
           messageType: 'IMAGE',

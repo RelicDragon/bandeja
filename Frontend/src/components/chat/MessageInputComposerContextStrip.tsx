@@ -7,6 +7,7 @@ import { useThreadScroll } from '@/pages/GameChat/useThreadView';
 import { COMPOSER_ELEVATED_PANEL_SHADOW } from '@/components/chat/composerElevatedPanel';
 import { PANEL_ENTER_Y, PANEL_EXIT_Y } from '../motion/motionTokens';
 import { CHAT_PANEL_TRANSITION } from '@/components/chat/chatListMotion';
+import { buildReplyToRef } from '@/utils/buildReplyToRef';
 
 const elevatedPreviewClassName = COMPOSER_ELEVATED_PANEL_SHADOW;
 const stripMotionClassName = 'mb-2 overflow-visible px-0.5 pt-1';
@@ -39,14 +40,7 @@ export function MessageInputComposerContextStrip({
           <EditPreview message={editingMessage!} onCancel={onCancelEdit!} className={elevatedPreviewClassName} />
         ) : (
           <ReplyPreview
-            replyTo={{
-              id: replyTo!.id,
-              content: replyTo!.content,
-              messageType: replyTo!.messageType,
-              stickerId: replyTo!.stickerId,
-              stickerEmoji: replyTo!.stickerEmoji,
-              sender: replyTo!.sender || { id: 'system', firstName: 'System' },
-            }}
+            replyTo={buildReplyToRef(replyTo!)}
             onCancel={onCancelReply}
             onScrollToMessage={onScrollToMessage}
             className={elevatedPreviewClassName}
@@ -71,14 +65,7 @@ export function MessageInputComposerContextStrip({
             <EditPreview message={editingMessage!} onCancel={onCancelEdit!} className={elevatedPreviewClassName} />
           ) : (
             <ReplyPreview
-              replyTo={{
-                id: replyTo!.id,
-                content: replyTo!.content,
-                messageType: replyTo!.messageType,
-                stickerId: replyTo!.stickerId,
-                stickerEmoji: replyTo!.stickerEmoji,
-                sender: replyTo!.sender || { id: 'system', firstName: 'System' },
-              }}
+              replyTo={buildReplyToRef(replyTo!)}
               onCancel={onCancelReply}
               onScrollToMessage={onScrollToMessage}
               className={elevatedPreviewClassName}

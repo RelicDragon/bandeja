@@ -14,6 +14,8 @@ import {
 } from '@/components/audio/audioWaveformUtils';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { buildReplyToRef } from '@/utils/buildReplyToRef';
+
 type VoiceRecorder = {
   start: () => Promise<boolean>;
   stop: () => Promise<{ blob: Blob; durationMs: number } | null>;
@@ -140,13 +142,7 @@ export function useMessageInputVoiceSend({
           mediaUrls: [blobUrl],
           thumbnailUrls: [],
           replyToId: replyTo?.id,
-          replyTo: replyTo
-            ? {
-                id: replyTo.id,
-                content: replyTo.content,
-                sender: replyTo.sender || { id: 'system', firstName: 'System' },
-              }
-            : undefined,
+          replyTo: replyTo ? buildReplyToRef(replyTo) : undefined,
           chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
           mentionIds: [],
           messageType: 'VOICE',
@@ -175,13 +171,7 @@ export function useMessageInputVoiceSend({
           mediaUrls: [uploaded.audioUrl],
           thumbnailUrls: [],
           replyToId: replyTo?.id,
-          replyTo: replyTo
-            ? {
-                id: replyTo.id,
-                content: replyTo.content,
-                sender: replyTo.sender || { id: 'system', firstName: 'System' },
-              }
-            : undefined,
+          replyTo: replyTo ? buildReplyToRef(replyTo) : undefined,
           chatType: userChatId ? 'PUBLIC' : normalizeChatType(chatType),
           mentionIds: [],
           messageType: 'VOICE',

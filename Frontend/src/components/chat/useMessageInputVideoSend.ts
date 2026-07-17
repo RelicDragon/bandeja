@@ -5,6 +5,7 @@ import type { ChatContextType, ChatMessage, OptimisticMessagePayload } from '@/a
 import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
 import { prepareChatVideoForSend } from '@/services/chat/chatVideoTranscode';
+import { buildReplyToRef } from '@/utils/buildReplyToRef';
 
 type Params = {
   isDisabled: boolean;
@@ -79,17 +80,7 @@ export function useMessageInputVideoSend({
         mediaUrls: [videoPreviewUrl],
         thumbnailUrls: [posterUrl],
         replyToId: replyTo?.id,
-        replyTo: replyTo
-          ? {
-              id: replyTo.id,
-              content: replyTo.content,
-              messageType: replyTo.messageType,
-              mediaUrls: replyTo.mediaUrls,
-              audioDurationMs: replyTo.audioDurationMs,
-              videoDurationMs: replyTo.videoDurationMs,
-              sender: replyTo.sender || { id: 'system', firstName: 'System' },
-            }
-          : undefined,
+        replyTo: replyTo ? buildReplyToRef(replyTo) : undefined,
         chatType: normalizeChatType(chatType),
         mentionIds: [],
         messageType: 'VIDEO',

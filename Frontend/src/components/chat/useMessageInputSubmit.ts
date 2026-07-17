@@ -20,6 +20,7 @@ import {
 } from '@/components/chat/messageInputImageUpload';
 import { useAuthStore } from '@/store/authStore';
 import { runWithProfileName } from '@/utils/runWithProfileName';
+import { buildReplyToRef } from '@/utils/buildReplyToRef';
 
 export type SendQueuedParams = {
   tempId: string;
@@ -228,13 +229,7 @@ export function useMessageInputSubmit(params: Params) {
       mediaUrls: previewUrls,
       thumbnailUrls: previewUrls,
       replyToId: p.replyTo?.id,
-      replyTo: p.replyTo
-        ? {
-            id: p.replyTo.id,
-            content: p.replyTo.content,
-            sender: p.replyTo.sender || { id: 'system', firstName: 'System' },
-          }
-        : undefined,
+      replyTo: p.replyTo ? buildReplyToRef(p.replyTo) : undefined,
       chatType: p.userChatId ? 'PUBLIC' : normalizeChatType(p.chatType),
       mentionIds: [...p.mentionIds],
       linkPreviewUrl: p.linkPreviewUrl,
