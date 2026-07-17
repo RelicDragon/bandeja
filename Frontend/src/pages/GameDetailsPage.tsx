@@ -186,7 +186,7 @@ export const GameDetailsPage = () => {
     const leftPanel = (
       <SplitViewLeftPanel bottomTabsVisible={false}>
         <div className="relative flex h-full min-h-0 flex-col">
-          <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-3">
+          <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto p-3">
             {renderEntityDetails()}
           </div>
           <ScrollEdgeHints scrollRef={scrollContainerRef} enabled={showScrollMoreHint} />
@@ -198,7 +198,7 @@ export const GameDetailsPage = () => {
       return (
         <div className="fixed inset-0 top-[calc(4rem+env(safe-area-inset-top))] overflow-hidden">
           <div className="relative flex h-full min-h-0 flex-col">
-            <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+            <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden scrollbar-auto">
               {renderEntityDetails()}
             </div>
             <ScrollEdgeHints scrollRef={scrollContainerRef} enabled={showScrollMoreHint} />
