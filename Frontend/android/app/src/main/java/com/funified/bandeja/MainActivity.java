@@ -20,6 +20,7 @@ import com.funified.bandeja.widgets.NextGameDeepLink;
 import com.funified.bandeja.widgets.NextGamesEnvelopeStorage;
 import com.funified.bandeja.widgets.WidgetBridgePlugin;
 import com.funified.bandeja.push.ChatNotificationHelper;
+import com.funified.bandeja.push.ChatViewingBridgePlugin;
 import ee.forgr.capacitor.social.login.GoogleProvider;
 import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;
 import ee.forgr.capacitor.social.login.SocialLoginPlugin;
@@ -45,6 +46,7 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
         setIntent(getIntent());
         registerPlugin(AuthBridgePlugin.class);
         registerPlugin(WidgetBridgePlugin.class);
+        registerPlugin(ChatViewingBridgePlugin.class);
         applyBrandingLaunchTheme();
         SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
         splashScreen.setKeepOnScreenCondition(() -> !AuthBridgePlugin.isAppShellReady());

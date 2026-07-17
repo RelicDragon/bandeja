@@ -25,6 +25,7 @@ import { shouldQueueChatMutation } from '@/services/chat/chatMutationNetwork';
 import { OfflineIntent } from '@/services/chat/offlineIntent';
 import { newClientMutationId } from '@/services/chat/chatMutationQueueStorage';
 import { scheduleChatOpenIdle } from '@/utils/chatOpenIdle';
+import { dismissNativeChatTrayNotification } from '@/services/push/dismissNativeChatTrayNotification';
 
 export type CoordinatorEnterParams = EnterContextParams & {
   rawContextType?: ChatContextType;
@@ -280,7 +281,19 @@ function scheduleMarkReadNetwork(
   );
 }
 
+function dismissTrayForEnter(params: CoordinatorEnterParams): void {
+  const raw = params.rawContextType ?? params.contextType;
+  dismissNativeChatTrayNotification({
+    contextType: params.contextType,
+    contextId: params.contextId,
+    gameChatType: params.gameChatType,
+    groupChannelId: params.groupChannelId,
+    rawContextType: raw,
+  });
+}
+
 export function markContextReadOnUserActivity(params: CoordinatorEnterParams): void {
+  dismissTrayForEnter(params);
   const resolved = resolveSnapshotContext(params);
   if (!resolved) return;
   const { key } = resolved;
@@ -295,6 +308,7 @@ export function markContextReadOnUserActivity(params: CoordinatorEnterParams): v
 }
 
 export async function enterContextAndMarkRead(params: CoordinatorEnterParams): Promise<void> {
+  dismissTrayForEnter(params);
   const resolved = resolveSnapshotContext(params);
   if (!resolved) return;
   const { key } = resolved;

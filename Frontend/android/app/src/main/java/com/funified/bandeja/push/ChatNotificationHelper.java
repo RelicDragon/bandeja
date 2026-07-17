@@ -62,6 +62,14 @@ public final class ChatNotificationHelper {
         if (pushData == null) {
             return;
         }
+        if (ChatPushViewingGuard.shouldSuppressDisplay(
+            AppForegroundState.isForeground(),
+            ChatViewingState.snapshot(),
+            pushData
+        )) {
+            confirmReceiptAsync(context, pushData);
+            return;
+        }
         applyUnreadBadgeFromData(context, data);
         ensureChannel(context);
         NotificationManager manager = notificationManager(context);
@@ -82,6 +90,18 @@ public final class ChatNotificationHelper {
         }
 
         confirmReceiptAsync(context, pushData);
+    }
+
+    public static void cancelForConversationKey(Context context, String conversationKey) {
+        if (conversationKey == null || conversationKey.trim().isEmpty()) {
+            return;
+        }
+        NotificationManager manager = notificationManager(context);
+        if (manager == null) {
+            return;
+        }
+        int notificationId = Math.abs(conversationKey.trim().hashCode());
+        manager.cancel(notificationId);
     }
 
     public static void showOutgoingReply(Context context, ChatPushData pushData, String replyText) {

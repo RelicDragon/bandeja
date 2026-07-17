@@ -21,6 +21,10 @@ import {
 } from '@/services/chat/chatUnifiedOfflineFlush';
 import { registerForegroundChatSync } from '@/utils/foregroundChatSyncRegistry';
 import { ensureChatPersistentStorageOnce, probeChatStoragePressure } from '@/services/chat/chatPersistentStorage';
+import {
+  cleanupNativeChatViewingSync,
+  initNativeChatViewingSync,
+} from '@/services/push/chatViewingBridge';
 
 let capUnsubscribe: PluginListenerHandle | null = null;
 let visibilityCleanup: (() => void) | null = null;
@@ -109,6 +113,7 @@ async function runForegroundSync(): Promise<void> {
 export const appLifecycleService = {
   init(): void {
     if (isCapacitor()) {
+      initNativeChatViewingSync();
       if (!capUnsubscribe) {
         void CapApp.getState()
           .then((s) => setChatSyncNativeAppActive(s.isActive))
@@ -148,6 +153,7 @@ export const appLifecycleService = {
   },
 
   cleanup(): void {
+    cleanupNativeChatViewingSync();
     if (capUnsubscribe) {
       capUnsubscribe.remove();
       capUnsubscribe = null;

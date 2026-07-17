@@ -129,7 +129,7 @@ export function useThreadSocket({
   }, [id, contextType, liveIngressEnabled]);
 
   useEffect(() => {
-    if (contextType === 'GROUP' && id) {
+    if ((contextType === 'GROUP' || contextType === 'BUG') && id) {
       useGameDetailsChromeStore.getState().setViewingGroupChannelId(id);
       return () => useGameDetailsChromeStore.getState().setViewingGroupChannelId(null);
     }
