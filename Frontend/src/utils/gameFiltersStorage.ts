@@ -63,14 +63,14 @@ function normalizeStoredFilters(filters: GameFilters | undefined): GameFilters {
 export const getGameFilters = async (): Promise<GameFilters> => {
   const filters = await get<GameFilters>(GAME_FILTERS_KEY);
   const now = Date.now();
-  
-  if (filters?.dateSavedAt && (now - filters.dateSavedAt) < ONE_HOUR_MS) {
+
+  if (filters?.dateSavedAt && now - filters.dateSavedAt < ONE_HOUR_MS) {
     return {
       ...normalizeStoredFilters(filters),
       activeTab: filters?.activeTab || 'calendar',
     };
   }
-  
+
   return {
     ...normalizeStoredFilters(filters),
     activeTab: filters?.activeTab || 'calendar',
@@ -80,11 +80,21 @@ export const getGameFilters = async (): Promise<GameFilters> => {
   };
 };
 
+/** Latest-wins queue so a slow older write cannot overwrite a newer filter snapshot. */
+let writeEpoch = 0;
+let writeChain: Promise<void> = Promise.resolve();
+
 export const setGameFilters = async (filters: GameFilters): Promise<void> => {
+  const epoch = ++writeEpoch;
   const filtersToSave: GameFilters = {
     ...filters,
-    dateSavedAt: (filters.listViewStartDate || filters.calendarSelectedDate) ? Date.now() : undefined,
+    dateSavedAt: filters.listViewStartDate || filters.calendarSelectedDate ? Date.now() : undefined,
   };
-  await set(GAME_FILTERS_KEY, filtersToSave);
-};
 
+  writeChain = writeChain.then(async () => {
+    if (epoch !== writeEpoch) return;
+    await set(GAME_FILTERS_KEY, filtersToSave);
+  });
+
+  await writeChain;
+};

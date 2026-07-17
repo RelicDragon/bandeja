@@ -6,6 +6,8 @@ import { useGameFilters } from './useGameFilters';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { getGameFilters, setGameFilters, type GameFilters } from '@/utils/gameFiltersStorage';
 
+(globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
 const idbStore = new Map<string, unknown>();
 
 vi.mock('idb-keyval', () => ({
