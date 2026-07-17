@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { body, param, query } from 'express-validator';
 import { ChatType } from '@prisma/client';
+import { chatMessageLinkPreviewValidators } from './chatMessage.validators';
 import {
   createMessage,
   getGameMessages,
@@ -232,8 +233,7 @@ router.post(
     body('mentionIds').optional().isArray().withMessage('Mention IDs must be an array'),
     body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type'),
     body('linkPreviewDisabled').optional().isBoolean().withMessage('linkPreviewDisabled must be boolean'),
-    body('linkPreviewUrl').optional().isString().isLength({ max: 2048 }).withMessage('Invalid linkPreviewUrl'),
-    body('linkPreviewToken').optional().isString().isLength({ max: 32768 }).withMessage('Invalid linkPreviewToken')
+    ...chatMessageLinkPreviewValidators,
   ]),
   createMessage
 );
