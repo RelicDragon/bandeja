@@ -171,17 +171,22 @@ async function run(): Promise<void> {
       'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
       'base64'
     );
-    const media = 'https://media1.tenor.com/m/rYCdWzuqXIIAAAAC/petty-parker-smoke.gif';
+    const brokenOg = 'https://media1.tenor.com/m/rYCdWzuqXIIAAAAC/petty-parker-smoke.gif';
+    const fetched: string[] = [];
     const result = await tryConvertGiphyPasteToImage(
       'https://tenor.com/view/petty-parker-smoke-gif-17093677',
       {
         apiKey: null,
         fetchFn: async (input) => {
           const url = String(input);
+          fetched.push(url);
           if (url.includes('tenor.com/view/')) {
-            return new Response(`<meta property="og:image" content="${media}">`, {
+            return new Response(`<meta property="og:image" content="${brokenOg}">`, {
               status: 200,
             });
+          }
+          if (url.includes('media1.tenor.com/m/')) {
+            return new Response('missing', { status: 404 });
           }
           return new Response(tinyGif, { status: 200, headers: { 'content-type': 'image/gif' } });
         },
@@ -196,6 +201,7 @@ async function run(): Promise<void> {
     );
     assert.ok(result);
     assert.equal(/tenor\.(com|co)/i.test(result!.mediaUrl), false);
+    assert.ok(fetched.some((u) => u.includes('media.tenor.com/rYCdWzuqXIIAAAAM/')));
   }
 
   // API fallback only after primary rehost fails

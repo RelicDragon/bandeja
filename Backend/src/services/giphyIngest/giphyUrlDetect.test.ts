@@ -72,6 +72,8 @@ assert.equal(
 );
 assert.equal(extractGiphyIdFromUrl('https://evil.com/gifs/FiGiRei2ICzzG'), null);
 assert.equal(extractGiphyIdFromUrl('https://giphy.com/gifs/bad%encoding'), null);
+assert.equal(extractGiphyIdFromUrl('https://klipy.com/gifs/hello-hi-6622'), null);
+assert.equal(extractGiphyIdFromUrl('https://tenor.com/view/x-gif-1234'), null);
 
 assert.equal(
   isDirectGiphyMediaUrl('https://media.giphy.com/media/FiGiRei2ICzzG/giphy.gif'),

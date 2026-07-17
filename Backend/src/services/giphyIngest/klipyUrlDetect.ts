@@ -55,13 +55,15 @@ export function extractKlipySlugFromUrl(urlString: string): string | null {
   return SLUG_RE.test(slug) ? slug : null;
 }
 
-function firstDirectGifUrl(gif: KlipyGif): string | null {
+function directGifUrls(gif: KlipyGif): string[] {
+  // Prefer chat-friendly sizes first (sm/md); hd can exceed ingest caps / be slow.
   const candidates = [
-    gif.file?.md?.gif?.url,
-    gif.file?.hd?.gif?.url,
     gif.file?.sm?.gif?.url,
+    gif.file?.md?.gif?.url,
     gif.file?.xs?.gif?.url,
+    gif.file?.hd?.gif?.url,
   ];
+  const out: string[] = [];
   for (const raw of candidates) {
     const url = raw?.trim();
     if (!url) continue;
@@ -69,24 +71,24 @@ function firstDirectGifUrl(gif: KlipyGif): string | null {
       const normalized = new URL(url);
       if (normalized.protocol === 'http:') normalized.protocol = 'https:';
       const href = normalized.toString();
-      if (isDirectKlipyMediaUrl(href)) return href;
+      if (isDirectKlipyMediaUrl(href) && !out.includes(href)) out.push(href);
     } catch {
       continue;
     }
   }
-  return null;
+  return out;
 }
 
-/** Resolve Klipy share page → direct static CDN GIF URL via Items API. */
-export async function resolveKlipyPageMediaUrl(
+/** Resolve Klipy share page → direct static CDN GIF URL candidates via Items API. */
+export async function resolveKlipyPageMediaUrls(
   pastedUrl: string,
   deps: KlipyResolveDeps = {}
-): Promise<string | null> {
+): Promise<string[]> {
   const slug = extractKlipySlugFromUrl(pastedUrl);
-  if (!slug) return null;
+  if (!slug) return [];
 
   const apiKey = (deps.apiKey !== undefined ? deps.apiKey : config.klipy.apiKey)?.trim() || '';
-  if (!apiKey) return null;
+  if (!apiKey) return [];
 
   const apiUrl = `https://api.klipy.com/api/v1/${encodeURIComponent(apiKey)}/gifs/items?slugs=${encodeURIComponent(slug)}`;
   try {
@@ -97,14 +99,22 @@ export async function resolveKlipyPageMediaUrl(
       timeoutMs: 4_000,
     });
     const json = JSON.parse(buffer.toString('utf8')) as KlipyItemsResponse;
-    if (json.result === false || !Array.isArray(json.data?.data)) return null;
+    if (json.result === false || !Array.isArray(json.data?.data)) return [];
     for (const gif of json.data.data) {
       if (gif.type === 'ad') continue;
-      const media = firstDirectGifUrl(gif);
-      if (media) return media;
+      const media = directGifUrls(gif);
+      if (media.length) return media;
     }
-    return null;
+    return [];
   } catch {
-    return null;
+    return [];
   }
+}
+
+export async function resolveKlipyPageMediaUrl(
+  pastedUrl: string,
+  deps: KlipyResolveDeps = {}
+): Promise<string | null> {
+  const urls = await resolveKlipyPageMediaUrls(pastedUrl, deps);
+  return urls[0] ?? null;
 }

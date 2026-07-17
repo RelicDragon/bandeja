@@ -1,5 +1,15 @@
 import { isAllowedGiphyHost, isGiphyMediaHost } from './giphyHosts';
 
+function isGiphyPageOrMediaHost(hostname: string): boolean {
+  const host = hostname.trim().toLowerCase().replace(/\.$/, '');
+  return (
+    host === 'giphy.com' ||
+    host === 'www.giphy.com' ||
+    host === 'api.giphy.com' ||
+    isGiphyMediaHost(host)
+  );
+}
+
 const URL_ONLY_RE =
   /^(?:<(https:\/\/[^>\s]+)>\s*|(https:\/\/\S+))$/i;
 
@@ -50,7 +60,8 @@ export function extractGiphyIdFromUrl(url: string): string | null {
   } catch {
     return null;
   }
-  if (!isAllowedGiphyHost(parsed.hostname)) return null;
+  // Never treat Klipy/Tenor paths as Giphy ids (hosts share the ingest allowlist).
+  if (!isGiphyPageOrMediaHost(parsed.hostname)) return null;
 
   const path = parsed.pathname;
 

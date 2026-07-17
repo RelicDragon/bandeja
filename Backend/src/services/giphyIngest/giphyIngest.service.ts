@@ -19,8 +19,8 @@ import {
 import { isAllowedGiphyHost, isDirectKlipyMediaUrl } from './giphyHosts';
 import { withGiphyImportSlot } from './giphyImportConcurrency';
 import { cachedGifImportResult } from './giphyImportResultCache';
-import { extractKlipySlugFromUrl, resolveKlipyPageMediaUrl } from './klipyUrlDetect';
-import { isTenorProviderUrl, resolveTenorMediaDownloadUrl } from './tenorUrlDetect';
+import { extractKlipySlugFromUrl, resolveKlipyPageMediaUrls } from './klipyUrlDetect';
+import { isTenorProviderUrl, resolveTenorMediaDownloadUrls } from './tenorUrlDetect';
 
 export type GiphyIngestResult = {
   mediaUrl: string;
@@ -170,22 +170,28 @@ export async function tryConvertGiphyPasteToImage(
   }
 
   if (extractKlipySlugFromUrl(pastedUrl)) {
-    const klipyMedia = await resolveKlipyPageMediaUrl(pastedUrl, {
+    const klipyCandidates = await resolveKlipyPageMediaUrls(pastedUrl, {
       fetchFn: deps.fetchFn,
       lookupFn: deps.lookupFn,
       apiKey: deps.klipyApiKey !== undefined ? deps.klipyApiKey : config.klipy.apiKey,
     });
-    if (!klipyMedia) return null;
-    return rehostGiphyMediaUrl(klipyMedia, deps);
+    for (const klipyMedia of klipyCandidates.slice(0, 3)) {
+      const hosted = await rehostGiphyMediaUrl(klipyMedia, deps);
+      if (hosted) return hosted;
+    }
+    return null;
   }
 
   if (isTenorProviderUrl(pastedUrl)) {
-    const tenorMedia = await resolveTenorMediaDownloadUrl(pastedUrl, {
+    const tenorCandidates = await resolveTenorMediaDownloadUrls(pastedUrl, {
       fetchFn: deps.fetchFn,
       lookupFn: deps.lookupFn,
     });
-    if (!tenorMedia) return null;
-    return rehostGiphyMediaUrl(tenorMedia, deps);
+    for (const tenorMedia of tenorCandidates.slice(0, 3)) {
+      const hosted = await rehostGiphyMediaUrl(tenorMedia, deps);
+      if (hosted) return hosted;
+    }
+    return null;
   }
 
   const primary = await resolveGiphyMediaDownloadUrl(pastedUrl, deps);

@@ -13,11 +13,18 @@ export {
   isDirectGiphyMediaUrl,
   buildGiphyCdnGifUrl,
 } from './giphyUrlDetect';
-export { extractKlipySlugFromUrl, resolveKlipyPageMediaUrl } from './klipyUrlDetect';
 export {
+  extractKlipySlugFromUrl,
+  resolveKlipyPageMediaUrl,
+  resolveKlipyPageMediaUrls,
+} from './klipyUrlDetect';
+export {
+  expandTenorMediaUrlCandidates,
   extractTenorMediaUrlFromHtml,
+  extractTenorMediaCandidatesFromHtml,
   isTenorProviderUrl,
   resolveTenorMediaDownloadUrl,
+  resolveTenorMediaDownloadUrls,
 } from './tenorUrlDetect';
 export {
   consumeGiphyIngestRateLimit,
