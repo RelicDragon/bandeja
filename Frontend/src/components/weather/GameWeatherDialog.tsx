@@ -11,13 +11,13 @@ interface GameWeatherDialogProps {
 }
 
 function GameWeatherDialogInner({ game, open, onClose, locale, hour12 }: GameWeatherDialogProps) {
-  const cityId = game.city.id;
+  if (!game.city?.id) return null;
 
   return (
     <WeatherWindowDialog
       open={open}
       onClose={onClose}
-      cityId={cityId}
+      cityId={game.city.id}
       cityTimezone={game.city.timezone}
       startTime={game.startTime}
       endTime={game.endTime}

@@ -5,6 +5,7 @@ import type { Game } from '@/types';
 import { gamesApi } from '@/api/games';
 import { useAuthStore } from '@/store/authStore';
 import { canConfigureGamePhotosPrivacy } from '@shared/gamePhotos/permissions';
+import { mergePhotosPrivacyIntoGame } from './photosPrivacyUpdate';
 
 type PhotosPrivacyToggleProps = {
   game: Game;
@@ -29,12 +30,8 @@ export function PhotosPrivacyToggle({ game, onGameUpdate, className }: PhotosPri
     setIsSaving(true);
     const next = !checked;
     try {
-      const response = await gamesApi.update(game.id, { forbidOthersPhotosView: next });
-      if (response.data) {
-        onGameUpdate?.(response.data);
-      } else {
-        onGameUpdate?.({ ...game, forbidOthersPhotosView: next });
-      }
+      await gamesApi.update(game.id, { forbidOthersPhotosView: next });
+      onGameUpdate?.(mergePhotosPrivacyIntoGame(game, next));
       toast.success(t('gameDetails.photosPrivacy.updated'));
     } catch (error) {
       console.error('Failed to update photo privacy:', error);
