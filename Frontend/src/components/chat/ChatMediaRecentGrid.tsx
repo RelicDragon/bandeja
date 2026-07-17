@@ -66,21 +66,28 @@ export function ChatMediaRecentGrid({
         if (item.kind === 'GIF') {
           return (
             <button
-              key={`gif:${item.id}`}
+              key={`gif:${item.provider}:${item.id}`}
               type="button"
               disabled={busy}
               onClick={() => onSelectGif(item)}
               className="group relative aspect-square overflow-hidden rounded-2xl bg-gray-100 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 active:scale-[0.98] disabled:opacity-50 dark:bg-gray-800"
               title={item.title}
             >
-              <img
-                src={item.previewUrl}
-                alt={item.title}
-                loading="lazy"
-                decoding="async"
-                className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105 group-active:scale-95"
-                draggable={false}
-              />
+              {reduceMotion ? (
+                <span className="flex h-full w-full items-center justify-center px-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                  {item.title || 'GIF'}
+                </span>
+              ) : (
+                <img
+                  src={item.previewUrl}
+                  alt={item.title}
+                  loading="lazy"
+                  decoding="async"
+                referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover transition-transform duration-200 group-hover:scale-105 group-active:scale-95"
+                  draggable={false}
+                />
+              )}
               <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/55 px-1.5 py-0.5 text-[9px] font-bold tracking-wide text-white">
                 GIF
               </span>

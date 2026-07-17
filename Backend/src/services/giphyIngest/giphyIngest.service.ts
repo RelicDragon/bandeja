@@ -16,6 +16,11 @@ import {
   GiphyValidateError,
   validateGiphyImageBuffer,
 } from './giphyValidateImage';
+import { isAllowedGiphyHost, isDirectKlipyMediaUrl } from './giphyHosts';
+import { withGiphyImportSlot } from './giphyImportConcurrency';
+import { cachedGifImportResult } from './giphyImportResultCache';
+import { extractKlipySlugFromUrl, resolveKlipyPageMediaUrl } from './klipyUrlDetect';
+import { isTenorProviderUrl, resolveTenorMediaDownloadUrl } from './tenorUrlDetect';
 
 export type GiphyIngestResult = {
   mediaUrl: string;
@@ -27,7 +32,18 @@ export type GiphyIngestDeps = {
   lookupFn?: DnsLookupFn;
   processChatImage?: typeof ImageProcessor.processChatImage;
   apiKey?: string | null;
+  klipyApiKey?: string | null;
 };
+
+const inFlightGifImports = new Map<string, Promise<GiphyIngestResult | null>>();
+
+function isProviderHostedUrl(raw: string): boolean {
+  try {
+    return isAllowedGiphyHost(new URL(raw).hostname);
+  } catch {
+    return false;
+  }
+}
 
 type GiphyApiGifResponse = {
   data?: {
@@ -84,7 +100,7 @@ export async function resolveGiphyMediaDownloadUrl(
  * Fetch, validate, and re-host a Giphy media URL into chat originals storage.
  * Returns null on any soft-fail (caller keeps TEXT with original URL).
  */
-export async function rehostGiphyMediaUrl(
+async function rehostGiphyMediaUrlInner(
   mediaDownloadUrl: string,
   deps: GiphyIngestDeps = {}
 ): Promise<GiphyIngestResult | null> {
@@ -102,7 +118,10 @@ export async function rehostGiphyMediaUrl(
     if (!processed.originalPath || !processed.thumbnailPath) {
       return null;
     }
-    if (/giphy\.com/i.test(processed.originalPath)) {
+    if (
+      isProviderHostedUrl(processed.originalPath) ||
+      isProviderHostedUrl(processed.thumbnailPath)
+    ) {
       return null;
     }
     return {
@@ -118,14 +137,57 @@ export async function rehostGiphyMediaUrl(
   }
 }
 
+export async function rehostGiphyMediaUrl(
+  mediaDownloadUrl: string,
+  deps: GiphyIngestDeps = {}
+): Promise<GiphyIngestResult | null> {
+  const key = mediaDownloadUrl.trim();
+  const existing = inFlightGifImports.get(key);
+  if (existing) return existing;
+  const importMedia = () => withGiphyImportSlot(() => rehostGiphyMediaUrlInner(key, deps));
+  const request =
+    deps.fetchFn || deps.lookupFn || deps.processChatImage
+      ? importMedia()
+      : cachedGifImportResult(key, importMedia);
+  inFlightGifImports.set(key, request);
+  try {
+    return await request;
+  } finally {
+    if (inFlightGifImports.get(key) === request) inFlightGifImports.delete(key);
+  }
+}
+
 /**
  * Full paste → IMAGE pipeline. Soft-fails to null (message stays TEXT).
- * Fast path: CDN/direct media once. Optional API fallback only if rehost fails and key is set.
+ * Supports Giphy, Klipy (direct + share page via Items API), Tenor (direct + page og:image).
  */
 export async function tryConvertGiphyPasteToImage(
   pastedUrl: string,
   deps: GiphyIngestDeps = {}
 ): Promise<GiphyIngestResult | null> {
+  if (isDirectKlipyMediaUrl(pastedUrl)) {
+    return rehostGiphyMediaUrl(pastedUrl, deps);
+  }
+
+  if (extractKlipySlugFromUrl(pastedUrl)) {
+    const klipyMedia = await resolveKlipyPageMediaUrl(pastedUrl, {
+      fetchFn: deps.fetchFn,
+      lookupFn: deps.lookupFn,
+      apiKey: deps.klipyApiKey !== undefined ? deps.klipyApiKey : config.klipy.apiKey,
+    });
+    if (!klipyMedia) return null;
+    return rehostGiphyMediaUrl(klipyMedia, deps);
+  }
+
+  if (isTenorProviderUrl(pastedUrl)) {
+    const tenorMedia = await resolveTenorMediaDownloadUrl(pastedUrl, {
+      fetchFn: deps.fetchFn,
+      lookupFn: deps.lookupFn,
+    });
+    if (!tenorMedia) return null;
+    return rehostGiphyMediaUrl(tenorMedia, deps);
+  }
+
   const primary = await resolveGiphyMediaDownloadUrl(pastedUrl, deps);
   if (!primary) return null;
 

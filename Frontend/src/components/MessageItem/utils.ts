@@ -83,9 +83,10 @@ export function isAnimatedChatImageUrl(url: string | null | undefined): boolean 
 
 export function resolveChatImageDisplayUrl(
   mediaUrl: string | undefined,
-  thumbnailUrl: string | undefined
+  thumbnailUrl: string | undefined,
+  reduceMotion = false
 ): string {
   const original = mediaUrl || '';
-  if (isAnimatedChatImageUrl(original)) return original;
+  if (isAnimatedChatImageUrl(original) && !reduceMotion) return original;
   return thumbnailUrl || original;
 }

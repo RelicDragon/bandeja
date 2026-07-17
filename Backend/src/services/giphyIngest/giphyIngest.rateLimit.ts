@@ -1,4 +1,6 @@
 /** Max Giphy ingest attempts per user per window. */
+import { consumeDistributedRateLimit } from './distributedRateLimit';
+
 export const GIPHY_INGEST_MAX_PER_WINDOW = 10;
 export const GIPHY_INGEST_WINDOW_MS = 60_000;
 
@@ -36,4 +38,13 @@ export function tryConsumeGiphyIngestRateLimit(userId: string): boolean {
   }
   bucket.count += 1;
   return true;
+}
+
+export function consumeGiphyIngestRateLimit(userId: string): Promise<boolean> {
+  return consumeDistributedRateLimit(
+    `giphy-ingest:${userId}`,
+    GIPHY_INGEST_MAX_PER_WINDOW,
+    GIPHY_INGEST_WINDOW_MS,
+    () => tryConsumeGiphyIngestRateLimit(userId)
+  );
 }

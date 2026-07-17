@@ -1,6 +1,8 @@
 import { importGiphyGif, type GiphyImportResult, type GiphySearchItem } from '@/api/giphy';
 import { bumpMyChatMediaRecent, type ChatMediaRecent } from '@/api/stickers';
 import { bumpCachedChatMediaRecent } from '@/services/stickers/stickerPrefsCache';
+import { isGifProviderHostedUrl } from '@/utils/gifProviderUrl';
+import { withChatSyncRetry } from '@/services/chat/chatHttpRetry';
 import type { PendingGiphyOutboxMedia } from './chatLocalDb';
 
 type GiphyImporter = (
@@ -10,8 +12,13 @@ type GiphyImporter = (
 
 export function toPendingGiphyOutboxMedia(item: GiphySearchItem): PendingGiphyOutboxMedia {
   return {
-    provider: 'GIPHY',
-    ...item,
+    provider: item.provider,
+    id: item.id,
+    title: item.title,
+    previewUrl: item.previewUrl,
+    downloadUrl: item.downloadUrl,
+    width: item.width,
+    height: item.height,
   };
 }
 
@@ -20,12 +27,17 @@ export async function importPendingGiphyOutboxMedia(
   signal?: AbortSignal,
   importer: GiphyImporter = importGiphyGif
 ): Promise<GiphyImportResult> {
-  const imported = await importer(pending.downloadUrl, { signal });
+  // Retry 429/503/transient network — importBusy and rate-limit are expected under burst sends.
+  const imported = await withChatSyncRetry(
+    'giphyImport',
+    () => importer(pending.downloadUrl, { signal }),
+    6
+  );
   if (
-    /giphy\.com/i.test(imported.mediaUrl) ||
-    /giphy\.com/i.test(imported.thumbnailUrl)
+    isGifProviderHostedUrl(imported.mediaUrl) ||
+    isGifProviderHostedUrl(imported.thumbnailUrl)
   ) {
-    throw new Error('giphy_hotlink_rejected');
+    throw new Error('gif_provider_hotlink_rejected');
   }
   return imported;
 }

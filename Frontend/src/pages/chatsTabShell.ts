@@ -1,5 +1,30 @@
 import type { ChatType } from '@/components/chat/ChatList';
 import type { ChatSelection } from '@/utils/chatSelectionFromPath';
+import { buildUrl } from '@/utils/urlSchema';
+
+export type ChatsListFilter = 'users' | 'bugs' | 'channels' | 'market';
+
+/** Path for list → thread nav. Market channel chats must keep `filter=market` so URL sync does not flip the left pane to Channels. */
+export function buildChatSelectPath(
+  chatId: string,
+  chatType: ChatType,
+  chatsFilter: ChatsListFilter,
+  opts?: { role?: 'buyer' | 'seller'; item?: string }
+): string {
+  if (chatsFilter === 'bugs' && chatType === 'channel') return `/bugs/${chatId}`;
+  if (chatType === 'user') return `/user-chat/${chatId}`;
+  if (chatType === 'game') return `/games/${chatId}/chat`;
+  if (chatType === 'group') return `/group-chat/${chatId}`;
+  if (chatsFilter === 'market') {
+    return buildUrl('channelChat', {
+      id: chatId,
+      filter: 'market',
+      ...(opts?.role ? { role: opts.role } : {}),
+      ...(opts?.item ? { item: opts.item } : {}),
+    });
+  }
+  return `/channel-chat/${chatId}`;
+}
 
 /** A1.2: selection drives paint; URL catches up without unmounting GameChat. */
 export function shouldRenderEmbeddedGameChat(

@@ -8,6 +8,7 @@ import type { ChatContextType } from '@/api/chat';
 import type { ChatType } from '@/types';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
 import { sendWithTimeout, cancelSend, resend } from '@/services/chatSendService';
+import { markOutboxResumeSuppressed } from '@/services/chat/chatSendCoordinator';
 import { normalizeChatType } from '@/utils/chatType';
 import { parseSystemMessage } from '@/utils/systemMessages';
 import {
@@ -208,7 +209,20 @@ export function useThreadOptimistic({
             : {}),
           ...(pendingGiphy ? { pendingGiphy } : {}),
         },
-      }).catch((err) => console.error('[messageQueue] add', err));
+      }).catch((err) => {
+        console.error('[messageQueue] add', err);
+        setMessages((current) => {
+          const failed = current.find(
+            (message) => (message as ChatMessageWithStatus)._optimisticId === tempId
+          );
+          revokeChatBlobUrls(failed);
+          const next = current.filter(
+            (message) => (message as ChatMessageWithStatus)._optimisticId !== tempId
+          );
+          messagesRef.current = next;
+          return next;
+        });
+      });
       requestAnimationFrame(() => {
         try {
           scrollToBottom();
@@ -218,7 +232,7 @@ export function useThreadOptimistic({
       });
       return tempId;
     },
-    [contextType, id, user, scrollToBottom, applyLiveEvent]
+    [contextType, id, user, scrollToBottom, applyLiveEvent, setMessages, messagesRef]
   );
 
   const handleMarkFailed = useCallback(
@@ -335,10 +349,11 @@ export function useThreadOptimistic({
         messagesRef.current = next;
         return next;
       });
+      markOutboxResumeSuppressed([tempId]);
+      cancelSend(tempId);
       if (id) {
         messageQueueStorage.remove(tempId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
       }
-      cancelSend(tempId);
     },
     [contextType, id, setMessages, messagesRef]
   );
@@ -353,8 +368,9 @@ export function useThreadOptimistic({
         return next;
       });
       if (id) {
-        messageQueueStorage.remove(optimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
+        markOutboxResumeSuppressed([optimisticId]);
         cancelSend(optimisticId);
+        messageQueueStorage.remove(optimisticId, contextType, id).catch((err) => console.error('[messageQueue] remove', err));
       }
     },
     [contextType, id, setMessages, messagesRef]

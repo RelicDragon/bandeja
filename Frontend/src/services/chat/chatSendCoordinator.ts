@@ -44,6 +44,7 @@ export function beginChatSend(
   contextId: string
 ): { generation: number; signal: AbortSignal } {
   clearDeadlineTimer(tempId);
+  suppressOutboxResume.delete(tempId);
   const generation = bumpSendGeneration(tempId);
   abortByTempId.get(tempId)?.abort();
   const controller = new AbortController();

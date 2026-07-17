@@ -98,6 +98,16 @@ describe('createMessageWithSocketAck', () => {
     );
   });
 
+  it('returns immediately when socket wins even if HTTP ignores abort', async () => {
+    const socketMsg = serverMessage('srv-socket', 'cid-race');
+    waitForChatSendSocketAck.mockResolvedValue(socketMsg);
+    createMessage.mockImplementation(() => new Promise(() => undefined));
+
+    await expect(
+      createMessageWithSocketAck(request, 'GAME', 'game-1', 'cid-race', undefined, 'temp-1')
+    ).resolves.toEqual(socketMsg);
+  });
+
   it('falls back to HTTP when socket ack times out', async () => {
     vi.useFakeTimers();
     waitForChatSendSocketAck.mockResolvedValue(null);

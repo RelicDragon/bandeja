@@ -86,7 +86,7 @@ pm2 restart backend
 
 Migrations run as part of every backend deploy. Sticker seed upserts catalog rows and uploads/reuses assets under `uploads/stickers/packs/…` when AWS/S3 is configured. Safe to re-run.
 
-**Giphy:** paste URL→GIF works without a key (CDN rewrite). Composer GIF search needs `GIPHY_API_KEY` in Backend `.env` on the server; without it the attach-menu GIF entry stays hidden.
+**Giphy / Klipy:** paste URL→GIF works without keys (CDN rewrite for direct media). Composer GIF search needs `GIPHY_API_KEY` and/or `KLIPY_API_KEY` in Backend `.env` on the server (Giphy preferred, Klipy fallback); without both, `/giphy/status` is unavailable and the GIF tray/attach entry stays hidden.
 
 ### Frontend deploy (`scripts/deploy-frontend.sh`)
 

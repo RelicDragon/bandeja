@@ -1,6 +1,9 @@
 import sharp from 'sharp';
 import { GIPHY_MAX_BYTES } from './ssrfSafeFetch';
 
+const MAX_ANIMATION_FRAMES = 500;
+const MAX_ANIMATED_PIXELS = 100_000_000;
+
 export type DetectedImageKind = 'gif' | 'webp' | 'png' | 'jpeg';
 
 export class GiphyValidateError extends Error {
@@ -90,7 +93,10 @@ export async function validateGiphyImageBuffer(
 
   let meta: sharp.Metadata;
   try {
-    meta = await sharp(buffer, { animated: kind === 'gif' || kind === 'webp' }).metadata();
+    meta = await sharp(buffer, {
+      animated: kind === 'gif' || kind === 'webp' || kind === 'png',
+      limitInputPixels: MAX_ANIMATED_PIXELS,
+    }).metadata();
   } catch {
     throw new GiphyValidateError('Invalid image data');
   }
@@ -98,6 +104,14 @@ export async function validateGiphyImageBuffer(
   const { width, height } = resolveGiphyImageDimensions(meta);
   if (width < 1 || height < 1 || width > 8192 || height > 8192) {
     throw new GiphyValidateError('Invalid image dimensions');
+  }
+  const pages = meta.pages ?? 1;
+  if (
+    pages < 1 ||
+    pages > MAX_ANIMATION_FRAMES ||
+    width * height * pages > MAX_ANIMATED_PIXELS
+  ) {
+    throw new GiphyValidateError('Animation is too complex');
   }
 
   return { kind, width, height };

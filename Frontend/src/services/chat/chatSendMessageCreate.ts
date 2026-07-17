@@ -18,36 +18,68 @@ export async function createMessageWithSocketAck(
   }
 
   const httpAbort = new AbortController();
-  const onParentAbort = () => httpAbort.abort();
-  signal?.addEventListener('abort', onParentAbort, { once: true });
+  const ackAbort = new AbortController();
+  const onParentAbort = () => {
+    httpAbort.abort();
+    ackAbort.abort();
+  };
+  if (signal?.aborted) onParentAbort();
+  else signal?.addEventListener('abort', onParentAbort, { once: true });
 
-  const httpPromise = chatApi.createMessage(request, { signal: httpAbort.signal }).finally(() => {
-    signal?.removeEventListener('abort', onParentAbort);
-  });
+  const httpPromise = chatApi.createMessage(request, { signal: httpAbort.signal });
 
   const ackPromise = waitForChatSendSocketAck({
     contextType,
     contextId,
     clientMutationId: cid,
-    signal,
+    signal: ackAbort.signal,
     timeoutMs: SEND_API_PHASE_MS,
   }).then((msg) => {
     if (msg && !httpAbort.signal.aborted) httpAbort.abort();
     return msg;
   });
 
-  const [httpSettled, ackSettled] = await Promise.allSettled([httpPromise, ackPromise]);
+  return new Promise<ChatMessage>((resolve, reject) => {
+    let settled = false;
+    let failures = 0;
+    let lastFailure: unknown = new Error('send_failed');
+    const cleanup = () => signal?.removeEventListener('abort', onParentAbort);
 
-  if (ackSettled.status === 'fulfilled' && ackSettled.value) {
-    recordChatSendMetric({
-      kind: 'chat_send_socket_ack',
-      tempId,
-      contextType,
-      contextId,
-    });
-    return ackSettled.value;
-  }
+    const succeed = (message: ChatMessage, viaSocket: boolean) => {
+      if (settled) return;
+      settled = true;
+      if (viaSocket) {
+        recordChatSendMetric({
+          kind: 'chat_send_socket_ack',
+          tempId,
+          contextType,
+          contextId,
+        });
+        if (!httpAbort.signal.aborted) httpAbort.abort();
+      } else if (!ackAbort.signal.aborted) {
+        ackAbort.abort();
+      }
+      cleanup();
+      resolve(message);
+    };
+    const fail = (error: unknown) => {
+      if (settled) return;
+      failures += 1;
+      lastFailure = error;
+      if (failures === 2) {
+        settled = true;
+        cleanup();
+        reject(lastFailure);
+      }
+    };
 
-  if (httpSettled.status === 'fulfilled') return httpSettled.value;
-  throw httpSettled.status === 'rejected' ? httpSettled.reason : new Error('send_failed');
+    void httpPromise.then((message) => succeed(message, false), fail);
+    void ackPromise.then(
+      (message) => {
+        if (message) succeed(message, true);
+        else fail(new Error('socket_ack_missing'));
+      },
+      fail
+    );
+  });
 }

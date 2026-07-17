@@ -44,6 +44,7 @@ import {
 } from '@/services/chat/chatOutboxGiphy';
 import type { PendingGiphyOutboxMedia } from '@/services/chat/chatLocalDb';
 import { primeChatMediaDimensions } from '@/services/chat/chatMediaAssetCache';
+import { isGifProviderHostedUrl } from '@/utils/gifProviderUrl';
 
 function completeChatSendSuccess(
   tempId: string,
@@ -94,13 +95,16 @@ async function failSendAttempt(
   contextType: ChatContextType,
   contextId: string,
   onFailed: (tempId: string) => void,
-  reason: string
+  reason: string,
+  suppressAbortResume = false
 ): Promise<void> {
   if (!isActiveSendGeneration(tempId, generation)) return;
+  if (suppressAbortResume) markOutboxResumeSuppressed([tempId]);
   teardownChatSendAttempt(tempId);
   await messageQueueStorage.updateStatus(tempId, contextType, contextId, 'failed').catch((err) => {
     console.error('[messageQueue] updateStatus', err);
   });
+  if (!isActiveSendGeneration(tempId, generation)) return;
   recordChatSendMetric({
     kind: 'chat_send_failed',
     tempId,
@@ -209,7 +213,15 @@ export function sendWithTimeout(
 
       if (hasMediaUpload) {
         armPhaseDeadline(tempId, generation, uploadPhaseMsForRow(row), () => {
-          void failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'upload_deadline');
+          void failSendAttempt(
+            tempId,
+            generation,
+            contextType,
+            contextId,
+            onFailed,
+            'upload_deadline',
+            true
+          );
         });
       }
 
@@ -391,8 +403,18 @@ export function sendWithTimeout(
           finalThumb = [...(payload.thumbnailUrls ?? [])];
         }
         // Never create IMAGE messages that hotlink Giphy CDN.
-        if (finalMedia.some((u) => /giphy\.com/i.test(u))) {
-          await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'giphy_hotlink');
+        if (
+          finalMedia.some(isGifProviderHostedUrl) ||
+          finalThumb.some(isGifProviderHostedUrl)
+        ) {
+          await failSendAttempt(
+            tempId,
+            generation,
+            contextType,
+            contextId,
+            onFailed,
+            'gif_provider_hotlink'
+          );
           return;
         }
       }
@@ -409,7 +431,15 @@ export function sendWithTimeout(
           phase: 'api',
           durationMs: Date.now() - startedAt,
         });
-        void failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'api_deadline');
+        void failSendAttempt(
+          tempId,
+          generation,
+          contextType,
+          contextId,
+          onFailed,
+          'api_deadline',
+          true
+        );
       });
 
       await messageQueueStorage

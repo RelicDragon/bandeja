@@ -42,7 +42,7 @@ export function ChatStickerTray({
   const reduceMotion = usePrefersReducedMotion();
   const panelTransition = reduceMotion ? { duration: 0 } : CHAT_PANEL_TRANSITION;
   const tray = useChatStickerTrayData(open, sport, initialTab);
-  const gifs = useGiphySearch(open);
+  const gifs = useGiphySearch(open && tray.tab === 'gifs');
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -118,6 +118,16 @@ export function ChatStickerTray({
           : gifs.query.trim()
             ? t('chat.giphy.noResults', { defaultValue: 'No GIFs found' })
             : t('chat.giphy.emptyTrending', { defaultValue: 'No trending GIFs right now' });
+  const gifSearchLabel =
+    gifs.provider === 'KLIPY'
+      ? t('chat.giphy.searchKlipyPlaceholder', { defaultValue: 'Search KLIPY' })
+      : t('chat.giphy.searchPlaceholder', { defaultValue: 'Search GIFs' });
+  const gifAttribution =
+    gifs.providers.length > 1
+      ? t('chat.giphy.poweredByBoth', { defaultValue: 'Powered by GIPHY & KLIPY' })
+      : gifs.provider === 'KLIPY'
+      ? t('chat.giphy.poweredByKlipy', { defaultValue: 'Powered by KLIPY' })
+      : t('chat.giphy.poweredBy', { defaultValue: 'Powered by GIPHY' });
 
   const showGridLoading =
     (tray.loading && tray.tab !== 'recent') ||
@@ -178,7 +188,7 @@ export function ChatStickerTray({
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-xl p-2 transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-gray-800"
+                className="flex h-11 w-11 items-center justify-center rounded-xl transition-colors hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:hover:bg-gray-800"
                 aria-label={t('common.close', { defaultValue: 'Close' })}
               >
                 <X size={20} />
@@ -203,7 +213,7 @@ export function ChatStickerTray({
                   }
                   placeholder={
                     tray.tab === 'gifs'
-                      ? t('chat.giphy.searchPlaceholder', { defaultValue: 'Search GIFs' })
+                      ? gifSearchLabel
                       : t('chat.stickers.searchPlaceholder', {
                           defaultValue: 'Search stickers',
                         })
@@ -212,7 +222,7 @@ export function ChatStickerTray({
                   data-testid="chat-media-search"
                   aria-label={
                     tray.tab === 'gifs'
-                      ? t('chat.giphy.searchPlaceholder', { defaultValue: 'Search GIFs' })
+                      ? gifSearchLabel
                       : t('chat.stickers.searchPlaceholder', { defaultValue: 'Search stickers' })
                   }
                 />
@@ -256,7 +266,7 @@ export function ChatStickerTray({
                         document.getElementById(`${panelId}-tab-${next}`)?.focus()
                       );
                     }}
-                    className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                    className={`min-h-11 shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                       selected
                         ? 'bg-blue-600 text-white'
                         : 'bg-transparent text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800'
@@ -401,11 +411,12 @@ export function ChatStickerTray({
                 packs={tray.packs}
                 selectedPackId={tray.selectedPackId}
                 onSelectPack={tray.setSelectedPackId}
+                panelId={`${panelId}-panel`}
               />
             ) : null}
             {tray.tab === 'gifs' ? (
               <p className="px-4 pb-1 pt-2 text-center text-[10px] font-medium uppercase tracking-wide text-gray-400">
-                {t('chat.giphy.poweredBy', { defaultValue: 'Powered by GIPHY' })}
+                {gifAttribution}
               </p>
             ) : null}
           </motion.div>

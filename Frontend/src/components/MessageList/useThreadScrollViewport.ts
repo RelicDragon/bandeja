@@ -106,13 +106,6 @@ export function useThreadScrollViewport({
       index === rowCount - 1 ? '__end__' : (messages[index] ? getMessageRowKey(messages[index]) : `i-${index}`),
   });
 
-  virtualizer.shouldAdjustScrollPositionOnItemSizeChange = (item, _delta, instance) =>
-    shouldAdjustForMessageRowResize({
-      isScrolling: instance.isScrolling,
-      itemStart: item.start,
-      scrollOffset: instance.scrollOffset ?? 0,
-    });
-
   const virtualizerRef = useRef(virtualizer);
   virtualizerRef.current = virtualizer;
   const messagesForScrollRef = useRef(messages);
@@ -194,6 +187,14 @@ export function useThreadScrollViewport({
     isSwitchingChatType,
     containerEvents,
   });
+  virtualizer.shouldAdjustScrollPositionOnItemSizeChange = (item, _delta, instance) => {
+    if (isNearBottomRef.current && !instance.isScrolling) return true;
+    return shouldAdjustForMessageRowResize({
+      isScrolling: instance.isScrolling,
+      itemStart: item.start,
+      scrollOffset: instance.scrollOffset ?? 0,
+    });
+  };
 
   useMessageListPrependCompensation({
     containerRef: messagesContainerRef,

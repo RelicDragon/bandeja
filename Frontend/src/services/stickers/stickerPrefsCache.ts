@@ -45,7 +45,7 @@ function sanitizePrefs(prefs: UserStickerPrefs): UserStickerPrefs {
           if (item.kind === 'STICKER') return typeof item.stickerId === 'string' && !!item.stickerId;
           return (
             item.kind === 'GIF' &&
-            item.provider === 'GIPHY' &&
+            (item.provider === 'GIPHY' || item.provider === 'KLIPY') &&
             typeof item.id === 'string' &&
             !!item.id &&
             typeof item.previewUrl === 'string' &&

@@ -40,6 +40,7 @@ import {
   isRetryableMutationError,
   shouldQueueChatMutation,
 } from '@/services/chat/chatMutationNetwork';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem({
   message,
@@ -76,6 +77,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const reduceMotion = usePrefersReducedMotion();
   const messageRef = useRef<HTMLDivElement>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showPlayerCard, setShowPlayerCard] = useState(false);
@@ -273,7 +275,8 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const getThumbnailUrl = (index: number): string =>
     resolveChatImageDisplayUrl(
       currentMessage.mediaUrls?.[index],
-      currentMessage.thumbnailUrls?.[index]
+      currentMessage.thumbnailUrls?.[index],
+      reduceMotion
     );
 
   const handleImageClick = (url: string) => setFullscreenImage(url || null);

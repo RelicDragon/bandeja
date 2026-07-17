@@ -1,10 +1,8 @@
 import { isBandejaDeepLinkHost } from '@/utils/bandejaDeepLinkHost';
-
-const GIPHY_HOST_RE = /(^|\.)giphy\.com$/i;
+import { isGifProviderHostedUrl } from '@/utils/gifProviderUrl';
 
 export function isGiphyLinkHost(hostname: string): boolean {
-  const host = hostname.trim().toLowerCase().replace(/\.$/, '');
-  return GIPHY_HOST_RE.test(host);
+  return isGifProviderHostedUrl(`https://${hostname}/`);
 }
 
 export function isAppLinkPreviewHost(hostname: string): boolean {
@@ -16,13 +14,13 @@ export function isAppLinkPreviewHost(hostname: string): boolean {
   return false;
 }
 
-/** Chip + optional rich card (bandeja DB or external OG). Skips Giphy. */
+/** Chip + optional rich card (bandeja DB or external OG). Skips GIF provider hosts. */
 export function isEligibleLinkPreviewUrl(urlString: string): boolean {
   try {
     const u = new URL(urlString);
     if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
     if (u.username || u.password) return false;
-    if (isGiphyLinkHost(u.hostname)) return false;
+    if (isGifProviderHostedUrl(u.toString())) return false;
     // External unfurl is HTTPS-only on BE — avoid eternal chip for http:// sites.
     if (u.protocol === 'http:' && !isAppLinkPreviewHost(u.hostname)) return false;
     return true;

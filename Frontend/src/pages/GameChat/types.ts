@@ -17,6 +17,8 @@ export type ChatNavigateOptions = {
   forceReload?: boolean;
   anchorMessageId?: string;
   initialChatType?: string;
+  /** Keep Market subtab when opening a marketplace channel chat (push/Telegram). */
+  filter?: 'market';
 };
 
 export interface GameChatProps {

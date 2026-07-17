@@ -13,6 +13,7 @@ import { SplitViewLeftPanel, SplitViewRightPanel } from '@/components/SplitViewP
 import { useDesktop } from '@/hooks/useDesktop';
 import { parseChatSelectionFromPath } from '@/utils/chatSelectionFromPath';
 import {
+  buildChatSelectPath,
   desktopRightPanelTransition,
   isChatPanelReady,
   shouldRenderEmbeddedGameChat,
@@ -33,7 +34,7 @@ export const ChatsTab = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isDesktop = useDesktop();
-  const { filter: chatsFilter } = useChatsFromUrl();
+  const { filter: chatsFilter, role: marketChatRole, item: marketItemId } = useChatsFromUrl();
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedChatType, setSelectedChatType] = useState<ChatType | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -92,16 +93,14 @@ export const ChatsTab = () => {
     }
   }, [isDesktop, chatPanelReady]);
 
-  const getChatPath = useCallback((chatId: string, chatType: ChatType) => {
-    if (chatsFilter === 'bugs' && chatType === 'channel') return `/bugs/${chatId}`;
-    return chatType === 'user'
-      ? `/user-chat/${chatId}`
-      : chatType === 'channel'
-      ? `/channel-chat/${chatId}`
-      : chatType === 'game'
-      ? `/games/${chatId}/chat`
-      : `/group-chat/${chatId}`;
-  }, [chatsFilter]);
+  const getChatPath = useCallback(
+    (chatId: string, chatType: ChatType) =>
+      buildChatSelectPath(chatId, chatType, chatsFilter, {
+        role: marketChatRole,
+        item: marketItemId,
+      }),
+    [chatsFilter, marketChatRole, marketItemId]
+  );
 
   const handleChatSelect = useCallback((chatId: string, chatType: ChatType, options?: ChatSelectNavOptions) => {
     const fromSearch = !!options?.searchQuery;

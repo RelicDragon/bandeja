@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { searchGiphy, type GiphySearchItem, type GiphySearchPage } from '@/api/giphy';
+import { applyGiphySearchPageItems } from './giphySearchItems';
 
 const DEBOUNCE_MS = 280;
 const PAGE_SIZE = 24;
+const MAX_RETAINED_ITEMS = 240;
 
 type UseGiphySearchResult = {
+  provider: 'GIPHY' | 'KLIPY';
+  providers: Array<'GIPHY' | 'KLIPY'>;
   query: string;
   setQuery: (q: string) => void;
   items: GiphySearchItem[];
@@ -18,6 +22,16 @@ type UseGiphySearchResult = {
   refresh: () => void;
 };
 
+function isAbortError(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { code?: string; name?: string };
+  return (
+    e.code === 'ERR_CANCELED' ||
+    e.name === 'CanceledError' ||
+    e.name === 'AbortError'
+  );
+}
+
 function mapError(err: unknown): 'unavailable' | 'failed' | 'rateLimited' {
   if (!err || typeof err !== 'object') return 'failed';
   const status = (err as { response?: { status?: number; data?: { code?: string } } }).response
@@ -30,6 +44,7 @@ function mapError(err: unknown): 'unavailable' | 'failed' | 'rateLimited' {
 
 export function useGiphySearch(open: boolean): UseGiphySearchResult {
   const [query, setQueryState] = useState('');
+  const [provider, setProvider] = useState<'GIPHY' | 'KLIPY'>('GIPHY');
   const [items, setItems] = useState<GiphySearchItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -39,26 +54,58 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
   const [nextOffset, setNextOffset] = useState(0);
   const requestIdRef = useRef(0);
   const debouncedQueryRef = useRef('');
+  const abortRef = useRef<AbortController | null>(null);
+  const itemsRef = useRef<GiphySearchItem[]>([]);
 
-  const fetchPage = useCallback(async (q: string, offset: number, append: boolean) => {
+  useEffect(
+    () => () => {
+      abortRef.current?.abort();
+      abortRef.current = null;
+    },
+    []
+  );
+
+  const fetchPage = useCallback(async (
+    q: string,
+    offset: number,
+    append: boolean,
+    providerHint?: 'GIPHY' | 'KLIPY'
+  ) => {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     const reqId = ++requestIdRef.current;
     if (append) setLoadingMore(true);
     else setLoading(true);
     setLoadMoreError(false);
     setError(null);
     try {
-      const page: GiphySearchPage = await searchGiphy(q, { offset, limit: PAGE_SIZE });
+      const page: GiphySearchPage = await searchGiphy(q, {
+        offset,
+        limit: PAGE_SIZE,
+        provider: providerHint,
+        signal: controller.signal,
+      });
       if (reqId !== requestIdRef.current) return;
-      setItems((prev) => (append ? [...prev, ...page.items] : page.items));
+      const nextItems = applyGiphySearchPageItems(
+        itemsRef.current,
+        page.items,
+        append
+      ).slice(0, MAX_RETAINED_ITEMS);
+      itemsRef.current = nextItems;
+      setItems(nextItems);
+      setProvider(page.provider);
       setNextOffset(page.nextOffset ?? offset + (page.limit || page.items.length));
-      setHasMore(page.hasMore);
+      setHasMore(page.hasMore && nextItems.length < MAX_RETAINED_ITEMS);
     } catch (err) {
       if (reqId !== requestIdRef.current) return;
+      if (isAbortError(err) || controller.signal.aborted) return;
       setError(mapError(err));
       if (append) {
         setLoadMoreError(true);
         setHasMore(false);
       } else {
+        itemsRef.current = [];
         setItems([]);
         setHasMore(false);
         setNextOffset(0);
@@ -68,13 +115,18 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
         setLoading(false);
         setLoadingMore(false);
       }
+      if (abortRef.current === controller) abortRef.current = null;
     }
   }, []);
 
   useEffect(() => {
     if (!open) {
+      abortRef.current?.abort();
+      abortRef.current = null;
       requestIdRef.current += 1;
       setQueryState('');
+      setProvider('GIPHY');
+      itemsRef.current = [];
       setItems([]);
       setError(null);
       setHasMore(false);
@@ -96,8 +148,11 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
   }, [open, query, fetchPage]);
 
   const setQuery = useCallback((value: string) => {
+    abortRef.current?.abort();
+    abortRef.current = null;
     requestIdRef.current += 1;
     setQueryState(value);
+    itemsRef.current = [];
     setItems([]);
     setError(null);
     setHasMore(false);
@@ -107,8 +162,8 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
 
   const loadMore = useCallback(() => {
     if (!open || loading || loadingMore || !hasMore) return;
-    void fetchPage(debouncedQueryRef.current, nextOffset, true);
-  }, [open, loading, loadingMore, hasMore, nextOffset, fetchPage]);
+    void fetchPage(debouncedQueryRef.current, nextOffset, true, provider);
+  }, [open, loading, loadingMore, hasMore, nextOffset, provider, fetchPage]);
 
   const refresh = useCallback(() => {
     if (!open) return;
@@ -117,10 +172,12 @@ export function useGiphySearch(open: boolean): UseGiphySearchResult {
 
   const retryLoadMore = useCallback(() => {
     if (!open || loading || loadingMore) return;
-    void fetchPage(debouncedQueryRef.current, nextOffset, true);
-  }, [open, loading, loadingMore, nextOffset, fetchPage]);
+    void fetchPage(debouncedQueryRef.current, nextOffset, true, provider);
+  }, [open, loading, loadingMore, nextOffset, provider, fetchPage]);
 
   return {
+    provider,
+    providers: [...new Set(items.map((item) => item.provider))],
     query,
     setQuery,
     items,

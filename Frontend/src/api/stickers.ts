@@ -43,7 +43,7 @@ export type ChatMediaRecent =
   | { kind: 'STICKER'; stickerId: string }
   | {
       kind: 'GIF';
-      provider: 'GIPHY';
+      provider: 'GIPHY' | 'KLIPY';
       id: string;
       title: string;
       previewUrl: string;

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import type { GiphySearchItem } from '@/api/giphy';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 type GiphySearchGridProps = {
   items: GiphySearchItem[];
@@ -27,6 +28,7 @@ export function GiphySearchGrid({
   onRetryLoadMore,
 }: GiphySearchGridProps) {
   const { t } = useTranslation();
+  const reduceMotion = usePrefersReducedMotion();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -56,25 +58,38 @@ export function GiphySearchGrid({
         className="grid grid-cols-[repeat(auto-fit,minmax(90px,1fr))]"
         data-testid="giphy-search-grid"
       >
-        {items.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            disabled={busy}
-            onClick={() => onSelect(item)}
-            className="group relative aspect-square overflow-hidden bg-gray-100 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 disabled:opacity-50 dark:bg-gray-800"
-            title={item.title}
-            data-testid={`giphy-result-${item.id}`}
-          >
-            <img
-              src={item.previewUrl}
-              alt={item.title}
-              loading="eager"
-              className="h-full w-full object-cover"
-              draggable={false}
-            />
-          </button>
-        ))}
+        {items.map((item, index) => {
+          // Prefer still frame when present; Klipy has no staticUrl — keep preview.
+          const displayUrl =
+            reduceMotion && item.staticUrl ? item.staticUrl : item.previewUrl;
+          return (
+            <button
+              key={`${item.provider}:${item.id}`}
+              type="button"
+              disabled={busy}
+              onClick={() => onSelect(item)}
+              className="group relative aspect-square overflow-hidden bg-gray-100 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 disabled:opacity-50 dark:bg-gray-800"
+              title={item.title}
+              data-testid={`giphy-result-${item.id}`}
+            >
+              {displayUrl ? (
+                <img
+                  src={displayUrl}
+                  alt={item.title}
+                  loading={index < 9 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover"
+                  draggable={false}
+                />
+              ) : (
+                <span className="flex h-full w-full items-center justify-center px-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                  GIF
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
       {hasMore || loadMoreError ? (
         <div ref={loadMoreRef} className="flex justify-center pt-3">

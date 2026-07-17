@@ -13,6 +13,7 @@ import type { GameChatFooterVariant } from './GameChatFooter';
 import type { ThreadSessionScroll } from '@/services/chat/threadSession';
 import type { ThreadSearchValue } from './useThreadSearch';
 import type { ArchivedGameChatMeta } from '@/utils/cancelledGameChatStub';
+import type { PendingGiphyOutboxMedia } from '@/services/chat/chatLocalDb';
 
 export type { ThreadSearchValue } from './useThreadSearch';
 
@@ -26,7 +27,8 @@ export interface ThreadMessageActionsValue {
     pendingVoiceBlob?: Blob,
     pendingVideoBlob?: Blob,
     pendingVideoPosterBlob?: Blob,
-    videoTranscodeMs?: number
+    videoTranscodeMs?: number,
+    pendingGiphy?: PendingGiphyOutboxMedia
   ) => string;
   handleSendQueued: (params: SendQueuedParams) => void;
   handleSendFailed: (optimisticId: string) => void;

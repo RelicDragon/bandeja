@@ -15,6 +15,7 @@ import { PreferenceKey } from '../../../types/notifications.types';
 import { config } from '../../../config/env';
 import { isBenignTelegramRecipientError } from '../telegramRecipientErrors';
 import { guardedTelegramSendMessage } from '../guardedTelegramSend';
+import { resolveGroupChatNotificationPath } from '../../shared/groupChatNotificationPath';
 
 export async function sendGroupChatNotification(
   api: Api,
@@ -64,12 +65,7 @@ export async function sendGroupChatNotification(
       ? (participant.role === 'OWNER' || participant.role === 'ADMIN')
       : true;
 
-    const chatPath = groupChannel.bug
-      ? `/bugs/${groupChannel.id}`
-      : groupChannel.marketItem
-        ? `/channel-chat/${groupChannel.id}`
-        : `/group-chat/${groupChannel.id}`;
-    const chatUrl = `${config.frontendUrl}${chatPath}`;
+    const chatUrl = `${config.frontendUrl}${resolveGroupChatNotificationPath(groupChannel)}`;
 
     try {
       const lang = await getUserLanguageFromTelegramId(user.telegramId, undefined);

@@ -98,6 +98,106 @@ async function run(): Promise<void> {
     assert.equal(/giphy\.com/i.test(result!.mediaUrl), false);
   }
 
+  {
+    const tinyGif = Buffer.from(
+      'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+      'base64'
+    );
+    const result = await tryConvertGiphyPasteToImage(
+      'https://static1.klipy.com/party.gif',
+      {
+        apiKey: null,
+        fetchFn: async () =>
+          new Response(tinyGif, { status: 200, headers: { 'content-type': 'image/gif' } }),
+        lookupFn: async () => [{ address: '8.8.8.8', family: 4 }],
+        processChatImage: async () => ({
+          originalPath: 'https://cdn.example.com/uploads/chat/originals/klipy.gif',
+          thumbnailPath: 'https://cdn.example.com/uploads/chat/thumbnails/klipy_thumb.jpg',
+          originalSize: { width: 1, height: 1 },
+          thumbnailSize: { width: 1, height: 1 },
+        }),
+      }
+    );
+    assert.ok(result);
+    assert.equal(/klipy\.com/i.test(result!.mediaUrl), false);
+  }
+
+  {
+    const tinyGif = Buffer.from(
+      'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+      'base64'
+    );
+    const result = await tryConvertGiphyPasteToImage('https://klipy.com/gifs/hello-hi-662', {
+      apiKey: null,
+      klipyApiKey: 'klipy-key',
+      fetchFn: async (input) => {
+        const url = String(input);
+        if (url.includes('/gifs/items')) {
+          return new Response(
+            JSON.stringify({
+              result: true,
+              data: {
+                data: [
+                  {
+                    slug: 'hello-hi-662',
+                    file: {
+                      md: {
+                        gif: { url: 'https://static1.klipy.com/ii/abc/hello.gif' },
+                      },
+                    },
+                  },
+                ],
+              },
+            }),
+            { status: 200 }
+          );
+        }
+        return new Response(tinyGif, { status: 200, headers: { 'content-type': 'image/gif' } });
+      },
+      lookupFn: async () => [{ address: '8.8.8.8', family: 4 }],
+      processChatImage: async () => ({
+        originalPath: 'https://cdn.example.com/uploads/chat/originals/klipy-page.gif',
+        thumbnailPath: 'https://cdn.example.com/uploads/chat/thumbnails/klipy-page_thumb.jpg',
+        originalSize: { width: 1, height: 1 },
+        thumbnailSize: { width: 1, height: 1 },
+      }),
+    });
+    assert.ok(result);
+    assert.equal(/klipy\.com/i.test(result!.mediaUrl), false);
+  }
+
+  {
+    const tinyGif = Buffer.from(
+      'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+      'base64'
+    );
+    const media = 'https://media1.tenor.com/m/rYCdWzuqXIIAAAAC/petty-parker-smoke.gif';
+    const result = await tryConvertGiphyPasteToImage(
+      'https://tenor.com/view/petty-parker-smoke-gif-17093677',
+      {
+        apiKey: null,
+        fetchFn: async (input) => {
+          const url = String(input);
+          if (url.includes('tenor.com/view/')) {
+            return new Response(`<meta property="og:image" content="${media}">`, {
+              status: 200,
+            });
+          }
+          return new Response(tinyGif, { status: 200, headers: { 'content-type': 'image/gif' } });
+        },
+        lookupFn: async () => [{ address: '8.8.8.8', family: 4 }],
+        processChatImage: async () => ({
+          originalPath: 'https://cdn.example.com/uploads/chat/originals/tenor.gif',
+          thumbnailPath: 'https://cdn.example.com/uploads/chat/thumbnails/tenor_thumb.jpg',
+          originalSize: { width: 1, height: 1 },
+          thumbnailSize: { width: 1, height: 1 },
+        }),
+      }
+    );
+    assert.ok(result);
+    assert.equal(/tenor\.(com|co)/i.test(result!.mediaUrl), false);
+  }
+
   // API fallback only after primary rehost fails
   {
     let fetchCalls = 0;

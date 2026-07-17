@@ -75,6 +75,32 @@ function testRejectsUntrustedGifUrls() {
     ]),
     []
   );
+  assert.deepEqual(
+    normalizeRecentMediaInput([
+      {
+        kind: 'GIF',
+        provider: 'KLIPY',
+        id: 'party',
+        title: 'Party',
+        previewUrl: 'https://static1.klipy.com/party-small.gif',
+        downloadUrl: 'https://static.klipy.com/party.gif',
+        width: 220,
+        height: 180,
+      },
+    ]),
+    [
+      {
+        kind: 'GIF',
+        provider: 'KLIPY',
+        id: 'party',
+        title: 'Party',
+        previewUrl: 'https://static1.klipy.com/party-small.gif',
+        downloadUrl: 'https://static.klipy.com/party.gif',
+        width: 220,
+        height: 180,
+      },
+    ]
+  );
   console.log('ok rejects untrusted GIF URLs');
 }
 

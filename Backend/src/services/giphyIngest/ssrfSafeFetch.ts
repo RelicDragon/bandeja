@@ -82,12 +82,30 @@ function isAbortError(err: unknown): boolean {
 
 async function assertHostnameResolvesPublic(
   hostname: string,
-  lookupFn: DnsLookupFn
+  lookupFn: DnsLookupFn,
+  signal: AbortSignal
 ): Promise<void> {
   let results: Array<{ address: string; family: 4 | 6 }>;
   try {
-    results = await lookupFn(hostname);
+    results = await new Promise<Array<{ address: string; family: 4 | 6 }>>(
+      (resolve, reject) => {
+        const onAbort = () => reject(new SsrfFetchError('Fetch timed out'));
+        signal.addEventListener('abort', onAbort, { once: true });
+        void lookupFn(hostname).then(
+          (rows) => {
+            signal.removeEventListener('abort', onAbort);
+            if (signal.aborted) reject(new SsrfFetchError('Fetch timed out'));
+            else resolve(rows);
+          },
+          () => {
+            signal.removeEventListener('abort', onAbort);
+            reject(new SsrfFetchError('DNS lookup failed'));
+          }
+        );
+      }
+    );
   } catch {
+    if (signal.aborted) throw new SsrfFetchError('Fetch timed out');
     throw new SsrfFetchError('DNS lookup failed');
   }
   if (!results.length) {
@@ -112,6 +130,9 @@ function assertHttpsAllowlistedUrl(urlString: string): URL {
   }
   if (parsed.username || parsed.password) {
     throw new SsrfFetchError('URL credentials are not allowed');
+  }
+  if (parsed.port && parsed.port !== '443') {
+    throw new SsrfFetchError('Only the default HTTPS port is allowed');
   }
   if (!isAllowedGiphyHost(parsed.hostname)) {
     throw new SsrfFetchError('Host is not allowlisted');
@@ -232,7 +253,7 @@ export async function ssrfSafeFetchBytes(
 
     while (true) {
       assertNotTimedOut();
-      await assertHostnameResolvesPublic(current.hostname, lookupFn);
+      await assertHostnameResolvesPublic(current.hostname, lookupFn, ac.signal);
       assertNotTimedOut();
 
       let res: Response;

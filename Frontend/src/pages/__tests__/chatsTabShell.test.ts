@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildChatSelectPath,
   desktopRightPanelTransition,
   isChatPanelPathSynced,
   isChatPanelReady,
@@ -7,6 +8,25 @@ import {
 } from '../chatsTabShell';
 
 describe('chatsTabShell', () => {
+  describe('buildChatSelectPath', () => {
+    it('keeps market filter (and role/item) when opening a market channel chat', () => {
+      expect(buildChatSelectPath('c1', 'channel', 'market')).toBe(
+        '/channel-chat/c1?filter=market'
+      );
+      expect(
+        buildChatSelectPath('c1', 'channel', 'market', { role: 'buyer', item: 'i9' })
+      ).toBe('/channel-chat/c1?filter=market&role=buyer&item=i9');
+    });
+
+    it('uses plain channel path for Channels tab', () => {
+      expect(buildChatSelectPath('c1', 'channel', 'channels')).toBe('/channel-chat/c1');
+    });
+
+    it('uses bugs path for Bugs tab channel chats', () => {
+      expect(buildChatSelectPath('b1', 'channel', 'bugs')).toBe('/bugs/b1');
+    });
+  });
+
   describe('shouldRenderEmbeddedGameChat', () => {
     it('renders when selection is set', () => {
       expect(shouldRenderEmbeddedGameChat('a', 'user')).toBe(true);

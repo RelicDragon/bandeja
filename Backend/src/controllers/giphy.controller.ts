@@ -3,19 +3,47 @@ import { AuthRequest } from '../middleware/auth';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import {
+  GiphyImportBusyError,
   isDirectGiphyMediaUrl,
-  isGiphySearchConfigured,
+  isDirectKlipyMediaUrl,
+  isGifSearchConfigured,
   rehostGiphyMediaUrl,
   searchGiphyGifs,
   trendingGiphyGifs,
-  tryConsumeGiphyIngestRateLimit,
-  tryConsumeGiphySearchRateLimit,
+  consumeGiphyIngestRateLimit,
+  consumeGiphySearchRateLimit,
 } from '../services/giphyIngest';
+
+const MAX_GIF_QUERY_LENGTH = 100;
+
+function parseIntegerQuery(
+  value: unknown,
+  name: string,
+  fallback: number | undefined,
+  min: number,
+  max: number
+): number | undefined {
+  if (value == null) return fallback;
+  if (typeof value !== 'string' || !/^\d+$/.test(value)) {
+    throw new ApiError(400, `Invalid ${name}`, true, { code: 'giphy.invalidPagination' });
+  }
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < min || parsed > max) {
+    throw new ApiError(400, `Invalid ${name}`, true, { code: 'giphy.invalidPagination' });
+  }
+  return parsed;
+}
+
+function parseProvider(value: unknown): 'GIPHY' | 'KLIPY' | undefined {
+  if (value == null) return undefined;
+  if (value === 'GIPHY' || value === 'KLIPY') return value;
+  throw new ApiError(400, 'Invalid GIF provider', true, { code: 'giphy.invalidProvider' });
+}
 
 export const getStatus = asyncHandler(async (_req: AuthRequest, res: Response) => {
   res.json({
     success: true,
-    data: { available: isGiphySearchConfigured() },
+    data: { available: isGifSearchConfigured() },
   });
 });
 
@@ -23,28 +51,42 @@ export const search = asyncHandler(async (req: AuthRequest, res: Response) => {
   const userId = req.userId;
   if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
 
-  if (!isGiphySearchConfigured()) {
+  if (!isGifSearchConfigured()) {
     throw new ApiError(503, 'Giphy search is not configured', true, {
       code: 'giphy.searchUnavailable',
     });
   }
 
-  if (!tryConsumeGiphySearchRateLimit(userId)) {
-    throw new ApiError(429, 'Too many Giphy searches', true, { code: 'giphy.searchRateLimited' });
+  if (req.query.q != null && typeof req.query.q !== 'string') {
+    throw new ApiError(400, 'Invalid GIF search query', true, { code: 'giphy.invalidQuery' });
   }
-
-  const q = typeof req.query.q === 'string' ? req.query.q : '';
-  const offset = typeof req.query.offset === 'string' ? Number(req.query.offset) : 0;
-  const limit = typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined;
+  const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+  if (q.length > MAX_GIF_QUERY_LENGTH) {
+    throw new ApiError(400, 'GIF search query is too long', true, { code: 'giphy.invalidQuery' });
+  }
+  const offset = parseIntegerQuery(req.query.offset, 'offset', 0, 0, 10_000) ?? 0;
+  const limit = parseIntegerQuery(req.query.limit, 'limit', undefined, 1, 50);
+  const provider = parseProvider(req.query.provider);
 
   try {
+    const deps = { authorizeCacheMiss: () => consumeGiphySearchRateLimit(userId) };
     const page = q.trim()
-      ? await searchGiphyGifs(q, { offset, limit })
-      : await trendingGiphyGifs({ offset, limit });
+      ? await searchGiphyGifs(q, { offset, limit, provider }, deps)
+      : await trendingGiphyGifs({ offset, limit, provider }, deps);
     res.json({ success: true, data: page });
   } catch (err) {
-    if (err instanceof Error && err.message === 'GIPHY_API_KEY_MISSING') {
+    if (err instanceof Error && err.message === 'GIF_SEARCH_RATE_LIMITED') {
+      throw new ApiError(429, 'Too many Giphy searches', true, {
+        code: 'giphy.searchRateLimited',
+      });
+    }
+    if (err instanceof Error && err.message === 'GIF_SEARCH_NOT_CONFIGURED') {
       throw new ApiError(503, 'Giphy search is not configured', true, {
+        code: 'giphy.searchUnavailable',
+      });
+    }
+    if (err instanceof Error && err.message === 'GIF_SEARCH_PROVIDERS_COOLING_DOWN') {
+      throw new ApiError(503, 'GIF search temporarily unavailable', true, {
         code: 'giphy.searchUnavailable',
       });
     }
@@ -57,25 +99,35 @@ export const trending = asyncHandler(async (req: AuthRequest, res: Response) => 
   const userId = req.userId;
   if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
 
-  if (!isGiphySearchConfigured()) {
+  if (!isGifSearchConfigured()) {
     throw new ApiError(503, 'Giphy search is not configured', true, {
       code: 'giphy.searchUnavailable',
     });
   }
 
-  if (!tryConsumeGiphySearchRateLimit(userId)) {
-    throw new ApiError(429, 'Too many Giphy searches', true, { code: 'giphy.searchRateLimited' });
-  }
-
-  const offset = typeof req.query.offset === 'string' ? Number(req.query.offset) : 0;
-  const limit = typeof req.query.limit === 'string' ? Number(req.query.limit) : undefined;
+  const offset = parseIntegerQuery(req.query.offset, 'offset', 0, 0, 10_000) ?? 0;
+  const limit = parseIntegerQuery(req.query.limit, 'limit', undefined, 1, 50);
+  const provider = parseProvider(req.query.provider);
 
   try {
-    const page = await trendingGiphyGifs({ offset, limit });
+    const page = await trendingGiphyGifs(
+      { offset, limit, provider },
+      { authorizeCacheMiss: () => consumeGiphySearchRateLimit(userId) }
+    );
     res.json({ success: true, data: page });
   } catch (err) {
-    if (err instanceof Error && err.message === 'GIPHY_API_KEY_MISSING') {
+    if (err instanceof Error && err.message === 'GIF_SEARCH_RATE_LIMITED') {
+      throw new ApiError(429, 'Too many Giphy searches', true, {
+        code: 'giphy.searchRateLimited',
+      });
+    }
+    if (err instanceof Error && err.message === 'GIF_SEARCH_NOT_CONFIGURED') {
       throw new ApiError(503, 'Giphy search is not configured', true, {
+        code: 'giphy.searchUnavailable',
+      });
+    }
+    if (err instanceof Error && err.message === 'GIF_SEARCH_PROVIDERS_COOLING_DOWN') {
+      throw new ApiError(503, 'GIF search temporarily unavailable', true, {
         code: 'giphy.searchUnavailable',
       });
     }
@@ -92,15 +144,9 @@ export const importGif = asyncHandler(async (req: AuthRequest, res: Response) =>
   const userId = req.userId;
   if (!userId) throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
 
-  if (!isGiphySearchConfigured()) {
-    throw new ApiError(503, 'Giphy search is not configured', true, {
-      code: 'giphy.searchUnavailable',
-    });
-  }
-
   const rawUrl = typeof req.body?.downloadUrl === 'string' ? req.body.downloadUrl.trim() : '';
   if (!rawUrl) {
-    throw new ApiError(400, 'Valid Giphy media downloadUrl is required', true, {
+    throw new ApiError(400, 'Valid GIF media downloadUrl is required', true, {
       code: 'giphy.invalidDownloadUrl',
     });
   }
@@ -111,22 +157,30 @@ export const importGif = asyncHandler(async (req: AuthRequest, res: Response) =>
     if (parsed.protocol === 'http:') parsed.protocol = 'https:';
     downloadUrl = parsed.toString();
   } catch {
-    throw new ApiError(400, 'Valid Giphy media downloadUrl is required', true, {
+    throw new ApiError(400, 'Valid GIF media downloadUrl is required', true, {
       code: 'giphy.invalidDownloadUrl',
     });
   }
 
-  if (!isDirectGiphyMediaUrl(downloadUrl)) {
-    throw new ApiError(400, 'Valid Giphy media downloadUrl is required', true, {
+  if (!isDirectGiphyMediaUrl(downloadUrl) && !isDirectKlipyMediaUrl(downloadUrl)) {
+    throw new ApiError(400, 'Valid GIF media downloadUrl is required', true, {
       code: 'giphy.invalidDownloadUrl',
     });
   }
 
-  if (!tryConsumeGiphyIngestRateLimit(userId)) {
+  if (!(await consumeGiphyIngestRateLimit(userId))) {
     throw new ApiError(429, 'Too many Giphy imports', true, { code: 'giphy.importRateLimited' });
   }
 
-  const result = await rehostGiphyMediaUrl(downloadUrl);
+  let result;
+  try {
+    result = await rehostGiphyMediaUrl(downloadUrl);
+  } catch (error) {
+    if (error instanceof GiphyImportBusyError) {
+      throw new ApiError(503, 'GIF import is busy', true, { code: 'giphy.importBusy' });
+    }
+    throw error;
+  }
   if (!result) {
     throw new ApiError(422, 'Could not import GIF', true, { code: 'giphy.importFailed' });
   }

@@ -1,4 +1,4 @@
-import { isAllowedGiphyHost } from './giphyHosts';
+import { isAllowedGiphyHost, isGiphyMediaHost } from './giphyHosts';
 
 const URL_ONLY_RE =
   /^(?:<(https:\/\/[^>\s]+)>\s*|(https:\/\/\S+))$/i;
@@ -69,7 +69,12 @@ export function extractGiphyIdFromUrl(url: string): string | null {
   // /gifs/{slug-or-id} — id is last segment after final '-' when slug present, else whole segment
   const gifMatch = path.match(/\/gifs\/([^/?#]+)\/?$/i);
   if (gifMatch?.[1]) {
-    const segment = decodeURIComponent(gifMatch[1]);
+    let segment: string;
+    try {
+      segment = decodeURIComponent(gifMatch[1]);
+    } catch {
+      return null;
+    }
     const dash = segment.lastIndexOf('-');
     const candidate = dash >= 0 ? segment.slice(dash + 1) : segment;
     if (GIF_ID_RE.test(candidate)) return candidate;
@@ -86,11 +91,13 @@ export function isDirectGiphyMediaUrl(url: string): boolean {
   } catch {
     return false;
   }
-  if (!isAllowedGiphyHost(parsed.hostname)) return false;
-  const host = parsed.hostname.toLowerCase();
-  if (host === 'giphy.com' || host === 'www.giphy.com' || host === 'api.giphy.com') {
-    return false;
-  }
+  if (
+    parsed.protocol !== 'https:' ||
+    parsed.username ||
+    parsed.password ||
+    (parsed.port && parsed.port !== '443') ||
+    !isGiphyMediaHost(parsed.hostname)
+  ) return false;
   const path = parsed.pathname.toLowerCase();
   return (
     /\.(gif|webp|png|jpe?g)$/i.test(path) ||

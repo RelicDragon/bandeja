@@ -450,7 +450,13 @@ class PushNotificationService {
         if (chatCtx?.bugId) {
           navigationService.navigateToBugChat(chatCtx.bugId);
         } else if (chatCtx?.marketItemId) {
-          navigationService.navigateToMarketplace({ item: chatCtx.marketItemId });
+          const channelId = chatCtx.groupChannelId ?? chatCtx.contextId;
+          if (channelId) {
+            navigationService.navigateToChannelChat(channelId, {
+              anchorMessageId: chatCtx.messageId,
+              filter: 'market',
+            });
+          }
         } else if (chatCtx) {
           navigationService.navigateToGroupChat(chatCtx.contextId, {
             anchorMessageId: chatCtx.messageId,
@@ -459,7 +465,10 @@ class PushNotificationService {
           if (payload.bugId) {
             navigationService.navigateToBugChat(payload.bugId);
           } else if (payload.marketItemId) {
-            navigationService.navigateToMarketplace({ item: payload.marketItemId });
+            navigationService.navigateToChannelChat(payload.groupChannelId, {
+              anchorMessageId: payload?.messageId,
+              filter: 'market',
+            });
           } else {
             navigationService.navigateToGroupChat(payload.groupChannelId, {
               anchorMessageId: payload?.messageId,

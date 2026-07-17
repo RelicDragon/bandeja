@@ -252,6 +252,9 @@ async function run(): Promise<void> {
 
   {
     assert.equal(isSkippedLinkPreviewHost('giphy.com'), true);
+    assert.equal(isSkippedLinkPreviewHost('klipy.com'), true);
+    assert.equal(isSkippedLinkPreviewHost('tenor.com'), true);
+    assert.equal(isSkippedLinkPreviewHost('media.tenor.com'), true);
     assert.equal(isSkippedLinkPreviewHost('bandeja.me'), true);
     assert.equal(isSkippedLinkPreviewHost('example.com'), false);
   }
@@ -361,6 +364,8 @@ async function run(): Promise<void> {
   {
     assert.equal(extractFirstEligiblePreviewUrl('see https://bandeja.me/find now'), 'https://bandeja.me/find');
     assert.equal(extractFirstEligiblePreviewUrl('https://giphy.com/x only'), null);
+    assert.equal(extractFirstEligiblePreviewUrl('https://klipy.com/gifs/hello-hi-662'), null);
+    assert.equal(extractFirstEligiblePreviewUrl('https://tenor.com/view/x-gif-1'), null);
     assert.equal(
       normalizeEligiblePreviewSelection('https://example.org', [
         'https://example.com/',

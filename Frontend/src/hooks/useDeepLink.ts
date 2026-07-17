@@ -130,7 +130,7 @@ export const useDeepLink = () => {
         if (pathname.startsWith('/channel-chat/')) {
           const id = pathname.split('/channel-chat/')[1]?.split('/')[0];
           if (id) {
-            navigateFreshChat(navigate, `/channel-chat/${id}`);
+            navigateFreshChat(navigate, `/channel-chat/${id}${url.search || ''}`);
             return;
           }
         }

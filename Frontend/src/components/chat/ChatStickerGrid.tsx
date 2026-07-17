@@ -86,10 +86,13 @@ export function ChatStickerCell({
   const { t } = useTranslation();
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFired = useRef(false);
+  const pointerOrigin = useRef<{ x: number; y: number } | null>(null);
   const clearLongPress = () => {
-    if (!longPressTimer.current) return;
-    clearTimeout(longPressTimer.current);
-    longPressTimer.current = null;
+    pointerOrigin.current = null;
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
   };
   const motionMode = resolveStickerMotionMode({
     staticUrl: sticker.staticUrl,
@@ -117,18 +120,30 @@ export function ChatStickerCell({
         onContextMenu={(event) => {
           if (!onToggleFavorite) return;
           event.preventDefault();
+          clearLongPress();
           lightHaptic();
           onToggleFavorite(sticker);
         }}
-        onPointerDown={() => {
+        onPointerDown={(event) => {
           if (!onToggleFavorite) return;
           longPressFired.current = false;
           clearLongPress();
+          pointerOrigin.current = { x: event.clientX, y: event.clientY };
           longPressTimer.current = setTimeout(() => {
             longPressFired.current = true;
             lightHaptic();
             onToggleFavorite(sticker);
           }, LONG_PRESS_MS);
+        }}
+        onPointerMove={(event) => {
+          const origin = pointerOrigin.current;
+          if (
+            origin &&
+            (Math.abs(event.clientX - origin.x) > 8 ||
+              Math.abs(event.clientY - origin.y) > 8)
+          ) {
+            clearLongPress();
+          }
         }}
         onPointerUp={clearLongPress}
         onPointerCancel={clearLongPress}
@@ -148,7 +163,7 @@ export function ChatStickerCell({
             lightHaptic();
             onToggleFavorite(sticker);
           }}
-          className={`absolute right-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-full text-[11px] leading-none shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+          className={`absolute right-0 top-0 flex h-9 w-9 items-center justify-center rounded-full text-[11px] leading-none shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
             favorite
               ? 'bg-amber-400 text-amber-950'
               : 'bg-white/90 text-gray-400 dark:bg-gray-800/90 dark:text-gray-500'

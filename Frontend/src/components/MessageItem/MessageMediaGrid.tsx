@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { getImageGridLayout } from './utils';
 import { ChatMediaImage } from './ChatMediaImage';
 
@@ -20,6 +21,7 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
   loadEager = false,
   floating = false,
 }) => {
+  const { t } = useTranslation();
   const layout = getImageGridLayout(mediaUrls.length);
 
   return (
@@ -36,16 +38,29 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
         const isSingleImage = layout.singleImage;
 
         return (
-          <div
+          <button
             key={index}
+            type="button"
+            aria-label={
+              floating
+                ? t('chat.giphy.openGif', { defaultValue: 'Open GIF' })
+                : t('chat.giphy.openMedia', {
+                    defaultValue: 'Open media {{number}}',
+                    number: index + 1,
+                  })
+            }
             className={`relative overflow-hidden ${floating ? 'rounded-xl' : ''}`}
             style={{
               gridColumn: isFirstInThreeLayout ? '1 / -1' : 'auto',
               aspectRatio: isSingleImage ? undefined : (isFirstInThreeLayout ? '16/9' : '1'),
               maxHeight: isSingleImage ? '400px' : undefined,
               cursor: 'pointer',
+              padding: 0,
+              border: 0,
+              background: 'transparent',
+              textAlign: 'left',
             }}
-            onClick={() => onImageClick(url)}
+            onClick={() => onImageClick(floating ? getThumbnailUrl(index) : url)}
           >
             <ChatMediaImage
               src={getThumbnailUrl(index)}
@@ -60,7 +75,7 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
               style={{ display: 'block', maxHeight: isSingleImage ? '400px' : undefined }}
               loading={loadEager ? 'eager' : 'lazy'}
             />
-          </div>
+          </button>
         );
       })}
     </div>

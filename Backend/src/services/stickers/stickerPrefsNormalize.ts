@@ -1,11 +1,12 @@
 import { MAX_STICKER_FAVORITES, MAX_STICKER_RECENT } from './stickerConstants';
-import { isAllowedGiphyHost } from '../giphyIngest/giphyHosts';
+import { isDirectKlipyMediaUrl } from '../giphyIngest/giphyHosts';
+import { isDirectGiphyMediaUrl } from '../giphyIngest/giphyUrlDetect';
 
 export type ChatMediaRecent =
   | { kind: 'STICKER'; stickerId: string }
   | {
       kind: 'GIF';
-      provider: 'GIPHY';
+      provider: 'GIPHY' | 'KLIPY';
       id: string;
       title: string;
       previewUrl: string;
@@ -34,11 +35,15 @@ export function normalizeFavoritesInput(ids: unknown): string[] | undefined {
   return normalizeStickerIdList(ids, MAX_STICKER_FAVORITES);
 }
 
-function normalizeGiphyUrl(raw: unknown): string | null {
+function normalizeProviderUrl(raw: unknown, provider: 'GIPHY' | 'KLIPY'): string | null {
   if (typeof raw !== 'string' || raw.length > 2048) return null;
   try {
     const url = new URL(raw.trim());
-    return url.protocol === 'https:' && isAllowedGiphyHost(url.hostname) ? url.toString() : null;
+    if (url.protocol !== 'https:') return null;
+    if (provider === 'KLIPY') {
+      return isDirectKlipyMediaUrl(url.toString()) ? url.toString() : null;
+    }
+    return isDirectGiphyMediaUrl(url.toString()) ? url.toString() : null;
   } catch {
     return null;
   }
@@ -51,10 +56,16 @@ export function normalizeChatMediaRecentItem(raw: unknown): ChatMediaRecent | nu
     const stickerId = typeof item.stickerId === 'string' ? item.stickerId.trim() : '';
     return stickerId && stickerId.length <= 100 ? { kind: 'STICKER', stickerId } : null;
   }
-  if (item.kind !== 'GIF' || item.provider !== 'GIPHY') return null;
+  if (
+    item.kind !== 'GIF' ||
+    (item.provider !== 'GIPHY' && item.provider !== 'KLIPY')
+  ) {
+    return null;
+  }
+  const provider = item.provider;
   const id = typeof item.id === 'string' ? item.id.trim() : '';
-  const previewUrl = normalizeGiphyUrl(item.previewUrl);
-  const downloadUrl = normalizeGiphyUrl(item.downloadUrl);
+  const previewUrl = normalizeProviderUrl(item.previewUrl, provider);
+  const downloadUrl = normalizeProviderUrl(item.downloadUrl, provider);
   if (!id || id.length > 100 || !previewUrl || !downloadUrl) return null;
   const dimension = (value: unknown) =>
     typeof value === 'number' && Number.isFinite(value)
@@ -62,7 +73,7 @@ export function normalizeChatMediaRecentItem(raw: unknown): ChatMediaRecent | nu
       : 200;
   return {
     kind: 'GIF',
-    provider: 'GIPHY',
+    provider,
     id,
     title: typeof item.title === 'string' ? item.title.trim().slice(0, 200) || 'GIF' : 'GIF',
     previewUrl,

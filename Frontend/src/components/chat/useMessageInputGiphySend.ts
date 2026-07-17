@@ -13,6 +13,8 @@ import type { PendingGiphyOutboxMedia } from '@/services/chat/chatLocalDb';
 import { toPendingGiphyOutboxMedia } from '@/services/chat/chatOutboxGiphy';
 import { primeChatMediaDimensions } from '@/services/chat/chatMediaAssetCache';
 import { useNetworkStore } from '@/utils/networkStatus';
+import { waitForOutboxReady } from '@/services/chat/chatOutboxEnqueue';
+import { isGifProviderHostedUrl } from '@/utils/gifProviderUrl';
 
 type Params = {
   isDisabled: boolean;
@@ -69,11 +71,12 @@ export function useMessageInputGiphySend({
   t,
 }: Params) {
   const [giphyBusy, setGiphyBusy] = useState(false);
+  const busyRef = useRef(false);
   const sendGenRef = useRef(0);
 
   const sendGiphy = useCallback(
     async (item: GiphySearchItem) => {
-      if (isDisabled || inputBlocked || giphyBusy) return;
+      if (isDisabled || inputBlocked || busyRef.current) return;
       const authUser = useAuthStore.getState().user;
       if (authUser && authUser.nameIsSet !== true) {
         runWithProfileName(() => void sendGiphy(item));
@@ -81,6 +84,13 @@ export function useMessageInputGiphySend({
       }
       if (!finalContextId) {
         toast.error(t('chat.missingContextId'));
+        return;
+      }
+      if (
+        !isGifProviderHostedUrl(item.downloadUrl) ||
+        !isGifProviderHostedUrl(item.previewUrl)
+      ) {
+        toast.error(t('chat.giphy.sendFailed', { defaultValue: 'Could not queue GIF' }));
         return;
       }
 
@@ -93,6 +103,7 @@ export function useMessageInputGiphySend({
       }
 
       const sendGen = ++sendGenRef.current;
+      busyRef.current = true;
       lightHaptic();
       setGiphyBusy(true);
 
@@ -135,6 +146,10 @@ export function useMessageInputGiphySend({
           return;
         }
 
+        const outboxReady = await waitForOutboxReady(optimisticId);
+        if (!outboxReady) {
+          throw new Error('giphy_outbox_persist_failed');
+        }
         onMessageSent?.();
         onCancelReply?.();
         onStopTyping?.();
@@ -170,6 +185,7 @@ export function useMessageInputGiphySend({
         toast.error(t('chat.giphy.sendFailed', { defaultValue: 'Could not queue GIF' }));
       } finally {
         if (sendGen === sendGenRef.current) {
+          busyRef.current = false;
           setGiphyBusy(false);
         }
       }
@@ -177,7 +193,6 @@ export function useMessageInputGiphySend({
     [
       isDisabled,
       inputBlocked,
-      giphyBusy,
       finalContextId,
       contextType,
       userChatId,

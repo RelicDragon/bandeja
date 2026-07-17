@@ -26,8 +26,8 @@ export async function resumeOrFailSupersededChatSend(
   onFailed: (tempId: string) => void,
   driveSend: DriveQueuedSend
 ): Promise<void> {
-  if (await reconcileAbortedChatSendIfDelivered(tempId, contextType, contextId)) return;
   if (consumeOutboxResumeSuppressed(tempId)) return;
+  if (await reconcileAbortedChatSendIfDelivered(tempId, contextType, contextId)) return;
 
   const row = await messageQueueStorage.getByTempId(tempId);
   if (!row || row.contextType !== contextType || row.contextId !== contextId) return;

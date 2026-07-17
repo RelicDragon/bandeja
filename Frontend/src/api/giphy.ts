@@ -2,15 +2,18 @@ import api from './axios';
 import type { ApiResponse } from '@/types';
 
 export type GiphySearchItem = {
+  provider: 'GIPHY' | 'KLIPY';
   id: string;
   title: string;
   previewUrl: string;
+  staticUrl?: string;
   downloadUrl: string;
   width: number;
   height: number;
 };
 
 export type GiphySearchPage = {
+  provider: 'GIPHY' | 'KLIPY';
   items: GiphySearchItem[];
   offset: number;
   nextOffset: number;
@@ -51,30 +54,43 @@ export function clearGiphyStatusCache(): void {
 
 export async function searchGiphy(
   q: string,
-  options?: { offset?: number; limit?: number }
+  options?: {
+    offset?: number;
+    limit?: number;
+    provider?: 'GIPHY' | 'KLIPY';
+    signal?: AbortSignal;
+  }
 ): Promise<GiphySearchPage> {
   const { data } = await api.get<ApiResponse<GiphySearchPage>>('/giphy/search', {
     params: {
       q: q.trim() || undefined,
       offset: options?.offset ?? 0,
       limit: options?.limit ?? 24,
+      provider: options?.provider,
     },
     timeout: 15_000,
+    signal: options?.signal,
   });
+  if (!data.data) throw new Error('giphy_search_empty');
   return data.data;
 }
 
 export async function trendingGiphy(options?: {
   offset?: number;
   limit?: number;
+  provider?: 'GIPHY' | 'KLIPY';
+  signal?: AbortSignal;
 }): Promise<GiphySearchPage> {
   const { data } = await api.get<ApiResponse<GiphySearchPage>>('/giphy/trending', {
     params: {
       offset: options?.offset ?? 0,
       limit: options?.limit ?? 24,
+      provider: options?.provider,
     },
     timeout: 15_000,
+    signal: options?.signal,
   });
+  if (!data.data) throw new Error('giphy_search_empty');
   return data.data;
 }
 
@@ -88,5 +104,8 @@ export async function importGiphyGif(
     { downloadUrl },
     { timeout: 45_000, signal: options?.signal }
   );
+  if (!data.data?.mediaUrl || !data.data.thumbnailUrl) {
+    throw new Error('giphy_import_empty');
+  }
   return data.data;
 }

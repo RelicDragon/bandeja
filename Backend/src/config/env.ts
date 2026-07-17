@@ -162,5 +162,8 @@ export const config = {
   giphy: {
     apiKey: (process.env.GIPHY_API_KEY || '').trim(),
   },
+  klipy: {
+    apiKey: (process.env.KLIPY_API_KEY || '').trim(),
+  },
 };
 

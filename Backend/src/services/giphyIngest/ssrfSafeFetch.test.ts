@@ -37,6 +37,22 @@ async function run(): Promise<void> {
   );
 
   {
+    const startedAt = Date.now();
+    await assert.rejects(
+      () =>
+        ssrfSafeFetchBytes('https://api.giphy.com/v1/gifs/search', {
+          fetchFn: async () => {
+            throw new Error('fetch must not start before DNS');
+          },
+          lookupFn: async () => new Promise(() => undefined),
+          timeoutMs: 20,
+        }),
+      (err: unknown) => err instanceof SsrfFetchError && /timed out/i.test(err.message)
+    );
+    assert.ok(Date.now() - startedAt < 250);
+  }
+
+  {
     let calls = 0;
     const fetchFn: typeof fetch = async () => {
       calls += 1;

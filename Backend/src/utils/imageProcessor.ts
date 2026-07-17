@@ -121,7 +121,13 @@ export class ImageProcessor {
     
     // Upload to S3
     const originalPath = await S3Service.uploadFile(imageBuffer, originalS3Key, contentType);
-    const thumbnailPath = await S3Service.uploadFile(thumbnailBuffer, thumbnailS3Key, 'image/jpeg');
+    let thumbnailPath: string;
+    try {
+      thumbnailPath = await S3Service.uploadFile(thumbnailBuffer, thumbnailS3Key, 'image/jpeg');
+    } catch (error) {
+      await S3Service.deleteFile(originalS3Key);
+      throw error;
+    }
     
     return {
       originalPath,

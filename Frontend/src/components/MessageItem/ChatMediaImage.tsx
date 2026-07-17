@@ -22,7 +22,7 @@ export const ChatMediaImage: React.FC<ChatMediaImageProps> = ({
 
   return (
     <img
-      src={asset?.displayUrl}
+      src={asset?.displayUrl ?? src}
       width={asset?.dimensions?.width}
       height={asset?.dimensions?.height}
       alt={alt}

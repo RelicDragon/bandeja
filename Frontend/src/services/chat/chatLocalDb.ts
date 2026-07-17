@@ -25,7 +25,7 @@ export type ChatLocalCursorRow = {
 export type QueuedMessageStatus = 'queued' | 'sending' | 'failed';
 
 export type PendingGiphyOutboxMedia = {
-  provider: 'GIPHY';
+  provider: 'GIPHY' | 'KLIPY';
   id: string;
   title: string;
   previewUrl: string;

@@ -78,12 +78,6 @@ export const createSystemMessage = (
 ) => SystemMessageService.createSystemMessageWithEmit(contextId, messageData, chatType, chatContextType);
 
 export const createMessage = asyncHandler(async (req: AuthRequest, res: Response) => {
-  console.log('[createMessage] Request received:', {
-    body: req.body,
-    userId: req.userId,
-    headers: req.headers
-  });
-
   const {
     chatContextType = 'GAME',
     contextId,

@@ -99,7 +99,9 @@ class NavigationService {
 
   navigateToChannelChat(channelId: string, opts?: ChatNavigateOptions) {
     if (!this.ensureInitialized() || !channelId) return;
-    this.navigate!(buildUrl('channelChat', { id: channelId }), {
+    const params: PlaceParams = { id: channelId };
+    if (opts?.filter === 'market') params.filter = 'market';
+    this.navigate!(buildUrl('channelChat', params), {
       replace: true,
       state: chatNavigationState({ forceReload: true, ...opts }),
     });

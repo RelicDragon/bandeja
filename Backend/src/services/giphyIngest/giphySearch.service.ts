@@ -6,27 +6,42 @@ import {
   type DnsLookupFn,
 } from './ssrfSafeFetch';
 import {
-  readGiphySearchCache,
+  giphySearchCacheKey,
+  readGiphySearchCacheForRequest,
   writeGiphySearchCache,
   type GiphySearchCacheStore,
 } from './giphySearch.cache';
+import { fetchKlipyGifs, isKlipySearchConfigured } from './klipySearch.service';
+import {
+  isGifProviderCoolingDown,
+  recordGifProviderFailure,
+  recordGifProviderSuccess,
+} from './gifProviderHealth';
+
+const inFlightGiphyLists = new Map<string, Promise<GiphySearchPage>>();
 
 export const GIPHY_SEARCH_DEFAULT_LIMIT = 24;
 export const GIPHY_SEARCH_MAX_LIMIT = 50;
+export const GIF_SEARCH_PROVIDER_TIMEOUT_MS = 5_000;
+
+export type GifProvider = 'GIPHY' | 'KLIPY';
 
 export type GiphySearchItem = {
+  provider: GifProvider;
   id: string;
   title: string;
   previewUrl: string;
+  staticUrl?: string;
   downloadUrl: string;
   width: number;
   height: number;
 };
 
 export type GiphySearchPage = {
+  provider: GifProvider;
   items: GiphySearchItem[];
   offset: number;
-  /** Next Giphy API offset (based on API page size, not filtered item count). */
+  /** Next active-provider offset (based on API page size, not filtered item count). */
   nextOffset: number;
   limit: number;
   totalCount: number;
@@ -37,7 +52,17 @@ export type GiphySearchDeps = {
   fetchFn?: typeof fetch;
   lookupFn?: DnsLookupFn;
   apiKey?: string | null;
+  klipyApiKey?: string | null;
   cache?: GiphySearchCacheStore | null;
+  nowFn?: () => number;
+  providerTimeoutMs?: number;
+  authorizeCacheMiss?: () => Promise<boolean>;
+};
+
+export type GifSearchOptions = {
+  offset?: number;
+  limit?: number;
+  provider?: GifProvider;
 };
 
 type GiphyApiImage = {
@@ -54,6 +79,7 @@ type GiphyApiGif = {
     downsized?: GiphyApiImage;
     downsized_medium?: GiphyApiImage;
     fixed_width?: GiphyApiImage;
+    fixed_width_still?: GiphyApiImage;
     fixed_width_downsampled?: GiphyApiImage;
     preview_gif?: GiphyApiImage;
   };
@@ -61,6 +87,9 @@ type GiphyApiGif = {
 
 type GiphyApiListResponse = {
   data?: GiphyApiGif[];
+  meta?: {
+    status?: number;
+  };
   pagination?: {
     total_count?: number;
     count?: number;
@@ -71,6 +100,17 @@ type GiphyApiListResponse = {
 export function isGiphySearchConfigured(apiKey?: string | null): boolean {
   const key = (apiKey !== undefined ? apiKey : config.giphy.apiKey)?.trim() || '';
   return key.length > 0;
+}
+
+export function isGifSearchConfigured(deps: {
+  giphyApiKey?: string | null;
+  klipyApiKey?: string | null;
+} = {}): boolean {
+  const giphyKey =
+    deps.giphyApiKey !== undefined ? deps.giphyApiKey : config.giphy.apiKey;
+  const klipyKey =
+    deps.klipyApiKey !== undefined ? deps.klipyApiKey : config.klipy.apiKey;
+  return isGiphySearchConfigured(giphyKey) || isKlipySearchConfigured(klipyKey);
 }
 
 function clampLimit(raw: number | undefined): number {
@@ -136,12 +176,12 @@ function pickDownloadUrl(images: GiphyApiGif['images']): string | null {
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
   if (!raw) return fallback;
   const n = Number.parseInt(raw, 10);
-  return Number.isFinite(n) && n > 0 ? n : fallback;
+  return Number.isFinite(n) && n > 0 ? Math.min(8192, n) : fallback;
 }
 
 function mapGif(gif: GiphyApiGif): GiphySearchItem | null {
   const id = gif.id?.trim();
-  if (!id) return null;
+  if (!id || id.length > 100) return null;
   const previewUrl = pickPreviewUrl(gif.images);
   const downloadUrl = pickDownloadUrl(gif.images);
   if (!previewUrl || !downloadUrl) return null;
@@ -150,10 +190,15 @@ function mapGif(gif: GiphyApiGif): GiphySearchItem | null {
     gif.images?.downsized ??
     gif.images?.original ??
     gif.images?.fixed_width_downsampled;
+  const staticUrl = gif.images?.fixed_width_still?.url
+    ? normalizeGiphyMediaUrl(gif.images.fixed_width_still.url)
+    : null;
   return {
+    provider: 'GIPHY',
     id,
-    title: (gif.title ?? '').trim() || 'GIF',
+    title: ((gif.title ?? '').trim() || 'GIF').slice(0, 200),
     previewUrl,
+    ...(staticUrl ? { staticUrl } : {}),
     downloadUrl,
     width: parsePositiveInt(dims?.width, 200),
     height: parsePositiveInt(dims?.height, 200),
@@ -162,6 +207,7 @@ function mapGif(gif: GiphyApiGif): GiphySearchItem | null {
 
 async function fetchGiphyList(
   pathAndQuery: string,
+  requestedLimit: number,
   deps: GiphySearchDeps
 ): Promise<GiphySearchPage> {
   const apiKey = (deps.apiKey !== undefined ? deps.apiKey : config.giphy.apiKey)?.trim() || '';
@@ -176,22 +222,119 @@ async function fetchGiphyList(
     fetchFn: deps.fetchFn,
     lookupFn: deps.lookupFn,
     maxBytes: 2 * 1024 * 1024,
-    timeoutMs: 8_000,
+    timeoutMs: deps.providerTimeoutMs ?? GIF_SEARCH_PROVIDER_TIMEOUT_MS,
   });
 
   const json = JSON.parse(buffer.toString('utf8')) as GiphyApiListResponse;
-  const rawCount = Array.isArray(json.data) ? json.data.length : 0;
-  const items = (json.data ?? [])
+  if (!Array.isArray(json.data) || (json.meta?.status != null && json.meta.status !== 200)) {
+    throw new Error('GIPHY_SEARCH_FAILED');
+  }
+  const rawCount = Math.min(json.data.length, requestedLimit);
+  const items = json.data
+    .slice(0, requestedLimit)
     .map(mapGif)
     .filter((item): item is GiphySearchItem => item != null);
 
   const offset = json.pagination?.offset ?? 0;
-  const pageCount = json.pagination?.count ?? rawCount;
+  const pageCount = Math.min(json.pagination?.count ?? rawCount, requestedLimit);
   const totalCount = json.pagination?.total_count ?? offset + pageCount;
-  const nextOffset = offset + pageCount;
-  const hasMore = nextOffset < totalCount;
+  if (
+    !Number.isSafeInteger(offset) ||
+    offset < 0 ||
+    !Number.isSafeInteger(pageCount) ||
+    pageCount < 0 ||
+    !Number.isSafeInteger(totalCount) ||
+    totalCount < offset + pageCount
+  ) {
+    throw new Error('GIPHY_SEARCH_FAILED');
+  }
+  const providerNextOffset = offset + pageCount;
+  const hasMore = pageCount > 0 && providerNextOffset < totalCount;
+  const nextOffset = hasMore ? offset + requestedLimit : providerNextOffset;
 
-  return { items, offset, nextOffset, limit: pageCount, totalCount, hasMore };
+  return {
+    provider: 'GIPHY',
+    items,
+    offset,
+    nextOffset,
+    limit: pageCount,
+    totalCount,
+    hasMore,
+  };
+}
+
+function configuredProviders(deps: GiphySearchDeps): GifProvider[] {
+  const giphyApiKey =
+    deps.apiKey !== undefined ? deps.apiKey : config.giphy.apiKey;
+  const klipyApiKey =
+    deps.klipyApiKey !== undefined ? deps.klipyApiKey : config.klipy.apiKey;
+  const providers: GifProvider[] = [];
+  if (isGiphySearchConfigured(giphyApiKey)) providers.push('GIPHY');
+  if (isKlipySearchConfigured(klipyApiKey)) providers.push('KLIPY');
+  return providers;
+}
+
+function providerOrder(
+  preferredProvider: GifProvider | undefined,
+  deps: GiphySearchDeps
+): GifProvider[] {
+  const configured = configuredProviders(deps);
+  const base: GifProvider[] = preferredProvider
+    ? [preferredProvider, preferredProvider === 'GIPHY' ? 'KLIPY' : 'GIPHY']
+    : ['GIPHY', 'KLIPY'];
+  const available = base.filter((provider) => configured.includes(provider));
+  const now = deps.nowFn?.() ?? Date.now();
+  return available.filter((provider) => !isGifProviderCoolingDown(provider, now));
+}
+
+function giphyPath(query: string, offset: number, limit: number): string {
+  return query
+    ? `/v1/gifs/search?q=${encodeURIComponent(query)}&offset=${offset}&limit=${limit}&rating=pg-13&lang=en`
+    : `/v1/gifs/trending?offset=${offset}&limit=${limit}&rating=pg-13`;
+}
+
+async function fetchGifListWithFallback(
+  query: string,
+  offset: number,
+  limit: number,
+  preferredProvider: GifProvider | undefined,
+  deps: GiphySearchDeps
+): Promise<GiphySearchPage> {
+  const providers = providerOrder(preferredProvider, deps);
+  if (providers.length === 0) {
+    if (configuredProviders(deps).length === 0) {
+      throw new Error('GIF_SEARCH_NOT_CONFIGURED');
+    }
+    throw new Error('GIF_SEARCH_PROVIDERS_COOLING_DOWN');
+  }
+  const now = deps.nowFn?.() ?? Date.now();
+  for (const provider of providers) {
+    const attemptOffset = offset;
+    try {
+      const page =
+        provider === 'GIPHY'
+          ? await fetchGiphyList(giphyPath(query, attemptOffset, limit), limit, deps)
+          : await fetchKlipyGifs(
+              query,
+              { offset: attemptOffset, limit },
+              {
+                fetchFn: deps.fetchFn,
+                lookupFn: deps.lookupFn,
+                apiKey:
+                  deps.klipyApiKey !== undefined
+                    ? deps.klipyApiKey
+                    : config.klipy.apiKey,
+                timeoutMs:
+                  deps.providerTimeoutMs ?? GIF_SEARCH_PROVIDER_TIMEOUT_MS,
+              }
+            );
+      recordGifProviderSuccess(provider);
+      return page;
+    } catch {
+      recordGifProviderFailure(provider, now);
+    }
+  }
+  throw new Error('GIF_SEARCH_FAILED');
 }
 
 function cacheStoreForDeps(
@@ -205,21 +348,50 @@ async function cachedGiphyList(
   query: string,
   offset: number,
   limit: number,
+  provider: GifProvider | undefined,
   fetchPage: () => Promise<GiphySearchPage>,
   deps: GiphySearchDeps
 ): Promise<GiphySearchPage> {
-  const identity = { query, offset, limit };
+  const identity = { query, offset, limit, provider };
   const cache = cacheStoreForDeps(deps);
-  const cached = await readGiphySearchCache(identity, cache);
+  const eligible = providerOrder(provider, deps);
+  const cached = await readGiphySearchCacheForRequest(identity, eligible, cache);
   if (cached) return cached;
-  const page = await fetchPage();
-  await writeGiphySearchCache(identity, page, cache);
-  return page;
+  // Coalesce in-flight by request identity (preferred provider), not response provider.
+  const inflightKey = `req:${giphySearchCacheKey({
+    ...identity,
+    provider: provider ?? 'GIPHY',
+  })}:${provider ?? 'AUTO'}`;
+  const existing = inFlightGiphyLists.get(inflightKey);
+  if (existing) return existing;
+
+  const request = (async () => {
+    if (deps.authorizeCacheMiss && !(await deps.authorizeCacheMiss())) {
+      throw new Error('GIF_SEARCH_RATE_LIMITED');
+    }
+    const page = await fetchPage();
+    // Persist under the provider that actually answered — never under a preferred
+    // key that fell back (avoids locking Giphy requests onto Klipy for months).
+    await writeGiphySearchCache(
+      { query, offset, limit, provider: page.provider },
+      page,
+      cache
+    );
+    return page;
+  })();
+  inFlightGiphyLists.set(inflightKey, request);
+  try {
+    return await request;
+  } finally {
+    if (inFlightGiphyLists.get(inflightKey) === request) {
+      inFlightGiphyLists.delete(inflightKey);
+    }
+  }
 }
 
 export async function searchGiphyGifs(
   query: string,
-  options: { offset?: number; limit?: number } = {},
+  options: GifSearchOptions = {},
   deps: GiphySearchDeps = {}
 ): Promise<GiphySearchPage> {
   const q = query.trim();
@@ -233,22 +405,33 @@ export async function searchGiphyGifs(
       q,
       offset,
       limit,
+      options.provider,
       () =>
-        fetchGiphyList(
-          `/v1/gifs/search?q=${encodeURIComponent(q)}&offset=${offset}&limit=${limit}&rating=pg-13&lang=en`,
+        fetchGifListWithFallback(
+          q,
+          offset,
+          limit,
+          options.provider,
           deps
         ),
       deps
     );
   } catch (err) {
     if (err instanceof SsrfFetchError) throw err;
-    if (err instanceof Error && err.message === 'GIPHY_API_KEY_MISSING') throw err;
+    if (
+      err instanceof Error &&
+      (err.message === 'GIF_SEARCH_NOT_CONFIGURED' ||
+        err.message === 'GIF_SEARCH_RATE_LIMITED' ||
+        err.message === 'GIF_SEARCH_PROVIDERS_COOLING_DOWN')
+    ) {
+      throw err;
+    }
     throw new Error('GIPHY_SEARCH_FAILED');
   }
 }
 
 export async function trendingGiphyGifs(
-  options: { offset?: number; limit?: number } = {},
+  options: GifSearchOptions = {},
   deps: GiphySearchDeps = {}
 ): Promise<GiphySearchPage> {
   const offset = clampOffset(options.offset);
@@ -258,16 +441,27 @@ export async function trendingGiphyGifs(
       '',
       offset,
       limit,
+      options.provider,
       () =>
-        fetchGiphyList(
-          `/v1/gifs/trending?offset=${offset}&limit=${limit}&rating=pg-13`,
+        fetchGifListWithFallback(
+          '',
+          offset,
+          limit,
+          options.provider,
           deps
         ),
       deps
     );
   } catch (err) {
     if (err instanceof SsrfFetchError) throw err;
-    if (err instanceof Error && err.message === 'GIPHY_API_KEY_MISSING') throw err;
+    if (
+      err instanceof Error &&
+      (err.message === 'GIF_SEARCH_NOT_CONFIGURED' ||
+        err.message === 'GIF_SEARCH_RATE_LIMITED' ||
+        err.message === 'GIF_SEARCH_PROVIDERS_COOLING_DOWN')
+    ) {
+      throw err;
+    }
     throw new Error('GIPHY_SEARCH_FAILED');
   }
 }

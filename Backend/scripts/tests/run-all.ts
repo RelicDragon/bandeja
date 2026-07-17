@@ -761,6 +761,22 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'klipy url detect unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'giphyIngest', 'klipyUrlDetect.test.ts'),
+    ],
+  },
+  {
+    label: 'tenor url detect unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'giphyIngest', 'tenorUrlDetect.test.ts'),
+    ],
+  },
+  {
     label: 'giphy ssrf fetch unit',
     command: process.execPath,
     args: [
@@ -774,6 +790,20 @@ const suites: Suite[] = [
     args: [
       path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
       path.join(backendRoot, 'src', 'services', 'giphyIngest', 'giphyIngest.service.test.ts'),
+    ],
+  },
+  {
+    label: 'giphy import concurrency unit',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(
+        backendRoot,
+        'src',
+        'services',
+        'giphyIngest',
+        'giphyImportConcurrency.test.ts'
+      ),
     ],
   },
   {
@@ -997,6 +1027,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'group chat notification path',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'shared', 'groupChatNotificationPath.test.ts'),
+    ],
+  },
+  {
     label: 'telegram chat media preview',
     command: process.execPath,
     args: [
@@ -1004,6 +1042,7 @@ const suites: Suite[] = [
       path.join(backendRoot, 'src', 'services', 'telegram', 'notifications', 'telegram-chat-media.notification.test.ts'),
     ],
   },
+
   {
     label: 'game external booking',
     command: process.execPath,

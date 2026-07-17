@@ -1,5 +1,7 @@
+import { isAllowedGiphyHost } from '../giphyIngest/giphyHosts';
+
 /**
- * First chat-preview-eligible URL in message text (skips giphy).
+ * First chat-preview-eligible URL in message text (skips GIF provider hosts).
  */
 export function extractFirstEligiblePreviewUrl(content: string | null | undefined): string | null {
   return extractEligiblePreviewUrls(content)[0] ?? null;
@@ -16,7 +18,8 @@ export function extractEligiblePreviewUrls(content: string | null | undefined): 
       const u = new URL(raw);
       if (u.protocol !== 'http:' && u.protocol !== 'https:') continue;
       if (u.username || u.password) continue;
-      if (/(^|\.)giphy\.com$/i.test(u.hostname)) continue;
+      // GIF paste pipeline owns these hosts (Giphy / Klipy / Tenor).
+      if (isAllowedGiphyHost(u.hostname)) continue;
       const normalized = u.toString();
       if (!urls.includes(normalized)) urls.push(normalized);
     } catch {
