@@ -29,9 +29,12 @@ export const UserGameNoteModal = ({
   const adjustHeight = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
-    el.style.height = '0';
-    const oneRow = 40;
-    el.style.height = `${Math.max(oneRow, el.scrollHeight)}px`;
+    const minHeight = 40;
+    const maxHeight = 320;
+    el.style.height = '0px';
+    const contentHeight = el.scrollHeight;
+    el.style.height = `${Math.min(maxHeight, Math.max(minHeight, contentHeight))}px`;
+    el.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden';
   }, []);
 
   useEffect(() => {
@@ -93,7 +96,7 @@ export const UserGameNoteModal = ({
             onKeyDown={handleKeyDown}
             placeholder={t('userGameNotes.placeholder')}
             rows={1}
-            className="w-full min-h-[2.5rem] px-4 py-3 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
+            className="w-full min-h-[2.5rem] max-h-80 box-border px-4 py-3 overflow-hidden scrollbar-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-primary-500 dark:focus:border-primary-400 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 resize-none"
             maxLength={5000}
           />
         </div>
