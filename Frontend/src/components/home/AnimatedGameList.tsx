@@ -44,11 +44,10 @@ export function AnimatedGameList<T>({
 
   return (
     <div className={className}>
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence initial={false}>
         {items.map((item, index) => (
           <motion.div
             key={getKey(item)}
-            layout
             custom={index}
             variants={itemVariants}
             initial="hidden"

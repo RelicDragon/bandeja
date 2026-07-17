@@ -39,7 +39,7 @@ export function GamesByDateList({
   }
 
   return (
-    <AnimatedMount layout className="space-y-4 pb-8">
+    <AnimatedMount className="space-y-4 pb-8">
       {grouped.map((group) => (
         <div key={group.dateStr}>
           <GamesDateGroupHeading label={group.label} />

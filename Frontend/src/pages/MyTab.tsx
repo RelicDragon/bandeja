@@ -463,7 +463,7 @@ export const MyTab = () => {
               />
             </div>
           )}
-          <AnimatedMount layout>
+          <AnimatedMount>
             <MyGamesSection
               games={gamesSectionGames}
               user={user}
@@ -581,7 +581,7 @@ export const MyTab = () => {
               <CalendarSection {...myTabCalendarProps} />
             </AnimatedMount>
           )}
-          <AnimatedMount layout>
+          <AnimatedMount>
             <MyGamesSection
               games={gamesSectionGames}
               user={user}

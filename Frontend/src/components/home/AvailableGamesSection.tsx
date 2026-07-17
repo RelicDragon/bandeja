@@ -786,8 +786,8 @@ export const AvailableGamesSection = ({
             <div className="flex-1 min-h-0 overflow-y-auto bg-gray-50 dark:bg-gray-900">
               <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
                 <TabContentStack id="find-split-right">
-                  <AnimatedMount layout>{gamesContent}</AnimatedMount>
-                  <AnimatedMount layout>
+                  <AnimatedMount>{gamesContent}</AnimatedMount>
+                  <AnimatedMount>
                     <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />
                   </AnimatedMount>
                 </TabContentStack>
@@ -812,9 +812,9 @@ export const AvailableGamesSection = ({
         <CalendarSection {...calendarSectionProps} />
       </AnimatedMount>
 
-      <AnimatedMount layout>{gamesContent}</AnimatedMount>
+      <AnimatedMount>{gamesContent}</AnimatedMount>
 
-      <AnimatedMount layout>
+      <AnimatedMount>
         <SubscriptionsNudgeButton onClick={handleSubscriptionsClick} />
       </AnimatedMount>
     </TabContentStack>

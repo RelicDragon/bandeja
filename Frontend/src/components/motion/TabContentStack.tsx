@@ -1,6 +1,4 @@
-import { LayoutGroup } from 'framer-motion';
 import type { ReactNode } from 'react';
-import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 interface TabContentStackProps {
   children: ReactNode;
@@ -8,16 +6,6 @@ interface TabContentStackProps {
   id?: string;
 }
 
-export function TabContentStack({ children, className, id = 'tab-content-stack' }: TabContentStackProps) {
-  const reduceMotion = usePrefersReducedMotion();
-
-  if (reduceMotion) {
-    return <div className={className}>{children}</div>;
-  }
-
-  return (
-    <LayoutGroup id={id}>
-      <div className={className}>{children}</div>
-    </LayoutGroup>
-  );
+export function TabContentStack({ children, className }: TabContentStackProps) {
+  return <div className={className}>{children}</div>;
 }

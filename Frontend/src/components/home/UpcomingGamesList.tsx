@@ -160,7 +160,7 @@ export const UpcomingGamesList = ({
   );
 
   return (
-    <AnimatedMount layout className="space-y-4">
+    <AnimatedMount className="space-y-4">
       {upcomingGrouped.length > 0 && (
         <Card className="py-4">
           <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2 px-1">
