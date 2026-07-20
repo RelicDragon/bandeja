@@ -228,7 +228,14 @@
         "USER_KICKED": "{{userName}} was kicked from the bar",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the bar",
         "GAME_CLUB_CHANGED": "Bar location changed to {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Bar date/time changed to {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Bar date/time changed to {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Hall booking status changed to {{bookingStatus}}",
+        "bookingStatuses": {
+          "EXTERNAL_FULL": "Fully booked",
+          "EXTERNAL_PARTIAL": "Not fully booked",
+          "MANUAL": "Hall booked",
+          "NONE": "Not booked yet"
+        }
       },
       "TRAINING": {
         "USER_JOINED_GAME": "{{userName}} joined the training",
@@ -239,7 +246,8 @@
         "USER_KICKED": "{{userName}} was kicked from the training",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the training",
         "GAME_CLUB_CHANGED": "Training location changed to {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Training date/time changed to {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Training date/time changed to {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Court booking status changed to {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} joined the tournament",
@@ -250,7 +258,8 @@
         "USER_KICKED": "{{userName}} was kicked from the tournament",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the tournament",
         "GAME_CLUB_CHANGED": "Tournament location changed to {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Tournament date/time changed to {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Tournament date/time changed to {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Court booking status changed to {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} joined the league",
@@ -261,7 +270,8 @@
         "USER_KICKED": "{{userName}} was kicked from the league",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the league",
         "GAME_CLUB_CHANGED": "League location changed to {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "League date/time changed to {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "League date/time changed to {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Court booking status changed to {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} joined the league season",
@@ -272,11 +282,19 @@
         "USER_KICKED": "{{userName}} was kicked from the league season",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} is now the owner of the league season",
         "GAME_CLUB_CHANGED": "League season location changed to {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "League season date/time changed to {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "League season date/time changed to {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Court booking status changed to {{bookingStatus}}"
       },
       "actions": {
         "joined": "joined the game",
         "left": "left the game"
+      },
+      "GAME_BOOKING_STATUS_CHANGED": "Court booking status changed to {{bookingStatus}}",
+      "bookingStatuses": {
+        "EXTERNAL_FULL": "Fully booked",
+        "EXTERNAL_PARTIAL": "Not fully booked",
+        "MANUAL": "Court booked",
+        "NONE": "Not booked yet"
       }
     },
     "openChat": "Open Chat",
@@ -522,33 +540,111 @@
         "market": "Marketplace",
         "marketChat": "Marketplace chat"
       },
-      "openGame": { "title": "Open game", "description": "View this game in Bandeja" },
-      "openTraining": { "title": "Open training", "description": "View this training in Bandeja" },
-      "openLeague": { "title": "Open league", "description": "View this league in Bandeja" },
-      "viewProfile": { "title": "Profile", "description": "View profile" },
-      "directMessage": { "title": "Chat", "description": "Direct message" },
-      "marketplaceItem": { "title": "Marketplace item", "description": "View listing" },
+      "openGame": {
+        "title": "Open game",
+        "description": "View this game in Bandeja"
+      },
+      "openTraining": {
+        "title": "Open training",
+        "description": "View this training in Bandeja"
+      },
+      "openLeague": {
+        "title": "Open league",
+        "description": "View this league in Bandeja"
+      },
+      "viewProfile": {
+        "title": "Profile",
+        "description": "View profile"
+      },
+      "directMessage": {
+        "title": "Chat",
+        "description": "Direct message"
+      },
+      "marketplaceItem": {
+        "title": "Marketplace item",
+        "description": "View listing"
+      },
       "app": {
-        "home": { "title": "Bandeja", "description": "My games" },
-        "invites": { "title": "Invites", "description": "Open invites" },
-        "find": { "title": "Find games", "description": "Browse available games" },
-        "findToday": { "title": "Find games", "description": "Today" },
-        "findTomorrow": { "title": "Find games", "description": "Tomorrow" },
-        "chats": { "title": "Chats", "description": "Open conversations" },
-        "chatsMarketplace": { "title": "Marketplace chats", "description": "Open marketplace chats" },
-        "createGame": { "title": "Create game", "description": "Start a new game" },
-        "createLeague": { "title": "Create league", "description": "Start a new league" },
-        "nextGame": { "title": "Next game", "description": "Jump to your next game" },
-        "nextGameChat": { "title": "Next game", "description": "Open game chat" },
-        "nextGameLive": { "title": "Next game", "description": "Open live scoring" },
-        "marketplace": { "title": "Marketplace", "description": "Browse items" },
-        "marketplaceMy": { "title": "My listings", "description": "Your marketplace items" },
-        "leaderboard": { "title": "Leaderboard", "description": "Rankings" },
-        "login": { "title": "Log in", "description": "Sign in to Bandeja" },
-        "register": { "title": "Register", "description": "Create a Bandeja account" },
-        "bugs": { "title": "Bugs", "description": "Bug reports" },
-        "profile": { "title": "Profile", "description": "Your profile" },
-        "open": { "title": "Bandeja", "description": "Open in Bandeja" }
+        "home": {
+          "title": "Bandeja",
+          "description": "My games"
+        },
+        "invites": {
+          "title": "Invites",
+          "description": "Open invites"
+        },
+        "find": {
+          "title": "Find games",
+          "description": "Browse available games"
+        },
+        "findToday": {
+          "title": "Find games",
+          "description": "Today"
+        },
+        "findTomorrow": {
+          "title": "Find games",
+          "description": "Tomorrow"
+        },
+        "chats": {
+          "title": "Chats",
+          "description": "Open conversations"
+        },
+        "chatsMarketplace": {
+          "title": "Marketplace chats",
+          "description": "Open marketplace chats"
+        },
+        "createGame": {
+          "title": "Create game",
+          "description": "Start a new game"
+        },
+        "createLeague": {
+          "title": "Create league",
+          "description": "Start a new league"
+        },
+        "nextGame": {
+          "title": "Next game",
+          "description": "Jump to your next game"
+        },
+        "nextGameChat": {
+          "title": "Next game",
+          "description": "Open game chat"
+        },
+        "nextGameLive": {
+          "title": "Next game",
+          "description": "Open live scoring"
+        },
+        "marketplace": {
+          "title": "Marketplace",
+          "description": "Browse items"
+        },
+        "marketplaceMy": {
+          "title": "My listings",
+          "description": "Your marketplace items"
+        },
+        "leaderboard": {
+          "title": "Leaderboard",
+          "description": "Rankings"
+        },
+        "login": {
+          "title": "Log in",
+          "description": "Sign in to Bandeja"
+        },
+        "register": {
+          "title": "Register",
+          "description": "Create a Bandeja account"
+        },
+        "bugs": {
+          "title": "Bugs",
+          "description": "Bug reports"
+        },
+        "profile": {
+          "title": "Profile",
+          "description": "Your profile"
+        },
+        "open": {
+          "title": "Bandeja",
+          "description": "Open in Bandeja"
+        }
       }
     }
   }

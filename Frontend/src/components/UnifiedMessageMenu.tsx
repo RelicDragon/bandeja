@@ -29,13 +29,14 @@ import {
   resolveIncomingTranslationTargetCode,
 } from '@/utils/translationLanguages';
 import { isCapacitor } from '@/utils/capacitor';
-import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff, Sticker } from 'lucide-react';
+import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff, Star, Sticker } from 'lucide-react';
 import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 import { usePlayersStore } from '@/store/playersStore';
 import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
 import type { BasicUser } from '@/types';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { useIsStickerFavorite } from '@/hooks/useIsStickerFavorite';
 import { buildMessageDetailsAudienceRows } from '@/utils/messageDetailsAudience';
 import {
   isEligibleSaveAsStickerMessage,
@@ -247,6 +248,18 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
   };
 
   const canSaveAsSticker = !isSystemMessage && isEligibleSaveAsStickerMessage(message);
+
+  const favoriteStickerId =
+    !isSystemMessage && message.messageType === 'STICKER' ? message.stickerId : null;
+  const { isFavorite: isStickerFavorite, toggle: toggleStickerFavorite, busy: favoriteBusy } =
+    useIsStickerFavorite(favoriteStickerId);
+  const canFavoriteSticker = !!favoriteStickerId;
+
+  const handleToggleFavorite = () => {
+    if (!canFavoriteSticker || favoriteBusy) return;
+    void toggleStickerFavorite();
+    closeMenu();
+  };
 
   const handleSaveAsSticker = async () => {
     if (!canSaveAsSticker || isSavingSticker) return;
@@ -620,6 +633,24 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                   {isSavingSticker
                     ? t('chat.contextMenu.savingAsSticker', { defaultValue: 'Saving…' })
                     : t('chat.contextMenu.saveAsSticker', { defaultValue: 'Save as sticker' })}
+                </span>
+              </button>
+            )}
+            {canFavoriteSticker && (
+              <button
+                type="button"
+                onClick={handleToggleFavorite}
+                disabled={favoriteBusy}
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="chat-toggle-sticker-favorite"
+              >
+                <Star className={`w-4 h-4 ${isStickerFavorite ? 'fill-current' : ''}`} />
+                <span>
+                  {isStickerFavorite
+                    ? t('chat.contextMenu.removeFromFavorites', {
+                        defaultValue: 'Remove from favorites',
+                      })
+                    : t('chat.contextMenu.addToFavorites', { defaultValue: 'Add to favorites' })}
                 </span>
               </button>
             )}

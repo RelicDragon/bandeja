@@ -22,6 +22,26 @@ function formatVoicePreviewLabel(ms: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+const GIF_PROVIDER_HOSTS = ['giphy.com', 'klipy.com', 'tenor.com', 'tenor.co'];
+
+/** True when a stored media URL points at an animated GIF (re-hosted or provider-hosted). */
+export function looksLikeGifMediaUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  let host = '';
+  let path = '';
+  try {
+    const parsed = new URL(url);
+    host = parsed.hostname.toLowerCase().replace(/\.$/, '');
+    path = parsed.pathname.toLowerCase();
+  } catch {
+    const fallback = url.toLowerCase();
+    return /\.gif($|\?)/.test(fallback) || /\/giphy\.(gif|webp|png)($|\?)/.test(fallback);
+  }
+  if (GIF_PROVIDER_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) return true;
+  if (path.endsWith('.gif') || path.includes('.gif.')) return true;
+  return /\/giphy\.(gif|webp|png)$/.test(path);
+}
+
 export function extractPreviewFromMessage(message: MessageForPreview): string {
   if (hasStoryReplyPayload(message.storyReply)) {
     return formatStoryReplyPreview(message.content);
@@ -44,6 +64,9 @@ export function extractPreviewFromMessage(message: MessageForPreview): string {
   const hasMedia = Array.isArray(message.mediaUrls) && message.mediaUrls.length > 0;
   const hasText = Boolean(message.content?.trim());
 
+  if (hasMedia && !hasText && looksLikeGifMediaUrl(message.mediaUrls[0])) {
+    return '[TYPE:GIF]';
+  }
   if (hasMedia && !hasText) return '[TYPE:MEDIA]';
   if (!hasText) return '[TYPE:MEDIA]';
 

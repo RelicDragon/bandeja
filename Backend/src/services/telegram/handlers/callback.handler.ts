@@ -1,5 +1,5 @@
 import { Middleware } from 'grammy';
-import { BotContext, PendingReply } from '../types';
+import { BotContext, PendingTelegramInput } from '../types';
 import { ChatType } from '@prisma/client';
 import prisma from '../../../config/database';
 import { t } from '../../../utils/translations';
@@ -7,9 +7,10 @@ import telegramNotificationService from '../notification.service';
 import { acceptInviteFromTelegram, declineInviteFromTelegram } from '../invite.service';
 import { acceptUserTeamInviteFromTelegram, declineUserTeamInviteFromTelegram } from '../userTeamInviteTelegram.service';
 import { escapeMarkdown, escapeHTML, getUserLanguage } from '../utils';
+import { updateInviteTelegramMessage } from '../inviteMessageUpdate';
 
 export function createCallbackHandler(
-  pendingReplies: Map<string, PendingReply>
+  pendingReplies: Map<string, PendingTelegramInput>
 ): Middleware<BotContext> {
   return async (ctx) => {
     const query = ctx.callbackQuery;
@@ -29,7 +30,7 @@ export function createCallbackHandler(
         const [, inviteId, action] = parts;
         const telegramId = ctx.telegramId;
 
-        if (action !== 'accept' && action !== 'decline') {
+        if (action !== 'accept' && action !== 'decline' && action !== 'decline_r') {
           await ctx.answerCallbackQuery({ text: 'Invalid action', show_alert: true });
           return;
         }
@@ -51,7 +52,64 @@ export function createCallbackHandler(
         }
 
         const lang = getUserLanguage(user.language, ctx.from?.language_code);
-        
+
+        if (action === 'decline_r') {
+          if (
+            !query.message ||
+            !('text' in query.message) ||
+            !query.message.text ||
+            !query.message.chat ||
+            !('id' in query.message.chat) ||
+            typeof query.message.chat.id !== 'number'
+          ) {
+            await ctx.answerCallbackQuery({
+              text: t('telegram.inviteActionError', lang),
+              show_alert: true
+            });
+            return;
+          }
+
+          const participant = await prisma.gameParticipant.findUnique({
+            where: { id: inviteId },
+            select: { status: true, userId: true },
+          });
+          if (
+            !participant ||
+            participant.status !== 'INVITED' ||
+            participant.userId !== user.id
+          ) {
+            await ctx.answerCallbackQuery({
+              text: t('errors.invites.notFound', lang) || t('telegram.inviteActionError', lang),
+              show_alert: true
+            });
+            return;
+          }
+
+          pendingReplies.set(telegramId, {
+            kind: 'decline_invite',
+            inviteId,
+            userId: user.id,
+            lang,
+            inviteMessageChatId: query.message.chat.id,
+            inviteMessageId: query.message.message_id,
+            inviteMessageText: query.message.text,
+            inviteReplyMarkup: query.message.reply_markup
+              ? { inline_keyboard: query.message.reply_markup.inline_keyboard as unknown[] }
+              : undefined,
+            createdAt: Date.now(),
+          });
+
+          await ctx.answerCallbackQuery();
+          await ctx.api.sendMessage(
+            query.message.chat.id,
+            t('telegram.declineInviteReasonPrompt', lang)
+          );
+          return;
+        }
+
+        // Accept / plain decline: drop any in-flight "decline with response" prompt
+        pendingReplies.delete(telegramId);
+
         const result = action === 'accept'
           ? await acceptInviteFromTelegram(inviteId, user.id)
           : await declineInviteFromTelegram(inviteId, user.id);
@@ -71,40 +129,24 @@ export function createCallbackHandler(
         if (query.message && 'text' in query.message && query.message.text && query.message.chat) {
           const chat = query.message.chat;
           if ('id' in chat && typeof chat.id === 'number') {
-            const originalMessage = query.message.text;
-            const isHTML = originalMessage.includes('<') && originalMessage.includes('>');
-            const parseMode = isHTML ? 'HTML' : 'Markdown';
-            const escapeFunction = isHTML ? escapeHTML : escapeMarkdown;
-            
-            let updatedMessage: string;
-            let statusText: string;
-            
-            if (result.success) {
-              statusText = action === 'accept' 
+            const statusText = result.success
+              ? (action === 'accept'
                 ? t('telegram.inviteAccepted', lang)
-                : t('telegram.inviteDeclined', lang);
-              
-              let cleanedMessage = originalMessage.replace(/^(✅|❌)[^\n]*(?:\n\n?)?/s, '');
-              cleanedMessage = cleanedMessage.replace(/^🎯[^\n]*(?:\n\n?)?/s, '');
-              updatedMessage = escapeFunction('✅ ' + statusText) + '\n\n' + cleanedMessage.trim();
-            } else {
-              const errorText = t(result.message, lang) || t('telegram.inviteActionError', lang);
-              let cleanedMessage = originalMessage.replace(/^(✅|❌)[^\n]*(?:\n\n?)?/s, '');
-              updatedMessage = escapeFunction('❌ ' + errorText) + '\n\n' + cleanedMessage.trim();
-            }
+                : t('telegram.inviteDeclined', lang))
+              : (t(result.message, lang) || t('telegram.inviteActionError', lang));
 
             try {
-              const newReplyMarkup = result.success ? { inline_keyboard: [] } : query.message.reply_markup;
-              const hasContentChanged = originalMessage !== updatedMessage;
-              const hasMarkupChanged = result.success && query.message.reply_markup && 
-                JSON.stringify(query.message.reply_markup) !== JSON.stringify(newReplyMarkup);
-              
-              if (hasContentChanged || hasMarkupChanged) {
-                await ctx.api.editMessageText(chat.id, query.message.message_id, updatedMessage, {
-                  parse_mode: parseMode,
-                  reply_markup: newReplyMarkup
-                });
-              }
+              await updateInviteTelegramMessage({
+                api: ctx.api,
+                chatId: chat.id,
+                messageId: query.message.message_id,
+                originalText: query.message.text,
+                statusLine: statusText,
+                success: result.success,
+                replyMarkup: query.message.reply_markup
+                  ? { inline_keyboard: query.message.reply_markup.inline_keyboard as unknown[] }
+                  : undefined,
+              });
             } catch (editError) {
               console.error('Failed to edit invite message:', editError);
             }
@@ -291,6 +333,7 @@ export function createCallbackHandler(
 
         const lang = getUserLanguage(user.language, ctx.from?.language_code);
         pendingReplies.set(telegramId, {
+          kind: 'reply',
           messageId,
           gameId,
           userId: user.id,
@@ -338,6 +381,7 @@ export function createCallbackHandler(
 
         const lang = getUserLanguage(user.language, ctx.from?.language_code);
         pendingReplies.set(telegramId, {
+          kind: 'reply',
           messageId,
           userChatId,
           userId: user.id,
@@ -409,6 +453,7 @@ export function createCallbackHandler(
 
         const lang = getUserLanguage(user.language, ctx.from?.language_code);
         pendingReplies.set(telegramId, {
+          kind: 'reply',
           messageId,
           groupChannelId,
           userId: user.id,
@@ -456,6 +501,7 @@ export function createCallbackHandler(
 
         const lang = getUserLanguage(user.language, ctx.from?.language_code);
         pendingReplies.set(telegramId, {
+          kind: 'reply',
           messageId,
           bugId,
           userId: user.id,
@@ -483,4 +529,3 @@ export function createCallbackHandler(
     }
   };
 }
-

@@ -231,7 +231,14 @@
         "USER_KICKED": "{{userName}} je izbačen iz bara",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik bara",
         "GAME_CLUB_CHANGED": "Lokacija bara promenjena na {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Datum/vreme bara promenjeno na {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Datum/vreme bara promenjeno na {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije sale promenjen na {{bookingStatus}}",
+        "bookingStatuses": {
+          "EXTERNAL_FULL": "Potpuno rezervisano",
+          "EXTERNAL_PARTIAL": "Nije potpuno rezervisano",
+          "MANUAL": "Sala rezervisana",
+          "NONE": "Još nije rezervisano"
+        }
       },
       "TRAINING": {
         "USER_JOINED_GAME": "{{userName}} se pridružio treningu",
@@ -242,7 +249,8 @@
         "USER_KICKED": "{{userName}} je izbačen sa treninga",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik treninga",
         "GAME_CLUB_CHANGED": "Lokacija treninga promenjena na {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Datum/vreme treninga promenjeno na {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Datum/vreme treninga promenjeno na {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} se pridružio turniru",
@@ -253,7 +261,8 @@
         "USER_KICKED": "{{userName}} je izbačen sa turnira",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik turnira",
         "GAME_CLUB_CHANGED": "Lokacija turnira promenjena na {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Datum/vreme turnira promenjeno na {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Datum/vreme turnira promenjeno na {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} se pridružio ligi",
@@ -264,7 +273,8 @@
         "USER_KICKED": "{{userName}} je izbačen iz lige",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik lige",
         "GAME_CLUB_CHANGED": "Lokacija lige promenjena na {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Datum/vreme lige promenjeno na {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Datum/vreme lige promenjeno na {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} se pridružio sezoni lige",
@@ -275,11 +285,19 @@
         "USER_KICKED": "{{userName}} je izbačen iz sezone lige",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} je sada vlasnik sezone lige",
         "GAME_CLUB_CHANGED": "Lokacija sezone lige promenjena na {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Datum/vreme sezone lige promenjeno na {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Datum/vreme sezone lige promenjeno na {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}"
       },
       "actions": {
         "joined": "se pridružio igri",
         "left": "napustio igru"
+      },
+      "GAME_BOOKING_STATUS_CHANGED": "Status rezervacije terena promenjen na {{bookingStatus}}",
+      "bookingStatuses": {
+        "EXTERNAL_FULL": "Potpuno rezervisano",
+        "EXTERNAL_PARTIAL": "Nije potpuno rezervisano",
+        "MANUAL": "Teren rezervisan",
+        "NONE": "Još nije rezervisano"
       }
     },
     "openChat": "Otvori ćaskanje",
@@ -528,33 +546,111 @@
         "market": "Pijaca",
         "marketChat": "Ćaskanje pijace"
       },
-      "openGame": { "title": "Otvori igru", "description": "Pogledaj igru u Bandeja" },
-      "openTraining": { "title": "Otvori trening", "description": "Pogledaj trening u Bandeja" },
-      "openLeague": { "title": "Otvori ligu", "description": "Pogledaj ligu u Bandeja" },
-      "viewProfile": { "title": "Profil", "description": "Pogledaj profil" },
-      "directMessage": { "title": "Ćaskanje", "description": "Direktna poruka" },
-      "marketplaceItem": { "title": "Artikal", "description": "Pogledaj oglas" },
+      "openGame": {
+        "title": "Otvori igru",
+        "description": "Pogledaj igru u Bandeja"
+      },
+      "openTraining": {
+        "title": "Otvori trening",
+        "description": "Pogledaj trening u Bandeja"
+      },
+      "openLeague": {
+        "title": "Otvori ligu",
+        "description": "Pogledaj ligu u Bandeja"
+      },
+      "viewProfile": {
+        "title": "Profil",
+        "description": "Pogledaj profil"
+      },
+      "directMessage": {
+        "title": "Ćaskanje",
+        "description": "Direktna poruka"
+      },
+      "marketplaceItem": {
+        "title": "Artikal",
+        "description": "Pogledaj oglas"
+      },
       "app": {
-        "home": { "title": "Bandeja", "description": "Moje igre" },
-        "invites": { "title": "Pozivnice", "description": "Otvori pozivnice" },
-        "find": { "title": "Nađi igre", "description": "Pregledaj dostupne igre" },
-        "findToday": { "title": "Nađi igre", "description": "Danas" },
-        "findTomorrow": { "title": "Nađi igre", "description": "Sutra" },
-        "chats": { "title": "Ćaskanja", "description": "Otvori razgovore" },
-        "chatsMarketplace": { "title": "Ćaskanja pijace", "description": "Otvori ćaskanja pijace" },
-        "createGame": { "title": "Napravi igru", "description": "Započni novu igru" },
-        "createLeague": { "title": "Napravi ligu", "description": "Započni novu ligu" },
-        "nextGame": { "title": "Sledeća igra", "description": "Idi na sledeću igru" },
-        "nextGameChat": { "title": "Sledeća igra", "description": "Otvori ćaskanje igre" },
-        "nextGameLive": { "title": "Sledeća igra", "description": "Otvori uživo rezultat" },
-        "marketplace": { "title": "Pijaca", "description": "Pregledaj artikle" },
-        "marketplaceMy": { "title": "Moji oglasi", "description": "Tvoji artikli" },
-        "leaderboard": { "title": "Rang lista", "description": "Rangiranje" },
-        "login": { "title": "Prijava", "description": "Prijavi se u Bandeja" },
-        "register": { "title": "Registracija", "description": "Napravi nalog" },
-        "bugs": { "title": "Bugovi", "description": "Prijave bagova" },
-        "profile": { "title": "Profil", "description": "Tvoj profil" },
-        "open": { "title": "Bandeja", "description": "Otvori u Bandeja" }
+        "home": {
+          "title": "Bandeja",
+          "description": "Moje igre"
+        },
+        "invites": {
+          "title": "Pozivnice",
+          "description": "Otvori pozivnice"
+        },
+        "find": {
+          "title": "Nađi igre",
+          "description": "Pregledaj dostupne igre"
+        },
+        "findToday": {
+          "title": "Nađi igre",
+          "description": "Danas"
+        },
+        "findTomorrow": {
+          "title": "Nađi igre",
+          "description": "Sutra"
+        },
+        "chats": {
+          "title": "Ćaskanja",
+          "description": "Otvori razgovore"
+        },
+        "chatsMarketplace": {
+          "title": "Ćaskanja pijace",
+          "description": "Otvori ćaskanja pijace"
+        },
+        "createGame": {
+          "title": "Napravi igru",
+          "description": "Započni novu igru"
+        },
+        "createLeague": {
+          "title": "Napravi ligu",
+          "description": "Započni novu ligu"
+        },
+        "nextGame": {
+          "title": "Sledeća igra",
+          "description": "Idi na sledeću igru"
+        },
+        "nextGameChat": {
+          "title": "Sledeća igra",
+          "description": "Otvori ćaskanje igre"
+        },
+        "nextGameLive": {
+          "title": "Sledeća igra",
+          "description": "Otvori uživo rezultat"
+        },
+        "marketplace": {
+          "title": "Pijaca",
+          "description": "Pregledaj artikle"
+        },
+        "marketplaceMy": {
+          "title": "Moji oglasi",
+          "description": "Tvoji artikli"
+        },
+        "leaderboard": {
+          "title": "Rang lista",
+          "description": "Rangiranje"
+        },
+        "login": {
+          "title": "Prijava",
+          "description": "Prijavi se u Bandeja"
+        },
+        "register": {
+          "title": "Registracija",
+          "description": "Napravi nalog"
+        },
+        "bugs": {
+          "title": "Bugovi",
+          "description": "Prijave bagova"
+        },
+        "profile": {
+          "title": "Profil",
+          "description": "Tvoj profil"
+        },
+        "open": {
+          "title": "Bandeja",
+          "description": "Otvori u Bandeja"
+        }
       }
     }
   }

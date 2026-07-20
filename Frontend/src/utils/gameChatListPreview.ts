@@ -1,6 +1,7 @@
 import type { ChatMessage } from '@/api/chat';
 import { normalizeChatType } from '@/utils/chatType';
 import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
+import { looksLikeGifMediaUrl } from '@/utils/gifMediaUrl';
 
 /** Game list rows show PUBLIC channel activity only (matches backend lastMessagePreview). */
 export function isGamePublicListPreviewMessage(
@@ -27,7 +28,12 @@ export function chatMessageToGameListPreview(message: ChatMessage): {
   }
   const hasMedia = (message.mediaUrls?.length ?? 0) > 0;
   const text = message.content?.trim() ?? '';
-  if (hasMedia && !text) return { preview: '[TYPE:MEDIA]', updatedAt };
+  if (hasMedia && !text) {
+    if (looksLikeGifMediaUrl(message.mediaUrls?.[0])) {
+      return { preview: '[TYPE:GIF]', updatedAt };
+    }
+    return { preview: '[TYPE:MEDIA]', updatedAt };
+  }
   if (!text && message.poll?.question) return { preview: `[TYPE:POLL]${message.poll.question}`, updatedAt };
   if (!text) return { preview: '[TYPE:MEDIA]', updatedAt };
   if (text.startsWith('{')) {

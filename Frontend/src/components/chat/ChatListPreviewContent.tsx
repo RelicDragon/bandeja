@@ -15,6 +15,15 @@ export function ChatListGenericMediaRow({ t }: { t: TFunction }) {
   );
 }
 
+export function ChatListGifRow({ t }: { t: TFunction }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Images className="w-4 h-4 shrink-0" aria-hidden />
+      {t('chat.giphy.attach', { defaultValue: 'GIF' })}
+    </span>
+  );
+}
+
 export function ChatListVideoRow({
   t,
   durationMs,
@@ -60,6 +69,10 @@ export function ChatListPreviewContent({ preview, t, entityType }: Props) {
 
   if (preview === '[TYPE:MEDIA]') {
     return <ChatListGenericMediaRow t={t} />;
+  }
+
+  if (preview === '[TYPE:GIF]') {
+    return <ChatListGifRow t={t} />;
   }
 
   if (preview.startsWith('[TYPE:VOICE]')) {

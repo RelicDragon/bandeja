@@ -1,7 +1,7 @@
 import { Bot } from 'grammy';
 import type { TelegramOtp } from '@prisma/client';
 import { config } from '../../config/env';
-import { PendingReply } from './types';
+import { PendingTelegramInput } from './types';
 import { requireUser, requireChat, requirePrivateChat, syncTelegramProfile } from './middleware';
 import { handleStartCommand } from './commands/start.command';
 import { generateAuthCode } from './commands/auth.command';
@@ -19,7 +19,7 @@ import { t } from '../../utils/translations';
 class TelegramBotService {
   private bot: Bot | null = null;
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
-  private pendingReplies: Map<string, PendingReply> = new Map();
+  private pendingReplies: Map<string, PendingTelegramInput> = new Map();
 
   getBot(): Bot | null {
     return this.bot;

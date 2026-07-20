@@ -1,14 +1,29 @@
 import { Middleware } from 'grammy';
-import { BotContext, PendingReply } from '../types';
+import { BotContext, PendingTelegramInput } from '../types';
 import { getUserLanguageFromTelegramId } from '../utils';
 import { t } from '../../../utils/translations';
 import { MessageService } from '../../chat/message.service';
 import { markReplyContextAsRead } from '../markReplyContextAsRead';
 import { scheduleMessageDeletion } from '../messageDeletion.service';
 import { Bot } from 'grammy';
+import {
+  finalizeTelegramInviteDecline,
+  isDeclineInvitePendingExpired,
+  parseLeadingBotCommand,
+} from '../inviteDeclinePending';
+
+function claimPending(
+  pendingReplies: Map<string, PendingTelegramInput>,
+  telegramId: string
+): PendingTelegramInput | undefined {
+  const pending = pendingReplies.get(telegramId);
+  if (!pending) return undefined;
+  pendingReplies.delete(telegramId);
+  return pending;
+}
 
 export function createMessageHandler(
-  pendingReplies: Map<string, PendingReply>,
+  pendingReplies: Map<string, PendingTelegramInput>,
   bot: Bot | null
 ): Middleware<BotContext> {
   return async (ctx) => {
@@ -19,7 +34,83 @@ export function createMessageHandler(
     if (!msg) return;
     
     if (pendingReplies.has(telegramId)) {
-      const pendingReply = pendingReplies.get(telegramId)!;
+      const peek = pendingReplies.get(telegramId)!;
+
+      if (peek.kind === 'decline_invite') {
+        if (isDeclineInvitePendingExpired(peek)) {
+          pendingReplies.delete(telegramId);
+          const expiredMsg = await ctx.reply(
+            t('telegram.declineInviteReasonExpired', peek.lang)
+          );
+          if (expiredMsg.message_id) {
+            scheduleMessageDeletion(ctx.chat.id, expiredMsg.message_id, bot);
+          }
+          return;
+        }
+
+        const command = msg.text ? parseLeadingBotCommand(msg.text) : null;
+        if (command) {
+          if (command === '/skip') {
+            const pending = claimPending(pendingReplies, telegramId);
+            if (!pending || pending.kind !== 'decline_invite') return;
+            try {
+              const { feedback } = await finalizeTelegramInviteDecline({
+                api: ctx.api,
+                pending,
+              });
+              const replyMsg = await ctx.reply(feedback);
+              if (replyMsg.message_id) {
+                scheduleMessageDeletion(ctx.chat.id, replyMsg.message_id, bot);
+              }
+            } catch (error) {
+              console.error('Error declining invite from Telegram skip:', error);
+              const errorMessage = await ctx.reply(
+                t('telegram.inviteActionError', pending.lang)
+              );
+              if (errorMessage.message_id) {
+                scheduleMessageDeletion(ctx.chat.id, errorMessage.message_id, bot);
+              }
+            }
+            return;
+          }
+
+          pendingReplies.delete(telegramId);
+          await ctx.reply(t('telegram.declineInviteReasonCancelled', peek.lang));
+          return;
+        }
+
+        const reasonText = (msg.text ?? msg.caption)?.trim();
+        if (!reasonText) {
+          await ctx.reply(t('telegram.declineInviteReasonPrompt', peek.lang));
+          return;
+        }
+
+        const pending = claimPending(pendingReplies, telegramId);
+        if (!pending || pending.kind !== 'decline_invite') return;
+
+        try {
+          const { feedback } = await finalizeTelegramInviteDecline({
+            api: ctx.api,
+            pending,
+            declineMessage: reasonText,
+          });
+          const successMessage = await ctx.reply(feedback);
+          if (successMessage.message_id) {
+            scheduleMessageDeletion(ctx.chat.id, successMessage.message_id, bot);
+          }
+        } catch (error) {
+          console.error('Error declining invite with reason from Telegram:', error);
+          const errorMessage = await ctx.reply(
+            t('telegram.inviteActionError', pending.lang)
+          );
+          if (errorMessage.message_id) {
+            scheduleMessageDeletion(ctx.chat.id, errorMessage.message_id, bot);
+          }
+        }
+        return;
+      }
+
+      const pendingReply = peek;
       
       if (msg.text && msg.text.startsWith('/')) {
         pendingReplies.delete(telegramId);
@@ -67,15 +158,19 @@ export function createMessageHandler(
         if (successMessage.message_id) {
           scheduleMessageDeletion(ctx.chat.id, successMessage.message_id, bot);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Error sending reply:', error);
         pendingReplies.delete(telegramId);
         const lang = ctx.lang || await getUserLanguageFromTelegramId(telegramId, ctx.from?.language_code);
+        const statusCode =
+          error && typeof error === 'object' && 'statusCode' in error
+            ? (error as { statusCode?: number }).statusCode
+            : undefined;
         
         let errorText: string;
-        if (error?.statusCode === 403) {
+        if (statusCode === 403) {
           errorText = 'You do not have permission to reply to this chat.';
-        } else if (error?.statusCode === 404) {
+        } else if (statusCode === 404) {
           errorText = 'Chat or message not found.';
         } else {
           errorText = t('telegram.authError', lang) || 'An error occurred. Please try again.';
@@ -98,4 +193,3 @@ export function createMessageHandler(
     }
   };
 }
-

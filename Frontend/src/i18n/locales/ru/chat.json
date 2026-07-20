@@ -232,7 +232,14 @@
         "USER_KICKED": "{{userName}} был исключён из бара",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец бара",
         "GAME_CLUB_CHANGED": "Место бара изменено на {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Дата/время бара изменено на {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Дата/время бара изменено на {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Статус бронирования зала изменён на {{bookingStatus}}",
+        "bookingStatuses": {
+          "EXTERNAL_FULL": "Полностью забронировано",
+          "EXTERNAL_PARTIAL": "Забронировано не полностью",
+          "MANUAL": "Зал забронирован",
+          "NONE": "Еще не забронировано"
+        }
       },
       "TRAINING": {
         "USER_JOINED_GAME": "{{userName}} присоединился к тренировке",
@@ -243,7 +250,8 @@
         "USER_KICKED": "{{userName}} был исключён с тренировки",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец тренировки",
         "GAME_CLUB_CHANGED": "Место тренировки изменено на {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Дата/время тренировки изменено на {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Дата/время тренировки изменено на {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Статус бронирования корта изменён на {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} присоединился к турниру",
@@ -254,7 +262,8 @@
         "USER_KICKED": "{{userName}} был исключён с турнира",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец турнира",
         "GAME_CLUB_CHANGED": "Место турнира изменено на {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Дата/время турнира изменено на {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Дата/время турнира изменено на {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Статус бронирования корта изменён на {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} присоединился к лиге",
@@ -265,7 +274,8 @@
         "USER_KICKED": "{{userName}} был исключён из лиги",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец лиги",
         "GAME_CLUB_CHANGED": "Место лиги изменено на {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Дата/время лиги изменено на {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Дата/время лиги изменено на {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Статус бронирования корта изменён на {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} присоединился к сезону лиги",
@@ -276,11 +286,19 @@
         "USER_KICKED": "{{userName}} был исключён из сезона лиги",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} теперь владелец сезона лиги",
         "GAME_CLUB_CHANGED": "Место сезона лиги изменено на {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Дата/время сезона лиги изменено на {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Дата/время сезона лиги изменено на {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Статус бронирования корта изменён на {{bookingStatus}}"
       },
       "actions": {
         "joined": "присоединился к игре",
         "left": "покинул игру"
+      },
+      "GAME_BOOKING_STATUS_CHANGED": "Статус бронирования корта изменён на {{bookingStatus}}",
+      "bookingStatuses": {
+        "EXTERNAL_FULL": "Полностью забронировано",
+        "EXTERNAL_PARTIAL": "Забронировано не полностью",
+        "MANUAL": "Корт забронирован",
+        "NONE": "Еще не забронировано"
       }
     },
     "openChat": "Открыть чат",
@@ -529,33 +547,111 @@
         "market": "Маркет",
         "marketChat": "Чат маркета"
       },
-      "openGame": { "title": "Открыть игру", "description": "Посмотреть игру в Bandeja" },
-      "openTraining": { "title": "Открыть тренировку", "description": "Посмотреть тренировку в Bandeja" },
-      "openLeague": { "title": "Открыть лигу", "description": "Посмотреть лигу в Bandeja" },
-      "viewProfile": { "title": "Профиль", "description": "Открыть профиль" },
-      "directMessage": { "title": "Чат", "description": "Личные сообщения" },
-      "marketplaceItem": { "title": "Товар", "description": "Открыть объявление" },
+      "openGame": {
+        "title": "Открыть игру",
+        "description": "Посмотреть игру в Bandeja"
+      },
+      "openTraining": {
+        "title": "Открыть тренировку",
+        "description": "Посмотреть тренировку в Bandeja"
+      },
+      "openLeague": {
+        "title": "Открыть лигу",
+        "description": "Посмотреть лигу в Bandeja"
+      },
+      "viewProfile": {
+        "title": "Профиль",
+        "description": "Открыть профиль"
+      },
+      "directMessage": {
+        "title": "Чат",
+        "description": "Личные сообщения"
+      },
+      "marketplaceItem": {
+        "title": "Товар",
+        "description": "Открыть объявление"
+      },
       "app": {
-        "home": { "title": "Bandeja", "description": "Мои игры" },
-        "invites": { "title": "Приглашения", "description": "Открыть приглашения" },
-        "find": { "title": "Найти игры", "description": "Доступные игры" },
-        "findToday": { "title": "Найти игры", "description": "Сегодня" },
-        "findTomorrow": { "title": "Найти игры", "description": "Завтра" },
-        "chats": { "title": "Чаты", "description": "Открыть переписки" },
-        "chatsMarketplace": { "title": "Чаты маркета", "description": "Открыть чаты маркета" },
-        "createGame": { "title": "Создать игру", "description": "Новая игра" },
-        "createLeague": { "title": "Создать лигу", "description": "Новая лига" },
-        "nextGame": { "title": "Следующая игра", "description": "Перейти к следующей игре" },
-        "nextGameChat": { "title": "Следующая игра", "description": "Открыть чат игры" },
-        "nextGameLive": { "title": "Следующая игра", "description": "Открыть лайв-счёт" },
-        "marketplace": { "title": "Маркет", "description": "Смотреть товары" },
-        "marketplaceMy": { "title": "Мои объявления", "description": "Ваши товары" },
-        "leaderboard": { "title": "Рейтинг", "description": "Таблица лидеров" },
-        "login": { "title": "Вход", "description": "Войти в Bandeja" },
-        "register": { "title": "Регистрация", "description": "Создать аккаунт" },
-        "bugs": { "title": "Баги", "description": "Сообщения о багах" },
-        "profile": { "title": "Профиль", "description": "Ваш профиль" },
-        "open": { "title": "Bandeja", "description": "Открыть в Bandeja" }
+        "home": {
+          "title": "Bandeja",
+          "description": "Мои игры"
+        },
+        "invites": {
+          "title": "Приглашения",
+          "description": "Открыть приглашения"
+        },
+        "find": {
+          "title": "Найти игры",
+          "description": "Доступные игры"
+        },
+        "findToday": {
+          "title": "Найти игры",
+          "description": "Сегодня"
+        },
+        "findTomorrow": {
+          "title": "Найти игры",
+          "description": "Завтра"
+        },
+        "chats": {
+          "title": "Чаты",
+          "description": "Открыть переписки"
+        },
+        "chatsMarketplace": {
+          "title": "Чаты маркета",
+          "description": "Открыть чаты маркета"
+        },
+        "createGame": {
+          "title": "Создать игру",
+          "description": "Новая игра"
+        },
+        "createLeague": {
+          "title": "Создать лигу",
+          "description": "Новая лига"
+        },
+        "nextGame": {
+          "title": "Следующая игра",
+          "description": "Перейти к следующей игре"
+        },
+        "nextGameChat": {
+          "title": "Следующая игра",
+          "description": "Открыть чат игры"
+        },
+        "nextGameLive": {
+          "title": "Следующая игра",
+          "description": "Открыть лайв-счёт"
+        },
+        "marketplace": {
+          "title": "Маркет",
+          "description": "Смотреть товары"
+        },
+        "marketplaceMy": {
+          "title": "Мои объявления",
+          "description": "Ваши товары"
+        },
+        "leaderboard": {
+          "title": "Рейтинг",
+          "description": "Таблица лидеров"
+        },
+        "login": {
+          "title": "Вход",
+          "description": "Войти в Bandeja"
+        },
+        "register": {
+          "title": "Регистрация",
+          "description": "Создать аккаунт"
+        },
+        "bugs": {
+          "title": "Баги",
+          "description": "Сообщения о багах"
+        },
+        "profile": {
+          "title": "Профиль",
+          "description": "Ваш профиль"
+        },
+        "open": {
+          "title": "Bandeja",
+          "description": "Открыть в Bandeja"
+        }
       }
     }
   }

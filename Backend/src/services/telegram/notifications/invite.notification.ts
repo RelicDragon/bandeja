@@ -84,6 +84,12 @@ export async function sendInviteNotification(
     ],
     [
       {
+        text: t('telegram.declineInviteWithResponse', lang),
+        callback_data: `ia:${invite.id}:decline_r`
+      }
+    ],
+    [
+      {
         text: t('telegram.viewGame', lang),
         url: `${config.frontendUrl}/games/${invite.game.id}`
       }

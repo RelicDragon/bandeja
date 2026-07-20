@@ -10,8 +10,9 @@ import { hasParentGamePermission, canModifyResults } from '../../utils/parentGam
 import { isGameFormatOnlyUpdate, TRAINING_STRIPPED_FORMAT_KEYS } from '../../shared/gameFormatUpdateKeys';
 import { createSystemMessage } from '../../controllers/chat.controller';
 import { SystemMessageType } from '../../utils/systemMessages';
-import telegramNotificationService from '../telegram/notification.service';
+import notificationService from '../notification.service';
 import { formatDateInTimezone, getDateLabelInTimezone, getUserTimezoneFromCityId } from '../user-timezone.service';
+import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
 import { BarResultsService } from '../barResults.service';
 import { ImageProcessor } from '../../utils/imageProcessor';
 import { validateGameForSport } from '../../utils/validators/validateGameForSport';
@@ -312,6 +313,7 @@ export class GameUpdateService {
     const oldStatus = currentGame?.status;
     const oldEntityType = currentGame?.entityType;
     const oldTimeIsSet = currentGame?.timeIsSet;
+    let bookingStatusBeforeSync: string | null | undefined;
 
     // Normalize courtId: convert 'notBooked', empty string, or undefined to null
     let normalizedCourtId: string | null = null;
@@ -676,7 +678,8 @@ export class GameUpdateService {
         gamePatchAffectsBookingStatus(data) ||
         gamePatchAffectsBookingStatus(updateData as Record<string, unknown>)
       ) {
-        await syncGameBookingState(tx, id);
+        const synced = await syncGameBookingState(tx, id);
+        bookingStatusBeforeSync = synced.previousBookingStatus;
       }
     });
 
@@ -777,8 +780,8 @@ export class GameUpdateService {
           variables: { clubName }
         });
 
-        telegramNotificationService.sendGameSystemMessageNotification(systemMessage, updatedGame).catch(error => {
-          console.error('Failed to send Telegram notification for club change:', error);
+        notificationService.sendGameSystemMessageNotification(systemMessage, updatedGame).catch(error => {
+          console.error('Failed to send notification for club change:', error);
         });
       } catch (error) {
         console.error('Failed to create system message for club change:', error);
@@ -806,12 +809,16 @@ export class GameUpdateService {
           variables: { dateTime }
         });
 
-        telegramNotificationService.sendGameSystemMessageNotification(systemMessage, updatedGame).catch(error => {
-          console.error('Failed to send Telegram notification for date/time change:', error);
+        notificationService.sendGameSystemMessageNotification(systemMessage, updatedGame).catch(error => {
+          console.error('Failed to send notification for date/time change:', error);
         });
       } catch (error) {
         console.error('Failed to create system message for date/time change:', error);
       }
+    }
+
+    if (bookingStatusBeforeSync !== undefined) {
+      await notifyGameBookingStatusChangeIfNeeded(id, bookingStatusBeforeSync, updatedGame);
     }
 
     const sport = updatedGame.sport;

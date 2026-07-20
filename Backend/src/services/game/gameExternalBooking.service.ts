@@ -14,6 +14,7 @@ import {
   type LinkBookingToGamePatch,
 } from '../../shared/gameBooking/contracts';
 import { canMutateGameBookings } from '../../shared/gameBooking/bookingLinkAuthorization';
+import { notifyGameBookingStatusChangeIfNeeded } from './notifyGameBookingStatusChange';
 
 type Tx = Prisma.TransactionClient;
 
@@ -279,7 +280,7 @@ async function syncGameBookingState(
   tx: Tx,
   gameId: string,
   options?: { clearBookedCourtWhenUnlinked?: boolean },
-): Promise<void> {
+): Promise<{ previousBookingStatus: GameBookingStatus; bookingStatus: GameBookingStatus }> {
   const game = await tx.game.findUnique({
     where: { id: gameId },
     select: {
@@ -292,9 +293,12 @@ async function syncGameBookingState(
       endTime: true,
       maxParticipants: true,
       playersPerMatch: true,
+      bookingStatus: true,
     },
   });
   if (!game) throw new ApiError(404, 'Game not found');
+
+  const previousBookingStatus = game.bookingStatus;
 
   const bookingRows = await tx.gameExternalBooking.findMany({
     where: { gameId },
@@ -369,6 +373,8 @@ async function syncGameBookingState(
   }
 
   await tx.game.update({ where: { id: gameId }, data: patch });
+
+  return { previousBookingStatus, bookingStatus };
 }
 
 export { syncGameBookingState };
@@ -413,6 +419,8 @@ export async function patchGameBookings(
     throw new ApiError(400, BOOKING_ERROR_KEYS.patchRequiresBookingId);
   }
 
+  let previousBookingStatus: GameBookingStatus | null = null;
+
   await prisma.$transaction(async (tx) => {
     const provider = await resolveGameClubBookingProvider(gameId, tx);
 
@@ -440,8 +448,11 @@ export async function patchGameBookings(
       });
     }
 
-    await syncGameBookingState(tx, gameId, { clearBookedCourtWhenUnlinked: true });
+    const synced = await syncGameBookingState(tx, gameId, { clearBookedCourtWhenUnlinked: true });
+    previousBookingStatus = synced.previousBookingStatus;
   });
+
+  await notifyGameBookingStatusChangeIfNeeded(gameId, previousBookingStatus);
 
   return prisma.gameExternalBooking.findMany({
     where: { gameId },
@@ -467,6 +478,7 @@ export async function putGameBookingSnapshots(
   }
 
   const timeZone = await resolveBooktimeTimezoneForGame(gameId);
+  let previousBookingStatus: GameBookingStatus | null = null;
 
   await prisma.$transaction(async (tx) => {
     const game = await tx.game.findUnique({
@@ -501,8 +513,11 @@ export async function putGameBookingSnapshots(
       }
     }
 
-    await syncGameBookingState(tx, gameId);
+    const synced = await syncGameBookingState(tx, gameId);
+    previousBookingStatus = synced.previousBookingStatus;
   });
+
+  await notifyGameBookingStatusChangeIfNeeded(gameId, previousBookingStatus);
 
   return prisma.gameExternalBooking.findMany({
     where: { gameId },
@@ -544,6 +559,7 @@ export async function linkBookingToGame(
 
   const { externalBookingId, snapshot, gamePatch } = parseLinkBookingToGameBody(body);
   const timeZone = await resolveBooktimeTimezoneForGame(gameId);
+  let previousBookingStatus: GameBookingStatus | null = null;
   const resolvedSnapshot = { ...snapshot };
   if (!resolvedSnapshot.courtId && gamePatch?.courtId) {
     resolvedSnapshot.courtId = gamePatch.courtId;
@@ -582,8 +598,11 @@ export async function linkBookingToGame(
       },
     });
 
-    await syncGameBookingState(tx, gameId);
+    const synced = await syncGameBookingState(tx, gameId);
+    previousBookingStatus = synced.previousBookingStatus;
   });
+
+  await notifyGameBookingStatusChangeIfNeeded(gameId, previousBookingStatus);
 
   return prisma.gameExternalBooking.findMany({
     where: { gameId },

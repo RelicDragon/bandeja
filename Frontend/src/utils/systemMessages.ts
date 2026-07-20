@@ -21,6 +21,7 @@ export enum SystemMessageType {
   BUG_PRIORITY_CHANGED = 'BUG_PRIORITY_CHANGED',
   GAME_CLUB_CHANGED = 'GAME_CLUB_CHANGED',
   GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED',
+  GAME_BOOKING_STATUS_CHANGED = 'GAME_BOOKING_STATUS_CHANGED',
   USER_CHAT_REQUEST = 'USER_CHAT_REQUEST',
   USER_CHAT_ACCEPTED = 'USER_CHAT_ACCEPTED',
   USER_CHAT_DECLINED = 'USER_CHAT_DECLINED',
@@ -53,6 +54,7 @@ const FALLBACK_TEMPLATES: Record<SystemMessageType, string> = {
   [SystemMessageType.BUG_PRIORITY_CHANGED]: 'Bug priority changed to {{priority}}',
   [SystemMessageType.GAME_CLUB_CHANGED]: 'Game location changed to {{clubName}}',
   [SystemMessageType.GAME_DATE_TIME_CHANGED]: 'Game date/time changed to {{dateTime}}',
+  [SystemMessageType.GAME_BOOKING_STATUS_CHANGED]: 'Court booking status changed to {{bookingStatus}}',
   [SystemMessageType.USER_CHAT_REQUEST]: '{{requesterName}} requests to chat with you',
   [SystemMessageType.USER_CHAT_ACCEPTED]: '{{userName}} accepted the chat request',
   [SystemMessageType.USER_CHAT_DECLINED]: '{{userName}} declined the chat request',
@@ -120,6 +122,35 @@ const translateSystemMessageData = (
       ...safeVariables,
       dateTime: translateFn('gameDetails.datetimeNotSet', { defaultValue: 'Time is not set yet' }),
     };
+  }
+  if (type === SystemMessageType.GAME_BOOKING_STATUS_CHANGED && safeVariables.bookingStatus) {
+    const status = safeVariables.bookingStatus;
+    const labelFor = (key: string, fallback: string) =>
+      translateFn(key, { defaultValue: fallback });
+    let label: string;
+    switch (status) {
+      case 'EXTERNAL_FULL':
+        label = labelFor('chat.systemMessages.bookingStatuses.EXTERNAL_FULL', 'Fully booked');
+        break;
+      case 'EXTERNAL_PARTIAL':
+        label = labelFor(
+          'chat.systemMessages.bookingStatuses.EXTERNAL_PARTIAL',
+          'Not fully booked',
+        );
+        break;
+      case 'MANUAL':
+        label =
+          entityType === 'BAR'
+            ? labelFor('chat.systemMessages.BAR.bookingStatuses.MANUAL', 'Hall booked')
+            : labelFor('chat.systemMessages.bookingStatuses.MANUAL', 'Court booked');
+        break;
+      case 'NONE':
+        label = labelFor('chat.systemMessages.bookingStatuses.NONE', 'Not booked yet');
+        break;
+      default:
+        label = status;
+    }
+    safeVariables = { ...safeVariables, bookingStatus: label };
   }
 
   const entityKey = resolveSystemMessageTranslationKey(type, entityType);

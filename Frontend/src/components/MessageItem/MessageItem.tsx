@@ -41,6 +41,8 @@ import {
   shouldQueueChatMutation,
 } from '@/services/chat/chatMutationNetwork';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
+import { copyImageToClipboard } from '@/utils/copyImageToClipboard';
+import { resolveMessageCopyTargetUrl } from '@/utils/copyMessageMedia';
 
 export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem({
   message,
@@ -283,16 +285,34 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const handleVideoOpen = (videoUrl: string, posterUrl: string) =>
     setFullscreenVideo({ videoUrl, posterUrl });
 
-  const handleCopyMessage = (msg: ChatMessage) => {
-    let text: string;
+  const handleCopyMessage = async (msg: ChatMessage) => {
+    // 1. Copy text when present (system / voice transcription / plain text / caption).
+    let text: string | null = null;
     if (!msg.senderId) {
       text = formatSystemMessageForDisplay(msg.content, t, entityType);
     } else if (msg.messageType === 'VOICE' && msg.audioTranscription?.transcription?.trim()) {
       text = formatVoiceTranscriptionForDisplay(msg.audioTranscription.transcription, t);
     } else {
-      text = msg.content ?? '';
+      text = msg.content?.trim() ? msg.content : null;
     }
-    void navigator.clipboard.writeText(text);
+    if (text) {
+      void navigator.clipboard.writeText(text);
+      return;
+    }
+
+    // 2. Otherwise copy the image (sticker / GIF / photo).
+    const url = await resolveMessageCopyTargetUrl(msg, { reduceMotion });
+    if (!url) return;
+    try {
+      const outcome = await copyImageToClipboard(url);
+      toast.success(
+        outcome === 'shared'
+          ? t('media.imageShareOpened', { defaultValue: 'Opened share sheet' })
+          : t('media.imageCopied', { defaultValue: 'Image copied' })
+      );
+    } catch {
+      toast.error(t('media.copyImageFailed', { defaultValue: 'Could not copy image' }));
+    }
   };
 
   const handleQuickReaction = (e: React.MouseEvent) => {

@@ -15,6 +15,8 @@ type Props = {
   /** Optional catalog URLs when caller already resolved them (tray / optimistic). */
   staticUrl?: string | null;
   animatedUrl?: string | null;
+  /** Tap (click) opens the fullscreen viewer with Copy/Download. No-op when unset. */
+  onStickerClick?: (url: string) => void;
 };
 
 function StickerEmojiFallback({ emoji }: { emoji: string }) {
@@ -35,6 +37,7 @@ export function StickerMessageBubble({
   message,
   staticUrl: staticUrlProp,
   animatedUrl: animatedUrlProp,
+  onStickerClick,
 }: Props) {
   const emoji = message.stickerEmoji?.trim() || '🔖';
   const reduceMotion = usePrefersReducedMotion();
@@ -85,10 +88,29 @@ export function StickerMessageBubble({
     );
   }
 
+  const clickable = !!onStickerClick && !!url;
+  const handleClick = () => {
+    if (clickable) onStickerClick?.(url);
+  };
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (!clickable) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      onStickerClick?.(url);
+    }
+  };
+
   return (
-    <div
+    <button
+      type="button"
       ref={setNode}
-      className="flex h-40 w-40 items-center justify-center bg-transparent"
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      aria-label={emoji}
+      className={`flex h-40 w-40 items-center justify-center bg-transparent ${
+        clickable ? 'cursor-pointer' : 'cursor-default'
+      }`}
+      style={{ padding: 0, border: 0, textAlign: 'left' }}
       data-sticker-message="true"
       data-sticker-id={message.stickerId ?? undefined}
       data-sticker-motion={motionMode}
@@ -115,6 +137,6 @@ export function StickerMessageBubble({
           setUrl(next);
         }}
       />
-    </div>
+    </button>
   );
 }

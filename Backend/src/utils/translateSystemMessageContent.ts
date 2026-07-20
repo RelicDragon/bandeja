@@ -1,5 +1,5 @@
 import { resolveSystemMessageTranslationKey } from '@bandeja/shared/systemMessages/resolveSystemMessageTranslationKey';
-import { resolveGameClubPlace } from '../services/shared/notification-base';
+import { formatGameBookingStatusLabel, resolveGameClubPlace } from '../services/shared/notification-base';
 import { t } from './translations';
 
 type ParsedSystemMessage = {
@@ -51,6 +51,7 @@ function interpolateTemplate(
   messageType: string,
   variables: Record<string, string>,
   lang: string,
+  entityType?: string | null,
 ): string {
   const resolvedVariables = { ...variables };
 
@@ -62,6 +63,13 @@ function interpolateTemplate(
     const datetimeKey = 'games.datetimeNotSet';
     resolvedVariables.dateTime =
       t(datetimeKey, lang) !== datetimeKey ? t(datetimeKey, lang) : 'Time is not set yet';
+  }
+
+  if (messageType === 'GAME_BOOKING_STATUS_CHANGED' && resolvedVariables.bookingStatus) {
+    resolvedVariables.bookingStatus = formatGameBookingStatusLabel(
+      { bookingStatus: resolvedVariables.bookingStatus, entityType },
+      lang,
+    );
   }
 
   let result = template;
@@ -94,5 +102,5 @@ export function translateSystemMessageContent(
     return messageContent;
   }
 
-  return interpolateTemplate(template, messageData.type, messageData.variables, lang);
+  return interpolateTemplate(template, messageData.type, messageData.variables, lang, entityType);
 }

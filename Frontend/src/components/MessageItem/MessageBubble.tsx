@@ -257,7 +257,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         />
       )}
 
-      {isSticker && <StickerMessageBubble message={message} />}
+      {isSticker && (
+        <StickerMessageBubble message={message} onStickerClick={onImageClick} />
+      )}
 
       {message.mediaUrls && message.mediaUrls.length > 0 && !isVoice && !isVideo && !isSticker && (
         <MessageMediaGrid

@@ -12,6 +12,7 @@ const ENTITY_MESSAGE_TYPES = [
   'OWNERSHIP_TRANSFERRED',
   'GAME_CLUB_CHANGED',
   'GAME_DATE_TIME_CHANGED',
+  'GAME_BOOKING_STATUS_CHANGED',
 ] as const;
 
 type EntityMessageType = (typeof ENTITY_MESSAGE_TYPES)[number];
@@ -37,6 +38,7 @@ const BASE_SYSTEM_MESSAGES: Record<string, Record<string, string>> = {
     'chat.systemMessages.OWNERSHIP_TRANSFERRED': '{{newOwnerName}} is now the owner of the game',
     'chat.systemMessages.GAME_CLUB_CHANGED': 'Game location changed to {{clubName}}',
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Game date/time changed to {{dateTime}}',
+    'chat.systemMessages.GAME_BOOKING_STATUS_CHANGED': 'Court booking status changed to {{bookingStatus}}',
   },
   ru: {
     'chat.systemMessages.USER_JOINED_GAME': '{{userName}} присоединился к игре',
@@ -56,6 +58,7 @@ const BASE_SYSTEM_MESSAGES: Record<string, Record<string, string>> = {
     'chat.systemMessages.OWNERSHIP_TRANSFERRED': '{{newOwnerName}} теперь владелец игры',
     'chat.systemMessages.GAME_CLUB_CHANGED': 'Место игры изменено на {{clubName}}',
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Дата/время игры изменено на {{dateTime}}',
+    'chat.systemMessages.GAME_BOOKING_STATUS_CHANGED': 'Статус бронирования корта изменён на {{bookingStatus}}',
   },
   sr: {
     'chat.systemMessages.USER_JOINED_GAME': '{{userName}} se pridružio igri',
@@ -75,6 +78,7 @@ const BASE_SYSTEM_MESSAGES: Record<string, Record<string, string>> = {
     'chat.systemMessages.OWNERSHIP_TRANSFERRED': '{{newOwnerName}} je sada vlasnik igre',
     'chat.systemMessages.GAME_CLUB_CHANGED': 'Lokacija igre promenjena na {{clubName}}',
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Datum/vreme igre promenjeno na {{dateTime}}',
+    'chat.systemMessages.GAME_BOOKING_STATUS_CHANGED': 'Status rezervacije terena promenjen na {{bookingStatus}}',
   },
   es: {
     'chat.systemMessages.USER_JOINED_GAME': '{{userName}} se unió al juego',
@@ -94,6 +98,7 @@ const BASE_SYSTEM_MESSAGES: Record<string, Record<string, string>> = {
     'chat.systemMessages.OWNERSHIP_TRANSFERRED': '{{newOwnerName}} es ahora el dueño del juego',
     'chat.systemMessages.GAME_CLUB_CHANGED': 'Ubicación del juego cambiada a {{clubName}}',
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Fecha/hora del juego cambiada a {{dateTime}}',
+    'chat.systemMessages.GAME_BOOKING_STATUS_CHANGED': 'Estado de reserva de pista cambiado a {{bookingStatus}}',
   },
   cs: {
     'chat.systemMessages.USER_JOINED_GAME': '{{userName}} se připojil k zápasu',
@@ -113,6 +118,7 @@ const BASE_SYSTEM_MESSAGES: Record<string, Record<string, string>> = {
     'chat.systemMessages.OWNERSHIP_TRANSFERRED': '{{newOwnerName}} je nyní vlastníkem zápasu',
     'chat.systemMessages.GAME_CLUB_CHANGED': 'Místo zápasu změněno na {{clubName}}',
     'chat.systemMessages.GAME_DATE_TIME_CHANGED': 'Datum/čas zápasu změněn na {{dateTime}}',
+    'chat.systemMessages.GAME_BOOKING_STATUS_CHANGED': 'Stav rezervace kurtu změněn na {{bookingStatus}}',
   },
 };
 
@@ -128,6 +134,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} is now the owner of the bar',
       GAME_CLUB_CHANGED: 'Bar location changed to {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Bar date/time changed to {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Hall booking status changed to {{bookingStatus}}',
     },
     TRAINING: {
       USER_JOINED_GAME: '{{userName}} joined the training',
@@ -139,6 +146,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} is now the owner of the training',
       GAME_CLUB_CHANGED: 'Training location changed to {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Training date/time changed to {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Court booking status changed to {{bookingStatus}}',
     },
     TOURNAMENT: {
       USER_JOINED_GAME: '{{userName}} joined the tournament',
@@ -150,6 +158,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} is now the owner of the tournament',
       GAME_CLUB_CHANGED: 'Tournament location changed to {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Tournament date/time changed to {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Court booking status changed to {{bookingStatus}}',
     },
     LEAGUE: {
       USER_JOINED_GAME: '{{userName}} joined the league',
@@ -161,6 +170,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} is now the owner of the league',
       GAME_CLUB_CHANGED: 'League location changed to {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'League date/time changed to {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Court booking status changed to {{bookingStatus}}',
     },
     LEAGUE_SEASON: {
       USER_JOINED_GAME: '{{userName}} joined the league season',
@@ -172,6 +182,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} is now the owner of the league season',
       GAME_CLUB_CHANGED: 'League season location changed to {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'League season date/time changed to {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Court booking status changed to {{bookingStatus}}',
     },
   },
   ru: {
@@ -185,6 +196,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} теперь владелец бара',
       GAME_CLUB_CHANGED: 'Место бара изменено на {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Дата/время бара изменено на {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Статус бронирования зала изменён на {{bookingStatus}}',
     },
     TRAINING: {
       USER_JOINED_GAME: '{{userName}} присоединился к тренировке',
@@ -196,6 +208,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} теперь владелец тренировки',
       GAME_CLUB_CHANGED: 'Место тренировки изменено на {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Дата/время тренировки изменено на {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Статус бронирования корта изменён на {{bookingStatus}}',
     },
     TOURNAMENT: {
       USER_JOINED_GAME: '{{userName}} присоединился к турниру',
@@ -207,6 +220,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} теперь владелец турнира',
       GAME_CLUB_CHANGED: 'Место турнира изменено на {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Дата/время турнира изменено на {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Статус бронирования корта изменён на {{bookingStatus}}',
     },
     LEAGUE: {
       USER_JOINED_GAME: '{{userName}} присоединился к лиге',
@@ -218,6 +232,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} теперь владелец лиги',
       GAME_CLUB_CHANGED: 'Место лиги изменено на {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Дата/время лиги изменено на {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Статус бронирования корта изменён на {{bookingStatus}}',
     },
     LEAGUE_SEASON: {
       USER_JOINED_GAME: '{{userName}} присоединился к сезону лиги',
@@ -229,6 +244,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} теперь владелец сезона лиги',
       GAME_CLUB_CHANGED: 'Место сезона лиги изменено на {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Дата/время сезона лиги изменено на {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Статус бронирования корта изменён на {{bookingStatus}}',
     },
   },
   sr: {
@@ -242,6 +258,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je sada vlasnik bara',
       GAME_CLUB_CHANGED: 'Lokacija bara promenjena na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/vreme bara promenjeno na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Status rezervacije sale promenjen na {{bookingStatus}}',
     },
     TRAINING: {
       USER_JOINED_GAME: '{{userName}} se pridružio treningu',
@@ -253,6 +270,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je sada vlasnik treninga',
       GAME_CLUB_CHANGED: 'Lokacija treninga promenjena na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/vreme treninga promenjeno na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Status rezervacije terena promenjen na {{bookingStatus}}',
     },
     TOURNAMENT: {
       USER_JOINED_GAME: '{{userName}} se pridružio turniru',
@@ -264,6 +282,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je sada vlasnik turnira',
       GAME_CLUB_CHANGED: 'Lokacija turnira promenjena na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/vreme turnira promenjeno na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Status rezervacije terena promenjen na {{bookingStatus}}',
     },
     LEAGUE: {
       USER_JOINED_GAME: '{{userName}} se pridružio ligi',
@@ -275,6 +294,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je sada vlasnik lige',
       GAME_CLUB_CHANGED: 'Lokacija lige promenjena na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/vreme lige promenjeno na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Status rezervacije terena promenjen na {{bookingStatus}}',
     },
     LEAGUE_SEASON: {
       USER_JOINED_GAME: '{{userName}} se pridružio sezoni lige',
@@ -286,6 +306,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je sada vlasnik sezone lige',
       GAME_CLUB_CHANGED: 'Lokacija sezone lige promenjena na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/vreme sezone lige promenjeno na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Status rezervacije terena promenjen na {{bookingStatus}}',
     },
   },
   es: {
@@ -299,6 +320,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} es ahora el dueño del bar',
       GAME_CLUB_CHANGED: 'Ubicación del bar cambiada a {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Fecha/hora del bar cambiada a {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Estado de reserva del salón cambiado a {{bookingStatus}}',
     },
     TRAINING: {
       USER_JOINED_GAME: '{{userName}} se unió al entrenamiento',
@@ -310,6 +332,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} es ahora el dueño del entrenamiento',
       GAME_CLUB_CHANGED: 'Ubicación del entrenamiento cambiada a {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Fecha/hora del entrenamiento cambiada a {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Estado de reserva de pista cambiado a {{bookingStatus}}',
     },
     TOURNAMENT: {
       USER_JOINED_GAME: '{{userName}} se unió al torneo',
@@ -321,6 +344,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} es ahora el dueño del torneo',
       GAME_CLUB_CHANGED: 'Ubicación del torneo cambiada a {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Fecha/hora del torneo cambiada a {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Estado de reserva de pista cambiado a {{bookingStatus}}',
     },
     LEAGUE: {
       USER_JOINED_GAME: '{{userName}} se unió a la liga',
@@ -332,6 +356,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} es ahora el dueño de la liga',
       GAME_CLUB_CHANGED: 'Ubicación de la liga cambiada a {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Fecha/hora de la liga cambiada a {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Estado de reserva de pista cambiado a {{bookingStatus}}',
     },
     LEAGUE_SEASON: {
       USER_JOINED_GAME: '{{userName}} se unió a la temporada de liga',
@@ -343,6 +368,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} es ahora el dueño de la temporada de liga',
       GAME_CLUB_CHANGED: 'Ubicación de la temporada de liga cambiada a {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Fecha/hora de la temporada de liga cambiada a {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Estado de reserva de pista cambiado a {{bookingStatus}}',
     },
   },
   cs: {
@@ -356,6 +382,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je nyní vlastníkem baru',
       GAME_CLUB_CHANGED: 'Místo baru změněno na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/čas baru změněn na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Stav rezervace sálu změněn na {{bookingStatus}}',
     },
     TRAINING: {
       USER_JOINED_GAME: '{{userName}} se připojil k tréninku',
@@ -367,6 +394,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je nyní vlastníkem tréninku',
       GAME_CLUB_CHANGED: 'Místo tréninku změněno na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/čas tréninku změněn na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Stav rezervace kurtu změněn na {{bookingStatus}}',
     },
     TOURNAMENT: {
       USER_JOINED_GAME: '{{userName}} se připojil k turnaji',
@@ -378,6 +406,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je nyní vlastníkem turnaje',
       GAME_CLUB_CHANGED: 'Místo turnaje změněno na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/čas turnaje změněn na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Stav rezervace kurtu změněn na {{bookingStatus}}',
     },
     LEAGUE: {
       USER_JOINED_GAME: '{{userName}} se připojil k lize',
@@ -389,6 +418,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je nyní vlastníkem ligy',
       GAME_CLUB_CHANGED: 'Místo ligy změněno na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/čas ligy změněn na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Stav rezervace kurtu změněn na {{bookingStatus}}',
     },
     LEAGUE_SEASON: {
       USER_JOINED_GAME: '{{userName}} se připojil k sezóně ligy',
@@ -400,6 +430,7 @@ const ENTITY_OVERRIDES: Record<string, Record<EntityType, EntityMessageSet>> = {
       OWNERSHIP_TRANSFERRED: '{{newOwnerName}} je nyní vlastníkem sezóny ligy',
       GAME_CLUB_CHANGED: 'Místo sezóny ligy změněno na {{clubName}}',
       GAME_DATE_TIME_CHANGED: 'Datum/čas sezóny ligy změněn na {{dateTime}}',
+      GAME_BOOKING_STATUS_CHANGED: 'Stav rezervace kurtu změněn na {{bookingStatus}}',
     },
   },
 };

@@ -18,17 +18,23 @@ export async function acceptInviteFromTelegram(
 
 export async function declineInviteFromTelegram(
   inviteId: string,
-  userId: string
+  userId: string,
+  declineMessage?: string
 ): Promise<InviteActionResult> {
-  const result = await InviteService.declineInvite(inviteId, userId, false);
-  
+  const result = await InviteService.declineInvite(
+    inviteId,
+    userId,
+    false,
+    declineMessage
+  );
+
   if (result.success) {
     return {
       success: true,
       message: 'telegram.inviteDeclined',
     };
   }
-  
+
   return result;
 }
 

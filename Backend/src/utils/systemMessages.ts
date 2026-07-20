@@ -19,6 +19,7 @@ export enum SystemMessageType {
   BUG_PRIORITY_CHANGED = 'BUG_PRIORITY_CHANGED',
   GAME_CLUB_CHANGED = 'GAME_CLUB_CHANGED',
   GAME_DATE_TIME_CHANGED = 'GAME_DATE_TIME_CHANGED',
+  GAME_BOOKING_STATUS_CHANGED = 'GAME_BOOKING_STATUS_CHANGED',
   USER_CHAT_REQUEST = 'USER_CHAT_REQUEST',
   USER_CHAT_ACCEPTED = 'USER_CHAT_ACCEPTED',
   USER_CHAT_DECLINED = 'USER_CHAT_DECLINED',
@@ -132,6 +133,11 @@ export const SYSTEM_MESSAGE_TEMPLATES: Record<SystemMessageType, SystemMessageTe
     type: SystemMessageType.GAME_DATE_TIME_CHANGED,
     template: 'Game date/time changed to {{dateTime}}',
     variables: ['dateTime']
+  },
+  [SystemMessageType.GAME_BOOKING_STATUS_CHANGED]: {
+    type: SystemMessageType.GAME_BOOKING_STATUS_CHANGED,
+    template: 'Court booking status changed to {{bookingStatus}}',
+    variables: ['bookingStatus']
   },
   [SystemMessageType.USER_CHAT_REQUEST]: {
     type: SystemMessageType.USER_CHAT_REQUEST,

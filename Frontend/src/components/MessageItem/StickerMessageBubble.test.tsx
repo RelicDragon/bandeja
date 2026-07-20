@@ -40,4 +40,23 @@ describe('StickerMessageBubble', () => {
     expect(html).toContain('class="flex h-40 w-40');
     expect(html).toContain('src="https://cdn.example/sticker.webp"');
   });
+
+  it('renders a non-clickable bubble when no tap handler is supplied', () => {
+    const html = renderToStaticMarkup(
+      <StickerMessageBubble message={{ stickerId: 'sticker-1', stickerEmoji: '🎉' }} />
+    );
+    expect(html).toContain('<button');
+    expect(html).toContain('cursor-default');
+  });
+
+  it('renders a clickable button when an onStickerClick handler is supplied', () => {
+    const html = renderToStaticMarkup(
+      <StickerMessageBubble
+        message={{ stickerId: 'sticker-1', stickerEmoji: '🎉' }}
+        onStickerClick={() => undefined}
+      />
+    );
+    expect(html).toContain('<button');
+    expect(html).toContain('cursor-pointer');
+  });
 });

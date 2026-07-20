@@ -2,7 +2,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { Sport } from '@shared/sport';
 import {
   getMyStickerPrefs,
-  putMyStickerPrefs,
   type ChatMediaRecent,
   type StickerDto,
   type StickerPackListItem,
@@ -24,11 +23,12 @@ import {
   readCachedStickerPrefs,
   writeCachedStickerPrefs,
 } from '@/services/stickers/stickerPrefsCache';
+import { toggleStickerFavorite } from '@/services/stickers/stickerFavorites';
+import { subscribeStickerFavoritesChanged } from '@/services/stickers/stickerFavoritesEvents';
 import {
   MAX_STICKER_RECENT,
   bumpChatMediaRecent,
   mergeServerStickerPrefs,
-  toggleStickerFavoriteIds,
 } from '@/utils/stickerPrefsOrder';
 import { filterStickersByQuery, sortPacksForSport } from '@/utils/stickerTrayPacks';
 import { useAuthStore } from '@/store/authStore';
@@ -63,7 +63,6 @@ export function useChatStickerTrayData(
   const prefsRef = useRef(prefs);
   prefsRef.current = prefs;
   const hydrateGenRef = useRef(0);
-  const favChainRef = useRef(Promise.resolve());
   const searchIndexGenRef = useRef(0);
   const loadGenRef = useRef(0);
   const searchIndexedRef = useRef(false);
@@ -295,35 +294,23 @@ export function useChatStickerTrayData(
     };
   }, [open, selectedPackId, tab, packReloadKey]);
 
-  const toggleFavorite = useCallback(
-    (sticker: StickerDto) => {
-      favChainRef.current = favChainRef.current
-        .catch(() => undefined)
-        .then(async () => {
-          const prevPrefs = prefsRef.current;
-          const { favorites, isFavorite } = toggleStickerFavoriteIds(
-            prevPrefs.favorites,
-            sticker.id
-          );
-          const optimistic: UserStickerPrefs = { ...prevPrefs, favorites };
-          applyPrefs(optimistic);
-          setFavoriteStickers((prev) => {
-            if (!isFavorite) return prev.filter((s) => s.id !== sticker.id);
-            return [sticker, ...prev.filter((s) => s.id !== sticker.id)];
-          });
-          try {
-            const saved = await putMyStickerPrefs({ favorites });
-            const merged = mergeServerStickerPrefs(saved, readLocalRecent());
-            applyPrefs(merged);
-            await loadPrefsStickers(merged);
-          } catch {
-            applyPrefs(prevPrefs);
-            await loadPrefsStickers(prevPrefs);
-          }
-        });
-    },
-    [applyPrefs, loadPrefsStickers, readLocalRecent]
-  );
+  // Live-refresh favorites when they change anywhere (this tray or the message menu).
+  useEffect(() => {
+    if (!open) return;
+    const unsubscribe = subscribeStickerFavoritesChanged((detail) => {
+      const cached = readCachedStickerPrefs(detail.userId);
+      if (!cached) return;
+      applyPrefs(cached);
+      void loadPrefsStickers(cached);
+    });
+    return unsubscribe;
+  }, [open, applyPrefs, loadPrefsStickers]);
+
+  // The shared service owns cache + network + event; we reconcile via the effect above.
+  const toggleFavorite = useCallback((sticker: StickerDto) => {
+    if (!sticker.id) return;
+    void toggleStickerFavorite(sticker.id);
+  }, []);
 
   const bumpRecentLocal = useCallback(
     (sticker: StickerDto) => {

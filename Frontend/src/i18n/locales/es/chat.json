@@ -227,7 +227,14 @@
         "USER_KICKED": "{{userName}} fue expulsado del bar",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño del bar",
         "GAME_CLUB_CHANGED": "Ubicación del bar cambiada a {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Fecha/hora del bar cambiada a {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Fecha/hora del bar cambiada a {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva del salón cambiado a {{bookingStatus}}",
+        "bookingStatuses": {
+          "EXTERNAL_FULL": "Completamente reservado",
+          "EXTERNAL_PARTIAL": "No completamente reservado",
+          "MANUAL": "Salón reservado",
+          "NONE": "Aún no reservado"
+        }
       },
       "TRAINING": {
         "USER_JOINED_GAME": "{{userName}} se unió al entrenamiento",
@@ -238,7 +245,8 @@
         "USER_KICKED": "{{userName}} fue expulsado del entrenamiento",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño del entrenamiento",
         "GAME_CLUB_CHANGED": "Ubicación del entrenamiento cambiada a {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Fecha/hora del entrenamiento cambiada a {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Fecha/hora del entrenamiento cambiada a {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}"
       },
       "TOURNAMENT": {
         "USER_JOINED_GAME": "{{userName}} se unió al torneo",
@@ -249,7 +257,8 @@
         "USER_KICKED": "{{userName}} fue expulsado del torneo",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño del torneo",
         "GAME_CLUB_CHANGED": "Ubicación del torneo cambiada a {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Fecha/hora del torneo cambiada a {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Fecha/hora del torneo cambiada a {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}"
       },
       "LEAGUE": {
         "USER_JOINED_GAME": "{{userName}} se unió a la liga",
@@ -260,7 +269,8 @@
         "USER_KICKED": "{{userName}} fue expulsado de la liga",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño de la liga",
         "GAME_CLUB_CHANGED": "Ubicación de la liga cambiada a {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Fecha/hora de la liga cambiada a {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Fecha/hora de la liga cambiada a {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}"
       },
       "LEAGUE_SEASON": {
         "USER_JOINED_GAME": "{{userName}} se unió a la temporada de liga",
@@ -271,11 +281,19 @@
         "USER_KICKED": "{{userName}} fue expulsado de la temporada de liga",
         "OWNERSHIP_TRANSFERRED": "{{newOwnerName}} es ahora el dueño de la temporada de liga",
         "GAME_CLUB_CHANGED": "Ubicación de la temporada de liga cambiada a {{clubName}}",
-        "GAME_DATE_TIME_CHANGED": "Fecha/hora de la temporada de liga cambiada a {{dateTime}}"
+        "GAME_DATE_TIME_CHANGED": "Fecha/hora de la temporada de liga cambiada a {{dateTime}}",
+        "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}"
       },
       "actions": {
         "joined": "se unió al juego",
         "left": "abandonó el juego"
+      },
+      "GAME_BOOKING_STATUS_CHANGED": "Estado de reserva de pista cambiado a {{bookingStatus}}",
+      "bookingStatuses": {
+        "EXTERNAL_FULL": "Completamente reservado",
+        "EXTERNAL_PARTIAL": "No completamente reservado",
+        "MANUAL": "Pista reservada",
+        "NONE": "Aún no reservado"
       }
     },
     "openChat": "Abrir Chat",
@@ -520,33 +538,111 @@
         "market": "Mercado",
         "marketChat": "Chat del mercado"
       },
-      "openGame": { "title": "Abrir partido", "description": "Ver este partido en Bandeja" },
-      "openTraining": { "title": "Abrir entrenamiento", "description": "Ver este entrenamiento en Bandeja" },
-      "openLeague": { "title": "Abrir liga", "description": "Ver esta liga en Bandeja" },
-      "viewProfile": { "title": "Perfil", "description": "Ver perfil" },
-      "directMessage": { "title": "Chat", "description": "Mensaje directo" },
-      "marketplaceItem": { "title": "Artículo", "description": "Ver anuncio" },
+      "openGame": {
+        "title": "Abrir partido",
+        "description": "Ver este partido en Bandeja"
+      },
+      "openTraining": {
+        "title": "Abrir entrenamiento",
+        "description": "Ver este entrenamiento en Bandeja"
+      },
+      "openLeague": {
+        "title": "Abrir liga",
+        "description": "Ver esta liga en Bandeja"
+      },
+      "viewProfile": {
+        "title": "Perfil",
+        "description": "Ver perfil"
+      },
+      "directMessage": {
+        "title": "Chat",
+        "description": "Mensaje directo"
+      },
+      "marketplaceItem": {
+        "title": "Artículo",
+        "description": "Ver anuncio"
+      },
       "app": {
-        "home": { "title": "Bandeja", "description": "Mis partidos" },
-        "invites": { "title": "Invitaciones", "description": "Abrir invitaciones" },
-        "find": { "title": "Buscar partidos", "description": "Explorar partidos" },
-        "findToday": { "title": "Buscar partidos", "description": "Hoy" },
-        "findTomorrow": { "title": "Buscar partidos", "description": "Mañana" },
-        "chats": { "title": "Chats", "description": "Abrir conversaciones" },
-        "chatsMarketplace": { "title": "Chats del mercado", "description": "Abrir chats del mercado" },
-        "createGame": { "title": "Crear partido", "description": "Empezar un partido" },
-        "createLeague": { "title": "Crear liga", "description": "Empezar una liga" },
-        "nextGame": { "title": "Próximo partido", "description": "Ir a tu próximo partido" },
-        "nextGameChat": { "title": "Próximo partido", "description": "Abrir chat del partido" },
-        "nextGameLive": { "title": "Próximo partido", "description": "Abrir marcador en vivo" },
-        "marketplace": { "title": "Mercado", "description": "Explorar artículos" },
-        "marketplaceMy": { "title": "Mis anuncios", "description": "Tus artículos" },
-        "leaderboard": { "title": "Clasificación", "description": "Rankings" },
-        "login": { "title": "Iniciar sesión", "description": "Entrar en Bandeja" },
-        "register": { "title": "Registrarse", "description": "Crear una cuenta" },
-        "bugs": { "title": "Bugs", "description": "Informes de errores" },
-        "profile": { "title": "Perfil", "description": "Tu perfil" },
-        "open": { "title": "Bandeja", "description": "Abrir en Bandeja" }
+        "home": {
+          "title": "Bandeja",
+          "description": "Mis partidos"
+        },
+        "invites": {
+          "title": "Invitaciones",
+          "description": "Abrir invitaciones"
+        },
+        "find": {
+          "title": "Buscar partidos",
+          "description": "Explorar partidos"
+        },
+        "findToday": {
+          "title": "Buscar partidos",
+          "description": "Hoy"
+        },
+        "findTomorrow": {
+          "title": "Buscar partidos",
+          "description": "Mañana"
+        },
+        "chats": {
+          "title": "Chats",
+          "description": "Abrir conversaciones"
+        },
+        "chatsMarketplace": {
+          "title": "Chats del mercado",
+          "description": "Abrir chats del mercado"
+        },
+        "createGame": {
+          "title": "Crear partido",
+          "description": "Empezar un partido"
+        },
+        "createLeague": {
+          "title": "Crear liga",
+          "description": "Empezar una liga"
+        },
+        "nextGame": {
+          "title": "Próximo partido",
+          "description": "Ir a tu próximo partido"
+        },
+        "nextGameChat": {
+          "title": "Próximo partido",
+          "description": "Abrir chat del partido"
+        },
+        "nextGameLive": {
+          "title": "Próximo partido",
+          "description": "Abrir marcador en vivo"
+        },
+        "marketplace": {
+          "title": "Mercado",
+          "description": "Explorar artículos"
+        },
+        "marketplaceMy": {
+          "title": "Mis anuncios",
+          "description": "Tus artículos"
+        },
+        "leaderboard": {
+          "title": "Clasificación",
+          "description": "Rankings"
+        },
+        "login": {
+          "title": "Iniciar sesión",
+          "description": "Entrar en Bandeja"
+        },
+        "register": {
+          "title": "Registrarse",
+          "description": "Crear una cuenta"
+        },
+        "bugs": {
+          "title": "Bugs",
+          "description": "Informes de errores"
+        },
+        "profile": {
+          "title": "Perfil",
+          "description": "Tu perfil"
+        },
+        "open": {
+          "title": "Bandeja",
+          "description": "Abrir en Bandeja"
+        }
       }
     }
   }

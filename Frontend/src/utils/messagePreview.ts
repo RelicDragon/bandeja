@@ -15,6 +15,10 @@ export function parseMessagePreview(preview: string | null | undefined, t: TFunc
         return t('chat.messages.media', '[Media]');
     }
 
+    if (preview === '[TYPE:GIF]') {
+        return t('chat.giphy.attach', { defaultValue: 'GIF' });
+    }
+
     if (preview.startsWith('[TYPE:VOICE]')) {
         const dur = preview.slice(12);
         return dur

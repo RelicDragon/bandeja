@@ -1,10 +1,11 @@
 import type { ChatContextType, OptimisticMessagePayload } from '@/api/chat';
 import type { ChatListOutbox } from '@/utils/chatListSort';
+import { looksLikeGifMediaUrl } from '@/utils/gifMediaUrl';
 import { chatLocalDb } from './chatLocalDb';
 
 function outboxPreviewFromPayload(payload: OptimisticMessagePayload): {
   preview?: string;
-  previewKind?: 'text' | 'voice' | 'media' | 'video' | 'sticker';
+  previewKind?: 'text' | 'voice' | 'media' | 'gif' | 'video' | 'sticker';
 } {
   const text = (payload.content || '').trim();
   if (text) return { preview: text.slice(0, 80), previewKind: 'text' };
@@ -14,7 +15,10 @@ function outboxPreviewFromPayload(payload: OptimisticMessagePayload): {
     const emoji = payload.stickerEmoji?.trim();
     return { preview: emoji || undefined, previewKind: 'sticker' };
   }
-  if (payload.messageType === 'IMAGE' || (payload.mediaUrls?.length ?? 0) > 0) return { previewKind: 'media' };
+  if (payload.messageType === 'IMAGE' || (payload.mediaUrls?.length ?? 0) > 0) {
+    if (looksLikeGifMediaUrl(payload.mediaUrls?.[0])) return { previewKind: 'gif' };
+    return { previewKind: 'media' };
+  }
   return {};
 }
 

@@ -276,7 +276,8 @@ Frontend/e2e/
 | H-12 | View pending invite | Seed invite | Card shows game info |
 | H-13 | Accept invite | Accept | Joined game, invite gone |
 | H-14 | Decline invite | Decline → confirm modal | Invite removed |
-| H-15 | Decline with note | Add note in modal | Note saved |
+| H-15 | Decline with note | Add note in modal | Note posted to game chat (with notifications), then invite declined |
+| H-15a | Telegram decline with response | Telegram game invite → Decline with response → send reason (or `/skip` / `/skip@Bot`) | Same as H-15 when reason sent; invite declined and Telegram invite message updated; `/skip` declines without chat message; prompt expires after 10m; Accept/Decline clears pending prompt |
 | H-16 | Invite note on game | Save note without accept/decline | Persisted |
 | H-61 | Invite cleared after accept from game | My tab invite → open game → accept invite on game page → back to My tab | Invite card gone immediately; second accept not offered |
 
@@ -645,6 +646,7 @@ Frontend/e2e/
 | GD-89 | Linked bookings coverage badge | Game with linked bookings where count or booking window does not cover game courts/time; viewer owns linked reservation | Section header shows blue “Not fully booked” badge |
 | GD-90 | Linked bookings fully covered badge | Game with enough linked bookings spanning full `startTime`–`endTime` for required courts; viewer owns linked reservation | Section header shows green check “Fully booked” badge |
 | GD-103 | Linked booking status in game info (non-owner) | Game with `linkedBookings`; viewer is not the Booktime reservation owner (participant, guest, or other user) | “From your reservations” section hidden; game info club row shows green “Fully booked” or blue “Not fully booked” badge instead of manual court booked text |
+| GD-117 | Court booking status change notify | Participant or waitlisted player on game; owner toggles court booked / links or unlinks reservation so `bookingStatus` changes | Game chat system message with new status; push + Telegram to playing + waitlist (not pending invites), same channels as club/date-time change |
 | GD-87 | Linked booking refresh (owner) | Game details linked booking that exists in viewer's Booktime account | Refresh icon on row; success toast if still active |
 | GD-88 | Linked booking absent unlink | Refresh when booking gone from viewer's Booktime account | Modal explains link removal; game stays; confirm removes link from this game |
 | GD-91 | Delete game with linked bookings | Owner deletes game with `linkedBookings` → confirm → second modal | Lists linked reservations; explains club bookings stay active; "Delete anyway" proceeds |

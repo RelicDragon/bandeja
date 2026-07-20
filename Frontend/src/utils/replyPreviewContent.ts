@@ -2,7 +2,9 @@ import type { TFunction } from 'i18next';
 import type { ChatMessage } from '@/api/chat';
 import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatStickerPreviewText } from '@/utils/stickerPreview';
-import { isGifProviderHostedUrl } from '@/utils/gifProviderUrl';
+import { looksLikeGifMediaUrl } from '@/utils/gifMediaUrl';
+
+export { looksLikeGifMediaUrl };
 
 const REPLY_TRUNCATE_LEN = 100;
 
@@ -12,19 +14,6 @@ function truncate(str: string, max: number): string {
   const t = str.trim();
   if (t.length <= max) return t;
   return t.slice(0, max).trim() + '…';
-}
-
-export function looksLikeGifMediaUrl(url: string): boolean {
-  if (!url) return false;
-  if (isGifProviderHostedUrl(url)) return true;
-  try {
-    const path = new URL(url, 'https://local.invalid').pathname.toLowerCase();
-    if (path.endsWith('.gif') || path.includes('.gif.')) return true;
-    // Re-hosted provider imports keep a `giphy.*` stem (gif or animated webp/png).
-    return /\/giphy\.(gif|webp|png)$/i.test(path);
-  } catch {
-    return /\.gif($|\?)/i.test(url) || /\/giphy\.(gif|webp|png)($|\?)/i.test(url);
-  }
 }
 
 function isStickerReply(replyTo: ReplyToPreviewSource): boolean {
