@@ -46,20 +46,23 @@ type CommentAuthorFromDb = {
     reliability: number;
     gamesPlayed: number;
     gamesWon: number;
+    approvedLevel?: boolean;
+    approvedById?: string | null;
+    approvedWhen?: Date | null;
   }>;
 };
 
 function toStoryCommentAuthor(author: CommentAuthorFromDb): StoryCommentAuthorInput {
-  const { level } = projectUserByPrimarySport(author);
+  const projected = projectUserByPrimarySport(author);
   return {
     id: author.id,
     firstName: author.firstName,
     lastName: author.lastName,
     avatar: author.avatar,
-    level,
+    level: projected.level,
     socialLevel: author.socialLevel,
     gender: author.gender,
-    approvedLevel: author.approvedLevel,
+    approvedLevel: projected.approvedLevel,
     isTrainer: author.isTrainer,
     isActive: author.isActive,
   };

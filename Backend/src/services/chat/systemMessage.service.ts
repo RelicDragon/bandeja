@@ -1,25 +1,48 @@
 import prisma from '../../config/database';
 import { ChatSyncEventType } from '@bandeja/chat-contract';
-import { MessageState, ChatType, ChatContextType } from '@prisma/client';
+import { MessageState, ChatType, ChatContextType, Sport } from '@prisma/client';
 import { SystemMessageType, createSystemMessageContent } from '../../utils/systemMessages';
 import { computeContentSearchable } from '../../utils/messageSearchContent';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { updateLastMessagePreview } from './lastMessagePreview.service';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { getChatNotifier } from './chatNotifier';
+import { projectMessageEmbeddedUsers } from '../user/projectEmbeddedBasicUsers';
+import { resolveSport } from '../../sport/sportRegistry';
 
 const SYSTEM_MESSAGE_INCLUDE = {
-  sender: { select: USER_SELECT_FIELDS },
+  sender: { select: USER_SELECT_WITH_SPORT_PROFILES },
   replyTo: {
     select: {
       id: true,
       content: true,
-      sender: { select: USER_SELECT_FIELDS },
+      sender: { select: USER_SELECT_WITH_SPORT_PROFILES },
     },
   },
-  reactions: { include: { user: { select: USER_SELECT_FIELDS } } },
-  readReceipts: { include: { user: { select: USER_SELECT_FIELDS } } },
+  reactions: { include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } } },
+  readReceipts: { include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } } },
 } as const;
+
+async function resolveSystemMessageSport(
+  chatContextType: ChatContextType,
+  contextId: string,
+): Promise<Sport> {
+  if (chatContextType === ChatContextType.GAME) {
+    const game = await prisma.game.findUnique({
+      where: { id: contextId },
+      select: { sport: true },
+    });
+    return game?.sport ?? Sport.PADEL;
+  }
+  if (chatContextType === ChatContextType.USER) {
+    const chat = await prisma.userChat.findUnique({
+      where: { id: contextId },
+      select: { user1: { select: { primarySport: true } } },
+    });
+    return resolveSport(chat?.user1?.primarySport ?? Sport.PADEL);
+  }
+  return Sport.PADEL;
+}
 
 export class SystemMessageService {
   static async createSystemMessage(
@@ -34,6 +57,7 @@ export class SystemMessageService {
       variables: messageData.variables,
       text
     });
+    const sport = await resolveSystemMessageSport(chatContextType, contextId);
     const message = await prisma.$transaction(async (tx) => {
       const m = await tx.chatMessage.create({
         data: {
@@ -50,12 +74,13 @@ export class SystemMessageService {
         },
         include: SYSTEM_MESSAGE_INCLUDE
       });
+      const projected = projectMessageEmbeddedUsers(m, sport);
       const syncSeq = await ChatSyncEventService.appendEventInTransaction(
         tx,
         chatContextType,
         contextId,
         ChatSyncEventType.MESSAGE_CREATED,
-        { message: m }
+        { message: projected }
       );
       await tx.chatMessage.update({
         where: { id: m.id },
@@ -65,7 +90,9 @@ export class SystemMessageService {
         where: { id: m.id },
         include: SYSTEM_MESSAGE_INCLUDE,
       });
-      const out = (refreshed ?? m) as typeof m & { syncSeq?: number };
+      const out = projectMessageEmbeddedUsers(refreshed ?? m, sport) as typeof m & {
+        syncSeq?: number;
+      };
       out.syncSeq = syncSeq;
       return out;
     });

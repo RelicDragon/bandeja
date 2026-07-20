@@ -2,9 +2,33 @@ import { ChatSyncEventType } from '@bandeja/chat-contract';
 import { Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { MessageService } from './message.service';
+import {
+  projectUserForSportContext,
+  resolveChatMessageSport,
+} from '../user/userSportProfile.service';
+
+type PollUser = Parameters<typeof projectUserForSportContext>[0];
+
+function projectPollUsers<
+  T extends {
+    options: Array<{ votes: Array<{ user?: PollUser | null }> }>;
+    votes: Array<{ user?: PollUser | null }>;
+  },
+>(poll: T, sport: Parameters<typeof projectUserForSportContext>[1]): T {
+  const project = (u: PollUser | null | undefined) =>
+    u ? projectUserForSportContext(u, sport) : u;
+  return {
+    ...poll,
+    options: poll.options.map((o) => ({
+      ...o,
+      votes: o.votes.map((v) => ({ ...v, user: project(v.user) })),
+    })),
+    votes: poll.votes.map((v) => ({ ...v, user: project(v.user) })),
+  };
+}
 
 export class PollService {
     /**
@@ -92,7 +116,7 @@ export class PollService {
                         include: {
                             votes: {
                                 include: {
-                                    user: { select: USER_SELECT_FIELDS }
+                                    user: { select: USER_SELECT_WITH_SPORT_PROFILES }
                                 }
                             }
                         },
@@ -102,7 +126,7 @@ export class PollService {
                     },
                     votes: {
                         include: {
-                            user: { select: USER_SELECT_FIELDS }
+                            user: { select: USER_SELECT_WITH_SPORT_PROFILES }
                         }
                     }
                 }
@@ -113,31 +137,40 @@ export class PollService {
                 select: { chatContextType: true, contextId: true },
             });
             let syncSeq: number | undefined;
+            let projectedPoll = updatedPoll;
             if (ctxMsg && updatedPoll) {
-                const sanitized = updatedPoll.isAnonymous
+                const sport = await resolveChatMessageSport(
+                  {
+                    chatContextType: ctxMsg.chatContextType,
+                    contextId: ctxMsg.contextId,
+                  },
+                  userId,
+                );
+                projectedPoll = projectPollUsers(updatedPoll, sport);
+                const sanitized = projectedPoll.isAnonymous
                     ? {
-                        ...updatedPoll,
-                        options: updatedPoll.options.map((o) => ({
+                        ...projectedPoll,
+                        options: projectedPoll.options.map((o) => ({
                             ...o,
                             votes: o.votes.map((v) => ({ ...v, user: undefined })),
                         })),
-                        votes: updatedPoll.votes.map((v) => ({ ...v, user: undefined })),
+                        votes: projectedPoll.votes.map((v) => ({ ...v, user: undefined })),
                     }
-                    : updatedPoll;
+                    : projectedPoll;
                 syncSeq = await ChatSyncEventService.appendEventInTransaction(
                     tx,
                     ctxMsg.chatContextType,
                     ctxMsg.contextId,
                     ChatSyncEventType.POLL_VOTED,
                     {
-                        pollId: updatedPoll.id,
-                        messageId: updatedPoll.messageId,
+                        pollId: projectedPoll.id,
+                        messageId: projectedPoll.messageId,
                         updatedPoll: sanitized,
                     }
                 );
             }
 
-            return { poll: updatedPoll, syncSeq };
+            return { poll: projectedPoll, syncSeq };
         });
     }
 }

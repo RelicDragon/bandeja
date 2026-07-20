@@ -38,6 +38,10 @@ function run() {
     FIND_CARD_USER_SELECT.sportProfiles?.select?.level === true,
     'Find card still selects level for projection',
   );
+  assert.ok(
+    FIND_CARD_USER_SELECT.sportProfiles?.select?.approvedLevel === true,
+    'Find card selects approvedLevel for sport confirmation projection',
+  );
 
   const validCard = {
     id: 'g1',
