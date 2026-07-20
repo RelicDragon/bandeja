@@ -140,7 +140,7 @@ export class AdminGamesService {
             include: {
               user: {
                 select: {
-                  ...USER_SELECT_FIELDS,
+                  ...USER_SELECT_WITH_SPORT_PROFILES,
                   phone: true,
                 },
               },

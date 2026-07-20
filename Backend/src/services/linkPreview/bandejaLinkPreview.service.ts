@@ -1,6 +1,6 @@
 import { formatInTimeZone } from 'date-fns-tz';
 import prisma from '../../config/database';
-import { MarketItemStatus, ParticipantStatus } from '@prisma/client';
+import { MarketItemStatus, ParticipantStatus, Sport } from '@prisma/client';
 import { appLinkCopyKey, type ParsedBandejaLink } from './parseBandejaLink';
 import type { LinkPreviewBadgeKey, LinkPreviewCopyKey, LinkPreviewResult } from './linkPreview.types';
 
@@ -234,6 +234,9 @@ async function previewUser(id: string, href: string): Promise<LinkPreviewResult 
           reliability: true,
           gamesPlayed: true,
           gamesWon: true,
+          approvedLevel: true,
+          approvedById: true,
+          approvedWhen: true,
         },
       },
     },
@@ -243,6 +246,9 @@ async function previewUser(id: string, href: string): Promise<LinkPreviewResult 
   const primaryLevel =
     user.sportProfiles.find((profile) => profile.sport === user.primarySport)?.level ??
     user.socialLevel;
+  const primaryConfirmation =
+    user.sportProfiles.find((profile) => profile.sport === user.primarySport)?.approvedLevel ??
+    (user.primarySport === Sport.PADEL || !user.primarySport ? user.approvedLevel : false);
   return baseBandeja(href, {
     entityType: 'user',
     title: name,
@@ -264,7 +270,7 @@ async function previewUser(id: string, href: string): Promise<LinkPreviewResult 
       sportsEnabled: user.sportsEnabled,
       socialLevel: user.socialLevel,
       gender: user.gender,
-      approvedLevel: user.approvedLevel,
+      approvedLevel: primaryConfirmation,
       isTrainer: user.isTrainer,
       verbalStatus: user.verbalStatus,
       sportProfiles: user.sportProfiles,

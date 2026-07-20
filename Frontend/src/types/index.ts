@@ -16,6 +16,10 @@ export interface UserSportProfile {
   levelSource?: SportLevelSource;
   /** Manual or imported external scale (DUPR, NTRP, Playtomic, etc.) — profile only. */
   externalRatingHint?: string | null;
+  /** Sport Level Confirmation (ADR-008). */
+  approvedLevel?: boolean;
+  approvedById?: string | null;
+  approvedWhen?: Date | string | null;
   playStreak?: import('./playStreak').PlayStreakView;
 }
 

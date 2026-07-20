@@ -173,6 +173,9 @@ export const USER_SPORT_PROFILE_SELECT = {
   questionnaireVersion: true,
   levelSource: true,
   externalRatingHint: true,
+  approvedLevel: true,
+  approvedById: true,
+  approvedWhen: true,
 } as const;
 
 export const USER_SELECT_FIELDS = {
@@ -230,6 +233,7 @@ export const USER_STATS_TARGET_SELECT = {
   telegramId: true,
   telegramUsername: true,
   approvedById: true,
+  approvedWhen: true,
 } as const;
 
 export const PROFILE_SELECT_FIELDS = {

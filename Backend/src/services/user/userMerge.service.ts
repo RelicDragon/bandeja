@@ -3,6 +3,7 @@ import {
   ChatContextType,
   ParticipantRole,
   Prisma,
+  Sport,
   SportLevelSource,
 } from '@prisma/client';
 import prisma from '../../config/database';
@@ -525,10 +526,77 @@ async function mergeUserSportProfiles(tx: Tx, survivorId: string, sourceId: stri
         questionnaireVersion: version,
         levelSource: mergeSportLevelSource(surv.levelSource, src.levelSource),
         externalRatingHint: surv.externalRatingHint ?? src.externalRatingHint,
+        ...mergeSportLevelConfirmation(surv, src),
       },
     });
     await tx.userSportProfile.delete({ where: { id: src.id } });
   }
+}
+
+function mergeSportLevelConfirmation(
+  surv: {
+    approvedLevel: boolean;
+    approvedById: string | null;
+    approvedWhen: Date | null;
+  },
+  src: {
+    approvedLevel: boolean;
+    approvedById: string | null;
+    approvedWhen: Date | null;
+  },
+): {
+  approvedLevel: boolean;
+  approvedById: string | null;
+  approvedWhen: Date | null;
+} {
+  const approvedLevel = surv.approvedLevel || src.approvedLevel;
+  if (!approvedLevel) {
+    return { approvedLevel: false, approvedById: null, approvedWhen: null };
+  }
+  if (surv.approvedWhen && src.approvedWhen) {
+    if (surv.approvedWhen >= src.approvedWhen) {
+      return {
+        approvedLevel: true,
+        approvedById: surv.approvedById,
+        approvedWhen: surv.approvedWhen,
+      };
+    }
+    return {
+      approvedLevel: true,
+      approvedById: src.approvedById,
+      approvedWhen: src.approvedWhen,
+    };
+  }
+  if (surv.approvedLevel) {
+    return {
+      approvedLevel: true,
+      approvedById: surv.approvedById,
+      approvedWhen: surv.approvedWhen,
+    };
+  }
+  return {
+    approvedLevel: true,
+    approvedById: src.approvedById,
+    approvedWhen: src.approvedWhen,
+  };
+}
+
+/** ADR-008: keep User.approved* aligned with the PADEL sport profile. */
+async function syncPadelApprovalMirrorFromProfile(tx: Tx, userId: string) {
+  const padel = await tx.userSportProfile.findUnique({
+    where: { userId_sport: { userId, sport: Sport.PADEL } },
+    select: { approvedLevel: true, approvedById: true, approvedWhen: true },
+  });
+  let approvedById = padel?.approvedById ?? null;
+  if (approvedById === userId) approvedById = null;
+  await tx.user.update({
+    where: { id: userId },
+    data: {
+      approvedLevel: padel?.approvedLevel ?? false,
+      approvedById,
+      approvedWhen: padel?.approvedWhen ?? null,
+    },
+  });
 }
 
 async function mergeLundaProfiles(tx: Tx, survivorId: string, sourceId: string) {
@@ -597,6 +665,10 @@ export class UserMergeService {
         });
 
         await tx.user.updateMany({
+          where: { approvedById: sourceId },
+          data: { approvedById: survivorId },
+        });
+        await tx.userSportProfile.updateMany({
           where: { approvedById: sourceId },
           data: { approvedById: survivorId },
         });
@@ -738,6 +810,7 @@ export class UserMergeService {
         await dedupePairTables(tx, survivorId);
         await dedupeLeagueParticipants(tx, survivorId);
         await mergeUserSportProfiles(tx, survivorId, sourceId);
+        await syncPadelApprovalMirrorFromProfile(tx, survivorId);
         await mergeLundaProfiles(tx, survivorId, sourceId);
 
         await recomputeUserGameStats(tx, survivorId);
@@ -747,12 +820,10 @@ export class UserMergeService {
           data: {
             favoriteTrainerId:
               favoriteTrainerId === survivorId ? null : favoriteTrainerId,
-            approvedById:
-              approvedById === survivorId || approvedById === sourceId
-                ? null
-                : approvedById,
           },
         });
+
+        await syncPadelApprovalMirrorFromProfile(tx, survivorId);
 
         await tx.user.delete({ where: { id: sourceId } });
       },

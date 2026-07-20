@@ -1,6 +1,6 @@
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
-import { EntityType } from '@prisma/client';
+import { EntityType, Sport } from '@prisma/client';
 import { cleanupInviteParticipantsForEndedGame } from '../utils/gameInviteCleanup';
 import {
   ensureSportInEnabled,
@@ -181,17 +181,14 @@ export async function updateParticipantLevel(
   await prisma.$transaction(async (tx) => {
     await clearSetEventsForUserInGame(gameId, participantUserId, tx);
 
-    const userPatch: {
-      approvedLevel?: boolean;
-      approvedById?: string;
-      approvedWhen?: Date;
-    } = {};
-
-    if (user.isTrainer || user.isAdmin || isTrainerOrOwner) {
-      userPatch.approvedLevel = true;
-      userPatch.approvedById = userId;
-      userPatch.approvedWhen = new Date();
-    }
+    const confirmationPatch =
+      user.isTrainer || user.isAdmin || isTrainerOrOwner
+        ? {
+            approvedLevel: true,
+            approvedById: userId,
+            approvedWhen: now,
+          }
+        : null;
 
     await tx.userSportProfile.upsert({
       where: { userId_sport: { userId: participantUserId, sport: game.sport } },
@@ -201,20 +198,23 @@ export async function updateParticipantLevel(
         level: levelAfter,
         reliability: reliabilityAfter,
         lastRatingActivityAt: now,
+        ...(confirmationPatch ?? {}),
       },
       update: {
         level: levelAfter,
         reliability: reliabilityAfter,
         lastRatingActivityAt: now,
+        ...(confirmationPatch ?? {}),
       },
     });
 
     await ensureSportInEnabled(participantUserId, game.sport, tx);
 
-    if (Object.keys(userPatch).length > 0) {
+    // ADR-008: User.approved* is a PADEL-only denormalized mirror for older clients.
+    if (confirmationPatch && game.sport === Sport.PADEL) {
       await tx.user.update({
         where: { id: participantUserId },
-        data: userPatch,
+        data: confirmationPatch,
       });
     }
 

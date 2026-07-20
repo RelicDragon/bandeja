@@ -9,3 +9,9 @@ Existing `User.approvedLevel = true` rows migrate onto the PADEL sport profile. 
 - Drop `User.approved*` in the same release and rely on JSON projection only — rejected while old FE may still talk to new BE.
 - Project top-level `approved*` from primarySport always — rejected; padel mirror matches historical clients and migrated data.
 - Clear confirmation on undo or self-serve level edits — rejected; keep current rules, sport-scoped only.
+
+## Consequences
+
+- Slim Prisma selects that load `sportProfiles` without confirmation columns must not treat missing `approvedLevel` as `false` for PADEL — fall back to `User.approved*`.
+- Find cards and other projected game payloads must select confirmation fields on sport profiles so non-padel sports project correctly.
+- Unprojected `USER_SELECT_FIELDS` payloads keep returning the PADEL mirror on top-level `approvedLevel` for older clients.

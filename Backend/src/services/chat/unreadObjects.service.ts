@@ -1,8 +1,10 @@
 import prisma from '../../config/database';
-import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { ParticipantRole } from '@prisma/client';
 import { UnreadCountBatchService } from './unreadCountBatch.service';
 import { ReadReceiptService } from './readReceipt.service';
+import { projectGameUsersForSportContext } from '../game/read.service';
+import { projectUserByPrimarySport } from '../user/userSportProfile.service';
 
 export interface UnreadObjectsResult {
   games: Array<{ game: any; unreadCount: number }>;
@@ -21,7 +23,7 @@ export interface UnreadObjectsResult {
 const GAME_INCLUDE = {
   participants: {
     include: {
-      user: { select: USER_SELECT_FIELDS },
+      user: { select: USER_SELECT_WITH_SPORT_PROFILES },
     },
   },
   court: {
@@ -99,7 +101,7 @@ async function getGamesWithUnread(userId: string): Promise<UnreadObjectsResult['
   const countMap = Object.fromEntries(counts.map((c) => [c.gameId, c.count]));
   const gameById = Object.fromEntries(fullGames.map((g) => [g.id, g]));
   return gameIdsWithUnread.map((id) => ({
-    game: gameById[id],
+    game: projectGameUsersForSportContext(gameById[id]),
     unreadCount: countMap[id] ?? 0,
   }));
 }
@@ -128,16 +130,23 @@ async function getUserChatsWithUnread(userId: string): Promise<UnreadObjectsResu
   const fullChats = await prisma.userChat.findMany({
     where: { id: { in: chatIdsWithUnread } },
     include: {
-      user1: { select: USER_SELECT_FIELDS },
-      user2: { select: USER_SELECT_FIELDS },
+      user1: { select: USER_SELECT_WITH_SPORT_PROFILES },
+      user2: { select: USER_SELECT_WITH_SPORT_PROFILES },
     },
   });
 
   const chatById = Object.fromEntries(fullChats.map((c) => [c.id, c]));
-  return chatIdsWithUnread.map((id) => ({
-    chat: chatById[id],
-    unreadCount: unreadMap[id] ?? 0,
-  }));
+  return chatIdsWithUnread.map((id) => {
+    const chat = chatById[id]!;
+    return {
+      chat: {
+        ...chat,
+        user1: projectUserByPrimarySport(chat.user1),
+        user2: projectUserByPrimarySport(chat.user2),
+      },
+      unreadCount: unreadMap[id] ?? 0,
+    };
+  });
 }
 
 async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['bugs']> {
@@ -170,12 +179,12 @@ async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['b
     include: {
       bug: {
         include: {
-          sender: { select: { ...USER_SELECT_FIELDS, isAdmin: true } },
+          sender: { select: { ...USER_SELECT_WITH_SPORT_PROFILES, isAdmin: true } },
         },
       },
       participants: {
         where: { userId },
-        include: { user: { select: USER_SELECT_FIELDS } },
+        include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } },
       },
     },
   });
@@ -183,8 +192,17 @@ async function getBugsWithUnread(userId: string): Promise<UnreadObjectsResult['b
   const channelById = Object.fromEntries(fullChannels.map((c) => [c.id, c]));
   return idsWithUnread.map((id) => {
     const channel = channelById[id]!;
+    const bug = channel.bug
+      ? {
+          ...channel.bug,
+          groupChannelId: channel.id,
+          sender: channel.bug.sender
+            ? projectUserByPrimarySport(channel.bug.sender)
+            : channel.bug.sender,
+        }
+      : null;
     return {
-      bug: channel.bug ? { ...channel.bug, groupChannelId: channel.id } : null,
+      bug,
       unreadCount: unreadMap[id] ?? 0,
     };
   });
@@ -223,7 +241,7 @@ async function getGroupChannelsWithUnread(
     include: {
       participants: {
         where: { userId },
-        include: { user: { select: USER_SELECT_FIELDS } },
+        include: { user: { select: USER_SELECT_WITH_SPORT_PROFILES } },
       },
     },
   });
@@ -237,6 +255,10 @@ async function getGroupChannelsWithUnread(
     return {
       groupChannel: {
         ...channel,
+        participants: (channel.participants as any[]).map((p: any) => ({
+          ...p,
+          user: p.user ? projectUserByPrimarySport(p.user) : p.user,
+        })),
         isParticipant: !!userParticipant,
         isOwner: userParticipant?.role === ParticipantRole.OWNER,
       },

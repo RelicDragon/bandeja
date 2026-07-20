@@ -7,6 +7,7 @@ import {
   getDisplayLevelForSport,
   getReliabilityForSport,
   hasMultipleSportsEnabled,
+  isLevelConfirmedForSport,
   shouldShowSportLevelBadge,
 } from '@/utils/profileSports';
 
@@ -37,7 +38,7 @@ export function CompetitiveSocialLevelBadge({
     <span className={className}>
       {showCompetitive && (
         <>
-          {showApprovedCheck && user.approvedLevel && (
+          {showApprovedCheck && isLevelConfirmedForSport(user, sport) && (
             <Check size={14} className="text-white" strokeWidth={3} />
           )}
           {showSportLabel && hasMultipleSportsEnabled(user) && (

@@ -19,6 +19,7 @@ import {
   resolveTrainingEditDefaults,
   shouldShowSportLevelBadge,
   userLevelMatchesGameBand,
+  isLevelConfirmedForSport,
 } from './profileSports';
 
 const baseUser = (overrides: Partial<User> = {}): User =>
@@ -309,5 +310,59 @@ describe('profileSports', () => {
     expect(
       resolveTrainingEditDefaults(user, 'TENNIS', { levelBefore: 2.0, reliabilityBefore: 10 }),
     ).toEqual({ level: 2.0, reliability: 50 });
+  });
+
+  it('isLevelConfirmedForSport is per sport profile', () => {
+    const user = baseUser({
+      approvedLevel: true,
+      sportsEnabled: ['PADEL', 'TENNIS'],
+      sportProfiles: [
+        {
+          sport: 'PADEL',
+          level: 3.4,
+          reliability: 0,
+          gamesPlayed: 10,
+          gamesWon: 5,
+          approvedLevel: true,
+        },
+        {
+          sport: 'TENNIS',
+          level: 4.1,
+          reliability: 0,
+          gamesPlayed: 12,
+          gamesWon: 6,
+          approvedLevel: false,
+        },
+      ],
+    });
+    expect(isLevelConfirmedForSport(user, 'PADEL')).toBe(true);
+    expect(isLevelConfirmedForSport(user, 'TENNIS')).toBe(false);
+  });
+
+  it('isLevelConfirmedForSport trusts projected approvedLevel when profiles absent', () => {
+    const projected: BasicUser = {
+      id: 'p1',
+      level: 3.2,
+      primarySport: 'PADEL',
+      socialLevel: 3,
+      gender: 'MALE',
+      approvedLevel: true,
+      isTrainer: false,
+    };
+    expect(isLevelConfirmedForSport(projected, 'PADEL')).toBe(true);
+    expect(isLevelConfirmedForSport(projected, 'TENNIS')).toBe(true);
+  });
+
+  it('isLevelConfirmedForSport falls back to User mirror for slim padel profiles only', () => {
+    const user = baseUser({
+      approvedLevel: true,
+      sportsEnabled: ['PADEL', 'TENNIS'],
+      sportProfiles: [
+        { sport: 'PADEL', level: 3.4, reliability: 0, gamesPlayed: 10, gamesWon: 5 },
+        { sport: 'TENNIS', level: 4.1, reliability: 0, gamesPlayed: 12, gamesWon: 6 },
+      ],
+    });
+    expect(isLevelConfirmedForSport(user, 'PADEL')).toBe(true);
+    expect(isLevelConfirmedForSport(user, 'TENNIS')).toBe(false);
   });
 });

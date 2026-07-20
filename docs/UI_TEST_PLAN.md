@@ -795,6 +795,7 @@ Frontend/e2e/
 | GD-70 | BAR level changes display | Finished BAR game | Per-player level before/after on list |
 | GD-71 | Training review submit | Post-training review | Rating saved on trainer profile |
 | GD-72 | Training level/reliability edit | Trainer edits participant levels | `EditLevelModal` saves |
+| GD-74 | Training confirms sport only | `@trainer` set level on tennis TRAINING | Tennis profile confirmed; padel confirmation unchanged; avatar checkmark in tennis game only |
 | GD-73 | Empty trainer invite links | TRAINING, no trainer, owner/admin | "No trainer" row + "Invite trainer" row below; both open invite picker |
 
 ---
@@ -1134,6 +1135,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-70 | Profile sport questionnaire status | Profile → sport with 0 games → Show details | Card titled "{{sport}} questionnaire"; status + Fill out / Fill out again |
 | PR-71 | Admin player card uncertainty | `@admin` open `?player=` card → level hero | Shows Uncertainty under reliability; non-admin does not |
 | PR-72 | Player card rating settling | Open player card when idle past 30-day grace | “Rating settling” on card hero; raw Uncertainty only if viewer is admin |
+| PR-73 | Sport level confirmation (player card) | Multi-sport user confirmed only for padel → open card → switch competitive sport to tennis | Padel shows confirmed-by trainer; tennis shows not confirmed |
+| PR-74 | Avatar checkmark follows badge sport | Same user in padel game roster vs tennis game roster | Checkmark only when that game’s sport is confirmed |
 | PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |

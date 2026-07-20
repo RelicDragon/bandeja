@@ -119,6 +119,36 @@ export function getReliabilityForSport(user: User | BasicUser, sport: Sport): nu
   return 0;
 }
 
+/** Sport Level Confirmation for the sport shown on a badge/avatar (ADR-008). */
+export function isLevelConfirmedForSport(user: User | BasicUser, sport: Sport): boolean {
+  const profile = findSportProfile(user, sport);
+  if (profile && typeof profile.approvedLevel === 'boolean') {
+    return profile.approvedLevel;
+  }
+  // Projected payloads already sport-scoped top-level approvedLevel.
+  if (usesProjectedLevelFields(user)) return Boolean(user.approvedLevel);
+  // Profiles present but confirmation omitted (older/slim payloads): PADEL mirror only.
+  if (sport === DEFAULT_SPORT) return Boolean(user.approvedLevel);
+  return false;
+}
+
+export function getSportLevelApprovedWhen(
+  user: User | BasicUser,
+  sport: Sport,
+): Date | string | null | undefined {
+  const profile = findSportProfile(user, sport);
+  if (profile && typeof profile.approvedLevel === 'boolean') {
+    return profile.approvedWhen ?? null;
+  }
+  if (usesProjectedLevelFields(user) && 'approvedWhen' in user) {
+    return (user as User).approvedWhen ?? null;
+  }
+  if (sport === DEFAULT_SPORT && 'approvedWhen' in user) {
+    return (user as User).approvedWhen ?? null;
+  }
+  return null;
+}
+
 /** Initial reliability in training edit modal when prior value was below this (not a minimum). */
 export const TRAINING_RELIABILITY_DEFAULT = 50;
 

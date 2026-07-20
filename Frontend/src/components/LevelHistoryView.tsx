@@ -97,11 +97,23 @@ const LevelHistoryViewComponent = ({ stats, padding = 'p-6', tabDarkBgClass, hid
     if (showSocialLevel || !sportScopedStats) return;
     if (
       sportScopedStats.sport !== stats.sport ||
-      sportScopedStats.user.level !== stats.user.level
+      sportScopedStats.user.level !== stats.user.level ||
+      sportScopedStats.user.approvedLevel !== stats.user.approvedLevel ||
+      sportScopedStats.user.approvedById !== stats.user.approvedById ||
+      sportScopedStats.user.approvedWhen !== stats.user.approvedWhen
     ) {
       onStatsRefresh?.(sportScopedStats);
     }
-  }, [showSocialLevel, sportScopedStats, stats.sport, stats.user.level, onStatsRefresh]);
+  }, [
+    showSocialLevel,
+    sportScopedStats,
+    stats.sport,
+    stats.user.level,
+    stats.user.approvedLevel,
+    stats.user.approvedById,
+    stats.user.approvedWhen,
+    onStatsRefresh,
+  ]);
 
   const handleRatingChangeClick = (item: { id: string; gameId?: string }) => {
     if (!item.gameId) return;
@@ -214,7 +226,11 @@ const LevelHistoryViewComponent = ({ stats, padding = 'p-6', tabDarkBgClass, hid
     <div className={`${padding} space-y-3`}>
       {showLevelsContent && (
         <LevelHistoryLevelPanel
-          user={user}
+          user={
+            !showSocialLevel && sportScopedStats?.user
+              ? { ...user, ...sportScopedStats.user, sportProfiles: user.sportProfiles ?? sportScopedStats.user.sportProfiles }
+              : user
+          }
           sports={selectorSports}
           selection={selection}
           onChange={setSelection}

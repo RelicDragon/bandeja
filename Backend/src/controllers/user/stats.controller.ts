@@ -180,10 +180,12 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
 
   const sport = resolveStatsSport(req.query.sport, user.primarySport);
 
+  const projectedUserBase = projectUserForSportContext(user, sport);
+
   let approvedByUser = null;
-  if (req.userId && user.approvedById) {
+  if (req.userId && projectedUserBase.approvedById) {
     approvedByUser = await prisma.user.findUnique({
-      where: { id: user.approvedById },
+      where: { id: projectedUserBase.approvedById },
       select: {
         ...USER_SELECT_FIELDS,
         sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
@@ -236,7 +238,7 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
   });
 
   const projectedUser = {
-    ...projectUserForSportContext(user, sport),
+    ...projectedUserBase,
     isFavorite: !!isFavorite,
     approvedBy: approvedByUser,
   };

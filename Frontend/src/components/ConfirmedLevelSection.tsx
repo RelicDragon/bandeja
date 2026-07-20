@@ -3,7 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { PlayerAvatar } from './PlayerAvatar';
 import { CompetitiveSocialLevelBadge } from '@/components/profile/CompetitiveSocialLevelBadge';
 import { formatSmartRelativeTime } from '@/utils/dateFormat';
-import { findSportProfile, getDisplayLevelForSport, getUserPrimarySport } from '@/utils/profileSports';
+import {
+  findSportProfile,
+  getDisplayLevelForSport,
+  getSportLevelApprovedWhen,
+  getUserPrimarySport,
+  isLevelConfirmedForSport,
+} from '@/utils/profileSports';
 import { formatRatingHint } from '@/utils/sportRating';
 import type { Sport, User } from '@/types';
 
@@ -22,8 +28,14 @@ export const ConfirmedLevelSection = ({
 }: ConfirmedLevelSectionProps) => {
   const { t } = useTranslation();
   const levelSport = sport ?? getUserPrimarySport(user);
-  const confirmed = Boolean(user.approvedLevel && user.approvedBy);
+  const confirmed = isLevelConfirmedForSport(user, levelSport);
+  const approvedWhen = getSportLevelApprovedWhen(user, levelSport);
   const profile = findSportProfile(user, levelSport);
+  const approvedByMatches =
+    !profile?.approvedById ||
+    user.approvedBy?.id === profile.approvedById ||
+    user.approvedById === profile.approvedById;
+  const approvedBy = confirmed && approvedByMatches ? user.approvedBy : null;
   const ratingHint = formatRatingHint(
     levelSport,
     getDisplayLevelForSport(user, levelSport),
@@ -49,24 +61,34 @@ export const ConfirmedLevelSection = ({
           />
         </div>
       )}
-      {confirmed ? (
+      {confirmed && approvedBy ? (
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
               <Check size={16} strokeWidth={3} />
               <span className="text-sm font-medium">{t('playerCard.confirmedBy')}</span>
             </div>
             <div className="flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-              <PlayerAvatar player={user.approvedBy!} showName={false} fullHideName={true} extrasmall={true} />
-              <span className="font-medium">{user.approvedBy!.firstName} {user.approvedBy!.lastName}</span>
-              {user.approvedWhen && (
+              <PlayerAvatar player={approvedBy} showName={false} fullHideName={true} extrasmall={true} />
+              <span className="font-medium">{approvedBy.firstName} {approvedBy.lastName}</span>
+              {approvedWhen && (
                 <>
                   <span className="text-gray-500 dark:text-gray-500">•</span>
                   <span className="text-gray-600 dark:text-gray-400">
-                    {formatSmartRelativeTime(user.approvedWhen, t)}
+                    {formatSmartRelativeTime(approvedWhen, t)}
                   </span>
                 </>
               )}
             </div>
+          </div>
+        ) : confirmed && !approvedBy ? (
+          <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400 text-sm">
+            <Check size={16} strokeWidth={3} />
+            <span className="font-medium">{t('playerCard.confirmedBy')}</span>
+            {approvedWhen && (
+              <span className="text-gray-600 dark:text-gray-400">
+                {formatSmartRelativeTime(approvedWhen, t)}
+              </span>
+            )}
           </div>
         ) : showBadge ? (
           <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 text-sm">

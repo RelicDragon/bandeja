@@ -38,15 +38,22 @@ export function enrichProfileUser<
   reliability: number;
   gamesPlayed: number;
   gamesWon: number;
+  approvedLevel: boolean;
+  approvedById: string | null;
+  approvedWhen: Date | string | null;
 } {
   const sport = resolveSport(user.primarySport ?? Sport.PADEL);
   const snapshot = resolveUserSportSnapshot(user, sport);
+  const confirmation = resolveSportLevelConfirmation(user, sport);
   return {
     ...user,
     level: snapshot.level,
     reliability: snapshot.reliability,
     gamesPlayed: snapshot.gamesPlayed,
     gamesWon: snapshot.gamesWon,
+    approvedLevel: confirmation.approvedLevel,
+    approvedById: confirmation.approvedById,
+    approvedWhen: confirmation.approvedWhen,
     sportsPlayed: buildSportsPlayed(user.sportProfiles),
   };
 }
@@ -65,6 +72,9 @@ type SportProfileSnapshot = {
   reliability: number;
   gamesPlayed: number;
   gamesWon: number;
+  approvedLevel?: boolean;
+  approvedById?: string | null;
+  approvedWhen?: Date | string | null;
 };
 
 type UserWithSportProfiles = {
@@ -77,11 +87,56 @@ export type SportProjectedUserFields = {
   reliability: number;
   gamesPlayed: number;
   gamesWon: number;
+  approvedLevel: boolean;
+  approvedById: string | null;
+  approvedWhen: Date | string | null;
 };
 
 type ProjectedUser<T> = T extends null | undefined
   ? T
   : Omit<T, 'sportProfiles'> & SportProjectedUserFields;
+
+export type SportLevelConfirmationFields = {
+  approvedLevel: boolean;
+  approvedById: string | null;
+  approvedWhen: Date | null;
+};
+
+export function resolveSportLevelConfirmation(
+  user: UserWithSportProfiles,
+  sport: Sport,
+): SportLevelConfirmationFields {
+  const profile =
+    'sportProfiles' in user ? user.sportProfiles?.find((p) => p.sport === sport) : undefined;
+  if (profile && typeof profile.approvedLevel === 'boolean') {
+    return {
+      approvedLevel: profile.approvedLevel,
+      approvedById: profile.approvedById ?? null,
+      approvedWhen: profile.approvedWhen
+        ? profile.approvedWhen instanceof Date
+          ? profile.approvedWhen
+          : new Date(profile.approvedWhen)
+        : null,
+    };
+  }
+
+  // Slim selects may omit confirmation columns while still returning a profile row.
+  // ADR-008: User.approved* is the PADEL-only mirror for older payloads / unprojected selects.
+  if (sport === Sport.PADEL) {
+    const approvedWhenRaw = user.approvedWhen;
+    return {
+      approvedLevel: Boolean(user.approvedLevel),
+      approvedById: (user.approvedById as string | null | undefined) ?? null,
+      approvedWhen: approvedWhenRaw
+        ? approvedWhenRaw instanceof Date
+          ? approvedWhenRaw
+          : new Date(approvedWhenRaw as string)
+        : null,
+    };
+  }
+
+  return { approvedLevel: false, approvedById: null, approvedWhen: null };
+}
 
 export function assertSportImplemented(sport: Sport): void {
   const config = getSportConfig(sport);
@@ -295,6 +350,7 @@ type SportProfileForRemoval = {
   questionnaireCompletedAt: Date | null;
   questionnaireSkippedAt: Date | null;
   externalRatingHint: string | null;
+  approvedLevel?: boolean;
 };
 
 /** True when the sport was only enabled in profile — safe to delete `UserSportProfile`. */
@@ -307,6 +363,7 @@ export function isUnusedSportProfile(
   if (profile.gamesPlayed > 0 || profile.gamesWon > 0) return false;
   if (profile.questionnaireCompletedAt || profile.questionnaireSkippedAt) return false;
   if (profile.externalRatingHint) return false;
+  if (profile.approvedLevel) return false;
   if (profile.levelSource !== SportLevelSource.DEFAULT) return false;
   if (profile.level !== DEFAULT_NEW_SPORT_LEVEL || profile.reliability !== 0) return false;
   return true;
@@ -342,6 +399,7 @@ export function projectUserForSportContext<T extends UserWithSportProfiles | nul
       ? user
       : ({ ...(user as UserWithSportProfiles), sportProfiles: [] } as UserWithSportProfiles);
   const snapshot = resolveUserSportSnapshot(userForSnapshot, sport);
+  const confirmation = resolveSportLevelConfirmation(userForSnapshot, sport);
   const rest = { ...(user as UserWithSportProfiles) };
   delete (rest as Record<string, unknown>).sportProfiles;
   return {
@@ -350,6 +408,9 @@ export function projectUserForSportContext<T extends UserWithSportProfiles | nul
     reliability: snapshot.reliability,
     gamesPlayed: snapshot.gamesPlayed,
     gamesWon: snapshot.gamesWon,
+    approvedLevel: confirmation.approvedLevel,
+    approvedById: confirmation.approvedById,
+    approvedWhen: confirmation.approvedWhen,
   } as ProjectedUser<T>;
 }
 

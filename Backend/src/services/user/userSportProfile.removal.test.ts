@@ -32,5 +32,9 @@ assert(
   !isUnusedSportProfile({ ...fresh, levelSource: SportLevelSource.MANUAL }, 0),
   'manual level blocks delete',
 );
+assert(
+  !isUnusedSportProfile({ ...fresh, approvedLevel: true }, 0),
+  'sport level confirmation blocks delete',
+);
 
 console.log('userSportProfile.removal.test: ok');

@@ -1,12 +1,15 @@
 import { MAIN_PHOTO_RELATION_SELECT } from './gamePrismaIncludes';
 
-/** Minimal sport profile fields needed to project card-level `level` on Find. */
+/** Minimal sport profile fields needed to project card-level `level` + confirmation on Find. */
 export const FIND_CARD_SPORT_PROFILE_SELECT = {
   sport: true,
   level: true,
   reliability: true,
   gamesPlayed: true,
   gamesWon: true,
+  approvedLevel: true,
+  approvedById: true,
+  approvedWhen: true,
 } as const;
 
 /** Slim user projection for Find cards (no bio/availability/social dumps). */
@@ -66,7 +69,7 @@ const clubCardSelect = {
  *
  * Size/cost vs prior Find include (before #281):
  * - participants.user: dropped bio/verbalStatus/weeklyAvailability/availabilityBucketBoundaries/
- *   socialLevel; sportProfiles trimmed to level/reliability/gamesPlayed/gamesWon only
+ *   socialLevel; sportProfiles trimmed to level/reliability/gamesPlayed/gamesWon + confirmation
  *   (no streak/questionnaire/uncertainty columns).
  * - club/court.club: dropped integrationType + integrationConfig JSON.
  * - city: dropped telegramGroupId.

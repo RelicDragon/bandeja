@@ -93,6 +93,7 @@ model User {
   currentCity                     City?                       @relation("UserCurrentCity", fields: [currentCityId], references: [id])
   approvedBy                      User?                       @relation("UserApprovedBy", fields: [approvedById], references: [id])
   approvedUsers                   User[]                      @relation("UserApprovedBy")
+  sportProfilesApproved           UserSportProfile[]          @relation("SportProfileApprovedBy")
   favoriteTrainer                 User?                       @relation("UserFavoriteTrainer", fields: [favoriteTrainerId], references: [id], onDelete: SetNull)
   usersWithFavoriteTrainer        User[]                      @relation("UserFavoriteTrainer")
   favoriteClubs                   UserFavoriteClub[]
@@ -462,12 +463,20 @@ model UserSportProfile {
    * Manual or imported display bridge (DUPR, NTRP, Playtomic, etc.) — not used on avatar badge.
    */
   externalRatingHint       String?          @db.VarChar(32)
+  /**
+   * Sport Level Confirmation (ADR-008). User.approved* is a PADEL-only denormalized mirror.
+   */
+  approvedLevel            Boolean          @default(false)
+  approvedById             String?
+  approvedWhen             DateTime?
   createdAt                DateTime         @default(now())
   updatedAt                DateTime         @updatedAt
   user                     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approvedBy               User?            @relation("SportProfileApprovedBy", fields: [approvedById], references: [id])
 
   @@unique([userId, sport])
   @@index([userId])
+  @@index([approvedById])
 }
 
 model Court {

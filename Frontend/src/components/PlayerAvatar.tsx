@@ -13,7 +13,7 @@ import { PublicGamePrompt } from './GameDetails/PublicGamePrompt';
 import { getLevelColor } from '@/utils/levelColor';
 import { userAvatarTinyUrlFromStandard } from '@/utils/userAvatarTinyUrl';
 import { useSportLevelContext } from '@/contexts/useSportLevelContext';
-import { getDisplayLevelForSport, getUserPrimarySport, formatSportLevelBadgeDisplay } from '@/utils/profileSports';
+import { getDisplayLevelForSport, getUserPrimarySport, formatSportLevelBadgeDisplay, isLevelConfirmedForSport } from '@/utils/profileSports';
 import type { Sport } from '@shared/sport';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import './PlayerAvatar.css';
@@ -193,19 +193,20 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
 
   const initials = `${player.firstName?.[0] || ''}${player.lastName?.[0] || ''}`.toUpperCase();
 
-  const levelRightClass = extrasmall && !player.approvedLevel ? '-right-1' : '-right-2';
-  const trainerBadgeLeftClass = extrasmall ? '-left-1' : smallLayout ? '-left-1.5' : '-left-2';
-
-  const onlineDotClass = player && isOnline ? 'avatar-online-dot' : '';
-
-  const faceOnlyLayout = superTiny || inlineFace;
-
   const resolvedLevelSport = levelSport ?? contextLevelSport ?? getUserPrimarySport(player);
+  const levelConfirmed = isLevelConfirmedForSport(player, resolvedLevelSport);
   const levelBadgeText = formatSportLevelBadgeDisplay(player, resolvedLevelSport);
   const levelBadgeIsUnavailable = levelBadgeText === '-';
   const levelForBadge = levelBadgeIsUnavailable
     ? null
     : parseLevelForBadge(getDisplayLevelForSport(player, resolvedLevelSport) as unknown);
+
+  const levelRightClass = extrasmall && !levelConfirmed ? '-right-1' : '-right-2';
+  const trainerBadgeLeftClass = extrasmall ? '-left-1' : smallLayout ? '-left-1.5' : '-left-2';
+
+  const onlineDotClass = player && isOnline ? 'avatar-online-dot' : '';
+
+  const faceOnlyLayout = superTiny || inlineFace;
 
   const renderAvatarContent = () => {
     if (faceOnlyLayout) {
@@ -304,7 +305,7 @@ export const PlayerAvatar = ({ player, subscribePresence = true, isCurrentUser, 
             }
             const lvl = levelForBadge!;
             const levelColor = getLevelColor(lvl, isDark);
-            return player.approvedLevel ? (
+            return levelConfirmed ? (
               <div
                 className={`relative ${extrasmall ? 'h-3.5 px-1' : smallLayout ? 'h-4 px-1.5 -mr-1' : 'h-5 px-1.5'} rounded-full flex items-center justify-center gap-1`}
                 style={{ ...levelColor, ...levelBadgeStyle }}
