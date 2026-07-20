@@ -1,4 +1,5 @@
 import { LeagueParticipantType, Prisma } from '@prisma/client';
+import { findLeagueTeamIdByRosterAlias } from './leagueTeamRosterAlias.util';
 
 export function sortedPlayerKey(userIds: string[]): string {
   return [...userIds].sort().join(':');
@@ -85,7 +86,26 @@ export async function findTeamParticipantByRoster(
     }
   }
 
-  return null;
+  const aliasedTeamId = await findLeagueTeamIdByRosterAlias(tx, leagueSeasonId, teamPlayerIds);
+  if (!aliasedTeamId) {
+    return null;
+  }
+
+  return (
+    participants.find((p) => p.leagueTeamId === aliasedTeamId) ??
+    (await tx.leagueParticipant.findFirst({
+      where: {
+        leagueSeasonId,
+        participantType: LeagueParticipantType.TEAM,
+        leagueTeamId: aliasedTeamId,
+      },
+      include: {
+        leagueTeam: {
+          include: { players: true },
+        },
+      },
+    }))
+  );
 }
 
 export async function findOrCreateLeagueTeamByRoster(

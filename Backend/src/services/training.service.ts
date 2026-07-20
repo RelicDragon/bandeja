@@ -210,7 +210,7 @@ export async function updateParticipantLevel(
 
     await ensureSportInEnabled(participantUserId, game.sport, tx);
 
-    // ADR-008: User.approved* is a PADEL-only denormalized mirror for older clients.
+  // User.approved* is a PADEL-only denormalized mirror for older clients (see docs/APP_FUNCTIONALITY.md §2.2).
     if (confirmationPatch && game.sport === Sport.PADEL) {
       await tx.user.update({
         where: { id: participantUserId },

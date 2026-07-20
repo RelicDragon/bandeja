@@ -3,7 +3,7 @@ import type { ThreadScrollPosition } from '@/services/chat/chatThreadScroll';
 import type { ChatOpenSetMessagesSource } from '@/services/chat/chatOpenTrace';
 
 /**
- * ThreadOpen bootstrap invariants — see `docs/game-chat-open-performance.md`.
+ * ThreadOpen bootstrap invariants:
  *
  * | Invariant | Rule |
  * |-----------|------|

@@ -1578,13 +1578,11 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 ## Additional Resources
 
-### ADRs (Architecture Decision Records)
+### Architecture constraints
 
-**Location**: `docs/adr/`
+**Location**: `docs/APP_FUNCTIONALITY.md` §2.2
 
-- `ADR-003-create-template-registry.md` - Sport template sharing
-- `ADR-005-court-occupancy-ac-hybrid.md` - Court caching strategy
-- `ADR-006-external-booking-provider-ports.md` - Booking abstraction
+Load-bearing “do not simplify” rules (templates vs league, PADEL level mirror, occupancy, booking ports, chat live projection). No separate ADR folder.
 
 ### Important Patterns Reference
 
@@ -1663,4 +1661,4 @@ cd Backend && npm run build
 
 ---
 
-This documentation should enable any LLM to start working effectively on this codebase immediately. For specific implementation questions, refer to the actual source files and ADRs in the `docs/adr/` directory.
+This documentation should enable any LLM to start working effectively on this codebase immediately. For product behavior and architecture constraints, see `docs/APP_FUNCTIONALITY.md`.

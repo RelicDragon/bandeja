@@ -5,7 +5,7 @@
  * Sibling to `applyThreadEvent` (Dexie durability) — this powers React state
  * while the thread is visible, effects run async after paint.
  *
- * See ADR-007 for architectural decisions.
+ * See docs/APP_FUNCTIONALITY.md §2.2 (open chat thread) and threadOpen/types.ts.
  *
  * @module
  */

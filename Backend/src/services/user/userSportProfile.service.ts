@@ -121,7 +121,7 @@ export function resolveSportLevelConfirmation(
   }
 
   // Slim selects may omit confirmation columns while still returning a profile row.
-  // ADR-008: User.approved* is the PADEL-only mirror for older payloads / unprojected selects.
+  // User.approved* is the PADEL-only mirror for older payloads / unprojected selects (see docs/APP_FUNCTIONALITY.md §2.2).
   if (sport === Sport.PADEL) {
     const approvedWhenRaw = user.approvedWhen;
     return {

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { body } from 'express-validator';
+import { body, query } from 'express-validator';
 import { validate } from '../middleware/validate';
 import { authenticate, canAccessGame, canEditGame } from '../middleware/auth';
 import * as leagueController from '../controllers/league.controller';
@@ -312,6 +312,27 @@ router.delete(
   '/groups/:groupId/participants/:participantId',
   authenticate,
   leagueController.removeParticipantFromLeagueGroup
+);
+
+router.get(
+  '/:leagueSeasonId/participants/:participantId/swap-candidates',
+  authenticate,
+  canEditGame,
+  validate([
+    query('outUserId').notEmpty().withMessage('outUserId is required'),
+  ]),
+  leagueController.listLeagueTeamSwapCandidates
+);
+
+router.post(
+  '/:leagueSeasonId/participants/:participantId/swap-player',
+  authenticate,
+  canEditGame,
+  validate([
+    body('outUserId').notEmpty().withMessage('outUserId is required'),
+    body('inUserId').notEmpty().withMessage('inUserId is required'),
+  ]),
+  leagueController.swapLeagueTeamPlayer
 );
 
 router.put(

@@ -1,5 +1,5 @@
 import api from './axios';
-import type { ApiResponse, Game, GameSetupParams, Gender, Sport } from '@/types';
+import type { ApiResponse, BasicUser, Game, GameSetupParams, Gender, Sport } from '@/types';
 
 export interface CreateLeagueRequest {
   resultsRoundGenV2?: boolean;
@@ -409,6 +409,29 @@ export const leaguesApi = {
   },
   removeParticipantFromGroup: async (groupId: string, participantId: string) => {
     const response = await api.delete<ApiResponse<LeagueGroupManagementPayload>>(`/leagues/groups/${groupId}/participants/${participantId}`);
+    return response.data;
+  },
+  listTeamSwapCandidates: async (leagueSeasonId: string, participantId: string, outUserId: string) => {
+    const response = await api.get<
+      ApiResponse<{ allowUserInMultipleTeams: boolean; candidates: BasicUser[] }>
+    >(`/leagues/${leagueSeasonId}/participants/${participantId}/swap-candidates`, {
+      params: { outUserId },
+    });
+    return response.data;
+  },
+  swapTeamPlayer: async (
+    leagueSeasonId: string,
+    participantId: string,
+    body: { outUserId: string; inUserId: string },
+  ) => {
+    const response = await api.post<
+      ApiResponse<{
+        participant: LeagueStanding;
+        previousRosterKey: string;
+        currentRosterKey: string;
+        franchiseTeamId: string;
+      }>
+    >(`/leagues/${leagueSeasonId}/participants/${participantId}/swap-player`, body);
     return response.data;
   },
   reorderGroups: async (leagueSeasonId: string, groupIds: string[]) => {

@@ -1,4 +1,4 @@
-import { Loader2, Trash2 } from 'lucide-react';
+import { Loader2, ArrowLeftRight, Trash2 } from 'lucide-react';
 import { PlayerAvatar } from '@/components';
 import { LeagueStanding } from '@/api/leagues';
 import type { BasicUser } from '@/types';
@@ -28,6 +28,7 @@ interface LeagueGroupParticipantRowProps {
   index: number;
   onRemove: () => void;
   removing?: boolean;
+  onSwap?: () => void;
 }
 
 export const LeagueGroupParticipantRow = ({
@@ -35,8 +36,10 @@ export const LeagueGroupParticipantRow = ({
   index,
   onRemove,
   removing = false,
+  onSwap,
 }: LeagueGroupParticipantRowProps) => {
   const teamPlayers = participant.leagueTeam?.players.filter((p) => p.user) ?? [];
+  const showSwap = Boolean(onSwap) && teamPlayers.length === 2;
 
   return (
     <div className="flex items-stretch overflow-hidden rounded-xl border border-gray-200/90 bg-gray-50/90 dark:border-gray-700/70 dark:bg-gray-800/45">
@@ -57,7 +60,17 @@ export const LeagueGroupParticipantRow = ({
         ) : null}
       </div>
 
-      <div className="flex shrink-0 items-center border-l border-gray-200/90 px-2 dark:border-gray-700/70">
+      <div className="flex shrink-0 items-center gap-0.5 border-l border-gray-200/90 px-1.5 dark:border-gray-700/70">
+        {showSwap ? (
+          <button
+            type="button"
+            onClick={onSwap}
+            className="rounded-lg p-1.5 text-primary-600 transition hover:bg-primary-50 hover:text-primary-700 dark:text-primary-400 dark:hover:bg-primary-900/25 dark:hover:text-primary-300"
+            aria-label="Swap player"
+          >
+            <ArrowLeftRight size={14} />
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={onRemove}

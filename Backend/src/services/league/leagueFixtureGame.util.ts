@@ -1,5 +1,7 @@
 import { ResultsStatus } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { matchupKeyFromSigs, teamPlayerSig } from './generation/fixedTeamsRoundMatching';
+import { resolveRosterToCurrentTeamPlayers } from './leagueTeamRosterAlias.util';
 
 export type LeagueFixtureGameGuardRow = {
   id: string;
@@ -80,6 +82,28 @@ export function matchupKeyFromFixedTeams(fixedTeams: FixedTeamShape[]): string |
   const p1 = t2.players
     .map((p) => p.userId)
     .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+  if (p0.length !== 2 || p1.length !== 2) return null;
+  return matchupKeyFromSigs(teamPlayerSig(p0), teamPlayerSig(p1));
+}
+
+/** Matchup key after mapping historical rosters through season franchise aliases. */
+export async function matchupKeyFromFixedTeamsResolved(
+  tx: Prisma.TransactionClient,
+  leagueSeasonId: string,
+  fixedTeams: FixedTeamShape[],
+): Promise<string | null> {
+  if (fixedTeams.length < 2) return null;
+  const t1 = fixedTeams.find((t) => t.teamNumber === 1) ?? fixedTeams[0];
+  const t2 = fixedTeams.find((t) => t.teamNumber === 2) ?? fixedTeams[1];
+  const raw0 = t1.players
+    .map((p) => p.userId)
+    .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+  const raw1 = t2.players
+    .map((p) => p.userId)
+    .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+  if (raw0.length !== 2 || raw1.length !== 2) return null;
+  const p0 = await resolveRosterToCurrentTeamPlayers(tx, leagueSeasonId, raw0);
+  const p1 = await resolveRosterToCurrentTeamPlayers(tx, leagueSeasonId, raw1);
   if (p0.length !== 2 || p1.length !== 2) return null;
   return matchupKeyFromSigs(teamPlayerSig(p0), teamPlayerSig(p1));
 }

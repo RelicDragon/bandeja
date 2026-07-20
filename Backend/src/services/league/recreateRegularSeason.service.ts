@@ -14,7 +14,7 @@ import {
 } from './leagueFixtureGameDedup';
 import {
   assertDeletableBeforeDelete,
-  matchupKeyFromFixedTeams,
+  matchupKeyFromFixedTeamsResolved,
   type LeagueFixtureGameGuardRow,
 } from './leagueFixtureGame.util';
 import { LeagueStandingsRecalculateService } from './leagueStandingsRecalculate.service';
@@ -151,7 +151,7 @@ export class LeagueRecreateRegularSeasonService {
         const protectedByGroupKey = new Map<string, Map<string, string>>();
         for (const keeper of dedup.keepers) {
           if (!keeper.leagueGroupId || !keeper.leagueRoundId) continue;
-          const key = matchupKeyFromFixedTeams(keeper.fixedTeams);
+          const key = await matchupKeyFromFixedTeamsResolved(tx, leagueSeasonId, keeper.fixedTeams);
           if (!key) continue;
           let groupMap = protectedByGroupKey.get(keeper.leagueGroupId);
           if (!groupMap) {
@@ -215,6 +215,7 @@ export class LeagueRecreateRegularSeasonService {
         protectedByGroupKey.clear();
         await this.reconcileAllProtectedGames(
           tx,
+          leagueSeasonId,
           scheduleRounds,
           regularRounds,
           ctx.sortedTeamsByGroupId,
@@ -299,6 +300,7 @@ export class LeagueRecreateRegularSeasonService {
 
   private static async reconcileAllProtectedGames(
     tx: Prisma.TransactionClient,
+    leagueSeasonId: string,
     scheduleRounds: { id: string }[],
     allRegularRounds: { id: string }[],
     sortedTeamsByGroupId: Map<string, GroupSortedTeam[]>,
@@ -318,6 +320,7 @@ export class LeagueRecreateRegularSeasonService {
     });
 
     const placeParams = {
+      leagueSeasonId,
       scheduleRounds,
       sortedTeamsByGroupId,
       chatGameIds,

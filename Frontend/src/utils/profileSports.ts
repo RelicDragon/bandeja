@@ -119,7 +119,7 @@ export function getReliabilityForSport(user: User | BasicUser, sport: Sport): nu
   return 0;
 }
 
-/** Sport Level Confirmation for the sport shown on a badge/avatar (ADR-008). */
+/** Sport Level Confirmation for the sport shown on a badge/avatar (APP_FUNCTIONALITY §2.2). */
 export function isLevelConfirmedForSport(user: User | BasicUser, sport: Sport): boolean {
   const profile = findSportProfile(user, sport);
   if (profile && typeof profile.approvedLevel === 'boolean') {

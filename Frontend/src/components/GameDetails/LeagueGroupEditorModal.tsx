@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Plus, Trash2, Loader2, UserPlus, ChevronDown, Check, ArrowUp, ArrowDown, RefreshCw, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PlayerAvatar, ConfirmationModal } from '@/components';
-import { leaguesApi, LeagueGroupManagementPayload } from '@/api/leagues';
+import { leaguesApi, LeagueGroupManagementPayload, type LeagueStanding } from '@/api/leagues';
 import { LeagueGroupParticipantRow } from './LeagueGroupParticipantRow';
+import { LeagueTeamPlayerSwapModal } from './LeagueTeamPlayerSwapModal';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
 import { formatRecreateSeasonTableSummary } from '@/utils/leagueRecreateSeasonSummary';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
@@ -43,6 +44,7 @@ export const LeagueGroupEditorModal = ({
   const [syncLoading, setSyncLoading] = useState(false);
   const [showRecreateSeasonTableConfirm, setShowRecreateSeasonTableConfirm] = useState(false);
   const [isRecreatingSeasonTable, setIsRecreatingSeasonTable] = useState(false);
+  const [swapParticipant, setSwapParticipant] = useState<LeagueStanding | null>(null);
   const dropdownRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const renameTimeouts = useRef<Record<string, ReturnType<typeof setTimeout> | null>>({});
 
@@ -439,6 +441,11 @@ export const LeagueGroupEditorModal = ({
                           index={participantIndex}
                           onRemove={() => handleRemoveParticipant(group.id, participant.id)}
                           removing={removeLoading === participant.id}
+                          onSwap={
+                            participant.participantType === 'TEAM' && participant.leagueTeam
+                              ? () => setSwapParticipant(participant)
+                              : undefined
+                          }
                         />
                       ))
                     )}
@@ -678,6 +685,18 @@ export const LeagueGroupEditorModal = ({
           onClose={() => !isRecreatingSeasonTable && setShowRecreateSeasonTableConfirm(false)}
         />
       )}
+      {swapParticipant ? (
+        <LeagueTeamPlayerSwapModal
+          isOpen={Boolean(swapParticipant)}
+          onClose={() => setSwapParticipant(null)}
+          leagueSeasonId={leagueSeasonId}
+          participant={swapParticipant}
+          onSwapped={() => {
+            void fetchGroups({ silent: true });
+            onUpdated?.();
+          }}
+        />
+      ) : null}
     </Dialog>
   );
 };

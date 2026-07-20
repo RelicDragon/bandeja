@@ -9,6 +9,7 @@ import {
   rostersEqual,
   sortedPlayerKey,
 } from './leagueParticipantResolve';
+import { resolveRosterToCurrentTeamPlayers } from './leagueTeamRosterAlias.util';
 import { LEAGUE_USER_SELECT, projectLeagueParticipants } from './leagueSportProjection.util';
 
 type GameTeamWithPlayers = {
@@ -43,19 +44,21 @@ async function collectDesiredTeamPlayerIds(leagueSeasonId: string): Promise<stri
   /** Dedupes identical 2-player rosters; distinct pairs like [p1,p2] vs [p1,p3] stay separate keys. */
   const byKey = new Map<string, string[]>();
 
-  const ingestFixedTeams = (fixedTeams: GameTeamWithPlayers[]) => {
+  const ingestFixedTeams = async (fixedTeams: GameTeamWithPlayers[]) => {
     for (const ft of fixedTeams) {
-      const ids = ft.players.map((p) => p.userId).sort();
+      const rawIds = ft.players.map((p) => p.userId).sort();
+      if (rawIds.length !== 2) continue;
+      const ids = await resolveRosterToCurrentTeamPlayers(prisma, leagueSeasonId, rawIds);
       if (ids.length !== 2) continue;
       byKey.set(sortedPlayerKey(ids), ids);
     }
   };
 
   if (seasonGame?.hasFixedTeams) {
-    ingestFixedTeams(seasonGame.fixedTeams);
+    await ingestFixedTeams(seasonGame.fixedTeams);
   }
   for (const g of roundGames) {
-    ingestFixedTeams(g.fixedTeams);
+    await ingestFixedTeams(g.fixedTeams);
   }
 
   return [...byKey.values()].sort((a, b) => sortedPlayerKey(a).localeCompare(sortedPlayerKey(b)));
@@ -84,7 +87,8 @@ async function resolveLeagueGroupIdForTeam(
   for (const g of games) {
     if (!g.leagueGroupId) continue;
     for (const ft of g.fixedTeams) {
-      const ids = ft.players.map((p) => p.userId).sort();
+      const rawIds = ft.players.map((p) => p.userId).sort();
+      const ids = await resolveRosterToCurrentTeamPlayers(tx, leagueSeasonId, rawIds);
       if (sortedPlayerKey(ids) === key) {
         return g.leagueGroupId;
       }

@@ -4,7 +4,7 @@ import { regularRoundSlotForPairIndices, teamIndicesForSig, type GroupSortedTeam
 import {
   assertDeletableBeforeDelete,
   isDeletableLeagueFixtureGame,
-  matchupKeyFromFixedTeams,
+  matchupKeyFromFixedTeamsResolved,
   type LeagueFixtureGameGuardRow,
 } from './leagueFixtureGame.util';
 
@@ -34,6 +34,7 @@ export async function placeProtectedFixtureInSchedule(
   tx: Prisma.TransactionClient,
   game: FixtureGamePlacementRow,
   params: {
+    leagueSeasonId: string;
     scheduleRounds: { id: string }[];
     sortedTeamsByGroupId: Map<string, GroupSortedTeam[]>;
     chatGameIds: Set<string>;
@@ -41,14 +42,20 @@ export async function placeProtectedFixtureInSchedule(
     scheduleRoundIds: Set<string>;
   }
 ): Promise<{ moved: boolean; deletedDuplicateId: string | null }> {
-  const { scheduleRounds, sortedTeamsByGroupId, chatGameIds, protectedByGroupKey, scheduleRoundIds } =
-    params;
+  const {
+    leagueSeasonId,
+    scheduleRounds,
+    sortedTeamsByGroupId,
+    chatGameIds,
+    protectedByGroupKey,
+    scheduleRoundIds,
+  } = params;
 
   if (!game.leagueGroupId) {
     throw new ApiError(409, 'leagues.fullRoundRobin.recreate.invalidProtectedGame');
   }
 
-  const matchupKey = matchupKeyFromFixedTeams(game.fixedTeams);
+  const matchupKey = await matchupKeyFromFixedTeamsResolved(tx, leagueSeasonId, game.fixedTeams);
   if (!matchupKey) {
     throw new ApiError(409, 'leagues.fullRoundRobin.recreate.invalidProtectedGame');
   }

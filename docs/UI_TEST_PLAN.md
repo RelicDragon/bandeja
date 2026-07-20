@@ -31,7 +31,7 @@
 
 | Layer | Tool | Notes |
 |-------|------|-------|
-| E2E | **Playwright** | Aligns with `docs/AUTO_TEST_PLAN.md` Phase 4 |
+| E2E | **Playwright** | `Frontend/e2e/`, projects: guest / auth / two-user / etc. |
 | Auth bootstrap | API fixture + `storageState` | Faster than UI login every test |
 | DB | Seeded staging / disposable CI DB | Needs City, clubs, 4+ users for live scoring |
 | Selectors | `data-testid` on high-churn UI | Add incrementally to modals, tabs, CTAs |
@@ -778,6 +778,8 @@ Frontend/e2e/
 | GD-61 | Navigate to parent league | Open league fixture (`parentId`) | Link to season game works |
 | GD-85 | League match settings hidden | Open `LEAGUE` fixture as owner/admin before results | Game Settings section absent; season (`LEAGUE_SEASON`) still shows settings when editable |
 | GD-86 | League season sport levels | Tennis league season; player with padel 4.0 / tennis 2.5 | Standings, bracket, planner, fixture roster show tennis 2.5; Admin game modal shows tennis level for league fixture participants |
+| GD-118 | Mid-season fixed-team player swap | Fixed-team league; Manage groups → swap on team row → pick out/in → confirm | Roster updates; same standings row/points; past FINAL fixtures unchanged; future fixtures use new player |
+| GD-119 | Swap respects multi-team flag | Season with `allowUserInMultipleTeams` on; candidate already on another group team | Candidate listed and swap succeeds; off → candidate excluded with single-team hint |
 | GD-62 | Pending trainer invite | TRAINING without trainer | Pending trainer row + accept flow |
 | GD-63 | FAQ edit (owner) | Edit game FAQs | Content saved |
 | GD-64 | Announced game results gate | Enter results on ANNOUNCED game | Confirm modal before entry |
@@ -1573,6 +1575,6 @@ Playwright project `two-user` runs specs under `Frontend/e2e/specs/two-user/` ta
 - Main shell: `Frontend/src/pages/MainPage.tsx`
 - Push tap routing: `Frontend/src/utils/pushNotificationBracketRouting.util.ts`
 - Playwright E2E: `Frontend/playwright.config.ts`, `Frontend/e2e/`
-- Automated test plan: `docs/AUTO_TEST_PLAN.md`
+- Unit/integration: `Frontend` / `Backend` `test:*` scripts; CI `.github/workflows/ci.yml`
 - Home Next Game widgets: `Frontend/src/services/widgetNextGamesSync.ts`, iOS `BandejaHomeWidgets/` + `BandejaNextGames/`, Android `:bandeja-widgets`
 - Watch live-scoring relay (WatchConnectivity): iOS `BandejaWatchShared/` (payloads only; not next-games cache)

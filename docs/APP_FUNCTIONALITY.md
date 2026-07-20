@@ -10,17 +10,9 @@
 |----------|------------|
 | QA / release | §38 routes + `docs/UI_TEST_PLAN.md` P0 lists |
 | Product / support | §1 overview, §2.1 glossary, feature sections §5–§22 |
-| Agents / engineers | §2 architecture, §31 schedulers, §37 API summary, `docs/adr/` |
+| Agents / engineers | §2–§2.3 architecture/packages/constraints, §31 schedulers, §37 API summary, `docs/README.md` |
 
-**Related docs (do not duplicate here):**
-
-- `docs/UI_TEST_PLAN.md` — manual/E2E test catalog (~1300 cases)
-- `docs/CREATE_TEMPLATES_MATRIX.md` — full create-game template × sport matrix
-- `docs/PRODUCTION.md` — deploy, tunnels, app store releases
-- `docs/adr/` — architecture decisions (booking ports, court occupancy cache, chat projection, templates)
-- `CLAUDE.md` — dev commands and repo layout
-
-**Not shipped / manual-only:** see §40.
+**Related docs:** see `docs/README.md`. **Not shipped / manual-only:** see §40.
 
 ---
 
@@ -49,6 +41,8 @@
 | Storage | AWS S3 (media) |
 | Mobile | Capacitor 8 (camera, push, deep links, keyboard, network) |
 | Chat | Offline-first: IndexedDB (Dexie) + sync protocol (`@bandeja/chat-contract`) |
+| Unread | `@bandeja/unread-contract` — shared merge/totals; FE `unreadStore` + snapshot sync for tab badges |
+| Server state (FE) | TanStack Query v5 for REST lists; Zustand for client UI; chat stays on Dexie/L1 (not Query) |
 
 Most authenticated UX lives in a single **MainPage shell** with five bottom tabs. Standalone routes handle create flows, live scoring, league fullscreen views, sessions, connected clubs, and club admin.
 
@@ -91,6 +85,27 @@ Scheduler does **not** auto-set `FINISHED` for results-based types (`GAME`, `LEA
 Only `PLAYING` counts toward `maxParticipants` / slot fill.
 
 **Follow graph:** UI says *follow/unfollow*; API persists user follows under `/favorites/users` (separate from favorite **clubs**).
+
+### 2.2 Architecture constraints (do not “simplify” without intent)
+
+These are surprising, load-bearing choices still true in code:
+
+| Constraint | Why it stays |
+|------------|--------------|
+| **Create templates ≠ league/playoff formats** | Casual create uses the template registry (`createFlow` / `@shared/createTemplates`). League seasons and playoffs use separate wizards/seeds (`playoffTemplates`, `PLAYOFF_GAME_TYPE_TEMPLATES`). Do not add `league`/`playoff` template tiers. |
+| **Template matrix source of truth** | FE + `@shared/createTemplates` define templates; FE/BE parity via `createTemplates.parity.test.ts` / sport flow verify tests. Do not maintain a separate matrix markdown. |
+| **Sport level confirmation** | Per-sport on `UserSportProfile.approved*`. Legacy `User.approved*` is a **PADEL-only** denormalized mirror for older clients — not a primary-sport projection. Non-padel confirmation lives only on the sport profile. |
+| **Court occupancy** | FE owns external snapshot refresh; BE returns merged occupancy blocks (app games + admin holds + external busy). Snapshot freshness: `BOOKTIME_SNAPSHOT_FRESH_MS` (60s) — shared constant used for Booktime/Padeloo snapshot staleness. |
+| **External booking** | Provider ports in `@shared/booking/` with adapters for **Booktime** and **Padeloo** (`ClubIntegrationType`). Separate persistence: `ClubBooktimeBusySnapshot` / `UserClubBooktimeAuth` vs `ClubPadelooBusySnapshot` / `UserClubPadelooAuth`. Shared freshness constant `BOOKTIME_SNAPSHOT_FRESH_MS` (60s). |
+| **Open chat thread** | Live projection module (`threadLiveProjection`) — inbox can update while an open thread must still apply inbound + read-receipt paths without requiring refresh. Bootstrap invariants live in `Frontend/src/services/chat/threadOpen/types.ts`. |
+
+### 2.3 Shared packages & modules
+
+| Package / path | Role |
+|----------------|------|
+| `packages/chat-contract` (`@bandeja/chat-contract`) | Chat sync event types shared FE/BE |
+| `packages/unread-contract` (`@bandeja/unread-contract`) | Unread snapshot merge, totals, optimistic bump helpers |
+| `Frontend/shared/` (`@shared/*` from Backend) | Create templates, booking ports, gameBooking helpers, next-game **policy** (`nextGame/policy.ts` + golden JSON), club integration types, game format, officiating, system-message keys. Runtime `pickNextGame` is in `Frontend/src/utils/pickNextGame.ts`. |
 
 ---
 
@@ -147,7 +162,7 @@ Users **without any enabled sport** are redirected from Home and Find to Profile
 | **Market** | `/marketplace` | Marketplace listings |
 | **Top** | `/leaderboard` | City sport rankings |
 
-Unread badges appear on My (game chats), Chats, and Market when applicable.
+Unread badge on the **Chats** bottom tab when applicable. My/Market bottom tabs do not show unread today (store selectors exist; only Chats is wired in `BottomTabBar`). Market unread appears on the Chats → Market inbox filter. Game-card unread chips still show on Home/Find lists.
 
 ### 4.2 Header & create menu
 
@@ -187,10 +202,11 @@ Context-sensitive header per screen. The **+ create menu** (Home header) opens:
 - **PWA service worker** — web cache versioning and offline asset cache (native uses bundled `dist`)
 - **Offline gate:** `NoInternetScreen` blocks most routes offline
 - **Offline exceptions:** game details, live/broadcast, league fullscreen, user profiles, auth routes, **all chat routes** (IndexedDB cache + outbox)
-- **App version check:** blocking or optional update modal
+- **App version check:** `GET /api/app/version-check` via `useAppVersionCheck` — **blocking** (force) or **optional** update modal from Admin App Versions (min / force build per platform). E2E can stub via `window.__E2E_VERSION_CHECK__`
 - **Ads:** sponsor placements on Home, Find, Leaderboard
-- **Deep links:** games, chats, marketplace, profiles, teams, Telegram login
+- **Deep links:** games, chats, marketplace, profiles, teams, Telegram login, **`/next-game`** (widget / Siri / shortcuts)
 - **Desktop layouts:** split views for Home calendar, Find calendar, Chats inbox+thread, Game details+chat
+- **Home-screen widgets (native):** Next Game timeline synced via `widgetNextGamesSync` + App Group / Android widget bridge — see §39.3
 
 ### 4.5 Guest (unauthenticated) access
 
@@ -234,12 +250,12 @@ Instagram-style ephemeral content at top of Home:
 
 Three optional panels — Bookings, Teams, Leagues — with counts:
 
-**Bookings** (Booktime integration):
+**Bookings** (Booktime / Padeloo):
 - Upcoming club booking cards (up to 3 + "See all")
 - Adjacent same-court slot grouping
 - Linked game chips, occupancy % pills
 - Per-slot actions: link to game, create game, cancel booking
-- Connect-club banner for unconnected BOOKTIME clubs
+- Connect-club banner for unconnected integrated clubs
 - Gear shortcut → connected clubs integrations
 
 **Teams:**
@@ -289,7 +305,7 @@ Not a top-level route — embedded in city picker, Find header, and create-game 
 Opened from city picker, Find/create club modals, or club info links:
 
 - Address, city line, coordinates, **mini map** (`ClubMiniMap`), open in Maps link
-- **Availability grid** for BOOKTIME-integrated clubs (free slots, duration toggle, last-sync time)
+- **Availability grid** for BOOKTIME/PADELOO-integrated clubs (free slots, duration toggle, last-sync time)
 - Connect-club banner + OTP flow when not linked
 - Browse slots → navigate to create-game with prefilled club/court/time
 - **Club reviews** section (see §6.3)
@@ -398,9 +414,9 @@ Multi-step wizard for scheduling events. Entity types:
 - Invite players from list (level filter, availability icons)
 - Floating summary chip bar when scrolling past filled sections
 
-### 8.3 Booktime (external booking) integration
+### 8.3 External booking (Booktime / Padeloo)
 
-When club has BOOKTIME integration:
+When club has BOOKTIME or PADELOO integration:
 
 - Unified **location & time** panel: club → date → court → reservation card → auth/duration → time
 - Connect via phone OTP inline or from club detail
@@ -609,6 +625,9 @@ Offline-first real-time messaging system.
 - **Edit** and **delete** own messages (sync + offline outbox; edit shows error if message was deleted server-side)
 - **Report message** — reason (spam, harassment, inappropriate, fake info, other) + optional description → admin Reports queue
 - Photos, video (transcode/compress), voice/audio, documents
+- **Stickers** — first-class `MessageType.STICKER` (`stickerId`); official packs + personal stickers; favorites/recents tray (`/api/stickers`)
+- **Giphy / GIF** — composer GIF search & trending when `GIPHY_API_KEY` and/or `KLIPY_API_KEY` set (`/api/giphy`; provider may be Giphy or Klipy); URL-only paste re-hosted as `IMAGE` for Giphy, Klipy, or **Tenor** page/media URLs (soft-fail keeps text URL)
+- **Link previews** — eligible URLs get OG/app cards (`/api/link-preview`); Bandeja deep links resolve to typed app cards (game, next-game, profile, etc.); composer chip + remove-preview
 - Polls (create, vote)
 - Pinned messages
 - Search in thread + **global chat search** (sections: messages, games, channels, bugs, marketplace)
@@ -630,12 +649,12 @@ Offline-first real-time messaging system.
 - Avatar upload
 - Channel vs group distinction
 
-### 12.5 Sync protocol
+### 12.5 Sync protocol & unread
 
 - Socket.IO + IndexedDB local DB
 - Event-based sync (`MESSAGE_CREATE`, `MESSAGE_UPDATE`, `MESSAGE_DELETE`, `REACTION_ADD/REMOVE`, `READ_CURSOR_UPDATE`)
 - Background sync worker
-- Unread count coordination across tabs and push
+- **Unread authority:** `@bandeja/unread-contract` merge helpers + FE `unreadStore` / `unreadSnapshot` — Chats bottom-tab badge + app icon badge; optimistic bumps on send/receive; muted threads excluded from totals; open-thread clears without waiting for socket round-trip. My/Market bottom-tab selectors exist but are not shown on those tabs; Market unread is under Chats → Market filter; game cards can still show chat unread chips
 
 ---
 
@@ -648,7 +667,7 @@ Peer-to-peer listings within the app.
 - Infinite scroll listings
 - Category and city filters
 - Item detail drawer (`?item=`) or `/marketplace/:id`
-- Unread badges on Market tab and per-item threads
+- Unread badges on Market **inbox filter** (`/chats/marketplace`) and per-item threads
 
 ### 13.2 My listings (`/marketplace/my`)
 
@@ -743,6 +762,8 @@ Peer-to-peer listings within the app.
 
 **Statistics tab extras:**
 - **Performance insights** (win rate, streaks, form — sport-scoped)
+- **Play streak** — consecutive weeks with a finished game per sport (current / best / at-risk); shown on own profile
+- **Reliability** — per-sport reliability score (see §29); shown with stats / results deltas
 - **Level history** chart (competitive vs social level over time)
 
 ### 15.3 Other user profile (`/user-profile/:userId`) — guest-readable
@@ -789,13 +810,13 @@ Creator is excluded from their own game's subscription notifications.
 
 ---
 
-## 18. Connected clubs & Booktime (`/profile/connected-clubs`)
+## 18. Connected clubs & external booking (`/profile/connected-clubs`)
 
-External court booking integration (Booktime / Playtomic-style providers).
+External court booking via club `integrationType`: **BOOKTIME** or **PADELOO** (provider ports in `@shared/booking/`; FE adapters under `integrations/booktime` and `integrations/padeloo`).
 
 ### 18.1 Bookings tab
 
-- View linked club bookings (upcoming and past)
+- View linked club bookings (upcoming and past) for connected Booktime/Padeloo clubs
 - Past booking: link to game, expand actions
 - Cancel booking (policy confirm)
 - Timezone display uses club city TZ
@@ -803,14 +824,15 @@ External court booking integration (Booktime / Playtomic-style providers).
 
 ### 18.2 Integrations tab
 
-- Connect/disconnect clubs via phone OTP
-- New user signup flow during connect
+- Connect/disconnect clubs (Booktime: phone OTP; Padeloo: provider session/auth for that club)
+- New user signup flow during connect where applicable
 - Dismiss connect hints
 - Link bookings to games from My tab or create-game
+- APIs: `/booktime/*`, `/padeloo/*`, plus per-club `/clubs/:id/booktime|padeloo/...` snapshot/auth routes
 
 ### 18.3 Game ↔ booking link
 
-- Link one or more reservations to a game
+- Link one or more reservations to a game (coverage helpers in `@shared/gameBooking`)
 - Coverage badges: fully booked vs not fully booked
 - Shared reservation across multiple games (informational)
 - Refresh/unlink when booking disappears from external system
@@ -977,9 +999,10 @@ Per-channel toggles (Telegram vs Push). Respects chat mute state.
 ## 29. Ratings & rankings
 
 - **Bandeja ELO v1** rating engine per sport
+- **Reliability** — separate per-sport score on `UserSportProfile`; moves with results (`calculateReliabilityChange`); dampens level change via reliability coefficient (also interacts with `ratingUncertainty`); trainers can override on training games; shown on rankings, results summaries, Telegram/artifacts
 - Level change events stored and displayed
 - Score margin affects delta where configured
-- Leaderboard by city/sport/period
+- Leaderboard by city/sport/period (can sort/filter involving reliability)
 - Player comparison (head-to-head)
 - External rating display mappings (Playtomic, NTRP, DUPR, etc.)
 - Questionnaire-based initial level calibration
@@ -998,10 +1021,10 @@ Plain JS ops dashboard (no build step). Sections:
 | **Games** | Browse, manage games |
 | **Invites** | Invite management |
 | **Cities** | City CRUD |
-| **Clubs** | Club CRUD, courts, **online booking integration type**, **Booktime court import**, **court web camera URL** |
+| **Clubs** | Club CRUD, courts, **online booking integration type** (Booktime / Padeloo), **court import**, **court web camera URL** |
 | **Reports** | Message and story comment reports |
 | **App Versions** | Force/minimum version config |
-| **Platform Settings** | Translation queue, results artifacts settings |
+| **Platform Settings** | Translation queue, results artifacts settings (incl. Replicate photo model picker) |
 | **Market Categories** | Marketplace category management |
 | **Mass Notifications** | Broadcast push to users |
 | **Sponsor Ads** | Campaign management |
@@ -1099,10 +1122,12 @@ Each sport in the registry defines:
 
 ## 35. Testing & quality
 
-- **Playwright E2E:** smoke, auth, games, find, chats, marketplace, profile, leagues, club-admin, two-user specs
-- **Vitest unit tests:** live scoring, game invite, group channel, queries, chat inbox/outbox, stories
-- **Backend automated tests:** bracket structure, game results artifacts, service tests
+- **Playwright E2E:** smoke, auth, games, find, chats, marketplace, profile, leagues, club-admin, two-user, link-preview specs
+- **Vitest unit tests:** live scoring, game invite, group channel, queries, chat inbox/outbox/open, unread, stickers, stories, next-game / deep-link catalog, invites
+- **Backend automated tests:** bracket structure, game results artifacts, service tests, sticker/giphy suites
+- **Contract packages:** `packages/chat-contract`, `packages/unread-contract` (built in CI)
 - **UI test plan:** `docs/UI_TEST_PLAN.md` — 1300+ manual test cases catalogued
+- **CI:** `.github/workflows/ci.yml` — Node 24, lint/build + targeted FE suites + iOS shared packages job
 
 ---
 
@@ -1119,17 +1144,18 @@ Each sport in the registry defines:
 
 ## 37. Backend API surface (summary)
 
-~400+ endpoints under `/api/*` across 45 route modules. Not exhaustive — grouped by domain:
+~400+ endpoints under `/api/*` across route modules mounted in `Backend/src/routes/index.ts`. Not exhaustive — grouped by domain:
 
 | Domain | Key routes |
 |--------|------------|
 | Auth & identity | `/auth`, `/telegram`, `/me` (`/my-tab-data` aggregated home payload) |
+| App | `/app` (`/version-check`, `/location`) |
 | Users & social | `/users`, `/blocked-users`, `/favorites`, `/user-teams`, `/user-game-notes` |
-| Geography & clubs | `/cities`, `/clubs` (incl. `/map`, reviews), `/courts`, `/club-admin`, `/booktime` |
+| Geography & clubs | `/cities`, `/clubs` (incl. `/map`, reviews, per-club booktime/padeloo auth+snapshot), `/courts`, `/club-admin`, `/booktime`, `/padeloo` |
 | Games | `/games`, `/game-teams`, `/game-courts`, `/game-subscriptions`, `/invites`, `/faqs`, `/training`, `/trainers` |
 | Results & live | `/results` (incl. spectator token, live scoring, match timer, outcome explanation) |
 | Leagues | `/leagues` |
-| Chat | `/chat`, `/group-channels` |
+| Chat | `/chat`, `/group-channels`, `/stickers`, `/giphy`, `/link-preview` |
 | Media & stories | `/media`, `/stories` |
 | Marketplace & economy | `/market-items`, `/bets`, `/transactions`, `/goods`, `/currency` |
 | Ops | `/bugs`, `/ads`, `/weather`, `/push`, `/rankings`, `/level-changes`, `/admin`, `/logs` |
@@ -1147,7 +1173,7 @@ Each sport in the registry defines:
 `/`, `/find`, `/chats`, `/chats/marketplace`, `/bugs`, `/bugs/:id`, `/leaderboard`, `/profile`, `/games/:id`, `/games/:id/chat`, `/user-team/:id`, `/game-subscriptions`, `/marketplace`, `/marketplace/my`, `/marketplace/create`, `/marketplace/:id`, `/marketplace/:id/edit`, `/user-chat/:id`, `/group-chat/:id`, `/channel-chat/:id`
 
 ### Standalone authenticated
-`/create-game`, `/create-league`, `/select-city`, `/profile/sessions`, `/profile/connected-clubs`, `/games/:id/live`, `/games/:id/live/tv`, `/games/:id/live/broadcast`, `/games/:id/broadcast`, `/games/:id/league-table`, `/games/:id/league-bracket`, `/my-clubs/*`
+`/create-game`, `/create-league`, `/select-city`, `/profile/sessions`, `/profile/connected-clubs`, `/next-game` (redirect to next eligible game detail/chat/live via `?open=`), `/games/:id/live`, `/games/:id/live/tv`, `/games/:id/live/broadcast`, `/games/:id/broadcast`, `/games/:id/league-table`, `/games/:id/league-bracket`, `/my-clubs/*`
 
 ---
 
@@ -1166,8 +1192,11 @@ Each sport in the registry defines:
 | iOS Communication Notifications | — | ✓ when entitled | — | — | — | — |
 | Alternate app icon + sport mascot | — | ✓ | ✓ | — | — | — |
 | Live scoring | ✓ | ✓ | ✓ | ✓ | — | — |
+| Home Next Game widgets | — | ✓ | ✓ | Watch: §11.2 | — | — |
+| Siri / App Intents | — | ✓ | — | — | — | — |
+| Android dynamic shortcuts | — | — | ✓ | — | — | — |
 | Offline chat (IndexedDB outbox) | ✓ | ✓ | ✓ | — | — | — |
-| Booktime connect / book court | ✓ | ✓ | ✓ | — | — | import courts |
+| External booking (Booktime / Padeloo) | ✓ | ✓ | ✓ | — | — | import courts |
 | Deep links (Capacitor `appUrlOpen`) | — | ✓ | ✓ | — | login key | — |
 | Hardware back button | browser back | ✓ | ✓ | — | — | — |
 | Keyboard-aware dialogs/drawers | mobile web | ✓ | ✓ | — | — | — |
@@ -1187,18 +1216,34 @@ Handled in `useDeepLink.ts` for Bandeja URL hosts — same paths as web unless n
 | `/marketplace`, `/marketplace/my`, `/marketplace/create`, `/marketplace/:id`, `/marketplace/:id/edit` | Marketplace (+ query string) |
 | `/login/:telegramKey` | Telegram auto-login (deduped) |
 | `/`, `/find`, `/chats`, `/profile`, `/leaderboard`, `/bugs`, `/game-subscriptions`, `/create-game`, `/create-league`, `/select-city`, `/login`, `/register` | Main / auth routes |
+| `/next-game`, `/next-game?open=chat`, `/next-game?open=live` | Resolve next eligible game → detail / chat / live (`NextGameRedirect`, `@shared/nextGame` policy) |
 | `/my-clubs/*` | Club admin |
 | `/profile/connected-clubs`, `/profile/sessions` | Profile sub-pages (web; add if linked from native share) |
 
-Push notification taps use the same route targets (games, chats, bugs, marketplace, teams, league schedule).
+Push notification taps use the same route targets (games, chats, bugs, marketplace, teams, league schedule). Widget / Siri / shortcut taps typically land on `/next-game` or a concrete game path.
 
 ### 39.2 Native-only UX (not on desktop web)
 
 - **Permission modals** — camera, photos library, geolocation when denied (`PermissionModalProvider`)
 - **Native calendar add** — game details Add to calendar uses device calendar on Capacitor; web offers Google Calendar link + `.ics` download
-- **Splash / loading mascot** — primary sport + selected app icon (e.g. tiger variant per sport)
+- **Splash / loading mascot** — primary sport + selected app icon (e.g. tiger / racket variants per sport — `appIcons.ts`)
 - **Story DM bar / keyboard** — Android uses plugin keyboard height for story reply composer
 - **Capacitor secure token storage** — refresh token persistence
+- **Siri / App Intents (iOS)** — up to 10 donated shortcuts (`BandejaAppShortcuts` / `assistantRegistry`): Find today/tomorrow, My games, next game, next-game chat/live, and related feature/entity intents — not next-game only
+- **Android dynamic shortcuts** — next-game shortcuts (`DynamicGameShortcuts.java`) fed from the next-games envelope; also static feature shortcuts (`shortcuts.xml`)
+
+### 39.3 Phone home-screen widgets
+
+Separate from Apple Watch widgets (§11.2):
+
+| Platform | Implementation | Data |
+|----------|----------------|------|
+| iOS | `BandejaHomeWidgets` + `BandejaNextGames` App Group package | Envelope written by `widgetNextGamesSync` / `WidgetBridgePlugin` |
+| Android | `:bandeja-widgets` module + `WidgetBridgePlugin` | Same next-games JSON envelope |
+
+- Policy for which game is “next”: `@shared/nextGame/policy` + golden fixtures; selection implemented by `Frontend/src/utils/pickNextGame.ts`
+- Tap → `/next-game` or `/next-game?open=chat|live` (web + Capacitor)
+- Cleared on logout (`clearWidgetNextGamesCache`)
 
 ---
 
@@ -1211,7 +1256,7 @@ Push notification taps use the same route targets (games, chats, bugs, marketpla
 | External wallet top-up | No payment provider checkout in app |
 | Full Capacitor OAuth matrix | Apple/Google sign-in on device — manual QA |
 | Telegram OTP / bot flows | Manual unless test env provides deterministic keys |
-| Every sport × template combo | Sample in QA; full matrix in `CREATE_TEMPLATES_MATRIX.md` |
+| Every sport × template combo | Sample in QA; full set in `@shared/createTemplates` + parity tests |
 | Holland auction edge timing | Scheduler-driven; manual verification on slow clocks |
 | Watch standalone without phone | Requires paired iPhone + same account |
 

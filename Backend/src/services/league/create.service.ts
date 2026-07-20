@@ -37,6 +37,7 @@ import {
   ensureTeamLeagueParticipant,
   ensureUserLeagueParticipant,
   findTeamParticipantByRoster,
+  sortedPlayerKey,
 } from './leagueParticipantResolve';
 import { playersPerTeamOf } from '../results/generation/matchUtils';
 
@@ -86,6 +87,17 @@ export class LeagueCreateService {
       tidToUserSet.set(row.leagueTeamId as string, new Set(ids));
     }
 
+    const rosterAliases = await prisma.leagueTeamRosterAlias.findMany({
+      where: { leagueSeasonId },
+      select: { rosterKey: true, leagueTeamId: true },
+    });
+    const aliasKeyToTid = new Map<string, string>();
+    for (const alias of rosterAliases) {
+      // Only map aliases that still point at a franchise in this group selection.
+      if (!tidToUserSet.has(alias.leagueTeamId)) continue;
+      aliasKeyToTid.set(alias.rosterKey, alias.leagueTeamId);
+    }
+
     const groupScopeIds = leagueGroupId
       ? [leagueGroupId]
       : [
@@ -124,14 +136,19 @@ export class LeagueCreateService {
       },
     });
 
+    const resolveTidForPlayerIds = (playerIds: string[]): string | null => {
+      if (playerIds.length !== playersPerTeam) return null;
+      const current = sigToTid.get(teamPlayerSig(playerIds));
+      if (current) return current;
+      return aliasKeyToTid.get(sortedPlayerKey(playerIds)) ?? null;
+    };
+
     const resolveTids = (game: (typeof seasonGames)[number]): [string | null, string | null] => {
       if (game.fixedTeams.length < 2) return [null, null];
       const a = game.fixedTeams[0].players.map((p) => p.userId).filter(Boolean) as string[];
       const b = game.fixedTeams[1].players.map((p) => p.userId).filter(Boolean) as string[];
       if (a.length !== playersPerTeam || b.length !== playersPerTeam) return [null, null];
-      const tA = sigToTid.get(teamPlayerSig(a)) ?? null;
-      const tB = sigToTid.get(teamPlayerSig(b)) ?? null;
-      return [tA, tB];
+      return [resolveTidForPlayerIds(a), resolveTidForPlayerIds(b)];
     };
 
     const busyTids = new Set<string>();

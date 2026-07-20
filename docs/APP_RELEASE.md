@@ -25,7 +25,7 @@ Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
 Dry-run planner: `APP_RELEASE_DRY_RUN=1 ./scripts/app-release.sh`. Resume after failure: `APP_RELEASE_RESUME=1 ./scripts/app-release.sh`.
 
-See this file for store API credentials, Android signing, and internal-track smoke test steps.
+Store API credentials, Android signing, and internal-track smoke steps: **`docs/PRODUCTION.md`** (Mobile app store releases).
 
 ### Headless scripts
 

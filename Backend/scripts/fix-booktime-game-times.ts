@@ -1,6 +1,6 @@
 /**
  * Re-sync Game + GameExternalBooking times for BOOKTIME-linked games affected by
- * double wire-ingest (Gap B in docs/BOOKTIME_TIMEZONE_GAPS.md).
+ * double wire-ingest (timezone / UTC mismatch on ingest).
  *
  * Usage:
  *   npx ts-node scripts/fix-booktime-game-times.ts --dry-run

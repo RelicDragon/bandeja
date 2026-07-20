@@ -71,4 +71,4 @@ Canonical triage labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready
 
 ### Domain docs
 
-Multi-context — `CONTEXT-MAP.md` at repo root points to per-area `CONTEXT.md` files. See `docs/agents/domain.md`.
+Multi-context — see `docs/agents/domain.md` and `docs/README.md`.

@@ -581,7 +581,7 @@ function mergeSportLevelConfirmation(
   };
 }
 
-/** ADR-008: keep User.approved* aligned with the PADEL sport profile. */
+/** Keep User.approved* aligned with the PADEL sport profile (see docs/APP_FUNCTIONALITY.md §2.2). */
 async function syncPadelApprovalMirrorFromProfile(tx: Tx, userId: string) {
   const padel = await tx.userSportProfile.findUnique({
     where: { userId_sport: { userId, sport: Sport.PADEL } },

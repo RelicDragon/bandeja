@@ -2456,18 +2456,19 @@ model League {
 }
 
 model LeagueSeason {
-  id              String              @id
+  id              String                  @id
   leagueId        String
   orderIndex      Int
-  sport           Sport               @default(PADEL)
+  sport           Sport                   @default(PADEL)
   movePlayersRule Json?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  league          League              @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  game            Game?               @relation("GameLeagueSeason", fields: [id], references: [id], onDelete: Cascade)
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  league          League                  @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  game            Game?                   @relation("GameLeagueSeason", fields: [id], references: [id], onDelete: Cascade)
   groups          LeagueGroup[]
   participants    LeagueParticipant[]
   rounds          LeagueRound[]
+  rosterAliases   LeagueTeamRosterAlias[]
 
   @@index([leagueId])
   @@index([orderIndex])
@@ -2495,11 +2496,12 @@ model LeagueGroup {
 }
 
 model LeagueTeam {
-  id           String              @id @default(cuid())
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
+  id           String                  @id @default(cuid())
+  createdAt    DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
   players      LeagueTeamPlayer[]
   participants LeagueParticipant[]
+  rosterAliases LeagueTeamRosterAlias[]
 
   @@index([id])
 }
@@ -2515,6 +2517,22 @@ model LeagueTeamPlayer {
   @@unique([leagueTeamId, userId])
   @@index([leagueTeamId])
   @@index([userId])
+}
+
+/// Maps a historical fixed-team roster key to the current franchise LeagueTeam for a season.
+/// Lets past fixtures keep who actually played while standings stay on one LeagueParticipant.
+model LeagueTeamRosterAlias {
+  id             String       @id @default(cuid())
+  leagueSeasonId String
+  leagueTeamId   String
+  rosterKey      String
+  createdAt      DateTime     @default(now())
+  leagueSeason   LeagueSeason @relation(fields: [leagueSeasonId], references: [id], onDelete: Cascade)
+  leagueTeam     LeagueTeam   @relation(fields: [leagueTeamId], references: [id], onDelete: Cascade)
+
+  @@unique([leagueSeasonId, rosterKey])
+  @@index([leagueTeamId])
+  @@index([leagueSeasonId])
 }
 
 model LeagueParticipant {

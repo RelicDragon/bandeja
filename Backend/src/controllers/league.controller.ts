@@ -10,6 +10,7 @@ import { LeaguePlannerService } from '../services/league/planner.service';
 import { LeagueRecreateRegularSeasonService } from '../services/league/recreateRegularSeason.service';
 import { LeagueStandingsRecalculateService } from '../services/league/leagueStandingsRecalculate.service';
 import { BracketPlayoffService } from '../services/league/bracketPlayoff.service';
+import { LeagueTeamPlayerSwapService } from '../services/league/leagueTeamPlayerSwap.service';
 import prisma from '../config/database';
 import { ApiError } from '../utils/ApiError';
 
@@ -315,6 +316,39 @@ export const reorderLeagueGroups = asyncHandler(async (req: AuthRequest, res: Re
   const { groupIds } = req.body;
 
   const data = await LeagueGroupManagementService.reorderGroups(leagueSeasonId, groupIds);
+
+  res.json({
+    success: true,
+    data,
+  });
+});
+
+export const swapLeagueTeamPlayer = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId, participantId } = req.params;
+  const { outUserId, inUserId } = req.body;
+
+  const data = await LeagueTeamPlayerSwapService.swapPlayer({
+    leagueSeasonId,
+    participantId,
+    outUserId,
+    inUserId,
+  });
+
+  res.json({
+    success: true,
+    data,
+  });
+});
+
+export const listLeagueTeamSwapCandidates = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { leagueSeasonId, participantId } = req.params;
+  const outUserId = String(req.query.outUserId || '');
+
+  const data = await LeagueTeamPlayerSwapService.listSwapCandidates({
+    leagueSeasonId,
+    participantId,
+    outUserId,
+  });
 
   res.json({
     success: true,
