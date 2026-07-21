@@ -6,12 +6,12 @@ Marks the last commit that was shipped to **Google Play** and **App Store**. Use
 
 | | |
 |---|---|
-| **Version** | 0.97.6 |
-| **Build** | 188 |
-| **Commit** | `17dc0f93064c2e08f3af33bb52f84cc267ae2989` |
-| **Short** | `17dc0f93` |
+| **Version** | 0.97.7 |
+| **Build** | 189 |
+| **Commit** | `a79d5d6e1a31fdda3abd9d764d5fdf86b6e79273` |
+| **Short** | `a79d5d6e` |
 | **Date** | 2026-07-21 |
-| **Message** | Refactor LoginPanelFrame and AuthLayout styles for improved layout and user experience |
+| **Message** | Bump app release to 0.97.7 (build 189) |
 
 Canonical commit hash: `docs/app-release-baseline.txt` (one line, full SHA).
 
@@ -68,6 +68,7 @@ Generate **What's new** (LLM summarizes commits since baseline):
 
 | Version | Build | Commit | Date |
 |---------|-------|--------|------|
+| 0.97.7 | 189 | `a79d5d6e` | 2026-07-21 |
 | 0.97.6 | 188 | `17dc0f93` | 2026-07-21 |
 | 0.97.5 | 187 | `5dc1534f` | 2026-07-17 |
 | 0.97.4 | 186 | `867a9b3d` | 2026-07-17 |
