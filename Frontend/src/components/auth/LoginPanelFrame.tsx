@@ -18,7 +18,10 @@ export function LoginPanelFrame({ panelKey, direction, children }: LoginPanelFra
     const el = measureRef.current;
     if (!el) return;
 
-    const update = () => setHeight(el.getBoundingClientRect().height);
+    const update = () => {
+      // scrollHeight + ceil: avoid subpixel clip of descenders / underlines
+      setHeight(Math.ceil(el.scrollHeight));
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -36,7 +39,7 @@ export function LoginPanelFrame({ panelKey, direction, children }: LoginPanelFra
       animate={{ height: typeof height === 'number' ? height : undefined }}
       transition={{ duration: 0.38, ease }}
     >
-      <div ref={measureRef}>
+      <div ref={measureRef} className="pb-px">
         <AnimatePresence initial={false} mode="wait" custom={direction}>
           <motion.div
             key={panelKey}

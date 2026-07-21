@@ -420,7 +420,7 @@ export const Login = () => {
             </motion.div>
 
             {isWeb && <AppStoreDownloadButtons className="mt-3 sm:mt-4" />}
-            <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 sm:mt-4 sm:text-xs">
+            <p className="mt-3 pb-0.5 text-center text-[11px] leading-snug text-slate-500 dark:text-slate-400 sm:mt-4 sm:text-xs">
               {t('auth.byContinuing') || 'By continuing, you agree to our'}{' '}
               <a
                 href="/eula/world/eula.html"
