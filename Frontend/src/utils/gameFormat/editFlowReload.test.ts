@@ -124,7 +124,7 @@ describe('edit flow reload — template inference', () => {
     expect(inferred.templateId).toBeNull();
   });
 
-  it('returns advanced for wizard-only preset not matching a template card', () => {
+  it('infers padel super tiebreak template from CLASSIC_SUPER_TIEBREAK', () => {
     const inferred = inferFromGame(ROSTER_4, {
         scoringPreset: 'CLASSIC_SUPER_TIEBREAK',
         scoringMode: 'SETS',
@@ -134,8 +134,8 @@ describe('edit flow reload — template inference', () => {
         maxParticipants: 4,
       },
     );
-    expect(inferred.intent).toBe('advanced');
-    expect(inferred.templateId).toBeNull();
+    expect(inferred.intent).toBe('match');
+    expect(inferred.templateId).toBe('PADEL_SUPER_TIEBREAK');
   });
 });
 

@@ -287,6 +287,10 @@
         "description": "Standardní třísetový zápas",
         "badge": "Oficiální"
       },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "Super tiebreak",
+        "description": "2 sety + super tiebreak při 1–1"
+      },
       "PADEL_SINGLE_SET": {
         "title": "Jeden set",
         "description": "Zápas v jednom setu"

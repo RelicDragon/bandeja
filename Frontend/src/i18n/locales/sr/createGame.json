@@ -287,6 +287,10 @@
         "description": "Standardni meč do tri seta",
         "badge": "Zvanični"
       },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "Super taj-brejk",
+        "description": "Dva seta + super taj-brejk pri 1–1"
+      },
       "PADEL_SINGLE_SET": {
         "title": "Jedan set",
         "description": "Meč u jednom setu"

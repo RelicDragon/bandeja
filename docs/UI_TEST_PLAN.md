@@ -473,6 +473,7 @@ Frontend/e2e/
 | C-10a | Padel Automatic default | Create padel doubles game (default load) | **Automatic** template selected (Match badge); `CLASSIC_AUTOMATIC` preset; generation Automatic; rating game on |
 | C-10b | Automatic customize demote | Automatic template → Customize format → change any param | Custom/advanced card; template no longer matches |
 | C-10c | Automatic set entry | Automatic game → set 1: SegmentedSwitch Set/games vs Americano points (match-level); set 2+ uses same mode; at 1–1 decider can pick super tiebreak; next match can differ | Set/games 0–10; STB decider uses tiebreak point cap (first-to+5); hint/examples follow active mode; title shows STB suffix only when STB selected |
+| C-10d | Padel Super tie-break template | Create padel doubles → pick **Super tie-break** | `CLASSIC_SUPER_TIEBREAK` preset; Match badge; rating on; duration estimate shown; reopening format picker keeps template selected |
 | C-11 | Game format wizard | Open/close wizard | Scoring preset saved |
 | C-47 | Golden point deuce count | Create/edit classic game → Set structure step → pick Off / At 40–40 / After 1–4 deuces | Setting saved on game; live scoring uses advantage until threshold then sudden death at 40–40; watch matches web |
 | C-12 | Rating vs social game | Toggle affects rating | Flag persisted on create |

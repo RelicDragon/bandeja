@@ -284,6 +284,10 @@
         "description": "Partido estándar a tres sets",
         "badge": "Oficial"
       },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "Super tie-break",
+        "description": "Dos sets + super tie-break a 1–1"
+      },
       "PADEL_SINGLE_SET": {
         "title": "Un set",
         "description": "Partido en un solo set"

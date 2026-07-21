@@ -64,6 +64,7 @@ export const CREATE_FLOW_BY_SPORT: Record<Sport, SportCreateFlowConfig> = {
     createTemplates: [
       'PADEL_AUTOMATIC',
       'PADEL_BEST_OF_3',
+      'PADEL_SUPER_TIEBREAK',
       'PADEL_SINGLE_SET',
       'PADEL_AMERICANO',
       'PADEL_TIMED',

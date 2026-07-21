@@ -433,6 +433,10 @@
         "description": "Standard three-set match",
         "badge": "Official"
       },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "Super tie-break",
+        "description": "Two sets + super tie-break at 1–1"
+      },
       "PADEL_SINGLE_SET": {
         "title": "Single set",
         "description": "One set to decide the match"

@@ -29,6 +29,7 @@ function mockFormat(overrides: Partial<UseGameFormatResult> = {}): UseGameFormat
     setScoringPreset: vi.fn(),
     setGenerationType: vi.fn(),
     setHasGoldenPoint: vi.fn(),
+    setDeucesBeforeGoldenPoint: vi.fn(),
     setCustomPointsTotal: vi.fn(),
     setMatchTimerEnabled: vi.fn(),
     setMatchTimedCapMinutes: vi.fn(),
@@ -159,6 +160,24 @@ describe('formatMatchesCreateTemplate round-trip', () => {
     expect(
       formatMatchesCreateTemplate(tpl, { ...bo3Format, generationType: 'RANDOM' }, 8),
     ).toBe(false);
+  });
+
+  it('matches padel super tiebreak template', () => {
+    expect(
+      formatMatchesCreateTemplate(
+        CREATE_TEMPLATES.PADEL_SUPER_TIEBREAK,
+        {
+          scoringMode: 'CLASSIC',
+          scoringPreset: 'CLASSIC_SUPER_TIEBREAK',
+          generationType: 'AUTOMATIC',
+          matchTimerEnabled: false,
+          matchTimedCapMinutes: null,
+          customPointsTotal: null,
+          winnerOfGame: 'BY_MATCHES_WON',
+        },
+        4,
+      ),
+    ).toBe(true);
   });
 
   it('does not match best-of-3 when super tiebreak preset chosen', () => {

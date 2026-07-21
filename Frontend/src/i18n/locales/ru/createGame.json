@@ -289,6 +289,10 @@
         "description": "Стандартный матч из трёх сетов",
         "badge": "Официальный"
       },
+      "PADEL_SUPER_TIEBREAK": {
+        "title": "Супертай-брейк",
+        "description": "Два сета + супертай-брейк при 1–1"
+      },
       "PADEL_SINGLE_SET": {
         "title": "Один сет",
         "description": "Матч в одном сете"

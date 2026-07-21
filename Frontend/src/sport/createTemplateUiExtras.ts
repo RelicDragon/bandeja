@@ -22,6 +22,7 @@ export type FeCreateTemplateExtras = {
 export type FeLegacyPadelTemplateId =
   | 'PADEL_AUTOMATIC'
   | 'PADEL_BEST_OF_3'
+  | 'PADEL_SUPER_TIEBREAK'
   | 'PADEL_SINGLE_SET'
   | 'PADEL_AMERICANO'
   | 'PADEL_TIMED'
@@ -209,6 +210,21 @@ export const FE_LEGACY_PADEL_TEMPLATES: Record<FeLegacyPadelTemplateId, FeCreate
     badgeLabelKey: 'createGame.templates.PADEL_BEST_OF_3.badge',
     badgeVariant: 'official',
     scoringPreset: 'CLASSIC_BEST_OF_3',
+    gameType: 'CLASSIC',
+    matchGenerationType: 'AUTOMATIC',
+    playersPerMatch: 4,
+    suggestedMaxParticipants: 16,
+    suggestedCourts: 4,
+    affectsRating: true,
+    baselineRounds: 1,
+  },
+  PADEL_SUPER_TIEBREAK: {
+    id: 'PADEL_SUPER_TIEBREAK',
+    sport: Sports.PADEL,
+    tier: 'match',
+    labelKey: 'createGame.templates.PADEL_SUPER_TIEBREAK.title',
+    descriptionKey: 'createGame.templates.PADEL_SUPER_TIEBREAK.description',
+    scoringPreset: 'CLASSIC_SUPER_TIEBREAK',
     gameType: 'CLASSIC',
     matchGenerationType: 'AUTOMATIC',
     playersPerMatch: 4,

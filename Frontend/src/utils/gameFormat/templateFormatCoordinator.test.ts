@@ -23,6 +23,7 @@ const PADEL_CTX: TemplateFormatCoordinatorContext = {
   allowedScoringPresets: [
     'CLASSIC_AUTOMATIC',
     'CLASSIC_BEST_OF_3',
+    'CLASSIC_SUPER_TIEBREAK',
     'CLASSIC_SINGLE_SET',
     'CLASSIC_TIMED',
     'POINTS_24',
@@ -106,10 +107,10 @@ describe('templateFormatCoordinator', () => {
       expect(inferred.intent).toBe('social');
     });
 
-    it('infers custom when format does not match any template', () => {
+    it('infers padel super tiebreak from CLASSIC_SUPER_TIEBREAK format', () => {
       const format = mockFormat({ scoringPreset: 'CLASSIC_SUPER_TIEBREAK' });
       const inferred = inferTemplateFromFormat(PADEL_CTX, format);
-      expect(inferred).toEqual({ intent: 'advanced', templateId: null });
+      expect(inferred).toEqual({ intent: 'match', templateId: 'PADEL_SUPER_TIEBREAK' });
     });
   });
 
@@ -274,7 +275,7 @@ describe('templateFormatCoordinator', () => {
     });
 
     it('keeps locked manual selection when user explicitly chose custom', () => {
-      const format = mockFormat({ scoringPreset: 'CLASSIC_SUPER_TIEBREAK' });
+      const format = mockFormat({ scoringPreset: 'CLASSIC_BEST_OF_5' });
       const sync = syncSelectionFromFormat(
         PADEL_CTX,
         format,

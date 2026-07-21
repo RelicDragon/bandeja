@@ -70,7 +70,15 @@ describe('create template registry parity', () => {
   );
 
   it('legacy padel template IDs remain FE-only', () => {
-    const legacy = ['PADEL_BEST_OF_3', 'PADEL_SINGLE_SET', 'PADEL_AMERICANO', 'PADEL_TIMED'] as const;
+    const legacy = [
+      'PADEL_AUTOMATIC',
+      'PADEL_BEST_OF_3',
+      'PADEL_SUPER_TIEBREAK',
+      'PADEL_SINGLE_SET',
+      'PADEL_AMERICANO',
+      'PADEL_TIMED',
+      'PADEL_SINGLES_AUTOMATIC',
+    ] as const;
     for (const id of legacy) {
       expect(FE_CREATE_TEMPLATES[id]?.id).toBe(id);
       expect(FE_SHARED_CREATE_TEMPLATES[id as CreateTemplateId]).toBeUndefined();
