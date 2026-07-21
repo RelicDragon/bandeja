@@ -126,6 +126,7 @@
 }
 
 :root {
+  color-scheme: light;
   --ui-background: #f9fafb;
   --ui-foreground: #111827;
   --ui-border: #e5e7eb;
@@ -139,6 +140,7 @@
 }
 
 html.dark {
+  color-scheme: dark;
   --ui-background: #030712;
   --ui-foreground: #f9fafb;
   --ui-border: #374151;

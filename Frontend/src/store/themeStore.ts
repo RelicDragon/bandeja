@@ -21,12 +21,20 @@ function getSystemThemeSnapshot() {
   return getSystemTheme();
 }
 
+const PAGE_BG = { light: '#f9fafb', dark: '#111827' } as const;
+
 const applyTheme = (theme: 'light' | 'dark' | 'system') => {
   const actualTheme = theme === 'system' ? getSystemTheme() : theme;
+  const root = document.documentElement;
   if (actualTheme === 'dark') {
-    document.documentElement.classList.add('dark');
+    root.classList.add('dark');
   } else {
-    document.documentElement.classList.remove('dark');
+    root.classList.remove('dark');
+  }
+  root.style.colorScheme = actualTheme;
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) {
+    themeColor.setAttribute('content', PAGE_BG[actualTheme]);
   }
 };
 
