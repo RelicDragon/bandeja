@@ -10,7 +10,7 @@ export function LeagueGroupBookmarkTag({ name, color }: LeagueGroupBookmarkTagPr
   const groupColor = getLeagueGroupColor(color);
   return (
     <div
-      className="pointer-events-none absolute bottom-0 left-0 z-[1] flex max-w-[42%] items-stretch"
+      className="pointer-events-none absolute bottom-0 left-0 z-0 flex max-w-[42%] items-stretch"
       aria-hidden
     >
       <div

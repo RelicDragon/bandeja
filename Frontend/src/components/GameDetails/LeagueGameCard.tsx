@@ -384,7 +384,7 @@ export const LeagueGameCard = ({
       )}
 
       {(onOpen || canEdit || canDelete || onChat) && (
-        <div className="flex items-center justify-end gap-1.5">
+        <div className="relative z-10 flex items-center justify-end gap-1.5">
           {canDelete && (
             <button
               onClick={(e) => {

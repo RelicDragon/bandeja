@@ -4,9 +4,9 @@ import type { TFunction } from 'i18next';
 import type { LeagueGroup, LeagueRound } from '@/api/leagues';
 import type { Game } from '@/types';
 import { resultsApi, type RoundData } from '@/api/results';
-import { Select } from '@/components/Select';
 import { LeagueGameCard } from './LeagueGameCard';
 import { GroupFilterDropdown } from './GroupFilterDropdown';
+import { LeagueScheduleMyFilterSelect } from './LeagueScheduleMyFilterSelect';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
 import { distinctLeagueGroupIdsForUser } from '@/utils/leagueScheduleUserGroups';
 import {
@@ -173,26 +173,28 @@ export function LeagueScheduleMyGamesList({
   }
 
   const filters = (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+    <div
+      className={
+        showGroupFilter
+          ? 'grid grid-cols-1 gap-2 sm:grid-cols-2 sm:items-stretch'
+          : undefined
+      }
+    >
       {showGroupFilter && (
-        <div className="min-w-0 flex-1">
-          <GroupFilterDropdown
-            selectedGroupId={selectedGroupId}
-            groups={userGroupOptions}
-            allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
-            onSelect={setSelectedGroupId}
-            allGroupId={ALL_GROUP_ID}
-            showGroupProgressCounts={false}
-          />
-        </div>
-      )}
-      <div className={`min-w-0 ${showGroupFilter ? 'sm:w-48 sm:shrink-0' : 'w-full sm:max-w-xs'}`}>
-        <Select
-          options={statusOptions}
-          value={statusFilter}
-          onChange={(value) => setStatusFilter(value as LeagueScheduleMyGameStatusFilter)}
+        <GroupFilterDropdown
+          selectedGroupId={selectedGroupId}
+          groups={userGroupOptions}
+          allGroupsLabel={t('gameDetails.allGroups') || 'All groups'}
+          onSelect={setSelectedGroupId}
+          allGroupId={ALL_GROUP_ID}
+          showGroupProgressCounts={false}
         />
-      </div>
+      )}
+      <LeagueScheduleMyFilterSelect
+        options={statusOptions}
+        value={statusFilter}
+        onSelect={(value) => setStatusFilter(value as LeagueScheduleMyGameStatusFilter)}
+      />
     </div>
   );
 
