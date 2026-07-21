@@ -65,4 +65,24 @@ test.describe('leaderboard filters @auth', () => {
   test('LB-05 Empty leaderboard state', async () => {
     test.skip(true, 'requires isolated city with zero ranked players');
   });
+
+  test('LB-07 Gender filter refetches rankings', async ({ page }) => {
+    const leaderboard = new LeaderboardPage(page);
+    await leaderboard.goto();
+    await leaderboard.waitForLoaded();
+
+    const response = page.waitForResponse(
+      (res) =>
+        res.url().includes('/rankings/user-context') &&
+        res.url().includes('gender=men') &&
+        res.ok(),
+      { timeout: 30_000 },
+    );
+    await leaderboard.switchGender('men');
+    await response;
+    await expect(page).toHaveURL(/\/leaderboard/);
+    const rows = leaderboard.rankingRows();
+    const empty = leaderboard.emptyState();
+    await expect(rows.first().or(empty)).toBeVisible({ timeout: 20_000 });
+  });
 });

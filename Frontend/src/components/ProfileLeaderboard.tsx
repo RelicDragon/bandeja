@@ -7,6 +7,7 @@ import { rankingApi, LeaderboardEntry } from '@/api/ranking';
 import { Loading } from './Loading';
 import { PlayerAvatar } from './PlayerAvatar';
 import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSportPicker';
+import { LeaderboardGenderFilter } from '@/components/leaderboard/LeaderboardGenderFilter';
 import { LeaderboardScrollToTopFab } from '@/components/leaderboard/LeaderboardScrollToTopFab';
 import { useAuthStore } from '@/store/authStore';
 import { useHeaderStore } from '@/store/headerStore';
@@ -28,7 +29,7 @@ export const ProfileLeaderboard = () => {
   const { t } = useTranslation();
   const { translateCity } = useTranslatedGeo();
   const { user } = useAuthStore();
-  const { leaderboardType, leaderboardScope, leaderboardTimePeriod, areFiltersSticky, setLeaderboardScope, setLeaderboardTimePeriod, setAreFiltersSticky } = useHeaderStore();
+  const { leaderboardType, leaderboardScope, leaderboardTimePeriod, leaderboardGender, setLeaderboardScope, setLeaderboardTimePeriod, setLeaderboardGender } = useHeaderStore();
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -36,7 +37,6 @@ export const ProfileLeaderboard = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [leaderboardSport, setLeaderboardSport] = useState<Sport>(() => getViewerPrimarySport(user));
   const userRowRef = useRef<HTMLTableRowElement>(null);
-  const filtersRef = useRef<HTMLDivElement>(null);
 
   const enabledSports = useMemo(() => listEnabledSports(user), [user]);
   const showSportPicker = hasMultipleSportsEnabled(user);
@@ -91,74 +91,54 @@ export const ProfileLeaderboard = () => {
   const userRank = leaderboard.find(entry => entry.id === user?.id)?.rank;
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchLeaderboard = async () => {
       try {
         setLoading(true);
         setIsScrolled(false);
-        setAreFiltersSticky(false);
         const response = await rankingApi.getUserLeaderboardContext(
           leaderboardType,
           leaderboardScope,
           leaderboardType === 'games' ? leaderboardTimePeriod : undefined,
           activeLeaderboardSport,
+          leaderboardGender,
         );
+        if (cancelled) return;
         setLeaderboard(response.data.leaderboard);
       } catch (error: any) {
+        if (cancelled) return;
         console.error('Failed to fetch leaderboard:', error);
         toast.error(error.response?.data?.message || t('errors.generic') || 'Failed to load leaderboard');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchLeaderboard();
-  }, [t, leaderboardType, leaderboardScope, leaderboardTimePeriod, activeLeaderboardSport, setAreFiltersSticky]);
+    return () => {
+      cancelled = true;
+    };
+  }, [t, leaderboardType, leaderboardScope, leaderboardTimePeriod, leaderboardGender, activeLeaderboardSport]);
 
   useEffect(() => {
     if (!loading && leaderboard.length > 0 && !isScrolled) {
       const currentUserInLeaderboard = leaderboard.some(entry => entry.id === user?.id);
-      
+
       if (currentUserInLeaderboard && userRowRef.current) {
         const row = userRowRef.current;
         requestAnimationFrame(() => {
           row.scrollIntoView({ behavior: scrollBehavior, block: 'center' });
           setIsScrolled(true);
-          
-          setTimeout(() => {
-            if (filtersRef.current) {
-              const filtersRect = filtersRef.current.getBoundingClientRect();
-              const headerHeight = 64;
-              const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)')) || 0;
-              const threshold = headerHeight + safeAreaTop;
-              setAreFiltersSticky(filtersRect.top < threshold);
-            }
-          }, 500);
         });
       } else {
         setIsScrolled(true);
       }
     }
-  }, [loading, leaderboard, isScrolled, setAreFiltersSticky, user?.id, scrollBehavior]);
+  }, [loading, leaderboard, isScrolled, user?.id, scrollBehavior]);
+  const isInitialLoad = loading && leaderboard.length === 0;
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!filtersRef.current) return;
-      
-      const filtersRect = filtersRef.current.getBoundingClientRect();
-      const headerHeight = 64;
-      const safeAreaTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-top)')) || 0;
-      const threshold = headerHeight + safeAreaTop;
-      
-      setAreFiltersSticky(filtersRect.top < threshold);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [setAreFiltersSticky]);
-
-  if (loading) {
+  if (isInitialLoad) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loading />
@@ -359,7 +339,7 @@ export const ProfileLeaderboard = () => {
           </motion.div>
         </div>
       )}
-      <div ref={filtersRef} className={`space-y-4 ${areFiltersSticky ? 'opacity-0 pointer-events-none' : ''}`}>
+      <div className="space-y-4">
         {showSportPicker && (
           <LeaderboardSportPicker
             sports={enabledSports}
@@ -367,6 +347,10 @@ export const ProfileLeaderboard = () => {
             onChange={setLeaderboardSport}
           />
         )}
+        <LeaderboardGenderFilter
+          value={leaderboardGender}
+          onChange={setLeaderboardGender}
+        />
         {leaderboardType === 'games' && (
           <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
             <button
@@ -427,7 +411,10 @@ export const ProfileLeaderboard = () => {
       </div>
 
       {hasLeaderboardData ? (
-        <div style={{ opacity: isScrolled || loading ? 1 : 0 }}>
+        <div
+          className={loading ? 'opacity-60 transition-opacity' : 'transition-opacity'}
+          style={{ opacity: isScrolled || loading ? undefined : 0 }}
+        >
           {renderTable()}
         </div>
       ) : (

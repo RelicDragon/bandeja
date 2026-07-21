@@ -1,6 +1,8 @@
 import { create } from 'zustand';
+import type { LeaderboardGenderFilter } from '@/components/leaderboard/leaderboardGender';
 
 export type SyncStatus = 'IDLE' | 'SYNCING' | 'SUCCESS' | 'FAILED';
+export type { LeaderboardGenderFilter };
 
 interface HeaderState {
   pendingInvites: number;
@@ -11,7 +13,7 @@ interface HeaderState {
   leaderboardType: 'level' | 'social' | 'games';
   leaderboardScope: 'city' | 'global';
   leaderboardTimePeriod: '10' | '30' | 'all';
-  areFiltersSticky: boolean;
+  leaderboardGender: LeaderboardGenderFilter;
   createGameInitialDate: string | null;
   setPendingInvites: (count: number) => void;
   /** Authoritative count from the server; resets the echo-absorption set. */
@@ -23,7 +25,7 @@ interface HeaderState {
   setLeaderboardType: (type: 'level' | 'social' | 'games') => void;
   setLeaderboardScope: (scope: 'city' | 'global') => void;
   setLeaderboardTimePeriod: (period: '10' | '30' | 'all') => void;
-  setAreFiltersSticky: (sticky: boolean) => void;
+  setLeaderboardGender: (gender: LeaderboardGenderFilter) => void;
   setCreateGameInitialDate: (date: Date | null) => void;
 }
 
@@ -35,7 +37,7 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   leaderboardType: 'level',
   leaderboardScope: 'city',
   leaderboardTimePeriod: 'all',
-  areFiltersSticky: false,
+  leaderboardGender: 'all',
   createGameInitialDate: null,
   setPendingInvites: (count) => set({ pendingInvites: count }),
   setPendingInvitesFromServer: (count) =>
@@ -58,7 +60,7 @@ export const useHeaderStore = create<HeaderState>((set) => ({
   setLeaderboardType: (type) => set({ leaderboardType: type }),
   setLeaderboardScope: (scope) => set({ leaderboardScope: scope }),
   setLeaderboardTimePeriod: (period) => set({ leaderboardTimePeriod: period }),
-  setAreFiltersSticky: (sticky) => set({ areFiltersSticky: sticky }),
+  setLeaderboardGender: (gender) => set({ leaderboardGender: gender }),
   setCreateGameInitialDate: (date) =>
     set({ createGameInitialDate: date ? (() => {
       const d = new Date(date);

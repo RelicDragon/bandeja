@@ -1227,6 +1227,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | LB-04 | Open player from row | Tap player | Profile/card |
 | LB-05 | Empty leaderboard | No ranked players | Empty state |
 | LB-06 | Current user highlight | User in list | Highlighted row |
+| LB-07 | Gender filter | Switch All / Men / Women | Rankings refetch for that gender cohort; ranks restart at 1 |
 
 ---
 

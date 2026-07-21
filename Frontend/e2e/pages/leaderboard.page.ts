@@ -1,11 +1,18 @@
 import { expect, type Locator, type Page } from '@playwright/test';
 
 export type LeaderboardType = 'level' | 'games' | 'social';
+export type LeaderboardGender = 'all' | 'men' | 'women';
 
 const LEADERBOARD_TYPE_INDEX: Record<LeaderboardType, number> = {
   level: 0,
   games: 1,
   social: 2,
+};
+
+const LEADERBOARD_GENDER_INDEX: Record<LeaderboardGender, number> = {
+  all: 0,
+  men: 1,
+  women: 2,
 };
 
 export class LeaderboardPage {
@@ -29,12 +36,31 @@ export class LeaderboardPage {
     return this.page.locator('header').getByRole('tablist').first();
   }
 
+  genderTablist(): Locator {
+    return this.page.getByRole('tablist', { name: /gender/i });
+  }
+
   async switchType(type: LeaderboardType) {
     const response = this.page.waitForResponse(
       (res) => res.url().includes('/rankings/user-context') && res.ok(),
       { timeout: 30_000 },
     );
     const tab = this.leaderboardTablist().getByRole('tab').nth(LEADERBOARD_TYPE_INDEX[type]);
+    await tab.click();
+    await expect(tab).toHaveAttribute('aria-selected', 'true');
+    await response.catch(() => undefined);
+    await this.waitForLoaded();
+  }
+
+  async switchGender(gender: LeaderboardGender) {
+    const response = this.page.waitForResponse(
+      (res) =>
+        res.url().includes('/rankings/user-context') &&
+        res.url().includes(`gender=${gender}`) &&
+        res.ok(),
+      { timeout: 30_000 },
+    );
+    const tab = this.genderTablist().getByRole('tab').nth(LEADERBOARD_GENDER_INDEX[gender]);
     await tab.click();
     await expect(tab).toHaveAttribute('aria-selected', 'true');
     await response.catch(() => undefined);

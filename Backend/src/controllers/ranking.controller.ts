@@ -12,6 +12,7 @@ import {
   resolveLeaderboardSportMode,
   resolveUserSportSnapshot,
 } from '../services/user/userSportProfile.service';
+import { resolveLeaderboardGenderFilter } from '../services/ranking/leaderboardGenderFilter';
 
 const getLastGameRatingChanges = async (
   userIds: string[],
@@ -116,11 +117,18 @@ const mapToLeaderboard = (users: any[], rankMap: Map<string, number>, lastGameRa
 
 export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, res: Response) => {
   const currentUser = req.user!;
-  const { type = 'level', scope = 'global', timePeriod = 'all', sport: sportQuery } = req.query;
+  const {
+    type = 'level',
+    scope = 'global',
+    timePeriod = 'all',
+    sport: sportQuery,
+    gender: genderQuery,
+  } = req.query;
   const isSocial = type === 'social';
   const isGames = type === 'games';
   const isCity = scope === 'city';
   const usePerSportLevel = type === 'level' && !isSocial;
+  const genderFilter = resolveLeaderboardGenderFilter(genderQuery);
 
   if (isGames && timePeriod !== '10' && timePeriod !== '30' && timePeriod !== 'all') {
     throw new ApiError(400, 'Invalid time period. Must be 10, 30, or all');
@@ -152,6 +160,9 @@ export const getUserLeaderboardContext = asyncHandler(async (req: AuthRequest, r
   const baseWhere: any = { isActive: true };
   if (isCity) {
     baseWhere.currentCityId = user.currentCityId;
+  }
+  if (genderFilter) {
+    baseWhere.gender = genderFilter;
   }
 
   const userSelect = {
