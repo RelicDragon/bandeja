@@ -19,6 +19,7 @@ import {
 } from '@/api/leagues';
 import { Loader2, Check } from 'lucide-react';
 import { getLeagueGroupColor, getLeagueGroupSoftColor } from '@/utils/leagueGroupColors';
+import { leaguePreservesApiStandingsOrder } from '@/utils/leagueGroupStandingsOrder';
 import { resultsRoundGenV2Payload } from '@/utils/resultsRoundGenV2';
 import { PlayoffGameSetupStep } from './PlayoffGameSetupStep';
 import { BracketStructureSummary } from './BracketStructureSummary';
@@ -97,6 +98,12 @@ function compareStandings(a: LeagueStanding, b: LeagueStanding) {
   if (b.wins !== a.wins) return b.wins - a.wins;
   if (b.scoreDelta !== a.scoreDelta) return b.scoreDelta - a.scoreDelta;
   return 0;
+}
+
+function orderGroupStandings(rows: LeagueStanding[], preserveApiOrder: boolean): LeagueStanding[] {
+  // Fixed-team / 1v1 order is computed on the API (wins → H2H → mini-table).
+  if (preserveApiOrder) return rows;
+  return [...rows].sort(compareStandings);
 }
 
 export const PlayoffConfigurationModal = ({
@@ -242,12 +249,17 @@ export const PlayoffConfigurationModal = ({
     }
   }, [isOpen, groups, selectedGroupId]);
 
+  const preserveApiStandingsOrder = leaguePreservesApiStandingsOrder(
+    seasonGame ?? { hasFixedTeams }
+  );
+
   const getStandingsForGroup = useCallback(
     (groupId: string) =>
-      standings
-        .filter((s) => (s.currentGroupId ?? s.currentGroup?.id) === groupId)
-        .sort(compareStandings),
-    [standings]
+      orderGroupStandings(
+        standings.filter((s) => (s.currentGroupId ?? s.currentGroup?.id) === groupId),
+        preserveApiStandingsOrder
+      ),
+    [standings, preserveApiStandingsOrder]
   );
 
   const getOrderedParticipantIds = useCallback(
@@ -270,7 +282,7 @@ export const PlayoffConfigurationModal = ({
   );
 
   const filteredStandings = selectedGroupId === ALL_GROUP_ID
-    ? [...standings].sort(compareStandings)
+    ? orderGroupStandings(standings, preserveApiStandingsOrder)
     : getStandingsForGroup(selectedGroupId);
 
   const currentGroupSelected = selectedIdsByGroup[selectedGroupId];

@@ -5,13 +5,19 @@ import { Card, ConfirmationModal } from '@/components';
 import { faqApi, Faq } from '@/api/faq';
 import { Plus, Trash2, Edit3, ChevronUp, ChevronDown, X, Save, HelpCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { buildFixedTeamStandingsFaq } from '@/utils/leagueFixedTeamStandingsFaq';
 
 interface FaqEditProps {
   gameId: string;
   onFaqsChange?: (hasFaqs: boolean) => void;
+  includeFixedTeamStandingsFaq?: boolean;
 }
 
-export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
+export const FaqEdit = ({
+  gameId,
+  onFaqsChange,
+  includeFixedTeamStandingsFaq = false,
+}: FaqEditProps) => {
   const { t } = useTranslation();
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,6 +34,11 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
     onFaqsChangeRef.current = onFaqsChange;
   }, [onFaqsChange]);
 
+  const autoFaq = includeFixedTeamStandingsFaq
+    ? buildFixedTeamStandingsFaq(gameId, t)
+    : null;
+  const hasListContent = faqs.length > 0 || Boolean(autoFaq);
+
   const fetchFaqs = useCallback(async () => {
     try {
       setLoading(true);
@@ -41,15 +52,16 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
     } catch (error) {
       console.error('Failed to fetch FAQs:', error);
       toast.error(t('faq.fetchError', { defaultValue: 'Failed to fetch questions' }));
+      setFaqs([]);
       onFaqsChangeRef.current?.(false);
       if (isInitialLoad.current) {
-        setIsExpanded(false);
+        setIsExpanded(includeFixedTeamStandingsFaq);
         isInitialLoad.current = false;
       }
     } finally {
       setLoading(false);
     }
-  }, [gameId, t]);
+  }, [gameId, t, includeFixedTeamStandingsFaq]);
 
   useEffect(() => {
     isInitialLoad.current = true;
@@ -173,7 +185,7 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
           </div>
           {!isCreating && !editingId && (
             <div className="flex items-center gap-2">
-              {faqs.length > 0 && (
+              {hasListContent && (
                 <button
                   onClick={() => setIsExpanded(!isExpanded)}
                   className="flex items-center justify-center px-3 py-2 rounded-lg transition-all duration-300 ease-in-out shadow-sm hover:shadow-md bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 border border-primary-600 dark:border-primary-600 shadow-primary-100 dark:shadow-primary-900/20 text-white font-medium"
@@ -344,6 +356,22 @@ export const FaqEdit = ({ gameId, onFaqsChange }: FaqEditProps) => {
               )}
             </motion.div>
           ))}
+              {autoFaq && (
+                <motion.div
+                  key={autoFaq.id}
+                  layout
+                  transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+                  className="p-4 border rounded-lg border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40"
+                >
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                    {t('faq.automaticLabel')}
+                  </p>
+                  <h3 className="section-title whitespace-pre-line">{autoFaq.question}</h3>
+                  <p className="mt-2 text-gray-700 dark:text-gray-300 whitespace-pre-line">
+                    {autoFaq.answer}
+                  </p>
+                </motion.div>
+              )}
             </AnimatePresence>
           </motion.div>
         )}

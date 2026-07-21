@@ -1,8 +1,8 @@
 import { BRACKET_MAX_ENTRANTS, BRACKET_MIN_ENTRANTS } from './bracketStructure';
 import {
   buildEqualTopKQualifiers,
-  compareStandingsForBracket,
   mergeGlobalParticipantIds,
+  takeTopKStandingIds,
   type CrossGroupSeedingPreset,
   type StandingSortable,
 } from './crossGroupBracketSeeding';
@@ -32,8 +32,7 @@ export function buildQualifiersFromTeamsPerGroup(
       out[groupId] = [];
       continue;
     }
-    const sorted = [...(standingsByGroup[groupId] ?? [])].sort(compareStandingsForBracket);
-    out[groupId] = sorted.slice(0, k).map((s) => s.id);
+    out[groupId] = takeTopKStandingIds(standingsByGroup[groupId] ?? [], k);
   }
   return out;
 }

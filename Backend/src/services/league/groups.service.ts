@@ -7,6 +7,8 @@ import {
   LEAGUE_USER_SELECT,
   projectLeagueParticipants,
 } from './leagueSportProjection.util';
+import { applyGroupStandingsTiebreakers } from './leagueGroupStandingsFixtures';
+import { resolveLeagueGroupStandingsMode } from './leagueGroupStandingsMode';
 
 const participantInclude = {
   user: {
@@ -33,8 +35,8 @@ const participantInclude = {
 };
 
 const participantOrder: Prisma.LeagueParticipantOrderByWithRelationInput[] = [
-  { points: 'desc' },
   { wins: 'desc' },
+  { points: 'desc' },
   { scoreDelta: 'desc' },
 ];
 
@@ -69,6 +71,12 @@ export class LeagueGroupManagementService {
 
   private static async buildPayload(leagueSeasonId: string) {
     const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId);
+    const season = await prisma.leagueSeason.findUnique({
+      where: { id: leagueSeasonId },
+      select: { game: { select: { hasFixedTeams: true, playersPerMatch: true } } },
+    });
+    const standingsMode = resolveLeagueGroupStandingsMode(season?.game ?? {});
+
     const allGroups = await prisma.leagueGroup.findMany({
       where: { leagueSeasonId },
       include: {
@@ -101,12 +109,39 @@ export class LeagueGroupManagementService {
       orderBy: participantOrder,
     });
 
+    let projectedGroups = groups;
+    let projectedUnassigned = unassignedParticipants;
+    if (standingsMode) {
+      const wantType = standingsMode === 'fixedTeam' ? 'TEAM' : 'USER';
+      const isWanted = (p: { participantType: string }) => p.participantType === wantType;
+      const allRows = [
+        ...groups.flatMap((g) => g.participants.filter(isWanted)),
+        ...unassignedParticipants.filter(isWanted),
+      ];
+      const ranked = await applyGroupStandingsTiebreakers(
+        prisma,
+        leagueSeasonId,
+        allRows,
+        standingsMode
+      );
+      const byId = new Map(ranked.map((p, idx) => [p.id, idx]));
+      projectedGroups = groups.map((group) => ({
+        ...group,
+        participants: group.participants.filter(isWanted).sort(
+          (a, b) => (byId.get(a.id) ?? 0) - (byId.get(b.id) ?? 0)
+        ),
+      }));
+      projectedUnassigned = unassignedParticipants.filter(isWanted).sort(
+        (a, b) => (byId.get(a.id) ?? 0) - (byId.get(b.id) ?? 0)
+      );
+    }
+
     return {
-      groups: groups.map((group) => ({
+      groups: projectedGroups.map((group) => ({
         ...group,
         participants: projectLeagueParticipants(group.participants, seasonSport),
       })),
-      unassignedParticipants: projectLeagueParticipants(unassignedParticipants, seasonSport),
+      unassignedParticipants: projectLeagueParticipants(projectedUnassigned, seasonSport),
     };
   }
 

@@ -41,7 +41,7 @@ export async function resolveRosterToCurrentTeamPlayers(
   teamPlayerIds: string[],
 ): Promise<string[]> {
   const sorted = [...teamPlayerIds].sort();
-  if (sorted.length !== 2) return sorted;
+  if (sorted.length === 0) return sorted;
 
   const participants = await tx.leagueParticipant.findMany({
     where: {

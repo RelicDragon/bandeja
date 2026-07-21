@@ -17,6 +17,11 @@
     "deleteTitle": "Smazat dotaz",
     "deleteConfirm": "Opravdu chcete smazat tento dotaz?",
     "moveUp": "Posunout nahoru",
-    "moveDown": "Posunout dolů"
+    "moveDown": "Posunout dolů",
+    "automaticLabel": "Automatická",
+    "fixedTeamStandings": {
+      "question": "Jak se určuje pořadí ve skupině?",
+      "answer": "V základní části se tabulka každé skupiny řadí podle počtu vyhraných zápasů (ne podle bodů).\n\nPři stejném počtu výher:\n1. Dva (hráči nebo týmy) — rozhoduje vzájemný zápas\n2. Tři a více — minitabulka jen ze zápasů mezi nimi, podle:\n   • výher v minitabulce\n   • rozdílu setů\n   • rozdílu gemů\n3. Pokud po minitabulce zůstanou dva stále vyrovnaní — jejich vzájemný zápas\n\nPlatí pro ligy s pevnými týmy a pro ligy 1v1. Zápasy play-off se do pořadí ve skupině nepočítají."
+    }
   }
 }

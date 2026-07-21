@@ -24,6 +24,12 @@ export function compareStandingsForBracket(a: StandingSortable, b: StandingSorta
   return 0;
 }
 
+/** Take top K in caller order (API standings already apply fixed-team tie-breaks). */
+export function takeTopKStandingIds(rows: StandingSortable[], k: number): string[] {
+  if (k < 1) return [];
+  return rows.slice(0, k).map((s) => s.id);
+}
+
 export function sortCanonicalGroups<T extends { id: string; createdAt: string }>(groups: T[]): T[] {
   return [...groups].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
@@ -45,8 +51,7 @@ export function buildEqualTopKQualifiers(
 ): Record<string, string[]> {
   const out: Record<string, string[]> = {};
   for (const groupId of includedGroupIds) {
-    const sorted = [...(standingsByGroup[groupId] ?? [])].sort(compareStandingsForBracket);
-    out[groupId] = sorted.slice(0, k).map((s) => s.id);
+    out[groupId] = takeTopKStandingIds(standingsByGroup[groupId] ?? [], k);
   }
   return out;
 }

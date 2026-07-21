@@ -37,9 +37,15 @@ const ALL_GROUP_ID = 'ALL';
 interface LeagueStandingsTabProps {
   leagueSeasonId: string;
   hasFixedTeams: boolean;
+  /** When true (fixed teams or 1v1), keep API order — do not re-sort by points. */
+  preserveApiOrder?: boolean;
 }
 
-export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStandingsTabProps) => {
+export const LeagueStandingsTab = ({
+  leagueSeasonId,
+  hasFixedTeams,
+  preserveApiOrder = false,
+}: LeagueStandingsTabProps) => {
   const { t, i18n } = useTranslation();
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
   const [groups, setGroups] = useState<LeagueGroup[]>([]);
@@ -161,12 +167,16 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
   });
 
   const orderedGroupIds = groups.map((g) => g.id);
-  const orderedGroups = groups.map((group) => ({
-    id: group.id,
-    name: group.name || t('gameDetails.group') || 'Group',
-    color: group.color,
-    standings: [...(groupStandingsMap.get(group.id) || [])].sort(compareStandings),
-  }));
+  const orderedGroups = groups.map((group) => {
+    const rows = groupStandingsMap.get(group.id) || [];
+    return {
+      id: group.id,
+      name: group.name || t('gameDetails.group') || 'Group',
+      color: group.color,
+      // Fixed-team / 1v1 order comes from API (H2H / mini-table); do not re-sort.
+      standings: preserveApiOrder ? rows : [...rows].sort(compareStandings),
+    };
+  });
 
   useEffect(() => {
     if (loading) return;
@@ -483,7 +493,9 @@ export const LeagueStandingsTab = ({ leagueSeasonId, hasFixedTeams }: LeagueStan
                 </h3>
               </div>
               {renderStandingsTable(
-                [...ungroupedStandings].sort(compareStandings),
+                preserveApiOrder
+                  ? ungroupedStandings
+                  : [...ungroupedStandings].sort(compareStandings),
                 0
               )}
             </Card>

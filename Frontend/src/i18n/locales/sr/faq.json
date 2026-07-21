@@ -17,6 +17,11 @@
     "deleteTitle": "Obriši Pitanje",
     "deleteConfirm": "Da li ste sigurni da želite da obrišete ovo pitanje?",
     "moveUp": "Pomeri gore",
-    "moveDown": "Pomeri dole"
+    "moveDown": "Pomeri dole",
+    "automaticLabel": "Automatsko",
+    "fixedTeamStandings": {
+      "question": "Kako se određuje plasman u grupi?",
+      "answer": "U regularnoj sezoni tabela svake grupe se ređa po broju pobeda u mečevima (ne po bodovima).\n\nPri istom broju pobeda:\n1. Dvoje (igrači ili timovi) — odlučuje međusobni meč\n2. Tri ili više — mini-tabela samo od mečeva među njima, po redosledu:\n   • pobede u mini-tabeli\n   • razlika setova\n   • razlika gemova\n3. Ako posle mini-tabele i dalje ostanu dvoje jednaki — njihov međusobni rezultat\n\nVaži za lige sa fiksnim timovima i za 1v1 lige. Mečevi plej-ofa se ne računaju u plasman grupe."
+    }
   }
 }

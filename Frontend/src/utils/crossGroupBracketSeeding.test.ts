@@ -41,9 +41,9 @@ describe('maxEqualTopKPerGroup', () => {
 });
 
 describe('buildEqualTopKQualifiers', () => {
-  it('takes top K per included group by standings', () => {
+  it('takes top K per included group in given standings order', () => {
     const standingsByGroup = {
-      A: [standing('a2', 8), standing('a1', 12)],
+      A: [standing('a1', 12), standing('a2', 8)],
       B: [standing('b1', 10), standing('b2', 6)],
       C: [standing('c1', 5)],
     };

@@ -11,6 +11,9 @@ import {
 } from './leagueParticipantResolve';
 import { resolveRosterToCurrentTeamPlayers } from './leagueTeamRosterAlias.util';
 import { LEAGUE_USER_SELECT, projectLeagueParticipants } from './leagueSportProjection.util';
+import { applyGroupStandingsTiebreakers } from './leagueGroupStandingsFixtures';
+import { resolveLeagueGroupStandingsMode } from './leagueGroupStandingsMode';
+import { playersPerTeamOf } from '../results/generation/matchUtils';
 
 type GameTeamWithPlayers = {
   players: { userId: string }[];
@@ -41,15 +44,16 @@ async function collectDesiredTeamPlayerIds(leagueSeasonId: string): Promise<stri
     }),
   ]);
 
-  /** Dedupes identical 2-player rosters; distinct pairs like [p1,p2] vs [p1,p3] stay separate keys. */
+  /** Dedupes identical rosters; distinct pairs/singles stay separate keys. */
   const byKey = new Map<string, string[]>();
+  const rosterSize = playersPerTeamOf(seasonGame ?? {});
 
   const ingestFixedTeams = async (fixedTeams: GameTeamWithPlayers[]) => {
     for (const ft of fixedTeams) {
       const rawIds = ft.players.map((p) => p.userId).sort();
-      if (rawIds.length !== 2) continue;
+      if (rawIds.length !== rosterSize) continue;
       const ids = await resolveRosterToCurrentTeamPlayers(prisma, leagueSeasonId, rawIds);
-      if (ids.length !== 2) continue;
+      if (ids.length !== rosterSize) continue;
       byKey.set(sortedPlayerKey(ids), ids);
     }
   };
@@ -289,8 +293,7 @@ export class LeagueSyncService {
         }
       }
 
-      return projectLeagueParticipants(
-        await tx.leagueParticipant.findMany({
+      const rows = await tx.leagueParticipant.findMany({
         where: { leagueSeasonId },
         include: {
           user: {
@@ -307,11 +310,27 @@ export class LeagueSyncService {
               },
             },
           },
+          currentGroup: {
+            select: { id: true },
+          },
         },
-        orderBy: [{ points: 'desc' }, { wins: 'desc' }, { scoreDelta: 'desc' }],
-      }),
-        seasonSport,
-      );
+        orderBy: [{ wins: 'desc' }, { points: 'desc' }, { scoreDelta: 'desc' }],
+      });
+
+      const standingsMode = resolveLeagueGroupStandingsMode(seasonGame);
+      const ordered = standingsMode
+        ? await applyGroupStandingsTiebreakers(
+            tx,
+            leagueSeasonId,
+            rows.map((r) => ({
+              ...r,
+              currentGroupId: r.currentGroupId ?? r.currentGroup?.id ?? null,
+            })),
+            standingsMode
+          )
+        : rows;
+
+      return projectLeagueParticipants(ordered, seasonSport);
     });
   }
 }

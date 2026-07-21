@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
+import { playersPerTeamOf } from '../results/generation/matchUtils';
 import {
   ensureTeamLeagueParticipant,
   ensureUserLeagueParticipant,
@@ -71,6 +72,7 @@ export class LeagueGameResultsService {
         game: {
           select: {
             hasFixedTeams: true,
+            playersPerMatch: true,
             pointsPerWin: true,
             pointsPerLoose: true,
             pointsPerTie: true,
@@ -85,6 +87,7 @@ export class LeagueGameResultsService {
 
     const leagueId = leagueSeason.leagueId;
     const hasFixedTeams = leagueSeason.game?.hasFixedTeams || false;
+    const expectedPlayersPerTeam = playersPerTeamOf(leagueSeason.game ?? {});
     const scoringRules = {
       pointsPerWin: leagueSeason.game?.pointsPerWin ?? 0,
       pointsPerTie: leagueSeason.game?.pointsPerTie ?? 0,
@@ -99,6 +102,7 @@ export class LeagueGameResultsService {
         leagueGroupId,
         game,
         scoringRules,
+        expectedPlayersPerTeam,
         tx
       );
     } else {
@@ -166,6 +170,7 @@ export class LeagueGameResultsService {
         game: {
           select: {
             hasFixedTeams: true,
+            playersPerMatch: true,
             pointsPerWin: true,
             pointsPerLoose: true,
             pointsPerTie: true,
@@ -180,6 +185,7 @@ export class LeagueGameResultsService {
 
     const leagueId = leagueSeason.leagueId;
     const hasFixedTeams = leagueSeason.game?.hasFixedTeams || false;
+    const expectedPlayersPerTeam = playersPerTeamOf(leagueSeason.game ?? {});
     const scoringRules = {
       pointsPerWin: leagueSeason.game?.pointsPerWin ?? 0,
       pointsPerTie: leagueSeason.game?.pointsPerTie ?? 0,
@@ -194,6 +200,7 @@ export class LeagueGameResultsService {
         leagueGroupId,
         game,
         scoringRules,
+        expectedPlayersPerTeam,
         tx
       );
     } else {
@@ -302,6 +309,7 @@ export class LeagueGameResultsService {
     leagueGroupId: string,
     game: any,
     scoringRules: ScoringRules,
+    expectedPlayersPerTeam: number,
     tx: Prisma.TransactionClient
   ): Promise<void> {
     const { pointsPerWin, pointsPerTie, pointsPerLoose } = scoringRules;
@@ -341,7 +349,7 @@ export class LeagueGameResultsService {
       if (!team) continue;
 
       const teamPlayerIds = team.players.map((p: any) => p.userId);
-      if (teamPlayerIds.length !== 2) continue;
+      if (teamPlayerIds.length !== expectedPlayersPerTeam) continue;
 
       const scoreDelta = results.scoresMade - results.scoresLost;
       const points = results.wins * pointsPerWin + results.ties * pointsPerTie + results.losses * pointsPerLoose;
@@ -376,6 +384,7 @@ export class LeagueGameResultsService {
     leagueGroupId: string,
     game: any,
     scoringRules: ScoringRules,
+    expectedPlayersPerTeam: number,
     tx: Prisma.TransactionClient
   ): Promise<void> {
     const { pointsPerWin, pointsPerTie, pointsPerLoose } = scoringRules;
@@ -411,7 +420,7 @@ export class LeagueGameResultsService {
       if (!team) continue;
 
       const teamPlayerIds = team.players.map((p: any) => p.userId);
-      if (teamPlayerIds.length !== 2) continue;
+      if (teamPlayerIds.length !== expectedPlayersPerTeam) continue;
 
       const participant = await findTeamParticipantByRoster(tx, leagueSeasonId, teamPlayerIds);
 

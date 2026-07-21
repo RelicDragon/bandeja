@@ -72,6 +72,10 @@ import {
   type CancelledGameParticipantSnapshot,
 } from '@/utils/cancelledGameChatStub';
 import { playersPerMatchOf } from '@/utils/matchFormat';
+import {
+  leagueShowsGroupStandingsFaq,
+  leaguePreservesApiStandingsOrder,
+} from '@/utils/leagueGroupStandingsOrder';
 import { getViewerPrimarySport, shouldShowGameCardSportGlyph } from '@/utils/findSportFilter';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { Round } from '@/types/gameResults';
@@ -192,7 +196,8 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   );
   const persistLeagueSeasonTabRef = useRef(persistLeagueSeasonTabInUrl);
   persistLeagueSeasonTabRef.current = persistLeagueSeasonTabInUrl;
-  const [hasFaqs, setHasFaqs] = useState(false);
+  const [hasCustomFaqs, setHasCustomFaqs] = useState(false);
+  const [customFaqsReady, setCustomFaqsReady] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [showAnnouncedConfirm, setShowAnnouncedConfirm] = useState(false);
@@ -219,15 +224,29 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   );
 
   const handleFaqsChange = useCallback((hasFaqs: boolean) => {
-    setHasFaqs(hasFaqs);
+    setHasCustomFaqs(hasFaqs);
+    setCustomFaqsReady(true);
   }, []);
 
+  const hasFixedTeamStandingsFaq = leagueShowsGroupStandingsFaq(game ?? {});
+  const hasFaqs = hasCustomFaqs || hasFixedTeamStandingsFaq;
+
   useEffect(() => {
-    if (activeTab === 'faq' && !hasFaqs) {
+    setHasCustomFaqs(false);
+    setCustomFaqsReady(false);
+  }, [game?.id]);
+
+  // Don't bounce ?tab=faq → general until we know whether FAQs exist for this season.
+  useEffect(() => {
+    if (activeTab !== 'faq') return;
+    if (!game || game.entityType !== 'LEAGUE_SEASON') return;
+    if (hasFixedTeamStandingsFaq) return;
+    if (!customFaqsReady) return;
+    if (!hasCustomFaqs) {
       setActiveTab('general');
       persistLeagueSeasonTabRef.current('general');
     }
-  }, [activeTab, hasFaqs]);
+  }, [activeTab, game, hasFixedTeamStandingsFaq, customFaqsReady, hasCustomFaqs]);
 
   const isLeagueSeasonParticipant = useMemo(
     () => game?.entityType === 'LEAGUE_SEASON' && !!user?.id && userIsOnLeagueScheduleGame(game, user.id),
@@ -519,24 +538,34 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
   }, [user?.currentCity, game?.entityType]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const checkFaqs = async () => {
       if (!game || game.entityType !== 'LEAGUE_SEASON') return;
-      
+
       const isOwner = game && user ? isUserGameAdminOrOwner(game, user.id) : false;
       const canEdit = isOwner || user?.isAdmin || false;
-      
+
+      // Owners/admins: FaqEdit reports via onFaqsChange.
       if (canEdit) return;
-      
+
       try {
         const response = await faqApi.getGameFaqs(game.id);
-        setHasFaqs(response.data.length > 0);
+        if (cancelled) return;
+        setHasCustomFaqs(response.data.length > 0);
       } catch (error) {
         console.error('Failed to fetch FAQs:', error);
-        setHasFaqs(false);
+        if (cancelled) return;
+        setHasCustomFaqs(false);
+      } finally {
+        if (!cancelled) setCustomFaqsReady(true);
       }
     };
 
-    checkFaqs();
+    void checkFaqs();
+    return () => {
+      cancelled = true;
+    };
   }, [game, user]);
 
   const handleJoin = async () => {
@@ -1487,6 +1516,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
               <FaqEdit 
                 gameId={game.id} 
                 onFaqsChange={handleFaqsChange}
+                includeFixedTeamStandingsFaq={hasFixedTeamStandingsFaq}
               />
             </div>
           ) : null}
@@ -1621,7 +1651,11 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     if (user && activeTab === 'standings') {
       return (
         <div key="league-standings" className="contents">
-          <LeagueStandingsTab leagueSeasonId={game.id} hasFixedTeams={game.hasFixedTeams || false} />
+          <LeagueStandingsTab
+            leagueSeasonId={game.id}
+            hasFixedTeams={game.hasFixedTeams || false}
+            preserveApiOrder={leaguePreservesApiStandingsOrder(game)}
+          />
         </div>
       );
     }
@@ -1629,7 +1663,10 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
     if (user && activeTab === 'faq') {
       return (
         <div key="league-faq" className="contents">
-          <FaqTab gameId={game.id} />
+          <FaqTab
+            gameId={game.id}
+            includeFixedTeamStandingsFaq={hasFixedTeamStandingsFaq}
+          />
         </div>
       );
     }

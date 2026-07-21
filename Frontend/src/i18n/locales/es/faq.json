@@ -17,6 +17,11 @@
     "deleteTitle": "Eliminar Pregunta",
     "deleteConfirm": "¿Estás seguro de que quieres eliminar esta pregunta?",
     "moveUp": "Mover arriba",
-    "moveDown": "Mover abajo"
+    "moveDown": "Mover abajo",
+    "automaticLabel": "Automática",
+    "fixedTeamStandings": {
+      "question": "¿Cómo se decide la clasificación del grupo?",
+      "answer": "En la temporada regular, la tabla de cada grupo se ordena por partidos ganados (no por puntos).\n\nSi hay empate en victorias:\n1. Dos (jugadores o equipos) — decide el enfrentamiento directo\n2. Tres o más — una minitabla solo con los partidos entre ellos, según:\n   • victorias en la minitabla\n   • diferencia de sets\n   • diferencia de juegos\n3. Si tras la minitabla dos siguen empatados — su enfrentamiento directo\n\nAplica a ligas de equipos fijos y a ligas 1v1. Los partidos de playoff no cuentan para la clasificación del grupo."
+    }
   }
 }

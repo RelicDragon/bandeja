@@ -37,6 +37,8 @@ import {
   slotAcceptsSideAssignment,
   slotsById,
 } from './bracketSlotEdit.util';
+import { applyGroupStandingsTiebreakers } from './leagueGroupStandingsFixtures';
+import { resolveLeagueGroupStandingsMode } from './leagueGroupStandingsMode';
 import {
   buildEqualTopKQualifiers,
   buildUnequalQualifiersFromPayload,
@@ -527,16 +529,22 @@ export class BracketPlayoffService {
           : buildEqualTopKQualifiers(crossGroup.qualifiers, k!);
       } else if (useUnequal && crossGroup.teamsPerGroup?.length) {
         const built: { leagueGroupId: string; participantIds: string[] }[] = [];
+        const rankedByGroup = await this.loadRankedTeamStandingsForGroups(
+          leagueSeasonId,
+          includedGroupIds
+        );
         for (const gid of includedGroupIds) {
-          const ids = await this.loadGroupStandingsParticipantIds(leagueSeasonId, gid);
-          built.push({ leagueGroupId: gid, participantIds: ids });
+          built.push({ leagueGroupId: gid, participantIds: rankedByGroup.get(gid) ?? [] });
         }
         qualifiers = buildUnequalTopKQualifiers(crossGroup.teamsPerGroup, built);
       } else {
         const built: { leagueGroupId: string; participantIds: string[] }[] = [];
+        const rankedByGroup = await this.loadRankedTeamStandingsForGroups(
+          leagueSeasonId,
+          includedGroupIds
+        );
         for (const gid of includedGroupIds) {
-          const ids = await this.loadGroupStandingsParticipantIds(leagueSeasonId, gid);
-          built.push({ leagueGroupId: gid, participantIds: ids });
+          built.push({ leagueGroupId: gid, participantIds: rankedByGroup.get(gid) ?? [] });
         }
         qualifiers = buildEqualTopKQualifiers(built, k!);
       }
@@ -687,14 +695,50 @@ export class BracketPlayoffService {
     leagueSeasonId: string,
     groupId: string
   ): Promise<string[]> {
-    const participants = await prisma.leagueParticipant.findMany({
-      where: { leagueSeasonId, currentGroupId: groupId, participantType: 'TEAM' },
-      include: { leagueTeam: { include: { players: { select: { userId: true } } } } },
-      orderBy: [{ points: 'desc' }, { wins: 'desc' }, { scoreDelta: 'desc' }],
+    const ranked = await this.loadRankedTeamStandingsForGroups(leagueSeasonId, [groupId]);
+    return ranked.get(groupId) ?? [];
+  }
+
+  /** One fixture load for many groups — used by cross-group playoff seeding. */
+  private static async loadRankedTeamStandingsForGroups(
+    leagueSeasonId: string,
+    groupIds: string[]
+  ): Promise<Map<string, string[]>> {
+    const season = await prisma.leagueSeason.findUnique({
+      where: { id: leagueSeasonId },
+      select: { game: { select: { hasFixedTeams: true, playersPerMatch: true } } },
     });
-    return participants
-      .filter((p) => p.leagueTeam?.players?.length)
-      .map((p) => p.id);
+    const mode = resolveLeagueGroupStandingsMode(season?.game ?? {});
+    const out = new Map<string, string[]>();
+    for (const gid of groupIds) out.set(gid, []);
+    if (!mode) return out;
+
+    const wantType = mode === 'fixedTeam' ? 'TEAM' : 'USER';
+    const participants = await prisma.leagueParticipant.findMany({
+      where: {
+        leagueSeasonId,
+        participantType: wantType,
+        currentGroupId: { in: groupIds },
+      },
+      include: {
+        leagueTeam: { include: { players: { select: { userId: true } } } },
+      },
+      orderBy: [{ wins: 'desc' }, { points: 'desc' }, { scoreDelta: 'desc' }],
+    });
+    const ranked = await applyGroupStandingsTiebreakers(
+      prisma,
+      leagueSeasonId,
+      participants,
+      mode
+    );
+    for (const p of ranked) {
+      if (!p.currentGroupId) continue;
+      if (mode === 'fixedTeam' && !p.leagueTeam?.players?.length) continue;
+      if (mode === 'userSingles' && !p.userId) continue;
+      const list = out.get(p.currentGroupId);
+      if (list) list.push(p.id);
+    }
+    return out;
   }
 
   private static async persistGroupBracket(

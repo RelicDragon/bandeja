@@ -11,6 +11,8 @@ import {
   projectLeagueParticipants,
   projectLeagueRounds,
 } from './leagueSportProjection.util';
+import { applyGroupStandingsTiebreakers } from './leagueGroupStandingsFixtures';
+import { resolveLeagueGroupStandingsMode } from './leagueGroupStandingsMode';
 
 export class LeagueReadService {
   static async getLeagueRounds(leagueSeasonId: string, userId?: string) {
@@ -183,9 +185,12 @@ export class LeagueReadService {
     const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId);
     const season = await prisma.leagueSeason.findUnique({
       where: { id: leagueSeasonId },
-      select: { game: { select: { hasFixedTeams: true } } },
+      select: {
+        game: { select: { hasFixedTeams: true, playersPerMatch: true } },
+      },
     });
     const hasFixedTeams = season?.game?.hasFixedTeams ?? false;
+    const standingsMode = resolveLeagueGroupStandingsMode(season?.game ?? {});
 
     const participants = await prisma.leagueParticipant.findMany({
       where: { leagueSeasonId },
@@ -215,17 +220,23 @@ export class LeagueReadService {
         },
       },
       orderBy: [
-        { points: 'desc' },
         { wins: 'desc' },
+        { points: 'desc' },
         { scoreDelta: 'desc' },
       ],
     });
 
     const wantType = hasFixedTeams ? LeagueParticipantType.TEAM : LeagueParticipantType.USER;
-    return projectLeagueParticipants(
-      participants.filter((p) => p.participantType === wantType),
-      seasonSport,
-    );
+    let filtered = participants.filter((p) => p.participantType === wantType);
+    if (standingsMode) {
+      filtered = await applyGroupStandingsTiebreakers(
+        prisma,
+        leagueSeasonId,
+        filtered,
+        standingsMode
+      );
+    }
+    return projectLeagueParticipants(filtered, seasonSport);
   }
 }
 
