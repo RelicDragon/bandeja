@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef, useMemo, useState } from 'react';
 import './AuthWaveBackground.css';
 
 type WaveLayer = {
@@ -13,19 +13,24 @@ type WaveLayer = {
 };
 
 const LAYERS: WaveLayer[] = [
-  { color: 'rgba(125, 211, 252, 0.55)', darkColor: 'rgba(56, 189, 248, 0.35)', baseAmp: 0.11, ampPulse: 0.04, wavelength: 0.55, speed: 0.035, yRatio: 0.42, phase: 0.2 },
-  { color: 'rgba(56, 189, 248, 0.6)', darkColor: 'rgba(14, 165, 233, 0.4)', baseAmp: 0.13, ampPulse: 0.05, wavelength: 0.7, speed: -0.045, yRatio: 0.5, phase: 1.1 },
-  { color: 'rgba(14, 165, 233, 0.7)', darkColor: 'rgba(2, 132, 199, 0.5)', baseAmp: 0.15, ampPulse: 0.05, wavelength: 0.9, speed: 0.06, yRatio: 0.58, phase: 2.4 },
-  { color: 'rgba(2, 132, 199, 0.55)', darkColor: 'rgba(3, 105, 161, 0.55)', baseAmp: 0.1, ampPulse: 0.035, wavelength: 1.15, speed: -0.028, yRatio: 0.68, phase: 3.6 },
+  { color: 'rgba(125, 211, 252, 0.55)', darkColor: 'rgba(56, 189, 248, 0.35)', baseAmp: 0.11, ampPulse: 0.03, wavelength: 0.55, speed: 0.035, yRatio: 0.42, phase: 0.2 },
+  { color: 'rgba(56, 189, 248, 0.6)', darkColor: 'rgba(14, 165, 233, 0.4)', baseAmp: 0.13, ampPulse: 0.035, wavelength: 0.7, speed: -0.045, yRatio: 0.5, phase: 1.1 },
+  { color: 'rgba(14, 165, 233, 0.7)', darkColor: 'rgba(2, 132, 199, 0.5)', baseAmp: 0.15, ampPulse: 0.04, wavelength: 0.9, speed: 0.06, yRatio: 0.58, phase: 2.4 },
+  { color: 'rgba(2, 132, 199, 0.55)', darkColor: 'rgba(3, 105, 161, 0.55)', baseAmp: 0.1, ampPulse: 0.025, wavelength: 1.15, speed: -0.028, yRatio: 0.68, phase: 3.6 },
 ];
+
+/** Target canvas fps — full 60fps is unnecessary and heats phones. */
+const WAVE_FPS = 20;
+const FRAME_MS = 1000 / WAVE_FPS;
 
 type Star = {
   left: string;
   top: string;
   size: number;
   opacity: number;
-  delay: string;
-  duration: string;
+  delay?: string;
+  duration?: string;
+  twinkle: boolean;
 };
 
 function buildStars(count: number): Star[] {
@@ -38,15 +43,16 @@ function buildStars(count: number): Star[] {
 
   for (let i = 0; i < count; i += 1) {
     const yNorm = rand();
-    // Bias density toward the top; keep within upper ~55%
     const top = Math.pow(yNorm, 1.35) * 55;
+    const twinkle = i % 3 === 0;
     stars.push({
       left: `${rand() * 100}%`,
       top: `${top}%`,
       size: 0.9 + rand() * 2.1,
       opacity: 0.25 + rand() * 0.7,
-      delay: `${rand() * 4}s`,
-      duration: `${2.4 + rand() * 3.2}s`,
+      delay: twinkle ? `${rand() * 4}s` : undefined,
+      duration: twinkle ? `${3.5 + rand() * 4}s` : undefined,
+      twinkle,
     });
   }
   return stars;
@@ -107,9 +113,44 @@ function CloudStrip({ clouds }: { clouds: DriftCloud[] }) {
   );
 }
 
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      : false,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = () => setReduced(mq.matches);
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, []);
+
+  return reduced;
+}
+
+function useDocumentVisible(): boolean {
+  const [visible, setVisible] = useState(
+    () => (typeof document !== 'undefined' ? document.visibilityState !== 'hidden' : true),
+  );
+
+  useEffect(() => {
+    const onVis = () => setVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
+
+  return visible;
+}
+
 export function AuthWaveBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stars = useMemo(() => buildStars(100), []);
+  const reducedMotion = usePrefersReducedMotion();
+  const docVisible = useDocumentVisible();
+  const animate = docVisible && !reducedMotion;
+
+  const stars = useMemo(() => buildStars(36), []);
   const laneA = useMemo(() => buildCloudLane(4201, 5, 1.35), []);
   const laneB = useMemo(() => buildCloudLane(8831, 4, 0.95), []);
   const laneC = useMemo(() => buildCloudLane(2711, 4, 0.55), []);
@@ -118,23 +159,26 @@ export function AuthWaveBackground() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext('2d', { alpha: true });
+    const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true });
     if (!ctx) return;
 
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let width = 0;
     let height = 0;
     let dpr = 1;
     let raf = 0;
     let dark = isDarkMode();
     let running = true;
+    let lastPaint = 0;
+    let step = 8;
 
     const resize = () => {
       const parent = canvas.parentElement;
       if (!parent) return;
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Cap DPR hard — retina full-res canvas is a major heat source
+      dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       width = parent.clientWidth;
       height = Math.round(Math.min(window.innerHeight * 0.52, 460));
+      step = width < 480 ? 10 : 8;
       canvas.width = Math.max(1, Math.floor(width * dpr));
       canvas.height = Math.max(1, Math.floor(height * dpr));
       canvas.style.width = `${width}px`;
@@ -153,7 +197,7 @@ export function AuthWaveBackground() {
 
       ctx.beginPath();
       ctx.moveTo(0, height);
-      for (let x = 0; x <= width; x += 3) {
+      for (let x = 0; x <= width; x += step) {
         const y =
           baseline +
           amp * Math.sin(k * (x + drift) + layer.phase) +
@@ -175,32 +219,35 @@ export function AuthWaveBackground() {
 
     const loop = (now: number) => {
       if (!running) return;
-      paint(now / 1000);
+      if (now - lastPaint >= FRAME_MS) {
+        lastPaint = now;
+        paint(now / 1000);
+      }
       raf = requestAnimationFrame(loop);
     };
 
     resize();
-    paint(0);
+    paint(performance.now() / 1000);
 
-    if (!reducedMotion) {
+    if (animate) {
       raf = requestAnimationFrame(loop);
     }
 
     const onResize = () => {
       resize();
-      if (reducedMotion) paint(0);
+      paint(performance.now() / 1000);
     };
 
     const themeObserver = new MutationObserver(() => {
       dark = isDarkMode();
-      if (reducedMotion) paint(0);
+      paint(performance.now() / 1000);
     });
     themeObserver.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class'],
     });
 
-    window.addEventListener('resize', onResize);
+    window.addEventListener('resize', onResize, { passive: true });
 
     return () => {
       running = false;
@@ -208,10 +255,13 @@ export function AuthWaveBackground() {
       window.removeEventListener('resize', onResize);
       themeObserver.disconnect();
     };
-  }, []);
+  }, [animate]);
 
   return (
-    <div className="auth-wave-bg" aria-hidden="true">
+    <div
+      className={`auth-wave-bg${animate ? '' : ' auth-wave-bg--paused'}`}
+      aria-hidden="true"
+    >
       <div className="auth-wave-bg__base" />
 
       <div className="auth-wave-bg__sky">
@@ -236,15 +286,20 @@ export function AuthWaveBackground() {
         {stars.map((star, i) => (
           <span
             key={i}
-            className="auth-wave-bg__star"
+            className={
+              star.twinkle
+                ? 'auth-wave-bg__star auth-wave-bg__star--twinkle'
+                : 'auth-wave-bg__star'
+            }
             style={{
               left: star.left,
               top: star.top,
               width: star.size,
               height: star.size,
               opacity: star.opacity,
-              animationDelay: star.delay,
-              animationDuration: star.duration,
+              ...(star.twinkle
+                ? { animationDelay: star.delay, animationDuration: star.duration }
+                : null),
             }}
           />
         ))}
@@ -252,7 +307,6 @@ export function AuthWaveBackground() {
 
       <div className="auth-wave-bg__orb auth-wave-bg__orb--a" />
       <div className="auth-wave-bg__orb auth-wave-bg__orb--b" />
-      <div className="auth-wave-bg__orb auth-wave-bg__orb--c" />
 
       <canvas ref={canvasRef} className="auth-wave-bg__canvas" />
     </div>

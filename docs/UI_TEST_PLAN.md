@@ -192,6 +192,7 @@ Frontend/e2e/
 | A-05 | Register link hidden | Open `/login` | No "Don't have an account? Register" CTA |
 | A-05a | Welcome heading | Open `/login` as guest | Shows **Bandeja** brand heading (Outfit) or returning-user title above Google CTA; no subtitle |
 | A-06 | Google OAuth return | `?google_code=` mock exchange | Login success (web) |
+| A-06a | Google email already registered | Sign in with Google whose verified email matches an existing phone/Apple/Telegram account (no `googleId` yet) | Logs into that account and attaches Google — no “merge in Profile” error |
 | A-07 | Google OAuth error | `?google_error=` | Error shown |
 | A-08 | Telegram auto-login route | `/login/:telegramKey` | Auto login or error |
 | A-09 | EULA link | Open terms | External/legal page opens |

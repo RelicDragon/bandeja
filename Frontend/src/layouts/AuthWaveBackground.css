@@ -55,7 +55,6 @@
     rgba(255, 228, 160, 0.28) 42%,
     transparent 100%
   );
-  animation: auth-sun-tint-pulse 10s ease-in-out infinite;
 }
 
 .auth-wave-bg__clouds {
@@ -72,7 +71,6 @@
   display: flex;
   width: max-content;
   animation: auth-cloud-scroll linear infinite;
-  will-change: transform;
 }
 
 .auth-wave-bg__cloud-set {
@@ -107,7 +105,6 @@
   background: #fff;
   border-radius: 9999px;
   opacity: 1;
-  filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.06));
 }
 
 .auth-wave-bg__cloud--s1 {
@@ -150,16 +147,6 @@
     2.5rem -0.55rem 0 -0.4rem #fff;
 }
 
-@keyframes auth-sun-tint-pulse {
-  0%,
-  100% {
-    opacity: 0.85;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
 @keyframes auth-cloud-scroll {
   from {
     transform: translate3d(0, 0, 0);
@@ -198,31 +185,30 @@
   position: absolute;
   border-radius: 9999px;
   background: #fff;
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.55);
+}
+
+.auth-wave-bg__star--twinkle {
   animation-name: auth-star-twinkle;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
-  will-change: opacity, transform;
 }
 
 @keyframes auth-star-twinkle {
   0%,
   100% {
     opacity: 0.25;
-    transform: scale(0.85);
   }
   50% {
     opacity: 1;
-    transform: scale(1.15);
   }
 }
 
+/* Soft glows without continuous filter:blur animation (huge mobile GPU cost) */
 .auth-wave-bg__orb {
   position: absolute;
   z-index: 1;
   border-radius: 9999px;
-  filter: blur(56px);
-  animation: auth-orb-drift 22s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .auth-wave-bg__orb--a {
@@ -231,8 +217,7 @@
   right: -6%;
   width: 22rem;
   height: 22rem;
-  background: rgb(14 165 233 / 0.28);
-  animation-duration: 26s;
+  background: radial-gradient(circle, rgb(14 165 233 / 0.28) 0%, transparent 70%);
 }
 
 .auth-wave-bg__orb--b {
@@ -240,32 +225,15 @@
   left: -12%;
   width: 30rem;
   height: 30rem;
-  background: rgb(6 182 212 / 0.32);
-  animation-duration: 30s;
-  animation-direction: reverse;
-}
-
-.auth-wave-bg__orb--c {
-  top: auto;
-  bottom: 45%;
-  left: 35%;
-  width: 16rem;
-  height: 16rem;
-  background: rgb(56 189 248 / 0.22);
-  animation-duration: 24s;
-  animation-delay: -8s;
+  background: radial-gradient(circle, rgb(6 182 212 / 0.32) 0%, transparent 70%);
 }
 
 .dark .auth-wave-bg__orb--a {
-  background: rgb(14 165 233 / 0.32);
+  background: radial-gradient(circle, rgb(14 165 233 / 0.32) 0%, transparent 70%);
 }
 
 .dark .auth-wave-bg__orb--b {
-  background: rgb(6 182 212 / 0.24);
-}
-
-.dark .auth-wave-bg__orb--c {
-  background: rgb(56 189 248 / 0.18);
+  background: radial-gradient(circle, rgb(6 182 212 / 0.24) 0%, transparent 70%);
 }
 
 .auth-wave-bg__canvas {
@@ -278,23 +246,13 @@
   display: block;
 }
 
-@keyframes auth-orb-drift {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  40% {
-    transform: translate(-5%, 6%) scale(1.06);
-  }
-  70% {
-    transform: translate(4%, -4%) scale(0.96);
-  }
+.auth-wave-bg--paused .auth-wave-bg__cloud-lane,
+.auth-wave-bg--paused .auth-wave-bg__star--twinkle {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .auth-wave-bg__orb,
-  .auth-wave-bg__star,
-  .auth-wave-bg__sun-tint,
+  .auth-wave-bg__star--twinkle,
   .auth-wave-bg__cloud-lane {
     animation: none;
   }

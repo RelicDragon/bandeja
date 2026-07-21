@@ -6,11 +6,13 @@ function assert(cond: boolean, msg: string) {
 }
 
 const servicePath = join(__dirname, '../../src/services/auth/oauthAccountLink.service.ts');
+const oauthLoginPath = join(__dirname, '../../src/services/auth/oauthLogin.service.ts');
 const routesPath = join(__dirname, '../../src/routes/auth.routes.ts');
 const profilePath = join(__dirname, '../../../Frontend/src/pages/Profile.tsx');
 const utilPath = join(__dirname, '../../../Frontend/src/utils/oauthAccountLink.ts');
 
 const serviceSrc = readFileSync(servicePath, 'utf8');
+const oauthLoginSrc = readFileSync(oauthLoginPath, 'utf8');
 const routesSrc = readFileSync(routesPath, 'utf8');
 const profileSrc = readFileSync(profilePath, 'utf8');
 const utilSrc = readFileSync(utilPath, 'utf8');
@@ -34,6 +36,19 @@ assert(profileSrc.includes('showOAuthMergeModal'), 'Profile must show merge moda
 assert(
   utilSrc.includes('auth.oauthLinkMergeRequired') && utilSrc.includes('data?.code'),
   'util must match API merge-required code'
+);
+
+assert(
+  oauthLoginSrc.includes('attachGoogleToExistingByVerifiedEmail'),
+  'Google login must auto-attach verified email to existing account'
+);
+assert(
+  oauthLoginSrc.includes('attachAppleToExistingByVerifiedEmail'),
+  'Apple login must auto-attach verified email to existing account'
+);
+assert(
+  /if \(existingEmail\) \{[\s\S]*?attachGoogleToExistingByVerifiedEmail/.test(oauthLoginSrc),
+  'Google email conflict must attempt attach before throwing emailAlreadyExistsUseLogin'
 );
 
 console.log('oauth-account-link: OK');

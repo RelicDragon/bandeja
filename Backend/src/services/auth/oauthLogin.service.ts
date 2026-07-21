@@ -114,19 +114,50 @@ async function applyGoogleLoginProfileUpdates(
   return user;
 }
 
+type GoogleLoginOpts = {
+  language?: string;
+  firstName?: string;
+  lastName?: string;
+  primarySport?: unknown;
+  primarySportIsSet?: boolean;
+};
+
+/** Attach Google to an existing email account when the Google email is verified. */
+async function attachGoogleToExistingByVerifiedEmail(
+  existing: { id: string; isActive: boolean; googleId: string | null },
+  googleToken: GoogleTokenPayload,
+  googleId: string,
+  emailToUse: string,
+  opts: GoogleLoginOpts
+): Promise<ProfileUser | null> {
+  if (!googleToken.email_verified) return null;
+  if (!existing.isActive) {
+    throw new ApiError(403, 'auth.accountInactive');
+  }
+  let linked = await prisma.user.update({
+    where: { id: existing.id },
+    data: {
+      googleId,
+      googleEmail: emailToUse,
+      googleEmailVerified: true,
+    },
+    select: PROFILE_SELECT_FIELDS,
+  });
+  linked = await applyGoogleLoginProfileUpdates(linked, googleToken, {
+    language: opts.language,
+    firstName: opts.firstName,
+    lastName: opts.lastName,
+  });
+  return linked;
+}
+
 /**
  * Core user-lookup/creation/profile-update logic for Google sign-in.
  * Takes a verified GoogleTokenPayload directly (no req dependency).
  */
 export async function loginOrRegisterWithGoogleToken(
   googleToken: GoogleTokenPayload,
-  opts: {
-    language?: string;
-    firstName?: string;
-    lastName?: string;
-    primarySport?: unknown;
-    primarySportIsSet?: boolean;
-  },
+  opts: GoogleLoginOpts,
 ): Promise<{ user: ProfileUser; isNewUser: boolean }> {
   const googleId = googleToken.sub;
 
@@ -154,6 +185,15 @@ export async function loginOrRegisterWithGoogleToken(
       if (existingEmail.googleId) {
         throw new ApiError(400, 'auth.googleAccountAlreadyExists');
       }
+      // Universal login: verified Google email → attach to existing account and sign in
+      const linked = await attachGoogleToExistingByVerifiedEmail(
+        existingEmail,
+        googleToken,
+        googleId,
+        emailToUse,
+        opts
+      );
+      if (linked) return { user: linked, isNewUser: false };
       throw new ApiError(400, 'auth.emailAlreadyExistsUseLogin');
     }
   }
@@ -205,7 +245,21 @@ export async function loginOrRegisterWithGoogleToken(
       });
       return { user, isNewUser: false };
     }
-    if (err.code === 'P2002' && targetIncludes(err.meta?.target, 'email')) {
+    if (err.code === 'P2002' && targetIncludes(err.meta?.target, 'email') && emailToUse) {
+      const raced = await prisma.user.findUnique({ where: { email: emailToUse } });
+      if (raced?.googleId) {
+        throw new ApiError(400, 'auth.googleAccountAlreadyExists');
+      }
+      if (raced) {
+        const linked = await attachGoogleToExistingByVerifiedEmail(
+          raced,
+          googleToken,
+          googleId,
+          emailToUse,
+          opts
+        );
+        if (linked) return { user: linked, isNewUser: false };
+      }
       throw new ApiError(400, 'auth.emailAlreadyExistsUseLogin');
     }
     throw createError;
@@ -320,6 +374,30 @@ async function applyAppleLoginProfileUpdates(
   return user;
 }
 
+async function attachAppleToExistingByVerifiedEmail(
+  existing: { id: string; isActive: boolean; appleSub: string | null },
+  appleToken: AppleTokenDecoded,
+  appleSub: string,
+  emailToUse: string,
+  body: { language?: unknown; firstName?: unknown; lastName?: unknown }
+): Promise<ProfileUser | null> {
+  if (!appleToken.email_verified) return null;
+  if (!existing.isActive) {
+    throw new ApiError(403, 'auth.accountInactive');
+  }
+  let linked = await prisma.user.update({
+    where: { id: existing.id },
+    data: {
+      appleSub,
+      appleEmail: emailToUse,
+      appleEmailVerified: true,
+    },
+    select: PROFILE_SELECT_FIELDS,
+  });
+  linked = await applyAppleLoginProfileUpdates(linked, appleToken, body);
+  return linked;
+}
+
 export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResult> {
   const body = req.body as Record<string, unknown>;
   const identityToken = body.identityToken;
@@ -360,6 +438,20 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
     if (existingEmail) {
       if (existingEmail.appleSub) {
         throw new ApiError(400, 'auth.appleAccountAlreadyExists');
+      }
+      const linked = await attachAppleToExistingByVerifiedEmail(
+        existingEmail,
+        appleToken,
+        appleSub,
+        emailToUse,
+        { language: body.language, firstName: body.firstName, lastName: body.lastName }
+      );
+      if (linked) {
+        const { user: out, token, refreshToken, currentSessionId } = await finalizeAppleUser(
+          linked.id,
+          req
+        );
+        return { user: out, token, refreshToken, currentSessionId, statusCode: 200 };
       }
       throw new ApiError(400, 'auth.emailAlreadyExistsUseLogin');
     }
@@ -426,7 +518,27 @@ export async function loginOrRegisterWithApple(req: Request): Promise<OAuthResul
       const { user: out, token, refreshToken, currentSessionId } = await finalizeAppleUser(user.id, req);
       return { user: out, token, refreshToken, currentSessionId, statusCode: 200 };
     }
-    if (err.code === 'P2002' && targetIncludes(err.meta?.target, 'email')) {
+    if (err.code === 'P2002' && targetIncludes(err.meta?.target, 'email') && emailToUse) {
+      const raced = await prisma.user.findUnique({ where: { email: emailToUse } });
+      if (raced?.appleSub) {
+        throw new ApiError(400, 'auth.appleAccountAlreadyExists');
+      }
+      if (raced) {
+        const linked = await attachAppleToExistingByVerifiedEmail(
+          raced,
+          appleToken,
+          appleSub,
+          emailToUse,
+          { language: body.language, firstName: body.firstName, lastName: body.lastName }
+        );
+        if (linked) {
+          const { user: out, token, refreshToken, currentSessionId } = await finalizeAppleUser(
+            linked.id,
+            req
+          );
+          return { user: out, token, refreshToken, currentSessionId, statusCode: 200 };
+        }
+      }
       throw new ApiError(400, 'auth.emailAlreadyExistsUseLogin');
     }
     throw createError;
