@@ -12,6 +12,7 @@ import { loadLeagueSeasonSportOrThrow } from '../../utils/validators/validateLea
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { rostersEqual, sortedPlayerKey } from './leagueParticipantResolve';
 import { upsertRosterAlias, assertNewRosterNotForeignAlias } from './leagueTeamRosterAlias.util';
+import { markLeagueSwapCatchUpChatsRead } from './leagueTeamPlayerSwapChatCatchUp';
 
 export type SwapLeagueTeamPlayerParams = {
   leagueSeasonId: string;
@@ -40,11 +41,13 @@ function shouldPreserveHistoricalRoster(game: {
   return false;
 }
 
+type EnsurePlayingResult = 'created' | 'reactivated' | 'unchanged';
+
 async function ensurePlayingParticipant(
   tx: Prisma.TransactionClient,
   gameId: string,
   userId: string,
-): Promise<void> {
+): Promise<EnsurePlayingResult> {
   const existing = await tx.gameParticipant.findFirst({
     where: { gameId, userId },
   });
@@ -57,14 +60,16 @@ async function ensurePlayingParticipant(
         status: ParticipantStatus.PLAYING,
       },
     });
-    return;
+    return 'created';
   }
   if (existing.status !== ParticipantStatus.PLAYING) {
     await tx.gameParticipant.update({
       where: { id: existing.id },
       data: { status: ParticipantStatus.PLAYING },
     });
+    return 'reactivated';
   }
+  return 'unchanged';
 }
 
 async function replacePlayerOnGameTeam(
@@ -122,8 +127,9 @@ export class LeagueTeamPlayerSwapService {
 
     const seasonSport = await loadLeagueSeasonSportOrThrow(leagueSeasonId);
 
-    const result = await prisma.$transaction(async (tx) => {
+    const { result, chatCatchUpGameIds } = await prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${leagueSeasonId}::text))`);
+      const chatCatchUpGameIds: string[] = [];
 
       const seasonGame = await tx.game.findUnique({
         where: { id: leagueSeasonId },
@@ -267,7 +273,10 @@ export class LeagueTeamPlayerSwapService {
         teamPlayerIds: oldPlayerIds,
       });
 
-      await ensurePlayingParticipant(tx, leagueSeasonId, inUserId);
+      const seasonEnsure = await ensurePlayingParticipant(tx, leagueSeasonId, inUserId);
+      if (seasonEnsure !== 'unchanged') {
+        chatCatchUpGameIds.push(leagueSeasonId);
+      }
 
       const seasonTeams = await tx.gameTeam.findMany({
         where: { gameId: leagueSeasonId },
@@ -348,6 +357,9 @@ export class LeagueTeamPlayerSwapService {
         for (const gt of liveMatching) {
           await replacePlayerOnGameTeam(tx, gt.id, outUserId, inUserId);
         }
+        // Catch up fixture chats for the incoming player — they inherit history
+        // the moment they appear on that roster.
+        chatCatchUpGameIds.push(fixture.id);
 
         const outStillOnFixture = await tx.gameTeamPlayer.findFirst({
           where: {
@@ -413,12 +425,17 @@ export class LeagueTeamPlayerSwapService {
       }
 
       return {
-        participant: projectLeagueParticipants([updated], seasonSport)[0],
-        previousRosterKey: oldRosterKey,
-        currentRosterKey: newRosterKey,
-        franchiseTeamId,
+        result: {
+          participant: projectLeagueParticipants([updated], seasonSport)[0],
+          previousRosterKey: oldRosterKey,
+          currentRosterKey: newRosterKey,
+          franchiseTeamId,
+        },
+        chatCatchUpGameIds,
       };
     });
+
+    await markLeagueSwapCatchUpChatsRead(inUserId, chatCatchUpGameIds);
 
     return result;
   }
