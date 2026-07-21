@@ -954,6 +954,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
           {resolvedScheduleView === 'my' ? (
         <LeagueScheduleMyGamesList
           filteredRounds={filteredRounds}
+          groups={groups}
           userId={user?.id}
           canEdit={canEdit}
           selectedGameChatId={selectedGameChatId}

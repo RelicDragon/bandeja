@@ -510,6 +510,8 @@
     "fixtureMatrixViewList": "Seznam",
     "fixtureScheduleViewMy": "Moje",
     "scheduleMyGamesEmpty": "V tomto zobrazení zatím nejsou žádné zápasy s vámi.",
+    "scheduleMyGamesEmptyFiltered": "Žádné zápasy neodpovídají těmto filtrům.",
+    "scheduleMyStatusAll": "Vše",
     "scheduleMyGamesSignIn": "Pro zobrazení svých zápasů se přihlaste.",
     "fixtureTableHint": "Mřížka round-robin",
     "fixtureMatrixScrollHint": "Posuňte do stran a uvidíte všechna družstva",

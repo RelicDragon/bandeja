@@ -766,6 +766,8 @@ Frontend/e2e/
 | GD-44 | Schedule tab | View/fixtures | Round list |
 | GD-44a | My schedule multi-group bookmark | User plays in 2+ groups of same season → Schedule → My | Each card shows flush bottom-left colored group bookmark with group name |
 | GD-44b | My schedule single-group no bookmark | User plays in only one group → Schedule → My | No group bookmark on cards |
+| GD-44c | My schedule group filter | User plays in 2+ groups → Schedule → My → group selector | Options: All + only groups user plays in; selecting a group shows only that group's fixtures |
+| GD-44d | My schedule status filter | Schedule → My → status selector | Options: All / Not scheduled / Scheduled / Played; list filters by timeIsSet + FINAL; empty filtered state when no matches |
 | GD-45 | Planner tab | `@participant` | Planner accessible |
 | GD-46 | Standings tab | View table | Standings correct |
 | GD-47 | Fullscreen league table | `/games/:id/league-table` | Fullscreen table |

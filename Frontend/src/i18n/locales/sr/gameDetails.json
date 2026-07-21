@@ -504,6 +504,8 @@
     "fixtureMatrixViewList": "Spisak",
     "fixtureScheduleViewMy": "Moje",
     "scheduleMyGamesEmpty": "Još nema utakmica u ovom prikazu u kojima učestvujete.",
+    "scheduleMyGamesEmptyFiltered": "Nijedna utakmica ne odgovara ovim filterima.",
+    "scheduleMyStatusAll": "Sve",
     "scheduleMyGamesSignIn": "Prijavite se da vidite svoje utakmice.",
     "fixtureTableHint": "Round-robin mreža",
     "fixtureMatrixScrollHint": "Pomerite u stranu da vidite sve timove",

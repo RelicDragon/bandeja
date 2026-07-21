@@ -533,6 +533,8 @@
     "fixtureMatrixViewList": "List",
     "fixtureScheduleViewMy": "My",
     "scheduleMyGamesEmpty": "No games in this view include you yet.",
+    "scheduleMyGamesEmptyFiltered": "No games match these filters.",
+    "scheduleMyStatusAll": "All",
     "scheduleMyGamesSignIn": "Sign in to see your games.",
     "fixtureTableHint": "Round-robin grid",
     "fixtureMatrixScrollHint": "Scroll sideways to see all teams",

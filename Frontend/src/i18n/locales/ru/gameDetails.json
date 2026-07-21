@@ -523,6 +523,8 @@
     "fixtureMatrixViewList": "Список",
     "fixtureScheduleViewMy": "Мои",
     "scheduleMyGamesEmpty": "В этом разделе пока нет матчей с вашим участием.",
+    "scheduleMyGamesEmptyFiltered": "Нет матчей, подходящих под эти фильтры.",
+    "scheduleMyStatusAll": "Все",
     "scheduleMyGamesSignIn": "Войдите, чтобы видеть свои матчи.",
     "fixtureTableHint": "Сетка round-robin",
     "fixtureMatrixScrollHint": "Прокрутите в сторону, чтобы увидеть все команды",
