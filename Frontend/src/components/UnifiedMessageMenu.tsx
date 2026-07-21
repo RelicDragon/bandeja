@@ -30,8 +30,8 @@ import {
 } from '@/utils/translationLanguages';
 import { isCapacitor } from '@/utils/capacitor';
 import { FileText, Flag, Forward, Languages, Pencil, Pin, PinOff, Star, Sticker } from 'lucide-react';
-import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 import { isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
+import { isForwardableMessage } from '@/services/chat/forwardMessage';
 import { usePlayersStore } from '@/store/playersStore';
 import { fetchBasicUsersBatched } from '@/services/users/fetchBasicUsersBatched';
 import type { BasicUser } from '@/types';
@@ -238,8 +238,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
     closeMenu();
   };
 
-  const forwardPayload = formatChatMessageForForwardClipboard(message);
-  const canForward = !!onForward && !isSystemMessage && forwardPayload.length > 0;
+  const canForward = !!onForward && isForwardableMessage(message);
 
   const handleForward = () => {
     if (!onForward || !canForward) return;
@@ -257,8 +256,17 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
 
   const handleToggleFavorite = () => {
     if (!canFavoriteSticker || favoriteBusy) return;
-    void toggleStickerFavorite();
     closeMenu();
+    void toggleStickerFavorite().then((nowFavorite) => {
+      if (nowFavorite === null) return;
+      toast.success(
+        nowFavorite
+          ? t('chat.contextMenu.addedToFavorites', { defaultValue: 'Added to favorites' })
+          : t('chat.contextMenu.removedFromFavorites', {
+              defaultValue: 'Removed from favorites',
+            })
+      );
+    });
   };
 
   const handleSaveAsSticker = async () => {

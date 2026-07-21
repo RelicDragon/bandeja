@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ChatParticipantsModal } from '@/components/ChatParticipantsModal';
 import { ConfirmationModal } from '@/components/ConfirmationModal';
 import { DeclineInviteModal } from '@/components/DeclineInviteModal';
+import { ForwardDestinationModal } from '@/components/chat/ForwardDestinationModal';
 import { PlayerCardBottomSheet } from '@/components/PlayerCardBottomSheet';
 import { useAuthStore } from '@/store/authStore';
 import { useThreadChrome } from './useThreadView';
@@ -26,6 +27,10 @@ export const GameChatModals: React.FC = () => {
     setShowLeaveConfirmation,
     showDeclineInviteModal,
     setShowDeclineInviteModal,
+    forwardingMessage,
+    setForwardingMessage,
+    forwardContextType,
+    forwardContextId,
   } = useThreadChrome();
 
   return (
@@ -70,6 +75,14 @@ export const GameChatModals: React.FC = () => {
           onClose={() => setShowLeaveConfirmation(false)}
         />
       )}
+
+      <ForwardDestinationModal
+        isOpen={!!forwardingMessage}
+        onClose={() => setForwardingMessage(null)}
+        message={forwardingMessage}
+        currentContextType={forwardContextType}
+        currentContextId={forwardContextId}
+      />
     </>
   );
 };

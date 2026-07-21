@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NavigateFunction } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { chatApi, type ChatMessage, type ChatMessageWithStatus, type ChatContextType, type GroupChannel, type UserChat } from '@/api/chat';
-import { formatChatMessageForForwardClipboard } from '@/utils/chatForwardClipboard';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import type { ChatType, Game, User } from '@/types';
 import type { RefObject } from 'react';
@@ -194,27 +193,11 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     isMuted,
   });
 
-  const handleForwardMessage = useCallback(
-    async (m: ChatMessage) => {
-      const text = formatChatMessageForForwardClipboard(m);
-      if (!text.trim()) return;
-      try {
-        if (typeof navigator.share === 'function') {
-          try {
-            await navigator.share({ text });
-            return;
-          } catch (shareErr: unknown) {
-            if ((shareErr as { name?: string })?.name === 'AbortError') return;
-          }
-        }
-        await navigator.clipboard.writeText(text);
-        toast.success(t('chat.forwardCopied', { defaultValue: 'Copied — paste in another chat' }));
-      } catch {
-        toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }));
-      }
-    },
-    [t]
-  );
+  const [forwardingMessage, setForwardingMessage] = useState<ChatMessage | null>(null);
+
+  const handleForwardMessage = useCallback((m: ChatMessage) => {
+    setForwardingMessage(m);
+  }, []);
 
   const handleMessageSent = useCallback(() => {
     markRead();
@@ -251,6 +234,10 @@ export function useThreadViewChrome(params: UseThreadViewChromeParams) {
     handleJoinChannel,
     handleChatTypeChange,
     handleForwardMessage,
+    forwardingMessage,
+    setForwardingMessage,
+    forwardContextType: contextType,
+    forwardContextId: id ?? null,
     handleMessageSent,
     handleTranslateToLanguageChange,
     handleGroupChannelUpdate,

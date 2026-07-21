@@ -219,8 +219,9 @@ export const PlayerListModal = ({
     let cancelled = false;
 
     const loadPlayers = async () => {
-      const backgroundSearch = hasLoadedPlayersRef.current && Boolean(serverSearchQuery);
-      if (!backgroundSearch) setLoading(true);
+      // Keep list mounted for search refinements and clear — only first open shows spinner.
+      const backgroundReload = hasLoadedPlayersRef.current;
+      if (!backgroundReload) setLoading(true);
       if (!inviteAsTrainerOnly) setCanInviteAsTrainer(false);
       const filterIds = filterPlayerIdsRef.current;
       try {
@@ -305,7 +306,7 @@ export const PlayerListModal = ({
         setFetchedGameContext(null);
         toast.error(t('errors.generic'));
       } finally {
-        if (!cancelled && !backgroundSearch) setLoading(false);
+        if (!cancelled && !backgroundReload) setLoading(false);
       }
     };
 

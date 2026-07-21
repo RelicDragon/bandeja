@@ -18,30 +18,34 @@ function SoloFace({
   const useTiny = tile;
   const tinyUrl = useTiny ? userAvatarTinyUrlFromStandard(user.avatar) : null;
   const [tinyFailed, setTinyFailed] = useState(false);
+  const [fullFailed, setFullFailed] = useState(false);
   useEffect(() => {
     setTinyFailed(false);
+    setFullFailed(false);
   }, [user.id, user.avatar, useTiny]);
   const src = tinyUrl && !tinyFailed ? tinyUrl : user.avatar ?? '';
   const textCls = tile ? 'text-sm' : 'text-lg';
-
-  if (user.avatar && src) {
-    return (
-      <img
-        src={src}
-        alt=""
-        className="h-full w-full object-cover"
-        onError={() => {
-          if (tinyUrl) setTinyFailed(true);
-        }}
-      />
-    );
-  }
-  return (
+  const initials = (
     <div
       className={`flex h-full w-full items-center justify-center bg-primary-600 font-semibold text-white ${textCls}`}
     >
       {teamNameInitials(teamName)}
     </div>
+  );
+
+  if (!user.avatar || !src || fullFailed) {
+    return initials;
+  }
+  return (
+    <img
+      src={src}
+      alt=""
+      className="h-full w-full object-cover"
+      onError={() => {
+        if (tinyUrl && !tinyFailed) setTinyFailed(true);
+        else setFullFailed(true);
+      }}
+    />
   );
 }
 
@@ -58,8 +62,10 @@ function SplitFaceHalf({
 }) {
   const tinyUrl = tile ? userAvatarTinyUrlFromStandard(user.avatar) : null;
   const [tinyFailed, setTinyFailed] = useState(false);
+  const [fullFailed, setFullFailed] = useState(false);
   useEffect(() => {
     setTinyFailed(false);
+    setFullFailed(false);
   }, [user.id, user.avatar, tile]);
   const src = tinyUrl && !tinyFailed ? tinyUrl : user.avatar ?? '';
   const textCls = tile ? 'text-sm' : 'text-lg';
@@ -74,13 +80,14 @@ function SplitFaceHalf({
         transform: 'translateZ(0)',
       }}
     >
-      {user.avatar && src ? (
+      {user.avatar && src && !fullFailed ? (
         <img
           src={src}
           alt=""
           className="h-full w-full object-cover"
           onError={() => {
-            if (tinyUrl) setTinyFailed(true);
+            if (tinyUrl && !tinyFailed) setTinyFailed(true);
+            else setFullFailed(true);
           }}
         />
       ) : (
@@ -111,6 +118,10 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing, part
   const ring = showRing ?? tile;
   const { primary, secondary } = getTeamAvatarPair(team);
   const cutAngle = team.cutAngle ?? 45;
+  const [customAvatarFailed, setCustomAvatarFailed] = useState(false);
+  useEffect(() => {
+    setCustomAvatarFailed(false);
+  }, [team.id, team.avatar]);
 
   const boxCls =
     size === 'tile'
@@ -122,10 +133,15 @@ export function TeamAvatar({ team, size = 'hero', className = '', showRing, part
   const shrink = size === 'fill' ? '' : 'shrink-0';
   const wrapCls = `relative overflow-hidden ${shrink} ${boxCls} ${className}`.trim();
 
-  if (team.avatar) {
+  if (team.avatar && !customAvatarFailed) {
     const inner = (
       <div className={wrapCls}>
-        <img src={team.avatar} alt="" className="h-full w-full object-cover" />
+        <img
+          src={team.avatar}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setCustomAvatarFailed(true)}
+        />
       </div>
     );
     return showParticipantTip ? <TeamAvatarParticipantTipShell team={team}>{inner}</TeamAvatarParticipantTipShell> : inner;

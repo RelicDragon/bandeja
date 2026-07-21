@@ -213,27 +213,18 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     await ImageProcessor.deleteFile(url);
   };
 
-  if (avatar === null && currentUser?.avatar) {
-    await deleteOurCircularAvatar(currentUser.avatar);
-  } else if (
-    avatar !== undefined &&
-    avatar !== null &&
-    currentUser?.avatar &&
-    avatar !== currentUser.avatar
-  ) {
-    await deleteOurCircularAvatar(currentUser.avatar);
-  }
-
-  if (originalAvatar === null && currentUser?.originalAvatar) {
-    await deleteOurAvatarOriginal(currentUser.originalAvatar);
-  } else if (
-    originalAvatar !== undefined &&
-    originalAvatar !== null &&
-    currentUser?.originalAvatar &&
-    originalAvatar !== currentUser.originalAvatar
-  ) {
-    await deleteOurAvatarOriginal(currentUser.originalAvatar);
-  }
+  const shouldDeletePreviousCircular =
+    (avatar === null && !!currentUser?.avatar) ||
+    (avatar !== undefined &&
+      avatar !== null &&
+      !!currentUser?.avatar &&
+      avatar !== currentUser.avatar);
+  const shouldDeletePreviousOriginal =
+    (originalAvatar === null && !!currentUser?.originalAvatar) ||
+    (originalAvatar !== undefined &&
+      originalAvatar !== null &&
+      !!currentUser?.originalAvatar &&
+      originalAvatar !== currentUser.originalAvatar);
 
   if (favoriteTrainerId !== undefined && favoriteTrainerId) {
     const trainer = await prisma.user.findUnique({
@@ -363,6 +354,13 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
     }
     return updated;
   });
+
+  if (shouldDeletePreviousCircular) {
+    await deleteOurCircularAvatar(currentUser?.avatar);
+  }
+  if (shouldDeletePreviousOriginal) {
+    await deleteOurAvatarOriginal(currentUser?.originalAvatar);
+  }
 
   res.json({
     success: true,

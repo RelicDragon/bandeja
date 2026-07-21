@@ -6,6 +6,7 @@ import type { Game } from '@/types';
 import { resultsApi, type RoundData } from '@/api/results';
 import { LeagueGameCard } from './LeagueGameCard';
 import { userIsOnLeagueScheduleGame } from '@/utils/leagueScheduleUserGames';
+import { userPlaysInMultipleLeagueGroups } from '@/utils/leagueScheduleUserGroups';
 import { useDesktop } from '@/hooks/useDesktop';
 import { buildLeagueHomeGameBracketPath, isBracketLeagueGame } from '@/utils/leagueHomeBracket.util';
 interface LeagueScheduleMyGamesListProps {
@@ -53,6 +54,14 @@ export function LeagueScheduleMyGamesList({
     });
     return out;
   }, [filteredRounds, userId]);
+
+  const showGroupBookmark = useMemo(
+    () => userPlaysInMultipleLeagueGroups(
+      entries.map((e) => e.game),
+      userId,
+    ),
+    [entries, userId],
+  );
 
   useEffect(() => {
     if (entries.length === 0) {
@@ -131,6 +140,7 @@ export function LeagueScheduleMyGamesList({
               }
               onNoteSaved={onNoteSaved}
               showGroupTag={false}
+              showGroupBookmark={showGroupBookmark && !!game.leagueGroup}
               showLeagueGroupSideAccent={false}
               allRounds={gameResultsMap.get(game.id) ?? null}
             />

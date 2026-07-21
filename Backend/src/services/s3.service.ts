@@ -77,7 +77,8 @@ export class S3Service {
   static getCloudFrontUrl(key: string): string {
     this.initialize();
     const cleanKey = key.startsWith('/') ? key.substring(1) : key;
-    return `${this.cloudFrontDomain}/${cleanKey}`;
+    const domain = this.cloudFrontDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `https://${domain}/${cleanKey}`;
   }
 
   static extractS3Key(url: string): string {

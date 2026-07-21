@@ -22,6 +22,7 @@ import {
 import { resolveLeagueGameCardTeams } from '@/utils/leagueGameCardTeams.util';
 import { resolveLeagueGameCardWinner } from '@/utils/leagueGameCardWinner.util';
 import { gameHasLinkedExternalBooking } from '@/utils/gameHasConfirmedClubBooking';
+import { LeagueGroupBookmarkTag } from './LeagueGroupBookmarkTag';
 
 interface LeagueGameCardProps {
   game: Game;
@@ -31,6 +32,8 @@ interface LeagueGameCardProps {
   selectedForChat?: boolean;
   isDesktop?: boolean;
   showGroupTag?: boolean;
+  /** Bottom-left flush group ribbon (My schedule, multi-group). */
+  showGroupBookmark?: boolean;
   showLeagueGroupSideAccent?: boolean;
   seasonPlayoffBadge?: boolean;
   /** Bracket round label (e.g. Quarterfinals) — shown instead of season playoff when set. */
@@ -48,6 +51,7 @@ export const LeagueGameCard = ({
   selectedForChat = false,
   isDesktop = false,
   showGroupTag = true,
+  showGroupBookmark = false,
   showLeagueGroupSideAccent = true,
   seasonPlayoffBadge = false,
   bracketRoundBadge,
@@ -226,6 +230,9 @@ export const LeagueGameCard = ({
         >
           {game.leagueGroup.name}
         </div>
+      )}
+      {game.leagueGroup && showGroupBookmark && (
+        <LeagueGroupBookmarkTag name={game.leagueGroup.name} color={game.leagueGroup.color} />
       )}
       {bracketRoundBadge?.trim() ? (
         <div className="absolute top-2 left-2 max-w-[calc(100%-1rem)] truncate rounded-full border border-indigo-300 bg-indigo-50 px-2 py-0.5 text-xs font-semibold capitalize text-indigo-800 dark:border-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-200">

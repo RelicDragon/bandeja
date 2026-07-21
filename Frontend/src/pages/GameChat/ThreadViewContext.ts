@@ -41,7 +41,7 @@ export interface ThreadMessageActionsValue {
   handleReplyMessage: (message: ChatMessage) => void;
   handleEditMessage: (message: ChatMessage) => void;
   handlePollUpdated: (messageId: string, poll: import('@/api/chat').Poll) => void;
-  handleForwardMessage: (message: ChatMessage) => Promise<void>;
+  handleForwardMessage: (message: ChatMessage) => void;
   handleChatRequestRespond: (userChatId: string, allowed: boolean) => void;
   handleMessageUpdated: (updated: ChatMessage) => void;
   handlePinMessage: (message: ChatMessage) => Promise<void>;
@@ -153,6 +153,10 @@ export interface ThreadChromeValue {
   setShowLeaveConfirmation: (open: boolean) => void;
   showDeclineInviteModal: boolean;
   setShowDeclineInviteModal: (open: boolean) => void;
+  forwardingMessage: ChatMessage | null;
+  setForwardingMessage: (message: ChatMessage | null) => void;
+  forwardContextType: ChatContextType;
+  forwardContextId: string | null;
   chatContainerRef: RefObject<HTMLDivElement | null>;
   showLoadingHeader: boolean;
   navigate: ReturnType<typeof import('react-router-dom').useNavigate>;

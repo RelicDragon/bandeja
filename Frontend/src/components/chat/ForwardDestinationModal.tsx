@@ -5,8 +5,10 @@ import { Gamepad2, Search, Users } from 'lucide-react';
 import type { ChatContextType, ChatMessage } from '@/api/chat';
 import type { ChatItem } from '@/utils/chatListSort';
 import { getChatTitle } from '@/utils/chatListSort';
-import { loadThreadIndexForList } from '@/services/chat/chatThreadIndex';
+import { mapThreadIndexRowsToSortedChatItems } from '@/services/chat/chatThreadIndex';
+import { chatLocalDb } from '@/services/chat/chatLocalDb';
 import { forwardMessageToContext } from '@/services/chat/forwardMessage';
+import { parseMessagePreview } from '@/utils/messagePreview';
 import { useAuthStore } from '@/store/authStore';
 import {
   Dialog,
@@ -20,15 +22,24 @@ type Destination = {
   contextId: string;
   title: string;
   kind: 'user' | 'group' | 'game';
+  preview: string;
 };
 
-function itemToDestination(item: ChatItem, userId: string): Destination | null {
+function lastPreviewText(lm: unknown, t: ReturnType<typeof useTranslation>['t']): string {
+  // `lastMessage.preview` is the already-formatted last-message string (e.g. "[TYPE:GIF]").
+  if (!lm || typeof lm !== 'object' || !('preview' in lm)) return '';
+  const parsed = parseMessagePreview((lm as { preview?: string }).preview ?? null, t);
+  return parsed && parsed !== '[Media]' ? parsed : '';
+}
+
+function itemToDestination(item: ChatItem, userId: string, t: ReturnType<typeof useTranslation>['t']): Destination | null {
   if (item.type === 'user') {
     return {
       contextType: 'USER',
       contextId: item.data.id,
       title: getChatTitle(item, userId) || '—',
       kind: 'user',
+      preview: lastPreviewText(item.data.lastMessage, t),
     };
   }
   if (item.type === 'group' || item.type === 'channel') {
@@ -37,6 +48,7 @@ function itemToDestination(item: ChatItem, userId: string): Destination | null {
       contextId: item.data.id,
       title: item.data.name?.trim() || '—',
       kind: 'group',
+      preview: lastPreviewText(item.data.lastMessage, t),
     };
   }
   if (item.type === 'game') {
@@ -45,6 +57,7 @@ function itemToDestination(item: ChatItem, userId: string): Destination | null {
       contextId: item.data.id,
       title: item.data.name?.trim() || '—',
       kind: 'game',
+      preview: lastPreviewText(item.data.lastMessage, t),
     };
   }
   return null;
@@ -79,29 +92,25 @@ export function ForwardDestinationModal({
     setLoading(true);
     void (async () => {
       try {
-        const [users, games] = await Promise.all([
-          loadThreadIndexForList('users').catch(() => [] as ChatItem[]),
-          loadThreadIndexForList('games').catch(() => [] as ChatItem[]),
-        ]);
+        // Load every thread-index row regardless of list tab, so DMs, groups,
+        // channels and games all appear as forward targets.
+        const rows = await chatLocalDb.threadIndex.toArray();
         if (cancelled) return;
-        const mapped = [...users, ...games]
-          .map((item) => (userId ? itemToDestination(item, userId) : null))
+        const items = mapThreadIndexRowsToSortedChatItems(rows);
+        const seen = new Set<string>();
+        const mapped = items
+          .map((item) => (userId ? itemToDestination(item, userId, t) : null))
           .filter((d): d is Destination => !!d)
-          // Drop the chat we're forwarding from.
-          .filter(
-            (d) =>
-              !(
-                d.contextType === currentContextType &&
-                d.contextId === currentContextId
-              )
-          )
-          // Dedupe by context (users + games tabs can overlap on city groups).
-          .filter(
-            (d, idx, arr) =>
-              arr.findIndex(
-                (x) => x.contextType === d.contextType && x.contextId === d.contextId
-              ) === idx
-          );
+          .filter((d) => {
+            // Drop the chat we're forwarding from and dedupe by context.
+            if (d.contextType === currentContextType && d.contextId === currentContextId) {
+              return false;
+            }
+            const key = `${d.contextType}:${d.contextId}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          });
         setDestinations(mapped);
       } finally {
         if (!cancelled) setLoading(false);
@@ -110,32 +119,26 @@ export function ForwardDestinationModal({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, userId, currentContextType, currentContextId]);
+  }, [isOpen, userId, currentContextType, currentContextId, t]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return destinations;
-    return destinations.filter((d) => d.title.toLowerCase().includes(q));
+    return destinations.filter(
+      (d) => d.title.toLowerCase().includes(q) || d.preview.toLowerCase().includes(q)
+    );
   }, [destinations, query]);
 
   const handlePick = async (dest: Destination) => {
     if (!message || sendingTo) return;
     setSendingTo(dest.contextId);
     try {
-      const ok = await forwardMessageToContext(
-        message,
-        dest.contextType,
-        dest.contextId
-      );
+      const ok = await forwardMessageToContext(message, dest.contextType, dest.contextId);
       if (ok) {
-        toast.success(
-          t('chat.forwardSent', { defaultValue: 'Forwarded' }),
-        );
+        toast.success(t('chat.forwardSent', { defaultValue: 'Forwarded' }));
         onClose();
       } else {
-        toast.error(
-          t('chat.forwardFailed', { defaultValue: 'Could not forward' })
-        );
+        toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }));
       }
     } catch {
       toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }));
@@ -148,9 +151,7 @@ export function ForwardDestinationModal({
     <Dialog open={isOpen} onClose={onClose} modalId="forward-destination-modal">
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {t('chat.forwardTo', { defaultValue: 'Forward to…' })}
-          </DialogTitle>
+          <DialogTitle>{t('chat.forwardTo', { defaultValue: 'Forward to…' })}</DialogTitle>
         </DialogHeader>
 
         <div className="px-4 pb-2">
@@ -172,7 +173,9 @@ export function ForwardDestinationModal({
             </div>
           ) : filtered.length === 0 ? (
             <div className="px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-              {t('chat.forwardNoChats', { defaultValue: 'No chats to forward to' })}
+              {query.trim()
+                ? t('chat.forwardNoMatches', { defaultValue: 'No matches' })
+                : t('chat.forwardNoChats', { defaultValue: 'No chats to forward to' })}
             </div>
           ) : (
             <ul className="space-y-0.5">
@@ -188,14 +191,21 @@ export function ForwardDestinationModal({
                       disabled={!!sendingTo}
                       className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50"
                     >
-                      <span className="shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                      <span className="shrink-0 w-9 h-9 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                         <Icon className="w-4 h-4 text-gray-500 dark:text-gray-300" />
                       </span>
-                      <span className="min-w-0 flex-1 truncate text-sm text-gray-800 dark:text-gray-100">
-                        {dest.title}
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-gray-800 dark:text-gray-100">
+                          {dest.title}
+                        </span>
+                        {dest.preview ? (
+                          <span className="block truncate text-xs text-gray-500 dark:text-gray-400">
+                            {dest.preview}
+                          </span>
+                        ) : null}
                       </span>
                       {busy ? (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-400 shrink-0">
                           {t('chat.forwardSending', { defaultValue: 'Sending…' })}
                         </span>
                       ) : null}

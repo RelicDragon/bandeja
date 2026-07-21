@@ -674,6 +674,7 @@ Frontend/e2e/
 | GD-14 | Cancel own queue request | Cancel queue | Removed |
 | GD-15 | Invite players | Owner opens player list → invite | Pending invites shown |
 | GD-15a | Invite search Cyrillic→Latin | Open invite list; type Cyrillic prefix of a Latin-named player (e.g. `ив` for Ivan) | Player stays in results after debounce (does not flash then vanish) |
+| GD-15b | Invite search clear | Open invite list; type 2+ chars so results update; clear the search field | List stays mounted (no full-modal spinner); default invitable list restores after debounce |
 | GD-16 | Cancel invite | Owner cancels pending | Invite removed |
 | GD-17 | Guest join chat only | Join as guest | Chat access without full join |
 | GD-18 | Carousel vs list participants | Toggle view mode | Layout switches |
@@ -758,6 +759,8 @@ Frontend/e2e/
 |----|------|-------|----------|
 | GD-43 | League tabs | general/schedule/planner/standings/faq | Tab content |
 | GD-44 | Schedule tab | View/fixtures | Round list |
+| GD-44a | My schedule multi-group bookmark | User plays in 2+ groups of same season → Schedule → My | Each card shows flush bottom-left colored group bookmark with group name |
+| GD-44b | My schedule single-group no bookmark | User plays in only one group → Schedule → My | No group bookmark on cards |
 | GD-45 | Planner tab | `@participant` | Planner accessible |
 | GD-46 | Standings tab | View table | Standings correct |
 | GD-47 | Fullscreen league table | `/games/:id/league-table` | Fullscreen table |
@@ -1234,6 +1237,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | UT-04 | Invite member | Invite flow | Pending member |
 | UT-05 | Leave team | Leave confirm | Removed |
 | UT-06 | Full-height mobile layout | `@mobile` | Layout fills screen |
+| UT-07 | Dead custom avatar URL | Team whose `avatar` CDN URL 404/403s | Falls back to member composite / initials (no broken-image icon) |
+| UT-08 | Replace team avatar | Owner replaces existing team photo | New image shows; prior URL may 404 without breaking display |
 
 ---
 

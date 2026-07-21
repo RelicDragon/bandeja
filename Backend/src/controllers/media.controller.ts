@@ -215,16 +215,10 @@ async function uploadAvatarForEntity(
     throw new ApiError(404, `${entityType} not found`);
   }
 
-  if (entity.avatar && isOurCircularAvatarUrl(entity.avatar)) {
-    if (entityType === 'user') {
-      const tiny = userAvatarTinyUrlFromStandard(entity.avatar);
-      if (tiny) await ImageProcessor.deleteFile(tiny);
-    }
-    await ImageProcessor.deleteFile(entity.avatar);
-  }
-  if (entity.originalAvatar && isOurAvatarOriginalUrl(entity.originalAvatar)) {
-    await ImageProcessor.deleteFile(entity.originalAvatar);
-  }
+  // Upload + persist first, then delete previous objects. Deleting first leaves a
+  // dead DB URL (broken <img>) if processAvatar / DB update fails mid-replace.
+  const previousAvatar = entity.avatar;
+  const previousOriginal = entity.originalAvatar;
 
   const result = await ImageProcessor.processAvatar(originalFile.buffer, originalFile.originalname, {
     userTiny: entityType === 'user',
@@ -274,6 +268,21 @@ async function uploadAvatarForEntity(
         },
       });
       break;
+  }
+
+  if (previousAvatar && isOurCircularAvatarUrl(previousAvatar) && previousAvatar !== result.avatarPath) {
+    if (entityType === 'user') {
+      const tiny = userAvatarTinyUrlFromStandard(previousAvatar);
+      if (tiny) await ImageProcessor.deleteFile(tiny);
+    }
+    await ImageProcessor.deleteFile(previousAvatar);
+  }
+  if (
+    previousOriginal &&
+    isOurAvatarOriginalUrl(previousOriginal) &&
+    previousOriginal !== result.originalPath
+  ) {
+    await ImageProcessor.deleteFile(previousOriginal);
   }
 
   return {

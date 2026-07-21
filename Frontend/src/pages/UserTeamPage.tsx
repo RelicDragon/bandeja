@@ -373,8 +373,6 @@ export function UserTeamPage() {
                     }
                   />
                 </TeamAvatarCutDial>
-              ) : team.avatar ? (
-                <img src={team.avatar} alt="" className="h-[7.5rem] w-[7.5rem] rounded-[1.2rem] object-cover sm:h-32 sm:w-32" />
               ) : (
                 <TeamAvatar team={team} size="hero" />
               )}

@@ -61,16 +61,19 @@ export function buildForwardPayload(
 /**
  * Enqueue and send a forwarded copy of `message` into the destination chat. Writes an
  * outbox row for the destination context (so its thread-index preview updates to
- * "Sending…" immediately) then dispatches the send via the shared send service. The
- * created message lands in the destination thread via socket sync.
+ * "Sending…" immediately) then dispatches the send via the shared send service.
+ *
+ * Resolves to `true` once the send succeeds and `false` if it fails — so callers can
+ * show an accurate toast (not a premature one). The created message lands in the
+ * destination thread via socket sync; the outbox row is cleaned up by the send service.
  */
-export async function forwardMessageToContext(
+export function forwardMessageToContext(
   message: ChatMessage,
   destContextType: ChatContextType,
   destContextId: string
 ): Promise<boolean> {
   const built = buildForwardPayload(message);
-  if (!built) return false;
+  if (!built) return Promise.resolve(false);
   const { payload, mediaUrls, thumbnailUrls } = built;
 
   const tempId = `fwd-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -91,26 +94,31 @@ export async function forwardMessageToContext(
     clientMutationId,
   };
 
-  await messageQueueStorage.add(row);
-
-  sendWithTimeout(
-    {
-      tempId,
-      contextType: destContextType,
-      contextId: destContextId,
-      payload,
-      mediaUrls,
-      thumbnailUrls,
-      clientMutationId,
-    },
-    {
-      onFailed: () => {
-        messageQueueStorage
-          .updateStatus(tempId, destContextType, destContextId, 'failed')
-          .catch(() => undefined);
-      },
-    }
+  return messageQueueStorage.add(row).then(
+    () =>
+      new Promise<boolean>((resolve) => {
+        let settled = false;
+        const settle = (ok: boolean) => {
+          if (settled) return;
+          settled = true;
+          resolve(ok);
+        };
+        sendWithTimeout(
+          {
+            tempId,
+            contextType: destContextType,
+            contextId: destContextId,
+            payload,
+            mediaUrls,
+            thumbnailUrls,
+            clientMutationId,
+          },
+          {
+            onSuccess: () => settle(true),
+            onFailed: () => settle(false),
+          }
+        );
+      }),
+    () => false
   );
-
-  return true;
 }

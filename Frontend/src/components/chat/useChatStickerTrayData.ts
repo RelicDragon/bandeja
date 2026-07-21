@@ -296,15 +296,16 @@ export function useChatStickerTrayData(
 
   // Live-refresh favorites when they change anywhere (this tray or the message menu).
   useEffect(() => {
-    if (!open) return;
+    if (!open || !userId) return;
     const unsubscribe = subscribeStickerFavoritesChanged((detail) => {
+      if (detail.userId !== userId) return;
       const cached = readCachedStickerPrefs(detail.userId);
       if (!cached) return;
       applyPrefs(cached);
       void loadPrefsStickers(cached);
     });
     return unsubscribe;
-  }, [open, applyPrefs, loadPrefsStickers]);
+  }, [open, userId, applyPrefs, loadPrefsStickers]);
 
   // The shared service owns cache + network + event; we reconcile via the effect above.
   const toggleFavorite = useCallback((sticker: StickerDto) => {

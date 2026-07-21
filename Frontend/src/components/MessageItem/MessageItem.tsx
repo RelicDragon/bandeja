@@ -302,7 +302,15 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
 
     // 2. Otherwise copy the image (sticker / GIF / photo).
     const url = await resolveMessageCopyTargetUrl(msg, { reduceMotion });
-    if (!url) return;
+    if (!url) {
+      // Sticker whose asset couldn't be resolved: fall back to its emoji text.
+      if (msg.messageType === 'STICKER' && msg.stickerEmoji?.trim()) {
+        void navigator.clipboard.writeText(msg.stickerEmoji.trim());
+        return;
+      }
+      toast.error(t('media.copyImageFailed', { defaultValue: 'Could not copy image' }));
+      return;
+    }
     try {
       const outcome = await copyImageToClipboard(url);
       toast.success(

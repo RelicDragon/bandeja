@@ -24,13 +24,15 @@ export function useIsStickerFavorite(stickerId: string | null | undefined) {
     return unsubscribe;
   }, [stickerId]);
 
-  const toggle = useCallback(async () => {
-    if (!stickerId || busy) return;
+  const toggle = useCallback(async (): Promise<boolean | null> => {
+    if (!stickerId || busy) return null;
     setBusy(true);
     try {
       // Optimistic local flip for snappy UI; the event reconciles the real state.
       setIsFavorite((prev) => !prev);
-      await toggleStickerFavorite(stickerId);
+      // Service resolves to the actual resulting favorite state (or null if no-op),
+      // so callers can give accurate feedback even on rollback.
+      return await toggleStickerFavorite(stickerId);
     } finally {
       setBusy(false);
     }
