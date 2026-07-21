@@ -62,9 +62,6 @@ type DriftCloud = {
   height: number;
   gap: number;
   lift: number;
-  opacity: number;
-  fadeDuration: string;
-  fadeDelay: string;
 };
 
 function seededRand(seed: number) {
@@ -75,20 +72,17 @@ function seededRand(seed: number) {
   };
 }
 
-function buildCloudLane(seed: number, count: number): DriftCloud[] {
+function buildCloudLane(seed: number, count: number, sizeScale: number): DriftCloud[] {
   const rand = seededRand(seed);
   const clouds: DriftCloud[] = [];
   for (let i = 0; i < count; i += 1) {
-    const scale = 0.55 + rand() * 0.9;
+    const scale = (0.55 + rand() * 0.9) * sizeScale;
     clouds.push({
       shape: (1 + Math.floor(rand() * 5)) as DriftCloud['shape'],
       width: 2.6 + scale * 3.4,
       height: 0.95 + scale * 0.95,
       gap: 5.5 + rand() * 12,
       lift: -1.2 + rand() * 2.4,
-      opacity: 0.55 + rand() * 0.3,
-      fadeDuration: `${7 + rand() * 8}s`,
-      fadeDelay: `${-rand() * 10}s`,
     });
   }
   return clouds;
@@ -106,9 +100,6 @@ function CloudStrip({ clouds }: { clouds: DriftCloud[] }) {
             height: `${cloud.height}rem`,
             marginLeft: `${cloud.gap}rem`,
             marginBottom: `${cloud.lift}rem`,
-            ['--cloud-opacity' as string]: cloud.opacity,
-            animationDuration: cloud.fadeDuration,
-            animationDelay: cloud.fadeDelay,
           }}
         />
       ))}
@@ -119,9 +110,9 @@ function CloudStrip({ clouds }: { clouds: DriftCloud[] }) {
 export function AuthWaveBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stars = useMemo(() => buildStars(100), []);
-  const laneA = useMemo(() => buildCloudLane(4201, 5), []);
-  const laneB = useMemo(() => buildCloudLane(8831, 4), []);
-  const laneC = useMemo(() => buildCloudLane(2711, 4), []);
+  const laneA = useMemo(() => buildCloudLane(4201, 5, 1.35), []);
+  const laneB = useMemo(() => buildCloudLane(8831, 4, 0.95), []);
+  const laneC = useMemo(() => buildCloudLane(2711, 4, 0.55), []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -225,17 +216,19 @@ export function AuthWaveBackground() {
 
       <div className="auth-wave-bg__sky">
         <div className="auth-wave-bg__sun-tint" />
-        <div className="auth-wave-bg__cloud-lane auth-wave-bg__cloud-lane--a">
-          <CloudStrip clouds={laneA} />
-          <CloudStrip clouds={laneA} />
-        </div>
-        <div className="auth-wave-bg__cloud-lane auth-wave-bg__cloud-lane--b">
-          <CloudStrip clouds={laneB} />
-          <CloudStrip clouds={laneB} />
-        </div>
-        <div className="auth-wave-bg__cloud-lane auth-wave-bg__cloud-lane--c">
-          <CloudStrip clouds={laneC} />
-          <CloudStrip clouds={laneC} />
+        <div className="auth-wave-bg__clouds">
+          <div className="auth-wave-bg__cloud-lane auth-wave-bg__cloud-lane--c">
+            <CloudStrip clouds={laneC} />
+            <CloudStrip clouds={laneC} />
+          </div>
+          <div className="auth-wave-bg__cloud-lane auth-wave-bg__cloud-lane--b">
+            <CloudStrip clouds={laneB} />
+            <CloudStrip clouds={laneB} />
+          </div>
+          <div className="auth-wave-bg__cloud-lane auth-wave-bg__cloud-lane--a">
+            <CloudStrip clouds={laneA} />
+            <CloudStrip clouds={laneA} />
+          </div>
         </div>
       </div>
 

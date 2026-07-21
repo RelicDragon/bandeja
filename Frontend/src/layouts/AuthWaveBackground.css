@@ -35,6 +35,7 @@
   z-index: 2;
   overflow: hidden;
   pointer-events: none;
+  isolation: isolate;
 }
 
 .dark .auth-wave-bg__sky {
@@ -46,6 +47,7 @@
   top: 0;
   left: 0;
   right: 0;
+  z-index: 1;
   height: min(38vh, 320px);
   background: linear-gradient(
     to bottom,
@@ -56,12 +58,19 @@
   animation: auth-sun-tint-pulse 10s ease-in-out infinite;
 }
 
+.auth-wave-bg__clouds {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.4;
+  isolation: isolate;
+}
+
 .auth-wave-bg__cloud-lane {
   position: absolute;
   left: 0;
   display: flex;
   width: max-content;
-  z-index: 3;
   animation: auth-cloud-scroll linear infinite;
   will-change: transform;
 }
@@ -74,70 +83,71 @@
 
 .auth-wave-bg__cloud-lane--a {
   top: 5%;
-  animation-duration: 95s;
+  z-index: 30;
+  animation-duration: 48s;
 }
 
 .auth-wave-bg__cloud-lane--b {
   top: 14%;
-  animation-duration: 128s;
+  z-index: 20;
+  animation-duration: 88s;
   animation-direction: reverse;
 }
 
 .auth-wave-bg__cloud-lane--c {
   top: 23%;
-  animation-duration: 78s;
+  z-index: 10;
+  animation-duration: 150s;
 }
 
 .auth-wave-bg__cloud {
   position: relative;
   flex: 0 0 auto;
   display: block;
-  background: rgba(255, 255, 255, 0.82);
+  background: #fff;
   border-radius: 9999px;
-  filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.05));
-  animation-name: auth-cloud-fade;
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
+  opacity: 1;
+  filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.06));
 }
 
 .auth-wave-bg__cloud--s1 {
   box-shadow:
-    1.7rem 0.1rem 0 -0.15rem rgba(255, 255, 255, 0.82),
-    -1.5rem 0.2rem 0 -0.3rem rgba(255, 255, 255, 0.78),
-    0.2rem -1rem 0 -0.1rem rgba(255, 255, 255, 0.8);
+    1.7rem 0.1rem 0 -0.15rem #fff,
+    -1.5rem 0.2rem 0 -0.3rem #fff,
+    0.2rem -1rem 0 -0.1rem #fff;
 }
 
 .auth-wave-bg__cloud--s2 {
   box-shadow:
-    2.4rem 0.05rem 0 -0.25rem rgba(255, 255, 255, 0.82),
-    -2.1rem 0.35rem 0 -0.4rem rgba(255, 255, 255, 0.75),
-    0.55rem -1.25rem 0 -0.2rem rgba(255, 255, 255, 0.78),
-    3.6rem -0.15rem 0 -0.55rem rgba(255, 255, 255, 0.7);
+    2.4rem 0.05rem 0 -0.25rem #fff,
+    -2.1rem 0.35rem 0 -0.4rem #fff,
+    0.55rem -1.25rem 0 -0.2rem #fff,
+    3.6rem -0.15rem 0 -0.55rem #fff;
 }
 
 .auth-wave-bg__cloud--s3 {
   box-shadow:
-    1.2rem -0.05rem 0 -0.1rem rgba(255, 255, 255, 0.82),
-    -2.6rem 0.15rem 0 -0.45rem rgba(255, 255, 255, 0.72),
-    -0.4rem -0.95rem 0 -0.05rem rgba(255, 255, 255, 0.78),
-    2.8rem 0.3rem 0 -0.5rem rgba(255, 255, 255, 0.68);
+    1.2rem -0.05rem 0 -0.1rem #fff,
+    -2.6rem 0.15rem 0 -0.45rem #fff,
+    -0.4rem -0.95rem 0 -0.05rem #fff,
+    2.8rem 0.3rem 0 -0.5rem #fff;
 }
 
 .auth-wave-bg__cloud--s4 {
   box-shadow:
-    2rem 0.2rem 0 -0.2rem rgba(255, 255, 255, 0.8),
-    -1.1rem 0.05rem 0 -0.15rem rgba(255, 255, 255, 0.78),
-    0.9rem -1.35rem 0 -0.25rem rgba(255, 255, 255, 0.75),
-    -2.9rem -0.2rem 0 -0.55rem rgba(255, 255, 255, 0.68),
-    3.2rem 0.15rem 0 -0.65rem rgba(255, 255, 255, 0.65);
+    2rem 0.2rem 0 -0.2rem #fff,
+    -1.1rem 0.05rem 0 -0.15rem #fff,
+    0.9rem -1.35rem 0 -0.25rem #fff,
+    -2.9rem -0.2rem 0 -0.55rem #fff,
+    3.2rem 0.15rem 0 -0.65rem #fff;
 }
 
 .auth-wave-bg__cloud--s5 {
   box-shadow:
-    1.4rem 0.25rem 0 -0.35rem rgba(255, 255, 255, 0.8),
-    -1.8rem -0.1rem 0 -0.2rem rgba(255, 255, 255, 0.75),
-    0.1rem -0.85rem 0 0.05rem rgba(255, 255, 255, 0.78),
-    2.5rem -0.55rem 0 -0.4rem rgba(255, 255, 255, 0.7);
+    1.4rem 0.25rem 0 -0.35rem #fff,
+    -1.8rem -0.1rem 0 -0.2rem #fff,
+    0.1rem -0.85rem 0 0.05rem #fff,
+    2.5rem -0.55rem 0 -0.4rem #fff;
 }
 
 @keyframes auth-sun-tint-pulse {
@@ -156,19 +166,6 @@
   }
   to {
     transform: translate3d(-50%, 0, 0);
-  }
-}
-
-@keyframes auth-cloud-fade {
-  0%,
-  100% {
-    opacity: calc(var(--cloud-opacity, 0.8) * 0.72);
-  }
-  45% {
-    opacity: var(--cloud-opacity, 0.8);
-  }
-  70% {
-    opacity: calc(var(--cloud-opacity, 0.8) * 0.9);
   }
 }
 
@@ -298,8 +295,7 @@
   .auth-wave-bg__orb,
   .auth-wave-bg__star,
   .auth-wave-bg__sun-tint,
-  .auth-wave-bg__cloud-lane,
-  .auth-wave-bg__cloud {
+  .auth-wave-bg__cloud-lane {
     animation: none;
   }
 }
