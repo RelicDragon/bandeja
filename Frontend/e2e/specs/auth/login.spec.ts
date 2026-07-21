@@ -37,7 +37,7 @@ test.describe('auth login', () => {
 
     const firstDigit = page.getByLabel(/one-time code digit 1/i);
     const submitButton = page.getByRole('button', { name: /use code/i });
-    await expect(page.getByText(/if the link does not bring you back/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /enter your code/i })).toBeVisible();
     await expect(firstDigit).toBeVisible();
     await expect(page.getByRole('button', { name: /continue with google/i })).toBeHidden();
     await expect(page.getByRole('button', { name: /legacy phone sign-in|sign in with phone|phone sign-in/i })).toBeHidden();
@@ -64,7 +64,6 @@ test.describe('auth login', () => {
   test('A-09a web store download buttons', async ({ page }) => {
     const login = new LoginPage(page);
     await login.goto();
-    await expect(page.getByText(/get the app/i)).toBeVisible();
     const appStore = page.locator('a[href="https://apps.apple.com/app/bandeja/id6756632318"]');
     const playStore = page.locator(
       'a[href="https://play.google.com/store/apps/details?id=com.funified.bandeja"]'

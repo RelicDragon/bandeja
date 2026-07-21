@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/layouts/AuthLayout';
 import { OTPInput, TelegramIcon } from '@/components';
 import { AppStoreDownloadButtons } from '@/components/AppStoreDownloadButtons';
-import { PhoneSignInCard } from '@/components/auth';
+import { PhoneSignInCard, LoginPanelFrame } from '@/components/auth';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { config } from '@/config/media';
@@ -28,7 +28,31 @@ import { extractApiErrorMessage } from '@/utils/extractApiErrorMessage';
 type LoginTab = 'main' | 'phone';
 
 const btnBase =
-  'w-[280px] max-w-full mx-auto h-12 rounded-xl font-semibold transition-all duration-200 active:scale-[0.98] disabled:active:scale-100 flex items-center justify-center gap-3';
+  'mx-auto w-full max-w-[240px] sm:max-w-[260px] h-11 sm:h-12 rounded-xl text-[15px] font-semibold transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.98] disabled:active:scale-100 disabled:hover:translate-y-0 disabled:hover:shadow-none flex items-center justify-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900';
+
+const orDividerClass =
+  'mx-auto flex w-full max-w-[240px] sm:max-w-[260px] items-center gap-3 py-0.5';
+const orLineClass = 'h-px flex-1 bg-slate-200/90 dark:bg-slate-600/80';
+const orLabelClass =
+  'text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500';
+
+const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.12 },
+  },
+  exit: { opacity: 0, transition: { duration: 0.15 } },
+};
+
+const staggerItem: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
+  },
+};
 
 export const Login = () => {
   const { t } = useTranslation();
@@ -36,6 +60,7 @@ export const Login = () => {
   const setAuth = useAuthStore((state) => state.setAuth);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [tab, setTab] = useState<LoginTab>('main');
+  const [panelDirection, setPanelDirection] = useState(1);
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,7 +70,7 @@ export const Login = () => {
   const [appVersion, setAppVersion] = useState<{ version: string; buildNumber: string } | null>(null);
   const [searchParams] = useSearchParams();
   const isWeb = !isCapacitor();
-  const isTelegramOtpMode = tab === 'main' && telegramHint;
+  const [welcomeBack] = useState(() => localStorage.getItem('bandeja_has_signed_in') === '1');
 
   useEffect(() => {
     if (error) {
@@ -149,9 +174,15 @@ export const Login = () => {
     }
   }, [searchParams, setAuth, navigate, t]);
 
-  const goToTab = (next: LoginTab) => setTab(next);
+  const goToTab = (next: LoginTab) => {
+    setPanelDirection(next === 'main' ? -1 : 1);
+    setTab(next);
+  };
 
-  const handleBack = () => setTab('main');
+  const handleBack = () => {
+    setPanelDirection(-1);
+    setTab('main');
+  };
 
   const handlePhoneLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,6 +213,7 @@ export const Login = () => {
 
   const handleTelegramClick = () => {
     openTelegramLogin();
+    setPanelDirection(1);
     setTelegramHint(true);
     setTelegramOtpCode('');
     setError('');
@@ -194,6 +226,7 @@ export const Login = () => {
 
   const handleTelegramCancel = () => {
     if (loading) return;
+    setPanelDirection(-1);
     setTelegramHint(false);
     setTelegramOtpCode('');
     setError('');
@@ -302,22 +335,27 @@ export const Login = () => {
     </span>
   );
 
+  const panelKey = tab === 'phone' ? 'phone' : telegramHint ? 'telegram-otp' : 'main';
+
   return (
     <AuthLayout>
-      <div className="flex flex-col">
-        <div className="overflow-hidden transition-[height] duration-300 ease-out">
-          <AnimatePresence initial={false} mode="wait">
-            {tab === 'main' && !telegramHint && (
-              <motion.div
-                key="main"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-3"
-              >
-                {error && <ErrorBanner error={error} />}
-                {isWeb ? (
+      <LoginPanelFrame panelKey={panelKey} direction={panelDirection}>
+        {tab === 'main' && !telegramHint && (
+          <div className="flex flex-col">
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="show"
+              className="space-y-2.5 sm:space-y-3"
+            >
+              {error && <ErrorBanner error={error} />}
+              <motion.div variants={staggerItem} className="pb-1 text-center sm:pb-2">
+                <h1 className="font-brand text-[1.75rem] font-extrabold leading-none tracking-[-0.03em] text-slate-900 dark:text-white sm:text-[2.15rem] md:text-[2.35rem]">
+                  {welcomeBack ? t('auth.loginWelcomeBackTitle') : t('auth.loginWelcomeTitle')}
+                </h1>
+              </motion.div>
+              {isWeb ? (
+                <motion.div variants={staggerItem}>
                   <button
                     type="button"
                     onClick={() => {
@@ -325,156 +363,70 @@ export const Login = () => {
                       window.location.href = `/api/auth/google/redirect?lang=${encodeURIComponent(lang)}`;
                     }}
                     disabled={loading}
-                    className={`${btnBase} bg-white dark:bg-slate-700/90 text-slate-800 dark:text-slate-100 border-2 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700`}
+                    className={`${btnBase} border border-slate-200/90 bg-white/90 text-slate-800 hover:border-slate-300 hover:bg-white dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800`}
                   >
                     {loading ? loadingSpinner : <><GoogleIcon /><span>{t('auth.googleSignIn')}</span></>}
                   </button>
-                ) : (
+                </motion.div>
+              ) : (
+                <motion.div variants={staggerItem}>
                   <button
                     type="button"
                     onClick={handleGoogleSignIn}
                     disabled={loading}
-                    className={`${btnBase} bg-white dark:bg-slate-700/90 text-slate-800 dark:text-slate-100 border-2 border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700`}
+                    className={`${btnBase} border border-slate-200/90 bg-white/90 text-slate-800 hover:border-slate-300 hover:bg-white dark:border-slate-600 dark:bg-slate-800/80 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800`}
                   >
                     {loading ? loadingSpinner : <><GoogleIcon /><span>{t('auth.googleSignIn')}</span></>}
                   </button>
-                )}
-                {isIOS() && (
+                </motion.div>
+              )}
+              {isIOS() && (
+                <motion.div variants={staggerItem}>
                   <button
                     type="button"
                     onClick={handleAppleSignIn}
                     disabled={loading}
-                    className={`${btnBase} bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-50`}
+                    className={`${btnBase} bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100`}
                   >
                     {loading ? loadingSpinner : <><AppleIcon size={20} /><span>{t('auth.appleSignIn')}</span></>}
                   </button>
-                )}
+                </motion.div>
+              )}
+              <motion.div variants={staggerItem}>
                 <button
                   type="button"
                   onClick={handleTelegramClick}
-                  className={`${btnBase} bg-gradient-to-r from-[#0088cc] to-[#0099dd] hover:from-[#007ab8] hover:to-[#0088cc] text-white`}
+                  className={`${btnBase} bg-gradient-to-r from-[#0088cc] to-[#0099dd] text-white hover:from-[#007ab8] hover:to-[#0088cc]`}
                 >
                   <TelegramIcon size={20} className="text-white" />
                   <span>{t('auth.telegramLogin')}</span>
                 </button>
-                <div className="flex w-[280px] max-w-full mx-auto items-center gap-3 py-0.5">
-                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-600" />
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                    {t('auth.or')}
-                  </span>
-                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-600" />
-                </div>
+              </motion.div>
+              <motion.div variants={staggerItem} className={orDividerClass}>
+                <div className={orLineClass} />
+                <span className={orLabelClass}>{t('auth.or')}</span>
+                <div className={orLineClass} />
+              </motion.div>
+              <motion.div variants={staggerItem}>
                 <button
                   type="button"
                   onClick={() => goToTab('phone')}
-                  className={`${btnBase} bg-white/70 dark:bg-slate-800/60 text-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:bg-white dark:hover:bg-slate-800`}
+                  className={`${btnBase} border border-slate-200/80 bg-white/55 text-slate-700 hover:border-slate-300 hover:bg-white/80 dark:border-slate-600/80 dark:bg-slate-800/45 dark:text-slate-100 dark:hover:border-slate-500 dark:hover:bg-slate-800/70`}
                 >
                   <Phone size={18} strokeWidth={2.25} className="text-slate-500 dark:text-slate-300" />
                   <span>{t('auth.legacyPhoneSignIn')}</span>
                 </button>
               </motion.div>
-            )}
+            </motion.div>
 
-            {tab === 'main' && telegramHint && (
-              <motion.div
-                key="telegram-otp"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-4"
-              >
-                {error && <ErrorBanner error={error} />}
-                <form
-                  onSubmit={handleTelegramOtpSubmit}
-                  className="mx-auto w-full max-w-sm space-y-5 rounded-2xl border border-sky-100 bg-white/95 p-5 text-slate-800 shadow-[0_18px_45px_rgba(14,116,144,0.14)] dark:border-sky-500/20 dark:bg-slate-900/90 dark:text-slate-100 dark:shadow-none"
-                >
-                  <div className="flex min-h-12 items-center justify-between gap-4">
-                    <button
-                      type="button"
-                      onClick={handleTelegramCancel}
-                      disabled={loading}
-                      className="inline-flex items-center gap-1 rounded-full py-1.5 pr-3 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:text-white"
-                    >
-                      <ArrowLeft size={16} />
-                      {t('common.back')}
-                    </button>
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0088cc] text-white shadow-lg shadow-sky-600/20">
-                      <TelegramIcon size={24} className="text-white" />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <h2 className="text-xl font-bold leading-tight text-slate-900 dark:text-white">
-                      {t('auth.followInstructionsInTelegram')}
-                    </h2>
-                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                      {t('auth.telegramOtpFallbackHint')}
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <OTPInput
-                      value={telegramOtpCode}
-                      onChange={handleTelegramOtpChange}
-                      disabled={loading}
-                      autoFocus
-                    />
-                    <button
-                      type="submit"
-                      disabled={loading || telegramOtpCode.length !== 6}
-                      className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#0088cc] px-4 text-sm font-bold text-white shadow-lg shadow-sky-600/20 transition-all hover:bg-[#007ab8] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0088cc] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none dark:focus-visible:ring-offset-slate-900"
-                    >
-                      {loading ? loadingSpinner : t('auth.telegramOtpSubmit')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleTelegramOpenAgain}
-                      disabled={loading}
-                      className="w-full rounded-xl py-2 text-sm font-semibold text-[#0088cc] transition-colors hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-sky-950/40"
-                    >
-                      {t('auth.openTelegramBot')}
-                    </button>
-                  </div>
-                </form>
-              </motion.div>
-            )}
-
-            {tab === 'phone' && (
-              <motion.div
-                key="phone"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2 }}
-              >
-                <PhoneSignInCard
-                  phone={phone}
-                  password={password}
-                  loading={loading}
-                  loadingLabel={loadingSpinner}
-                  errorSlot={error ? <ErrorBanner error={error} /> : undefined}
-                  onPhoneChange={setPhone}
-                  onPasswordChange={setPassword}
-                  onBack={handleBack}
-                  onSubmit={handlePhoneLogin}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {!isTelegramOtpMode && tab === 'main' && (
-          <>
-            {isWeb && <AppStoreDownloadButtons className="mt-3" />}
-            <p className="mt-3 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400 shrink-0">
+            {isWeb && <AppStoreDownloadButtons className="mt-3 sm:mt-4" />}
+            <p className="mt-3 text-center text-[11px] leading-relaxed text-slate-500 dark:text-slate-400 sm:mt-4 sm:text-xs">
               {t('auth.byContinuing') || 'By continuing, you agree to our'}{' '}
-              <br />
               <a
                 href="/eula/world/eula.html"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium transition-colors underline decoration-2 underline-offset-2"
+                className="font-medium text-primary-600 underline decoration-2 underline-offset-2 transition-colors hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
                 onClick={(e) => {
                   e.preventDefault();
                   openEula();
@@ -483,17 +435,85 @@ export const Login = () => {
                 {t('auth.eula') || 'Terms of Service'}
               </a>
             </p>
-          </>
+            {appVersion && (
+              <p className="mt-2 text-center text-[10px] text-slate-400 dark:text-slate-500 sm:text-[11px]">
+                App Version: {appVersion.version} (Build {appVersion.buildNumber})
+              </p>
+            )}
+          </div>
         )}
-        {appVersion && !isTelegramOtpMode && tab === 'main' && (
-          <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
-            App Version: {appVersion.version} (Build {appVersion.buildNumber})
-          </p>
+
+        {tab === 'main' && telegramHint && (
+          <div className="space-y-4 sm:space-y-5">
+            {error && <ErrorBanner error={error} />}
+            <form
+              onSubmit={handleTelegramOtpSubmit}
+              className="mx-auto w-full space-y-5 text-slate-800 dark:text-slate-100"
+            >
+              <div className="flex min-h-11 items-center justify-between gap-4">
+                <button
+                  type="button"
+                  onClick={handleTelegramCancel}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1 rounded-full py-1.5 pr-3 text-sm font-semibold text-slate-500 transition-colors hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-50 dark:text-slate-400 dark:hover:text-white"
+                >
+                  <ArrowLeft size={16} />
+                  {t('common.back')}
+                </button>
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#0088cc] text-white sm:h-11 sm:w-11">
+                  <TelegramIcon size={22} className="text-white" />
+                </div>
+              </div>
+
+              <h2 className="font-brand text-[1.5rem] font-extrabold leading-none tracking-[-0.03em] text-slate-900 dark:text-white sm:text-[1.75rem]">
+                {t('auth.telegramOtpTitle')}
+              </h2>
+
+              <div className="space-y-3">
+                <OTPInput
+                  value={telegramOtpCode}
+                  onChange={handleTelegramOtpChange}
+                  disabled={loading}
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  disabled={loading || telegramOtpCode.length !== 6}
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#0088cc] px-4 text-sm font-bold text-white shadow-lg shadow-sky-600/20 transition-all hover:bg-[#007ab8] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0088cc] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none dark:focus-visible:ring-offset-slate-900 sm:h-12"
+                >
+                  {loading ? loadingSpinner : t('auth.telegramOtpSubmit')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleTelegramOpenAgain}
+                  disabled={loading}
+                  className="w-full rounded-xl py-2 text-sm font-semibold text-[#0088cc] transition-colors hover:bg-sky-50/70 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-sky-950/40"
+                >
+                  {t('auth.openTelegramBot')}
+                </button>
+              </div>
+            </form>
+          </div>
         )}
-      </div>
+
+        {tab === 'phone' && (
+          <PhoneSignInCard
+            phone={phone}
+            password={password}
+            loading={loading}
+            loadingLabel={loadingSpinner}
+            errorSlot={error ? <ErrorBanner error={error} /> : undefined}
+            onPhoneChange={setPhone}
+            onPasswordChange={setPassword}
+            onBack={handleBack}
+            onSubmit={handlePhoneLogin}
+          />
+        )}
+      </LoginPanelFrame>
     </AuthLayout>
   );
 };
+
 
 function ErrorBanner({ error }: { error: string }) {
   return (

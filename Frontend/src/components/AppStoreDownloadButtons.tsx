@@ -11,10 +11,14 @@ export function AppStoreDownloadButtons({ className = '' }: AppStoreDownloadButt
 
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`.trim()}>
-      <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-        {t('auth.getTheApp')}
-      </p>
-      <div className="flex w-full max-w-[280px] items-center justify-center gap-2">
+      <div className="flex w-full items-center gap-3 py-0.5">
+        <div className="h-px flex-1 bg-slate-200/90 dark:bg-slate-600/80" />
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+          {t('auth.or')}
+        </span>
+        <div className="h-px flex-1 bg-slate-200/90 dark:bg-slate-600/80" />
+      </div>
+      <div className="flex w-full max-w-sm items-center justify-center gap-2 sm:gap-3">
         <a
           href={APP_STORE_URL}
           target="_blank"
@@ -24,7 +28,7 @@ export function AppStoreDownloadButtons({ className = '' }: AppStoreDownloadButt
           <img
             src={badges.ios}
             alt={t('auth.downloadOnAppStore')}
-            className="h-10 w-full object-contain"
+            className="mx-auto h-9 w-full max-w-[148px] object-contain sm:h-10"
           />
         </a>
         <a
@@ -36,7 +40,7 @@ export function AppStoreDownloadButtons({ className = '' }: AppStoreDownloadButt
           <img
             src={badges.android}
             alt={t('auth.getItOnGooglePlay')}
-            className="h-14 w-full object-contain"
+            className="mx-auto h-12 w-full max-w-[148px] object-contain sm:h-14"
           />
         </a>
       </div>

@@ -103,6 +103,7 @@ export const useAuthStore = create<AuthState>((set, get) => {
       }
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', token);
+      localStorage.setItem('bandeja_has_signed_in', '1');
       if (opts?.refreshToken) {
         await persistRefreshBundle(opts.refreshToken, opts.currentSessionId);
       } else if (opts?.currentSessionId && isWebHttpOnlyRefreshCookie()) {

@@ -1,121 +1,60 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { Sun, Moon, Monitor, ChevronDown } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Sun, Moon, Monitor } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/store/themeStore';
 
+const HINT_MS = 1500;
+
 export const ThemeSelector = () => {
   const { t } = useTranslation();
-  const [isOpen, setIsOpen] = useState(false);
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const { theme, setTheme } = useThemeStore();
+  const { theme, toggleTheme } = useThemeStore();
+  const [hintVisible, setHintVisible] = useState(false);
+  const [hintLabel, setHintLabel] = useState('');
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const themes = [
-    { value: 'light', label: t('profile.light'), icon: Sun },
-    { value: 'dark', label: t('profile.dark'), icon: Moon },
-    { value: 'system', label: t('profile.system'), icon: Monitor },
-  ];
+  const themes = {
+    light: { label: t('profile.light'), icon: Sun },
+    dark: { label: t('profile.dark'), icon: Moon },
+    system: { label: t('profile.system'), icon: Monitor },
+  } as const;
 
-  const currentTheme = themes.find(t => t.value === theme) || themes[0];
-  const CurrentIcon = currentTheme.icon;
+  const current = themes[theme];
+  const CurrentIcon = current.icon;
 
-  const updateDropdownPosition = useCallback(() => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    setDropdownPosition({
-      top: rect.bottom + 8,
-      left: rect.right - 140,
-    });
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
   }, []);
 
-  useEffect(() => {
-    if (isOpen) {
-      updateDropdownPosition();
-      const handleResize = () => updateDropdownPosition();
-      window.addEventListener('resize', handleResize);
-      window.addEventListener('scroll', handleResize, true);
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('scroll', handleResize, true);
-      };
-    } else {
-      setDropdownPosition(null);
-    }
-  }, [isOpen, updateDropdownPosition]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        buttonRef.current && !buttonRef.current.contains(event.target as Node) &&
-        menuRef.current && !menuRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [isOpen]);
-
-  const handleChangeTheme = (themeValue: 'light' | 'dark' | 'system') => {
-    setTheme(themeValue);
-    setIsOpen(false);
+  const handleClick = () => {
+    const next = theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light';
+    toggleTheme();
+    setHintLabel(themes[next].label);
+    setHintVisible(true);
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => setHintVisible(false), HINT_MS);
   };
 
   return (
-    <>
-      <div className="relative">
-        <button
-          ref={buttonRef}
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-1.5 h-10 px-3 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm border border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
-          aria-label="Select theme"
-        >
-          <CurrentIcon size={16} className="text-slate-600 dark:text-slate-300" />
-          <ChevronDown size={14} className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
-      </div>
+    <div className="relative">
+      <button
+        type="button"
+        onClick={handleClick}
+        className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/90 bg-white/85 shadow-sm backdrop-blur-sm transition-all hover:bg-white dark:border-slate-600/80 dark:bg-slate-800/85 dark:hover:bg-slate-800"
+        aria-label={`${t('profile.theme')}: ${current.label}`}
+      >
+        <CurrentIcon size={16} className="text-slate-600 dark:text-slate-200" />
+      </button>
 
-      {isOpen && dropdownPosition && typeof document !== 'undefined' && createPortal(
-        <div
-          ref={menuRef}
-          className="fixed bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 z-[10000] min-w-[140px] overflow-hidden origin-top-right transition-all duration-200 opacity-100 scale-100 translate-y-0"
-          style={{
-            top: dropdownPosition.top,
-            left: dropdownPosition.left,
-          }}
-          onWheel={(e) => e.stopPropagation()}
-          onTouchMove={(e) => e.stopPropagation()}
-        >
-          {themes.map((themeOption, index) => {
-            const Icon = themeOption.icon;
-            return (
-              <button
-                key={themeOption.value}
-                type="button"
-                onClick={() => handleChangeTheme(themeOption.value as 'light' | 'dark' | 'system')}
-                className={`w-full px-3 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2.5 transition-all duration-200 ${
-                  themeOption.value === theme 
-                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400' 
-                    : 'text-slate-700 dark:text-slate-200'
-                }`}
-                style={{ 
-                  transitionDelay: `${index * 50}ms`,
-                }}
-              >
-                <Icon size={16} />
-                <span className="text-sm font-medium">{themeOption.label}</span>
-              </button>
-            );
-          })}
-        </div>,
-        document.body
-      )}
-    </>
+      <div
+        className={`pointer-events-none absolute right-0 top-full z-30 mt-1.5 whitespace-nowrap rounded-lg border border-slate-200/90 bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-md backdrop-blur-sm transition-all duration-200 dark:border-slate-600/80 dark:bg-slate-800/95 dark:text-slate-200 ${
+          hintVisible ? 'translate-y-0 opacity-100' : '-translate-y-0.5 opacity-0'
+        }`}
+        aria-live="polite"
+      >
+        {hintLabel || current.label}
+      </div>
+    </div>
   );
 };

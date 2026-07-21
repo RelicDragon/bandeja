@@ -29,11 +29,8 @@ export function PhoneSignInCard({
   const { t } = useTranslation();
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className="mx-auto w-full max-w-sm space-y-5 rounded-2xl border border-slate-200/80 bg-white/95 p-5 text-slate-800 shadow-[0_18px_45px_rgba(15,23,42,0.10)] dark:border-slate-600/50 dark:bg-slate-900/90 dark:text-slate-100 dark:shadow-none"
-    >
-      <div className="flex min-h-12 items-center justify-between gap-4">
+    <form onSubmit={onSubmit} className="mx-auto w-full space-y-4 text-slate-800 dark:text-slate-100 sm:space-y-5">
+      <div className="flex min-h-11 items-center justify-between gap-4">
         <button
           type="button"
           onClick={onBack}
@@ -43,23 +40,18 @@ export function PhoneSignInCard({
           <ArrowLeft size={16} />
           {t('common.back')}
         </button>
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800 text-white shadow-lg shadow-slate-900/20 dark:bg-slate-100 dark:text-slate-900 dark:shadow-none">
-          <Phone size={22} strokeWidth={2.25} />
+        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-800/90 text-white dark:bg-slate-100 dark:text-slate-900 sm:h-11 sm:w-11">
+          <Phone size={20} strokeWidth={2.25} />
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <h2 className="text-xl font-bold leading-tight text-slate-900 dark:text-white">
-          {t('auth.legacyPhoneSignIn')}
-        </h2>
-        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          {t('auth.legacyPhoneSignInHint')}
-        </p>
-      </div>
+      <h2 className="font-brand text-[1.5rem] font-extrabold leading-none tracking-[-0.03em] text-slate-900 dark:text-white sm:text-[1.75rem]">
+        {t('auth.legacyPhoneSignInTitle')}
+      </h2>
 
       {errorSlot}
 
-      <div className="space-y-3.5">
+      <div className="space-y-3 sm:space-y-3.5">
         <Input
           label={t('auth.phone')}
           type="tel"
@@ -68,7 +60,7 @@ export function PhoneSignInCard({
           onChange={(e) => onPhoneChange(e.target.value)}
           placeholder="+1234567890"
           required
-          className="h-12 rounded-xl border-slate-200 bg-slate-50/80 px-3.5 dark:border-slate-600 dark:bg-slate-800/50"
+          className="h-11 rounded-xl border-slate-200/90 bg-white/60 px-3.5 dark:border-slate-600 dark:bg-slate-800/50 sm:h-12"
         />
         <Input
           label={t('auth.password')}
@@ -77,14 +69,14 @@ export function PhoneSignInCard({
           value={password}
           onChange={(e) => onPasswordChange(e.target.value)}
           required
-          className="h-12 rounded-xl border-slate-200 bg-slate-50/80 px-3.5 dark:border-slate-600 dark:bg-slate-800/50"
+          className="h-11 rounded-xl border-slate-200/90 bg-white/60 px-3.5 dark:border-slate-600 dark:bg-slate-800/50 sm:h-12"
         />
       </div>
 
       <Button
         type="submit"
         disabled={loading}
-        className="h-12 w-full rounded-xl text-sm font-bold shadow-lg shadow-primary-600/20"
+        className="h-11 w-full rounded-xl text-sm font-bold shadow-lg shadow-primary-600/20 sm:h-12"
       >
         {loading ? loadingLabel : t('auth.login')}
       </Button>

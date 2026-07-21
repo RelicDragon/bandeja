@@ -7,6 +7,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        brand: ['Outfit', 'system-ui', 'sans-serif'],
+      },
       colors: {
         telegram: '#0088cc',
         whatsapp: '#25D366',
