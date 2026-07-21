@@ -8,7 +8,7 @@ export class LoginPage {
   }
 
   async openPhoneSignIn() {
-    await this.page.getByRole('button', { name: /legacy phone sign-in|phone sign-in|вход по телефону/i }).click();
+    await this.page.getByRole('button', { name: /legacy phone sign-in|sign in with phone|phone sign-in|вход по телефону/i }).click();
   }
 
   async fillPhoneCredentials(phone: string, password: string) {
@@ -29,11 +29,6 @@ export class LoginPage {
     await this.page.getByRole('button', { name: /^login$/i }).click();
     await expect(this.page.getByText(/invalid phone number or password/i)).toBeVisible({ timeout: 15_000 });
     await expect(this.page).toHaveURL(/\/login/);
-  }
-
-  async goToRegister() {
-    await this.page.getByRole('link', { name: /^register$/i }).click();
-    await this.page.waitForURL(/\/register/, { timeout: 15_000 });
   }
 
   async expectPhoneFormVisible() {

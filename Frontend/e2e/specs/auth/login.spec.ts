@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { LoginPage } from '../../pages/login.page';
-import { RegisterPage } from '../../pages/register.page';
 import { getE2eCredentials } from '../../test-user';
 
 const { phone } = getE2eCredentials();
@@ -41,7 +40,7 @@ test.describe('auth login', () => {
     await expect(page.getByText(/if the link does not bring you back/i)).toBeVisible();
     await expect(firstDigit).toBeVisible();
     await expect(page.getByRole('button', { name: /continue with google/i })).toBeHidden();
-    await expect(page.getByRole('button', { name: /legacy phone sign-in/i })).toBeHidden();
+    await expect(page.getByRole('button', { name: /legacy phone sign-in|sign in with phone|phone sign-in/i })).toBeHidden();
     await expect(submitButton).toBeDisabled();
 
     for (const [index, digit] of Array.from('123456').entries()) {
@@ -55,17 +54,30 @@ test.describe('auth login', () => {
     await login.expectMainTabVisible();
   });
 
-  test('A-05 register link', async ({ page }) => {
+  test('A-05 register link hidden', async ({ page }) => {
     const login = new LoginPage(page);
     await login.goto();
-    await login.goToRegister();
-    await new RegisterPage(page).expectLoaded();
+    await expect(page.getByRole('link', { name: /^register$/i })).toHaveCount(0);
+    await expect(page.getByText(/don't have an account/i)).toHaveCount(0);
+  });
+
+  test('A-09a web store download buttons', async ({ page }) => {
+    const login = new LoginPage(page);
+    await login.goto();
+    await expect(page.getByText(/get the app/i)).toBeVisible();
+    const appStore = page.locator('a[href="https://apps.apple.com/app/bandeja/id6756632318"]');
+    const playStore = page.locator(
+      'a[href="https://play.google.com/store/apps/details?id=com.funified.bandeja"]'
+    );
+    await expect(appStore).toBeVisible();
+    await expect(playStore).toBeVisible();
+    await expect(appStore.locator('img')).toBeVisible();
+    await expect(playStore.locator('img')).toBeVisible();
   });
 
   test('A-09 EULA link', async ({ page, context }) => {
     const login = new LoginPage(page);
     await login.goto();
-    await login.openPhoneSignIn();
     const popupPromise = context.waitForEvent('page');
     await page.getByRole('link', { name: /terms of service|eula/i }).click();
     const popup = await popupPromise;

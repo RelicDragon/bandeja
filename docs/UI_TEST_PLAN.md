@@ -189,11 +189,13 @@ Frontend/e2e/
 | A-02 | Invalid credentials | Wrong password | Error message, stay on login |
 | A-03 | Already authenticated | Visit `/login` while logged in | Redirect to `/` |
 | A-04 | Phone tab navigation | Switch main ↔ phone tab | Form visible |
-| A-05 | Register link | Click register | `/register` |
+| A-05 | Register link hidden | Open `/login` | No "Don't have an account? Register" CTA |
 | A-06 | Google OAuth return | `?google_code=` mock exchange | Login success (web) |
 | A-07 | Google OAuth error | `?google_error=` | Error shown |
 | A-08 | Telegram auto-login route | `/login/:telegramKey` | Auto login or error |
 | A-09 | EULA link | Open terms | External/legal page opens |
+| A-09a | Web store download buttons | Open `/login` in browser (not Capacitor) | App Store + Google Play badges visible; links open store pages |
+| A-09b | Cap hides store buttons | Open `/login` inside Capacitor app | Store download badges not shown |
 | A-27 | Android Google login stable session | Capacitor Android: logout → Google sign-in → complete | Lands on My tab; no bounce back to `/login` within 10s |
 | A-28 | Android Telegram login stable session | Capacitor Android: logout → Telegram bot link opens Chrome → tap Open Bandeja app | Native app opens, lands on My tab, and does not return to the browser handoff or `/login` within 10s |
 | A-28a | Android Telegram cold/warm handoff | Repeat A-28 with Bandeja force-stopped, then with Bandeja already running in background | Both launches consume the same custom-scheme route through `getLaunchUrl` / `appUrlOpen`; login completes once |

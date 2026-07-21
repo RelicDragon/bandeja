@@ -2,6 +2,7 @@ import axios from 'axios';
 import { App } from '@capacitor/app';
 import { isCapacitor, getCapacitorPlatform } from '@/utils/capacitor';
 import { resolveNativeApiBaseUrl } from '@/api/apiBaseUrl';
+import { APP_STORE_URL, PLAY_STORE_URL } from '@/utils/appStoreLinks';
 
 export type VersionCheckStatus = 'ok' | 'optional_update' | 'blocking_update';
 
@@ -134,9 +135,9 @@ export class AppVersionService {
 
   static getStoreUrl(platform: string): string {
     if (platform === 'ios') {
-      return 'https://apps.apple.com/app/bandeja/id6756632318';
+      return APP_STORE_URL;
     } else if (platform === 'android') {
-      return 'https://play.google.com/store/apps/details?id=com.funified.bandeja';
+      return PLAY_STORE_URL;
     }
     return '';
   }

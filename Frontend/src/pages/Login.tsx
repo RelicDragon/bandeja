@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '@/layouts/AuthLayout';
-import { Input, Button, OTPInput } from '@/components';
-import { AuthBackHeader } from '@/components/auth';
+import { OTPInput, TelegramIcon } from '@/components';
+import { AppStoreDownloadButtons } from '@/components/AppStoreDownloadButtons';
+import { PhoneSignInCard } from '@/components/auth';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/store/authStore';
 import { config } from '@/config/media';
 import { ArrowLeft, Phone, AlertCircle } from 'lucide-react';
-import { TelegramIcon } from '@/components';
 import { signInWithApple } from '@/services/appleAuth.service';
 import {
   loginWithGoogleCredentials,
@@ -305,7 +305,7 @@ export const Login = () => {
   return (
     <AuthLayout>
       <div className="flex flex-col">
-        <div className="overflow-hidden transition-[height] duration-300 ease-out min-h-[220px]">
+        <div className="overflow-hidden transition-[height] duration-300 ease-out">
           <AnimatePresence initial={false} mode="wait">
             {tab === 'main' && !telegramHint && (
               <motion.div
@@ -357,12 +357,19 @@ export const Login = () => {
                   <TelegramIcon size={20} className="text-white" />
                   <span>{t('auth.telegramLogin')}</span>
                 </button>
+                <div className="flex w-[280px] max-w-full mx-auto items-center gap-3 py-0.5">
+                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-600" />
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    {t('auth.or')}
+                  </span>
+                  <div className="h-px flex-1 bg-slate-200 dark:bg-slate-600" />
+                </div>
                 <button
                   type="button"
                   onClick={() => goToTab('phone')}
-                  className="w-[280px] max-w-full mx-auto h-11 flex items-center justify-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-700/60 rounded-xl transition-all"
+                  className={`${btnBase} bg-white/70 dark:bg-slate-800/60 text-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-600 hover:border-slate-300 dark:hover:border-slate-500 hover:bg-white dark:hover:bg-slate-800`}
                 >
-                  <Phone size={16} />
+                  <Phone size={18} strokeWidth={2.25} className="text-slate-500 dark:text-slate-300" />
                   <span>{t('auth.legacyPhoneSignIn')}</span>
                 </button>
               </motion.div>
@@ -436,48 +443,31 @@ export const Login = () => {
             {tab === 'phone' && (
               <motion.div
                 key="phone"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
               >
-                <AuthBackHeader title={t('auth.legacyPhoneSignIn')} onBack={handleBack} backLabel={t('common.back')} />
-                {error && <ErrorBanner error={error} />}
-                <form onSubmit={handlePhoneLogin} className="space-y-5">
-                  <Input
-                    label={t('auth.phone')}
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1234567890"
-                    required
-                  />
-                  <Input
-                    label={t('auth.password')}
-                    type="password"
-                    autoComplete="current-password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                  <Button type="submit" disabled={loading} className="w-[280px] max-w-full mx-auto h-12">
-                    {loading ? loadingSpinner : t('auth.login')}
-                  </Button>
-                </form>
+                <PhoneSignInCard
+                  phone={phone}
+                  password={password}
+                  loading={loading}
+                  loadingLabel={loadingSpinner}
+                  errorSlot={error ? <ErrorBanner error={error} /> : undefined}
+                  onPhoneChange={setPhone}
+                  onPasswordChange={setPassword}
+                  onBack={handleBack}
+                  onSubmit={handlePhoneLogin}
+                />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {!isTelegramOtpMode && (
+        {!isTelegramOtpMode && tab === 'main' && (
           <>
-            <p className="mt-4 text-center text-sm text-slate-600 dark:text-slate-400 shrink-0">
-              {t('auth.noAccount')}{' '}
-              <Link to="/register" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
-                {t('auth.register')}
-              </Link>
-            </p>
-            <p className="mt-4 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400 shrink-0">
+            {isWeb && <AppStoreDownloadButtons className="mt-3" />}
+            <p className="mt-3 text-center text-xs leading-relaxed text-slate-500 dark:text-slate-400 shrink-0">
               {t('auth.byContinuing') || 'By continuing, you agree to our'}{' '}
               <br />
               <a
@@ -495,7 +485,7 @@ export const Login = () => {
             </p>
           </>
         )}
-        {appVersion && !isTelegramOtpMode && (
+        {appVersion && !isTelegramOtpMode && tab === 'main' && (
           <p className="mt-3 text-center text-xs text-slate-500 dark:text-slate-400">
             App Version: {appVersion.version} (Build {appVersion.buildNumber})
           </p>
@@ -512,7 +502,7 @@ function ErrorBanner({ error }: { error: string }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }}
-      className="flex items-center gap-3 mb-6 p-4 bg-red-50 dark:bg-red-950/50 border-2 border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 rounded-xl"
+      className="flex items-center gap-3 p-3.5 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 rounded-xl"
     >
       <AlertCircle size={18} className="shrink-0" />
       <span className="text-sm font-medium">{error}</span>

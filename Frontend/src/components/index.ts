@@ -69,6 +69,7 @@ export * from './RefreshIndicator';
 export * from './AddToCalendar';
 export * from './AppVersionModal';
 export * from './AppleIcon';
+export * from './AppStoreDownloadButtons';
 export * from './TelegramIcon';
 export * from './WhatsAppIcon';
 export * from './ViberIcon';
