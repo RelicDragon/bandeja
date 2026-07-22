@@ -7,10 +7,10 @@ export const DEFAULT_API_RATE_LIMIT_MAX_PRODUCTION = 3000;
 export const DEFAULT_API_RATE_LIMIT_MAX_DEVELOPMENT = 10000;
 
 /**
- * Substrings matched against `req.path` (mount-stripped under `/api/`) or `originalUrl`.
- * Auth login/register keep dedicated limiters — do not skip them here.
+ * Pathname prefixes matched against mount-stripped `req.path` under `/api/`
+ * (no query string). Auth login/register keep dedicated limiters — do not skip them here.
  */
-export const DEFAULT_API_RATE_LIMIT_SKIP_SUBSTRINGS = [
+export const DEFAULT_API_RATE_LIMIT_SKIP_PATH_PREFIXES = [
   '/logs/stream',
   '/auth/refresh',
   '/chat/sync/',
@@ -21,7 +21,7 @@ export const DEFAULT_API_RATE_LIMIT_SKIP_SUBSTRINGS = [
 export type ApiRateLimitConfig = {
   windowMs: number;
   max: number;
-  skipPathSubstrings: string[];
+  skipPathPrefixes: string[];
 };
 
 function parsePositiveInt(raw: string | undefined, fallback: number): number {
@@ -30,9 +30,9 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-function parseSkipSubstrings(raw: string | undefined): string[] {
+function parseSkipPathPrefixes(raw: string | undefined): string[] {
   if (raw == null) {
-    return [...DEFAULT_API_RATE_LIMIT_SKIP_SUBSTRINGS];
+    return [...DEFAULT_API_RATE_LIMIT_SKIP_PATH_PREFIXES];
   }
   return raw
     .split(',')
@@ -44,7 +44,8 @@ export function resolveApiRateLimitConfig(input: {
   nodeEnv: string;
   windowMsEnv?: string;
   maxEnv?: string;
-  skipPathSubstringsEnv?: string;
+  /** Comma-separated pathname prefixes (matched at start of `req.path` only). */
+  skipPathPrefixesEnv?: string;
 }): ApiRateLimitConfig {
   const defaultMax =
     input.nodeEnv === 'production'
@@ -54,14 +55,29 @@ export function resolveApiRateLimitConfig(input: {
   return {
     windowMs: parsePositiveInt(input.windowMsEnv, DEFAULT_API_RATE_LIMIT_WINDOW_MS),
     max: parsePositiveInt(input.maxEnv, defaultMax),
-    skipPathSubstrings: parseSkipSubstrings(input.skipPathSubstringsEnv),
+    skipPathPrefixes: parseSkipPathPrefixes(input.skipPathPrefixesEnv),
   };
 }
 
+/** Strip query/hash so skip rules cannot be poisoned via `?…=/chat/sync/`. */
+export function rateLimitPathname(pathOrUrl: string): string {
+  const raw = pathOrUrl || '';
+  const noHash = raw.split('#')[0] ?? '';
+  return noHash.split('?')[0] ?? '';
+}
+
+/**
+ * True when pathname equals a skip prefix or starts with it.
+ * Matching is anchored at the start of the path (not an arbitrary substring).
+ */
 export function shouldSkipApiRateLimit(
   pathOrUrl: string,
-  skipPathSubstrings: readonly string[]
+  skipPathPrefixes: readonly string[]
 ): boolean {
-  const p = pathOrUrl || '';
-  return skipPathSubstrings.some((s) => s.length > 0 && p.includes(s));
+  const pathname = rateLimitPathname(pathOrUrl);
+  if (!pathname) return false;
+  return skipPathPrefixes.some((prefix) => {
+    if (!prefix) return false;
+    return pathname === prefix || pathname.startsWith(prefix);
+  });
 }

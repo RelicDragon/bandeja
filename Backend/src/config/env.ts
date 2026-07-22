@@ -171,7 +171,7 @@ export const config = {
     nodeEnv: process.env.NODE_ENV || 'development',
     windowMsEnv: process.env.RATE_LIMIT_WINDOW_MS,
     maxEnv: process.env.RATE_LIMIT_MAX,
-    skipPathSubstringsEnv: process.env.RATE_LIMIT_SKIP_PATH_SUBSTRINGS,
+    skipPathPrefixesEnv: process.env.RATE_LIMIT_SKIP_PATH_PREFIXES,
   }),
 };
 

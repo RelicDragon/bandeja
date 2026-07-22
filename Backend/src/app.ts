@@ -110,14 +110,18 @@ if (config.nodeEnv === 'development') {
 
 const limiter = rateLimit({
   windowMs: config.apiRateLimit.windowMs,
-  max: config.apiRateLimit.max,
-  message: 'Too many requests from this IP, please try again later.',
-  standardHeaders: true,
+  limit: config.apiRateLimit.max,
+  standardHeaders: 'draft-8',
   legacyHeaders: false,
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again later.',
+    code: 'rateLimit.global',
+  },
   keyGenerator: (req) => rateLimitKeyFromRequest(req),
+  // Mount-stripped pathname only — never originalUrl (query can embed skip prefixes).
   skip: (req) =>
-    shouldSkipApiRateLimit(req.path || '', config.apiRateLimit.skipPathSubstrings) ||
-    shouldSkipApiRateLimit(req.originalUrl || '', config.apiRateLimit.skipPathSubstrings),
+    shouldSkipApiRateLimit(req.path || '', config.apiRateLimit.skipPathPrefixes),
 });
 
 app.use('/api/', limiter);
