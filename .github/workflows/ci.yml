@@ -26,6 +26,10 @@ jobs:
       - run: npx prisma generate
       - run: npm run lint
       - run: npm run test:security
+        env:
+          # Suite imports route modules that construct PrismaClient; no DB queries.
+          DB_URL: postgresql://ci:ci@127.0.0.1:5432/ci_security
+          JWT_SECRET: ci-security-test-secret-min-32-chars!!
       - run: npm run build
 
   frontend:
