@@ -61,7 +61,11 @@ const DialogContent = React.forwardRef<
   }
 >(({ className, showCloseButton = true, closeOnInteractOutside = true, ignoreOutsideClickSelector, children, ...props }, ref) => {
   const preventOutside = !closeOnInteractOutside
-    ? { onInteractOutside: (e: Event) => e.preventDefault(), onPointerDownOutside: (e: Event) => e.preventDefault() }
+    ? {
+        onInteractOutside: (e: Event) => e.preventDefault(),
+        onPointerDownOutside: (e: Event) => e.preventDefault(),
+        onFocusOutside: (e: Event) => e.preventDefault(),
+      }
     : ignoreOutsideClickSelector
       ? {
           onInteractOutside: (e: Event) => {
@@ -69,7 +73,10 @@ const DialogContent = React.forwardRef<
           },
           onPointerDownOutside: (e: Event) => {
             if ((e.target as Element).closest?.(ignoreOutsideClickSelector)) e.preventDefault();
-          }
+          },
+          onFocusOutside: (e: Event) => {
+            if ((e.target as Element).closest?.(ignoreOutsideClickSelector)) e.preventDefault();
+          },
         }
       : {};
   return (

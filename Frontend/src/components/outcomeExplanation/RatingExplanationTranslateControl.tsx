@@ -65,7 +65,7 @@ export function RatingExplanationTranslateControl({
 
   useEffect(() => {
     if (!open) return;
-    const onPointerDown = (event: MouseEvent) => {
+    const onPointerDown = (event: PointerEvent) => {
       const target = event.target as Node;
       if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return;
       setOpen(false);
@@ -73,10 +73,11 @@ export function RatingExplanationTranslateControl({
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
     };
-    document.addEventListener('mousedown', onPointerDown);
+    // Bubble phase so option handlers run first; avoid competing with Radix dismiss layer.
+    document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
     return () => {
-      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [open]);
@@ -129,8 +130,10 @@ export function RatingExplanationTranslateControl({
               right: menuPos.right,
               maxHeight: menuPos.maxHeight,
             }}
-            className="z-[80] w-56 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl shadow-slate-900/10 animate-in fade-in zoom-in-95 duration-150"
+            className="z-[20000] w-56 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl shadow-slate-900/10 animate-in fade-in zoom-in-95 duration-150 pointer-events-auto"
             data-rating-explanation-lang-menu
+            onWheel={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
           >
             {TRANSLATION_LANGUAGES.map((lang) => {
               const selected = lang.code === activeLanguage;
@@ -141,7 +144,13 @@ export function RatingExplanationTranslateControl({
                   type="button"
                   role="option"
                   aria-selected={selected}
-                  onClick={() => handleSelect(lang.code)}
+                  // Select on pointerdown (same as Select.tsx) so Radix dialog
+                  // focus/outside dismiss cannot swallow the click.
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleSelect(lang.code);
+                  }}
                   className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors first:rounded-t-2xl last:rounded-b-2xl ${
                     selected
                       ? 'bg-emerald-50 dark:bg-emerald-950/45 text-slate-900 dark:text-slate-50'
