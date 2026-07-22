@@ -3,7 +3,8 @@ import type { Club } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { BooktimeConnectForm } from './BooktimeConnectForm';
 import { PadelooConnectForm } from './PadelooConnectForm';
-import { isBooktimeClub, isPadelooClub } from '@shared/clubIntegration';
+import { KlikterenConnectForm } from './KlikterenConnectForm';
+import { isBooktimeClub, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
 
 export type BooktimeIntegrationConfig = {
   companyId: string;
@@ -27,21 +28,32 @@ export function ConnectClubSheet({
   onConnected,
 }: ConnectClubSheetProps) {
   const { t } = useTranslation();
-  const providerKey = isPadelooClub(club) ? 'padeloo' : 'booktime';
+  const providerKey = isKlikterenClub(club) ? 'klikteren' : isPadelooClub(club) ? 'padeloo' : 'booktime';
 
   return (
     <Dialog open={open} onClose={() => onOpenChange(false)} modalId={`${providerKey}-connect-${club.id}`}>
       <DialogContent className="max-w-md max-h-[min(90vh,640px)] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>
-            {isPadelooClub(club)
+            {isKlikterenClub(club)
+              ? t('club.klikteren.connectTitle', { club: club.name, defaultValue: `Connect ${club.name}` })
+              : isPadelooClub(club)
               ? t('club.padeloo.connectTitle', { club: club.name, defaultValue: `Connect ${club.name}` })
               : t('club.booktime.connectTitle', { club: club.name })}
           </DialogTitle>
         </DialogHeader>
 
         <div className="px-6 pb-6 overflow-y-auto flex-1 min-h-0">
-          {isPadelooClub(club) ? (
+          {isKlikterenClub(club) ? (
+            <KlikterenConnectForm
+              club={club}
+              onConnected={() => {
+                onConnected?.();
+                onOpenChange(false);
+              }}
+              variant="dialog"
+            />
+          ) : isPadelooClub(club) ? (
             <PadelooConnectForm
               club={club}
               onConnected={() => {

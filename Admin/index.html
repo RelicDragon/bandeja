@@ -1027,6 +1027,7 @@
                         <option value="">None</option>
                         <option value="BOOKTIME">Online booking (Booktime)</option>
                         <option value="PADELOO">Online booking (Padeloo)</option>
+                        <option value="KLIKTEREN">Online booking (Klikteren)</option>
                     </select>
                     <div id="centerBooktimeFields" style="display: none; margin-top: 12px;">
                         <label for="centerBooktimeCompanyId">Booking provider company ID *</label>
@@ -1035,6 +1036,10 @@
                     <div id="centerPadelooFields" style="display: none; margin-top: 12px;">
                         <label for="centerPadelooClubId">Padeloo club ID *</label>
                         <input type="number" id="centerPadelooClubId" placeholder="e.g. 2" min="1" step="1" autocomplete="off" />
+                    </div>
+                    <div id="centerKlikterenFields" style="display: none; margin-top: 12px;">
+                        <label for="centerKlikterenVenueId">Klikteren venue ID *</label>
+                        <input type="text" id="centerKlikterenVenueId" placeholder="UUID" autocomplete="off" />
                     </div>
                 </div>
                 <div class="modal-actions">

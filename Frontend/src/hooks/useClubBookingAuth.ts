@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { booktimeApi, type BooktimeAuthStatus } from '@/api/booktime';
 import { padelooApi, type PadelooAuthStatus } from '@/api/padeloo';
-import { isBooktimeClub, isPadelooClub, type ClubIntegrationRef } from '@shared/clubIntegration';
+import { klikterenApi, type KlikterenAuthStatus } from '@/api/klikteren';
+import { isBooktimeClub, isKlikterenClub, isPadelooClub, type ClubIntegrationRef } from '@shared/clubIntegration';
 
 export type ClubBookingAuthStatus = {
   connected: boolean;
@@ -11,7 +12,7 @@ export type ClubBookingAuthStatus = {
   lastName?: string | null;
   externalUserId?: string | null;
   scoutOptIn?: boolean;
-  integrationType?: 'BOOKTIME' | 'PADELOO';
+  integrationType?: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN';
 };
 
 function mapBooktimeStatus(status: BooktimeAuthStatus): ClubBookingAuthStatus {
@@ -38,6 +39,18 @@ function mapPadelooStatus(status: PadelooAuthStatus): ClubBookingAuthStatus {
   };
 }
 
+function mapKlikterenStatus(status: KlikterenAuthStatus): ClubBookingAuthStatus {
+  return {
+    connected: status.connected,
+    email: status.email,
+    firstName: status.firstName,
+    lastName: status.lastName,
+    externalUserId: status.externalUserId,
+    scoutOptIn: status.scoutOptIn,
+    integrationType: 'KLIKTEREN',
+  };
+}
+
 export function useClubBookingAuth(club: (ClubIntegrationRef & { id: string }) | undefined, enabled: boolean) {
   const clubId = club?.id;
   const [status, setStatus] = useState<ClubBookingAuthStatus | null>(null);
@@ -52,6 +65,22 @@ export function useClubBookingAuth(club: (ClubIntegrationRef & { id: string }) |
     setStatus(null);
     setLoading(true);
     try {
+      if (isKlikterenClub(club)) {
+        const res = await klikterenApi.getAuth(clubId);
+        const next = mapKlikterenStatus(
+          res.data ?? {
+            connected: false,
+            email: null,
+            firstName: null,
+            lastName: null,
+            externalUserId: null,
+            scoutOptIn: true,
+          },
+        );
+        setStatus(next);
+        return next;
+      }
+
       if (isPadelooClub(club)) {
         const res = await padelooApi.getAuth(clubId);
         const next = mapPadelooStatus(

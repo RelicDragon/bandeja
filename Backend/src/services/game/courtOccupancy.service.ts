@@ -194,7 +194,8 @@ async function queryExternalBlocks(
 
   if (
     club?.integrationType !== ClubIntegrationType.BOOKTIME &&
-    club?.integrationType !== ClubIntegrationType.PADELOO
+    club?.integrationType !== ClubIntegrationType.PADELOO &&
+    club?.integrationType !== ClubIntegrationType.KLIKTEREN
   ) {
     return { blocks: [], isLoadingExternalSlots: false };
   }

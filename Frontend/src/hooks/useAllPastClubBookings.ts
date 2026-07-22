@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
 import { connectedClubRowToBooktimeRow } from '@/hooks/connectedBookingClubs';
 import type { PadelooMyClubRow } from '@/api/padeloo';
+import type { KlikterenMyClubRow } from '@/api/klikteren';
 import { useBooktimeAllPast } from '@/hooks/useBooktimeAllPast';
 import { loadPadelooPastForClubs } from '@/integrations/padeloo/padelooAllPastLoader';
+import { loadKlikterenPastForClubs } from '@/integrations/klikteren/klikterenAllPastLoader';
 import { booktimeBookingStartMs } from '@/integrations/booktime/localTime';
 
 export type AggregatedPastClubBooking = {
@@ -12,7 +14,7 @@ export type AggregatedPastClubBooking = {
   bookingEnd: string;
   clubId: string;
   clubName: string;
-  integrationType: 'BOOKTIME' | 'PADELOO';
+  integrationType: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN';
   price?: number;
   status?: string;
   bookingResourceId?: string;
@@ -34,6 +36,22 @@ function toPadelooRows(clubs: ConnectedBookingClubRow[]): PadelooMyClubRow[] {
     }));
 }
 
+function toKlikterenRows(clubs: ConnectedBookingClubRow[]): KlikterenMyClubRow[] {
+  return clubs
+    .filter((club) => club.integrationType === 'KLIKTEREN' && club.connected && club.klikterenVenueId)
+    .map((club) => ({
+      clubId: club.clubId,
+      clubName: club.clubName,
+      avatar: club.avatar,
+      klikterenVenueId: club.klikterenVenueId ?? null,
+      connected: club.connected,
+      email: club.email ?? null,
+      scoutOptIn: club.scoutOptIn,
+      cityTimezone: club.cityTimezone,
+      courts: club.courts,
+    }));
+}
+
 export function useAllPastClubBookings(
   clubs: ConnectedBookingClubRow[],
   enabled: boolean,
@@ -47,6 +65,7 @@ export function useAllPastClubBookings(
     [clubs],
   );
   const padelooRows = useMemo(() => toPadelooRows(clubs), [clubs]);
+  const klikterenRows = useMemo(() => toKlikterenRows(clubs), [clubs]);
   const { bookings: booktimePast, loading: booktimeLoading } = useBooktimeAllPast(
     booktimeRows,
     enabled && booktimeRows.length > 0,
@@ -54,6 +73,8 @@ export function useAllPastClubBookings(
   );
   const [padelooPast, setPadelooPast] = useState<AggregatedPastClubBooking[]>([]);
   const [padelooLoading, setPadelooLoading] = useState(false);
+  const [klikterenPast, setKlikterenPast] = useState<AggregatedPastClubBooking[]>([]);
+  const [klikterenLoading, setKlikterenLoading] = useState(false);
 
   const reloadPadeloo = useCallback(async () => {
     if (!enabled || padelooRows.length === 0) {
@@ -86,6 +107,37 @@ export function useAllPastClubBookings(
     void reloadPadeloo();
   }, [reloadPadeloo, refreshKey]);
 
+  const reloadKlikteren = useCallback(async () => {
+    if (!enabled || klikterenRows.length === 0) {
+      setKlikterenPast([]);
+      setKlikterenLoading(false);
+      return;
+    }
+    setKlikterenLoading(true);
+    try {
+      const rows = await loadKlikterenPastForClubs(klikterenRows);
+      setKlikterenPast(
+        rows.map((row) => ({
+          uuid: row.uuid,
+          bookingStart: row.bookingStart,
+          bookingEnd: row.bookingEnd,
+          clubId: row.clubId,
+          clubName: row.clubName,
+          integrationType: 'KLIKTEREN' as const,
+          price: row.price,
+          status: row.status,
+          bookingResourceId: row.bookingResourceId,
+        })),
+      );
+    } finally {
+      setKlikterenLoading(false);
+    }
+  }, [enabled, klikterenRows]);
+
+  useEffect(() => {
+    void reloadKlikteren();
+  }, [reloadKlikteren, refreshKey]);
+
   const bookings = useMemo(() => {
     const merged: AggregatedPastClubBooking[] = [
       ...booktimePast.map((row) => ({
@@ -100,13 +152,14 @@ export function useAllPastClubBookings(
         bookingResourceId: row.bookingResourceId,
       })),
       ...padelooPast,
+      ...klikterenPast,
     ];
     merged.sort((a, b) => booktimeBookingStartMs(b.bookingStart) - booktimeBookingStartMs(a.bookingStart));
     return merged;
-  }, [booktimePast, padelooPast]);
+  }, [booktimePast, padelooPast, klikterenPast]);
 
   return {
     bookings,
-    loading: booktimeLoading || padelooLoading,
+    loading: booktimeLoading || padelooLoading || klikterenLoading,
   };
 }

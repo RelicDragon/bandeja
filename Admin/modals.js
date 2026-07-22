@@ -264,6 +264,7 @@ async function editCenterModal(center) {
         : {};
     document.getElementById('centerBooktimeCompanyId').value = config.companyId || '';
     document.getElementById('centerPadelooClubId').value = config.clubId != null ? String(config.clubId) : '';
+    document.getElementById('centerKlikterenVenueId').value = config.venueId || '';
     toggleCenterIntegrationFields();
     await loadClubAdminsForCenter(center.id);
 }
@@ -272,11 +273,15 @@ function toggleCenterIntegrationFields() {
     const type = document.getElementById('centerIntegrationType')?.value || '';
     const booktimeFields = document.getElementById('centerBooktimeFields');
     const padelooFields = document.getElementById('centerPadelooFields');
+    const klikterenFields = document.getElementById('centerKlikterenFields');
     if (booktimeFields) {
         booktimeFields.style.display = type === 'BOOKTIME' ? 'block' : 'none';
     }
     if (padelooFields) {
         padelooFields.style.display = type === 'PADELOO' ? 'block' : 'none';
+    }
+    if (klikterenFields) {
+        klikterenFields.style.display = type === 'KLIKTEREN' ? 'block' : 'none';
     }
 }
 
@@ -304,6 +309,16 @@ function readCenterIntegrationPayload() {
         return {
             integrationType: 'PADELOO',
             integrationConfig: { clubId },
+        };
+    }
+    if (type === 'KLIKTEREN') {
+        const venueId = document.getElementById('centerKlikterenVenueId')?.value?.trim() || '';
+        if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(venueId)) {
+            throw new Error('Klikteren venue ID must be a UUID');
+        }
+        return {
+            integrationType: 'KLIKTEREN',
+            integrationConfig: { venueId },
         };
     }
     throw new Error('Unsupported integration type');

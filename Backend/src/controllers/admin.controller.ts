@@ -18,6 +18,7 @@ import { AdminMassNotificationService } from '../services/admin/massNotification
 import { ClubAdminAssignmentService } from '../services/admin/clubAdminAssignment.service';
 import { BooktimeImportCourtsService } from '../services/admin/booktimeImportCourts.service';
 import { PadelooImportCourtsService } from '../services/admin/padelooImportCourts.service';
+import { KlikterenImportCourtsService } from '../services/admin/klikterenImportCourts.service';
 import { AdminTranslationQueueStatsService } from '../services/admin/translationQueueStats.service';
 import { AdminGameResultsArtifactQueueStatsService } from '../services/admin/gameResultsArtifactQueueStats.service';
 import { ReplicatePhotoModelSettingService } from '../services/replicate/replicatePhotoModelSetting.service';
@@ -452,6 +453,11 @@ export const importBooktimeCourts = asyncHandler(async (req: AuthRequest, res: R
 
 export const importPadelooCourts = asyncHandler(async (req: AuthRequest, res: Response) => {
   const data = await PadelooImportCourtsService.applyImport(req.params.clubId, req.body ?? {});
+  res.json({ success: true, data });
+});
+
+export const importKlikterenCourts = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const data = await KlikterenImportCourtsService.applyImport(req.params.clubId, req.body ?? {});
   res.json({ success: true, data });
 });
 

@@ -58,6 +58,7 @@ import {
   removeClubAdmin,
   importBooktimeCourts,
   importPadelooCourts,
+  importKlikterenCourts,
   getReplicatePhotoModel,
   setReplicatePhotoModel,
 } from '../controllers/admin.controller';
@@ -123,6 +124,7 @@ router.delete('/clubs/:clubId/admins/:userId', requireAdmin, removeClubAdmin);
 
 router.post('/clubs/:clubId/booktime/import-courts', requireAdmin, importBooktimeCourts);
 router.post('/clubs/:clubId/padeloo/import-courts', requireAdmin, importPadelooCourts);
+router.post('/clubs/:clubId/klikteren/import-courts', requireAdmin, importKlikterenCourts);
 
 router.get('/courts', requireAdmin, getAllCourts);
 router.post('/courts', requireAdmin, createCourt);

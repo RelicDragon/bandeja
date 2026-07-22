@@ -95,8 +95,8 @@ These are surprising, load-bearing choices still true in code:
 | **Create templates ≠ league/playoff formats** | Casual create uses the template registry (`createFlow` / `@shared/createTemplates`). League seasons and playoffs use separate wizards/seeds (`playoffTemplates`, `PLAYOFF_GAME_TYPE_TEMPLATES`). Do not add `league`/`playoff` template tiers. |
 | **Template matrix source of truth** | FE + `@shared/createTemplates` define templates; FE/BE parity via `createTemplates.parity.test.ts` / sport flow verify tests. Do not maintain a separate matrix markdown. |
 | **Sport level confirmation** | Per-sport on `UserSportProfile.approved*`. Legacy `User.approved*` is a **PADEL-only** denormalized mirror for older clients — not a primary-sport projection. Non-padel confirmation lives only on the sport profile. |
-| **Court occupancy** | FE owns external snapshot refresh; BE returns merged occupancy blocks (app games + admin holds + external busy). Snapshot freshness: `BOOKTIME_SNAPSHOT_FRESH_MS` (60s) — shared constant used for Booktime/Padeloo snapshot staleness. |
-| **External booking** | Provider ports in `@shared/booking/` with adapters for **Booktime** and **Padeloo** (`ClubIntegrationType`). Separate persistence: `ClubBooktimeBusySnapshot` / `UserClubBooktimeAuth` vs `ClubPadelooBusySnapshot` / `UserClubPadelooAuth`. Shared freshness constant `BOOKTIME_SNAPSHOT_FRESH_MS` (60s). |
+| **Court occupancy** | FE owns external snapshot refresh; BE returns merged occupancy blocks (app games + admin holds + external busy). Snapshot freshness: `BOOKTIME_SNAPSHOT_FRESH_MS` (60s) — shared constant used for Booktime/Padeloo/Klikteren snapshot staleness. |
+| **External booking** | Provider ports in `@shared/booking/` with adapters for **Booktime**, **Padeloo**, and **Klikteren** (`ClubIntegrationType`). Separate persistence per provider (`UserClub*Auth` + `Club*BusySnapshot`). Shared freshness constant `BOOKTIME_SNAPSHOT_FRESH_MS` (60s). |
 | **Open chat thread** | Live projection module (`threadLiveProjection`) — inbox can update while an open thread must still apply inbound + read-receipt paths without requiring refresh. Bootstrap invariants live in `Frontend/src/services/chat/threadOpen/types.ts`. |
 
 ### 2.3 Shared packages & modules
@@ -250,7 +250,7 @@ Instagram-style ephemeral content at top of Home:
 
 Three optional panels — Bookings, Teams, Leagues — with counts:
 
-**Bookings** (Booktime / Padeloo):
+**Bookings** (Booktime / Padeloo / Klikteren):
 - Upcoming club booking cards (up to 3 + "See all")
 - Adjacent same-court slot grouping
 - Linked game chips, occupancy % pills
@@ -305,7 +305,7 @@ Not a top-level route — embedded in city picker, Find header, and create-game 
 Opened from city picker, Find/create club modals, or club info links:
 
 - Address, city line, coordinates, **mini map** (`ClubMiniMap`), open in Maps link
-- **Availability grid** for BOOKTIME/PADELOO-integrated clubs (free slots, duration toggle, last-sync time)
+- **Availability grid** for BOOKTIME/PADELOO/KLIKTEREN-integrated clubs (free slots, duration toggle, last-sync time)
 - Connect-club banner + OTP flow when not linked
 - Browse slots → navigate to create-game with prefilled club/court/time
 - **Club reviews** section (see §6.3)
@@ -414,9 +414,9 @@ Multi-step wizard for scheduling events. Entity types:
 - Invite players from list (level filter, availability icons)
 - Floating summary chip bar when scrolling past filled sections
 
-### 8.3 External booking (Booktime / Padeloo)
+### 8.3 External booking (Booktime / Padeloo / Klikteren)
 
-When club has BOOKTIME or PADELOO integration:
+When club has BOOKTIME, PADELOO, or KLIKTEREN integration:
 
 - Unified **location & time** panel: club → date → court → reservation card → auth/duration → time
 - Connect via phone OTP inline or from club detail
@@ -812,11 +812,11 @@ Creator is excluded from their own game's subscription notifications.
 
 ## 18. Connected clubs & external booking (`/profile/connected-clubs`)
 
-External court booking via club `integrationType`: **BOOKTIME** or **PADELOO** (provider ports in `@shared/booking/`; FE adapters under `integrations/booktime` and `integrations/padeloo`).
+External court booking via club `integrationType`: **BOOKTIME**, **PADELOO**, or **KLIKTEREN** (provider ports in `@shared/booking/`; FE adapters under `integrations/booktime`, `integrations/padeloo`, `integrations/klikteren`).
 
 ### 18.1 Bookings tab
 
-- View linked club bookings (upcoming and past) for connected Booktime/Padeloo clubs
+- View linked club bookings (upcoming and past) for connected Booktime/Padeloo/Klikteren clubs
 - Past booking: link to game, expand actions
 - Cancel booking (policy confirm)
 - Timezone display uses club city TZ
@@ -824,7 +824,7 @@ External court booking via club `integrationType`: **BOOKTIME** or **PADELOO** (
 
 ### 18.2 Integrations tab
 
-- Connect/disconnect clubs (Booktime: phone OTP; Padeloo: provider session/auth for that club)
+- Connect/disconnect clubs (Booktime: phone OTP; Padeloo: email OTP; Klikteren: email+password)
 - New user signup flow during connect where applicable
 - Dismiss connect hints
 - Link bookings to games from My tab or create-game
@@ -1021,7 +1021,7 @@ Plain JS ops dashboard (no build step). Sections:
 | **Games** | Browse, manage games |
 | **Invites** | Invite management |
 | **Cities** | City CRUD |
-| **Clubs** | Club CRUD, courts, **online booking integration type** (Booktime / Padeloo), **court import**, **court web camera URL** |
+| **Clubs** | Club CRUD, courts, **online booking integration type** (Booktime / Padeloo / Klikteren), **court import**, **court web camera URL** |
 | **Reports** | Message and story comment reports |
 | **App Versions** | Force/minimum version config |
 | **Platform Settings** | Translation queue, results artifacts settings (incl. Replicate photo model picker) |
@@ -1196,7 +1196,7 @@ Each sport in the registry defines:
 | Siri / App Intents | — | ✓ | — | — | — | — |
 | Android dynamic shortcuts | — | — | ✓ | — | — | — |
 | Offline chat (IndexedDB outbox) | ✓ | ✓ | ✓ | — | — | — |
-| External booking (Booktime / Padeloo) | ✓ | ✓ | ✓ | — | — | import courts |
+| External booking (Booktime / Padeloo / Klikteren) | ✓ | ✓ | ✓ | — | — | import courts |
 | Deep links (Capacitor `appUrlOpen`) | — | ✓ | ✓ | — | login key | — |
 | Hardware back button | browser back | ✓ | ✓ | — | — | — |
 | Keyboard-aware dialogs/drawers | mobile web | ✓ | ✓ | — | — | — |

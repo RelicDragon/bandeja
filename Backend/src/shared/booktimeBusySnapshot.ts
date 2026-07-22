@@ -120,10 +120,15 @@ export async function getSnapshotFreshness(
           where: { clubId, date: { in: dates } },
           select: { date: true, fetchedAt: true },
         })
-      : await prisma.clubBooktimeBusySnapshot.findMany({
-          where: { clubId, date: { in: dates } },
-          select: { date: true, fetchedAt: true },
-        });
+      : integrationType === ClubIntegrationType.KLIKTEREN
+        ? await prisma.clubKlikterenBusySnapshot.findMany({
+            where: { clubId, date: { in: dates } },
+            select: { date: true, fetchedAt: true },
+          })
+        : await prisma.clubBooktimeBusySnapshot.findMany({
+            where: { clubId, date: { in: dates } },
+            select: { date: true, fetchedAt: true },
+          });
 
   const fetchedAtByDate = new Map<string, Date>();
   for (const row of rows) {
@@ -227,15 +232,25 @@ export async function loadMergedBusySlots(options: {
             court: { select: { id: true, name: true, integrationCourtName: true } },
           },
         })
-      : await prisma.clubBooktimeBusySnapshot.findMany({
-          where: {
-            clubId,
-            date: { in: dates.length > 0 ? dates : ['__none__'] },
-          },
-          include: {
-            court: { select: { id: true, name: true, integrationCourtName: true } },
-          },
-        });
+      : integrationType === ClubIntegrationType.KLIKTEREN
+        ? await prisma.clubKlikterenBusySnapshot.findMany({
+            where: {
+              clubId,
+              date: { in: dates.length > 0 ? dates : ['__none__'] },
+            },
+            include: {
+              court: { select: { id: true, name: true, integrationCourtName: true } },
+            },
+          })
+        : await prisma.clubBooktimeBusySnapshot.findMany({
+            where: {
+              clubId,
+              date: { in: dates.length > 0 ? dates : ['__none__'] },
+            },
+            include: {
+              court: { select: { id: true, name: true, integrationCourtName: true } },
+            },
+          });
 
   const slots: MergedBusySlot[] = [];
 

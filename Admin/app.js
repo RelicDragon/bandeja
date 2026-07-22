@@ -1022,11 +1022,13 @@ async function viewCenterCourts(centerId) {
     const importBtn = document.getElementById('importBooktimeCourtsBtn');
     if (importBtn) {
         importBtn.style.display =
-            center.integrationType === 'BOOKTIME' || center.integrationType === 'PADELOO'
+            center.integrationType === 'BOOKTIME' || center.integrationType === 'PADELOO' || center.integrationType === 'KLIKTEREN'
                 ? 'inline-block'
                 : 'none';
         importBtn.textContent =
-            center.integrationType === 'PADELOO' ? 'Import Padeloo courts' : 'Import booking courts';
+            center.integrationType === 'PADELOO' ? 'Import Padeloo courts'
+            : center.integrationType === 'KLIKTEREN' ? 'Import Klikteren courts'
+            : 'Import booking courts';
     }
     loadCourtsForCenter(center.id);
 }
@@ -1101,6 +1103,10 @@ async function importBooktimeCourtsForCenter() {
     }
     if (currentCenter.integrationType === 'PADELOO') {
         await importPadelooCourtsForCenter();
+        return;
+    }
+    if (currentCenter.integrationType === 'KLIKTEREN') {
+        await importKlikterenCourtsForCenter();
         return;
     }
     const config = currentCenter.integrationConfig && typeof currentCenter.integrationConfig === 'object'
@@ -1180,6 +1186,45 @@ async function importPadelooCourtsForCenter() {
         const response = await apiRequest(`/admin/clubs/${currentCenter.id}/padeloo/import-courts`, {
             method: 'POST',
             body: JSON.stringify(payload),
+        });
+        if (response.success) {
+            const summary = response.data;
+            toast(`Imported: ${summary.created} created, ${summary.updated} updated`, 'success');
+            loadCourtsForCenter(currentCenter.id);
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function importKlikterenCourtsForCenter() {
+    if (!currentCenter?.id) {
+        alert('No club selected');
+        return;
+    }
+    const config = currentCenter.integrationConfig && typeof currentCenter.integrationConfig === 'object'
+        ? currentCenter.integrationConfig
+        : null;
+    const venueId = typeof config?.venueId === 'string' ? config.venueId.trim() : '';
+    if (!venueId) {
+        alert('Klikteren venueId is not configured for this club');
+        return;
+    }
+    if (!confirm('Import courts from Klikteren? Existing courts will be matched by external ID or name.')) return;
+    try {
+        const klikterenRes = await fetch(`https://api.klikteren.com/api/venues/${encodeURIComponent(venueId)}`);
+        if (!klikterenRes.ok) {
+            const text = await klikterenRes.text().catch(() => '');
+            throw new Error(`Klikteren venue fetch failed (${klikterenRes.status})${text ? `: ${text.slice(0, 200)}` : ''}`);
+        }
+        const payload = await klikterenRes.json();
+        const courts = Array.isArray(payload.courts) ? payload.courts : payload.data?.courts;
+        const response = await apiRequest(`/admin/clubs/${currentCenter.id}/klikteren/import-courts`, {
+            method: 'POST',
+            body: JSON.stringify({
+                name: payload.name ?? payload.data?.name,
+                courts: courts ?? [],
+            }),
         });
         if (response.success) {
             const summary = response.data;

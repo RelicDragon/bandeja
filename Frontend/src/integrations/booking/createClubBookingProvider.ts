@@ -6,14 +6,20 @@ import { BooktimeClubBookingProvider } from './providers/BooktimeClubBookingProv
 import { PadelooClient } from '@/integrations/padeloo/client';
 import { getPadelooClient, hydratePadelooSession } from '@/integrations/padeloo/session';
 import { PadelooClubBookingProvider } from './providers/PadelooClubBookingProvider';
+import { KlikterenClient } from '@/integrations/klikteren/client';
+import { getKlikterenClient, hydrateKlikterenSession } from '@/integrations/klikteren/session';
+import { KlikterenClubBookingProvider } from './providers/KlikterenClubBookingProvider';
 import {
   getBooktimeCompanyId,
+  getKlikterenVenueId,
   getPadelooClubId,
   isBooktimeClub,
+  isKlikterenClub,
   isPadelooClub,
 } from '@shared/clubIntegration';
 import type { ClubBookingProvider } from './ClubBookingProvider';
 import { PADELOO_BOOKING_DURATIONS } from '@/integrations/padeloo/config';
+import { KLIKTEREN_BOOKING_DURATIONS } from '@/integrations/klikteren/config';
 
 export async function createHydratedBooktimeClubBookingProvider(club: Club, companyId: string) {
   const clubTimeZone = resolveBooktimeMyClubTimezone(club);
@@ -49,6 +55,25 @@ export function createScoutPadelooClubBookingProvider(
   return new PadelooClubBookingProvider(club, padelooClubId, client, durationMinutes);
 }
 
+export async function createHydratedKlikterenClubBookingProvider(
+  club: Club,
+  klikterenVenueId: string,
+  durationMinutes: number = KLIKTEREN_BOOKING_DURATIONS[0],
+) {
+  await hydrateKlikterenSession(club.id, klikterenVenueId);
+  const client = getKlikterenClient(club.id, klikterenVenueId);
+  return new KlikterenClubBookingProvider(club, klikterenVenueId, client, durationMinutes);
+}
+
+export function createScoutKlikterenClubBookingProvider(
+  club: Club,
+  klikterenVenueId: string,
+  durationMinutes: number = KLIKTEREN_BOOKING_DURATIONS[0],
+) {
+  const client = new KlikterenClient({ klikterenVenueId });
+  return new KlikterenClubBookingProvider(club, klikterenVenueId, client, durationMinutes);
+}
+
 export function createClubBookingProvider(
   club: Club,
   mode: 'hydrated' | 'scout',
@@ -67,6 +92,13 @@ export function createClubBookingProvider(
     if (padelooClubId == null) return null;
     const durationMinutes = options?.durationMinutes ?? PADELOO_BOOKING_DURATIONS[0];
     return createScoutPadelooClubBookingProvider(club, padelooClubId, durationMinutes);
+  }
+
+  if (isKlikterenClub(club)) {
+    const klikterenVenueId = getKlikterenVenueId(club);
+    if (!klikterenVenueId) return null;
+    const durationMinutes = options?.durationMinutes ?? KLIKTEREN_BOOKING_DURATIONS[0];
+    return createScoutKlikterenClubBookingProvider(club, klikterenVenueId, durationMinutes);
   }
 
   return null;
@@ -88,6 +120,16 @@ export async function createHydratedClubBookingProvider(
     return createHydratedPadelooClubBookingProvider(
       club,
       padelooClubId,
+      options?.durationMinutes,
+    );
+  }
+
+  if (isKlikterenClub(club)) {
+    const klikterenVenueId = getKlikterenVenueId(club);
+    if (!klikterenVenueId) return null;
+    return createHydratedKlikterenClubBookingProvider(
+      club,
+      klikterenVenueId,
       options?.durationMinutes,
     );
   }

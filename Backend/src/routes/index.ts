@@ -42,6 +42,7 @@ import storyRoutes from './story.routes';
 import adRoutes from './ad.routes';
 import booktimeRoutes from './booktime.routes';
 import padelooRoutes from './padeloo.routes';
+import klikterenRoutes from './klikteren.routes';
 import weatherRoutes from './weather.routes';
 import meRoutes from './me.routes';
 import { optionalAuth, type AuthRequest } from '../middleware/auth';
@@ -115,6 +116,7 @@ router.use('/stories', storyRoutes);
 router.use('/ads', adRoutes);
 router.use('/booktime', booktimeRoutes);
 router.use('/padeloo', padelooRoutes);
+router.use('/klikteren', klikterenRoutes);
 router.use('/weather', weatherRoutes);
 
 export default router;

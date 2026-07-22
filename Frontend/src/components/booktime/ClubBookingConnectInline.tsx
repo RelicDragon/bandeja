@@ -5,8 +5,9 @@ import type { Club } from '@/types';
 import { ClubAvatar } from '@/components/ClubAvatar';
 import { BooktimeConnectForm } from './BooktimeConnectForm';
 import { PadelooConnectForm } from './PadelooConnectForm';
+import { KlikterenConnectForm } from './KlikterenConnectForm';
 import type { BooktimeIntegrationConfig } from './ConnectClubSheet';
-import { isPadelooClub } from '@shared/clubIntegration';
+import { isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
 
 type ClubBookingConnectInlineProps = {
   club: Club;
@@ -26,17 +27,30 @@ export function ClubBookingConnectInline({
   onCollapsedClick,
 }: ClubBookingConnectInlineProps) {
   const { t } = useTranslation();
+  const isKlikteren = isKlikterenClub(club);
   const isPadeloo = isPadelooClub(club);
-  const authTitle = isPadeloo
+  const authTitle = isKlikteren
+    ? t('createGame.klikteren.authTitle', { defaultValue: 'Connect your Klikteren account' })
+    : isPadeloo
     ? t('createGame.padeloo.authTitle', { defaultValue: 'Connect your Padeloo account' })
     : t('createGame.booktime.authTitle');
-  const authHint = isPadeloo
+  const authHint = isKlikteren
+    ? t('createGame.klikteren.authHint', {
+        club: club.name,
+        defaultValue: `Sign in with email and password to book at ${club.name}.`,
+      })
+    : isPadeloo
     ? t('createGame.padeloo.authHint', {
         club: club.name,
         defaultValue: `Sign in with email to book at ${club.name}.`,
       })
     : t('createGame.booktime.authHint', { club: club.name });
-  const authorizeLabel = isPadeloo
+  const authorizeLabel = isKlikteren
+    ? t('createGame.klikteren.authorizeInClub', {
+        club: club.name,
+        defaultValue: `Authorize in ${club.name}`,
+      })
+    : isPadeloo
     ? t('createGame.padeloo.authorizeInClub', {
         club: club.name,
         defaultValue: `Authorize in ${club.name}`,
@@ -78,7 +92,9 @@ export function ClubBookingConnectInline({
             </div>
           </div>
 
-          {isPadeloo ? (
+          {isKlikteren ? (
+            <KlikterenConnectForm club={club} onConnected={onConnected} variant="inline" />
+          ) : isPadeloo ? (
             <PadelooConnectForm club={club} onConnected={onConnected} variant="inline" />
           ) : integrationConfig ? (
             <BooktimeConnectForm

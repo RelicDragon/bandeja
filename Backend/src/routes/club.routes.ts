@@ -11,6 +11,8 @@ import * as booktimeAuthController from '../controllers/booktimeAuth.controller'
 import * as booktimeSnapshotController from '../controllers/booktimeSnapshot.controller';
 import * as padelooAuthController from '../controllers/padelooAuth.controller';
 import * as padelooSnapshotController from '../controllers/padelooSnapshot.controller';
+import * as klikterenAuthController from '../controllers/klikterenAuth.controller';
+import * as klikterenSnapshotController from '../controllers/klikterenSnapshot.controller';
 
 const router = Router();
 
@@ -99,6 +101,39 @@ router.put(
     body('courts').isArray().withMessage('courts must be an array'),
   ]),
   padelooSnapshotController.putPadelooSnapshot,
+);
+
+router.get('/:clubId/klikteren/auth', authenticate, klikterenAuthController.getKlikterenAuth);
+router.put(
+  '/:clubId/klikteren/auth',
+  authenticate,
+  validate([
+    body('accessToken').isString().notEmpty().withMessage('accessToken is required'),
+    body('externalUserId').isString().notEmpty().withMessage('externalUserId is required'),
+    body('refreshToken').optional().isString(),
+    body('email').optional().isString(),
+  ]),
+  klikterenAuthController.putKlikterenAuth,
+);
+router.post(
+  '/:clubId/klikteren/session-token',
+  authenticate,
+  booktimeSessionTokenLimiter,
+  klikterenAuthController.postKlikterenSessionToken,
+);
+router.delete('/:clubId/klikteren/auth', authenticate, klikterenAuthController.deleteKlikterenAuth);
+
+router.get('/:clubId/klikteren/snapshot', authenticate, klikterenSnapshotController.getKlikterenSnapshot);
+router.put(
+  '/:clubId/klikteren/snapshot',
+  authenticate,
+  validate([
+    body('date').isString().notEmpty().withMessage('date is required'),
+    body('fetchedAt').isISO8601().withMessage('fetchedAt must be ISO8601'),
+    body('force').optional().isBoolean(),
+    body('courts').isArray().withMessage('courts must be an array'),
+  ]),
+  klikterenSnapshotController.putKlikterenSnapshot,
 );
 
 router.get('/:id/reviews', optionalAuth, clubReviewController.getClubReviews);

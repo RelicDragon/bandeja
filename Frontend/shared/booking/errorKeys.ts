@@ -18,6 +18,7 @@ export const BOOKING_ERROR_KEYS = {
   legacyExternalBookingIdRejected: 'errors.booking.legacyExternalBookingIdRejected',
   companyIdRequired: 'errors.booking.companyIdRequired',
   padelooClubIdRequired: 'errors.booking.padelooClubIdRequired',
+  klikterenVenueIdRequired: 'errors.booking.klikterenVenueIdRequired',
   externalProviderUnsupported: 'errors.booking.externalProviderUnsupported',
   integrationTypeMustBeOnlineBooking: 'errors.booking.integrationTypeMustBeOnlineBooking',
   rollbackFailed: 'errors.booking.rollbackFailed',

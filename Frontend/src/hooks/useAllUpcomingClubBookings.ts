@@ -9,13 +9,22 @@ import { subscribeBooktimeAllUpcomingCacheInvalidation } from '@/integrations/bo
 import type { ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
 import { connectedClubRowToBooktimeRow } from '@/hooks/connectedBookingClubs';
 import type { PadelooMyClubRow } from '@/api/padeloo';
+import type { KlikterenMyClubRow } from '@/api/klikteren';
 import {
   loadPadelooUpcomingForClubs,
   type AggregatedPadelooBooking,
 } from '@/integrations/padeloo/padelooAllUpcomingLoader';
+import {
+  loadKlikterenUpcomingForClubs,
+  type AggregatedKlikterenBooking,
+} from '@/integrations/klikteren/klikterenAllUpcomingLoader';
 
-export type AggregatedClubBooking = (AggregatedBooktimeBooking | AggregatedPadelooBooking) & {
-  integrationType?: 'BOOKTIME' | 'PADELOO';
+export type AggregatedClubBooking = (
+  | AggregatedBooktimeBooking
+  | AggregatedPadelooBooking
+  | AggregatedKlikterenBooking
+) & {
+  integrationType?: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN';
 };
 
 type UpcomingSnapshot = {
@@ -70,6 +79,22 @@ function toPadelooRows(clubs: ConnectedBookingClubRow[]): PadelooMyClubRow[] {
     }));
 }
 
+function toKlikterenRows(clubs: ConnectedBookingClubRow[]): KlikterenMyClubRow[] {
+  return clubs
+    .filter((club) => club.integrationType === 'KLIKTEREN' && club.connected && club.klikterenVenueId)
+    .map((club) => ({
+      clubId: club.clubId,
+      clubName: club.clubName,
+      avatar: club.avatar,
+      klikterenVenueId: club.klikterenVenueId ?? null,
+      connected: club.connected,
+      email: club.email ?? null,
+      scoutOptIn: club.scoutOptIn,
+      cityTimezone: club.cityTimezone,
+      courts: club.courts,
+    }));
+}
+
 async function loadMergedUpcoming(
   clubs: ConnectedBookingClubRow[],
   enabled: boolean,
@@ -78,15 +103,18 @@ async function loadMergedUpcoming(
 
   const booktimeClubs = toBooktimeRows(clubs);
   const padelooClubs = toPadelooRows(clubs);
+  const klikterenClubs = toKlikterenRows(clubs);
 
-  const [booktimeBookings, padelooBookings] = await Promise.all([
+  const [booktimeBookings, padelooBookings, klikterenBookings] = await Promise.all([
     booktimeClubs.length > 0 ? loadAllBooktimeUpcoming(booktimeClubs, enabled) : Promise.resolve([]),
     padelooClubs.length > 0 ? loadPadelooUpcomingForClubs(padelooClubs) : Promise.resolve([]),
+    klikterenClubs.length > 0 ? loadKlikterenUpcomingForClubs(klikterenClubs) : Promise.resolve([]),
   ]);
 
   const merged: AggregatedClubBooking[] = [
     ...booktimeBookings.map((booking) => ({ ...booking, integrationType: 'BOOKTIME' as const })),
     ...padelooBookings,
+    ...klikterenBookings,
   ];
 
   merged.sort(
@@ -118,7 +146,7 @@ function runSharedLoad(
     if (!invalidate) {
       const booktimeOnly = toBooktimeRows(clubs);
       const cachedBookings = await peekCachedBooktimeUpcoming(booktimeOnly, enabled);
-      if (cachedBookings && toPadelooRows(clubs).length === 0) {
+      if (cachedBookings && toPadelooRows(clubs).length === 0 && toKlikterenRows(clubs).length === 0) {
         setKeyState(connectedKey, {
           bookings: cachedBookings.map((booking) => ({
             ...booking,
@@ -172,7 +200,7 @@ export function useAllUpcomingClubBookings(
   const connectedKey = useMemo(
     () =>
       clubs
-        .filter((club) => club.connected && (club.companyId || club.padelooClubId))
+        .filter((club) => club.connected && (club.companyId || club.padelooClubId || club.klikterenVenueId))
         .map((club) => `${club.integrationType}:${club.clubId}`)
         .sort()
         .join('|'),

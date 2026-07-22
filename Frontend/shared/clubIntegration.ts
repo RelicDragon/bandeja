@@ -1,6 +1,6 @@
 /** Keep in sync with Backend/src/shared/clubIntegration.ts */
 
-export type ClubIntegrationType = 'BOOKTIME' | 'PADELOO';
+export type ClubIntegrationType = 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN';
 
 export interface BooktimeIntegrationConfig {
   companyId: string;
@@ -13,7 +13,14 @@ export interface PadelooIntegrationConfig {
   clubId: number;
 }
 
-export type ClubIntegrationConfig = BooktimeIntegrationConfig | PadelooIntegrationConfig;
+export interface KlikterenIntegrationConfig {
+  venueId: string;
+}
+
+export type ClubIntegrationConfig =
+  | BooktimeIntegrationConfig
+  | PadelooIntegrationConfig
+  | KlikterenIntegrationConfig;
 
 export type ClubIntegrationRef = {
   integrationType?: ClubIntegrationType | null;
@@ -63,6 +70,23 @@ export function isPadelooClub(club: ClubIntegrationRef | undefined): boolean {
   return club?.integrationType === 'PADELOO';
 }
 
+export function parseKlikterenIntegrationConfig(raw: unknown): KlikterenIntegrationConfig | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const venueId = (raw as Record<string, unknown>).venueId;
+  if (typeof venueId !== 'string' || !venueId.trim()) return null;
+  const trimmed = venueId.trim();
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trimmed)
+  ) {
+    return null;
+  }
+  return { venueId: trimmed };
+}
+
+export function isKlikterenClub(club: ClubIntegrationRef | undefined): boolean {
+  return club?.integrationType === 'KLIKTEREN';
+}
+
 export function getBooktimeCompanyId(club: ClubIntegrationRef | undefined): string | null {
   if (!isBooktimeClub(club)) return null;
   return parseBooktimeIntegrationConfig(club?.integrationConfig)?.companyId ?? null;
@@ -73,9 +97,16 @@ export function getPadelooClubId(club: ClubIntegrationRef | undefined): number |
   return parsePadelooIntegrationConfig(club?.integrationConfig)?.clubId ?? null;
 }
 
+export function getKlikterenVenueId(club: ClubIntegrationRef | undefined): string | null {
+  if (!isKlikterenClub(club)) return null;
+  return parseKlikterenIntegrationConfig(club?.integrationConfig)?.venueId ?? null;
+}
+
 export function getExternalVenueId(club: ClubIntegrationRef | undefined): string | null {
   const booktimeId = getBooktimeCompanyId(club);
   if (booktimeId) return booktimeId;
+  const klikterenId = getKlikterenVenueId(club);
+  if (klikterenId) return klikterenId;
   const padelooId = getPadelooClubId(club);
   return padelooId != null ? String(padelooId) : null;
 }
@@ -84,6 +115,7 @@ export function clubHasBookingIntegration(club: ClubIntegrationRef | undefined):
   if (!club?.integrationType) return false;
   if (isBooktimeClub(club)) return getBooktimeCompanyId(club) !== null;
   if (isPadelooClub(club)) return getPadelooClubId(club) !== null;
+  if (isKlikterenClub(club)) return getKlikterenVenueId(club) !== null;
   return false;
 }
 
@@ -116,6 +148,20 @@ export function shouldUsePadelooDurations(
   courts: CourtIntegrationRef[] | undefined,
 ): boolean {
   if (!isPadelooClub(club) || !clubHasBookingIntegration(club)) return false;
+  if (selectedCourtId === 'notBooked') return false;
+  if (selectedCourtId) {
+    const court = courts?.find((c) => c.id === selectedCourtId);
+    return courtHasActiveBookingIntegration(club, court);
+  }
+  return true;
+}
+
+export function shouldUseKlikterenDurations(
+  club: ClubIntegrationRef | undefined,
+  selectedCourtId: string | null | undefined,
+  courts: CourtIntegrationRef[] | undefined,
+): boolean {
+  if (!isKlikterenClub(club) || !clubHasBookingIntegration(club)) return false;
   if (selectedCourtId === 'notBooked') return false;
   if (selectedCourtId) {
     const court = courts?.find((c) => c.id === selectedCourtId);

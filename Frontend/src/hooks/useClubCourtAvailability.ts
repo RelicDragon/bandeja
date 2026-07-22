@@ -1,7 +1,8 @@
 import type { Club } from '@/types';
-import { isBooktimeClub, isPadelooClub } from '@shared/clubIntegration';
+import { isBooktimeClub, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
 import { useBooktimeCourtAvailability } from '@/hooks/useBooktimeCourtAvailability';
 import { usePadelooCourtAvailability } from '@/hooks/usePadelooCourtAvailability';
+import { useKlikterenCourtAvailability } from '@/hooks/useKlikterenCourtAvailability';
 
 export function useClubCourtAvailability(params: {
   club: Club | undefined;
@@ -32,6 +33,17 @@ export function useClubCourtAvailability(params: {
     loadClubMeta: params.loadCompanyMeta,
   });
 
+  const klikteren = useKlikterenCourtAvailability({
+    club: params.club,
+    courts: params.courts,
+    date: params.date,
+    courtFilter: params.courtFilter,
+    durationMinutes: params.durationMinutes,
+    enabled: params.enabled && isKlikterenClub(params.club),
+    loadClubMeta: params.loadCompanyMeta,
+  });
+
+  if (isKlikterenClub(params.club)) return klikteren;
   if (isPadelooClub(params.club)) return padeloo;
   if (isBooktimeClub(params.club)) return booktime;
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { booktimeApi } from '@/api/booktime';
 import { padelooApi } from '@/api/padeloo';
+import { klikterenApi } from '@/api/klikteren';
 import { useAuthStore } from '@/store/authStore';
 import { useMyGamesQuery } from '@/queries/games/useMyGamesQuery';
 import {
@@ -30,20 +31,26 @@ export function useConnectedBookingClubs(enabled = true, options?: UseConnectedB
     setLoading(true);
     setError(false);
     try {
-      const [booktimeRes, padelooRes] = await Promise.all([
+      const [booktimeRes, padelooRes, klikterenRes] = await Promise.all([
         booktimeApi.getMyClubs().catch(() => null),
         padelooApi.getMyClubs().catch(() => null),
+        klikterenApi.getMyClubs().catch(() => null),
       ]);
 
       const booktimeClubs = booktimeRes?.data?.clubs ?? [];
       const padelooClubs = padelooRes?.data?.clubs ?? [];
-      const merged = mergeConnectedBookingClubs(booktimeClubs, padelooClubs);
+      const klikterenClubs = klikterenRes?.data?.clubs ?? [];
+      const merged = mergeConnectedBookingClubs(booktimeClubs, padelooClubs, klikterenClubs);
 
       const payload: ConnectedBookingClubsPayload = {
         cityClubCount:
-          (booktimeRes?.data?.cityBooktimeClubCount ?? 0) + (padelooRes?.data?.cityPadelooClubCount ?? 0),
+          (booktimeRes?.data?.cityBooktimeClubCount ?? 0) +
+          (padelooRes?.data?.cityPadelooClubCount ?? 0) +
+          (klikterenRes?.data?.cityKlikterenClubCount ?? 0),
         connectedCount:
-          (booktimeRes?.data?.connectedCount ?? 0) + (padelooRes?.data?.connectedCount ?? 0),
+          (booktimeRes?.data?.connectedCount ?? 0) +
+          (padelooRes?.data?.connectedCount ?? 0) +
+          (klikterenRes?.data?.connectedCount ?? 0),
         clubs: merged,
       };
       setData(payload);

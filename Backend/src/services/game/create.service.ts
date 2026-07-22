@@ -85,6 +85,7 @@ export class GameCreateService {
       const allowedProviders: ClubIntegrationType[] = [
         ClubIntegrationType.BOOKTIME,
         ClubIntegrationType.PADELOO,
+        ClubIntegrationType.KLIKTEREN,
       ];
       if (provider !== undefined && !allowedProviders.includes(provider)) {
         throw new ApiError(400, BOOKING_ERROR_KEYS.externalProviderUnsupported);

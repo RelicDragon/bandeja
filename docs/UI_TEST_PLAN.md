@@ -346,6 +346,7 @@ Frontend/e2e/
 | H-38f | Standalone booking card actions (My tab) | Connected user with at least one non-grouped upcoming booking | Tap standalone card → link/create/cancel actions animate in and card highlights; tap another standalone card → first collapses, second expands; tap same card again → actions collapse |
 | H-38k | Grouped booking card actions (My tab) | Connected user with adjacent same-court upcoming slots | Tap grouped card → per-slot rows animate in with link/create/cancel; only one card expanded at a time; tap again collapses |
 | H-38m | Padeloo upcoming (My tab) | User connected to Padeloo club (e.g. Avantura) with upcoming reservation | Bookings switch shows Padeloo booking card with provider label; cancel/link actions work |
+| H-38n | Klikteren upcoming (My tab) | User connected to Klikteren club (Padel Pro NS) with upcoming booking | Bookings switch shows Klikteren booking card with provider label; cancel/link actions work |
 | H-58 | My tab list view | My tab → tap List in calendar header (list icon + label) | Calendar grid collapses to header row; weather toggle hidden; UpcomingGamesList sections; preference persists after reload |
 | H-59 | My tab games calendar view | Tap Calendar in collapsed calendar header | Calendar grid expands; day selection works as before |
 | H-64 | Calendar weather toggle | My tab calendar expanded → tap cloud/sun icon in header | Icon highlights; day cells show weather pill (icon + temp) instead of entity-type pill where forecast exists; date select/filter unchanged |
@@ -965,6 +966,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-125 | Contextual tray search hit/miss | Search stickers for “smash”; switch to GIFs and search “celebrate”; enter nonsense | Sticker tabs filter sticker catalog; GIFs performs debounced provider search; each miss shows its own empty state |
 | CH-125a | GIF background loading and provider fallback | Open tray on Recent/Packs and verify no GIF request; switch to GIFs; load another page while Giphy starts returning errors and KLIPY is available | Sticker UI remains interactive; GIF loading starts only on the GIF tab; fallback appends KLIPY results without losing the visible Giphy page, keeps scroll position, and shows combined attribution |
 | CH-125b | Media tray keyboard and modal behavior | Open tray with keyboard → use Tab, Shift+Tab, arrow keys (including pack rail), Home/End, Escape → reopen | Focus stays in tray, arrows move media and pack tabs with correct selection, Escape closes, opener regains focus, and background page does not scroll while open |
+| CH-125b1 | Media tray search expands above keyboard | Open sticker/GIF tray on Capacitor iOS/Android or mobile browser → focus search → type | Tray expands to full height above the software keyboard (`data-expanded=true`); GIF/sticker results remain visible and scrollable; dismissing keyboard / blur returns compact height |
 | CH-125c | GIF reduced-motion behavior | Enable OS Reduce Motion → open GIF search/Recent → send and open a GIF | Search uses a static Giphy frame when available (Klipy keeps preview tile), Recent tiles show title instead of animating, and sent GIF bubbles/fullscreen use the static thumbnail |
 | CH-126 | Animated sticker + reduced motion | Tray Packs → send `padel/ball` or `padel/smash` (has `animatedUrl`); toggle OS “Reduce motion” | Motion on: tray cell + bubble use `.anim.webp` (`data-sticker-motion=animated`) with transparent canvas (no opaque fill behind glyph); reduced motion: both use static `.webp` (`data-sticker-motion=static`) |
 | CH-126a | Animated WebP on Capacitor | Same stickers as CH-126 on iOS/Android (min iOS 16 / Android 24 WebViews) | `.anim.webp` decodes and animates when motion allowed; static frame when reduced motion; static-only stickers still render |
@@ -1225,6 +1227,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-57a3 | Past booking card actions (settings) | Bookings → expand Past section; unlinked past booking | Same tap-to-expand "Link to game" behavior as upcoming standalone cards |
 | PR-57f | Padeloo Integrations tab | Integrations tab in city with Padeloo club (Zlatibor) | Avantura clubs listed; connect opens email OTP sheet; disconnect works |
 | PR-57g | Padeloo Bookings tab | Connected Padeloo user with upcoming reservation | Bookings tab lists Padeloo reservation alongside Booktime rows with provider badge |
+| PR-57h | Klikteren Integrations tab | Integrations tab in Novi Sad with Padel Pro | Padel Pro listed; connect opens email+password sheet; disconnect works |
+| PR-57i | Klikteren Bookings tab | Connected Klikteren user with upcoming booking | Bookings tab lists Klikteren booking alongside other providers with provider badge |
+| PR-57j | Klikteren create-game book | Create GAME at Padel Pro → connect → pick free slot → confirm book | Court reserved via Klikteren; game linked with EXTERNAL booking badge |
 | PR-57c | Link booking to game (happy path) | My tab → Bookings → Link to game → pick game (confirm reschedule if times differ) | Single request succeeds; success toast; game shows linked booking with correct time/club |
 | PR-57d | Link booking to game (failure) | Link to game while offline or on already-linked booking | Error toast; no partial link (game unchanged if request failed) |
 | PR-57e | Bookings back navigation | My tab → See all → back; Profile → Bookings → back | Browser back returns to previous screen (My tab or Profile) |
@@ -1429,6 +1434,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-50 | Story caption & text edit | Photo story editor → caption drawer / text style panel → focus | Caption drawer and style panel ride above keyboard |
 | X-51 | Story DM bar keyboard | Story viewer → focus DM input (iOS/Android) | DM bar sits just above keyboard with quick reactions visible; input does not jump to header |
 | X-52 | Keyboard dismiss restores layout | Any of above → dismiss keyboard | Surfaces return to resting position; no leftover bottom padding or shifted dialogs |
+| X-52a | Sticker/GIF tray above keyboard | Chat → open Stickers & GIFs → focus search (iOS/Android Capacitor + mobile web) | Tray lifts and expands to fill space above keyboard; results not covered; dismiss restores compact sheet |
 | X-55 | Auth login keyboard (Android web) | Mobile Chrome → `/login` → focus phone field | Form sits directly above keyboard; no dark gray scroll gap between card and keyboard |
 
 ### 18.11 Home screen Next Game widgets (Capacitor iOS + Android, `@widget` `@manual`)

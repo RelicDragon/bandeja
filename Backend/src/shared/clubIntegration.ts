@@ -13,6 +13,10 @@ export interface PadelooIntegrationConfig {
   clubId: number;
 }
 
+export interface KlikterenIntegrationConfig {
+  venueId: string;
+}
+
 export function parseBooktimeIntegrationConfig(raw: unknown): BooktimeIntegrationConfig | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const companyId = (raw as Record<string, unknown>).companyId;
@@ -41,6 +45,19 @@ export function parsePadelooIntegrationConfig(raw: unknown): PadelooIntegrationC
     if (Number.isInteger(parsed) && parsed > 0) return { clubId: parsed };
   }
   return null;
+}
+
+export function parseKlikterenIntegrationConfig(raw: unknown): KlikterenIntegrationConfig | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const venueId = (raw as Record<string, unknown>).venueId;
+  if (typeof venueId !== 'string' || !venueId.trim()) return null;
+  const trimmed = venueId.trim();
+  if (
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trimmed)
+  ) {
+    return null;
+  }
+  return { venueId: trimmed };
 }
 
 export function assertBooktimeIntegrationConfig(
@@ -73,12 +90,27 @@ export function assertPadelooIntegrationConfig(
   return config;
 }
 
+export function assertKlikterenIntegrationConfig(
+  integrationType: ClubIntegrationType | null | undefined,
+  integrationConfig: unknown
+): KlikterenIntegrationConfig | null {
+  if (!integrationType) return null;
+  if (integrationType !== ClubIntegrationType.KLIKTEREN) {
+    throw new ApiError(400, 'Unsupported integration type');
+  }
+  const config = parseKlikterenIntegrationConfig(integrationConfig);
+  if (!config) {
+    throw new ApiError(400, BOOKING_ERROR_KEYS.klikterenVenueIdRequired);
+  }
+  return config;
+}
+
 export function buildIntegrationConfigPayload(
   integrationType: ClubIntegrationType | null,
   integrationConfig: unknown
 ): {
   integrationType: ClubIntegrationType | null;
-  integrationConfig: BooktimeIntegrationConfig | PadelooIntegrationConfig | null;
+  integrationConfig: BooktimeIntegrationConfig | PadelooIntegrationConfig | KlikterenIntegrationConfig | null;
 } {
   if (!integrationType) {
     return { integrationType: null, integrationConfig: null };
@@ -89,6 +121,10 @@ export function buildIntegrationConfigPayload(
   }
   if (integrationType === ClubIntegrationType.PADELOO) {
     const config = assertPadelooIntegrationConfig(integrationType, integrationConfig);
+    return { integrationType, integrationConfig: config };
+  }
+  if (integrationType === ClubIntegrationType.KLIKTEREN) {
+    const config = assertKlikterenIntegrationConfig(integrationType, integrationConfig);
     return { integrationType, integrationConfig: config };
   }
   throw new ApiError(400, 'Unsupported integration type');

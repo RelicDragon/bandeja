@@ -1,9 +1,10 @@
 import type { Club } from '@/types';
-import { isBooktimeClub, isPadelooClub } from '@shared/clubIntegration';
+import { isBooktimeClub, isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
 import { useBooktimeSnapshotRefresh, type BooktimeSnapshotBanner } from '@/hooks/useBooktimeSnapshotRefresh';
 import { usePadelooSnapshotRefresh, type PadelooSnapshotBanner } from '@/hooks/usePadelooSnapshotRefresh';
+import { useKlikterenSnapshotRefresh, type KlikterenSnapshotBanner } from '@/hooks/useKlikterenSnapshotRefresh';
 
-export type ClubSnapshotBanner = BooktimeSnapshotBanner | PadelooSnapshotBanner;
+export type ClubSnapshotBanner = BooktimeSnapshotBanner | PadelooSnapshotBanner | KlikterenSnapshotBanner;
 
 export function useClubSnapshotRefresh(
   club: Club | undefined,
@@ -22,7 +23,14 @@ export function useClubSnapshotRefresh(
     enabled && isPadelooClub(club),
     options?.durationMinutes,
   );
+  const klikteren = useKlikterenSnapshotRefresh(
+    club,
+    selectedDate,
+    enabled && isKlikterenClub(club),
+    options?.durationMinutes,
+  );
 
+  if (isKlikterenClub(club)) return klikteren;
   if (isPadelooClub(club)) return padeloo;
   if (isBooktimeClub(club)) return booktime;
 

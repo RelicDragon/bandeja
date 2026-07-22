@@ -1,12 +1,17 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Clapperboard, Loader2, Search, Smile, X } from 'lucide-react';
 import type { Sport } from '@shared/sport';
 import type { StickerDto } from '@/api/stickers';
 import type { GiphySearchItem } from '@/api/giphy';
+import { useKeyboardInset } from '@/hooks/useKeyboardInset';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { CHAT_PANEL_TRANSITION } from '@/components/chat/chatListMotion';
+import {
+  chatStickerTrayPanelHeightClass,
+  shouldExpandChatStickerTray,
+} from '@/components/chat/chatStickerTrayLayout';
 import { ChatStickerGrid } from '@/components/chat/ChatStickerGrid';
 import { ChatStickerPackRail } from '@/components/chat/ChatStickerPackRail';
 import { ChatMediaRecentGrid } from '@/components/chat/ChatMediaRecentGrid';
@@ -43,10 +48,34 @@ export function ChatStickerTray({
   const panelTransition = reduceMotion ? { duration: 0 } : CHAT_PANEL_TRANSITION;
   const tray = useChatStickerTrayData(open, sport, initialTab);
   const gifs = useGiphySearch(open && tray.tab === 'gifs');
+  const keyboard = useKeyboardInset();
+  const [searchFocused, setSearchFocused] = useState(false);
+  const searchBlurTimerRef = useRef<number | null>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const panelId = useId();
+  const expandToFullHeight = shouldExpandChatStickerTray({
+    searchFocused,
+    keyboardVisible: keyboard.visible,
+  });
+
+  useEffect(() => {
+    if (open) return;
+    setSearchFocused(false);
+    if (searchBlurTimerRef.current != null) {
+      window.clearTimeout(searchBlurTimerRef.current);
+      searchBlurTimerRef.current = null;
+    }
+  }, [open]);
+
+  useEffect(() => {
+    return () => {
+      if (searchBlurTimerRef.current != null) {
+        window.clearTimeout(searchBlurTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -145,12 +174,15 @@ export function ChatStickerTray({
       {open ? (
         <motion.div
           key="chat-sticker-tray"
-          className="fixed inset-0 z-[100] flex items-end justify-center"
+          className={`cap-keyboard-aware-overlay fixed inset-0 z-[100] flex flex-col items-center justify-end ${
+            expandToFullHeight ? 'pt-[max(0.5rem,env(safe-area-inset-top))]' : ''
+          }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={panelTransition}
           data-testid="chat-sticker-tray"
+          data-expanded={expandToFullHeight ? 'true' : 'false'}
         >
           <motion.button
             type="button"
@@ -168,7 +200,11 @@ export function ChatStickerTray({
             aria-modal="true"
             aria-label={t('chat.stickers.trayTitle', { defaultValue: 'Stickers and GIFs' })}
             tabIndex={-1}
-            className="relative flex h-[min(76dvh,36rem)] max-h-[calc(100dvh-env(safe-area-inset-top)-0.5rem)] w-full max-w-lg flex-col overflow-hidden overscroll-contain rounded-t-[1.75rem] bg-white shadow-2xl outline-none dark:bg-gray-900 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+            className={`relative flex ${chatStickerTrayPanelHeightClass(expandToFullHeight)} w-full max-w-lg flex-col overflow-hidden overscroll-contain rounded-t-[1.75rem] bg-white shadow-2xl outline-none dark:bg-gray-900 ${
+              expandToFullHeight
+                ? 'pb-2'
+                : 'pb-[max(0.5rem,env(safe-area-inset-bottom))]'
+            }`}
             initial={{ y: 48, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 48, opacity: 0 }}
@@ -211,6 +247,19 @@ export function ChatStickerTray({
                       ? gifs.setQuery(event.target.value)
                       : tray.setSearchQuery(event.target.value)
                   }
+                  onFocus={() => {
+                    if (searchBlurTimerRef.current != null) {
+                      window.clearTimeout(searchBlurTimerRef.current);
+                      searchBlurTimerRef.current = null;
+                    }
+                    setSearchFocused(true);
+                  }}
+                  onBlur={() => {
+                    searchBlurTimerRef.current = window.setTimeout(() => {
+                      setSearchFocused(false);
+                      searchBlurTimerRef.current = null;
+                    }, 200);
+                  }}
                   placeholder={
                     tray.tab === 'gifs'
                       ? gifSearchLabel

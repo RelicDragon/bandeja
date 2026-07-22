@@ -965,6 +965,14 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'klikteren no outbound HTTP',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'klikteren', 'klikterenNoOutboundHttp.test.ts'),
+    ],
+  },
+  {
     label: 'padeloo snapshot ingest',
     command: process.execPath,
     args: [

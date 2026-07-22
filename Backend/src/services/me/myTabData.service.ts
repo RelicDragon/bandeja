@@ -221,12 +221,13 @@ export class MyTabDataService {
       userId,
       club: { isActive: true },
     };
-    const [booktimeCount, padelooCount] = await Promise.all([
+    const [booktimeCount, padelooCount, klikterenCount] = await Promise.all([
       prisma.userClubBooktimeAuth.count({ where: activeClubFilter }),
       prisma.userClubPadelooAuth.count({ where: activeClubFilter }),
+      prisma.userClubKlikterenAuth.count({ where: activeClubFilter }),
     ]);
 
-    return booktimeCount > 0 || padelooCount > 0;
+    return booktimeCount > 0 || padelooCount > 0 || klikterenCount > 0;
   }
 
   /**

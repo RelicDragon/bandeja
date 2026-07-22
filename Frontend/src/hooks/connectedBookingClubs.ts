@@ -1,5 +1,6 @@
 import type { BooktimeMyClubRow } from '@/api/booktime';
 import type { PadelooMyClubRow } from '@/api/padeloo';
+import type { KlikterenMyClubRow } from '@/api/klikteren';
 import type { ClubIntegrationType } from '@shared/clubIntegration';
 import type { Club } from '@/types';
 
@@ -20,6 +21,7 @@ export type ConnectedBookingClubRow = {
   companyId?: string | null;
   phoneNumber?: string | null;
   padelooClubId?: number | null;
+  klikterenVenueId?: string | null;
   email?: string | null;
 };
 
@@ -59,9 +61,25 @@ export function mapPadelooClubRow(row: PadelooMyClubRow): ConnectedBookingClubRo
   };
 }
 
+export function mapKlikterenClubRow(row: KlikterenMyClubRow): ConnectedBookingClubRow {
+  return {
+    clubId: row.clubId,
+    clubName: row.clubName,
+    avatar: row.avatar,
+    integrationType: 'KLIKTEREN',
+    connected: row.connected,
+    scoutOptIn: row.scoutOptIn,
+    cityTimezone: row.cityTimezone,
+    courts: row.courts,
+    klikterenVenueId: row.klikterenVenueId,
+    email: row.email,
+  };
+}
+
 export function mergeConnectedBookingClubs(
   booktime: BooktimeMyClubRow[],
   padeloo: PadelooMyClubRow[],
+  klikteren: KlikterenMyClubRow[] = [],
 ): ConnectedBookingClubRow[] {
   const byId = new Map<string, ConnectedBookingClubRow>();
   for (const row of booktime) {
@@ -69,6 +87,9 @@ export function mergeConnectedBookingClubs(
   }
   for (const row of padeloo) {
     byId.set(row.clubId, mapPadelooClubRow(row));
+  }
+  for (const row of klikteren) {
+    byId.set(row.clubId, mapKlikterenClubRow(row));
   }
   return [...byId.values()].sort((a, b) =>
     a.clubName.localeCompare(b.clubName, undefined, { sensitivity: 'base' }),
@@ -92,6 +113,7 @@ export function connectedClubRowToBooktimeRow(row: ConnectedBookingClubRow): Boo
 export type BookingListClubRow = BooktimeMyClubRow & {
   integrationType?: ClubIntegrationType;
   padelooClubId?: number | null;
+  klikterenVenueId?: string | null;
 };
 
 export function connectedClubRowToBookingListClub(row: ConnectedBookingClubRow): BookingListClubRow {
@@ -99,6 +121,7 @@ export function connectedClubRowToBookingListClub(row: ConnectedBookingClubRow):
     ...connectedClubRowToBooktimeRow(row),
     integrationType: row.integrationType,
     padelooClubId: row.padelooClubId ?? null,
+    klikterenVenueId: row.klikterenVenueId ?? null,
   };
 }
 
@@ -111,6 +134,18 @@ export function bookingListClubRowToClub(row: BookingListClubRow): Club {
     externalCourtId: c.externalCourtId ?? undefined,
     integrationCourtName: c.integrationCourtName ?? undefined,
   }));
+
+  if (row.integrationType === 'KLIKTEREN' || row.klikterenVenueId) {
+    return {
+      id: row.clubId,
+      name: row.clubName,
+      address: '',
+      cityId: '',
+      integrationType: 'KLIKTEREN',
+      integrationConfig: row.klikterenVenueId ? { venueId: row.klikterenVenueId } : null,
+      courts,
+    };
+  }
 
   if (row.integrationType === 'PADELOO' || row.padelooClubId != null) {
     return {

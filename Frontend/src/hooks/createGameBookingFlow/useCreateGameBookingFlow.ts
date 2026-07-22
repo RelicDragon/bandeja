@@ -29,7 +29,7 @@ import {
   type ReservationIntent,
 } from '@shared/gameBooking/reservationIntent';
 import { mapCreateAbortReasonToValidationReason } from './resolveCreateGameBookingAction';
-import { clubHasBookingIntegration, isPadelooClub, parseBooktimeIntegrationConfig, parsePadelooIntegrationConfig } from '@shared/clubIntegration';
+import { clubHasBookingIntegration, isKlikterenClub, isPadelooClub, parseBooktimeIntegrationConfig, parseKlikterenIntegrationConfig, parsePadelooIntegrationConfig } from '@shared/clubIntegration';
 import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCourts/overlapCheck';
 import { courtHasActiveBookingIntegration } from '@/utils/clubBookingIntegration';
 import { usePreselectedBookingHydration } from './usePreselectedBookingHydration';
@@ -147,9 +147,12 @@ export function useCreateGameBookingFlow({
     Boolean(selectedClub);
   const { apiEnabled: booktimeLiveApiEnabled } = useBooktimeLiveApiEnabled(
     selectedClub || undefined,
-    clubBookingFlowActive && !isPadelooClub(selectedClubData),
+    clubBookingFlowActive && !isPadelooClub(selectedClubData) && !isKlikterenClub(selectedClubData),
   );
-  const liveApiEnabled = isPadelooClub(selectedClubData) ? true : booktimeLiveApiEnabled;
+  const liveApiEnabled =
+    isPadelooClub(selectedClubData) || isKlikterenClub(selectedClubData)
+      ? true
+      : booktimeLiveApiEnabled;
 
   const { status: clubBookingAuth, refresh: refreshClubBookingAuth } = useClubBookingAuth(
     selectedClubData,
@@ -237,6 +240,7 @@ export function useCreateGameBookingFlow({
       willBookOnCreate: willBookOnCreate || wantsReserveNowAvailability,
       booktimeConnected: Boolean(clubBookingAuth?.connected),
       isPadelooClub: isPadelooClub(selectedClubData),
+      isKlikterenClub: isKlikterenClub(selectedClubData),
     }),
   });
 
@@ -271,10 +275,19 @@ export function useCreateGameBookingFlow({
     return parsePadelooIntegrationConfig(selectedClubData.integrationConfig);
   }, [selectedClubData]);
 
+  const klikterenIntegrationConfig = useMemo(() => {
+    if (!selectedClubData || !isKlikterenClub(selectedClubData)) return null;
+    return parseKlikterenIntegrationConfig(selectedClubData.integrationConfig);
+  }, [selectedClubData]);
+
   const clubDateReservationsEnabled =
     clubBookingFlowActive &&
     Boolean(clubBookingAuth?.connected) &&
-    Boolean(booktimeIntegrationConfig?.companyId || padelooIntegrationConfig?.clubId);
+    Boolean(
+      booktimeIntegrationConfig?.companyId ||
+        padelooIntegrationConfig?.clubId ||
+        klikterenIntegrationConfig?.venueId,
+    );
 
   const clubDateReservations = useClubDateReservations({
     club: selectedClubData,
@@ -311,11 +324,13 @@ export function useCreateGameBookingFlow({
     () =>
       resolveReservationIntentOptions({
         clubBookingFlowActive,
-        hasBooktimeAuthPath: Boolean(booktimeIntegrationConfig || padelooIntegrationConfig),
+        hasBooktimeAuthPath: Boolean(
+          booktimeIntegrationConfig || padelooIntegrationConfig || klikterenIntegrationConfig,
+        ),
         manualBookedAvailable: !clubBookingFlowActive,
         hasReservationsForDate,
       }),
-    [clubBookingFlowActive, booktimeIntegrationConfig, padelooIntegrationConfig, hasReservationsForDate],
+    [clubBookingFlowActive, booktimeIntegrationConfig, padelooIntegrationConfig, klikterenIntegrationConfig, hasReservationsForDate],
   );
 
   const resetOnClubChange = useCallback(() => {
@@ -763,6 +778,17 @@ export function useCreateGameBookingFlow({
         };
       }
 
+      if (klikterenIntegrationConfig) {
+        return {
+          provider: 'KLIKTEREN' as const,
+          klikterenVenueId: klikterenIntegrationConfig.venueId,
+          email: clubBookingAuth?.email ?? null,
+          firstName: clubBookingAuth?.firstName ?? null,
+          lastName: clubBookingAuth?.lastName ?? null,
+          ...sharedTail,
+        };
+      }
+
       if (!booktimeIntegrationConfig) return null;
 
       return {
@@ -780,6 +806,7 @@ export function useCreateGameBookingFlow({
       selectedClubData,
       booktimeIntegrationConfig,
       padelooIntegrationConfig,
+      klikterenIntegrationConfig,
       confirmModalOpen,
       integratedCourtIds,
       courts,

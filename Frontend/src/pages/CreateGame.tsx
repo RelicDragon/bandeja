@@ -60,7 +60,7 @@ import {
   resolveReservationValidationMessage,
   type ReservationValidationResult,
 } from '@shared/gameBooking/reservationIntent';
-import { isPadelooClub } from '@shared/clubIntegration';
+import { isKlikterenClub, isPadelooClub } from '@shared/clubIntegration';
 import type { CreateGameAbortReason } from '@/hooks/createGameBookingFlow/types';
 import { MultiCourtTimeHint } from '@/components/gameLocationTime/MultiCourtTimeHint';
 import { clubSupportsSport, filterClubsBySport } from '@/utils/courtSport';
@@ -476,7 +476,7 @@ export const CreateGame = ({
     entityType !== 'BAR' &&
     Boolean(selectedClub) &&
     clubBookingFlowActive &&
-    Boolean(booktimeIntegrationConfig || isPadelooClub(selectedClubData)) &&
+    Boolean(booktimeIntegrationConfig || isPadelooClub(selectedClubData) || isKlikterenClub(selectedClubData)) &&
     !clubBookingAuth?.connected &&
     (reservationIntent === 'reserveNow' || reservationIntent === 'useExisting');
   const booktimeAuthPromptCollapsed = showBooktimeAuthPrompt && !needsBooktimeAuth;
