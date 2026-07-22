@@ -8,14 +8,14 @@ export const DEFAULT_API_RATE_LIMIT_MAX_DEVELOPMENT = 10000;
 
 /**
  * Pathname prefixes matched against mount-stripped `req.path` under `/api/`
- * (no query string). Auth login/register keep dedicated limiters — do not skip them here.
+ * (no query string). Only routes that already have dedicated protection (or admin SSE).
+ * Auth login/register keep dedicated limiters — do not skip them here.
  */
 export const DEFAULT_API_RATE_LIMIT_SKIP_PATH_PREFIXES = [
   '/logs/stream',
   '/auth/refresh',
   '/chat/sync/',
-  '/chat/messages/missed',
-  '/chat/unread',
+  '/chat/unread-objects',
 ] as const;
 
 export type ApiRateLimitConfig = {
@@ -30,14 +30,23 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
+/** Reject bare `/` and non-path values so env misconfig cannot disable the limiter. */
+export function normalizeSkipPathPrefix(raw: string): string | null {
+  const s = raw.trim();
+  if (!s.startsWith('/') || s === '/') return null;
+  return s;
+}
+
 function parseSkipPathPrefixes(raw: string | undefined): string[] {
   if (raw == null) {
     return [...DEFAULT_API_RATE_LIMIT_SKIP_PATH_PREFIXES];
   }
-  return raw
-    .split(',')
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0);
+  const out: string[] = [];
+  for (const part of raw.split(',')) {
+    const normalized = normalizeSkipPathPrefix(part);
+    if (normalized) out.push(normalized);
+  }
+  return out;
 }
 
 export function resolveApiRateLimitConfig(input: {

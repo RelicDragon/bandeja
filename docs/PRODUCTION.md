@@ -246,7 +246,7 @@ Non-production blocks push/Telegram to real users unless whitelisted (`TEST_USER
 
 ### Global API rate limit
 
-Per-IP limiter on `/api/` (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `RATE_LIMIT_SKIP_PATH_PREFIXES`). Production default max is **3000** / 15 min; chat sync / unread / missed, auth refresh, and logs stream are skipped by default (pathname prefix match on `req.path` only). See `Backend/env.sample` and #313.
+Per-IP limiter on `/api/` (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `RATE_LIMIT_SKIP_PATH_PREFIXES`). Production default max is **3000** / 15 min. Default skips (pathname prefix on `req.path` only): admin log stream, auth refresh, chat sync, unread-objects — each already has dedicated protection. See `Backend/env.sample` and #313.
 
 **Do not:** run E2E against prod, `prisma migrate dev` on prod, or truncate prod tables.
 

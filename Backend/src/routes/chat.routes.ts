@@ -166,6 +166,15 @@ const chatSyncBatchHeadLimiter = rateLimit({
   keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
 });
 
+const missedMessagesLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 90,
+  message: { success: false, message: 'Too many missed-message sync requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => (req as AuthRequest).userId ?? rateLimitKeyFromRequest(req),
+});
+
 const pinMessageLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 30,
@@ -261,6 +270,7 @@ router.get(
 
 router.get(
   '/messages/missed',
+  missedMessagesLimiter,
   validate([
     query('contextType').isIn(['GAME', 'BUG', 'USER', 'GROUP']).withMessage('Invalid contextType'),
     query('contextId').notEmpty().withMessage('contextId is required'),
