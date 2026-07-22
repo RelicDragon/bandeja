@@ -8,6 +8,7 @@ import { getSportConfig } from '@/sport/sportRegistry';
 import { useGamePhotosStore } from '@/store/gamePhotosStore';
 import {
   canShowGameResultsShareCard,
+  isShareDismissal,
   resolveGameResultsSharePhotoUrl,
   shareGameResultsCard,
 } from '@/utils/gameResultsShare.util';
@@ -15,6 +16,7 @@ import { hasCachedResultsSummary } from '@/utils/gameResultsArtifacts.util';
 import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitialData';
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { useAuthStore } from '@/store/authStore';
+import { getGameParticipationState } from '@/utils/gameParticipationState';
 
 const EMPTY_GAME_PHOTOS: import('@/api/gamePhotos').GamePhoto[] = [];
 
@@ -27,6 +29,7 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   const [sharing, setSharing] = useState(false);
+  const userId = useAuthStore((s) => s.user?.id);
   const photos = useGamePhotosStore((s) => s.byGameId[game.id]?.photos) ?? EMPTY_GAME_PHOTOS;
   const photoUrl = resolveGameResultsSharePhotoUrl(game, photos);
   const showShareCard = canShowGameResultsShareCard(game, photos);
@@ -34,7 +37,9 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
     ? game.resultsSummaryText!.trim()
     : null;
   const sportLabel = t(getSportConfig(game.sport).labelKey);
-  const canPlayAgain = game.entityType === 'GAME';
+  const canPlayAgain =
+    game.entityType === 'GAME' &&
+    getGameParticipationState(game.participants ?? [], userId, game).isPlaying;
 
   const handleShare = async () => {
     if (!showShareCard || !cardRef.current) return;
@@ -47,7 +52,7 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
       });
       toast.success(t('gameResults.shareCardDone'));
     } catch (err: unknown) {
-      if ((err as { name?: string })?.name === 'AbortError') return;
+      if (isShareDismissal(err)) return;
       toast.error(t('gameResults.shareCardFailed'));
     } finally {
       setSharing(false);

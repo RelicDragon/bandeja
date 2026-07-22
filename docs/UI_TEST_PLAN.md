@@ -743,8 +743,9 @@ Frontend/e2e/
 | GD-113 | Round header match progress | Multi-round game with 2+ matches per round → finish some matches | Round header shows animated progress bar + `finished/total` counter; bar turns green when all matches complete |
 | GD-114 | Available players footer header | Edit a match with unassigned players in roster | Bottom sheet shows "Available Players" label with count badge above the draggable carousel |
 | GD-115 | Round added summary modal | Add round in results entry with ≤4 playing participants vs 5+ | ≤4: round added inline with no summary modal; 5+: modal lists generated match pairings |
-| GD-36 | Results share card hidden without photo | Final results, no game photo yet | No share card or share CTA; Play again still available |
-| GD-36b | Results share card with photo | Add/generate photo, open Results tab | Share card preview shows photo; Share results card succeeds |
+| GD-36 | Results share card hidden without photo | Final results, no game photo yet | No share card or share CTA; Play again shown only if viewer is PLAYING |
+| GD-36b | Results share card with photo | Add/generate photo, open Results tab | Share card preview shows photo; Share results card succeeds (native share sheet or PNG download on desktop) |
+| GD-36c | Play again only for players | Results as PLAYING participant vs guest/spectator/owner-only | Play again visible only when current user has PLAYING status on this game |
 | GD-37 | Game results artifact | Photo/story from results | Artifact flow |
 
 ### 9.5 Bets
