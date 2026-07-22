@@ -1,7 +1,7 @@
 import { Sports } from '../../sport/sportIds';
 import { getSportConfig } from '../../sport/sportRegistry';
 import { EntityType } from '@prisma/client';
-import { calculateEnduranceCoefficient } from './rating.service';
+import { calculateEnduranceCoefficient, calculateRatingUpdate } from './rating.service';
 
 function assert(cond: boolean, msg: string): void {
   if (!cond) {
@@ -53,8 +53,8 @@ assert(
     true,
     EntityType.LEAGUE,
     true,
-  ) === 2.25,
-  'classic league endurance gain x3 sets',
+  ) === 1.5,
+  'classic league endurance gain x2 sets',
 );
 assert(
   calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.GAME) === 0.1,
@@ -62,16 +62,16 @@ assert(
 );
 assert(
   Math.abs(
-    calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.LEAGUE, true) - 0.3,
+    calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.LEAGUE, true) - 0.2,
   ) < 1e-9,
-  'league endurance gain x3',
+  'league endurance gain x2',
 );
 assert(
   calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.LEAGUE, false) === 0.1,
   'league endurance loss x1',
 );
 assert(
-  calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], true, EntityType.LEAGUE, true) === 0.75,
+  calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], true, EntityType.LEAGUE, true) === 0.5,
   'classic league endurance gain',
 );
 assert(
@@ -79,8 +79,67 @@ assert(
   'classic league endurance loss',
 );
 assert(
-  calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.TOURNAMENT) === 0.2,
-  'tournament endurance x2',
+  Math.abs(
+    calculateEnduranceCoefficient([{ teamAScore: 6, teamBScore: 4 }], false, EntityType.TOURNAMENT) - 0.15,
+  ) < 1e-9,
+  'tournament endurance x1.5',
+);
+assert(
+  Math.abs(
+    calculateEnduranceCoefficient(
+      [
+        { teamAScore: 6, teamBScore: 4, isTieBreak: false },
+        { teamAScore: 4, teamBScore: 6, isTieBreak: false },
+        { teamAScore: 10, teamBScore: 5, isTieBreak: true },
+      ],
+      true,
+      EntityType.GAME,
+    ) - 0.6,
+  ) < 1e-9,
+  'classic STB endurance = 2 games + 1 points set',
+);
+assert(
+  Math.abs(
+    calculateEnduranceCoefficient(
+      [
+        { teamAScore: 6, teamBScore: 4, isTieBreak: false },
+        { teamAScore: 4, teamBScore: 6, isTieBreak: false },
+        { teamAScore: 10, teamBScore: 5, isTieBreak: true },
+      ],
+      true,
+      EntityType.LEAGUE,
+      true,
+    ) - 1.2,
+  ) < 1e-9,
+  'league STB endurance gain = (0.25+0.25+0.1)*2',
+);
+
+const reportedLeagueWinnerSets = [
+  { teamAScore: 0, teamBScore: 6, isTieBreak: false },
+  { teamAScore: 6, teamBScore: 4, isTieBreak: false },
+  { teamAScore: 10, teamBScore: 5, isTieBreak: true },
+];
+const reportedLeagueWinner = calculateRatingUpdate(
+  { level: 2.17519939799681, reliability: 39.220570936512026, gamesPlayed: 41 },
+  {
+    isWinner: true,
+    ownTeamLevel: 2.230466437566073,
+    opponentsLevel: 2.1263551644171343,
+    setScores: reportedLeagueWinnerSets,
+  },
+  true,
+  padel,
+  EntityType.LEAGUE,
+);
+assert(reportedLeagueWinner.totalPointDifferential === -3, 'reported league winner differential');
+assert(reportedLeagueWinner.marginLabel === 'veryClose', 'non-positive winner differential is very close');
+assert(
+  Math.abs((reportedLeagueWinner.multiplier ?? 0) - 0.36600592981575897) < 1e-9,
+  'non-positive winner differential uses minimum margin impact',
+);
+assert(
+  Math.abs(reportedLeagueWinner.levelChange - 0.03786054030764673) < 1e-9,
+  'reported league winner gain includes STB weighting and close-win impact',
 );
 
 console.log('ok: ratingEngine.test.ts');

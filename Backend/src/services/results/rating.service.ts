@@ -70,10 +70,16 @@ function enduranceEntityTypeMultiplier(
   entityType?: EntityType,
   isGainingRating = false,
 ): number {
-  if (entityType === EntityType.LEAGUE) return isGainingRating ? 3 : 1;
-  if (entityType === EntityType.TOURNAMENT) return 2;
+  if (entityType === EntityType.LEAGUE) return isGainingRating ? 2 : 1;
+  if (entityType === EntityType.TOURNAMENT) return 1.5;
   return 1;
 }
+
+const ENDURANCE_PER_GAMES_SET = 0.25;
+const ENDURANCE_PER_POINTS_SET = 0.1;
+/** Fallback when no set rows exist (legacy / empty). */
+const ENDURANCE_EMPTY_GAMES = 0.25;
+const ENDURANCE_EMPTY_POINTS = 0.5;
 
 export function calculateEnduranceCoefficient(
   setScores: RatingSetScore[] | undefined,
@@ -81,23 +87,19 @@ export function calculateEnduranceCoefficient(
   entityType?: EntityType,
   isGainingRating = false,
 ): number {
-  const usesGamesEndurance =
+  const baseSum =
     !setScores || setScores.length === 0
       ? ballsInGames
-      : setScores.some((set) => ratingSetUsesGamesMargin(set, ballsInGames));
-  const base =
-    !setScores || setScores.length === 0
-      ? usesGamesEndurance ? 0.25 : 0.5
-      : usesGamesEndurance ? 0.25 : 0.1;
+        ? ENDURANCE_EMPTY_GAMES
+        : ENDURANCE_EMPTY_POINTS
+      : setScores.reduce((sum, set) => {
+          const perSet = ratingSetUsesGamesMargin(set, ballsInGames)
+            ? ENDURANCE_PER_GAMES_SET
+            : ENDURANCE_PER_POINTS_SET;
+          return sum + perSet;
+        }, 0);
 
-  const setCountMultiplier =
-    setScores && setScores.length > 0 ? setScores.length : 1;
-
-  return (
-    base *
-    enduranceEntityTypeMultiplier(entityType, isGainingRating) *
-    setCountMultiplier
-  );
+  return baseSum * enduranceEntityTypeMultiplier(entityType, isGainingRating);
 }
 
 export function calculateReliabilityChange(
@@ -136,7 +138,10 @@ function calculateHighLevelDampening(playerLevel: number, isGaining: boolean): n
   return Math.exp(-3.5 * ratio);
 }
 
-function calculateDifferentialMultiplier(setScores: RatingSetScore[]): { multiplier: number; totalPointDifferential: number } {
+function calculateDifferentialMultiplier(
+  setScores: RatingSetScore[],
+  isWinner: boolean,
+): { multiplier: number; totalPointDifferential: number } {
   let totalPointDifferential = 0;
 
   const validSets = setScores.filter(set => set.teamAScore > 0 || set.teamBScore > 0);
@@ -145,6 +150,12 @@ function calculateDifferentialMultiplier(setScores: RatingSetScore[]): { multipl
       ? (set.teamAScore > set.teamBScore ? 1 : set.teamBScore > set.teamAScore ? -1 : 0)
       : set.teamAScore - set.teamBScore;
     totalPointDifferential += diff;
+  }
+
+  // Winning the match despite an even or negative aggregate margin is the
+  // closest kind of win; the losing sets must not amplify the rating gain.
+  if (isWinner && totalPointDifferential <= 0) {
+    return { multiplier: MIN_MULTIPLIER, totalPointDifferential };
   }
 
   if (totalPointDifferential <= CLOSE_MATCH_THRESHOLD && totalPointDifferential >= -CLOSE_MATCH_THRESHOLD) {
@@ -206,7 +217,7 @@ export function calculateRatingUpdate(
     matchResult.setScores &&
     matchResult.setScores.length > 0
   ) {
-    const result = calculateDifferentialMultiplier(matchResult.setScores);
+    const result = calculateDifferentialMultiplier(matchResult.setScores, matchResult.isWinner);
     totalPointDifferential = result.totalPointDifferential;
     marginLabel = marginLabelFromRawMultiplier(result.multiplier);
 
@@ -258,4 +269,3 @@ export function calculateRatingUpdate(
     marginLabel,
   };
 }
-

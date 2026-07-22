@@ -67,8 +67,13 @@ assert(gamesReliability > americanoReliability, 'games reliability weighted high
 
 const gamesEndurance = calculateEnduranceCoefficient(gamesSets, true);
 const americanoEndurance = calculateEnduranceCoefficient(americanoTwoSets, true);
+const deciderEndurance = calculateEnduranceCoefficient(americanoDeciderSets, true);
 assert(gamesEndurance === 0.5, 'games endurance uses balls-in-games base');
 assert(americanoEndurance === 0.2, 'americano endurance uses points base x2 sets');
+assert(
+  Math.abs(deciderEndurance - 0.6) < 1e-9,
+  'STB decider endurance = 2 games sets + 1 points set (0.25+0.25+0.1)',
+);
 
 const gamesRating = calculateRatingUpdate(
   { level: 3, reliability: 50, gamesPlayed: 10 },

@@ -21,6 +21,7 @@
     "verify:next-game": "bash scripts/verify-next-game-parity.sh",
     "test:ios-shared-packages": "bash ios/scripts/run-ios-shared-package-tests.sh",
     "test:live-scoring": "vitest run src/utils/liveScoring/core.test.ts src/utils/liveScoring/badmintonServe.test.ts src/utils/liveScoring/squashServe.test.ts src/utils/liveScoring/pickleballServe.test.ts src/utils/liveScoring/serveGuideGolden.test.ts src/utils/liveScoring/scoringGolden.test.ts src/liveScoring/registry.test.ts src/liveScoring/rallyScoreMeta.test.ts src/sport/sportRegistry.test.ts src/sport/badmintonFlow.verify.test.ts src/sport/createTemplates.parity.test.ts src/utils/profileSports.test.ts src/utils/findSportFilter.test.ts src/components/liveScoring/rally/pickleballCourt.test.ts src/components/liveScoring/rally/squashCourtLayout.test.ts",
+    "test:game-results-share": "node scripts/verify-game-results-share-export.mjs",
     "test:game-invite": "vitest run src/utils/gameInviteParticipant.test.ts",
     "test:invites": "vitest run src/utils/gameInviteParticipant.test.ts src/api/invites.myTabCache.test.ts src/queries/games/removeInviteFromMyGamesCache.test.ts",
     "test:group-channel": "vitest run src/utils/groupChannelParticipation.test.ts",

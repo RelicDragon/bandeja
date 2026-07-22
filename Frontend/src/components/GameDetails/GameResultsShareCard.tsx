@@ -17,6 +17,7 @@ import { buildDuplicateGameInitialData } from '@/utils/buildDuplicateGameInitial
 import { runWithProfileName } from '@/utils/runWithProfileName';
 import { useAuthStore } from '@/store/authStore';
 import { getGameParticipationState } from '@/utils/gameParticipationState';
+import { GameResultsShareCardVisual } from './GameResultsShareCardVisual';
 
 const EMPTY_GAME_PHOTOS: import('@/api/gamePhotos').GamePhoto[] = [];
 
@@ -40,6 +41,7 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
   const canPlayAgain =
     game.entityType === 'GAME' &&
     getGameParticipationState(game.participants ?? [], userId, game).isPlaying;
+  const title = game.name?.trim() || sportLabel;
 
   const handleShare = async () => {
     if (!showShareCard || !cardRef.current) return;
@@ -48,7 +50,7 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
       await shareGameResultsCard({
         cardElement: cardRef.current,
         summaryText: summary,
-        gameTitle: game.name?.trim() || sportLabel,
+        gameTitle: title,
       });
       toast.success(t('gameResults.shareCardDone'));
     } catch (err: unknown) {
@@ -96,37 +98,15 @@ export function GameResultsShareCard({ game }: GameResultsShareCardProps) {
 
   return (
     <div className="mb-4 flex flex-col items-center gap-3 px-1">
-      <div
-        ref={cardRef}
-        className="w-full max-w-sm overflow-hidden rounded-2xl border border-violet-400/30 bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900 p-4 text-white shadow-lg"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="m-0 text-[10px] font-semibold uppercase tracking-widest text-violet-300">
-              {t('gameResults.shareCardBadge')}
-            </p>
-            <h3 className="mt-1 text-lg font-bold leading-tight">
-              {game.name?.trim() || sportLabel}
-            </h3>
-          </div>
-          <span className="shrink-0 rounded-full bg-violet-500/20 px-2 py-0.5 text-[10px] font-medium text-violet-200">
-            {sportLabel}
-          </span>
-        </div>
-        {photoUrl ? (
-          <img
-            src={photoUrl}
-            alt=""
-            className="mt-3 aspect-[4/3] w-full rounded-xl object-cover ring-1 ring-white/10"
-            crossOrigin="anonymous"
-          />
-        ) : null}
-        {summary ? (
-          <p className="mt-3 text-sm leading-relaxed text-slate-200 line-clamp-6">{summary}</p>
-        ) : (
-          <p className="mt-3 text-sm text-slate-400">{t('gameResults.shareCardNoSummary')}</p>
-        )}
-      </div>
+      <GameResultsShareCardVisual
+        cardRef={cardRef}
+        badgeLabel={t('gameResults.shareCardBadge')}
+        title={title}
+        sportLabel={sportLabel}
+        photoUrl={photoUrl}
+        summary={summary}
+        noSummaryLabel={t('gameResults.shareCardNoSummary')}
+      />
       <div className="grid w-full max-w-sm grid-cols-1 gap-2 sm:grid-cols-2">
         <button
           type="button"

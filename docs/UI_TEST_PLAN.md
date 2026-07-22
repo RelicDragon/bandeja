@@ -745,7 +745,7 @@ Frontend/e2e/
 | GD-114 | Available players footer header | Edit a match with unassigned players in roster | Bottom sheet shows "Available Players" label with count badge above the draggable carousel |
 | GD-115 | Round added summary modal | Add round in results entry with ≤4 playing participants vs 5+ | ≤4: round added inline with no summary modal; 5+: modal lists generated match pairings |
 | GD-36 | Results share card hidden without photo | Final results, no game photo yet | No share card or share CTA; Play again shown only if viewer is PLAYING |
-| GD-36b | Results share card with photo | Add/generate photo, open Results tab | Share card preview shows photo; Share results card succeeds (native share sheet or PNG download on desktop) |
+| GD-36b | Results share card with photo | Add/generate photo, open Results tab | Share card preview shows photo; Share results card succeeds (PNG export must not fail on Tailwind oklch; native share or desktop download) |
 | GD-36c | Play again only for players | Results as PLAYING participant vs guest/spectator/owner-only | Play again visible only when current user has PLAYING status on this game |
 | GD-37 | Game results artifact | Photo/story from results | Artifact flow |
 
