@@ -51,6 +51,10 @@ async function main(): Promise<void> {
   if (insecure) {
     process.env.JWT_SECRET = 'cors-e2e-reverify-secret-min-32-chars!!';
   }
+  // Full `app` import constructs PrismaClient; CI has no real DB. Health/OPTIONS never query.
+  if (!(process.env.DB_URL || '').trim()) {
+    process.env.DB_URL = 'postgresql://ci:ci@127.0.0.1:5432/ci_cors_http_e2e';
+  }
 
   const { default: app } = await import('../app');
   const { PROD_CORS_ORIGINS } = await import('./corsOrigins');
