@@ -37,11 +37,18 @@ export const getLeagueRounds = asyncHandler(async (req: AuthRequest, res: Respon
 export const getLeagueStandings = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { leagueSeasonId } = req.params;
   
-  const standings = await LeagueReadService.getLeagueStandings(leagueSeasonId);
+  const [standings, rosterAliases] = await Promise.all([
+    LeagueReadService.getLeagueStandings(leagueSeasonId),
+    prisma.leagueTeamRosterAlias.findMany({
+      where: { leagueSeasonId },
+      select: { rosterKey: true, leagueTeamId: true },
+    }),
+  ]);
 
   res.json({
     success: true,
     data: standings,
+    meta: { rosterAliases },
   });
 });
 

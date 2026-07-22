@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flame } from 'lucide-react';
 import type { TFunction } from 'i18next';
-import type { LeagueRound } from '@/api/leagues';
+import type { LeagueRound, LeagueRosterAlias } from '@/api/leagues';
 import type { MatrixTeam } from '@/utils/leagueFixtureMatrix';
 import type { BasicUser, Game } from '@/types';
 import { PlayerAvatar } from '@/components';
@@ -12,6 +12,7 @@ import type { ResolvedDisplaySettings } from '@/utils/displayPreferences';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import {
   buildPairCellMap,
+  buildSigResolveMap,
   formatFixtureMatrixPlayerName,
   matchupKey,
   rowPerspectiveOutcome,
@@ -21,6 +22,7 @@ interface LeagueFixtureMatrixProps {
   groupId: string;
   teams: MatrixTeam[];
   rounds: LeagueRound[];
+  rosterAliases?: LeagueRosterAlias[];
   onFixtureCell: (payload: { games: Game[]; row: MatrixTeam; col: MatrixTeam }) => void;
   /** Use flex parent with bounded height; table scroll fills remaining space (fullscreen page). */
   fillViewportHeight?: boolean;
@@ -116,6 +118,7 @@ export const LeagueFixtureMatrix = ({
   groupId,
   teams,
   rounds,
+  rosterAliases = [],
   onFixtureCell,
   fillViewportHeight = false,
 }: LeagueFixtureMatrixProps) => {
@@ -123,7 +126,14 @@ export const LeagueFixtureMatrix = ({
   const user = useAuthStore((s) => s.user);
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
 
-  const pairMap = useMemo(() => buildPairCellMap(rounds, groupId), [rounds, groupId]);
+  const sigResolveMap = useMemo(
+    () => buildSigResolveMap(teams, rosterAliases),
+    [teams, rosterAliases],
+  );
+  const pairMap = useMemo(
+    () => buildPairCellMap(rounds, groupId, sigResolveMap),
+    [rounds, groupId, sigResolveMap],
+  );
 
   if (teams.length < 2) {
     return (
@@ -237,7 +247,7 @@ export const LeagueFixtureMatrix = ({
                     let outcomeChar: string | null = null;
                     let live = false;
                     if (primary) {
-                      const r = rowPerspectiveOutcome(primary, row.sig, col.sig);
+                      const r = rowPerspectiveOutcome(primary, row.sig, col.sig, sigResolveMap);
                       if (r.outcome) outcomeChar = r.outcome;
                       else if (r.scoreHint === 'live') live = true;
                     }

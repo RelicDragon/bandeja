@@ -11,7 +11,7 @@ import { GroupFilterDropdown } from './GroupFilterDropdown';
 import { RoundTypeFilterSwitch } from './RoundTypeFilterSwitch';
 import { LeagueFixtureMatrix } from './LeagueFixtureMatrix';
 import { LeagueFixtureDetailSheet } from './LeagueFixtureDetailSheet';
-import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding } from '@/api/leagues';
+import { leaguesApi, LeagueRound, LeagueGroup, LeagueStanding, type LeagueRosterAlias } from '@/api/leagues';
 import { Loader2, Calendar, Users, Trophy, LayoutGrid, Maximize2 } from 'lucide-react';
 import { standingsTeamsForGroup, roundsInSingleRoundRobinCycle, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
 import { repairLeagueScheduleSearchIfInvalid, resolveLeagueScheduleMode } from '@/utils/leagueScheduleSubtab';
@@ -61,6 +61,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
   const user = useAuthStore((s) => s.user);
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
+  const [rosterAliases, setRosterAliases] = useState<LeagueRosterAlias[]>([]);
   const [fixtureSheet, setFixtureSheet] = useState<{
     games: Game[];
     row: MatrixTeam;
@@ -118,6 +119,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
       
       const standingsResponse = await leaguesApi.getStandings(leagueSeasonId);
       setStandings(standingsResponse.data);
+      setRosterAliases(standingsResponse.meta?.rosterAliases ?? []);
       setParticipantCount(standingsResponse.data.length);
 
       try {
@@ -873,6 +875,7 @@ export const LeagueScheduleTab = ({ leagueSeasonId, canEdit = false, hasFixedTea
               groupId={matrixGroupId}
               teams={matrixTeams}
               rounds={rounds}
+              rosterAliases={rosterAliases}
               onFixtureCell={({ games, row, col }) => setFixtureSheet({ games, row, col })}
             />
           </div>

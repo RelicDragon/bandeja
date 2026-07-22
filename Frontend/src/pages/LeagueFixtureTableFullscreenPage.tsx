@@ -6,7 +6,7 @@ import { Card } from '@/components';
 import { LeagueFixtureMatrix } from '@/components/GameDetails/LeagueFixtureMatrix';
 import { LeagueFixtureDetailSheet } from '@/components/GameDetails/LeagueFixtureDetailSheet';
 import { gamesApi } from '@/api';
-import { leaguesApi, type LeagueGroup, type LeagueRound, type LeagueStanding } from '@/api/leagues';
+import { leaguesApi, type LeagueGroup, type LeagueRound, type LeagueStanding, type LeagueRosterAlias } from '@/api/leagues';
 import { standingsTeamsForGroup, type MatrixTeam } from '@/utils/leagueFixtureMatrix';
 import type { Game } from '@/types';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
@@ -21,6 +21,7 @@ export const LeagueFixtureTableFullscreenPage = () => {
   const [metaError, setMetaError] = useState(false);
   const [rounds, setRounds] = useState<LeagueRound[]>([]);
   const [standings, setStandings] = useState<LeagueStanding[]>([]);
+  const [rosterAliases, setRosterAliases] = useState<LeagueRosterAlias[]>([]);
   const [groups, setGroups] = useState<LeagueGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [fixtureSheet, setFixtureSheet] = useState<{
@@ -64,11 +65,13 @@ export const LeagueFixtureTableFullscreenPage = () => {
       ]);
       setRounds(roundsRes.data);
       setStandings(standingsRes.data);
+      setRosterAliases(standingsRes.meta?.rosterAliases ?? []);
       setGroups(groupsRes.data.groups);
     } catch (e) {
       console.error(e);
       setRounds([]);
       setStandings([]);
+      setRosterAliases([]);
       setGroups([]);
     } finally {
       setLoading(false);
@@ -175,6 +178,7 @@ export const LeagueFixtureTableFullscreenPage = () => {
               groupId={matrixGroupId}
               teams={matrixTeams}
               rounds={rounds}
+              rosterAliases={rosterAliases}
               fillViewportHeight
               onFixtureCell={({ games, row, col }) => setFixtureSheet({ games, row, col })}
             />

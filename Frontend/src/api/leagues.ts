@@ -253,6 +253,12 @@ export interface LeagueStanding {
   };
 }
 
+/** Historical fixed-team roster (`userId:userId`) → current franchise leagueTeamId. */
+export interface LeagueRosterAlias {
+  rosterKey: string;
+  leagueTeamId: string;
+}
+
 export interface LeagueGroup {
   id: string;
   leagueSeasonId: string;
@@ -337,7 +343,9 @@ export const leaguesApi = {
     return response.data;
   },
   getStandings: async (leagueSeasonId: string) => {
-    const response = await api.get<ApiResponse<LeagueStanding[]>>(`/leagues/${leagueSeasonId}/standings`);
+    const response = await api.get<
+      ApiResponse<LeagueStanding[]> & { meta?: { rosterAliases?: LeagueRosterAlias[] } }
+    >(`/leagues/${leagueSeasonId}/standings`);
     return response.data;
   },
   createRound: async (leagueSeasonId: string, creationType?: string) => {

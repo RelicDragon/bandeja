@@ -1,5 +1,5 @@
 import type { BasicUser, Game } from '@/types';
-import type { LeagueRound, LeagueStanding } from '@/api/leagues';
+import type { LeagueRound, LeagueStanding, LeagueRosterAlias } from '@/api/leagues';
 
 const letterRe = /\p{L}/u;
 
@@ -31,6 +31,51 @@ export function matchupKey(sigA: string, sigB: string): string {
   return sigA < sigB ? `${sigA}|${sigB}` : `${sigB}|${sigA}`;
 }
 
+/** Backend rosterKey uses `id1:id2`; matrix sigs use `id1,id2`. */
+export function rosterKeyToSig(rosterKey: string): string {
+  return rosterKey
+    .split(':')
+    .map((id) => id.trim())
+    .filter(Boolean)
+    .sort()
+    .join(',');
+}
+
+/**
+ * Map any franchise roster (current or historical alias) → current matrix team sig.
+ * Past FINAL fixtures keep old player ids; aliases reconnect them after a mid-season swap.
+ * Prefer an exact current roster match over aliases (same rule as backend resolveRosterToCurrentTeamPlayers).
+ */
+export function buildSigResolveMap(
+  teams: MatrixTeam[],
+  aliases: LeagueRosterAlias[] = [],
+): Map<string, string> {
+  const tidToSig = new Map(teams.map((t) => [t.leagueTeamId, t.sig]));
+  const map = new Map<string, string>();
+  for (const t of teams) {
+    map.set(t.sig, t.sig);
+  }
+  for (const a of aliases) {
+    const hist = rosterKeyToSig(a.rosterKey);
+    if (!hist || hist.split(',').length !== 2) continue;
+    // Do not steal a roster that is currently fielded by any franchise in this matrix.
+    if (map.has(hist)) continue;
+    const current = tidToSig.get(a.leagueTeamId);
+    if (!current) continue;
+    map.set(hist, current);
+  }
+  return map;
+}
+
+export function resolveTeamSig(
+  sig: string | null,
+  resolveMap?: Map<string, string>,
+): string | null {
+  if (!sig) return null;
+  if (!resolveMap) return sig;
+  return resolveMap.get(sig) ?? sig;
+}
+
 export function sigFromFixedTeam(game: Game, teamNumber: 1 | 2): string | null {
   const ft = game.fixedTeams?.find((t) => t.teamNumber === teamNumber);
   if (!ft?.players?.length) return null;
@@ -50,19 +95,28 @@ export type CellOutcome = 'W' | 'L' | 'T' | null;
 export function rowPerspectiveOutcome(
   game: Game,
   rowSig: string,
-  colSig: string
+  colSig: string,
+  resolveMap?: Map<string, string>,
 ): { outcome: CellOutcome; scoreHint: string | null } {
   if (rowSig === colSig) return { outcome: null, scoreHint: null };
-  const s1 = sigFromFixedTeam(game, 1);
-  const s2 = sigFromFixedTeam(game, 2);
-  if (!s1 || !s2) return { outcome: null, scoreHint: null };
+  const s1raw = sigFromFixedTeam(game, 1);
+  const s2raw = sigFromFixedTeam(game, 2);
+  if (!s1raw || !s2raw) return { outcome: null, scoreHint: null };
 
-  const scheduled =
-    Boolean(game.timeIsSet) && Boolean(game.clubId);
+  const s1 = resolveTeamSig(s1raw, resolveMap)!;
+  const s2 = resolveTeamSig(s2raw, resolveMap)!;
+  const expected = matchupKey(rowSig, colSig);
+  if (matchupKey(s1, s2) !== expected) return { outcome: null, scoreHint: null };
+
+  const scheduled = Boolean(game.timeIsSet) && Boolean(game.clubId);
   const played = game.resultsStatus === 'FINAL' && (game.outcomes?.length ?? 0) > 0;
 
   if (played && game.outcomes) {
-    const rowIds = rowSig.split(',');
+    // Outcomes belong to who actually played (historical roster), not the current franchise pair.
+    const perspectiveRaw =
+      s1 === rowSig ? s1raw : s2 === rowSig ? s2raw : null;
+    if (!perspectiveRaw) return { outcome: null, scoreHint: null };
+    const rowIds = perspectiveRaw.split(',');
     const rowOutcomes = game.outcomes.filter((o) => rowIds.includes(o.userId));
     if (rowOutcomes.length === 0) return { outcome: null, scoreHint: null };
     const allWinners = rowOutcomes.every((o) => o.isWinner);
@@ -132,7 +186,8 @@ export type CellGames = { games: Game[] };
 
 export function buildPairCellMap(
   rounds: LeagueRound[],
-  groupId: string
+  groupId: string,
+  resolveMap?: Map<string, string>,
 ): Map<string, Game[]> {
   const map = new Map<string, Game[]>();
   const regularGames = rounds
@@ -141,8 +196,10 @@ export function buildPairCellMap(
     .filter((g) => g.leagueGroupId === groupId && (g.hasFixedTeams || gameHasFixturePairTeams(g)));
 
   for (const g of regularGames) {
-    const s1 = sigFromFixedTeam(g, 1);
-    const s2 = sigFromFixedTeam(g, 2);
+    const s1raw = sigFromFixedTeam(g, 1);
+    const s2raw = sigFromFixedTeam(g, 2);
+    const s1 = resolveTeamSig(s1raw, resolveMap);
+    const s2 = resolveTeamSig(s2raw, resolveMap);
     if (!s1 || !s2 || s1 === s2) continue;
     const key = matchupKey(s1, s2);
     const prev = map.get(key) ?? [];
