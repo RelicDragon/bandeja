@@ -22,6 +22,8 @@ jobs:
           cache-dependency-path: Backend/package-lock.json
       - run: npm ci
       - run: npm run build:contract
+      - run: npm run build:unread-contract
+      - run: npm run build:shared
       - run: npm run test --prefix ../packages/chat-contract
       - run: npx prisma generate
       - run: npm run lint
