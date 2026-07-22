@@ -30,6 +30,26 @@ interface RatingUpdate {
   totalPointDifferential?: number;
   enduranceCoefficient?: number;
   reliabilityCoefficient?: number;
+  /** Pre-margin Elo-style delta from expected vs actual outcome. */
+  expectedWinProbability: number;
+  performanceDifference: number;
+  baseLevelChange: number;
+  highLevelDampening: number;
+  cappedByMaxDelta: boolean;
+  maxDeltaPerEvent: number;
+  ownTeamLevel: number;
+  opponentsLevel: number;
+  /** Score-margin bucket before level-gap expectedness scaling. */
+  marginLabel?: 'veryClose' | 'close' | 'normal' | 'blowout';
+}
+
+export type RatingMarginLabel = NonNullable<RatingUpdate['marginLabel']>;
+
+function marginLabelFromRawMultiplier(rawMultiplier: number): RatingMarginLabel {
+  if (rawMultiplier < 0.6) return 'veryClose';
+  if (rawMultiplier < 1) return 'close';
+  if (rawMultiplier > 2) return 'blowout';
+  return 'normal';
 }
 
 const BASE_LEVEL_CHANGE = 0.05;
@@ -179,6 +199,7 @@ export function calculateRatingUpdate(
 
   let multiplier = 1.0;
   let totalPointDifferential: number | undefined = undefined;
+  let marginLabel: RatingMarginLabel | undefined;
 
   if (
     engine.useScoreMargin &&
@@ -187,6 +208,7 @@ export function calculateRatingUpdate(
   ) {
     const result = calculateDifferentialMultiplier(matchResult.setScores);
     totalPointDifferential = result.totalPointDifferential;
+    marginLabel = marginLabelFromRawMultiplier(result.multiplier);
 
     const levelGap = Math.abs(matchResult.ownTeamLevel - matchResult.opponentsLevel);
     const expectednessScale = 1 / (1 + levelGap);
@@ -212,7 +234,9 @@ export function calculateRatingUpdate(
   const highLevelDampening = calculateHighLevelDampening(playerStats.level, levelChange > 0);
   levelChange = levelChange * highLevelDampening;
 
+  const uncappedLevelChange = levelChange;
   levelChange = Math.max(-maxLevelChange, Math.min(maxLevelChange, levelChange));
+  const cappedByMaxDelta = Math.abs(uncappedLevelChange) > maxLevelChange + 1e-12;
 
   const pointsEarned = matchResult.isWinner ? POINTS_PER_WIN : 0;
 
@@ -223,6 +247,15 @@ export function calculateRatingUpdate(
     totalPointDifferential,
     enduranceCoefficient,
     reliabilityCoefficient,
+    expectedWinProbability,
+    performanceDifference,
+    baseLevelChange,
+    highLevelDampening,
+    cappedByMaxDelta,
+    maxDeltaPerEvent: maxLevelChange,
+    ownTeamLevel: matchResult.ownTeamLevel,
+    opponentsLevel: matchResult.opponentsLevel,
+    marginLabel,
   };
 }
 

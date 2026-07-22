@@ -101,13 +101,13 @@ export function RatingExplanationTranslateControl({
         aria-expanded={open}
         aria-controls={listId}
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-blue-200/80 dark:border-blue-800/70 bg-white/70 dark:bg-slate-900/50 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-900 transition-colors disabled:opacity-50"
+        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/80 dark:border-emerald-800/60 bg-white/80 dark:bg-slate-900/55 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 shadow-sm hover:bg-white dark:hover:bg-slate-900 transition-colors disabled:opacity-50"
         title={t('gameResults.llmRatingInsightTranslate')}
       >
         {isTranslating ? (
-          <Loader2 size={14} className="animate-spin text-blue-600 dark:text-blue-400" />
+          <Loader2 size={14} className="animate-spin text-emerald-600 dark:text-emerald-400" />
         ) : (
-          <Languages size={14} className="text-blue-600 dark:text-blue-400" />
+          <Languages size={14} className="text-emerald-600 dark:text-emerald-400" />
         )}
         <span className="text-base leading-none" aria-hidden>
           {activeFlag}
@@ -129,7 +129,7 @@ export function RatingExplanationTranslateControl({
               right: menuPos.right,
               maxHeight: menuPos.maxHeight,
             }}
-            className="z-[80] w-56 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl animate-in fade-in zoom-in-95 duration-150"
+            className="z-[80] w-56 overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/90 dark:border-slate-700/80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl shadow-slate-900/10 animate-in fade-in zoom-in-95 duration-150"
             data-rating-explanation-lang-menu
           >
             {TRANSLATION_LANGUAGES.map((lang) => {
@@ -142,10 +142,10 @@ export function RatingExplanationTranslateControl({
                   role="option"
                   aria-selected={selected}
                   onClick={() => handleSelect(lang.code)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${
+                  className={`w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors first:rounded-t-2xl last:rounded-b-2xl ${
                     selected
-                      ? 'bg-blue-50 dark:bg-blue-950/50 text-slate-900 dark:text-slate-50'
-                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                      ? 'bg-emerald-50 dark:bg-emerald-950/45 text-slate-900 dark:text-slate-50'
+                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80'
                   }`}
                 >
                   <span className="text-base leading-none w-5 text-center" aria-hidden>
@@ -153,12 +153,12 @@ export function RatingExplanationTranslateControl({
                   </span>
                   <span className="flex-1 min-w-0 truncate">{lang.label}</span>
                   {isOriginal && (
-                    <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                    <span className="text-[10px] uppercase tracking-wide text-emerald-600/80 dark:text-emerald-400/80">
                       {t('gameResults.llmRatingInsightOriginal')}
                     </span>
                   )}
                   {selected && (
-                    <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <Check size={14} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                   )}
                 </button>
               );

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshCw } from 'lucide-react';
 import {
   getOutcomeRatingExplanationLlm,
   getOutcomeRatingExplanationTranslation,
@@ -8,6 +7,7 @@ import {
 import { useAuthStore } from '@/store/authStore';
 import { extractLanguageCode } from '@/utils/displayPreferences';
 import { TRANSLATION_LANGUAGES } from '@/utils/translationLanguages';
+import { RatingExplanationInsightBody } from './RatingExplanationInsightBody';
 import { RatingExplanationTranslateControl } from './RatingExplanationTranslateControl';
 
 const POLL_START_MS = 500;
@@ -28,13 +28,6 @@ function resolveUiLanguage(i18nLanguage: string | undefined): string {
 
 function isTranslatableLanguage(code: string): boolean {
   return TRANSLATION_LANGUAGES.some((l) => l.code === code);
-}
-
-function splitParagraphs(text: string): string[] {
-  return text
-    .split(/\n+/)
-    .map((p) => p.trim())
-    .filter(Boolean);
 }
 
 function preferredDisplayLanguage(appLanguage: string, sourceLanguage: string): string {
@@ -304,103 +297,48 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
 
   return (
     <section
-      className="mb-6 overflow-hidden rounded-xl border border-blue-200/80 dark:border-blue-800/70 bg-gradient-to-br from-blue-50 to-indigo-50/70 dark:from-blue-950/40 dark:to-indigo-950/30"
+      className="relative mb-6 overflow-hidden rounded-2xl border border-emerald-200/70 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/90 via-white to-teal-50/60 dark:from-emerald-950/35 dark:via-slate-950/40 dark:to-teal-950/25 shadow-sm shadow-emerald-500/[0.04]"
       aria-live="polite"
       aria-busy={phase === 'pending' || isTranslating}
     >
-      <div className="px-4 pt-4 pb-1 sm:px-5 sm:pt-5 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-slate-50">
-            {t('gameResults.llmRatingInsightTitle')}
-          </h3>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            {t('gameResults.llmRatingInsightSubtitle')}
-          </p>
+      <div
+        className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-emerald-400 via-teal-500 to-emerald-600/80"
+        aria-hidden
+      />
+      <div className="pl-4 sm:pl-5">
+        <div className="px-4 pt-4 pb-1 sm:px-5 sm:pt-5 flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="text-[15px] font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+              {t('gameResults.llmRatingInsightTitle')}
+            </h3>
+            <p className="mt-1 text-[12px] leading-snug text-slate-500 dark:text-slate-400">
+              {t('gameResults.llmRatingInsightSubtitle')}
+            </p>
+          </div>
+          {phase === 'ready' && sourceLanguage && (
+            <RatingExplanationTranslateControl
+              sourceLanguage={sourceLanguage}
+              activeLanguage={activeLanguage}
+              isTranslating={isTranslating}
+              onSelectLanguage={onSelectLanguage}
+            />
+          )}
         </div>
-        {phase === 'ready' && sourceLanguage && (
-          <RatingExplanationTranslateControl
+
+        <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+          <RatingExplanationInsightBody
+            phase={phase}
+            committedText={committedText}
+            committedLanguage={committedLanguage}
             sourceLanguage={sourceLanguage}
-            activeLanguage={activeLanguage}
             isTranslating={isTranslating}
-            onSelectLanguage={onSelectLanguage}
+            showingOriginal={showingOriginal}
+            translateFailedLanguage={translateFailedLanguage}
+            isAuthenticated={isAuthenticated}
+            onRetrySource={onRetrySource}
+            onRetryTranslate={onRetryTranslate}
           />
-        )}
-      </div>
-
-      <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
-        {phase === 'pending' && (
-          <div className="space-y-2.5" role="status">
-            <div className="h-3.5 w-[92%] rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse" />
-            <div className="h-3.5 w-[88%] rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse" />
-            <div className="h-3.5 w-[70%] rounded bg-slate-200/80 dark:bg-slate-700/70 animate-pulse" />
-            <p className="pt-1 text-xs text-slate-500 dark:text-slate-400">
-              {t('gameResults.llmRatingInsightLoading')}
-            </p>
-          </div>
-        )}
-
-        {phase === 'ready' && committedText && (
-          <div className="relative">
-            {isTranslating && (
-              <div className="absolute inset-0 z-10 rounded-lg bg-white/55 dark:bg-slate-950/45 backdrop-blur-[1px] flex items-center justify-center">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                  {t('gameResults.llmRatingInsightTranslating')}
-                </p>
-              </div>
-            )}
-            <div
-              className={`space-y-3 text-[15px] leading-relaxed text-slate-800 dark:text-slate-100 animate-in fade-in duration-300 ${
-                isTranslating ? 'opacity-40' : ''
-              }`}
-            >
-              {splitParagraphs(committedText).map((paragraph, index) => (
-                <p key={`${committedLanguage}-${index}`}>{paragraph}</p>
-              ))}
-            </div>
-            {!showingOriginal && !isTranslating && !translateFailedLanguage && (
-              <p className="mt-3 text-[11px] text-slate-400 dark:text-slate-500">
-                {t('gameResults.llmRatingInsightTranslatedFrom', {
-                  language: sourceLanguage?.toUpperCase(),
-                })}
-              </p>
-            )}
-            {translateFailedLanguage && (
-              <div className="mt-3 flex items-center justify-between gap-3">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {t('gameResults.llmRatingInsightTranslateFailed')}
-                </p>
-                {isAuthenticated && (
-                  <button
-                    type="button"
-                    onClick={onRetryTranslate}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200"
-                  >
-                    <RefreshCw size={12} />
-                    {t('gameResults.llmRatingInsightRetry')}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {phase === 'failed' && (
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-slate-600 dark:text-slate-300">
-              {t('gameResults.llmRatingInsightFailed')}
-            </p>
-            {isAuthenticated && (
-              <button
-                type="button"
-                onClick={onRetrySource}
-                className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-white dark:hover:bg-slate-900 transition-colors"
-              >
-                <RefreshCw size={14} />
-                {t('gameResults.llmRatingInsightRetry')}
-              </button>
-            )}
-          </div>
-        )}
+        </div>
       </div>
     </section>
   );

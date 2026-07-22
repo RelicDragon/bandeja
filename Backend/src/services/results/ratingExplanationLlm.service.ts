@@ -3,6 +3,7 @@ import { getAiService } from '../ai/ai.service';
 import { LLM_REASON } from '../ai/llmReasons';
 import { getOutcomeExplanation } from './outcomeExplanation.service';
 import { buildRatingExplanationLlmPrompt } from './ratingExplanationLlmPrompt.util';
+import { buildAlgorithmNotes } from './ratingExplanationLlmAlgorithmNotes';
 import type {
   ExplanationDataForLlm,
   RatingExplanationLlmResponse,
@@ -34,13 +35,52 @@ function playerDisplayName(firstName?: string | null, lastName?: string | null):
 function toLlmPayload(
   explanation: NonNullable<Awaited<ReturnType<typeof getOutcomeExplanation>>>,
 ): ExplanationDataForLlm {
+  const matches = explanation.matches.map((m) => ({
+    roundNumber: m.roundNumber,
+    matchNumber: m.matchNumber,
+    isWinner: m.isWinner,
+    isDraw: m.isDraw,
+    notFinishedByRules: m.notFinishedByRules,
+    opponentLevel: m.opponentLevel,
+    ownTeamLevel: m.ownTeamLevel,
+    levelDifference: m.levelDifference,
+    scoreDelta: m.scoreDelta,
+    levelChange: m.levelChange,
+    pointsEarned: m.pointsEarned,
+    multiplier: m.multiplier,
+    totalPointDifferential: m.totalPointDifferential,
+    enduranceCoefficient: m.enduranceCoefficient,
+    expectedWinProbability: m.expectedWinProbability,
+    performanceDifference: m.performanceDifference,
+    baseLevelChange: m.baseLevelChange,
+    highLevelDampening: m.highLevelDampening,
+    cappedByMaxDelta: m.cappedByMaxDelta,
+    maxDeltaPerEvent: m.maxDeltaPerEvent,
+    marginLabel: m.marginLabel,
+    teammates: m.teammates.map((p) => ({
+      name: playerDisplayName(p.firstName, p.lastName),
+      level: p.level,
+    })),
+    opponents: m.opponents.map((p) => ({
+      name: playerDisplayName(p.firstName, p.lastName),
+      level: p.level,
+    })),
+    sets: m.sets?.map((s) => ({
+      setNumber: s.setNumber,
+      isWinner: s.isWinner,
+      levelChange: s.levelChange,
+      userScore: s.userScore,
+      opponentScore: s.opponentScore,
+      isTieBreak: s.isTieBreak,
+      scoreKind: s.scoreKind,
+    })),
+  }));
+
   return {
     levelBefore: explanation.userLevel,
     levelAfter: explanation.userLevel + explanation.levelChange,
     levelChange: explanation.levelChange,
     reliabilityBefore: explanation.userReliability,
-    reliabilityAfter: explanation.userReliability + explanation.reliabilityChange,
-    reliabilityChange: explanation.reliabilityChange,
     reliabilityCoefficient: explanation.reliabilityCoefficient,
     ratingSettling: explanation.ratingSettling,
     ratingUncertainty:
@@ -48,38 +88,14 @@ function toLlmPayload(
     gamesPlayedBefore: explanation.userGamesPlayed,
     summary: explanation.summary,
     placementRatingFloor: explanation.placementRatingFloor,
-    matches: explanation.matches.map((m) => ({
-      roundNumber: m.roundNumber,
-      matchNumber: m.matchNumber,
-      isWinner: m.isWinner,
-      isDraw: m.isDraw,
-      notFinishedByRules: m.notFinishedByRules,
-      opponentLevel: m.opponentLevel,
-      levelDifference: m.levelDifference,
-      scoreDelta: m.scoreDelta,
-      levelChange: m.levelChange,
-      pointsEarned: m.pointsEarned,
-      multiplier: m.multiplier,
-      totalPointDifferential: m.totalPointDifferential,
-      enduranceCoefficient: m.enduranceCoefficient,
-      teammates: m.teammates.map((p) => ({
-        name: playerDisplayName(p.firstName, p.lastName),
-        level: p.level,
-      })),
-      opponents: m.opponents.map((p) => ({
-        name: playerDisplayName(p.firstName, p.lastName),
-        level: p.level,
-      })),
-      sets: m.sets?.map((s) => ({
-        setNumber: s.setNumber,
-        isWinner: s.isWinner,
-        levelChange: s.levelChange,
-        userScore: s.userScore,
-        opponentScore: s.opponentScore,
-        isTieBreak: s.isTieBreak,
-        scoreKind: s.scoreKind,
-      })),
-    })),
+    algorithmNotes: buildAlgorithmNotes({
+      ratingUncertainty: explanation.ratingUncertainty,
+      ratingSettling: explanation.ratingSettling,
+      reliabilityCoefficient: explanation.reliabilityCoefficient,
+      placementRatingFloor: explanation.placementRatingFloor,
+      matches,
+    }),
+    matches,
   };
 }
 

@@ -40,9 +40,9 @@ export type ExplanationDataForLlm = {
   levelBefore: number;
   levelAfter: number;
   levelChange: number;
+  /** How settled the player's rating was going into this game (affects level-move size). */
   reliabilityBefore: number;
-  reliabilityAfter: number;
-  reliabilityChange: number;
+  /** Scales how large the level change is; do not treat as a separate outcome to explain. */
   reliabilityCoefficient: number;
   ratingSettling: boolean;
   ratingUncertainty?: number;
@@ -58,6 +58,20 @@ export type ExplanationDataForLlm = {
     applied: boolean;
     uncappedLevelChange: number;
   };
+  /** Named rating-engine levers + short field guide for fair level-magnitude narration. */
+  algorithmNotes: {
+    fieldGuide: Record<string, string>;
+    ratingUncertaintyScale?: number;
+    ratingSettling: boolean;
+    reliabilityCoefficient: number;
+    maxDeltaPerEvent?: number;
+    highLevelDampeningApplied?: boolean;
+    anyMatchCappedByMaxDelta?: boolean;
+    placementRatingFloor?: {
+      applied: boolean;
+      uncappedLevelChange: number;
+    };
+  };
   matches: Array<{
     roundNumber: number;
     matchNumber: number;
@@ -65,6 +79,7 @@ export type ExplanationDataForLlm = {
     isDraw: boolean;
     notFinishedByRules?: boolean;
     opponentLevel: number;
+    ownTeamLevel?: number;
     levelDifference: number;
     scoreDelta?: number;
     levelChange: number;
@@ -72,6 +87,13 @@ export type ExplanationDataForLlm = {
     multiplier?: number;
     totalPointDifferential?: number;
     enduranceCoefficient?: number;
+    expectedWinProbability?: number;
+    performanceDifference?: number;
+    baseLevelChange?: number;
+    highLevelDampening?: number;
+    cappedByMaxDelta?: boolean;
+    maxDeltaPerEvent?: number;
+    marginLabel?: 'veryClose' | 'close' | 'normal' | 'blowout';
     teammates: Array<{ name: string; level: number }>;
     opponents: Array<{ name: string; level: number }>;
     sets?: Array<{

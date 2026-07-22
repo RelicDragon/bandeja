@@ -102,6 +102,14 @@ interface MatchExplanation {
   multiplier?: number;
   totalPointDifferential?: number;
   enduranceCoefficient?: number;
+  expectedWinProbability?: number;
+  performanceDifference?: number;
+  baseLevelChange?: number;
+  highLevelDampening?: number;
+  cappedByMaxDelta?: boolean;
+  maxDeltaPerEvent?: number;
+  ownTeamLevel?: number;
+  marginLabel?: 'veryClose' | 'close' | 'normal' | 'blowout';
   teammates: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   opponents: Array<{ firstName: string | null; lastName: string | null; level: number }>;
   sets?: SetExplanation[];
@@ -552,6 +560,14 @@ export function buildOutcomeRatingExplanation(
               multiplier: update.multiplier,
               totalPointDifferential: update.totalPointDifferential,
               enduranceCoefficient: update.enduranceCoefficient,
+              expectedWinProbability: update.expectedWinProbability,
+              performanceDifference: update.performanceDifference,
+              baseLevelChange: update.baseLevelChange,
+              highLevelDampening: update.highLevelDampening,
+              cappedByMaxDelta: update.cappedByMaxDelta,
+              maxDeltaPerEvent: update.maxDeltaPerEvent,
+              ownTeamLevel: update.ownTeamLevel,
+              marginLabel: update.marginLabel,
               teammates: (userTeam?.players ?? [])
                 .filter((tp) => tp.userId !== userId)
                 .map((tp) => ({
