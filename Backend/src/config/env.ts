@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { resolveApiRateLimitConfig } from './apiRateLimit';
 
 dotenv.config();
 
@@ -165,5 +166,12 @@ export const config = {
   klipy: {
     apiKey: (process.env.KLIPY_API_KEY || '').trim(),
   },
+  /** Global `/api/` IP rate limit. See `apiRateLimit.ts` / #313. */
+  apiRateLimit: resolveApiRateLimitConfig({
+    nodeEnv: process.env.NODE_ENV || 'development',
+    windowMsEnv: process.env.RATE_LIMIT_WINDOW_MS,
+    maxEnv: process.env.RATE_LIMIT_MAX,
+    skipPathSubstringsEnv: process.env.RATE_LIMIT_SKIP_PATH_SUBSTRINGS,
+  }),
 };
 

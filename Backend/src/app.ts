@@ -11,6 +11,7 @@ import { errorHandler, notFoundHandler, reflectCorsOrigin } from './middleware/e
 import { recordPresenceActivity } from './middleware/recordPresenceActivity';
 import { e2eTestContextMiddleware } from './middleware/e2eTestContext';
 import { config } from './config/env';
+import { shouldSkipApiRateLimit } from './config/apiRateLimit';
 import { buildHealthPayload } from './utils/healthInfo';
 import { getResponseBodySize } from './utils/responseSize';
 
@@ -108,21 +109,15 @@ if (config.nodeEnv === 'development') {
 }
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: config.nodeEnv === 'development' ? 10000 : 10000,
+  windowMs: config.apiRateLimit.windowMs,
+  max: config.apiRateLimit.max,
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => rateLimitKeyFromRequest(req),
-  skip: (req) => {
-    const p = req.path || '';
-    return (
-      p.includes('/logs/stream') ||
-      p.includes('/auth/login') ||
-      p.includes('/auth/register') ||
-      p.includes('/auth/refresh')
-    );
-  },
+  skip: (req) =>
+    shouldSkipApiRateLimit(req.path || '', config.apiRateLimit.skipPathSubstrings) ||
+    shouldSkipApiRateLimit(req.originalUrl || '', config.apiRateLimit.skipPathSubstrings),
 });
 
 app.use('/api/', limiter);
