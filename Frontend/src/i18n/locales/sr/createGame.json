@@ -282,6 +282,10 @@
       "title": "Šabloni",
       "empty": "Nema šablona — prilagodite format.",
       "durationApprox2h": "~2 č",
+      "PADEL_AUTOMATIC": {
+        "title": "Automatic",
+        "description": "Prijateljski meč, fleksibilno bodovanje setovima ili poenima — vi odlučujete."
+      },
       "PADEL_BEST_OF_3": {
         "title": "Best-of-3",
         "description": "Standardni meč do tri seta",

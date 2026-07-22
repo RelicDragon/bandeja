@@ -253,6 +253,16 @@ export async function persistKlikterenSessionAfterConnect(
 }
 
 export async function disconnectKlikterenClub(clubId: string): Promise<void> {
+  const stored = readStoredSession(clubId);
+  if (stored?.accessToken && stored.klikterenVenueId) {
+    try {
+      const client = getKlikterenClient(clubId, stored.klikterenVenueId);
+      client.applyToken(stored.accessToken);
+      await client.signOut();
+    } catch {
+      /* best-effort remote revoke */
+    }
+  }
   await klikterenApi.deleteAuth(clubId);
   clearStoredSession(clubId);
   memoryClients.delete(clubId);

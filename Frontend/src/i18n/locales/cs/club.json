@@ -143,6 +143,25 @@
       "noUpcomingAny": "Žádné nadcházející rezervace v propojených klubech.",
       "tabBookings": "Rezervace",
       "tabIntegrations": "Integrace"
+    },
+    "padeloo": {
+      "connectHint": "Sign in with your Padeloo email to link bookings.",
+      "otpSent": "Enter the code sent to {{email}}",
+      "connectedAs": "Signed in · {{email}}",
+      "providerLabel": "Padeloo",
+      "errors": {
+        "generic": "Something went wrong. Try again."
+      }
+    },
+    "klikteren": {
+      "connectTitle": "Connect {{club}}",
+      "connectHint": "Sign in with your Klikteren email and password.",
+      "password": "Password",
+      "connectedAs": "Signed in · {{email}}",
+      "providerLabel": "Klikteren",
+      "errors": {
+        "generic": "Something went wrong. Try again."
+      }
     }
   }
 }

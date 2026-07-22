@@ -279,6 +279,10 @@
       "title": "Plantillas rápidas",
       "empty": "Sin plantillas — usa Personalizar formato.",
       "durationApprox2h": "~2 h",
+      "PADEL_AUTOMATIC": {
+        "title": "Automatic",
+        "description": "Partido amistoso, puntuación flexible por sets o puntos — tú decides."
+      },
       "PADEL_BEST_OF_3": {
         "title": "Best-of-3",
         "description": "Partido estándar a tres sets",
