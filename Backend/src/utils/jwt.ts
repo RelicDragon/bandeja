@@ -33,8 +33,11 @@ export interface JwtPayload {
   ver?: number;
 }
 
+const JWT_ALG: jwt.Algorithm = 'HS256';
+
 function signJwt(body: Record<string, unknown>, expiresIn: string): string {
   return jwt.sign(body, config.jwtSecret, {
+    algorithm: JWT_ALG,
     expiresIn: expiresIn as jwt.SignOptions['expiresIn'],
   });
 }
@@ -42,6 +45,9 @@ function signJwt(body: Record<string, unknown>, expiresIn: string): string {
 export function generateLegacyAccessToken(
   payload: Omit<JwtPayload, 'typ' | 'jti' | 'iss' | 'aud' | 'ver'>
 ): string {
+  if (config.nodeEnv === 'production') {
+    throw new Error('Legacy JWT issuance is disabled in production');
+  }
   const body: Record<string, unknown> = { ...payload };
   return signJwt(body, config.jwtExpiresIn);
 }
@@ -62,12 +68,23 @@ export function generateShortAccessToken(
 
 export const generateToken = (
   payload: Omit<JwtPayload, 'typ' | 'jti' | 'iss' | 'aud' | 'ver'>
-): string => generateLegacyAccessToken(payload);
+): string => {
+  if (config.nodeEnv === 'production') {
+    throw new Error('generateToken is disabled in production; use issueLoginTokens');
+  }
+  return generateLegacyAccessToken(payload);
+};
 
 export function verifyToken(token: string): JwtPayload {
-  const decoded = jwt.verify(token, config.jwtSecret) as jwt.JwtPayload & JwtPayload;
+  const decoded = jwt.verify(token, config.jwtSecret, {
+    algorithms: [JWT_ALG],
+  }) as jwt.JwtPayload & JwtPayload;
   if (decoded.typ !== 'access') {
-    if (config.refreshTokenEnabled && legacyJwtVerifyCutoffActive()) {
+    // Production never accepts legacy long-lived JWTs (#315).
+    if (
+      config.nodeEnv === 'production' ||
+      (config.refreshTokenEnabled && legacyJwtVerifyCutoffActive())
+    ) {
       throw new LegacyJwtVerifyRejectedError();
     }
   }
@@ -101,7 +118,7 @@ export function signLiveSpectatorToken(gameId: string, matchId: string): string 
   return jwt.sign(
     { ...body, jti: randomUUID() } as jwt.JwtPayload,
     config.jwtSecret,
-    { expiresIn: '48h' }
+    { algorithm: JWT_ALG, expiresIn: '48h' }
   );
 }
 
@@ -126,6 +143,7 @@ export function verifyLiveSpectatorToken(token: string): LiveSpectatorJwtPayload
     throw new jwt.JsonWebTokenError('Invalid live spectator token');
   }
   const decoded = jwt.verify(token, config.jwtSecret, {
+    algorithms: [JWT_ALG],
     clockTolerance: 45,
   }) as jwt.JwtPayload & Partial<LiveSpectatorJwtPayload>;
   if (decoded.typ !== 'live_spectator' || decoded.ver !== LIVE_SPECTATOR_VER) {

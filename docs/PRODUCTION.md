@@ -156,7 +156,7 @@ Creates two tunnels:
 | Local | Remote | Purpose |
 |-------|--------|---------|
 | `127.0.0.1:15432` | `188.245.101.10:5432` | PostgreSQL |
-| `127.0.0.1:9000` | `back.bandeja.com:8080` | Admin static UI + proxied API |
+| `127.0.0.1:9000` | `back.bandeja.com:3000` | Prod API via `relic` SSH (Admin UI is local `./Admin/serve.sh` on `:9010`) |
 
 Script loads `~/.ssh/id_hetzner` into `ssh-agent` (macOS: keychain). Keeps tunnels alive with `ServerAliveInterval=60`.
 
@@ -228,11 +228,25 @@ Uses SSH to `relic@back.bandeja.com`, `pg_dump --data-only` on prod, restores in
 ## Admin panel
 
 1. Start tunnels: `./Admin/run-ssh.sh`
-2. Open `Admin/index.html` in a browser (file:// or simple static server)
-3. Login: API URL **Production via SSH Tunnel (localhost:9000)**
+2. Start same-origin UI: `./Admin/serve.sh` (proxies `/api` → tunnel `:9000`)
+3. Open **`http://127.0.0.1:9010/`** — login API URL **`/api`**
 4. Admin credentials: prod admin user (phone + password)
 
-Default API URL in `Admin/app.js`: `http://localhost:9000/api`
+Local backend instead of tunnel: `./Admin/serve.sh --dev` (proxies → `:3000`).
+
+**Do not** open `Admin/index.html` via `file://` — prod CORS rejects `Origin: null` (#310). The serve proxy keeps Admin same-origin so Admin does not depend on CORS allowlisting.
+
+CORS allowlist (app clients, HTTP + Socket.IO): `https://bandeja.me`, `https://www.bandeja.me`, Capacitor `https://localhost` + `capacitor://localhost`. Dev also allows Vite `:3001` and Admin serve `:9010`. Optional extras: `CORS_ALLOWED_ORIGINS`.
+
+### Trust proxy & client IP
+
+Express `trust proxy` defaults to **1 hop** (`TRUST_PROXY`). Rate limits and `getClientIp` use trusted `req.ip` only — never raw `X-Forwarded-For` / `cf-connecting-ip` from the client.
+
+The edge (Cloudflare / nginx) **must overwrite** client-supplied `X-Forwarded-For` with the real client IP for the trusted hop. Misconfigured hops make rate-limit buckets spoofable. Set `TRUST_PROXY=false` only when the API is reached with no reverse proxy.
+
+### Replicate webhooks
+
+Set both `REPLICATE_WEBHOOK_URL` and `REPLICATE_WEBHOOK_SECRET` (from Replicate default webhook signing secret). URL without secret → webhooks are not registered (poll-only). Inbound `/webhooks/replicate` verifies signature + timestamp and dedupes `webhook-id` via Redis `SET NX` when `REDIS_URL` is set (required for multi-node); single-node falls back to in-process cache. Claims are released if apply fails so Replicate retries can succeed.
 
 ## Safety guardrails
 
@@ -246,7 +260,7 @@ Non-production blocks push/Telegram to real users unless whitelisted (`TEST_USER
 
 ### Global API rate limit
 
-Per-IP limiter on `/api/` (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `RATE_LIMIT_SKIP_PATH_PREFIXES`). Production default max is **3000** / 15 min. Default skips (pathname prefix on `req.path` only): admin log stream, auth refresh, chat sync, unread-objects — each already has dedicated protection. See `Backend/env.sample` and #313.
+Per-IP limiter on `/api/` (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `RATE_LIMIT_SKIP_PATH_PREFIXES`). Production default max is **3000** / 15 min; Default skips (pathname prefix on `req.path` only): admin log stream, auth refresh, chat sync, unread-objects — each already has dedicated protection. See `Backend/env.sample` and #313.
 
 **Do not:** run E2E against prod, `prisma migrate dev` on prod, or truncate prod tables.
 
@@ -259,7 +273,7 @@ Per-IP limiter on `/api/` (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `RATE_LIMIT
 | Draft app What's new | `./scripts/app-release-whats-new.sh` → see `docs/APP_RELEASE.md` |
 | Ship mobile app update | `./scripts/app-release.sh` (or headless: bump → submit → `./scripts/app-release-mark-shipped.sh --commit`) |
 | Read prod DB | `./Admin/run-ssh.sh &` → MCP `bandeja-prod-pg` |
-| Run admin action | Tunnels up → `Admin/index.html` → localhost:9000 |
+| Run admin action | Tunnels up → `./Admin/serve.sh` → `http://127.0.0.1:9010/` (API `/api`) |
 | Debug backend logs | `ssh relic@back.bandeja.com` → `pm2 logs backend` |
 | Migrate only | GitHub Actions **Prisma migrate deploy** or backend deploy |
 | Refresh local data | `Backend/sync-db-from-prod.sh` |
@@ -272,4 +286,4 @@ Per-IP limiter on `/api/` (`RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX`, `RATE_LIMIT
 | Tunnel exits immediately | Check key: `ssh-add -l`; re-run script to unlock |
 | Deploy didn't pick up commit | Confirm push reached `origin/master`; check Actions → CI → Deploy production; manual fallback: `./upd.sh` |
 | Backend 502 after deploy | SSH to back → `pm2 logs backend`; check migrate/build errors |
-| Admin login fails | Confirm tunnel on 9000; API URL = `http://localhost:9000/api` |
+| Admin login fails | Confirm tunnel on 9000 + `./Admin/serve.sh`; open **`http://127.0.0.1:9010/`** (not `file://`); API URL = `/api` |

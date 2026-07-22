@@ -5,4 +5,6 @@ alwaysApply: true
 
 If you need to access prod DB using MCP (bandeja-prod-pg). Prod DB is in tunnel. First - check access to DB. If MCP failing → start script Admin/run-ssh.sh in background to create tunnel first. Keep tunnel until you finish job.
 
+Admin UI: after tunnels, `./Admin/serve.sh` → open http://127.0.0.1:9010/ (API `/api`). Do not use file://.
+
 Full ops reference: docs/PRODUCTION.md (deploy, tunnels, admin, safety).

@@ -98,15 +98,8 @@ async function fetchExternalIp(): Promise<string | null> {
 }
 
 export async function getClientIp(req: Request): Promise<string | null> {
-  let ip: string | null = null;
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') {
-    const first = forwarded.split(',')[0]?.trim();
-    if (first) ip = first;
-  }
-  if (!ip && typeof req.headers['x-real-ip'] === 'string' && req.headers['x-real-ip'])
-    ip = req.headers['x-real-ip'];
-  if (!ip) ip = req.ip ?? null;
+  // Prefer Express trusted `req.ip` (after `trust proxy`). Do not prefer raw XFF/X-Real-IP.
+  let ip: string | null = req.ip?.trim() || null;
   if (ip && !isLocalIp(ip)) return ip;
   const hint = ip ? maskIpForLog(ip) : null;
   const external = await fetchExternalIp();

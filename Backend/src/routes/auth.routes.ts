@@ -38,8 +38,36 @@ router.get('/sessions', authenticate, authRefreshController.getSessions);
 
 router.delete('/sessions/:id', authenticate, authRefreshController.deleteSession);
 
+const phoneAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { success: false, message: 'Too many phone auth attempts' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
+});
+
+const phoneRegisterLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { success: false, message: 'Too many registration attempts' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
+});
+
+const oauthAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 40,
+  message: { success: false, message: 'Too many OAuth auth attempts' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => rateLimitKeyFromRequest(req),
+});
+
 router.post(
   '/register/phone',
+  phoneRegisterLimiter,
   validate([
     body('phone').isMobilePhone('any').withMessage('Valid phone number is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
@@ -50,6 +78,7 @@ router.post(
 
 router.post(
   '/login/phone',
+  phoneAuthLimiter,
   validate([
     body('phone').isMobilePhone('any').withMessage('Valid phone number is required'),
     body('password').notEmpty().withMessage('Password is required'),
@@ -58,24 +87,8 @@ router.post(
 );
 
 router.post(
-  '/register/telegram',
-  validate([
-    body('telegramId').notEmpty().withMessage('Telegram ID is required'),
-    body('firstName').notEmpty().withMessage('First name is required'),
-  ]),
-  authController.registerWithTelegram
-);
-
-router.post(
-  '/login/telegram',
-  validate([
-    body('telegramId').notEmpty().withMessage('Telegram ID is required'),
-  ]),
-  authController.loginWithTelegram
-);
-
-router.post(
   '/login/apple',
+  oauthAuthLimiter,
   validate([
     body('identityToken').notEmpty().isString().withMessage('Identity token is required'),
     body('nonce').notEmpty().isString().isLength({ min: 1 }).withMessage('Nonce is required'),
@@ -94,6 +107,7 @@ router.post(
 
 router.post(
   '/login/google',
+  oauthAuthLimiter,
   validate([
     body('idToken').notEmpty().isString().withMessage('Google ID token is required'),
     body('firstName').optional().isString().isLength({ max: 100 }).withMessage('First name must be a string with max 100 characters'),
@@ -110,10 +124,11 @@ router.post(
 );
 
 // Google OAuth redirect flow (Safari-safe, server-side authorization code + PKCE)
-router.get('/google/redirect', googleOAuthController.googleOAuthRedirect);
-router.get('/google/callback', googleOAuthController.googleOAuthCallback);
+router.get('/google/redirect', oauthAuthLimiter, googleOAuthController.googleOAuthRedirect);
+router.get('/google/callback', oauthAuthLimiter, googleOAuthController.googleOAuthCallback);
 router.post(
   '/google/exchange',
+  oauthAuthLimiter,
   validate([
     body('code').notEmpty().isString().withMessage('One-time code is required'),
   ]),

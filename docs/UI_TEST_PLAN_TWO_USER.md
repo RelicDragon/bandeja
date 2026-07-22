@@ -140,6 +140,6 @@ npm run test:e2e:two-user
 npm run test:e2e              # all projects
 ```
 
-Pre-flight: both users exist in `padelpulse_dev`, backend `/health` → `e2eSafe`, same city.
+Pre-flight: both users exist in `padelpulse_dev`, backend `/api/health/details` → `e2eSafe`, same city.
 
 Flake mitigation: `expect.poll` 15–20s; unique `Date.now()` message text; teardown games/listings in `afterAll` / `registerTeardown`.

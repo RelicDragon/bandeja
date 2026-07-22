@@ -44,12 +44,31 @@ import booktimeRoutes from './booktime.routes';
 import padelooRoutes from './padeloo.routes';
 import weatherRoutes from './weather.routes';
 import meRoutes from './me.routes';
-import { buildHealthPayload } from '../utils/healthInfo';
+import { optionalAuth, type AuthRequest } from '../middleware/auth';
+import { buildDetailedHealthPayload, buildPublicHealthPayload } from '../utils/healthInfo';
+import { isLoopbackIp } from '../utils/isLoopbackIp';
+import { ApiError } from '../utils/ApiError';
+import { config } from '../config/env';
 
 const router = Router();
 
 router.get('/health', (_req, res) => {
-  res.json(buildHealthPayload());
+  res.json(buildPublicHealthPayload());
+});
+
+router.get('/health/details', optionalAuth, (req: AuthRequest, res, next) => {
+  try {
+    const isAdmin = Boolean(req.user?.isAdmin);
+    // Use TCP peer (socket.remoteAddress), not req.ip — req.ip is spoofable via XFF when trust proxy is on.
+    const peer = req.socket?.remoteAddress;
+    const localDevProbe = config.nodeEnv !== 'production' && isLoopbackIp(peer);
+    if (!isAdmin && !localDevProbe) {
+      throw new ApiError(403, 'Detailed health probe requires admin or local loopback');
+    }
+    res.json(buildDetailedHealthPayload());
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.use('/app', appRoutes);

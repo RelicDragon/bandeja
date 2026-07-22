@@ -1,5 +1,13 @@
 import dotenv from 'dotenv';
 import { resolveApiRateLimitConfig } from './apiRateLimit';
+import {
+  assertProductionJwtAuthConfig,
+  normalizeNodeEnv,
+  resolveJwtAccessExpiresIn,
+  resolveJwtLegacyExpiresIn,
+  resolveJwtSecret,
+  resolveRefreshTokenExpiresIn,
+} from './jwtAuthConfig';
 
 dotenv.config();
 
@@ -12,9 +20,11 @@ function parseTrustProxy(): boolean | number | string {
   return v;
 }
 
+const nodeEnv = normalizeNodeEnv(process.env.NODE_ENV);
+
 export const config = {
   port: parseInt(process.env.PORT || '3000', 10),
-  nodeEnv: process.env.NODE_ENV || 'development',
+  nodeEnv,
   /** Express trust proxy (default 1 hop). Set TRUST_PROXY=false behind no proxy. */
   trustProxy: parseTrustProxy(),
   db: {
@@ -25,12 +35,20 @@ export const config = {
     password: process.env.DB_PASSWORD || '',
     schema: process.env.DB_SCHEMA || 'public',
   },
-  jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '90d',
-  jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '30m',
+  jwtSecret: resolveJwtSecret({
+    nodeEnv,
+    jwtSecretEnv: process.env.JWT_SECRET,
+  }),
+  /** Legacy long-lived JWT (non-production / pre-refresh clients only). */
+  jwtExpiresIn: resolveJwtLegacyExpiresIn(process.env.JWT_EXPIRES_IN),
+  /** Short access JWT (`typ=access`); production capped at 30m (#315). */
+  jwtAccessExpiresIn: resolveJwtAccessExpiresIn(process.env.JWT_ACCESS_EXPIRES_IN, nodeEnv),
   jwtIssuer: process.env.JWT_ISS || 'padelpulse',
   jwtAudience: process.env.JWT_AUD || 'padelpulse-app',
-  refreshTokenExpiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '60d',
+  refreshTokenExpiresIn: resolveRefreshTokenExpiresIn(
+    process.env.REFRESH_TOKEN_EXPIRES_IN,
+    nodeEnv
+  ),
   refreshTokenEnabled: process.env.REFRESH_TOKEN_ENABLED !== 'false',
   /** Web: Set-Cookie httpOnly refresh; omit refresh from JSON. Kill-switch: REFRESH_WEB_HTTPONLY_COOKIE=false */
   refreshWebHttpOnlyCookie: process.env.REFRESH_WEB_HTTPONLY_COOKIE !== 'false',
@@ -49,12 +67,12 @@ export const config = {
   })(),
   refreshCookieSecure:
     process.env.REFRESH_COOKIE_SECURE === 'true' ||
-    ((process.env.NODE_ENV || 'development') === 'production' && process.env.REFRESH_COOKIE_SECURE !== 'false'),
+    (nodeEnv === 'production' && process.env.REFRESH_COOKIE_SECURE !== 'false'),
   minClientVersionForRefresh: process.env.MIN_CLIENT_VERSION_FOR_REFRESH || '0.94.1',
   /**
    * After this instant (UTC), with refresh enabled, clients below min version cannot receive new long-lived JWTs.
    * Default `2026-05-15T00:00:00.000Z` when unset. Set `LEGACY_JWT_ISSUANCE_END_AT=off` (or `false` / `none` / `disabled`) to disable the calendar check.
-   * Invalid ISO → null (no sunset).
+   * Invalid ISO → null (no sunset). Production refuses null (#315).
    */
   legacyJwtIssuanceEndAt: (() => {
     const raw = (process.env.LEGACY_JWT_ISSUANCE_END_AT || '').trim();
@@ -66,7 +84,9 @@ export const config = {
   })(),
   accessRefreshLeewaySeconds: parseInt(process.env.ACCESS_REFRESH_LEEWAY_SECONDS || '120', 10),
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || '',
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3001',
+  /** Comma-separated extra CORS Origins (HTTP + Socket.IO). See #310. */
+  corsAllowedOrigins: (process.env.CORS_ALLOWED_ORIGINS || '').trim(),
   apns: {
     keyId: process.env.APNS_KEY_ID || '',
     teamId: process.env.APNS_TEAM_ID || '',
@@ -132,6 +152,8 @@ export const config = {
     replicateModel:
       process.env.REPLICATE_MODEL || 'black-forest-labs/flux-2-max',
     replicateWebhookUrl: (process.env.REPLICATE_WEBHOOK_URL || '').trim(),
+    /** Signing secret from GET /v1/webhooks/default/secret (whsec_…). Required to accept webhooks. */
+    replicateWebhookSecret: (process.env.REPLICATE_WEBHOOK_SECRET || '').trim(),
     replicatePollDelayMs: parseInt(
       process.env.RESULTS_ARTIFACTS_REPLICATE_POLL_MS || '5000',
       10
@@ -168,10 +190,18 @@ export const config = {
   },
   /** Global `/api/` IP rate limit. See `apiRateLimit.ts` / #313. */
   apiRateLimit: resolveApiRateLimitConfig({
-    nodeEnv: process.env.NODE_ENV || 'development',
+    nodeEnv,
     windowMsEnv: process.env.RATE_LIMIT_WINDOW_MS,
     maxEnv: process.env.RATE_LIMIT_MAX,
     skipPathPrefixesEnv: process.env.RATE_LIMIT_SKIP_PATH_PREFIXES,
   }),
 };
 
+assertProductionJwtAuthConfig({
+  nodeEnv: config.nodeEnv,
+  jwtSecret: config.jwtSecret,
+  jwtAccessExpiresIn: config.jwtAccessExpiresIn,
+  refreshTokenExpiresIn: config.refreshTokenExpiresIn,
+  refreshTokenEnabled: config.refreshTokenEnabled,
+  legacyJwtIssuanceEndAt: config.legacyJwtIssuanceEndAt,
+});

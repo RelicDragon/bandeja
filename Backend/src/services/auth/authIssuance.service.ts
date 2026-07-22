@@ -11,13 +11,14 @@ function legacyJwtIssuanceSunsetActive(): boolean {
   return Date.now() >= end.getTime();
 }
 
-/** When true, login cannot fall back to long-lived JWT; client must meet refresh version (or refresh must be disabled). */
+/**
+ * When true, login cannot fall back to long-lived JWT.
+ * Production never issues legacy JWTs (#315); elsewhere blocked after sunset when refresh is on.
+ */
 function legacyLongJwtIssuanceBlocked(req: Request): boolean {
-  return (
-    config.refreshTokenEnabled &&
-    legacyJwtIssuanceSunsetActive() &&
-    !clientVersionSupportsRefresh(req)
-  );
+  if (clientVersionSupportsRefresh(req)) return false;
+  if (config.nodeEnv === 'production') return true;
+  return config.refreshTokenEnabled && legacyJwtIssuanceSunsetActive();
 }
 
 /**
@@ -56,6 +57,14 @@ export async function issueLoginTokens(
   req: Request
 ): Promise<{ token: string; refreshToken?: string; currentSessionId?: string }> {
   assertLoginIssuanceAllowed(req);
+
+  // Production: short access + refresh only (never legacy), regardless of kill-switches.
+  if (config.nodeEnv === 'production') {
+    const token = generateShortAccessToken(jwtPayload);
+    const { refreshToken, sessionId } = await createUserRefreshSession(jwtPayload.userId, req);
+    return { token, refreshToken, currentSessionId: sessionId };
+  }
+
   if (!config.refreshTokenEnabled || !clientVersionSupportsRefresh(req)) {
     return { token: generateLegacyAccessToken(jwtPayload) };
   }

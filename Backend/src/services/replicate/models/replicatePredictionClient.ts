@@ -41,7 +41,15 @@ export async function createReplicatePrediction(
   input: Record<string, unknown>
 ): Promise<ReplicatePredictionRecord> {
   const client = getReplicateClient();
-  const webhook = config.resultsArtifacts.replicateWebhookUrl;
+  const webhookUrl = config.resultsArtifacts.replicateWebhookUrl;
+  const webhookSecret = config.resultsArtifacts.replicateWebhookSecret;
+  // Never register an unsigned webhook endpoint — secret is required for fail-closed verify.
+  const webhook = webhookUrl && webhookSecret ? webhookUrl : '';
+  if (webhookUrl && !webhookSecret) {
+    console.warn(
+      '[replicate] REPLICATE_WEBHOOK_URL set without REPLICATE_WEBHOOK_SECRET; omitting webhook (poll-only)'
+    );
+  }
   const prediction = await client.predictions.create({
     model,
     input,

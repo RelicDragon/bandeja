@@ -12,10 +12,20 @@ import { recordPresenceActivity } from './middleware/recordPresenceActivity';
 import { e2eTestContextMiddleware } from './middleware/e2eTestContext';
 import { config } from './config/env';
 import { shouldSkipApiRateLimit } from './config/apiRateLimit';
-import { buildHealthPayload } from './utils/healthInfo';
+import {
+  createCorsOriginDelegate,
+  getCorsAllowedOrigins,
+} from './config/corsOrigins';
+import { buildPublicHealthPayload } from './utils/healthInfo';
 import { getResponseBodySize } from './utils/responseSize';
 
 const app: Application = express();
+
+const corsAllowedOrigins = getCorsAllowedOrigins({
+  nodeEnv: config.nodeEnv,
+  frontendUrl: config.frontendUrl,
+  extraOrigins: config.corsAllowedOrigins,
+});
 
 app.set('trust proxy', config.trustProxy);
 
@@ -24,25 +34,20 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }
 }));
 
-// Handle CORS preflight for all paths (incl. file:// Admin where Origin is "null").
-// Express 5 / path-to-regexp v8 rejects bare `*`; method middleware preserves behavior.
+// CORS preflight — allowlisted origins only (never reflect arbitrary / `null`).
 app.use((req, res, next) => {
   if (req.method !== 'OPTIONS') {
     next();
     return;
   }
   reflectCorsOrigin(req, res);
-  if (!res.getHeader('Access-Control-Allow-Origin')) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
   res.header('Access-Control-Max-Age', '86400');
   res.sendStatus(200);
 });
 
-// Configure CORS for API routes (reflect request Origin, including "null")
 app.use(
   cors({
-    origin: true,
+    origin: createCorsOriginDelegate(corsAllowedOrigins),
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: [
@@ -63,11 +68,22 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: '5mb' }));
+app.use(
+  express.json({
+    limit: '5mb',
+    verify: (req, _res, buf) => {
+      const url =
+        ('originalUrl' in req && typeof (req as { originalUrl?: string }).originalUrl === 'string'
+          ? (req as { originalUrl: string }).originalUrl
+          : req.url) || '';
+      if (url.startsWith('/webhooks/replicate')) {
+        (req as express.Request & { rawBody?: string }).rawBody = buf.toString('utf8');
+      }
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
-// Optimized compression middleware for API responses
-// Only compress JSON responses > 1KB with level 6 (balance speed/size)
 app.use(
   compression({
     filter: (req, res) => {
@@ -75,8 +91,6 @@ app.use(
         return false;
       }
 
-      // Compress normal JSON responses; the content type is usually not set yet
-      // when the compression filter runs, so keep Express' default negotiation.
       const contentType = res.getHeader('Content-Type');
       if (contentType?.toString().includes('application/json')) {
         return true;
@@ -84,12 +98,11 @@ app.use(
 
       return compression.filter(req, res);
     },
-    threshold: 1024, // Only compress responses > 1KB
-    level: 6, // Balance between speed and compression (default is 6)
+    threshold: 1024,
+    level: 6,
   })
 );
 
-// Add response size header for monitoring
 app.use((req, res, next) => {
   const originalSend = res.send;
   res.send = function (data: any) {
@@ -128,7 +141,7 @@ app.use('/api/', limiter);
 app.use('/api', recordPresenceActivity);
 
 app.get('/health', (_req, res) => {
-  res.json(buildHealthPayload());
+  res.json(buildPublicHealthPayload());
 });
 
 app.use('/webhooks', replicateWebhookRoutes);

@@ -67,6 +67,7 @@ async function run() {
   });
 
   console.log('apiRateLimit.middleware.test.ts: ok');
+  process.exit(0);
 }
 
 run().catch((err) => {

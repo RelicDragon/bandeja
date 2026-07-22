@@ -60,18 +60,18 @@ type HealthPayload = {
 };
 
 export async function assertBackendDatabaseSafe(apiURL: string): Promise<void> {
-  const healthUrl = apiURL.replace(/\/api\/?$/, '/health');
+  const detailsUrl = apiURL.replace(/\/?$/, '') + '/health/details';
   let res: Response;
   try {
-    res = await fetch(healthUrl);
+    res = await fetch(detailsUrl);
   } catch {
     throw new Error(
-      `[e2e] Cannot reach backend health at ${healthUrl}. Start Backend on padelpulse_dev before running E2E.`,
+      `[e2e] Cannot reach backend health details at ${detailsUrl}. Start Backend on padelpulse_dev before running E2E.`,
     );
   }
 
   if (!res.ok) {
-    throw new Error(`[e2e] Backend health check failed (${res.status}) at ${healthUrl}`);
+    throw new Error(`[e2e] Backend health details check failed (${res.status}) at ${detailsUrl}`);
   }
 
   const payload = (await res.json()) as HealthPayload;

@@ -88,10 +88,18 @@ ssh -N "${SSH_OPTS[@]}" -L 127.0.0.1:15432:127.0.0.1:5432 relic@188.245.101.10 &
 DB_PID=$!
 wait_for_port 15432 "DB" "${DB_PID}"
 
-echo "Admin UI: localhost:9000 -> back.bandeja.com:8080"
-ssh -N "${SSH_OPTS[@]}" -L 127.0.0.1:9000:127.0.0.1:8080 root@back.bandeja.com &
+# API only (Admin UI is ./Admin/serve.sh on :9010). Use relic→:3000 — no root@ needed.
+echo "Admin API: localhost:9000 -> back.bandeja.com:3000"
+ssh -N "${SSH_OPTS[@]}" -L 127.0.0.1:9000:127.0.0.1:3000 relic@back.bandeja.com &
 ADMIN_PID=$!
-wait_for_port 9000 "Admin" "${ADMIN_PID}"
+wait_for_port 9000 "Admin API" "${ADMIN_PID}"
 
 echo "Tunnels up (Ctrl+C to stop)"
+echo ""
+echo "Admin panel (same-origin, required):"
+echo "  ./Admin/serve.sh"
+echo "  open http://127.0.0.1:9010/   (login API URL: /api)"
+echo "Local backend instead of tunnel:"
+echo "  ./Admin/serve.sh --dev"
+echo "Do not open Admin/index.html via file://"
 wait

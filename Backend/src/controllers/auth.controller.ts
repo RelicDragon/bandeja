@@ -9,8 +9,6 @@ import {
 } from '../services/auth/authIssuance.service';
 import { issuedRefreshJsonPayload } from '../utils/refreshWebCookie';
 import { hashPassword, comparePassword } from '../utils/hash';
-import { NotificationChannelType } from '@prisma/client';
-import { NotificationPreferenceService } from '../services/notificationPreference.service';
 import { PROFILE_SELECT_FIELDS } from '../utils/constants';
 import { enrichProfileUser } from '../services/user/userSportProfile.service';
 import { AuthRequest } from '../middleware/auth';
@@ -132,112 +130,6 @@ export const loginWithPhone = asyncHandler(async (req: Request, res: Response) =
   }
 
   const user = await ensureUserCityAssigned(userWithPassword.id, req);
-  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
-
-  res.json({
-    success: true,
-    data: {
-      user,
-      token: issued.token,
-      ...issuedRefreshJsonPayload(req, res, issued),
-    },
-  });
-});
-
-export const registerWithTelegram = asyncHandler(async (req: Request, res: Response) => {
-  const { telegramId, telegramUsername, firstName, lastName, email, language, gender, genderIsSet, preferredHandLeft, preferredHandRight, preferredCourtSideLeft, preferredCourtSideRight, primarySport: primarySportRaw } = req.body;
-  const primarySport = parseRegistrationPrimarySport(primarySportRaw);
-  const nameData = resolveDisplayNameData(firstName, lastName);
-
-  const existingUser = await prisma.user.findUnique({
-    where: { telegramId },
-  });
-
-  if (existingUser) {
-    throw new ApiError(400, 'User with this Telegram account already exists');
-  }
-
-  if (email) {
-    const existingEmail = await prisma.user.findUnique({
-      where: { email },
-    });
-    if (existingEmail) {
-      throw new ApiError(400, 'User with this email already exists');
-    }
-  }
-
-  assertLoginIssuanceAllowed(req);
-
-  let user = await prisma.user.create({
-    data: {
-      telegramId,
-      telegramUsername,
-      firstName: nameData.firstName,
-      lastName: nameData.lastName,
-      nameIsSet: nameData.nameIsSet,
-      email,
-      language,
-      gender: gender || undefined,
-      genderIsSet: genderIsSet || false,
-      preferredHandLeft: preferredHandLeft || false,
-      preferredHandRight: preferredHandRight || false,
-      preferredCourtSideLeft: preferredCourtSideLeft || false,
-      preferredCourtSideRight: preferredCourtSideRight || false,
-      ...registrationSportUserFields(primarySport, {
-        primarySportIsSet: registrationSportExplicitlyChosen(primarySportRaw),
-      }),
-    },
-    select: PROFILE_SELECT_FIELDS,
-  });
-
-  try {
-    await TransactionService.createRegistrationBonus(user.id);
-  } catch (e) {
-    console.error('[registerWithTelegram] Registration bonus failed:', e);
-  }
-
-  await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
-
-  user = await ensureUserCityAssigned(user.id, req);
-  const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
-
-  res.status(201).json({
-    success: true,
-    data: {
-      user,
-      token: issued.token,
-      ...issuedRefreshJsonPayload(req, res, issued),
-    },
-  });
-});
-
-export const loginWithTelegram = asyncHandler(async (req: Request, res: Response) => {
-  const { telegramId, language } = req.body;
-
-  let user = await prisma.user.findUnique({
-    where: { telegramId },
-    select: PROFILE_SELECT_FIELDS,
-  });
-
-  if (!user) {
-    throw new ApiError(401, 'User not found', true, { code: 'auth.userNotFound' });
-  }
-
-  if (!user.isActive) {
-    throw new ApiError(403, 'auth.accountInactive');
-  }
-
-  if (language) {
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { language },
-    });
-    user.language = language;
-  }
-
-  await NotificationPreferenceService.ensurePreferenceForChannel(user.id, NotificationChannelType.TELEGRAM);
-
-  user = await ensureUserCityAssigned(user.id, req);
   const issued = await issueLoginTokens(jwtPayloadFromAuthUser(user), req);
 
   res.json({

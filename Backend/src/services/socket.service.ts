@@ -7,6 +7,7 @@ import { verifyToken } from '../utils/jwt';
 type RedisPubSubClient = RedisClientType;
 import prisma from '../config/database';
 import { MessageService } from './chat/message.service';
+import { authorizeBugRoomJoin } from './chat/authorizeBugRoomJoin';
 import {
   extractChatTypeFromEmitPayload,
   resolveGameChatSocketRecipientIds,
@@ -18,6 +19,11 @@ import { ApiError } from '../utils/ApiError';
 import { presenceService } from './presence.service';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../utils/constants';
 import { projectUserForSportContext } from './user/userSportProfile.service';
+import { config } from '../config/env';
+import {
+  createCorsOriginDelegate,
+  getCorsAllowedOrigins,
+} from '../config/corsOrigins';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -61,15 +67,15 @@ class SocketService {
   readonly adapterReady: Promise<void>;
 
   constructor(server: HTTPServer) {
-    const allowedOrigins = [
-      process.env.FRONTEND_URL || "http://localhost:5173",
-      "http://91.98.232.51",
-      "http://10.0.0.2", "https://bandeja.me"
-    ].filter(Boolean);
+    const allowedOrigins = getCorsAllowedOrigins({
+      nodeEnv: config.nodeEnv,
+      frontendUrl: config.frontendUrl,
+      extraOrigins: config.corsAllowedOrigins,
+    });
 
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: allowedOrigins,
+        origin: createCorsOriginDelegate(allowedOrigins),
         methods: ["GET", "POST"],
         credentials: true
       },
@@ -274,14 +280,9 @@ class SocketService {
       );
 
       socket.on('join-bug-room', this.wrapAsync(socket, async (bugId: string) => {
-        if (!socket.userId) return;
-
-        const bug = await prisma.bug.findUnique({
-          where: { id: bugId }
-        });
-
-        if (!bug) {
-          socket.emit('error', { message: 'Bug not found' });
+        const auth = await authorizeBugRoomJoin(bugId, socket.userId);
+        if (!auth.ok) {
+          socket.emit('error', { message: auth.message, code: auth.code });
           return;
         }
 

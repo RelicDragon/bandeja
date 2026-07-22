@@ -80,7 +80,7 @@ async function loadReplicatePhotoModelSetting() {
 function formatPlatformSettingsApiError(error) {
     const msg = error?.message || 'Request failed';
     if (msg.includes('Cannot reach API at')) {
-        return `${msg} For local dev use "Development (localhost:3000)" on the login screen.`;
+        return `${msg} Start ./Admin/serve.sh (or --dev) and use API URL /api.`;
     }
     return msg;
 }

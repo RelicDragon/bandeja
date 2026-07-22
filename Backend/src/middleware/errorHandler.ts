@@ -1,21 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiError } from '../utils/ApiError';
 import { config } from '../config/env';
+import {
+  getCorsAllowedOrigins,
+  isCorsOriginAllowed,
+} from '../config/corsOrigins';
 import type { AuthRequest } from './auth';
 
 const CORS_ALLOW_HEADERS =
-  'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, X-Client-Version, X-Client-Platform';
+  'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, If-None-Match, X-Client-Version, X-Client-Platform, X-E2E-Test';
 
-/** Browsers need this on error JSON too; `Origin: null` = Admin opened as file:// */
+const corsAllowedOrigins = getCorsAllowedOrigins({
+  nodeEnv: config.nodeEnv,
+  frontendUrl: config.frontendUrl,
+  extraOrigins: config.corsAllowedOrigins,
+});
+
+/** Reflect ACAO only for allowlisted Origins (never `null` / arbitrary). */
 export function reflectCorsOrigin(req: Request, res: Response): void {
   const origin = req.get('Origin');
-  if (typeof origin === 'string' && origin.length > 0) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Headers', CORS_ALLOW_HEADERS);
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
-    res.append('Vary', 'Origin');
-  }
+  if (!isCorsOriginAllowed(origin, corsAllowedOrigins)) return;
+  res.setHeader('Access-Control-Allow-Origin', origin!);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Headers', CORS_ALLOW_HEADERS);
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.append('Vary', 'Origin');
 }
 
 function isChatSyncApiPath(url: string): boolean {

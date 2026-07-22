@@ -1412,6 +1412,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | X-43 | Manual external court ID | Platform admin court list → set externalCourtId | Snapshot maps busy to internal court column |
 | X-53 | Court web camera URL | Platform admin → edit court → Web camera URL → Save | URL persisted; Camera column shows ✓ |
 | X-54 | Open court camera from list | Platform admin court list → click ✓ in Camera column | Opens web camera URL in new tab |
+| X-54b | Admin via serve + tunnel | `./Admin/run-ssh.sh` → `./Admin/serve.sh` → open `http://127.0.0.1:9010/` → API `/api` → login | Login + admin API succeed (same-origin proxy to tunneled `:3000`) |
+| X-54c | Admin file:// blocked | Open `Admin/index.html` as `file://` | Blocking message; instructs serve.sh + `http://127.0.0.1:9010/` |
+| X-54d | Admin local backend | Backend on `:3000` → `./Admin/serve.sh --dev` → login API `/api` | Admin talks to local API via proxy |
 
 ### 18.10 Software keyboard (Capacitor + mobile web, `@manual`)
 

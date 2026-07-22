@@ -1,3 +1,5 @@
+import { config } from './config/env';
+import { assertProductionJwtAuthConfig } from './config/jwtAuthConfig';
 import {
   connectWorkersDatabase,
   disconnectWorkersDatabase,
@@ -7,6 +9,14 @@ import {
 
 const run = async () => {
   try {
+    assertProductionJwtAuthConfig({
+      nodeEnv: config.nodeEnv,
+      jwtSecret: config.jwtSecret,
+      jwtAccessExpiresIn: config.jwtAccessExpiresIn,
+      refreshTokenExpiresIn: config.refreshTokenExpiresIn,
+      refreshTokenEnabled: config.refreshTokenEnabled,
+      legacyJwtIssuanceEndAt: config.legacyJwtIssuanceEndAt,
+    });
     await connectWorkersDatabase();
     console.log('✅ Database connected (worker process)');
     startQueueWorkers();

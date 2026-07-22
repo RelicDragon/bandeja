@@ -34,30 +34,6 @@ export const authApi = {
     return response.data;
   },
 
-  registerTelegram: async (data: {
-    telegramId: string;
-    telegramUsername?: string;
-    firstName: string;
-    lastName: string;
-    email?: string;
-    language?: string;
-    gender?: string;
-    genderIsSet?: boolean;
-    preferredHandLeft?: boolean;
-    preferredHandRight?: boolean;
-    preferredCourtSideLeft?: boolean;
-    preferredCourtSideRight?: boolean;
-    primarySport?: RegistrationPrimarySport;
-  }) => {
-    const response = await api.post<ApiResponse<LoginResponse>>('/auth/register/telegram', data);
-    return response.data;
-  },
-
-  loginTelegram: async (data: { telegramId: string; language?: string }) => {
-    const response = await api.post<ApiResponse<LoginResponse>>('/auth/login/telegram', data);
-    return response.data;
-  },
-
   verifyTelegramOtp: async (data: {
     code: string;
     telegramId?: string;

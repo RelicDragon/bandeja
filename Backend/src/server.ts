@@ -1,5 +1,6 @@
 import app from './app';
 import { config } from './config/env';
+import { assertProductionJwtAuthConfig } from './config/jwtAuthConfig';
 import prisma from './config/database';
 import { initializeLogManager } from './controllers/logs.controller';
 import SocketService from './services/socket.service';
@@ -34,6 +35,15 @@ const startServer = async () => {
   });
 
   try {
+    assertProductionJwtAuthConfig({
+      nodeEnv: config.nodeEnv,
+      jwtSecret: config.jwtSecret,
+      jwtAccessExpiresIn: config.jwtAccessExpiresIn,
+      refreshTokenExpiresIn: config.refreshTokenExpiresIn,
+      refreshTokenEnabled: config.refreshTokenEnabled,
+      legacyJwtIssuanceEndAt: config.legacyJwtIssuanceEndAt,
+    });
+
     initializeLogManager();
     console.log('📋 Log manager initialized');
 

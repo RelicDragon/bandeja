@@ -164,7 +164,6 @@ export class MessageService {
         participants: {
           where: { userId }
         },
-        groupChannel: { select: { id: true } }
       }
     });
 
@@ -186,10 +185,13 @@ export class MessageService {
     const isAdmin = user.isAdmin;
     const isParticipant = bug.participants.length > 0;
 
-    // For viewing: everyone can view bug chats
-    // For writing: must be sender, admin, or participant
-    if (requireWriteAccess && !isSender && !isAdmin && !isParticipant) {
-      throw new ApiError(403, 'You must join the chat to send messages');
+    if (!isSender && !isAdmin && !isParticipant) {
+      throw new ApiError(
+        403,
+        requireWriteAccess ? 'You must join the chat to send messages' : 'Access denied to bug chat',
+        true,
+        { code: 'bug.accessDenied' }
+      );
     }
 
     return { bug, isSender, isAdmin, isParticipant };

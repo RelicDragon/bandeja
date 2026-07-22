@@ -1,8 +1,49 @@
-let API_URL = localStorage.getItem('apiUrl') || 'http://localhost:9000/api';
+let API_URL = '/api';
 let authToken = null;
 /** Refresh token for admin session (short access JWT after legacy sunset). */
 let adminRefreshToken = null;
 const ADMIN_CLIENT_VERSION = '99.0.0';
+
+function isFileProtocol() {
+    return typeof location !== 'undefined' && location.protocol === 'file:';
+}
+
+function blockFileProtocolAdmin() {
+    if (!isFileProtocol()) return false;
+    document.body.innerHTML = `
+      <main style="font-family:system-ui,sans-serif;max-width:36rem;margin:3rem auto;padding:0 1.25rem;line-height:1.5">
+        <h1 style="font-size:1.35rem">Admin cannot run from file://</h1>
+        <p>Browsers send <code>Origin: null</code>, which the API rejects after the CORS allowlist (#310).</p>
+        <ol>
+          <li>Tunnel: <code>./Admin/run-ssh.sh</code></li>
+          <li>UI: <code>./Admin/serve.sh</code> (prod) or <code>./Admin/serve.sh --dev</code></li>
+          <li>Open <a href="http://127.0.0.1:9010/"><strong>http://127.0.0.1:9010/</strong></a></li>
+          <li>Login API URL: <code>/api</code> (same-origin proxy)</li>
+        </ol>
+      </main>`;
+    return true;
+}
+
+function preferredApiUrlForPage() {
+    if (typeof location === 'undefined') return '/api';
+    // Same-origin Admin serve (9010) or tunnel UI (:9000) — always use relative /api.
+    if (location.protocol === 'http:' || location.protocol === 'https:') {
+        return '/api';
+    }
+    return '/api';
+}
+
+function normalizeStoredApiUrl(saved) {
+    if (!saved || typeof saved !== 'string') return preferredApiUrlForPage();
+    // Migrate old absolute tunnel/dev URLs to same-origin when served over http(s).
+    if (!isFileProtocol() && (saved === 'http://localhost:9000/api' || saved === 'http://127.0.0.1:9000/api'
+        || saved === 'http://localhost:3000/api' || saved === 'http://127.0.0.1:3000/api')) {
+        return '/api';
+    }
+    return saved;
+}
+
+API_URL = preferredApiUrlForPage();
 
 function adminClientHeaders() {
     return {
@@ -141,7 +182,7 @@ async function apiRequest(endpoint, options = {}, isRetry = false) {
     } catch (error) {
         if (error instanceof TypeError && String(error.message).includes('fetch')) {
             const networkError = new Error(
-                `Cannot reach API at ${API_URL}${endpoint}. Check the API URL on login, ensure the backend is running, and deploy the latest backend if this route is new.`
+                `Cannot reach API at ${API_URL}${endpoint}. Use ./Admin/serve.sh (API URL /api). For prod: ./Admin/run-ssh.sh first. For local API: ./Admin/serve.sh --dev.`
             );
             console.error('API Error:', networkError);
             throw networkError;
@@ -1834,12 +1875,24 @@ window.updateReportStatus = updateReportStatus;
 window.updateStoryCommentReportStatus = updateStoryCommentReportStatus;
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (blockFileProtocolAdmin()) return;
+
     const savedToken = localStorage.getItem('adminToken');
     const savedAdmin = localStorage.getItem('adminData');
-    const savedApiUrl = localStorage.getItem('apiUrl');
+    const savedApiUrl = normalizeStoredApiUrl(localStorage.getItem('apiUrl'));
+    const apiSelect = document.getElementById('apiUrl');
 
-    if (savedApiUrl) {
-        document.getElementById('apiUrl').value = savedApiUrl;
+    API_URL = savedApiUrl;
+    localStorage.setItem('apiUrl', savedApiUrl);
+    if (apiSelect) {
+        const hasOption = [...apiSelect.options].some((o) => o.value === savedApiUrl);
+        if (!hasOption) {
+            const opt = document.createElement('option');
+            opt.value = savedApiUrl;
+            opt.textContent = savedApiUrl;
+            apiSelect.appendChild(opt);
+        }
+        apiSelect.value = savedApiUrl;
     }
 
     if (savedToken && savedAdmin) {
