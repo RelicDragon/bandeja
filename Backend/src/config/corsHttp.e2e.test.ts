@@ -1,6 +1,7 @@
 /**
- * End-to-end CORS header check against the Express app (no Socket.IO).
- * Run: NODE_ENV=production npx ts-node --transpile-only src/config/corsHttp.e2e.test.ts
+ * Full-app CORS header smoke (no Socket.IO). Optional — not in `test:security`
+ * (imports Prisma + contracts; use `corsStack.e2e` / `corsOrigins` in CI).
+ * Run: npm run test:cors-http-e2e
  */
 import http from 'http';
 
