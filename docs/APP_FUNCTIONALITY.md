@@ -828,7 +828,8 @@ External court booking via club `integrationType`: **BOOKTIME**, **PADELOO**, or
 - New user signup flow during connect where applicable
 - Dismiss connect hints
 - Link bookings to games from My tab or create-game
-- APIs: `/booktime/*`, `/padeloo/*`, plus per-club `/clubs/:id/booktime|padeloo/...` snapshot/auth routes
+- APIs: `/booktime/*`, `/padeloo/*`, `/klikteren/*` (incl. `/klikteren/upstream/*` CORS proxy — Klikteren API only allows Origin `klikteren.com`), plus per-club `/clubs/:id/booktime|padeloo|klikteren/...` snapshot/auth routes
+- **KLIKTEREN exception**: FE still owns booking UX, but all HTTP to `api.klikteren.com` goes through Bandeja backend upstream proxy (Booktime/Padeloo call providers directly because they allow CORS `*`).
 
 ### 18.3 Game ↔ booking link
 

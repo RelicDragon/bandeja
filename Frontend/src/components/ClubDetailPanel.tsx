@@ -20,13 +20,16 @@ import {
   type BooktimeIntegrationConfig,
 } from '@/components/booktime/ConnectClubSheet';
 import { hydrateBooktimeSession } from '@/integrations/booktime/session';
+import { hydrateKlikterenSession } from '@/integrations/klikteren/session';
 import { hydratePadelooSession } from '@/integrations/padeloo/session';
 import { resolveBooktimeMyClubTimezone } from '@/components/booktime/booktimeBookingUtils';
 import { useClubSnapshotRefresh } from '@/hooks/useClubSnapshotRefresh';
 import {
   clubHasBookingIntegration,
+  getKlikterenVenueId,
   getPadelooClubId,
   isBooktimeClub,
+  isKlikterenClub,
   isPadelooClub,
   parseBooktimeIntegrationConfig,
 } from '@shared/clubIntegration';
@@ -159,6 +162,11 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
       if (padelooClubId != null) {
         await hydratePadelooSession(club.id, padelooClubId);
       }
+    } else if (isKlikterenClub(club)) {
+      const klikterenVenueId = getKlikterenVenueId(club);
+      if (klikterenVenueId) {
+        await hydrateKlikterenSession(club.id, klikterenVenueId);
+      }
     }
     await refreshClubAuth();
     await onClubRefresh?.();
@@ -223,12 +231,17 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
 
       {clubAuth?.connected && hasBookingIntegration ? (
         <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/70 dark:bg-emerald-950/20 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-200">
-          {isPadelooClub(club)
-            ? t('club.padeloo.connectedAs', {
+          {isKlikterenClub(club)
+            ? t('club.klikteren.connectedAs', {
                 email: clubAuth.email ?? '—',
                 defaultValue: `Connected as ${clubAuth.email ?? '—'}`,
               })
-            : t('club.booktime.connectedAs', { phone: clubAuth.phoneNumber ?? '—' })}
+            : isPadelooClub(club)
+              ? t('club.padeloo.connectedAs', {
+                  email: clubAuth.email ?? '—',
+                  defaultValue: `Connected as ${clubAuth.email ?? '—'}`,
+                })
+              : t('club.booktime.connectedAs', { phone: clubAuth.phoneNumber ?? '—' })}
         </div>
       ) : null}
 
@@ -239,7 +252,7 @@ export function ClubDetailPanel({ club, onOpenFullscreenPhoto, onClubRefresh, sn
         </div>
       ) : null}
 
-      {(booktimeConfig || isPadelooClub(club)) && hasBookingIntegration ? (
+      {(booktimeConfig || isPadelooClub(club) || isKlikterenClub(club)) && hasBookingIntegration ? (
         <ConnectClubSheet
           club={club}
           integrationConfig={booktimeConfig ?? undefined}

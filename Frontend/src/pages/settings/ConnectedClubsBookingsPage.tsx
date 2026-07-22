@@ -14,6 +14,7 @@ import { ConnectedClubsIntegrationsTab } from '@/components/booktime/ConnectedCl
 import { useConnectedBookingClubs } from '@/hooks/useConnectedBookingClubs';
 import type { Club } from '@/types';
 import { disconnectBooktimeClub } from '@/integrations/booktime/session';
+import { disconnectKlikterenClub } from '@/integrations/klikteren/session';
 import { disconnectPadelooClub } from '@/integrations/padeloo/session';
 import { handleBack } from '@/utils/backNavigation';
 
@@ -58,6 +59,8 @@ export function ConnectedClubsBookingsPage() {
     try {
       if (club.integrationType === 'PADELOO') {
         await disconnectPadelooClub(club.clubId);
+      } else if (club.integrationType === 'KLIKTEREN') {
+        await disconnectKlikterenClub(club.clubId);
       } else {
         await disconnectBooktimeClub(club.clubId);
       }

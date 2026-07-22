@@ -33,7 +33,7 @@ export function useKlikterenTimeOptions({
   const [options, setOptions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const durationMinutes = Math.round(durationHours * 60);
-  const klikterenClubId = getKlikterenVenueId(club);
+  const klikterenVenueId = getKlikterenVenueId(club);
 
   const normalizedSelectedCourtIds = useMemo(() => {
     const source = selectedCourtIds ?? (selectedCourtId ? [selectedCourtId] : []);
@@ -41,7 +41,7 @@ export function useKlikterenTimeOptions({
   }, [selectedCourtId, selectedCourtIds]);
 
   const load = useCallback(async () => {
-    if (!enabled || !club || !isKlikterenClub(club) || klikterenClubId == null) {
+    if (!enabled || !club || !isKlikterenClub(club) || klikterenVenueId == null) {
       setOptions([]);
       return;
     }
@@ -49,7 +49,7 @@ export function useKlikterenTimeOptions({
     try {
       const { raw, dateKey } = await fetchKlikterenCourtAvailabilityForDate({
         club,
-        klikterenClubId,
+        klikterenVenueId,
         date: selectedDate,
         durationMinutes,
       });
@@ -87,7 +87,7 @@ export function useKlikterenTimeOptions({
     durationMinutes,
     enabled,
     normalizedSelectedCourtIds,
-    klikterenClubId,
+    klikterenVenueId,
     selectedCourtId,
     selectedDate,
   ]);
@@ -149,7 +149,7 @@ export function useKlikterenTimeOptions({
 
   const rowsForDate = useCallback(() => [], []);
 
-  const active = enabled && !!club && klikterenClubId != null;
+  const active = enabled && !!club && klikterenVenueId != null;
 
   return useMemo(
     () => ({

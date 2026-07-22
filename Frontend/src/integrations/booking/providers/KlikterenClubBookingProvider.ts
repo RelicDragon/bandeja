@@ -75,6 +75,7 @@ export class KlikterenClubBookingProvider implements ClubBookingProvider {
     const now = Date.now();
     return bookings
       .filter((row) => {
+        if (row.venueId && row.venueId !== this.klikterenVenueId) return false;
         const start = new Date(`${row.date}T${row.startTime}`);
         return !Number.isNaN(start.getTime()) && start.getTime() >= now;
       })

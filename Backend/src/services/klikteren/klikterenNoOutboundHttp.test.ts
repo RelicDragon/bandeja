@@ -21,10 +21,12 @@ function walkTsFiles(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/** Only the dedicated upstream proxy may call api.klikteren.com (CORS forces BE hop). */
+const ALLOWED_OUTBOUND = new Set(['klikteren/klikterenUpstream.service.ts']);
+
 const outboundPatterns = [
-  /KLIKTEREN_API_URL/,
+  /https:\/\/api\.klikteren\.com/,
   /fetch\s*\(\s*[`'"]https:\/\/api\.klikteren\.com/,
-  /fetch\s*\(\s*`\$\{KLIKTEREN_API_URL/,
 ];
 
 function run(): void {
@@ -33,14 +35,18 @@ function run(): void {
   const offenders: string[] = [];
 
   for (const file of files) {
-    const rel = path.relative(srcRoot, file);
+    const rel = path.relative(srcRoot, file).replace(/\\/g, '/');
+    if (ALLOWED_OUTBOUND.has(rel)) continue;
     const text = fs.readFileSync(file, 'utf8');
     if (outboundPatterns.some((pattern) => pattern.test(text))) {
       offenders.push(rel);
     }
   }
 
-  assert(offenders.length === 0, `Backend/src runtime must not call Klikteren HTTP: ${offenders.join(', ')}`);
+  assert(
+    offenders.length === 0,
+    `Backend/src must not call Klikteren HTTP outside upstream proxy: ${offenders.join(', ')}`,
+  );
   console.log('klikterenNoOutboundHttp.test.ts: all passed');
 }
 

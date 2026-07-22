@@ -1,4 +1,4 @@
-export type ExternalBookingProvider = 'BOOKTIME' | 'PADELOO';
+export type ExternalBookingProvider = 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN';
 
 export interface GameLinkedBooking {
   id: string;

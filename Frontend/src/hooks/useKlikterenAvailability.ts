@@ -6,7 +6,7 @@ import { getKlikterenVenueId, isKlikterenClub } from '@shared/clubIntegration';
 
 export function useKlikterenAvailability(club: Club, selectedDate: Date, enabled: boolean) {
   const [durationMinutes, setDurationMinutes] = useState<number>(KLIKTEREN_BOOKING_DURATIONS[0]);
-  const klikterenClubId = getKlikterenVenueId(club);
+  const klikterenVenueId = getKlikterenVenueId(club);
 
   const availability = useKlikterenCourtAvailability({
     club,
@@ -14,7 +14,7 @@ export function useKlikterenAvailability(club: Club, selectedDate: Date, enabled
     durationMinutes,
     enabled: enabled && isKlikterenClub(club),
     loadClubMeta: true,
-    klikterenClubId,
+    klikterenVenueId,
   });
 
   useEffect(() => {

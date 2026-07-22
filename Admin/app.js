@@ -1212,12 +1212,7 @@ async function importKlikterenCourtsForCenter() {
     }
     if (!confirm('Import courts from Klikteren? Existing courts will be matched by external ID or name.')) return;
     try {
-        const klikterenRes = await fetch(`https://api.klikteren.com/api/venues/${encodeURIComponent(venueId)}`);
-        if (!klikterenRes.ok) {
-            const text = await klikterenRes.text().catch(() => '');
-            throw new Error(`Klikteren venue fetch failed (${klikterenRes.status})${text ? `: ${text.slice(0, 200)}` : ''}`);
-        }
-        const payload = await klikterenRes.json();
+        const payload = await apiRequest(`/klikteren/upstream/api/venues/${encodeURIComponent(venueId)}`);
         const courts = Array.isArray(payload.courts) ? payload.courts : payload.data?.courts;
         const response = await apiRequest(`/admin/clubs/${currentCenter.id}/klikteren/import-courts`, {
             method: 'POST',

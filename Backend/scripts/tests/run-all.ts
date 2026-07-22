@@ -973,6 +973,22 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'klikteren upstream allowlist',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'klikteren', 'klikterenUpstream.service.test.ts'),
+    ],
+  },
+  {
+    label: 'klikteren snapshot ingest',
+    command: process.execPath,
+    args: [
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'src', 'services', 'klikteren', 'klikterenSnapshot.service.test.ts'),
+    ],
+  },
+  {
     label: 'padeloo snapshot ingest',
     command: process.execPath,
     args: [

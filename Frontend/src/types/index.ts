@@ -341,10 +341,11 @@ export interface Club {
   amenities?: Record<string, any>;
   isBar?: boolean;
   isForPlaying?: boolean;
-  integrationType?: 'BOOKTIME' | 'PADELOO' | null;
+  integrationType?: 'BOOKTIME' | 'PADELOO' | 'KLIKTEREN' | null;
   integrationConfig?: {
     companyId?: string;
     clubId?: number;
+    venueId?: string;
     termsUrl?: string;
     privacyUrl?: string;
     serviceIds?: string[];

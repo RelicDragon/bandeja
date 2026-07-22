@@ -73,7 +73,9 @@ export function assembleCreateGameBookingFields(
     externalBookingProvider: externalBookingIds?.length
       ? input.integrationType === 'PADELOO'
         ? 'PADELOO'
-        : 'BOOKTIME'
+        : input.integrationType === 'KLIKTEREN'
+          ? 'KLIKTEREN'
+          : 'BOOKTIME'
       : undefined,
     bookingSnapshots,
   };

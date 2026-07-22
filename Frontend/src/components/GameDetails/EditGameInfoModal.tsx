@@ -38,7 +38,9 @@ import { checkBookingOverlap, fetchBookedCourtsForDay } from '@/utils/bookedCour
 import { supportsClubBookingFlow } from '@shared/gameBooking/supportsClubBookingFlow';
 import {
   clubHasBookingIntegration,
+  getKlikterenVenueId,
   getPadelooClubId,
+  isKlikterenClub,
   isPadelooClub,
   parseBooktimeIntegrationConfig,
 } from '@shared/clubIntegration';
@@ -446,6 +448,7 @@ export const EditGameInfoModal = ({
       willBookOnCreate: willBookOnEdit || reserveNewEditActive,
       booktimeConnected: Boolean(clubBookingAuth?.connected),
       isPadelooClub: isPadelooClub(selectedClubData),
+      isKlikterenClub: isKlikterenClub(selectedClubData),
     }) && isOpen,
   });
   const resolvedGenerateTimeOptions = booktimeTimeOptions.active
@@ -1158,6 +1161,49 @@ export const EditGameInfoModal = ({
       <ClubCreateGameConfirmModal
         provider="PADELOO"
         padelooClubId={getPadelooClubId(selectedClubData)!}
+        email={clubBookingAuth?.email ?? null}
+        open={confirmModalOpen}
+        onOpenChange={setConfirmModalOpen}
+        club={selectedClubData}
+        bookings={integratedCourtsForConfirm.map((court) => ({
+          court,
+          date: whenSelectedDate,
+          startTime: whenSelectedTime,
+          durationMinutes: Math.round(whenDuration * 60),
+        }))}
+        firstName={clubBookingAuth?.firstName ?? null}
+        lastName={clubBookingAuth?.lastName ?? null}
+        sport={game.sport}
+        summaryChips={[]}
+        bookFlowContext={{
+          refreshSnapshot,
+          lastFetchedAt: snapshotLastFetchedAt,
+        }}
+        snapshotBlocked={snapshotBlocked}
+        onExecuteCreateGame={async (overrides) => {
+          await executeSave({
+            externalBookingIds: overrides.externalBookingIds,
+            bookingSnapshots: overrides.bookingSnapshots,
+          });
+        }}
+        onSlotTaken={() => {
+          setWhenSelectedTime('');
+          setHookTime('');
+          booktimeTimeOptions.reload();
+        }}
+        onSuccess={() => {
+          setConfirmModalOpen(false);
+        }}
+        flowMode="edit"
+      />
+    ) : null}
+    {selectedClubData &&
+    confirmModalOpen &&
+    isKlikterenClub(selectedClubData) &&
+    getKlikterenVenueId(selectedClubData) != null ? (
+      <ClubCreateGameConfirmModal
+        provider="KLIKTEREN"
+        klikterenVenueId={getKlikterenVenueId(selectedClubData)!}
         email={clubBookingAuth?.email ?? null}
         open={confirmModalOpen}
         onOpenChange={setConfirmModalOpen}

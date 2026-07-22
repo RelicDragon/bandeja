@@ -11,7 +11,10 @@ import {
 } from '@/integrations/klikteren/slots';
 import { clubLocalDateString, clubLocalNowMinutes } from '@/utils/clubAdmin/scheduleTime';
 import { getKlikterenVenueId, isKlikterenClub } from '@shared/clubIntegration';
-import { KLIKTEREN_BOOKING_DURATIONS } from '@/integrations/klikteren/config';
+import {
+  KLIKTEREN_BOOKING_DURATIONS,
+  KLIKTEREN_SLOT_STEP_MINUTES,
+} from '@/integrations/klikteren/config';
 
 export type KlikterenCourtAvailabilityRow = {
   court: Court;
@@ -73,12 +76,23 @@ export function buildBusyByCourtId(
 }
 
 export function buildPublicSlotsByExternalId(
-  availability: { courtFreeSlots?: Record<string, string[]> } | null | undefined,
+  availability: {
+    courtFreeSlots?: Record<string, string[]>;
+    courtDateClosedByOwner?: Record<string, boolean>;
+    courtSlotConfig?: Record<string, { slotLengthMinutes?: number; minSlotsPerBooking?: number }>;
+  } | null | undefined,
   durationMinutes: number,
 ): Map<string, string[]> {
   const publicMap = new Map<string, string[]>();
   for (const [courtId, freeStarts] of Object.entries(availability?.courtFreeSlots ?? {})) {
-    const slots = freeStartTimesToDurationSlots(freeStarts ?? [], durationMinutes);
+    if (availability?.courtDateClosedByOwner?.[courtId]) {
+      publicMap.set(courtId, []);
+      continue;
+    }
+    const slotStep =
+      availability?.courtSlotConfig?.[courtId]?.slotLengthMinutes ??
+      KLIKTEREN_SLOT_STEP_MINUTES;
+    const slots = freeStartTimesToDurationSlots(freeStarts ?? [], durationMinutes, slotStep);
     publicMap.set(courtId, availableSlotsToRangeStrings(slots));
   }
   return publicMap;
@@ -146,10 +160,12 @@ export async function fetchKlikterenCourtAvailabilityForDate(params: {
 
   let companyMeta: KlikterenAvailabilityClubMeta | undefined;
   if (loadClubMeta) {
-    void venue;
+    const autoOpenDays = (venue?.courts ?? [])
+      .map((court) => court.autoOpenDays)
+      .filter((days): days is number => typeof days === 'number' && days > 0);
     companyMeta = {
       durations: [...KLIKTEREN_BOOKING_DURATIONS],
-      bookableDays: DEFAULT_BOOKABLE_DAYS,
+      bookableDays: autoOpenDays.length > 0 ? Math.max(...autoOpenDays) : DEFAULT_BOOKABLE_DAYS,
     };
   }
 

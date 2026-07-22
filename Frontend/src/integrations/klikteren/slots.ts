@@ -213,7 +213,11 @@ export function freeStartTimesToDurationSlots(
 
 export function mapKlikterenAvailabilityToSnapshotCourts(
   club: Club,
-  availability: { courtFreeSlots: Record<string, string[]> },
+  availability: {
+    courtFreeSlots: Record<string, string[]>;
+    courtDateClosedByOwner?: Record<string, boolean>;
+    courtSlotConfig?: Record<string, { slotLengthMinutes?: number }>;
+  },
   dateKey: string,
   durationMinutes: number,
   courtNames: Map<string, string> = new Map(),
@@ -240,8 +244,15 @@ export function mapKlikterenAvailabilityToSnapshotCourts(
   };
 
   for (const [externalCourtId, freeStarts] of Object.entries(availability.courtFreeSlots ?? {})) {
-    const slots = freeStartTimesToDurationSlots(freeStarts ?? [], durationMinutes);
     const entry = ensure(externalCourtId, courtNames.get(externalCourtId) ?? null);
+    if (availability.courtDateClosedByOwner?.[externalCourtId]) {
+      entry.busySlots = deriveBusyFromAvailableSlotsInWorkingHours([], dateKey, club);
+      continue;
+    }
+    const slotStep =
+      availability.courtSlotConfig?.[externalCourtId]?.slotLengthMinutes ??
+      KLIKTEREN_SLOT_STEP_MINUTES;
+    const slots = freeStartTimesToDurationSlots(freeStarts ?? [], durationMinutes, slotStep);
     entry.busySlots = deriveBusyFromAvailableSlotsInWorkingHours(slots, dateKey, club);
   }
 

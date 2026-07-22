@@ -402,6 +402,16 @@
       "alreadyReserved": "Court already reserved for this game.",
       "liveApiUnavailable": "Court reservation isn't available right now — using normal scheduling."
     },
+    "padeloo": {
+      "authTitle": "Connect your Padeloo account",
+      "authHint": "Sign in with your Padeloo email to pick a time at {{club}}.",
+      "authorizeInClub": "Authorize in {{club}}"
+    },
+    "klikteren": {
+      "authTitle": "Connect your Klikteren account",
+      "authHint": "Sign in with your Klikteren email and password to pick a time at {{club}}.",
+      "authorizeInClub": "Authorize in {{club}}"
+    },
     "intent": {
       "title": "What kind of game?",
       "noTemplatesForSetup": "No preset fits this setup — use Advanced to pick a format manually.",

@@ -3,12 +3,16 @@ import {
   clubHasBookingIntegration,
   courtHasActiveBookingIntegration,
   getBooktimeCompanyId,
+  getKlikterenVenueId,
   getPadelooClubId,
   isBooktimeClub,
+  isKlikterenClub,
   isPadelooClub,
   parseBooktimeIntegrationConfig,
+  parseKlikterenIntegrationConfig,
   parsePadelooIntegrationConfig,
   shouldUseBooktimeCompanyDurations,
+  shouldUseKlikterenDurations,
 } from './clubIntegration';
 
 describe('parsePadelooIntegrationConfig', () => {
@@ -37,6 +41,46 @@ describe('padeloo club integration predicates', () => {
     expect(
       courtHasActiveBookingIntegration(integratedClub, { externalCourtId: '5' }),
     ).toBe(true);
+  });
+});
+
+describe('parseKlikterenIntegrationConfig', () => {
+  it('returns null for invalid raw config', () => {
+    expect(parseKlikterenIntegrationConfig(null)).toBeNull();
+    expect(parseKlikterenIntegrationConfig({ venueId: '  ' })).toBeNull();
+    expect(parseKlikterenIntegrationConfig({ venueId: 1 })).toBeNull();
+    expect(parseKlikterenIntegrationConfig({ venueId: 'not-a-uuid' })).toBeNull();
+  });
+
+  it('parses venueId UUID', () => {
+    expect(
+      parseKlikterenIntegrationConfig({ venueId: ' 05cdc4d3-03fd-4f2c-af65-9b2018b5a53e ' }),
+    ).toEqual({
+      venueId: '05cdc4d3-03fd-4f2c-af65-9b2018b5a53e',
+    });
+  });
+});
+
+describe('klikteren club integration predicates', () => {
+  const integratedClub = {
+    integrationType: 'KLIKTEREN' as const,
+    integrationConfig: { venueId: '05cdc4d3-03fd-4f2c-af65-9b2018b5a53e' },
+  };
+
+  it('detects Klikteren club and venueId', () => {
+    expect(isKlikterenClub(integratedClub)).toBe(true);
+    expect(getKlikterenVenueId(integratedClub)).toBe('05cdc4d3-03fd-4f2c-af65-9b2018b5a53e');
+    expect(clubHasBookingIntegration(integratedClub)).toBe(true);
+    expect(
+      courtHasActiveBookingIntegration(integratedClub, { externalCourtId: 'court-1' }),
+    ).toBe(true);
+  });
+
+  it('uses klikteren durations for mapped courts', () => {
+    const mapped = { id: 'c1', externalCourtId: 'ext' };
+    expect(shouldUseKlikterenDurations(integratedClub, null, [mapped])).toBe(true);
+    expect(shouldUseKlikterenDurations(integratedClub, 'notBooked', [mapped])).toBe(false);
+    expect(shouldUseKlikterenDurations(integratedClub, 'c1', [mapped])).toBe(true);
   });
 });
 

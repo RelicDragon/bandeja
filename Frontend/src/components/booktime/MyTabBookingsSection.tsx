@@ -5,6 +5,7 @@ import { RefreshCw, Settings } from 'lucide-react';
 import type { MyTabClubBookingsSnapshot } from '@/hooks/useMyTabClubBookings';
 import { connectedClubRowToBookingListClub } from '@/hooks/connectedBookingClubs';
 import { PADELOO_DEFAULT_CANCEL_HOURS } from '@/integrations/padeloo/config';
+import { KLIKTEREN_DEFAULT_CANCEL_HOURS } from '@/integrations/klikteren/config';
 import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsCardsSkeleton } from './BooktimeBookingsCardsSkeleton';
 import { MyTabConnectBanner } from './MyTabConnectBanner';
@@ -38,6 +39,9 @@ export function MyTabBookingsSection({ booktime }: Props) {
     for (const club of clubs) {
       if (club.integrationType === 'PADELOO' && club.connected && club.padelooClubId) {
         map.set(club.clubId, PADELOO_DEFAULT_CANCEL_HOURS);
+      }
+      if (club.integrationType === 'KLIKTEREN' && club.connected && club.klikterenVenueId) {
+        map.set(club.clubId, KLIKTEREN_DEFAULT_CANCEL_HOURS);
       }
     }
     return map;

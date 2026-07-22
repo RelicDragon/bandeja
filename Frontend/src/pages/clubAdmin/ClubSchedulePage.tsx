@@ -169,7 +169,9 @@ export function ClubSchedulePage() {
           {t('clubAdmin.scheduleLoadFailed')}
         </p>
       )}
-      {club?.integrationType === 'BOOKTIME' ? (
+      {club?.integrationType === 'BOOKTIME' ||
+      club?.integrationType === 'PADELOO' ||
+      club?.integrationType === 'KLIKTEREN' ? (
         <BooktimeScheduleStatus
           clubId={clubId}
           isLoadingExternalSlots={!!data?.isLoadingExternalSlots}

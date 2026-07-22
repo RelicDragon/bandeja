@@ -28,6 +28,23 @@ describe('klikteren slots mapping', () => {
     expect(busy).toHaveLength(3);
   });
 
+  it('builds 90 and 120 minute slots from consecutive free starts', () => {
+    const starts = ['09:00', '09:30', '10:00', '10:30', '11:00'];
+    expect(freeStartTimesToDurationSlots(starts, 90).map((s) => s.startTime)).toEqual([
+      '09:00',
+      '09:30',
+      '10:00',
+    ]);
+    expect(freeStartTimesToDurationSlots(starts, 120).map((s) => s.startTime)).toEqual([
+      '09:00',
+      '09:30',
+    ]);
+  });
+
+  it('rejects non-contiguous free starts for duration slots', () => {
+    expect(freeStartTimesToDurationSlots(['09:00', '10:00'], 60)).toEqual([]);
+  });
+
   it('builds duration slots from consecutive free starts', () => {
     const slots = freeStartTimesToDurationSlots(
       ['09:00', '09:30', '10:00', '10:30'],

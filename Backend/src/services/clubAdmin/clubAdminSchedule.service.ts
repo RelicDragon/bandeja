@@ -1,4 +1,4 @@
-import { ParticipantRole, Prisma } from '@prisma/client';
+import { ClubIntegrationType, ParticipantRole, Prisma } from '@prisma/client';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS } from '../../utils/constants';
 import {
@@ -98,6 +98,12 @@ export class ClubAdminScheduleService {
       ];
     }
 
+    const club = await prisma.club.findUnique({
+      where: { id: clubId },
+      select: { integrationType: true },
+    });
+    const integrationType = club?.integrationType ?? ClubIntegrationType.BOOKTIME;
+
     const [games, occupancyResult, dateMeta, unmappedCount] = await Promise.all([
       prisma.game.findMany({
         where: gameWhere,
@@ -123,8 +129,8 @@ export class ClubAdminScheduleService {
         gameCourtFilter: 'admin',
         sources: { games: false, holds: true, externals: true },
       }),
-      getSnapshotDateMeta(clubId, dateStr),
-      countUnmappedExternalCourts(clubId),
+      getSnapshotDateMeta(clubId, dateStr, integrationType ?? ClubIntegrationType.BOOKTIME),
+      countUnmappedExternalCourts(clubId, integrationType ?? ClubIntegrationType.BOOKTIME),
     ]);
 
     const slots: ScheduleSlot[] = [];

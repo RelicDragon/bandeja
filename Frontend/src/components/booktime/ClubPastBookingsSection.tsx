@@ -25,7 +25,7 @@ export function ClubPastBookingsSection({
   const [expanded, setExpanded] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const connectedClubs = useMemo(
-    () => clubs.filter((c) => c.connected && (c.companyId || c.padelooClubId)),
+    () => clubs.filter((c) => c.connected && (c.companyId || c.padelooClubId || c.klikterenVenueId)),
     [clubs],
   );
   const { bookings: past, loading } = useAllPastClubBookings(connectedClubs, expanded, refreshKey);
@@ -88,7 +88,9 @@ export function ClubPastBookingsSection({
                       providerLabel={
                         booking.integrationType === 'PADELOO'
                           ? t('club.padeloo.providerLabel', { defaultValue: 'Padeloo' })
-                          : undefined
+                          : booking.integrationType === 'KLIKTEREN'
+                            ? t('club.klikteren.providerLabel', { defaultValue: 'Klikteren' })
+                            : undefined
                       }
                       expandableActions
                       actionsExpanded={selectedBookingId === bookingId}

@@ -71,7 +71,7 @@ export function isKlikterenSlotTakenError(err: unknown): boolean {
 export async function confirmKlikterenBooking(
   client: KlikterenClient,
   club: Club,
-  klikterenVenueId: string,
+  _klikterenVenueId: string,
   pending: KlikterenPendingBooking,
   ctx: KlikterenBookFlowContext,
 ): Promise<{ bookingId: string; bookingStart: string; bookingEnd: string; price?: number }> {

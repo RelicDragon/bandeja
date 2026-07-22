@@ -61,8 +61,9 @@ app.use(
       'X-Client-Version',
       'X-Client-Platform',
       'X-E2E-Test',
+      'X-Klikteren-Cookie',
     ],
-    exposedHeaders: ['ETag', 'X-Response-Size'],
+    exposedHeaders: ['ETag', 'X-Response-Size', 'X-Klikteren-Set-Cookie'],
     preflightContinue: false,
     optionsSuccessStatus: 200,
   })

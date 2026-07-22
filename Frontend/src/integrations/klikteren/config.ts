@@ -1,6 +1,11 @@
+import { resolveAbsoluteApiBaseUrlForFetch } from '@/api/apiBaseUrl';
+
 export const KLIKTEREN_DEFAULT_CANCEL_HOURS = 2;
 
-export const KLIKTEREN_API_URL = 'https://api.klikteren.com';
+/** Always via Bandeja proxy — api.klikteren.com CORS only allows klikteren.com. */
+export function getKlikterenApiUrl(): string {
+  return `${resolveAbsoluteApiBaseUrlForFetch().replace(/\/$/, '')}/klikteren/upstream`;
+}
 
 export const KLIKTEREN_BOOKING_DURATIONS = [60, 90, 120] as const;
 

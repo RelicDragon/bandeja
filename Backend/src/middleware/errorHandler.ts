@@ -8,7 +8,7 @@ import {
 import type { AuthRequest } from './auth';
 
 const CORS_ALLOW_HEADERS =
-  'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, If-None-Match, X-Client-Version, X-Client-Platform, X-E2E-Test';
+  'Content-Type, Authorization, Cache-Control, Pragma, Expires, Accept, If-None-Match, X-Client-Version, X-Client-Platform, X-E2E-Test, X-Klikteren-Cookie';
 
 const corsAllowedOrigins = getCorsAllowedOrigins({
   nodeEnv: config.nodeEnv,

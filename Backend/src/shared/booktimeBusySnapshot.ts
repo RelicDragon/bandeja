@@ -161,15 +161,27 @@ export async function getSnapshotFreshness(
 
 export async function getSnapshotDateMeta(
   clubId: string,
-  date: string
+  date: string,
+  integrationType: ClubIntegrationType = ClubIntegrationType.BOOKTIME,
 ): Promise<{
   snapshotFetchedAt: Date | null;
   hasSnapshotForDate: boolean;
 }> {
-  const rows = await prisma.clubBooktimeBusySnapshot.findMany({
-    where: { clubId, date },
-    select: { fetchedAt: true },
-  });
+  const rows =
+    integrationType === ClubIntegrationType.PADELOO
+      ? await prisma.clubPadelooBusySnapshot.findMany({
+          where: { clubId, date },
+          select: { fetchedAt: true },
+        })
+      : integrationType === ClubIntegrationType.KLIKTEREN
+        ? await prisma.clubKlikterenBusySnapshot.findMany({
+            where: { clubId, date },
+            select: { fetchedAt: true },
+          })
+        : await prisma.clubBooktimeBusySnapshot.findMany({
+            where: { clubId, date },
+            select: { fetchedAt: true },
+          });
   let snapshotFetchedAt: Date | null = null;
   for (const row of rows) {
     if (!snapshotFetchedAt || row.fetchedAt > snapshotFetchedAt) {
@@ -179,12 +191,28 @@ export async function getSnapshotDateMeta(
   return { snapshotFetchedAt, hasSnapshotForDate: rows.length > 0 };
 }
 
-export async function countUnmappedExternalCourts(clubId: string): Promise<number> {
-  const rows = await prisma.clubBooktimeBusySnapshot.findMany({
-    where: { clubId, courtId: null, externalCourtId: { not: null } },
-    select: { externalCourtId: true },
-    distinct: ['externalCourtId'],
-  });
+export async function countUnmappedExternalCourts(
+  clubId: string,
+  integrationType: ClubIntegrationType = ClubIntegrationType.BOOKTIME,
+): Promise<number> {
+  const rows =
+    integrationType === ClubIntegrationType.PADELOO
+      ? await prisma.clubPadelooBusySnapshot.findMany({
+          where: { clubId, courtId: null, externalCourtId: { not: null } },
+          select: { externalCourtId: true },
+          distinct: ['externalCourtId'],
+        })
+      : integrationType === ClubIntegrationType.KLIKTEREN
+        ? await prisma.clubKlikterenBusySnapshot.findMany({
+            where: { clubId, courtId: null, externalCourtId: { not: null } },
+            select: { externalCourtId: true },
+            distinct: ['externalCourtId'],
+          })
+        : await prisma.clubBooktimeBusySnapshot.findMany({
+            where: { clubId, courtId: null, externalCourtId: { not: null } },
+            select: { externalCourtId: true },
+            distinct: ['externalCourtId'],
+          });
   return rows.length;
 }
 

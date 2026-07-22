@@ -20,7 +20,9 @@ export function ConnectedClubCard({
   const providerLabel =
     club.integrationType === 'PADELOO'
       ? t('club.padeloo.providerLabel', { defaultValue: 'Padeloo' })
-      : t('club.booktime.providerLabel', { defaultValue: 'Booktime' });
+      : club.integrationType === 'KLIKTEREN'
+        ? t('club.klikteren.providerLabel', { defaultValue: 'Klikteren' })
+        : t('club.booktime.providerLabel', { defaultValue: 'Booktime' });
 
   return (
     <article

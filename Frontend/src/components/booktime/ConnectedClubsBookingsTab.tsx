@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { connectedClubRowToBooktimeRow, connectedClubRowToBookingListClub, type ConnectedBookingClubRow } from '@/hooks/connectedBookingClubs';
 import { PADELOO_DEFAULT_CANCEL_HOURS } from '@/integrations/padeloo/config';
+import { KLIKTEREN_DEFAULT_CANCEL_HOURS } from '@/integrations/klikteren/config';
 import { useAuthStore } from '@/store/authStore';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { useAllUpcomingClubBookings } from '@/hooks/useAllUpcomingClubBookings';
@@ -22,7 +23,7 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey }: Props) {
   const displaySettings = useMemo(() => resolveDisplaySettings(user), [user]);
   const [pastRefreshKey, setPastRefreshKey] = useState(0);
   const connectedClubs = useMemo(
-    () => clubs.filter((c) => c.connected && (c.companyId || c.padelooClubId)),
+    () => clubs.filter((c) => c.connected && (c.companyId || c.padelooClubId || c.klikterenVenueId)),
     [clubs],
   );
   const { bookings: upcoming, loading: upcomingLoading, removeBooking } = useAllUpcomingClubBookings(
@@ -50,6 +51,9 @@ export function ConnectedClubsBookingsTab({ clubs, refreshKey }: Props) {
     for (const club of clubs) {
       if (club.integrationType === 'PADELOO' && club.connected && club.padelooClubId) {
         map.set(club.clubId, PADELOO_DEFAULT_CANCEL_HOURS);
+      }
+      if (club.integrationType === 'KLIKTEREN' && club.connected && club.klikterenVenueId) {
+        map.set(club.clubId, KLIKTEREN_DEFAULT_CANCEL_HOURS);
       }
     }
     return map;

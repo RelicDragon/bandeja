@@ -9,7 +9,8 @@ import { BooktimeUpcomingBookingsList } from './BooktimeUpcomingBookingsList';
 import { BooktimeBookingsLoading } from './BooktimeBookingsLoading';
 import { useBooktimeCancelPolicy } from './useBooktimeCancelPolicy';
 import { PADELOO_DEFAULT_CANCEL_HOURS } from '@/integrations/padeloo/config';
-import { isBooktimeClub, isPadelooClub } from '@shared/clubIntegration';
+import { KLIKTEREN_DEFAULT_CANCEL_HOURS } from '@/integrations/klikteren/config';
+import { isBooktimeClub, isKlikterenClub, isPadelooClub, getKlikterenVenueId } from '@shared/clubIntegration';
 
 type Props = {
   club: Club;
@@ -46,6 +47,14 @@ function clubToConnectedRow(club: Club, connected: boolean): ConnectedBookingClu
     };
   }
 
+  if (isKlikterenClub(club)) {
+    return {
+      ...base,
+      integrationType: 'KLIKTEREN',
+      klikterenVenueId: getKlikterenVenueId(club),
+    };
+  }
+
   return {
     ...base,
     integrationType: 'BOOKTIME',
@@ -75,6 +84,9 @@ export function ClubUpcomingBookings({
     }
     if (isPadelooClub(club)) {
       map.set(club.id, PADELOO_DEFAULT_CANCEL_HOURS);
+    }
+    if (isKlikterenClub(club)) {
+      map.set(club.id, KLIKTEREN_DEFAULT_CANCEL_HOURS);
     }
     return map;
   }, [allowedHoursToCancel, club]);

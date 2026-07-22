@@ -212,7 +212,9 @@ export function BooktimeBookingRow({
           {club.clubName}
           {club.integrationType === 'PADELOO'
             ? ` · ${t('club.padeloo.providerLabel', { defaultValue: 'Padeloo' })}`
-            : ''}
+            : club.integrationType === 'KLIKTEREN'
+              ? ` · ${t('club.klikteren.providerLabel', { defaultValue: 'Klikteren' })}`
+              : ''}
         </p>
       ) : null}
       {!nested ? (

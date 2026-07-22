@@ -1229,7 +1229,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-57g | Padeloo Bookings tab | Connected Padeloo user with upcoming reservation | Bookings tab lists Padeloo reservation alongside Booktime rows with provider badge |
 | PR-57h | Klikteren Integrations tab | Integrations tab in Novi Sad with Padel Pro | Padel Pro listed; connect opens email+password sheet; disconnect works |
 | PR-57i | Klikteren Bookings tab | Connected Klikteren user with upcoming booking | Bookings tab lists Klikteren booking alongside other providers with provider badge |
-| PR-57j | Klikteren create-game book | Create GAME at Padel Pro → connect → pick free slot → confirm book | Court reserved via Klikteren; game linked with EXTERNAL booking badge |
+| PR-57j | Klikteren create-game book | Create GAME at Padel Pro → connect → pick free slot → confirm book | Court reserved via Klikteren (Bandeja upstream proxy); game linked with EXTERNAL booking badge |
+| PR-57k | Klikteren availability without CORS block | Open Padel Pro club detail availability (web) | Slots load (requests go to `/api/klikteren/upstream/...`, not blocked by klikteren.com CORS) |
 | PR-57c | Link booking to game (happy path) | My tab → Bookings → Link to game → pick game (confirm reschedule if times differ) | Single request succeeds; success toast; game shows linked booking with correct time/club |
 | PR-57d | Link booking to game (failure) | Link to game while offline or on already-linked booking | Error toast; no partial link (game unchanged if request failed) |
 | PR-57e | Bookings back navigation | My tab → See all → back; Profile → Bookings → back | Browser back returns to previous screen (My tab or Profile) |
