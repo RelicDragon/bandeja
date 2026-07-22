@@ -58,6 +58,7 @@ jobs:
       - run: npm run test:queries
       - run: npm run test:invites
       - run: npm run test:live-scoring
+      - run: npx playwright install --with-deps chromium
       - run: npm run test:game-results-share
       - run: npm run build
 
