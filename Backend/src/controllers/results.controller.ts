@@ -8,6 +8,8 @@ import * as roundGenerationService from '../services/results/roundGeneration.ser
 import { GameService } from '../services/game/game.service';
 import * as outcomesService from '../services/results/outcomes.service';
 import * as outcomeExplanationService from '../services/results/outcomeExplanation.service';
+import * as ratingExplanationLlmService from '../services/results/ratingExplanationLlm.service';
+import * as ratingExplanationLlmTranslateService from '../services/results/ratingExplanationLlmTranslate.service';
 import * as matchLiveScoringService from '../services/results/matchLiveScoring.service';
 import { LIVE_SCORING_REASON_CODE } from '../services/results/liveScoringEngine/liveScoringRejectReasons';
 import { liveSpectatorQueryTokenMaxBytes, signLiveSpectatorToken, verifyLiveSpectatorToken } from '../utils/jwt';
@@ -377,6 +379,60 @@ export const getOutcomeExplanation = asyncHandler(async (req: AuthRequest, res: 
       ? { ratingUncertainty }
       : {}),
   };
+
+  res.json({
+    success: true,
+    data,
+  });
+});
+
+export const getOutcomeRatingExplanationLlm = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId, userId } = req.params;
+  const language =
+    typeof req.query.lang === 'string'
+      ? req.query.lang
+      : typeof req.query.language === 'string'
+        ? req.query.language
+        : undefined;
+  const retry =
+    req.query.retry === '1' ||
+    req.query.retry === 'true' ||
+    req.query.retry === 'yes';
+
+  const data = await ratingExplanationLlmService.getOrStartRatingExplanationLlm(
+    gameId,
+    userId,
+    language,
+    req.userId,
+    { retry },
+  );
+
+  res.json({
+    success: true,
+    data,
+  });
+});
+
+export const getOutcomeRatingExplanationTranslation = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { gameId, userId } = req.params;
+  const language =
+    typeof req.query.lang === 'string'
+      ? req.query.lang
+      : typeof req.query.language === 'string'
+        ? req.query.language
+        : undefined;
+  const retry =
+    req.query.retry === '1' ||
+    req.query.retry === 'true' ||
+    req.query.retry === 'yes';
+
+  const data = await ratingExplanationLlmTranslateService.getOrStartRatingExplanationTranslation(
+    gameId,
+    userId,
+    language,
+    req.userId,
+    { retry },
+  );
 
   res.json({
     success: true,

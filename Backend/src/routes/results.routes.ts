@@ -12,6 +12,16 @@ router.get('/game/:gameId', optionalAuth, resultsController.getGameResults);
 router.get('/round/:roundId', optionalAuth, resultsController.getRoundResults);
 router.get('/match/:matchId', optionalAuth, resultsController.getMatchResults);
 router.get('/game/:gameId/outcome/:userId/explanation', optionalAuth, resultsController.getOutcomeExplanation);
+router.get(
+  '/game/:gameId/outcome/:userId/rating-explanation-llm',
+  optionalAuth,
+  resultsController.getOutcomeRatingExplanationLlm,
+);
+router.get(
+  '/game/:gameId/outcome/:userId/rating-explanation-llm/translation',
+  optionalAuth,
+  resultsController.getOutcomeRatingExplanationTranslation,
+);
 
 router.post('/game/:gameId/recalculate', authenticate, requireCanModifyResults, resultsController.recalculateOutcomes);
 router.post('/game/:gameId/reset', authenticate, requireCanModifyResults, resultsController.resetGameResults);

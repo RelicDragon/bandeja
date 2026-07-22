@@ -119,6 +119,16 @@ const suites: Suite[] = [
     ],
   },
   {
+    label: 'rating explanation llm storage',
+    command: process.execPath,
+    args: [
+      '-r',
+      'dotenv/config',
+      path.join(backendRoot, 'node_modules', 'ts-node', 'dist', 'bin.js'),
+      path.join(backendRoot, 'scripts', 'tests', 'rating-explanation-llm-storage.ts'),
+    ],
+  },
+  {
     label: 'multisport trust patches',
     command: process.execPath,
     args: [

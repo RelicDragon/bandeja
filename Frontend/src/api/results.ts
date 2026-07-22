@@ -248,3 +248,49 @@ export const getOutcomeExplanation = async (gameId: string, userId: string): Pro
   const response = await api.get<ApiResponse<OutcomeExplanation>>(`/results/game/${gameId}/outcome/${userId}/explanation`);
   return response.data.data;
 };
+
+export type RatingExplanationLlmStatus = 'pending' | 'ready' | 'failed' | 'skipped' | 'unavailable';
+
+export interface RatingExplanationLlmResult {
+  status: RatingExplanationLlmStatus;
+  text?: string;
+  language?: string;
+  sourceLanguage?: string;
+  kind?: 'original' | 'translation';
+}
+
+export const getOutcomeRatingExplanationLlm = async (
+  gameId: string,
+  userId: string,
+  language: string,
+  options?: { retry?: boolean },
+): Promise<RatingExplanationLlmResult> => {
+  const response = await api.get<ApiResponse<RatingExplanationLlmResult>>(
+    `/results/game/${gameId}/outcome/${userId}/rating-explanation-llm`,
+    {
+      params: {
+        lang: language,
+        ...(options?.retry ? { retry: '1' } : {}),
+      },
+    },
+  );
+  return response.data.data;
+};
+
+export const getOutcomeRatingExplanationTranslation = async (
+  gameId: string,
+  userId: string,
+  language: string,
+  options?: { retry?: boolean },
+): Promise<RatingExplanationLlmResult> => {
+  const response = await api.get<ApiResponse<RatingExplanationLlmResult>>(
+    `/results/game/${gameId}/outcome/${userId}/rating-explanation-llm/translation`,
+    {
+      params: {
+        lang: language,
+        ...(options?.retry ? { retry: '1' } : {}),
+      },
+    },
+  );
+  return response.data.data;
+};

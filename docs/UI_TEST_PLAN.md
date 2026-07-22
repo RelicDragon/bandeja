@@ -805,6 +805,12 @@ Frontend/e2e/
 | GD-67d | Rating settling chip | Open explanation when idle past 30-day grace | Soft “Rating settling” chip on Reliability Factor; no raw uncertainty for non-admin |
 | GD-67e | Grace idle period | Profile with last rated/training activity &lt; 30 days ago | No uncertainty rise / settling chip |
 | GD-67f | Training resets idle clock | Finish training (or set trainee level) after long idle | Settling clears; lastRatingActivityAt updated; uncertainty not −10 |
+| GD-67g | LLM rating insight (rated game) | Open outcome explanation on `affectsRating` game | Top insight: skeleton → original; if app locale ≠ source, auto-translates to app locale |
+| GD-67h | LLM rating insight skipped (non-rated) | Open explanation on non-rating game | No LLM insight section |
+| GD-67i | LLM rating insight failure UX | Force AI failure / timeout | Soft failure + Retry; numeric summary remains |
+| GD-67j | LLM insight translate | Language menu → non-original | Overlay while translating; then translation; Original is instant |
+| GD-67k | LLM insight translate cache | Re-select a previously translated language | Instant from client cache |
+| GD-67l | LLM insight translate retry | Fail translation → Retry / re-pick language | Restarts translate without regenerating original |
 | GD-68 | Finish results confirm | Finish results action | Confirmation modal |
 | GD-69 | Edit finalized results | Edit after finish | Danger confirm modal |
 | GD-70 | BAR level changes display | Finished BAR game | Per-player level before/after on list |

@@ -9,7 +9,7 @@ export type ModalType =
   | { type: 'finish' }
   | { type: 'edit' }
   | { type: 'syncConflict' }
-  | { type: 'explanation'; explanation: OutcomeExplanation; playerName: string; levelBefore: number }
+  | { type: 'explanation'; explanation: OutcomeExplanation; playerName: string; levelBefore: number; gameId: string; affectsRating: boolean }
   | null;
 
 export const useModalManager = () => {

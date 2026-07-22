@@ -437,7 +437,14 @@ export const GameResultsEntryEmbedded = ({
                     genderTeams={(currentGame.genderTeams || 'ANY') as 'ANY' | 'MEN' | 'WOMEN' | 'MIX_PAIRS'}
                     winnerOfGame={currentGame.winnerOfGame}
                     onExplanationClick={(explanation, playerName, levelBefore) => {
-                      openModal({ type: 'explanation', explanation, playerName, levelBefore });
+                      openModal({
+                        type: 'explanation',
+                        explanation,
+                        playerName,
+                        levelBefore,
+                        gameId: currentGame.id,
+                        affectsRating: currentGame.affectsRating,
+                      });
                     }}
                   />
                 </div>

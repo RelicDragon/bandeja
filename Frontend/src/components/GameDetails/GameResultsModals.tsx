@@ -220,6 +220,8 @@ export const GameResultsModals = ({
         explanation={modal.explanation}
         playerName={modal.playerName}
         levelBefore={modal.levelBefore}
+        gameId={modal.gameId}
+        affectsRating={modal.affectsRating}
         onClose={onClose}
       />,
       document.body

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { OutcomeExplanation } from '@/api/results';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog';
 import { OutcomeExplanationMatchCard } from '@/components/outcomeExplanation/OutcomeExplanationMatchCard';
+import { RatingExplanationLlmSection } from '@/components/outcomeExplanation/RatingExplanationLlmSection';
 import { formatChange, formatNumber, getLevelChangeColor, groupMatchesByRound } from '@/components/outcomeExplanation/formatters';
 import { useAuthStore } from '@/store/authStore';
 import { ratingUncertaintyScale } from '@/utils/ratingUncertainty';
@@ -11,6 +12,8 @@ interface OutcomeExplanationModalProps {
   explanation: OutcomeExplanation;
   playerName: string;
   levelBefore: number;
+  gameId: string;
+  affectsRating: boolean;
   onClose: () => void;
 }
 
@@ -18,6 +21,8 @@ const OutcomeExplanationModalInner = ({
   explanation,
   playerName,
   levelBefore,
+  gameId,
+  affectsRating,
   onClose,
 }: OutcomeExplanationModalProps) => {
   const { t } = useTranslation();
@@ -47,6 +52,10 @@ const OutcomeExplanationModalInner = ({
         </DialogHeader>
 
         <div className="p-4 overflow-y-auto overscroll-y-contain max-h-[calc(90vh-8rem)]">
+          {affectsRating && (
+            <RatingExplanationLlmSection gameId={gameId} userId={explanation.userId} />
+          )}
+
           <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
             <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">
               {t('gameResults.summary')}
