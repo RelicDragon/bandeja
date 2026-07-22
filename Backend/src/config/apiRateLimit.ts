@@ -76,8 +76,21 @@ export function rateLimitPathname(pathOrUrl: string): string {
 }
 
 /**
- * True when pathname equals a skip prefix or starts with it.
- * Matching is anchored at the start of the path (not an arbitrary substring).
+ * True when pathname equals a skip prefix or continues past a path segment boundary.
+ * `/chat/unread-objects` matches `/chat/unread-objects` and `/chat/unread-objects/…`,
+ * not `/chat/unread-objectss`.
+ */
+export function pathMatchesSkipPrefix(pathname: string, prefix: string): boolean {
+  if (!pathname || !prefix) return false;
+  if (prefix.endsWith('/')) {
+    return pathname.startsWith(prefix) || pathname === prefix.slice(0, -1);
+  }
+  return pathname === prefix || pathname.startsWith(`${prefix}/`);
+}
+
+/**
+ * True when pathname equals a skip prefix or starts with it at a segment boundary.
+ * Matching uses the pathname only (query/hash stripped) and is anchored at the start.
  */
 export function shouldSkipApiRateLimit(
   pathOrUrl: string,
@@ -85,8 +98,5 @@ export function shouldSkipApiRateLimit(
 ): boolean {
   const pathname = rateLimitPathname(pathOrUrl);
   if (!pathname) return false;
-  return skipPathPrefixes.some((prefix) => {
-    if (!prefix) return false;
-    return pathname === prefix || pathname.startsWith(prefix);
-  });
+  return skipPathPrefixes.some((prefix) => pathMatchesSkipPrefix(pathname, prefix));
 }

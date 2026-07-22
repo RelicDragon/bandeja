@@ -44,8 +44,13 @@ function run() {
 
   const skips = prod.skipPathPrefixes;
   assert.equal(shouldSkipApiRateLimit('/chat/sync/events', skips), true);
+  assert.equal(shouldSkipApiRateLimit('/chat/sync', skips), true);
+  assert.equal(shouldSkipApiRateLimit('/chat/syncing', skips), false);
   assert.equal(shouldSkipApiRateLimit('/chat/unread-objects', skips), true);
+  assert.equal(shouldSkipApiRateLimit('/chat/unread-objects/', skips), true);
+  assert.equal(shouldSkipApiRateLimit('/chat/unread-objectss', skips), false);
   assert.equal(shouldSkipApiRateLimit('/auth/refresh', skips), true);
+  assert.equal(shouldSkipApiRateLimit('/auth/refreshToken', skips), false);
   assert.equal(shouldSkipApiRateLimit('/logs/stream', skips), true);
 
   // Must NOT skip unprotected / high-risk lookalikes
