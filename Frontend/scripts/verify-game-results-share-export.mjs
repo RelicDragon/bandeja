@@ -84,7 +84,7 @@ const browser = await chromium.launch();
 try {
   const page = await browser.newPage();
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => window.__DONE__ === true, null, { timeout: 30000 });
+  await page.waitForFunction(() => globalThis.__DONE__ === true, undefined, { timeout: 30000 });
   const text = await page.locator('#out').innerText();
   if (!text.includes('CARD_OK')) {
     throw new Error(`expected CARD_OK, got:\\n${text}`);

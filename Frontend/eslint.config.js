@@ -47,7 +47,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.js'],
+    files: ['scripts/**/*.{js,mjs,cjs}'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: {
