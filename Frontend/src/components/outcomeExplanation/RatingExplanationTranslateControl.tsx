@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { Check, Languages, Loader2 } from 'lucide-react';
 import {
@@ -23,15 +24,51 @@ export function RatingExplanationTranslateControl({
 }: RatingExplanationTranslateControlProps) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number; maxHeight: number } | null>(
+    null,
+  );
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const listId = useId();
+
+  const updateMenuPosition = useCallback(() => {
+    const button = buttonRef.current;
+    if (!button) return;
+    const rect = button.getBoundingClientRect();
+    const gap = 6;
+    const viewportPadding = 8;
+    const spaceBelow = window.innerHeight - rect.bottom - gap - viewportPadding;
+    const spaceAbove = rect.top - gap - viewportPadding;
+    const openUpward = spaceBelow < 180 && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(120, Math.min(256, openUpward ? spaceAbove : spaceBelow));
+    setMenuPos({
+      top: openUpward ? Math.max(viewportPadding, rect.top - gap - maxHeight) : rect.bottom + gap,
+      right: Math.max(viewportPadding, window.innerWidth - rect.right),
+      maxHeight,
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setMenuPos(null);
+      return;
+    }
+    updateMenuPosition();
+    const onReposition = () => updateMenuPosition();
+    window.addEventListener('resize', onReposition);
+    window.addEventListener('scroll', onReposition, true);
+    return () => {
+      window.removeEventListener('resize', onReposition);
+      window.removeEventListener('scroll', onReposition, true);
+    };
+  }, [open, updateMenuPosition]);
 
   useEffect(() => {
     if (!open) return;
     const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
+      const target = event.target as Node;
+      if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      setOpen(false);
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
@@ -55,8 +92,9 @@ export function RatingExplanationTranslateControl({
   const activeFlag = getTranslationLanguageFlag(activeLanguage);
 
   return (
-    <div className="relative shrink-0" ref={rootRef}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         disabled={disabled}
         aria-haspopup="listbox"
@@ -77,44 +115,57 @@ export function RatingExplanationTranslateControl({
         <span className="uppercase tracking-wide">{activeLanguage}</span>
       </button>
 
-      {open && (
-        <div
-          id={listId}
-          role="listbox"
-          aria-label={t('gameResults.llmRatingInsightTranslate')}
-          className="absolute right-0 top-full z-30 mt-1.5 w-56 max-h-64 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl animate-in fade-in slide-in-from-top-2 duration-150"
-        >
-          {TRANSLATION_LANGUAGES.map((lang) => {
-            const selected = lang.code === activeLanguage;
-            const isOriginal = lang.code === sourceLanguage;
-            return (
-              <button
-                key={lang.code}
-                type="button"
-                role="option"
-                aria-selected={selected}
-                onClick={() => handleSelect(lang.code)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${
-                  selected
-                    ? 'bg-blue-50 dark:bg-blue-950/50 text-slate-900 dark:text-slate-50'
-                    : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                <span className="text-base leading-none w-5 text-center" aria-hidden>
-                  {getTranslationLanguageFlag(lang.code)}
-                </span>
-                <span className="flex-1 min-w-0 truncate">{lang.label}</span>
-                {isOriginal && (
-                  <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                    {t('gameResults.llmRatingInsightOriginal')}
+      {open &&
+        menuPos &&
+        createPortal(
+          <div
+            ref={menuRef}
+            id={listId}
+            role="listbox"
+            aria-label={t('gameResults.llmRatingInsightTranslate')}
+            style={{
+              position: 'fixed',
+              top: menuPos.top,
+              right: menuPos.right,
+              maxHeight: menuPos.maxHeight,
+            }}
+            className="z-[80] w-56 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl animate-in fade-in zoom-in-95 duration-150"
+            data-rating-explanation-lang-menu
+          >
+            {TRANSLATION_LANGUAGES.map((lang) => {
+              const selected = lang.code === activeLanguage;
+              const isOriginal = lang.code === sourceLanguage;
+              return (
+                <button
+                  key={lang.code}
+                  type="button"
+                  role="option"
+                  aria-selected={selected}
+                  onClick={() => handleSelect(lang.code)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm transition-colors ${
+                    selected
+                      ? 'bg-blue-50 dark:bg-blue-950/50 text-slate-900 dark:text-slate-50'
+                      : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <span className="text-base leading-none w-5 text-center" aria-hidden>
+                    {getTranslationLanguageFlag(lang.code)}
                   </span>
-                )}
-                {selected && <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
+                  <span className="flex-1 min-w-0 truncate">{lang.label}</span>
+                  {isOriginal && (
+                    <span className="text-[10px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
+                      {t('gameResults.llmRatingInsightOriginal')}
+                    </span>
+                  )}
+                  {selected && (
+                    <Check size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

@@ -44,7 +44,7 @@ const OutcomeExplanationModalInner = ({
 
   return (
     <Dialog open={isOpen} onClose={handleClose} modalId={modalIdRef.current}>
-      <DialogContent>
+      <DialogContent ignoreOutsideClickSelector="[data-rating-explanation-lang-menu]">
         <DialogHeader>
           <DialogTitle>
             {t('gameResults.explanationTitle')}: {playerName && playerName !== 'null' ? playerName : 'Unknown'}

@@ -216,7 +216,7 @@ export const GameResultsModals = ({
   if (modal.type === 'explanation' && typeof document !== 'undefined') {
     return createPortal(
       <OutcomeExplanationModal
-        key={`explanation-${modal.explanation.userId || 'default'}`}
+        key={`explanation-${modal.gameId}-${modal.explanation.userId || 'default'}`}
         explanation={modal.explanation}
         playerName={modal.playerName}
         levelBefore={modal.levelBefore}

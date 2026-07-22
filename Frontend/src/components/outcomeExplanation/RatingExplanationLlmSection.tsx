@@ -5,13 +5,15 @@ import {
   getOutcomeRatingExplanationLlm,
   getOutcomeRatingExplanationTranslation,
 } from '@/api/results';
+import { useAuthStore } from '@/store/authStore';
 import { extractLanguageCode } from '@/utils/displayPreferences';
 import { TRANSLATION_LANGUAGES } from '@/utils/translationLanguages';
 import { RatingExplanationTranslateControl } from './RatingExplanationTranslateControl';
 
 const POLL_START_MS = 500;
 const POLL_MAX_MS = 2000;
-const POLL_DEADLINE_MS = 75_000;
+/** Keep above backend PENDING_STALE_MS (90s) so UI does not give up while server may still finish. */
+const POLL_DEADLINE_MS = 105_000;
 
 type UiPhase = 'boot' | 'pending' | 'ready' | 'failed' | 'hidden';
 
@@ -42,6 +44,7 @@ function preferredDisplayLanguage(appLanguage: string, sourceLanguage: string): 
 
 export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanationLlmSectionProps) {
   const { t, i18n } = useTranslation();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [phase, setPhase] = useState<UiPhase>('boot');
   const [sourceText, setSourceText] = useState<string | null>(null);
   const [sourceLanguage, setSourceLanguage] = useState<string | null>(null);
@@ -106,6 +109,7 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
   useEffect(() => {
     const requestId = ++sourceRequestIdRef.current;
     const preferredAtStart = appLanguageRef.current;
+    let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let delay = POLL_START_MS;
     const startedAt = Date.now();
@@ -130,7 +134,7 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
           retry: sendRetry,
         });
         sendRetry = false;
-        if (requestId !== sourceRequestIdRef.current) return;
+        if (cancelled || requestId !== sourceRequestIdRef.current) return;
 
         if (result.status === 'ready' && result.text) {
           const lang = result.sourceLanguage || result.language || preferredAtStart;
@@ -146,6 +150,7 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
             setCommittedLanguage(lang);
             setCommittedText(result.text);
             setLoadingLanguage(target);
+            // Do not force retry on first open — avoids preempting an in-flight translation.
             setTranslateRequest({ language: target, retry: false, nonce: Date.now() });
           }
           return;
@@ -158,6 +163,7 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
             return;
           }
           timer = setTimeout(() => {
+            if (cancelled || requestId !== sourceRequestIdRef.current) return;
             void poll();
           }, delay);
           delay = Math.min(POLL_MAX_MS, Math.round(delay * 1.35));
@@ -171,7 +177,7 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
 
         setPhase('hidden');
       } catch {
-        if (requestId !== sourceRequestIdRef.current) return;
+        if (cancelled || requestId !== sourceRequestIdRef.current) return;
         setPhase('failed');
       }
     };
@@ -179,17 +185,20 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
     void poll();
 
     return () => {
+      cancelled = true;
       if (timer) clearTimeout(timer);
     };
   }, [gameId, userId, retryToken, commitLanguage]);
 
   // When the app language changes after source is ready, switch display locale.
+  // Never force retry on cache miss — that would preempt a fresh in-flight translation.
   const prevAppLanguageRef = useRef(appLanguage);
   useEffect(() => {
     if (phase !== 'ready' || !sourceLanguage || !sourceText) return;
     if (prevAppLanguageRef.current === appLanguage) return;
     prevAppLanguageRef.current = appLanguage;
-    requestLanguage(preferredDisplayLanguage(appLanguage, sourceLanguage));
+    const target = preferredDisplayLanguage(appLanguage, sourceLanguage);
+    requestLanguage(target);
   }, [appLanguage, phase, sourceLanguage, sourceText, requestLanguage]);
 
   // Translate poller
@@ -198,15 +207,17 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
 
     const requestId = ++translateRequestIdRef.current;
     const { language: targetLanguage, retry } = translateRequest;
+    let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let delay = POLL_START_MS;
     const startedAt = Date.now();
     let sendRetry = retry;
+    let didAutoRecover = false;
 
     setLoadingLanguage(targetLanguage);
 
     const fail = () => {
-      if (requestId !== translateRequestIdRef.current) return;
+      if (cancelled || requestId !== translateRequestIdRef.current) return;
       setLoadingLanguage(null);
       setTranslateFailedLanguage(targetLanguage);
       setTranslateRequest(null);
@@ -218,7 +229,7 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
           retry: sendRetry,
         });
         sendRetry = false;
-        if (requestId !== translateRequestIdRef.current) return;
+        if (cancelled || requestId !== translateRequestIdRef.current) return;
 
         if (result.status === 'ready' && result.text) {
           commitLanguage(targetLanguage, result.text);
@@ -232,9 +243,20 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
             return;
           }
           timer = setTimeout(() => {
+            if (cancelled || requestId !== translateRequestIdRef.current) return;
             void poll();
           }, delay);
           delay = Math.min(POLL_MAX_MS, Math.round(delay * 1.35));
+          return;
+        }
+
+        if (result.status === 'failed' && !didAutoRecover) {
+          didAutoRecover = true;
+          sendRetry = true;
+          timer = setTimeout(() => {
+            if (cancelled || requestId !== translateRequestIdRef.current) return;
+            void poll();
+          }, delay);
           return;
         }
 
@@ -247,6 +269,7 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
     void poll();
 
     return () => {
+      cancelled = true;
       if (timer) clearTimeout(timer);
     };
   }, [translateRequest, gameId, userId, sourceLanguage, sourceText, commitLanguage]);
@@ -258,11 +281,10 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
 
   const onSelectLanguage = useCallback(
     (language: string) => {
-      const needsRetry =
-        language !== sourceLanguage && !cacheRef.current.has(language);
-      requestLanguage(language, { retry: needsRetry });
+      // Cache miss → poll/start without retry (protects fresh pending on server).
+      requestLanguage(language);
     },
-    [requestLanguage, sourceLanguage],
+    [requestLanguage],
   );
 
   const onRetryTranslate = useCallback(() => {
@@ -347,14 +369,16 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {t('gameResults.llmRatingInsightTranslateFailed')}
                 </p>
-                <button
-                  type="button"
-                  onClick={onRetryTranslate}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200"
-                >
-                  <RefreshCw size={12} />
-                  {t('gameResults.llmRatingInsightRetry')}
-                </button>
+                {isAuthenticated && (
+                  <button
+                    type="button"
+                    onClick={onRetryTranslate}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 dark:border-slate-700 px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200"
+                  >
+                    <RefreshCw size={12} />
+                    {t('gameResults.llmRatingInsightRetry')}
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -365,14 +389,16 @@ export function RatingExplanationLlmSection({ gameId, userId }: RatingExplanatio
             <p className="text-sm text-slate-600 dark:text-slate-300">
               {t('gameResults.llmRatingInsightFailed')}
             </p>
-            <button
-              type="button"
-              onClick={onRetrySource}
-              className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-white dark:hover:bg-slate-900 transition-colors"
-            >
-              <RefreshCw size={14} />
-              {t('gameResults.llmRatingInsightRetry')}
-            </button>
+            {isAuthenticated && (
+              <button
+                type="button"
+                onClick={onRetrySource}
+                className="inline-flex items-center justify-center gap-1.5 self-start rounded-lg bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 px-3 py-1.5 text-sm font-medium text-slate-800 dark:text-slate-100 hover:bg-white dark:hover:bg-slate-900 transition-colors"
+              >
+                <RefreshCw size={14} />
+                {t('gameResults.llmRatingInsightRetry')}
+              </button>
+            )}
           </div>
         )}
       </div>

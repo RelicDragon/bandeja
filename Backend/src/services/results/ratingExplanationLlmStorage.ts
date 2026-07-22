@@ -38,6 +38,18 @@ export const TRANSLATION_TARGET_LANGS = [
 
 const BLOB_UPDATE_ATTEMPTS = 5;
 
+export const RATING_EXPLANATION_PENDING_STALE_MS = 90_000;
+
+export function isPendingFresh(
+  stored: { status: string; startedAt: string },
+  staleMs = RATING_EXPLANATION_PENDING_STALE_MS,
+): boolean {
+  if (stored.status !== 'pending') return false;
+  const started = Date.parse(stored.startedAt);
+  if (Number.isNaN(started)) return false;
+  return Date.now() - started < staleMs;
+}
+
 export function normalizeSourceLanguage(language: string | undefined): string {
   const base = (language || 'en').split('-')[0].toLowerCase();
   if ((SOURCE_LLM_RATING_LANGS as readonly string[]).includes(base)) {
@@ -183,7 +195,16 @@ export async function updateExplanationBlob(
     if (next == null) return null;
     if (blobsEqual(current, next)) return next;
 
-    await persist(outcome.id, writeExplanationBlob(outcome.metadata, next));
+    // Re-read immediately before write so we don't clobber unrelated metadata keys
+    // and so we detect concurrent blob changes.
+    const fresh = await load();
+    if (!fresh) return null;
+    const freshBlob = readExplanationBlob(fresh.metadata);
+    if (!blobsEqual(freshBlob, current)) {
+      continue;
+    }
+
+    await persist(fresh.id, writeExplanationBlob(fresh.metadata, next));
 
     const reloaded = await load();
     if (!reloaded) return null;

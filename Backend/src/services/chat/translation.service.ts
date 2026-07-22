@@ -4,7 +4,7 @@ import { ApiError } from '../../utils/ApiError';
 import { ChatSyncEventService } from './chatSyncEvent.service';
 import { getChatNotifier } from './chatNotifier';
 import { getAiService } from '../ai/ai.service';
-import { LLM_REASON } from '../ai/llmReasons';
+import { LLM_REASON, type LlmReason } from '../ai/llmReasons';
 import { sourceAppearsToBeTargetLanguage, translationMatchesTargetFranc } from './translationFrancCheck';
 import { normalizeTranslationOutput, translationEqualsSource } from './translationOutputNormalize';
 
@@ -50,7 +50,8 @@ export class TranslationService {
   static async getTranslationFromChatGPT(
     text: string,
     targetLanguage: string,
-    userId?: string
+    userId?: string,
+    reason: LlmReason = LLM_REASON.MESSAGE_TRANSLATION,
   ): Promise<string> {
     if (!text || !text.trim()) {
       throw new ApiError(400, 'Text to translate is required');
@@ -106,7 +107,7 @@ export class TranslationService {
           ],
           temperature: 0.1,
           max_tokens: 1500,
-          reason: LLM_REASON.MESSAGE_TRANSLATION,
+          reason,
           userId,
         });
         console.info('[translation] llm_response', {

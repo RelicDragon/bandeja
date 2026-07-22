@@ -10,15 +10,16 @@ import type {
 } from './ratingExplanationLlm.types';
 import {
   emptyExplanationBlob,
+  isPendingFresh,
   normalizeSourceLanguage,
   readExplanationBlob,
   toStoredEntry,
   updateExplanationBlob,
 } from './ratingExplanationLlmStorage';
+import { canRequestRatingExplanationLlm } from './ratingExplanationLlmAccess';
 
 export { LLM_RATING_EXPLANATION_KEY } from './ratingExplanationLlmStorage';
 
-const PENDING_STALE_MS = 90_000;
 const sourceInFlight = new Set<string>();
 
 function sourceFlightKey(gameId: string, userId: string): string {
@@ -82,13 +83,6 @@ function toLlmPayload(
   };
 }
 
-function isPendingFresh(stored: { status: string; startedAt: string }): boolean {
-  if (stored.status !== 'pending') return false;
-  const started = Date.parse(stored.startedAt);
-  if (Number.isNaN(started)) return false;
-  return Date.now() - started < PENDING_STALE_MS;
-}
-
 async function loadOutcome(gameId: string, userId: string) {
   return prisma.gameOutcome.findUnique({
     where: { gameId_userId: { gameId, userId } },
@@ -114,7 +108,7 @@ async function writeSource(
   gameId: string,
   userId: string,
   source: StoredLlmRatingExplanation,
-  options?: { onlyIfStartedAt?: string; clearTranslations?: boolean },
+  options?: { onlyIfStartedAt?: string },
 ): Promise<boolean> {
   const saved = await mutateBlob(gameId, userId, (current) => {
     if (options?.onlyIfStartedAt) {
@@ -127,7 +121,7 @@ async function writeSource(
     return {
       version: 2,
       source: entry,
-      translations: options?.clearTranslations ? {} : current.translations,
+      translations: current.translations,
     };
   });
   return saved != null;
@@ -238,15 +232,20 @@ function toOriginalResponse(source: StoredLlmRatingExplanation): RatingExplanati
   return { status: 'pending', language: source.language, sourceLanguage: source.language, kind: 'original' };
 }
 
+/**
+ * Ensures a single original insight exists (generated once).
+ * Translations are handled separately — never regenerate for another locale.
+ */
 export async function getOrStartRatingExplanationLlm(
   gameId: string,
   userId: string,
   languageInput: string | undefined,
   initiatedByUserId?: string,
-  options?: { retry?: boolean },
+  options?: { retry?: boolean; allowStart?: boolean },
 ): Promise<RatingExplanationLlmResponse> {
   const preferredLanguage = normalizeSourceLanguage(languageInput);
   const retry = Boolean(options?.retry);
+  const allowStart = Boolean(options?.allowStart);
 
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -265,15 +264,29 @@ export async function getOrStartRatingExplanationLlm(
   const blob = readExplanationBlob(outcome.metadata);
   const source = blob?.source;
 
-  if (!retry && source?.status === 'ready' && source.text) {
+  if (source?.status === 'ready' && source.text) {
     return toOriginalResponse(source);
+  }
+
+  if (!allowStart) {
+    // Read-only: ready/pending only — never expose failed (broken Retry UX).
+    if (source?.status === 'ready' && source.text) return toOriginalResponse(source);
+    if (source && isPendingFresh(source)) return toOriginalResponse(source);
+    return { status: 'skipped' };
+  }
+
+  const allowed = await canRequestRatingExplanationLlm(gameId, userId, initiatedByUserId);
+  if (!allowed) {
+    if (source?.status === 'ready' && source.text) return toOriginalResponse(source);
+    if (source && isPendingFresh(source)) return toOriginalResponse(source);
+    return { status: 'skipped' };
   }
 
   if (!retry && source?.status === 'failed') {
     return toOriginalResponse(source);
   }
 
-  if (!retry && source && isPendingFresh(source)) {
+  if (source && isPendingFresh(source)) {
     if (!sourceInFlight.has(sourceFlightKey(gameId, userId))) {
       scheduleSourceGeneration(gameId, userId, source.language, source.startedAt, initiatedByUserId);
     }
@@ -287,8 +300,34 @@ export async function getOrStartRatingExplanationLlm(
     startedAt,
   };
 
-  const saved = await mutateBlob(gameId, userId, () => emptyExplanationBlob(pending));
-  if (!saved) return { status: 'skipped' };
+  // CAS: never overwrite ready or fresh pending (retry only clears failed / stale).
+  const saved = await mutateBlob(gameId, userId, (current) => {
+    if (current?.source.status === 'ready' && current.source.text) {
+      return current;
+    }
+    if (current?.source && isPendingFresh(current.source)) {
+      return current;
+    }
+    if (!retry && current?.source?.status === 'failed') {
+      return current;
+    }
+    return emptyExplanationBlob(pending);
+  });
+
+  if (!saved) return { status: 'failed', language: preferredLanguage, kind: 'original' };
+
+  if (saved.source.startedAt !== startedAt) {
+    if (saved.source.status === 'pending' && !sourceInFlight.has(sourceFlightKey(gameId, userId))) {
+      scheduleSourceGeneration(
+        gameId,
+        userId,
+        saved.source.language,
+        saved.source.startedAt,
+        initiatedByUserId,
+      );
+    }
+    return toOriginalResponse(saved.source);
+  }
 
   scheduleSourceGeneration(gameId, userId, preferredLanguage, startedAt, initiatedByUserId);
   return toOriginalResponse(pending);

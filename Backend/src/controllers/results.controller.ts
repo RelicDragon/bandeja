@@ -404,7 +404,7 @@ export const getOutcomeRatingExplanationLlm = asyncHandler(async (req: AuthReque
     userId,
     language,
     req.userId,
-    { retry },
+    { retry, allowStart: Boolean(req.userId) },
   );
 
   res.json({
@@ -431,7 +431,7 @@ export const getOutcomeRatingExplanationTranslation = asyncHandler(async (req: A
     userId,
     language,
     req.userId,
-    { retry },
+    { retry, allowStart: Boolean(req.userId) },
   );
 
   res.json({
