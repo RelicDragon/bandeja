@@ -435,7 +435,7 @@
       "durationApprox2h": "~2h",
       "durationApprox90m": "~90 min",
       "PADEL_AUTOMATIC": {
-        "title": "Automatic",
+        "title": "Flexible scoring",
         "description": "Casual match, flexible set or points scoring, you decide."
       },
       "PADEL_BEST_OF_3": {

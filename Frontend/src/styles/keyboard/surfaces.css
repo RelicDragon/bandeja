@@ -76,6 +76,18 @@ body.keyboard-visible .cap-keyboard-aware-overlay {
   padding-bottom: calc(var(--keyboard-height, 0px) + 0.75rem) !important;
 }
 
+/* Sticker/GIF tray: sit flush on the keyboard so results use all remaining height. */
+body.keyboard-visible .chat-sticker-tray-overlay.cap-keyboard-aware-overlay {
+  padding-bottom: var(--keyboard-height, 0px) !important;
+}
+
+/* Compact tray must not overflow above the keyboard while still mid-height. */
+body.keyboard-visible .chat-sticker-tray-overlay .chat-sticker-tray-panel {
+  max-height: calc(
+    100dvh - var(--keyboard-height, 0px) - env(safe-area-inset-top, 0px) - 0.5rem
+  ) !important;
+}
+
 /* Fixed/absolute bottom tool panels (e.g. story text style bar) — gated on keyboard-visible
    so --keyboard-height does not linger during iOS hide animation. */
 body.keyboard-visible .cap-keyboard-aware-bottom-panel {

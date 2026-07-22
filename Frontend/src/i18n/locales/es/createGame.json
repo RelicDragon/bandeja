@@ -280,7 +280,7 @@
       "empty": "Sin plantillas — usa Personalizar formato.",
       "durationApprox2h": "~2 h",
       "PADEL_AUTOMATIC": {
-        "title": "Automatic",
+        "title": "Puntuación flexible",
         "description": "Partido amistoso, puntuación flexible por sets o puntos — tú decides."
       },
       "PADEL_BEST_OF_3": {

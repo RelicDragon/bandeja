@@ -14,6 +14,7 @@ export const KEYBOARD_LAYOUT_SHRINK_THRESHOLD_PX = 80;
  *
  * CSS adapter: `styles/keyboard/` — surfaces that consume the contract:
  * - `.cap-keyboard-aware-dialog|sheet|overlay|bottom-panel`
+ * - `.chat-sticker-tray-overlay` (flush keyboard padding; React owns expand height)
  * - `.dialog-content-animate` under `keyboard-dialog-shift`
  * - `.chat-container` footer/main lift
  * - `.fullscreen-dialog-root .cap-fullscreen-dialog-body`
