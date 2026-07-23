@@ -9,7 +9,7 @@ export function getUserPrimarySport(user: User | BasicUser | null | undefined): 
 }
 
 /** Primary among enabled sports; falls back to first enabled when stored primary is disabled. */
-export function resolveActivePrimarySport(user: User | null | undefined): Sport | null {
+export function resolveActivePrimarySport(user: User | BasicUser | null | undefined): Sport | null {
   const enabled = listEnabledSports(user);
   if (enabled.length === 0) return null;
   const stored = getUserPrimarySport(user);
