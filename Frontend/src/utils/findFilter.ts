@@ -10,7 +10,11 @@ import {
   passesFindHideBarGamesFilter,
   passesFindSuitableRatingFilter,
 } from '@/utils/findAvailabilityFilters';
-import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
+import {
+  filterGamesForCalendarDay,
+  gameCalendarDayKey,
+} from '@/utils/calendarSelectedDayFilter';
+import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
 
 export type FindDisplayEntityType = 'GAME' | 'TOURNAMENT' | 'TRAINING' | 'LEAGUE' | 'BAR';
 
@@ -67,6 +71,8 @@ export interface FindFilterOptions {
   mode?: FindFilterMode;
   /** Stop after visibility/gender (used for calendar participant pills). */
   phase?: 'visibility' | 'full';
+  /** City IANA TZ for panel time-of-day (matches API / day keys). */
+  cityTimezone?: string | null;
 }
 
 export function toFindDisplayEntityType(entityType: Game['entityType']): FindDisplayEntityType {
@@ -108,12 +114,12 @@ export function passesFindVisibilityFilter(
   game: Game,
   viewer: FindFilterViewer,
   state: FindFilterState,
-  options?: Pick<FindFilterOptions, 'mode'>,
+  options?: Pick<FindFilterOptions, 'mode' | 'cityTimezone'>,
 ): boolean {
   const mode = options?.mode ?? 'list';
   if (!passesTimeSetGate(game, mode)) return false;
 
-  if (!passesAvailableGamePanelFilters(game, state.panel)) return false;
+  if (!passesAvailableGamePanelFilters(game, state.panel, options?.cityTimezone)) return false;
 
   if (state.findDiscoveryEnabled) {
     if (!passesFindNoRatingFilter(game, state.filterNoRating)) return false;
@@ -212,24 +218,30 @@ export function filterFindGames(
 ): Game[] {
   const mode = options?.mode ?? (options?.selectedDay ? 'calendar' : 'list');
   const listFromToday = options?.listFromToday ?? mode === 'list';
+  const cityTimezone = options?.cityTimezone;
 
   let source = games;
   if (options?.selectedDay) {
-    source = filterGamesForCalendarDay(games, options.selectedDay);
+    source = filterGamesForCalendarDay(games, options.selectedDay, cityTimezone);
   } else if (listFromToday) {
-    const today = startOfDay(new Date());
+    const todayKey = cityTimezone
+      ? dateKeyInTimezone(new Date(), cityTimezone)
+      : format(startOfDay(new Date()), 'yyyy-MM-dd');
     source = games.filter((game) => {
       if (game.status === 'ARCHIVED') return false;
       if (game.timeIsSet !== false) {
-        const gameDate = startOfDay(new Date(game.startTime));
-        if (gameDate < today) return false;
+        if (gameCalendarDayKey(game, cityTimezone) < todayKey) return false;
       }
       return true;
     });
   }
 
   return source.filter((game) =>
-    passesFindFilter(game, viewer, state, { ...options, mode }),
+    passesFindFilter(game, viewer, state, {
+      ...options,
+      mode,
+      cityTimezone,
+    }),
   );
 }
 
@@ -266,6 +278,7 @@ export function aggregateFindGamesByDay(
   viewer: FindFilterViewer,
   state: FindFilterState,
   unreadCounts: Record<string, number> = {},
+  cityTimezone?: string | null,
 ): Map<string, FindDayAggregate> {
   const dataMap = new Map<string, FindDayAggregate>();
 
@@ -274,12 +287,13 @@ export function aggregateFindGamesByDay(
       !passesFindFilter(game, viewer, state, {
         mode: 'calendar',
         phase: 'visibility',
+        cityTimezone,
       })
     ) {
       continue;
     }
 
-    const gameDate = format(startOfDay(new Date(game.startTime)), 'yyyy-MM-dd');
+    const gameDate = gameCalendarDayKey(game, cityTimezone);
     const isUserParticipantInGame =
       !!viewer?.id && game.participants?.some((p) => p.userId === viewer.id);
 
@@ -293,6 +307,7 @@ export function aggregateFindGamesByDay(
       !passesFindFilter(game, viewer, state, {
         mode: 'calendar',
         phase: 'full',
+        cityTimezone,
       })
     ) {
       continue;

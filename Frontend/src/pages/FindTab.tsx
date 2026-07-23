@@ -258,20 +258,39 @@ export const FindTab = () => {
 
   const sortedSelectedDayGames = useMemo(() => {
     if (!dayScopedEnabled) return undefined;
-    if (loadingSelectedDayGames && selectedDayGames.length === 0) return undefined;
-    return sortGamesByStatusAndStartTime(selectedDayGames);
-  }, [dayScopedEnabled, loadingSelectedDayGames, selectedDayGames]);
+    if (selectedDayGames.length > 0) {
+      return sortGamesByStatusAndStartTime(selectedDayGames);
+    }
+    // Still fetching → omit so UI can use month day-slice (F-56).
+    if (loadingSelectedDayGames) return undefined;
+    // Empty page with more to scan (e.g. availableSlots overscan) must stay
+    // day-scoped so "Load more" remains authoritative (F-55).
+    if (selectedDayMeta.hasMore) return [];
+    // Settled empty day → fall back to month slice (archive-truncation safety).
+    return undefined;
+  }, [
+    dayScopedEnabled,
+    selectedDayGames,
+    loadingSelectedDayGames,
+    selectedDayMeta.hasMore,
+  ]);
+
+  const useDayScopedList =
+    dayScopedEnabled &&
+    (loadingSelectedDayGames ||
+      selectedDayGames.length > 0 ||
+      selectedDayMeta.hasMore);
 
   const pageMeta =
     findViewMode === 'list'
       ? upcomingMeta
-      : dayScopedEnabled
+      : useDayScopedList
         ? selectedDayMeta
         : calendarMeta;
   const onLoadMoreAvailable =
     findViewMode === 'list'
       ? loadMoreUpcomingGames
-      : dayScopedEnabled
+      : useDayScopedList
         ? loadMoreSelectedDayGames
         : loadMoreCalendarGames;
 

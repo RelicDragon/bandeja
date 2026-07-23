@@ -9,6 +9,7 @@ import { useShellNavStore } from '@/store/shellNavStore';
 import { useHeaderStore } from '@/store/headerStore';
 import { format, parse, startOfDay } from 'date-fns';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
+import { resolveViewerCityTimezone } from '@/utils/cityTimezone';
 import { CalendarSection } from './CalendarSection';
 import { TrainersList } from './TrainersList';
 import { GenderPromptBanner } from './GenderPromptBanner';
@@ -431,6 +432,7 @@ export const AvailableGamesSection = ({
   );
 
   const filteredGames = useMemo(() => {
+    const cityTimezone = resolveViewerCityTimezone(user?.currentCity?.timezone);
     if (findViewMode === 'calendar') {
       const dayScoped = selectedDayGames != null;
       return filterFindGames(
@@ -442,6 +444,7 @@ export const AvailableGamesSection = ({
           // Always day-cut: BE calendar used to OR-bypass LEAGUE_SEASON past the range,
           // and day-scoped responses must not skip that client safety net.
           selectedDay: selectedDate,
+          cityTimezone,
         },
       );
     }
@@ -452,6 +455,7 @@ export const AvailableGamesSection = ({
       {
         mode: 'list',
         listFromToday: true,
+        cityTimezone,
       },
     );
   }, [availableGames, selectedDayGames, user, isAdmin, findFilterState, findViewMode, selectedDate]);

@@ -81,9 +81,21 @@ describe('countFindDayIndexByDay', () => {
           filterTimeEnd: '23:00',
         },
       },
+      'UTC',
     );
     const total = [...counts.values()].reduce((s, n) => s + n, 0);
     expect(total).toBe(1);
+  });
+
+  it('buckets onto city calendar day (early UTC morning)', () => {
+    const counts = countFindDayIndexByDay(
+      [row({ id: 'early', startTime: '2026-07-23T04:00:00.000Z' })],
+      { id: 'u1' },
+      baseState,
+      'Europe/Belgrade',
+    );
+    expect(counts.get('2026-07-23')).toBe(1);
+    expect(counts.get('2026-07-22')).toBeUndefined();
   });
 
   it('applies discovery no-rating residual for list/badge parity', () => {

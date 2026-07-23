@@ -1,19 +1,36 @@
-import { startOfDay } from 'date-fns';
+import { format, startOfDay } from 'date-fns';
 import type { Game } from '@/types';
 import { filterPastGames } from '@/queries/games/filterPastGames';
+import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
+import { resolveViewerCityTimezone } from '@/utils/cityTimezone';
+
+function rangeDayKeys(
+  rangeStart: Date,
+  rangeEnd: Date,
+): { startKey: string; endKey: string } {
+  return {
+    startKey: format(startOfDay(rangeStart), 'yyyy-MM-dd'),
+    endKey: format(startOfDay(rangeEnd), 'yyyy-MM-dd'),
+  };
+}
+
+function gameDayKey(game: Game, cityTimezone: string): string {
+  return dateKeyInTimezone(new Date(game.startTime), cityTimezone);
+}
 
 export function filterPastGamesForCalendarRange(
   games: Game[],
   rangeStart: Date,
   rangeEnd: Date,
+  cityTimezone?: string | null,
 ): Game[] {
-  const startMs = startOfDay(rangeStart).getTime();
-  const endMs = startOfDay(rangeEnd).getTime() + 24 * 60 * 60 * 1000 - 1;
+  const tz = resolveViewerCityTimezone(cityTimezone);
+  const { startKey, endKey } = rangeDayKeys(rangeStart, rangeEnd);
 
   return filterPastGames(
     games.filter((game) => {
-      const startMsGame = new Date(game.startTime).getTime();
-      return startMsGame >= startMs && startMsGame <= endMs;
+      const key = gameDayKey(game, tz);
+      return key >= startKey && key <= endKey;
     }),
   );
 }
@@ -22,19 +39,20 @@ export function pastGamesCacheCoversRange(
   games: Game[],
   rangeStart: Date,
   rangeEnd: Date,
+  cityTimezone?: string | null,
 ): boolean {
   if (games.length === 0) return false;
 
-  const startMs = startOfDay(rangeStart).getTime();
-  const endMs = startOfDay(rangeEnd).getTime() + 24 * 60 * 60 * 1000 - 1;
+  const tz = resolveViewerCityTimezone(cityTimezone);
+  const { startKey, endKey } = rangeDayKeys(rangeStart, rangeEnd);
 
-  let minMs = Number.POSITIVE_INFINITY;
-  let maxMs = Number.NEGATIVE_INFINITY;
+  let minKey = '9999-99-99';
+  let maxKey = '0000-00-00';
   for (const game of games) {
-    const ms = new Date(game.startTime).getTime();
-    if (ms < minMs) minMs = ms;
-    if (ms > maxMs) maxMs = ms;
+    const key = gameDayKey(game, tz);
+    if (key < minKey) minKey = key;
+    if (key > maxKey) maxKey = key;
   }
 
-  return minMs <= startMs && maxMs >= endMs;
+  return minKey <= startKey && maxKey >= endKey;
 }

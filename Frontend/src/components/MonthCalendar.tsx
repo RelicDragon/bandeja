@@ -28,6 +28,7 @@ import { useMonthCalendarWeather } from '@/hooks/useMonthCalendarWeather';
 import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
 import { MonthCalendarWeatherToggle } from '@/components/MonthCalendarWeatherToggle';
 import { resolveCalendarDayPillVisibility } from '@/utils/calendarDayPillVisibility';
+import { resolveViewerCityTimezone } from '@/utils/cityTimezone';
 import {
   readCalendarWeatherMode,
   writeCalendarWeatherMode,
@@ -197,15 +198,22 @@ export const MonthCalendar = ({
   );
 
   const dateCellData = useMemo(() => {
+    const cityTimezone = resolveViewerCityTimezone(user?.currentCity?.timezone);
     const fromCards = aggregateFindGamesByDay(
       availableGames,
       findFilterViewer,
       findFilterState,
       gamesUnreadCounts,
+      cityTimezone,
     );
     if (!dayIndex || dayIndex.length === 0) return fromCards;
 
-    const indexCounts = countFindDayIndexByDay(dayIndex, findFilterViewer, findFilterState);
+    const indexCounts = countFindDayIndexByDay(
+      dayIndex,
+      findFilterViewer,
+      findFilterState,
+      cityTimezone,
+    );
     const merged = new Map(fromCards);
     for (const [day, count] of indexCounts) {
       const existing = merged.get(day);
@@ -226,7 +234,7 @@ export const MonthCalendar = ({
       }
     }
     return merged;
-  }, [availableGames, dayIndex, findFilterViewer, findFilterState, gamesUnreadCounts]);
+  }, [availableGames, dayIndex, findFilterViewer, findFilterState, gamesUnreadCounts, user?.currentCity?.timezone]);
 
   const notifyMonthChange = (month: Date) => {
     if (onMonthChange) {

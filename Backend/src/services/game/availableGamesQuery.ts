@@ -1,6 +1,7 @@
 import type { Prisma, Sport } from '@prisma/client';
 import prisma from '../../config/database';
 import { resolvePublicGamesSportFilter } from '../user/userSportProfile.service';
+import { getUserTimezoneFromCityId } from '../user-timezone.service';
 import { getAvailableGamesCardInclude } from './availableGamesCard.projection';
 import {
   AVAILABLE_GAMES_DAY_TAKE,
@@ -14,12 +15,15 @@ import {
   resolveAvailablePageAfterFilter,
   type AvailableGamesPageMeta,
 } from './availableGamesBounds';
+import { calendarDateBounds, startOfCalendarDate, endOfCalendarDate, InvalidCalendarDateError } from './calendarDateBounds';
 import { enrichAvailableGamesSafe } from './availableGamesEnrichment';
 import { filterIdsByAvailableSlots } from './availableGamesSlotsSql';
 import {
   appendStructuralFiltersToWhere,
   type AvailableStructuralFilters,
 } from './availableGamesStructuralWhere';
+import { formatInTimeZone } from 'date-fns-tz';
+import { ApiError } from '../../utils/ApiError';
 
 /** Light startTimes index for calendar badges — no fat card include. */
 export const AVAILABLE_GAMES_DAY_INDEX_CAP = 5000;
@@ -131,19 +135,24 @@ async function buildAvailableWhere(
     OR: buildVisibilityOr(userId, includeLeagues, includeAllPrivate),
   };
 
+  const cityId = await resolveCityId(userId, options.userCityId);
+  if (cityId) where.cityId = cityId;
+  // Cached city TZ lookup (same helper as notifications / weather).
+  const cityTimezone = await getUserTimezoneFromCityId(cityId ?? null);
+
   if (kind === 'upcoming') {
     where.status = { not: 'ARCHIVED' };
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const horizon = new Date(today);
-    horizon.setFullYear(horizon.getFullYear() + 1);
-    horizon.setHours(23, 59, 59, 999);
+    const todayKey = formatInTimeZone(new Date(), cityTimezone, 'yyyy-MM-dd');
+    const todayStart = startOfCalendarDate(todayKey, cityTimezone);
+    const [y, m, d] = todayKey.split('-').map(Number);
+    const horizonKey = `${y + 1}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    const horizon = endOfCalendarDate(horizonKey, cityTimezone);
     // List: untied LEAGUE_SEASON shells stay visible; timed games stay in horizon.
     where.AND = [
       {
         OR: [
           { entityType: 'LEAGUE_SEASON' },
-          { startTime: { gte: today, lte: horizon } },
+          { startTime: { gte: todayStart, lte: horizon } },
         ],
       },
     ];
@@ -152,25 +161,24 @@ async function buildAvailableWhere(
       where.status = { not: 'ARCHIVED' };
     }
     if (options.startDate || options.endDate) {
-      const startTimeRange: { gte?: Date; lte?: Date } = {};
-      if (options.startDate) {
-        const start = new Date(options.startDate);
-        start.setHours(0, 0, 0, 0);
-        startTimeRange.gte = start;
-      }
-      if (options.endDate) {
-        const end = new Date(options.endDate);
-        end.setHours(23, 59, 59, 999);
-        startTimeRange.lte = end;
+      let startTimeRange: { gte?: Date; lte?: Date };
+      try {
+        startTimeRange = calendarDateBounds(
+          options.startDate,
+          options.endDate,
+          cityTimezone,
+        );
+      } catch (err) {
+        if (err instanceof InvalidCalendarDateError) {
+          throw new ApiError(400, err.message, true, { code: 'validation.invalidDate' });
+        }
+        throw err;
       }
       // Calendar / day-scoped: every entity (incl. LEAGUE_SEASON) must fall in range.
       // Do not OR-bypass by entityType — that made seasons appear on every selected day.
       where.AND = [{ startTime: startTimeRange }];
     }
   }
-
-  const cityId = await resolveCityId(userId, options.userCityId);
-  if (cityId) where.cityId = cityId;
 
   if (sportFilter.mode === 'single') {
     where.sport = sportFilter.sport;

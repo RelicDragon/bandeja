@@ -1,11 +1,19 @@
 import { format, getDate, getDaysInMonth, set, startOfDay, startOfMonth } from 'date-fns';
 import type { Game } from '@/types';
+import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
 
 export const calendarDayKey = (date: Date): string =>
   format(startOfDay(date), 'yyyy-MM-dd');
 
-export const gameCalendarDayKey = (game: Game): string =>
-  calendarDayKey(new Date(game.startTime));
+/** Bucket a game onto a calendar day — city TZ when known (matches API bounds). */
+export const gameCalendarDayKey = (
+  game: Game,
+  timeZone?: string | null,
+): string => {
+  const instant = new Date(game.startTime);
+  if (timeZone) return dateKeyInTimezone(instant, timeZone);
+  return calendarDayKey(instant);
+};
 
 /** Keep selected day-of-month when paging the calendar (clamp to target month length). */
 export function selectedDayInMonth(anchor: Date, month: Date): Date {
@@ -14,11 +22,15 @@ export function selectedDayInMonth(anchor: Date, month: Date): Date {
   return startOfDay(set(monthStart, { date: day }));
 }
 
-export function filterGamesForCalendarDay(games: Game[], selectedDate: Date): Game[] {
+export function filterGamesForCalendarDay(
+  games: Game[],
+  selectedDate: Date,
+  timeZone?: string | null,
+): Game[] {
   const selectedKey = calendarDayKey(selectedDate);
   return games.filter((game) => {
     if (game.timeIsSet === false) return false;
-    return gameCalendarDayKey(game) === selectedKey;
+    return gameCalendarDayKey(game, timeZone) === selectedKey;
   });
 }
 

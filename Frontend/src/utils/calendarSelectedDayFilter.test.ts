@@ -3,6 +3,7 @@ import { format, parse, startOfDay } from 'date-fns';
 import type { Game } from '@/types';
 import {
   filterGamesForCalendarDay,
+  gameCalendarDayKey,
   selectedDayInMonth,
   unionDateRangeWithDay,
 } from './calendarSelectedDayFilter';
@@ -51,12 +52,23 @@ describe('filterGamesForCalendarDay', () => {
     expect(cellKey).toBe('2026-06-04');
   });
 
-  it('round-trips selected day through store-style yyyy-MM-dd key', () => {
-    const clicked = parse('2026-04-30', 'yyyy-MM-dd', new Date());
-    const stored = format(startOfDay(clicked), 'yyyy-MM-dd');
-    const restored = parse(stored, 'yyyy-MM-dd', new Date());
-    const games = [gameOn('2026-04-30')];
-    expect(filterGamesForCalendarDay(games, startOfDay(restored))).toHaveLength(1);
+  it('buckets early-UTC games onto the city calendar day (not device TZ)', () => {
+    // 04:00 UTC = 06:00 Belgrade on Jul 23; would be Jul 22 evening in US timezones.
+    const selected = parse('2026-07-23', 'yyyy-MM-dd', new Date());
+    const games = [
+      {
+        id: 'early',
+        startTime: '2026-07-23T04:00:00.000Z',
+        timeIsSet: true,
+        entityType: 'GAME',
+        status: 'ANNOUNCED',
+        participants: [],
+        maxParticipants: 4,
+        isPublic: true,
+      } as Game,
+    ];
+    expect(filterGamesForCalendarDay(games, selected, 'Europe/Belgrade')).toHaveLength(1);
+    expect(gameCalendarDayKey(games[0], 'Europe/Belgrade')).toBe('2026-07-23');
   });
 });
 

@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { format, parse, startOfDay } from 'date-fns';
 import { filterGamesForCalendarDay } from '@/utils/calendarSelectedDayFilter';
+import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
+import { resolveViewerCityTimezone } from '@/utils/cityTimezone';
 import {
   InvitesSection,
   MyGamesSection,
@@ -213,11 +215,16 @@ export const MyTab = () => {
   const calendarMergedUnreadCounts = gameUnreadForSort;
   const myGamesForSelectedDate = useMemo(() => {
     if (!myGamesSelectedDate) return [];
+    const cityTimezone = resolveViewerCityTimezone(user?.currentCity?.timezone);
     return sortMyGamesByStatusAndDateTime(
-      filterGamesForCalendarDay(calendarMergedGames, myGamesSelectedDate),
+      filterGamesForCalendarDay(
+        calendarMergedGames,
+        myGamesSelectedDate,
+        cityTimezone,
+      ),
       calendarMergedUnreadCounts,
     );
-  }, [myGamesSelectedDate, calendarMergedGames, calendarMergedUnreadCounts]);
+  }, [myGamesSelectedDate, calendarMergedGames, calendarMergedUnreadCounts, user?.currentCity?.timezone]);
 
   const upcomingGamesUndated = useMemo(() => {
     const base = calendarMergedGames.filter((g) => {
@@ -232,13 +239,13 @@ export const MyTab = () => {
     if (!myGamesSelectedDate) {
       return upcomingGamesUndated;
     }
+    const cityTimezone = resolveViewerCityTimezone(user?.currentCity?.timezone);
     const selectedStr = format(startOfDay(myGamesSelectedDate), 'yyyy-MM-dd');
-    return upcomingGamesUndated
-      .filter((g) => {
-        const gameStr = format(startOfDay(new Date(g.startTime)), 'yyyy-MM-dd');
-        return gameStr !== selectedStr;
-      });
-  }, [myGamesSelectedDate, upcomingGamesUndated]);
+    return upcomingGamesUndated.filter((g) => {
+      const gameStr = dateKeyInTimezone(new Date(g.startTime), cityTimezone);
+      return gameStr !== selectedStr;
+    });
+  }, [myGamesSelectedDate, upcomingGamesUndated, user?.currentCity?.timezone]);
   const upcomingsCollapsed = myGamesViewMode === 'list';
   const showGamesCalendar = loading || hasUpcomingGames;
   const gamesSectionGames = myGamesViewMode === 'list' ? [] : myGamesForSelectedDate;
@@ -278,12 +285,18 @@ export const MyTab = () => {
             ? Date.now() - queryState.dataUpdatedAt
             : Number.POSITIVE_INFINITY;
           const cacheIsFresh = cacheAgeMs <= GAMES_LIST_STALE_TIME;
-          const fromCache = filterPastGamesForCalendarRange(cachedGames, rangeStart, end);
+          const cityTimezone = user?.currentCity?.timezone;
+          const fromCache = filterPastGamesForCalendarRange(
+            cachedGames,
+            rangeStart,
+            end,
+            cityTimezone,
+          );
 
           if (
             cacheIsFresh &&
             fromCache.length > 0 &&
-            pastGamesCacheCoversRange(cachedGames, rangeStart, end)
+            pastGamesCacheCoversRange(cachedGames, rangeStart, end, cityTimezone)
           ) {
             setPastGamesInRange(fromCache);
             return;

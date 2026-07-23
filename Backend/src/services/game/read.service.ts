@@ -18,6 +18,7 @@ import {
   MAIN_PHOTO_RELATION_SELECT,
 } from './gamePrismaIncludes';
 import { fetchAvailableGamesPage } from './availableGamesQuery';
+import { calendarDateBounds, InvalidCalendarDateError } from './calendarDateBounds';
 import type { AvailableStructuralFilters } from './availableGamesStructuralWhere';
 import { serializeLinkedBooking } from './gameExternalBooking.service';
 import { withLegacyGoldenPointField } from '../../shared/gameFormat/goldenPoint';
@@ -26,6 +27,8 @@ import {
   type GamePhotosViewer,
 } from '../../shared/gamePhotos/permissions';
 import { WeatherForecastService } from '../weatherForecast.service';
+import { getUserTimezoneFromCityId } from '../user-timezone.service';
+import { formatInTimeZone } from 'date-fns-tz';
 
 export { MAIN_PHOTO_RELATION_SELECT };
 export { getAvailableGamesCardInclude } from './availableGamesCard.projection';
@@ -581,19 +584,36 @@ export class GameReadService {
       throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
     }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const pastUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        isAdmin: true,
+        currentCityId: true,
+      },
+    });
+    const cityTimezone = await getUserTimezoneFromCityId(
+      userCityId ?? pastUser?.currentCityId ?? null,
+    );
+
+    const todayKey = formatInTimeZone(new Date(), cityTimezone, 'yyyy-MM-dd');
+    const todayStart = calendarDateBounds(todayKey, todayKey, cityTimezone).gte!;
 
     let startTimeFilter: { lt: Date } | { gte: Date; lte: Date };
     if (startDate && endDate) {
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      const rangeEnd = end.getTime() < today.getTime() ? end : today;
-      startTimeFilter = { gte: start, lte: rangeEnd };
+      let range: { gte?: Date; lte?: Date };
+      try {
+        range = calendarDateBounds(startDate, endDate, cityTimezone);
+      } catch (err) {
+        if (err instanceof InvalidCalendarDateError) {
+          throw new ApiError(400, err.message, true, { code: 'validation.invalidDate' });
+        }
+        throw err;
+      }
+      const rangeEnd =
+        range.lte && range.lte.getTime() < todayStart.getTime() ? range.lte : todayStart;
+      startTimeFilter = { gte: range.gte!, lte: rangeEnd };
     } else {
-      startTimeFilter = { lt: today };
+      startTimeFilter = { lt: todayStart };
     }
 
     const where: any = {
@@ -609,11 +629,6 @@ export class GameReadService {
         { entityType: 'LEAGUE_SEASON', resultsStatus: 'FINAL' },
       ],
     };
-
-    const pastUser = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
     const photoViewer = buildPhotoViewer(userId, pastUser?.isAdmin ?? false);
 
     const gamesRaw = await prisma.game.findMany({

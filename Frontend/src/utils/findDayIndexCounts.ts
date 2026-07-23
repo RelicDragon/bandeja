@@ -3,6 +3,7 @@ import { gameStartFallsInTimeRange } from '@/utils/gameListTimeFilter';
 import type { FindFilterState, FindFilterViewer } from '@/utils/findFilter';
 import { getDisplayLevelForSport } from '@/utils/profileSports';
 import { parseGameSport } from '@/utils/gameSport';
+import { dateKeyInTimezone } from '@/utils/weatherDayGroups';
 
 /** Light calendar day-index row from available meta (no fat card). */
 export type FindDayIndexRow = {
@@ -24,7 +25,7 @@ export type FindDayIndexRow = {
 };
 
 /**
- * Count games per local calendar day from the cheap server dayIndex.
+ * Count games per city calendar day from the cheap server dayIndex.
  * Structural filters (club / entity / level / hide BAR / open slots / timeIsSet)
  * are already applied server-side — do not re-apply them here.
  * Residual client heuristics only: time-of-day panel, suitable rating,
@@ -37,6 +38,7 @@ export function countFindDayIndexByDay(
   rows: FindDayIndexRow[],
   viewer: FindFilterViewer,
   state: FindFilterState,
+  cityTimezone?: string | null,
 ): Map<string, number> {
   const counts = new Map<string, number>();
 
@@ -49,6 +51,7 @@ export function countFindDayIndexByDay(
           row.startTime,
           state.panel.filterTimeStart,
           state.panel.filterTimeEnd,
+          cityTimezone,
         )
       ) {
         continue;
@@ -80,7 +83,9 @@ export function countFindDayIndexByDay(
       if (userLevel < minLevel || userLevel > maxLevel) continue;
     }
 
-    const key = format(startOfDay(new Date(row.startTime)), 'yyyy-MM-dd');
+    const key = cityTimezone
+      ? dateKeyInTimezone(new Date(row.startTime), cityTimezone)
+      : format(startOfDay(new Date(row.startTime)), 'yyyy-MM-dd');
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
 

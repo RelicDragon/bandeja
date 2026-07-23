@@ -22,7 +22,8 @@ export const getGameClubId = (game: Game): string | undefined =>
 
 export const passesAvailableGamePanelFilters = (
   game: Game,
-  p: AvailableGamePanelFilterState
+  p: AvailableGamePanelFilterState,
+  timeZone?: string | null,
 ): boolean => {
   if (p.filterClubIds.length > 0) {
     const cid = getGameClubId(game);
@@ -31,7 +32,14 @@ export const passesAvailableGamePanelFilters = (
     }
   }
   if (!(p.filterTimeStart === '00:00' && p.filterTimeEnd === '24:00')) {
-    if (!gameStartFallsInTimeRange(game.startTime, p.filterTimeStart, p.filterTimeEnd)) {
+    if (
+      !gameStartFallsInTimeRange(
+        game.startTime,
+        p.filterTimeStart,
+        p.filterTimeEnd,
+        timeZone,
+      )
+    ) {
       return false;
     }
   }
