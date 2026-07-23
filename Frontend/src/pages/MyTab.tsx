@@ -320,7 +320,7 @@ export const MyTab = () => {
         setLoadingPastInRange(false);
       }
     },
-    [queryClient, user?.id]
+    [queryClient, user?.id, user?.currentCity?.timezone]
   );
   const handleUpcomingsToggle = useCallback(() => {
     setMyGamesViewMode((prev) => (prev === 'list' ? 'calendar' : 'list'));
