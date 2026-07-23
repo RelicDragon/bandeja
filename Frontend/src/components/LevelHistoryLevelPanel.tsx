@@ -16,6 +16,9 @@ type LevelHistoryLevelPanelProps = {
   selection: LevelHistorySelection;
   onChange: (value: LevelHistorySelection) => void;
   variant?: LevelHistoryLevelPanelVariant;
+  includeSportsInSelector?: boolean;
+  includeSocialInSelector?: boolean;
+  competitiveSport?: Sport;
 };
 
 export function LevelHistoryLevelPanel({
@@ -24,13 +27,21 @@ export function LevelHistoryLevelPanel({
   selection,
   onChange,
   variant = 'compact',
+  includeSportsInSelector = true,
+  includeSocialInSelector = true,
+  competitiveSport,
 }: LevelHistoryLevelPanelProps) {
   const isAdmin = Boolean(useAuthStore((s) => s.user)?.isAdmin);
   const showSocialLevel = selection.kind === 'social';
   const historySport =
     selection.kind === 'competitive' ? selection.sport : getUserPrimarySport(user);
-  const showSelector = sports.length > 0;
+  const showSelector =
+    (includeSportsInSelector && sports.length > 0) || includeSocialInSelector;
   const selectorTone = variant === 'hero' ? 'onGradient' : 'neutral';
+  const selectorCompetitiveSport =
+    competitiveSport
+    ?? (selection.kind === 'competitive' ? selection.sport : undefined)
+    ?? sports[0];
 
   if (variant === 'hero') {
     return (
@@ -43,6 +54,9 @@ export function LevelHistoryLevelPanel({
               onChange={onChange}
               embedded
               tone={selectorTone}
+              includeSports={includeSportsInSelector}
+              includeSocial={includeSocialInSelector}
+              competitiveSport={selectorCompetitiveSport}
             />
           )}
           <LevelHistoryAvatarSection
@@ -69,6 +83,9 @@ export function LevelHistoryLevelPanel({
           onChange={onChange}
           embedded
           tone={selectorTone}
+          includeSports={includeSportsInSelector}
+          includeSocial={includeSocialInSelector}
+          competitiveSport={selectorCompetitiveSport}
         />
       )}
       {showSocialLevel ? (

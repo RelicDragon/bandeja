@@ -1,4 +1,4 @@
-import { useEffect, useState, useLayoutEffect } from 'react';
+import { useEffect, useState, useLayoutEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -14,11 +14,12 @@ import { useAuthStore } from '@/store/authStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useBackButtonHandler } from '@/hooks/useBackButtonHandler';
 import { handleBack } from '@/utils/backNavigation';
-import { PlayerCardProfileBody } from '@/components/player/PlayerCardProfileBody';
+import { PlayerCardProfileBody, type PlayerCardProfileTab } from '@/components/player/PlayerCardProfileBody';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { parseLevelSportQuery } from '@/utils/levelSportQuery';
 import { usePlayerProfile } from '@/features/playerProfile';
+import type { Sport } from '@shared/sport';
 
 export const UserProfilePage = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -31,8 +32,18 @@ export const UserProfilePage = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalUrl, setShareModalUrl] = useState('');
   const [avatarViewerUrl, setAvatarViewerUrl] = useState<string | null>(null);
+  const [profileTab, setProfileTab] = useState<PlayerCardProfileTab>('statistics');
+  const [profileSportOverride, setProfileSportOverride] = useState<{ userId: string; sport: Sport } | null>(null);
   const showTelegram = !!user;
   const [searchParams] = useSearchParams();
+  const resolvedProfileSport =
+    userId && profileSportOverride?.userId === userId
+      ? profileSportOverride.sport
+      : undefined;
+  const handleCompetitiveSportChange = useCallback((sport: Sport) => {
+    if (!userId) return;
+    setProfileSportOverride({ userId, sport });
+  }, [userId]);
 
   const {
     stats,
@@ -45,6 +56,7 @@ export const UserProfilePage = () => {
     blockingUser,
     actions,
   } = usePlayerProfile(userId, {
+    levelSport: resolvedProfileSport,
     sportFromUrl: parseLevelSportQuery(searchParams.get('sport')),
     presenceKey: 'user-profile-page',
     onBlocked: () => handleBack(navigate),
@@ -69,6 +81,8 @@ export const UserProfilePage = () => {
     setShowShareModal(false);
     setShareModalUrl('');
     setAvatarViewerUrl(null);
+    setProfileTab('statistics');
+    setProfileSportOverride(null);
   }, [userId]);
 
   const setUserProfileHeaderActions = useShellNavStore((s) => s.setUserProfileHeaderActions);
@@ -212,6 +226,10 @@ export const UserProfilePage = () => {
                   isBlocked={isBlocked}
                   showTelegram={showTelegram}
                   edgeToEdge={!!user}
+                  showProfileTabs
+                  showGroupsTab={false}
+                  activeProfileTab={profileTab}
+                  onProfileTabChange={setProfileTab}
                   onStatsRefresh={setStats}
                   prependBeforeLevelHistory={!user ? <PublicGamePrompt variant="profile" /> : undefined}
                   onAvatarClick={() => {
@@ -233,6 +251,7 @@ export const UserProfilePage = () => {
                   onMarketItemClick={user
                     ? (item) => navigate(`/marketplace/${item.id}`)
                     : () => navigate('/login')}
+                  onCompetitiveSportChange={handleCompetitiveSportChange}
                 />
               </motion.div>
             )}

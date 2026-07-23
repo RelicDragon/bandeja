@@ -9,6 +9,7 @@ export function userStatsQueryOptions(
   userId: string | undefined,
   sport?: Sport,
   enabled = true,
+  keepPreviousForSameUser = false,
 ) {
   const isEnabled = enabled && !!userId;
   return queryOptions({
@@ -19,14 +20,22 @@ export function userStatsQueryOptions(
     },
     staleTime: USER_STATS_STALE_TIME,
     enabled: isEnabled,
+    placeholderData: keepPreviousForSameUser
+      ? (previousData, previousQuery) => {
+          const previousUserId = previousQuery?.queryKey[2];
+          if (!userId || previousUserId !== userId) return undefined;
+          return previousData;
+        }
+      : undefined,
   });
 }
 
 export function useUserStatsQuery(
   userId: string | undefined,
   sport?: Sport,
-  options?: { enabled?: boolean },
+  options?: { enabled?: boolean; keepPrevious?: boolean },
 ) {
   const enabled = options?.enabled ?? !!userId;
-  return useQuery(userStatsQueryOptions(userId, sport, enabled));
+  const keepPrevious = options?.keepPrevious ?? false;
+  return useQuery(userStatsQueryOptions(userId, sport, enabled, keepPrevious));
 }

@@ -146,12 +146,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   const messageRef = useRef(message);
   const mentionIdsRef = useRef(mentionIds);
   const editingMessageRef = useRef(editingMessage);
-
-  useEffect(() => {
-    messageRef.current = message;
-    mentionIdsRef.current = mentionIds;
-    editingMessageRef.current = editingMessage;
-  }, [message, mentionIds, editingMessage]);
+  // Keep refs current during render so chat-switch draft flush never reads a stale composer.
+  messageRef.current = message;
+  mentionIdsRef.current = mentionIds;
+  editingMessageRef.current = editingMessage;
 
   useEffect(() => {
     return () => {

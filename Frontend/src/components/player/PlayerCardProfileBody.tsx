@@ -1,20 +1,26 @@
 import type { ReactNode } from 'react';
-import { memo } from 'react';
-import { useMemo } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Send, Dumbbell, BarChart3, Users } from 'lucide-react';
 import type { TFunction } from 'i18next';
 import { UserStats } from '@/api/users';
 import { LevelHistoryView } from '@/components/LevelHistoryView';
+import type { LevelHistorySelection } from '@/components/LevelHistoryLevelSelector';
 import { GenderIndicator } from '@/components/GenderIndicator';
 import { TrainerRatingBadge } from '@/components/TrainerRatingBadge';
 import { SegmentedSwitch, type SegmentedSwitchTab } from '@/components/SegmentedSwitch';
+import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSportPicker';
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePresenceStore } from '@/store/presenceStore';
 import { PlayStreakChip } from '@/components/playStreak/PlayStreakChip';
 import { useAuthStore } from '@/store/authStore';
 import { MarketItem } from '@/types';
+import type { Sport } from '@/types';
 import { PlayerCardRatingStatus } from '@/components/player/PlayerCardRatingStatus';
+import {
+  getUserPrimarySport,
+  listEnabledSports,
+} from '@/utils/profileSports';
 
 export type PlayerCardProfileTab = 'statistics' | 'levels' | 'groups';
 
@@ -37,6 +43,8 @@ export interface PlayerCardProfileBodyProps {
   onMarketItemClick?: (item: MarketItem) => void;
   onStatsRefresh?: (stats: UserStats) => void;
   playStreakAliveOnly?: boolean;
+  /** Keep parent stats query on the same competitive sport as the picker. */
+  onCompetitiveSportChange?: (sport: Sport) => void;
 }
 
 const containerVariants = {
@@ -48,6 +56,13 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: [0.4, 0, 0.2, 1] as const } },
 };
+
+function resolveInitialSport(user: UserStats['user'], statsSport: Sport | undefined): Sport {
+  const enabled = listEnabledSports(user);
+  const primary = getUserPrimarySport(user);
+  if (statsSport && enabled.includes(statsSport)) return statsSport;
+  return enabled.find((s) => s === primary) ?? enabled[0] ?? primary;
+}
 
 const PlayerCardProfileBodyComponent = ({
   stats,
@@ -68,6 +83,7 @@ const PlayerCardProfileBodyComponent = ({
   onMarketItemClick,
   onStatsRefresh,
   playStreakAliveOnly = false,
+  onCompetitiveSportChange,
 }: PlayerCardProfileBodyProps) => {
   const { user } = stats;
   const authUserId = useAuthStore((s) => s.user?.id);
@@ -78,6 +94,48 @@ const PlayerCardProfileBodyComponent = ({
   const initials = `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase();
   const hasTelegram = showTelegram && !!(user.telegramId || (user.telegramUsername && user.telegramUsername.trim()));
   const playStreak = user.playStreak;
+  const enabledSports = useMemo(() => listEnabledSports(user), [user]);
+  const showExternalSportPicker = showProfileTabs && enabledSports.length > 1;
+  const profileUserId = user.id;
+  const [selection, setSelection] = useState<LevelHistorySelection>(() => ({
+    kind: 'competitive',
+    sport: resolveInitialSport(user, stats.sport),
+  }));
+  const [lastCompetitiveSport, setLastCompetitiveSport] = useState<Sport>(() =>
+    resolveInitialSport(user, stats.sport),
+  );
+  const prevProfileUserIdRef = useRef(profileUserId);
+
+  useEffect(() => {
+    const preferred = resolveInitialSport(user, stats.sport);
+    const userChanged = prevProfileUserIdRef.current !== profileUserId;
+    prevProfileUserIdRef.current = profileUserId;
+
+    if (enabledSports.length === 0) {
+      setSelection({ kind: 'social' });
+      if (userChanged) setLastCompetitiveSport(preferred);
+      return;
+    }
+
+    if (userChanged) {
+      setSelection({ kind: 'competitive', sport: preferred });
+      setLastCompetitiveSport(preferred);
+      return;
+    }
+
+    setSelection((prev) => {
+      if (prev.kind === 'social') return prev;
+      if (enabledSports.includes(prev.sport)) return prev;
+      return { kind: 'competitive', sport: preferred };
+    });
+    setLastCompetitiveSport((prev) => (enabledSports.includes(prev) ? prev : preferred));
+  }, [enabledSports, profileUserId, stats.sport, user]);
+
+  useEffect(() => {
+    if (selection.kind !== 'competitive') return;
+    setLastCompetitiveSport(selection.sport);
+    onCompetitiveSportChange?.(selection.sport);
+  }, [onCompetitiveSportChange, selection]);
 
   const profileTabs = useMemo<SegmentedSwitchTab[]>(() => {
     const tabs: SegmentedSwitchTab[] = [
@@ -92,6 +150,24 @@ const PlayerCardProfileBodyComponent = ({
     return tabs;
   }, [showGroupsTab, t]);
   const safeActiveProfileTab = activeProfileTab === 'groups' && !showGroupsTab ? 'statistics' : activeProfileTab;
+  const pickerSport =
+    selection.kind === 'competitive' ? selection.sport : lastCompetitiveSport;
+  const sportScopedStatsReady =
+    !showProfileTabs
+    || selection.kind === 'social'
+    || !stats.sport
+    || stats.sport === pickerSport;
+
+  useEffect(() => {
+    if (!showProfileTabs) return;
+    if (safeActiveProfileTab === 'levels') return;
+    if (selection.kind !== 'social') return;
+    setSelection({ kind: 'competitive', sport: lastCompetitiveSport });
+  }, [lastCompetitiveSport, safeActiveProfileTab, selection.kind, showProfileTabs]);
+
+  const handleSelectionChange = (next: LevelHistorySelection) => {
+    setSelection(next);
+  };
 
   return (
     <motion.div className={`flex flex-col p-6 pt-2 ${prependBeforeLevelHistory ? 'gap-2' : 'gap-3'}`} variants={containerVariants} initial="hidden" animate="visible">
@@ -154,8 +230,8 @@ const PlayerCardProfileBodyComponent = ({
               </div>
             )}
             <PlayerCardRatingStatus
-              settling={Boolean(user.ratingSettling)}
-              uncertainty={isAdmin ? user.ratingUncertainty : null}
+              settling={sportScopedStatsReady ? Boolean(user.ratingSettling) : false}
+              uncertainty={sportScopedStatsReady && isAdmin ? user.ratingUncertainty : null}
               t={t}
             />
           </div>
@@ -190,6 +266,16 @@ const PlayerCardProfileBodyComponent = ({
         </motion.div>
       )}
 
+      {showExternalSportPicker && (
+        <motion.div variants={itemVariants}>
+          <LeaderboardSportPicker
+            sports={enabledSports}
+            value={pickerSport}
+            onChange={(sport) => handleSelectionChange({ kind: 'competitive', sport })}
+          />
+        </motion.div>
+      )}
+
       {showProfileTabs && onProfileTabChange && (
         <motion.div variants={itemVariants} className="flex justify-center">
           <SegmentedSwitch
@@ -215,6 +301,10 @@ const PlayerCardProfileBodyComponent = ({
             tabDarkBgClass="dark:bg-gray-700/50"
             hideUserCard
             content={showProfileTabs && safeActiveProfileTab === 'levels' ? 'levels' : showProfileTabs ? 'statistics' : 'all'}
+            selection={showProfileTabs ? selection : undefined}
+            onSelectionChange={showProfileTabs ? handleSelectionChange : undefined}
+            includeSportsInSelector={!showExternalSportPicker}
+            competitiveSport={lastCompetitiveSport}
             onOpenGame={onOpenGame}
             showItemsToSell
             onMarketItemClick={onMarketItemClick}

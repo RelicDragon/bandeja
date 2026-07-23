@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { chatApi, type ChatContextType, type ChatMessage } from '@/api/chat';
 import type { ChatType } from '@/types';
 import { normalizeChatType } from '@/utils/chatType';
@@ -10,6 +10,12 @@ import {
   withDraftRetry,
 } from '@/components/chat/messageInputDraftUtils';
 import { deleteDraftFromComposer } from '@/components/chat/draftDeleteFlow';
+import {
+  planDraftSlotTransition,
+  shouldApplyLoadedDraft,
+  shouldCommitLastSavedAfterPersist,
+  type DraftComposerSlot,
+} from '@/components/chat/messageInputDraftSwitch';
 
 function mentionIdsEqual(a: string[], b: string[]) {
   return a.length === b.length && a.every((id, i) => id === b[i]);
@@ -58,27 +64,43 @@ export function useMessageInputDraftSync({
   });
   const lastSavedContentRef = useRef<string>('');
   const lastSavedMentionIdsRef = useRef<string[]>([]);
+  const draftSlotRef = useRef<DraftComposerSlot>({
+    contextType,
+    contextId: '',
+    chatType: resolvedChatType,
+    userId: undefined,
+  });
+  const loadDraftRef = useRef<() => Promise<void>>(async () => {});
 
-  const saveDraft = useCallback(
-    async (content: string, mentionIds: string[]) => {
-      if (!finalContextId || !userId) return;
+  const persistDraftToSlot = useCallback(
+    async (
+      slot: DraftComposerSlot,
+      content: string,
+      mentionIds: string[],
+      options?: { updateLastSaved?: boolean; force?: boolean }
+    ) => {
+      if (!slot.contextId || !slot.userId) return;
 
       const trimmedContent = (content?.trim() ?? '').slice(0, DRAFT_MAX_CONTENT_LENGTH);
       const safeMentionIds = (mentionIds ?? []).slice(0, 50);
+      const updateLastSaved = options?.updateLastSaved !== false;
+
       if (!trimmedContent && safeMentionIds.length === 0) {
         if (lastSavedContentRef.current === '' && lastSavedMentionIdsRef.current.length === 0) return;
         const previousContent = lastSavedContentRef.current;
         const previousMentionIds = lastSavedMentionIdsRef.current.slice();
         try {
           await deleteDraftFromComposer({
-            userId,
-            contextType,
-            contextId: finalContextId,
-            chatType: resolvedChatType,
+            userId: slot.userId,
+            contextType: slot.contextType,
+            contextId: slot.contextId,
+            chatType: slot.chatType,
             previousDraft: { content: previousContent, mentionIds: previousMentionIds },
           });
-          lastSavedContentRef.current = '';
-          lastSavedMentionIdsRef.current = [];
+          if (shouldCommitLastSavedAfterPersist(draftSlotRef.current, slot, updateLastSaved)) {
+            lastSavedContentRef.current = '';
+            lastSavedMentionIdsRef.current = [];
+          }
         } catch (error) {
           console.error('Failed to delete draft:', error);
         }
@@ -86,35 +108,74 @@ export function useMessageInputDraftSync({
       }
 
       if (
+        !options?.force &&
+        updateLastSaved &&
         trimmedContent === lastSavedContentRef.current &&
         mentionIdsEqual(safeMentionIds, lastSavedMentionIdsRef.current)
       ) {
         return;
       }
 
-      await draftStorage.set(userId, contextType, finalContextId, resolvedChatType, trimmedContent, safeMentionIds);
-      emitDraftUpdatedEvent(userId, contextType, finalContextId, resolvedChatType, trimmedContent, safeMentionIds);
+      await draftStorage.set(
+        slot.userId,
+        slot.contextType,
+        slot.contextId,
+        slot.chatType,
+        trimmedContent,
+        safeMentionIds
+      );
+      emitDraftUpdatedEvent(
+        slot.userId,
+        slot.contextType,
+        slot.contextId,
+        slot.chatType,
+        trimmedContent,
+        safeMentionIds
+      );
       const payload = {
-        chatContextType: contextType,
-        contextId: finalContextId,
-        chatType: resolvedChatType,
+        chatContextType: slot.contextType,
+        contextId: slot.contextId,
+        chatType: slot.chatType,
         content: trimmedContent || undefined,
         mentionIds: safeMentionIds.length > 0 ? safeMentionIds : undefined,
       };
       try {
         const savedDraft = await withDraftRetry(() => chatApi.saveDraft(payload));
-        lastSavedContentRef.current = trimmedContent;
-        lastSavedMentionIdsRef.current = safeMentionIds.slice();
+        if (shouldCommitLastSavedAfterPersist(draftSlotRef.current, slot, updateLastSaved)) {
+          lastSavedContentRef.current = trimmedContent;
+          lastSavedMentionIdsRef.current = safeMentionIds.slice();
+        }
         window.dispatchEvent(
           new CustomEvent('draft-updated', {
-            detail: { draft: savedDraft, chatContextType: contextType, contextId: finalContextId },
+            detail: {
+              draft: savedDraft,
+              chatContextType: slot.contextType,
+              contextId: slot.contextId,
+            },
           })
         );
       } catch (error) {
         console.error('Failed to save draft to server:', error);
       }
     },
-    [finalContextId, userId, contextType, resolvedChatType]
+    []
+  );
+
+  const saveDraft = useCallback(
+    async (content: string, mentionIds: string[]) => {
+      if (!finalContextId || !userId) return;
+      await persistDraftToSlot(
+        {
+          contextType,
+          contextId: finalContextId,
+          chatType: resolvedChatType,
+          userId,
+        },
+        content,
+        mentionIds
+      );
+    },
+    [finalContextId, userId, contextType, resolvedChatType, persistDraftToSlot]
   );
 
   const debouncedSaveDraft = useCallback(
@@ -143,24 +204,25 @@ export function useMessageInputDraftSync({
       saveDraftTimeoutRef.current = null;
     }
 
-    const applyDraftToState = (content: string, ids: string[], markAsSaved: boolean) => {
+    const applyDraftToState = (content: string, ids: string[], markAsSaved: boolean): boolean => {
       const hasUserTyped = messageRef.current.trim().length > 0 || mentionIdsRef.current.length > 0;
-      if (!hasUserTyped) {
-        setMessage(content || '');
-        setMentionIds(ids ?? []);
-        setTimeout(() => updateMultilineState(), 100);
-      }
+      if (!shouldApplyLoadedDraft(hasUserTyped)) return false;
+      setMessage(content || '');
+      setMentionIds(ids ?? []);
+      setTimeout(() => updateMultilineState(), 100);
       if (markAsSaved) {
         const trimmed = (content ?? '').trim().slice(0, DRAFT_MAX_CONTENT_LENGTH);
         const safeIds = (ids ?? []).slice(0, 50);
         lastSavedContentRef.current = trimmed;
         lastSavedMentionIdsRef.current = safeIds.slice();
       }
+      return true;
     };
 
+    let appliedLocal = false;
     const local = await draftStorage.get(userId, contextType, finalContextId, resolvedChatType);
     if (local && loadingDraftKeyRef.current === draftKey) {
-      applyDraftToState(local.content, local.mentionIds, false);
+      appliedLocal = applyDraftToState(local.content, local.mentionIds, true);
     }
 
     let serverPromise: Promise<Awaited<ReturnType<typeof chatApi.getDraft>>>;
@@ -188,31 +250,38 @@ export function useMessageInputDraftSync({
       const serverUpdated = serverDraft ? new Date(serverDraft.updatedAt).getTime() : 0;
       const useLocal = local && (!serverDraft || localUpdated >= serverUpdated);
       if (useLocal && local) {
-        if (!serverDraft || localUpdated > serverUpdated) {
-          const pushContext = { contextType, contextId: finalContextId, chatType: resolvedChatType };
+        if (appliedLocal && (!serverDraft || localUpdated > serverUpdated)) {
+          const pushSlot: DraftComposerSlot = {
+            contextType,
+            contextId: finalContextId,
+            chatType: resolvedChatType,
+            userId,
+          };
           draftStorage
             .set(userId, contextType, finalContextId, resolvedChatType, local.content, local.mentionIds)
             .then(() => {
               const cur = currentContextRef.current;
-              if (cur.contextType !== pushContext.contextType || cur.contextId !== pushContext.contextId || cur.chatType !== pushContext.chatType)
+              if (cur.contextType !== pushSlot.contextType || cur.contextId !== pushSlot.contextId || cur.chatType !== pushSlot.chatType)
                 return;
               if (loadingDraftKeyRef.current !== draftKey) return;
               if (local.content.trim() || local.mentionIds.length > 0) {
-                saveDraft(local.content, local.mentionIds);
+                void persistDraftToSlot(pushSlot, local.content, local.mentionIds, { force: true });
               }
             });
         }
       } else if (serverDraft) {
-        applyDraftToState(serverDraft.content ?? '', serverDraft.mentionIds ?? [], true);
-        await draftStorage.set(
-          userId,
-          contextType,
-          finalContextId,
-          resolvedChatType,
-          serverDraft.content ?? '',
-          serverDraft.mentionIds ?? [],
-          serverDraft.updatedAt
-        );
+        const appliedServer = applyDraftToState(serverDraft.content ?? '', serverDraft.mentionIds ?? [], true);
+        if (appliedServer) {
+          await draftStorage.set(
+            userId,
+            contextType,
+            finalContextId,
+            resolvedChatType,
+            serverDraft.content ?? '',
+            serverDraft.mentionIds ?? [],
+            serverDraft.updatedAt
+          );
+        }
       }
     } catch (error) {
       console.error('Failed to load draft from server:', error);
@@ -225,21 +294,59 @@ export function useMessageInputDraftSync({
     userChatId,
     resolvedChatType,
     updateMultilineState,
-    saveDraft,
+    persistDraftToSlot,
     messageRef,
     mentionIdsRef,
     setMessage,
     setMentionIds,
   ]);
 
-  useEffect(() => {
+  loadDraftRef.current = loadDraft;
+
+  useLayoutEffect(() => {
+    const nextSlot: DraftComposerSlot = {
+      contextType,
+      contextId: finalContextId ?? '',
+      chatType: resolvedChatType,
+      userId,
+    };
+    const plan = planDraftSlotTransition({
+      prev: draftSlotRef.current,
+      next: nextSlot,
+      content: messageRef.current ?? '',
+      mentionIds: mentionIdsRef.current ?? [],
+      isEditing: !!editingMessageRef.current,
+    });
+
+    if (plan.flush) {
+      if (saveDraftTimeoutRef.current) {
+        clearTimeout(saveDraftTimeoutRef.current);
+        saveDraftTimeoutRef.current = null;
+      }
+      void persistDraftToSlot(plan.flush.slot, plan.flush.content, plan.flush.mentionIds, {
+        updateLastSaved: false,
+      }).catch((error) => {
+        console.error('Failed to save draft:', error);
+      });
+    }
+
+    draftSlotRef.current = nextSlot;
+    currentContextRef.current = {
+      contextType,
+      contextId: finalContextId ?? '',
+      chatType: resolvedChatType,
+    };
+
+    if (!plan.adoptNext) return;
+
     if (saveDraftTimeoutRef.current) {
       clearTimeout(saveDraftTimeoutRef.current);
       saveDraftTimeoutRef.current = null;
     }
     lastSavedContentRef.current = '';
     lastSavedMentionIdsRef.current = [];
-    currentContextRef.current = { contextType, contextId: finalContextId ?? '', chatType: resolvedChatType };
+    messageRef.current = '';
+    mentionIdsRef.current = [];
     const draftKey = `${contextType}-${finalContextId}-${userChatId ? 'PUBLIC' : normalizeChatType(chatType)}`;
     if (loadingDraftKeyRef.current !== draftKey) {
       hasLoadedDraftRef.current = false;
@@ -249,14 +356,18 @@ export function useMessageInputDraftSync({
     setMentionIds([]);
     setOriginalMessageBeforeTranslate(null);
     setOriginalMentionIdsBeforeTranslate(null);
-    void loadDraft();
+    void loadDraftRef.current();
   }, [
     finalContextId,
     contextType,
     chatType,
-    loadDraft,
     userChatId,
     resolvedChatType,
+    userId,
+    persistDraftToSlot,
+    editingMessageRef,
+    messageRef,
+    mentionIdsRef,
     setMessage,
     setMentionIds,
     setOriginalMessageBeforeTranslate,
@@ -283,43 +394,35 @@ export function useMessageInputDraftSync({
   }, [contextType, finalContextId, chatType, userChatId]);
 
   useEffect(() => {
-    const flush = () => {
+    const flushActiveSlot = () => {
       if (saveDraftTimeoutRef.current) {
         clearTimeout(saveDraftTimeoutRef.current);
         saveDraftTimeoutRef.current = null;
       }
       if (editingMessageRef.current) return;
-      if (finalContextId && userId) {
-        const currentMessage = messageRef.current?.trim() ?? '';
-        const currentMentionIds = mentionIdsRef.current || [];
-        if (currentMessage || currentMentionIds.length > 0) {
-          emitDraftUpdatedEvent(
-            userId,
-            contextType,
-            finalContextId,
-            resolvedChatType,
-            currentMessage,
-            currentMentionIds
-          );
-          void saveDraft(currentMessage, currentMentionIds).catch((error) => {
-            console.error('Failed to save draft:', error);
-          });
-        }
+      const slot = draftSlotRef.current;
+      if (!slot.contextId || !slot.userId) return;
+      const currentMessage = messageRef.current?.trim() ?? '';
+      const currentMentionIds = mentionIdsRef.current || [];
+      if (currentMessage || currentMentionIds.length > 0) {
+        void persistDraftToSlot(slot, currentMessage, currentMentionIds).catch((error) => {
+          console.error('Failed to save draft:', error);
+        });
       }
     };
     const onHidden = () => {
-      if (document.visibilityState === 'hidden') flush();
+      if (document.visibilityState === 'hidden') flushActiveSlot();
     };
     document.addEventListener('visibilitychange', onHidden);
-    window.addEventListener('beforeunload', flush);
-    window.addEventListener('pagehide', flush);
+    window.addEventListener('beforeunload', flushActiveSlot);
+    window.addEventListener('pagehide', flushActiveSlot);
     return () => {
       document.removeEventListener('visibilitychange', onHidden);
-      window.removeEventListener('beforeunload', flush);
-      window.removeEventListener('pagehide', flush);
-      flush();
+      window.removeEventListener('beforeunload', flushActiveSlot);
+      window.removeEventListener('pagehide', flushActiveSlot);
+      flushActiveSlot();
     };
-  }, [finalContextId, userId, saveDraft, editingMessageRef, messageRef, mentionIdsRef, contextType, resolvedChatType]);
+  }, [editingMessageRef, messageRef, mentionIdsRef, persistDraftToSlot]);
 
   return {
     saveDraft,

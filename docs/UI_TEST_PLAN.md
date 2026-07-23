@@ -1008,6 +1008,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-35b | Preferred incoming translation language | Open Translation modal (composer translate button) → top section → pick e.g. Spanish | Selection saved; reopening modal shows Spanish selected |
 | CH-35c | Translate message uses preferred language | Set preferred incoming language to Spanish (app UI may be English) → long-press foreign message → Translate | Menu shows “Translate to Spanish”; message appears in Spanish |
 | CH-36 | Draft persistence | Type without send → leave → return | Draft restored |
+| CH-36a | Draft stays on source chat (desktop) | Desktop split view: type draft in chat A → switch to chat B → return to A | B composer empty (or B's own draft); A restores the typed draft; draft is not copied into B |
 | CH-37 | Offline send queue | `@offline` send | Queued state + retry on online |
 | CH-38 | Failed send retry | Force failure → resend | Message sends |
 | CH-39 | Read receipts | Open thread | Unread clears |
@@ -1163,6 +1164,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-72 | Player card rating settling | Open player card when idle past 30-day grace | “Rating settling” on card hero; raw Uncertainty only if viewer is admin |
 | PR-73 | Sport level confirmation (player card) | Multi-sport user confirmed only for padel → open card → switch competitive sport to tennis | Padel shows confirmed-by trainer; tennis shows not confirmed |
 | PR-74 | Avatar checkmark follows badge sport | Same user in padel game roster vs tennis game roster | Checkmark only when that game’s sport is confirmed |
+| PR-75 | Multi-sport picker above profile tabs | Open player card / `/user-profile/:id` for multi-sport user | Sport picker above Statistics/Levels(/Groups); sport change updates both tabs; no cross-user flash; no wrong-sport stats flash |
+| PR-76 | Single-sport no external picker | Open card for user with one enabled sport | No sport picker above tabs; Levels still has sport+social selector |
 | PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |

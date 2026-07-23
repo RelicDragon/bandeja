@@ -17,13 +17,31 @@ export const ProfileStatistics = () => {
     () => (user ? resolveActivePrimarySport(user) ?? getUserPrimarySport(user) : undefined),
     [user],
   );
-  const { data: stats, isPending } = useUserStatsQuery(user?.id, sport);
+  const { data: stats, isPending } = useUserStatsQuery(user?.id, sport, { keepPrevious: true });
   const loading = isPending && !stats;
 
   const setStats = useCallback(
     (nextStats: UserStats) => {
       if (!user?.id) return;
-      queryClient.setQueryData(queryKeys.userStats(user.id, sport), nextStats);
+      const sportKey = nextStats.sport ?? sport;
+      queryClient.setQueryData(queryKeys.userStats(user.id, sportKey), nextStats);
+      queryClient.setQueriesData<UserStats>(
+        { queryKey: ['users', 'stats', user.id] },
+        (previous) => {
+          if (!previous) return previous;
+          const previousSport = previous.sport ?? sport;
+          if (previousSport === sportKey) return nextStats;
+          return {
+            ...previous,
+            followersCount: nextStats.followersCount,
+            followingCount: nextStats.followingCount,
+            user: {
+              ...previous.user,
+              isFavorite: nextStats.user.isFavorite,
+            },
+          };
+        },
+      );
     },
     [queryClient, user?.id, sport],
   );

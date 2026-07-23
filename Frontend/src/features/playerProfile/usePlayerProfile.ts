@@ -71,7 +71,10 @@ export function usePlayerProfile(
     data: statsData,
     isPending,
     isError,
-  } = useUserStatsQuery(playerId ?? undefined, levelSport, { enabled: statsQueryEnabled });
+  } = useUserStatsQuery(playerId ?? undefined, levelSport, {
+    enabled: statsQueryEnabled,
+    keepPrevious: true,
+  });
 
   const stats = statsQueryEnabled ? (statsData ?? null) : null;
   const statsLoading = statsQueryEnabled && isPending && !statsData;
@@ -107,7 +110,25 @@ export function usePlayerProfile(
   const setStats = useCallback(
     (nextStats: UserStats) => {
       if (!playerId) return;
-      queryClient.setQueryData(queryKeys.userStats(playerId, levelSport), nextStats);
+      const sportKey = nextStats.sport ?? levelSport;
+      queryClient.setQueryData(queryKeys.userStats(playerId, sportKey), nextStats);
+      queryClient.setQueriesData<UserStats>(
+        { queryKey: ['users', 'stats', playerId] },
+        (previous) => {
+          if (!previous) return previous;
+          const previousSport = previous.sport ?? levelSport;
+          if (previousSport === sportKey) return nextStats;
+          return {
+            ...previous,
+            followersCount: nextStats.followersCount,
+            followingCount: nextStats.followingCount,
+            user: {
+              ...previous.user,
+              isFavorite: nextStats.user.isFavorite,
+            },
+          };
+        },
+      );
     },
     [queryClient, playerId, levelSport],
   );

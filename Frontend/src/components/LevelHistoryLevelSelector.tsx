@@ -16,6 +16,11 @@ type LevelHistoryLevelSelectorProps = {
   onChange: (value: LevelHistorySelection) => void;
   embedded?: boolean;
   tone?: 'neutral' | 'onGradient';
+  /** When false, competitive sports are omitted (shown elsewhere). */
+  includeSports?: boolean;
+  includeSocial?: boolean;
+  /** Used to leave social mode when sports live in an external picker. */
+  competitiveSport?: Sport;
 };
 
 export function LevelHistoryLevelSelector({
@@ -24,27 +29,39 @@ export function LevelHistoryLevelSelector({
   onChange,
   embedded = false,
   tone = 'neutral',
+  includeSports = true,
+  includeSocial = true,
+  competitiveSport,
 }: LevelHistoryLevelSelectorProps) {
   const { t } = useTranslation();
 
   const tabs = useMemo<SegmentedSwitchTab[]>(() => {
-    const sportTabs: SegmentedSwitchTab[] = sports.map((sport) => ({
-      id: sport,
-      label: t(getSportConfig(sport).labelKey),
-      icon: () => <SportPublicIcon sport={sport} className="h-5 w-5 shrink-0 object-contain" />,
-    }));
-    sportTabs.push({
-      id: 'social',
-      label: t('rating.socialLevel'),
-      icon: SocialLevelIcon,
-    });
-    return sportTabs;
-  }, [sports, t]);
+    const next: SegmentedSwitchTab[] = [];
+    if (includeSports) {
+      for (const sport of sports) {
+        next.push({
+          id: sport,
+          label: t(getSportConfig(sport).labelKey),
+          icon: () => <SportPublicIcon sport={sport} className="h-5 w-5 shrink-0 object-contain" />,
+        });
+      }
+    }
+    if (includeSocial) {
+      next.push({
+        id: 'social',
+        label: t('rating.socialLevel'),
+        icon: SocialLevelIcon,
+      });
+    }
+    return next;
+  }, [includeSocial, includeSports, sports, t]);
 
-  if (sports.length === 0) {
+  if (tabs.length === 0) {
     return null;
   }
 
+  const socialOnly = !includeSports && includeSocial;
+  const restoreSport = competitiveSport ?? sports[0];
   const activeId = value.kind === 'social' ? 'social' : value.sport;
 
   const wrapperClass = embedded
@@ -60,6 +77,33 @@ export function LevelHistoryLevelSelector({
         ? '!mx-0'
         : '';
 
+  const layoutId = `level-history-sport-${embedded ? 'embedded' : 'standalone'}-${tone}${socialOnly ? '-social' : ''}`;
+
+  if (socialOnly) {
+    return (
+      <div className={`flex justify-center ${wrapperClass}`.trim()}>
+        <SegmentedSwitch
+          tabs={tabs}
+          allowDeselect
+          activeId={value.kind === 'social' ? 'social' : null}
+          onChange={(id) => {
+            if (id === 'social') {
+              onChange({ kind: 'social' });
+              return;
+            }
+            if (restoreSport) {
+              onChange({ kind: 'competitive', sport: restoreSport });
+            }
+          }}
+          showOnlyActiveTabText={false}
+          layoutId={layoutId}
+          className={switchClass}
+          ariaLabel={t('playerCard.levelHistorySelector')}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className={`flex justify-center ${wrapperClass}`.trim()}>
       <SegmentedSwitch
@@ -70,7 +114,7 @@ export function LevelHistoryLevelSelector({
           else onChange({ kind: 'competitive', sport: id as Sport });
         }}
         showOnlyActiveTabText
-        layoutId={`level-history-sport-${embedded ? 'embedded' : 'standalone'}-${tone}`}
+        layoutId={layoutId}
         className={switchClass}
         ariaLabel={t('playerCard.levelHistorySelector')}
       />

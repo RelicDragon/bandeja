@@ -55,6 +55,7 @@ jobs:
       - run: npm run test:next-game
       - run: npm run test:chat-open
       - run: npm run test:chat-inbox-feed
+      - run: npm run test:chat-drafts
       - run: npm run test:queries
       - run: npm run test:invites
       - run: npm run test:live-scoring

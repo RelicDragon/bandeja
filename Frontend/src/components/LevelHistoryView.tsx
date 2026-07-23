@@ -18,7 +18,7 @@ import { GamesStatsSection } from './GamesStatsSection';
 import { LevelHistoryProfileStatsSection } from './LevelHistoryProfileStatsSection';
 import { PlayerItemsToSell } from './PlayerItemsToSell';
 import { ProfilePerformanceInsights } from './ProfilePerformanceInsights';
-import { MarketItem } from '@/types';
+import { MarketItem, type Sport } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
@@ -33,18 +33,41 @@ interface LevelHistoryViewProps {
   onMarketItemClick?: (item: MarketItem) => void;
   /** When competitive sport changes, refresh projected user + games stats. */
   onStatsRefresh?: (stats: UserStats) => void;
+  selection?: LevelHistorySelection;
+  onSelectionChange?: (value: LevelHistorySelection) => void;
+  /** When false, competitive sports are omitted from the levels panel selector. */
+  includeSportsInSelector?: boolean;
+  /** Restore target when leaving social with an external sport picker. */
+  competitiveSport?: Sport;
 }
 
-const LevelHistoryViewComponent = ({ stats, padding = 'p-6', tabDarkBgClass, hideUserCard = false, content = 'all', onOpenGame, showItemsToSell = false, onMarketItemClick, onStatsRefresh }: LevelHistoryViewProps) => {
+const LevelHistoryViewComponent = ({
+  stats,
+  padding = 'p-6',
+  tabDarkBgClass,
+  hideUserCard = false,
+  content = 'all',
+  onOpenGame,
+  showItemsToSell = false,
+  onMarketItemClick,
+  onStatsRefresh,
+  selection: controlledSelection,
+  onSelectionChange,
+  includeSportsInSelector = true,
+  competitiveSport,
+}: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = stats;
   const primarySport = getUserPrimarySport(user);
   const selectorSports = useMemo(() => listEnabledSports(user), [user]);
-  const [selection, setSelection] = useState<LevelHistorySelection>({
+  const [uncontrolledSelection, setUncontrolledSelection] = useState<LevelHistorySelection>({
     kind: 'competitive',
     sport: primarySport,
   });
+  const isSelectionControlled = controlledSelection !== undefined && onSelectionChange !== undefined;
+  const selection = isSelectionControlled ? controlledSelection : uncontrolledSelection;
+  const setSelection = isSelectionControlled ? onSelectionChange : setUncontrolledSelection;
   const [levelChangeEvents, setLevelChangeEvents] = useState<LevelHistoryItem[]>([]);
   const [activeTab, setActiveTab] = useState<'10' | '30' | 'all'>('10');
   const [gamesStatsTab, setGamesStatsTab] = useState<'30' | '90' | 'all'>('30');
@@ -57,13 +80,24 @@ const LevelHistoryViewComponent = ({ stats, padding = 'p-6', tabDarkBgClass, hid
   const historySport = selection.kind === 'competitive' ? selection.sport : primarySport;
   const { data: sportScopedStats } = useUserStatsQuery(user.id, historySport, {
     enabled: !showSocialLevel,
+    keepPrevious: true,
   });
+  const alignedSportStats =
+    !showSocialLevel && sportScopedStats?.sport === historySport ? sportScopedStats : undefined;
+  const alignedParentStats =
+    !showSocialLevel && stats.sport === historySport ? stats : undefined;
   const gamesStatsForView = useMemo(() => {
     if (showSocialLevel) {
       return stats.gamesStatsAllSports ?? stats.gamesStats;
     }
-    return sportScopedStats?.gamesStats ?? stats.gamesStats;
-  }, [showSocialLevel, sportScopedStats, stats.gamesStats, stats.gamesStatsAllSports]);
+    return alignedSportStats?.gamesStats ?? alignedParentStats?.gamesStats ?? [];
+  }, [
+    alignedParentStats?.gamesStats,
+    alignedSportStats?.gamesStats,
+    showSocialLevel,
+    stats.gamesStats,
+    stats.gamesStatsAllSports,
+  ]);
   useEffect(() => {
     if (selectorSports.length === 0) {
       setSelection({ kind: 'social' });
@@ -71,12 +105,19 @@ const LevelHistoryViewComponent = ({ stats, padding = 'p-6', tabDarkBgClass, hid
     }
     const preferred =
       selectorSports.find((s) => s === primarySport) ?? selectorSports[0] ?? primarySport;
-    setSelection((prev) => {
+    if (isSelectionControlled) {
+      if (controlledSelection.kind === 'social') return;
+      if (!selectorSports.includes(controlledSelection.sport)) {
+        setSelection({ kind: 'competitive', sport: preferred });
+      }
+      return;
+    }
+    setUncontrolledSelection((prev) => {
       if (prev.kind === 'social') return prev;
       const sportInList = selectorSports.includes(prev.sport);
       return { kind: 'competitive', sport: sportInList ? prev.sport : preferred };
     });
-  }, [primarySport, selectorSports]);
+  }, [controlledSelection, isSelectionControlled, primarySport, selectorSports, setSelection]);
 
   useEffect(() => {
     const fetchLevelChanges = async () => {
@@ -94,19 +135,18 @@ const LevelHistoryViewComponent = ({ stats, padding = 'p-6', tabDarkBgClass, hid
   }, [user.id, historySport, showSocialLevel]);
 
   useEffect(() => {
-    if (showSocialLevel || !sportScopedStats) return;
+    if (!alignedSportStats) return;
     if (
-      sportScopedStats.sport !== stats.sport ||
-      sportScopedStats.user.level !== stats.user.level ||
-      sportScopedStats.user.approvedLevel !== stats.user.approvedLevel ||
-      sportScopedStats.user.approvedById !== stats.user.approvedById ||
-      sportScopedStats.user.approvedWhen !== stats.user.approvedWhen
+      alignedSportStats.sport !== stats.sport ||
+      alignedSportStats.user.level !== stats.user.level ||
+      alignedSportStats.user.approvedLevel !== stats.user.approvedLevel ||
+      alignedSportStats.user.approvedById !== stats.user.approvedById ||
+      alignedSportStats.user.approvedWhen !== stats.user.approvedWhen
     ) {
-      onStatsRefresh?.(sportScopedStats);
+      onStatsRefresh?.(alignedSportStats);
     }
   }, [
-    showSocialLevel,
-    sportScopedStats,
+    alignedSportStats,
     stats.sport,
     stats.user.level,
     stats.user.approvedLevel,
@@ -227,14 +267,16 @@ const LevelHistoryViewComponent = ({ stats, padding = 'p-6', tabDarkBgClass, hid
       {showLevelsContent && (
         <LevelHistoryLevelPanel
           user={
-            !showSocialLevel && sportScopedStats?.user
-              ? { ...user, ...sportScopedStats.user, sportProfiles: user.sportProfiles ?? sportScopedStats.user.sportProfiles }
+            alignedSportStats?.user
+              ? { ...user, ...alignedSportStats.user, sportProfiles: user.sportProfiles ?? alignedSportStats.user.sportProfiles }
               : user
           }
           sports={selectorSports}
           selection={selection}
           onChange={setSelection}
           variant={hideUserCard ? 'compact' : 'hero'}
+          includeSportsInSelector={includeSportsInSelector}
+          competitiveSport={competitiveSport}
         />
       )}
 
@@ -260,7 +302,7 @@ const LevelHistoryViewComponent = ({ stats, padding = 'p-6', tabDarkBgClass, hid
           )}
 
           <ProfilePerformanceInsights
-            insights={sportScopedStats?.performanceInsights ?? stats.performanceInsights}
+            insights={alignedSportStats?.performanceInsights ?? alignedParentStats?.performanceInsights}
             darkBgClass={tabDarkBgClass}
             onOpenGame={onOpenGame}
           />

@@ -45,11 +45,20 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const [showShareModal, setShowShareModal] = useState(false);
   const [shareModalUrl, setShareModalUrl] = useState('');
   const [profileTab, setProfileTab] = useState<PlayerCardProfileTab>('statistics');
+  const [profileSportOverride, setProfileSportOverride] = useState<{ playerId: string; sport: Sport } | null>(null);
   const [commonChats, setCommonChats] = useState<CommonChatItem[]>([]);
   const [commonChatsLoading, setCommonChatsLoading] = useState(false);
   const navigatingToChatRef = useRef(false);
   const navigatingToFullProfileRef = useRef(false);
   const suppressDrawerDismissUntilRef = useRef(0);
+  const resolvedProfileSport =
+    playerId && profileSportOverride?.playerId === playerId
+      ? profileSportOverride.sport
+      : undefined;
+  const handleCompetitiveSportChange = useCallback((sport: Sport) => {
+    if (!playerId) return;
+    setProfileSportOverride({ playerId, sport });
+  }, [playerId]);
 
   const markReopenOnBack = useCallback(() => {
     if (!playerId) return;
@@ -106,12 +115,13 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   }, [navigate, onClose, playerId, user?.id]);
 
   const playerProfileOptions = useMemo(() => ({
+    levelSport: resolvedProfileSport,
     presenceKey: 'player-card',
     onBlocked: handleClose,
     onShareFallback: handleShareFallback,
     onStartChat: handleProfileStartChat,
     onOpenFullProfile: handleOpenFullProfile,
-  }), [handleClose, handleShareFallback, handleProfileStartChat, handleOpenFullProfile]);
+  }), [resolvedProfileSport, handleClose, handleShareFallback, handleProfileStartChat, handleOpenFullProfile]);
 
   const {
     stats,
@@ -135,6 +145,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
     setShowShareModal(false);
     setShareModalUrl('');
     setProfileTab('statistics');
+    setProfileSportOverride(null);
     setCommonChats([]);
   }, [playerId]);
 
@@ -443,6 +454,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         onOpenGame={handleOpenGame}
                         onMarketItemClick={handleMarketItemClick}
                         onStatsRefresh={setStats}
+                        onCompetitiveSportChange={handleCompetitiveSportChange}
                         playStreakAliveOnly
                       />
                     </motion.div>
