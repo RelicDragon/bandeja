@@ -95,6 +95,7 @@ function gameInstantMs(
   endTime: string,
   booking: LinkBookingRecord,
   timeZone?: string | null,
+  bookingMs?: { startMs: number; endMs: number } | null,
 ): { startMs: number; endMs: number } | null {
   const tz = timeZone ?? BOOKTIME_DEFAULT_TIMEZONE;
   const candidates = [
@@ -118,13 +119,19 @@ function gameInstantMs(
     },
   ];
 
+  let firstValid: { startMs: number; endMs: number } | null = null;
   for (const candidate of candidates) {
     if (candidate.startMs == null || candidate.endMs == null) continue;
-    if (candidate.endMs > candidate.startMs) {
-      return { startMs: candidate.startMs, endMs: candidate.endMs };
+    if (candidate.endMs <= candidate.startMs) continue;
+    const valid = { startMs: candidate.startMs, endMs: candidate.endMs };
+    if (!firstValid) firstValid = valid;
+    // Prefer a parse that actually overlaps the booking slot when shapes mix
+    // (Booktime wire vs Prisma true UTC).
+    if (!bookingMs || clipIntervalToBooking(valid, bookingMs)) {
+      return valid;
     }
   }
-  return null;
+  return firstValid;
 }
 
 function linkSnapshotInstantMs(
@@ -213,16 +220,22 @@ function collectBookingSlotGameIntervals(
 ): Array<{ start: number; end: number }> {
   const intervals: Array<{ start: number; end: number }> = [];
   for (const game of linkedGames) {
+    // Prefer live game window clipped to the booking. Link snapshots are often the
+    // full external booking range (not the used slice), so only fall back to them
+    // when the game times do not overlap this booking slot.
+    if (game.startTime && game.endTime) {
+      const gameMs = gameInstantMs(game.startTime, game.endTime, booking, timeZone, bookingMs);
+      const clipped = gameMs ? clipIntervalToBooking(gameMs, bookingMs) : null;
+      if (clipped) {
+        intervals.push(clipped);
+        continue;
+      }
+    }
     if (game.linkBookingStart && game.linkBookingEnd) {
       const linkMs = linkSnapshotInstantMs(game.linkBookingStart, game.linkBookingEnd);
       const clipped = linkMs ? clipIntervalToBooking(linkMs, bookingMs) : null;
       if (clipped) intervals.push(clipped);
-      continue;
     }
-    if (!game.startTime || !game.endTime) continue;
-    const gameMs = gameInstantMs(game.startTime, game.endTime, booking, timeZone);
-    const clipped = gameMs ? clipIntervalToBooking(gameMs, bookingMs) : null;
-    if (clipped) intervals.push(clipped);
   }
   return intervals;
 }

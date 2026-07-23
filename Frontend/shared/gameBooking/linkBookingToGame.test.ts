@@ -279,7 +279,64 @@ describe('linkedGamesBookingSlotOccupancyPercent', () => {
     ).toBe(100);
   });
 
-  it('uses link snapshot times for occupancy on the booking slot', () => {
+  it('prefers overlapping game times over a full-booking link snapshot', () => {
+    const booking = normalizeBooking('2026-07-27T09:00:00.000Z', '2026-07-27T11:00:00.000Z');
+    const firstHour = normalizeBooking('2026-07-27T09:00:00.000Z', '2026-07-27T10:00:00.000Z');
+    expect(
+      linkedGamesBookingSlotOccupancyPercent(
+        booking,
+        [
+          {
+            timeIsSet: true,
+            startTime: firstHour.bookingStart,
+            endTime: firstHour.bookingEnd,
+            linkBookingStart: booking.bookingStart,
+            linkBookingEnd: booking.bookingEnd,
+          },
+        ],
+        TZ,
+      ),
+    ).toBe(50);
+  });
+
+  it('matches prod shape: ingested booking + true-UTC game + full link snapshot', () => {
+    const booking = {
+      uuid: 'booking-1',
+      bookingStart: booktimeIngestToStoredUtcIso('2026-07-27T09:00:00.000Z', TZ)!,
+      bookingEnd: booktimeIngestToStoredUtcIso('2026-07-27T11:00:00.000Z', TZ)!,
+      bookingResourceId: 'ext-a',
+    };
+    expect(
+      linkedGamesBookingSlotOccupancyPercent(
+        booking,
+        [
+          {
+            timeIsSet: true,
+            startTime: '2026-07-27T08:00:00.000Z',
+            endTime: '2026-07-27T09:00:00.000Z',
+            linkBookingStart: booking.bookingStart,
+            linkBookingEnd: booking.bookingEnd,
+          },
+        ],
+        TZ,
+      ),
+    ).toBe(50);
+    expect(linkedGamesFullyCoverBookingSlot(
+      booking,
+      [
+        {
+          timeIsSet: true,
+          startTime: '2026-07-27T08:00:00.000Z',
+          endTime: '2026-07-27T09:00:00.000Z',
+          linkBookingStart: booking.bookingStart,
+          linkBookingEnd: booking.bookingEnd,
+        },
+      ],
+      TZ,
+    )).toBe(false);
+  });
+
+  it('falls back to link snapshot when game times do not overlap the booking', () => {
     const booking = normalizeBooking('2026-06-19T09:00:00.000Z', '2026-06-19T10:00:00.000Z');
     expect(
       linkedGamesBookingSlotOccupancyPercent(
@@ -365,6 +422,66 @@ describe('linkedGamesBookingSlotSegments', () => {
         TZ,
       ),
     ).toEqual(['partial', 'empty']);
+  });
+
+  it('returns empty then partial for a 2h booking with a 1h overlapping game', () => {
+    const booking = normalizeBooking('2026-07-27T09:00:00.000Z', '2026-07-27T11:00:00.000Z');
+    const secondHour = normalizeBooking('2026-07-27T10:00:00.000Z', '2026-07-27T11:00:00.000Z');
+    expect(
+      linkedGamesBookingSlotSegments(
+        booking,
+        [
+          {
+            timeIsSet: true,
+            startTime: secondHour.bookingStart,
+            endTime: secondHour.bookingEnd,
+            linkBookingStart: booking.bookingStart,
+            linkBookingEnd: booking.bookingEnd,
+          },
+        ],
+        TZ,
+      ),
+    ).toEqual(['empty', 'empty', 'partial', 'partial']);
+  });
+
+  it('handles mixed Booktime wall booking + true-UTC game times', () => {
+    // Raw Booktime-shaped wall times (pre-ingest) vs Prisma toISOString game window.
+    const booking = {
+      uuid: 'booking-1',
+      bookingStart: '2026-07-27T09:00:00.000Z',
+      bookingEnd: '2026-07-27T11:00:00.000Z',
+      bookingResourceId: 'ext-a',
+    };
+    expect(
+      linkedGamesBookingSlotOccupancyPercent(
+        booking,
+        [
+          {
+            timeIsSet: true,
+            startTime: '2026-07-27T08:00:00.000Z',
+            endTime: '2026-07-27T09:00:00.000Z',
+            linkBookingStart: booking.bookingStart,
+            linkBookingEnd: booking.bookingEnd,
+          },
+        ],
+        TZ,
+      ),
+    ).toBe(50);
+    expect(
+      linkedGamesBookingSlotSegments(
+        booking,
+        [
+          {
+            timeIsSet: true,
+            startTime: '2026-07-27T08:00:00.000Z',
+            endTime: '2026-07-27T09:00:00.000Z',
+            linkBookingStart: booking.bookingStart,
+            linkBookingEnd: booking.bookingEnd,
+          },
+        ],
+        TZ,
+      ),
+    ).toEqual(['empty', 'empty', 'partial', 'partial']);
   });
 
   it('returns all full when a link exists but game times do not overlap', () => {

@@ -116,7 +116,7 @@ export function BooktimeBookingRow({
   const [cancelBusy, setCancelBusy] = useState(false);
   const { linkedGame, linkedGames: fetchedLinkedGames, reload: reloadLinkedGame } = useBooktimeLinkedGame(
     booking.uuid,
-    !selectable && !readOnly && linkedGamesProp === undefined,
+    !selectable && linkedGamesProp === undefined,
   );
   const linkedGames = linkedGamesProp ?? fetchedLinkedGames;
   const [cancelDoneBanner, setCancelDoneBanner] = useState<BooktimeLinkedGame | null>(null);

@@ -23,7 +23,11 @@ import {
   type FindDisplayEntityType,
   type FindFilterState,
 } from '@/utils/findFilter';
-import { countFindDayIndexByDay, type FindDayIndexRow } from '@/utils/findDayIndexCounts';
+import {
+  aggregateFindDayIndexByDay,
+  mergeFindDayIndexIntoCardDays,
+  type FindDayIndexRow,
+} from '@/utils/findDayIndexCounts';
 import { useMonthCalendarWeather } from '@/hooks/useMonthCalendarWeather';
 import { MonthCalendarWeatherPill } from '@/components/MonthCalendarWeatherPill';
 import { MonthCalendarWeatherToggle } from '@/components/MonthCalendarWeatherToggle';
@@ -208,32 +212,13 @@ export const MonthCalendar = ({
     );
     if (!dayIndex || dayIndex.length === 0) return fromCards;
 
-    const indexCounts = countFindDayIndexByDay(
+    const indexByDay = aggregateFindDayIndexByDay(
       dayIndex,
       findFilterViewer,
       findFilterState,
       cityTimezone,
     );
-    const merged = new Map(fromCards);
-    for (const [day, count] of indexCounts) {
-      const existing = merged.get(day);
-      if (existing) {
-        existing.gameCount = count;
-        merged.set(day, existing);
-      } else {
-        merged.set(day, {
-          gameCount: count,
-          gameIds: [],
-          unreadCount: 0,
-          hasLeagueTournament: false,
-          isUserParticipant: false,
-          hasTraining: false,
-          participantEntityTypes: new Set(),
-          entityTypes: new Set(),
-        });
-      }
-    }
-    return merged;
+    return mergeFindDayIndexIntoCardDays(fromCards, indexByDay);
   }, [availableGames, dayIndex, findFilterViewer, findFilterState, gamesUnreadCounts, user?.currentCity?.timezone]);
 
   const notifyMonthChange = (month: Date) => {

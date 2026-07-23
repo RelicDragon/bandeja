@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { Loader2, RefreshCw } from 'lucide-react';
 import type { Club, Court, Game } from '@/types';
-import type { BooktimeMyClubRow } from '@/api/booktime';
+import type { BooktimeLinkedGame, BooktimeMyClubRow } from '@/api/booktime';
 import type { UserBooktimeBookingIdsResult } from '@/integrations/booktime/userBookingsCheck';
 import { gamesApi } from '@/api';
 import { BooktimeBookingRow } from '@/components/booktime/BooktimeBookingRow';
@@ -27,6 +27,17 @@ type LinkedBookingListItemProps = {
   onBookingUnlinked?: () => void | Promise<void>;
 };
 
+function toOccupancyLinkedGame(game: Game): BooktimeLinkedGame {
+  return {
+    id: game.id,
+    name: game.name ?? null,
+    startTime: game.startTime,
+    endTime: game.endTime,
+    timeIsSet: game.timeIsSet === true,
+    status: game.status,
+  };
+}
+
 export function LinkedBookingListItem({
   link,
   game,
@@ -44,7 +55,9 @@ export function LinkedBookingListItem({
   const [refreshing, setRefreshing] = useState(false);
   const [absentOpen, setAbsentOpen] = useState(false);
   const [unlinkBusy, setUnlinkBusy] = useState(false);
-  const { linkedGames } = useBooktimeLinkedGames(link.externalBookingId, absentOpen);
+  const seedLinkedGames = useMemo(() => [toOccupancyLinkedGame(game)], [game]);
+  const { linkedGames: fetchedLinkedGames } = useBooktimeLinkedGames(link.externalBookingId, true);
+  const linkedGames = fetchedLinkedGames.length > 0 ? fetchedLinkedGames : seedLinkedGames;
 
   const court =
     courts.find((c) => c.id === link.courtId) ??
@@ -137,6 +150,7 @@ export function LinkedBookingListItem({
         compact
         clubTimezone={clubTimezone}
         courtOverride={courtOverride}
+        linkedGames={linkedGames}
         trailing={isOwner || (!readOnly && onRemove) ? trailing : undefined}
       />
       <LinkedBookingAbsentModal
