@@ -94,7 +94,7 @@ describe('useAvailableGamesQuery', () => {
 
     expect(getAvailableGames).toHaveBeenCalledWith(
       expect.objectContaining({
-        showArchived: false,
+        showArchived: true,
         includeLeagues: true,
         startDate: '2026-06-01',
         endDate: '2026-06-30',

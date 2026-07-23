@@ -32,9 +32,10 @@ export function buildAvailableGamesApiParams(
   pagination?: { take?: number; cursor?: string },
 ) {
   const apiParams: Parameters<typeof gamesApi.getAvailableGames>[0] = {
-    // Never pull ARCHIVED into Find calendar — ASC month pages fill with history
-    // and truncate away live/upcoming days (badges fall back to cards; list goes empty).
-    showArchived: false,
+    // Calendar keeps ARCHIVED so past days stay browsable on Find. Month ASC
+    // truncation is handled by dayIndex badges + day-scoped selected-day fetch
+    // (a single day is never flooded by other days' archive).
+    showArchived: true,
     includeLeagues: !!params.includeLeagues,
     mode: 'calendar',
     format: 'card',
