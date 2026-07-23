@@ -15,6 +15,7 @@ import {
   listSelectableSports,
   resolveActivePrimarySport,
   resolveCreateGameDefaultSport,
+  resolveProfileCardSport,
   resolveProfileHeaderLevel,
   resolveTrainingEditDefaults,
   shouldShowSportLevelBadge,
@@ -72,6 +73,64 @@ describe('profileSports', () => {
       sportsEnabled: ['TENNIS'],
     });
     expect(resolveActivePrimarySport(user)).toBe('TENNIS');
+  });
+
+  it('resolveProfileCardSport prefers viewer primary when subject has it', () => {
+    const subject = baseUser({
+      primarySport: 'PADEL',
+      sportsEnabled: ['PADEL', 'TENNIS'],
+    });
+    const viewer = baseUser({
+      id: 'viewer',
+      primarySport: 'TENNIS',
+      sportsEnabled: ['TENNIS'],
+    });
+    expect(resolveProfileCardSport(subject, viewer)).toBe('TENNIS');
+  });
+
+  it('resolveProfileCardSport falls back to subject primary when viewer sport missing', () => {
+    const subject = baseUser({
+      primarySport: 'PADEL',
+      sportsEnabled: ['PADEL'],
+    });
+    const viewer = baseUser({
+      id: 'viewer',
+      primarySport: 'TENNIS',
+      sportsEnabled: ['TENNIS'],
+    });
+    expect(resolveProfileCardSport(subject, viewer)).toBe('PADEL');
+  });
+
+  it('resolveProfileCardSport prefers open hint when subject has it', () => {
+    const subject = baseUser({
+      primarySport: 'PADEL',
+      sportsEnabled: ['PADEL', 'TENNIS'],
+    });
+    const viewer = baseUser({
+      id: 'viewer',
+      primarySport: 'PADEL',
+      sportsEnabled: ['PADEL'],
+    });
+    expect(resolveProfileCardSport(subject, viewer, 'TENNIS')).toBe('TENNIS');
+  });
+
+  it('resolveProfileCardSport ignores open hint subject lacks', () => {
+    const subject = baseUser({
+      primarySport: 'PADEL',
+      sportsEnabled: ['PADEL'],
+    });
+    const viewer = baseUser({
+      id: 'viewer',
+      primarySport: 'TENNIS',
+      sportsEnabled: ['TENNIS'],
+    });
+    expect(resolveProfileCardSport(subject, viewer, 'TENNIS')).toBe('PADEL');
+  });
+
+  it('resolveProfileCardSport returns undefined when subject has no sports', () => {
+    const subject = baseUser({ sportsEnabled: [] });
+    const viewer = baseUser({ primarySport: 'TENNIS', sportsEnabled: ['TENNIS'] });
+    expect(resolveProfileCardSport(subject, viewer)).toBeUndefined();
   });
 
   it('detects multi-sport for leaderboard picker', () => {

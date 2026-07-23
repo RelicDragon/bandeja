@@ -1,6 +1,10 @@
 import Foundation
 import Observation
 
+extension Notification.Name {
+    static let watchLiveScoringRelayDidUpdate = Notification.Name("bandeja.watch.liveScoringRelayDidUpdate")
+}
+
 struct WatchLiveScoringRelayMessage: Sendable {
     let gameId: String
     let matchId: String
@@ -61,6 +65,7 @@ final class WatchLiveScoringRelayStore {
         guard let message = WatchLiveScoringRelayMessage(dict: dict) else { return }
         lastMessage = message
         tick += 1
+        NotificationCenter.default.post(name: .watchLiveScoringRelayDidUpdate, object: nil)
     }
 
     func markApplied(gameId: String, matchId: String, revision: Int) {

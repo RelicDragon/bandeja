@@ -3,6 +3,10 @@ import HealthKit
 import Observation
 import os
 
+extension Notification.Name {
+    static let watchWorkoutSessionDidFail = Notification.Name("bandeja.watch.workoutSessionDidFail")
+}
+
 private struct WorkoutUploadBody: Encodable, Sendable {
     let durationSeconds: Int
     let totalEnergyKcal: Double?
@@ -49,9 +53,16 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
 
     func recoverIfNeeded() async {
         guard HKHealthStore.isHealthDataAvailable() else { return }
+        if isActive, session != nil {
+            if let s = session { sessionState = s.state }
+            if let b = builder { elapsedSeconds = b.elapsedTime }
+            return
+        }
         do {
             guard let recovered = try await healthStore.recoverActiveWorkoutSession() else {
-                ud?.removeObject(forKey: Self.activeGameIdKey)
+                if !isActive {
+                    ud?.removeObject(forKey: Self.activeGameIdKey)
+                }
                 return
             }
             session = recovered
@@ -67,7 +78,9 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
             authDenied = false
         } catch {
             Self.log.error("recoverActiveWorkoutSession failed: \(error.localizedDescription, privacy: .public)")
-            ud?.removeObject(forKey: Self.activeGameIdKey)
+            if !isActive {
+                ud?.removeObject(forKey: Self.activeGameIdKey)
+            }
         }
     }
 
@@ -99,18 +112,21 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         config.activityType = .paddleSports
         config.locationType = isIndoor ? .indoor : .outdoor
 
+        var startedSession: HKWorkoutSession?
+        var startedBuilder: HKLiveWorkoutBuilder?
         do {
             let newSession = try HKWorkoutSession(healthStore: healthStore, configuration: config)
             let newBuilder = newSession.associatedWorkoutBuilder()
             newBuilder.dataSource = HKLiveWorkoutDataSource(healthStore: healthStore, workoutConfiguration: config)
             newSession.delegate = self
             newBuilder.delegate = self
+            startedSession = newSession
+            startedBuilder = newBuilder
 
             let start = Date()
             workoutStartDate = start
             newSession.startActivity(with: start)
             try await newBuilder.beginCollection(at: start)
-            try? await newSession.startMirroringToCompanionDevice()
 
             session = newSession
             builder = newBuilder
@@ -124,19 +140,50 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
             elapsedSeconds = newBuilder.elapsedTime
         } catch {
             Self.log.error("startIfNeeded failed: \(error.localizedDescription, privacy: .public)")
-            session = nil
-            builder = nil
-            activeGameId = nil
-            workoutStartDate = nil
-            isActive = false
-            sessionState = .notStarted
-            ud?.removeObject(forKey: Self.activeGameIdKey)
+            await tearDownFailedStart(session: startedSession, builder: startedBuilder)
         }
+    }
+
+    private func tearDownFailedStart(session failedSession: HKWorkoutSession?, builder failedBuilder: HKLiveWorkoutBuilder?) async {
+        let end = Date()
+        if let failedSession {
+            failedSession.stopActivity(with: end)
+        }
+        if let failedBuilder {
+            do {
+                try await failedBuilder.endCollection(at: end)
+                failedBuilder.discardWorkout()
+            } catch {
+                Self.log.error("tearDownFailedStart discard failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+        failedSession?.end()
+        clearStateAfterSession()
     }
 
     func discardIfStillActive(gameId: String) async {
         guard activeGameId == gameId, isActive else { return }
         await discardWorkout()
+    }
+
+    /// Idle launch / abandon with no scoring session: upload if we still know the game, else discard.
+    func reclaimOrDiscardOrphan() async {
+        if !isActive {
+            await recoverIfNeeded()
+        }
+        guard isActive else { return }
+        if let gid = activeGameId {
+            await endSessionUploadAndClear(gameId: gid)
+        } else {
+            await discardWorkout()
+        }
+    }
+
+    /// Bind a recovered HK session that lost its App Group game id.
+    func adoptActiveGameIdIfMissing(_ gameId: String) {
+        guard isActive, session != nil, activeGameId == nil else { return }
+        activeGameId = gameId
+        ud?.set(gameId, forKey: Self.activeGameIdKey)
     }
 
     func togglePauseResume() {
@@ -181,6 +228,7 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
             guard let workout = try await builder.finishWorkout() else {
                 throw NSError(domain: "WorkoutManager", code: 1)
             }
+            session.end()
 
             let startDate = workout.startDate
             let endDate = workout.endDate
@@ -206,11 +254,13 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
                 healthExternalId: workout.uuid.uuidString
             )
             await uploadSummaryWithRetries(gameId: gameId, body: body)
+            clearStateAfterSession()
         } catch {
             Self.log.error("endSession HealthKit pipeline failed: \(error.localizedDescription, privacy: .public)")
+            builder.discardWorkout()
+            session.end()
+            clearStateAfterSession()
         }
-
-        clearStateAfterSession()
     }
 
     private func uploadSummaryWithRetries(gameId: String, body: WorkoutUploadBody) async {
@@ -275,6 +325,7 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
         } catch {
             Self.log.error("discardWorkout failed: \(error.localizedDescription, privacy: .public)")
         }
+        session.end()
         clearStateAfterSession()
     }
 
@@ -319,10 +370,10 @@ final class WorkoutManager: NSObject, HKWorkoutSessionDelegate, HKLiveWorkoutBui
 
     nonisolated func workoutSession(_ workoutSession: HKWorkoutSession, didFailWithError error: Error) {
         Task { @MainActor in
-            if let s = self.session, ObjectIdentifier(s) == ObjectIdentifier(workoutSession) {
-                Self.log.error("HKWorkoutSession failed: \(error.localizedDescription, privacy: .public)")
-                self.clearStateAfterSession()
-            }
+            guard let s = self.session, ObjectIdentifier(s) == ObjectIdentifier(workoutSession) else { return }
+            Self.log.error("HKWorkoutSession failed: \(error.localizedDescription, privacy: .public)")
+            await self.discardWorkout()
+            NotificationCenter.default.post(name: .watchWorkoutSessionDidFail, object: nil)
         }
     }
 }

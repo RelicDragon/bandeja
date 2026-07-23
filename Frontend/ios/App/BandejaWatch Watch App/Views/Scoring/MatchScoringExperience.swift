@@ -115,13 +115,10 @@ struct MatchScoringExperience: View {
             scheduleRemoteAttributionDismiss()
         }
         .onAppear {
-            vm.startLiveScoringRemotePolling()
             pushWidgetSnapshot()
         }
         .onDisappear {
             remoteAttributionDismissTask?.cancel()
-            vm.stopLiveScoringRemotePolling()
-            WatchLiveActiveSnapshotStore.clear()
         }
         .onChange(of: vm.sets) { _, _ in pushWidgetSnapshot() }
         .onChange(of: vm.activeSetIndex) { _, _ in pushWidgetSnapshot() }

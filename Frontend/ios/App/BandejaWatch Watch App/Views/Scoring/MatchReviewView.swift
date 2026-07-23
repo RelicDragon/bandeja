@@ -22,6 +22,11 @@ struct MatchReviewView: View {
                 }
             }
             if !vm.isReadOnly {
+                if let err = vm.error {
+                    Text(err.localizedDescription)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                }
                 Button(WatchCopy.backToScoring(lang)) { onBack() }
                     .buttonStyle(.bordered)
                 Button(vm.isSaving ? WatchCopy.saving(lang) : WatchCopy.finishMatch(lang)) { onFinish() }

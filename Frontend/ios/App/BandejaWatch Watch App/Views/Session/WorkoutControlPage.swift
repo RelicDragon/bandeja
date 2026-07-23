@@ -120,7 +120,20 @@ struct WorkoutControlPage: View {
 
     @ViewBuilder
     private func metricsSection(lang: String) -> some View {
-        if workout.isActive, workout.activeGameId == gameId, !workout.authDenied {
+        if workout.authDenied {
+            VStack(spacing: 6) {
+                Text(WatchCopy.workoutHealthDenied(lang))
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .multilineTextAlignment(.center)
+                Button(WatchCopy.retry(lang)) {
+                    Task { await session.retryWorkoutStart() }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
+            }
+            .frame(maxWidth: .infinity)
+        } else if workout.isActive, workout.activeGameId == gameId {
             VStack(alignment: .leading, spacing: 6) {
                 metricRow(icon: "flame.fill", color: .orange, text: WatchCopy.workoutKcal(lang, value: Int(workout.activeCalories.rounded())))
                 if workout.heartRate > 0 {
@@ -137,6 +150,19 @@ struct WorkoutControlPage: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
+        } else if mode == .matchActive {
+            VStack(spacing: 6) {
+                Text(WatchCopy.workoutNotTracking(lang))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Button(WatchCopy.retry(lang)) {
+                    Task { await session.retryWorkoutStart() }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.mini)
+            }
+            .frame(maxWidth: .infinity)
         }
     }
 

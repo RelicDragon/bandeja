@@ -19,6 +19,7 @@ import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionB
 import { SportLevelProvider } from '@/contexts/SportLevelContext';
 import { parseLevelSportQuery } from '@/utils/levelSportQuery';
 import { usePlayerProfile } from '@/features/playerProfile';
+import { resolveActivePrimarySport } from '@/utils/profileSports';
 import type { Sport } from '@shared/sport';
 
 export const UserProfilePage = () => {
@@ -36,13 +37,17 @@ export const UserProfilePage = () => {
   const [profileSportOverride, setProfileSportOverride] = useState<{ userId: string; sport: Sport } | null>(null);
   const showTelegram = !!user;
   const [searchParams] = useSearchParams();
+  const sportFromUrl = parseLevelSportQuery(searchParams.get('sport'));
+  const viewerPrimarySport = user ? resolveActivePrimarySport(user) ?? undefined : undefined;
   const resolvedProfileSport =
     userId && profileSportOverride?.userId === userId
       ? profileSportOverride.sport
       : undefined;
   const handleCompetitiveSportChange = useCallback((sport: Sport) => {
     if (!userId) return;
-    setProfileSportOverride({ userId, sport });
+    setProfileSportOverride((prev) =>
+      prev?.userId === userId && prev.sport === sport ? prev : { userId, sport },
+    );
   }, [userId]);
 
   const {
@@ -56,8 +61,7 @@ export const UserProfilePage = () => {
     blockingUser,
     actions,
   } = usePlayerProfile(userId, {
-    levelSport: resolvedProfileSport,
-    sportFromUrl: parseLevelSportQuery(searchParams.get('sport')),
+    levelSport: resolvedProfileSport ?? sportFromUrl ?? viewerPrimarySport,
     presenceKey: 'user-profile-page',
     onBlocked: () => handleBack(navigate),
     onShareFallback: (url) => {
@@ -231,6 +235,7 @@ export const UserProfilePage = () => {
                   activeProfileTab={profileTab}
                   onProfileTabChange={setProfileTab}
                   onStatsRefresh={setStats}
+                  sportHint={sportFromUrl}
                   prependBeforeLevelHistory={!user ? <PublicGamePrompt variant="profile" /> : undefined}
                   onAvatarClick={() => {
                     if (!stats.user.originalAvatar) return;

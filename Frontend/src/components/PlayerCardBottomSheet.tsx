@@ -28,6 +28,8 @@ import { PlayerCardCommonGroups } from '@/components/player/PlayerCardCommonGrou
 import { PlayerProfileSocialActions } from '@/components/player/PlayerProfileSocialActions';
 import { PlayerProfileActionBar } from '@/components/player/PlayerProfileActionBar';
 import { usePlayerProfile } from '@/features/playerProfile';
+import { resolveActivePrimarySport } from '@/utils/profileSports';
+import { useSportLevelContext } from '@/contexts/useSportLevelContext';
 
 interface PlayerCardBottomSheetProps {
   playerId: string | null;
@@ -38,6 +40,8 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const openSportHint = useSportLevelContext();
+  const viewerPrimarySport = user ? resolveActivePrimarySport(user) ?? undefined : undefined;
   const [avatarViewerUrl, setAvatarViewerUrl] = useState<string | null>(null);
   const [showReviewsView, setShowReviewsView] = useState(false);
   const [showSendMoneyModal, setShowSendMoneyModal] = useState(false);
@@ -57,7 +61,9 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       : undefined;
   const handleCompetitiveSportChange = useCallback((sport: Sport) => {
     if (!playerId) return;
-    setProfileSportOverride({ playerId, sport });
+    setProfileSportOverride((prev) =>
+      prev?.playerId === playerId && prev.sport === sport ? prev : { playerId, sport },
+    );
   }, [playerId]);
 
   const markReopenOnBack = useCallback(() => {
@@ -115,13 +121,22 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
   }, [navigate, onClose, playerId, user?.id]);
 
   const playerProfileOptions = useMemo(() => ({
-    levelSport: resolvedProfileSport,
+    // Open/game hint → viewer primary; body corrects if subject lacks the sport.
+    levelSport: resolvedProfileSport ?? openSportHint ?? viewerPrimarySport,
     presenceKey: 'player-card',
     onBlocked: handleClose,
     onShareFallback: handleShareFallback,
     onStartChat: handleProfileStartChat,
     onOpenFullProfile: handleOpenFullProfile,
-  }), [resolvedProfileSport, handleClose, handleShareFallback, handleProfileStartChat, handleOpenFullProfile]);
+  }), [
+    resolvedProfileSport,
+    openSportHint,
+    viewerPrimarySport,
+    handleClose,
+    handleShareFallback,
+    handleProfileStartChat,
+    handleOpenFullProfile,
+  ]);
 
   const {
     stats,
@@ -455,6 +470,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         onMarketItemClick={handleMarketItemClick}
                         onStatsRefresh={setStats}
                         onCompetitiveSportChange={handleCompetitiveSportChange}
+                        sportHint={openSportHint}
                         playStreakAliveOnly
                       />
                     </motion.div>

@@ -29,7 +29,6 @@ struct BandejaWatchApp: App {
                     .environment(gameListVM)
                     .environment(ActiveSessionManager.shared)
                     .task {
-                        await WorkoutManager.shared.recoverIfNeeded()
                         await ActiveSessionManager.shared.recoverIfNeeded()
                         await NetworkDeliveryOutbox.shared.flush()
                         await WorkoutSyncOutbox.shared.flush()

@@ -63,6 +63,14 @@ final class MatchScoringViewModel {
     private var remoteLivePollTask: Task<Void, Never>?
     private var relayObserveTask: Task<Void, Never>?
     private var lastObservedRelayTick = 0
+    /// Bumps on every local score mutation so ACK envelopes cannot wipe newer points.
+    private var localScoreGeneration = 0
+    /// Last generation successfully acknowledged / merged from remote.
+    private var ackedScoreGeneration = 0
+
+    private var hasUnackedLocalEdits: Bool {
+        localScoreGeneration > ackedScoreGeneration
+    }
 
     var rules: WatchScoringRules { WatchScoringRulebook.rules(for: game) }
 
@@ -444,8 +452,10 @@ final class MatchScoringViewModel {
         relayObserveTask?.cancel()
         lastObservedRelayTick = WatchLiveScoringRelayStore.shared.tick
         relayObserveTask = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 150_000_000)
+            self?.consumePendingLiveScoringRelayIfNeeded()
+            let stream = NotificationCenter.default.notifications(named: .watchLiveScoringRelayDidUpdate)
+            for await _ in stream {
+                guard !Task.isCancelled else { return }
                 self?.consumePendingLiveScoringRelayIfNeeded()
             }
         }
@@ -501,6 +511,7 @@ final class MatchScoringViewModel {
     func saveCurrentSets() async {
         guard !isReadOnly else { return }
         guard let match else { return }
+        error = nil
         let persistedSets = sets
         allowsRemoteLiveScoringMerge = false
         liveSaveTask?.cancel()
@@ -527,6 +538,7 @@ final class MatchScoringViewModel {
             )
             try await api.sendVoid(.updateMatch(gameId: gameId, matchId: match.id), body: body)
             sets = persistedSets
+            self.error = nil
             WatchSessionManager.shared.notifyScoreUpdated(
                 gameId: gameId,
                 matchId: match.id
@@ -541,6 +553,7 @@ final class MatchScoringViewModel {
                     teamB: teamBIds,
                     sets: persistedSets
                 )
+                self.error = nil
             } else {
                 self.error = error
             }
@@ -552,7 +565,7 @@ final class MatchScoringViewModel {
     }
 
     func incrementAmericanoTeamA() {
-        guard !isReadOnly else { return }
+        guard !isReadOnly, !isSaving else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -596,7 +609,7 @@ final class MatchScoringViewModel {
     }
 
     func decrementAmericanoTeamA() {
-        guard !isReadOnly else { return }
+        guard !isReadOnly, !isSaving else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
         if timedClassicSetLocked, !activeSetIsSupplemental { return }
         if activeSetIsSupplemental {
@@ -619,7 +632,7 @@ final class MatchScoringViewModel {
     }
 
     func incrementAmericanoTeamB() {
-        guard !isReadOnly else { return }
+        guard !isReadOnly, !isSaving else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
         if activeSetIsSupplemental {
             ensureSetExists(activeSetIndex)
@@ -663,7 +676,7 @@ final class MatchScoringViewModel {
     }
 
     func decrementAmericanoTeamB() {
-        guard !isReadOnly else { return }
+        guard !isReadOnly, !isSaving else { return }
         guard usesBallCapPerSetUI, activeSetIndex < sets.count else { return }
         if timedClassicSetLocked, !activeSetIsSupplemental { return }
         if activeSetIsSupplemental {
@@ -691,7 +704,7 @@ final class MatchScoringViewModel {
     }
 
     func unscorePoint(_ side: TeamSide) {
-        guard !isReadOnly, !usesBallCapPerSetUI else { return }
+        guard !isReadOnly, !isSaving, !usesBallCapPerSetUI else { return }
         let engineState = liveScoringEngineState()
         guard WatchLiveScoringEngine.canUnscore(state: engineState, side: side, rules: rules) else { return }
         defer { scheduleLiveScoringSave() }
@@ -712,15 +725,24 @@ final class MatchScoringViewModel {
         WatchScoreHaptics.undo()
     }
 
-    /// Clears modal scoring state before the review screen.
-    func prepareForMatchReview() {
+    /// Clears modal scoring state before the review screen; flushes pending live save first.
+    func prepareForMatchReview() async {
         pendingSetFormatChoiceIndex = nil
+        allowsRemoteLiveScoringMerge = false
+        await flushLiveScoringSnapshot()
         stopLiveScoringRemotePolling()
+    }
+
+    func resumeAfterMatchReview() {
+        syncOptionalDeciderPendingAfterEnvelopeMerge()
+        startLiveScoringRemotePolling()
+        scheduleLiveScoringSave()
     }
 
     func cancelSetFormatChoice() {
         pendingSetFormatChoiceIndex = nil
-        scheduleLiveScoringSave()
+        // Mandatory optional-decider: restore pending so scoring stays gated and dialog can reopen.
+        syncOptionalDeciderPendingAfterEnvelopeMerge()
     }
 
     func confirmSetFormatNormal() {
@@ -916,7 +938,7 @@ final class MatchScoringViewModel {
     }
 
     func scorePoint(_ side: TeamSide) {
-        guard !isReadOnly else { return }
+        guard !isReadOnly, !isSaving else { return }
         if usesTennisSetRules, !activeSetIsSupplemental, optionalDeciderChoicePending() { return }
         if usesTennisSetRules, !activeSetIsSupplemental, timedClassicSetLocked { return }
         if !activeSetIsSupplemental, blocksFurtherOfficialTaps() { return }
@@ -1026,8 +1048,21 @@ final class MatchScoringViewModel {
     func applyLiveScoringEnvelopeIfNewer(_ envelope: WatchLiveScoringEnvelope?, force: Bool) {
         guard force || allowsRemoteLiveScoringMerge else { return }
         guard let envelope, envelope.isSupported, envelope.revision > liveScoringRevision else { return }
+
+        // Unacked local taps win over remote until we push; never wipe the board mid-rally.
+        if !force, hasUnackedLocalEdits {
+            liveScoringRevision = max(liveScoringRevision, envelope.revision)
+            if liveSaveTask == nil {
+                scheduleLiveScoringSave()
+            }
+            return
+        }
+
         guard let state = envelope.state else {
             liveScoringRevision = envelope.revision
+            if force {
+                ackedScoreGeneration = localScoreGeneration
+            }
             return
         }
         maybeQueueRemoteWriterAttribution(envelope: envelope)
@@ -1086,6 +1121,7 @@ final class MatchScoringViewModel {
         officiatingLetPending = state.officiatingLetPending == true
         cacheServeSeedToOfflineStore()
         normalizeLiveSetsAfterDecisionIfNeeded()
+        ackedScoreGeneration = localScoreGeneration
     }
 
     func dismissRemoteWriterAttribution() {
@@ -1207,6 +1243,7 @@ final class MatchScoringViewModel {
     private func scheduleLiveScoringSave() {
         guard !isReadOnly else { return }
         guard !openEndedPresetBlocksLivePatch else { return }
+        localScoreGeneration += 1
         liveSaveTask?.cancel()
         liveSaveTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 350_000_000)
@@ -1219,6 +1256,7 @@ final class MatchScoringViewModel {
         guard !openEndedPresetBlocksLivePatch else { return }
         liveSaveTask?.cancel()
         liveSaveTask = nil
+        let generationAtSend = localScoreGeneration
         let body = WatchPatchLiveScoringBody(
             state: makeLiveScoringState(),
             baseRevision: liveScoringRevision,
@@ -1231,12 +1269,24 @@ final class MatchScoringViewModel {
             if let envelope = response.liveScoring {
                 noteAcknowledgedOwnClientMessageId(envelope)
                 if applyEnvelope {
-                    applyLiveScoringEnvelopeIfNewer(envelope, force: true)
+                    if localScoreGeneration == generationAtSend {
+                        applyLiveScoringEnvelopeIfNewer(envelope, force: true)
+                        ackedScoreGeneration = generationAtSend
+                    } else {
+                        liveScoringRevision = max(liveScoringRevision, envelope.revision)
+                        scheduleLiveScoringSave()
+                    }
                 } else {
                     liveScoringRevision = max(liveScoringRevision, envelope.revision)
+                    ackedScoreGeneration = generationAtSend
                 }
             } else {
-                liveScoringRevision = response.revision
+                liveScoringRevision = max(liveScoringRevision, response.revision)
+                if applyEnvelope, localScoreGeneration != generationAtSend {
+                    scheduleLiveScoringSave()
+                } else {
+                    ackedScoreGeneration = generationAtSend
+                }
             }
             WatchSessionManager.shared.notifyScoreUpdated(
                 gameId: gameId,
@@ -1246,13 +1296,20 @@ final class MatchScoringViewModel {
         } catch let api as APIError {
             if case .liveScoringRevisionMismatch(_, let serverEnvelope) = api {
                 if applyEnvelope {
-                    if let serverEnvelope {
-                        applyLiveScoringEnvelopeIfNewer(serverEnvelope, force: true)
-                    } else {
-                        await pollLiveScoringEnvelopeFromServer()
+                    if localScoreGeneration == generationAtSend {
+                        if let serverEnvelope {
+                            applyLiveScoringEnvelopeIfNewer(serverEnvelope, force: true)
+                            ackedScoreGeneration = generationAtSend
+                        } else {
+                            await pollLiveScoringEnvelopeFromServer()
+                        }
+                    } else if let serverEnvelope {
+                        liveScoringRevision = max(liveScoringRevision, serverEnvelope.revision)
+                        scheduleLiveScoringSave()
                     }
                 } else if let serverEnvelope {
                     liveScoringRevision = max(liveScoringRevision, serverEnvelope.revision)
+                    ackedScoreGeneration = generationAtSend
                 }
                 NetworkDeliveryOutbox.shared.removeLivePatch(matchId: matchId)
                 return

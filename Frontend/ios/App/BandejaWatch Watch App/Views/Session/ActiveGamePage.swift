@@ -27,7 +27,6 @@ struct ActiveGamePage: View {
         }
         .navigationTitle(WatchCopy.matches(lang))
         .task(id: gameId) {
-            await WorkoutManager.shared.recoverIfNeeded()
             if let svm = session.scoringViewModel, svm.gameId == gameId {
                 if svm.results == nil, !svm.isLoading {
                     await svm.load()

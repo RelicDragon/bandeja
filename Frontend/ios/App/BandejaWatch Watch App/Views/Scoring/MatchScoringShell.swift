@@ -55,13 +55,36 @@ struct MatchScoringShell: View {
             if vm.isLoading && vm.match == nil {
                 ProgressView(WatchCopy.loadingEllipsis(lang))
             } else if let error = vm.error, vm.match == nil {
-                Text(error.localizedDescription).font(.caption2)
+                VStack(spacing: 8) {
+                    Text(error.localizedDescription)
+                        .font(.caption2)
+                        .multilineTextAlignment(.center)
+                    Button(WatchCopy.retry(lang)) {
+                        Task {
+                            await vm.load()
+                            if !vm.isReadOnly, vm.match != nil {
+                                vm.startLiveScoringRemotePolling()
+                            }
+                        }
+                    }
+                    .buttonStyle(.bordered)
+                    if entry == .session {
+                        Button(WatchCopy.backToMatches(lang)) {
+                            Task { await session.returnToGameActiveFromMatch() }
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.mini)
+                    }
+                }
             } else if vm.isReadOnly, vm.match != nil {
                 readOnlyContent
             } else if isReviewing {
                 MatchReviewView(
                     vm: vm,
-                    onBack: { isReviewing = false },
+                    onBack: {
+                        isReviewing = false
+                        vm.resumeAfterMatchReview()
+                    },
                     onFinish: saveAndComplete
                 )
             } else {
@@ -81,7 +104,17 @@ struct MatchScoringShell: View {
         }
         .modifier(MatchScoringShellLoadModifier(entry: entry, matchId: matchId) {
             await vm.load()
+            if !vm.isReadOnly, vm.match != nil {
+                vm.startLiveScoringRemotePolling()
+            }
         })
+        .onDisappear {
+            Task {
+                await vm.flushLiveScoringSnapshot()
+                vm.stopLiveScoringRemotePolling()
+                WatchLiveActiveSnapshotStore.clear()
+            }
+        }
         .onChange(of: session.finishMatchSignal) { _, newVal in
             guard entry == .session else { return }
             guard newVal > lastFinishSignal else { return }
@@ -102,6 +135,9 @@ struct MatchScoringShell: View {
             resetPageIfGuideHidden(whenGuideHidden: skipped)
         }
         .alert(WatchCopy.finishMatch(lang), isPresented: $showReadOnlyFinishAlert) {
+            Button(WatchCopy.backToMatches(lang)) {
+                Task { await session.returnToGameActiveFromMatch() }
+            }
             Button(WatchCopy.close(lang), role: .cancel) {}
         } message: {
             Text(WatchCopy.sessionCannotFinishReadOnly(lang))
@@ -180,8 +216,10 @@ struct MatchScoringShell: View {
     }
 
     private func beginReview() {
-        vm.prepareForMatchReview()
-        isReviewing = true
+        Task {
+            isReviewing = true
+            await vm.prepareForMatchReview()
+        }
     }
 
     private func saveAndComplete() {

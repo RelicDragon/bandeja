@@ -871,6 +871,13 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | LS-33 | Mid-match serve setup gate | `@watch` Open scoring when live envelope has points but no serve seed | Setup overlay blocks scoring until resolved or skipped; matches web `needsServeSetup` (#178 edge) |
 | LS-34 | Finish match persists score | `@watch` Score several games → Finish Match → confirm on review (optional: `@two devices` phone on same live game) | Review and saved results match scored sets; no reset to 0–0 during review/save |
 | LS-35 | Watch dev/staging API host | Build iPhone app with non-prod `VITE_API_BASE_URL` → open app (login if needed) → open `@watch` game list / score a point | Watch REST calls hit same host as phone (not hardcoded prod); avatars load from that host; prod build unchanged |
+| LS-36 | Watch Play starts workout without quit | `@watch` active game → tap Play on a match → lower wrist / leave app briefly → raise wrist | App stays in match scoring (not force-quit to watch face); workout session remains active; green Play overlay gone |
+| LS-37 | Watch workout Health denied retry | `@watch` deny Health on first Play → swipe to workout page → Retry after allowing Health | Metrics appear; `workoutStartedForGame` true; later matches auto-resume |
+| LS-38 | Watch rapid score during live PATCH | `@watch` score several points quickly while network is slow | No points wiped after ACK; board matches taps; revision catches up |
+| LS-39 | Watch tab swipe keeps live sync | `@watch` score a point → swipe to workout page → swipe back → score again | Pending live PATCH flushed; no lost points; polling still active after return |
+| LS-40 | Watch HK fail shows retry | `@watch` mid-match if workout session fails (or Force Quit Health) → open workout page | “Workout not started” + Retry restores tracking |
+| LS-41 | Watch load-fail escape | `@watch` Play → network fail on match load | Retry reloads; Back to matches returns to game match list (not trapped) |
+| LS-42 | Watch dirty local beats remote poll | `@watch` score a point then immediately receive older/newer phone revision before ACK | Local point stays; later push reconciles; board never snaps backward mid-rally |
 
 ---
 
@@ -1166,6 +1173,11 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-74 | Avatar checkmark follows badge sport | Same user in padel game roster vs tennis game roster | Checkmark only when that game’s sport is confirmed |
 | PR-75 | Multi-sport picker above profile tabs | Open player card / `/user-profile/:id` for multi-sport user | Sport picker above Statistics/Levels(/Groups); sport change updates both tabs; no cross-user flash; no wrong-sport stats flash |
 | PR-76 | Single-sport no external picker | Open card for user with one enabled sport | No sport picker above tabs; Levels still has sport+social selector |
+| PR-77 | Default sport prefers viewer primary | Viewer primary tennis; subject has tennis+padel | Card/profile opens on tennis |
+| PR-78 | Default sport falls back to subject | Viewer primary tennis; subject padel-only | Opens on padel |
+| PR-79 | No sports hides stats/levels UI | Subject `sportsEnabled: []` | No sport picker, no Statistics/Levels switch; common groups shown if any, else only hero |
+| PR-80 | Profile URL sport hint | `/user-profile/:id?sport=TENNIS` and subject has tennis | Opens on tennis even if viewer primary is padel |
+| PR-81 | Game-open sport hint | Open `?player=` from tennis game; subject has tennis | Card opens on tennis; if subject lacks tennis → viewer primary or subject primary |
 | PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |

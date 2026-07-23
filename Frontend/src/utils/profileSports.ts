@@ -35,6 +35,26 @@ export function getViewerPrimarySport(user: User | null | undefined): Sport {
   return resolveActivePrimarySport(user) ?? getUserPrimarySport(user);
 }
 
+/**
+ * Default sport when viewing another user's card/profile:
+ * optional open hint (URL/context) if subject has it →
+ * viewer's primary if subject has it →
+ * subject's primary.
+ * Undefined when the subject has no enabled sports.
+ */
+export function resolveProfileCardSport(
+  subject: User | BasicUser | null | undefined,
+  viewer: User | null | undefined,
+  openHint?: Sport | null,
+): Sport | undefined {
+  const enabled = listEnabledSports(subject);
+  if (enabled.length === 0) return undefined;
+  if (openHint && enabled.includes(openHint)) return openHint;
+  const viewerPrimary = viewer ? resolveActivePrimarySport(viewer) : null;
+  if (viewerPrimary && enabled.includes(viewerPrimary)) return viewerPrimary;
+  return resolveActivePrimarySport(subject) ?? enabled[0];
+}
+
 /** Create-game default: active primary → lastCreatedSport → sportsEnabled[0]. */
 export function resolveCreateGameDefaultSport(user: User | null | undefined): Sport {
   const enabled = listEnabledSports(user);

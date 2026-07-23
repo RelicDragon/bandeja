@@ -238,6 +238,24 @@ enum WatchCopy {
         }
     }
 
+    nonisolated static func workoutHealthDenied(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Activa Salud para medir el entrenamiento"
+        case "ru": return "Разрешите Здоровье для тренировки"
+        case "sr": return "Дозволи Здравље за тренинг"
+        default: return "Allow Health to track workout"
+        }
+    }
+
+    nonisolated static func workoutNotTracking(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Entrenamiento no iniciado"
+        case "ru": return "Тренировка не запущена"
+        case "sr": return "Тренинг није покренут"
+        default: return "Workout not started"
+        }
+    }
+
     nonisolated static func sessionFinishGame(_ lang: String) -> String {
         switch lang {
         case "es": return "Finalizar"
@@ -280,6 +298,15 @@ enum WatchCopy {
         case "ru": return "Назад к счёту"
         case "sr": return "Назад на бодовање"
         default: return "Back to Scoring"
+        }
+    }
+
+    nonisolated static func backToMatches(_ lang: String) -> String {
+        switch lang {
+        case "es": return "Volver a partidos"
+        case "ru": return "К матчам"
+        case "sr": return "Назад на мечеве"
+        default: return "Back to matches"
         }
     }
 

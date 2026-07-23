@@ -33,7 +33,16 @@ final class ActiveSessionManager {
 
     private let api = APIClient()
 
-    private init() {}
+    private init() {
+        Task { @MainActor in
+            for await _ in NotificationCenter.default.notifications(named: .watchWorkoutSessionDidFail) {
+                if !WorkoutManager.shared.isActive {
+                    workoutStartedForGame = false
+                    persistLocal()
+                }
+            }
+        }
+    }
 
     var activeGameId: String? {
         switch phase {
@@ -53,18 +62,41 @@ final class ActiveSessionManager {
 
     func startMatch(matchId: String) async {
         guard case .gameActive(let gid) = phase else { return }
+        scoringViewModel?.stopPolling()
         phase = .matchActive(gameId: gid, matchId: matchId)
-        if !workoutStartedForGame {
-            await WorkoutManager.shared.startIfNeeded(gameId: gid, isIndoor: true)
-            workoutStartedForGame = true
-        } else {
-            WorkoutManager.shared.autoResume()
-        }
+        await ensureWorkoutRunning(gameId: gid)
         await syncMySessionWithRetries(gameId: gid, activeMatchId: matchId)
         persistLocal()
     }
 
+    func retryWorkoutStart() async {
+        guard let gid = activeGameId else { return }
+        await ensureWorkoutRunning(gameId: gid)
+        persistLocal()
+    }
+
+    private func ensureWorkoutRunning(gameId: String) async {
+        let workout = WorkoutManager.shared
+        if workout.isActive, workout.activeGameId == gameId {
+            workoutStartedForGame = true
+            workout.autoResume()
+            return
+        }
+        await workout.startIfNeeded(gameId: gameId, isIndoor: true)
+        workoutStartedForGame = workout.isActive && workout.activeGameId == gameId
+    }
+
     func finishMatchAfterSave() async {
+        guard case .matchActive(let gid, _) = phase else { return }
+        WorkoutManager.shared.autoPause()
+        await syncMySessionWithRetries(gameId: gid, activeMatchId: nil)
+        phase = .gameActive(gameId: gid)
+        await scoringViewModel?.refresh()
+        persistLocal()
+    }
+
+    /// Leave a stuck/failed match screen without discarding the game workout.
+    func returnToGameActiveFromMatch() async {
         guard case .matchActive(let gid, _) = phase else { return }
         WorkoutManager.shared.autoPause()
         await syncMySessionWithRetries(gameId: gid, activeMatchId: nil)
@@ -92,10 +124,8 @@ final class ActiveSessionManager {
     }
 
     func resetSessionDiscardWorkout() async {
+        await WorkoutManager.shared.reclaimOrDiscardOrphan()
         let gid = activeGameId
-        if let gid {
-            await WorkoutManager.shared.discardIfStillActive(gameId: gid)
-        }
         await syncMySessionWithRetries(gameId: gid, activeMatchId: nil)
         scoringViewModel?.stopPolling()
         scoringViewModel = nil
@@ -110,14 +140,17 @@ final class ActiveSessionManager {
 
     func recoverIfNeeded() async {
         guard case .idle = phase else { return }
-        guard let gid = ud?.string(forKey: Self.kGame) else { return }
+        guard let gid = ud?.string(forKey: Self.kGame) else {
+            await WorkoutManager.shared.reclaimOrDiscardOrphan()
+            return
+        }
         let storedMatch = ud?.string(forKey: Self.kMatch)
         workoutStartedForGame = ud?.bool(forKey: Self.kWorkout) ?? false
 
         do {
             let game: WatchGame = try await api.fetch(.gameDetail(id: gid))
             if game.resultsStatus != "IN_PROGRESS" || game.status != "STARTED" {
-                clearLocalPersistence()
+                await abandonRecoveredSession(gameId: gid)
                 return
             }
 
@@ -139,7 +172,7 @@ final class ActiveSessionManager {
                 if Self.isTransientRecoveryError(err) {
                     return
                 }
-                clearLocalPersistence()
+                await abandonRecoveredSession(gameId: gid)
                 return
             }
 
@@ -148,25 +181,47 @@ final class ActiveSessionManager {
                 scoringViewModel = nil
                 workoutStartedForGame = false
                 phase = .idle
+                await WorkoutManager.shared.reclaimOrDiscardOrphan()
                 clearLocalPersistence()
                 return
             }
 
             if let mid = matchId, svm.myMatches.contains(where: { $0.match.id == mid }) {
                 phase = .matchActive(gameId: gid, matchId: mid)
-                if workoutStartedForGame {
-                    await WorkoutManager.shared.recoverIfNeeded()
-                }
+                scoringViewModel?.stopPolling()
             } else {
                 phase = .gameActive(gameId: gid)
+            }
+
+            await WorkoutManager.shared.recoverIfNeeded()
+            let workout = WorkoutManager.shared
+            if workout.isActive {
+                if workout.activeGameId == nil {
+                    workout.adoptActiveGameIdIfMissing(gid)
+                }
+                if workout.activeGameId == gid {
+                    workoutStartedForGame = true
+                } else {
+                    await workout.reclaimOrDiscardOrphan()
+                    workoutStartedForGame = false
+                }
+            } else {
+                workoutStartedForGame = false
             }
             persistLocal()
         } catch {
             if Self.isTransientRecoveryError(error) {
                 return
             }
-            clearLocalPersistence()
+            await abandonRecoveredSession(gameId: gid)
         }
+    }
+
+    private func abandonRecoveredSession(gameId _: String) async {
+        await WorkoutManager.shared.reclaimOrDiscardOrphan()
+        workoutStartedForGame = false
+        phase = .idle
+        clearLocalPersistence()
     }
 
     private func syncMySessionWithRetries(gameId: String?, activeMatchId: String?) async {
