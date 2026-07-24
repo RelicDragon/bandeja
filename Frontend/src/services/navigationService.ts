@@ -73,14 +73,17 @@ class NavigationService {
     this.navigate!(buildUrl('userTeam', { id: teamId }), { replace: true });
   }
 
-  async navigateToBugChat(bugId: string) {
+  async navigateToBugChat(bugId: string, opts?: ChatNavigateOptions) {
     if (!this.ensureInitialized() || !bugId) return;
     try {
       const { bugsApi } = await import('@/api');
       const res = await bugsApi.getBugById(bugId);
       const groupChannelId = res.data?.groupChannel?.id;
       if (groupChannelId) {
-        this.navigate!(buildUrl('bugs', { id: groupChannelId }), { replace: true });
+        this.navigate!(buildUrl('bugs', { id: groupChannelId }), {
+          replace: true,
+          state: chatNavigationState({ forceReload: true, ...opts }),
+        });
       } else {
         this.navigate!(buildUrl('bugs'), { replace: true });
       }

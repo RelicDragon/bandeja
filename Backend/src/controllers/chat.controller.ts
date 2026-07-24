@@ -103,6 +103,7 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     linkPreviewDisabled: rawLinkPreviewDisabled,
     linkPreviewUrl: rawLinkPreviewUrl,
     linkPreviewToken: rawLinkPreviewToken,
+    forwardedFromMessageId: rawForwardedFromMessageId,
   } = req.body;
   const senderId = req.userId;
 
@@ -158,19 +159,22 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     : undefined;
   console.log('[createMessage] Final mediaUrls:', finalMediaUrls);
 
-  // Validate that message has content, media, poll, or sticker
+  // Validate that message has content, media, poll, sticker, or is a forward
   const hasContent = content && content.trim();
   const hasMedia = finalMediaUrls.length > 0;
   const hasPoll = poll && poll.question && poll.options && poll.options.length >= 2;
   const hasSticker = messageType === MessageType.STICKER || Boolean(stickerId);
+  const hasForward =
+    typeof rawForwardedFromMessageId === 'string' && rawForwardedFromMessageId.trim().length > 0;
   console.log('[createMessage] Validation:', {
     hasContent,
     hasMedia,
     hasPoll,
     hasSticker,
+    hasForward,
     contentLength: content?.length,
   });
-  if (!hasContent && !hasMedia && !hasPoll && !hasSticker) {
+  if (!hasContent && !hasMedia && !hasPoll && !hasSticker && !hasForward) {
     console.error('[createMessage] Message has no content, media, poll, or sticker');
     throw new ApiError(400, 'Message must have content, media, poll, or sticker');
   }
@@ -223,6 +227,10 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       linkPreviewUrl: typeof rawLinkPreviewUrl === 'string' ? rawLinkPreviewUrl.trim() : undefined,
       linkPreviewToken:
         typeof rawLinkPreviewToken === 'string' ? rawLinkPreviewToken.trim() : undefined,
+      forwardedFromMessageId:
+        typeof rawForwardedFromMessageId === 'string' && rawForwardedFromMessageId.trim()
+          ? rawForwardedFromMessageId.trim()
+          : undefined,
     });
 
     console.log('[createMessage] Message created successfully:', message.id);

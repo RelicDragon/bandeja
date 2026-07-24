@@ -503,6 +503,12 @@
     "translateTextTooLong": "Text is too long to translate (max {{max}} characters).",
     "forwardCopied": "Copied — paste in another chat",
     "forwardFailed": "Could not forward",
+    "forwardSent": "Prosleđeno",
+    "forwardTo": "Prosledi…",
+    "forwardSending": "Šaljem…",
+    "forwardNoMatches": "Nema pogodaka",
+    "forwardNoChats": "Nema ćaskanja za prosleđivanje",
+    "forwardedFrom": "Prosleđeno od",
     "sending": "Sending…",
     "sendingSlow": "Taking longer than usual…",
     "linkPreview": {

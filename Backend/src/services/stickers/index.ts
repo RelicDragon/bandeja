@@ -28,6 +28,7 @@ export {
   getStickerPackById,
   getStickerById,
   assertSendableSticker,
+  assertForwardableSticker,
   bumpStickerRecent,
   bumpUserChatMediaRecent,
   getUserStickerPrefs,

@@ -1375,8 +1375,14 @@ model ChatMessage {
   linkPreviewUrl      String?
   /// Sender-controlled per-message suppression; URL text remains untouched.
   linkPreviewDisabled Boolean               @default(false)
+  /// Original message this row forwards (shared CDN URLs; SetNull if original deleted).
+  forwardedFromMessageId String?
+  /// Attribution snapshot: { title, chatContextType, contextId, isChannel?, messageId }
+  forwardedFrom          Json?
   replyTo             ChatMessage?          @relation("MessageReply", fields: [replyToId], references: [id])
   replies             ChatMessage[]         @relation("MessageReply")
+  forwardedFromMessage ChatMessage?         @relation("MessageForward", fields: [forwardedFromMessageId], references: [id], onDelete: SetNull)
+  forwards             ChatMessage[]        @relation("MessageForward")
   sender              User?                 @relation(fields: [senderId], references: [id], onDelete: Cascade)
   sticker             Sticker?              @relation(fields: [stickerId], references: [id], onDelete: Restrict)
   reactions           MessageReaction[]
@@ -1398,6 +1404,7 @@ model ChatMessage {
   @@index([createdAt])
   @@index([state])
   @@index([replyToId])
+  @@index([forwardedFromMessageId])
   @@index([chatType])
   @@index([contextId])
   @@index([deletedAt])

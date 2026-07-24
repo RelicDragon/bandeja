@@ -504,6 +504,12 @@
     "translateTextTooLong": "Text is too long to translate (max {{max}} characters).",
     "forwardCopied": "Copied — paste in another chat",
     "forwardFailed": "Could not forward",
+    "forwardSent": "Переслано",
+    "forwardTo": "Переслать…",
+    "forwardSending": "Отправка…",
+    "forwardNoMatches": "Нет совпадений",
+    "forwardNoChats": "Нет чатов для пересылки",
+    "forwardedFrom": "Переслано от",
     "sending": "Sending…",
     "sendingSlow": "Taking longer than usual…",
     "linkPreview": {

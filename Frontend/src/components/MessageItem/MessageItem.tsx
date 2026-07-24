@@ -7,7 +7,9 @@ import { useAuthStore } from '@/store/authStore';
 import { UnifiedMessageMenu } from '../UnifiedMessageMenu';
 import { ReplyPreview } from '../ReplyPreview';
 import { StoryReplyPreview } from './StoryReplyPreview';
+import { ForwardedFromHeader } from './ForwardedFromHeader';
 import { parseStoryReplyInfo } from '@/api/parseStoryReplyInfo';
+import { parseForwardedFrom } from '@/services/chat/forwardMessage';
 import { PlayerCardBottomSheet } from '../PlayerCardBottomSheet';
 import { formatSystemMessageForDisplay, SystemMessageType } from '@/utils/systemMessages';
 import { FullscreenImageViewer } from '../FullscreenImageViewer';
@@ -103,6 +105,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const isSendingSlow = useOptimisticSendSlowHint(isSending, currentMessage.createdAt);
   const isMenuOpen = contextMenuState.isOpen && contextMenuState.messageId === currentMessage.id;
   const storyReply = parseStoryReplyInfo(currentMessage.storyReply);
+  const forwardedFrom = parseForwardedFrom(currentMessage.forwardedFrom);
   const canReact = !!onAddReaction && !!onRemoveReaction && !isOffline;
 
   const displaySettings = user ? resolveDisplaySettings(user) : null;
@@ -555,6 +558,16 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                     onVideoOpen={handleVideoOpen}
                     className={`mb-1 flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}
                   />
+                )}
+
+                {forwardedFrom && (
+                  <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}>
+                    <ForwardedFromHeader
+                      forwardedFrom={forwardedFrom}
+                      isOwnMessage={isOwnMessage}
+                      label={t('chat.forwardedFrom', { defaultValue: 'Forwarded from' })}
+                    />
+                  </div>
                 )}
 
                 <div

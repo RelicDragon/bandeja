@@ -495,6 +495,12 @@
     "translateTextTooLong": "Text is too long to translate (max {{max}} characters).",
     "forwardCopied": "Copied — paste in another chat",
     "forwardFailed": "Could not forward",
+    "forwardSent": "Forwarded",
+    "forwardTo": "Forward to…",
+    "forwardSending": "Sending…",
+    "forwardNoMatches": "No matches",
+    "forwardNoChats": "No chats to forward to",
+    "forwardedFrom": "Forwarded from",
     "sending": "Sending…",
     "sendingSlow": "Taking longer than usual…",
     "linkPreview": {

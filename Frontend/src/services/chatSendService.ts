@@ -215,8 +215,68 @@ export function sendWithTimeout(
       throwIfAborted(signal);
       if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
 
-      const hasMediaUpload = rowNeedsMediaUpload(row);
       const resolvedClientMutationId = clientMutationId ?? row?.clientMutationId;
+      const forwardSourceId = (row?.payload ?? payload).forwardedFromMessageId?.trim();
+
+      // Forward = server-side link. Skip all upload / hotlink work.
+      if (forwardSourceId) {
+        clearDeadlineTimer(tempId);
+        armPhaseDeadline(tempId, generation, SEND_API_PHASE_MS, () => {
+          recordChatSendMetric({
+            kind: 'chat_send_deadline',
+            tempId,
+            contextType,
+            contextId,
+            phase: 'api',
+            durationMs: Date.now() - startedAt,
+          });
+          void failSendAttempt(
+            tempId,
+            generation,
+            contextType,
+            contextId,
+            onFailed,
+            'api_deadline',
+            true
+          );
+        });
+        const p = row?.payload ?? payload;
+        const request: CreateMessageRequest = {
+          chatContextType: contextType,
+          contextId,
+          mediaUrls: [],
+          chatType: p.chatType ? normalizeChatType(p.chatType) : undefined,
+          forwardedFromMessageId: forwardSourceId,
+          ...(resolvedClientMutationId ? { clientMutationId: resolvedClientMutationId } : {}),
+        };
+        const created = await createMessageWithSocketAck(
+          request,
+          contextType,
+          contextId,
+          resolvedClientMutationId,
+          signal,
+          tempId
+        );
+        if (!isActiveSendGeneration(tempId, generation)) {
+          sealChatSendAttempt(tempId);
+          completeChatSendSuccess(tempId, contextType, contextId, created, callbacks, undefined);
+          return;
+        }
+        sealChatSendAttempt(tempId);
+        recordChatSendMetric({
+          kind: 'chat_send_succeeded',
+          tempId,
+          contextType,
+          contextId,
+          hasMedia: false,
+          hasVideo: false,
+          durationMs: Date.now() - startedAt,
+        });
+        completeChatSendSuccess(tempId, contextType, contextId, created, callbacks, undefined);
+        return;
+      }
+
+      const hasMediaUpload = rowNeedsMediaUpload(row);
 
       if (hasMediaUpload) {
         armPhaseDeadline(tempId, generation, uploadPhaseMsForRow(row), () => {

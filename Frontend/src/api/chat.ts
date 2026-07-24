@@ -129,6 +129,16 @@ export interface StoryReplyInfo {
   mediaType?: 'IMAGE' | 'VIDEO';
 }
 
+export interface ForwardedFromInfo {
+  title: string;
+  chatContextType: ChatContextType;
+  contextId: string;
+  isChannel?: boolean;
+  /** GAME sources: which thread (PUBLIC/PRIVATE/ADMINS) to open on tap. */
+  chatType?: ChatType;
+  messageId: string;
+}
+
 export interface ChatMessage {
   id: string;
   chatContextType: ChatContextType;
@@ -157,6 +167,9 @@ export interface ChatMessage {
   deletedAt?: string | null;
   replyToId?: string;
   storyReply?: StoryReplyInfo | null;
+  /** Telegram-style forward attribution (denormalized). */
+  forwardedFrom?: ForwardedFromInfo | null;
+  forwardedFromMessageId?: string | null;
   linkPreview?: import('@/api/linkPreview').LinkPreviewData | null;
   linkPreviewDisabled?: boolean;
   linkPreviewUrl?: string | null;
@@ -279,6 +292,8 @@ export interface OptimisticMessagePayload {
   documentMimeType?: string;
   documentSize?: number;
   storyReply?: StoryReplyInfo;
+  forwardedFromMessageId?: string;
+  forwardedFrom?: ForwardedFromInfo;
   linkPreviewDisabled?: boolean;
   linkPreviewUrl?: string | null;
   linkPreview?: import('@/api/linkPreview').LinkPreviewData | null;
@@ -309,6 +324,8 @@ export interface CreateMessageRequest {
   linkPreviewDisabled?: boolean;
   linkPreviewUrl?: string | null;
   linkPreviewToken?: string | null;
+  /** Server copies content/media from this message — no re-upload. */
+  forwardedFromMessageId?: string;
   poll?: {
     question: string;
     type: PollType;

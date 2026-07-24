@@ -18,6 +18,22 @@ function storyReplyEqual(
   );
 }
 
+function forwardedFromEqual(
+  a: ChatMessage['forwardedFrom'],
+  b: ChatMessage['forwardedFrom']
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return a === b;
+  return (
+    a.title === b.title &&
+    a.chatContextType === b.chatContextType &&
+    a.contextId === b.contextId &&
+    a.messageId === b.messageId &&
+    a.isChannel === b.isChannel &&
+    a.chatType === b.chatType
+  );
+}
+
 function reactionsEqual(a: ChatMessage['reactions'], b: ChatMessage['reactions']): boolean {
   if (a === b) return true;
   if (a.length !== b.length) return false;
@@ -53,6 +69,8 @@ function messageContentEqual(a: ChatMessage, b: ChatMessage): boolean {
   if (!reactionsEqual(a.reactions, b.reactions)) return false;
   if (a.replyToId !== b.replyToId) return false;
   if (!storyReplyEqual(a.storyReply, b.storyReply)) return false;
+  if (a.forwardedFromMessageId !== b.forwardedFromMessageId) return false;
+  if (!forwardedFromEqual(a.forwardedFrom, b.forwardedFrom)) return false;
   if (a.linkPreview !== b.linkPreview) {
     if (JSON.stringify(a.linkPreview ?? null) !== JSON.stringify(b.linkPreview ?? null)) return false;
   }

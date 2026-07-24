@@ -955,7 +955,13 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-23 | Reaction | Add reaction on user or system message (e.g. join/leave) | Reaction strip visible; emoji persists |
 | CH-24 | Pin message | Pin (if permitted) | Pinned bar shows |
 | CH-25 | Unpin message | Unpin | Bar updates |
-| CH-26 | Forward message | Forward to another chat | Appears in target |
+| CH-26 | Forward message | Long-press → Forward → pick chat | Opens destination immediately; message appears with “Forwarded from” header |
+| CH-26a | Forward attribution | Tap “Forwarded from” title on a forwarded message | Opens the source chat (and anchors to original when possible) |
+| CH-26b | Forward media (no re-upload) | Forward image/GIF/video/document/sticker | Media plays in target; request sends only forwardedFromMessageId (no CDN upload) |
+| CH-26c | Forward nested | Forward an already-forwarded message | Header still shows original author/source chat; content matches selected bubble |
+| CH-26d | Forward offline/retry | Forward while briefly offline | Opens destination; failed send shows toast + failed outbox in dest |
+| CH-26e | Forward from private game chat | Forward PRIVATE game message → tap attribution | Opens that game’s PRIVATE thread |
+| CH-26f | Forward dest filter | Open Forward picker as channel subscriber | Subscriber-only channels and archived games are not listed |
 | CH-27 | Copy text | Copy action | Clipboard content |
 | CH-28 | Send image | Attach image | Image message renders |
 | CH-96 | GIF provider URL-only paste → GIF | In GAME/USER/GROUP/BUG chat, paste only an allowlisted HTTPS URL and send: Giphy (`giphy.com/gifs/…` or `media.giphy.com/…`), Klipy direct (`static*.klipy.com/…gif`) or share page (`klipy.com/gifs/{slug}` with `KLIPY_API_KEY`), Tenor page (`tenor.com/view/…`) or direct media (`media*.tenor.com/….gif`) | Message becomes `IMAGE` with re-hosted media (our CDN/`uploads/chat/…`, not giphy/klipy/tenor hosts); GIF animates with fully transparent bubble panel (Telegram-style, no colored/white chrome); time/ticks overlay the GIF |

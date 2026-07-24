@@ -179,6 +179,8 @@ export function useThreadOptimistic({
         replyToId: payload.replyToId,
         replyTo: payload.replyTo,
         storyReply: payload.storyReply,
+        forwardedFromMessageId: payload.forwardedFromMessageId,
+        forwardedFrom: payload.forwardedFrom,
         sender: user ? (user as import('@/types').BasicUser) : null,
         reactions: [],
         readReceipts: [],

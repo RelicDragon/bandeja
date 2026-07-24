@@ -245,6 +245,26 @@ export async function assertSendableSticker(
   return { id: sticker.id, emoji: sticker.emoji };
 }
 
+/**
+ * Forward path: sticker must still exist/be active, but personal-pack ownership
+ * is not required (message already contained a valid reference).
+ */
+export async function assertForwardableSticker(stickerId: string): Promise<{
+  id: string;
+  emoji: string;
+}> {
+  const sticker = await prisma.sticker.findFirst({
+    where: { id: stickerId, isActive: true },
+    include: {
+      pack: { select: { isActive: true } },
+    },
+  });
+  if (!sticker || !sticker.pack.isActive) {
+    throw new ApiError(400, 'Sticker not available', true, { code: 'sticker.unavailable' });
+  }
+  return { id: sticker.id, emoji: sticker.emoji };
+}
+
 export async function bumpStickerRecent(userId: string, stickerId: string): Promise<void> {
   await bumpUserChatMediaRecent(userId, { kind: 'STICKER', stickerId });
 }

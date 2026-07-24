@@ -37,6 +37,11 @@ import { chatSyncMessageUpdatedCompactPayload } from '../../utils/chatSyncMessag
 import { lastMessageForUnreadListSocket } from '../../utils/chatListSocketPreview';
 import { resolveOutgoingChatMessageType } from './resolveOutgoingChatMessageType';
 import {
+  resolveForwardCreateFields,
+  findReferencedChatMediaUrls,
+  type ForwardedFromSnapshot,
+} from './forwardMessage.service';
+import {
   MAX_VIDEO_DURATION_MS as VIDEO_MESSAGE_MAX_MS,
   MIN_VIDEO_DURATION_MS,
 } from '../../constants/chatVideo';
@@ -58,6 +63,7 @@ import {
 } from '../giphyIngest';
 import {
   assertSendableSticker,
+  assertForwardableSticker,
   bumpStickerRecent,
   isStickerCatalogUrl,
 } from '../stickers';
@@ -641,7 +647,42 @@ export class MessageService {
     linkPreviewDisabled?: boolean;
     linkPreviewUrl?: string | null;
     linkPreviewToken?: string | null;
+    forwardedFromMessageId?: string | null;
   }) {
+    let forwardFields: Awaited<ReturnType<typeof resolveForwardCreateFields>> | null = null;
+    let forwardSnapshot: ForwardedFromSnapshot | null = null;
+    let createInput = { ...data };
+    if (typeof data.forwardedFromMessageId === 'string' && data.forwardedFromMessageId.trim()) {
+      if (data.replyToId || hasStoryReplyPayload(data.storyReply) || data.poll) {
+        throw new ApiError(400, 'Forwarded messages cannot include reply, story reply, or poll', true, {
+          code: 'chat.forward.conflict',
+        });
+      }
+      forwardFields = await resolveForwardCreateFields(data.forwardedFromMessageId);
+      await this.validateMessageAccess(forwardFields.sourceAccess, data.senderId, false);
+      forwardSnapshot = forwardFields.forwardedFrom;
+      createInput = {
+        ...data,
+        content: forwardFields.content ?? undefined,
+        mediaUrls: forwardFields.mediaUrls,
+        thumbnailUrls: forwardFields.thumbnailUrls,
+        messageType: forwardFields.messageType,
+        stickerId: forwardFields.stickerId,
+        videoDurationMs: forwardFields.videoDurationMs,
+        videoWidth: forwardFields.videoWidth,
+        videoHeight: forwardFields.videoHeight,
+        documentFileName: forwardFields.documentFileName,
+        documentMimeType: forwardFields.documentMimeType,
+        documentSize: forwardFields.documentSize,
+        linkPreviewDisabled: forwardFields.linkPreviewDisabled,
+        linkPreviewUrl: forwardFields.linkPreviewUrl,
+        mentionIds: [],
+        replyToId: undefined,
+        storyReply: undefined,
+        poll: undefined,
+      };
+    }
+
     const {
       chatContextType,
       contextId,
@@ -667,8 +708,8 @@ export class MessageService {
       linkPreviewUrl: requestedLinkPreviewUrl,
       linkPreviewToken,
     } = {
-      ...data,
-      clientThumbnailUrls: data.thumbnailUrls ?? [],
+      ...createInput,
+      clientThumbnailUrls: createInput.thumbnailUrls ?? [],
     };
     const requestedStickerId =
       typeof rawStickerId === 'string' && rawStickerId.trim() ? rawStickerId.trim() : null;
@@ -700,7 +741,7 @@ export class MessageService {
       });
     }
 
-    if (replyToId && hasStoryReplyPayload(data.storyReply)) {
+    if (replyToId && hasStoryReplyPayload(createInput.storyReply)) {
       throw new ApiError(400, 'Cannot combine message reply with story reply');
     }
 
@@ -719,13 +760,13 @@ export class MessageService {
       }
     }
 
-    if (hasStoryReplyPayload(data.storyReply) && chatContextType !== 'USER') {
+    if (hasStoryReplyPayload(createInput.storyReply) && chatContextType !== 'USER') {
       throw new ApiError(400, 'Story reply is only allowed in user chats');
     }
 
     const storyReply =
-      chatContextType === 'USER' && hasStoryReplyPayload(data.storyReply)
-        ? await validateStoryReplyForUserChatMessage(data.storyReply, senderId, userChat!)
+      chatContextType === 'USER' && hasStoryReplyPayload(createInput.storyReply)
+        ? await validateStoryReplyForUserChatMessage(createInput.storyReply, senderId, userChat!)
         : null;
 
     // Dedupe before Giphy ingest so retries do not re-fetch / re-upload / burn rate limit.
@@ -787,7 +828,9 @@ export class MessageService {
           code: 'sticker.pollConflict',
         });
       }
-      const sticker = await assertSendableSticker(requestedStickerId, senderId);
+      const sticker = forwardFields
+        ? await assertForwardableSticker(requestedStickerId)
+        : await assertSendableSticker(requestedStickerId, senderId);
       resolvedStickerId = sticker.id;
       resolvedStickerEmoji = sticker.emoji;
       workingContent = '';
@@ -796,6 +839,7 @@ export class MessageService {
     }
 
     const canTryGiphy =
+      !forwardFields &&
       !poll &&
       !resolvedStickerId &&
       requestedMessageType !== MessageType.VOICE &&
@@ -952,18 +996,23 @@ export class MessageService {
             : computeContentSearchable(workingContent ?? null, poll?.question);
 
     let linkPreviewSnapshot: Awaited<ReturnType<typeof resolveLinkPreviewForOutgoingMessage>> = null;
+    if (forwardFields) {
+      linkPreviewSnapshot = (forwardFields.linkPreview as typeof linkPreviewSnapshot) ?? null;
+    }
     const eligiblePreviewUrls = extractEligiblePreviewUrls(contentForStore);
     const requestedPreviewUrl = normalizeEligiblePreviewSelection(
       requestedLinkPreviewUrl,
       eligiblePreviewUrls
     );
-    const linkPreviewUrl =
-      !linkPreviewDisabled && requestedPreviewUrl
+    const linkPreviewUrl = forwardFields
+      ? forwardFields.linkPreviewUrl
+      : !linkPreviewDisabled && requestedPreviewUrl
         ? requestedPreviewUrl
         : !linkPreviewDisabled
           ? (eligiblePreviewUrls[0] ?? null)
           : null;
     if (
+      !forwardFields &&
       !linkPreviewDisabled &&
       resolvedMessageType === MessageType.TEXT &&
       contentForStore &&
@@ -1024,6 +1073,8 @@ export class MessageService {
           documentSize:
             resolvedMessageType === MessageType.DOCUMENT ? documentMeta?.size ?? null : null,
           clientMutationId: cid ?? undefined,
+          forwardedFromMessageId: forwardFields?.forwardedFromMessageId ?? undefined,
+          forwardedFrom: forwardSnapshot ?? undefined,
         } as any,
         include: this.getMessageInclude()
       }) as any;
@@ -1102,7 +1153,12 @@ export class MessageService {
           (recovered as { _deduped?: boolean })._deduped = true;
           MessageService.scheduleSenderContextReadAfterSend(chatContextType, contextId, senderId);
           // Retries must still bump Recent (first attempt may have created the row then failed mid-bump).
-          if (recovered.messageType === MessageType.STICKER && recovered.stickerId) {
+          // Forwards never bump recent (may reference another user's personal sticker).
+          if (
+            recovered.messageType === MessageType.STICKER &&
+            recovered.stickerId &&
+            !recovered.forwardedFromMessageId
+          ) {
             try {
               await bumpStickerRecent(senderId, recovered.stickerId);
             } catch (err) {
@@ -1118,7 +1174,7 @@ export class MessageService {
     const message = result.message as typeof result.message & { syncSeq: number };
     (message as { syncSeq: number }).syncSeq = result.syncSeq;
 
-    if (resolvedMessageType === MessageType.STICKER && resolvedStickerId) {
+    if (resolvedMessageType === MessageType.STICKER && resolvedStickerId && !forwardFields) {
       try {
         await bumpStickerRecent(senderId, resolvedStickerId);
       } catch (err) {
@@ -1253,6 +1309,7 @@ export class MessageService {
     linkPreviewDisabled?: boolean;
     linkPreviewUrl?: string | null;
     linkPreviewToken?: string | null;
+    forwardedFromMessageId?: string | null;
   }) {
     const message = await this.createMessage(data);
 
@@ -2080,20 +2137,24 @@ export class MessageService {
       (Array.isArray(message.mediaUrls) &&
         message.mediaUrls.some((u) => isStickerCatalogUrl(u)));
 
-    if (!skipMediaDelete && message.mediaUrls && message.mediaUrls.length > 0) {
-      for (const mediaUrl of message.mediaUrls) {
-        if (isStickerCatalogUrl(mediaUrl)) continue;
+    if (!skipMediaDelete) {
+      const candidateUrls = [
+        ...(message.mediaUrls ?? []),
+        ...(message.thumbnailUrls ?? []),
+      ].filter((u) => u && !isStickerCatalogUrl(u));
+      const referenced = await findReferencedChatMediaUrls(candidateUrls, messageId);
+      for (const mediaUrl of message.mediaUrls ?? []) {
+        if (!mediaUrl || isStickerCatalogUrl(mediaUrl) || referenced.has(mediaUrl)) continue;
         try {
           await ImageProcessor.deleteFile(mediaUrl);
         } catch (error) {
           console.error(`Error deleting media file ${mediaUrl}:`, error);
         }
       }
-    }
-
-    if (!skipMediaDelete && message.thumbnailUrls && message.thumbnailUrls.length > 0) {
-      for (const thumbnailUrl of message.thumbnailUrls) {
-        if (isStickerCatalogUrl(thumbnailUrl)) continue;
+      for (const thumbnailUrl of message.thumbnailUrls ?? []) {
+        if (!thumbnailUrl || isStickerCatalogUrl(thumbnailUrl) || referenced.has(thumbnailUrl)) {
+          continue;
+        }
         try {
           await ImageProcessor.deleteFile(thumbnailUrl);
         } catch (error) {

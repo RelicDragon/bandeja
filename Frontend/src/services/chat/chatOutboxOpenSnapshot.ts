@@ -169,6 +169,8 @@ export async function buildOutboxOptimisticsForOpen(params: {
     updatedAt: q.createdAt,
     replyToId: q.payload.replyToId,
     replyTo: q.payload.replyTo,
+    forwardedFromMessageId: q.payload.forwardedFromMessageId,
+    forwardedFrom: q.payload.forwardedFrom,
     sender: user ?? null,
     reactions: [],
     readReceipts: [],
