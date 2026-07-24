@@ -6,7 +6,12 @@ import { getChatNotifier } from './chatNotifier';
 import { getAiService } from '../ai/ai.service';
 import { LLM_REASON, type LlmReason } from '../ai/llmReasons';
 import { sourceAppearsToBeTargetLanguage, translationMatchesTargetFranc } from './translationFrancCheck';
-import { normalizeTranslationOutput, translationEqualsSource } from './translationOutputNormalize';
+import {
+  isNoTranslationNeededMarker,
+  NO_TRANSLATION_NEEDED_MARKER,
+  normalizeTranslationOutput,
+} from './translationOutputNormalize';
+import { translationIsRedundantOfSource } from './translationRedundant';
 
 export const TRANSLATION_LANGUAGE_NAMES: Record<string, string> = {
   en: 'English',
@@ -75,15 +80,16 @@ export class TranslationService {
     const buildSystemPrompt = (llmAttemptIndex: number) => {
       const lines = [
         `You are a professional translator.`,
-        `Translate into ${targetLanguageName} only.`,
+        `CRITICAL: If the source is already written in ${targetLanguageName}, or translating would only paraphrase/polish it, reply with exactly this token and nothing else: ${NO_TRANSLATION_NEEDED_MARKER}`,
+        `Never rewrite, rephrase, correct, or "improve" text that is already ${targetLanguageName}.`,
+        `Otherwise translate into ${targetLanguageName} only.`,
         `No preambles (e.g. "Here is the translation"), no quotes around the result, no notes in English or any other language.`,
         `Keep proper names, @handles, URLs, numbers, and emojis unchanged unless they must be localized.`,
-        `Output only the translated text, with no extra labels or formatting.`,
-        `The entire reply must be in ${targetLanguageName}; no other natural language.`,
+        `Unless you reply with ${NO_TRANSLATION_NEEDED_MARKER}, output only the translated text in ${targetLanguageName}; no other natural language, labels, or formatting.`,
       ];
       if (llmAttemptIndex > 0) {
         lines.push(
-          `Your previous answer failed an automatic ${targetLanguageName} check. Respond again with the complete text only in ${targetLanguageName}: no other language, preamble, markdown fences, or surrounding quotes.`
+          `Your previous answer failed an automatic ${targetLanguageName} check. Respond again with either exactly ${NO_TRANSLATION_NEEDED_MARKER} (source already ${targetLanguageName} — do not paraphrase) or the complete translation only in ${targetLanguageName}: no other language, preamble, markdown fences, or surrounding quotes.`
         );
       }
       return lines.join(' ');
@@ -105,7 +111,7 @@ export class TranslationService {
             },
             { role: 'user', content: text },
           ],
-          temperature: 0.1,
+          temperature: 0,
           max_tokens: 1500,
           reason,
           userId,
@@ -123,6 +129,25 @@ export class TranslationService {
             continue;
           }
           throw new ApiError(503, 'Translation service is temporarily unavailable. Please try again later.');
+        }
+        if (isNoTranslationNeededMarker(normalized)) {
+          const original = normalizeTranslationOutput(text);
+          console.info('[translation] llm_no_translation_needed', {
+            attempt,
+            targetLanguage,
+            sourceChars: original.length,
+          });
+          return original;
+        }
+        if (translationIsRedundantOfSource(text, normalized, targetLanguage)) {
+          const original = normalizeTranslationOutput(text);
+          console.info('[translation] llm_redundant_rewrite', {
+            attempt,
+            targetLanguage,
+            sourceChars: original.length,
+            outChars: normalized.length,
+          });
+          return original;
         }
         console.info('[translation] normalized', {
           attempt,
@@ -304,7 +329,7 @@ export class TranslationService {
     }
 
     if (existing && existing.translation !== MESSAGE_TRANSLATION_PENDING) {
-      if (translationEqualsSource(sourceText, existing.translation)) {
+      if (translationIsRedundantOfSource(sourceText, existing.translation, normalizedLanguageCode)) {
         await this.discardRedundantTranslation(messageId, normalizedLanguageCode);
         return { translation: sourceText, languageCode: normalizedLanguageCode };
       }
@@ -320,7 +345,7 @@ export class TranslationService {
       normalizedLanguageCode,
       userId || undefined
     );
-    if (translationEqualsSource(sourceText, translation)) {
+    if (translationIsRedundantOfSource(sourceText, translation, normalizedLanguageCode)) {
       console.info('[translation] skip_redundant', {
         messageId,
         languageCode: normalizedLanguageCode,
@@ -354,7 +379,13 @@ export class TranslationService {
     });
 
     if (existingTranslation && existingTranslation.translation !== MESSAGE_TRANSLATION_PENDING) {
-      if (translationEqualsSource(messageContent, existingTranslation.translation)) {
+      if (
+        translationIsRedundantOfSource(
+          messageContent,
+          existingTranslation.translation,
+          normalizedLanguageCode
+        )
+      ) {
         await this.discardRedundantTranslation(messageId, normalizedLanguageCode);
         return {
           translation: messageContent,
@@ -379,7 +410,9 @@ export class TranslationService {
 
     const waited = await this.waitForPendingTranslationRow(messageId, normalizedLanguageCode);
     if (waited.status === 'ready') {
-      if (translationEqualsSource(messageContent, waited.translation)) {
+      if (
+        translationIsRedundantOfSource(messageContent, waited.translation, normalizedLanguageCode)
+      ) {
         await this.discardRedundantTranslation(messageId, normalizedLanguageCode);
         return {
           translation: messageContent,

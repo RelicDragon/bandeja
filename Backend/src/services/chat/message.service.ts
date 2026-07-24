@@ -22,7 +22,7 @@ import notificationService from '../notification.service';
 import { UserChatService } from './userChat.service';
 import { hasParentGamePermissionWithUserCheck } from '../../utils/parentGamePermissions';
 import { TranslationService } from './translation.service';
-import { translationEqualsSource } from './translationOutputNormalize';
+import { translationIsRedundantOfSource } from './translationRedundant';
 import { ReadReceiptService } from './readReceipt.service';
 import { DraftService } from './draft.service';
 import { invalidateBasicUsersAllowedCacheForMessage } from '../user/basicUsersForMessageAllowedCache';
@@ -527,7 +527,7 @@ export class MessageService {
         translation &&
         (translation.translation === MESSAGE_TRANSLATION_PENDING ||
           !sourceText ||
-          !translationEqualsSource(sourceText, translation.translation))
+          !translationIsRedundantOfSource(sourceText, translation.translation))
           ? {
               languageCode: translation.languageCode,
               translation: translation.translation,
@@ -1464,7 +1464,7 @@ export class MessageService {
               (t) =>
                 t.translation === MESSAGE_TRANSLATION_PENDING ||
                 !emitSourceText ||
-                !translationEqualsSource(emitSourceText, t.translation)
+                !translationIsRedundantOfSource(emitSourceText, t.translation)
             )
             .map((t) => ({
               languageCode: t.languageCode,

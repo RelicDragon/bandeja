@@ -1,5 +1,5 @@
 import type { ChatContextType, ChatMessage, MessageReadReceipt } from '@/api/chat';
-import { translationEqualsSource } from '@/utils/translationOutputNormalize';
+import { translationIsRedundantOfSource } from '@/utils/translationRedundant';
 import { isMessageTranslationPending as isTranslationPending } from '@bandeja/chat-contract';
 import { BANDEJA_CHAT_PINS_UPDATED } from '@/utils/chatPinsEvents';
 import { chatLocalDb, type ChatLocalRow } from './chatLocalDb';
@@ -156,7 +156,7 @@ export async function applyChatSyncPatchesInSlice(
         if (
           !isTranslationPending(p.translation) &&
           sourceText &&
-          translationEqualsSource(sourceText, p.translation)
+          translationIsRedundantOfSource(sourceText, p.translation)
         ) {
           const translations = (r.payload.translations ?? []).filter(
             (t) => t.languageCode.toLowerCase() !== p.languageCode.toLowerCase()

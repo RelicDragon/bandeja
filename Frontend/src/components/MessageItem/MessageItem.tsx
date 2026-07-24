@@ -17,7 +17,7 @@ import { FullscreenVideoViewer } from '../FullscreenVideoViewer';
 import { ReportMessageModal } from '../ReportMessageModal';
 import { extractLanguageCode } from '@/utils/language';
 import { isMessageTranslationPending as isTranslationPending } from '@bandeja/chat-contract';
-import { translationEqualsSource } from '@/utils/translationOutputNormalize';
+import { translationIsRedundantOfSource } from '@/utils/translationRedundant';
 import { useChatAutoTranslateSlots } from '@/contexts/ChatAutoTranslateContext';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MessageItemProps } from './types';
@@ -211,7 +211,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
   const translationDuplicatesOriginal =
     !!matchingTranslation &&
     !!sourceTextForTranslationCompare &&
-    translationEqualsSource(sourceTextForTranslationCompare, matchingTranslation.translation);
+    translationIsRedundantOfSource(sourceTextForTranslationCompare, matchingTranslation.translation);
   const hasTranslation = translationReady && localeAllowed && !translationDuplicatesOriginal;
   const isTranslationLoading =
     localeAllowed &&
