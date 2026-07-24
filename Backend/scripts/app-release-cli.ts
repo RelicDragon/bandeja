@@ -30,9 +30,9 @@ import {
   versionBumpFilesChanged,
 } from './lib/app-release-finalize';
 import {
-  PLAY_TRACKS,
   ReleaseUploadError,
   isAndroidAlreadyUploadedError,
+  resolvePlayTrack,
   runAndroidStoreVerification,
   runAndroidUpload,
   runIosBinaryUpload,
@@ -415,7 +415,7 @@ async function promptStoreConfig(session: ReleaseSession): Promise<ReleaseSessio
         message: 'Google Play track',
         options: [
           { value: 'internal', label: 'Internal testing', hint: 'Recommended for smoke tests' },
-          { value: 'closed', label: 'Closed testing (alpha/beta)' },
+          { value: 'alpha', label: 'Closed testing', hint: 'Play API track: alpha' },
           { value: 'production', label: 'Production' },
         ],
         initialValue: session.store.androidTrack ?? 'internal',
@@ -423,8 +423,12 @@ async function promptStoreConfig(session: ReleaseSession): Promise<ReleaseSessio
     );
 
   }
-  if (androidTrack && !PLAY_TRACKS.includes(androidTrack as (typeof PLAY_TRACKS)[number])) {
-    throw new Error(`Invalid Play track: ${androidTrack}`);
+  if (androidTrack) {
+    const resolved = resolvePlayTrack(androidTrack);
+    if (!resolved) {
+      throw new Error(`Invalid Play track: ${androidTrack}`);
+    }
+    androidTrack = resolved;
   }
 
   let iosSubmitForReview = session.store.iosSubmitForReview;

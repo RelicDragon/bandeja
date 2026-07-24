@@ -10,12 +10,4 @@ final class WatchWorkoutBackgroundModeTests: XCTestCase {
             "WKBackgroundModes must include workout-processing so Play→HKWorkoutSession does not quit the app"
         )
     }
-
-    func testInfoPlistDeclaresAudioBackgroundModeForScoreHaptics() {
-        let modes = Bundle.main.object(forInfoDictionaryKey: "WKBackgroundModes") as? [String] ?? []
-        XCTAssertTrue(
-            modes.contains("audio"),
-            "WKBackgroundModes must include audio when score haptics run during an active workout session"
-        )
-    }
 }

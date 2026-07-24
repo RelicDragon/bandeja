@@ -15,8 +15,15 @@ export const UPLOAD_DIR = path.join(ROOT, '.app-release/upload');
 export const PLAY_METADATA_DIR = path.join(UPLOAD_DIR, 'android');
 export const IOS_RELEASE_NOTES_PATH = path.join(UPLOAD_DIR, 'ios-release-notes.txt');
 
-export const PLAY_TRACKS = ['internal', 'closed', 'production'] as const;
+/** Google Play Publishing API track ids (not Console UI labels). Closed testing = `alpha`. */
+export const PLAY_TRACKS = ['internal', 'alpha', 'production'] as const;
 export type PlayTrack = (typeof PLAY_TRACKS)[number];
+
+/** Map CLI/session aliases to API track ids. */
+export function resolvePlayTrack(value: string): PlayTrack | null {
+  const normalized = value === 'closed' ? 'alpha' : value;
+  return isPlayTrack(normalized) ? normalized : null;
+}
 
 const LOG_TAIL_LINES = 40;
 const IOS_STATE_PREFIX = 'APP_RELEASE_IOS_STATE_JSON:';
@@ -85,7 +92,7 @@ function resolveFastlaneInvocation(): { command: string; prefix: string[] } {
 export function tailUploadLog(output: string, lineCount = LOG_TAIL_LINES): string {
   const lines = output.split('\n').filter((line) => line.trim().length > 0);
   const usefulErrorPattern =
-    /(?:Google Api Error|App Store Connect|appStoreVersions|The provided entity|missing a required attribute|whatsNew|Version code .*already|already been used|already uploaded|Cannot submit for review|selected build|submit-for-review|ERROR \[|^\[.*\]: \[!]|\[!] )/i;
+    /(?:Google Api Error|App Store Connect|appStoreVersions|The provided entity|missing a required attribute|whatsNew|Version code .*already|already been used|already uploaded|Cannot submit for review|selected build|submit-for-review|Validation failed|Invalid Info\.plist|Application Loader Error|Error uploading ipa|Could not download\/upload|ERROR \[|^\[.*\]: \[!]|\[!] )/i;
   const usefulErrors = lines.filter(
     (line) => usefulErrorPattern.test(line) && !/^\s*from .*fastlane.* in /.test(line),
   );
@@ -225,7 +232,9 @@ export function runUploadPreflight(session: ReleaseSession): UploadPreflight {
   }
 
   if (androidPending && !session.store.androidTrack) {
-    issues.push('Google Play track is not set (internal, closed, or production).');
+    issues.push('Google Play track is not set (internal, alpha, or production).');
+  } else if (androidPending && session.store.androidTrack && !resolvePlayTrack(session.store.androidTrack)) {
+    issues.push(`Invalid Google Play track: ${session.store.androidTrack}`);
   }
 
   if (iosPending && session.store.iosSubmitForReview === undefined) {
@@ -281,7 +290,9 @@ export function runStoreVerificationPreflight(session: ReleaseSession): UploadPr
   }
 
   if (androidPending && !session.store.androidTrack) {
-    issues.push('Google Play track is not set (internal, closed, or production).');
+    issues.push('Google Play track is not set (internal, alpha, or production).');
+  } else if (androidPending && session.store.androidTrack && !resolvePlayTrack(session.store.androidTrack)) {
+    issues.push(`Invalid Google Play track: ${session.store.androidTrack}`);
   }
 
   if (iosPending && session.store.iosSubmitForReview === undefined) {
@@ -353,11 +364,18 @@ function resolveUploadInputs(session: ReleaseSession): {
   }
 
   const metadata = prepareUploadMetadata(session);
+  const track = resolvePlayTrack(session.store.androidTrack!);
+  if (!track) {
+    throw new ReleaseUploadError(
+      `Invalid Google Play track: ${session.store.androidTrack}`,
+      '',
+    );
+  }
   return {
     metadata,
     aab: session.artifacts?.aab ? path.resolve(session.artifacts.aab) : '',
     ipa: session.artifacts?.ipa ? path.resolve(session.artifacts.ipa) : '',
-    track: session.store.androidTrack!,
+    track,
     submitForReview: session.store.iosSubmitForReview === true,
   };
 }
@@ -385,7 +403,7 @@ export async function runAndroidStoreVerification(session: ReleaseSession): Prom
   );
 
   await runFastlaneLane('android', 'verify_release', {
-    track: session.store.androidTrack!,
+    track: resolvePlayTrack(session.store.androidTrack!) ?? session.store.androidTrack!,
     version_code: String(session.planned.build),
     changelog_path: changelogPath,
   });

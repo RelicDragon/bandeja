@@ -1023,7 +1023,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Bandeja reads your heart rate and calories during padel games.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Bandeja saves your padel workout to Apple Health.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKBackgroundModes = "workout-processing audio";
+				INFOPLIST_KEY_WKBackgroundModes = "workout-processing";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.funified.bandeja;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1077,7 +1077,7 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Bandeja reads your heart rate and calories during padel games.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Bandeja saves your padel workout to Apple Health.";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				INFOPLIST_KEY_WKBackgroundModes = "workout-processing audio";
+				INFOPLIST_KEY_WKBackgroundModes = "workout-processing";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.funified.bandeja;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

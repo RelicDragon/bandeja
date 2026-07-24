@@ -8,6 +8,7 @@ import {
   isAndroidAlreadyUploadedError,
   parseIosAppStoreConnectState,
   prepareUploadMetadata,
+  resolvePlayTrack,
   resolvePlayWhatsNewText,
   runStoreVerificationPreflight,
   runUploadPreflight,
@@ -69,7 +70,11 @@ const baseSession: ReleaseSession = {
 };
 
 assert(PLAY_TRACKS.includes('internal'), 'PLAY_TRACKS includes internal');
+assert(PLAY_TRACKS.includes('alpha'), 'PLAY_TRACKS includes alpha');
 assert(PLAY_TRACKS.includes('production'), 'PLAY_TRACKS includes production');
+assert(resolvePlayTrack('closed') === 'alpha', 'closed alias maps to alpha');
+assert(resolvePlayTrack('alpha') === 'alpha', 'alpha track resolves');
+assert(resolvePlayTrack('bogus') === null, 'invalid track rejected');
 assert(
   isAndroidAlreadyUploadedError(
     new ReleaseUploadError(
