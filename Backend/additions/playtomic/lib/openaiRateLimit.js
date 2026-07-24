@@ -25,7 +25,7 @@ function getClient() {
 }
 
 function getDefaultModel() {
-  if (IS_DEEPSEEK) return process.env.DEEPSEEK_MODEL || "deepseek-chat";
+  if (IS_DEEPSEEK) return process.env.DEEPSEEK_MODEL || "deepseek-v4-pro";
   return process.env.OPENAI_MODEL || "gpt-5.2";
 }
 
