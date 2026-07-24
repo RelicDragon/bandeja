@@ -247,7 +247,6 @@ export const MyTab = () => {
     });
   }, [myGamesSelectedDate, upcomingGamesUndated, user?.currentCity?.timezone]);
   const upcomingsCollapsed = myGamesViewMode === 'list';
-  const showGamesCalendar = loading || hasUpcomingGames;
   const gamesSectionGames = myGamesViewMode === 'list' ? [] : myGamesForSelectedDate;
   const gamesSectionUpcoming =
     myGamesViewMode === 'list' || !myGamesSelectedDate
@@ -263,7 +262,6 @@ export const MyTab = () => {
     gamesSectionUpcoming.length > 0
       ? t('home.noGamesOnSelectedDate')
       : undefined;
-  const useDesktopCalendarSplit = hasUpcomingGames || loading;
   const handleCalendarDateRangeChange = useCallback(
     async (start: Date, end: Date) => {
       const today = startOfDay(new Date());
@@ -520,23 +518,19 @@ export const MyTab = () => {
     return (
       <>
       <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
-        {useDesktopCalendarSplit ? (
-          <ResizableSplitter
-            defaultLeftWidth={35}
-            minLeftWidth={280}
-            maxLeftWidth={450}
-            leftPanel={
-              <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
-                <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-                  <CalendarSection {...myTabCalendarProps} />
-                </div>
+        <ResizableSplitter
+          defaultLeftWidth={35}
+          minLeftWidth={280}
+          maxLeftWidth={450}
+          leftPanel={
+            <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
+              <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+                <CalendarSection {...myTabCalendarProps} />
               </div>
-            }
-            rightPanel={calendarContentPanel}
-          />
-        ) : (
-          calendarContentPanel
-        )}
+            </div>
+          }
+          rightPanel={calendarContentPanel}
+        />
       </div>
       {declineInviteModal}
       </>
@@ -589,11 +583,9 @@ export const MyTab = () => {
             </div>
           )}
 
-          {(loading || hasUpcomingGames) && (
-            <AnimatedMount show={showGamesCalendar}>
-              <CalendarSection {...myTabCalendarProps} />
-            </AnimatedMount>
-          )}
+          <AnimatedMount>
+            <CalendarSection {...myTabCalendarProps} />
+          </AnimatedMount>
           <AnimatedMount>
             <MyGamesSection
               games={gamesSectionGames}

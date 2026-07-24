@@ -353,6 +353,7 @@ Frontend/e2e/
 | H-38n | Klikteren upcoming (My tab) | User connected to Klikteren club (Padel Pro NS) with upcoming booking | Bookings switch shows Klikteren booking card with provider label; cancel/link actions work |
 | H-58 | My tab list view | My tab → tap List in calendar header (list icon + label) | Calendar grid collapses to header row; weather toggle hidden; UpcomingGamesList sections; preference persists after reload |
 | H-59 | My tab games calendar view | Tap Calendar in collapsed calendar header | Calendar grid expands; day selection works as before |
+| H-59a | Calendar always present on My | My tab with zero games, or only FINISHED/ARCHIVED | Month calendar still mounts (collapsed or expanded) |
 | H-64 | Calendar weather toggle | My tab calendar expanded → tap cloud/sun icon in header | Icon highlights; day cells show weather pill (icon + temp) instead of entity-type pill where forecast exists; date select/filter unchanged |
 | H-65 | Calendar weather toggle off | With weather mode on → tap cloud/sun again | Entity-type pills return; weather pills hidden |
 | H-66 | Calendar weather toggle disabled | User without selected city | Cloud/sun control disabled; no weather requests; entity-type pills unchanged |

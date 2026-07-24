@@ -49,7 +49,7 @@ async function verifyWithOpenAI(club) {
           content: `Is this a REAL padel club (one physical venue) or a DIRECTORY/listing/category page? Reply with exactly one word: REAL or DIRECTORY.\nName: ${name}\nAddress: ${street}, ${city}, ${country}\nDescription: ${desc}`,
         },
       ],
-      max_tokens: 10,
+      max_tokens: 90,
     },
     null
   );
@@ -88,7 +88,7 @@ async function geocodeWithTavily(club) {
           content: `From the following search results about a padel venue, extract the exact latitude and longitude in decimal degrees if mentioned. Reply with ONLY two numbers separated by space: lat lon. If no coordinates found reply: NONE.\n\n${snippets.slice(0, 2000)}`,
         },
       ],
-      max_tokens: 30,
+      max_tokens: 90,
     },
     null
   );
@@ -114,7 +114,7 @@ async function geocodeWithOpenAI(club) {
           content: `What are the latitude and longitude in decimal degrees for this address: ${fullAddress}? Reply with ONLY two numbers separated by a space: lat lon. Example: 55.7558 37.6173`,
         },
       ],
-      max_tokens: 30,
+      max_tokens: 90,
     },
     null
   );

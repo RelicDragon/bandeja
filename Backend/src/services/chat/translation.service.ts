@@ -112,7 +112,7 @@ export class TranslationService {
             { role: 'user', content: text },
           ],
           temperature: 0,
-          max_tokens: 1500,
+          max_tokens: 4500,
           reason,
           userId,
         });

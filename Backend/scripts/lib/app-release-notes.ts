@@ -134,7 +134,7 @@ ${commitLog}`;
       { role: 'user', content: userPrompt },
     ],
     temperature: 0.35,
-    max_tokens: 2000,
+    max_tokens: 6000,
     reason: LLM_REASON.APP_RELEASE_NOTES,
   });
 

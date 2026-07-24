@@ -191,7 +191,7 @@ async function runSourceGeneration(
           { role: 'user', content: user },
         ],
         temperature: 0.4,
-        max_tokens: 700,
+        max_tokens: 2100,
         reason: LLM_REASON.RATING_EXPLANATION,
         userId: initiatedByUserId,
       })

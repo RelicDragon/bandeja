@@ -39,9 +39,12 @@ export function getAiService(): IAiService {
         messages: options.messages,
         temperature: options.temperature,
         max_tokens: options.max_tokens,
+        ...(provider === 'deepseek'
+          ? { extra_body: { thinking: { type: 'disabled' as const } } }
+          : {}),
       });
       const text = response.choices[0]?.message?.content?.trim();
-      if (text == null) throw new Error('Empty AI response');
+      if (!text) throw new Error('Empty AI response');
       const usage = response.usage;
       logLlmUsage({
         provider,
