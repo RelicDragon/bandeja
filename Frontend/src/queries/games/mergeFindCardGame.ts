@@ -5,7 +5,6 @@ const STRIP_ROOT_KEYS = [
   'linkedBookings',
   'resultsArtifactJob',
   'rounds',
-  'outcomes',
   'fixedTeams',
   'externalBookings',
 ] as const;
@@ -53,6 +52,56 @@ function slimCourt(court: unknown): unknown {
   return base;
 }
 
+/** Keep only fields GameCard standings need — avoid re-inflating outcome.user trees. */
+function slimFindCardOutcomes(outcomes: unknown): unknown {
+  if (!Array.isArray(outcomes)) return [];
+  const slimmed: Array<{ userId: string; position: number }> = [];
+  for (const row of outcomes) {
+    if (!row || typeof row !== 'object') continue;
+    const o = row as Record<string, unknown>;
+    if (typeof o.userId !== 'string' || o.userId.length === 0) continue;
+    if (typeof o.position !== 'number' || !Number.isFinite(o.position)) continue;
+    slimmed.push({ userId: o.userId, position: o.position });
+  }
+  return slimmed;
+}
+
+function preserveExistingFindOutcomes(existingRecord: Record<string, unknown>): unknown {
+  const positioned = slimFindCardOutcomes(existingRecord.outcomes);
+  return Array.isArray(positioned) && positioned.length > 0 ? positioned : undefined;
+}
+
+function resolveFindCardOutcomes(
+  incomingRecord: Record<string, unknown>,
+  existingRecord: Record<string, unknown>,
+): unknown {
+  const resultsStatus =
+    (incomingRecord.resultsStatus as string | undefined) ??
+    (existingRecord.resultsStatus as string | undefined);
+  if (resultsStatus !== 'FINAL') {
+    return undefined;
+  }
+
+  const incomingOutcomes = incomingRecord.outcomes;
+  // Omit / null / [] — incomplete socket patches must not wipe standings.
+  if (
+    !('outcomes' in incomingRecord) ||
+    incomingOutcomes === undefined ||
+    incomingOutcomes === null ||
+    (Array.isArray(incomingOutcomes) && incomingOutcomes.length === 0)
+  ) {
+    return preserveExistingFindOutcomes(existingRecord);
+  }
+
+  const positioned = slimFindCardOutcomes(incomingOutcomes);
+  if (Array.isArray(positioned) && positioned.length > 0) {
+    return positioned;
+  }
+
+  // Non-empty incoming with no positions (e.g. training rating-only) → clear.
+  return undefined;
+}
+
 /**
  * Merge a live socket/detail game onto a Find card row without re-inflating
  * fat detail trees (keeps Find cache small after patches).
@@ -85,6 +134,7 @@ export function mergeFindCardGame(existing: Game, incoming: Game): Game {
     ...existing,
     ...incomingRecord,
     participants,
+    outcomes: resolveFindCardOutcomes(incomingRecord, existingRecord),
     userNote:
       incomingRecord.userNote !== undefined ? incomingRecord.userNote : existingRecord.userNote,
     weatherSummary:

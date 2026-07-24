@@ -202,15 +202,42 @@ export class ImageProcessor {
     };
   }
   
+  static resolveChatDocumentExt(filename: string, mimeType: string): '.pdf' | '.txt' | '.doc' | '.docx' {
+    const fromName = path.extname(filename || '').toLowerCase().replace(/[^a-z.]/g, '');
+    if (fromName === '.pdf' || fromName === '.txt' || fromName === '.doc' || fromName === '.docx') {
+      return fromName;
+    }
+    const mime = (mimeType || '').toLowerCase().split(';')[0].trim();
+    if (mime === 'application/pdf') return '.pdf';
+    if (mime === 'text/plain') return '.txt';
+    if (mime === 'application/msword') return '.doc';
+    if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      return '.docx';
+    }
+    return '.pdf';
+  }
+
+  static buildAttachmentContentDisposition(filename: string, ext: string): string {
+    const fallbackBase = `document${ext}`;
+    const raw = (filename || fallbackBase).trim() || fallbackBase;
+    const ascii = raw
+      .replace(/[^\x20-\x7E]/g, '_')
+      .replace(/["\\\r\n]/g, '_')
+      .slice(0, 180) || fallbackBase;
+    const utf8Star = encodeURIComponent(raw.slice(0, 180)).replace(/['()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+    return `attachment; filename="${ascii}"; filename*=UTF-8''${utf8Star}`;
+  }
+
   static async processDocument(fileBuffer: Buffer, filename: string, mimeType: string): Promise<{ filePath: string; thumbnailPath?: string }> {
     const uniqueId = crypto.randomUUID();
-    const ext = path.extname(filename);
+    const ext = ImageProcessor.resolveChatDocumentExt(filename, mimeType);
     const baseName = `${uniqueId}${ext}`;
-    
+
     const fileS3Key = `uploads/documents/${baseName}`;
-    
+    const disposition = ImageProcessor.buildAttachmentContentDisposition(filename, ext);
+
     // Upload document to S3
-    const filePath = await S3Service.uploadFile(fileBuffer, fileS3Key, mimeType);
+    const filePath = await S3Service.uploadFile(fileBuffer, fileS3Key, mimeType, disposition);
     
     let thumbnailPath: string | undefined;
     

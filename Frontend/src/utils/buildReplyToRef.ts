@@ -13,6 +13,7 @@ export function buildReplyToRef(
     | 'stickerEmoji'
     | 'audioDurationMs'
     | 'videoDurationMs'
+    | 'documentFileName'
     | 'sender'
   >
 ): NonNullable<ChatMessage['replyTo']> {
@@ -26,6 +27,7 @@ export function buildReplyToRef(
     stickerEmoji: message.stickerEmoji,
     audioDurationMs: message.audioDurationMs,
     videoDurationMs: message.videoDurationMs,
+    documentFileName: message.documentFileName,
     sender: message.sender || { id: 'system', firstName: 'System' },
   };
 }

@@ -68,4 +68,91 @@ describe('mergeFindCardGame', () => {
       (merged.participants[0].user as { sportProfiles?: unknown }).sportProfiles,
     ).toBeUndefined();
   });
+
+  it('keeps slim FINAL outcomes and does not re-inflate user trees', () => {
+    const existing = {
+      id: 'g1',
+      resultsStatus: 'FINAL',
+      outcomes: [{ userId: 'u1', position: 2, pointsEarned: 1 }],
+    } as unknown as Game;
+
+    const incoming = {
+      id: 'g1',
+      resultsStatus: 'FINAL',
+      outcomes: [
+        {
+          userId: 'u1',
+          position: 1,
+          pointsEarned: 10,
+          levelChange: 0.2,
+          user: { id: 'u1', bio: 'fat', firstName: 'A' },
+        },
+      ],
+    } as unknown as Game;
+
+    const merged = mergeFindCardGame(existing, incoming);
+    expect(merged.outcomes).toEqual([{ userId: 'u1', position: 1 }]);
+  });
+
+  it('preserves existing FINAL outcomes when socket patch omits them', () => {
+    const existing = {
+      id: 'g1',
+      resultsStatus: 'FINAL',
+      outcomes: [{ userId: 'u1', position: 1 }],
+    } as unknown as Game;
+    const incoming = { id: 'g1', name: 'patched', resultsStatus: 'FINAL' } as unknown as Game;
+    const merged = mergeFindCardGame(existing, incoming);
+    expect(merged.name).toBe('patched');
+    expect(merged.outcomes).toEqual([{ userId: 'u1', position: 1 }]);
+  });
+
+  it('clears outcomes when results are no longer FINAL', () => {
+    const existing = {
+      id: 'g1',
+      resultsStatus: 'FINAL',
+      outcomes: [{ userId: 'u1', position: 1 }],
+    } as unknown as Game;
+    const incoming = {
+      id: 'g1',
+      resultsStatus: 'NONE',
+      outcomes: [{ userId: 'u1', position: 1 }],
+    } as unknown as Game;
+    const merged = mergeFindCardGame(existing, incoming);
+    expect(merged.outcomes).toBeUndefined();
+  });
+
+  it('drops FINAL outcomes that have no standing positions (e.g. training)', () => {
+    const existing = { id: 'g1', resultsStatus: 'FINAL' } as unknown as Game;
+    const incoming = {
+      id: 'g1',
+      resultsStatus: 'FINAL',
+      outcomes: [{ userId: 'u1', position: null, pointsEarned: 0 }],
+    } as unknown as Game;
+    const merged = mergeFindCardGame(existing, incoming);
+    expect(merged.outcomes).toBeUndefined();
+  });
+
+  it('preserves FINAL standings when socket sends empty or null outcomes', () => {
+    const existing = {
+      id: 'g1',
+      resultsStatus: 'FINAL',
+      outcomes: [{ userId: 'u1', position: 1 }],
+    } as unknown as Game;
+
+    expect(
+      mergeFindCardGame(existing, {
+        id: 'g1',
+        resultsStatus: 'FINAL',
+        outcomes: [],
+      } as unknown as Game).outcomes,
+    ).toEqual([{ userId: 'u1', position: 1 }]);
+
+    expect(
+      mergeFindCardGame(existing, {
+        id: 'g1',
+        resultsStatus: 'FINAL',
+        outcomes: null,
+      } as unknown as Game).outcomes,
+    ).toEqual([{ userId: 'u1', position: 1 }]);
+  });
 });

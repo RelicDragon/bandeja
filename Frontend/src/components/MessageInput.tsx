@@ -41,6 +41,7 @@ import { useMessageInputMultiline } from '@/components/chat/useMessageInputMulti
 import { useMessageInputTranslation } from '@/components/chat/useMessageInputTranslation';
 import { useMessageInputVoiceSend } from '@/components/chat/useMessageInputVoiceSend';
 import { useMessageInputVideoSend } from '@/components/chat/useMessageInputVideoSend';
+import { useMessageInputDocumentSend } from '@/components/chat/useMessageInputDocumentSend';
 import { useMessageInputStickerSend } from '@/components/chat/useMessageInputStickerSend';
 import { useMessageInputGiphySend } from '@/components/chat/useMessageInputGiphySend';
 import { useMessageInputSubmit, type SendQueuedParams } from '@/components/chat/useMessageInputSubmit';
@@ -137,7 +138,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   const [isDragOver, setIsDragOver] = useState(false);
   const [isPollModalOpen, setIsPollModalOpen] = useState(false);
   const [isStickerTrayOpen, setIsStickerTrayOpen] = useState(false);
-  const [mediaTrayInitialTab, setMediaTrayInitialTab] = useState<'recent' | 'gifs'>('recent');
   const [isComposerSearchExpanded, setIsComposerSearchExpanded] = useState(false);
   const voiceRecorder = useAudioRecorder();
   const lastAppliedEditIdRef = useRef<string | null>(null);
@@ -235,6 +235,20 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
   });
 
   const video = useMessageInputVideoSend({
+    isDisabled,
+    inputBlocked,
+    finalContextId,
+    contextType,
+    chatType,
+    replyTo,
+    onOptimisticMessage,
+    onSendQueued,
+    onMessageSent,
+    onCancelReply,
+    t,
+  });
+
+  const documentSend = useMessageInputDocumentSend({
     isDisabled,
     inputBlocked,
     finalContextId,
@@ -548,6 +562,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
       lastOwnMessage.messageType !== 'VOICE' &&
       lastOwnMessage.messageType !== 'VIDEO' &&
       lastOwnMessage.messageType !== 'STICKER' &&
+      lastOwnMessage.messageType !== 'DOCUMENT' &&
       !lastOwnMessage.poll
     ) {
       e.preventDefault();
@@ -641,11 +656,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                     videoBusy={video.videoBusy}
                     onAddImages={(files) => setSelectedImages((prev) => [...prev, ...files])}
                     onAddVideo={(file) => void video.handleVideoFile(file)}
+                    onAddDocument={(file) => documentSend.handleDocumentFile(file)}
                     onOpenPoll={() => setIsPollModalOpen(true)}
-                    onOpenGiphy={() => {
-                      setMediaTrayInitialTab('gifs');
-                      setIsStickerTrayOpen(true);
-                    }}
                   />
                 </motion.div>
                 <motion.div
@@ -665,10 +677,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
                   <ChatStickerTrayButton
                     disabled={isDisabled || inputBlocked || voice.voiceMode || sticker.stickerBusy}
                     active={isStickerTrayOpen}
-                    onClick={() => {
-                      setMediaTrayInitialTab('recent');
-                      setIsStickerTrayOpen(true);
-                    }}
+                    onClick={() => setIsStickerTrayOpen(true)}
                   />
                 </motion.div>
                 <MessageInputSearchToggle
@@ -890,7 +899,6 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
         onClose={() => setIsStickerTrayOpen(false)}
         onSelectSticker={(s) => void sticker.sendSticker(s)}
         onSelectGif={(item) => void giphy.sendGiphy(item)}
-        initialTab={mediaTrayInitialTab}
         sport={game?.sport ?? null}
         busy={sticker.stickerBusy || giphy.giphyBusy}
       />

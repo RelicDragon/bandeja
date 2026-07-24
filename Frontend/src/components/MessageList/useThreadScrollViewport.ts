@@ -127,7 +127,15 @@ export function useThreadScrollViewport({
   const eagerMediaMessageIds = useMemo(() => {
     const tail = messages.slice(-OPEN_TAIL_EAGER_MEDIA);
     return new Set(
-      tail.filter((m) => (m.mediaUrls?.length ?? 0) > 0 && m.messageType !== 'VIDEO').map((m) => m.id)
+      tail
+        .filter(
+          (m) =>
+            (m.mediaUrls?.length ?? 0) > 0 &&
+            m.messageType !== 'VIDEO' &&
+            m.messageType !== 'DOCUMENT' &&
+            m.messageType !== 'VOICE'
+        )
+        .map((m) => m.id)
     );
   }, [messages]);
 

@@ -399,6 +399,8 @@ export interface GameParticipant {
   invitedByUser?: BasicUser | null;
   /** Watch scoring session: current match id or null */
   activeMatchId?: string | null;
+  /** When false, this participant's result is hidden from followers' story feeds. Default true. */
+  showInStories?: boolean;
 }
 
 export interface GameTeamPlayer {

@@ -7,6 +7,11 @@ export function formatChatMessageForForwardClipboard(m: ChatMessage): string {
     parts.push('[video]');
     return parts.join('\n\n').trim();
   }
+  if (m.messageType === 'DOCUMENT') {
+    const name = m.documentFileName?.trim();
+    parts.push(name ? `[file] ${name}` : '[file]');
+    return parts.join('\n\n').trim();
+  }
   if (m.messageType === 'STICKER') {
     parts.push(formatStickerPreviewText(m.stickerEmoji));
     return parts.join('\n\n').trim();

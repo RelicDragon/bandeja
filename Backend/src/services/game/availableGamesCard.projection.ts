@@ -120,6 +120,7 @@ export function getAvailableGamesCardInclude() {
         joinedAt: true,
         inviteMessage: true,
         inviteExpiresAt: true,
+        showInStories: true,
         user: {
           select: FIND_CARD_USER_SELECT,
         },
@@ -153,6 +154,15 @@ export function getAvailableGamesCardInclude() {
       },
     },
     mainPhoto: MAIN_PHOTO_RELATION_SELECT,
+    /** Slim standings for FINAL GameCard place badges (positioned rows only). */
+    outcomes: {
+      where: { position: { not: null } },
+      select: {
+        userId: true,
+        position: true,
+      },
+      orderBy: { position: 'asc' as const },
+    },
   } as const;
 }
 
@@ -263,6 +273,24 @@ export function collectAvailableGamesCardContractIssues(
         issues.push({
           path: `[${gameIndex}].participants[${pIndex}].user.level`,
           reason: 'expected projected level number when present',
+        });
+      }
+    });
+
+    const outcomes = Array.isArray(g.outcomes) ? g.outcomes : [];
+    outcomes.forEach((outcome, oIndex) => {
+      if (!outcome || typeof outcome !== 'object') return;
+      const row = outcome as Record<string, unknown>;
+      if ('user' in row) {
+        issues.push({
+          path: `[${gameIndex}].outcomes[${oIndex}].user`,
+          reason: 'outcome.user not part of Find card standings payload',
+        });
+      }
+      if (typeof row.userId !== 'string') {
+        issues.push({
+          path: `[${gameIndex}].outcomes[${oIndex}].userId`,
+          reason: 'expected outcome.userId string',
         });
       }
     });

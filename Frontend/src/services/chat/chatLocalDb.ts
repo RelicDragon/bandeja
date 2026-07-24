@@ -50,6 +50,8 @@ export type ChatOutboxRow = {
   hasPendingVoiceBlob?: boolean;
   /** Pending video MP4 blob in `outboxMediaBlobs` until upload+ACK. */
   hasPendingVideoBlob?: boolean;
+  /** Pending document blob in `outboxMediaBlobs` until upload+ACK. */
+  hasPendingDocumentBlob?: boolean;
   videoDurationMs?: number;
   /** Client transcode time (ms) for metrics; set when video is prepared for send. */
   videoTranscodeMs?: number;
@@ -61,7 +63,7 @@ export type OutboxMediaBlobRow = {
   id: string;
   tempId: string;
   slot: number;
-  kind: 'image' | 'voice' | 'video' | 'video-poster';
+  kind: 'image' | 'voice' | 'video' | 'video-poster' | 'document';
   blob: Blob;
 };
 

@@ -24,7 +24,8 @@ export class S3Service {
   static async uploadFile(
     buffer: Buffer,
     key: string,
-    contentType?: string
+    contentType?: string,
+    contentDisposition?: string
   ): Promise<string> {
     this.initialize();
 
@@ -33,6 +34,7 @@ export class S3Service {
       Key: key,
       Body: buffer,
       ContentType: contentType,
+      ...(contentDisposition ? { ContentDisposition: contentDisposition } : {}),
       CacheControl: "public, max-age=31536000, immutable",
     });
 

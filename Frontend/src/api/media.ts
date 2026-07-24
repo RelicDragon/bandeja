@@ -27,6 +27,14 @@ export interface ChatVideoUploadResponse {
   height: number;
 }
 
+export interface ChatDocumentUploadResponse {
+  fileUrl: string;
+  thumbnailUrl?: string;
+  originalName: string;
+  size: number;
+  mimetype: string;
+}
+
 async function postMultipartAvatarUpload(
   path: string,
   avatarFile: File,
@@ -209,6 +217,35 @@ export const mediaApi = {
               if (total > 0) options.onUploadProgress!(ev.loaded / total);
             }
           : undefined,
+      }
+    );
+    return response.data.data;
+  },
+
+  uploadChatDocument: async (
+    documentFile: File,
+    contextId: string,
+    contextType?: 'GAME' | 'BUG' | 'USER' | 'GROUP',
+    options?: { signal?: AbortSignal }
+  ): Promise<ChatDocumentUploadResponse> => {
+    const formData = new FormData();
+    formData.append('document', documentFile);
+    if (contextType === 'BUG') {
+      formData.append('bugId', contextId);
+    } else if (contextType === 'USER') {
+      formData.append('userChatId', contextId);
+    } else if (contextType === 'GROUP') {
+      formData.append('groupChannelId', contextId);
+    } else {
+      formData.append('gameId', contextId);
+    }
+
+    const response = await api.post<ApiResponse<ChatDocumentUploadResponse>>(
+      '/media/upload/chat/document',
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        signal: options?.signal,
       }
     );
     return response.data.data;

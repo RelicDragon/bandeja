@@ -10,6 +10,13 @@ import type {
   UserPerformanceInsights,
 } from '@/api/users';
 import { formatDate } from '@/utils/dateFormat';
+import {
+  dedupeRelationshipCards,
+  distinctRelationshipRankingModes,
+  resolveRelationshipsForMode,
+  type RelationshipCardKey,
+  type RelationshipRankingMode,
+} from '@/utils/profileRelationshipRankings';
 import { buildUrl } from '@/utils/urlSchema';
 
 interface ProfilePerformanceInsightsProps {
@@ -18,14 +25,13 @@ interface ProfilePerformanceInsightsProps {
   onOpenGame?: () => void;
 }
 
-type RelationshipRankingMode = 'formulae' | 'rating' | 'games';
-type RelationshipCardKey = 'bestPartner' | 'worstPartner' | 'favoriteTarget' | 'nemesis';
+const relationshipRankingModeLabels: Record<RelationshipRankingMode, string> = {
+  formulae: 'playerCard.relationshipRankingFormulae',
+  rating: 'playerCard.relationshipRankingRating',
+  games: 'playerCard.relationshipRankingGames',
+};
 
-const relationshipRankingModes: Array<{ mode: RelationshipRankingMode; labelKey: string }> = [
-  { mode: 'formulae', labelKey: 'playerCard.relationshipRankingFormulae' },
-  { mode: 'rating', labelKey: 'playerCard.relationshipRankingRating' },
-  { mode: 'games', labelKey: 'playerCard.relationshipRankingGames' },
-];
+const FORMULAE_ONLY_MODES: readonly RelationshipRankingMode[] = ['formulae'];
 
 const streakClasses: Record<StreakResult, string> = {
   win: 'bg-green-500 dark:bg-green-400 border-green-600 dark:border-green-300',
@@ -101,6 +107,17 @@ const ProfilePerformanceInsightsComponent = ({
   const relationshipHideTimeoutRef = useRef<number | null>(null);
   const relationshipRevealTimeoutRef = useRef<number | null>(null);
 
+  const clearRelationshipTransitionTimers = () => {
+    if (relationshipHideTimeoutRef.current != null) {
+      window.clearTimeout(relationshipHideTimeoutRef.current);
+      relationshipHideTimeoutRef.current = null;
+    }
+    if (relationshipRevealTimeoutRef.current != null) {
+      window.clearTimeout(relationshipRevealTimeoutRef.current);
+      relationshipRevealTimeoutRef.current = null;
+    }
+  };
+
   useEffect(() => () => {
     if (relationshipHideTimeoutRef.current != null) {
       window.clearTimeout(relationshipHideTimeoutRef.current);
@@ -110,74 +127,74 @@ const ProfilePerformanceInsightsComponent = ({
     }
   }, []);
 
+  const availableRankingModes = insights
+    ? distinctRelationshipRankingModes(insights.relationships)
+    : FORMULAE_ONLY_MODES;
+  const availableRankingModesKey = availableRankingModes.join(',');
+
+  useEffect(() => {
+    const modes = availableRankingModesKey.split(',') as RelationshipRankingMode[];
+    if (modes.includes(relationshipRankingMode)) return;
+    clearRelationshipTransitionTimers();
+    setRelationshipRankingMode('formulae');
+    setDisplayedRelationshipRankingMode('formulae');
+    setRelationshipCardsVisible(true);
+    setSelectedRelationshipKey(null);
+  }, [availableRankingModesKey, relationshipRankingMode]);
+
   if (!insights) return null;
 
   const recentGames = insights.streaks.recentGames.slice(-10);
   const emptySlots = Math.max(0, 10 - recentGames.length);
   const hasStreakData = recentGames.length > 0 || !!insights.streaks.current;
 
-  const relationshipSource = insights.relationships;
-  const bestPartner = displayedRelationshipRankingMode === 'rating'
-    ? relationshipSource.bestPartnerByRating ?? relationshipSource.bestPartner
-    : displayedRelationshipRankingMode === 'games'
-      ? relationshipSource.bestPartnerByCount ?? relationshipSource.bestPartner
-      : relationshipSource.bestPartner;
-  const worstPartner = displayedRelationshipRankingMode === 'rating'
-    ? relationshipSource.worstPartnerByRating ?? relationshipSource.worstPartner
-    : displayedRelationshipRankingMode === 'games'
-      ? relationshipSource.worstPartnerByCount ?? relationshipSource.worstPartner
-      : relationshipSource.worstPartner;
-  const favoriteTarget = displayedRelationshipRankingMode === 'rating'
-    ? relationshipSource.favoriteTargetByRating ?? relationshipSource.favoriteTarget
-    : displayedRelationshipRankingMode === 'games'
-      ? relationshipSource.favoriteTargetByCount ?? relationshipSource.favoriteTarget
-      : relationshipSource.favoriteTarget;
-  const nemesis = displayedRelationshipRankingMode === 'rating'
-    ? relationshipSource.nemesisByRating ?? relationshipSource.nemesis
-    : displayedRelationshipRankingMode === 'games'
-      ? relationshipSource.nemesisByCount ?? relationshipSource.nemesis
-      : relationshipSource.nemesis;
+  const resolved = resolveRelationshipsForMode(
+    insights.relationships,
+    displayedRelationshipRankingMode,
+  );
 
-  const relationships: Array<{
-    key: RelationshipCardKey;
-    label: string;
-    icon: typeof Trophy;
-    entry: PerformanceRelationshipEntry | null | undefined;
-    tone: string;
-  }> = [
+  const relationships = dedupeRelationshipCards([
     {
       key: 'bestPartner' as const,
       label: t('playerCard.bestPartner'),
       icon: Trophy,
-      entry: bestPartner,
+      entry: resolved.bestPartner,
       tone: 'text-green-600 dark:text-green-400',
     },
     {
       key: 'worstPartner' as const,
       label: t('playerCard.worstPartner'),
       icon: TrendingDown,
-      entry: worstPartner,
+      entry: resolved.worstPartner,
       tone: 'text-red-600 dark:text-red-400',
     },
     {
       key: 'favoriteTarget' as const,
       label: t('playerCard.favoriteTarget'),
       icon: Crosshair,
-      entry: favoriteTarget,
+      entry: resolved.favoriteTarget,
       tone: 'text-blue-600 dark:text-blue-400',
     },
     {
       key: 'nemesis' as const,
       label: t('playerCard.nemesis'),
       icon: ShieldAlert,
-      entry: nemesis,
+      entry: resolved.nemesis,
       tone: 'text-purple-600 dark:text-purple-400',
     },
-  ].filter((item) => item.entry);
+  ]);
   const hasRelationshipData = relationships.length > 0;
+  const showRankingModeSwitch = availableRankingModes.length > 1;
+  const relationshipRankingModes = availableRankingModes.map((mode) => ({
+    mode,
+    labelKey: relationshipRankingModeLabels[mode],
+  }));
   const selectedRelationship = selectedRelationshipKey
-    ? relationships.find((relationship) => relationship.key === selectedRelationshipKey)
+    ? relationships.find((relationship) => relationship.key === selectedRelationshipKey) ?? null
     : null;
+  if (selectedRelationshipKey && !selectedRelationship) {
+    setSelectedRelationshipKey(null);
+  }
   const relationshipFormulaLines = [
     t('playerCard.relationshipFormulaMatches'),
     t('playerCard.relationshipFormulaRate'),
@@ -195,15 +212,10 @@ const ProfilePerformanceInsightsComponent = ({
 
   const selectRelationshipRankingMode = (mode: RelationshipRankingMode) => {
     if (mode === relationshipRankingMode) return;
+    if (!availableRankingModes.includes(mode)) return;
+
     setRelationshipRankingMode(mode);
-
-    if (relationshipHideTimeoutRef.current != null) {
-      window.clearTimeout(relationshipHideTimeoutRef.current);
-    }
-    if (relationshipRevealTimeoutRef.current != null) {
-      window.clearTimeout(relationshipRevealTimeoutRef.current);
-    }
-
+    clearRelationshipTransitionTimers();
     setRelationshipCardsVisible(false);
     setSelectedRelationshipKey(null);
     relationshipHideTimeoutRef.current = window.setTimeout(() => {
@@ -442,32 +454,6 @@ const ProfilePerformanceInsightsComponent = ({
                   <p className="mt-2">{t('playerCard.relationshipFormulaPick')}</p>
                 </div>
               </div>
-              <div
-                className="mb-3 grid grid-cols-3 rounded-lg bg-white/70 p-1 shadow-inner ring-1 ring-gray-200/70 dark:bg-gray-800/40 dark:ring-gray-700/70"
-                aria-label={t('playerCard.relationshipRankingMode')}
-                role="radiogroup"
-              >
-                {relationshipRankingModes.map(({ mode, labelKey }) => {
-                  const selected = relationshipRankingMode === mode;
-                  return (
-                    <button
-                      key={mode}
-                      type="button"
-                      className={`min-w-0 rounded-md px-2 py-1.5 text-xs font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
-                        selected
-                          ? 'bg-primary-600 text-white shadow-sm'
-                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/70 dark:hover:text-white'
-                      }`}
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => selectRelationshipRankingMode(mode)}
-                    >
-                      <span className="block truncate">{t(labelKey)}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
               {hasRelationshipData ? (
                 <div
                   className={`grid grid-cols-1 gap-2 transition-all duration-200 ease-out motion-reduce:transition-none sm:grid-cols-2 ${
@@ -543,6 +529,36 @@ const ProfilePerformanceInsightsComponent = ({
               ) : (
                 <div className="text-sm text-gray-500 dark:text-gray-400">{t('playerCard.noPartnerStatsYet')}</div>
               )}
+
+              {showRankingModeSwitch ? (
+                <div
+                  className={`mt-3 grid rounded-lg bg-white/70 p-1 shadow-inner ring-1 ring-gray-200/70 dark:bg-gray-800/40 dark:ring-gray-700/70 ${
+                    relationshipRankingModes.length === 2 ? 'grid-cols-2' : 'grid-cols-3'
+                  }`}
+                  aria-label={t('playerCard.relationshipRankingMode')}
+                  role="radiogroup"
+                >
+                  {relationshipRankingModes.map(({ mode, labelKey }) => {
+                    const selected = relationshipRankingMode === mode;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        className={`min-w-0 rounded-md px-2 py-1.5 text-xs font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 ${
+                          selected
+                            ? 'bg-primary-600 text-white shadow-sm'
+                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-700/70 dark:hover:text-white'
+                        }`}
+                        role="radio"
+                        aria-checked={selected}
+                        onClick={() => selectRelationshipRankingMode(mode)}
+                      >
+                        <span className="block truncate">{t(labelKey)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
             </motion.div>
           )}
         </AnimatePresence>

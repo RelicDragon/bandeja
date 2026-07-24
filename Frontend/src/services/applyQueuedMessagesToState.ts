@@ -7,6 +7,7 @@ import { sendWithTimeout, isSending } from '@/services/chatSendService';
 import { reconcileOptimisticMessages } from '@/services/chat/optimisticReconcile';
 import {
   loadOutboxImageBlobs,
+  loadOutboxDocumentBlob,
   loadOutboxVideoBlob,
   loadOutboxVideoPosterBlob,
   loadOutboxVoiceBlob,
@@ -154,6 +155,19 @@ export async function applyQueuedMessagesToState(params: {
         }
         mediaUrls = [URL.createObjectURL(vb)];
         thumbnailUrls = [];
+      } else if (q.payload.messageType === 'DOCUMENT' && q.hasPendingDocumentBlob) {
+        const db = await loadOutboxDocumentBlob(q.tempId);
+        if (!db) {
+          logChatOutboxBlobMismatch('rehydrate', {
+            tempId: q.tempId,
+            contextType: q.contextType,
+            contextId: q.contextId,
+            kind: 'document',
+          });
+          return { kind: 'broken', q };
+        }
+        mediaUrls = [URL.createObjectURL(db)];
+        thumbnailUrls = [];
       }
       return { kind: 'ok', q, mediaUrls, thumbnailUrls };
     })
@@ -193,6 +207,9 @@ export async function applyQueuedMessagesToState(params: {
     videoWidth: q.payload.videoWidth,
     videoHeight: q.payload.videoHeight,
     waveformData: q.payload.waveformData,
+    documentFileName: q.payload.documentFileName,
+    documentMimeType: q.payload.documentMimeType,
+    documentSize: q.payload.documentSize,
     createdAt: q.createdAt,
     updatedAt: q.createdAt,
     replyToId: q.payload.replyToId,

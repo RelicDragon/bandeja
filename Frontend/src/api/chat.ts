@@ -62,7 +62,7 @@ export interface Poll {
 
 export type MessageState = 'SENT' | 'DELIVERED' | 'READ';
 export type ChatContextType = 'GAME' | 'BUG' | 'USER' | 'GROUP';
-export type MessageType = 'TEXT' | 'IMAGE' | 'VOICE' | 'VIDEO' | 'POLL' | 'STICKER';
+export type MessageType = 'TEXT' | 'IMAGE' | 'VOICE' | 'VIDEO' | 'POLL' | 'STICKER' | 'DOCUMENT';
 
 const UNREAD_COUNT_CACHE_TTL = 1000;
 const UNREAD_OBJECTS_IN_FLIGHT_TTL_MS = 1800;
@@ -148,6 +148,9 @@ export interface ChatMessage {
   videoWidth?: number | null;
   videoHeight?: number | null;
   waveformData?: number[];
+  documentFileName?: string | null;
+  documentMimeType?: string | null;
+  documentSize?: number | null;
   createdAt: string;
   updatedAt: string;
   editedAt?: string | null;
@@ -168,6 +171,7 @@ export interface ChatMessage {
     stickerEmoji?: string | null;
     audioDurationMs?: number | null;
     videoDurationMs?: number | null;
+    documentFileName?: string | null;
     sender: {
       id: string;
       firstName?: string;
@@ -248,6 +252,10 @@ export function getLastMessageText(m: ChatMessage | LastMessagePreview | null | 
     const emoji = msg.stickerEmoji?.trim();
     return emoji ? `[TYPE:STICKER]${emoji}` : '[TYPE:STICKER]';
   }
+  if (msg.messageType === 'DOCUMENT') {
+    const name = msg.documentFileName?.trim();
+    return name ? `[TYPE:DOCUMENT]${name}` : '[TYPE:DOCUMENT]';
+  }
   return msg.content ?? '';
 }
 
@@ -267,6 +275,9 @@ export interface OptimisticMessagePayload {
   videoWidth?: number;
   videoHeight?: number;
   waveformData?: number[];
+  documentFileName?: string;
+  documentMimeType?: string;
+  documentSize?: number;
   storyReply?: StoryReplyInfo;
   linkPreviewDisabled?: boolean;
   linkPreviewUrl?: string | null;
@@ -291,6 +302,9 @@ export interface CreateMessageRequest {
   videoWidth?: number;
   videoHeight?: number;
   waveformData?: number[];
+  documentFileName?: string;
+  documentMimeType?: string;
+  documentSize?: number;
   clientMutationId?: string;
   linkPreviewDisabled?: boolean;
   linkPreviewUrl?: string | null;

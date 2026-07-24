@@ -33,6 +33,12 @@ export function parseMessagePreview(preview: string | null | undefined, t: TFunc
             : t('chat.videoMessage', 'Video');
     }
 
+    if (preview.startsWith('[TYPE:DOCUMENT]')) {
+        const name = preview.slice('[TYPE:DOCUMENT]'.length).trim();
+        const label = t('chat.documentMessage', { defaultValue: 'File' });
+        return name ? `${label}: ${name}` : label;
+    }
+
     if (preview.startsWith('[TYPE:STICKER]')) {
         const emoji = preview.slice('[TYPE:STICKER]'.length).trim();
         const label = t('chat.stickerMessage', 'Sticker');

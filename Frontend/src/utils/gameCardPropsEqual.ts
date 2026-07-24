@@ -1,6 +1,7 @@
 import type { Game, GameParticipant } from '@/types';
 import type { FindSportFilterValue } from '@/utils/gameFiltersStorage';
 import { participantsRenderKey, playingParticipantsKey } from '@/utils/gameCardParticipants';
+import { gameCardOutcomesKey } from '@/utils/gameCardStandings';
 
 export interface GameCardMemoProps {
   game: Game;
@@ -83,6 +84,7 @@ function gameRenderSignature(game: Game): string {
     game.hasFixedTeams ? '1' : '0',
     game.genderTeams ?? '',
     game.resultsStatus ?? '',
+    gameCardOutcomesKey(game.outcomes),
     game.startTime ?? '',
     game.endTime ?? '',
     game.timeIsSet === false ? '0' : '1',

@@ -111,9 +111,6 @@ router.post(
 router.post(
   '/upload/chat/document',
   upload.single('document'),
-  validate([
-    body('gameId').notEmpty().withMessage('Game ID is required')
-  ]),
   uploadChatDocument
 );
 

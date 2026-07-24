@@ -312,6 +312,8 @@
     "shareCardFailed": "Deljenje nije uspelo",
     "shareCardNoSummary": "Odlična sesija!",
     "playAgainCta": "Igraj ponovo",
+    "showInStories": "Prikaži ovaj {{entity}} u mojim stories",
+    "showInStoriesFailed": "Nije moguće ažurirati vidljivost u stories",
     "configureGameRules": "Configure game rules",
     "viewGameRules": "View game rules",
     "setupConfigured": "Game setup configured"

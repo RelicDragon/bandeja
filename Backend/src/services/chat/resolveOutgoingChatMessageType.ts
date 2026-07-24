@@ -2,7 +2,7 @@ import { MessageType } from '@prisma/client';
 
 /**
  * Pure resolution used by MessageService.createMessage.
- * Precedence: poll → STICKER → VOICE → VIDEO → IMAGE (mediaUrls, incl. post-Giphy) → TEXT.
+ * Precedence: poll → STICKER → VOICE → VIDEO → DOCUMENT → IMAGE (mediaUrls, incl. post-Giphy) → TEXT.
  * Giphy URL-only paste is applied before this runs (re-host → mediaUrls).
  */
 export function resolveOutgoingChatMessageType(params: {
@@ -17,6 +17,7 @@ export function resolveOutgoingChatMessageType(params: {
   }
   if (params.requestedMessageType === MessageType.VOICE) return MessageType.VOICE;
   if (params.requestedMessageType === MessageType.VIDEO) return MessageType.VIDEO;
+  if (params.requestedMessageType === MessageType.DOCUMENT) return MessageType.DOCUMENT;
   if (params.mediaUrls.length > 0) return MessageType.IMAGE;
   return MessageType.TEXT;
 }

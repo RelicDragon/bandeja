@@ -9,11 +9,22 @@ export interface MessagePreviewLike {
   poll?: { question?: string };
   messageType?: string;
   stickerEmoji?: string | null;
+  documentFileName?: string | null;
 }
 
 export function getMessagePreviewText(message: MessagePreviewLike): string {
   if (message.messageType === 'STICKER') {
     return formatStickerPreviewText(message.stickerEmoji);
+  }
+  if (message.messageType === 'DOCUMENT') {
+    const name = message.documentFileName?.trim() ?? '';
+    return name ? `📄 ${name}` : '📄 File';
+  }
+  if (message.messageType === 'VIDEO') {
+    return '🎬 Video';
+  }
+  if (message.messageType === 'VOICE') {
+    return '🎤 Voice message';
   }
   if (message.content && message.content.trim()) {
     return message.content.trim();

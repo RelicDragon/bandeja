@@ -4,6 +4,7 @@ import type { ChatOutboxRow } from './chatLocalDb';
 import { chatLocalDb } from './chatLocalDb';
 import {
   loadOutboxImageBlobs,
+  loadOutboxDocumentBlob,
   loadOutboxVideoBlob,
   loadOutboxVideoPosterBlob,
   loadOutboxVoiceBlob,
@@ -26,6 +27,9 @@ export async function outboxRowHasLocalMediaBlobs(row: ChatOutboxRow): Promise<b
   }
   if (row.hasPendingVoiceBlob) {
     return !!(await loadOutboxVoiceBlob(row.tempId));
+  }
+  if (row.hasPendingDocumentBlob) {
+    return !!(await loadOutboxDocumentBlob(row.tempId));
   }
   return true;
 }
@@ -73,7 +77,10 @@ export async function reconcileUnsendableOutboxRow(row: ChatOutboxRow): Promise<
 > {
   const hasBlobs = await outboxRowHasLocalMediaBlobs(row);
   const needsUpload =
-    (row.pendingImageBlobCount ?? 0) > 0 || row.hasPendingVideoBlob || row.hasPendingVoiceBlob;
+    (row.pendingImageBlobCount ?? 0) > 0 ||
+    !!row.hasPendingVideoBlob ||
+    !!row.hasPendingVoiceBlob ||
+    !!row.hasPendingDocumentBlob;
 
   if (!needsUpload || hasBlobs) {
     return 'needs_send';
@@ -83,7 +90,13 @@ export async function reconcileUnsendableOutboxRow(row: ChatOutboxRow): Promise<
     tempId: row.tempId,
     contextType: row.contextType,
     contextId: row.contextId,
-    kind: row.hasPendingVideoBlob ? 'video' : row.hasPendingVoiceBlob ? 'voice' : 'image',
+    kind: row.hasPendingVideoBlob
+      ? 'video'
+      : row.hasPendingVoiceBlob
+        ? 'voice'
+        : row.hasPendingDocumentBlob
+          ? 'document'
+          : 'image',
   });
 
   let serverMsg = await findLocalMessageByClientMutationId(row);

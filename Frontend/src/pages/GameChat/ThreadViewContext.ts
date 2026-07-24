@@ -28,7 +28,8 @@ export interface ThreadMessageActionsValue {
     pendingVideoBlob?: Blob,
     pendingVideoPosterBlob?: Blob,
     videoTranscodeMs?: number,
-    pendingGiphy?: PendingGiphyOutboxMedia
+    pendingGiphy?: PendingGiphyOutboxMedia,
+    pendingDocumentBlob?: Blob
   ) => string;
   handleSendQueued: (params: SendQueuedParams) => void;
   handleSendFailed: (optimisticId: string) => void;

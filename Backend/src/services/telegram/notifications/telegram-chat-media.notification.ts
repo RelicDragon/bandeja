@@ -35,7 +35,7 @@ function buildCaption(senderName: string, body: string, senderLineStyle: 'dm' | 
   return `${prefix} *${escapeMarkdown(senderName)}*: ${escapeMarkdown(body)}`;
 }
 
-function resolveVideoUrl(message: ChatMessageForMediaPreview): string | undefined {
+function resolveMediaUrl(message: ChatMessageForMediaPreview): string | undefined {
   const raw = message.mediaUrls?.[0]?.trim();
   if (!raw) {
     return undefined;
@@ -45,6 +45,10 @@ function resolveVideoUrl(message: ChatMessageForMediaPreview): string | undefine
   }
   const key = raw.startsWith('/') ? raw.substring(1) : raw;
   return S3Service.getCloudFrontUrl(key);
+}
+
+function resolveVideoUrl(message: ChatMessageForMediaPreview): string | undefined {
+  return resolveMediaUrl(message);
 }
 
 function buildSendOptions(
@@ -136,7 +140,7 @@ export async function sendTelegramChatMediaNotification(
   console.log('[telegram-media-preview]', { messageType: messageType ?? 'TEXT' });
 
   try {
-    if (preview.previewImageUrl && messageType !== 'VIDEO') {
+    if (preview.previewImageUrl && messageType !== 'VIDEO' && messageType !== 'DOCUMENT') {
       await api.sendPhoto(params.telegramId, preview.previewImageUrl, {
         caption: trimmedCaption,
         parse_mode: sendOptions.parse_mode,
@@ -170,6 +174,39 @@ export async function sendTelegramChatMediaNotification(
             return;
           }
           throw videoUrlError;
+        }
+      }
+    }
+
+    if (messageType === 'DOCUMENT') {
+      const docUrl = resolveMediaUrl(params.message);
+      const fileName =
+        typeof params.message.documentFileName === 'string' &&
+        params.message.documentFileName.trim()
+          ? params.message.documentFileName.trim()
+          : 'document';
+      if (docUrl) {
+        const docOptions = {
+          caption: trimmedCaption,
+          parse_mode: sendOptions.parse_mode,
+          ...(sendOptions.reply_markup ? { reply_markup: sendOptions.reply_markup } : {}),
+        } as Parameters<Api['sendDocument']>[2];
+        try {
+          await api.sendDocument(params.telegramId, docUrl, docOptions);
+          return;
+        } catch (docUrlError) {
+          console.warn('[telegram-media-preview] document URL send failed, trying buffer upload');
+          const rawMedia = params.message.mediaUrls?.[0]?.trim();
+          if (rawMedia) {
+            const { buffer } = await S3Service.getObjectBuffer(rawMedia);
+            await api.sendDocument(
+              params.telegramId,
+              new InputFile(buffer, fileName),
+              docOptions
+            );
+            return;
+          }
+          throw docUrlError;
         }
       }
     }

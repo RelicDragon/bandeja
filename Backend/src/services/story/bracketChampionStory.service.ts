@@ -213,9 +213,25 @@ export class BracketChampionStoryService {
       where: { id: { in: rosterIds } },
       select: { id: true, shareGameResultsToFollowers: true },
     });
+    const seasonParticipants = await prisma.gameParticipant.findMany({
+      where: { gameId: seasonGame.id, userId: { in: rosterIds } },
+      select: { userId: true, showInStories: true },
+    });
+    const showInStoriesByUser = new Map(
+      seasonParticipants.map((row) => [row.userId, row.showInStories])
+    );
 
     for (const owner of owners) {
-      if (!owner.shareGameResultsToFollowers) continue;
+      if (
+        !canSeeBracketChampionInStories({
+          viewerFollows: true,
+          game: seasonGame,
+          owner,
+          participant: { showInStories: showInStoriesByUser.get(owner.id) ?? true },
+        })
+      ) {
+        continue;
+      }
       const game = toGameSummary(seasonGame, { id: owner.id, isAdmin: false });
       const segment = buildBracketChampionSegment({
         sourceId,
@@ -296,6 +312,16 @@ export class BracketChampionStoryService {
         },
         select: { id: true, shareGameResultsToFollowers: true },
       });
+      const seasonParticipants = await prisma.gameParticipant.findMany({
+        where: {
+          gameId: seasonGame.id,
+          userId: { in: owners.map((o) => o.id) },
+        },
+        select: { userId: true, showInStories: true },
+      });
+      const showInStoriesByUser = new Map(
+        seasonParticipants.map((row) => [row.userId, row.showInStories])
+      );
 
       const sourceId = bracketChampionSourceId(slot.leagueRoundId, slot.leagueGroupId);
       const championLabel = await resolveChampionTeamLabel(championParticipantId);
@@ -319,6 +345,7 @@ export class BracketChampionStoryService {
             viewerFollows: true,
             game: seasonGame,
             owner,
+            participant: { showInStories: showInStoriesByUser.get(owner.id) ?? true },
           })
         ) {
           continue;

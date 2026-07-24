@@ -1,6 +1,6 @@
 export function logChatOutboxBlobMismatch(
   source: 'send' | 'rehydrate' | 'reconcile',
-  detail: { tempId: string; contextType?: string; contextId?: string; expected?: number; got?: number; kind?: 'image' | 'voice' | 'video' }
+  detail: { tempId: string; contextType?: string; contextId?: string; expected?: number; got?: number; kind?: 'image' | 'voice' | 'video' | 'document' }
 ): void {
   console.warn('[bandeja-chat] outbox blob mismatch', { source, ...detail });
 }

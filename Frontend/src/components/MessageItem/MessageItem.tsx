@@ -300,7 +300,14 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       return;
     }
 
-    // 2. Otherwise copy the image (sticker / GIF / photo).
+    // 2. Document: copy filename (no image target).
+    if (msg.messageType === 'DOCUMENT') {
+      const name = msg.documentFileName?.trim();
+      void navigator.clipboard.writeText(name ? `[file] ${name}` : '[file]');
+      return;
+    }
+
+    // 3. Otherwise copy the image (sticker / GIF / photo).
     const url = await resolveMessageCopyTargetUrl(msg, { reduceMotion });
     if (!url) {
       // Sticker whose asset couldn't be resolved: fall back to its emoji text.

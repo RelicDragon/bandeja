@@ -114,6 +114,29 @@ function testNeverUsesOriginalUrl(): void {
   assert.ok(preview.previewImageUrl?.includes('thumbnails'));
 }
 
+function testDocumentPreview(): void {
+  const preview = resolveChatNotificationMediaPreview({
+    messageType: 'DOCUMENT',
+    mediaUrls: ['https://cdn.example.com/uploads/documents/abc.pdf'],
+    documentFileName: 'rules.pdf',
+  }, 'en');
+
+  assert.equal(preview.body, '📄 rules.pdf');
+  assert.equal(preview.previewImageUrl, undefined);
+  assert.equal(preview.previewMediaType, undefined);
+  assert.equal(preview.mediaCount, 1);
+}
+
+function testDocumentWithoutName(): void {
+  const preview = resolveChatNotificationMediaPreview({
+    messageType: 'DOCUMENT',
+    mediaUrls: ['https://cdn.example.com/uploads/documents/abc.pdf'],
+  }, 'en');
+
+  assert.equal(preview.body, '📄 File');
+  assert.equal(preview.previewImageUrl, undefined);
+}
+
 function testStoryReplyThumbnail(): void {
   const thumb = 'https://d1afylun4w6qxe.cloudfront.net/uploads/games/thumbnails/story_thumb.jpg';
   const preview = resolveChatNotificationMediaPreview({
@@ -158,6 +181,8 @@ void (async () => {
   testTextOnly();
   testMissingThumbFallbackLabel();
   testNeverUsesOriginalUrl();
+  testDocumentPreview();
+  testDocumentWithoutName();
   testStoryReplyThumbnail();
   testStoryReplyWithoutThumb();
   console.log('chat-notification-media-preview.test.ts: ok');

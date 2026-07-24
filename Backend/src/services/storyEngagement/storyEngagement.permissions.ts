@@ -214,7 +214,7 @@ export async function resolveVisibleSegment(
               leagueSeason: {
                 include: {
                   league: { select: { name: true } },
-                  game: { select: { isPublic: true } },
+                  game: { select: { id: true, isPublic: true } },
                 },
               },
             },
@@ -242,12 +242,19 @@ export async function resolveVisibleSegment(
       if (!owner) segmentNotFound();
       if (!follows) engagementForbidden();
       const seasonGame = finalSlot.leagueRound.leagueSeason.game;
+      const seasonParticipant = seasonGame
+        ? await prisma.gameParticipant.findUnique({
+            where: { userId_gameId: { userId: ownerUserId, gameId: seasonGame.id } },
+            select: { showInStories: true },
+          })
+        : null;
       if (
         !seasonGame ||
         !canSeeBracketChampionInStories({
           viewerFollows: true,
           game: seasonGame,
           owner,
+          participant: { showInStories: seasonParticipant?.showInStories ?? true },
         })
       ) {
         segmentNotFound();
@@ -283,11 +290,16 @@ export async function resolveVisibleSegment(
       });
       if (!outcome) segmentNotFound();
       if (!follows) engagementForbidden();
+      const resultParticipant = await prisma.gameParticipant.findUnique({
+        where: { userId_gameId: { userId: ownerUserId, gameId: sourceId } },
+        select: { showInStories: true },
+      });
       if (
         !canSeeResultInStories({
           viewerFollows: true,
           game: outcome.game,
           outcomeOwner: outcome.user,
+          participant: { showInStories: resultParticipant?.showInStories ?? true },
         })
       ) {
         segmentNotFound();

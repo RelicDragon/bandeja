@@ -45,6 +45,7 @@ import { FaqEdit } from '@/components/GameDetails/FaqEdit';
 import { EditMaxParticipantsModal } from '@/components/EditMaxParticipantsModal';
 import { EditGameInfoModal, type EditGameInfoInitialTabId } from '@/components/GameDetails/EditGameInfoModal';
 import { GameResultsEntryEmbedded } from '@/components/GameDetails/GameResultsEntryEmbedded';
+import { GameResultsShowInStoriesSwitch } from '@/components/GameDetails/GameResultsShowInStoriesSwitch';
 import { ResultsTableView } from '@/components/gameResults/ResultsTableView';
 import { ScoreEntryModal, RoundAddedModal } from '@/components/gameResults';
 import { useIsLandscape } from '@/hooks/useIsLandscape';
@@ -1403,6 +1404,14 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
           {!isLeagueSeason && game.resultsStatus !== 'NONE' && game.entityType !== 'BAR' && game.entityType !== 'TRAINING' ? (
             <div key="results-entry" className="contents">
               <GameResultsEntryEmbedded game={game} onGameUpdate={setGame} onRoundAdded={(r) => { if (shouldShowRoundAddedModal(r, tablePlayers.length)) { setRoundAddedForModal(r); setRoundAddedModalRoundNumber(undefined); } }} />
+            </div>
+          ) : null}
+
+          {user &&
+          game.resultsStatus === 'FINAL' &&
+          (isLeagueSeason || game.entityType === 'TRAINING' || game.entityType === 'BAR') ? (
+            <div key="show-in-stories" className="contents">
+              <GameResultsShowInStoriesSwitch game={game} onGameUpdate={setGame} />
             </div>
           ) : null}
 

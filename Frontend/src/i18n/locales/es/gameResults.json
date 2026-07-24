@@ -308,6 +308,8 @@
     "shareCardFailed": "No se pudo compartir",
     "shareCardNoSummary": "¡Gran sesión!",
     "playAgainCta": "Jugar de nuevo",
+    "showInStories": "Mostrar este {{entity}} en mis stories",
+    "showInStoriesFailed": "No se pudo actualizar la visibilidad en stories",
     "configureGameRules": "Configure game rules",
     "viewGameRules": "View game rules",
     "setupConfigured": "Game setup configured"

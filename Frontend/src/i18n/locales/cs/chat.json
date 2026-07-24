@@ -170,6 +170,12 @@
       "unfavorite": "Odebrat z oblíbených"
     },
     "attachVideo": "Video",
+    "attachFile": "Soubor",
+    "documentMessage": "Soubor",
+    "documentTooLarge": "Soubor je příliš velký (max. 32 MB)",
+    "invalidDocumentType": "Nepodporovaný typ souboru (PDF, DOC, DOCX, TXT)",
+    "documentPickFailed": "Nepodařilo se vybrat soubor",
+    "documentOpenFailed": "Soubor se nepodařilo otevřít",
     "compressingVideo": "Komprimace videa…",
     "videoTooLong": "Video je příliš dlouhé (max. 3 minuty)",
     "videoTooLarge": "Soubor videa je příliš velký",

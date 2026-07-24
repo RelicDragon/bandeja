@@ -11,8 +11,10 @@ import { formatChatTime } from '@/utils/dateFormat';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import type { ChatItem } from './chatListTypes';
 import { ChatListOutboxAnimated } from './ChatListOutboxAnimated';
-import { ChatListPreviewContent, ChatListStickerRow } from './ChatListPreviewContent';
+import { ChatListDocumentRow, ChatListPreviewContent, ChatListStickerRow, ChatListVideoRow } from './ChatListPreviewContent';
 import { ChatListPreviewText } from './ChatListPreviewText';
+import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
+import { Mic } from 'lucide-react';
 import { ChatListDraftPreview } from './ChatListDraftPreview';
 import {
   dismissFailedOutboxForContext,
@@ -201,6 +203,27 @@ function ChatListGameCardInner({ chat, isSelected, onClick }: ChatListGameCardPr
                       const full = lastMessage as ChatMessage;
                       if (full.messageType === 'STICKER') {
                         return <ChatListStickerRow t={t} emoji={full.stickerEmoji} />;
+                      }
+                      if (full.messageType === 'DOCUMENT') {
+                        return <ChatListDocumentRow t={t} fileName={full.documentFileName} />;
+                      }
+                      if (full.messageType === 'VIDEO') {
+                        return <ChatListVideoRow t={t} durationMs={full.videoDurationMs} />;
+                      }
+                      if (full.messageType === 'VOICE') {
+                        const dur =
+                          full.audioDurationMs != null && full.audioDurationMs > 0
+                            ? ` (${formatVoiceDurationMmSs(full.audioDurationMs)})`
+                            : '';
+                        return (
+                          <span className="inline-flex items-center gap-1">
+                            <Mic className="w-4 h-4 shrink-0" aria-hidden />
+                            <span>
+                              {t('chat.voiceMessage', { defaultValue: 'Voice message' })}
+                              {dur}
+                            </span>
+                          </span>
+                        );
                       }
                       const text = full.senderId
                         ? full.content || ''

@@ -20,6 +20,9 @@ function createMockApi(
         throw new Error('video URL fetch failed');
       }
     },
+    sendDocument: async (...args: unknown[]) => {
+      calls.push({ method: 'sendDocument', args });
+    },
     sendMessage: async (...args: unknown[]) => {
       calls.push({ method: 'sendMessage', args });
     },
@@ -164,6 +167,27 @@ async function testStoryReplySendsPhoto(): Promise<void> {
   assert.equal(calls[0]?.args[1], thumb);
 }
 
+async function testSendsDocument(): Promise<void> {
+  const calls: SentCall[] = [];
+  const { api } = createMockApi(calls);
+
+  await sendTelegramChatMediaNotification(api, {
+    telegramId: 'tg-7',
+    message: {
+      messageType: 'DOCUMENT',
+      mediaUrls: ['https://cdn.example.com/uploads/documents/rules.pdf'],
+      documentFileName: 'rules.pdf',
+    },
+    senderName: 'Ada',
+    captionPrefix: '',
+    buttons: [[{ text: 'Reply', callback_data: 'rum:1:2' }]],
+    lang: 'en',
+  });
+
+  assert.equal(calls[0]?.method, 'sendDocument');
+  assert.match(String(calls[0]?.args[1]), /rules\.pdf/);
+}
+
 void (async () => {
   await testSendsPhotoForImage();
   await testSendsVideoWithThumbnail();
@@ -171,5 +195,6 @@ void (async () => {
   await testPhotoFailureFallsBackToText();
   await testVideoUrlFailureFallsBackToText();
   await testStoryReplySendsPhoto();
+  await testSendsDocument();
   console.log('telegram-chat-media.notification.test.ts: ok');
 })();

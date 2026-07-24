@@ -326,6 +326,10 @@ Frontend/e2e/
 |----|------|-------|----------|
 | H-28 | Past games subtab | Header → Past (History) | Past games list only (no stories, bookings, invites, or banners); load more when available; URL `/?tab=past-games` |
 | H-29a | Past games empty | User with no past games → Past subtab | Empty state "No past games" |
+| H-29b | FINAL card standing places | Past / My / Find card with `resultsStatus=FINAL` and outcomes that include `position` | Player row sorted by place; place badge above each avatar |
+| H-29c | Non-standing card no places | Card not FINAL, or FINAL without positioned outcomes (e.g. training rating-only) | Player carousel order unchanged; no place badges above avatars |
+| H-29d | Normal match place medals | FINAL 1v1/2v2 (or other non-tournament) game card | Place 1 shows gold trophy (ties share gold); other places show numbers |
+| H-29e | Tournament place medals | FINAL `entityType=TOURNAMENT` card | Places 1–3 show gold/silver/bronze medals (ties share medal); 4+ show numbers |
 | H-31 | Calendar subtab default | Open home | Calendar view default; no `tab` query param; Calendar/Past segmented control shows no unread badges |
 | H-32 | URL deep link Past | `/?tab=past-games` | Past subtab selected |
 | H-33 | Subtab survives refresh | On Past subtab → reload | Same subtab + query param preserved |
@@ -436,6 +440,8 @@ Frontend/e2e/
 | F-45 | Game card unified header | View cards of each entity type (game, training, tournament, league, bar) | Title row shows color-coded entity glyph (non-GAME) + name (entity-type label as fallback when unnamed); all pills (sport, participation, private, gender, no-rating, fixed teams, results) sit in one wrap row under the title; no duplicate entity pill |
 | F-47 | Game card date tile | Cards with set time, today/tomorrow, and `timeIsSet=false` | Calendar tile (weekday/day/month) tinted by entity type; bold time range + club beside it; "Today"/"Tomorrow" chip for near dates; crossed-calendar tile + "not set" text when time unset |
 | F-48 | Game card photo beside players | Cards with main photo (with/without players; league-season photo-only) | Square photo sits left of the participants carousel, stretched to the full carousel row height; carousel scrolls independently to the right |
+| F-70 | Find FINAL card standing places | Find (incl. archived/finished) FINAL game with positioned outcomes | Card shows place badges (medal/number) above avatars, sorted by standing |
+| F-71 | Find standings survive incomplete socket patch | FINAL Find card with places; receive socket update that omits outcomes or sends `[]`/`null` while still FINAL | Place badges remain; order unchanged |
 | F-49 | Find load stable under socket noise | Open Find (calendar + list) while unrelated My/game room socket bumps arrive | Calendar day counts and upcoming list do not flash empty or refetch wholesale; games already on Find patch in place when that game updates |
 | F-50 | Find filter list/calendar parity | Apply entity + slots + suitable rating (+ optional private/no-rating) toggles | Day badge counts match the filtered games shown for that day; list view applies the same filters |
 | F-51 | Find progressive enrichment | Open Find cold; wait for cards then badges/weather/notes | Cards paint before notes/weather/reactions; enrichment failure leaves list intact |
@@ -749,9 +755,13 @@ Frontend/e2e/
 | GD-113 | Round header match progress | Multi-round game with 2+ matches per round → finish some matches | Round header shows animated progress bar + `finished/total` counter; bar turns green when all matches complete |
 | GD-114 | Available players footer header | Edit a match with unassigned players in roster | Bottom sheet shows "Available Players" label with count badge above the draggable carousel |
 | GD-115 | Round added summary modal | Add round in results entry with ≤4 playing participants vs 5+ | ≤4: round added inline with no summary modal; 5+: modal lists generated match pairings |
-| GD-36 | Results share card hidden without photo | Final results, no game photo yet | No share card or share CTA; Play again shown only if viewer is PLAYING |
-| GD-36b | Results share card with photo | Add/generate photo, open Results tab | Share card preview shows photo; Share results card succeeds (PNG export must not fail on Tailwind oklch; native share or desktop download) |
+| GD-36 | Results card hidden without photo | Final results, no game photo yet | No results photo card; Play again shown only if viewer is PLAYING; stories switch shown only if viewer is PLAYING |
+| GD-36b | Results card above tabs | Final results with photo | Results card + Play again (and stories switch if PLAYING) sit above Results/Stats/Scores switch, not inside Results tab |
 | GD-36c | Play again only for players | Results as PLAYING participant vs guest/spectator/owner-only | Play again visible only when current user has PLAYING status on this game |
+| GD-36d | Show in stories toggle | PLAYING (or outcome) user on FINAL toggles off then on | Switch above tabs; entity label; default on; off removes GAME_RESULT (and bracket champion on league season) from followers live+feed; on restores when eligible; profile shareGameResultsToFollowers still required |
+| GD-36e | Stories switch hidden for non-players | View FINAL results as guest/spectator | No "Show this … in my stories" switch |
+| GD-36f | Toggle survives tab switch | Toggle off, switch to Scores then back | Switch stays off; card+switch remain above Results/Stats/Scores control |
+| GD-36g | League season / training / bar switch | FINAL league season, training, or bar as player | Switch visible (these entity types do not use results tabs); toggle still gates stories |
 | GD-37 | Game results artifact | Photo/story from results | Artifact flow |
 
 ### 9.5 Bets
@@ -963,6 +973,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-107 | Giphy search → send GIF | With `GIPHY_API_KEY` and/or `KLIPY_API_KEY` set: open media tray at 300px width → GIFs → scroll results → tap a result | Results render three per row, edge-to-edge with no gaps or rounded corners, remain painted without blinking while scrolling, and add responsive columns on wider screens; tray closes; message sends as `IMAGE` with re-hosted media (our CDN/`uploads/chat/…`, not giphy.com/klipy.com); GIF animates with transparent panel (no bubble chrome), same as CH-96 |
 | CH-108 | GIF search unavailable without keys | Without `GIPHY_API_KEY` and `KLIPY_API_KEY` (or `/giphy/status` available=false): open media tray → GIFs | Stickers and mixed Recent remain usable; GIFs shows unavailable state without blocking tray open; URL-only paste (#CH-96) still works |
 | CH-117 | Open sticker and GIF tray from composer | In GAME/USER/GROUP/BUG chat with media allowed → tap sticker button next to attach | Tray opens immediately with search and Recent · Favorites · Packs · GIFs; GIF trending fetch starts only after switching to the GIFs tab; Packs lists seeded stickers |
+| CH-147 | Attach flyout entries | Game chat → tap paperclip attach | Flyout shows File, Video, Images, Poll (no GIF); GIFs still via sticker tray (CH-117 / CH-107) |
+| CH-148 | Send document file | Attach → File → pick PDF/DOC/DOCX/TXT (desktop, mobile browser, Capacitor) | Optimistic file bubble with name/size; CDN upload; confirmed DOCUMENT; tap opens/downloads (native Share uses unique file URI; web blob download); chat list + push show File/name (not Photo); Copy copies `[file] name` (not image toast); re-open thread while pending still shows file bubble |
 | CH-118 | Tap sticker sends via outbox | Open tray → tap a sticker in Packs | Optimistic sticker appears in thread immediately (fully transparent panel, no bubble chrome); create confirms via sync; no image upload / pending blobs |
 | CH-119 | Sticker send offline retry | Go briefly offline → send sticker from tray → come online | Outbox retries create-only (no media upload); sticker confirms when network returns |
 | CH-119a | Sticker cannot be edited | Own sticker → context menu / ArrowUp | No Edit action; API rejects content update if attempted |
@@ -1082,6 +1094,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-61 | Group settings page | Navigate to group settings | Member/admin actions |
 | CH-62 | Kick from group settings | Admin kicks member | Member removed |
 | CH-63 | Bug chat video attach (iOS) | `@mobile` Capacitor iOS → bug thread → attach gallery MOV | Video accepted; compress toast; message sends |
+| CH-63a | Chat video after compress 100% (iOS) | `@mobile` Capacitor iOS → any chat → attach gallery video → wait until compress hits 100% / Preparing | Optimistic VIDEO bubble appears promptly; attach unlocked; poster may be fallback if frame capture times out (≤3s) — never stuck busy |
 | CH-64 | Bugs filter survives thread nav | `@mobile` Bugs → turn off Created by me → open non-owned bug → back | Created by me stays off; list still shows all bugs |
 
 ---
@@ -1183,6 +1196,8 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-79 | No sports hides stats/levels UI | Subject `sportsEnabled: []` | No sport picker, no Statistics/Levels switch; common groups shown if any, else only hero |
 | PR-80 | Profile URL sport hint | `/user-profile/:id?sport=TENNIS` and subject has tennis | Opens on tennis even if viewer primary is padel |
 | PR-81 | Game-open sport hint | Open `?player=` from tennis game; subject has tennis | Card opens on tennis; if subject lacks tennis → viewer primary or subject primary |
+| PR-82 | Partners ranking modes (enough data) | Player card Statistics → Partners when Rating/Games change people vs Formulae | Switch visible; each visible mode changes at least one card person; no two tabs with identical people |
+| PR-83 | Partners sparse data (one game) | Open card with 1 finished doubles game (e.g. Polina) | Ranking switch hidden; only one partner + one opponent card (no best=worst / favorite=nemesis dupes) |
 | PR-streak-1 | Own profile play streak chip | Own profile/card after ≥1 qualifying week | Flame + N weeks; tap opens sheet with current/best/deadline |
 | PR-streak-2 | Other profile play streak | Open another user’s card with streak | Current/best visible; no at-risk styling or hours |
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |

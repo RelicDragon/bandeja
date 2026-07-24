@@ -171,6 +171,12 @@
       "unfavorite": "Remove from favorites"
     },
     "attachVideo": "Video",
+    "attachFile": "File",
+    "documentMessage": "File",
+    "documentTooLarge": "File is too large (max 32 MB)",
+    "invalidDocumentType": "Unsupported file type (PDF, DOC, DOCX, TXT)",
+    "documentPickFailed": "Failed to pick file",
+    "documentOpenFailed": "Could not open file",
     "compressingVideo": "Compressing video…",
     "videoTooLong": "Video is too long (max 3 minutes)",
     "videoTooLarge": "Video file is too large",

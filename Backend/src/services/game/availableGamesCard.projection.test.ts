@@ -42,6 +42,21 @@ function run() {
     FIND_CARD_USER_SELECT.sportProfiles?.select?.approvedLevel === true,
     'Find card selects approvedLevel for sport confirmation projection',
   );
+  assert.ok(
+    include.outcomes?.select?.userId === true &&
+      include.outcomes?.select?.position === true &&
+      !('pointsEarned' in (include.outcomes?.select as object)),
+    'Find card includes slim positioned outcomes only',
+  );
+  assert.equal(
+    'user' in (include.outcomes?.select as object),
+    false,
+    'Find card outcomes omit user tree',
+  );
+  assert.ok(
+    include.outcomes?.where?.position?.not === null,
+    'Find card outcomes skip position-less rows at query time',
+  );
 
   const validCard = {
     id: 'g1',
@@ -106,6 +121,18 @@ function run() {
   );
 
   assert.ok(FIND_CARD_FORBIDDEN_USER_KEYS.includes('bio'));
+
+  const fatOutcomes = {
+    ...validCard,
+    resultsStatus: 'FINAL',
+    outcomes: [{ userId: 'u1', position: 1, pointsEarned: 3, user: { id: 'u1', bio: 'x' } }],
+  };
+  assert.ok(
+    collectAvailableGamesCardContractIssues([fatOutcomes]).some((i) =>
+      i.path.includes('outcomes') && i.reason.includes('user'),
+    ),
+    'Find card outcomes must not include user trees',
+  );
 
   console.log('availableGamesCard.projection.test.ts: ok');
 }

@@ -95,7 +95,7 @@ export function projectAvailableGameCardPayload(game: any, viewer?: GamePhotosVi
   void _externalBookings;
   void _resultsArtifactsVersion;
   void _resultsArtifactsReadyAt;
-  return withLegacyGoldenPointField({
+  const projected = withLegacyGoldenPointField({
     ...rest,
     timeOverride: game.timeOverride ?? false,
     photosCount: canViewPhotos ? (game.photosCount ?? 0) : 0,
@@ -108,6 +108,29 @@ export function projectAvailableGameCardPayload(game: any, viewer?: GamePhotosVi
           }
         : null,
   });
+  // Only ship slim standings when FINAL and at least one row has a position
+  // (training FINAL outcomes are rating-only and must not appear as places).
+  if (projected.resultsStatus === 'FINAL' && Array.isArray(projected.outcomes) && projected.outcomes.length > 0) {
+    const slimmed = projected.outcomes
+      .map((o: { userId?: unknown; position?: number | null }) => ({
+        userId: typeof o.userId === 'string' ? o.userId : '',
+        position: o.position ?? null,
+      }))
+      .filter(
+        (o: { userId: string; position: number | null }) =>
+          o.userId.length > 0 &&
+          typeof o.position === 'number' &&
+          Number.isFinite(o.position),
+      );
+    if (slimmed.length > 0) {
+      projected.outcomes = slimmed;
+    } else {
+      delete projected.outcomes;
+    }
+  } else {
+    delete projected.outcomes;
+  }
+  return projected;
 }
 
 export function projectGameUsersForSportContext<T extends { sport?: Sport; [key: string]: any }>(game: T): T {

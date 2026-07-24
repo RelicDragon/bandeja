@@ -53,6 +53,15 @@ assert.equal(
 
 assert.equal(resolve({ requestedMessageType: MessageType.VOICE }), MessageType.VOICE);
 assert.equal(resolve({ requestedMessageType: MessageType.VIDEO }), MessageType.VIDEO);
+assert.equal(resolve({ requestedMessageType: MessageType.DOCUMENT }), MessageType.DOCUMENT);
+assert.equal(
+  resolve({
+    requestedMessageType: MessageType.DOCUMENT,
+    mediaUrls: ['https://cdn/doc.pdf'],
+  }),
+  MessageType.DOCUMENT,
+  'DOCUMENT precedes mediaUrls→IMAGE'
+);
 assert.equal(resolve({ mediaUrls: ['https://cdn/x.gif'] }), MessageType.IMAGE);
 assert.equal(resolve({}), MessageType.TEXT);
 assert.equal(

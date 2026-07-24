@@ -7,6 +7,7 @@ import { getCachedMessageRowHeight } from './chatMessageHeights';
 
 export const ROW_ESTIMATE_PX = 88;
 export const ROW_ESTIMATE_VIDEO_PX = 360;
+export const ROW_ESTIMATE_DOCUMENT_PX = 88;
 /** Single-image bubble max (400) + row chrome / reactions gutter. */
 export const ROW_ESTIMATE_IMAGE_PX = 448;
 export const ROW_ESTIMATE_VOICE_PX = 120;
@@ -20,6 +21,7 @@ export function estimateMessageRowHeightPx(msg: ChatMessage | undefined): number
   if (msg.messageType === 'VIDEO') return ROW_ESTIMATE_VIDEO_PX;
   if (msg.messageType === 'VOICE') return ROW_ESTIMATE_VOICE_PX;
   if (msg.messageType === 'STICKER') return ROW_ESTIMATE_STICKER_PX;
+  if (msg.messageType === 'DOCUMENT') return ROW_ESTIMATE_DOCUMENT_PX;
   if (msg.poll) return ROW_ESTIMATE_POLL_PX;
   const mediaCount = msg.mediaUrls?.length ?? 0;
   if (mediaCount > 0 || msg.messageType === 'IMAGE') {

@@ -600,7 +600,7 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
                 <span>{t('chat.contextMenu.reply')}</span>
               </button>
             )}
-            {isOwnMessage && onEdit && !isSystemMessage && message.content != null && !message.poll && message.messageType !== 'VOICE' && message.messageType !== 'VIDEO' && message.messageType !== 'STICKER' && (
+            {isOwnMessage && onEdit && !isSystemMessage && message.content != null && !message.poll && message.messageType !== 'VOICE' && message.messageType !== 'VIDEO' && message.messageType !== 'STICKER' && message.messageType !== 'DOCUMENT' && (
               <button
                 onClick={() => { onEdit(message); closeMenu(); }}
                 className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-3"

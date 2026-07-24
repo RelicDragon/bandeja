@@ -17,6 +17,7 @@ import { BetService } from '../bets/bet.service';
 import { removeUserFromGameFixedTeams } from './fixedTeamsCleanup';
 import { applyUserTeamToFixedTeamsIfReady } from './userTeamFixedTeams.service';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
+import { syncParticipantShowInStoriesSideEffects } from '../story/participantShowInStories.sync';
 
 const PLAYING_STATUS = 'PLAYING' as const;
 const IN_QUEUE_STATUS = 'IN_QUEUE' as const;
@@ -746,6 +747,56 @@ export class ParticipantService {
       game: participant.game,
     };
     return { participant, invite };
+  }
+
+  static async setShowInStories(gameId: string, userId: string, showInStories: boolean) {
+    const participant = await prisma.gameParticipant.findUnique({
+      where: { userId_gameId: { userId, gameId } },
+      select: {
+        id: true,
+        status: true,
+        showInStories: true,
+        game: { select: { entityType: true } },
+      },
+    });
+
+    if (!participant) {
+      throw new ApiError(404, 'Not a participant of this game');
+    }
+
+    const played =
+      participant.status === PLAYING_STATUS ||
+      (await prisma.gameOutcome.findFirst({
+        where: { gameId, userId },
+        select: { id: true },
+      })) != null;
+
+    if (!played) {
+      throw new ApiError(403, 'Only players of this game can change story visibility');
+    }
+
+    if (participant.showInStories === showInStories) {
+      return showInStories;
+    }
+
+    const updated = await prisma.gameParticipant.update({
+      where: { id: participant.id },
+      data: { showInStories },
+      select: { showInStories: true },
+    });
+
+    try {
+      await syncParticipantShowInStoriesSideEffects({
+        gameId,
+        userId,
+        showInStories: updated.showInStories,
+        entityType: participant.game.entityType,
+      });
+    } catch (err) {
+      console.error('[showInStories] story sync failed after persist', err);
+    }
+
+    return updated.showInStories;
   }
 }
 

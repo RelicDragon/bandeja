@@ -113,4 +113,46 @@ describe('patchGameInGamesCaches', () => {
     expect(Array.isArray(cached)).toBe(false);
     expect(getGamesFromAvailableCache(cached)?.[0].name).toBe('new');
   });
+
+  it('preserves My-game outcomes when socket patch omits them', () => {
+    const myKey = queryKeys.games.my('u1');
+    const outcomes = [{ userId: 'u1', position: 1, pointsEarned: 10 }];
+    client.setQueryData<MyGamesData>(myKey, {
+      games: [{ id: 'g1', name: 'old', resultsStatus: 'FINAL', outcomes } as Game],
+      invites: [],
+      unreadCounts: {},
+    });
+
+    patchGameInGamesCaches(client, { id: 'g1', name: 'new', resultsStatus: 'FINAL' } as Game);
+
+    const patched = client.getQueryData<MyGamesData>(myKey)?.games[0];
+    expect(patched?.name).toBe('new');
+    expect(patched?.outcomes).toEqual(outcomes);
+  });
+
+  it('preserves My-game outcomes when socket sends empty or null outcomes', () => {
+    const myKey = queryKeys.games.my('u1');
+    const outcomes = [{ userId: 'u1', position: 1, pointsEarned: 10 }];
+    client.setQueryData<MyGamesData>(myKey, {
+      games: [{ id: 'g1', name: 'old', resultsStatus: 'FINAL', outcomes } as Game],
+      invites: [],
+      unreadCounts: {},
+    });
+
+    patchGameInGamesCaches(client, {
+      id: 'g1',
+      name: 'empty',
+      resultsStatus: 'FINAL',
+      outcomes: [],
+    } as Game);
+    expect(client.getQueryData<MyGamesData>(myKey)?.games[0].outcomes).toEqual(outcomes);
+
+    patchGameInGamesCaches(client, {
+      id: 'g1',
+      name: 'null',
+      resultsStatus: 'FINAL',
+      outcomes: null,
+    } as unknown as Game);
+    expect(client.getQueryData<MyGamesData>(myKey)?.games[0].outcomes).toEqual(outcomes);
+  });
 });

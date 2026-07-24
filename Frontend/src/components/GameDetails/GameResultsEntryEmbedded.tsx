@@ -37,6 +37,7 @@ import { GameResultsModals } from './GameResultsModals';
 import { GameWorkoutSummaryCard } from './GameWorkoutSummaryCard';
 import { PlayStreakResultsBanner } from '@/components/playStreak/PlayStreakResultsBanner';
 import { GameResultsShareCard } from './GameResultsShareCard';
+import { GameResultsShowInStoriesSwitch } from './GameResultsShowInStoriesSwitch';
 import { useGameDetailsChromeStore } from './gameDetailsChromeStore';
 import { ResultsLoadingState } from './resultsEntry/ResultsLoadingState';
 import { BracketReturnBar } from './resultsEntry/BracketReturnBar';
@@ -401,6 +402,13 @@ export const GameResultsEntryEmbedded = ({
 
       <ResultsTelegramSection currentGame={currentGame} telegram={telegram} />
 
+      {currentGame?.resultsStatus === 'FINAL' ? (
+        <div className="w-full">
+          <GameResultsShareCard game={currentGame} />
+          <GameResultsShowInStoriesSwitch game={game} onGameUpdate={onGameUpdate} />
+        </div>
+      ) : null}
+
       {isResultsEntryMode && (
         <GameResultsTabs
           activeTab={activeTab}
@@ -427,7 +435,6 @@ export const GameResultsEntryEmbedded = ({
                   gameId={currentGame.id}
                   outcomes={currentGame.outcomes || []}
                 />
-                <GameResultsShareCard game={currentGame} />
                 <div className="[&>div]:mx-0 [&>div]:max-w-none [&>div]:px-0">
                   <OutcomesDisplay
                     outcomes={currentGame.outcomes || []}

@@ -24,7 +24,20 @@ function replaceGameInArray(
   return changed ? next : null;
 }
 
-const mergeMyOrPast = (existing: Game, incoming: Game): Game => ({ ...existing, ...incoming });
+const mergeMyOrPast = (existing: Game, incoming: Game): Game => {
+  const next = { ...existing, ...incoming };
+  // Socket payloads often omit or send empty outcomes; never wipe standings by accident.
+  const incomingOutcomes = incoming.outcomes;
+  const incompleteOutcomes =
+    !('outcomes' in incoming) ||
+    incomingOutcomes === undefined ||
+    incomingOutcomes === null ||
+    (Array.isArray(incomingOutcomes) && incomingOutcomes.length === 0);
+  if (incompleteOutcomes) {
+    next.outcomes = existing.outcomes;
+  }
+  return next;
+};
 
 export type PatchGameInCachesResult = {
   patchedMy: boolean;
@@ -60,7 +73,7 @@ export function patchGameInGamesCaches(
       const nextInvites = cached.invites.map((invite) => {
         if (!invite.game || invite.game.id !== gameId) return invite;
         invitesChanged = true;
-        return { ...invite, game: { ...invite.game, ...nextGame } };
+        return { ...invite, game: mergeMyOrPast(invite.game, nextGame) };
       });
       if (!nextGames && !invitesChanged) continue;
       queryClient.setQueryData<MyGamesData>(key, {

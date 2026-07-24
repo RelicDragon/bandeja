@@ -112,6 +112,11 @@ function getMessagePreview(message: ChatMessage, t: TFunction): string {
       t('chat.stickerMessage', { defaultValue: 'Sticker' })
     );
   }
+  if (message.messageType === 'DOCUMENT') {
+    const name = message.documentFileName?.trim();
+    const label = t('chat.documentMessage', { defaultValue: 'File' });
+    return name ? `${label}: ${name}` : label;
+  }
   return getLastMessageText(message) || '';
 }
 

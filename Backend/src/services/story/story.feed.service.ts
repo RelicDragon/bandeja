@@ -15,7 +15,6 @@ import {
   canSeeCreatedGameInStories,
   canSeeManualStory,
   canSeePhotoInStories,
-  canSeeResultInStories,
 } from './story.permissions';
 import { isStoryItemMediaInvalid } from './story.validate.service';
 import { MAIN_PHOTO_RELATION_SELECT } from '../game/read.service';
@@ -611,23 +610,32 @@ export class StoryFeedService {
 
       for (const outcome of outcomes) {
         const ownerUserId = outcome.userId;
-        const viewerFollows = followedIds.has(ownerUserId);
-        if (
-          !canSeeResultInStories({
-            viewerFollows,
-            game: outcome.game,
-            outcomeOwner: outcome.user,
-          })
-        ) {
-          continue;
-        }
+        if (!followedIds.has(ownerUserId)) continue;
+        if (!outcome.user.shareGameResultsToFollowers) continue;
         pendingResults.push({ ownerUserId, outcome });
       }
 
-      const resultGameIds = [...new Set(pendingResults.map((p) => p.outcome.game.id))];
+      const hiddenShowInStories =
+        pendingResults.length === 0
+          ? []
+          : await prisma.gameParticipant.findMany({
+              where: {
+                showInStories: false,
+                gameId: { in: [...new Set(pendingResults.map((p) => p.outcome.game.id))] },
+                userId: { in: [...new Set(pendingResults.map((p) => p.ownerUserId))] },
+              },
+              select: { gameId: true, userId: true },
+            });
+      const hiddenKeys = new Set(hiddenShowInStories.map((row) => `${row.gameId}:${row.userId}`));
+
+      const visibleResults = pendingResults.filter(
+        (p) => !hiddenKeys.has(`${p.outcome.game.id}:${p.ownerUserId}`)
+      );
+
+      const resultGameIds = [...new Set(visibleResults.map((p) => p.outcome.game.id))];
       const gamesWithRounds = await loadStoryResultMatchesByGame(resultGameIds);
 
-      for (const { ownerUserId, outcome } of pendingResults) {
+      for (const { ownerUserId, outcome } of visibleResults) {
         const createdAt = outcome.game.finishedDate ?? outcome.createdAt;
         const key = segmentKey(StorySourceType.GAME_RESULT, outcome.game.id);
         const preview = storyGameBackdropUrl(outcome.game, photoViewer);

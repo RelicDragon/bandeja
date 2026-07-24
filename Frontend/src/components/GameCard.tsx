@@ -45,6 +45,12 @@ import {
   getPlayingParticipants,
   playingParticipantsKey,
 } from '@/utils/gameCardParticipants';
+import {
+  gameCardOutcomesKey,
+  hasOutcomeStandings,
+  orderPlayingParticipantsByStandings,
+} from '@/utils/gameCardStandings';
+import { resolveStandingMedalMode } from '@/utils/gameCardStandingPlace';
 import { gameCardPropsEqual } from '@/utils/gameCardPropsEqual';
 
 import { useAuthStore } from '@/store/authStore';
@@ -108,11 +114,36 @@ export const GameCard = memo(function GameCard({
 
   const participants = game.participants ?? [];
   const playingSig = playingParticipantsKey(participants);
-  const playingCacheRef = useRef({ sig: '', list: [] as typeof participants });
-  if (playingCacheRef.current.sig !== playingSig) {
-    playingCacheRef.current = { sig: playingSig, list: getPlayingParticipants(participants) };
+  const outcomesKey = gameCardOutcomesKey(game.outcomes);
+  const showStandingPlaces = hasOutcomeStandings(game.resultsStatus, game.outcomes);
+  const standingCacheKey = `${playingSig}\u0001${showStandingPlaces ? outcomesKey : ''}`;
+  const playingCacheRef = useRef({
+    sig: '',
+    list: [] as typeof participants,
+    placeByUserId: {} as Record<string, number>,
+  });
+  if (playingCacheRef.current.sig !== standingCacheKey) {
+    const playing = getPlayingParticipants(participants);
+    if (showStandingPlaces) {
+      const ordered = orderPlayingParticipantsByStandings(playing, game.outcomes);
+      playingCacheRef.current = {
+        sig: standingCacheKey,
+        list: ordered.participants,
+        placeByUserId: ordered.placeByUserId,
+      };
+    } else {
+      playingCacheRef.current = {
+        sig: standingCacheKey,
+        list: playing,
+        placeByUserId: {},
+      };
+    }
   }
   const playingParticipants = playingCacheRef.current.list;
+  const standingPlaceByUserId = showStandingPlaces
+    ? playingCacheRef.current.placeByUserId
+    : undefined;
+  const standingMedalMode = resolveStandingMedalMode(game.entityType);
 
   const participation = getGameParticipationState(participants, effectiveUser?.id, game);
   const isParticipant = participation.isPlaying;
@@ -394,6 +425,8 @@ export const GameCard = memo(function GameCard({
                       userId={effectiveUser?.id}
                       shouldShowCrowns={true}
                       autoHideNames={carouselAutoHideNames}
+                      placeByUserId={standingPlaceByUserId}
+                      standingMedalMode={standingMedalMode}
                     />
                   </div>
                 ) : null}

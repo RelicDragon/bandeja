@@ -202,6 +202,14 @@ export const gamesApi = {
     return response.data;
   },
 
+  setMyShowInStories: async (id: string, showInStories: boolean) => {
+    const response = await api.put<ApiResponse<{ showInStories: boolean }>>(
+      `/games/${id}/my-show-in-stories`,
+      { showInStories }
+    );
+    return response.data;
+  },
+
   leave: async (id: string) => {
     const response = await api.post<ApiResponse<Game>>(`/games/${id}/leave`);
     return response.data;

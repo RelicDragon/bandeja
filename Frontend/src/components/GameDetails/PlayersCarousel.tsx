@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { motion, type Variants } from 'framer-motion';
 import { PlayerAvatar, UnreadBadge } from '@/components';
+import { GameCardStandingPlaceBadge } from '@/components/gameCard/GameCardStandingPlaceBadge';
 import { GameParticipant } from '@/types';
 import type { Sport } from '@shared/sport';
 import { useUnreadByUserIdBridge } from '@/hooks/useUnreadBridge';
 import { participantsLayoutKey, participantsRenderKey } from '@/utils/gameCardParticipants';
+import type { StandingMedalMode } from '@/utils/gameCardStandingPlace';
+import { placeMapsEqual } from '@/utils/gameCardStandings';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
@@ -85,6 +88,9 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
   showName,
   levelSport,
   slotIndex = 0,
+  place,
+  medalMode = 'winner',
+  reserveStandingPlace = false,
 }: {
   participant: GameParticipant;
   propUnread?: number;
@@ -101,9 +107,13 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
   showName?: boolean;
   levelSport?: Sport;
   slotIndex?: number;
+  place?: number;
+  medalMode?: StandingMedalMode;
+  reserveStandingPlace?: boolean;
 }) {
   const unreadCount = useUnreadByUserIdBridge(participant.userId, propUnread);
   const isDragged = draggedPlayerId === participant.user.id;
+  const alignForPlaces = reserveStandingPlace || place != null;
   return (
     <motion.div
       layout
@@ -111,28 +121,35 @@ const ParticipantCarouselSlot = memo(function ParticipantCarouselSlot({
       variants={slotVariants}
       initial="hidden"
       animate="visible"
-      className={`relative w-16 flex-shrink-0 pt-2 pb-4 ${
+      className={`relative w-16 flex-shrink-0 pb-4 ${alignForPlaces ? 'pt-0' : 'pt-2'} ${
         isDragged ? 'opacity-0' : ''
       }`}
       whileHover={draggable ? { scale: 1.05 } : undefined}
     >
-      <PlayerAvatar
-        player={participant.user}
-        isCurrentUser={participant.user.id === userId}
-        removable={participant.user.id === userId}
-        onRemoveClick={participant.user.id === userId ? onLeave : undefined}
-        role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
-        smallLayout={true}
-        showName={showName}
-        draggable={draggable}
-        onDragStart={draggable && onDragStart ? (e) => onDragStart(e, participant.user.id) : undefined}
-        onDragEnd={draggable ? onDragEnd : undefined}
-        onTouchStart={draggable && onTouchStart ? (e) => onTouchStart(e, participant.user.id) : undefined}
-        onTouchMove={draggable ? onTouchMove : undefined}
-        onTouchEnd={draggable ? onTouchEnd : undefined}
-        levelSport={levelSport}
-      />
-      <UnreadBadge count={unreadCount} className="absolute -top-1 -right-1 border-2 border-white dark:border-gray-900" />
+      {place != null ? (
+        <GameCardStandingPlaceBadge place={place} medalMode={medalMode} />
+      ) : reserveStandingPlace ? (
+        <div className="mb-0.5 h-4" aria-hidden />
+      ) : null}
+      <div className="relative">
+        <PlayerAvatar
+          player={participant.user}
+          isCurrentUser={participant.user.id === userId}
+          removable={participant.user.id === userId}
+          onRemoveClick={participant.user.id === userId ? onLeave : undefined}
+          role={shouldShowCrowns ? (participant.role as 'OWNER' | 'ADMIN' | 'PLAYER') : undefined}
+          smallLayout={true}
+          showName={showName}
+          draggable={draggable}
+          onDragStart={draggable && onDragStart ? (e) => onDragStart(e, participant.user.id) : undefined}
+          onDragEnd={draggable ? onDragEnd : undefined}
+          onTouchStart={draggable && onTouchStart ? (e) => onTouchStart(e, participant.user.id) : undefined}
+          onTouchMove={draggable ? onTouchMove : undefined}
+          onTouchEnd={draggable ? onTouchEnd : undefined}
+          levelSport={levelSport}
+        />
+        <UnreadBadge count={unreadCount} className="absolute -top-1 -right-1 border-2 border-white dark:border-gray-900" />
+      </div>
     </motion.div>
   );
 });
@@ -158,6 +175,10 @@ interface PlayersCarouselProps {
   onTouchMove?: (e: TouchEvent) => void;
   onTouchEnd?: (e: TouchEvent) => void;
   levelSport?: Sport;
+  /** When set, show standing place above each matching avatar. */
+  placeByUserId?: Record<string, number>;
+  /** Tournament → podium medals; otherwise gold for 1st only. */
+  standingMedalMode?: StandingMedalMode;
 }
 
 function PlayersCarouselInner({
@@ -181,6 +202,8 @@ function PlayersCarouselInner({
   onTouchMove,
   onTouchEnd,
   levelSport,
+  placeByUserId,
+  standingMedalMode = 'winner',
 }: PlayersCarouselProps) {
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftFade, setShowLeftFade] = useState(false);
@@ -191,6 +214,10 @@ function PlayersCarouselInner({
   const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pressTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const layoutKey = participantsLayoutKey(participants);
+  const showStandingPlaces = Boolean(
+    placeByUserId && participants.some((p) => placeByUserId[p.userId] != null)
+  );
+  const chevronTopClass = showStandingPlaces ? 'top-[2.625rem]' : 'top-7';
 
   const checkScrollPosition = useCallback(() => {
     const container = carouselRef.current;
@@ -204,10 +231,10 @@ function PlayersCarouselInner({
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    
+
     return () => {
       window.removeEventListener('resize', checkMobile);
     };
@@ -221,14 +248,14 @@ function PlayersCarouselInner({
 
     const handleScroll = () => {
       checkScrollPosition();
-      
+
       if (autoHideNames && isMobile) {
         setIsScrolling(true);
-        
+
         if (scrollTimeoutRef.current) {
           clearTimeout(scrollTimeoutRef.current);
         }
-        
+
         scrollTimeoutRef.current = setTimeout(() => {
           setIsScrolling(false);
         }, 500);
@@ -313,7 +340,7 @@ function PlayersCarouselInner({
         </div>
       )}
       <div className={showGenderIndicator && gender ? "flex-1 relative min-w-0" : "relative"}>
-        <div 
+        <div
           ref={carouselRef}
           className="[touch-action:pan-x_pan-y] overscroll-x-contain overflow-x-auto overflow-y-hidden scrollbar-hide [-webkit-overflow-scrolling:touch] pt-2"
           onMouseDown={autoHideNames ? handlePressStart : undefined}
@@ -344,6 +371,9 @@ function PlayersCarouselInner({
                 showName={autoHideNames ? ((isMobile && isScrolling) || isPressed) : undefined}
                 levelSport={levelSport}
                 slotIndex={index}
+                place={placeByUserId?.[participant.userId]}
+                medalMode={standingMedalMode}
+                reserveStandingPlace={showStandingPlaces}
               />
             ))}
             {emptySlots > 0 &&
@@ -367,7 +397,7 @@ function PlayersCarouselInner({
                 e.stopPropagation();
                 scrollLeft();
               }}
-              className="absolute left-0 top-7 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer z-20"
+              className={`absolute left-0 ${chevronTopClass} -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer z-20`}
             >
               <ChevronLeft size={14} className="text-gray-400 dark:text-gray-500" />
             </button>
@@ -381,7 +411,7 @@ function PlayersCarouselInner({
                 e.stopPropagation();
                 scrollRight();
               }}
-              className="absolute right-0 top-7 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer z-20"
+              className={`absolute right-0 ${chevronTopClass} -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer z-20`}
             >
               <ChevronRight size={14} className="text-gray-400 dark:text-gray-500" />
             </button>
@@ -404,8 +434,9 @@ function carouselPropsEqual(a: PlayersCarouselProps, b: PlayersCarouselProps): b
   if (a.draggable !== b.draggable) return false;
   if (a.draggedPlayerId !== b.draggedPlayerId) return false;
   if (a.levelSport !== b.levelSport) return false;
+  if (a.standingMedalMode !== b.standingMedalMode) return false;
   if (participantsRenderKey(a.participants) !== participantsRenderKey(b.participants)) return false;
-  return true;
+  return placeMapsEqual(a.placeByUserId, b.placeByUserId);
 }
 
 export const PlayersCarousel = memo(PlayersCarouselInner, carouselPropsEqual);

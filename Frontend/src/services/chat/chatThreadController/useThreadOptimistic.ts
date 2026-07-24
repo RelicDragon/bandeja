@@ -140,7 +140,8 @@ export function useThreadOptimistic({
       pendingVideoBlob?: Blob,
       pendingVideoPosterBlob?: Blob,
       videoTranscodeMs?: number,
-      pendingGiphy?: PendingGiphyOutboxMedia
+      pendingGiphy?: PendingGiphyOutboxMedia,
+      pendingDocumentBlob?: Blob
     ): string => {
       if (!id) return '';
       const tempId = `opt-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -170,6 +171,9 @@ export function useThreadOptimistic({
         videoWidth: payload.videoWidth,
         videoHeight: payload.videoHeight,
         waveformData: payload.waveformData,
+        documentFileName: payload.documentFileName,
+        documentMimeType: payload.documentMimeType,
+        documentSize: payload.documentSize,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         replyToId: payload.replyToId,
@@ -183,7 +187,7 @@ export function useThreadOptimistic({
         _clientMutationId: clientMutationId,
       };
       const persistPayload =
-        pendingVoiceBlob != null || pendingVideoBlob != null
+        pendingVoiceBlob != null || pendingVideoBlob != null || pendingDocumentBlob != null
           ? { ...payload, mediaUrls: [], thumbnailUrls: [] }
           : payload;
       applyLiveEvent({ type: 'optimisticSend', message: optimistic });
@@ -208,6 +212,7 @@ export function useThreadOptimistic({
               }
             : {}),
           ...(pendingGiphy ? { pendingGiphy } : {}),
+          ...(pendingDocumentBlob ? { pendingDocumentBlob } : {}),
         },
       }).catch((err) => {
         console.error('[messageQueue] add', err);

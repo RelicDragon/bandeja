@@ -8,6 +8,7 @@ import { MessageExternalLinkPreview } from './MessageExternalLinkPreview';
 import { MessageMediaGrid } from './MessageMediaGrid';
 import { AudioMessageBubble } from '../audio/AudioMessageBubble';
 import { ChatVideoBubble } from './ChatVideoBubble';
+import { ChatDocumentBubble } from './ChatDocumentBubble';
 import { StickerMessageBubble } from './StickerMessageBubble';
 import { getThreadSearchBubbleRingClass } from './threadSearchHighlightStyles';
 import { isAnimatedChatImageUrl } from './utils';
@@ -106,10 +107,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const isVoice = message.messageType === 'VOICE';
   const isVideo = message.messageType === 'VIDEO';
   const isSticker = message.messageType === 'STICKER';
+  const isDocument = message.messageType === 'DOCUMENT';
   const hasVoiceTranscript =
     isVoice && !!(message.audioTranscription?.transcription?.trim() || message.content?.trim());
-  const showTextBlock = !message.poll && !isSticker && (!!message.content?.trim() || hasVoiceTranscript);
-  const hasMedia = !isVoice && !isVideo && !isSticker && message.mediaUrls && message.mediaUrls.length > 0;
+  const showTextBlock =
+    !message.poll && !isSticker && !isDocument && (!!message.content?.trim() || hasVoiceTranscript);
+  const hasMedia =
+    !isVoice && !isVideo && !isSticker && !isDocument && message.mediaUrls && message.mediaUrls.length > 0;
   const hasMediaOnly = hasMedia && !message.content;
   const hasMediaAndContent = hasMedia && !!message.content;
   // Telegram-style: sticker / lone GIF float with no bubble panel.
@@ -146,7 +150,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       : matchesMessageUrl(message.content?.trim(), firstExternalHttpUrl));
   const { tickRead, tickDelivered } = resolveOwnMessageTicks(message, currentUserId);
   const contentVariantForTranslation = isOwnMessage ? 'own' : 'other';
-  const hasMediaOrVoice = isVoice || isVideo || isSticker || hasMedia;
+  const hasMediaOrVoice = isVoice || isVideo || isSticker || isDocument || hasMedia;
   const paddingClass = isFloatingMedia || isPreviewOnlyMessage
     ? 'p-0'
     : hasTranslation
@@ -261,7 +265,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         <StickerMessageBubble message={message} onStickerClick={onImageClick} />
       )}
 
-      {message.mediaUrls && message.mediaUrls.length > 0 && !isVoice && !isVideo && !isSticker && (
+      {isDocument && (message.mediaUrls?.[0] || message.documentFileName) && (
+        <ChatDocumentBubble
+          message={message}
+          isOwnMessage={isOwnMessage}
+          isChannel={isChannel}
+          isSending={isSending}
+        />
+      )}
+
+      {message.mediaUrls && message.mediaUrls.length > 0 && !isVoice && !isVideo && !isSticker && !isDocument && (
         <MessageMediaGrid
           mediaUrls={message.mediaUrls}
           getThumbnailUrl={getThumbnailUrl}

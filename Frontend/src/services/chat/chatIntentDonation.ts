@@ -50,6 +50,9 @@ function messageBodyForIntent(message: ChatMessage): string {
   if (message.messageType === 'VIDEO') {
     return 'Video';
   }
+  if (message.messageType === 'DOCUMENT') {
+    return message.documentFileName?.trim() || 'File';
+  }
   const text = message.content?.trim() ?? '';
   if (text) return text;
   if ((message.mediaUrls?.length ?? 0) > 0) return 'Photo';

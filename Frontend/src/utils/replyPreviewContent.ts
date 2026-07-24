@@ -22,6 +22,7 @@ function isStickerReply(replyTo: ReplyToPreviewSource): boolean {
 
 function isImageOrMediaReply(replyTo: ReplyToPreviewSource): boolean {
   if (replyTo.messageType === 'VOICE' || replyTo.messageType === 'VIDEO') return false;
+  if (replyTo.messageType === 'DOCUMENT') return false;
   if (isStickerReply(replyTo)) return false;
   return (
     replyTo.messageType === 'IMAGE' ||
@@ -39,6 +40,11 @@ export function getReplyPreviewDisplayContent(
   }
   if (replyTo.messageType === 'VIDEO') {
     return t('chat.videoMessage', { defaultValue: 'Video' });
+  }
+  if (replyTo.messageType === 'DOCUMENT') {
+    const name = replyTo.documentFileName?.trim();
+    const label = t('chat.documentMessage', { defaultValue: 'File' });
+    return name ? `${label}: ${name}` : label;
   }
   if (isStickerReply(replyTo)) {
     return formatStickerPreviewText(

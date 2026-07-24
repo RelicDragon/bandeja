@@ -5,12 +5,16 @@ import { chatLocalDb } from './chatLocalDb';
 
 function outboxPreviewFromPayload(payload: OptimisticMessagePayload): {
   preview?: string;
-  previewKind?: 'text' | 'voice' | 'media' | 'gif' | 'video' | 'sticker';
+  previewKind?: 'text' | 'voice' | 'media' | 'gif' | 'video' | 'sticker' | 'document';
 } {
   const text = (payload.content || '').trim();
   if (text) return { preview: text.slice(0, 80), previewKind: 'text' };
   if (payload.messageType === 'VOICE') return { previewKind: 'voice' };
   if (payload.messageType === 'VIDEO') return { previewKind: 'video' };
+  if (payload.messageType === 'DOCUMENT') {
+    const name = payload.documentFileName?.trim();
+    return { preview: name || undefined, previewKind: 'document' };
+  }
   if (payload.messageType === 'STICKER') {
     const emoji = payload.stickerEmoji?.trim();
     return { preview: emoji || undefined, previewKind: 'sticker' };

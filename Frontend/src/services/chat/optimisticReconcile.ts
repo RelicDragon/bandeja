@@ -117,6 +117,10 @@ function findPendingOptimisticByFingerprint(
     if (serverMessage.messageType === 'VOICE' || serverMessage.messageType === 'VIDEO') {
       return (m.mediaUrls?.[0] ?? '') === (serverMessage.mediaUrls?.[0] ?? '');
     }
+    if (serverMessage.messageType === 'DOCUMENT') {
+      if ((m.documentFileName ?? '') !== (serverMessage.documentFileName ?? '')) return false;
+      return (m.replyToId ?? null) === (serverMessage.replyToId ?? null);
+    }
     if (m.content !== serverMessage.content) return false;
     if (normalizeChatType(m.chatType) !== normalizedMessageChatType) return false;
     if ((m.replyToId ?? null) !== msgReplyToId) return false;

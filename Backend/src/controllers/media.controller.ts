@@ -3,6 +3,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiError } from '../utils/ApiError';
 import { AuthRequest } from '../middleware/auth';
 import multer, { FileFilterCallback } from 'multer';
+import path from 'path';
 import { ImageProcessor } from '../utils/imageProcessor';
 import { VideoProcessor } from '../utils/videoProcessor';
 import {
@@ -11,8 +12,6 @@ import {
   isOurAvatarOriginalUrl,
 } from '../utils/userAvatarTiny';
 import prisma from '../config/database';
-import { hasParentGamePermission } from '../utils/parentGamePermissions';
-import { ParticipantRole, Prisma } from '@prisma/client';
 import { MessageService } from '../services/chat/message.service';
 import { GameChatViewerAccessService } from '../services/chat/gameChatViewerAccess.service';
 import { GroupChannelService } from '../services/chat/groupChannel.service';
@@ -20,6 +19,7 @@ import { UserTeamService } from '../services/userTeam.service';
 import { parseClubPhotosJson } from '../utils/clubPhotosJson';
 import * as clubReviewService from '../services/clubReview.service';
 import { isStickerCatalogUrl } from '../services/stickers';
+import { Prisma } from '@prisma/client';
 
 const MAX_CLUB_PHOTOS = 24;
 
@@ -38,12 +38,25 @@ const fileFilter = (req: any, file: any, cb: FileFilterCallback) => {
     'image/heic',
     'image/heif',
   ];
-  const allowedDocTypes = ['application/pdf', 'text/plain', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-  
+  const allowedDocTypes = [
+    'application/pdf',
+    'text/plain',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+  const allowedDocExt = new Set(['.pdf', '.txt', '.doc', '.docx']);
+
   if ((file.fieldname === 'image' || file.fieldname === 'avatar' || file.fieldname === 'original') && allowedImageTypes.includes(file.mimetype)) {
     cb(null, true);
-  } else if (file.fieldname === 'document' && allowedDocTypes.includes(file.mimetype)) {
-    cb(null, true);
+  } else if (file.fieldname === 'document') {
+    const mimeOk = allowedDocTypes.includes(file.mimetype);
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const extOk = allowedDocExt.has(ext);
+    if (mimeOk || extOk) {
+      cb(null, true);
+    } else {
+      cb(new ApiError(400, `Invalid file type for field: ${file.fieldname}, mimetype: ${file.mimetype}`));
+    }
   } else {
     cb(new ApiError(400, `Invalid file type for field: ${file.fieldname}, mimetype: ${file.mimetype}`));
   }
@@ -590,37 +603,32 @@ export const uploadChatDocument = asyncHandler(async (req: AuthRequest, res: Res
     throw new ApiError(400, 'No document file provided');
   }
 
-  const { gameId } = req.body;
-  const senderId = req.userId!;
+  const { gameId, bugId, userChatId, groupChannelId } = req.body;
+  const senderId = req.userId;
 
-  // Check for pending invite or participant access
-  const game = await prisma.game.findUnique({
-    where: { id: gameId },
-    include: {
-      participants: {
-        where: { userId: senderId },
-      },
-    },
-  });
-
-  if (!game) {
-    throw new ApiError(404, 'Game not found');
+  if (!senderId) {
+    throw new ApiError(401, 'Unauthorized');
   }
 
-  const hasPermission = await hasParentGamePermission(
-    gameId,
-    senderId,
-    [ParticipantRole.OWNER, ParticipantRole.ADMIN, ParticipantRole.PARTICIPANT],
-    req.user?.isAdmin || false
+  if (!gameId && !bugId && !userChatId && !groupChannelId) {
+    throw new ApiError(400, 'At least one of gameId, bugId, userChatId, or groupChannelId is required');
+  }
+
+  if (gameId) {
+    await GameChatViewerAccessService.assertWritable(gameId, senderId);
+  } else if (bugId) {
+    await MessageService.validateBugAccess(bugId, senderId, true);
+  } else if (userChatId) {
+    await MessageService.validateUserChatAccess(userChatId, senderId, true);
+  } else if (groupChannelId) {
+    await MessageService.validateGroupChannelAccess(groupChannelId, senderId, true);
+  }
+
+  const result = await ImageProcessor.processDocument(
+    req.file.buffer,
+    req.file.originalname,
+    req.file.mimetype
   );
-  const hasPendingInvite = (game as any).participants?.[0]?.status === 'INVITED';
-
-  if (!hasPermission && !hasPendingInvite) {
-    throw new ApiError(403, 'You are not a participant or invited to this game');
-  }
-
-  // Process document
-  const result = await ImageProcessor.processDocument(req.file.buffer, req.file.originalname, req.file.mimetype);
 
   res.status(200).json({
     success: true,
@@ -630,8 +638,8 @@ export const uploadChatDocument = asyncHandler(async (req: AuthRequest, res: Res
       thumbnailUrl: result.thumbnailPath,
       originalName: req.file.originalname,
       size: req.file.size,
-      mimetype: req.file.mimetype
-    }
+      mimetype: req.file.mimetype,
+    },
   });
 });
 

@@ -24,6 +24,7 @@ export interface ChatMessageForMediaPreview {
   audioDurationMs?: number | null;
   videoDurationMs?: number | null;
   stickerEmoji?: string | null;
+  documentFileName?: string | null;
   storyReply?: unknown;
 }
 
@@ -144,6 +145,12 @@ function formatVoiceBody(message: ChatMessageForMediaPreview): string {
   return '🎤 Voice message';
 }
 
+function formatDocumentBody(message: ChatMessageForMediaPreview): string {
+  const name =
+    typeof message.documentFileName === 'string' ? message.documentFileName.trim() : '';
+  return name ? `📄 ${name}` : '📄 File';
+}
+
 function formatStickerBody(message: ChatMessageForMediaPreview, lang: string): string {
   const stickerKey = 'notifications.sticker';
   const stickerLabel = t(stickerKey, lang);
@@ -188,6 +195,13 @@ export function resolveChatNotificationMediaPreview(
       body: formatVideoBody(message),
       previewImageUrl,
       previewMediaType: previewImageUrl ? 'video' : undefined,
+      mediaCount,
+    };
+  }
+
+  if (message.messageType === 'DOCUMENT') {
+    return {
+      body: formatDocumentBody(message),
       mediaCount,
     };
   }

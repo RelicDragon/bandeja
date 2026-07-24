@@ -42,9 +42,11 @@ export function canSeeResultInStories(opts: {
     resultsArtifactsReadyAt: Date | null;
   };
   outcomeOwner: { shareGameResultsToFollowers: boolean };
+  participant: { showInStories: boolean };
 }): boolean {
   if (!opts.viewerFollows) return false;
   if (!opts.outcomeOwner.shareGameResultsToFollowers) return false;
+  if (!opts.participant.showInStories) return false;
   if (!opts.game.isPublic) return false;
   return (
     opts.game.resultsStatus === 'FINAL' && opts.game.resultsArtifactsReadyAt != null
@@ -55,8 +57,10 @@ export function canSeeBracketChampionInStories(opts: {
   viewerFollows: boolean;
   game: { isPublic: boolean };
   owner: { shareGameResultsToFollowers: boolean };
+  participant: { showInStories: boolean };
 }): boolean {
   if (!opts.viewerFollows) return false;
   if (!opts.owner.shareGameResultsToFollowers) return false;
+  if (!opts.participant.showInStories) return false;
   return opts.game.isPublic;
 }

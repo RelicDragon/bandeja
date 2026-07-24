@@ -1009,6 +1009,8 @@ model GameParticipant {
   inviteClosedAt   DateTime?
   /// Watch / client: match the user is currently scoring (cleared on finalize).
   activeMatchId    String?
+  /// When false, this participant's result/champion story for this game is hidden from followers' feeds.
+  showInStories    Boolean           @default(true)
   game             Game              @relation(fields: [gameId], references: [id], onDelete: Cascade)
   user             User              @relation("ParticipantUser", fields: [userId], references: [id], onDelete: Cascade)
   invitedByUser    User?             @relation("ParticipantInvitedBy", fields: [invitedByUserId], references: [id], onDelete: SetNull)
@@ -1350,6 +1352,10 @@ model ChatMessage {
   videoWidth          Int?
   videoHeight         Int?
   waveformData        Float[]               @default([])
+  /// Set iff messageType = DOCUMENT; display name from upload.
+  documentFileName    String?
+  documentMimeType    String?
+  documentSize        Int?
   /// Set iff messageType = STICKER; catalog identity (mediaUrls stay empty).
   stickerId           String?
   /// Denormalized emoji for list preview / old clients without catalog join.
@@ -1962,6 +1968,7 @@ enum MessageType {
   VIDEO
   POLL
   STICKER
+  DOCUMENT
 }
 
 enum StorySourceType {

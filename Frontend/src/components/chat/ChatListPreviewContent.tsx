@@ -1,5 +1,5 @@
 import { TFunction } from 'i18next';
-import { BarChart2, Images, Mic, Video } from 'lucide-react';
+import { BarChart2, FileText, Images, Mic, Video } from 'lucide-react';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
 import { ChatListPreviewText } from './ChatListPreviewText';
@@ -64,6 +64,23 @@ export function ChatListStickerRow({
   );
 }
 
+export function ChatListDocumentRow({
+  t,
+  fileName,
+}: {
+  t: TFunction;
+  fileName?: string | null;
+}) {
+  const name = fileName?.trim();
+  const label = t('chat.documentMessage', { defaultValue: 'File' });
+  return (
+    <span className="inline-flex items-center gap-1 min-w-0">
+      <FileText className="w-4 h-4 shrink-0" aria-hidden />
+      <span className="truncate">{name ? `${label}: ${name}` : label}</span>
+    </span>
+  );
+}
+
 export function ChatListPreviewContent({ preview, t, entityType }: Props) {
   if (!preview) return null;
 
@@ -91,6 +108,17 @@ export function ChatListPreviewContent({ preview, t, entityType }: Props) {
   if (preview.startsWith('[TYPE:VIDEO]')) {
     const dur = preview.slice(12);
     return <ChatListVideoRow t={t} durationLabel={dur || undefined} />;
+  }
+
+  if (preview.startsWith('[TYPE:DOCUMENT]')) {
+    const name = preview.slice('[TYPE:DOCUMENT]'.length).trim();
+    const label = t('chat.documentMessage', { defaultValue: 'File' });
+    return (
+      <span className="inline-flex items-center gap-1 min-w-0">
+        <FileText className="w-4 h-4 shrink-0" aria-hidden />
+        <span className="truncate">{name ? `${label}: ${name}` : label}</span>
+      </span>
+    );
   }
 
   if (preview.startsWith('[TYPE:STICKER]')) {

@@ -500,6 +500,17 @@ export const togglePlayingStatus = asyncHandler(async (req: AuthRequest, res: Re
   });
 });
 
+export const setMyShowInStories = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const showInStories = req.body.showInStories === true;
+  const value = await ParticipantService.setShowInStories(id, req.userId!, showInStories);
+
+  res.json({
+    success: true,
+    data: { showInStories: value },
+  });
+});
+
 export const addAdmin = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { id } = req.params;
   const { userId } = req.body;

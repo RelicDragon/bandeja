@@ -11,3 +11,6 @@ export const MAX_VIDEO_HEIGHT = 720;
 export const TARGET_VIDEO_BITRATE = 3_000_000;
 
 export const SEND_VIDEO_UPLOAD_PHASE_MS = 180_000;
+
+/** Client Mediabunny/WebCodecs encode must finish or fail — never hang attach forever. */
+export const SEND_VIDEO_TRANSCODE_PHASE_MS = 180_000;

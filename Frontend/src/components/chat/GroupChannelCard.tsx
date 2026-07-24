@@ -20,6 +20,7 @@ import { convertMentionsToPlaintext } from '@/utils/parseMentions';
 import { formatSystemMessageForDisplay } from '@/utils/systemMessages';
 import { formatVoiceDurationMmSs } from '@/utils/messagePreview';
 import {
+  ChatListDocumentRow,
   ChatListGenericMediaRow,
   ChatListPreviewContent,
   ChatListStickerRow,
@@ -303,10 +304,12 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
             const isFullVoice = fullMsg?.messageType === 'VOICE';
             const isFullVideo = fullMsg?.messageType === 'VIDEO';
             const isFullSticker = fullMsg?.messageType === 'STICKER';
+            const isFullDocument = fullMsg?.messageType === 'DOCUMENT';
             const voiceAsTextOnly = isFullVoice && !!(fullMsg?.content?.trim());
             const showVoiceRow = isFullVoice && !voiceAsTextOnly;
             const showVideoRow = isFullVideo;
             const showStickerRow = isFullSticker;
+            const showDocumentRow = isFullDocument;
             const hasMediaUrls = (fullMsg?.mediaUrls?.length ?? 0) > 0;
             const mt = fullMsg?.messageType;
             const showGenericMediaRow =
@@ -314,6 +317,7 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
               !isFullVoice &&
               !isFullVideo &&
               !isFullSticker &&
+              !isFullDocument &&
               hasMediaUrls &&
               mt === undefined;
             const showPhotoRow =
@@ -321,6 +325,7 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
               !isFullVoice &&
               !isFullVideo &&
               !isFullSticker &&
+              !isFullDocument &&
               hasMediaUrls &&
               mt !== undefined;
             const previewLm = isPreviewOnly ? (lastMessage as LastMessagePreview) : null;
@@ -390,6 +395,15 @@ const GroupChannelCardInner = ({ groupChannel, listPresenceBatched = false, unre
                           </span>
                         )}
                         <ChatListStickerRow t={t} emoji={fullMsg?.stickerEmoji} />
+                      </>
+                    ) : showDocumentRow ? (
+                      <>
+                        {groupChannel.isChannel && sender && (
+                          <span className="font-medium">
+                            {sender.firstName} {sender.lastName}:{' '}
+                          </span>
+                        )}
+                        <ChatListDocumentRow t={t} fileName={fullMsg?.documentFileName} />
                       </>
                     ) : showPhotoRow ? (
                       <span className="flex items-center gap-1">

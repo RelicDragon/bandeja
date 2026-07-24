@@ -96,6 +96,9 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
     videoWidth: rawVideoWidth,
     videoHeight: rawVideoHeight,
     waveformData: rawWaveformData,
+    documentFileName: rawDocumentFileName,
+    documentMimeType: rawDocumentMimeType,
+    documentSize: rawDocumentSize,
     clientMutationId: rawClientMutationId,
     linkPreviewDisabled: rawLinkPreviewDisabled,
     linkPreviewUrl: rawLinkPreviewUrl,
@@ -137,7 +140,9 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
         ? MessageType.VIDEO
         : rawMessageType === 'STICKER'
           ? MessageType.STICKER
-          : undefined;
+          : rawMessageType === 'DOCUMENT'
+            ? MessageType.DOCUMENT
+            : undefined;
   const stickerId =
     typeof rawStickerId === 'string' && rawStickerId.trim() ? rawStickerId.trim() : undefined;
   const audioDurationMs =
@@ -205,6 +210,14 @@ export const createMessage = asyncHandler(async (req: AuthRequest, res: Response
       videoWidth: videoWidth !== undefined && !Number.isNaN(videoWidth) ? videoWidth : undefined,
       videoHeight: videoHeight !== undefined && !Number.isNaN(videoHeight) ? videoHeight : undefined,
       waveformData,
+      documentFileName:
+        typeof rawDocumentFileName === 'string' ? rawDocumentFileName.trim() : undefined,
+      documentMimeType:
+        typeof rawDocumentMimeType === 'string' ? rawDocumentMimeType.trim() : undefined,
+      documentSize:
+        rawDocumentSize != null && rawDocumentSize !== '' && !Number.isNaN(Number(rawDocumentSize))
+          ? Number(rawDocumentSize)
+          : undefined,
       clientMutationId: clientMutationId || undefined,
       linkPreviewDisabled: rawLinkPreviewDisabled === true,
       linkPreviewUrl: typeof rawLinkPreviewUrl === 'string' ? rawLinkPreviewUrl.trim() : undefined,

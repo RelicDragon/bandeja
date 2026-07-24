@@ -61,4 +61,25 @@ assert.equal(
   '[TYPE:STICKER]🎾'
 );
 
+assert.equal(
+  extractPreviewFromMessage({
+    content: null,
+    mediaUrls: ['https://cdn.example/uploads/documents/a.pdf'],
+    pollId: null,
+    messageType: 'DOCUMENT',
+    documentFileName: 'rules.pdf',
+  }),
+  '[TYPE:DOCUMENT]rules.pdf'
+);
+
+assert.equal(
+  extractPreviewFromMessage({
+    content: null,
+    mediaUrls: ['https://cdn.example/uploads/documents/a.pdf'],
+    pollId: null,
+    messageType: 'DOCUMENT',
+  }),
+  '[TYPE:DOCUMENT]'
+);
+
 console.log('lastMessagePreview.service.test.ts: OK');

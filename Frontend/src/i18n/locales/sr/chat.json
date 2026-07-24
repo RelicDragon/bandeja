@@ -174,6 +174,12 @@
       "unfavorite": "Ukloni iz omiljenih"
     },
     "attachVideo": "Video",
+    "attachFile": "Fajl",
+    "documentMessage": "Fajl",
+    "documentTooLarge": "Fajl je prevelik (maks. 32 MB)",
+    "invalidDocumentType": "Nepodržani tip fajla (PDF, DOC, DOCX, TXT)",
+    "documentPickFailed": "Neuspelo biranje fajla",
+    "documentOpenFailed": "Nije moguće otvoriti fajl",
     "compressingVideo": "Kompresija videa…",
     "videoTooLong": "Video je predugo (maks. 3 min)",
     "videoTooLarge": "Video fajl je prevelik",

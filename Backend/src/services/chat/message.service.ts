@@ -108,6 +108,26 @@ function isAllowedChatVideoMediaUrl(url: string): boolean {
   return true;
 }
 
+function isAllowedChatDocumentMediaUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  let key: string;
+  try {
+    key = S3Service.extractS3Key(url);
+  } catch {
+    return false;
+  }
+  if (!/^uploads\/documents\/[a-zA-Z0-9._-]+$/.test(key)) return false;
+  const allowedHost = config.aws.cloudFrontDomain.replace(/^https?:\/\//, '').split('/')[0].toLowerCase();
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      return new URL(url).hostname.toLowerCase() === allowedHost;
+    } catch {
+      return false;
+    }
+  }
+  return true;
+}
+
 function isAllowedChatVideoThumbnailUrl(url: string): boolean {
   if (!url || typeof url !== 'string') return false;
   let key: string;
@@ -365,6 +385,7 @@ export class MessageService {
           stickerEmoji: true,
           audioDurationMs: true,
           videoDurationMs: true,
+          documentFileName: true,
           sender: {
             select: USER_SELECT_WITH_SPORT_PROFILES
           }
@@ -605,6 +626,9 @@ export class MessageService {
     videoWidth?: number | null;
     videoHeight?: number | null;
     waveformData?: number[];
+    documentFileName?: string | null;
+    documentMimeType?: string | null;
+    documentSize?: number | null;
     poll?: {
       question: string;
       options: string[];
@@ -636,6 +660,9 @@ export class MessageService {
       videoWidth,
       videoHeight,
       waveformData,
+      documentFileName: rawDocumentFileName,
+      documentMimeType: rawDocumentMimeType,
+      documentSize: rawDocumentSize,
       linkPreviewDisabled = false,
       linkPreviewUrl: requestedLinkPreviewUrl,
       linkPreviewToken,
@@ -773,6 +800,7 @@ export class MessageService {
       !resolvedStickerId &&
       requestedMessageType !== MessageType.VOICE &&
       requestedMessageType !== MessageType.VIDEO &&
+      requestedMessageType !== MessageType.DOCUMENT &&
       workingMediaUrls.length === 0;
 
     let giphyUploaded: { mediaUrl: string; thumbnailUrl: string } | null = null;
@@ -860,8 +888,43 @@ export class MessageService {
       throw new ApiError(400, 'Invalid video message payload');
     }
 
+    let documentMeta: { fileName: string; mimeType: string | null; size: number | null } | null =
+      null;
+    if (resolvedMessageType === MessageType.DOCUMENT) {
+      if (poll) {
+        throw new ApiError(400, 'Document messages cannot include a poll');
+      }
+      if (workingMediaUrls.length !== 1) {
+        throw new ApiError(400, 'Document message requires exactly one file URL');
+      }
+      const url = workingMediaUrls[0];
+      if (!url || !isAllowedChatDocumentMediaUrl(url)) {
+        throw new ApiError(400, 'Invalid document file URL');
+      }
+      const fileName =
+        typeof rawDocumentFileName === 'string' ? rawDocumentFileName.trim() : '';
+      if (!fileName || fileName.length > 255) {
+        throw new ApiError(400, 'Document file name is required');
+      }
+      const mimeType =
+        typeof rawDocumentMimeType === 'string' && rawDocumentMimeType.trim()
+          ? rawDocumentMimeType.trim().slice(0, 127)
+          : null;
+      const size =
+        rawDocumentSize != null &&
+        Number.isFinite(Number(rawDocumentSize)) &&
+        Number(rawDocumentSize) >= 0
+          ? Math.floor(Number(rawDocumentSize))
+          : null;
+      documentMeta = { fileName, mimeType, size };
+    } else if (requestedMessageType === MessageType.DOCUMENT) {
+      throw new ApiError(400, 'Invalid document message payload');
+    }
+
     const thumbnailUrls =
-      resolvedMessageType === MessageType.VOICE || resolvedMessageType === MessageType.STICKER
+      resolvedMessageType === MessageType.VOICE ||
+      resolvedMessageType === MessageType.STICKER ||
+      resolvedMessageType === MessageType.DOCUMENT
         ? []
         : resolvedMessageType === MessageType.VIDEO
           ? workingClientThumbnails.slice(0, 1)
@@ -872,7 +935,8 @@ export class MessageService {
     const contentForStore =
       resolvedMessageType === MessageType.VOICE ||
       resolvedMessageType === MessageType.VIDEO ||
-      resolvedMessageType === MessageType.STICKER
+      resolvedMessageType === MessageType.STICKER ||
+      resolvedMessageType === MessageType.DOCUMENT
         ? ''
         : workingContent?.startsWith('[TYPE:')
           ? workingContent.substring(1)
@@ -883,7 +947,9 @@ export class MessageService {
         ? computeVoiceContentSearchable(audioDurationMs)
         : resolvedMessageType === MessageType.STICKER
           ? (resolvedStickerEmoji ?? 'sticker')
-          : computeContentSearchable(workingContent ?? null, poll?.question);
+          : resolvedMessageType === MessageType.DOCUMENT
+            ? (documentMeta?.fileName ?? 'document')
+            : computeContentSearchable(workingContent ?? null, poll?.question);
 
     let linkPreviewSnapshot: Awaited<ReturnType<typeof resolveLinkPreviewForOutgoingMessage>> = null;
     const eligiblePreviewUrls = extractEligiblePreviewUrls(contentForStore);
@@ -951,6 +1017,12 @@ export class MessageService {
           videoWidth: resolvedMessageType === MessageType.VIDEO ? videoMeta?.width ?? null : null,
           videoHeight: resolvedMessageType === MessageType.VIDEO ? videoMeta?.height ?? null : null,
           waveformData: resolvedMessageType === MessageType.VOICE ? voiceWaveform : [],
+          documentFileName:
+            resolvedMessageType === MessageType.DOCUMENT ? documentMeta?.fileName ?? null : null,
+          documentMimeType:
+            resolvedMessageType === MessageType.DOCUMENT ? documentMeta?.mimeType ?? null : null,
+          documentSize:
+            resolvedMessageType === MessageType.DOCUMENT ? documentMeta?.size ?? null : null,
           clientMutationId: cid ?? undefined,
         } as any,
         include: this.getMessageInclude()
@@ -1166,6 +1238,9 @@ export class MessageService {
     videoWidth?: number | null;
     videoHeight?: number | null;
     waveformData?: number[];
+    documentFileName?: string | null;
+    documentMimeType?: string | null;
+    documentSize?: number | null;
     poll?: {
       question: string;
       options: string[];
@@ -1669,6 +1744,10 @@ export class MessageService {
 
     if (message.messageType === MessageType.STICKER) {
       throw new ApiError(400, 'Sticker messages cannot be edited');
+    }
+
+    if (message.messageType === MessageType.DOCUMENT) {
+      throw new ApiError(400, 'Document messages cannot be edited');
     }
 
     await this.validateMessageAccess(message, userId, true);

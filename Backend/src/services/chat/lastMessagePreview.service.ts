@@ -12,6 +12,7 @@ interface MessageForPreview {
   audioDurationMs?: number | null;
   videoDurationMs?: number | null;
   stickerEmoji?: string | null;
+  documentFileName?: string | null;
   storyReply?: unknown;
 }
 
@@ -52,6 +53,11 @@ export function extractPreviewFromMessage(message: MessageForPreview): string {
   }
   if (message.messageType === 'VIDEO' && message.videoDurationMs != null) {
     return `[TYPE:VIDEO]${formatVoicePreviewLabel(message.videoDurationMs)}`;
+  }
+  if (message.messageType === 'DOCUMENT') {
+    const name =
+      typeof message.documentFileName === 'string' ? message.documentFileName.trim() : '';
+    return name ? `[TYPE:DOCUMENT]${name}` : '[TYPE:DOCUMENT]';
   }
   if (message.messageType === 'STICKER') {
     const emoji =
@@ -120,6 +126,7 @@ export async function updateLastMessagePreview(
       audioDurationMs: true,
       videoDurationMs: true,
       stickerEmoji: true,
+      documentFileName: true,
       storyReply: true,
       senderId: true,
     },

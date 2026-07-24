@@ -3,8 +3,11 @@ import {
   MAX_VIDEO_DURATION_MS,
   MAX_VIDEO_HEIGHT,
   MAX_VIDEO_WIDTH,
+  SEND_VIDEO_TRANSCODE_PHASE_MS,
 } from '@/constants/chatVideo';
-import { compressChatOutboxImageBlob } from '@/services/chat/chatOutboxImageCompress';
+import { withTimeout } from '@/services/chat/chatVideoAsyncTimeout';
+import { loadChatVideoMetadata } from '@/services/chat/chatVideoMetadata';
+import { captureChatVideoPosterBlob } from '@/services/chat/chatVideoPoster';
 import { transcodeChatVideoToMp4, type TranscodeProgressFn } from '@/services/chat/chatVideoTranscodeMediabunny';
 
 export type ChatVideoTranscodeResult = {
@@ -26,83 +29,18 @@ export type PrepareChatVideoOptions = {
   trim?: VideoTrimRangeMs;
 };
 
-function loadVideoMetadata(file: File): Promise<{ durationMs: number; width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.muted = true;
-    video.playsInline = true;
-    const cleanup = () => {
-      URL.revokeObjectURL(url);
-      video.removeAttribute('src');
-      video.load();
-    };
-    video.onloadedmetadata = () => {
-      const durationMs = Number.isFinite(video.duration) ? Math.round(video.duration * 1000) : 0;
-      const width = video.videoWidth || 0;
-      const height = video.videoHeight || 0;
-      cleanup();
-      resolve({ durationMs, width, height });
-    };
-    video.onerror = () => {
-      cleanup();
-      reject(new Error('video_probe_failed'));
-    };
-    video.src = url;
-  });
-}
-
-async function capturePosterBlob(file: File): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    video.preload = 'auto';
-    video.muted = true;
-    video.playsInline = true;
-    const cleanup = () => {
-      URL.revokeObjectURL(url);
-      video.removeAttribute('src');
-      video.load();
-    };
-    const draw = () => {
-      const w = video.videoWidth || 640;
-      const h = video.videoHeight || 360;
-      const canvas = document.createElement('canvas');
-      const scale = Math.min(1, 512 / Math.max(w, h));
-      canvas.width = Math.max(1, Math.round(w * scale));
-      canvas.height = Math.max(1, Math.round(h * scale));
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        cleanup();
-        reject(new Error('poster_canvas_failed'));
-        return;
-      }
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(
-        async (blob) => {
-          cleanup();
-          if (!blob) {
-            reject(new Error('poster_blob_failed'));
-            return;
-          }
-          resolve(await compressChatOutboxImageBlob(blob));
-        },
-        'image/jpeg',
-        0.85
-      );
-    };
-    video.onloadeddata = () => {
-      const seekTo = Math.min(0.5, Math.max(0, (video.duration || 1) * 0.1));
-      video.currentTime = seekTo;
-    };
-    video.onseeked = () => draw();
-    video.onerror = () => {
-      cleanup();
-      reject(new Error('poster_capture_failed'));
-    };
-    video.src = url;
-  });
+function fitWithinMax(width: number, height: number): { width: number; height: number } {
+  if (width <= 0 || height <= 0) {
+    return { width: MAX_VIDEO_WIDTH, height: MAX_VIDEO_HEIGHT };
+  }
+  if (width <= MAX_VIDEO_WIDTH && height <= MAX_VIDEO_HEIGHT) {
+    return { width, height };
+  }
+  const scale = Math.min(MAX_VIDEO_WIDTH / width, MAX_VIDEO_HEIGHT / height);
+  return {
+    width: Math.max(2, Math.round(width * scale)),
+    height: Math.max(2, Math.round(height * scale)),
+  };
 }
 
 function isLikelyMp4(file: File): boolean {
@@ -114,6 +52,20 @@ function isLikelyMp4(file: File): boolean {
 /** Duration stored on the message after client encode (trimmed files may report long metadata). */
 export function effectiveChatVideoDurationMs(durationMs: number, wasTranscoded: boolean): number {
   return wasTranscoded ? Math.min(durationMs, MAX_VIDEO_DURATION_MS) : durationMs;
+}
+
+/** Output duration after client encode/trim — no HTMLVideo re-probe required. */
+export function resolveEncodedChatVideoDurationMs(params: {
+  sourceDurationMs: number;
+  wasTranscoded: boolean;
+  wantsTrim: boolean;
+  trimmedDurationMs: number;
+}): number {
+  const { sourceDurationMs, wasTranscoded, wantsTrim, trimmedDurationMs } = params;
+  if (wantsTrim && trimmedDurationMs > 0) {
+    return effectiveChatVideoDurationMs(trimmedDurationMs, wasTranscoded);
+  }
+  return effectiveChatVideoDurationMs(sourceDurationMs, wasTranscoded);
 }
 
 /** Whether client-side Mediabunny transcode is required before upload. */
@@ -138,60 +90,85 @@ export async function prepareChatVideoForSend(
   options?: PrepareChatVideoOptions
 ): Promise<ChatVideoTranscodeResult> {
   const startedAt = Date.now();
-  let meta = await loadVideoMetadata(rawFile);
-  if (meta.durationMs < 500) {
+  const sourceMeta = await loadChatVideoMetadata(rawFile);
+  if (sourceMeta.durationMs < 500) {
     throw new Error('video_too_short');
   }
 
   const trim = options?.trim;
   const trimStartMs = Math.max(0, trim?.startMs ?? 0);
   const trimEndMs =
-    trim && trim.endMs > trimStartMs ? Math.min(trim.endMs, meta.durationMs) : meta.durationMs;
+    trim && trim.endMs > trimStartMs ? Math.min(trim.endMs, sourceMeta.durationMs) : sourceMeta.durationMs;
   const trimmedDurationMs = Math.max(0, trimEndMs - trimStartMs);
-  const wantsTrim = trim != null && (trimStartMs > 0 || trimEndMs < meta.durationMs);
+  const wantsTrim = trim != null && (trimStartMs > 0 || trimEndMs < sourceMeta.durationMs);
+  const needsTranscode = shouldTranscodeChatVideo(rawFile, sourceMeta) || wantsTrim;
+
+  // Poster from *source* in parallel with encode — gallery MOV/HEVC plays on iOS; re-encoded blob MP4 often hangs.
+  const posterPromise = captureChatVideoPosterBlob(rawFile);
 
   let videoFile = rawFile;
-  let wasTranscoded = false;
+  let width = sourceMeta.width;
+  let height = sourceMeta.height;
 
-  if (shouldTranscodeChatVideo(rawFile, meta) || wantsTrim) {
-    if (!isWebCodecsVideoTranscodeAvailable()) {
-      throw new Error('video_transcode_unavailable');
+  try {
+    if (needsTranscode) {
+      if (!isWebCodecsVideoTranscodeAvailable()) {
+        throw new Error('video_transcode_unavailable');
+      }
+      const fitted = fitWithinMax(sourceMeta.width, sourceMeta.height);
+      width = fitted.width;
+      height = fitted.height;
+      // Only pass trim when the user/story actually clips — a always-on trim object
+      // forced main-thread encode and skipped the worker on every chat send.
+      const encodeTrim = wantsTrim
+        ? { startSec: trimStartMs / 1000, endSec: trimEndMs / 1000 }
+        : undefined;
+      videoFile = await withTimeout(
+        transcodeChatVideoToMp4(
+          rawFile,
+          tempId,
+          sourceMeta,
+          options?.onTranscodeProgress,
+          encodeTrim
+        ),
+        SEND_VIDEO_TRANSCODE_PHASE_MS,
+        'video_transcode_failed'
+      );
     }
-    wasTranscoded = true;
-    videoFile = await transcodeChatVideoToMp4(rawFile, tempId, meta, options?.onTranscodeProgress, {
-      startSec: trimStartMs / 1000,
-      endSec: trimEndMs / 1000,
+
+    const durationMs = resolveEncodedChatVideoDurationMs({
+      sourceDurationMs: sourceMeta.durationMs,
+      wasTranscoded: needsTranscode,
+      wantsTrim,
+      trimmedDurationMs,
     });
-    meta = await loadVideoMetadata(videoFile);
-    if (wantsTrim && trimmedDurationMs > 0) {
-      meta = { ...meta, durationMs: trimmedDurationMs };
+    if (durationMs < 500) {
+      throw new Error('video_too_short');
     }
-  }
+    if (!needsTranscode && durationMs > MAX_VIDEO_DURATION_MS) {
+      throw new Error('video_too_long');
+    }
+    if (videoFile.size > MAX_VIDEO_BYTES_AFTER_ENCODE) {
+      throw new Error('video_too_large');
+    }
 
-  const durationMs = effectiveChatVideoDurationMs(meta.durationMs, wasTranscoded);
-  if (durationMs < 500) {
-    throw new Error('video_too_short');
-  }
-  if (!wasTranscoded && durationMs > MAX_VIDEO_DURATION_MS) {
-    throw new Error('video_too_long');
-  }
-  meta = { ...meta, durationMs };
-  if (videoFile.size > MAX_VIDEO_BYTES_AFTER_ENCODE) {
-    throw new Error('video_too_large');
-  }
+    const base = `chat-video-${tempId}`;
+    if (videoFile.name !== `${base}.mp4`) {
+      videoFile = new File([videoFile], `${base}.mp4`, { type: 'video/mp4' });
+    }
 
-  const base = `chat-video-${tempId}`;
-  if (videoFile.name !== `${base}.mp4`) {
-    videoFile = new File([videoFile], `${base}.mp4`, { type: 'video/mp4' });
+    const posterBlob = await posterPromise;
+    return {
+      videoFile,
+      posterBlob,
+      durationMs,
+      width,
+      height,
+      transcodeMs: Date.now() - startedAt,
+    };
+  } catch (e) {
+    // Ensure poster work finishes (always resolves) so it can't outlive this call as an orphan.
+    await posterPromise.catch(() => undefined);
+    throw e;
   }
-
-  const posterBlob = await capturePosterBlob(videoFile);
-  return {
-    videoFile,
-    posterBlob,
-    durationMs,
-    width: meta.width,
-    height: meta.height,
-    transcodeMs: Date.now() - startedAt,
-  };
 }

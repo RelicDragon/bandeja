@@ -5,7 +5,7 @@ import {
   MAX_VIDEO_HEIGHT,
   MAX_VIDEO_WIDTH,
 } from '@/constants/chatVideo';
-import { effectiveChatVideoDurationMs, shouldTranscodeChatVideo } from './chatVideoTranscode';
+import { effectiveChatVideoDurationMs, resolveEncodedChatVideoDurationMs, shouldTranscodeChatVideo } from './chatVideoTranscode';
 
 function file(type: string, size: number, name = 'clip.mp4'): File {
   return new File([new Uint8Array(size)], name, { type });
@@ -20,6 +20,30 @@ describe('effectiveChatVideoDurationMs', () => {
 
   it('does not clamp passthrough duration', () => {
     expect(effectiveChatVideoDurationMs(90_000, false)).toBe(90_000);
+  });
+});
+
+describe('resolveEncodedChatVideoDurationMs', () => {
+  it('prefers trim length when trimmed', () => {
+    expect(
+      resolveEncodedChatVideoDurationMs({
+        sourceDurationMs: 120_000,
+        wasTranscoded: true,
+        wantsTrim: true,
+        trimmedDurationMs: 45_000,
+      })
+    ).toBe(45_000);
+  });
+
+  it('clamps long source after encode without explicit trim', () => {
+    expect(
+      resolveEncodedChatVideoDurationMs({
+        sourceDurationMs: MAX_VIDEO_DURATION_MS + 60_000,
+        wasTranscoded: true,
+        wantsTrim: false,
+        trimmedDurationMs: 0,
+      })
+    ).toBe(MAX_VIDEO_DURATION_MS);
   });
 });
 

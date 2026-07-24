@@ -30,11 +30,26 @@ function reactionsEqual(a: ChatMessage['reactions'], b: ChatMessage['reactions']
   return true;
 }
 
+function mediaUrlsEqual(a: string[] | null | undefined, b: string[] | null | undefined): boolean {
+  if (a === b) return true;
+  const aa = a ?? [];
+  const bb = b ?? [];
+  if (aa.length !== bb.length) return false;
+  for (let i = 0; i < aa.length; i++) {
+    if (aa[i] !== bb[i]) return false;
+  }
+  return true;
+}
+
 function messageContentEqual(a: ChatMessage, b: ChatMessage): boolean {
   if (getMessageRowKey(a) !== getMessageRowKey(b)) return false;
   if (a.content !== b.content) return false;
   if (a.updatedAt !== b.updatedAt) return false;
   if (a.messageType !== b.messageType) return false;
+  if (!mediaUrlsEqual(a.mediaUrls, b.mediaUrls)) return false;
+  if (a.documentFileName !== b.documentFileName) return false;
+  if (a.documentMimeType !== b.documentMimeType) return false;
+  if (a.documentSize !== b.documentSize) return false;
   if (!reactionsEqual(a.reactions, b.reactions)) return false;
   if (a.replyToId !== b.replyToId) return false;
   if (!storyReplyEqual(a.storyReply, b.storyReply)) return false;

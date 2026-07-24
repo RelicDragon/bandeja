@@ -22,6 +22,10 @@ export function chatMessageToGameListPreview(message: ChatMessage): {
   if (message.messageType === 'VIDEO' && message.videoDurationMs != null) {
     return { preview: `[TYPE:VIDEO]${formatVoiceDurationMmSs(message.videoDurationMs)}`, updatedAt };
   }
+  if (message.messageType === 'DOCUMENT') {
+    const name = message.documentFileName?.trim() ?? '';
+    return { preview: name ? `[TYPE:DOCUMENT]${name}` : '[TYPE:DOCUMENT]', updatedAt };
+  }
   if (message.messageType === 'STICKER') {
     const emoji = message.stickerEmoji?.trim() ?? '';
     return { preview: emoji ? `[TYPE:STICKER]${emoji}` : '[TYPE:STICKER]', updatedAt };

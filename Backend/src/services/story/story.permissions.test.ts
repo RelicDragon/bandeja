@@ -1,4 +1,4 @@
-import { canSeePhotoInStories } from './story.permissions';
+import { canSeePhotoInStories, canSeeResultInStories } from './story.permissions';
 
 function assert(cond: boolean, msg: string): void {
   if (!cond) {
@@ -14,6 +14,12 @@ const baseGame = {
   forbidOthersPhotosView: false,
   participants: [{ userId: 'player', role: 'PARTICIPANT' }],
   parent: null,
+};
+
+const resultGame = {
+  resultsStatus: 'FINAL',
+  isPublic: true,
+  resultsArtifactsReadyAt: new Date(),
 };
 
 function run(): void {
@@ -55,6 +61,26 @@ function run(): void {
       viewer: { id: 'player' },
     }),
     'not FINAL denies photo story segment',
+  );
+
+  assert(
+    canSeeResultInStories({
+      viewerFollows: true,
+      game: resultGame,
+      outcomeOwner: { shareGameResultsToFollowers: true },
+      participant: { showInStories: true },
+    }),
+    'result story allowed when participant showInStories',
+  );
+
+  assert(
+    !canSeeResultInStories({
+      viewerFollows: true,
+      game: resultGame,
+      outcomeOwner: { shareGameResultsToFollowers: true },
+      participant: { showInStories: false },
+    }),
+    'result story denied when participant hides stories',
   );
 
   console.log('story.permissions.test.ts: all passed');

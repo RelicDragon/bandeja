@@ -60,8 +60,15 @@ export function useMessageInputVideoSend({
     try {
       const prepared = await prepareChatVideoForSend(file, prepId, {
         onTranscodeProgress: (p) => {
-          const pct = Math.round(p * 100);
-          if (pct > 0 && pct < 100) {
+          const pct = Math.min(100, Math.round(p * 100));
+          if (pct >= 100) {
+            toast.loading(
+              t('chat.preparingVideo', { defaultValue: 'Preparing video…' }),
+              { id: compressToast }
+            );
+            return;
+          }
+          if (pct > 0) {
             toast.loading(
               t('chat.compressingVideoPercent', {
                 defaultValue: 'Compressing video… {{percent}}%',
@@ -125,7 +132,11 @@ export function useMessageInputVideoSend({
             defaultValue: 'Video encoding is not supported in this browser.',
           })
         );
-      } else if (code === 'video_transcode_failed' || code === 'video_probe_failed') {
+      } else if (
+        code === 'video_transcode_failed' ||
+        code === 'video_probe_failed' ||
+        code === 'video_probe_timeout'
+      ) {
         toast.error(t('chat.videoSendFailed', { defaultValue: 'Could not prepare video' }));
       } else {
         toast.error(t('chat.videoSendFailed', { defaultValue: 'Could not prepare video' }));

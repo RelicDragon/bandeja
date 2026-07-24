@@ -314,6 +314,8 @@
     "shareCardDone": "Отправлено",
     "shareCardFailed": "Не удалось поделиться",
     "shareCardNoSummary": "Отличная игра!",
-    "playAgainCta": "Сыграть снова"
+    "playAgainCta": "Сыграть снова",
+    "showInStories": "Показывать {{entity}} в моих stories",
+    "showInStoriesFailed": "Не удалось обновить видимость в stories"
   }
 }

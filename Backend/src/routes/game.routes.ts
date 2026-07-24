@@ -153,6 +153,19 @@ router.put(
   gameController.togglePlayingStatus
 );
 
+router.put(
+  '/:id/my-show-in-stories',
+  authenticate,
+  canAccessGameIncludingArchived,
+  validate([
+    body('showInStories')
+      .isBoolean()
+      .withMessage('showInStories must be a boolean')
+      .toBoolean(),
+  ]),
+  gameController.setMyShowInStories
+);
+
 router.post(
   '/:id/add-admin',
   authenticate,

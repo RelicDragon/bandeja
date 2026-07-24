@@ -20,6 +20,7 @@ import { Loader2, BellOff, Mic } from 'lucide-react';
 import { ChatListPinIcon } from '@/components/chat/ChatListPinIcon';
 import { ChatListOutboxAnimated } from '@/components/chat/ChatListOutboxAnimated';
 import {
+  ChatListDocumentRow,
   ChatListGenericMediaRow,
   ChatListPreviewContent,
   ChatListStickerRow,
@@ -192,10 +193,12 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
             const isFullVoice = fullLm?.messageType === 'VOICE';
             const isFullVideo = fullLm?.messageType === 'VIDEO';
             const isFullSticker = fullLm?.messageType === 'STICKER';
+            const isFullDocument = fullLm?.messageType === 'DOCUMENT';
             const voiceAsTextOnly = isFullVoice && !!(fullMessage?.content?.trim());
             const showVoiceRow = isFullVoice && !voiceAsTextOnly;
             const showVideoRow = isFullVideo;
             const showStickerRow = isFullSticker;
+            const showDocumentRow = isFullDocument;
             const hasMediaUrls = (fullLm?.mediaUrls?.length ?? 0) > 0;
             const mt = fullLm?.messageType;
             const showGenericMediaRow =
@@ -203,6 +206,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
               !isFullVoice &&
               !isFullVideo &&
               !isFullSticker &&
+              !isFullDocument &&
               hasMediaUrls &&
               mt === undefined;
             const showPhotoRow =
@@ -210,6 +214,7 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
               !isFullVoice &&
               !isFullVideo &&
               !isFullSticker &&
+              !isFullDocument &&
               hasMediaUrls &&
               mt !== undefined;
 
@@ -237,6 +242,8 @@ const UserChatCardInner = ({ chat, listPresenceBatched = false, unreadCount = 0,
                     <ChatListVideoRow t={t} durationMs={fullLm?.videoDurationMs} />
                   ) : showStickerRow ? (
                     <ChatListStickerRow t={t} emoji={fullLm?.stickerEmoji} />
+                  ) : showDocumentRow ? (
+                    <ChatListDocumentRow t={t} fileName={fullLm?.documentFileName} />
                   ) : showPhotoRow ? (
                     <span className="flex items-center gap-1">
                       <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>

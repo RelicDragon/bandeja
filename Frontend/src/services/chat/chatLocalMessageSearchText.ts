@@ -59,6 +59,12 @@ export function computeChatLocalSearchText(m: ChatMessage): string | null {
     if (fromText && sticker) return `${fromText} ${sticker}`;
     return sticker ?? fromText;
   }
+  if (m.messageType === 'DOCUMENT') {
+    const docBits = [m.documentFileName?.trim(), 'file', 'document'].filter(Boolean).join(' ');
+    const doc = normalizeForSearch(docBits);
+    if (fromText && doc) return `${fromText} ${doc}`;
+    return doc ?? fromText;
+  }
   return fromText;
 }
 

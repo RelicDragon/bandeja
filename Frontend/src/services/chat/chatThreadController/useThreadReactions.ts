@@ -277,6 +277,7 @@ export function useThreadReactions({
       message.messageType === 'VOICE' ||
       message.messageType === 'VIDEO' ||
       message.messageType === 'STICKER' ||
+      message.messageType === 'DOCUMENT' ||
       message.poll
     ) {
       return;

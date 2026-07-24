@@ -4,10 +4,16 @@ import { runWithProfileName } from '@/utils/runWithProfileName';
 import { mediaApi } from '@/api/media';
 import { uploadChatImageFileWithRetry } from '@/services/chat/chatImageUploadRetry';
 import { uploadChatVideoFileWithRetry } from '@/services/chat/chatVideoUploadRetry';
+import { uploadChatDocumentFileWithRetry } from '@/services/chat/chatDocumentUploadRetry';
 import { messageQueueStorage, QueuedMessage } from './chatMessageQueueStorage';
 import { normalizeChatType } from '@/utils/chatType';
 import {
+  CHAT_DOCUMENT_MIME_TYPES,
+  mimeFromChatDocumentName,
+} from '@/utils/documentCapture';
+import {
   loadOutboxImageBlobs,
+  loadOutboxDocumentBlob,
   loadOutboxVideoBlob,
   loadOutboxVideoPosterBlob,
   loadOutboxVoiceBlob,
@@ -80,6 +86,7 @@ function rowNeedsMediaUpload(row: QueuedMessage | undefined): boolean {
   return !!(
     row.hasPendingVoiceBlob ||
     row.hasPendingVideoBlob ||
+    row.hasPendingDocumentBlob ||
     (row.pendingGiphy && !(row.mediaUrls?.length ?? 0)) ||
     (row.pendingImageBlobCount ?? 0) > 0
   );
@@ -322,6 +329,63 @@ export function sendWithTimeout(
           await failSendAttempt(tempId, generation, contextType, contextId, onFailed, 'video_upload_failed');
           return;
         }
+      } else if (row?.hasPendingDocumentBlob) {
+        const db = await loadOutboxDocumentBlob(tempId);
+        throwIfAborted(signal);
+        if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
+        if (!db) {
+          logChatOutboxBlobMismatch('send', { tempId, contextType, contextId, kind: 'document' });
+          await failSendAttempt(
+            tempId,
+            generation,
+            contextType,
+            contextId,
+            onFailed,
+            'document_blob_missing'
+          );
+          return;
+        }
+        try {
+          const fileName = row.payload.documentFileName || 'document';
+          const mime =
+            row.payload.documentMimeType ||
+            (db.type && db.type !== 'application/octet-stream' ? db.type : '') ||
+            mimeFromChatDocumentName(fileName);
+          const documentFile = db instanceof File ? db : new File([db], fileName, { type: mime });
+          const uploadFile =
+            documentFile.type && CHAT_DOCUMENT_MIME_TYPES.has(documentFile.type)
+              ? documentFile
+              : new File([documentFile], fileName, {
+                  type: mimeFromChatDocumentName(fileName, mime),
+                  lastModified: documentFile.lastModified,
+                });
+          const uploaded = await runWithAbort(signal, () =>
+            uploadChatDocumentFileWithRetry(uploadFile, contextId, contextType, 3, signal)
+          );
+          if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
+          await messageQueueStorage.commitPendingDocumentUploaded(tempId, uploaded.fileUrl, {
+            fileName: uploaded.originalName || fileName,
+            mimeType: uploaded.mimetype || uploadFile.type || mime,
+            size: uploaded.size ?? uploadFile.size,
+          });
+          finalMedia = [uploaded.fileUrl];
+          finalThumb = [];
+        } catch (e) {
+          if (isAbortError(e)) {
+            await resumeOrFailSupersededChatSend(tempId, contextType, contextId, onFailed);
+            return;
+          }
+          if (await finishIfSendGenerationStale(tempId, generation, contextType, contextId, onFailed)) return;
+          await failSendAttempt(
+            tempId,
+            generation,
+            contextType,
+            contextId,
+            onFailed,
+            'document_upload_failed'
+          );
+          return;
+        }
       } else if (row?.hasPendingVoiceBlob) {
         const vb = await loadOutboxVoiceBlob(tempId);
         throwIfAborted(signal);
@@ -467,6 +531,9 @@ export function sendWithTimeout(
         videoWidth: p.videoWidth,
         videoHeight: p.videoHeight,
         waveformData: p.waveformData,
+        documentFileName: p.documentFileName,
+        documentMimeType: p.documentMimeType,
+        documentSize: p.documentSize,
         linkPreviewUrl: p.linkPreviewUrl,
         linkPreviewDisabled: p.linkPreviewDisabled,
         linkPreviewToken: p.linkPreviewToken ?? undefined,

@@ -51,6 +51,16 @@ function sortBubbleSegments(segments: StorySegment[]): StorySegment[] {
   return [...segments].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
 }
 
+function segmentPreviewThumbnailUrl(segment: StorySegment): string | null {
+  if (segment.sourceType === 'USER_STORY_ITEM' || segment.sourceType === 'GAME_PHOTO') {
+    return segment.media.thumbnailUrl;
+  }
+  if ('game' in segment) {
+    return segment.game.mainPhoto?.thumbnailUrl ?? segment.game.avatar ?? null;
+  }
+  return null;
+}
+
 function recomputeBubbleHasUnseen(bubble: StoryBubble, viewedKeys: Set<string>): StoryBubble {
   const hasUnseen = bubble.segments.some((s) => !viewedKeys.has(s.key) && !s.viewed);
   return { ...bubble, hasUnseen };
@@ -198,6 +208,7 @@ export const useStoriesStore = create<StoriesState>((set, get) => ({
       if (!s.feed) return s;
       const bubbles = [...s.feed.bubbles];
       const idx = bubbles.findIndex((b) => b.user.id === ownerUserId);
+      const previewFromSegment = segmentPreviewThumbnailUrl(segment);
       if (idx >= 0) {
         const bubble = bubbles[idx];
         if (bubble.segments.some((seg) => seg.key === segment.key)) return s;
@@ -207,24 +218,24 @@ export const useStoriesStore = create<StoriesState>((set, get) => ({
             ...bubble,
             ...(user ? { user } : {}),
             segments,
-            previewThumbnailUrl: segment.sourceType === 'USER_STORY_ITEM'
-              ? segment.media.thumbnailUrl
-              : segment.sourceType === 'GAME_PHOTO'
-                ? segment.media.thumbnailUrl
-                : bubble.previewThumbnailUrl,
+            previewThumbnailUrl: previewFromSegment ?? bubble.previewThumbnailUrl,
           },
           s.viewedKeys
         );
-      } else if (segment.sourceType === 'USER_STORY_ITEM') {
+      } else {
         const bubbleUser =
-          user ?? ({ id: ownerUserId } as StoryBubble['user']);
+          user ??
+          (segment.sourceType === 'USER_STORY_ITEM'
+            ? ({ id: ownerUserId } as StoryBubble['user'])
+            : null);
+        if (!bubbleUser) return s;
         bubbles.unshift(
           recomputeBubbleHasUnseen(
             {
               user: bubbleUser,
               isSelf: false,
               hasUnseen: true,
-              previewThumbnailUrl: segment.media.thumbnailUrl,
+              previewThumbnailUrl: previewFromSegment,
               segments: [segment],
             },
             s.viewedKeys

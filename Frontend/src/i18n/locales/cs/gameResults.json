@@ -310,6 +310,8 @@
     "shareCardDone": "Sdíleno",
     "shareCardFailed": "Sdílení se nepodařilo",
     "shareCardNoSummary": "Skvělá session!",
-    "playAgainCta": "Hrát znovu"
+    "playAgainCta": "Hrát znovu",
+    "showInStories": "Zobrazit {{entity}} v mých stories",
+    "showInStoriesFailed": "Nepodařilo se aktualizovat viditelnost ve stories"
   }
 }

@@ -175,6 +175,12 @@
       "unfavorite": "Убрать из избранного"
     },
     "attachVideo": "Видео",
+    "attachFile": "Файл",
+    "documentMessage": "Файл",
+    "documentTooLarge": "Файл слишком большой (макс. 32 МБ)",
+    "invalidDocumentType": "Неподдерживаемый тип файла (PDF, DOC, DOCX, TXT)",
+    "documentPickFailed": "Не удалось выбрать файл",
+    "documentOpenFailed": "Не удалось открыть файл",
     "compressingVideo": "Сжатие видео…",
     "videoTooLong": "Видео слишком длинное (макс. 3 мин)",
     "videoTooLarge": "Файл видео слишком большой",
