@@ -14,7 +14,7 @@ type UseMessageListScrollAnchorParams = {
   justLoadedOlderMessagesRef: RefObject<boolean>;
   prependCompensationEpochRef: RefObject<number>;
   threadScrollKey: string | null;
-  measurementRevision: number;
+  measurementKey: string;
 };
 
 /**
@@ -28,7 +28,7 @@ export function useMessageListScrollAnchor({
   justLoadedOlderMessagesRef,
   prependCompensationEpochRef,
   threadScrollKey,
-  measurementRevision,
+  measurementKey,
 }: UseMessageListScrollAnchorParams): void {
   const prevMeasurementsRef = useRef<MeasurementSnapshot | null>(null);
   const lastPrependEpochRef = useRef(0);
@@ -71,6 +71,6 @@ export function useMessageListScrollAnchor({
     isLoadingMoreRef,
     justLoadedOlderMessagesRef,
     prependCompensationEpochRef,
-    measurementRevision,
+    measurementKey,
   ]);
 }

@@ -8,6 +8,7 @@ import {
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
+import { isAllowedGiphyHost } from '../giphyIngest/giphyHosts';
 
 export const FORWARDABLE_MESSAGE_TYPES = new Set<MessageType>([
   MessageType.TEXT,
@@ -100,6 +101,24 @@ export function parseForwardedFrom(raw: unknown): ForwardedFromSnapshot | null {
   };
 }
 
+/** Reject provider-CDN GIF URLs — forwards must use app-hosted media only. */
+export function assertForwardMediaUrlsAllowed(urls: readonly string[]): void {
+  for (const raw of urls) {
+    const u = raw?.trim();
+    if (!u) continue;
+    try {
+      const host = new URL(u).hostname;
+      if (isAllowedGiphyHost(host)) {
+        throw new ApiError(400, 'Provider-hosted GIFs cannot be forwarded', true, {
+          code: 'chat.forward.providerMedia',
+        });
+      }
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+    }
+  }
+}
+
 async function buildAttributionTitle(
   source: ChatMessage & {
     sender: { firstName: string | null; lastName: string | null } | null;
@@ -158,6 +177,8 @@ export async function resolveForwardCreateFields(
       code: 'chat.forward.typeNotAllowed',
     });
   }
+
+  assertForwardMediaUrlsAllowed([...(source.mediaUrls ?? []), ...(source.thumbnailUrls ?? [])]);
 
   const existingSnap = parseForwardedFrom(source.forwardedFrom);
   let snapshot: ForwardedFromSnapshot;

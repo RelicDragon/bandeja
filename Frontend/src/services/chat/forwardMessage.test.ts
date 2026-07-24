@@ -89,6 +89,26 @@ describe('isForwardableMessage', () => {
     ).toBe(true);
   });
 
+  it('rejects provider-hosted GIF image URLs', () => {
+    expect(
+      isForwardableMessage(
+        msg({
+          messageType: 'IMAGE',
+          mediaUrls: ['https://media.giphy.com/media/abc/giphy.gif'],
+        })
+      )
+    ).toBe(false);
+    expect(
+      isForwardableMessage(
+        msg({
+          messageType: 'IMAGE',
+          mediaUrls: ['https://cdn.example/uploads/chat/originals/a.gif'],
+          thumbnailUrls: ['https://media.tenor.com/x.gif'],
+        })
+      )
+    ).toBe(false);
+  });
+
   it('rejects system, in-flight, incomplete media, and poll without poll payload', () => {
     expect(isForwardableMessage(msg({ senderId: null }))).toBe(false);
     expect(isForwardableMessage(msg({ messageType: 'POLL' }))).toBe(false);

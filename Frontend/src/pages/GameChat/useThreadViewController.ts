@@ -55,8 +55,10 @@ export function useThreadViewController({
   const [isTogglingMute, setIsTogglingMute] = useState(false);
   const [translateToLanguageForChat, setTranslateToLanguageForChat] = useState<string | null>(null);
   const chatNearBottomStoreRef = useRef(createChatNearBottomStore());
+  const syncLiveNearBottomRef = useRef<(near: boolean) => void>(() => {});
   const setChatNearBottom = useCallback((near: boolean) => {
     chatNearBottomStoreRef.current.set(near);
+    syncLiveNearBottomRef.current(near);
   }, []);
   const subscribeChatNearBottom = useCallback(
     (listener: () => void) => chatNearBottomStoreRef.current.subscribe(listener),
@@ -152,6 +154,8 @@ export function useThreadViewController({
     isGameChatArchived,
     isGameChatAccessDenied,
   });
+
+  syncLiveNearBottomRef.current = thread.syncLiveNearBottom;
 
   const { setPage, setHasMoreMessages, setReplyTo, setEditingMessage } = thread;
 

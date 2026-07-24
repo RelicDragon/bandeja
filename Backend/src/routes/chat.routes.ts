@@ -242,6 +242,11 @@ router.post(
     body('mentionIds').optional().isArray().withMessage('Mention IDs must be an array'),
     body('chatType').optional().isIn(Object.values(ChatType)).withMessage('Invalid chat type'),
     body('linkPreviewDisabled').optional().isBoolean().withMessage('linkPreviewDisabled must be boolean'),
+    body('forwardedFromMessageId')
+      .optional()
+      .isString()
+      .isLength({ min: 1, max: 128 })
+      .withMessage('forwardedFromMessageId must be 1-128 characters'),
     ...chatMessageLinkPreviewValidators,
   ]),
   createMessage

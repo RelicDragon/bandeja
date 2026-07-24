@@ -352,9 +352,9 @@ export class MessageService {
     } else if (message.chatContextType === 'BUG') {
       await this.validateBugAccess(message.contextId, userId, requireWriteAccess);
     } else if (message.chatContextType === 'USER') {
-      await this.validateUserChatAccess(message.contextId, userId);
+      await this.validateUserChatAccess(message.contextId, userId, requireWriteAccess);
     } else if (message.chatContextType === 'GROUP') {
-      await this.validateGroupChannelAccess(message.contextId, userId);
+      await this.validateGroupChannelAccess(message.contextId, userId, requireWriteAccess);
     }
   }
 

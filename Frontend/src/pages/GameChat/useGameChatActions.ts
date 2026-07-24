@@ -17,6 +17,7 @@ import {
   getThreadOpenScrollRow,
   reconcileAfterPaint,
 } from '@/services/chat/threadOpen';
+import { shouldPinAfterAsyncReconcile } from '@/components/MessageList/messageListOpenBottomIntent';
 import { chatSyncTailKey } from '@/utils/chatSyncScope';
 import { normalizeChatType } from '@/utils/chatType';
 import { mergeServerPageWithPendingOptimistics } from '@/utils/chatMessageSort';
@@ -313,7 +314,17 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
           setMessages,
           scrollRow: getThreadOpenScrollRow(),
         }).then((result) => {
-          if (currentIdRef.current === requestId && result.pinToBottom) scrollToBottom();
+          if (currentIdRef.current !== requestId) return;
+          const scrollRow = getThreadOpenScrollRow();
+          if (
+            shouldPinAfterAsyncReconcile({
+              reconcileWantsPin: result.pinToBottom,
+              liveNearBottom: scrollRow?.atBottom === true,
+              openScrollAtBottom: scrollRow?.atBottom,
+            })
+          ) {
+            scrollToBottom();
+          }
         });
       };
 
@@ -369,7 +380,17 @@ export function useGameChatActions(params: UseGameChatActionsParams) {
             setMessages,
             scrollRow: getThreadOpenScrollRow(),
           });
-          if (currentIdRef.current === requestId && result.pinToBottom) scrollToBottom();
+          if (currentIdRef.current !== requestId) return;
+          const scrollRow = getThreadOpenScrollRow();
+          if (
+            shouldPinAfterAsyncReconcile({
+              reconcileWantsPin: result.pinToBottom,
+              liveNearBottom: scrollRow?.atBottom === true,
+              openScrollAtBottom: scrollRow?.atBottom,
+            })
+          ) {
+            scrollToBottom();
+          }
         }
         if (user?.id) {
           await applyQueuedMessagesToState({

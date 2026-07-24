@@ -21,6 +21,20 @@ export function applyPrependScrollCompensation(
   return scrollDifference;
 }
 
+/**
+ * Follow-up after virtualizer/estimates settle: grow scrollTop by height delta only,
+ * preserving whatever scrollTop is now (avoids double-apply from a stale snapshot top).
+ */
+export function applyPrependScrollHeightGrowth(
+  container: HTMLElement,
+  previousScrollHeight: number
+): number {
+  const delta = container.scrollHeight - previousScrollHeight;
+  if (delta <= 0) return 0;
+  container.scrollTop = Math.max(0, container.scrollTop + delta);
+  return delta;
+}
+
 export function detectPrependReconcile(params: {
   previousMessageCount: number;
   previousFirstId: string | undefined;

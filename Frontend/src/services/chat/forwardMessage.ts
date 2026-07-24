@@ -341,6 +341,7 @@ export type ForwardEnqueueResult = {
 };
 
 export type ForwardSendHooks = {
+  onSuccess?: () => void;
   onFailed?: () => void;
 };
 
@@ -384,7 +385,7 @@ export async function forwardMessageToContext(
     return { ok: false };
   }
 
-  // Fire-and-forget: outbox owns retries; surface hard failure to caller.
+  // Fire-and-forget: outbox owns retries; surface outcome to caller.
   sendWithTimeout(
     {
       tempId,
@@ -396,7 +397,9 @@ export async function forwardMessageToContext(
       clientMutationId,
     },
     {
-      onSuccess: () => undefined,
+      onSuccess: () => {
+        hooks?.onSuccess?.();
+      },
       onFailed: () => {
         hooks?.onFailed?.();
       },

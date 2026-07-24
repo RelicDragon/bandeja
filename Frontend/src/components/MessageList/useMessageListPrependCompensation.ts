@@ -4,6 +4,7 @@ import { decideNewMessagesScrollApply } from '@/services/chat/threadScrollPolicy
 import { pinMessageListContainerToBottom } from '@/utils/messageListScroll';
 import {
   applyPrependScrollCompensation,
+  applyPrependScrollHeightGrowth,
   capturePrependScrollSnapshot,
   detectPrependReconcile,
   type PrependScrollSnapshot,
@@ -89,6 +90,7 @@ export function useMessageListPrependCompensation({
       previousFirstMessageIdRef.current = currentFirstId;
       if (!isLoadingMore) {
         prependSnapshotRef.current = capturePrependScrollSnapshot(container);
+        wasAtBottomBeforeGrowRef.current = isNearBottomRef.current;
       }
       return;
     }
@@ -119,6 +121,14 @@ export function useMessageListPrependCompensation({
         applyPrependScrollCompensation(container, snapshot);
         prependCompensationEpochRef.current += 1;
         prependSnapshotRef.current = capturePrependScrollSnapshot(container);
+        const heightAfter = container.scrollHeight;
+        // Virtualizer/estimates may settle one frame later — grow from *current* scrollTop.
+        requestAnimationFrame(() => {
+          const el = containerRef.current;
+          if (!el) return;
+          applyPrependScrollHeightGrowth(el, heightAfter);
+          prependSnapshotRef.current = capturePrependScrollSnapshot(el);
+        });
       }
     } else if (
       scrollDecision.kind === 'append-pin-if-at-bottom' &&

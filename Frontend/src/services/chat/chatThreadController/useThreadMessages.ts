@@ -58,6 +58,7 @@ import {
   mergeOpenPaintWithLivePending,
 } from '@/services/chat/chatOpenSnapshot';
 import { decideReconcilePinApply } from '@/services/chat/threadScrollPolicy';
+import { shouldPinAfterAsyncReconcile } from '@/components/MessageList/messageListOpenBottomIntent';
 import { shouldDenyArchivedGameChatRouteOnMessageError } from '@/pages/GameChat/gameChatRouteState';
 const PAGE_SIZE = 50;
 
@@ -116,6 +117,7 @@ export function useThreadMessages({
   const openPaintCommittedRef = useRef(false);
   const forceFreshOpenRef = useRef(false);
   const threadOpenSettlingRef = useRef(true);
+  const liveNearBottomRef = useRef(true);
   const [isThreadOpenSettling, setIsThreadOpenSettling] = useState(true);
   const [initialScroll, setInitialScroll] = useState<ThreadInitialScroll | undefined>(undefined);
   const [openPaintGeneration, setOpenPaintGeneration] = useState(0);
@@ -125,6 +127,7 @@ export function useThreadMessages({
   const beginThreadOpenSettling = useCallback(() => {
     beginThreadOpenSettlingModule();
     threadOpenSettlingRef.current = true;
+    liveNearBottomRef.current = true;
     setIsThreadOpenSettling(true);
   }, []);
 
@@ -154,17 +157,32 @@ export function useThreadMessages({
     ) => {
       const scrollPlan = scrollOverride ?? plan;
       const paintMessages = mergeOpenPaintWithLivePending(messagesRef.current, plan.messages);
+      const sameThreadAlreadyPainted =
+        openPaintCommittedRef.current && openScrollThreadKeyRef.current === threadKey;
       const duplicatePaint =
-        openPaintCommittedRef.current &&
-        openScrollThreadKeyRef.current === threadKey &&
-        chatOpenMessageIdsEqual(messagesRef.current, paintMessages);
-      if (duplicatePaint) {
+        sameThreadAlreadyPainted && chatOpenMessageIdsEqual(messagesRef.current, paintMessages);
+
+      // Same-thread enrich (network hydrate after local paint): update rows only.
+      // Re-applying open scroll resurrects at-bottom and yanks users reading history.
+      if (sameThreadAlreadyPainted) {
         commitChatOpenMessages(messagesRef, setMessages, paintMessages, source);
         setHasMoreMessages(chatOpenLikelyHasOlderMessages(paintMessages.length, PAGE_SIZE));
         setIsLoadingMessages(false);
         setIsInitialLoad(false);
+        if (!duplicatePaint && id) {
+          void applyThreadEvent({ kind: 'syncTailsFromHeads', contextType, contextId: id });
+          void applyThreadL1Put({
+            contextType,
+            contextId: id,
+            gameChatType: contextType === 'GAME' ? effectiveChatType : undefined,
+            readRows: () => messagesRef.current,
+            verify: () => currentIdRef.current === id,
+            immediate: true,
+          });
+        }
         return;
       }
+
       applyOpenScrollFromPlan(scrollPlan, threadKey);
       commitChatOpenMessages(messagesRef, setMessages, paintMessages, source);
       openPaintCommittedRef.current = true;
@@ -393,6 +411,36 @@ export function useThreadMessages({
     }
   }, [messageListRef]);
 
+  /** Keep reconcile/socket pin policy in sync with live viewport (open-time scroll row goes stale). */
+  const syncLiveNearBottom = useCallback((near: boolean) => {
+    liveNearBottomRef.current = near;
+    // Leaving the tail is authoritative even during open settling (user reading history).
+    // Claiming the tail during settling is ignored — height growth flickers near-bottom.
+    if (near && threadOpenSettlingRef.current) return;
+    if (near) {
+      openScrollRef.current = { atBottom: true, anchorMessageId: null };
+      return;
+    }
+    const prev = openScrollRef.current;
+    openScrollRef.current = {
+      atBottom: false,
+      anchorMessageId: prev?.anchorMessageId ?? null,
+    };
+  }, []);
+
+  const pinToBottomIfLiveAtTail = useCallback(() => {
+    if (
+      !shouldPinAfterAsyncReconcile({
+        reconcileWantsPin: true,
+        liveNearBottom: liveNearBottomRef.current,
+        openScrollAtBottom: openScrollRef.current?.atBottom,
+      })
+    ) {
+      return;
+    }
+    scrollToBottom();
+  }, [scrollToBottom]);
+
   const pinAfterSocketMergeIfAllowed = useCallback(() => {
     if (scrollTargetActiveRef.current) return;
     if (threadOpenSettlingRef.current) return;
@@ -402,8 +450,8 @@ export function useThreadMessages({
       reconcileDelta: 'append',
     });
     if (decision.kind !== 'pin-bottom') return;
-    scrollToBottom();
-  }, [scrollToBottom]);
+    pinToBottomIfLiveAtTail();
+  }, [pinToBottomIfLiveAtTail]);
 
   useEffect(() => {
     if (!id || snapshotRevision <= lastConsumedSnapshotRevisionRef.current) return;
@@ -426,7 +474,15 @@ export function useThreadMessages({
       scrollRow: openScrollRef.current,
     }).then((result) => {
       if (currentIdRef.current !== id) return;
-      if (result.pinToBottom) scrollToBottom();
+      if (
+        shouldPinAfterAsyncReconcile({
+          reconcileWantsPin: result.pinToBottom,
+          liveNearBottom: liveNearBottomRef.current,
+          openScrollAtBottom: openScrollRef.current?.atBottom,
+        })
+      ) {
+        scrollToBottom();
+      }
     });
   }, [
     snapshotRevision,
@@ -455,7 +511,15 @@ export function useThreadMessages({
       });
       if (currentIdRef.current !== requestId) return;
       endThreadOpenSettling();
-      if (result.pinToBottom) scrollToBottom();
+      if (
+        shouldPinAfterAsyncReconcile({
+          reconcileWantsPin: result.pinToBottom,
+          liveNearBottom: liveNearBottomRef.current,
+          openScrollAtBottom: openScrollRef.current?.atBottom,
+        })
+      ) {
+        scrollToBottom();
+      }
     },
     [contextType, currentIdRef, endThreadOpenSettling, scrollToBottom]
   );
@@ -830,6 +894,7 @@ export function useThreadMessages({
     hasLoadedRef,
     isLoadingRef,
     scrollToBottom,
+    syncLiveNearBottom,
     beginScrollTargetSession,
     endScrollTargetSession,
     loadMessages,

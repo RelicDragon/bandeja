@@ -8,6 +8,8 @@ export type MessageListLayoutMotionInput = {
   reduceMotion: boolean;
   threadLayoutSettling: boolean;
   isNearBottom: boolean;
+  /** Load-more / prepend windows — never animate (fights scroll compensation). */
+  suppressMotion?: boolean;
 };
 
 export type MessageListLayoutMotion = {
@@ -24,10 +26,10 @@ export type MessageListLayoutMotion = {
 export function resolveMessageListLayoutMotion(
   input: MessageListLayoutMotionInput
 ): MessageListLayoutMotion {
-  const { reduceMotion, threadLayoutSettling, isNearBottom } = input;
+  const { reduceMotion, threadLayoutSettling, isNearBottom, suppressMotion = false } = input;
   const inTailMotionZone = threadLayoutSettling || isNearBottom;
 
-  if (reduceMotion || !inTailMotionZone) {
+  if (reduceMotion || suppressMotion || !inTailMotionZone) {
     return { heightTransition: INSTANT_TRANSITION, rowLayoutTransitionEnabled: false };
   }
 

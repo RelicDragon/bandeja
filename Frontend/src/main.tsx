@@ -11,11 +11,13 @@ import { installMarkReadFlushFailureResync } from './services/chat/chatMarkReadR
 import { installUnreadThreadIndexSync } from './services/chat/unreadThreadIndexSync';
 import { installUnreadNativeBadgeSync } from './services/chat/unreadNativeBadgeSync';
 import { installChunkLoadRecovery } from './utils/chunkLoadRecovery';
+import { applyDevFavicon } from './utils/devFavicon';
 
 const CACHE_VERSION = 'v1';
 
 if (import.meta.env.DEV) {
   document.title = `[DEV] ${document.title}`;
+  applyDevFavicon();
 }
 
 installChunkLoadRecovery();

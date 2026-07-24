@@ -6,6 +6,7 @@ import type { ChatContextType, ChatMessage } from '@/api/chat';
 import { forwardMessageToContext } from '@/services/chat/forwardMessage';
 import {
   destinationsFromChatItems,
+  forwardDestinationKey,
   loadLocalForwardChatItems,
   loadNetworkForwardChatItems,
   mergeForwardDestinations,
@@ -48,7 +49,9 @@ export function ForwardDestinationModal({
     if (!isOpen || !userId) return;
     let cancelled = false;
     setQuery('');
+    setSendingTo(null);
     setLoading(true);
+    setDestinations([]);
 
     const exclude = { contextType: currentContextType, contextId: currentContextId };
     const blocked = blockedUserIds ?? [];
@@ -57,20 +60,20 @@ export function ForwardDestinationModal({
       try {
         const localItems = await loadLocalForwardChatItems();
         if (cancelled) return;
-        const localDest = destinationsFromChatItems(localItems, userId, t, exclude);
+        const localDest = destinationsFromChatItems(localItems, userId, t, exclude, blocked);
         setDestinations(localDest);
-        setLoading(false);
 
         try {
           const networkItems = await loadNetworkForwardChatItems(userId, blocked);
           if (cancelled) return;
-          const networkDest = destinationsFromChatItems(networkItems, userId, t, exclude);
-          setDestinations((prev) => mergeForwardDestinations(prev, networkDest));
+          const networkDest = destinationsFromChatItems(networkItems, userId, t, exclude, blocked);
+          setDestinations(mergeForwardDestinations(localDest, networkDest, { networkAuthoritative: true }));
         } catch (err) {
           console.error('Forward destinations network load failed:', err);
         }
       } catch (err) {
         console.error('Forward destinations local load failed:', err);
+      } finally {
         if (!cancelled) setLoading(false);
       }
     })();
@@ -90,25 +93,30 @@ export function ForwardDestinationModal({
 
   const handlePick = async (dest: ForwardDestination) => {
     if (!message || sendingTo) return;
-    setSendingTo(dest.contextId);
+    const busyKey = forwardDestinationKey(dest);
+    setSendingTo(busyKey);
+    const toastId = toast.loading(t('chat.forwardSending', { defaultValue: 'Sending…' }));
     try {
       const result = await forwardMessageToContext(message, dest.contextType, dest.contextId, {
+        onSuccess: () => {
+          toast.success(t('chat.forwardSent', { defaultValue: 'Forwarded' }), { id: toastId });
+        },
         onFailed: () => {
-          toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }));
+          toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }), { id: toastId });
         },
       });
       if (result.ok) {
-        toast.success(t('chat.forwardSent', { defaultValue: 'Forwarded' }));
         onClose();
         navigateToChatContext(dest.contextType, dest.contextId, {
           isChannel: dest.kind === 'channel',
           forceReload: true,
+          replace: false,
         });
       } else {
-        toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }));
+        toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }), { id: toastId });
       }
     } catch {
-      toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }));
+      toast.error(t('chat.forwardFailed', { defaultValue: 'Could not forward' }), { id: toastId });
     } finally {
       setSendingTo(null);
     }
@@ -135,21 +143,23 @@ export function ForwardDestinationModal({
         </div>
 
         <div className="max-h-[50vh] overflow-y-auto px-2 pb-3">
-          {loading ? (
+          {loading && destinations.length === 0 ? (
             <div className="px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
               {t('common.loading', { defaultValue: 'Loading…' })}
             </div>
           ) : filtered.length === 0 ? (
             <div className="px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
-              {query.trim()
-                ? t('chat.forwardNoMatches', { defaultValue: 'No matches' })
-                : t('chat.forwardNoChats', { defaultValue: 'No chats to forward to' })}
+              {loading
+                ? t('common.loading', { defaultValue: 'Loading…' })
+                : query.trim()
+                  ? t('chat.forwardNoMatches', { defaultValue: 'No matches' })
+                  : t('chat.forwardNoChats', { defaultValue: 'No chats to forward to' })}
             </div>
           ) : (
             <ul className="space-y-0.5">
               {filtered.map((dest) => {
-                const key = `${dest.contextType}:${dest.contextId}`;
-                const busy = sendingTo === dest.contextId;
+                const key = forwardDestinationKey(dest);
+                const busy = sendingTo === key;
                 return (
                   <li key={key}>
                     <button

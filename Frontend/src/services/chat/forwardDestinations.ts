@@ -29,6 +29,10 @@ function lastPreviewText(lm: unknown, t: TFunction): string {
   return parsed && parsed !== '[Media]' ? parsed : '';
 }
 
+export function forwardDestinationKey(d: Pick<ForwardDestination, 'contextType' | 'contextId'>): string {
+  return `${d.contextType}:${d.contextId}`;
+}
+
 export function canWriteToForwardChannel(channel: GroupChannel, userId: string): boolean {
   if (channel.isChannel) {
     if (channel.isOwner === true) return true;
@@ -36,6 +40,27 @@ export function canWriteToForwardChannel(channel: GroupChannel, userId: string):
   }
   if (channel.isParticipant === false) return false;
   return true;
+}
+
+function otherUserIdFromUserChat(chat: UserChat, userId: string): string | null {
+  if (chat.user1Id === userId) return chat.user2Id ?? null;
+  if (chat.user2Id === userId) return chat.user1Id ?? null;
+  return null;
+}
+
+/** Drop DMs with blocked peers (local cache does not apply network blocked filter). */
+export function filterBlockedForwardDestinations(
+  dests: ForwardDestination[],
+  userId: string,
+  blockedUserIds: readonly string[]
+): ForwardDestination[] {
+  if (blockedUserIds.length === 0) return dests;
+  const blocked = new Set(blockedUserIds);
+  return dests.filter((d) => {
+    if (d.kind !== 'user' || d.item.type !== 'user') return true;
+    const other = otherUserIdFromUserChat(d.item.data, userId);
+    return !other || !blocked.has(other);
+  });
 }
 
 export function chatItemToForwardDestination(
@@ -54,6 +79,7 @@ export function chatItemToForwardDestination(
     };
   }
   if (item.type === 'group') {
+    if (!canWriteToForwardChannel(item.data, userId)) return null;
     return {
       contextType: 'GROUP',
       contextId: item.data.id,
@@ -92,7 +118,8 @@ export function destinationsFromChatItems(
   items: ChatItem[],
   userId: string,
   t: TFunction,
-  exclude?: { contextType: ChatContextType | null; contextId: string | null }
+  exclude?: { contextType: ChatContextType | null; contextId: string | null },
+  blockedUserIds: readonly string[] = []
 ): ForwardDestination[] {
   const seen = new Set<string>();
   const out: ForwardDestination[] = [];
@@ -102,27 +129,32 @@ export function destinationsFromChatItems(
     if (exclude?.contextType && d.contextType === exclude.contextType && d.contextId === exclude.contextId) {
       continue;
     }
-    const key = `${d.contextType}:${d.contextId}`;
+    const key = forwardDestinationKey(d);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(d);
   }
-  return out;
+  return filterBlockedForwardDestinations(out, userId, blockedUserIds);
 }
 
-function destKey(d: ForwardDestination): string {
-  return `${d.contextType}:${d.contextId}`;
-}
-
-/** Local order first; network fills gaps and refreshes `item` (avatars) on matches. */
+/**
+ * Local order first; network refreshes matches and appends gaps.
+ * When `networkAuthoritative`, drop local-only DMs (blocked / left chats stale in IDB).
+ */
 export function mergeForwardDestinations(
   base: ForwardDestination[],
-  extra: ForwardDestination[]
+  extra: ForwardDestination[],
+  opts?: { networkAuthoritative?: boolean }
 ): ForwardDestination[] {
-  const byKey = new Map(base.map((d) => [destKey(d), d]));
-  const order = base.map(destKey);
+  const networkKeys = new Set(extra.map(forwardDestinationKey));
+  const local = opts?.networkAuthoritative
+    ? base.filter((d) => d.kind !== 'user' || networkKeys.has(forwardDestinationKey(d)))
+    : base;
+
+  const byKey = new Map(local.map((d) => [forwardDestinationKey(d), d]));
+  const order = local.map(forwardDestinationKey);
   for (const d of extra) {
-    const key = destKey(d);
+    const key = forwardDestinationKey(d);
     const prev = byKey.get(key);
     if (prev) {
       byKey.set(key, {

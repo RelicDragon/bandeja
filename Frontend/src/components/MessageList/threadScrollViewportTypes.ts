@@ -20,7 +20,10 @@ import type { MessageListSettlingRefs } from './messageListSettlingContext';
  * - Open with `{ atBottom: true }` → pin after layout (open restore).
  * - Settling + open-at-bottom → ResizeObserver pin loop (`decideSettlingPinApply`).
  * - Append while at bottom (not settling) → instant pin (`decideNewMessagesScrollApply`).
- * - Initial load complete while still near bottom → one smooth pin.
+ * - Initial load complete while still near bottom → one smooth pin (never force-align mid-history).
+ * - User scroll away from tail clears open-at-bottom intent (except during settling / programmatic pins).
+ * - Same-thread network hydrate must not re-apply open-at-bottom or resurrect pin intent.
+ * - Async reconcile/socket pin only if the live viewport is still at the tail.
  *
  * ## When to compensate prepend
  * - Load-more completion, prepend reconcile, or older-page merge (`prepend-compensate`).

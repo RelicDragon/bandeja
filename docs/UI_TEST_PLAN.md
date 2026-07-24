@@ -960,12 +960,13 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-25 | Unpin message | Unpin | Bar updates |
 | CH-26 | Forward message | Long-press → Forward → pick chat | Opens destination immediately; message appears with “Forwarded from” header; body is a live link to the original |
 | CH-26a | Forward attribution | Tap “Forwarded from” title on a forwarded message (light + dark theme) | Label readable on chat background; opens the source chat (Back returns to dest); anchors to original when possible |
-| CH-26b | Forward media (no re-upload) | Forward image/GIF/video/document/sticker/voice | Media plays in target; request sends only forwardedFromMessageId (no CDN upload) |
+| CH-26b | Forward media (no re-upload) | Forward image/GIF/video/document/sticker/voice | Media plays in target; request sends only forwardedFromMessageId (no CDN upload); provider-hosted Giphy/Tenor/Klipy URLs are not forwardable (app CDN only) |
 | CH-26c | Forward nested | Forward an already-forwarded message | Header still shows original author/source chat; content matches selected bubble |
-| CH-26d | Forward offline/retry | Forward while briefly offline | Opens destination; failed send shows toast + failed outbox in dest |
+| CH-26d | Forward offline/retry | Forward while briefly offline | Opens destination; loading toast → fail toast + failed outbox in dest (no premature “Forwarded”) |
 | CH-26e | Forward from private game chat | Forward PRIVATE game message → tap attribution | Opens that game’s PRIVATE thread |
 | CH-26f | Forward dest filter | Open Forward picker as channel subscriber | Subscriber-only channels and archived games are not listed |
-| CH-26l | Forward dest local+network | Open Forward from a thread before Chats tab hydrated; also after a new DM/group/game exists only on server | Picker shows local cache immediately, then fills with full DMs/groups/games/channels/market from API (current chat excluded); row avatars match ChatList (player/group/channel/game entity) |
+| CH-26l | Forward dest local+network | Open Forward from a thread before Chats tab hydrated; also after a new DM/group/game exists only on server | Picker shows local cache then settles with API list (no empty flash as final); blocked DMs excluded; current chat excluded; avatars match ChatList |
+| CH-26m | Forward back stack | Forward to another chat → system/UI Back | Returns to source chat (nav push, not replace) |
 | CH-26g | Forward poll (shared votes) | Forward a poll → open dest chat → vote; also re-forward that poll; vote from PRIVATE game thread with PUBLIC forward | Same poll/results as original; vote from either chat updates both; nested forward works; GAME chatType rooms all update live |
 | CH-26h | Forward voice | Forward a voice message | Plays in dest with waveform/duration; no re-upload; transcription appears on host and linked forwards |
 | CH-26i | Forward edit blocked | Own forwarded TEXT → Edit / ArrowUp | No Edit action; API rejects content update |
@@ -1062,6 +1063,11 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-80 | Bulk mark-read updates all own ticks | Two-user DM or game chat: A sends two messages with thread open; B opens chat (bulk mark-read) | Both of A's messages show read ticks and Details read state without A refreshing |
 | CH-40 | Scroll to replied | Tap reply preview | Scrolls to original |
 | CH-41 | Load older messages | Scroll up | Pagination loads history |
+| CH-41a | Load older keeps scroll anchor | Long thread → scroll up until older page loads (local or network) while mid-history; also open thread then immediately scroll up while network hydrate finishes | Viewport stays on the same messages; does not jump to latest/bottom; FAB may appear |
+| CH-41b | Tail pin survives media growth | At bottom of thread with image/video messages → wait for media height to settle | Stays at latest; does not falsely show FAB or lose append-pin |
+| CH-41c | Thread switch after scroll-up | In chat A scroll into history → open chat B (expected at bottom) | Chat B lands at latest; open settling does not leave B stuck mid-list |
+| CH-41d | Chat-type switch late reconcile | Game chat → switch PUBLIC/PRIVATE → scroll up quickly while switch finishes | Stays in history; late reconcile does not yank to bottom after leave-tail |
+| CH-41e | Scroll up during open settling | Open long thread → immediately scroll into history while open settling/hydrate still running | Settling pins stop; viewport stays in history (no fight back to bottom) |
 | CH-42 | Jump to pinned | Tap pinned bar | Scrolls to message |
 | CH-61 | Message grouping | Send 3+ messages within 4 min from one sender | Tight spacing; avatar bottom-aligned on last only; sender name on first only; asymmetric bubble corners (small radius between grouped bubbles) |
 | CH-62 | Group break | Same sender after >4 min gap or different sender/day | New group: full corners, avatar + name shown again |

@@ -19,6 +19,7 @@ type UseMessageListScrollTargetParams = {
   virtualizer: Virtualizer<HTMLDivElement, Element>;
   openScrollAtBottomRef: RefObject<boolean>;
   wasAtBottomBeforeGrowRef: RefObject<boolean>;
+  userReleasedBottomIntentRef: RefObject<boolean>;
   virtualMeasureKey: string;
   reduceMotion: boolean;
   onScrollTargetReached?: (messageId: string) => void;
@@ -31,6 +32,7 @@ export function useMessageListScrollTarget({
   virtualizer,
   openScrollAtBottomRef,
   wasAtBottomBeforeGrowRef,
+  userReleasedBottomIntentRef,
   virtualMeasureKey,
   reduceMotion,
   onScrollTargetReached,
@@ -134,7 +136,13 @@ export function useMessageListScrollTarget({
     remeasureAttemptsRef.current = 0;
     openScrollAtBottomRef.current = false;
     wasAtBottomBeforeGrowRef.current = false;
-  }, [scrollTargetMessageId, openScrollAtBottomRef, wasAtBottomBeforeGrowRef]);
+    userReleasedBottomIntentRef.current = true;
+  }, [
+    scrollTargetMessageId,
+    openScrollAtBottomRef,
+    wasAtBottomBeforeGrowRef,
+    userReleasedBottomIntentRef,
+  ]);
 
   useLayoutEffect(() => {
     if (!scrollTargetMessageId || !targetPresent) return;

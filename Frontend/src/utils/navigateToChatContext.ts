@@ -36,10 +36,16 @@ export function navigateToForwardedFromChat(info: ForwardedFromInfo): void {
 export function navigateToChatContext(
   contextType: ForwardedFromInfo['chatContextType'],
   contextId: string,
-  opts?: { isChannel?: boolean; forceReload?: boolean; chatType?: ForwardedFromInfo['chatType'] }
+  opts?: {
+    isChannel?: boolean;
+    forceReload?: boolean;
+    chatType?: ForwardedFromInfo['chatType'];
+    replace?: boolean;
+  }
 ): void {
   const navOpts: ChatNavigateOptions = {
     forceReload: opts?.forceReload !== false,
+    replace: opts?.replace,
     ...(opts?.chatType ? { initialChatType: opts.chatType } : {}),
   };
   if (contextType === 'USER') {

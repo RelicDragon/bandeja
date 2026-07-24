@@ -53,4 +53,15 @@ describe('resolveMessageListLayoutMotion', () => {
     expect(result.heightTransition).toEqual({ duration: 0 });
     expect(result.rowLayoutTransitionEnabled).toBe(true);
   });
+
+  it('suppresses all layout motion during load-more / prepend windows', () => {
+    const result = resolveMessageListLayoutMotion({
+      reduceMotion: false,
+      threadLayoutSettling: false,
+      isNearBottom: true,
+      suppressMotion: true,
+    });
+    expect(result.heightTransition).toEqual({ duration: 0 });
+    expect(result.rowLayoutTransitionEnabled).toBe(false);
+  });
 });
