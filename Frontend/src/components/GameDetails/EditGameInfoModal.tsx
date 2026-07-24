@@ -895,7 +895,12 @@ export const EditGameInfoModal = ({
             disabled={isSaving}
           />
         </div>
-        <div ref={contentScrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div
+          ref={contentScrollRef}
+          className={`min-h-0 flex-1 px-4 py-3 ${
+            activeTab === 'general' ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'
+          }`}
+        >
           {activeTab === 'general' && (
             <GeneralTab
               game={game}

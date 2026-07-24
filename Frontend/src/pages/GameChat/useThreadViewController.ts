@@ -41,6 +41,7 @@ export function useThreadViewController({
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const messageListRef = useRef<MessageListHandle>(null);
   const previousIdRef = useRef<string | undefined>(id);
+  const previousContextTypeRef = useRef(contextType);
   const currentIdRef = useRef<string | undefined>(id);
   currentIdRef.current = id;
 
@@ -237,9 +238,10 @@ export function useThreadViewController({
   }, [lastGameCancelled, id, contextType, setIsGameChatArchived, setArchivedGameMeta, setGame, clearLastGameCancelled]);
 
   useLayoutEffect(() => {
-    if (id === previousIdRef.current) return;
+    if (id === previousIdRef.current && contextType === previousContextTypeRef.current) return;
     const prevId = previousIdRef.current;
-    if (prevId) cancelAllForContext(contextType, prevId);
+    const prevContext = previousContextTypeRef.current;
+    if (prevId) cancelAllForContext(prevContext, prevId);
     setGame(null);
     setBug(null);
     setUserChat(null);
@@ -257,6 +259,7 @@ export function useThreadViewController({
     setEditingMessage(null);
     setCurrentChatType(initialChatType || 'PUBLIC');
     previousIdRef.current = id;
+    previousContextTypeRef.current = contextType;
   }, [
     id,
     contextType,

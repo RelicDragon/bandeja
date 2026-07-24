@@ -11,7 +11,7 @@ export function resolveOutgoingChatMessageType(params: {
   stickerId?: string | null;
   mediaUrls: string[];
 }): MessageType {
-  if (params.poll) return MessageType.POLL;
+  if (params.poll || params.requestedMessageType === MessageType.POLL) return MessageType.POLL;
   if (params.requestedMessageType === MessageType.STICKER || params.stickerId) {
     return MessageType.STICKER;
   }

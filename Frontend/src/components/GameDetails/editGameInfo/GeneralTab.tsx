@@ -34,8 +34,8 @@ export const GeneralTab = ({
   const currentAvatar = state.removeAvatar ? undefined : (avatarPreviewUrl ?? game.avatar ?? undefined);
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-5">
+      <div className="flex shrink-0 items-center gap-4">
         <AvatarUpload
           currentAvatar={currentAvatar ?? undefined}
           isGameAvatar={true}
@@ -58,14 +58,13 @@ export const GeneralTab = ({
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1.5">{descriptionLabel}</label>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <label className="mb-1.5 block shrink-0 text-xs font-medium text-gray-600 dark:text-gray-400">{descriptionLabel}</label>
         <textarea
           value={state.description}
           onChange={(e) => onChange({ description: e.target.value })}
           placeholder={descriptionPlaceholder}
-          className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none resize-none"
-          rows={4}
+          className="min-h-0 w-full flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
         />
       </div>
     </div>

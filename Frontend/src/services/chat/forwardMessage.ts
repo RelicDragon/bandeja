@@ -2,6 +2,7 @@ import {
   type ChatContextType,
   type ChatMessage,
   type ForwardedFromInfo,
+  type MessageType,
   type OptimisticMessagePayload,
 } from '@/api/chat';
 import { messageQueueStorage } from '@/services/chatMessageQueueStorage';
@@ -9,22 +10,104 @@ import { sendWithTimeout } from '@/services/chatSendService';
 import { chatLocalDb } from '@/services/chat/chatLocalDb';
 import type { ChatOutboxRow } from '@/services/chat/chatLocalDb';
 import { getUserDisplayName } from '@/utils/messageMenuUtils';
+import { isGifProviderHostedUrl } from '@/utils/gifProviderUrl';
 
 /** Message types that can be forwarded (Telegram-style link to original). */
-export const FORWARDABLE_MESSAGE_TYPES = new Set([
+export const FORWARDABLE_MESSAGE_TYPES = new Set<MessageType>([
   'TEXT',
   'IMAGE',
   'STICKER',
   'VIDEO',
   'DOCUMENT',
+  'VOICE',
+  'POLL',
 ]);
 
-/** Can this message be forwarded? Excludes system, voice, and poll messages. */
+function isHostedHttpUrl(url: string): boolean {
+  const u = url.trim();
+  if (!u) return false;
+  if (u.startsWith('blob:') || u.startsWith('data:') || u.startsWith('file:')) return false;
+  return /^https?:\/\//i.test(u);
+}
+
+function allHosted(urls: string[]): boolean {
+  return urls.length > 0 && urls.every(isHostedHttpUrl);
+}
+
+/** Can this message be forwarded? Excludes system and in-flight/outbox rows. */
 export function isForwardableMessage(
-  message: Pick<ChatMessage, 'messageType' | 'senderId'>
+  message: Pick<
+    ChatMessage,
+    | 'messageType'
+    | 'senderId'
+    | 'id'
+    | 'mediaUrls'
+    | 'thumbnailUrls'
+    | 'stickerId'
+    | 'poll'
+    | 'videoDurationMs'
+    | 'documentFileName'
+    | 'audioDurationMs'
+    | 'waveformData'
+  > & {
+    _status?: 'SENDING' | 'FAILED';
+    _optimisticId?: string;
+  }
 ): boolean {
   if (!message.senderId) return false;
-  return FORWARDABLE_MESSAGE_TYPES.has(message.messageType ?? 'TEXT');
+  if (message._status === 'SENDING' || message._status === 'FAILED') return false;
+  if (message._optimisticId) return false;
+  const id = message.id ?? '';
+  // Temp / outbox ids are never on the server — forwarding them always 404s.
+  if (id.startsWith('opt-') || id.startsWith('fwd-')) return false;
+
+  const type = message.messageType ?? 'TEXT';
+  if (!FORWARDABLE_MESSAGE_TYPES.has(type)) return false;
+
+  if (type === 'STICKER') {
+    return !!message.stickerId?.trim();
+  }
+
+  if (type === 'TEXT') return true;
+
+  if (type === 'POLL') {
+    return !!message.poll?.id;
+  }
+
+  const media = Array.isArray(message.mediaUrls) ? message.mediaUrls.filter(Boolean) : [];
+  const thumbs = Array.isArray(message.thumbnailUrls)
+    ? message.thumbnailUrls.filter(Boolean)
+    : [];
+
+  if (type === 'IMAGE') {
+    if (!allHosted(media)) return false;
+    if ([...media, ...thumbs].some((u) => isGifProviderHostedUrl(u))) return false;
+    return true;
+  }
+
+  if (type === 'VIDEO') {
+    if (media.length !== 1 || !allHosted(media)) return false;
+    if (thumbs.length !== 1 || !allHosted(thumbs)) return false;
+    const dur = message.videoDurationMs;
+    return dur != null && Number.isFinite(dur) && dur > 0;
+  }
+
+  if (type === 'DOCUMENT') {
+    if (media.length !== 1 || !allHosted(media)) return false;
+    const name = message.documentFileName?.trim();
+    return !!name && name.length <= 255;
+  }
+
+  if (type === 'VOICE') {
+    if (media.length !== 1 || !allHosted(media)) return false;
+    const dur = message.audioDurationMs;
+    if (dur == null || !Number.isFinite(dur) || dur < 500) return false;
+    const wf = message.waveformData;
+    if (!Array.isArray(wf) || wf.length < 1 || wf.length > 80) return false;
+    return wf.every((x) => typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= 1);
+  }
+
+  return false;
 }
 
 export function parseForwardedFrom(raw: unknown): ForwardedFromInfo | null {
@@ -200,6 +283,38 @@ export async function buildForwardPayload(
         documentSize: message.documentSize ?? undefined,
       },
       mediaUrls,
+      thumbnailUrls: [],
+    };
+  }
+
+  if (message.messageType === 'VOICE') {
+    return {
+      payload: {
+        ...base,
+        content: '',
+        mediaUrls,
+        thumbnailUrls: [],
+        messageType: 'VOICE',
+        audioDurationMs: message.audioDurationMs ?? undefined,
+        waveformData: [...(message.waveformData ?? [])],
+      },
+      mediaUrls,
+      thumbnailUrls: [],
+    };
+  }
+
+  if (message.messageType === 'POLL' || message.poll) {
+    return {
+      payload: {
+        ...base,
+        content: message.poll?.question ?? message.content ?? '',
+        mediaUrls: [],
+        thumbnailUrls: [],
+        messageType: 'POLL',
+        // Local-only: paints the shared poll until server hydrates from the link.
+        poll: message.poll ?? undefined,
+      },
+      mediaUrls: [],
       thumbnailUrls: [],
     };
   }

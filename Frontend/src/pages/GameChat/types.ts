@@ -19,6 +19,8 @@ export type ChatNavigateOptions = {
   initialChatType?: string;
   /** Keep Market subtab when opening a marketplace channel chat (push/Telegram). */
   filter?: 'market';
+  /** Default true. Forward attribution uses false so Back returns to the dest chat. */
+  replace?: boolean;
 };
 
 export interface GameChatProps {

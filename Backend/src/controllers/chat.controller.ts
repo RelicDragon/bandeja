@@ -268,47 +268,71 @@ export const votePoll = asyncHandler(async (req: AuthRequest, res: Response) => 
     throw new ApiError(400, 'Option IDs must be an array');
   }
 
-  const { poll: updatedPoll, syncSeq } = await PollService.vote(pollId, userId, optionIds);
+  const {
+    poll: updatedPoll,
+    hostMessageId,
+    fanoutTargets,
+    uniqueCtxTargets,
+  } = await PollService.vote(pollId, userId, optionIds);
   if (!updatedPoll) {
     throw new ApiError(500, 'Poll vote failed');
   }
 
-  const message = await prisma.chatMessage.findUnique({
-    where: { id: updatedPoll.messageId },
-    select: { chatContextType: true, contextId: true }
-  });
+  const sanitized = updatedPoll.isAnonymous
+    ? {
+        ...updatedPoll,
+        options: updatedPoll.options.map((o) => ({
+          ...o,
+          votes: o.votes.map((v) => ({ ...v, user: undefined })),
+        })),
+        votes: updatedPoll.votes.map((v) => ({ ...v, user: undefined })),
+      }
+    : updatedPoll;
 
-  if (message) {
-    const sanitized = updatedPoll.isAnonymous
-      ? { ...updatedPoll, options: updatedPoll.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll.votes.map(v => ({ ...v, user: undefined })) }
-      : updatedPoll;
+  const relatedMessageIds = fanoutTargets.map((t) => t.messageId);
+
+  for (const target of uniqueCtxTargets) {
     const notifyUserIdsPoll =
-      message.chatContextType === ChatContextType.USER
-        ? await notifyUserIdsForUserChat(message.contextId)
+      target.chatContextType === ChatContextType.USER
+        ? await notifyUserIdsForUserChat(target.contextId)
         : undefined;
+    const threadMessageIds = fanoutTargets
+      .filter((t) => fanoutMatch(t, target))
+      .map((t) => t.messageId);
+    // Pass a messageId from *this* GAME chatType thread so socket routing is correct.
     getChatNotifier().emitChatEvent(
-      message.chatContextType,
-      message.contextId,
+      target.chatContextType,
+      target.contextId,
       'poll-vote',
       {
         pollId: updatedPoll.id,
-        messageId: updatedPoll.messageId,
-        updatedPoll: sanitized
+        messageId: hostMessageId,
+        chatType: target.chatType,
+        relatedMessageIds: threadMessageIds.length ? threadMessageIds : relatedMessageIds,
+        updatedPoll: sanitized,
       },
-      updatedPoll.messageId,
-      syncSeq,
+      target.messageId,
+      target.syncSeq,
       notifyUserIdsPoll
     );
   }
 
-  const responsePoll = updatedPoll.isAnonymous
-    ? { ...updatedPoll, options: updatedPoll.options.map(o => ({ ...o, votes: o.votes.map(v => ({ ...v, user: undefined })) })), votes: updatedPoll.votes.map(v => ({ ...v, user: undefined })) }
-    : updatedPoll;
   res.json({
     success: true,
-    data: responsePoll
+    data: sanitized,
   });
 });
+
+function fanoutMatch(
+  a: { chatContextType: ChatContextType; contextId: string; chatType?: string },
+  b: { chatContextType: ChatContextType; contextId: string; chatType?: string }
+): boolean {
+  if (a.chatContextType !== b.chatContextType || a.contextId !== b.contextId) return false;
+  if (a.chatContextType === ChatContextType.GAME) {
+    return a.chatType === b.chatType;
+  }
+  return true;
+}
 
 export const getGameMessages = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { gameId } = req.params;
@@ -476,29 +500,35 @@ export const updateMessage = asyncHandler(async (req: AuthRequest, res: Response
   const leaseCid = idem.outcome === 'lease' ? idem.cid : null;
 
   try {
-    const updatedMessage = await MessageService.updateMessageContent(messageId, userId, {
-      content: content ?? '',
-      mentionIds
-    });
+    const { updated: updatedMessage, fanoutTargets } = await MessageService.updateMessageContent(
+      messageId,
+      userId,
+      {
+        content: content ?? '',
+        mentionIds
+      }
+    );
 
     const body = { success: true, data: updatedMessage };
     if (leaseCid) {
       await ChatMutationIdempotencyService.complete(userId, leaseCid, body);
     }
 
-    const notifyUserIds =
-      updatedMessage.chatContextType === ChatContextType.USER
-        ? await notifyUserIdsForUserChat(updatedMessage.contextId)
-        : undefined;
-    getChatNotifier().emitChatEvent(
-      updatedMessage.chatContextType,
-      updatedMessage.contextId,
-      'message-updated',
-      { message: updatedMessage },
-      updatedMessage.id,
-      (updatedMessage as { syncSeq?: number }).syncSeq,
-      notifyUserIds
-    );
+    for (const target of fanoutTargets) {
+      const notifyUserIds =
+        target.chatContextType === ChatContextType.USER
+          ? await notifyUserIdsForUserChat(target.contextId)
+          : undefined;
+      getChatNotifier().emitChatEvent(
+        target.chatContextType,
+        target.contextId,
+        'message-updated',
+        { message: target.message },
+        target.messageId,
+        target.syncSeq,
+        notifyUserIds
+      );
+    }
 
     res.json(body);
   } catch (e) {
@@ -514,24 +544,27 @@ export const updateMessageLinkPreview = asyncHandler(async (req: AuthRequest, re
   if (!userId) {
     throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
   }
-  const updatedMessage = await MessageService.updateMessageLinkPreview(
-    req.params.messageId,
-    userId,
-    req.body.disabled === true
-  );
-  const notifyUserIds =
-    updatedMessage.chatContextType === ChatContextType.USER
-      ? await notifyUserIdsForUserChat(updatedMessage.contextId)
-      : undefined;
-  getChatNotifier().emitChatEvent(
-    updatedMessage.chatContextType,
-    updatedMessage.contextId,
-    'message-updated',
-    { message: updatedMessage },
-    updatedMessage.id,
-    (updatedMessage as { syncSeq?: number }).syncSeq,
-    notifyUserIds
-  );
+  const { updated: updatedMessage, fanoutTargets } =
+    await MessageService.updateMessageLinkPreview(
+      req.params.messageId,
+      userId,
+      req.body.disabled === true
+    );
+  for (const target of fanoutTargets) {
+    const notifyUserIds =
+      target.chatContextType === ChatContextType.USER
+        ? await notifyUserIdsForUserChat(target.contextId)
+        : undefined;
+    getChatNotifier().emitChatEvent(
+      target.chatContextType,
+      target.contextId,
+      'message-updated',
+      { message: target.message },
+      target.messageId,
+      target.syncSeq,
+      notifyUserIds
+    );
+  }
   res.json({ success: true, data: updatedMessage });
 });
 
@@ -1201,7 +1234,7 @@ export const translateMessage = asyncHandler(async (req: AuthRequest, res: Respo
 
   const message = await prisma.chatMessage.findUnique({
     where: { id: messageId },
-    select: { content: true, messageType: true },
+    select: { content: true, messageType: true, forwardedFromMessageId: true },
   });
 
   if (!message) {
@@ -1210,8 +1243,10 @@ export const translateMessage = asyncHandler(async (req: AuthRequest, res: Respo
 
   let sourceText = message.content?.trim() ?? '';
   if (!sourceText && message.messageType === MessageType.VOICE) {
+    const { resolveLinkedRootMessageId } = await import('../services/chat/forwardMessage.service');
+    const hostId = resolveLinkedRootMessageId({ id: messageId, forwardedFromMessageId: message.forwardedFromMessageId });
     const tr = await prisma.messageTranscription.findUnique({
-      where: { messageId },
+      where: { messageId: hostId },
       select: { transcription: true },
     });
     if (tr?.transcription && tr.transcription !== MESSAGE_TRANSCRIPTION_PENDING) {
@@ -1263,12 +1298,14 @@ export const transcribeMessage = asyncHandler(async (req: AuthRequest, res: Resp
   const message = await prisma.chatMessage.findUnique({
     where: { id: messageId },
     select: {
+      id: true,
       messageType: true,
       mediaUrls: true,
       audioDurationMs: true,
       chatContextType: true,
       contextId: true,
       chatType: true,
+      forwardedFromMessageId: true,
     },
   });
 
@@ -1286,7 +1323,24 @@ export const transcribeMessage = asyncHandler(async (req: AuthRequest, res: Resp
     throw new ApiError(400, 'Only voice messages can be transcribed');
   }
 
-  const audioUrl = message.mediaUrls[0];
+  // Linked voice forwards share the host transcription row (no per-shell Whisper).
+  const { resolveLinkedRootMessageId } = await import('../services/chat/forwardMessage.service');
+  const hostId = resolveLinkedRootMessageId(message);
+
+  let audioUrl = message.mediaUrls[0];
+  let audioDurationMs = message.audioDurationMs;
+  if ((!audioUrl?.trim() || audioDurationMs == null) && hostId !== messageId) {
+    const host = await prisma.chatMessage.findUnique({
+      where: { id: hostId },
+      select: { mediaUrls: true, audioDurationMs: true },
+    });
+    const hostAudioUrl = host?.mediaUrls?.[0];
+    if (!audioUrl?.trim() && hostAudioUrl) {
+      audioUrl = hostAudioUrl;
+    }
+    audioDurationMs = audioDurationMs ?? host?.audioDurationMs ?? null;
+  }
+
   if (!audioUrl?.trim()) {
     console.warn('[transcription] http_no_media_url', { messageId, userId, mediaCount: message.mediaUrls?.length ?? 0 });
     throw new ApiError(400, 'Voice message has no audio');
@@ -1309,19 +1363,35 @@ export const transcribeMessage = asyncHandler(async (req: AuthRequest, res: Resp
 
   try {
     const data = await TranscriptionService.getOrCreateTranscription(
-      messageId,
+      hostId,
       userId,
       audioUrl,
-      message.audioDurationMs
+      audioDurationMs
     );
 
-    getChatNotifier().emitMessageTranscription(
-      message.chatContextType,
-      message.contextId,
-      messageId,
-      { transcription: data.transcription, languageCode: data.languageCode },
-      data.syncSeq
-    );
+    const relatedMessageIds = data.relatedMessageIds ?? [messageId];
+    const targets =
+      data.fanoutTargets?.length ?
+        data.fanoutTargets
+      : [
+          {
+            messageId,
+            chatContextType: message.chatContextType,
+            contextId: message.contextId,
+            syncSeq: data.syncSeq,
+          },
+        ];
+
+    for (const target of targets) {
+      getChatNotifier().emitMessageTranscription(
+        target.chatContextType,
+        target.contextId,
+        target.messageId,
+        { transcription: data.transcription, languageCode: data.languageCode },
+        target.syncSeq ?? data.syncSeq,
+        relatedMessageIds
+      );
+    }
 
     res.json({
       success: true,

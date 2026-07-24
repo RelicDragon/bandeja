@@ -30,6 +30,10 @@ export function chatMessageToGameListPreview(message: ChatMessage): {
     const emoji = message.stickerEmoji?.trim() ?? '';
     return { preview: emoji ? `[TYPE:STICKER]${emoji}` : '[TYPE:STICKER]', updatedAt };
   }
+  if (message.messageType === 'POLL') {
+    const q = (message.poll?.question ?? message.content)?.trim() ?? '';
+    return { preview: q ? `[TYPE:POLL]${q}` : '[TYPE:POLL]', updatedAt };
+  }
   const hasMedia = (message.mediaUrls?.length ?? 0) > 0;
   const text = message.content?.trim() ?? '';
   if (hasMedia && !text) {

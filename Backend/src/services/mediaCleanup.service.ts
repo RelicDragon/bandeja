@@ -6,23 +6,23 @@ import {
   isOurAvatarOriginalUrl,
 } from '../utils/userAvatarTiny';
 import { isStickerCatalogUrl } from './stickers';
+import { findReferencedChatMediaUrls, rehomeForwardHostsBeforeHardDelete } from './chat/forwardMessage.service';
 
 export class MediaCleanupService {
   /**
    * Clean up media files when a user is deleted (cascade delete scenario)
    */
   static async cleanupUserMedia(userId: string): Promise<void> {
-    try {
-      // Get all messages from this user before they're cascade deleted
-      const userMessages = await prisma.chatMessage.findMany({
-        where: { senderId: userId },
-        select: { mediaUrls: true, thumbnailUrls: true }
-      });
+    const userMessages = await prisma.chatMessage.findMany({
+      where: { senderId: userId },
+      select: { id: true, mediaUrls: true, thumbnailUrls: true }
+    });
 
-      // Clean up message media files
-      for (const message of userMessages) {
-        await this.cleanupMessageMedia(message.mediaUrls, message.thumbnailUrls);
-      }
+    // Must succeed before user.delete cascade — swallowing would wipe shared Polls.
+    await rehomeForwardHostsBeforeHardDelete(userMessages.map((m) => m.id));
+
+    try {
+      await this.cleanupMessageMediaBatch(userMessages);
 
       // Get user's avatar files
       const user = await prisma.user.findUnique({
@@ -50,17 +50,15 @@ export class MediaCleanupService {
    * Clean up media files when a game is deleted (cascade delete scenario)
    */
   static async cleanupGameMedia(gameId: string): Promise<void> {
-    try {
-      // Get all messages from this game before they're cascade deleted
-      const gameMessages = await prisma.chatMessage.findMany({
-        where: { gameId },
-        select: { mediaUrls: true, thumbnailUrls: true }
-      });
+    const gameMessages = await prisma.chatMessage.findMany({
+      where: { gameId },
+      select: { id: true, mediaUrls: true, thumbnailUrls: true }
+    });
 
-      // Clean up message media files
-      for (const message of gameMessages) {
-        await this.cleanupMessageMedia(message.mediaUrls, message.thumbnailUrls);
-      }
+    await rehomeForwardHostsBeforeHardDelete(gameMessages.map((m) => m.id));
+
+    try {
+      await this.cleanupMessageMediaBatch(gameMessages);
 
       // Get game's media files
       const game = await prisma.game.findUnique({
@@ -81,30 +79,31 @@ export class MediaCleanupService {
   }
 
   /**
-   * Clean up individual message media files
+   * Delete chat media only when no other live message still references the URL
+   * (e.g. forwards outside the cascade set still share CDN objects).
    */
-  private static async cleanupMessageMedia(mediaUrls: string[], thumbnailUrls: string[]): Promise<void> {
-    // Clean up media files
-    if (mediaUrls && mediaUrls.length > 0) {
-      for (const mediaUrl of mediaUrls) {
-        if (isStickerCatalogUrl(mediaUrl)) continue;
-        try {
-          await ImageProcessor.deleteFile(mediaUrl);
-        } catch (error) {
-          console.error(`Error deleting media file ${mediaUrl}:`, error);
-        }
+  private static async cleanupMessageMediaBatch(
+    messages: Array<{ id: string; mediaUrls: string[]; thumbnailUrls: string[] }>
+  ): Promise<void> {
+    if (messages.length === 0) return;
+
+    const excludeIds = messages.map((m) => m.id);
+    const candidates: string[] = [];
+    for (const message of messages) {
+      for (const url of [...(message.mediaUrls ?? []), ...(message.thumbnailUrls ?? [])]) {
+        if (url && !isStickerCatalogUrl(url)) candidates.push(url);
       }
     }
+    const unique = [...new Set(candidates)];
+    if (unique.length === 0) return;
 
-    // Clean up thumbnail files
-    if (thumbnailUrls && thumbnailUrls.length > 0) {
-      for (const thumbnailUrl of thumbnailUrls) {
-        if (isStickerCatalogUrl(thumbnailUrl)) continue;
-        try {
-          await ImageProcessor.deleteFile(thumbnailUrl);
-        } catch (error) {
-          console.error(`Error deleting thumbnail file ${thumbnailUrl}:`, error);
-        }
+    const referenced = await findReferencedChatMediaUrls(unique, excludeIds);
+    for (const url of unique) {
+      if (referenced.has(url)) continue;
+      try {
+        await ImageProcessor.deleteFile(url);
+      } catch (error) {
+        console.error(`Error deleting media file ${url}:`, error);
       }
     }
   }

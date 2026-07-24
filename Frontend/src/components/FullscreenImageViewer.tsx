@@ -12,7 +12,12 @@ import { downloadImage } from '@/utils/downloadImage';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
 import { useBackButtonModal } from '@/hooks/useBackButtonModal';
-import { mediaCacheKeyForSrc, readCachedMediaResponse, writeCachedMediaResponse } from '@/services/chat/chatMediaCache';
+import { resolveChatMediaUrl } from '@/components/audio/audioWaveformUtils';
+import {
+  mediaCacheKeyForSrc,
+  readCachedMediaResponse,
+  writeCachedMediaResponse,
+} from '@/services/chat/chatMediaCache';
 
 interface FullscreenImageViewerProps {
   imageUrl: string;
@@ -25,6 +30,17 @@ interface FullscreenImageViewerProps {
   usePortaledOverlay?: boolean;
 }
 
+function resolveViewerImageUrl(imageUrl: string): string {
+  if (!imageUrl) return imageUrl;
+  if (imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) return imageUrl;
+  return resolveChatMediaUrl(imageUrl);
+}
+
+function dismissBackdropRgba(offsetY: number): string {
+  const opacity = Math.max(0.35, 0.8 - offsetY / 400);
+  return `rgba(0,0,0,${opacity})`;
+}
+
 export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
   imageUrl,
   onClose,
@@ -35,89 +51,68 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
 }) => {
   const { t } = useTranslation();
   useBackButtonModal(usePortaledOverlay && isOpen, onClose, modalId);
-  const touchStartY = useRef<number | null>(null);
-  const touchStartX = useRef<number | null>(null);
   const zoomRef = useRef<FullscreenImageZoomHandle>(null);
-  const [swipeOffset, setSwipeOffset] = useState(0);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const chromeRef = useRef<HTMLDivElement>(null);
+  const resetBarRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
-  const [displayUrl, setDisplayUrl] = useState(imageUrl);
+  const shownUrl = resolveViewerImageUrl(imageUrl);
   const resolvedBlobRef = useRef<Blob | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
   const zoomActive = enableTransform && isOpen;
 
   useEffect(() => {
-    if (isOpen) zoomRef.current?.resetTransform();
-  }, [displayUrl, isOpen]);
-
-  useEffect(() => {
-    setDisplayUrl(imageUrl);
     resolvedBlobRef.current = null;
-  }, [imageUrl]);
+    if (isOpen) zoomRef.current?.resetTransform();
+    if (overlayRef.current) overlayRef.current.style.backgroundColor = dismissBackdropRgba(0);
+    if (chromeRef.current) chromeRef.current.style.opacity = '1';
+    if (resetBarRef.current) resetBarRef.current.style.opacity = '1';
+  }, [shownUrl, isOpen]);
 
+  // Prefetch blob for copy/download only — keep <img src> on the original URL
+  // so the view never flashes or resets when cache resolves.
   useEffect(() => {
-    if (!isOpen || !imageUrl) return;
-    if (imageUrl.startsWith('blob:') || imageUrl.startsWith('data:')) return;
-    const key = mediaCacheKeyForSrc(imageUrl);
-    let revoked: string | null = null;
+    if (!isOpen || !shownUrl) return;
+    if (shownUrl.startsWith('blob:') || shownUrl.startsWith('data:')) return;
+    const key = mediaCacheKeyForSrc(shownUrl);
     let cancelled = false;
     void (async () => {
       try {
         const hit = await readCachedMediaResponse(key);
         if (cancelled) return;
         if (hit?.ok) {
-          const blob = await hit.blob();
-          resolvedBlobRef.current = blob;
-          const u = URL.createObjectURL(blob);
-          revoked = u;
-          setDisplayUrl(u);
+          resolvedBlobRef.current = await hit.blob();
           return;
         }
       } catch {
-        /* keep network src */
+        /* network fallback below */
       }
       try {
         const res = await fetch(key, { mode: 'cors', credentials: 'omit' });
-        if (cancelled) return;
-        if (res.ok) {
-          await writeCachedMediaResponse(key, res);
-          if (!revoked) {
-            const b = await res.blob();
-            resolvedBlobRef.current = b;
-            const u = URL.createObjectURL(b);
-            revoked = u;
-            setDisplayUrl(u);
-          }
-        }
+        if (cancelled || !res.ok) return;
+        await writeCachedMediaResponse(key, res);
+        resolvedBlobRef.current = await res.blob();
       } catch {
-        /* keep network src */
+        /* copy/download can still use <img> / network */
       }
     })();
     return () => {
       cancelled = true;
-      if (revoked) URL.revokeObjectURL(revoked);
     };
-  }, [isOpen, imageUrl]);
+  }, [isOpen, shownUrl]);
 
   useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+      if (e.key === 'Escape') onClose();
     };
-
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onClose, isOpen]);
 
   useEffect(() => {
-    if (!isOpen || !usePortaledOverlay) return;
+    if (!isOpen) return;
     const prevOverflow = document.body.style.overflow;
     const prevTouchAction = document.body.style.touchAction;
     document.body.style.overflow = 'hidden';
@@ -126,7 +121,16 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       document.body.style.overflow = prevOverflow;
       document.body.style.touchAction = prevTouchAction;
     };
-  }, [isOpen, usePortaledOverlay]);
+  }, [isOpen]);
+
+  const handleDismissOffsetChange = useCallback((offsetY: number) => {
+    if (overlayRef.current) {
+      overlayRef.current.style.backgroundColor = dismissBackdropRgba(offsetY);
+    }
+    const chromeOpacity = offsetY > 40 ? '0.35' : '1';
+    if (chromeRef.current) chromeRef.current.style.opacity = chromeOpacity;
+    if (resetBarRef.current) resetBarRef.current.style.opacity = chromeOpacity;
+  }, []);
 
   const handleDownload = useCallback(
     async (e: React.MouseEvent) => {
@@ -134,7 +138,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       setIsDownloading(true);
       try {
         const img = containerRef.current?.querySelector('img');
-        const outcome = await downloadImage(displayUrl, {
+        const outcome = await downloadImage(shownUrl, {
           blob: resolvedBlobRef.current,
           img,
         });
@@ -148,7 +152,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         setIsDownloading(false);
       }
     },
-    [displayUrl, t],
+    [shownUrl, t],
   );
 
   const handleCopy = useCallback(
@@ -157,7 +161,7 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       setIsCopying(true);
       try {
         const img = containerRef.current?.querySelector('img');
-        const outcome = await copyImageToClipboard(displayUrl, {
+        const outcome = await copyImageToClipboard(shownUrl, {
           blob: resolvedBlobRef.current,
           img,
         });
@@ -171,192 +175,140 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
         setIsCopying(false);
       }
     },
-    [displayUrl, t],
+    [shownUrl, t],
   );
 
-  const resetView = useCallback(
+  const resetView = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    zoomRef.current?.resetTransform();
+    handleDismissOffsetChange(0);
+  }, [handleDismissOffsetChange]);
+
+  const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
-      e.stopPropagation();
-      zoomRef.current?.resetTransform();
+      // Image taps are owned by FullscreenImageZoom (tap / double-tap).
+      if ((e.target as HTMLElement).closest('button')) return;
+      if ((e.target as HTMLElement).closest('[data-fullscreen-image-zoom]')) return;
+      if (zoomRef.current?.isZoomed()) return;
+      onClose();
     },
-    [],
+    [onClose],
   );
 
-  const handleViewerClick = useCallback((e: React.MouseEvent) => {
-    if ((e.target as HTMLElement).closest('button')) return;
-    if (zoomRef.current?.isZoomed()) return;
-    const img = containerRef.current?.querySelector('img');
-    if (!img) {
-      onClose();
-      return;
-    }
-    const { left, right, top, bottom } = img.getBoundingClientRect();
-    const insideImage =
-      e.clientX >= left &&
-      e.clientX <= right &&
-      e.clientY >= top &&
-      e.clientY <= bottom;
-    if (!insideImage) onClose();
-  }, [onClose]);
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    const touch = e.touches[0];
-    touchStartY.current = touch.clientY;
-    touchStartX.current = touch.clientX;
-    setSwipeOffset(0);
-  }, []);
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    if (touchStartY.current === null || touchStartX.current === null) return;
-    if (e.touches.length > 1) return;
-
-    const touch = e.touches[0];
-    const deltaY = touch.clientY - touchStartY.current;
-    const deltaX = Math.abs(touch.clientX - touchStartX.current);
-
-    if (!zoomRef.current?.isZoomed() && deltaY > 0 && deltaY > deltaX) {
-      e.preventDefault();
-      setSwipeOffset(deltaY);
-    }
-  }, []);
-
-  const handleImageTapClose = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (touchStartY.current === null) return;
-    if (e.touches.length > 0) return;
-
-    const touch = e.changedTouches[0];
-    const deltaY = touch.clientY - touchStartY.current;
-    const deltaX = Math.abs(touch.clientX - (touchStartX.current || 0));
-
-    if (!zoomRef.current?.isZoomed() && deltaY > 100 && deltaY > deltaX) {
-      onClose();
-    } else {
-      setSwipeOffset(0);
-    }
-
-    touchStartY.current = null;
-    touchStartX.current = null;
-  }, [onClose]);
-
-  if (!isOpen) {
-    return null;
-  }
-
-  const captureGestures = enableTransform || usePortaledOverlay;
+  if (!isOpen) return null;
 
   const viewerBody = (
-      <div 
-        ref={containerRef}
-        className={`fixed inset-0 z-[1] flex items-center justify-center bg-transparent ${
-          captureGestures ? 'touch-none overscroll-none' : ''
-        }`}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        style={{ 
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingRight: 'env(safe-area-inset-right)',
-          paddingBottom: 'env(safe-area-inset-bottom)',
-          paddingLeft: 'env(safe-area-inset-left)',
-        }}
-      >
-        <div 
-          className="relative z-10 flex h-full w-full items-center justify-center pointer-events-auto"
-          onClick={handleViewerClick}
-          style={{
-            transform: swipeOffset > 0 ? `translateY(${swipeOffset}px)` : 'none',
-            transition: swipeOffset === 0 ? 'transform 0.2s' : 'none',
-          }}
-        >
-          {enableTransform ? (
-            <div className="relative z-10 h-full w-full min-h-0 min-w-0 pointer-events-auto">
-              <FullscreenImageZoom
-                ref={zoomRef}
-                src={displayUrl}
-                active={zoomActive}
-                onTap={handleImageTapClose}
-              />
-            </div>
-          ) : (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 z-[1] flex items-center justify-center bg-transparent touch-none overscroll-none"
+      onClick={handleBackdropClick}
+      style={{
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingRight: 'env(safe-area-inset-right)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        paddingLeft: 'env(safe-area-inset-left)',
+      }}
+    >
+      <div className="relative z-10 h-full w-full min-h-0 min-w-0 pointer-events-auto">
+        {enableTransform ? (
+          <FullscreenImageZoom
+            ref={zoomRef}
+            src={shownUrl}
+            active={zoomActive}
+            onTap={onClose}
+            onDismiss={onClose}
+            onDismissOffsetChange={handleDismissOffsetChange}
+          />
+        ) : (
+          <button
+            type="button"
+            className="flex h-full w-full items-center justify-center bg-transparent p-0 border-0"
+            onClick={onClose}
+          >
             <img
-              src={displayUrl}
+              src={shownUrl}
               alt="Fullscreen view"
               draggable={false}
-              className="relative z-10 pointer-events-auto max-h-full max-w-full object-contain cursor-pointer"
-              onClick={handleImageTapClose}
+              decoding="async"
+              fetchPriority="high"
+              className="max-h-full max-w-full object-contain"
             />
-          )}
-
-          <div 
-            className="absolute top-4 right-4 z-50 flex gap-3 pointer-events-auto"
-            style={{
-              top: 'calc(env(safe-area-inset-top, 0px) + 2.5rem)',
-              right: 'max(1rem, env(safe-area-inset-right))',
-            }}
-          >
-            <button
-              type="button"
-              onClick={handleCopy}
-              disabled={isCopying}
-              className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS} disabled:cursor-not-allowed disabled:opacity-50`}
-              aria-label={t('media.copyImage')}
-            >
-              {isCopying ? <Loader2 size={22} className="animate-spin" /> : <Copy size={22} />}
-            </button>
-            <button
-              type="button"
-              onClick={handleDownload}
-              disabled={isDownloading}
-              className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS} disabled:cursor-not-allowed disabled:opacity-50`}
-              aria-label={t('media.download')}
-            >
-              {isDownloading ? (
-                <Loader2 size={22} className="animate-spin" />
-              ) : (
-                <Download size={22} />
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                onClose();
-              }}
-              className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS}`}
-              aria-label={t('common.close')}
-            >
-              <X size={22} />
-            </button>
-          </div>
-
-          <div 
-            className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
-            style={{
-              bottom: 'max(2rem, env(safe-area-inset-bottom))',
-            }}
-          >
-            {enableTransform ? (
-              <button
-                onClick={resetView}
-                className={`rounded-xl px-6 py-3 text-sm font-medium ${OVERLAY_CONTROL_GLASS}`}
-              >
-                {t('media.resetView')}
-              </button>
-            ) : null}
-          </div>
-        </div>
+          </button>
+        )}
       </div>
+
+      <div
+        ref={chromeRef}
+        className="absolute top-4 right-4 z-50 flex gap-3 pointer-events-auto"
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) + 2.5rem)',
+          right: 'max(1rem, env(safe-area-inset-right))',
+          transition: 'opacity 0.15s',
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleCopy}
+          disabled={isCopying}
+          className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS} disabled:cursor-not-allowed disabled:opacity-50`}
+          aria-label={t('media.copyImage')}
+        >
+          {isCopying ? <Loader2 size={22} className="animate-spin" /> : <Copy size={22} />}
+        </button>
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={isDownloading}
+          className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS} disabled:cursor-not-allowed disabled:opacity-50`}
+          aria-label={t('media.download')}
+        >
+          {isDownloading ? (
+            <Loader2 size={22} className="animate-spin" />
+          ) : (
+            <Download size={22} />
+          )}
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onClose();
+          }}
+          className={`flex h-12 w-12 items-center justify-center rounded-full ${OVERLAY_CONTROL_GLASS}`}
+          aria-label={t('common.close')}
+        >
+          <X size={22} />
+        </button>
+      </div>
+
+      {enableTransform ? (
+        <div
+          ref={resetBarRef}
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 pointer-events-auto"
+          style={{
+            bottom: 'max(2rem, env(safe-area-inset-bottom))',
+            transition: 'opacity 0.15s',
+          }}
+        >
+          <button
+            type="button"
+            onClick={resetView}
+            className={`rounded-xl px-6 py-3 text-sm font-medium ${OVERLAY_CONTROL_GLASS}`}
+          >
+            {t('media.resetView')}
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 
   if (usePortaledOverlay) {
     const overlay = (
       <div
-        className="fullscreen-backdrop-overlay fixed inset-0 z-[100] touch-none overscroll-none bg-black/80"
+        ref={overlayRef}
+        className="fullscreen-backdrop-overlay fixed inset-0 z-[100] touch-none overscroll-none"
+        style={{ backgroundColor: dismissBackdropRgba(0) }}
         data-state="open"
         role="dialog"
         aria-modal="true"
@@ -374,7 +326,8 @@ export const FullscreenImageViewer: React.FC<FullscreenImageViewerProps> = ({
       modalId={modalId}
       closeOnInteractOutside={false}
       overlayClassName="fullscreen-backdrop-overlay"
-      contentClassName="fullscreen-content-fade-animate"
+      contentClassName="fullscreen-content-fade-animate overflow-hidden"
+      bodyClassName="!overflow-hidden overscroll-none touch-none"
     >
       {viewerBody}
     </FullScreenDialog>

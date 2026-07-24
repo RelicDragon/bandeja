@@ -1,11 +1,13 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { resolveChatMediaUrl } from '@/components/audio/audioWaveformUtils';
 import { getImageGridLayout } from './utils';
 import { ChatMediaImage } from './ChatMediaImage';
 
 interface MessageMediaGridProps {
   mediaUrls: string[];
   getThumbnailUrl: (index: number) => string;
+  getFullscreenUrl: (index: number) => string;
   onImageClick: (url: string) => void;
   hasContentBelow?: boolean;
   loadEager?: boolean;
@@ -16,6 +18,7 @@ interface MessageMediaGridProps {
 export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
   mediaUrls,
   getThumbnailUrl,
+  getFullscreenUrl,
   onImageClick,
   hasContentBelow = false,
   loadEager = false,
@@ -60,7 +63,7 @@ export const MessageMediaGrid: React.FC<MessageMediaGridProps> = ({
               background: 'transparent',
               textAlign: 'left',
             }}
-            onClick={() => onImageClick(floating ? getThumbnailUrl(index) : url)}
+            onClick={() => onImageClick(resolveChatMediaUrl(getFullscreenUrl(index) || url))}
           >
             <ChatMediaImage
               src={getThumbnailUrl(index)}

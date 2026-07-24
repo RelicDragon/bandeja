@@ -211,7 +211,15 @@ export function useThreadReactions({
   const handlePollUpdated = useCallback(
     (messageId: string, updatedPoll: Poll) => {
       setMessages((prev) => {
-        const next = prev.map((m) => (m.id === messageId && m.poll ? { ...m, poll: updatedPoll } : m));
+        const next = prev.map((m) => {
+          const samePoll = m.poll?.id && m.poll.id === updatedPoll.id;
+          const sameHost =
+            m.id === messageId ||
+            m.forwardedFromMessageId === updatedPoll.messageId ||
+            m.forwardedFromMessageId === messageId;
+          if (!samePoll && !sameHost) return m;
+          return { ...m, poll: updatedPoll };
+        });
         messagesRef.current = next;
         return next;
       });
@@ -274,6 +282,7 @@ export function useThreadReactions({
   const handleCancelReply = useCallback(() => setReplyTo(null), []);
   const handleEditMessage = useCallback((message: ChatMessage) => {
     if (
+      message.forwardedFromMessageId ||
       message.messageType === 'VOICE' ||
       message.messageType === 'VIDEO' ||
       message.messageType === 'STICKER' ||

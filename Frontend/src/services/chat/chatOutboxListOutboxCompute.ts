@@ -7,6 +7,10 @@ function outboxPreviewFromPayload(payload: OptimisticMessagePayload): {
   preview?: string;
   previewKind?: 'text' | 'voice' | 'media' | 'gif' | 'video' | 'sticker' | 'document';
 } {
+  if (payload.messageType === 'POLL') {
+    const q = payload.poll?.question?.trim() || payload.content?.trim();
+    return { preview: q || undefined, previewKind: 'text' };
+  }
   const text = (payload.content || '').trim();
   if (text) return { preview: text.slice(0, 80), previewKind: 'text' };
   if (payload.messageType === 'VOICE') return { previewKind: 'voice' };

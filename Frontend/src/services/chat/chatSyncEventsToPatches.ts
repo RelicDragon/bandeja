@@ -65,14 +65,36 @@ export function chatSyncEventsToPatches(events: ChatSyncEventDTO[]): ChatSyncPat
       case ChatSyncEventType.POLL_VOTED: {
         const messageId = p.messageId as string | undefined;
         const updatedPoll = p.updatedPoll as ChatMessage['poll'];
-        if (messageId && updatedPoll) out.push({ op: 'pollVoted', messageId, poll: updatedPoll });
+        const relatedMessageIds = Array.isArray(p.relatedMessageIds)
+          ? (p.relatedMessageIds as string[]).filter((id) => typeof id === 'string' && id)
+          : [];
+        if (updatedPoll) {
+          const ids = relatedMessageIds.length
+            ? relatedMessageIds
+            : messageId
+              ? [messageId]
+              : [];
+          for (const mid of ids) {
+            out.push({ op: 'pollVoted', messageId: mid, poll: updatedPoll });
+          }
+        }
         break;
       }
       case ChatSyncEventType.MESSAGE_TRANSCRIPTION_UPDATED: {
         const messageId = p.messageId as string | undefined;
         const audioTranscription = p.audioTranscription as ChatMessage['audioTranscription'];
-        if (messageId && audioTranscription) {
-          out.push({ op: 'transcriptionUpdated', messageId, audioTranscription });
+        const relatedMessageIds = Array.isArray(p.relatedMessageIds)
+          ? (p.relatedMessageIds as string[]).filter((id) => typeof id === 'string' && id)
+          : [];
+        if (audioTranscription) {
+          const ids = relatedMessageIds.length
+            ? relatedMessageIds
+            : messageId
+              ? [messageId]
+              : [];
+          for (const mid of ids) {
+            out.push({ op: 'transcriptionUpdated', messageId: mid, audioTranscription });
+          }
         }
         break;
       }

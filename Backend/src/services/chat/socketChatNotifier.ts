@@ -143,14 +143,16 @@ class SocketChatNotifier implements ChatNotifier {
     contextId: string,
     messageId: string,
     audioTranscription: { transcription: string; languageCode: string | null },
-    syncSeq?: number
+    syncSeq?: number,
+    relatedMessageIds?: string[]
   ): void {
     getSocketService()?.emitMessageTranscription(
       contextType,
       contextId,
       messageId,
       audioTranscription,
-      syncSeq
+      syncSeq,
+      relatedMessageIds
     );
   }
 }

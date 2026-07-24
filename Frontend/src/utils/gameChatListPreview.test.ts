@@ -49,4 +49,13 @@ describe('chatMessageToGameListPreview', () => {
     const msg = base({ messageType: 'STICKER', stickerEmoji: '🎾' });
     expect(chatMessageToGameListPreview(msg).preview).toBe('[TYPE:STICKER]🎾');
   });
+
+  it('emits [TYPE:POLL] for poll forwards that denormalize question into content', () => {
+    const msg = base({
+      messageType: 'POLL',
+      content: 'Who wants court 2?',
+      poll: undefined,
+    });
+    expect(chatMessageToGameListPreview(msg).preview).toBe('[TYPE:POLL]Who wants court 2?');
+  });
 });

@@ -4,14 +4,8 @@ import {
   useEffect,
   useImperativeHandle,
   useRef,
-  useState,
 } from 'react';
-import {
-  TransformComponent,
-  TransformWrapper,
-  type ReactZoomPanPinchContentRef,
-} from 'react-zoom-pan-pinch';
-import { isImageViewZoomed } from './imageViewTransform';
+import { useFullscreenImageGestures } from './useFullscreenImageGestures';
 
 export type FullscreenImageZoomHandle = {
   resetTransform: () => void;
@@ -22,139 +16,177 @@ type FullscreenImageZoomProps = {
   src: string;
   active: boolean;
   onTap?: () => void;
+  onDismiss?: () => void;
+  onDismissOffsetChange?: (offsetY: number) => void;
 };
 
-const TAP_MOVE_THRESHOLD_PX = 10;
-const TAP_CLOSE_DELAY_MS = 280;
+const TAP_MOVE_THRESHOLD_PX = 12;
+const DOUBLE_TAP_MS = 280;
 
 export const FullscreenImageZoom = forwardRef<FullscreenImageZoomHandle, FullscreenImageZoomProps>(
-  function FullscreenImageZoom({ src, active, onTap }, ref) {
-    const zoomRef = useRef<ReactZoomPanPinchContentRef | null>(null);
-    const stateRef = useRef({ scale: 1, positionX: 0, positionY: 0 });
-    const [panningDisabled, setPanningDisabled] = useState(true);
-    const tapStartRef = useRef<{ x: number; y: number } | null>(null);
-    const tapSuppressedRef = useRef(false);
-    const tapCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function FullscreenImageZoom(
+    { src, active, onTap, onDismiss, onDismissOffsetChange },
+    ref,
+  ) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
+    const tapOriginRef = useRef<{ x: number; y: number; at: number } | null>(null);
+    const activePointersRef = useRef<Set<number>>(new Set());
+    const multiTouchRef = useRef(false);
+    const pendingTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const onTapRef = useRef(onTap);
+    onTapRef.current = onTap;
 
-    const clearTapCloseTimer = useCallback(() => {
-      if (tapCloseTimerRef.current) {
-        clearTimeout(tapCloseTimerRef.current);
-        tapCloseTimerRef.current = null;
-      }
-    }, []);
-
-    const scheduleTapClose = useCallback(() => {
-      if (!onTap) return;
-      clearTapCloseTimer();
-      tapCloseTimerRef.current = setTimeout(() => {
-        tapCloseTimerRef.current = null;
-        if (!tapSuppressedRef.current) onTap();
-      }, TAP_CLOSE_DELAY_MS);
-    }, [clearTapCloseTimer, onTap]);
-
-    const handlePointerDown = useCallback((e: React.PointerEvent) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      clearTapCloseTimer();
-      tapSuppressedRef.current = false;
-      tapStartRef.current = { x: e.clientX, y: e.clientY };
-    }, [clearTapCloseTimer]);
-
-    const handlePointerUp = useCallback((e: React.PointerEvent) => {
-      if (e.pointerType === 'mouse' && e.button !== 0) return;
-      const start = tapStartRef.current;
-      tapStartRef.current = null;
-      if (!start) return;
-      const moved = Math.hypot(e.clientX - start.x, e.clientY - start.y) > TAP_MOVE_THRESHOLD_PX;
-      if (!moved && !tapSuppressedRef.current) scheduleTapClose();
-    }, [scheduleTapClose]);
-
-    useEffect(() => () => clearTapCloseTimer(), [clearTapCloseTimer]);
-
-    const syncState = useCallback((scale: number, positionX: number, positionY: number) => {
-      stateRef.current = { scale, positionX, positionY };
-      setPanningDisabled(scale <= 1.01);
-    }, []);
-
-    const resetToFitView = useCallback(() => {
-      zoomRef.current?.resetTransform(0);
-      syncState(1, 0, 0);
-    }, [syncState]);
+    const { resetTransform, isZoomed, isGestureBusy, toggleDoubleTapZoom } =
+      useFullscreenImageGestures({
+        enabled: active,
+        containerRef,
+        contentRef,
+        onDismiss,
+        onDismissOffsetChange,
+      });
 
     useImperativeHandle(
       ref,
       () => ({
-        resetTransform: resetToFitView,
-        isZoomed: () => {
-          const s = stateRef.current;
-          return isImageViewZoomed(s.scale, s.positionX, s.positionY);
-        },
+        resetTransform,
+        isZoomed,
       }),
-      [resetToFitView],
+      [isZoomed, resetTransform],
     );
 
     useEffect(() => {
-      if (active) resetToFitView();
-    }, [active, src, resetToFitView]);
+      if (active) resetTransform();
+    }, [active, src, resetTransform]);
+
+    const clearPendingTap = useCallback(() => {
+      if (pendingTapTimerRef.current) {
+        clearTimeout(pendingTapTimerRef.current);
+        pendingTapTimerRef.current = null;
+      }
+    }, []);
+
+    useEffect(() => () => clearPendingTap(), [clearPendingTap]);
+
+    // Pointer may release outside the element — keep the active set honest via window.
+    useEffect(() => {
+      if (!active) return;
+
+      const onWinUp = (e: PointerEvent) => {
+        if (!activePointersRef.current.has(e.pointerId)) return;
+        // Inside pointerup is owned by onPointerUpCapture (tap / double-tap).
+        // pointercancel is always cleaned here (element may not see it).
+        if (e.type === 'pointerup' && containerRef.current?.contains(e.target as Node)) {
+          return;
+        }
+
+        activePointersRef.current.delete(e.pointerId);
+        if (activePointersRef.current.size === 0) {
+          multiTouchRef.current = false;
+        } else {
+          multiTouchRef.current = true;
+        }
+        tapOriginRef.current = null;
+        clearPendingTap();
+      };
+
+      window.addEventListener('pointerup', onWinUp, true);
+      window.addEventListener('pointercancel', onWinUp, true);
+      const pointers = activePointersRef.current;
+      return () => {
+        window.removeEventListener('pointerup', onWinUp, true);
+        window.removeEventListener('pointercancel', onWinUp, true);
+        pointers.clear();
+        multiTouchRef.current = false;
+        tapOriginRef.current = null;
+      };
+    }, [active, clearPendingTap]);
+
+    const handlePointerDownCapture = useCallback(
+      (e: React.PointerEvent) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        activePointersRef.current.add(e.pointerId);
+        if (activePointersRef.current.size > 1) {
+          multiTouchRef.current = true;
+          tapOriginRef.current = null;
+          clearPendingTap();
+          return;
+        }
+        multiTouchRef.current = false;
+        tapOriginRef.current = { x: e.clientX, y: e.clientY, at: performance.now() };
+      },
+      [clearPendingTap],
+    );
+
+    const handlePointerUpCapture = useCallback(
+      (e: React.PointerEvent) => {
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+        activePointersRef.current.delete(e.pointerId);
+        const stillDown = activePointersRef.current.size > 0;
+        const wasMulti = multiTouchRef.current;
+        if (!stillDown) multiTouchRef.current = false;
+
+        // Ignore lifts that are part of a pinch / multi-touch sequence.
+        if (wasMulti || stillDown) {
+          tapOriginRef.current = null;
+          clearPendingTap();
+          return;
+        }
+        if (isGestureBusy()) {
+          tapOriginRef.current = null;
+          clearPendingTap();
+          return;
+        }
+
+        const origin = tapOriginRef.current;
+        tapOriginRef.current = null;
+        if (!origin) return;
+        if (Math.hypot(e.clientX - origin.x, e.clientY - origin.y) > TAP_MOVE_THRESHOLD_PX) {
+          clearPendingTap();
+          return;
+        }
+        if (performance.now() - origin.at > 500) return;
+
+        if (pendingTapTimerRef.current) {
+          clearPendingTap();
+          toggleDoubleTapZoom(e.clientX, e.clientY);
+          return;
+        }
+
+        pendingTapTimerRef.current = setTimeout(() => {
+          pendingTapTimerRef.current = null;
+          if (isGestureBusy() || isZoomed()) return;
+          onTapRef.current?.();
+        }, DOUBLE_TAP_MS);
+      },
+      [clearPendingTap, isGestureBusy, isZoomed, toggleDoubleTapZoom],
+    );
 
     if (!active) return null;
 
     return (
       <div
-        className="relative h-full w-full min-h-0 min-w-0 touch-none select-none"
-        onPointerDownCapture={handlePointerDown}
-        onPointerUpCapture={handlePointerUp}
-        onPointerCancelCapture={() => { tapStartRef.current = null; clearTapCloseTimer(); }}
+        ref={containerRef}
+        data-fullscreen-image-zoom=""
+        className="relative h-full w-full min-h-0 min-w-0 touch-none select-none overflow-hidden"
+        style={{ touchAction: 'none' }}
+        onPointerDownCapture={handlePointerDownCapture}
+        onPointerUpCapture={handlePointerUpCapture}
       >
-        <TransformWrapper
-          key={src}
-          ref={zoomRef}
-          minScale={0.5}
-          maxScale={8}
-          limitToBounds
-          centerOnInit
-          centerZoomedOut
-          smooth={false}
-          wheel={{ step: 0.04, touchPadDisabled: false }}
-          pinch={{ step: 0.12 }}
-          panning={{ disabled: panningDisabled, velocityDisabled: true }}
-          trackPadPanning={{ disabled: true }}
-          velocityAnimation={{ disabled: true }}
-          doubleClick={{ mode: 'toggle', step: 1.75, animationTime: 250, animationType: 'easeOut' }}
-          onInit={(ctx) => {
-            syncState(ctx.state.scale, ctx.state.positionX, ctx.state.positionY);
-            requestAnimationFrame(() => resetToFitView());
-          }}
-          onTransform={(ctx) =>
-            syncState(ctx.state.scale, ctx.state.positionX, ctx.state.positionY)
-          }
-          onZoomStart={() => {
-            tapSuppressedRef.current = true;
-            clearTapCloseTimer();
-          }}
-          onPanningStart={() => {
-            if (stateRef.current.scale > 1.01) {
-              tapSuppressedRef.current = true;
-              clearTapCloseTimer();
-            }
-          }}
-          onPinchStart={() => { tapSuppressedRef.current = true; clearTapCloseTimer(); }}
-          onWheelStart={() => { tapSuppressedRef.current = true; clearTapCloseTimer(); }}
+        <div
+          ref={contentRef}
+          className="flex h-full w-full items-center justify-center will-change-transform"
+          style={{ transformOrigin: 'center center' }}
         >
-          <TransformComponent
-            wrapperClass="!h-full !w-full"
-            contentClass="!flex !h-full !w-full !items-center !justify-center"
-          >
-            <img
-              src={src}
-              alt=""
-              draggable={false}
-              className="max-h-full max-w-full object-contain"
-              onLoad={() => {
-                requestAnimationFrame(() => resetToFitView());
-              }}
-            />
-          </TransformComponent>
-        </TransformWrapper>
+          <img
+            src={src}
+            alt=""
+            draggable={false}
+            decoding="async"
+            fetchPriority="high"
+            className="max-h-full max-w-full object-contain pointer-events-none"
+          />
+        </div>
       </div>
     );
   },

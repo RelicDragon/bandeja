@@ -563,7 +563,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({ disabled: disabledPr
       lastOwnMessage.messageType !== 'VIDEO' &&
       lastOwnMessage.messageType !== 'STICKER' &&
       lastOwnMessage.messageType !== 'DOCUMENT' &&
-      !lastOwnMessage.poll
+      !lastOwnMessage.poll &&
+      !lastOwnMessage.forwardedFromMessageId
     ) {
       e.preventDefault();
       onStartEditMessage(lastOwnMessage);

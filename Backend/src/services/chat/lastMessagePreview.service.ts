@@ -78,8 +78,8 @@ export function extractPreviewFromMessage(message: MessageForPreview): string {
 
   const text = message.content!;
 
-  // Handle poll messages - check pollId field
-  if (message.pollId) {
+  // Handle poll messages (host or linked forward with question in content)
+  if (message.pollId || message.messageType === 'POLL') {
     return `[TYPE:POLL]${text}`;
   }
 

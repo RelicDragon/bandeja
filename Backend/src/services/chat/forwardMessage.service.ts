@@ -1,11 +1,13 @@
 import {
   ChatContextType,
   MessageType,
+  Prisma,
   type ChatMessage,
   type ChatType,
 } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
+import { USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 
 export const FORWARDABLE_MESSAGE_TYPES = new Set<MessageType>([
   MessageType.TEXT,
@@ -13,6 +15,8 @@ export const FORWARDABLE_MESSAGE_TYPES = new Set<MessageType>([
   MessageType.STICKER,
   MessageType.VIDEO,
   MessageType.DOCUMENT,
+  MessageType.VOICE,
+  MessageType.POLL,
 ]);
 
 export type ForwardedFromSnapshot = {
@@ -40,6 +44,8 @@ export type ForwardCreateFields = {
   messageType: MessageType;
   stickerId: string | null;
   stickerEmoji: string | null;
+  audioDurationMs: number | null;
+  waveformData: number[];
   videoDurationMs: number | null;
   videoWidth: number | null;
   videoHeight: number | null;
@@ -49,6 +55,8 @@ export type ForwardCreateFields = {
   linkPreview: unknown;
   linkPreviewUrl: string | null;
   linkPreviewDisabled: boolean;
+  /** Present when linking a poll — never create a new Poll row for forwards. */
+  linkedPollQuestion: string | null;
 };
 
 function displayName(user: {
@@ -129,6 +137,7 @@ export async function resolveForwardCreateFields(
     where: { id, deletedAt: null },
     include: {
       sender: { select: { firstName: true, lastName: true } },
+      poll: { select: { question: true } },
     },
   });
 
@@ -187,6 +196,24 @@ export async function resolveForwardCreateFields(
     if (!rootExists) linkId = source.id;
   }
 
+  // Poll shells have no Poll row — resolve question from the linked root host.
+  let linkedPollQuestion: string | null = null;
+  if (source.messageType === MessageType.POLL) {
+    linkedPollQuestion = source.poll?.question ?? null;
+    if (!linkedPollQuestion) {
+      const rootPoll = await prisma.poll.findUnique({
+        where: { messageId: linkId },
+        select: { question: true },
+      });
+      linkedPollQuestion = rootPoll?.question ?? null;
+    }
+    if (!linkedPollQuestion) {
+      throw new ApiError(400, 'Poll message is missing poll data', true, {
+        code: 'chat.forward.pollMissing',
+      });
+    }
+  }
+
   return {
     sourceAccess: {
       chatContextType: source.chatContextType,
@@ -195,12 +222,17 @@ export async function resolveForwardCreateFields(
     },
     forwardedFromMessageId: linkId,
     forwardedFrom: snapshot,
-    content: source.content,
+    content:
+      source.messageType === MessageType.POLL
+        ? linkedPollQuestion ?? source.content
+        : source.content,
     mediaUrls: [...(source.mediaUrls ?? [])],
     thumbnailUrls: [...(source.thumbnailUrls ?? [])],
     messageType: source.messageType,
     stickerId: source.stickerId,
     stickerEmoji: source.stickerEmoji,
+    audioDurationMs: source.audioDurationMs,
+    waveformData: Array.isArray(source.waveformData) ? [...source.waveformData] : [],
     videoDurationMs: source.videoDurationMs,
     videoWidth: source.videoWidth,
     videoHeight: source.videoHeight,
@@ -210,7 +242,132 @@ export async function resolveForwardCreateFields(
     linkPreview: source.linkPreview,
     linkPreviewUrl: source.linkPreviewUrl,
     linkPreviewDisabled: source.linkPreviewDisabled,
+    linkedPollQuestion,
   };
+}
+
+const FORWARD_BODY_FIELDS = [
+  'content',
+  'mediaUrls',
+  'thumbnailUrls',
+  'messageType',
+  'stickerId',
+  'stickerEmoji',
+  'audioDurationMs',
+  'waveformData',
+  'videoDurationMs',
+  'videoWidth',
+  'videoHeight',
+  'documentFileName',
+  'documentMimeType',
+  'documentSize',
+  'linkPreview',
+  'linkPreviewUrl',
+  'linkPreviewDisabled',
+] as const;
+
+/**
+ * Overlay live body + poll from the linked original onto forward rows.
+ * Keeps the forward row’s identity (id, sender, reactions, attribution).
+ */
+export async function hydrateForwardedMessages<T extends Record<string, unknown>>(
+  messages: T[]
+): Promise<T[]> {
+  const linkIds = [
+    ...new Set(
+      messages
+        .map((m) =>
+          typeof m.forwardedFromMessageId === 'string' ? m.forwardedFromMessageId.trim() : ''
+        )
+        .filter(Boolean)
+    ),
+  ];
+  if (linkIds.length === 0) return messages;
+
+  const originals = await prisma.chatMessage.findMany({
+    where: { id: { in: linkIds } },
+    include: {
+      poll: {
+        include: {
+          options: {
+            include: {
+              votes: {
+                include: {
+                  user: { select: USER_SELECT_WITH_SPORT_PROFILES },
+                },
+              },
+            },
+            orderBy: { order: 'asc' },
+          },
+          votes: {
+            include: {
+              user: { select: USER_SELECT_WITH_SPORT_PROFILES },
+            },
+          },
+        },
+      },
+      audioTranscription: true,
+    },
+  });
+  const byId = new Map(originals.map((o) => [o.id, o]));
+
+  return messages.map((m) => {
+    const linkId =
+      typeof m.forwardedFromMessageId === 'string' ? m.forwardedFromMessageId.trim() : '';
+    if (!linkId) return m;
+    const orig = byId.get(linkId);
+    if (!orig) return m;
+
+    const next: Record<string, unknown> = { ...m };
+    // Soft-deleted host: still share poll + transcription so linked forwards keep working.
+    if (!orig.deletedAt) {
+      for (const key of FORWARD_BODY_FIELDS) {
+        if (key in orig) next[key] = (orig as Record<string, unknown>)[key];
+      }
+    }
+    next.poll = orig.poll ?? null;
+    if (orig.audioTranscription) {
+      next.audioTranscription = orig.audioTranscription;
+    }
+    return next as T;
+  });
+}
+
+/**
+ * Root message id for linked forwards (transcription / shared media identity).
+ */
+export function resolveLinkedRootMessageId(message: {
+  id: string;
+  forwardedFromMessageId?: string | null;
+}): string {
+  const root = message.forwardedFromMessageId?.trim();
+  return root || message.id;
+}
+
+/**
+ * Live forward shells that point at `rootMessageId` (for poll vote fan-out / access).
+ */
+export async function findLiveForwardsOfMessage(rootMessageId: string): Promise<
+  Array<{
+    id: string;
+    chatContextType: ChatContextType;
+    contextId: string;
+    chatType: ChatType;
+  }>
+> {
+  if (!rootMessageId) return [];
+  return prisma.chatMessage.findMany({
+    where: {
+      forwardedFromMessageId: rootMessageId,
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      chatContextType: true,
+      contextId: true,
+      chatType: true,
+    },
+  });
 }
 
 /**
@@ -219,17 +376,26 @@ export async function resolveForwardCreateFields(
  */
 export async function findReferencedChatMediaUrls(
   candidates: string[],
-  excludeMessageId: string
+  excludeMessageIds: string | string[]
 ): Promise<Set<string>> {
   const unique = [...new Set(candidates.filter((u) => typeof u === 'string' && u.length > 0))];
   if (unique.length === 0) return new Set();
+  const excluded = [
+    ...new Set(
+      (Array.isArray(excludeMessageIds) ? excludeMessageIds : [excludeMessageIds]).filter(Boolean)
+    ),
+  ];
 
   const referenced = new Set<string>();
   await Promise.all(
     unique.map(async (url) => {
       const hit = await prisma.chatMessage.findFirst({
         where: {
-          id: { not: excludeMessageId },
+          ...(excluded.length === 1
+            ? { id: { not: excluded[0]! } }
+            : excluded.length > 1
+              ? { id: { notIn: excluded } }
+              : {}),
           deletedAt: null,
           OR: [{ mediaUrls: { has: url } }, { thumbnailUrls: { has: url } }],
         },
@@ -239,4 +405,101 @@ export async function findReferencedChatMediaUrls(
     })
   );
   return referenced;
+}
+
+/**
+ * Before hard-deleting messages (admin user/game cascade), rehome Poll +
+ * transcription onto a surviving live forward shell and retarget
+ * `forwardedFromMessageId` links. Soft-delete already keeps hosts; hard-delete
+ * would otherwise Cascade-delete Poll and SetNull the FK.
+ */
+export async function rehomeForwardHostsBeforeHardDelete(
+  dyingMessageIds: string[],
+  db: Prisma.TransactionClient | typeof prisma = prisma
+): Promise<void> {
+  const dying = [...new Set(dyingMessageIds.filter(Boolean))];
+  if (dying.length === 0) return;
+
+  const survivorForwards = await db.chatMessage.findMany({
+    where: {
+      forwardedFromMessageId: { in: dying },
+      deletedAt: null,
+      id: { notIn: dying },
+    },
+    select: { id: true, forwardedFromMessageId: true, createdAt: true },
+    orderBy: { createdAt: 'asc' },
+  });
+  if (survivorForwards.length === 0) return;
+
+  const byHost = new Map<string, typeof survivorForwards>();
+  for (const row of survivorForwards) {
+    const hostId = row.forwardedFromMessageId?.trim();
+    if (!hostId) continue;
+    const list = byHost.get(hostId);
+    if (list) list.push(row);
+    else byHost.set(hostId, [row]);
+  }
+
+  for (const [hostId, survivors] of byHost) {
+    const newHostId = survivors[0]?.id;
+    if (!newHostId) continue;
+
+    const run = async (tx: Prisma.TransactionClient) => {
+      const newHost = await tx.chatMessage.findUnique({
+        where: { id: newHostId },
+        select: { senderId: true },
+      });
+      await tx.chatMessage.update({
+        where: { id: newHostId },
+        data: { forwardedFromMessageId: null, forwardedFrom: Prisma.DbNull },
+      });
+
+      const poll = await tx.poll.findUnique({ where: { messageId: hostId }, select: { id: true } });
+      if (poll) {
+        await tx.poll.update({
+          where: { id: poll.id },
+          data: { messageId: newHostId },
+        });
+      }
+
+      const transcription = await tx.messageTranscription.findUnique({
+        where: { messageId: hostId },
+        select: { id: true },
+      });
+      if (transcription) {
+        const existingOnNew = await tx.messageTranscription.findUnique({
+          where: { messageId: newHostId },
+          select: { id: true },
+        });
+        if (existingOnNew) {
+          await tx.messageTranscription.delete({ where: { id: transcription.id } });
+        } else {
+          // Retarget createdBy so user.delete Cascade on the dying author
+          // does not wipe the shared transcription after rehome.
+          await tx.messageTranscription.update({
+            where: { id: transcription.id },
+            data: {
+              messageId: newHostId,
+              ...(newHost?.senderId ? { createdBy: newHost.senderId } : {}),
+            },
+          });
+        }
+      }
+
+      await tx.chatMessage.updateMany({
+        where: {
+          forwardedFromMessageId: hostId,
+          deletedAt: null,
+          id: { not: newHostId },
+        },
+        data: { forwardedFromMessageId: newHostId },
+      });
+    };
+
+    if (db === prisma) {
+      await prisma.$transaction(run);
+    } else {
+      await run(db);
+    }
+  }
 }

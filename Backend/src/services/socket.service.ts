@@ -860,12 +860,14 @@ class SocketService {
     contextId: string,
     messageId: string,
     audioTranscription: { transcription: string; languageCode: string | null },
-    syncSeq?: number
+    syncSeq?: number,
+    relatedMessageIds?: string[]
   ): void {
     const emitPayload = {
       contextType,
       contextId,
       messageId,
+      relatedMessageIds: relatedMessageIds?.length ? relatedMessageIds : [messageId],
       audioTranscription,
       timestamp: new Date().toISOString(),
       ...(syncSeq != null ? { syncSeq } : {}),

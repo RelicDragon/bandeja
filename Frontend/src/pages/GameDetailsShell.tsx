@@ -1407,9 +1407,7 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
             </div>
           ) : null}
 
-          {user &&
-          game.resultsStatus === 'FINAL' &&
-          (isLeagueSeason || game.entityType === 'TRAINING' || game.entityType === 'BAR') ? (
+          {user && isLeagueSeason ? (
             <div key="show-in-stories" className="contents">
               <GameResultsShowInStoriesSwitch game={game} onGameUpdate={setGame} />
             </div>
@@ -1694,6 +1692,9 @@ export const GameDetailsShell = ({ variant, initialGame, selectedGameChatId, onC
       <SportLevelProvider sport={shellLevelSport}>
       <AnimatedPresencePanel panelKey={shellViewKey}>
       <AnimatedChildrenStagger contentKey={staggerContentKey} className="space-y-4">
+          {game.resultsStatus === 'FINAL' ? (
+            <GameResultsShowInStoriesSwitch game={game} onGameUpdate={setGame} />
+          ) : null}
           <ResultsTableView
             game={game}
             rounds={engineRounds}

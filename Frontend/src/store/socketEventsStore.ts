@@ -77,6 +77,7 @@ interface ChatMessageTranscriptionData {
   contextId: string;
   messageId: string;
   audioTranscription: { transcription: string; languageCode: string | null };
+  relatedMessageIds?: string[];
   timestamp?: string;
   syncSeq?: number;
 }
@@ -162,6 +163,7 @@ interface PollVoteData {
   pollId: string;
   messageId: string;
   updatedPoll: any;
+  relatedMessageIds?: string[];
   syncSeq?: number;
 }
 

@@ -41,7 +41,8 @@ class NavigationService {
     const navOpts: ChatNavigateOptions | undefined =
       typeof opts === 'string' ? { initialChatType: opts } : opts;
     const state = openChat ? chatNavigationState(navOpts) : undefined;
-    this.navigate!(buildUrl(place as any, { id: gameId }), { replace: true, state });
+    const replace = navOpts?.replace !== false;
+    this.navigate!(buildUrl(place as any, { id: gameId }), { replace, state });
   }
 
   navigateToLeagueSeasonSchedule(
@@ -63,7 +64,7 @@ class NavigationService {
   navigateToUserChat(userChatId: string, opts?: ChatNavigateOptions) {
     if (!this.ensureInitialized() || !userChatId) return;
     this.navigate!(buildUrl('userChat', { id: userChatId }), {
-      replace: true,
+      replace: opts?.replace !== false,
       state: chatNavigationState({ forceReload: true, ...opts }),
     });
   }
@@ -75,27 +76,28 @@ class NavigationService {
 
   async navigateToBugChat(bugId: string, opts?: ChatNavigateOptions) {
     if (!this.ensureInitialized() || !bugId) return;
+    const replace = opts?.replace !== false;
     try {
       const { bugsApi } = await import('@/api');
       const res = await bugsApi.getBugById(bugId);
       const groupChannelId = res.data?.groupChannel?.id;
       if (groupChannelId) {
         this.navigate!(buildUrl('bugs', { id: groupChannelId }), {
-          replace: true,
+          replace,
           state: chatNavigationState({ forceReload: true, ...opts }),
         });
       } else {
-        this.navigate!(buildUrl('bugs'), { replace: true });
+        this.navigate!(buildUrl('bugs'), { replace });
       }
     } catch {
-      this.navigate!(buildUrl('bugs'), { replace: true });
+      this.navigate!(buildUrl('bugs'), { replace });
     }
   }
 
   navigateToGroupChat(groupChannelId: string, opts?: ChatNavigateOptions) {
     if (!this.ensureInitialized() || !groupChannelId) return;
     this.navigate!(buildUrl('groupChat', { id: groupChannelId }), {
-      replace: true,
+      replace: opts?.replace !== false,
       state: chatNavigationState({ forceReload: true, ...opts }),
     });
   }
@@ -105,7 +107,7 @@ class NavigationService {
     const params: PlaceParams = { id: channelId };
     if (opts?.filter === 'market') params.filter = 'market';
     this.navigate!(buildUrl('channelChat', params), {
-      replace: true,
+      replace: opts?.replace !== false,
       state: chatNavigationState({ forceReload: true, ...opts }),
     });
   }

@@ -9,6 +9,7 @@ import {
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ChatSyncEventService } from '../chat/chatSyncEvent.service';
+import { rehomeForwardHostsBeforeHardDelete } from '../chat/forwardMessage.service';
 import { clampSportProfileGameStats } from '../results/outcomeStatsSnapshot';
 import { resolveDisplayNameData } from './userDisplayName.service';
 import { recomputeUserGameStats } from './userGameStatsRecompute.service';
@@ -203,6 +204,14 @@ async function mergeUserChats(tx: Tx, survivorId: string, sourceId: string) {
     if (other === survivorId) {
       await appendThreadLocalInvalidate(tx, ChatContextType.USER, chat.id);
       await tx.pinnedUserChat.deleteMany({ where: { userChatId: chat.id } });
+      const dyingMsgs = await tx.chatMessage.findMany({
+        where: { chatContextType: ChatContextType.USER, contextId: chat.id },
+        select: { id: true },
+      });
+      await rehomeForwardHostsBeforeHardDelete(
+        dyingMsgs.map((m) => m.id),
+        tx
+      );
       await tx.chatMessage.deleteMany({
         where: { chatContextType: ChatContextType.USER, contextId: chat.id },
       });

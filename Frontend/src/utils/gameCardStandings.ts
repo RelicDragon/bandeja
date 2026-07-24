@@ -17,7 +17,9 @@ function isStandingOutcome(row: unknown): row is GameCardStandingOutcome {
   return typeof userId === 'string' && userId.length > 0;
 }
 
-function hasNumericPosition(outcome: GameCardStandingOutcome): boolean {
+function hasNumericPosition(
+  outcome: GameCardStandingOutcome
+): outcome is GameCardStandingOutcome & { position: number } {
   return typeof outcome.position === 'number' && Number.isFinite(outcome.position);
 }
 
@@ -30,9 +32,11 @@ export function hasOutcomeStandings(
   return (outcomes ?? []).some((row) => isStandingOutcome(row) && hasNumericPosition(row));
 }
 
-function sortByPosition(outcomes: readonly GameCardStandingOutcome[]): GameCardStandingOutcome[] {
+function sortByPosition<T extends GameCardStandingOutcome & { position: number }>(
+  outcomes: readonly T[]
+): T[] {
   return [...outcomes].sort((a, b) => {
-    const placeDiff = (a.position as number) - (b.position as number);
+    const placeDiff = a.position - b.position;
     if (placeDiff !== 0) return placeDiff;
     return a.userId.localeCompare(b.userId);
   });

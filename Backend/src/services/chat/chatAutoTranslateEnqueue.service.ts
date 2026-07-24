@@ -11,17 +11,21 @@ export class ChatAutoTranslateEnqueueService {
     const message = await prisma.chatMessage.findUnique({
       where: { id: messageId },
       select: {
+        id: true,
         content: true,
         messageType: true,
         senderId: true,
+        forwardedFromMessageId: true,
       },
     });
     if (!message || !message.senderId) return null;
 
     let sourceText = message.content?.trim() ?? '';
     if (!sourceText && message.messageType === MessageType.VOICE) {
+      const { resolveLinkedRootMessageId } = await import('./forwardMessage.service');
+      const hostId = resolveLinkedRootMessageId(message);
       const tr = await prisma.messageTranscription.findUnique({
-        where: { messageId },
+        where: { messageId: hostId },
         select: { transcription: true },
       });
       if (

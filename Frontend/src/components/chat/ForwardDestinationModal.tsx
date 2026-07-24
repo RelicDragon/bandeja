@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
-import { Gamepad2, Megaphone, Search, Users } from 'lucide-react';
-import type { ChatContextType, ChatMessage, GroupChannel } from '@/api/chat';
-import type { ChatItem } from '@/utils/chatListSort';
-import { getChatTitle } from '@/utils/chatListSort';
-import { mapThreadIndexRowsToSortedChatItems } from '@/services/chat/chatThreadIndex';
-import { chatLocalDb } from '@/services/chat/chatLocalDb';
+import { Search } from 'lucide-react';
+import type { ChatContextType, ChatMessage } from '@/api/chat';
 import { forwardMessageToContext } from '@/services/chat/forwardMessage';
+import {
+  destinationsFromChatItems,
+  loadLocalForwardChatItems,
+  loadNetworkForwardChatItems,
+  mergeForwardDestinations,
+  type ForwardDestination,
+} from '@/services/chat/forwardDestinations';
+import { ForwardDestinationAvatar } from '@/components/chat/ForwardDestinationAvatar';
 import { navigateToChatContext } from '@/utils/navigateToChatContext';
-import { parseMessagePreview } from '@/utils/messagePreview';
-import { isGroupChannelAdminOrOwner } from '@/utils/gameResults';
 import { useAuthStore } from '@/store/authStore';
 import {
   Dialog,
@@ -18,79 +20,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/Dialog';
-
-type Destination = {
-  contextType: ChatContextType;
-  contextId: string;
-  title: string;
-  kind: 'user' | 'group' | 'channel' | 'game';
-  preview: string;
-};
-
-function lastPreviewText(lm: unknown, t: ReturnType<typeof useTranslation>['t']): string {
-  if (!lm || typeof lm !== 'object' || !('preview' in lm)) return '';
-  const parsed = parseMessagePreview((lm as { preview?: string }).preview ?? null, t);
-  return parsed && parsed !== '[Media]' ? parsed : '';
-}
-
-function canWriteToChannel(channel: GroupChannel, userId: string): boolean {
-  // Broadcast channels: owner/admin only.
-  if (channel.isChannel) {
-    if (channel.isOwner === true) return true;
-    return isGroupChannelAdminOrOwner(channel, userId);
-  }
-  // Bug / market “channel” ChatItems are group-style: any participant can write.
-  if (channel.isParticipant === false) return false;
-  return true;
-}
-
-function itemToDestination(item: ChatItem, userId: string, t: ReturnType<typeof useTranslation>['t']): Destination | null {
-  if (item.type === 'user') {
-    return {
-      contextType: 'USER',
-      contextId: item.data.id,
-      title: getChatTitle(item, userId) || '—',
-      kind: 'user',
-      preview: lastPreviewText(item.data.lastMessage, t),
-    };
-  }
-  if (item.type === 'group') {
-    return {
-      contextType: 'GROUP',
-      contextId: item.data.id,
-      title: item.data.name?.trim() || '—',
-      kind: 'group',
-      preview: lastPreviewText(item.data.lastMessage, t),
-    };
-  }
-  if (item.type === 'channel') {
-    if (!canWriteToChannel(item.data, userId)) return null;
-    return {
-      contextType: 'GROUP',
-      contextId: item.data.id,
-      title: item.data.name?.trim() || '—',
-      kind: item.data.isChannel ? 'channel' : 'group',
-      preview: lastPreviewText(item.data.lastMessage, t),
-    };
-  }
-  if (item.type === 'game') {
-    if (item.data.status === 'ARCHIVED') return null;
-    return {
-      contextType: 'GAME',
-      contextId: item.data.id,
-      title: item.data.name?.trim() || '—',
-      kind: 'game',
-      preview: lastPreviewText(item.data.lastMessage, t),
-    };
-  }
-  return null;
-}
-
-function DestinationIcon({ kind }: { kind: Destination['kind'] }) {
-  if (kind === 'game') return <Gamepad2 className="w-4 h-4 text-gray-500 dark:text-gray-300" />;
-  if (kind === 'channel') return <Megaphone className="w-4 h-4 text-gray-500 dark:text-gray-300" />;
-  return <Users className="w-4 h-4 text-gray-500 dark:text-gray-300" />;
-}
 
 interface ForwardDestinationModalProps {
   isOpen: boolean;
@@ -109,43 +38,47 @@ export function ForwardDestinationModal({
 }: ForwardDestinationModalProps) {
   const { t } = useTranslation();
   const userId = useAuthStore((s) => s.user?.id);
-  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const blockedUserIds = useAuthStore((s) => s.user?.blockedUserIds);
+  const [destinations, setDestinations] = useState<ForwardDestination[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState('');
   const [sendingTo, setSendingTo] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !userId) return;
     let cancelled = false;
     setQuery('');
     setLoading(true);
+
+    const exclude = { contextType: currentContextType, contextId: currentContextId };
+    const blocked = blockedUserIds ?? [];
+
     void (async () => {
       try {
-        const rows = await chatLocalDb.threadIndex.toArray();
+        const localItems = await loadLocalForwardChatItems();
         if (cancelled) return;
-        const items = mapThreadIndexRowsToSortedChatItems(rows);
-        const seen = new Set<string>();
-        const mapped = items
-          .map((item) => (userId ? itemToDestination(item, userId, t) : null))
-          .filter((d): d is Destination => !!d)
-          .filter((d) => {
-            if (d.contextType === currentContextType && d.contextId === currentContextId) {
-              return false;
-            }
-            const key = `${d.contextType}:${d.contextId}`;
-            if (seen.has(key)) return false;
-            seen.add(key);
-            return true;
-          });
-        setDestinations(mapped);
-      } finally {
+        const localDest = destinationsFromChatItems(localItems, userId, t, exclude);
+        setDestinations(localDest);
+        setLoading(false);
+
+        try {
+          const networkItems = await loadNetworkForwardChatItems(userId, blocked);
+          if (cancelled) return;
+          const networkDest = destinationsFromChatItems(networkItems, userId, t, exclude);
+          setDestinations((prev) => mergeForwardDestinations(prev, networkDest));
+        } catch (err) {
+          console.error('Forward destinations network load failed:', err);
+        }
+      } catch (err) {
+        console.error('Forward destinations local load failed:', err);
         if (!cancelled) setLoading(false);
       }
     })();
+
     return () => {
       cancelled = true;
     };
-  }, [isOpen, userId, currentContextType, currentContextId, t]);
+  }, [isOpen, userId, blockedUserIds, currentContextType, currentContextId, t]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -155,7 +88,7 @@ export function ForwardDestinationModal({
     );
   }, [destinations, query]);
 
-  const handlePick = async (dest: Destination) => {
+  const handlePick = async (dest: ForwardDestination) => {
     if (!message || sendingTo) return;
     setSendingTo(dest.contextId);
     try {
@@ -225,9 +158,7 @@ export function ForwardDestinationModal({
                       disabled={!!sendingTo}
                       className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-sky-50 dark:hover:bg-sky-950/40 disabled:opacity-50 transition-colors"
                     >
-                      <span className="shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-sky-100 to-indigo-100 dark:from-sky-900/50 dark:to-indigo-900/40 flex items-center justify-center">
-                        <DestinationIcon kind={dest.kind} />
-                      </span>
+                      <ForwardDestinationAvatar dest={dest} />
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium text-gray-800 dark:text-gray-100">
                           {dest.title}

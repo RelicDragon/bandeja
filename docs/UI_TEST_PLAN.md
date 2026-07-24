@@ -644,6 +644,7 @@ Frontend/e2e/
 | GD-06d | Photos before FINAL | Game with `resultsStatus` not FINAL | Nobody sees photos section or card thumb (any viewer) |
 | GD-06e | Photo privacy toggle | FINAL game with visible Photos section; owner/admin toggles in gallery header | Setting persists; visibility matches matrix |
 | GD-06f | Photo upload permissions | Participant uploads; stranger cannot upload/set main | Upload/set-main succeed for participant/admin only |
+| GD-06g | Fullscreen game photo original + gestures | Open Photos section → tap a photo | Viewer loads `originalUrl`; pinch/rotate/wheel/double-click behave like CH-30c–CH-30e |
 | GD-07 | Open game chat | Chat button | `/games/:id/chat` |
 | GD-104 | Weather dialog opens on game day | Game with weather summary → open forecast dialog | Full-day hourly chart/list for game day; game hours tagged “Game” |
 | GD-106 | Weather dialog archive day | Past game with weather → open dialog | Full 24h archive day (not game-window only); hourly rows and chart show precipitation in mm |
@@ -761,7 +762,9 @@ Frontend/e2e/
 | GD-36d | Show in stories toggle | PLAYING (or outcome) user on FINAL toggles off then on | Switch above tabs; entity label; default on; off removes GAME_RESULT (and bracket champion on league season) from followers live+feed; on restores when eligible; profile shareGameResultsToFollowers still required |
 | GD-36e | Stories switch hidden for non-players | View FINAL results as guest/spectator | No "Show this … in my stories" switch |
 | GD-36f | Toggle survives tab switch | Toggle off, switch to Scores then back | Switch stays off; card+switch remain above Results/Stats/Scores control |
-| GD-36g | League season / training / bar switch | FINAL league season, training, or bar as player | Switch visible (these entity types do not use results tabs); toggle still gates stories |
+| GD-36g | League season stories switch | Open LEAGUE_SEASON as player (even if season resultsStatus is not FINAL) | Switch visible; toggles season story visibility including bracket champion |
+| GD-36h | Landscape table view switch | FINAL game in landscape/table view as player | Stories switch remains visible above the table (not only in hidden results engine host) |
+| GD-36i | Final fixture also gates champion | Toggle off on playoff final (GRAND_FINAL / terminal MAIN) | Hides that fixture GAME_RESULT and mirrors to season participant → BRACKET_CHAMPION hidden too |
 | GD-37 | Game results artifact | Photo/story from results | Artifact flow |
 
 ### 9.5 Bets
@@ -955,13 +958,19 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-23 | Reaction | Add reaction on user or system message (e.g. join/leave) | Reaction strip visible; emoji persists |
 | CH-24 | Pin message | Pin (if permitted) | Pinned bar shows |
 | CH-25 | Unpin message | Unpin | Bar updates |
-| CH-26 | Forward message | Long-press → Forward → pick chat | Opens destination immediately; message appears with “Forwarded from” header |
-| CH-26a | Forward attribution | Tap “Forwarded from” title on a forwarded message | Opens the source chat (and anchors to original when possible) |
-| CH-26b | Forward media (no re-upload) | Forward image/GIF/video/document/sticker | Media plays in target; request sends only forwardedFromMessageId (no CDN upload) |
+| CH-26 | Forward message | Long-press → Forward → pick chat | Opens destination immediately; message appears with “Forwarded from” header; body is a live link to the original |
+| CH-26a | Forward attribution | Tap “Forwarded from” title on a forwarded message (light + dark theme) | Label readable on chat background; opens the source chat (Back returns to dest); anchors to original when possible |
+| CH-26b | Forward media (no re-upload) | Forward image/GIF/video/document/sticker/voice | Media plays in target; request sends only forwardedFromMessageId (no CDN upload) |
 | CH-26c | Forward nested | Forward an already-forwarded message | Header still shows original author/source chat; content matches selected bubble |
 | CH-26d | Forward offline/retry | Forward while briefly offline | Opens destination; failed send shows toast + failed outbox in dest |
 | CH-26e | Forward from private game chat | Forward PRIVATE game message → tap attribution | Opens that game’s PRIVATE thread |
 | CH-26f | Forward dest filter | Open Forward picker as channel subscriber | Subscriber-only channels and archived games are not listed |
+| CH-26l | Forward dest local+network | Open Forward from a thread before Chats tab hydrated; also after a new DM/group/game exists only on server | Picker shows local cache immediately, then fills with full DMs/groups/games/channels/market from API (current chat excluded); row avatars match ChatList (player/group/channel/game entity) |
+| CH-26g | Forward poll (shared votes) | Forward a poll → open dest chat → vote; also re-forward that poll; vote from PRIVATE game thread with PUBLIC forward | Same poll/results as original; vote from either chat updates both; nested forward works; GAME chatType rooms all update live |
+| CH-26h | Forward voice | Forward a voice message | Plays in dest with waveform/duration; no re-upload; transcription appears on host and linked forwards |
+| CH-26i | Forward edit blocked | Own forwarded TEXT → Edit / ArrowUp | No Edit action; API rejects content update |
+| CH-26j | Host edit syncs forwards | Edit original TEXT that was forwarded to another chat | Dest bubble + list preview update live (no stale body) |
+| CH-26k | Forward poll list preview | Forward poll → check dest chat list row | Preview shows poll type + question (`[TYPE:POLL]…`), not plain text |
 | CH-27 | Copy text | Copy action | Clipboard content |
 | CH-28 | Send image | Attach image | Image message renders |
 | CH-96 | GIF provider URL-only paste → GIF | In GAME/USER/GROUP/BUG chat, paste only an allowlisted HTTPS URL and send: Giphy (`giphy.com/gifs/…` or `media.giphy.com/…`), Klipy direct (`static*.klipy.com/…gif`) or share page (`klipy.com/gifs/{slug}` with `KLIPY_API_KEY`), Tenor page (`tenor.com/view/…`) or direct media (`media*.tenor.com/….gif`) | Message becomes `IMAGE` with re-hosted media (our CDN/`uploads/chat/…`, not giphy/klipy/tenor hosts); GIF animates with fully transparent bubble panel (Telegram-style, no colored/white chrome); time/ticks overlay the GIF |
@@ -1029,6 +1038,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-30 | Fullscreen media | Tap image/video | Viewer opens |
 | CH-30a | Copy fullscreen image | Open image viewer → tap copy | Desktop/native: “Image copied” toast; paste works. Mobile web without clipboard image API: share sheet opens with “Choose Copy or Save…” toast |
 | CH-30b | Download fullscreen image | Open image viewer → tap download | Desktop web: file download + “Image downloaded” toast. iOS/Android/native + mobile web: share sheet opens with “Choose Copy or Save…” toast; user can save to Photos/files |
+| CH-30c | Fullscreen uses original photo | Send a chat photo (or open game photos gallery) → tap thumbnail to open viewer | Network/img src is the original asset (`…/originals/…`), not the grid thumbnail (`…/thumbnails/…_thumb…`); image looks sharp when zoomed |
+| CH-30d | Fullscreen pinch zoom/rotate (mobile) | Open image → two-finger pinch in/out and twist | Image scales and rotates under fingers; reset restores fit; swipe-down dismiss still works only when not zoomed/rotated |
+| CH-30e | Fullscreen desktop wheel/trackpad | Open image on desktop → scroll wheel or trackpad pinch; drag when zoomed; double-click | Zooms toward cursor; pan works when zoomed; double-click toggles zoom; Reset restores fit |
 | CH-31 | Send voice (if enabled) | Record voice | Audio message |
 | CH-32 | Create poll | Poll composer | Poll message |
 | CH-33 | Vote on poll | Select option | Vote count updates |

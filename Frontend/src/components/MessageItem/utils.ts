@@ -90,3 +90,16 @@ export function resolveChatImageDisplayUrl(
   if (isAnimatedChatImageUrl(original) && !reduceMotion) return original;
   return thumbnailUrl || original;
 }
+
+/** Fullscreen viewer: always prefer the original media URL (not the grid thumbnail). */
+export function resolveChatImageFullscreenUrl(
+  mediaUrl: string | undefined,
+  thumbnailUrl: string | undefined,
+  reduceMotion = false
+): string {
+  const original = mediaUrl || '';
+  if (isAnimatedChatImageUrl(original) && reduceMotion) {
+    return thumbnailUrl || original;
+  }
+  return original || thumbnailUrl || '';
+}

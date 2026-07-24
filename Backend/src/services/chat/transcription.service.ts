@@ -221,7 +221,19 @@ export class TranscriptionService {
     userId: string,
     audioUrl: string,
     audioDurationMs?: number | null
-  ): Promise<{ transcription: string; languageCode: string | null; syncSeq?: number }> {
+  ): Promise<{
+    transcription: string;
+    languageCode: string | null;
+    syncSeq?: number;
+    relatedMessageIds?: string[];
+    fanoutTargets?: Array<{
+      messageId: string;
+      chatContextType: import('@prisma/client').ChatContextType;
+      contextId: string;
+      chatType: import('@prisma/client').ChatType;
+      syncSeq?: number;
+    }>;
+  }> {
     if (!audioUrl?.trim()) {
       console.error('[transcription] missing_audio_url', { messageId, userId });
       throw new ApiError(400, 'Voice message has no audio');
@@ -233,9 +245,34 @@ export class TranscriptionService {
       });
 
       if (existing && existing.transcription !== MESSAGE_TRANSCRIPTION_PENDING) {
+        const { findLiveForwardsOfMessage } = await import('./forwardMessage.service');
+        const forwards = await findLiveForwardsOfMessage(messageId);
+        const host = await prisma.chatMessage.findUnique({
+          where: { id: messageId },
+          select: { chatContextType: true, contextId: true, chatType: true },
+        });
+        const relatedMessageIds = [messageId, ...forwards.map((f) => f.id)];
+        const fanoutTargets = host
+          ? [
+              {
+                messageId,
+                chatContextType: host.chatContextType,
+                contextId: host.contextId,
+                chatType: host.chatType,
+              },
+              ...forwards.map((f) => ({
+                messageId: f.id,
+                chatContextType: f.chatContextType,
+                contextId: f.contextId,
+                chatType: f.chatType,
+              })),
+            ]
+          : [];
         return {
           transcription: existing.transcription,
           languageCode: existing.languageCode,
+          relatedMessageIds,
+          fanoutTargets,
         };
       }
 
@@ -301,14 +338,44 @@ export class TranscriptionService {
         }
         const chatMsg = await prisma.chatMessage.findUnique({
           where: { id: messageId },
-          select: { chatContextType: true, contextId: true },
+          select: { chatContextType: true, contextId: true, chatType: true },
         });
         if (!chatMsg) {
           throw new ApiError(404, 'Message not found');
         }
         const { text, language } = await this.transcribeWithWhisper(audioUrl, userId, messageId);
         const audioTranscription = { transcription: text, languageCode: language };
-        const syncSeq = await prisma.$transaction(async (tx) => {
+        const { findLiveForwardsOfMessage } = await import('./forwardMessage.service');
+        const forwards = await findLiveForwardsOfMessage(messageId);
+        const relatedMessageIds = [messageId, ...forwards.map((f) => f.id)];
+        const fanoutTargets = [
+          {
+            messageId,
+            chatContextType: chatMsg.chatContextType,
+            contextId: chatMsg.contextId,
+            chatType: chatMsg.chatType,
+            syncSeq: undefined as number | undefined,
+          },
+          ...forwards.map((f) => ({
+            messageId: f.id,
+            chatContextType: f.chatContextType,
+            contextId: f.contextId,
+            chatType: f.chatType,
+            syncSeq: undefined as number | undefined,
+          })),
+        ];
+        const seen = new Set<string>();
+        const uniqueTargets = fanoutTargets.filter((t) => {
+          const key =
+            t.chatContextType === 'GAME'
+              ? `${t.chatContextType}:${t.contextId}:${t.chatType}`
+              : `${t.chatContextType}:${t.contextId}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+
+        await prisma.$transaction(async (tx) => {
           await tx.messageTranscription.update({
             where: { messageId },
             data: {
@@ -316,28 +383,39 @@ export class TranscriptionService {
               languageCode: language,
             },
           });
-          return ChatSyncEventService.appendEventInTransaction(
-            tx,
-            chatMsg.chatContextType,
-            chatMsg.contextId,
-            ChatSyncEventType.MESSAGE_TRANSCRIPTION_UPDATED,
-            { messageId, audioTranscription }
-          );
+          for (const target of uniqueTargets) {
+            target.syncSeq = await ChatSyncEventService.appendEventInTransaction(
+              tx,
+              target.chatContextType,
+              target.contextId,
+              ChatSyncEventType.MESSAGE_TRANSCRIPTION_UPDATED,
+              { messageId, relatedMessageIds, audioTranscription }
+            );
+          }
         });
+        const hostSyncSeq = uniqueTargets.find((t) => t.messageId === messageId)?.syncSeq;
         if (text !== MESSAGE_TRANSCRIPTION_NO_SPEECH) {
           const { ChatAutoTranslateEnqueueService } = await import(
             './chatAutoTranslateEnqueue.service'
           );
-          void ChatAutoTranslateEnqueueService.onTranscriptionReady(messageId).catch(
-            (enqueueErr) => {
-              console.error('[auto-translate] enqueue after transcription failed', {
-                messageId,
-                enqueueErr,
-              });
-            }
-          );
+          for (const mid of relatedMessageIds) {
+            void ChatAutoTranslateEnqueueService.onTranscriptionReady(mid).catch(
+              (enqueueErr) => {
+                console.error('[auto-translate] enqueue after transcription failed', {
+                  messageId: mid,
+                  enqueueErr,
+                });
+              }
+            );
+          }
         }
-        return { transcription: text, languageCode: language, syncSeq };
+        return {
+          transcription: text,
+          languageCode: language,
+          syncSeq: hostSyncSeq,
+          relatedMessageIds,
+          fanoutTargets: uniqueTargets,
+        };
       } catch (err) {
         const cleared = await prisma.messageTranscription.deleteMany({
           where: {

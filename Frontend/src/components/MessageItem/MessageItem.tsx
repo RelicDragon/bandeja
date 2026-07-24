@@ -21,7 +21,13 @@ import { translationEqualsSource } from '@/utils/translationOutputNormalize';
 import { useChatAutoTranslateSlots } from '@/contexts/ChatAutoTranslateContext';
 import { resolveDisplaySettings } from '@/utils/displayPreferences';
 import { MessageItemProps } from './types';
-import { parseContentWithMentionsAndUrls, formatMessageTime as formatMessageTimeUtil, resolveChatImageDisplayUrl } from './utils';
+import {
+  parseContentWithMentionsAndUrls,
+  formatMessageTime as formatMessageTimeUtil,
+  resolveChatImageDisplayUrl,
+  resolveChatImageFullscreenUrl,
+} from './utils';
+import { resolveChatMediaUrl } from '@/components/audio/audioWaveformUtils';
 import { formatVoiceTranscriptionForDisplay, isVoiceTranscriptionNoSpeech } from '@/utils/voiceTranscriptionDisplay';
 import { SystemMessageBlock } from './SystemMessageBlock';
 import { SystemMessageReactionMotion } from './SystemMessageReactionMotion';
@@ -284,7 +290,17 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
       reduceMotion
     );
 
-  const handleImageClick = (url: string) => setFullscreenImage(url || null);
+  const getFullscreenUrl = (index: number): string =>
+    resolveChatMediaUrl(
+      resolveChatImageFullscreenUrl(
+        currentMessage.mediaUrls?.[index],
+        currentMessage.thumbnailUrls?.[index],
+        reduceMotion
+      )
+    );
+
+  const handleImageClick = (url: string) =>
+    setFullscreenImage(url ? resolveChatMediaUrl(url) : null);
   const handleVideoOpen = (videoUrl: string, posterUrl: string) =>
     setFullscreenVideo({ videoUrl, posterUrl });
 
@@ -564,7 +580,6 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                   <div className={`flex flex-col ${isOwnMessage ? 'items-end' : 'items-start'}`}>
                     <ForwardedFromHeader
                       forwardedFrom={forwardedFrom}
-                      isOwnMessage={isOwnMessage}
                       label={t('chat.forwardedFrom', { defaultValue: 'Forwarded from' })}
                     />
                   </div>
@@ -592,6 +607,7 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                       isTranscribing={isTranscribing}
                       formatMessageTime={formatMessageTime}
                       getThumbnailUrl={getThumbnailUrl}
+                      getFullscreenUrl={getFullscreenUrl}
                       onImageClick={handleImageClick}
                       onVideoOpen={handleVideoOpen}
                       inlineVideoPlaybackPaused={!!fullscreenVideo}
@@ -610,7 +626,12 @@ export const MessageItem: React.FC<MessageItemProps> = memo(function MessageItem
                       onRemoveFromQueue={onRemoveFromQueue}
                       firstExternalHttpUrl={firstExternalHttpUrl}
                       initialLinkPreview={storedLinkPreview}
-                      canDismissLinkPreview={isOwnMessage && !isOffline && !isSending}
+                      canDismissLinkPreview={
+                        isOwnMessage &&
+                        !isOffline &&
+                        !isSending &&
+                        !currentMessage.forwardedFromMessageId
+                      }
                       onDismissLinkPreview={handleDismissLinkPreview}
                       loadMediaEager={loadMediaEager}
                       t={t}

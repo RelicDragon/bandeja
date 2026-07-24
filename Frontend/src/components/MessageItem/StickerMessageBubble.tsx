@@ -90,13 +90,19 @@ export function StickerMessageBubble({
 
   const clickable = !!onStickerClick && !!url;
   const handleClick = () => {
-    if (clickable) onStickerClick?.(url);
+    if (!clickable) return;
+    // Prefer the richest available asset for fullscreen (animated > static > current).
+    const fullscreenSrc =
+      (!reduceMotion && animatedUrl?.trim()) || staticUrl?.trim() || url;
+    onStickerClick?.(fullscreenSrc);
   };
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (!clickable) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      onStickerClick?.(url);
+      const fullscreenSrc =
+        (!reduceMotion && animatedUrl?.trim()) || staticUrl?.trim() || url;
+      onStickerClick?.(fullscreenSrc);
     }
   };
 

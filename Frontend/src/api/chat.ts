@@ -50,6 +50,8 @@ export interface PollVote {
 
 export interface Poll {
   id: string;
+  /** Host ChatMessage id that owns this poll (shared across linked forwards). */
+  messageId?: string;
   question: string;
   type: PollType;
   isAnonymous: boolean;
@@ -294,6 +296,8 @@ export interface OptimisticMessagePayload {
   storyReply?: StoryReplyInfo;
   forwardedFromMessageId?: string;
   forwardedFrom?: ForwardedFromInfo;
+  /** Local-only optimistic paint for linked poll forwards (not sent on create). */
+  poll?: import('@/api/chat').Poll;
   linkPreviewDisabled?: boolean;
   linkPreviewUrl?: string | null;
   linkPreview?: import('@/api/linkPreview').LinkPreviewData | null;

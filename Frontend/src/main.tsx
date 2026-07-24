@@ -14,6 +14,10 @@ import { installChunkLoadRecovery } from './utils/chunkLoadRecovery';
 
 const CACHE_VERSION = 'v1';
 
+if (import.meta.env.DEV) {
+  document.title = `[DEV] ${document.title}`;
+}
+
 installChunkLoadRecovery();
 
 initChatSyncMetricsSession();

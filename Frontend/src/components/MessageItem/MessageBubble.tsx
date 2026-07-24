@@ -34,6 +34,7 @@ interface MessageBubbleProps {
   translationRevealKey?: string;
   formatMessageTime: (dateString: string) => string;
   getThumbnailUrl: (index: number) => string;
+  getFullscreenUrl: (index: number) => string;
   onImageClick: (url: string) => void;
   onMentionClick: (userId: string) => void;
   onUrlClick: (url: string, e: React.MouseEvent) => void;
@@ -76,6 +77,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   translationRevealKey,
   formatMessageTime,
   getThumbnailUrl,
+  getFullscreenUrl,
   onImageClick,
   onMentionClick,
   onUrlClick,
@@ -278,6 +280,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         <MessageMediaGrid
           mediaUrls={message.mediaUrls}
           getThumbnailUrl={getThumbnailUrl}
+          getFullscreenUrl={getFullscreenUrl}
           onImageClick={onImageClick}
           hasContentBelow={!!message.content}
           loadEager={loadMediaEager}

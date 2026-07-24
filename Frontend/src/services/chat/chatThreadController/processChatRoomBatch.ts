@@ -130,22 +130,32 @@ function mapBatchToLiveEvents(batch: ChatRoomEvent[]): ThreadLiveEvent[] {
         break;
       }
       case 'transcription': {
-        events.push({
-          type: 'messageUpdated',
-          messageId: ev.data.messageId,
-          audioTranscription: ev.data.audioTranscription,
-          updatedAt: ev.data.timestamp,
-          syncSeq: ev.data.syncSeq,
-        });
+        const related = Array.isArray(ev.data.relatedMessageIds)
+          ? ev.data.relatedMessageIds
+          : [ev.data.messageId];
+        for (const messageId of related) {
+          events.push({
+            type: 'messageUpdated',
+            messageId,
+            audioTranscription: ev.data.audioTranscription,
+            updatedAt: ev.data.timestamp,
+            syncSeq: ev.data.syncSeq,
+          });
+        }
         break;
       }
       case 'pollVote': {
-        events.push({
-          type: 'messageUpdated',
-          messageId: ev.data.messageId,
-          poll: ev.data.updatedPoll,
-          syncSeq: ev.data.syncSeq,
-        });
+        const related = Array.isArray(ev.data.relatedMessageIds)
+          ? ev.data.relatedMessageIds
+          : [ev.data.messageId];
+        for (const messageId of related) {
+          events.push({
+            type: 'messageUpdated',
+            messageId,
+            poll: ev.data.updatedPoll,
+            syncSeq: ev.data.syncSeq,
+          });
+        }
         break;
       }
       case 'translation':

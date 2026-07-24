@@ -5,9 +5,10 @@ import type { ChatNavigateOptions } from '@/pages/GameChat/types';
 /** Open the source chat for a forwarded message attribution. */
 export function navigateToForwardedFromChat(info: ForwardedFromInfo): void {
   const { chatContextType, contextId, isChannel, messageId, chatType } = info;
-  if (!contextId) return;
+  if (!contextId || !navigationService.isReady()) return;
   const opts: ChatNavigateOptions = {
     forceReload: true,
+    replace: false,
     ...(messageId ? { anchorMessageId: messageId } : {}),
     ...(chatType ? { initialChatType: chatType } : {}),
   };

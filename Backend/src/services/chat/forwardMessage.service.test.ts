@@ -39,7 +39,7 @@ assert.equal(FORWARDABLE_MESSAGE_TYPES.has(MessageType.IMAGE), true);
 assert.equal(FORWARDABLE_MESSAGE_TYPES.has(MessageType.STICKER), true);
 assert.equal(FORWARDABLE_MESSAGE_TYPES.has(MessageType.VIDEO), true);
 assert.equal(FORWARDABLE_MESSAGE_TYPES.has(MessageType.DOCUMENT), true);
-assert.equal(FORWARDABLE_MESSAGE_TYPES.has(MessageType.VOICE), false);
-assert.equal(FORWARDABLE_MESSAGE_TYPES.has(MessageType.POLL), false);
+assert.equal(FORWARDABLE_MESSAGE_TYPES.has(MessageType.VOICE), true);
+assert.equal(FORWARDABLE_MESSAGE_TYPES.has(MessageType.POLL), true);
 
 console.log('forwardMessage.service.test.ts: ok');

@@ -756,7 +756,13 @@ export class ParticipantService {
         id: true,
         status: true,
         showInStories: true,
-        game: { select: { entityType: true } },
+        game: {
+          select: {
+            entityType: true,
+            parentId: true,
+            parent: { select: { id: true, entityType: true } },
+          },
+        },
       },
     });
 
@@ -785,6 +791,32 @@ export class ParticipantService {
       select: { showInStories: true },
     });
 
+    const seasonParentId =
+      participant.game.parent?.entityType === 'LEAGUE_SEASON'
+        ? participant.game.parent.id
+        : null;
+
+    const terminalFinal =
+      seasonParentId == null
+        ? null
+        : await prisma.leagueBracketSlot.findFirst({
+            where: {
+              gameId,
+              OR: [
+                { slotKind: 'GRAND_FINAL' },
+                { slotKind: 'MAIN', winnerSlotId: null },
+              ],
+            },
+            select: { id: true },
+          });
+
+    if (seasonParentId && terminalFinal) {
+      await prisma.gameParticipant.updateMany({
+        where: { gameId: seasonParentId, userId },
+        data: { showInStories },
+      });
+    }
+
     try {
       await syncParticipantShowInStoriesSideEffects({
         gameId,
@@ -792,6 +824,14 @@ export class ParticipantService {
         showInStories: updated.showInStories,
         entityType: participant.game.entityType,
       });
+      if (seasonParentId && terminalFinal) {
+        await syncParticipantShowInStoriesSideEffects({
+          gameId: seasonParentId,
+          userId,
+          showInStories: updated.showInStories,
+          entityType: 'LEAGUE_SEASON',
+        });
+      }
     } catch (err) {
       console.error('[showInStories] story sync failed after persist', err);
     }

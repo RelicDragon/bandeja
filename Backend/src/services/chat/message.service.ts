@@ -39,6 +39,8 @@ import { resolveOutgoingChatMessageType } from './resolveOutgoingChatMessageType
 import {
   resolveForwardCreateFields,
   findReferencedChatMediaUrls,
+  findLiveForwardsOfMessage,
+  hydrateForwardedMessages,
   type ForwardedFromSnapshot,
 } from './forwardMessage.service';
 import {
@@ -475,7 +477,9 @@ export class MessageService {
       return messages;
     }
 
-    const messageIds = messages.map(m => m.id);
+    const hydrated = await hydrateForwardedMessages(messages);
+
+    const messageIds = hydrated.map(m => m.id);
     const translations = await prisma.messageTranslation.findMany({
       where: {
         messageId: { in: messageIds },
@@ -490,7 +494,7 @@ export class MessageService {
 
     const translationMap = new Map(translations.map(t => [t.messageId, t]));
 
-    const voiceMessageIds = messages.filter((m: { messageType?: string }) => m.messageType === 'VOICE').map((m: { id: string }) => m.id);
+    const voiceMessageIds = hydrated.filter((m: { messageType?: string }) => m.messageType === 'VOICE').map((m: { id: string }) => m.id);
     const transcriptionRows =
       voiceMessageIds.length > 0
         ? await prisma.messageTranscription.findMany({
@@ -500,16 +504,22 @@ export class MessageService {
         : [];
     const transcriptionMap = new Map(transcriptionRows.map((r) => [r.messageId, r]));
 
-    return messages.map(message => {
+    return hydrated.map(message => {
       const { serverSyncSeq, ...rest } = message as typeof message & { serverSyncSeq?: number | null };
       const translation = translationMap.get(message.id);
       const trRow = transcriptionMap.get(message.id);
-      const audioTranscription =
+      const fromTranscriptionTable =
         trRow &&
         trRow.transcription &&
         trRow.transcription !== MESSAGE_TRANSCRIPTION_PENDING
           ? { transcription: trRow.transcription, languageCode: trRow.languageCode }
           : undefined;
+      // Linked voice forwards hydrate transcription from the original message.
+      const audioTranscription =
+        fromTranscriptionTable ??
+        (message as { audioTranscription?: { transcription: string; languageCode: string | null } })
+          .audioTranscription ??
+        undefined;
       const sourceText =
         (message.content?.trim() || '') ||
         (audioTranscription?.transcription?.trim() || '');
@@ -668,6 +678,8 @@ export class MessageService {
         thumbnailUrls: forwardFields.thumbnailUrls,
         messageType: forwardFields.messageType,
         stickerId: forwardFields.stickerId,
+        audioDurationMs: forwardFields.audioDurationMs,
+        waveformData: forwardFields.waveformData,
         videoDurationMs: forwardFields.videoDurationMs,
         videoWidth: forwardFields.videoWidth,
         videoHeight: forwardFields.videoHeight,
@@ -679,6 +691,7 @@ export class MessageService {
         mentionIds: [],
         replyToId: undefined,
         storyReply: undefined,
+        // Link forwards never create a new Poll — votes stay on the original.
         poll: undefined,
       };
     }
@@ -795,7 +808,8 @@ export class MessageService {
           { chatContextType, contextId },
           senderId,
         );
-        return projectMessageEmbeddedUsers(existing, sport) as typeof existing;
+        const [hydrated] = await hydrateForwardedMessages([existing]);
+        return projectMessageEmbeddedUsers(hydrated ?? existing, sport) as typeof existing;
       }
     }
 
@@ -993,7 +1007,15 @@ export class MessageService {
           ? (resolvedStickerEmoji ?? 'sticker')
           : resolvedMessageType === MessageType.DOCUMENT
             ? (documentMeta?.fileName ?? 'document')
-            : computeContentSearchable(workingContent ?? null, poll?.question);
+            : resolvedMessageType === MessageType.POLL && forwardFields?.linkedPollQuestion
+              ? computeContentSearchable(null, forwardFields.linkedPollQuestion)
+              : computeContentSearchable(workingContent ?? null, poll?.question);
+
+    if (resolvedMessageType === MessageType.POLL && !poll && !forwardFields) {
+      throw new ApiError(400, 'Poll payload is required', true, {
+        code: 'chat.poll.required',
+      });
+    }
 
     let linkPreviewSnapshot: Awaited<ReturnType<typeof resolveLinkPreviewForOutgoingMessage>> = null;
     if (forwardFields) {
@@ -1113,6 +1135,12 @@ export class MessageService {
         })) as any;
       }
 
+      // Link forwards: attach live original body/poll before clients see MESSAGE_CREATED.
+      if (forwardFields) {
+        const [hydrated] = await hydrateForwardedMessages([finalMessage]);
+        if (hydrated) finalMessage = hydrated as typeof finalMessage;
+      }
+
       const syncSeq = await ChatSyncEventService.appendEventInTransaction(
         tx,
         chatContextType,
@@ -1165,13 +1193,16 @@ export class MessageService {
               console.error('[MessageService] bumpStickerRecent failed (dedupe)', err);
             }
           }
-          return recovered as any;
+          const [hydrated] = await hydrateForwardedMessages([recovered]);
+          return (hydrated ?? recovered) as any;
         }
       }
       throw e;
     }
 
-    const message = result.message as typeof result.message & { syncSeq: number };
+    const messageRaw = result.message as typeof result.message & { syncSeq: number };
+    const [messageHydrated] = await hydrateForwardedMessages([messageRaw]);
+    const message = (messageHydrated ?? messageRaw) as typeof result.message & { syncSeq: number };
     (message as { syncSeq: number }).syncSeq = result.syncSeq;
 
     if (resolvedMessageType === MessageType.STICKER && resolvedStickerId && !forwardFields) {
@@ -1410,12 +1441,18 @@ export class MessageService {
       where: { messageId: message.id },
       select: { transcription: true, languageCode: true },
     });
-    const audioTranscription =
+    const fromTable =
       trRow &&
       trRow.transcription &&
       trRow.transcription !== MESSAGE_TRANSCRIPTION_PENDING
         ? { transcription: trRow.transcription, languageCode: trRow.languageCode }
         : undefined;
+    // Linked voice forwards hydrate transcription from the original before emit.
+    const audioTranscription =
+      fromTable ??
+      (message as { audioTranscription?: { transcription: string; languageCode: string | null } })
+        .audioTranscription ??
+      undefined;
 
     const emitSourceText =
       (message.content?.trim() || '') ||
@@ -1791,6 +1828,12 @@ export class MessageService {
       throw new ApiError(403, 'You can only edit your own messages');
     }
 
+    if (message.forwardedFromMessageId) {
+      throw new ApiError(400, 'Forwarded messages cannot be edited', true, {
+        code: 'chat.forward.editForbidden',
+      });
+    }
+
     if (message.messageType === MessageType.VOICE) {
       throw new ApiError(400, 'Voice messages cannot be edited');
     }
@@ -1805,6 +1848,10 @@ export class MessageService {
 
     if (message.messageType === MessageType.DOCUMENT) {
       throw new ApiError(400, 'Document messages cannot be edited');
+    }
+
+    if (message.messageType === MessageType.POLL) {
+      throw new ApiError(400, 'Poll messages cannot be edited');
     }
 
     await this.validateMessageAccess(message, userId, true);
@@ -1877,7 +1924,96 @@ export class MessageService {
       console.error('[auto-translate] re-enqueue on edit failed', { messageId, err });
     });
 
-    return updated;
+    type EditFanoutTarget = {
+      messageId: string;
+      chatContextType: typeof updated.chatContextType;
+      contextId: string;
+      chatType: typeof updated.chatType;
+      syncSeq: number;
+      message: typeof updated;
+    };
+
+    const fanoutTargets: EditFanoutTarget[] = [
+      {
+        messageId: updated.id,
+        chatContextType: updated.chatContextType,
+        contextId: updated.contextId,
+        chatType: updated.chatType,
+        syncSeq,
+        message: updated,
+      },
+    ];
+
+    const liveForwards = await findLiveForwardsOfMessage(messageId);
+    for (const forward of liveForwards) {
+      const { forwardRow, forwardSyncSeq } = await prisma.$transaction(async (tx) => {
+        const row = await tx.chatMessage.update({
+          where: { id: forward.id },
+          data: {
+            content,
+            contentSearchable,
+            linkPreviewUrl,
+            linkPreview: linkPreview ?? Prisma.DbNull,
+            linkPreviewDisabled: message.linkPreviewDisabled,
+          },
+          include: this.getMessageInclude(),
+        });
+        const seq = await ChatSyncEventService.appendEventInTransaction(
+          tx,
+          forward.chatContextType,
+          forward.contextId,
+          ChatSyncEventType.MESSAGE_UPDATED,
+          chatSyncMessageUpdatedCompactPayload({
+            id: row.id,
+            content: row.content,
+            mentionIds: row.mentionIds,
+            editedAt: updated.editedAt,
+            updatedAt: row.updatedAt,
+            linkPreviewDisabled: row.linkPreviewDisabled,
+            linkPreviewUrl: row.linkPreviewUrl,
+            linkPreview: row.linkPreview,
+          })
+        );
+        await tx.chatMessage.update({
+          where: { id: forward.id },
+          data: { serverSyncSeq: seq },
+        });
+        const fresh = await tx.chatMessage.findUnique({
+          where: { id: forward.id },
+          include: this.getMessageInclude(),
+        });
+        const finalRow = (fresh ?? row) as typeof row;
+        (finalRow as { syncSeq?: number }).syncSeq = seq;
+        // Overlay host editedAt so clients show "edited" on linked shells.
+        (finalRow as { editedAt?: Date | null }).editedAt = updated.editedAt;
+        const [hydrated] = await hydrateForwardedMessages([
+          finalRow as unknown as Record<string, unknown>,
+        ]);
+        return {
+          forwardRow: (hydrated ?? finalRow) as typeof row,
+          forwardSyncSeq: seq,
+        };
+      });
+
+      await updateLastMessagePreview(forward.chatContextType, forward.contextId);
+      void ChatAutoTranslateEnqueueService.onMessageEdited(forward.id).catch((err) => {
+        console.error('[auto-translate] re-enqueue on forward edit failed', {
+          messageId: forward.id,
+          err,
+        });
+      });
+
+      fanoutTargets.push({
+        messageId: forward.id,
+        chatContextType: forward.chatContextType,
+        contextId: forward.contextId,
+        chatType: forward.chatType,
+        syncSeq: forwardSyncSeq,
+        message: forwardRow as typeof updated,
+      });
+    }
+
+    return { updated, fanoutTargets };
   }
 
   static async updateMessageLinkPreview(
@@ -1889,6 +2025,11 @@ export class MessageService {
     if (!message || message.deletedAt) throw new ApiError(404, 'Message not found');
     if (message.senderId !== userId) {
       throw new ApiError(403, 'You can only change previews on your own messages');
+    }
+    if (message.forwardedFromMessageId) {
+      throw new ApiError(400, 'Forwarded messages cannot be edited', true, {
+        code: 'chat.forward.editForbidden',
+      });
     }
     await this.validateMessageAccess(message, userId, true);
 
@@ -1923,7 +2064,79 @@ export class MessageService {
       return { updated: fresh ?? row, syncSeq: seq };
     });
     (updated as { syncSeq?: number }).syncSeq = syncSeq;
-    return updated;
+
+    type EditFanoutTarget = {
+      messageId: string;
+      chatContextType: typeof updated.chatContextType;
+      contextId: string;
+      chatType: typeof updated.chatType;
+      syncSeq: number;
+      message: typeof updated;
+    };
+
+    const fanoutTargets: EditFanoutTarget[] = [
+      {
+        messageId: updated.id,
+        chatContextType: updated.chatContextType,
+        contextId: updated.contextId,
+        chatType: updated.chatType,
+        syncSeq,
+        message: updated,
+      },
+    ];
+
+    const liveForwards = await findLiveForwardsOfMessage(messageId);
+    for (const forward of liveForwards) {
+      const { forwardRow, forwardSyncSeq } = await prisma.$transaction(async (tx) => {
+        const row = await tx.chatMessage.update({
+          where: { id: forward.id },
+          data: { linkPreviewDisabled: disabled },
+          include: this.getMessageInclude(),
+        });
+        const seq = await ChatSyncEventService.appendEventInTransaction(
+          tx,
+          forward.chatContextType,
+          forward.contextId,
+          ChatSyncEventType.MESSAGE_UPDATED,
+          chatSyncMessageUpdatedCompactPayload({
+            id: row.id,
+            content: row.content,
+            mentionIds: row.mentionIds,
+            editedAt: row.editedAt,
+            updatedAt: row.updatedAt,
+            linkPreviewDisabled: row.linkPreviewDisabled,
+          })
+        );
+        await tx.chatMessage.update({
+          where: { id: forward.id },
+          data: { serverSyncSeq: seq },
+        });
+        const fresh = await tx.chatMessage.findUnique({
+          where: { id: forward.id },
+          include: this.getMessageInclude(),
+        });
+        const finalRow = (fresh ?? row) as typeof row;
+        (finalRow as { syncSeq?: number }).syncSeq = seq;
+        const [hydrated] = await hydrateForwardedMessages([
+          finalRow as unknown as Record<string, unknown>,
+        ]);
+        return {
+          forwardRow: (hydrated ?? finalRow) as typeof row,
+          forwardSyncSeq: seq,
+        };
+      });
+
+      fanoutTargets.push({
+        messageId: forward.id,
+        chatContextType: forward.chatContextType,
+        contextId: forward.contextId,
+        chatType: forward.chatType,
+        syncSeq: forwardSyncSeq,
+        message: forwardRow as typeof updated,
+      });
+    }
+
+    return { updated, fanoutTargets };
   }
 
   static async updateMessageState(messageId: string, userId: string, state: MessageState) {
@@ -2142,23 +2355,15 @@ export class MessageService {
         ...(message.mediaUrls ?? []),
         ...(message.thumbnailUrls ?? []),
       ].filter((u) => u && !isStickerCatalogUrl(u));
-      const referenced = await findReferencedChatMediaUrls(candidateUrls, messageId);
-      for (const mediaUrl of message.mediaUrls ?? []) {
-        if (!mediaUrl || isStickerCatalogUrl(mediaUrl) || referenced.has(mediaUrl)) continue;
+      // Re-check immediately before each S3 delete so a concurrent forward
+      // that just inserted a shared URL is less likely to lose the object.
+      for (const mediaUrl of candidateUrls) {
+        const referenced = await findReferencedChatMediaUrls([mediaUrl], messageId);
+        if (referenced.has(mediaUrl)) continue;
         try {
           await ImageProcessor.deleteFile(mediaUrl);
         } catch (error) {
           console.error(`Error deleting media file ${mediaUrl}:`, error);
-        }
-      }
-      for (const thumbnailUrl of message.thumbnailUrls ?? []) {
-        if (!thumbnailUrl || isStickerCatalogUrl(thumbnailUrl) || referenced.has(thumbnailUrl)) {
-          continue;
-        }
-        try {
-          await ImageProcessor.deleteFile(thumbnailUrl);
-        } catch (error) {
-          console.error(`Error deleting thumbnail file ${thumbnailUrl}:`, error);
         }
       }
     }

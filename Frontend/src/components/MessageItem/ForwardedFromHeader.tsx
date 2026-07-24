@@ -3,7 +3,6 @@ import { navigateToForwardedFromChat } from '@/utils/navigateToChatContext';
 
 interface ForwardedFromHeaderProps {
   forwardedFrom: ForwardedFromInfo;
-  isOwnMessage: boolean;
   className?: string;
   label: string;
 }
@@ -11,41 +10,27 @@ interface ForwardedFromHeaderProps {
 /** Telegram-style “Forwarded from …” strip; tap opens the source chat. */
 export function ForwardedFromHeader({
   forwardedFrom,
-  isOwnMessage,
   className = '',
   label,
 }: ForwardedFromHeaderProps) {
   return (
     <button
       type="button"
+      data-forwarded-from-header="true"
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
         navigateToForwardedFromChat(forwardedFrom);
       }}
-      className={`mb-1 max-w-full text-left rounded-md overflow-hidden transition-opacity hover:opacity-90 active:opacity-80 ${className}`}
+      className={`relative z-20 mb-1 max-w-full text-left rounded-md overflow-hidden cursor-pointer transition-colors hover:bg-sky-50/80 dark:hover:bg-sky-950/40 active:bg-sky-100/80 dark:active:bg-sky-900/40 ${className}`}
       aria-label={`${label} ${forwardedFrom.title}`}
     >
-      <span
-        className={`flex items-stretch gap-0 border-l-[3px] pl-2 py-0.5 ${
-          isOwnMessage
-            ? 'border-blue-200/90'
-            : 'border-sky-500 dark:border-sky-400'
-        }`}
-      >
+      <span className="flex items-stretch gap-0 border-l-[3px] border-sky-500 dark:border-sky-400 pl-2 py-0.5">
         <span className="min-w-0 flex flex-col">
-          <span
-            className={`text-[11px] font-semibold leading-tight ${
-              isOwnMessage ? 'text-blue-100' : 'text-sky-600 dark:text-sky-400'
-            }`}
-          >
+          <span className="text-[11px] font-semibold leading-tight text-sky-600 dark:text-sky-400">
             {label}
           </span>
-          <span
-            className={`text-[13px] font-semibold truncate leading-snug ${
-              isOwnMessage ? 'text-white' : 'text-sky-700 dark:text-sky-300'
-            }`}
-          >
+          <span className="text-[13px] font-semibold truncate leading-snug text-sky-800 dark:text-sky-200">
             {forwardedFrom.title}
           </span>
         </span>
