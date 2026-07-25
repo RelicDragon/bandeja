@@ -38,7 +38,13 @@ type SegmentedSwitchProps = SegmentedSwitchBaseProps &
   (
     | { allowDeselect?: false; activeId: string; onChange: (id: string) => void }
     | { allowDeselect: true; activeId: string | null; onChange: (id: string | null) => void }
-  );
+  ) & {
+    /** Tab ids that toggle on/off independently of `activeId`. */
+    toggleIds?: readonly string[];
+    /** Which `toggleIds` are currently on (visual + aria-pressed). */
+    activeToggleIds?: readonly string[];
+    onToggle?: (id: string, next: boolean) => void;
+  };
 
 export const SegmentedSwitch = ({
   tabs,
@@ -54,11 +60,22 @@ export const SegmentedSwitch = ({
   allowDeselect = false,
   badgeStyle = 'notification',
   fullWidth = false,
+  toggleIds,
+  activeToggleIds,
+  onToggle,
 }: SegmentedSwitchProps) => {
   const isVertical = orientation === 'vertical';
+  const hasToggles = Boolean(toggleIds?.length);
+  const toggleIdSet = hasToggles ? new Set(toggleIds) : null;
+  const activeToggleSet = activeToggleIds?.length ? new Set(activeToggleIds) : null;
 
   const handleTabClick = (tabId: string, tabDisabled?: boolean) => {
     if (disabled || tabDisabled) return;
+    if (toggleIdSet?.has(tabId)) {
+      const next = !activeToggleSet?.has(tabId);
+      onToggle?.(tabId, next);
+      return;
+    }
     if (allowDeselect && activeId === tabId) {
       (onChange as (id: string | null) => void)(null);
       return;
@@ -67,24 +84,28 @@ export const SegmentedSwitch = ({
   };
   return (
   <div
-    role="tablist"
+    role={hasToggles ? 'group' : 'tablist'}
     aria-label={ariaLabel}
-    aria-orientation={isVertical ? 'vertical' : 'horizontal'}
-    className={`relative flex items-stretch gap-1 overflow-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${
+    aria-orientation={hasToggles ? undefined : isVertical ? 'vertical' : 'horizontal'}
+    className={`relative flex max-w-full items-stretch gap-1 overflow-x-auto overflow-y-visible rounded-lg bg-gray-100 p-1 dark:bg-gray-700 ${
       isVertical ? 'w-full flex-col' : fullWidth ? 'w-full' : 'w-fit'
     } ${className}`.trim()}
   >
     {tabs.map((tab) => {
-      const isActive = activeId === tab.id;
+      const isToggle = toggleIdSet?.has(tab.id) ?? false;
+      const isActive = isToggle
+        ? (activeToggleSet?.has(tab.id) ?? false)
+        : activeId === tab.id;
       const Icon = tab.icon;
-      const showLabel = !showOnlyActiveTabText || isActive;
+      const showLabel = Boolean(tab.label) && (!showOnlyActiveTabText || isActive);
       const pad = showOnlyActiveTabText && !isActive ? 'px-2' : 'px-3';
       return (
         <motion.button
           key={tab.id}
           type="button"
-          role="tab"
-          aria-selected={isActive}
+          role={isToggle ? 'button' : 'tab'}
+          aria-selected={isToggle ? undefined : isActive}
+          aria-pressed={isToggle ? isActive : undefined}
           disabled={disabled || tab.disabled}
           title={tab.disabled ? tab.title : undefined}
           onClick={() => handleTabClick(tab.id, tab.disabled)}
@@ -105,7 +126,7 @@ export const SegmentedSwitch = ({
           {isActive && (
             <motion.div
               className="absolute inset-0 rounded-md bg-primary-500/15 dark:bg-primary-400/15 ring-1 ring-primary-500/30 dark:ring-primary-400/30"
-              layoutId={layoutId}
+              layoutId={isToggle ? `${layoutId}-toggle-${tab.id}` : layoutId}
               initial={false}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             />
@@ -125,11 +146,11 @@ export const SegmentedSwitch = ({
             </span>
           )}
           <span
-            className={`relative flex min-w-0 items-center gap-1.5 ${
+            className={`relative z-[1] flex min-w-0 items-center gap-1.5 ${
               isVertical ? 'justify-start' : 'justify-center'
             }`}
           >
-            {Icon && <Icon size={18} className="shrink-0" />}
+            {Icon && <Icon size={18} className="shrink-0" aria-hidden />}
             {showOnlyActiveTabText ? (
               <AnimatePresence initial={false}>
                 {showLabel && (

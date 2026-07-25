@@ -52,7 +52,7 @@ import { ResizableSplitter } from '@/components/ResizableSplitter';
 import { navigationService } from '@/services/navigationService';
 import { useUserTeamsStore } from '@/store/userTeamsStore';
 import { scrollAppToTop } from '@/utils/appScroll';
-import { readMyGamesViewMode, writeMyGamesViewMode } from '@/utils/myGamesViewStorage';
+import { readMyGamesViewMode, writeMyGamesViewMode, type MyGamesViewMode } from '@/utils/myGamesViewStorage';
 
 const sortMyGamesByStatusAndDateTime = <T extends { status?: string; startTime: string; parentId?: string; id: string; entityType?: string }>(
   list: T[] = [],
@@ -112,10 +112,13 @@ export const MyTab = () => {
   useRegisterAdSportContext(AD_PLACEMENTS.HOME_HERO, primarySport);
   const hideHomeHeroAd = isHomeHeroAdBlocked(user, primarySport, questionnaireStatus);
 
-  const [myGamesViewMode, setMyGamesViewMode] = useState(() => readMyGamesViewMode());
+  const [myGamesViewMode, setMyGamesViewMode] = useState<MyGamesViewMode>(() =>
+    readMyGamesViewMode(user?.id),
+  );
+
   useEffect(() => {
-    writeMyGamesViewMode(myGamesViewMode);
-  }, [myGamesViewMode]);
+    setMyGamesViewMode(readMyGamesViewMode(user?.id));
+  }, [user?.id]);
 
   useEffect(() => {
     scrollAppToTop('auto');
@@ -159,6 +162,8 @@ export const MyTab = () => {
   }, [isPastGamesTab, prefetchPastGames]);
 
   const [pastGamesInRange, setPastGamesInRange] = useState<any[]>([]);
+  const pastRangeRequestIdRef = useRef(0);
+  const calendarVisibleRef = useRef(false);
 
   const gameIdsForUnread = useMemo(() => {
     const ids = new Set<string>();
@@ -246,7 +251,6 @@ export const MyTab = () => {
       return gameStr !== selectedStr;
     });
   }, [myGamesSelectedDate, upcomingGamesUndated, user?.currentCity?.timezone]);
-  const upcomingsCollapsed = myGamesViewMode === 'list';
   const gamesSectionGames = myGamesViewMode === 'list' ? [] : myGamesForSelectedDate;
   const gamesSectionUpcoming =
     myGamesViewMode === 'list' || !myGamesSelectedDate
@@ -264,14 +268,22 @@ export const MyTab = () => {
       : undefined;
   const handleCalendarDateRangeChange = useCallback(
     async (start: Date, end: Date) => {
+      if (!calendarVisibleRef.current) return;
+      const requestId = ++pastRangeRequestIdRef.current;
       const today = startOfDay(new Date());
       const rangeStart = startOfDay(start);
       if (rangeStart >= today) {
-        setPastGamesInRange([]);
+        if (requestId === pastRangeRequestIdRef.current) {
+          setPastGamesInRange([]);
+          setLoadingPastInRange(false);
+        }
         return;
       }
       setLoadingPastInRange(true);
       try {
+        if (!calendarVisibleRef.current || requestId !== pastRangeRequestIdRef.current) {
+          return;
+        }
         const userId = user?.id;
         if (userId) {
           const queryState = queryClient.getQueryState(queryKeys.games.past(userId));
@@ -296,7 +308,12 @@ export const MyTab = () => {
             fromCache.length > 0 &&
             pastGamesCacheCoversRange(cachedGames, rangeStart, end, cityTimezone)
           ) {
-            setPastGamesInRange(fromCache);
+            if (
+              calendarVisibleRef.current &&
+              requestId === pastRangeRequestIdRef.current
+            ) {
+              setPastGamesInRange(fromCache);
+            }
             return;
           }
         }
@@ -307,35 +324,65 @@ export const MyTab = () => {
           limit: 100,
           offset: 0,
         });
+        if (
+          !calendarVisibleRef.current ||
+          requestId !== pastRangeRequestIdRef.current
+        ) {
+          return;
+        }
         const list = (response.data ?? []).filter(
           (g: { entityType?: string; resultsStatus?: string }) =>
             !(g.entityType === 'LEAGUE_SEASON' && g.resultsStatus !== 'FINAL')
         );
         setPastGamesInRange(list);
       } catch {
-        setPastGamesInRange([]);
+        if (
+          calendarVisibleRef.current &&
+          requestId === pastRangeRequestIdRef.current
+        ) {
+          setPastGamesInRange([]);
+        }
       } finally {
-        setLoadingPastInRange(false);
+        if (requestId === pastRangeRequestIdRef.current) {
+          setLoadingPastInRange(false);
+        }
       }
     },
     [queryClient, user?.id, user?.currentCity?.timezone]
   );
-  const handleUpcomingsToggle = useCallback(() => {
-    setMyGamesViewMode((prev) => (prev === 'list' ? 'calendar' : 'list'));
+  const calendarVisible = myGamesViewMode === 'calendar';
+  calendarVisibleRef.current = calendarVisible;
+  useEffect(() => {
+    if (calendarVisible) return;
+    pastRangeRequestIdRef.current += 1;
+    setPastGamesInRange([]);
+    setLoadingPastInRange(false);
+  }, [calendarVisible]);
+  const handleCalendarVisibleChange = useCallback((visible: boolean) => {
+    calendarVisibleRef.current = visible;
+    if (!visible) {
+      pastRangeRequestIdRef.current += 1;
+      setPastGamesInRange([]);
+      setLoadingPastInRange(false);
+    }
+    const mode = visible ? 'calendar' : 'list';
+    setMyGamesViewMode(mode);
+    const userId = useAuthStore.getState().user?.id;
+    if (userId) writeMyGamesViewMode(mode, userId);
   }, []);
   const myTabCalendarProps = {
     selectedDate: myGamesSelectedDate,
     onDateSelect: setMyGamesSelectedDate,
     availableGames: calendarMergedGames,
     onDateRangeChange: handleCalendarDateRangeChange,
-    collapsed: upcomingsCollapsed,
     weatherModeScope: 'my' as const,
     selectedDateEmptyHint,
-    upcomingsToggle: {
-      active: upcomingsCollapsed,
-      onClick: handleUpcomingsToggle,
-      label: t('games.list'),
-    },
+  };
+  const myTabPanelSwitcherProps = {
+    games,
+    gamesUnreadCounts: calendarMergedUnreadCounts,
+    calendarVisible,
+    onCalendarVisibleChange: handleCalendarVisibleChange,
   };
   const filteredPastGames = useMemo(() => {
     const list = pastGames.filter((g) => g.entityType !== 'LEAGUE_SEASON');
@@ -444,16 +491,13 @@ export const MyTab = () => {
               <StoriesRail />
             </AnimatedMount>
           )}
-          {user && (
-            <AnimatedMount layout>
-              <MyTabPanelSwitcher
-                games={games}
-                gamesUnreadCounts={calendarMergedUnreadCounts}
-              />
-            </AnimatedMount>
-          )}
           {!hideHomeHeroAd && user && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
+          )}
+          {user && (
+            <AnimatedMount layout>
+              <MyTabPanelSwitcher {...myTabPanelSwitcherProps} />
+            </AnimatedMount>
           )}
           {user && (
             <AnimatedMount layout>
@@ -502,6 +546,7 @@ export const MyTab = () => {
       </div>
     </div>
   );
+  const splitView = isDesktop && calendarVisible && !isPastGamesTab;
   if (isDesktop) {
     if (isPastGamesTab) {
       return (
@@ -517,22 +562,23 @@ export const MyTab = () => {
     }
     return (
       <>
-      <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
-        <ResizableSplitter
-          defaultLeftWidth={35}
-          minLeftWidth={280}
-          maxLeftWidth={450}
-          leftPanel={
-            <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
-              <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
-                <CalendarSection {...myTabCalendarProps} />
+        <div className="fixed inset-x-0 bottom-0 overflow-hidden z-0" style={{ top: 'calc(4rem + env(safe-area-inset-top, 0px))' }}>
+          <ResizableSplitter
+            showLeft={splitView}
+            defaultLeftWidth={35}
+            minLeftWidth={280}
+            maxLeftWidth={450}
+            leftPanel={
+              <div className="flex-1 min-h-0 overflow-y-auto bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
+                <div className="p-4" style={{ paddingBottom: scrollBottomPadding }}>
+                  <CalendarSection {...myTabCalendarProps} />
+                </div>
               </div>
-            </div>
-          }
-          rightPanel={calendarContentPanel}
-        />
-      </div>
-      {declineInviteModal}
+            }
+            rightPanel={calendarContentPanel}
+          />
+        </div>
+        {declineInviteModal}
       </>
     );
   }
@@ -552,16 +598,13 @@ export const MyTab = () => {
               <StoriesRail />
             </AnimatedMount>
           )}
-          {user && (
-            <AnimatedMount layout>
-              <MyTabPanelSwitcher
-                games={games}
-                gamesUnreadCounts={calendarMergedUnreadCounts}
-              />
-            </AnimatedMount>
-          )}
           {!hideHomeHeroAd && user && (
             <AdSlot placement={AD_PLACEMENTS.HOME_HERO} />
+          )}
+          {user && (
+            <AnimatedMount layout>
+              <MyTabPanelSwitcher {...myTabPanelSwitcherProps} />
+            </AnimatedMount>
           )}
           {user && (
             <AnimatedMount layout>
@@ -583,9 +626,11 @@ export const MyTab = () => {
             </div>
           )}
 
-          <AnimatedMount>
-            <CalendarSection {...myTabCalendarProps} />
-          </AnimatedMount>
+          {calendarVisible ? (
+            <AnimatedMount layout>
+              <CalendarSection {...myTabCalendarProps} />
+            </AnimatedMount>
+          ) : null}
           <AnimatedMount>
             <MyGamesSection
               games={gamesSectionGames}
