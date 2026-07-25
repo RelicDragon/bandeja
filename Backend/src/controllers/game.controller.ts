@@ -350,6 +350,7 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
     mode: 'calendar',
   });
 
+  const indexOnly = req.query.indexOnly === 'true';
   const { games, meta } = await GameService.getAvailableGames(
     req.userId,
     req.user?.currentCityId,
@@ -367,6 +368,7 @@ export const getAvailableGames = asyncHandler(async (req: AuthRequest, res: Resp
       cursor: req.query.cursor as string | undefined,
     },
     enrich,
+    indexOnly,
   );
 
   res.json({

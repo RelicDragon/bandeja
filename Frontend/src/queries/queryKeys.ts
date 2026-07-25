@@ -14,6 +14,8 @@ export interface AvailableGamesFilterParams {
   cityId?: string;
   isAdmin?: boolean;
   structural?: FindStructuralApiParams;
+  /** Month badge path — separate cache from day card pages. */
+  indexOnly?: boolean;
 }
 
 export function buildAvailableGamesFilterHash(params: AvailableGamesFilterParams): string {
@@ -22,11 +24,12 @@ export function buildAvailableGamesFilterHash(params: AvailableGamesFilterParams
   const cityId = params.cityId ?? 'no-city';
   const includeLeagues = String(!!params.includeLeagues);
   const structural = buildStructuralFilterHashPart(params.structural);
+  const indexFlag = params.indexOnly ? 'i1' : 'i0';
 
   if (params.startDate && params.endDate) {
-    return `${cityId}-${format(params.startDate, 'yyyy-MM-dd')}-${format(params.endDate, 'yyyy-MM-dd')}-${includeLeagues}-${sport}-${privateFlag}-${structural}`;
+    return `${cityId}-${format(params.startDate, 'yyyy-MM-dd')}-${format(params.endDate, 'yyyy-MM-dd')}-${includeLeagues}-${sport}-${privateFlag}-${structural}-${indexFlag}`;
   }
-  return `${cityId}-${includeLeagues}-${sport}-${privateFlag}-${structural}`;
+  return `${cityId}-${includeLeagues}-${sport}-${privateFlag}-${structural}-${indexFlag}`;
 }
 
 export function buildAvailableUpcomingFilterHash(params: Omit<AvailableGamesFilterParams, 'startDate' | 'endDate'>): string {

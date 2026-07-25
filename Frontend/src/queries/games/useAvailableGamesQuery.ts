@@ -25,12 +25,33 @@ export interface AvailableGamesQueryParams {
   isAdmin?: boolean;
   cityId?: string;
   structural?: FindStructuralApiParams;
+  /** Month range: request dayIndex only (no card payload). */
+  indexOnly?: boolean;
+}
+
+export function isDayScopedAvailableRange(
+  startDate?: Date,
+  endDate?: Date,
+): boolean {
+  return (
+    !!startDate &&
+    !!endDate &&
+    format(startDate, 'yyyy-MM-dd') === format(endDate, 'yyyy-MM-dd')
+  );
+}
+
+/** Multi-day calendar range defaults to index-only unless overridden. */
+export function resolveAvailableIndexOnly(params: AvailableGamesQueryParams): boolean {
+  if (params.indexOnly != null) return params.indexOnly;
+  if (!params.startDate || !params.endDate) return false;
+  return !isDayScopedAvailableRange(params.startDate, params.endDate);
 }
 
 export function buildAvailableGamesApiParams(
   params: AvailableGamesQueryParams,
   pagination?: { take?: number; cursor?: string },
 ) {
+  const indexOnly = resolveAvailableIndexOnly(params);
   const apiParams: Parameters<typeof gamesApi.getAvailableGames>[0] = {
     // Calendar keeps ARCHIVED so past days stay browsable on Find. Month ASC
     // truncation is handled by dayIndex badges + day-scoped selected-day fetch
@@ -51,6 +72,9 @@ export function buildAvailableGamesApiParams(
   if (params.isAdmin && params.showPrivateGames) {
     apiParams.showPrivateGames = true;
   }
+  if (indexOnly) {
+    apiParams.indexOnly = true;
+  }
   if (pagination?.take != null) apiParams.take = pagination.take;
   if (pagination?.cursor) apiParams.cursor = pagination.cursor;
   return apiParams;
@@ -64,6 +88,7 @@ export function availableGamesQueryOptions(
   params: AvailableGamesQueryParams,
   enabled = true,
 ) {
+  const indexOnly = resolveAvailableIndexOnly(params);
   const filterHash = buildAvailableGamesFilterHash({
     startDate: params.startDate,
     endDate: params.endDate,
@@ -73,15 +98,13 @@ export function availableGamesQueryOptions(
     cityId: params.cityId,
     isAdmin: params.isAdmin,
     structural: params.structural,
+    indexOnly,
   });
   const isEnabled = enabled && !!params.userId;
   const queryKey = queryKeys.games.available(filterHash);
   // Day-scoped fetches must not keep previous day's rows as placeholder —
   // Find filters by selectedDay and would flash EmptyState while fetching.
-  const dayScoped =
-    !!params.startDate &&
-    !!params.endDate &&
-    format(params.startDate, 'yyyy-MM-dd') === format(params.endDate, 'yyyy-MM-dd');
+  const dayScoped = isDayScopedAvailableRange(params.startDate, params.endDate);
 
   return queryOptions({
     queryKey,
@@ -89,7 +112,9 @@ export function availableGamesQueryOptions(
       const response = await gamesApi.getAvailableGames(buildAvailableGamesApiParams(params));
       const games = sortGamesByStartTimeAsc(response.data || []);
       const meta = parseMeta(response.meta);
-      void attachAvailableGamesEnrichment(client, queryKey, games);
+      if (!indexOnly) {
+        void attachAvailableGamesEnrichment(client, queryKey, games);
+      }
       return { games, meta };
     },
     staleTime: GAMES_LIST_STALE_TIME,
@@ -111,6 +136,7 @@ export function useAvailableGamesQuery(
   const loadMore = async () => {
     const current = query.data;
     if (!current?.meta.hasMore || !current.meta.nextCursor) return;
+    if (resolveAvailableIndexOnly(params)) return;
     const response = await gamesApi.getAvailableGames(
       buildAvailableGamesApiParams(params, { cursor: current.meta.nextCursor }),
     );

@@ -104,6 +104,7 @@ describe('useAvailableGamesQuery', () => {
         format: 'card',
         hideBar: true,
         availableSlots: true,
+        indexOnly: true,
       }),
     );
 
@@ -220,6 +221,35 @@ describe('useAvailableGamesQuery', () => {
     });
     expect(dayOpts.placeholderData).toBeUndefined();
     expect(monthOpts.placeholderData).toBeTypeOf('function');
+  });
+
+  it('month range defaults to indexOnly; day-scoped does not', async () => {
+    const client = createTestClient();
+    const day = new Date('2026-06-15T00:00:00');
+    await client.fetchQuery(
+      availableGamesQueryOptions({
+        userId: 'user-1',
+        startDate: day,
+        endDate: day,
+        sport: 'PADEL',
+      }),
+    );
+    expect(getAvailableGames).toHaveBeenCalledWith(
+      expect.not.objectContaining({ indexOnly: true }),
+    );
+
+    getAvailableGames.mockClear();
+    await client.fetchQuery(
+      availableGamesQueryOptions({
+        userId: 'user-1',
+        startDate: new Date('2026-06-01'),
+        endDate: new Date('2026-06-30'),
+        sport: 'PADEL',
+      }),
+    );
+    expect(getAvailableGames).toHaveBeenCalledWith(
+      expect.objectContaining({ indexOnly: true }),
+    );
   });
 
   it('loadMore appends games and preserves dayIndex from the first page', async () => {

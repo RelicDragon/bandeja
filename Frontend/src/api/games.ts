@@ -127,6 +127,8 @@ export const gamesApi = {
     take?: number;
     cursor?: string;
     enrich?: boolean;
+    /** Calendar month: dayIndex only (no card rows). */
+    indexOnly?: boolean;
   }) => {
     const response = await api.get<ApiResponse<Game[]>>('/games/available', { params });
     return response.data;

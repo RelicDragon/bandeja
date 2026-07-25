@@ -43,6 +43,8 @@ export type AvailableDayIndexRow = {
   timeIsSet: boolean;
   affectsRating: boolean;
   ownerUserId: string | null;
+  /** True when the requesting user is a participant (for calendar pills). */
+  viewerIsParticipant: boolean;
 };
 
 export type AvailableGamesListResult = {
@@ -70,6 +72,8 @@ export type AvailableGamesFetchOptions = {
   enrich?: boolean;
   order?: 'asc' | 'desc';
   kind: 'calendar' | 'upcoming';
+  /** Calendar month badges only — skip fat card page (Find uses day-scoped cards). */
+  indexOnly?: boolean;
 };
 
 function buildVisibilityOr(
@@ -198,6 +202,7 @@ async function buildAvailableWhere(
 async function fetchCalendarDayIndex(
   where: Prisma.GameWhereInput,
   availableSlots: boolean | undefined,
+  viewerUserId: string,
 ): Promise<{ dayIndex: AvailableDayIndexRow[]; dayIndexTruncated: boolean }> {
   const rows = await prisma.game.findMany({
     where,
@@ -217,9 +222,10 @@ async function fetchCalendarDayIndex(
       affectsRating: true,
       court: { select: { clubId: true } },
       participants: {
-        where: { role: 'OWNER' },
-        select: { userId: true },
-        take: 1,
+        where: {
+          OR: [{ role: 'OWNER' }, { userId: viewerUserId }],
+        },
+        select: { userId: true, role: true },
       },
     },
     orderBy: [{ startTime: 'asc' }, { id: 'asc' }],
@@ -235,22 +241,26 @@ async function fetchCalendarDayIndex(
     list = list.filter((g) => openIds.has(g.id));
   }
 
-  const dayIndex: AvailableDayIndexRow[] = list.map((g) => ({
-    id: g.id,
-    startTime: g.startTime.toISOString(),
-    sport: g.sport,
-    entityType: g.entityType,
-    minLevel: g.minLevel,
-    maxLevel: g.maxLevel,
-    maxParticipants: g.maxParticipants,
-    genderTeams: g.genderTeams,
-    trainerId: g.trainerId,
-    clubId: g.clubId ?? g.court?.clubId ?? null,
-    isPublic: g.isPublic,
-    timeIsSet: g.timeIsSet,
-    affectsRating: g.affectsRating,
-    ownerUserId: g.participants[0]?.userId ?? null,
-  }));
+  const dayIndex: AvailableDayIndexRow[] = list.map((g) => {
+    const owner = g.participants.find((p) => p.role === 'OWNER');
+    return {
+      id: g.id,
+      startTime: g.startTime.toISOString(),
+      sport: g.sport,
+      entityType: g.entityType,
+      minLevel: g.minLevel,
+      maxLevel: g.maxLevel,
+      maxParticipants: g.maxParticipants,
+      genderTeams: g.genderTeams,
+      trainerId: g.trainerId,
+      clubId: g.clubId ?? g.court?.clubId ?? null,
+      isPublic: g.isPublic,
+      timeIsSet: g.timeIsSet,
+      affectsRating: g.affectsRating,
+      ownerUserId: owner?.userId ?? null,
+      viewerIsParticipant: g.participants.some((p) => p.userId === viewerUserId),
+    };
+  });
 
   return { dayIndex, dayIndexTruncated };
 }
@@ -259,7 +269,30 @@ export async function fetchAvailableGamesPage(
   options: AvailableGamesFetchOptions,
   project: (game: unknown) => unknown,
 ): Promise<AvailableGamesListResult> {
-  const { userId, enrich = false, kind } = options;
+  const { userId, enrich = false, kind, indexOnly = false } = options;
+
+  const { where, structuralForMode } = await buildAvailableWhere(options);
+
+  // Month badge path: dayIndex only — selected-day cards come from a separate fetch.
+  if (indexOnly && kind === 'calendar') {
+    const dayIndexResult = await fetchCalendarDayIndex(
+      where,
+      structuralForMode.availableSlots,
+      userId,
+    );
+    return {
+      games: [],
+      meta: {
+        take: 0,
+        bound: AVAILABLE_GAMES_MAX_TAKE,
+        hasMore: false,
+        truncated: false,
+        nextCursor: null,
+        dayIndex: dayIndexResult.dayIndex,
+        dayIndexTruncated: dayIndexResult.dayIndexTruncated,
+      },
+    };
+  }
 
   const defaultTake =
     kind === 'upcoming'
@@ -271,8 +304,6 @@ export async function fetchAvailableGamesPage(
         : AVAILABLE_GAMES_MONTH_TAKE;
   const take = clampAvailableTake(options.take, defaultTake);
   const order: 'asc' | 'desc' = options.order ?? 'asc';
-
-  const { where, structuralForMode } = await buildAvailableWhere(options);
 
   const cursor = decodeAvailableGamesCursor(options.cursor);
   const pageWhere: Prisma.GameWhereInput = { ...where };
@@ -301,7 +332,7 @@ export async function fetchAvailableGamesPage(
       take: fetchTake + 1,
     }),
     wantDayIndex
-      ? fetchCalendarDayIndex(where, structuralForMode.availableSlots)
+      ? fetchCalendarDayIndex(where, structuralForMode.availableSlots, userId)
       : Promise.resolve(null),
   ]);
 

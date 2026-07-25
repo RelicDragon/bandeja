@@ -694,6 +694,7 @@ export class GameReadService {
     structural?: AvailableStructuralFilters,
     pagination?: { take?: number; cursor?: string },
     enrich = false,
+    indexOnly = false,
   ) {
     if (!userId) {
       throw new ApiError(401, 'Unauthorized', true, { code: 'auth.notAuthenticated' });
@@ -716,6 +717,7 @@ export class GameReadService {
         take: pagination?.take,
         cursor: pagination?.cursor,
         enrich,
+        indexOnly,
         kind: 'calendar',
         order: 'asc',
       },

@@ -143,11 +143,17 @@ export const MonthCalendar = ({
   const selectedDayKey = selectedDate ? calendarDayKey(selectedDate) : null;
 
   const displaySettings = useMemo(() => user ? resolveDisplaySettings(user) : resolveDisplaySettings(null), [user]);
-  // Subscribe to a shallow-stable record of ONLY this calendar's game ids, not the
-  // whole byContext map, so the calendar re-renders only when one of these games'
-  // counts changes.
+  // Subscribe only to unread for games visible on this grid: month cards and/or dayIndex ids.
+  const calendarUnreadGameIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const g of availableGames) ids.add(g.id);
+    if (dayIndex) {
+      for (const row of dayIndex) ids.add(row.id);
+    }
+    return [...ids];
+  }, [availableGames, dayIndex]);
   const gamesUnreadCounts = useUnreadStore(
-    useShallow((s) => gameUnreadCountsMap(availableGames.map((g) => g.id), s.displayedByContext))
+    useShallow((s) => gameUnreadCountsMap(calendarUnreadGameIds, s.displayedByContext)),
   );
   const locale = useMemo(() => {
     return localeMap[i18n.language as keyof typeof localeMap] || enGB;
@@ -218,7 +224,7 @@ export const MonthCalendar = ({
       findFilterState,
       cityTimezone,
     );
-    return mergeFindDayIndexIntoCardDays(fromCards, indexByDay);
+    return mergeFindDayIndexIntoCardDays(fromCards, indexByDay, gamesUnreadCounts);
   }, [availableGames, dayIndex, findFilterViewer, findFilterState, gamesUnreadCounts, user?.currentCity?.timezone]);
 
   const notifyMonthChange = (month: Date) => {

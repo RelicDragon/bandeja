@@ -163,32 +163,62 @@ describe('mergeFindDayIndexIntoCardDays', () => {
         '2026-07-23',
         {
           gameCount: 20,
+          gameIds: ['g1', 'g2'],
           entityTypes: new Set(['GAME' as const, 'TRAINING' as const]),
           hasLeagueTournament: false,
           hasTraining: true,
+          isUserParticipant: false,
+          participantEntityTypes: new Set(),
         },
       ],
       [
         '2026-07-24',
         {
           gameCount: 5,
+          gameIds: ['g3'],
           entityTypes: new Set(['TOURNAMENT' as const]),
           hasLeagueTournament: true,
           hasTraining: false,
+          isUserParticipant: true,
+          participantEntityTypes: new Set(['TOURNAMENT' as const]),
         },
       ],
     ]);
 
-    const merged = mergeFindDayIndexIntoCardDays(fromCards, indexByDay);
+    const merged = mergeFindDayIndexIntoCardDays(fromCards, indexByDay, { g2: 2, g3: 1 });
     const d23 = merged.get('2026-07-23')!;
     expect(d23.gameCount).toBe(20);
     expect([...d23.entityTypes].sort()).toEqual(['GAME', 'TRAINING']);
     expect(d23.isUserParticipant).toBe(true);
     expect(d23.hasTraining).toBe(true);
+    expect(d23.unreadCount).toBe(2);
 
     const d24 = merged.get('2026-07-24')!;
     expect(d24.gameCount).toBe(5);
     expect([...d24.entityTypes]).toEqual(['TOURNAMENT']);
     expect(d24.hasLeagueTournament).toBe(true);
+    expect(d24.isUserParticipant).toBe(true);
+    expect(d24.unreadCount).toBe(1);
+  });
+
+  it('applies unread + participant from indexOnly days (no cards)', () => {
+    const indexByDay = aggregateFindDayIndexByDay(
+      [
+        row({
+          id: 'mine',
+          startTime: '2026-07-23T10:00:00.000Z',
+          viewerIsParticipant: true,
+          entityType: 'GAME',
+        }),
+      ],
+      { id: 'u1' },
+      baseState,
+      'UTC',
+    );
+    const merged = mergeFindDayIndexIntoCardDays(new Map(), indexByDay, { mine: 3 });
+    const day = merged.get('2026-07-23')!;
+    expect(day.unreadCount).toBe(3);
+    expect(day.isUserParticipant).toBe(true);
+    expect([...day.participantEntityTypes]).toEqual(['GAME']);
   });
 });

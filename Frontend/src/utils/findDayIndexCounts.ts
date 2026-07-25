@@ -28,21 +28,29 @@ export type FindDayIndexRow = {
   /** Present when server index includes rating flag (discovery no-rating parity). */
   affectsRating?: boolean;
   ownerUserId: string | null;
+  /** Present when server marks the viewer as a participant. */
+  viewerIsParticipant?: boolean;
 };
 
 export type FindDayIndexDayAgg = {
   gameCount: number;
+  gameIds: string[];
   entityTypes: Set<FindDisplayEntityType>;
   hasLeagueTournament: boolean;
   hasTraining: boolean;
+  isUserParticipant: boolean;
+  participantEntityTypes: Set<FindDisplayEntityType>;
 };
 
 function emptyIndexDayAgg(): FindDayIndexDayAgg {
   return {
     gameCount: 0,
+    gameIds: [],
     entityTypes: new Set(),
     hasLeagueTournament: false,
     hasTraining: false,
+    isUserParticipant: false,
+    participantEntityTypes: new Set(),
   };
 }
 
@@ -124,6 +132,7 @@ export function aggregateFindDayIndexByDay(
 
     const existing = byDay.get(key) ?? emptyIndexDayAgg();
     existing.gameCount += 1;
+    existing.gameIds.push(row.id);
 
     const displayType = toFindDisplayEntityType(
       row.entityType as Parameters<typeof toFindDisplayEntityType>[0],
@@ -139,6 +148,10 @@ export function aggregateFindDayIndexByDay(
     if (displayType === 'TRAINING') {
       existing.hasTraining = true;
     }
+    if (row.viewerIsParticipant) {
+      existing.isUserParticipant = true;
+      existing.participantEntityTypes.add(displayType);
+    }
 
     byDay.set(key, existing);
   }
@@ -149,30 +162,43 @@ export function aggregateFindDayIndexByDay(
 /**
  * Overlay dayIndex counts/types onto fat-card day aggregates.
  * Count comes from index (complete under month truncate); types/flags union.
+ * Unread dots use unreadCounts keyed by dayIndex game ids (works with indexOnly months).
  */
 export function mergeFindDayIndexIntoCardDays(
   fromCards: Map<string, FindDayAggregate>,
   indexByDay: Map<string, FindDayIndexDayAgg>,
+  unreadCounts: Record<string, number> = {},
 ): Map<string, FindDayAggregate> {
   const merged = new Map(fromCards);
   for (const [day, agg] of indexByDay) {
+    const unreadCount = agg.gameIds.reduce(
+      (sum, id) => sum + (unreadCounts[id] || 0),
+      0,
+    );
     const existing = merged.get(day);
     if (existing) {
       existing.gameCount = agg.gameCount;
+      existing.gameIds = agg.gameIds.length > 0 ? agg.gameIds : existing.gameIds;
+      existing.unreadCount = unreadCount;
       for (const t of agg.entityTypes) existing.entityTypes.add(t);
       existing.hasLeagueTournament =
         existing.hasLeagueTournament || agg.hasLeagueTournament;
       existing.hasTraining = existing.hasTraining || agg.hasTraining;
+      existing.isUserParticipant =
+        existing.isUserParticipant || agg.isUserParticipant;
+      for (const t of agg.participantEntityTypes) {
+        existing.participantEntityTypes.add(t);
+      }
       merged.set(day, existing);
     } else {
       merged.set(day, {
         gameCount: agg.gameCount,
-        gameIds: [],
-        unreadCount: 0,
+        gameIds: [...agg.gameIds],
+        unreadCount,
         hasLeagueTournament: agg.hasLeagueTournament,
-        isUserParticipant: false,
+        isUserParticipant: agg.isUserParticipant,
         hasTraining: agg.hasTraining,
-        participantEntityTypes: new Set(),
+        participantEntityTypes: new Set(agg.participantEntityTypes),
         entityTypes: new Set(agg.entityTypes),
       });
     }

@@ -69,6 +69,7 @@ export class GameService {
     structural?: Parameters<typeof GameReadService.getAvailableGames>[10],
     pagination?: { take?: number; cursor?: string },
     enrich = false,
+    indexOnly = false,
   ) {
     return GameReadService.getAvailableGames(
       userId,
@@ -84,6 +85,7 @@ export class GameService {
       structural,
       pagination,
       enrich,
+      indexOnly,
     );
   }
 

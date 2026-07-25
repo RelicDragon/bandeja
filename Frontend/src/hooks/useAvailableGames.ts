@@ -7,9 +7,9 @@ export function deriveAvailableGamesLoading(
   queryEnabled: boolean,
   isPending: boolean,
   isFetching: boolean,
-  gamesCount: number,
+  hasData: boolean,
 ): boolean {
-  return queryEnabled && (isPending || (isFetching && gamesCount === 0));
+  return queryEnabled && (isPending || (isFetching && !hasData));
 }
 
 export const useAvailableGames = (
@@ -27,12 +27,13 @@ export const useAvailableGames = (
   queryEnabled = true,
   structural?: FindStructuralApiParams,
   /**
-   * When true, ignore keepPreviousData so callers can fall back to month cards
-   * instead of flashing the wrong day (selected-day scoped Find fetch).
+   * When true, ignore keepPreviousData so callers can fall back while the day
+   * key resolves (selected-day scoped Find fetch).
    */
   rejectPlaceholderData = false,
+  indexOnly?: boolean,
 ) => {
-  const { data, isPending, isFetching, isPlaceholderData, refetch, loadMore } =
+  const { data, isPending, isFetching, isPlaceholderData, isError, refetch, loadMore } =
     useAvailableGamesQuery(
       {
         userId: user?.id,
@@ -44,6 +45,7 @@ export const useAvailableGames = (
         isAdmin: user?.isAdmin,
         cityId: user?.currentCity?.id || user?.currentCityId,
         structural,
+        indexOnly,
       },
       { enabled: queryEnabled },
     );
@@ -51,12 +53,13 @@ export const useAvailableGames = (
   const hidePlaceholder = rejectPlaceholderData && isPlaceholderData;
   const games = hidePlaceholder ? [] : (data?.games ?? []);
   const meta = hidePlaceholder ? EMPTY_AVAILABLE_META : (data?.meta ?? EMPTY_AVAILABLE_META);
+  const hasData = !hidePlaceholder && data != null;
 
   const loading = deriveAvailableGamesLoading(
     queryEnabled,
     isPending || hidePlaceholder,
     isFetching,
-    games.length,
+    hasData,
   );
 
   const fetchData = useCallback(
@@ -69,7 +72,10 @@ export const useAvailableGames = (
   return {
     availableGames: games,
     meta,
+    /** Settled page only — never keepPreviousData placeholders (unsafe to seed from). */
+    page: hidePlaceholder || isPlaceholderData ? undefined : data,
     loading,
+    isError: queryEnabled && isError,
     isPlaceholderData,
     fetchData,
     refetch: fetchData,

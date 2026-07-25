@@ -777,7 +777,7 @@ export const AvailableGamesSection = ({
                 <TabContentStack id="find-split-left">
                   {filterBlock}
                   <AnimatedMount layout show={trainingFilterVal}>
-                    <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
+                    <TrainersList show={trainingFilterVal} availableGames={selectedDayGames ?? availableGames} levelSport={findLevelSport} />
                   </AnimatedMount>
                   <AnimatedMount layout>
                     <CalendarSection {...calendarSectionProps} />
@@ -809,7 +809,7 @@ export const AvailableGamesSection = ({
     <TabContentStack className="mt-2" id="find-tab-stack">
       {filterBlock}
       <AnimatedMount layout show={trainingFilterVal}>
-        <TrainersList show={trainingFilterVal} availableGames={availableGames} levelSport={findLevelSport} />
+        <TrainersList show={trainingFilterVal} availableGames={selectedDayGames ?? availableGames} levelSport={findLevelSport} />
       </AnimatedMount>
 
       <AnimatedMount layout>

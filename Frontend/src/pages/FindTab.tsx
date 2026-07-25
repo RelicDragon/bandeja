@@ -1,9 +1,9 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
-import { addMonths, startOfDay, format, parse } from 'date-fns';
+import { addDays, addMonths, startOfDay, format, parse } from 'date-fns';
 import { AvailableGamesSection } from '@/components/home';
 import { AdSlot } from '@/components/sponsorSlots';
 import { AD_PLACEMENTS } from '@/shared/adPlacements';
@@ -29,7 +29,16 @@ import { runWithProfileName } from '@/utils/runWithProfileName';
 import { FindHeaderActions } from '@/components/headerContent/FindHeaderActions';
 import { availableGamesQueryOptions } from '@/queries/games/useAvailableGamesQuery';
 import { availableUpcomingGamesQueryOptions } from '@/queries/games/useAvailableUpcomingGamesQuery';
+import {
+  dayScopedQueryParams,
+  monthSeedRangeFromParams,
+  seedDayScopedAvailableCache,
+} from '@/queries/games/seedDayScopedAvailableCache';
 import { sortGamesByStatusAndStartTime } from '@/queries/games/sortGames';
+import {
+  buildAvailableGamesFilterHash,
+  buildAvailableUpcomingFilterHash,
+} from '@/queries/queryKeys';
 
 export const FindTab = () => {
   const { t } = useTranslation();
@@ -102,6 +111,7 @@ export const FindTab = () => {
   const listQueryEnabled = queryEnabled && findViewMode === 'list';
 
   const cityId = user?.currentCity?.id || user?.currentCityId;
+  const cityTimezone = user?.currentCity?.timezone;
   const calendarQueryParams = useMemo(
     () => ({
       userId: user?.id,
@@ -113,6 +123,7 @@ export const FindTab = () => {
       isAdmin: user?.isAdmin,
       cityId,
       structural: calendarStructural,
+      indexOnly: true as const,
     }),
     [
       user?.id,
@@ -148,7 +159,9 @@ export const FindTab = () => {
   const {
     availableGames: calendarGames,
     meta: calendarMeta,
+    page: calendarPage,
     loading: loadingCalendarGames,
+    isPlaceholderData: calendarIsPlaceholder,
     refetch: refetchCalendarGames,
     loadMore: loadMoreCalendarGames,
   } = useAvailableGames(
@@ -160,6 +173,8 @@ export const FindTab = () => {
     filters.showPrivateGames,
     calendarQueryEnabled,
     calendarStructural,
+    false,
+    true, // indexOnly — month badges via dayIndex
   );
 
   const selectedDayDate = useMemo(() => {
@@ -168,12 +183,40 @@ export const FindTab = () => {
     return Number.isNaN(d.getTime()) ? undefined : d;
   }, [findSelectedDay]);
 
+  // Day cards load in parallel with month index (fast TTFP). Seed is best-effort.
   const dayScopedEnabled =
     calendarQueryEnabled && !!selectedDayDate && findViewMode === 'calendar';
+
+  const monthSeedRange = useMemo(
+    () => monthSeedRangeFromParams(calendarQueryParams),
+    [calendarQueryParams],
+  );
+
+  // Seed only from settled month index (never keepPreviousData placeholder).
+  useLayoutEffect(() => {
+    if (!dayScopedEnabled || !selectedDayDate || !calendarPage || !monthSeedRange) return;
+    seedDayScopedAvailableCache(
+      queryClient,
+      calendarPage,
+      dayScopedQueryParams(calendarQueryParams, selectedDayDate),
+      cityTimezone,
+      monthSeedRange,
+    );
+  }, [
+    dayScopedEnabled,
+    selectedDayDate,
+    calendarPage,
+    queryClient,
+    calendarQueryParams,
+    cityTimezone,
+    monthSeedRange,
+  ]);
+
   const {
     availableGames: selectedDayGames,
     meta: selectedDayMeta,
     loading: loadingSelectedDayGames,
+    isError: selectedDayIsError,
     refetch: refetchSelectedDayGames,
     loadMore: loadMoreSelectedDayGames,
   } = useAvailableGames(
@@ -185,7 +228,8 @@ export const FindTab = () => {
     filters.showPrivateGames,
     dayScopedEnabled,
     calendarStructural,
-    true, // rejectPlaceholderData — fall back to month day list while day key resolves
+    true, // rejectPlaceholderData
+    false,
   );
 
   const {
@@ -203,11 +247,16 @@ export const FindTab = () => {
     upcomingStructural,
   );
 
-  // #287 Prefetch inactive view + adjacent months once Find is ready (no thrash).
+  // Prefetch inactive view + adjacent days (cards) + adjacent months (indexOnly).
   const prefetchKeyRef = useRef<string>('');
   useEffect(() => {
     if (!queryEnabled || !user?.id) return;
-    const key = `${findViewMode}:${calendarQueryParams.startDate?.toISOString() ?? ''}:${upcomingQueryParams.structural ? JSON.stringify(upcomingQueryParams.structural) : ''}:${findSportApiParam ?? ''}`;
+    const calendarHash = buildAvailableGamesFilterHash({
+      ...calendarQueryParams,
+      indexOnly: true,
+    });
+    const upcomingHash = buildAvailableUpcomingFilterHash(upcomingQueryParams);
+    const key = `${findViewMode}:${calendarHash}:${findSelectedDay ?? ''}:${calendarPage ? 'm1' : 'm0'}:${upcomingHash}`;
     if (prefetchKeyRef.current === key) return;
     prefetchKeyRef.current = key;
 
@@ -227,10 +276,28 @@ export const FindTab = () => {
               ...calendarQueryParams,
               startDate: adj.startDate,
               endDate: adj.endDate,
+              indexOnly: true,
             },
             true,
           ),
         );
+      }
+    }
+
+    if (findViewMode === 'calendar' && selectedDayDate && monthSeedRange) {
+      for (const delta of [-1, 1]) {
+        const adjDay = addDays(selectedDayDate, delta);
+        const dayParams = dayScopedQueryParams(calendarQueryParams, adjDay);
+        if (calendarPage) {
+          seedDayScopedAvailableCache(
+            queryClient,
+            calendarPage,
+            dayParams,
+            cityTimezone,
+            monthSeedRange,
+          );
+        }
+        void queryClient.prefetchQuery(availableGamesQueryOptions(dayParams, true));
       }
     }
   }, [
@@ -243,13 +310,18 @@ export const FindTab = () => {
     findSportApiParam,
     queryDateRange.startDate,
     findSelectedDay,
+    selectedDayDate,
     displaySettings.weekStart,
+    calendarPage,
+    cityTimezone,
+    monthSeedRange,
   ]);
 
   const loadingAvailableGames =
     findViewMode === 'list'
       ? loadingUpcomingGames
-      : loadingCalendarGames || (dayScopedEnabled && loadingSelectedDayGames && selectedDayGames.length === 0);
+      : loadingCalendarGames ||
+        (dayScopedEnabled && loadingSelectedDayGames && selectedDayGames.length === 0);
 
   const filteredAvailableGames = useMemo(() => {
     if (findViewMode === 'list') return sortGamesByStatusAndStartTime(upcomingGames);
@@ -261,25 +333,20 @@ export const FindTab = () => {
     if (selectedDayGames.length > 0) {
       return sortGamesByStatusAndStartTime(selectedDayGames);
     }
-    // Still fetching → omit so UI can use month day-slice (F-56).
     if (loadingSelectedDayGames) return undefined;
-    // Empty page with more to scan (e.g. availableSlots overscan) must stay
-    // day-scoped so "Load more" remains authoritative (F-55).
+    // Error after retries → empty + pull-to-refresh (not endless skeleton / false “busy”).
+    if (selectedDayIsError) return [];
     if (selectedDayMeta.hasMore) return [];
-    // Settled empty day → fall back to month slice (archive-truncation safety).
-    return undefined;
+    return [];
   }, [
     dayScopedEnabled,
     selectedDayGames,
     loadingSelectedDayGames,
+    selectedDayIsError,
     selectedDayMeta.hasMore,
   ]);
 
-  const useDayScopedList =
-    dayScopedEnabled &&
-    (loadingSelectedDayGames ||
-      selectedDayGames.length > 0 ||
-      selectedDayMeta.hasMore);
+  const useDayScopedList = dayScopedEnabled;
 
   const pageMeta =
     findViewMode === 'list'
@@ -357,9 +424,9 @@ export const FindTab = () => {
 
   const sectionProps = {
     availableGames: filteredAvailableGames,
-    // While day-scoped fetch is in flight (empty), omit so UI falls back to month day slice.
     selectedDayGames: sortedSelectedDayGames,
-    dayIndex: calendarMeta.dayIndex,
+    // Hide previous-month badge counts while the new month index is in flight.
+    dayIndex: calendarIsPlaceholder ? undefined : calendarMeta.dayIndex,
     user,
     loading: loadingAvailableGames,
     onJoin: handleJoinGame,

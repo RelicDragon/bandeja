@@ -36,7 +36,7 @@ export const useAvailableUpcomingGames = (
     queryEnabled,
     isPending,
     isFetching,
-    availableGames.length,
+    data != null,
   );
 
   const fetchData = useCallback(
