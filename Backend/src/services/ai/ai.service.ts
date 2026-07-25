@@ -39,12 +39,28 @@ export function getAiService(): IAiService {
         messages: options.messages,
         temperature: options.temperature,
         max_tokens: options.max_tokens,
-        ...(provider === 'deepseek'
-          ? { extra_body: { thinking: { type: 'disabled' as const } } }
-          : {}),
-      });
-      const text = response.choices[0]?.message?.content?.trim();
-      if (!text) throw new Error('Empty AI response');
+        ...(provider === 'deepseek' ? { thinking: { type: 'disabled' } } : {}),
+      } as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming);
+      const message = response.choices[0]?.message;
+      const text = message?.content?.trim();
+      if (!text) {
+        const reasoning =
+          message &&
+          typeof message === 'object' &&
+          'reasoning_content' in message &&
+          typeof (message as { reasoning_content?: unknown }).reasoning_content === 'string'
+            ? String((message as { reasoning_content?: string }).reasoning_content ?? '').length
+            : 0;
+        console.error('[ai] Empty AI response', {
+          provider,
+          model,
+          reason: options.reason ?? null,
+          finishReason: response.choices[0]?.finish_reason ?? null,
+          reasoningChars: reasoning,
+          usage: response.usage ?? null,
+        });
+        throw new Error('Empty AI response');
+      }
       const usage = response.usage;
       logLlmUsage({
         provider,
