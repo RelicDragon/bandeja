@@ -175,7 +175,7 @@ export function BooktimeAdjacentBookingGroup({
           compact={compact}
           clubTimezone={clubTimezone}
           nested
-          readOnly
+          readOnly={!expandableActions}
           linkedGames={
             linkedGamesLoading
               ? undefined
