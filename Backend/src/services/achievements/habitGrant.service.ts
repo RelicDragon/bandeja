@@ -1,5 +1,6 @@
 import { Prisma, type Sport } from '@prisma/client';
 import {
+  habitUnlocksDue,
   habitUnlocksNewlyCrossed,
   type AchievementDefinition,
   type HabitProgressCounters,
@@ -142,21 +143,66 @@ export async function grantHabitAchievements(params: {
     after: params.after,
     ownedDefinitionIds,
   });
-  if (due.length === 0) {
+  return createHabitGrants({
+    db,
+    userId: params.userId,
+    due,
+    sport: params.sport ?? null,
+    sourceGameId: params.sourceGameId ?? null,
+  });
+}
+
+/**
+ * One-time / ops backfill: grant every one-shot habit whose counters already meet
+ * threshold and that has never been granted (incl. revoked). Silent — no celebration.
+ * Uses the same aggregated counters as the cabinet progress UI.
+ */
+export async function backfillHabitAchievementsForUser(params: {
+  userId: string;
+  counters: HabitProgressCounters;
+  tx?: Prisma.TransactionClient | typeof prisma;
+}): Promise<HabitGrantResult> {
+  const db = params.tx ?? prisma;
+  const existing = await db.userAchievement.findMany({
+    where: { userId: params.userId },
+    select: { definitionId: true },
+  });
+  const ownedDefinitionIds = new Set(existing.map((r) => r.definitionId));
+  const due = habitUnlocksDue({
+    counters: params.counters,
+    ownedDefinitionIds,
+  });
+  return createHabitGrants({
+    db,
+    userId: params.userId,
+    due,
+    sport: null,
+    sourceGameId: null,
+  });
+}
+
+async function createHabitGrants(params: {
+  db: Prisma.TransactionClient | typeof prisma;
+  userId: string;
+  due: AchievementDefinition[];
+  sport: Sport | null;
+  sourceGameId: string | null;
+}): Promise<HabitGrantResult> {
+  if (params.due.length === 0) {
     return { granted: [], unlocks: [] };
   }
 
   const granted: AchievementDefinition[] = [];
   const unlocks: HabitUnlockMeta[] = [];
-  for (const definition of due) {
+  for (const definition of params.due) {
     try {
-      const row = await db.userAchievement.create({
+      const row = await params.db.userAchievement.create({
         data: {
           userId: params.userId,
           definitionId: definition.id,
           sourceKey: '',
-          sport: params.sport ?? null,
-          sourceGameId: params.sourceGameId ?? null,
+          sport: params.sport,
+          sourceGameId: params.sourceGameId,
           isActive: true,
         },
       });

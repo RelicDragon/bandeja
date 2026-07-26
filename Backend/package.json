@@ -45,6 +45,7 @@
     "restore:reliability-from-latest-outcome": "ts-node scripts/restoreReliabilityFromLatestOutcome.ts",
     "backfill:last-rating-activity-at": "ts-node scripts/backfillLastRatingActivityAt.ts",
     "backfill:play-streak": "ts-node scripts/backfillPlayStreak.ts",
+    "backfill:habit-achievements": "ts-node --transpile-only scripts/backfillHabitAchievements.ts",
     "audit:court-club-sports": "ts-node scripts/audit-court-club-sports.ts",
     "backfill:court-club-sports": "ts-node scripts/backfill-court-club-sports.ts",
     "seed:padeloo-avantura": "ts-node -r dotenv/config scripts/seed-padeloo-avantura.ts",
