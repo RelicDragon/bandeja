@@ -41,7 +41,8 @@ export function usePlayerProfile(
   const user = useAuthStore((state) => state.user);
   const viewerUserId = user?.id;
   const updateUser = useAuthStore((state) => state.updateUser);
-  const { addFavorite, removeFavorite } = useFavoritesStore();
+  const addFavorite = useFavoritesStore((state) => state.addFavorite);
+  const removeFavorite = useFavoritesStore((state) => state.removeFavorite);
   const contextLevelSport = useSportLevelContext();
   const viewerDefault = user ? resolveActivePrimarySport(user) ?? undefined : undefined;
 

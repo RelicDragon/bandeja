@@ -351,7 +351,6 @@ export function TrophyCelebrationSheet({
                     <TrophyRarityFrame
                       rarity={unlock.rarity}
                       className="h-28 w-28 rounded-3xl"
-                      innerClassName="rounded-[22px]"
                     >
                       <TrophyArt artKey={unlock.artKey} className="h-20 w-24" />
                     </TrophyRarityFrame>

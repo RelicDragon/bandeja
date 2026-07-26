@@ -134,7 +134,6 @@ function ShowcaseSlot({
               <TrophyRarityFrame
                 rarity={slot.definition!.rarity}
                 className="h-12 w-12"
-                innerClassName="rounded-[13px]"
               >
                 <TrophyArt artKey={slot.definition!.artKey} className="h-8 w-9" />
               </TrophyRarityFrame>

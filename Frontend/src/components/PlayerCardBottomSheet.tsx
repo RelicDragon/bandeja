@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { memo, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ArrowLeft, Share2, Maximize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -36,7 +36,10 @@ interface PlayerCardBottomSheetProps {
   onClose: () => void;
 }
 
-export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomSheetProps) => {
+export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
+  playerId,
+  onClose,
+}: PlayerCardBottomSheetProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
@@ -519,4 +522,4 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
       )}
     </>
   );
-};
+});

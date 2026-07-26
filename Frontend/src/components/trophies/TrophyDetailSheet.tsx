@@ -96,7 +96,6 @@ export function TrophyDetailSheet({
               rarity={definition.rarity}
               locked={locked}
               className="h-28 w-28 rounded-3xl"
-              innerClassName="rounded-[22px]"
             >
               <TrophyArt artKey={definition.artKey} locked={locked} className="h-[4.5rem] w-[5.5rem]" />
             </TrophyRarityFrame>

@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { TrophyArt } from '@/components/trophies/TrophyArt';
 import { TrophyDetailSheet } from '@/components/trophies/TrophyDetailSheet';
-import { TrophyRarityBadge } from '@/components/trophies/TrophyRarityBadge';
 import { TrophyRarityFrame } from '@/components/trophies/TrophyRarityFrame';
-import { rarityTextClass } from '@/components/trophies/trophyRarityStyles';
+import {
+  rarityAuraClass,
+  rarityTextClass,
+} from '@/components/trophies/trophyRarityStyles';
 import type {
   TrophyCabinetEntryView,
   TrophyDefinitionView,
@@ -40,21 +42,31 @@ export function TrophyCabinetCard({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`group relative flex h-full w-full flex-col items-center gap-2 rounded-2xl border p-2.5 text-center transition duration-200 hover:-translate-y-0.5 active:scale-[0.98] ${
+        className={`group relative flex h-full w-full flex-col items-center gap-1.5 rounded-2xl px-1.5 pb-2 pt-2 text-center transition duration-200 hover:-translate-y-0.5 active:scale-[0.97] ${
           locked
-            ? 'border-gray-200/80 bg-gray-50/90 dark:border-gray-700/60 dark:bg-gray-900/40'
-            : 'border-gray-200/70 bg-white shadow-sm hover:shadow-md dark:border-gray-700/50 dark:bg-gray-900/70'
+            ? 'bg-gray-50/80 dark:bg-white/[0.03]'
+            : 'bg-gradient-to-b from-white to-gray-50 shadow-sm ring-1 ring-black/[0.04] dark:from-white/[0.07] dark:to-white/[0.02] dark:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.55)] dark:ring-white/[0.06]'
         }`}
       >
-        <div className="relative w-full shrink-0">
-          <TrophyRarityFrame rarity={definition.rarity} locked={locked} className="mx-auto h-[4.75rem] w-full max-w-[5.5rem]">
+        <div className="relative flex w-full justify-center">
+          {!locked && (
+            <div
+              className={`pointer-events-none absolute inset-0 -m-1 rounded-full bg-gradient-to-b opacity-70 blur-md ${rarityAuraClass(definition.rarity)}`}
+              aria-hidden
+            />
+          )}
+          <TrophyRarityFrame
+            rarity={definition.rarity}
+            locked={locked}
+            className="relative h-[4.5rem] w-[4.5rem] rounded-2xl"
+          >
             <motion.div
               key={locked ? 'locked' : `open-${instances[0]?.id ?? 'none'}`}
               initial={{ opacity: 0.5, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'spring', stiffness: 380, damping: 28 }}
             >
-              <TrophyArt artKey={definition.artKey} locked={locked} className="h-14 w-16" />
+              <TrophyArt artKey={definition.artKey} locked={locked} className="h-12 w-14" />
             </motion.div>
           </TrophyRarityFrame>
           {instances.length > 1 && (
@@ -71,25 +83,19 @@ export function TrophyCabinetCard({
             </span>
           )}
         </div>
-        <TrophyRarityBadge rarity={definition.rarity} locked={locked} />
         <span
-          className={`line-clamp-2 min-h-[2.2em] flex-1 text-[11px] font-semibold leading-tight ${rarityTextClass(definition.rarity, locked)}`}
+          className={`line-clamp-2 min-h-[2.2em] w-full px-0.5 text-[11px] font-semibold leading-tight ${rarityTextClass(definition.rarity, locked)}`}
         >
           {t(definition.titleKey)}
         </span>
-        <div className="mt-auto w-full min-h-[1.375rem] px-0.5">
+        <div className="mt-auto w-full min-h-[0.875rem] px-1">
           {showProgress && progress && (
-            <>
-              <div className="h-1 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-                <div
-                  className="h-full rounded-full bg-primary-500 transition-all"
-                  style={{ width: `${Math.min(100, (progress.current / progress.target) * 100)}%` }}
-                />
-              </div>
-              <div className="mt-0.5 text-[10px] tabular-nums text-gray-500 dark:text-gray-400">
-                {progress.current}/{progress.target}
-              </div>
-            </>
+            <div className="h-1 overflow-hidden rounded-full bg-gray-200/90 dark:bg-white/10">
+              <div
+                className="h-full rounded-full bg-primary-500 transition-all"
+                style={{ width: `${Math.min(100, (progress.current / progress.target) * 100)}%` }}
+              />
+            </div>
           )}
         </div>
       </button>

@@ -15,12 +15,21 @@ interface PresenceWantedState {
 export const usePresenceWantedStore = create<PresenceWantedState>((set, get) => ({
   wantedByKey: {},
   setWanted: (key, ids) => {
-    set((state) => ({
-      wantedByKey: { ...state.wantedByKey, [key]: ids },
-    }));
+    set((state) => {
+      const prev = state.wantedByKey[key];
+      if (
+        prev &&
+        prev.length === ids.length &&
+        prev.every((id, i) => id === ids[i])
+      ) {
+        return state;
+      }
+      return { wantedByKey: { ...state.wantedByKey, [key]: ids } };
+    });
   },
   clearWanted: (key) => {
     set((state) => {
+      if (!(key in state.wantedByKey)) return state;
       const next = { ...state.wantedByKey };
       delete next[key];
       return { wantedByKey: next };

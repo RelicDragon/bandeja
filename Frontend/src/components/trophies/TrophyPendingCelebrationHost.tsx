@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { TrophyCelebrationSheet } from '@/components/trophies/TrophyCelebrationSheet';
 import type { TrophiesPayload } from '@/types/trophies';
 
@@ -14,17 +15,21 @@ export function TrophyPendingCelebrationHost({
   isOwn,
   nested = false,
 }: TrophyPendingCelebrationHostProps) {
-  if (!isOwn || !trophies?.pendingCelebrations?.length) return null;
+  const pendingCelebrations = trophies?.pendingCelebrations;
+  const pending = useMemo(() => {
+    if (!pendingCelebrations?.length) return null;
+    return pendingCelebrations.map((row) => ({
+      definitionId: row.definitionId,
+      rarity: row.rarity,
+      artKey: row.artKey,
+      titleKey: row.titleKey,
+      achievementId: row.achievementId,
+      ...(row.place != null ? { place: row.place } : {}),
+      sport: row.sport,
+    }));
+  }, [pendingCelebrations]);
 
-  const pending = trophies.pendingCelebrations.map((row) => ({
-    definitionId: row.definitionId,
-    rarity: row.rarity,
-    artKey: row.artKey,
-    titleKey: row.titleKey,
-    achievementId: row.achievementId,
-    ...(row.place != null ? { place: row.place } : {}),
-    sport: row.sport,
-  }));
+  if (!isOwn || !pending?.length) return null;
 
   return <TrophyCelebrationSheet pending={pending} nested={nested} />;
 }
