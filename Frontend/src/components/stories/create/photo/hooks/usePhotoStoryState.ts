@@ -233,12 +233,16 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
   );
 
   const replaceActiveMedia = useCallback(
-    (file: File, previewUrl: string) => {
+    (
+      file: File,
+      previewUrl: string,
+      options?: { naturalWidth: number; naturalHeight: number }
+    ) => {
       // Do not revoke previous URL here — undo history still references it.
       withHistory((prev) =>
         prev.map((doc, i) => {
           if (i !== activeIndex) return doc;
-          return patchDocumentMedia(doc, file, previewUrl);
+          return patchDocumentMedia(doc, file, previewUrl, options);
         })
       );
       setDefaultTransforms((prev) => {

@@ -302,6 +302,7 @@ Frontend/e2e/
 |----|------|-------|----------|
 | H-21 | Open story viewer | Tap story bubble | Fullscreen viewer |
 | H-22 | Story navigation | Tap next/prev | Changes slide |
+| H-70 | Story viewer stays responsive | Open video + image stories on Capacitor/web → hold to pause → release outside frame → advance through several segments | Progress advances smoothly; release always unpauses; no WebView freeze; mute starts on native |
 | H-23 | Create story sheet | Tap own bubble / header action | Create sheet opens |
 | H-24 | Photo story publish | Pick photo → publish | Appears in rail |
 | H-25 | Video story publish | Pick video → publish | Appears in rail |
@@ -336,6 +337,7 @@ Frontend/e2e/
 | H-67 | Story discard after partial publish | Multi-photo Share fails mid-batch → discard editor | Already-published slides removed (or cleanup error toast) |
 | H-68 | Story adjust live preview | Open Adjust → drag brightness | Canvas updates while dragging; release commits undo step |
 | H-69 | Story crop failure toast | Force crop error (invalid image) → Done | Toast shown; editor stays on crop screen |
+| H-71 | Story crop fills 9:16 | Crop photo → Done (desktop + mobile browser + Capacitor iOS/Android) | Result fills story frame exactly (no letterbox / aspect jump vs cropper); Done works even if canvas.toBlob returns null |
 
 ### 6.5 Home subtabs & URL
 

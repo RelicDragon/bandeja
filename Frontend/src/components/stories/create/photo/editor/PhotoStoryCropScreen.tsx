@@ -3,16 +3,24 @@ import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import Cropper from 'react-easy-crop';
 import { Loader2 } from 'lucide-react';
-import getCroppedImg from '@/utils/cropUtils';
 import { Button } from '@/components';
 import { useFocusTrap } from '@/hooks/useFocusTrap';
 import { lightHaptic } from '@/utils/lightHaptic';
+import { cropToStoryCanvas } from '../utils/cropToStoryCanvas';
+import { STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH } from '../utils/transform';
 
 type PhotoStoryCropScreenProps = {
   imageUrl: string;
-  onConfirm: (file: File) => void;
+  onConfirm: (result: {
+    file: File;
+    previewUrl: string;
+    naturalWidth: number;
+    naturalHeight: number;
+  }) => void;
   onCancel: () => void;
 };
+
+const STORY_ASPECT = STORY_CANVAS_WIDTH / STORY_CANVAS_HEIGHT;
 
 export function PhotoStoryCropScreen({ imageUrl, onConfirm, onCancel }: PhotoStoryCropScreenProps) {
   const { t } = useTranslation();
@@ -31,17 +39,14 @@ export function PhotoStoryCropScreen({ imageUrl, onConfirm, onCancel }: PhotoSto
   const handleConfirm = useCallback(async () => {
     if (!area || busy) return;
     setBusy(true);
-    let blobUrl: string | null = null;
     try {
-      blobUrl = await getCroppedImg(imageUrl, area, 0);
-      const res = await fetch(blobUrl);
-      const blob = await res.blob();
+      const { file, width, height } = await cropToStoryCanvas(imageUrl, area);
+      const previewUrl = URL.createObjectURL(file);
       lightHaptic();
-      onConfirm(new File([blob], `story-crop-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+      onConfirm({ file, previewUrl, naturalWidth: width, naturalHeight: height });
     } catch {
       toast.error(t('stories.editor.cropFailed'));
     } finally {
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
       setBusy(false);
     }
   }, [area, busy, imageUrl, onConfirm, t]);
@@ -58,7 +63,8 @@ export function PhotoStoryCropScreen({ imageUrl, onConfirm, onCancel }: PhotoSto
           image={imageUrl}
           crop={crop}
           zoom={zoom}
-          aspect={9 / 16}
+          aspect={STORY_ASPECT}
+          showGrid
           onCropChange={setCrop}
           onZoomChange={setZoom}
           onCropComplete={(_, pixels) => setArea(pixels)}

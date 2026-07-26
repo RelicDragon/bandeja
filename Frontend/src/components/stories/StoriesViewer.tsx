@@ -275,6 +275,12 @@ export function StoriesViewer({
   }, [open, bubbles, bubbleIndex, segmentIndex, flushPendingViews, onClose]);
 
   useEffect(() => {
+    if (open) return;
+    resetPlaybackRef.current();
+  }, [open]);
+
+  const togglePause = playback.togglePause;
+  useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (getStoryViewerEngagementPaused()) return;
@@ -282,12 +288,12 @@ export function StoriesViewer({
       else if (e.key === 'ArrowLeft') goPrevSegment();
       else if (e.key === ' ') {
         e.preventDefault();
-        playback.togglePause();
+        togglePause();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [open, goNextSegment, goPrevSegment, playback]);
+  }, [open, goNextSegment, goPrevSegment, togglePause]);
 
   const slide = useMemo(() => {
     if (slideVersion == null || !segment || !bubble) return null;

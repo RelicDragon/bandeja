@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 type StoriesGestureLayerProps = {
   onTapLeft: () => void;
@@ -41,49 +41,81 @@ export function StoriesGestureLayer({
   children,
 }: StoriesGestureLayerProps) {
   const longPressMs = reducedMotion ? LONG_PRESS_MS_REDUCED : LONG_PRESS_MS;
-  const touchStart = useRef<{ x: number; y: number; t: number } | null>(null);
+  const touchStart = useRef<{ x: number; y: number; t: number; pointerId: number } | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressActive = useRef(false);
   const skipGestureRef = useRef(false);
   const lastTapRef = useRef<{ t: number; x: number; y: number } | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
-  const clearLongPress = useCallback(() => {
+  const onLongPressEndRef = useRef(onLongPressEnd);
+  onLongPressEndRef.current = onLongPressEnd;
+  const onLongPressStartRef = useRef(onLongPressStart);
+  onLongPressStartRef.current = onLongPressStart;
+
+  const clearLongPressTimer = useCallback(() => {
     if (longPressTimer.current) {
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
+  }, []);
+
+  const endLongPressIfActive = useCallback(() => {
+    clearLongPressTimer();
     if (longPressActive.current) {
       longPressActive.current = false;
-      onLongPressEnd();
+      onLongPressEndRef.current();
     }
-  }, [onLongPressEnd]);
+  }, [clearLongPressTimer]);
+
+  const releasePointer = useCallback((pointerId: number) => {
+    const el = rootRef.current;
+    if (!el) return;
+    try {
+      if (el.hasPointerCapture(pointerId)) el.releasePointerCapture(pointerId);
+    } catch {
+      // Pointer may already be released by the browser.
+    }
+  }, []);
+
+  // Unmount only — must not re-run when parent passes new callback identities each render.
+  useEffect(() => () => endLongPressIfActive(), [endLongPressIfActive]);
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
       skipGestureRef.current = isStoryInteractiveTarget(e.target);
       if (skipGestureRef.current) return;
-      touchStart.current = { x: e.clientX, y: e.clientY, t: Date.now() };
+      touchStart.current = { x: e.clientX, y: e.clientY, t: Date.now(), pointerId: e.pointerId };
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        // Some environments reject capture; pointerup may still land here.
+      }
       longPressTimer.current = setTimeout(() => {
         longPressActive.current = true;
-        onLongPressStart();
+        onLongPressStartRef.current();
       }, longPressMs);
     },
-    [onLongPressStart, longPressMs]
+    [longPressMs]
   );
 
   const handlePointerUp = useCallback(
     (e: React.PointerEvent) => {
+      const start = touchStart.current;
+      if (start) releasePointer(start.pointerId);
+
       if (skipGestureRef.current) {
         skipGestureRef.current = false;
         touchStart.current = null;
-        clearLongPress();
+        endLongPressIfActive();
         return;
       }
-      const start = touchStart.current;
-      clearLongPress();
+
+      const wasLongPress = longPressActive.current;
+      endLongPressIfActive();
       touchStart.current = null;
-      if (!start || longPressActive.current) return;
+      if (!start || wasLongPress) return;
 
       const dx = e.clientX - start.x;
       const dy = e.clientY - start.y;
@@ -120,16 +152,36 @@ export function StoriesGestureLayer({
       if (ratio < 1 / 3) onTapLeft();
       else onTapRight();
     },
-    [clearLongPress, onSwipeDown, onSwipeUp, onSwipeLeft, onSwipeRight, onTapLeft, onTapRight, onDoubleTap]
+    [
+      endLongPressIfActive,
+      releasePointer,
+      onSwipeDown,
+      onSwipeUp,
+      onSwipeLeft,
+      onSwipeRight,
+      onTapLeft,
+      onTapRight,
+      onDoubleTap,
+    ]
+  );
+
+  const handlePointerCancel = useCallback(
+    (e: React.PointerEvent) => {
+      releasePointer(e.pointerId);
+      skipGestureRef.current = false;
+      touchStart.current = null;
+      endLongPressIfActive();
+    },
+    [endLongPressIfActive, releasePointer]
   );
 
   return (
     <div
+      ref={rootRef}
       className={className ?? 'relative flex-1 min-h-0 touch-none select-none'}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
-      onPointerCancel={clearLongPress}
-      onPointerLeave={clearLongPress}
+      onPointerCancel={handlePointerCancel}
     >
       {children}
     </div>

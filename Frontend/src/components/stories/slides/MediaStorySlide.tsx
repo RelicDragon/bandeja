@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { resolveChatMediaUrl } from '@/components/audio/audioWaveformUtils';
 import { ensureChatMediaDownloaded } from '@/services/chat/chatMediaDownloadManager';
 import { OVERLAY_CONTROL_GLASS } from '@/components/ui/overlayControlGlass';
 import { resolveStoryViewerPresentation } from '@/components/stories/create/utils/storyCompositionViewport';
-import { STORY_VIDEO_STALL_MS } from '@/components/stories/storyPlayback';
+import {
+  shouldReportStoryProgress,
+  STORY_VIDEO_STALL_MS,
+} from '@/components/stories/storyPlayback';
 import { StoryCompositionViewport } from '@/components/stories/StoryCompositionViewport';
 import { STORY_COMPOSITION_MEDIA_FILL_CLASS } from '@/components/stories/StoryCompositionMedia';
 import { useStoryViewerEngagementPaused } from '@/components/stories/viewer/storyViewerEngagementPause';
@@ -34,10 +38,13 @@ export function MediaStorySlide({
   const engagementPaused = useStoryViewerEngagementPaused();
   const paused = userPaused || engagementPaused;
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(() => Capacitor.isNativePlatform());
   const [retryCount, setRetryCount] = useState(0);
   const lastPlaybackProgressRef = useRef(0);
   const lastPlaybackTickRef = useRef(0);
+  const lastProgressReportRef = useRef({ value: -1, atMs: 0 });
+  const onVideoProgressRef = useRef(onVideoProgress);
+  onVideoProgressRef.current = onVideoProgress;
   const isVideo = segment.sourceType === 'USER_STORY_ITEM' && segment.media.type === 'VIDEO';
   const mediaUrl = resolveChatMediaUrl(segment.media.url);
   const posterUrl =
@@ -68,6 +75,7 @@ export function MediaStorySlide({
     setRetryCount(0);
     lastPlaybackProgressRef.current = 0;
     lastPlaybackTickRef.current = 0;
+    lastProgressReportRef.current = { value: -1, atMs: 0 };
   }, [mediaUrl]);
 
   useEffect(() => {
@@ -84,9 +92,10 @@ export function MediaStorySlide({
     video.currentTime = 0;
     lastPlaybackProgressRef.current = 0;
     lastPlaybackTickRef.current = 0;
-    onVideoProgress?.(0);
+    lastProgressReportRef.current = { value: -1, atMs: 0 };
+    onVideoProgressRef.current?.(0);
     if (isActive && !paused) void video.play().catch(() => handleMediaError());
-  }, [replayNonce, isVideo, isActive, paused, onVideoProgress, handleMediaError]);
+  }, [replayNonce, isVideo, isActive, paused, handleMediaError]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -137,8 +146,12 @@ export function MediaStorySlide({
     const p = Math.min(1, video.currentTime / video.duration);
     lastPlaybackProgressRef.current = p;
     lastPlaybackTickRef.current = Date.now();
-    onVideoProgress?.(p);
-  }, [onVideoProgress]);
+    const now = performance.now();
+    const prev = lastProgressReportRef.current;
+    if (!shouldReportStoryProgress(prev.value, p, prev.atMs, now)) return;
+    lastProgressReportRef.current = { value: p, atMs: now };
+    onVideoProgressRef.current?.(p);
+  }, []);
 
   useEffect(() => {
     if (!isActive || !isVideo || paused) return;
@@ -175,6 +188,7 @@ export function MediaStorySlide({
       poster={posterUrl ? resolveChatMediaUrl(posterUrl) : undefined}
       className={STORY_COMPOSITION_MEDIA_FILL_CLASS}
       playsInline
+      muted={muted}
       preload="auto"
       onLoadedMetadata={handleLoadedMetadata}
       onEnded={onVideoEnded}

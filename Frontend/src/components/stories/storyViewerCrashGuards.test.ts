@@ -3,7 +3,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { drawCompositionOverlays } from '@/components/stories/create/utils/storyCompositionDraw';
 import { formatRelativeTimeSafe } from '@/utils/dateFormat';
 import { resolveStoryViewerSlideKind } from '@/components/stories/storiesViewerSlideKind';
+import { storySegmentSlideVersion } from '@/components/stories/storyPlayback';
 import type { TextStoryLayer } from '@/components/stories/create/types/storyEditor.types';
+import type { StorySegment } from '@/api/stories';
 
 describe('story viewer crash guards', () => {
   it('drawCompositionOverlays survives text layers missing style (legacy overlay data)', () => {
@@ -58,5 +60,23 @@ describe('story viewer crash guards', () => {
     const staleInternalIndex = 1;
     const clickedIndex = 0;
     expect(staleInternalIndex).not.toBe(clickedIndex);
+  });
+
+  it('mark-viewed must not remount the active slide media', () => {
+    const segment = {
+      key: 'USER_STORY_ITEM:9',
+      viewed: false,
+      createdAt: '2026-07-01T00:00:00.000Z',
+      sourceType: 'USER_STORY_ITEM',
+      media: {
+        url: 'https://cdn.example/story.mp4',
+        thumbnailUrl: 'https://cdn.example/story.jpg',
+        type: 'VIDEO',
+        durationMs: 8000,
+      },
+    } as StorySegment;
+    const before = storySegmentSlideVersion(segment);
+    const after = storySegmentSlideVersion({ ...segment, viewed: true });
+    expect(before).toBe(after);
   });
 });

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getStorySegmentDurationMs, STORY_MARK_VIEWED_MS, type StorySegment } from '@/api/stories';
 import {
   computeVideoFallbackBudgetMs,
+  shouldReportStoryProgress,
   STORY_PLAYBACK_RATE,
 } from '@/components/stories/storyPlayback';
 import { useStoryViewerEngagementPaused } from '@/components/stories/viewer/storyViewerEngagementPause';
@@ -52,8 +53,10 @@ export function useStoriesPlayback({
   const startedAtRef = useRef<number | null>(null);
   const elapsedBeforePauseRef = useRef(0);
   const markedRef = useRef(false);
+  const completedRef = useRef(false);
   const markTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const videoFallbackRemainingRef = useRef(0);
+  const lastProgressReportRef = useRef({ value: 0, atMs: 0 });
   const onCompleteRef = useRef(onComplete);
   const onMarkViewedRef = useRef(onMarkViewed);
   const segmentKeyRef = useRef<string | null>(null);
@@ -71,6 +74,8 @@ export function useStoriesPlayback({
     !isVideo && durationMs > 0 ? durationMs / STORY_PLAYBACK_RATE : durationMs;
   const reducedMotion = usePrefersReducedMotion();
   const effectivePaused = paused || engagementPaused;
+  const effectivePausedRef = useRef(effectivePaused);
+  effectivePausedRef.current = effectivePaused;
 
   const clearMarkTimer = useCallback(() => {
     if (markTimerRef.current) {
@@ -86,6 +91,23 @@ export function useStoriesPlayback({
     }
   }, []);
 
+  const completeOnce = useCallback(() => {
+    if (completedRef.current) return;
+    completedRef.current = true;
+    stopRaf();
+    setProgress(1);
+    onCompleteRef.current();
+  }, [stopRaf]);
+
+  const setProgressThrottled = useCallback((next: number) => {
+    const clamped = Math.min(1, Math.max(0, next));
+    const now = performance.now();
+    const prev = lastProgressReportRef.current;
+    if (!shouldReportStoryProgress(prev.value, clamped, prev.atMs, now)) return;
+    lastProgressReportRef.current = { value: clamped, atMs: now };
+    setProgress(clamped);
+  }, []);
+
   const resetPlayback = useCallback(() => {
     stopRaf();
     clearMarkTimer();
@@ -94,8 +116,10 @@ export function useStoriesPlayback({
     startedAtRef.current = null;
     elapsedBeforePauseRef.current = 0;
     markedRef.current = false;
+    completedRef.current = false;
     videoFallbackRemainingRef.current = 0;
     appliedVideoSegmentKeyRef.current = null;
+    lastProgressReportRef.current = { value: 0, atMs: 0 };
     setReplayGeneration((g) => g + 1);
   }, [clearMarkTimer, stopRaf]);
 
@@ -125,40 +149,41 @@ export function useStoriesPlayback({
     });
     if (fill == null) return;
     appliedVideoSegmentKeyRef.current = segmentKey;
-    setProgress(fill);
-  }, [segmentKey, isActive, isVideo, effectivePaused, videoProgress]);
+    setProgressThrottled(fill);
+  }, [segmentKey, isActive, isVideo, effectivePaused, videoProgress, setProgressThrottled]);
 
   useEffect(() => {
     if (!isActive || !segmentKey || !isVideo || videoEnded) return;
+    if (completedRef.current) return;
 
     const budgetMs = computeVideoFallbackBudgetMs(durationMs, videoDurationMs);
     videoFallbackRemainingRef.current = budgetMs;
 
     const id = setInterval(() => {
-      if (videoEnded) return;
-      if (effectivePaused) return;
+      if (completedRef.current) {
+        clearInterval(id);
+        return;
+      }
+      if (effectivePausedRef.current) return;
       videoFallbackRemainingRef.current -= VIDEO_FALLBACK_TICK_MS;
       if (videoFallbackRemainingRef.current <= 0) {
         clearInterval(id);
-        setProgress(1);
-        onCompleteRef.current();
+        completeOnce();
       }
     }, VIDEO_FALLBACK_TICK_MS);
 
     return () => clearInterval(id);
-  }, [segmentKey, isActive, isVideo, effectivePaused, videoEnded, durationMs, videoDurationMs, replayGeneration]);
+  }, [segmentKey, isActive, isVideo, videoEnded, durationMs, videoDurationMs, replayGeneration, completeOnce]);
 
   useEffect(() => {
     if (!isActive || !segmentKey || effectivePaused || reducedMotion) {
       stopRaf();
       return;
     }
+    if (completedRef.current) return;
 
     if (isVideo) {
-      if (videoEnded) {
-        setProgress(1);
-        onCompleteRef.current();
-      }
+      if (videoEnded) completeOnce();
       return;
     }
 
@@ -167,21 +192,32 @@ export function useStoriesPlayback({
       startedAtRef.current = performance.now();
     }
     const tick = (now: number) => {
-      if (segmentKeyRef.current !== capturedSegmentKey) return;
+      if (segmentKeyRef.current !== capturedSegmentKey || completedRef.current) return;
       const started = startedAtRef.current ?? now;
       const elapsed = elapsedBeforePauseRef.current + (now - started);
       const p = playbackDurationMs > 0 ? Math.min(1, elapsed / playbackDurationMs) : 1;
-      setProgress(p);
       if (p >= 1) {
-        stopRaf();
-        onCompleteRef.current();
+        completeOnce();
         return;
       }
+      setProgressThrottled(p);
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return stopRaf;
-  }, [segmentKey, isActive, effectivePaused, reducedMotion, isVideo, videoEnded, playbackDurationMs, stopRaf, replayGeneration]);
+  }, [
+    segmentKey,
+    isActive,
+    effectivePaused,
+    reducedMotion,
+    isVideo,
+    videoEnded,
+    playbackDurationMs,
+    stopRaf,
+    replayGeneration,
+    completeOnce,
+    setProgressThrottled,
+  ]);
 
   const togglePause = useCallback(() => {
     setPaused((prev) => {
@@ -226,10 +262,8 @@ export function useStoriesPlayback({
   }, [clearMarkTimer]);
 
   const advanceManually = useCallback(() => {
-    stopRaf();
-    setProgress(1);
-    onCompleteRef.current();
-  }, [stopRaf]);
+    completeOnce();
+  }, [completeOnce]);
 
   return {
     progress,

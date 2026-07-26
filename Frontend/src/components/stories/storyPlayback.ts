@@ -1,8 +1,11 @@
 import type { StorySegment } from '@/api/stories';
 
-/** Identity for slide media — excludes engagement so likes do not remount the slide. */
+/**
+ * Identity for slide media — excludes engagement + viewed so likes/mark-viewed
+ * do not remount the slide mid-playback (remount storms freeze Capacitor WebViews).
+ */
 export function storySegmentSlideVersion(segment: StorySegment): string {
-  const base = `${segment.key}|${segment.viewed}|${segment.createdAt}|${segment.sourceType}`;
+  const base = `${segment.key}|${segment.createdAt}|${segment.sourceType}`;
   switch (segment.sourceType) {
     case 'USER_STORY_ITEM':
       return `${base}|${segment.media.url}|${segment.media.type}|${segment.media.overlayText ?? ''}`;
@@ -17,6 +20,19 @@ export function storySegmentSlideVersion(segment: StorySegment): string {
     default:
       return base;
   }
+}
+
+/** Min delta before reporting video/image progress to React (avoids 60fps setState hangs). */
+export const STORY_PROGRESS_REPORT_EPSILON = 0.012;
+
+/** Min wall-clock gap between progress React updates. */
+export const STORY_PROGRESS_REPORT_MIN_MS = 80;
+
+export function shouldReportStoryProgress(prev: number, next: number, lastReportAtMs: number, nowMs: number): boolean {
+  if (next >= 1) return true;
+  // Duplicate 0s must not bypass the throttle (video currentTime stays 0 for many frames).
+  if (Math.abs(next - prev) < STORY_PROGRESS_REPORT_EPSILON) return false;
+  return nowMs - lastReportAtMs >= STORY_PROGRESS_REPORT_MIN_MS;
 }
 
 /** Wall-clock multiplier for story segment playback (2 = twice as fast). */

@@ -11,6 +11,7 @@ import {
   type StoryNode,
   type TextNode,
 } from '../types';
+import { defaultMediaTransform } from './transform';
 
 export function createDocumentFromFile(file: StoryMediaFile): StoryDocument {
   const mediaId = nanoid();
@@ -40,17 +41,30 @@ export function getOverlayNodes(doc: StoryDocument): StoryLayer[] {
   return doc.nodes.filter((n): n is StoryLayer => n.type === 'text' || n.type === 'sticker');
 }
 
-export function patchDocumentMedia(doc: StoryDocument, file: File, previewUrl: string): StoryDocument {
+export function patchDocumentMedia(
+  doc: StoryDocument,
+  file: File,
+  previewUrl: string,
+  options?: { naturalWidth: number; naturalHeight: number }
+): StoryDocument {
   const media = getMediaNode(doc);
   if (!media) return doc;
+  const nw = options?.naturalWidth;
+  const nh = options?.naturalHeight;
+  const hasDims = nw != null && nh != null && nw > 0 && nh > 0;
   return {
     ...doc,
     nodes: doc.nodes.map((n) =>
       n.id === media.id
         ? {
             ...n,
-            source: { file, previewUrl },
-            transform: { ...DEFAULT_TRANSFORM },
+            source: {
+              file,
+              previewUrl,
+              ...(hasDims ? { naturalWidth: nw, naturalHeight: nh } : {}),
+            },
+            // Known dims → cover fit immediately (crop must fill 9:16, never scale:1 letterbox).
+            transform: hasDims ? defaultMediaTransform(nw, nh) : { ...DEFAULT_TRANSFORM },
             adjust: { ...DEFAULT_MEDIA_ADJUST },
           }
         : n

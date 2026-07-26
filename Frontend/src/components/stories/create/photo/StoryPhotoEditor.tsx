@@ -379,8 +379,8 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
               <PhotoStoryCropScreen
                 key={media.source.previewUrl}
                 imageUrl={media.source.previewUrl}
-                onConfirm={(file) => {
-                  replaceActiveMedia(file, URL.createObjectURL(file));
+                onConfirm={({ file, previewUrl, naturalWidth, naturalHeight }) => {
+                  replaceActiveMedia(file, previewUrl, { naturalWidth, naturalHeight });
                   setActiveTool(null);
                 }}
                 onCancel={() => setActiveTool(null)}
