@@ -25,22 +25,16 @@ export function TrophyRarityFrame({
 
   return (
     <div
-      className={`${hasRounded ? '' : 'rounded-2xl'} ${rarityGlowClass(rarity, locked)} ${className}`}
+      className={`bg-gradient-to-br p-[1.5px] ${hasRounded ? '' : 'rounded-2xl'} ${rarityFrameClass(rarity, locked)} ${rarityGlowClass(rarity, locked)} ${className}`}
     >
       <div
-        className={`h-full w-full overflow-hidden bg-gradient-to-br p-[1.5px] ${
-          hasRounded ? 'rounded-[inherit]' : 'rounded-2xl'
-        } ${rarityFrameClass(rarity, locked)}`}
+        className={`flex h-full w-full items-center justify-center rounded-[inherit] ${
+          locked
+            ? 'bg-gray-100/95 dark:bg-gray-900/90'
+            : 'bg-white/95 dark:bg-gray-950/85'
+        } ${innerClassName}`}
       >
-        <div
-          className={`flex h-full w-full items-center justify-center ${
-            locked
-              ? 'bg-gray-100/95 dark:bg-gray-900/90'
-              : 'bg-white/95 dark:bg-gray-950/85'
-          } ${innerClassName}`}
-        >
-          {children}
-        </div>
+        {children}
       </div>
     </div>
   );

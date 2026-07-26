@@ -102,7 +102,7 @@ function TrophyCabinetRail({
       <motion.div
         ref={carouselRef}
         style={maskStyle}
-        className="-mx-1 flex gap-2.5 overflow-x-auto overflow-y-hidden px-1 pb-1 scrollbar-hide [touch-action:pan-x_pan-y] overscroll-x-contain snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
+        className="-mx-1 flex gap-2.5 overflow-x-auto px-1 py-2 scrollbar-hide [touch-action:pan-x_pan-y] overscroll-x-contain snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
         initial="hidden"
         animate="visible"
         variants={{
