@@ -18,9 +18,11 @@ import { GamesStatsSection } from './GamesStatsSection';
 import { LevelHistoryProfileStatsSection } from './LevelHistoryProfileStatsSection';
 import { PlayerItemsToSell } from './PlayerItemsToSell';
 import { ProfilePerformanceInsights } from './ProfilePerformanceInsights';
+import { TrophyCabinet } from '@/components/trophies/TrophyCabinet';
 import { MarketItem, type Sport } from '@/types';
 import { formatDate } from '@/utils/dateFormat';
 import { XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { useAuthStore } from '@/store/authStore';
 
 interface LevelHistoryViewProps {
   stats: UserStats;
@@ -58,7 +60,9 @@ const LevelHistoryViewComponent = ({
 }: LevelHistoryViewProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const authUserId = useAuthStore((s) => s.user?.id);
   const { user } = stats;
+  const isOwnProfile = authUserId === user.id;
   const primarySport = getUserPrimarySport(user);
   const selectorSports = useMemo(() => listEnabledSports(user), [user]);
   const [uncontrolledSelection, setUncontrolledSelection] = useState<LevelHistorySelection>({
@@ -286,6 +290,12 @@ const LevelHistoryViewComponent = ({
             user={user}
             followersCount={stats.followersCount}
             followingCount={stats.followingCount}
+          />
+
+          <TrophyCabinet
+            trophies={alignedSportStats?.user.trophies ?? alignedParentStats?.user.trophies ?? user.trophies}
+            isOwn={isOwnProfile}
+            ownerUserId={user.id}
           />
 
           {showItemsToSell && (

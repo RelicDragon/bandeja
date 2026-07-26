@@ -26,6 +26,8 @@
     "noPastGames": "No past games",
     "noGames": "You don't have any games yet",
     "noGamesOnSelectedDate": "No games on this date",
+    "dayGamesLoadFailed": "Couldn't load games for this day",
+    "dayGamesLoadFailedHint": "Check your connection and try again.",
     "upcomingGames": "Upcoming games",
     "staleGamesTitle": "Scheduled time has passed — game was not played",
     "staleGamesHint": "The organizer can cancel this listing or set a new date.",

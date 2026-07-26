@@ -59,6 +59,15 @@ export const deleteStoryItem = asyncHandler(async (req: AuthRequest, res: Respon
   res.json({ success: true, data: result });
 });
 
+export const deleteStorySegment = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const result = await StoryDeleteService.deleteSegment(
+    req.userId!,
+    req.params.sourceType,
+    req.params.sourceId
+  );
+  res.json({ success: true, data: result });
+});
+
 export const markStoryViews = asyncHandler(async (req: AuthRequest, res: Response) => {
   const { entries } = req.body;
   const result = await StoryViewService.markViewed(req.userId!, entries);

@@ -58,6 +58,17 @@ import {
   accrueRatingUncertainty,
   ratingUncertaintyAfterFinishedGame,
 } from './ratingUncertainty';
+import {
+  grantHabitAchievements,
+  habitCounterPairForSportUpdate,
+  mergeHabitUnlocksMetadata,
+} from '../achievements/habitGrant.service';
+import {
+  grantPodiumAchievementsForFinalizedGame,
+  mergePodiumUnlocksMetadata,
+  stripPodiumUnlocksMetadata,
+  syncParentSeasonPodiumIfFinal,
+} from '../achievements/podiumGrant.service';
 import { countsAsRatingActivity, countsForPlayStreak } from './ratingActivity';
 
 async function rebuildLeagueSeasonStandingsIfNeeded(
@@ -544,6 +555,9 @@ export async function applyGameOutcomes(
       playStreakLastPlayAt: Date;
       playStreakWeekStartAt: Date;
     } | null = null;
+    let playStreakBeforeCount = 0;
+    let playStreakAfterCount = 0;
+    let playStreakRecomputed = false;
 
     if (countsForPlayStreak(game) && sportStatsDeltas.gamesPlayedDelta > 0) {
       const timezone = await getUserTimezone(outcome.userId);
@@ -555,6 +569,9 @@ export async function applyGameOutcomes(
       const advanced =
         afterState.count > beforeState.count ||
         (beforeState.count === 0 && afterState.count === 1);
+      playStreakBeforeCount = beforeState.count;
+      playStreakAfterCount = afterState.count;
+      playStreakRecomputed = true;
       playStreakUpdate = {
         playStreakCount: afterState.count,
         playStreakBest: afterState.best,
@@ -575,6 +592,59 @@ export async function applyGameOutcomes(
           lastPlayAt: afterState.lastPlayAt ? afterState.lastPlayAt.toISOString() : null,
         },
       });
+    }
+
+    const appliedStats = computeApplySportStats(
+      sportSnapshot,
+      ratingStatsApplied,
+      levelAfter,
+      reliabilityAfter,
+      isWinner,
+    );
+
+    const shouldEvaluateHabits =
+      sportStatsDeltas.gamesPlayedDelta > 0 ||
+      sportStatsDeltas.gamesWonDelta > 0 ||
+      playStreakUpdate != null;
+
+    if (shouldEvaluateHabits) {
+      const currentProfile = user.sportProfiles.find((p) => p.sport === game.sport);
+      // Streak habit counters must use recomputed before/after counts when available.
+      // Profile fields can be 0 while afterState.best reflects full history — that soft-backfills.
+      const streakCountBefore = playStreakRecomputed
+        ? playStreakBeforeCount
+        : (currentProfile?.playStreakCount ?? 0);
+      const streakCountAfter = playStreakRecomputed
+        ? playStreakAfterCount
+        : (currentProfile?.playStreakCount ?? 0);
+      const { before, after } = await habitCounterPairForSportUpdate({
+        userId: outcome.userId,
+        sport: game.sport,
+        before: {
+          gamesPlayed: sportSnapshot.gamesPlayed,
+          gamesWon: sportSnapshot.gamesWon,
+          playStreakBest: streakCountBefore,
+          playStreakCount: streakCountBefore,
+        },
+        after: {
+          gamesPlayed: appliedStats.gamesPlayed,
+          gamesWon: appliedStats.gamesWon,
+          playStreakBest: streakCountAfter,
+          playStreakCount: streakCountAfter,
+        },
+        tx,
+      });
+      const habitGrant = await grantHabitAchievements({
+        userId: outcome.userId,
+        before,
+        after,
+        sport: game.sport,
+        sourceGameId: gameId,
+        tx,
+      });
+      if (habitGrant.unlocks.length > 0) {
+        mergedMetadata = mergeHabitUnlocksMetadata(mergedMetadata, habitGrant.unlocks);
+      }
     }
 
     await tx.gameOutcome.upsert({
@@ -620,14 +690,6 @@ export async function applyGameOutcomes(
         metadata: mergedMetadata,
       },
     });
-
-    const appliedStats = computeApplySportStats(
-      sportSnapshot,
-      ratingStatsApplied,
-      levelAfter,
-      reliabilityAfter,
-      isWinner,
-    );
 
     await tx.userSportProfile.upsert({
       where: { userId_sport: { userId: outcome.userId, sport: game.sport } },
@@ -755,6 +817,44 @@ export async function applyGameOutcomes(
     if (previousResultsStatus !== 'FINAL') {
       bracketCreatedGameIds = await BracketAdvancementService.onGameFinalized(gameId, tx);
     }
+
+    // Sync podium on FINAL (idempotent; revoke+re-award only when winner set changes).
+    const podiumBatch = await grantPodiumAchievementsForFinalizedGame({ gameId, tx });
+    if (podiumBatch.replaced) {
+      // Clear stale podiumUnlocks from demoted users, then write current winners.
+      const outcomes = await tx.gameOutcome.findMany({
+        where: { gameId },
+        select: { userId: true, metadata: true },
+      });
+      for (const row of outcomes) {
+        const unlocks = podiumBatch.byUserId.get(row.userId);
+        await tx.gameOutcome.update({
+          where: { gameId_userId: { gameId, userId: row.userId } },
+          data: {
+            metadata: unlocks?.length
+              ? mergePodiumUnlocksMetadata(row.metadata, unlocks)
+              : stripPodiumUnlocksMetadata(row.metadata),
+          },
+        });
+      }
+    } else if (podiumBatch.grants.length > 0) {
+      for (const [userId, unlocks] of podiumBatch.byUserId) {
+        const gameOutcome = await tx.gameOutcome.findUnique({
+          where: { gameId_userId: { gameId, userId } },
+          select: { metadata: true },
+        });
+        if (!gameOutcome) continue;
+        await tx.gameOutcome.update({
+          where: { gameId_userId: { gameId, userId } },
+          data: {
+            metadata: mergePodiumUnlocksMetadata(gameOutcome.metadata, unlocks),
+          },
+        });
+      }
+    }
+
+    // Fixture under an already-FINAL season: re-sync season podium to corrected standings (X1).
+    await syncParentSeasonPodiumIfFinal({ gameId, tx });
 
     if (game.entityType !== EntityType.BAR && game.entityType !== EntityType.LEAGUE_SEASON) {
       await SocialParticipantLevelService.applySocialParticipantLevelChanges(gameId, tx);

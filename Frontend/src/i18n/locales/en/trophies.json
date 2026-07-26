@@ -1,0 +1,96 @@
+{
+  "trophies": {
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "legendary": "Legendary"
+    },
+    "showcase": {
+      "hint": "Win leagues & keep playing to fill your showcase",
+      "pinHint": "Pin favorites from the cabinet — up to 3",
+      "emptySlot": "Empty showcase slot"
+    },
+    "banner": {
+      "unlocked": "Trophy unlocked",
+      "andMore": "+{{count}} more",
+      "dismiss": "Dismiss"
+    },
+    "celebration": {
+      "unlocked": "Trophy unlocked",
+      "subtitle": "A new trophy joins your cabinet",
+      "pin": "Pin to showcase",
+      "pinning": "Pinning…",
+      "pinned": "Pinned to showcase",
+      "viewCabinet": "View trophy cabinet",
+      "dismiss": "Nice!",
+      "pinError": "Couldn’t pin right now — try again from your cabinet.",
+      "pinsFull": "Showcase is full — unpin one first (max 3)."
+    },
+    "cabinet": {
+      "title": "Trophy cabinet",
+      "count": "{{count}} earned",
+      "ownEmpty": "Chase podium finishes, streaks, and milestones — locked trophies show your next goals.",
+      "visitorEmpty": "No trophies yet.",
+      "pinHint": "Tap a trophy to pin it to your showcase (up to 3)."
+    },
+    "detail": {
+      "progress": "Progress {{current}} / {{target}}",
+      "lockedHint": "Keep playing to unlock this trophy.",
+      "earnedOn": "Earned {{date}}",
+      "sport": "{{sport}}",
+      "timesEarned": "Earned {{count}} times",
+      "openEvent": "Open event",
+      "pin": "Pin to showcase",
+      "pinning": "Pinning…",
+      "unpin": "Unpin from showcase",
+      "unpinning": "Unpinning…",
+      "pinnedBadge": "Pinned",
+      "pinWhich": "Choose which to pin",
+      "pinHint": "Pinned trophies stay in your showcase even when newer ones unlock.",
+      "pinsFull": "Showcase is full — unpin one first (max 3).",
+      "pinError": "Couldn’t update pin — try again."
+    },
+    "defs": {
+      "podiumGold": {
+        "title": "Gold podium",
+        "description": "Finish 1st in a league or tournament with at least 8 players."
+      },
+      "podiumSilver": {
+        "title": "Silver podium",
+        "description": "Finish 2nd in a league or tournament with at least 8 players."
+      },
+      "podiumBronze": {
+        "title": "Bronze podium",
+        "description": "Finish 3rd in a league or tournament with at least 8 players."
+      },
+      "firstWin": {
+        "title": "First win",
+        "description": "Win your first qualifying game."
+      },
+      "games10": {
+        "title": "Getting started",
+        "description": "Finish 10 qualifying games."
+      },
+      "games50": {
+        "title": "Regular",
+        "description": "Finish 50 qualifying games."
+      },
+      "games100": {
+        "title": "Centurion",
+        "description": "Finish 100 qualifying games."
+      },
+      "streak4": {
+        "title": "Month in motion",
+        "description": "Keep a 4-week play streak."
+      },
+      "streak8": {
+        "title": "Two months strong",
+        "description": "Keep an 8-week play streak."
+      },
+      "streak12": {
+        "title": "Season of fire",
+        "description": "Keep a 12-week play streak."
+      }
+    }
+  }
+}

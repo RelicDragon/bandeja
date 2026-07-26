@@ -25,6 +25,7 @@ import { appendMatchLiveScoringAudit } from './results/matchLiveScoringAudit.ser
 import { updateMatchWinners } from './results/matchWinner.service';
 import { undoGameOutcomes } from './results/outcomes.service';
 import { revertForGame } from './levelChange';
+import { syncPodiumAfterLeavingFinal } from './achievements/podiumGrant.service';
 
 const SUPPLEMENTAL_SET_SCORE_MAX = 9999;
 
@@ -213,6 +214,7 @@ export async function deleteGameResults(gameId: string) {
         },
       });
     }
+    await syncPodiumAfterLeavingFinal({ gameId, tx });
   });
 }
 
@@ -314,6 +316,7 @@ export async function resetGameResults(gameId: string) {
         },
       });
     }
+    await syncPodiumAfterLeavingFinal({ gameId, tx });
   });
 }
 
@@ -372,6 +375,8 @@ export async function editGameResults(gameId: string) {
           },
         });
         await updateMatchWinners(gameId, tx);
+        // X1: undo already rebuilt season standings; sync podium for event / parent season.
+        await syncPodiumAfterLeavingFinal({ gameId, tx });
       }
   });
 }
@@ -530,6 +535,7 @@ export async function syncResults(gameId: string, rounds: any[]) {
     }
 
     const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
+    const wasFinal = game.resultsStatus === 'FINAL';
     await tx.game.update({
       where: { id: gameId },
       data: {
@@ -548,6 +554,9 @@ export async function syncResults(gameId: string, rounds: any[]) {
         ),
       },
     });
+    if (wasFinal) {
+      await syncPodiumAfterLeavingFinal({ gameId, tx, rebuildSeasonStandings: true });
+    }
   });
 }
 
@@ -565,29 +574,42 @@ export async function createRound(gameId: string, roundId: string) {
 
   const gameRow = await prisma.game.findUnique({
     where: { id: gameId },
-    select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
+    select: {
+      startTime: true,
+      endTime: true,
+      cityId: true,
+      timeIsSet: true,
+      entityType: true,
+      resultsStatus: true,
+    },
   });
   if (!gameRow) {
     throw new ApiError(404, 'Game not found');
   }
   const cityTimezone = await getUserTimezoneFromCityId(gameRow.cityId);
-  await prisma.game.update({
-    where: { id: gameId },
-    data: {
-      resultsStatus: 'IN_PROGRESS',
-      finishedDate: null,
-      status: calculateGameStatus(
-        {
-          startTime: gameRow.startTime,
-          endTime: gameRow.endTime,
-          resultsStatus: 'IN_PROGRESS',
-          timeIsSet: gameRow.timeIsSet,
-          entityType: gameRow.entityType,
-          finishedDate: null,
-        },
-        cityTimezone
-      ),
-    },
+  const wasFinal = gameRow.resultsStatus === 'FINAL';
+  await prisma.$transaction(async (tx) => {
+    await tx.game.update({
+      where: { id: gameId },
+      data: {
+        resultsStatus: 'IN_PROGRESS',
+        finishedDate: null,
+        status: calculateGameStatus(
+          {
+            startTime: gameRow.startTime,
+            endTime: gameRow.endTime,
+            resultsStatus: 'IN_PROGRESS',
+            timeIsSet: gameRow.timeIsSet,
+            entityType: gameRow.entityType,
+            finishedDate: null,
+          },
+          cityTimezone
+        ),
+      },
+    });
+    if (wasFinal) {
+      await syncPodiumAfterLeavingFinal({ gameId, tx, rebuildSeasonStandings: true });
+    }
   });
 }
 
@@ -770,6 +792,7 @@ export async function updateMatch(
       cityId: true,
       timeIsSet: true,
       entityType: true,
+      resultsStatus: true,
     },
   });
 
@@ -880,23 +903,29 @@ export async function updateMatch(
   });
 
   const cityTimezone = await getUserTimezoneFromCityId(game.cityId);
-  await prisma.game.update({
-    where: { id: gameId },
-    data: {
-      resultsStatus: 'IN_PROGRESS',
-      finishedDate: null,
-      status: calculateGameStatus(
-        {
-          startTime: game.startTime,
-          endTime: game.endTime,
-          resultsStatus: 'IN_PROGRESS',
-          timeIsSet: game.timeIsSet,
-          entityType: game.entityType,
-          finishedDate: null,
-        },
-        cityTimezone
-      ),
-    },
+  const wasFinal = game.resultsStatus === 'FINAL';
+  await prisma.$transaction(async (tx) => {
+    await tx.game.update({
+      where: { id: gameId },
+      data: {
+        resultsStatus: 'IN_PROGRESS',
+        finishedDate: null,
+        status: calculateGameStatus(
+          {
+            startTime: game.startTime,
+            endTime: game.endTime,
+            resultsStatus: 'IN_PROGRESS',
+            timeIsSet: game.timeIsSet,
+            entityType: game.entityType,
+            finishedDate: null,
+          },
+          cityTimezone
+        ),
+      },
+    });
+    if (wasFinal) {
+      await syncPodiumAfterLeavingFinal({ gameId, tx, rebuildSeasonStandings: true });
+    }
   });
 
   if (hadLiveEnvelope) {

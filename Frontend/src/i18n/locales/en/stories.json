@@ -134,7 +134,11 @@
       "storyForbidden": "You cannot reply to this story",
       "storyInvalid": "Could not attach story to this message",
       "share": "Share",
-      "shareTitle": "Share profile"
+      "shareTitle": "Share profile",
+      "moreActions": "More actions",
+      "deleteMyStory": "Delete my story",
+      "deleteStoryConfirm": "Delete this story? Followers will no longer see it.",
+      "deleteStoryFailed": "Could not delete story"
     }
   }
 }

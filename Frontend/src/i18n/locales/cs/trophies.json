@@ -1,0 +1,96 @@
+{
+  "trophies": {
+    "rarity": {
+      "common": "Běžný",
+      "rare": "Vzácný",
+      "legendary": "Legendární"
+    },
+    "showcase": {
+      "hint": "Vyhrávej ligy a hraj pravidelně — vitrína se naplní",
+      "pinHint": "Připni favority ze sbírky — max. 3",
+      "emptySlot": "Prázdný slot výlohy"
+    },
+    "banner": {
+      "unlocked": "Trofej odemčena",
+      "andMore": "+{{count}} další",
+      "dismiss": "Zavřít"
+    },
+    "celebration": {
+      "unlocked": "Trofej odemčena",
+      "subtitle": "Nová trofej míří do tvé sbírky",
+      "pin": "Připnout do výlohy",
+      "pinning": "Připínám…",
+      "pinned": "Připnuto do výlohy",
+      "viewCabinet": "Zobrazit sbírku trofejí",
+      "dismiss": "Skvělé!",
+      "pinError": "Teď se nepodařilo připnout — zkus to ve sbírce.",
+      "pinsFull": "Výloha je plná — nejdřív jednu odepni (max. 3)."
+    },
+    "cabinet": {
+      "title": "Vitrína trofejí",
+      "count": "Získáno: {{count}}",
+      "ownEmpty": "Stíhej pódia, série a milníky — zamčené trofeje ukazují další cíle.",
+      "visitorEmpty": "Zatím žádné trofeje.",
+      "pinHint": "Klepni na trofej a připni ji do výlohy (max. 3)."
+    },
+    "detail": {
+      "progress": "Postup {{current}} / {{target}}",
+      "lockedHint": "Hraj dál a odemkni tuto trofej.",
+      "earnedOn": "Získáno {{date}}",
+      "sport": "{{sport}}",
+      "timesEarned": "Získáno {{count}}×",
+      "openEvent": "Otevřít událost",
+      "pin": "Připnout do výlohy",
+      "pinning": "Připínám…",
+      "unpin": "Odepnout z výlohy",
+      "unpinning": "Odepínám…",
+      "pinnedBadge": "Připnuto",
+      "pinWhich": "Vyber, kterou připnout",
+      "pinHint": "Připnuté trofeje zůstanou ve výloze i když odemkneš novější.",
+      "pinsFull": "Výloha je plná — nejdřív jednu odepni (max. 3).",
+      "pinError": "Nepodařilo se aktualizovat — zkus to znovu."
+    },
+    "defs": {
+      "podiumGold": {
+        "title": "Zlaté pódium",
+        "description": "1. místo v lize nebo turnaji s alespoň 8 hráči."
+      },
+      "podiumSilver": {
+        "title": "Stříbrné pódium",
+        "description": "2. místo v lize nebo turnaji s alespoň 8 hráči."
+      },
+      "podiumBronze": {
+        "title": "Bronzové pódium",
+        "description": "3. místo v lize nebo turnaji s alespoň 8 hráči."
+      },
+      "firstWin": {
+        "title": "První výhra",
+        "description": "Vyhraj svůj první započítávaný zápas."
+      },
+      "games10": {
+        "title": "Začínáme",
+        "description": "Dokonči 10 započítávaných zápasů."
+      },
+      "games50": {
+        "title": "Pravidelný",
+        "description": "Dokonči 50 započítávaných zápasů."
+      },
+      "games100": {
+        "title": "Stovka",
+        "description": "Dokonči 100 započítávaných zápasů."
+      },
+      "streak4": {
+        "title": "Měsíc v pohybu",
+        "description": "Udrž 4týdenní sérii."
+      },
+      "streak8": {
+        "title": "Dva měsíce",
+        "description": "Udrž 8týdenní sérii."
+      },
+      "streak12": {
+        "title": "Sezóna ohně",
+        "description": "Udrž 12týdenní sérii."
+      }
+    }
+  }
+}

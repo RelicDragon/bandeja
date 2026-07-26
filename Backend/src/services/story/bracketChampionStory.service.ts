@@ -249,6 +249,7 @@ export class BracketChampionStoryService {
   static async loadRawSegments(params: {
     activityOwnerIds: string[];
     followedIds: Set<string>;
+    viewerId: string;
     activitySince: Date;
     viewedSet: Set<string>;
     viewer: GamePhotosViewer;
@@ -339,7 +340,7 @@ export class BracketChampionStoryService {
       const leagueName = slot.leagueRound.leagueSeason.league.name;
 
       for (const owner of owners) {
-        if (!params.followedIds.has(owner.id)) continue;
+        if (owner.id !== params.viewerId && !params.followedIds.has(owner.id)) continue;
         if (
           !canSeeBracketChampionInStories({
             viewerFollows: true,

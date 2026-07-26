@@ -26,6 +26,8 @@
     "noPastGames": "Žádné minulé zápasy",
     "noGames": "Zatím nemáte žádné zápasy",
     "noGamesOnSelectedDate": "Na tento den nejsou žádné zápasy",
+    "dayGamesLoadFailed": "Nepodařilo se načíst zápasy pro tento den",
+    "dayGamesLoadFailedHint": "Zkontrolujte připojení a zkuste to znovu.",
     "upcomingGames": "Nadcházející zápasy",
     "staleGamesTitle": "Plánovaný čas už uplynul — zápas se neodehrál",
     "staleGamesHint": "Organizátor může zápas zrušit nebo domluvit nový termín.",

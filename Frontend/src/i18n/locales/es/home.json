@@ -26,6 +26,8 @@
     "noPastGames": "No hay juegos pasados",
     "noGames": "Aún no tienes juegos",
     "noGamesOnSelectedDate": "No hay juegos en esta fecha",
+    "dayGamesLoadFailed": "No se pudieron cargar los juegos de este día",
+    "dayGamesLoadFailedHint": "Comprueba tu conexión e inténtalo de nuevo.",
     "upcomingGames": "Próximos juegos",
     "staleGamesTitle": "Ya pasó la hora prevista — el partido no se jugó",
     "staleGamesHint": "El organizador puede anular la convocatoria o fijar otra fecha.",

@@ -39,6 +39,7 @@ import {
   buildAvailableGamesFilterHash,
   buildAvailableUpcomingFilterHash,
 } from '@/queries/queryKeys';
+import { deriveFindCalendarGamesLoading } from '@/utils/deriveFindCalendarGamesLoading';
 
 export const FindTab = () => {
   const { t } = useTranslation();
@@ -215,6 +216,7 @@ export const FindTab = () => {
   const {
     availableGames: selectedDayGames,
     meta: selectedDayMeta,
+    page: selectedDayPage,
     loading: loadingSelectedDayGames,
     isError: selectedDayIsError,
     refetch: refetchSelectedDayGames,
@@ -317,24 +319,20 @@ export const FindTab = () => {
     monthSeedRange,
   ]);
 
-  const loadingAvailableGames =
-    findViewMode === 'list'
-      ? loadingUpcomingGames
-      : loadingCalendarGames ||
-        (dayScopedEnabled && loadingSelectedDayGames && selectedDayGames.length === 0);
-
   const filteredAvailableGames = useMemo(() => {
     if (findViewMode === 'list') return sortGamesByStatusAndStartTime(upcomingGames);
     return sortGamesByStatusAndStartTime(calendarGames);
   }, [findViewMode, upcomingGames, calendarGames]);
 
+  // undefined = day not ready (skeleton); [] = settled empty; non-empty = cards.
+  // Must stay aligned with AvailableGamesSection initialGamesLoading (null check).
   const sortedSelectedDayGames = useMemo(() => {
     if (!dayScopedEnabled) return undefined;
     if (selectedDayGames.length > 0) {
       return sortGamesByStatusAndStartTime(selectedDayGames);
     }
     if (loadingSelectedDayGames) return undefined;
-    // Error after retries → empty + pull-to-refresh (not endless skeleton / false “busy”).
+    // Hard fail (no successful page) → [] so list leaves skeleton; section shows Retry.
     if (selectedDayIsError) return [];
     if (selectedDayMeta.hasMore) return [];
     return [];
@@ -345,6 +343,15 @@ export const FindTab = () => {
     selectedDayIsError,
     selectedDayMeta.hasMore,
   ]);
+
+  const loadingAvailableGames =
+    findViewMode === 'list'
+      ? loadingUpcomingGames
+      : deriveFindCalendarGamesLoading({
+          dayScopedEnabled,
+          loadingCalendar: loadingCalendarGames,
+          dayListReady: sortedSelectedDayGames != null,
+        });
 
   const useDayScopedList = dayScopedEnabled;
 
@@ -440,6 +447,8 @@ export const FindTab = () => {
     hasMoreAvailable: pageMeta.hasMore,
     onLoadMoreAvailable,
     availableBound: pageMeta.bound,
+    dayLoadError: Boolean(dayScopedEnabled && selectedDayIsError && selectedDayPage == null),
+    onRetryDay: refetchSelectedDayGames,
   };
 
   if (splitView) {
@@ -452,7 +461,7 @@ export const FindTab = () => {
   }
 
   return (
-    <PullToRefreshShell onRefresh={handleRefresh} disabled={loadingAvailableGames}>
+    <PullToRefreshShell onRefresh={handleRefresh}>
       {({ isRefreshing }) => (
         <>
           <AdSlot placement={AD_PLACEMENTS.FIND_TOP} className="mb-4 w-full min-w-0" />

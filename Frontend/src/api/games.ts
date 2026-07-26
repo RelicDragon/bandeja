@@ -129,8 +129,11 @@ export const gamesApi = {
     enrich?: boolean;
     /** Calendar month: dayIndex only (no card rows). */
     indexOnly?: boolean;
-  }) => {
-    const response = await api.get<ApiResponse<Game[]>>('/games/available', { params });
+  }, options?: { timeoutMs?: number }) => {
+    const response = await api.get<ApiResponse<Game[]>>('/games/available', {
+      params,
+      ...(options?.timeoutMs != null ? { timeout: options.timeoutMs } : {}),
+    });
     return response.data;
   },
 

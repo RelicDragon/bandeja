@@ -78,7 +78,8 @@ export async function emitStoryDeleted(ownerUserId: string, segmentKey: string) 
   const io = getIo();
   if (!io) return;
   const followerIds = await getFollowerIds(ownerUserId);
-  for (const uid of followerIds) {
+  const targets = new Set([ownerUserId, ...followerIds]);
+  for (const uid of targets) {
     io.to(`notify-user-${uid}`).emit('story:deleted', { ownerUserId, segmentKey });
   }
 }

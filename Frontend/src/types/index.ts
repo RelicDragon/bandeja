@@ -231,6 +231,7 @@ export interface User extends BasicUser {
   /** @deprecated Prefer `sportProfiles` for the relevant sport; API-populated from primary sport profile. */
   gamesWon: number;
   playStreak?: import('./playStreak').PlayStreakView;
+  trophies?: import('./trophies').TrophiesPayload;
   approvedById?: string | null;
   approvedWhen?: Date | string | null;
   favoriteTrainerId?: string | null;
@@ -448,6 +449,22 @@ export interface GameOutcome {
     playStreakAdvanced?: boolean;
     playStreakBefore?: { count: number; best: number; lastPlayAt: string | null };
     playStreakAfter?: { count: number; best: number; lastPlayAt: string | null };
+    habitUnlocks?: Array<{
+      definitionId: string;
+      rarity: string;
+      artKey: string;
+      titleKey: string;
+      achievementId?: string;
+    }>;
+    podiumUnlocks?: Array<{
+      definitionId: string;
+      rarity: string;
+      artKey: string;
+      titleKey: string;
+      achievementId: string;
+      place: number;
+      sport: string | null;
+    }>;
     [key: string]: unknown;
   } | null;
 }

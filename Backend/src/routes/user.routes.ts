@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { NotificationChannelType } from '@prisma/client';
-import { body, query } from 'express-validator';
+import { body, param, query } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import { validate } from '../middleware/validate';
 import { authenticate, optionalAuth, AuthRequest } from '../middleware/auth';
@@ -43,6 +43,23 @@ const reactionEmojiUsageGetLimiter = rateLimit({
 const router = Router();
 
 router.get('/profile', authenticate, userController.getProfile);
+router.post(
+  '/me/achievement-pins',
+  authenticate,
+  validate([
+    body('achievementId').isString().notEmpty().withMessage('achievementId is required'),
+    body('slot').optional().isInt({ min: 0, max: 2 }).withMessage('slot must be 0–2'),
+  ]),
+  userController.pinMyAchievement
+);
+router.delete(
+  '/me/achievement-pins/:achievementId',
+  authenticate,
+  validate([
+    param('achievementId').isString().notEmpty().withMessage('achievementId is required'),
+  ]),
+  userController.unpinMyAchievement
+);
 router.get(
   '/me/reaction-emoji-usage',
   authenticate,

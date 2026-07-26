@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { useStoriesPlayback } from '@/hooks/useStoriesPlayback';
 import { storyViewEntryFromSegment, useStoriesStore } from '@/store/storiesStore';
-import type { StoryBubble } from '@/api/stories';
+import { parseStorySegmentKey, storiesApi, type StoryBubble } from '@/api/stories';
 import { lightHaptic } from '@/utils/lightHaptic';
 import { preloadStorySegmentMedia } from '@/utils/storySegmentMediaPreload';
 import { storySegmentSlideVersion } from './storyPlayback';
@@ -34,14 +36,17 @@ export function StoriesViewer({
   onClose,
   onBubbleChange,
 }: StoriesViewerProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const markViewed = useStoriesStore((s) => s.markViewed);
   const flushPendingViews = useStoriesStore((s) => s.flushPendingViews);
+  const applyStoryDeleted = useStoriesStore((s) => s.applyStoryDeleted);
   const [bubbleIndex, setBubbleIndex] = useState(initialBubbleIndex);
   const [segmentIndex, setSegmentIndex] = useState(initialSegmentIndex);
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [videoDurationMs, setVideoDurationMs] = useState<number | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const wasOpenRef = useRef(false);
   const doubleTapLikeRef = useRef<(() => void) | null>(null);
   const [doubleTapBurst, setDoubleTapBurst] = useState<{ x: number; y: number } | null>(null);
@@ -205,6 +210,25 @@ export function StoriesViewer({
     [markCurrentSegmentViewed, flushPendingViews, onClose, navigate]
   );
 
+  const handleDeleteStory = useCallback(async () => {
+    const b = bubbleRef.current;
+    const s = segmentRef.current;
+    if (!b?.isSelf || !s || deleting) return;
+    const parsed = parseStorySegmentKey(s.key);
+    if (!parsed) return;
+    setDeleting(true);
+    lightHaptic();
+    try {
+      await storiesApi.deleteSegment(parsed.sourceType, parsed.sourceId);
+      applyStoryDeleted({ ownerUserId: b.user.id, segmentKey: s.key });
+    } catch {
+      toast.error(t('stories.viewer.deleteStoryFailed'));
+      throw new Error('delete-failed');
+    } finally {
+      setDeleting(false);
+    }
+  }, [deleting, t, applyStoryDeleted]);
+
   useEffect(() => {
     if (!open) return;
     if (bubbles.length === 0) {
@@ -321,7 +345,14 @@ export function StoriesViewer({
             activeIndex={safeSegmentIndex}
             progress={playback.progress}
           />
-          <StoriesViewerHeader user={bubble.user} createdAt={segment?.createdAt} onClose={handleClose} />
+          <StoriesViewerHeader
+            user={bubble.user}
+            createdAt={segment?.createdAt}
+            isOwner={bubble.isSelf}
+            onClose={handleClose}
+            onDeleteStory={bubble.isSelf ? () => void handleDeleteStory() : undefined}
+            deleting={deleting}
+          />
         </div>
         {segment ? (
           <StoryViewerEngagementChrome

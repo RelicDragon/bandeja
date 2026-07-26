@@ -131,7 +131,11 @@
       "storyForbidden": "No puedes responder a esta historia",
       "storyInvalid": "No se pudo adjuntar la historia a este mensaje",
       "share": "Compartir",
-      "shareTitle": "Compartir perfil"
+      "shareTitle": "Compartir perfil",
+      "moreActions": "Más acciones",
+      "deleteMyStory": "Eliminar mi historia",
+      "deleteStoryConfirm": "¿Eliminar esta historia? Tus seguidores ya no la verán.",
+      "deleteStoryFailed": "No se pudo eliminar la historia"
     },
     "mixedMediaBlocked": "Share photos and videos separately",
     "oneVideoOnly": "Add one video at a time",

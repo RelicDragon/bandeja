@@ -460,6 +460,23 @@ export const usersApi = {
     return response.data;
   },
 
+  pinAchievement: async (achievementId: string, slot?: number) => {
+    const response = await api.post<
+      ApiResponse<{ pin: { slot: number; achievementId: string; alreadyPinned?: boolean } }>
+    >('/users/me/achievement-pins', {
+      achievementId,
+      ...(slot != null ? { slot } : {}),
+    });
+    return response.data.data.pin;
+  },
+
+  unpinAchievement: async (achievementId: string) => {
+    const response = await api.delete<
+      ApiResponse<{ pin: { removed: boolean; achievementId: string } }>
+    >(`/users/me/achievement-pins/${encodeURIComponent(achievementId)}`);
+    return response.data.data.pin;
+  },
+
   getCommonChats: async (userId: string) => {
     const response = await api.get<ApiResponse<CommonChatItem[]>>(`/users/${userId}/common-groups`);
     return response.data;

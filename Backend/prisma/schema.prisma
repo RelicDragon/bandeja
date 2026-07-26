@@ -180,8 +180,11 @@ model User {
   storySegmentCommentsOwned       StorySegmentComment[]       @relation("StorySegmentCommentOwner")
   storyCommentLikes               StoryCommentLike[]          @relation("StoryCommentLikeUser")
   storyCommentReports             StoryCommentReport[]        @relation("StoryCommentReportReporter")
+  storySegmentDismissals          StorySegmentDismissal[]
   unreadState                     UserUnreadState?
   contextUnreadStates             UserContextUnreadState[]
+  achievements                    UserAchievement[]
+  achievementPins                 UserAchievementPin[]
 
   @@index([phone])
   @@index([telegramId])
@@ -828,6 +831,19 @@ model StoryView {
   @@unique([viewerId, sourceType, sourceId])
   @@index([viewerId, ownerUserId])
   @@index([ownerUserId, sourceId])
+}
+
+/// Owner dismissed a projected story segment (game auto-slides, photos) from their stories.
+model StorySegmentDismissal {
+  id         String          @id @default(cuid())
+  userId     String
+  sourceType StorySourceType
+  sourceId   String
+  createdAt  DateTime        @default(now())
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sourceType, sourceId])
+  @@index([userId])
 }
 
 model StorySegmentLike {
@@ -1829,6 +1845,49 @@ model UserFavoriteUser {
   @@unique([userId, favoriteUserId])
   @@index([userId])
   @@index([favoriteUserId])
+}
+
+/// Cosmetic trophy unlock instance (catalog definition id is code-defined).
+model UserAchievement {
+  id               String      @id @default(cuid())
+  userId           String
+  definitionId     String
+  earnedAt         DateTime    @default(now())
+  sport            Sport?
+  place            Int?
+  sourceEntityType EntityType?
+  sourceEntityId   String?
+  sourceGameId     String?
+  /// Idempotency: "" for one-shot habits; source entity id for podium stacks.
+  sourceKey        String      @default("")
+  revokedAt        DateTime?
+  isActive         Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pins             UserAchievementPin[]
+
+  /// Active uniqueness is enforced by partial unique index in SQL
+  /// (userId, definitionId, sourceKey) WHERE isActive = true — see migrations.
+  @@index([userId, isActive])
+  @@index([userId, definitionId, sourceKey])
+  @@index([sourceEntityId, definitionId])
+  @@index([sourceGameId])
+}
+
+model UserAchievementPin {
+  userId        String
+  /// Showcase slot 0–2 (CHECK enforced in SQL).
+  slot          Int
+  achievementId String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   UserAchievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@id([userId, slot])
+  @@unique([userId, achievementId])
+  @@index([achievementId])
 }
 
 model BlockedUser {

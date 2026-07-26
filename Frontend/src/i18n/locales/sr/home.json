@@ -26,6 +26,8 @@
     "noPastGames": "Nema prošlih igara",
     "noGames": "Još uvek nemate igara",
     "noGamesOnSelectedDate": "Nema igara na ovaj datum",
+    "dayGamesLoadFailed": "Nije uspelo učitavanje igara za ovaj dan",
+    "dayGamesLoadFailedHint": "Proverite vezu i pokušajte ponovo.",
     "upcomingGames": "Predstojeće igre",
     "staleGamesTitle": "Dogovoreno vreme je prošlo — igra nije odigrana",
     "staleGamesHint": "Organizator može da otkaže igru ili zakaže novi termin.",

@@ -3,10 +3,6 @@ import prisma from '../../config/database';
 import { USER_SELECT_FIELDS, USER_SELECT_WITH_SPORT_PROFILES } from '../../utils/constants';
 import { Sport } from '@prisma/client';
 import { InviteService } from '../invite.service';
-import { getUserTimezoneFromCityId } from '../user-timezone.service';
-import { undoGameOutcomes } from '../results/outcomes.service';
-import { revertForGame } from '../levelChange';
-import { calculateGameStatus } from '../../utils/gameStatus';
 import { Prisma } from '@prisma/client';
 import { projectUserForSportContext } from '../user/userSportProfile.service';
 import { resolveLeagueSeasonSport } from '../../utils/validators/validateLeagueSeasonSport';
@@ -315,10 +311,7 @@ export class AdminGamesService {
   static async resetGameResults(gameId: string, _adminUserId: string) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      include: {
-        participants: true,
-        outcomes: true,
-      },
+      select: { id: true, status: true },
     });
 
     if (!game) {
@@ -329,91 +322,9 @@ export class AdminGamesService {
       throw new ApiError(403, 'Cannot reset results for archived games');
     }
 
-    await prisma.$transaction(async (tx) => {
-      if (game.outcomes.length > 0) {
-        await undoGameOutcomes(gameId, tx);
-      } else {
-        await revertForGame(gameId, 'all', tx);
-      }
-
-      await tx.roundOutcome.deleteMany({
-        where: {
-          round: {
-            gameId,
-          },
-        },
-      });
-
-      await tx.set.deleteMany({
-        where: {
-          match: {
-            round: {
-              gameId,
-            },
-          },
-        },
-      });
-      
-      await tx.teamPlayer.deleteMany({
-        where: {
-          team: {
-            match: {
-              round: {
-                gameId,
-              },
-            },
-          },
-        },
-      });
-      
-      await tx.team.deleteMany({
-        where: {
-          match: {
-            round: {
-              gameId,
-            },
-          },
-        },
-      });
-      
-      await tx.match.deleteMany({
-        where: {
-          round: {
-            gameId,
-          },
-        },
-      });
-
-      await tx.round.deleteMany({
-        where: { gameId },
-      });
-
-      const updatedGame = await tx.game.findUnique({
-        where: { id: gameId },
-        select: { startTime: true, endTime: true, cityId: true, timeIsSet: true, entityType: true },
-      });
-      
-      if (updatedGame) {
-        const cityTimezone = await getUserTimezoneFromCityId(updatedGame.cityId);
-        await tx.game.update({
-          where: { id: gameId },
-          data: {
-            resultsStatus: 'NONE',
-            finishedDate: null,
-            metadata: {
-              ...((game.metadata as any) || {}),
-            },
-            status: calculateGameStatus({
-              startTime: updatedGame.startTime,
-              endTime: updatedGame.endTime,
-              resultsStatus: 'NONE',
-              timeIsSet: updatedGame.timeIsSet,
-              entityType: updatedGame.entityType,
-            }, cityTimezone),
-          },
-        });
-      }
-    });
+    // Delegate so admin reset shares X1 podium revoke + season re-sync with player reset.
+    const { resetGameResults } = await import('../results.service');
+    await resetGameResults(gameId);
 
     return { message: 'Game results reset successfully' };
   }

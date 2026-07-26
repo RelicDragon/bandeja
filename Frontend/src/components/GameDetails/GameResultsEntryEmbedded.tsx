@@ -36,6 +36,8 @@ import { OfflineBanner } from './OfflineBanner';
 import { GameResultsModals } from './GameResultsModals';
 import { GameWorkoutSummaryCard } from './GameWorkoutSummaryCard';
 import { PlayStreakResultsBanner } from '@/components/playStreak/PlayStreakResultsBanner';
+import { TrophyUnlockBanner } from '@/components/trophies/TrophyUnlockBanner';
+import { TrophyCelebrationSheet } from '@/components/trophies/TrophyCelebrationSheet';
 import { GameResultsShareCard } from './GameResultsShareCard';
 import { GameResultsShowInStoriesSwitch } from './GameResultsShowInStoriesSwitch';
 import { useGameDetailsChromeStore } from './gameDetailsChromeStore';
@@ -432,6 +434,14 @@ export const GameResultsEntryEmbedded = ({
             {currentGame?.resultsStatus === 'FINAL' && activeTab === 'results' ? (
               <div className="w-full">
                 <PlayStreakResultsBanner
+                  gameId={currentGame.id}
+                  outcomes={currentGame.outcomes || []}
+                />
+                <TrophyUnlockBanner
+                  gameId={currentGame.id}
+                  outcomes={currentGame.outcomes || []}
+                />
+                <TrophyCelebrationSheet
                   gameId={currentGame.id}
                   outcomes={currentGame.outcomes || []}
                 />

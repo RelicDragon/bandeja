@@ -3,14 +3,25 @@ import type { BasicUser } from '@/types';
 import { formatRelativeTimeSafe } from '@/utils/dateFormat';
 import { StoryBubbleFace } from './StoryBubbleFace';
 import { STORY_VIEWER_ICON_BTN } from './storyViewerIconBtn';
+import { StoryViewerOwnerMenu } from './viewer/StoryViewerOwnerMenu';
 
 type StoriesViewerHeaderProps = {
   user: BasicUser;
   createdAt?: string;
+  isOwner?: boolean;
   onClose: () => void;
+  onDeleteStory?: () => void;
+  deleting?: boolean;
 };
 
-export function StoriesViewerHeader({ user, createdAt, onClose }: StoriesViewerHeaderProps) {
+export function StoriesViewerHeader({
+  user,
+  createdAt,
+  isOwner = false,
+  onClose,
+  onDeleteStory,
+  deleting = false,
+}: StoriesViewerHeaderProps) {
   const timeLabel = createdAt ? formatRelativeTimeSafe(createdAt) : '';
 
   return (
@@ -24,13 +35,18 @@ export function StoriesViewerHeader({ user, createdAt, onClose }: StoriesViewerH
           {timeLabel ? <p className="text-xs text-white/80 drop-shadow">{timeLabel}</p> : null}
         </div>
       </div>
-      <button
-        type="button"
-        onClick={onClose}
-        className={`pointer-events-auto ${STORY_VIEWER_ICON_BTN}`}
-      >
-        <X size={28} className="text-white" strokeWidth={1.75} />
-      </button>
+      <div className="flex shrink-0 items-center gap-0.5">
+        {isOwner && onDeleteStory ? (
+          <StoryViewerOwnerMenu onDelete={onDeleteStory} deleting={deleting} />
+        ) : null}
+        <button
+          type="button"
+          onClick={onClose}
+          className={`pointer-events-auto ${STORY_VIEWER_ICON_BTN}`}
+        >
+          <X size={28} className="text-white" strokeWidth={1.75} />
+        </button>
+      </div>
     </div>
   );
 }

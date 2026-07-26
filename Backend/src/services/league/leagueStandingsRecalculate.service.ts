@@ -64,6 +64,21 @@ export class LeagueStandingsRecalculateService {
       await LeagueGameResultsService.syncGameResults(game.id, tx);
     }
 
+    // X1: if the season is already FINAL, keep podium cabinet aligned with rebuilt standings.
+    const season = await tx.game.findUnique({
+      where: { id: leagueSeasonId },
+      select: { resultsStatus: true, entityType: true, parentId: true },
+    });
+    if (season?.resultsStatus === ResultsStatus.FINAL) {
+      const { isPodiumEligibleEntityType } = await import('@bandeja/shared/achievements');
+      if (isPodiumEligibleEntityType(season.entityType, season.parentId)) {
+        const { grantPodiumAchievementsForFinalizedGame } = await import(
+          '../achievements/podiumGrant.service'
+        );
+        await grantPodiumAchievementsForFinalizedGame({ gameId: leagueSeasonId, tx });
+      }
+    }
+
     return {
       participantsReset: reset.count,
       gamesSynced: ordered.length,

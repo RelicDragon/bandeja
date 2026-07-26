@@ -23,6 +23,10 @@ import {
   buildPlayStreakViewForUser,
   maybePersistBrokenPlayStreak,
 } from '../../services/results/playStreak.service';
+import {
+  buildTrophiesPayload,
+  countersFromSportProfiles,
+} from '../../services/achievements/achievementProjection.service';
 import { accrueRatingUncertainty, isRatingSettling } from '../../services/results/ratingUncertainty';
 import { EntityType, ParticipantRole, Sport } from '@prisma/client';
 import { resolveSport } from '../../sport/sportRegistry';
@@ -267,6 +271,13 @@ export const getUserStats = asyncHandler(async (req: AuthRequest, res: Response)
     await maybePersistBrokenPlayStreak(userId, sport, playStreakFields, playStreak);
   }
   (projectedUser as { playStreak?: typeof playStreak }).playStreak = playStreak;
+
+  const trophies = await buildTrophiesPayload({
+    userId,
+    viewerUserId: req.userId,
+    counters: countersFromSportProfiles(user.sportProfiles),
+  });
+  (projectedUser as { trophies?: typeof trophies }).trophies = trophies;
 
   if (req.userId) {
     const viewer = await prisma.user.findUnique({

@@ -1,0 +1,96 @@
+{
+  "trophies": {
+    "rarity": {
+      "common": "Običan",
+      "rare": "Retko",
+      "legendary": "Legendarno"
+    },
+    "showcase": {
+      "hint": "Pobedi lige i igraj redovno — vitrina će se popuniti",
+      "pinHint": "Zakači omiljene iz kolekcije — do 3",
+      "emptySlot": "Prazan slot izloga"
+    },
+    "banner": {
+      "unlocked": "Pehar otključan",
+      "andMore": "+{{count}} još",
+      "dismiss": "Zatvori"
+    },
+    "celebration": {
+      "unlocked": "Pehar otključan",
+      "subtitle": "Novi trofej ulazi u tvoju kolekciju",
+      "pin": "Zakači na izlog",
+      "pinning": "Kačim…",
+      "pinned": "Zakačeno na izlog",
+      "viewCabinet": "Pogledaj kolekciju trofeja",
+      "dismiss": "Super!",
+      "pinError": "Nije uspelo kačenje — pokušaj iz kolekcije.",
+      "pinsFull": "Izlog je pun — prvo skini jedan (max 3)."
+    },
+    "cabinet": {
+      "title": "Vitrina pehara",
+      "count": "Osvojeno: {{count}}",
+      "ownEmpty": "Juri podijume, serije i prekretnice — zaključani pehari pokazuju sledeće ciljeve.",
+      "visitorEmpty": "Još nema pehara.",
+      "pinHint": "Dodirni pehar da ga zakačiš na izlog (do 3)."
+    },
+    "detail": {
+      "progress": "Napredak {{current}} / {{target}}",
+      "lockedHint": "Nastavi da igraš da otključaš ovaj pehar.",
+      "earnedOn": "Osvojeno {{date}}",
+      "sport": "{{sport}}",
+      "timesEarned": "Osvojeno {{count}} puta",
+      "openEvent": "Otvori događaj",
+      "pin": "Zakači na izlog",
+      "pinning": "Kačim…",
+      "unpin": "Skini sa izloga",
+      "unpinning": "Skidam…",
+      "pinnedBadge": "Zakačeno",
+      "pinWhich": "Izaberi koji da zakačiš",
+      "pinHint": "Zakačeni pehari ostaju na izlogu i kad otključaš novije.",
+      "pinsFull": "Izlog je pun — prvo skini jedan (max 3).",
+      "pinError": "Nije uspelo ažuriranje — pokušaj ponovo."
+    },
+    "defs": {
+      "podiumGold": {
+        "title": "Zlatni podijum",
+        "description": "1. mesto u ligi ili turniru sa najmanje 8 igrača."
+      },
+      "podiumSilver": {
+        "title": "Srebrni podijum",
+        "description": "2. mesto u ligi ili turniru sa najmanje 8 igrača."
+      },
+      "podiumBronze": {
+        "title": "Bronzani podijum",
+        "description": "3. mesto u ligi ili turniru sa najmanje 8 igrača."
+      },
+      "firstWin": {
+        "title": "Prva pobeda",
+        "description": "Pobedi u prvoj važećoj utakmici."
+      },
+      "games10": {
+        "title": "Početak",
+        "description": "Završi 10 važećih utakmica."
+      },
+      "games50": {
+        "title": "Redovan",
+        "description": "Završi 50 važećih utakmica."
+      },
+      "games100": {
+        "title": "Stotina",
+        "description": "Završi 100 važećih utakmica."
+      },
+      "streak4": {
+        "title": "Mesec u pokretu",
+        "description": "Održavaj seriju od 4 nedelje."
+      },
+      "streak8": {
+        "title": "Dva meseca",
+        "description": "Održavaj seriju od 8 nedelja."
+      },
+      "streak12": {
+        "title": "Sezona vatre",
+        "description": "Održavaj seriju od 12 nedelja."
+      }
+    }
+  }
+}

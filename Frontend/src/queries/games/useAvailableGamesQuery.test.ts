@@ -106,6 +106,7 @@ describe('useAvailableGamesQuery', () => {
         availableSlots: true,
         indexOnly: true,
       }),
+      undefined,
     );
 
     const page = client.getQueryData(
@@ -236,6 +237,7 @@ describe('useAvailableGamesQuery', () => {
     );
     expect(getAvailableGames).toHaveBeenCalledWith(
       expect.not.objectContaining({ indexOnly: true }),
+      { timeoutMs: 4000 },
     );
 
     getAvailableGames.mockClear();
@@ -249,6 +251,7 @@ describe('useAvailableGamesQuery', () => {
     );
     expect(getAvailableGames).toHaveBeenCalledWith(
       expect.objectContaining({ indexOnly: true }),
+      undefined,
     );
   });
 
@@ -318,5 +321,50 @@ describe('useAvailableGamesQuery', () => {
     const games = Array.from({ length: 250 }, (_, i) => sampleGame(`g${i}`, '2026-06-01'));
     await attachAvailableGamesEnrichment(client, ['games', 'available', 'h'], games);
     expect(getAvailableGamesEnrichment).toHaveBeenCalledTimes(3);
+  });
+
+  it('day-scoped options use short timeout and one auto-retry (no 4xx retry)', () => {
+    const day = new Date('2026-06-15');
+    const dayOpts = availableGamesQueryOptions({
+      userId: 'user-1',
+      startDate: day,
+      endDate: day,
+      indexOnly: false,
+    });
+    const monthOpts = availableGamesQueryOptions({
+      userId: 'user-1',
+      startDate: new Date('2026-06-01'),
+      endDate: new Date('2026-06-30'),
+      indexOnly: true,
+    });
+    expect(typeof dayOpts.retry).toBe('function');
+    const dayRetry = dayOpts.retry as (
+      failureCount: number,
+      error: { response?: { status?: number } },
+    ) => boolean;
+    expect(dayRetry(0, { response: { status: 500 } })).toBe(true);
+    expect(dayRetry(1, { response: { status: 500 } })).toBe(false);
+    expect(dayRetry(0, { response: { status: 404 } })).toBe(false);
+    expect(monthOpts.retry).toBeUndefined();
+  });
+
+  it('day-scoped fetch passes 4s timeout to API', async () => {
+    const client = createTestClient();
+    const day = new Date('2026-06-15');
+    await client.fetchQuery(
+      availableGamesQueryOptions({
+        userId: 'user-1',
+        startDate: day,
+        endDate: day,
+        indexOnly: false,
+      }),
+    );
+    expect(getAvailableGames).toHaveBeenCalledWith(
+      expect.objectContaining({
+        startDate: '2026-06-15',
+        endDate: '2026-06-15',
+      }),
+      { timeoutMs: 4000 },
+    );
   });
 });

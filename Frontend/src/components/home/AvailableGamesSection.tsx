@@ -22,6 +22,7 @@ import { AnimatedLoadingSwap } from '@/components/motion/AnimatedLoadingSwap';
 import { AnimatedMount } from '@/components/motion/AnimatedMount';
 import { TabContentStack } from '@/components/motion/TabContentStack';
 import { EmptyStateCard } from './EmptyStateCard';
+import { FindDayLoadErrorEmpty } from './FindDayLoadErrorEmpty';
 import { GamesLoadingSkeleton } from './GameCardSkeleton';
 import { EntityFilterChips } from './EntityFilterChips';
 import { SubscriptionsNudgeButton } from './SubscriptionsNudgeButton';
@@ -58,6 +59,9 @@ interface AvailableGamesSectionProps {
   hasMoreAvailable?: boolean;
   onLoadMoreAvailable?: () => void | Promise<void>;
   availableBound?: number;
+  /** Day-scoped fetch failed after retries — show retry empty, not “no games”. */
+  dayLoadError?: boolean;
+  onRetryDay?: () => void | Promise<void>;
 }
 
 export const AvailableGamesSection = ({
@@ -77,6 +81,8 @@ export const AvailableGamesSection = ({
   hasMoreAvailable = false,
   onLoadMoreAvailable,
   availableBound = 300,
+  dayLoadError = false,
+  onRetryDay,
 }: AvailableGamesSectionProps) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -657,11 +663,12 @@ export const AvailableGamesSection = ({
     />
   );
 
+  // Calendar: `selectedDayGames == null` means day authority not ready yet.
+  // A settled empty array must not stay on the skeleton (e.g. month index still in flight).
   const initialGamesLoading = Boolean(
-    loading &&
-      (findViewMode === 'calendar'
-        ? (selectedDayGames ?? availableGames).length === 0
-        : availableGames.length === 0),
+    findViewMode === 'calendar'
+      ? loading && selectedDayGames == null
+      : loading && availableGames.length === 0,
   );
 
   const findListCollapsed = findViewMode === 'list';
@@ -738,10 +745,14 @@ export const AvailableGamesSection = ({
       loading={<GamesLoadingSkeleton />}
     >
       {filteredGames.length === 0 ? (
-        <>
-          <EmptyStateCard icon={SearchX} title={emptyMessage} />
-          {loadMoreFooter}
-        </>
+        dayLoadError && onRetryDay && findViewMode === 'calendar' ? (
+          <FindDayLoadErrorEmpty onRetry={onRetryDay} />
+        ) : (
+          <>
+            <EmptyStateCard icon={SearchX} title={emptyMessage} />
+            {loadMoreFooter}
+          </>
+        )
       ) : findViewMode === 'list' ? (
         <>
           <GamesByDateList

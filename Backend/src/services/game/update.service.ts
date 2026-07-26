@@ -37,6 +37,11 @@ import {
   assertCourtMatchesGameSport,
 } from '../../shared/clubSports';
 import { WeatherForecastService } from '../weatherForecast.service';
+import {
+  grantPodiumAchievementsForFinalizedGame,
+  syncParentSeasonPodiumIfFinal,
+  syncPodiumAfterLeavingFinal,
+} from '../achievements/podiumGrant.service';
 
 /** Only scalar fields — nested writes / API echo keys force Prisma onto GameUpdateInput where courtId/clubId are invalid. */
 const GAME_UNCHECKED_SCALAR_KEYS = new Set<string>([
@@ -302,6 +307,7 @@ export class GameUpdateService {
         cityId: true,
         status: true,
         entityType: true,
+        parentId: true,
         timeIsSet: true,
         finishedDate: true,
       },
@@ -600,6 +606,13 @@ export class GameUpdateService {
 
     delete updateData.resultsRoundGenV2;
 
+    const finalizingViaUpdate =
+      data.resultsStatus === 'FINAL' && currentGame?.resultsStatus !== 'FINAL';
+    const leavingFinalViaUpdate =
+      data.resultsStatus !== undefined &&
+      data.resultsStatus !== 'FINAL' &&
+      currentGame?.resultsStatus === 'FINAL';
+
     await prisma.$transaction(async (tx) => {
       await tx.$executeRaw(Prisma.sql`SELECT id FROM "Game" WHERE id = ${id} FOR UPDATE`);
 
@@ -619,8 +632,6 @@ export class GameUpdateService {
         data.timeIsSet === true &&
         oldTimeIsSet === false &&
         currentGame?.resultsStatus !== 'FINAL';
-      const finalizingViaUpdate =
-        data.resultsStatus === 'FINAL' && currentGame?.resultsStatus !== 'FINAL';
       if (schedulingBracketMain || finalizingViaUpdate) {
         await BracketAdvancementService.assertPlayInCompleteForMainBracketGame(id, tx);
       }
@@ -681,9 +692,33 @@ export class GameUpdateService {
         const synced = await syncGameBookingState(tx, id);
         bookingStatusBeforeSync = synced.previousBookingStatus;
       }
+
+      // Keep podium sync in the same transaction as resultsStatus so FINAL never
+      // persists without grant/revoke (and leave-FINAL never leaves stale trophies).
+      if (leavingFinalViaUpdate) {
+        await syncPodiumAfterLeavingFinal({
+          gameId: id,
+          tx,
+          rebuildSeasonStandings: true,
+        });
+      }
+
+      if (finalizingViaUpdate) {
+        if (
+          currentGame?.entityType === EntityType.LEAGUE_SEASON ||
+          currentGame?.entityType === EntityType.TOURNAMENT ||
+          (currentGame?.entityType === EntityType.LEAGUE && !currentGame.parentId)
+        ) {
+          await grantPodiumAchievementsForFinalizedGame({ gameId: id, tx });
+        }
+        if (currentGame?.entityType === EntityType.LEAGUE && currentGame.parentId) {
+          await syncParentSeasonPodiumIfFinal({ gameId: id, tx });
+        }
+      }
     });
 
     await GameReadinessService.updateGameReadiness(id);
+
     const weatherScheduleChanged =
       data.startTime !== undefined ||
       data.endTime !== undefined ||

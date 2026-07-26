@@ -133,7 +133,11 @@
       "storyForbidden": "Вы не можете ответить на эту историю",
       "storyInvalid": "Не удалось прикрепить историю к сообщению",
       "share": "Поделиться",
-      "shareTitle": "Поделиться профилем"
+      "shareTitle": "Поделиться профилем",
+      "moreActions": "Ещё",
+      "deleteMyStory": "Удалить мою историю",
+      "deleteStoryConfirm": "Удалить эту историю? Подписчики больше её не увидят.",
+      "deleteStoryFailed": "Не удалось удалить историю"
     },
     "mixedMediaBlocked": "Share photos and videos separately",
     "oneVideoOnly": "Add one video at a time",

@@ -1,16 +1,33 @@
 import { useSyncExternalStore } from 'react';
 
 let engagementPaused = false;
+let ownerMenuPaused = false;
 const listeners = new Set<() => void>();
+
+function notify() {
+  listeners.forEach((l) => l());
+}
+
+function isPaused() {
+  return engagementPaused || ownerMenuPaused;
+}
 
 export function setStoryViewerEngagementPaused(value: boolean) {
   if (engagementPaused === value) return;
   engagementPaused = value;
-  listeners.forEach((l) => l());
+  notify();
+}
+
+export function setStoryViewerOwnerMenuPaused(value: boolean) {
+  if (ownerMenuPaused === value) return;
+  ownerMenuPaused = value;
+  notify();
 }
 
 export function resetStoryViewerEngagementPaused() {
-  setStoryViewerEngagementPaused(false);
+  engagementPaused = false;
+  ownerMenuPaused = false;
+  notify();
 }
 
 function subscribe(listener: () => void) {
@@ -19,7 +36,7 @@ function subscribe(listener: () => void) {
 }
 
 export function getStoryViewerEngagementPaused() {
-  return engagementPaused;
+  return isPaused();
 }
 
 export function useStoryViewerEngagementPaused() {

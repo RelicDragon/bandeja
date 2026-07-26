@@ -13,6 +13,8 @@ import { LeaderboardSportPicker } from '@/components/leaderboard/LeaderboardSpor
 import { useFavoritesStore } from '@/store/favoritesStore';
 import { usePresenceStore } from '@/store/presenceStore';
 import { PlayStreakChip } from '@/components/playStreak/PlayStreakChip';
+import { TrophyShowcase } from '@/components/trophies/TrophyShowcase';
+import { TrophyPendingCelebrationHost } from '@/components/trophies/TrophyPendingCelebrationHost';
 import { useAuthStore } from '@/store/authStore';
 import { MarketItem } from '@/types';
 import type { Sport } from '@/types';
@@ -226,7 +228,7 @@ const PlayerCardProfileBodyComponent = ({
   return (
     <motion.div className={`flex flex-col p-6 pt-2 ${prependBeforeLevelHistory ? 'gap-2' : 'gap-3'}`} variants={containerVariants} initial="hidden" animate="visible">
       <motion.div
-        className={`relative h-48 rounded-2xl ${isBlocked ? 'bg-gradient-to-br from-red-500 to-red-700 dark:from-red-600 dark:to-red-800' : 'bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800'}`}
+        className={`relative min-h-48 rounded-2xl ${isBlocked ? 'bg-gradient-to-br from-red-500 to-red-700 dark:from-red-600 dark:to-red-800' : 'bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800'}`}
         variants={itemVariants}
       >
         {isOnline && (
@@ -235,7 +237,7 @@ const PlayerCardProfileBodyComponent = ({
             {t('playerCard.online')}
           </span>
         )}
-        <div className="absolute inset-0 flex items-center justify-center gap-6 px-4 overflow-hidden">
+        <div className="relative z-0 flex items-start gap-5 px-4 py-4 pr-12 sm:items-center sm:gap-6">
           <div className="relative shrink-0">
             {user.originalAvatar ? (
               <button type="button" onClick={onAvatarClick} className="cursor-pointer hover:opacity-90 transition-opacity">
@@ -283,6 +285,10 @@ const PlayerCardProfileBodyComponent = ({
                 <PlayStreakChip streak={playStreak} isOwn={isOwnProfile} aliveOnly={playStreakAliveOnly} />
               </div>
             )}
+            <div className="mt-2">
+              <TrophyShowcase trophies={user.trophies} isOwn={isOwnProfile} ownerUserId={user.id} />
+            </div>
+            <TrophyPendingCelebrationHost trophies={user.trophies} isOwn={isOwnProfile} />
             <PlayerCardRatingStatus
               settling={sportScopedStatsReady ? Boolean(user.ratingSettling) : false}
               uncertainty={sportScopedStatsReady && isAdmin ? user.ratingUncertainty : null}

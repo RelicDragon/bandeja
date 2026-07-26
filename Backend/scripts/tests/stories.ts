@@ -162,10 +162,10 @@ async function main() {
     const selfBubble = selfFeed.bubbles.find((b) => b.isSelf);
     assert(!!selfBubble, 'self bubble exists');
     assert(
-      selfBubble!.segments.every((s) => s.sourceType === 'USER_STORY_ITEM'),
-      'self bubble manual only'
+      selfBubble!.segments.some((s) => s.sourceType === 'USER_STORY_ITEM'),
+      'self bubble includes manual item'
     );
-    console.log('ok: self bubble manual only');
+    console.log('ok: self bubble includes own segments');
 
     await StoryCreateService.createItem(unfollowedId, {
       mediaUrl: `/uploads/stories/originals/unfollow-${suffix}.jpg`,

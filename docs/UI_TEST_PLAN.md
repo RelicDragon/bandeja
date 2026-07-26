@@ -307,6 +307,8 @@ Frontend/e2e/
 | H-25 | Video story publish | Pick video → publish | Appears in rail |
 | H-26 | Story engagement | Like / comment (if enabled) | Count updates |
 | H-27 | Report story comment | Report flow | Modal submits |
+| H-54 | Owner story menu | Open own story (manual or game auto) | Top-right ⋮ visible |
+| H-55 | Delete own story | Own story → ⋮ → Delete my story → confirm | Segment removed; followers stop seeing it (incl. GAME_CREATED / GAME_RESULT) |
 | H-42 | Story DM reply lands in user chat | Open another user's story → type DM text → send → open user chat with owner | Message in DM thread shows story thumbnail card + "Replied to your story"/"You replied to their story" label above the bubble |
 | H-43 | Story quick-reaction emoji reply | Open another user's story → focus DM input → tap one of the six quick emojis | Emoji sent to DM with same story-reply card; flyout animation plays in viewer |
 | H-44 | Story reply card without media | Reply to GAME_CREATED/GAME_RESULT story without photo | DM shows story-reply label with placeholder thumbnail; tap does nothing harmful |
@@ -455,6 +457,8 @@ Frontend/e2e/
 | F-72 | Find calendar unread + my-game pills (indexOnly) | User is participant / has unread on a game; open Find calendar | Day cell still shows unread dot and participant-type pill (from dayIndex + unread store), not only when month cards were loaded |
 | F-53 | Find warm view / month + day prefetch | Open calendar, switch to list (and back); flip to prev/next month; tap adjacent day within ~30s | Inactive view + adjacent months (indexOnly) + ±1 selected days (cards) often hit warm cache |
 | F-73 | Find seed empty day from dayIndex | Month indexOnly settled; select in-range day with dayIndex count 0 | Day list settles empty via seed (no sticky false-empty for out-of-range D±1); never seeds from keepPreviousData month placeholder |
+| F-74 | Find day list not blocked by month index | Calendar visible; month index still pending or slow; select a day that day-scopes to `[]` (or settles with cards) | Day list shows empty/cards — not endless skeleton; pull-to-refresh still works while a fetch is in flight |
+| F-75 | Find day load error + retry | Calendar; force day-scoped `/games/available` to fail with no cached day page (offline, 5xx, or >~4s) | Within ~4s×2 (one auto-retry), empty shows load-failed + Retry (not “no games”); Retry refetches that day. Settled empty day that later fails a background refetch keeps “no games”, not error |
 | F-54 | Find structural filters server-align | Toggle club / entity / hide BAR / level band / available slots | Results match prior UX; filter changes refetch with new hash (not silent client-only discard of a fat payload) |
 | F-55 | Find selected-day detail under truncate | Busy month; pick a late-month day | Day list comes from day-scoped fetch (complete for that day / load more), not from month cards |
 | F-56 | Find day switch no wrong-day flash | Calendar: tap day A then day B quickly | No wrong-day cards; while day fetch resolves, loading — not previous day’s cards |
@@ -1231,6 +1235,44 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-streak-3 | Same week second game | Second rated finish same week window | Count unchanged; results streak banner absent |
 | PR-streak-4 | New week while alive | Rated finish after open week, before deadline | Count +1; celebration banner once |
 | PR-streak-5 | Past deadline | Open player card (`?player=`) after missing deadline | Streak chip hidden (alive-only); fullscreen/profile sport panel may still show best |
+| PR-trophy-1 | Own empty trophy showcase | Own player card / `/user-profile/:id` with no unlocks | Three empty showcase slots under avatar + short hint; no crash |
+| PR-trophy-2 | Own empty trophy cabinet | Profile → Statistics (or own card Statistics) with no unlocks | Cabinet shows full locked catalog with progress affordances; inviting empty copy |
+| PR-trophy-3 | Visitor empty trophies | Open another user’s card with zero trophies | Showcase hidden; cabinet calm empty (“No trophies yet”) — no locked graveyard |
+| PR-trophy-4 | Trophy detail sheet | Tap locked or unlocked trophy tile | Sheet with title, rarity, description; locked shows progress/hint |
+| PR-trophy-5 | Dark/light trophy UI | Toggle theme on Statistics with cabinet visible | Trophy frames/labels readable in both themes |
+| PR-trophy-6 | Habit unlock first win | Finish a qualifying rated win when user has 0 prior wins | `habit_first_win` appears on own cabinet/showcase; Common banner on Results once |
+| PR-trophy-7 | Habit unlock volume | Cross 10 / 50 / 100 qualifying finished games | Matching volume trophy grants once; cabinet shows unlocked; Common banner (no celebration sheet) |
+| PR-trophy-8 | Habit unlock streak 4 | Advance play streak to 4 weeks | `habit_streak_4` unlocks; Common banner on Results; count does not re-banner on same-week finish |
+| PR-trophy-9 | Habit unlock idempotent | Re-finalize / edit results after habit already earned | No duplicate instance; banner does not reappear for same unlock |
+| PR-trophy-10 | Rare streak celebration | Reach 8-week streak (Rare habit) | Trophy grants; Results opens celebration sheet (not Common banner) with Rare art + rarity badge; light/dark readable |
+| PR-trophy-11 | No historical soft backfill | User already above volume thresholds pre-ship → finish next qualifying game; streak uses current count only | No volume trophies for already-passed thresholds; streak unlocks only when current weeks cross 4/8/12 (not lifetime best dump) |
+| PR-trophy-12 | Rarity visual hierarchy | Own cabinet with Common + Rare + Legendary (or locked Legendary silhouette) | Frames, glow, and rarity badges clearly differ; showcase slots use matching rarity treatment |
+| PR-trophy-13 | Distinct trophy art | Browse full own cabinet catalog | Each definition shows unique art (podium cups / first-win medal / volume badges / streak flames) — not generic placeholders |
+| PR-trophy-14 | Celebration motion + cabinet CTA | Rare/Legendary unlock on Results | Sheet springs in with brief spark accents; View cabinet navigates to own profile; dismissible; works light/dark |
+| PR-trophy-15 | Showcase beside streak | Own player card with streak + ≥1 showcase trophy | Showcase under avatar next to play-streak chip (rarity glow, tap → detail) |
+| PR-trophy-16 | Tournament podium N≥8 | Finalize TOURNAMENT with ≥8 PLAYING and places 1–3 | Gold/silver/bronze granted; celebration sheet with pin + view cabinet |
+| PR-trophy-17 | Tournament podium N<8 | Finalize TOURNAMENT with <8 PLAYING | No podium trophies; no podium celebration |
+| PR-trophy-18 | Podium stack per event | Gold in two different qualifying FINAL events | Two distinct gold instances in cabinet |
+| PR-trophy-19 | Celebration pin CTA | From Rare/Legendary celebration sheet tap Pin | Showcase pin persists; sheet shows pinned state |
+| PR-trophy-19b | Cabinet pin / unpin | Own unlocked trophy → detail → Pin; then Unpin | Optimistic update; pinned badge on tile + showcase ✦; after unpin falls back to auto showcase |
+| PR-trophy-19c | Visitor locked visibility | Open another user’s Statistics with some unlocks | Only unlocked tiles; no locked catalog / progress bars |
+| PR-trophy-19d | Owner locked progress | Own Statistics with incomplete habit | Locked tiles + progress bars for streak/volume/first-win |
+| PR-trophy-19e | Max 3 pins refuse | Own profile with 3 pins → pin a 4th | No optimistic flip; error “unpin one first”; existing pins unchanged |
+| PR-trophy-19f | Profile Statistics showcase | Profile → Statistics (own) | Showcase under avatar next to play streak (same as player card); not clipped |
+| PR-trophy-19g | Ghost pin after revoke | Pin a podium trophy → standings correction revokes it → pin another | Old pin cleared; new pin succeeds (no false “full”) |
+| PR-trophy-20 | League season T2 | FINAL LEAGUE_SEASON ≥8; fixed-team player who played FINAL fixture for placed team (after mid-season swap) | That player gets podium; roster sticker without FINAL fixture play does not |
+| PR-trophy-21 | FINAL correction revoke | After FINAL podium grant, correct standings so place-1 changes → re-finalize/recalc | Old gold revoked from wrong user; new gold on correct user; pins on revoked instance cleared |
+| PR-trophy-21b | FINAL reopen clears podium | After podium grant, Edit results (leave FINAL) on tournament / season | Active podium for that event gone from cabinet/showcase; pins on those instances cleared; celebration sheet closes if still open |
+| PR-trophy-21c | Season fixture re-FINAL sync | FINAL LEAGUE_SEASON with podium; edit fixture that changes places → re-FINAL fixture | Season podium matches corrected standings; revoked pins cleared; no stale Legendary on wrong player |
+| PR-trophy-21d | Restart/reset clears podium | After podium grant, Restart results (reset/delete → NONE) on tournament | Podium + pins cleared; no celebration for revoked ids |
+| PR-trophy-21e | Admin reset clears podium | Admin `/games/:id/reset-results` after podium grant | Same as 21d — podium + pins cleared |
+| PR-trophy-21f | Standings recalc syncs season podium | FINAL LEAGUE_SEASON; admin/organizer recalculate standings after place change | Cabinet matches new top 3; revoked pins cleared |
+| PR-trophy-22 | Season podium celebration | Mark LEAGUE_SEASON FINAL (≥8) while placed; open own profile/card | Rare/Legendary celebration sheet appears from pending unlocks (pin + view cabinet) |
+| PR-trophy-23 | Recalc keeps pins | Re-save identical FINAL tournament results after pinning a podium trophy | Pin remains; no duplicate instance |
+| PR-trophy-24 | No double celebration | Celebrate podium on Results, then open own profile | Sheet does not open again for same achievement id |
+| PR-trophy-25 | Bracket final reopen | FINAL season with bracket; reopen grand-final fixture | Season podium cleared/absent until final is FINAL again; no RR standings fallback gold |
+| PR-trophy-26 | Walkover no bench trophy | Bracket walkover FINAL where a fixed-team roster has a non-PLAYING name | Only PLAYING players get outcomes/podium eligibility |
+| PR-trophy-27 | Multi-group PER_GROUP event podium | FINAL LEAGUE_SEASON with PER_GROUP brackets in 2+ groups | Event-wide top 3 (standings), not one Legendary gold per group champion |
 | PR-19 | Change city | City modal | City updated; no Cities/Clubs switch; browse country → cities |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |

@@ -132,7 +132,11 @@
       "storyForbidden": "Na tento příběh nemůžete odpovědět",
       "storyInvalid": "Příběh se nepodařilo připojit k této zprávě",
       "share": "Sdílet",
-      "shareTitle": "Sdílet profil"
+      "shareTitle": "Sdílet profil",
+      "moreActions": "Další akce",
+      "deleteMyStory": "Smazat můj příběh",
+      "deleteStoryConfirm": "Smazat tento příběh? Sledující ho už neuvidí.",
+      "deleteStoryFailed": "Příběh se nepodařilo smazat"
     },
     "mixedMediaBlocked": "Share photos and videos separately",
     "oneVideoOnly": "Add one video at a time",

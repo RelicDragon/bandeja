@@ -408,13 +408,23 @@ export class StoryFeedService {
     });
     const followedIds = new Set(favorites.map((f) => f.favoriteUserId));
     const followingIds = [...new Set([...followedIds, viewerId])];
-    const activityOwnerIds = [...followedIds];
+    const activityOwnerIds = [...followingIds];
 
     const viewedRows = await prisma.storyView.findMany({
       where: { viewerId },
       select: { sourceType: true, sourceId: true },
     });
     const viewedSet = new Set(viewedRows.map((v) => segmentKey(v.sourceType, v.sourceId)));
+
+    const dismissalRows = await prisma.storySegmentDismissal.findMany({
+      where: { userId: { in: activityOwnerIds } },
+      select: { userId: true, sourceType: true, sourceId: true },
+    });
+    const dismissedKeys = new Set(
+      dismissalRows.map((d) => `${d.userId}:${segmentKey(d.sourceType, d.sourceId)}`)
+    );
+    const isDismissed = (ownerUserId: string, sourceType: StorySourceType, sourceId: string) =>
+      dismissedKeys.has(`${ownerUserId}:${segmentKey(sourceType, sourceId)}`);
 
     const rawSegments: RawSegment[] = [];
 
@@ -485,7 +495,8 @@ export class StoryFeedService {
 
       for (const photo of photos) {
         if (!photo.uploaderId || !photo.uploader) continue;
-        const viewerFollows = followedIds.has(photo.uploaderId);
+        if (isDismissed(photo.uploaderId, StorySourceType.GAME_PHOTO, photo.id)) continue;
+        const viewerFollows = photo.uploaderId === viewerId || followedIds.has(photo.uploaderId);
         if (
           !canSeePhotoInStories({
             viewerFollows,
@@ -549,7 +560,8 @@ export class StoryFeedService {
 
       for (const row of ownerParticipants) {
         const ownerUserId = row.userId;
-        const viewerFollows = followedIds.has(ownerUserId);
+        if (isDismissed(ownerUserId, StorySourceType.GAME_CREATED, row.game.id)) continue;
+        const viewerFollows = ownerUserId === viewerId || followedIds.has(ownerUserId);
         if (
           !canSeeCreatedGameInStories({
             viewerFollows,
@@ -610,7 +622,7 @@ export class StoryFeedService {
 
       for (const outcome of outcomes) {
         const ownerUserId = outcome.userId;
-        if (!followedIds.has(ownerUserId)) continue;
+        if (ownerUserId !== viewerId && !followedIds.has(ownerUserId)) continue;
         if (!outcome.user.shareGameResultsToFollowers) continue;
         pendingResults.push({ ownerUserId, outcome });
       }
@@ -678,11 +690,16 @@ export class StoryFeedService {
       const bracketChampionSegs = await BracketChampionStoryService.loadRawSegments({
         activityOwnerIds,
         followedIds,
+        viewerId,
         activitySince,
         viewedSet,
         viewer: photoViewer,
       });
-      rawSegments.push(...bracketChampionSegs);
+      rawSegments.push(
+        ...bracketChampionSegs.filter(
+          (s) => !isDismissed(s.ownerUserId, StorySourceType.BRACKET_CHAMPION, s.sourceId)
+        )
+      );
     }
 
     const byOwner = new Map<string, RawSegment[]>();
@@ -719,9 +736,6 @@ export class StoryFeedService {
 
       const isSelf = ownerUserId === viewerId;
       let ownerSegs = dedupByGameId(segs);
-      if (isSelf) {
-        ownerSegs = ownerSegs.filter((s) => s.sourceType === StorySourceType.USER_STORY_ITEM);
-      }
       ownerSegs = capSegments(ownerSegs);
       if (ownerSegs.length === 0) continue;
 

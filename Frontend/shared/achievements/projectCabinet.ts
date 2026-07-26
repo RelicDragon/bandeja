@@ -1,0 +1,82 @@
+import { ACHIEVEMENT_CATALOG, getAchievementDefinition } from './catalog';
+import type {
+  AchievementDefinition,
+  AchievementInstanceInput,
+  TrophyProgress,
+} from './types';
+
+export type HabitProgressCounters = {
+  /**
+   * Current play-streak weeks (max across sports) for streak habits.
+   * Uses live count — not lifetime best — so forward-only grants match “streak reaches N”
+   * and locked progress shows the chase, not a pre-ship best.
+   */
+  streakBest: number;
+  /** Qualifying finished games count (volume). */
+  gamesFinished: number;
+  /** Wins count for first-win habit. */
+  gamesWon: number;
+};
+
+export type CabinetEntry = {
+  definition: AchievementDefinition;
+  unlocked: boolean;
+  instances: AchievementInstanceInput[];
+  progress: TrophyProgress | null;
+};
+
+export function habitProgressForDefinition(
+  definition: AchievementDefinition,
+  counters: HabitProgressCounters,
+): TrophyProgress | null {
+  const target = definition.threshold;
+  if (target == null || target <= 0) return null;
+  if (definition.ruleKind === 'HABIT_STREAK') {
+    return { current: Math.min(counters.streakBest, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_VOLUME') {
+    return { current: Math.min(counters.gamesFinished, target), target };
+  }
+  if (definition.ruleKind === 'HABIT_FIRST_WIN') {
+    return { current: Math.min(counters.gamesWon, target), target };
+  }
+  return null;
+}
+
+/**
+ * Build cabinet rows. Owner sees full catalog (locked + unlocked).
+ * Visitor sees unlocked definitions only (no locked graveyard).
+ */
+export function projectTrophyCabinet(input: {
+  isOwner: boolean;
+  instances: AchievementInstanceInput[];
+  counters: HabitProgressCounters;
+}): CabinetEntry[] {
+  const byDefinition = new Map<string, AchievementInstanceInput[]>();
+  for (const instance of input.instances) {
+    if (!getAchievementDefinition(instance.definitionId)) continue;
+    const list = byDefinition.get(instance.definitionId) ?? [];
+    list.push(instance);
+    byDefinition.set(instance.definitionId, list);
+  }
+  for (const list of byDefinition.values()) {
+    list.sort((a, b) => Date.parse(b.earnedAt) - Date.parse(a.earnedAt));
+  }
+
+  const rows: CabinetEntry[] = [];
+  for (const definition of ACHIEVEMENT_CATALOG) {
+    const instances = byDefinition.get(definition.id) ?? [];
+    const unlocked = instances.length > 0;
+    if (!input.isOwner && !unlocked) continue;
+    rows.push({
+      definition,
+      unlocked,
+      instances,
+      progress:
+        input.isOwner && !unlocked
+          ? habitProgressForDefinition(definition, input.counters)
+          : null,
+    });
+  }
+  return rows;
+}

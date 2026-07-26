@@ -23,6 +23,14 @@
       "types": "./dist/gameBooking/*.d.ts",
       "default": "./dist/gameBooking/*.js"
     },
+    "./achievements": {
+      "types": "./dist/achievements/index.d.ts",
+      "default": "./dist/achievements/index.js"
+    },
+    "./achievements/*": {
+      "types": "./dist/achievements/*.d.ts",
+      "default": "./dist/achievements/*.js"
+    },
     "./*": {
       "types": "./dist/*.d.ts",
       "default": "./dist/*.js"

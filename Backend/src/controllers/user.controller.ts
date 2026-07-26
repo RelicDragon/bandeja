@@ -33,3 +33,4 @@ export { getPresence } from './user/presence.controller';
 export { getBasicUsersByIds } from './user/basicUsersBatch.controller';
 export { getMyWorkoutSessions } from './user/workoutSessions.controller';
 export { getReactionEmojiUsage } from './user/reactionEmojiUsage.controller';
+export { pinMyAchievement, unpinMyAchievement } from './user/achievementPins.controller';

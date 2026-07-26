@@ -1,0 +1,96 @@
+{
+  "trophies": {
+    "rarity": {
+      "common": "Común",
+      "rare": "Raro",
+      "legendary": "Legendario"
+    },
+    "showcase": {
+      "hint": "Gana ligas y sigue jugando para llenar tu vitrina",
+      "pinHint": "Fija favoritos desde la vitrina — máx. 3",
+      "emptySlot": "Hueco vacío del escaparate"
+    },
+    "banner": {
+      "unlocked": "Trofeo desbloqueado",
+      "andMore": "+{{count}} más",
+      "dismiss": "Cerrar"
+    },
+    "celebration": {
+      "unlocked": "Trofeo desbloqueado",
+      "subtitle": "Una nueva pieza para tu vitrina",
+      "pin": "Fijar en el escaparate",
+      "pinning": "Fijando…",
+      "pinned": "Fijado en el escaparate",
+      "viewCabinet": "Ver vitrina de trofeos",
+      "dismiss": "¡Genial!",
+      "pinError": "No se pudo fijar ahora — inténtalo desde tu vitrina.",
+      "pinsFull": "El escaparate está lleno — quita uno primero (máx. 3)."
+    },
+    "cabinet": {
+      "title": "Vitrina de trofeos",
+      "count": "{{count}} conseguidos",
+      "ownEmpty": "Persigue podios, rachas e hitos: los trofeos bloqueados muestran tus siguientes metas.",
+      "visitorEmpty": "Aún no hay trofeos.",
+      "pinHint": "Toca un trofeo para fijarlo en el escaparate (máx. 3)."
+    },
+    "detail": {
+      "progress": "Progreso {{current}} / {{target}}",
+      "lockedHint": "Sigue jugando para desbloquear este trofeo.",
+      "earnedOn": "Conseguido el {{date}}",
+      "sport": "{{sport}}",
+      "timesEarned": "Conseguido {{count}} veces",
+      "openEvent": "Abrir evento",
+      "pin": "Fijar en el escaparate",
+      "pinning": "Fijando…",
+      "unpin": "Quitar del escaparate",
+      "unpinning": "Quitando…",
+      "pinnedBadge": "Fijado",
+      "pinWhich": "Elige cuál fijar",
+      "pinHint": "Los fijados se quedan en el escaparate aunque desbloquees otros más nuevos.",
+      "pinsFull": "El escaparate está lleno — quita uno primero (máx. 3).",
+      "pinError": "No se pudo actualizar — inténtalo de nuevo."
+    },
+    "defs": {
+      "podiumGold": {
+        "title": "Podio de oro",
+        "description": "1.º en una liga o torneo con al menos 8 jugadores."
+      },
+      "podiumSilver": {
+        "title": "Podio de plata",
+        "description": "2.º en una liga o torneo con al menos 8 jugadores."
+      },
+      "podiumBronze": {
+        "title": "Podio de bronce",
+        "description": "3.º en una liga o torneo con al menos 8 jugadores."
+      },
+      "firstWin": {
+        "title": "Primera victoria",
+        "description": "Gana tu primer partido válido."
+      },
+      "games10": {
+        "title": "Primeros pasos",
+        "description": "Termina 10 partidos válidos."
+      },
+      "games50": {
+        "title": "Habitual",
+        "description": "Termina 50 partidos válidos."
+      },
+      "games100": {
+        "title": "Centurión",
+        "description": "Termina 100 partidos válidos."
+      },
+      "streak4": {
+        "title": "Mes en marcha",
+        "description": "Mantén una racha de 4 semanas."
+      },
+      "streak8": {
+        "title": "Dos meses fuertes",
+        "description": "Mantén una racha de 8 semanas."
+      },
+      "streak12": {
+        "title": "Temporada de fuego",
+        "description": "Mantén una racha de 12 semanas."
+      }
+    }
+  }
+}

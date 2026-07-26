@@ -114,6 +114,10 @@ export class BracketSlotWalkoverService {
         await this.finalizeWalkoverGame(slot.gameId, payload.leagueParticipantId, tx);
         const ids = await BracketAdvancementService.onGameFinalized(slot.gameId, tx);
         createdGameIds.push(...ids);
+        const { syncParentSeasonPodiumIfFinal } = await import(
+          '../achievements/podiumGrant.service'
+        );
+        await syncParentSeasonPodiumIfFinal({ gameId: slot.gameId, tx });
       } else {
         await tx.leagueBracketSlot.update({
           where: { id: slot.winnerSlotId! },
@@ -240,11 +244,17 @@ export class BracketSlotWalkoverService {
       include: {
         fixedTeams: { include: { players: true }, orderBy: { teamNumber: 'asc' } },
         outcomes: true,
+        participants: {
+          where: { status: 'PLAYING' },
+          select: { userId: true },
+        },
       },
     });
     if (!game?.parentId) {
       throw new ApiError(400, 'Bracket game not found');
     }
+
+    const playingUserIds = new Set(game.participants.map((p) => p.userId));
 
     const teamParticipants: { teamNumber: number; participantId: string; playerIds: string[] }[] =
       [];
@@ -260,7 +270,8 @@ export class BracketSlotWalkoverService {
       teamParticipants.push({
         teamNumber: team.teamNumber,
         participantId: participant.id,
-        playerIds,
+        // T2: only players who are PLAYING get outcomes (no bench sticker trophies).
+        playerIds: playerIds.filter((id) => playingUserIds.has(id)),
       });
     }
 
@@ -269,6 +280,9 @@ export class BracketSlotWalkoverService {
     }
     if (!teamParticipants.some((t) => t.participantId === winnerParticipantId)) {
       throw new ApiError(400, 'Winner must be a contestant in this match');
+    }
+    if (teamParticipants.some((t) => t.playerIds.length === 0)) {
+      throw new ApiError(400, 'Walkover requires PLAYING players on each side');
     }
 
     let position = 1;
@@ -297,6 +311,7 @@ export class BracketSlotWalkoverService {
             wins: isWinner ? 1 : 0,
             losses: isWinner ? 0 : 1,
             isWinner,
+            position,
           },
         });
         position++;

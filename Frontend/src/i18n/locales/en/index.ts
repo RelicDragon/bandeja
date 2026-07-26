@@ -34,6 +34,7 @@ import offline from './offline.json';
 import permissions from './permissions.json';
 import playerCard from './playerCard.json';
 import playStreak from './playStreak.json';
+import trophies from './trophies.json';
 import playerInvite from './playerInvite.json';
 import playerProfile from './playerProfile.json';
 import profile from './profile.json';
@@ -93,6 +94,7 @@ export default {
     ...permissions,
     ...playerCard,
     ...playStreak,
+    ...trophies,
     ...playerInvite,
     ...playerProfile,
     ...profile,

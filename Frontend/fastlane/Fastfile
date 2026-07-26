@@ -125,15 +125,60 @@ def exact_ios_build_selectable?(build)
   build&.processing_state == Spaceship::ConnectAPI::Build::ProcessingState::VALID
 end
 
+def ios_build_audience_type(build)
+  return nil unless build&.id
+
+  resp = Spaceship::ConnectAPI.client.get_build(build_id: build.id)
+  resp.body.dig("data", "attributes", "buildAudienceType")
+rescue StandardError
+  nil
+end
+
 def assert_exact_ios_build_selectable!(app_version, build_number)
   build = find_ios_app_store_build(app_version, build_number)
   UI.user_error!("Exact App Store Connect build #{app_version} (#{build_number}) is not visible yet.") unless build
 
-  return build if exact_ios_build_selectable?(build)
+  unless exact_ios_build_selectable?(build)
+    UI.user_error!(
+      "Exact App Store Connect build #{app_version} (#{build_number}) is #{build.processing_state}; " \
+      "cannot continue until that build is VALID and selectable."
+    )
+  end
 
+  audience = ios_build_audience_type(build)
+  if audience && audience != "APP_STORE_ELIGIBLE"
+    UI.user_error!(
+      "App Store Connect build #{app_version} (#{build_number}) has buildAudienceType=#{audience}; " \
+      "only APP_STORE_ELIGIBLE builds can be attached to an App Store version " \
+      "(INTERNAL_ONLY / TestFlight-internal uploads cannot be submitted)."
+    )
+  end
+
+  build
+end
+
+IOS_STORE_VERSION_BUILD_ATTACHABLE_STATES = [
+  Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::PREPARE_FOR_SUBMISSION,
+  Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::DEVELOPER_REJECTED,
+  Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::REJECTED,
+  Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::METADATA_REJECTED,
+  Spaceship::ConnectAPI::AppStoreVersion::AppVersionState::INVALID_BINARY
+].freeze
+
+def assert_ios_store_version_accepts_build!(app_version, build_number)
+  app_store_version = find_ios_app_store_version(app_version)
+  return nil unless app_store_version
+
+  state = app_store_version.app_version_state
+  return app_store_version if IOS_STORE_VERSION_BUILD_ATTACHABLE_STATES.include?(state)
+
+  selected = app_store_version.get_build
+  selected_label = selected ? "#{selected.version}" : "none"
   UI.user_error!(
-    "Exact App Store Connect build #{app_version} (#{build_number}) is #{build.processing_state}; " \
-    "cannot continue until that build is VALID and selectable."
+    "App Store Connect version #{app_version} is #{state} (selected build #{selected_label}) and cannot " \
+    "accept build #{build_number}. Live/approved versions need a new marketing version " \
+    "(e.g. bump past #{app_version}), rebuild, then upload again. " \
+    "ASC error if ignored: 'The specified pre-release build could not be added'."
   )
 end
 
@@ -349,6 +394,7 @@ platform :ios do
     UI.user_error!("Release notes file not found at #{release_notes_path}") unless File.exist?(release_notes_path)
 
     assert_exact_ios_build_selectable!(app_version, build_number)
+    assert_ios_store_version_accepts_build!(app_version, build_number)
     release_notes = File.read(release_notes_path)
 
     upload_to_app_store(

@@ -62,6 +62,11 @@ router.patch(
 
 router.delete('/items/:itemId', storyController.deleteStoryItem);
 
+router.delete(
+  '/segments/:sourceType/:sourceId',
+  storyController.deleteStorySegment
+);
+
 router.post(
   '/views',
   validate([

@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trophy art preview</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --panel: #1a222c;
+        --ink: #e8eef4;
+        --muted: #8b9aab;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+        padding: 2rem 1.25rem 4rem;
+      }
+      h1 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin: 0 0 0.35rem;
+      }
+      p {
+        margin: 0 0 1.5rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 1rem;
+        max-width: 960px;
+      }
+      .card {
+        background: var(--panel);
+        border-radius: 14px;
+        padding: 1rem 0.75rem 0.85rem;
+        text-align: center;
+      }
+      .stage {
+        display: grid;
+        place-items: center;
+        height: 140px;
+        border-radius: 10px;
+        margin-bottom: 0.65rem;
+        background:
+          linear-gradient(45deg, #2a3440 25%, transparent 25%),
+          linear-gradient(-45deg, #2a3440 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #2a3440 75%),
+          linear-gradient(-45deg, transparent 75%, #2a3440 75%);
+        background-size: 16px 16px;
+        background-position:
+          0 0,
+          0 8px,
+          8px -8px,
+          -8px 0;
+        background-color: #222b35;
+      }
+      .stage.light {
+        background-color: #d8dee6;
+        background-image:
+          linear-gradient(45deg, #c5ccd6 25%, transparent 25%),
+          linear-gradient(-45deg, #c5ccd6 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #c5ccd6 75%),
+          linear-gradient(-45deg, transparent 75%, #c5ccd6 75%);
+        background-size: 16px 16px;
+        background-position:
+          0 0,
+          0 8px,
+          8px -8px,
+          -8px 0;
+      }
+      img {
+        width: 96px;
+        height: 96px;
+        object-fit: contain;
+      }
+      .key {
+        font-size: 0.75rem;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        color: var(--muted);
+        word-break: break-all;
+      }
+      .sizes {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: center;
+        align-items: end;
+        margin-top: 0.5rem;
+      }
+      .sizes img {
+        width: var(--sz, 36px);
+        height: var(--sz, 36px);
+        object-fit: contain;
+      }
+      .toolbar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.25rem;
+        flex-wrap: wrap;
+      }
+      button {
+        appearance: none;
+        border: 1px solid #3a4654;
+        background: #243040;
+        color: var(--ink);
+        border-radius: 8px;
+        padding: 0.4rem 0.75rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+      button[aria-pressed='true'] {
+        background: #3d5a80;
+        border-color: #5b7fad;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Trophy art preview</h1>
+    <p>/trophies/*.png · checker shows transparency · toggle light/dark stage</p>
+    <div class="toolbar">
+      <button type="button" id="darkBtn" aria-pressed="true">Dark stage</button>
+      <button type="button" id="lightBtn" aria-pressed="false">Light stage</button>
+    </div>
+    <div class="grid" id="grid"></div>
+    <script>
+      const KEYS = [
+        'podium_gold',
+        'podium_silver',
+        'podium_bronze',
+        'habit_first_win',
+        'habit_games_10',
+        'habit_games_50',
+        'habit_games_100',
+        'habit_streak_4',
+        'habit_streak_8',
+        'habit_streak_12',
+      ];
+      const grid = document.getElementById('grid');
+      const sizes = [
+        { label: 'sm', px: 36 },
+        { label: 'md', px: 56 },
+        { label: 'lg', px: 80 },
+      ];
+
+      for (const key of KEYS) {
+        const card = document.createElement('article');
+        card.className = 'card';
+        const stage = document.createElement('div');
+        stage.className = 'stage';
+        const img = document.createElement('img');
+        img.src = `/trophies/${key}.png?v=2`;
+        img.alt = key;
+        stage.appendChild(img);
+        const label = document.createElement('div');
+        label.className = 'key';
+        label.textContent = key;
+        const row = document.createElement('div');
+        row.className = 'sizes';
+        for (const s of sizes) {
+          const thumb = document.createElement('img');
+          thumb.src = `/trophies/${key}.png?v=2`;
+          thumb.alt = `${key} ${s.label}`;
+          thumb.style.setProperty('--sz', `${s.px}px`);
+          thumb.title = `${s.px}px`;
+          row.appendChild(thumb);
+        }
+        card.append(stage, label, row);
+        grid.appendChild(card);
+      }
+
+      const darkBtn = document.getElementById('darkBtn');
+      const lightBtn = document.getElementById('lightBtn');
+      function setLight(on) {
+        document.querySelectorAll('.stage').forEach((el) => el.classList.toggle('light', on));
+        darkBtn.setAttribute('aria-pressed', String(!on));
+        lightBtn.setAttribute('aria-pressed', String(on));
+      }
+      darkBtn.addEventListener('click', () => setLight(false));
+      lightBtn.addEventListener('click', () => setLight(true));
+    </script>
+  </body>
+</html>

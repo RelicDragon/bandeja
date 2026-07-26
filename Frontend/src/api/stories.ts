@@ -216,6 +216,10 @@ export const storiesApi = {
     await api.delete(`/stories/items/${itemId}`);
   },
 
+  deleteSegment: async (sourceType: StorySourceType, sourceId: string): Promise<void> => {
+    await api.delete(`/stories/segments/${encodeURIComponent(sourceType)}/${encodeURIComponent(sourceId)}`);
+  },
+
   markViews: async (entries: StoryViewEntry[]): Promise<void> => {
     if (entries.length === 0) return;
     await api.post('/stories/views', { entries });

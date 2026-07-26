@@ -12,7 +12,7 @@ import {
   type AvailableGamesPage,
   type AvailableGamesPageMeta,
 } from './availableGamesPage';
-import { GAMES_LIST_STALE_TIME } from './constants';
+import { GAMES_LIST_STALE_TIME, AVAILABLE_GAMES_DAY_TIMEOUT_MS } from './constants';
 import { sortGamesByStartTimeAsc } from './sortGames';
 
 export interface AvailableGamesQueryParams {
@@ -109,7 +109,10 @@ export function availableGamesQueryOptions(
   return queryOptions({
     queryKey,
     queryFn: async ({ client }): Promise<AvailableGamesPage> => {
-      const response = await gamesApi.getAvailableGames(buildAvailableGamesApiParams(params));
+      const response = await gamesApi.getAvailableGames(
+        buildAvailableGamesApiParams(params),
+        dayScoped ? { timeoutMs: AVAILABLE_GAMES_DAY_TIMEOUT_MS } : undefined,
+      );
       const games = sortGamesByStartTimeAsc(response.data || []);
       const meta = parseMeta(response.meta);
       if (!indexOnly) {
@@ -120,6 +123,18 @@ export function availableGamesQueryOptions(
     staleTime: GAMES_LIST_STALE_TIME,
     placeholderData: dayScoped ? undefined : keepPreviousData,
     enabled: isEnabled,
+    // Day taps: 4s timeout + one auto-retry → Retry CTA (month keeps defaults).
+    ...(dayScoped
+      ? {
+          retry: (failureCount: number, error: { response?: { status?: number } }) => {
+            const status = error?.response?.status;
+            if (typeof status === 'number' && status >= 400 && status < 500) {
+              return false;
+            }
+            return failureCount < 1;
+          },
+        }
+      : {}),
   });
 }
 
@@ -137,8 +152,10 @@ export function useAvailableGamesQuery(
     const current = query.data;
     if (!current?.meta.hasMore || !current.meta.nextCursor) return;
     if (resolveAvailableIndexOnly(params)) return;
+    const dayScoped = isDayScopedAvailableRange(params.startDate, params.endDate);
     const response = await gamesApi.getAvailableGames(
       buildAvailableGamesApiParams(params, { cursor: current.meta.nextCursor }),
+      dayScoped ? { timeoutMs: AVAILABLE_GAMES_DAY_TIMEOUT_MS } : undefined,
     );
     const incoming = sortGamesByStartTimeAsc(response.data || []);
     const meta = parseMeta(response.meta);

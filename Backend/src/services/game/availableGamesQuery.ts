@@ -294,12 +294,14 @@ export async function fetchAvailableGamesPage(
     };
   }
 
+  const singleDay =
+    !!options.startDate &&
+    !!options.endDate &&
+    options.startDate === options.endDate;
   const defaultTake =
     kind === 'upcoming'
       ? AVAILABLE_GAMES_UPCOMING_TAKE
-      : options.startDate &&
-          options.endDate &&
-          options.startDate === options.endDate
+      : singleDay
         ? AVAILABLE_GAMES_DAY_TAKE
         : AVAILABLE_GAMES_MONTH_TAKE;
   const take = clampAvailableTake(options.take, defaultTake);
@@ -318,7 +320,8 @@ export async function fetchAvailableGamesPage(
     pageWhere.AND = and;
   }
 
-  const wantDayIndex = kind === 'calendar' && !cursor;
+  // Month badges come from indexOnly. Day-scoped card fetches skip dayIndex.
+  const wantDayIndex = kind === 'calendar' && !cursor && !singleDay;
   // When open-slots is on, overscan so post-filter pages are not sparse/empty.
   const fetchTake = structuralForMode.availableSlots
     ? Math.min(AVAILABLE_GAMES_MAX_TAKE, Math.max(take * 4, take + 1))
