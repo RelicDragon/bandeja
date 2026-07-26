@@ -45,7 +45,7 @@ export const useShellNavStore = create<ShellNavState>((set) => ({
   initShellAnimationPlayed: false,
   isAnimating: false,
   activeTab: 'calendar',
-  profileActiveTab: 'general',
+  profileActiveTab: 'statistics',
   chatsFilter: 'users',
   marketplaceTab: 'market',
   findViewMode: 'calendar',

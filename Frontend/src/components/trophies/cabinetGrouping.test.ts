@@ -79,6 +79,31 @@ describe('groupCabinetRailItems', () => {
     expect(items[0]?.kind).toBe('card');
   });
 
+  it('stacks first win with wins ladder (same family)', () => {
+    const items = groupCabinetRailItems([
+      entry(def({ id: 'habit_first_win', ruleKind: 'HABIT_FIRST_WIN', threshold: 1 }), true),
+      entry(def({ id: 'habit_wins_10', ruleKind: 'HABIT_WINS', threshold: 10 }), true),
+      entry(def({ id: 'habit_wins_25', ruleKind: 'HABIT_WINS', threshold: 25 }), true),
+      entry(
+        def({ id: 'habit_wins_50', ruleKind: 'HABIT_WINS', threshold: 50, rarity: 'RARE' }),
+        false,
+        { progress: { current: 30, target: 50 } },
+      ),
+    ]);
+    expect(items.map((i) => i.kind)).toEqual(['stack', 'card']);
+    expect(items[0]).toMatchObject({ kind: 'stack', unlocked: true, ruleKind: 'HABIT_WINS' });
+    if (items[0]?.kind === 'stack') {
+      expect(items[0].entries.map((e) => e.definition.id)).toEqual([
+        'habit_wins_25',
+        'habit_wins_10',
+        'habit_first_win',
+      ]);
+    }
+    if (items[1]?.kind === 'card') {
+      expect(items[1].entry.definition.id).toBe('habit_wins_50');
+    }
+  });
+
   it('stacks unlocked habit_games separately from locked', () => {
     const unlocked10 = entry(
       def({ id: 'habit_games_10', ruleKind: 'HABIT_VOLUME', threshold: 10 }),

@@ -660,7 +660,7 @@ export const ProfileContent = () => {
 
   useEffect(() => {
     if (user && !user.isTrainer && profileActiveTab === 'reviews') {
-      setProfileActiveTab('general');
+      setProfileActiveTab('statistics');
     }
   }, [user, user?.isTrainer, profileActiveTab, setProfileActiveTab]);
 

@@ -5,7 +5,17 @@ import { TrophyArt } from '@/components/trophies/TrophyArt';
 import { TrophyDetailSheet } from '@/components/trophies/TrophyDetailSheet';
 import { TrophyRarityFrame } from '@/components/trophies/TrophyRarityFrame';
 import {
+  TROPHY_RARITY_TAG_CLASS,
+  TROPHY_TILE_ART_SLOT_CLASS,
+  TROPHY_TILE_FOOTER_SLOT_CLASS,
+  TROPHY_TILE_LABEL_SLOT_CLASS,
+  TROPHY_TILE_PROGRESS_SLOT_CLASS,
+  trophyTileButtonClass,
+} from '@/components/trophies/trophyCabinetTileChrome';
+import {
   rarityAuraClass,
+  rarityBadgeClass,
+  rarityLabelKey,
   rarityTextClass,
 } from '@/components/trophies/trophyRarityStyles';
 import type {
@@ -42,13 +52,9 @@ export function TrophyCabinetCard({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={`group relative flex h-full w-full flex-col items-center gap-1.5 rounded-2xl px-1.5 pb-2 pt-2 text-center transition duration-200 hover:-translate-y-0.5 active:scale-[0.97] ${
-          locked
-            ? 'bg-gray-50/80 dark:bg-white/[0.03]'
-            : 'bg-gradient-to-b from-white to-gray-50 shadow-sm ring-1 ring-black/[0.04] dark:from-white/[0.07] dark:to-white/[0.02] dark:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.55)] dark:ring-white/[0.06]'
-        }`}
+        className={trophyTileButtonClass(locked)}
       >
-        <div className="relative flex w-full justify-center">
+        <div className={TROPHY_TILE_ART_SLOT_CLASS}>
           {!locked && (
             <div
               className={`pointer-events-none absolute inset-0 -m-1 rounded-full bg-gradient-to-b opacity-70 blur-md ${rarityAuraClass(definition.rarity)}`}
@@ -83,20 +89,39 @@ export function TrophyCabinetCard({
             </span>
           )}
         </div>
-        <span
-          className={`line-clamp-2 min-h-[2.2em] w-full px-0.5 text-[11px] font-semibold leading-tight ${rarityTextClass(definition.rarity, locked)}`}
+        <div
+          data-testid="trophy-title-slot"
+          className={TROPHY_TILE_LABEL_SLOT_CLASS}
         >
-          {t(definition.titleKey)}
-        </span>
-        <div className="mt-auto w-full min-h-[0.875rem] px-1">
-          {showProgress && progress && (
-            <div className="h-1 overflow-hidden rounded-full bg-gray-200/90 dark:bg-white/10">
+          <span
+            className={`line-clamp-2 w-full text-[11px] font-semibold leading-tight ${rarityTextClass(definition.rarity, locked)}`}
+          >
+            {t(definition.titleKey)}
+          </span>
+        </div>
+        <div
+          data-testid="trophy-card-footer"
+          className={TROPHY_TILE_FOOTER_SLOT_CLASS}
+        >
+          <span
+            data-testid="trophy-rarity-tag"
+            className={`${TROPHY_RARITY_TAG_CLASS} ${rarityBadgeClass(definition.rarity, locked)}`}
+          >
+            {t(rarityLabelKey(definition.rarity))}
+          </span>
+          <div className={TROPHY_TILE_PROGRESS_SLOT_CLASS}>
+            {showProgress && progress && (
               <div
-                className="h-full rounded-full bg-primary-500 transition-all"
-                style={{ width: `${Math.min(100, (progress.current / progress.target) * 100)}%` }}
-              />
-            </div>
-          )}
+                data-testid="trophy-progress"
+                className="h-full overflow-hidden rounded-full bg-gray-200/90 dark:bg-white/10"
+              >
+                <div
+                  className="h-full rounded-full bg-primary-500 transition-all"
+                  style={{ width: `${Math.min(100, (progress.current / progress.target) * 100)}%` }}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </button>
       <TrophyDetailSheet

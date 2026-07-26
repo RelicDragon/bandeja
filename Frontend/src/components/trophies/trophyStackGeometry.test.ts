@@ -28,16 +28,18 @@ describe('trophyStackGeometry', () => {
 
   it('maps ruleKind to family label keys', () => {
     expect(stackFamilyLabelKey('HABIT_VOLUME')).toBe('trophies.cabinet.family.games');
+    expect(stackFamilyLabelKey('HABIT_WINS')).toBe('trophies.cabinet.family.wins');
+    expect(stackFamilyLabelKey('HABIT_FIRST_WIN')).toBe('trophies.cabinet.family.wins');
     expect(stackFamilyLabelKey('PODIUM')).toBe('trophies.cabinet.family.podium');
     expect(stackFamilyLabelKey('UNKNOWN')).toBe('trophies.cabinet.family.generic');
   });
 
   it('computes expanded rail width and rem box size', () => {
-    // 3 cards + gaps + collapse chip
-    expect(stackExpandedWidthRem(3)).toBeCloseTo(6.75 * 3 + 0.625 * 2 + 0.625 + 1.75);
+    // Frame padding + 3 icons + inter-icon/trailing gaps + collapse chip.
+    expect(stackExpandedWidthRem(3)).toBeCloseTo(0.5 * 2 + 4.75 * 3 + 0.5 * 3 + 1.75);
     expect(stackExpandedWidthRem(0)).toBe(0);
     const box = pileBoxSizeRem(3);
-    expect(box.widthRem).toBeGreaterThan(4.5);
-    expect(box.heightRem).toBeGreaterThan(4.5);
+    expect(box.widthRem).toBe(4.5);
+    expect(box.heightRem).toBe(4.5);
   });
 });

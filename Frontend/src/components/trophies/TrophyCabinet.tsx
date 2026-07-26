@@ -1,12 +1,11 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
-import { getHorizontalScrollFadeMaskStyle } from '@/components/HorizontalScrollFadeEdges';
 import { groupCabinetRailItems } from '@/components/trophies/cabinetGrouping';
 import { TrophyCabinetCard } from '@/components/trophies/TrophyCabinetCard';
 import { TrophyCabinetStack } from '@/components/trophies/TrophyCabinetStack';
+import { TROPHY_TILE_WIDTH_CLASS } from '@/components/trophies/trophyCabinetTileChrome';
 import { useTrophyStackExpansion } from '@/components/trophies/useTrophyStackExpansion';
-import { useHorizontalScrollFade } from '@/hooks/useHorizontalScrollFade';
 import type { TrophiesPayload, TrophyCabinetEntryView } from '@/types/trophies';
 
 type TrophyCabinetProps = {
@@ -70,7 +69,6 @@ function TrophyCabinetRail({
   ownerUserId?: string;
 }) {
   const { t } = useTranslation();
-  const carouselRef = useRef<HTMLDivElement>(null);
   const rows = useMemo(() => groupCabinetRailItems(cabinet), [cabinet]);
   const stackKeys = useMemo(() => {
     const keys = new Set<string>();
@@ -79,8 +77,6 @@ function TrophyCabinetRail({
     }
     return keys;
   }, [rows]);
-  const { showLeftFade, showRightFade } = useHorizontalScrollFade(carouselRef, rows.length);
-  const maskStyle = getHorizontalScrollFadeMaskStyle(showLeftFade, showRightFade);
   const { isExpanded, setExpanded } = useTrophyStackExpansion(stackKeys);
 
   return (
@@ -97,9 +93,7 @@ function TrophyCabinetRail({
       </div>
 
       <motion.div
-        ref={carouselRef}
-        style={maskStyle}
-        className="-mx-1 flex flex-nowrap items-stretch gap-2.5 overflow-x-auto px-1 py-3 scrollbar-hide [touch-action:pan-x_pan-y] overscroll-x-contain snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
+        className="flex flex-nowrap items-stretch gap-2.5 overflow-x-auto px-1 py-3 scrollbar-hide [touch-action:pan-x_pan-y] overscroll-x-contain snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
         initial="hidden"
         animate="visible"
         variants={{
@@ -111,7 +105,7 @@ function TrophyCabinetRail({
           item.kind === 'card' ? (
             <motion.div
               key={item.key}
-              className="w-[6.75rem] shrink-0 snap-start"
+              className={`${TROPHY_TILE_WIDTH_CLASS} flex shrink-0 snap-start`}
               variants={{
                 hidden: { opacity: 0, x: 14 },
                 visible: { opacity: 1, x: 0 },
@@ -128,7 +122,7 @@ function TrophyCabinetRail({
           ) : (
             <motion.div
               key={item.key}
-              className="shrink-0 snap-start"
+              className="flex shrink-0 snap-start"
               variants={{
                 hidden: { opacity: 0, x: 14 },
                 visible: { opacity: 1, x: 0 },

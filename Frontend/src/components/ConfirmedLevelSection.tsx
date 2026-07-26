@@ -43,10 +43,50 @@ export const ConfirmedLevelSection = ({
     profile?.externalRatingHint,
   );
 
+  const confirmation =
+    confirmed && approvedBy ? (
+      <div className="flex flex-col items-center gap-2">
+        <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+          <Check size={16} strokeWidth={3} />
+          <span className="text-sm font-medium">{t('playerCard.confirmedBy')}</span>
+        </div>
+        <div className="flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
+          <PlayerAvatar player={approvedBy} showName={false} fullHideName={true} extrasmall={true} />
+          <span className="font-medium">
+            {approvedBy.firstName} {approvedBy.lastName}
+          </span>
+          {approvedWhen && (
+            <>
+              <span className="text-gray-500 dark:text-gray-500">•</span>
+              <span className="text-gray-600 dark:text-gray-400">
+                {formatSmartRelativeTime(approvedWhen, t)}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    ) : confirmed && !approvedBy ? (
+      <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400 text-sm">
+        <Check size={16} strokeWidth={3} />
+        <span className="font-medium">{t('playerCard.confirmedBy')}</span>
+        {approvedWhen && (
+          <span className="text-gray-600 dark:text-gray-400">
+            {formatSmartRelativeTime(approvedWhen, t)}
+          </span>
+        )}
+      </div>
+    ) : showBadge ? (
+      <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
+        <span>{t('playerCard.levelNotConfirmed')}</span>
+      </div>
+    ) : null;
+
+  if (!ratingHint && !showBadge && !confirmation) return null;
+
   const content = (
     <>
       {ratingHint && (
-        <p className="text-center text-xs text-gray-500 dark:text-gray-400 mb-2">{ratingHint}</p>
+        <p className="mb-2 text-center text-xs text-gray-500 dark:text-gray-400">{ratingHint}</p>
       )}
       {showBadge && (
         <div className={`flex justify-center ${confirmed || !embedded ? 'mb-2' : ''}`}>
@@ -57,44 +97,11 @@ export const ConfirmedLevelSection = ({
             showApprovedCheck={confirmed}
             showReliability
             levelDecimals={2}
-            className="bg-yellow-500 dark:bg-yellow-600 text-white px-3 py-1.5 rounded-full font-bold text-sm shadow-md flex items-center gap-1 inline-flex"
+            className="inline-flex items-center gap-1 rounded-full bg-yellow-500 px-3 py-1.5 text-sm font-bold text-white shadow-md dark:bg-yellow-600"
           />
         </div>
       )}
-      {confirmed && approvedBy ? (
-          <div className="flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
-              <Check size={16} strokeWidth={3} />
-              <span className="text-sm font-medium">{t('playerCard.confirmedBy')}</span>
-            </div>
-            <div className="flex items-center justify-center gap-2 text-gray-700 dark:text-gray-300 text-sm">
-              <PlayerAvatar player={approvedBy} showName={false} fullHideName={true} extrasmall={true} />
-              <span className="font-medium">{approvedBy.firstName} {approvedBy.lastName}</span>
-              {approvedWhen && (
-                <>
-                  <span className="text-gray-500 dark:text-gray-500">•</span>
-                  <span className="text-gray-600 dark:text-gray-400">
-                    {formatSmartRelativeTime(approvedWhen, t)}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-        ) : confirmed && !approvedBy ? (
-          <div className="flex items-center justify-center gap-2 text-green-700 dark:text-green-400 text-sm">
-            <Check size={16} strokeWidth={3} />
-            <span className="font-medium">{t('playerCard.confirmedBy')}</span>
-            {approvedWhen && (
-              <span className="text-gray-600 dark:text-gray-400">
-                {formatSmartRelativeTime(approvedWhen, t)}
-              </span>
-            )}
-          </div>
-        ) : showBadge ? (
-          <div className="flex items-center justify-center gap-2 text-gray-500 dark:text-gray-400 text-sm">
-            <span>{t('playerCard.levelNotConfirmed')}</span>
-          </div>
-        ) : null}
+      {confirmation}
     </>
   );
 
@@ -103,7 +110,7 @@ export const ConfirmedLevelSection = ({
   }
 
   return (
-    <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-700/50 border border-gray-200/60 dark:border-gray-600/50">
+    <div className="overflow-hidden rounded-xl border border-gray-200/60 bg-gray-100 dark:border-gray-600/50 dark:bg-gray-700/50">
       <div className="px-3 py-2.5">{content}</div>
     </div>
   );

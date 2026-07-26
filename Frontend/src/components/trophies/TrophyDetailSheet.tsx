@@ -86,6 +86,13 @@ export function TrophyDetailSheet({
   const sourceTitle = instance?.source?.title?.trim() || null;
   const canPin = isOwn && pinsEditable && !locked && Boolean(ownerUserId);
   const showStackedPins = canPin && instances.length > 1;
+  const progressPercent =
+    progress &&
+    progress.target > 0 &&
+    Number.isFinite(progress.current) &&
+    Number.isFinite(progress.target)
+      ? Math.min(100, Math.max(0, (progress.current / progress.target) * 100))
+      : 0;
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -114,14 +121,63 @@ export function TrophyDetailSheet({
 
         <div className="space-y-3 px-1 text-sm">
           {locked && isOwn && (
-            <p className="text-gray-600 dark:text-gray-300">
-              {progress
-                ? t('trophies.detail.progress', {
-                    current: progress.current,
-                    target: progress.target,
-                  })
-                : t('trophies.detail.lockedHint')}
-            </p>
+            progress ? (
+              <div
+                data-testid="trophy-detail-progress"
+                className="relative overflow-hidden rounded-3xl border border-primary-100/80 bg-gradient-to-b from-primary-50/90 to-white px-5 py-4 text-center shadow-[0_14px_30px_-24px_rgba(14,165,233,0.8)] dark:border-primary-500/20 dark:from-primary-950/35 dark:to-white/[0.03]"
+                aria-label={t('trophies.detail.progress', {
+                  current: progress.current,
+                  target: progress.target,
+                })}
+              >
+                <div
+                  className="pointer-events-none absolute inset-x-10 -top-8 h-16 rounded-full bg-primary-400/15 blur-2xl dark:bg-primary-400/10"
+                  aria-hidden
+                />
+                <div className="relative">
+                  <div className="relative flex items-baseline justify-center">
+                    <div
+                      data-testid="trophy-detail-progress-value"
+                      className="flex items-baseline justify-center gap-1.5 tabular-nums"
+                    >
+                      <span className="text-3xl font-black tracking-tight text-gray-900 dark:text-white">
+                        {progress.current}
+                      </span>
+                      <span className="text-sm font-bold text-gray-400 dark:text-gray-500">
+                        / {progress.target}
+                      </span>
+                    </div>
+                    <span
+                      data-testid="trophy-detail-progress-percent"
+                      className="absolute right-0 text-sm font-bold tabular-nums text-primary-600 dark:text-primary-300"
+                    >
+                      {Math.round(progressPercent)}%
+                    </span>
+                  </div>
+
+                  <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-gray-200/90 p-0.5 shadow-inner dark:bg-white/10">
+                    <div
+                      data-testid="trophy-detail-progress-bar"
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(progressPercent)}
+                      className="relative h-full overflow-hidden rounded-full bg-gradient-to-r from-primary-400 via-primary-500 to-cyan-400 shadow-[0_0_12px_rgba(14,165,233,0.45)] transition-[width] duration-500 ease-out"
+                      style={{ width: `${progressPercent}%` }}
+                    >
+                      <span
+                        className="absolute inset-0 bg-gradient-to-b from-white/45 via-transparent to-transparent"
+                        aria-hidden
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="rounded-2xl bg-gray-50/90 px-4 py-3 text-center text-gray-600 dark:bg-white/[0.04] dark:text-gray-300">
+                {t('trophies.detail.lockedHint')}
+              </p>
+            )
           )}
 
           {!locked && instance && (

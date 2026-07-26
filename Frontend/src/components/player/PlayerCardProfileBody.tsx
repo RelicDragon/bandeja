@@ -43,7 +43,6 @@ export interface PlayerCardProfileBodyProps {
   onOpenGame: () => void;
   onMarketItemClick?: (item: MarketItem) => void;
   onStatsRefresh?: (stats: UserStats) => void;
-  playStreakAliveOnly?: boolean;
   /** Keep parent stats query on the same competitive sport as the picker. */
   onCompetitiveSportChange?: (sport: Sport) => void;
   /** URL/open hint — used only if the subject has this sport enabled. */
@@ -84,7 +83,6 @@ const PlayerCardProfileBodyComponent = ({
   onOpenGame,
   onMarketItemClick,
   onStatsRefresh,
-  playStreakAliveOnly = false,
   onCompetitiveSportChange,
   sportHint,
   celebrationNested = false,
@@ -276,9 +274,9 @@ const PlayerCardProfileBodyComponent = ({
                 <TrainerRatingBadge trainer={user} size="sm" showReviewCount={true} onClick={onRatingClick} variant="onPrimary" />
               </div>
             )}
-            {playStreak && (playStreak.current > 0 || playStreak.best > 0) && (
+            {playStreak && playStreak.current > 0 && (
               <div className="mt-2">
-                <PlayStreakChip streak={playStreak} isOwn={isOwnProfile} aliveOnly={playStreakAliveOnly} />
+                <PlayStreakChip streak={playStreak} isOwn={isOwnProfile} />
               </div>
             )}
             <div className="mt-2">

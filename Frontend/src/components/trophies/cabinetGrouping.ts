@@ -11,6 +11,12 @@ export type TrophyCabinetRailItem =
       entries: TrophyCabinetEntryView[];
     };
 
+/** First win belongs in the wins ladder stack. */
+export function stackFamilyKey(ruleKind: string): string {
+  if (ruleKind === 'HABIT_FIRST_WIN') return 'HABIT_WINS';
+  return ruleKind;
+}
+
 /** Higher = better (harder threshold, better podium place). */
 export function stackBetterScore(entry: TrophyCabinetEntryView): number {
   const { definition } = entry;
@@ -83,7 +89,7 @@ function itemProgressRatio(item: TrophyCabinetRailItem): number {
 }
 
 /**
- * Group cabinet entries by (ruleKind, unlocked).
+ * Group cabinet entries by (stack family, unlocked).
  * Singles stay cards; 2+ become stacks. Unlocked stacks stay separate from locked.
  * Rail order: unlocked first (best leftmost), then locked (closest progress leftmost).
  */
@@ -98,7 +104,8 @@ export function groupCabinetRailItems(
   for (const entry of entries) {
     const ruleKind = entry.definition?.ruleKind;
     if (!ruleKind || !entry.definition?.id) continue;
-    const key = `${ruleKind}::${entry.unlocked ? 'u' : 'l'}`;
+    const family = stackFamilyKey(ruleKind);
+    const key = `${family}::${entry.unlocked ? 'u' : 'l'}`;
     let bucket = buckets.get(key);
     if (!bucket) {
       bucket = [];
@@ -113,7 +120,7 @@ export function groupCabinetRailItems(
     const group = buckets.get(key);
     if (!group || group.length === 0) continue;
     const unlocked = group[0]!.unlocked;
-    const ruleKind = group[0]!.definition.ruleKind;
+    const ruleKind = stackFamilyKey(group[0]!.definition.ruleKind);
     if (group.length === 1) {
       const entry = group[0]!;
       items.push({ kind: 'card', key: entry.definition.id, entry });

@@ -1,21 +1,29 @@
 /** Shared pile geometry for collapsed trophy stacks (rem-based; no root-font px assumptions). */
 export const STACK_CARD_WIDTH_REM = 6.75;
-export const STACK_CARD_GAP_REM = 0.625;
-/** Inline collapse chip after expanded cards (w-7 ≈ 1.75rem). */
+export const STACK_CARD_GAP_REM = 0.5;
+/** Borderless expanded icon cell (frame + title width). */
+export const STACK_ICON_CELL_REM = 4.75;
+/** Inline collapse chip after expanded icons (w-7 ≈ 1.75rem). */
 export const STACK_COLLAPSE_CHIP_REM = 1.75;
-/** Horizontal layer offset in rem. */
-export const PILE_SHIFT_X_REM = 0.44;
-/** Vertical layer offset in rem (backs sit lower). */
-export const PILE_SHIFT_Y_REM = 0.31;
+/** Space between the persistent group frame and its icon row. */
+export const STACK_FRAME_PADDING_REM = 0.5;
+/** Horizontal layer offset in rem (kept small so peeks fit card chrome). */
+export const PILE_SHIFT_X_REM = 0.28;
+/** Vertical layer offset in rem (backs sit slightly lower; layout box stays FRAME_REM). */
+export const PILE_SHIFT_Y_REM = 0.18;
 export const FRAME_REM = 4.5;
 /** Cap animated layers so large families stay light. */
 export const MAX_PILE_LAYERS = 4;
 
 export function stackExpandedWidthRem(count: number): number {
   const n = Math.max(0, count);
-  const cards = n * STACK_CARD_WIDTH_REM + Math.max(0, n - 1) * STACK_CARD_GAP_REM;
   if (n === 0) return 0;
-  return cards + STACK_CARD_GAP_REM + STACK_COLLAPSE_CHIP_REM;
+  return (
+    STACK_FRAME_PADDING_REM * 2 +
+    n * STACK_ICON_CELL_REM +
+    n * STACK_CARD_GAP_REM +
+    STACK_COLLAPSE_CHIP_REM
+  );
 }
 
 /**
@@ -53,11 +61,9 @@ export function pileLayerStyle(index: number, count: number): {
 }
 
 export function pileBoxSizeRem(count: number): { widthRem: number; heightRem: number } {
-  const layers = Math.max(1, Math.min(count, MAX_PILE_LAYERS));
-  return {
-    widthRem: FRAME_REM + Math.max(0, layers - 1) * PILE_SHIFT_X_REM,
-    heightRem: FRAME_REM + Math.max(0, layers - 1) * PILE_SHIFT_Y_REM,
-  };
+  // Layout footprint always matches a single trophy frame; peeks overflow visually.
+  void count;
+  return { widthRem: FRAME_REM, heightRem: FRAME_REM };
 }
 
 export function stackFamilyLabelKey(ruleKind: string): string {
@@ -67,6 +73,7 @@ export function stackFamilyLabelKey(ruleKind: string): string {
     case 'HABIT_STREAK':
       return 'trophies.cabinet.family.streak';
     case 'HABIT_WINS':
+    case 'HABIT_FIRST_WIN':
       return 'trophies.cabinet.family.wins';
     case 'PODIUM':
       return 'trophies.cabinet.family.podium';

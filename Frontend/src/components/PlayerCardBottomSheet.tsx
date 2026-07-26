@@ -474,7 +474,6 @@ export const PlayerCardBottomSheet = memo(function PlayerCardBottomSheet({
                         onStatsRefresh={setStats}
                         onCompetitiveSportChange={handleCompetitiveSportChange}
                         sportHint={openSportHint}
-                        playStreakAliveOnly
                         celebrationNested
                       />
                     </motion.div>

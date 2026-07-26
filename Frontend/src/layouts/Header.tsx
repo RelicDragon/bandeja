@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Bell, ArrowLeft, User, BarChart3, GitCompare, Users, Star } from 'lucide-react';
+import { Bell, ArrowLeft, User, Settings, GitCompare, Users, Star } from 'lucide-react';
 import { useHeaderStore } from '@/store/headerStore';
 import { useShellNavStore } from '@/store/shellNavStore';
 import { useGameDetailsChromeStore } from '@/components/GameDetails/gameDetailsChromeStore';
@@ -219,8 +219,8 @@ export const Header = ({ animateEntry = false }: HeaderProps) => {
             {isProfileShell && (
               <SegmentedSwitch
                 tabs={[
-                  { id: 'general', label: t('profile.general') || 'General', icon: User },
-                  { id: 'statistics', label: t('profile.statistics') || 'Statistics', icon: BarChart3 },
+                  { id: 'statistics', label: t('profile.title') || 'Profile', icon: User },
+                  { id: 'general', label: t('profile.general') || 'General', icon: Settings },
                   { id: 'comparison', label: t('profile.comparison') || 'Comparison', icon: GitCompare },
                   { id: 'followers', label: t('profile.community') || 'Community', icon: Users },
                   ...(user?.isTrainer ? [{ id: 'reviews', label: t('profile.review') || 'Review', icon: Star }] : []),

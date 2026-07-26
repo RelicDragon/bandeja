@@ -62,7 +62,7 @@ export function ProfileSportDetailsPanel({
               <span className="text-xs text-gray-500 dark:text-gray-400">
                 {t('profile.sports.gamesCount', { count: gamesPlayed })}
               </span>
-              {sportStreak && (sportStreak.current > 0 || sportStreak.best > 0) && (
+              {sportStreak && sportStreak.current > 0 && (
                 <PlayStreakChip streak={sportStreak} isOwn />
               )}
             </div>
