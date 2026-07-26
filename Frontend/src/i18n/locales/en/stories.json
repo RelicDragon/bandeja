@@ -95,7 +95,11 @@
       "publishExportFailed": "Could not prepare story image",
       "publishTranscodeFailed": "Video processing failed",
       "publishUploadFailed": "Upload failed — check your connection",
-      "publishCreateFailed": "Could not save story"
+      "publishCreateFailed": "Could not save story",
+      "publishPartialFailed": "Some slides published. Tap Share again to finish.",
+      "publishFeedRefreshFailed": "Story saved, but feed did not refresh. Pull to update.",
+      "publishOrphanCleanupFailed": "Could not remove already-published slides. Delete them from your story.",
+      "cropFailed": "Could not crop photo"
     },
     "viewer": {
       "likeCount": "{{count}} likes",

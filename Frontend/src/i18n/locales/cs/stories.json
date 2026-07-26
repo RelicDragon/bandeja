@@ -92,7 +92,11 @@
       "publishExportFailed": "Nepodařilo se připravit obrázek",
       "publishTranscodeFailed": "Zpracování videa selhalo",
       "publishUploadFailed": "Nahrání selhalo — zkontrolujte připojení",
-      "publishCreateFailed": "Příběh se nepodařilo uložit"
+      "publishCreateFailed": "Příběh se nepodařilo uložit",
+      "publishPartialFailed": "Některé snímky se publikovaly. Klepněte znovu na Sdílet.",
+      "publishFeedRefreshFailed": "Příběh je uložený, ale feed se neobnovil. Obnovte potažením.",
+      "publishOrphanCleanupFailed": "Nepodařilo se odebrat už publikované snímky. Smažte je ve své story.",
+      "cropFailed": "Fotku se nepodařilo oříznout"
     },
     "viewer": {
       "likeCount": "{{count}} lajků",

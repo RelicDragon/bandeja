@@ -10,7 +10,10 @@ type PhotoStoryStageProps = {
   onMeasure?: (size: { w: number; h: number }, frameRect: DOMRect) => void;
 };
 
-/** Full-bleed stage — 9:16 frame is letterboxed by StoryCompositionViewport. */
+/**
+ * Full-bleed stage. `touch-action: none` + overscroll lock is required so
+ * Capacitor / mobile Safari don't steal pinch-pan for page zoom/scroll.
+ */
 export function PhotoStoryStage({
   children,
   className,
@@ -23,8 +26,12 @@ export function PhotoStoryStage({
 
   return (
     <div
-      className={`absolute inset-0 z-[10] bg-black ${className ?? ''}`}
-      style={{ touchAction: gesturesDisabled ? 'auto' : 'none' }}
+      className={`absolute inset-0 z-[10] bg-black touch-none overscroll-none select-none ${className ?? ''}`}
+      style={{
+        touchAction: gesturesDisabled ? 'auto' : 'none',
+        WebkitUserSelect: 'none',
+        WebkitTouchCallout: 'none',
+      }}
       {...gestureProps}
     >
       {overlay}

@@ -1,7 +1,8 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import toast from 'react-hot-toast';
 import {
+  parseStorySegmentKey,
   storiesApi,
   type CreateStoryItemPayload,
   type StoryImageUploadResponse,
@@ -10,6 +11,7 @@ import { useStoriesStore } from '@/store/storiesStore';
 import type { StoryDocument, StorySession } from '../types';
 import { drawScene } from '../utils/drawScene';
 import { prepareDocumentForExport } from '../utils/prepareDocumentForExport';
+import { storyDocumentContentHash } from '../utils/storyDocumentContentHash';
 
 type PublishStep = 'export' | 'upload' | 'create';
 
@@ -32,6 +34,22 @@ function publishStepKey(step: PublishStep): string {
     case 'create':
       return 'stories.editor.publishCreateFailed';
   }
+}
+
+type SlotProgress = {
+  contentHash: string;
+  clientUploadId: string;
+  segmentKey: string | null;
+};
+
+type PublishProgress = {
+  slots: SlotProgress[];
+};
+
+async function deletePublishedSegmentKey(segmentKey: string): Promise<void> {
+  const parsed = parseStorySegmentKey(segmentKey);
+  if (!parsed || parsed.sourceType !== 'USER_STORY_ITEM') return;
+  await storiesApi.deleteItem(parsed.sourceId);
 }
 
 export function buildPhotoCreateItemPayload(
@@ -94,38 +112,130 @@ export function useStoryPhotoPublish() {
   const { t } = useTranslation();
   const fetchFeed = useStoriesStore((s) => s.fetchFeed);
   const [isPublishing, setIsPublishing] = useState(false);
+  const publishingRef = useRef(false);
+  const progressRef = useRef<PublishProgress | null>(null);
+
+  const abandonPartialPublish = useCallback(async (): Promise<void> => {
+    const progress = progressRef.current;
+    progressRef.current = null;
+    if (!progress) return;
+    const keys = progress.slots.map((s) => s.segmentKey).filter((k): k is string => !!k);
+    if (keys.length === 0) return;
+    const results = await Promise.allSettled(keys.map((key) => deletePublishedSegmentKey(key)));
+    const failed = results.some((r) => r.status === 'rejected');
+    if (failed) {
+      toast.error(t('stories.editor.publishOrphanCleanupFailed'));
+    }
+  }, [t]);
+
+  const hasPartialPublish = useCallback((): boolean => {
+    const progress = progressRef.current;
+    if (!progress) return false;
+    return progress.slots.some((s) => s.segmentKey != null);
+  }, []);
 
   const publishSession = useCallback(
     async (session: StorySession): Promise<string | null> => {
       const { segments, caption } = session;
-      if (segments.length === 0 || isPublishing) return null;
+      if (segments.length === 0 || publishingRef.current) return null;
+      publishingRef.current = true;
       setIsPublishing(true);
-      const batchId = storiesApi.newClientUploadId();
-      let lastSegmentKey: string | null = null;
       const trimmedCaption = caption?.trim() || undefined;
+
+      if (!progressRef.current) {
+        progressRef.current = { slots: [] };
+      }
+      const progress = progressRef.current;
+      while (progress.slots.length < segments.length) {
+        progress.slots.push({
+          contentHash: '',
+          clientUploadId: storiesApi.newClientUploadId(),
+          segmentKey: null,
+        });
+      }
+      if (progress.slots.length > segments.length) {
+        const removed = progress.slots.splice(segments.length);
+        await Promise.allSettled(
+          removed
+            .map((s) => s.segmentKey)
+            .filter((k): k is string => !!k)
+            .map((key) => deletePublishedSegmentKey(key))
+        );
+      }
+
+      let lastSegmentKey: string | null = null;
 
       try {
         for (let i = 0; i < segments.length; i++) {
-          const clientUploadId = `${batchId}-${i}`;
-          lastSegmentKey = await publishStoryPhotoDocument(segments[i]!, {
+          const doc = segments[i]!;
+          const contentHash = storyDocumentContentHash(doc, trimmedCaption);
+          let slot = progress.slots[i]!;
+
+          if (slot.segmentKey && slot.contentHash === contentHash) {
+            lastSegmentKey = slot.segmentKey;
+            continue;
+          }
+
+          if (slot.contentHash !== contentHash) {
+            if (slot.segmentKey) {
+              try {
+                await deletePublishedSegmentKey(slot.segmentKey);
+              } catch {
+                // Continue — re-publish with a fresh clientUploadId.
+              }
+            }
+            slot = {
+              contentHash,
+              clientUploadId: storiesApi.newClientUploadId(),
+              segmentKey: null,
+            };
+            progress.slots[i] = slot;
+          } else if (!slot.clientUploadId) {
+            slot.clientUploadId = storiesApi.newClientUploadId();
+          }
+
+          lastSegmentKey = await publishStoryPhotoDocument(doc, {
             caption: trimmedCaption,
-            clientUploadId,
+            clientUploadId: slot.clientUploadId,
           });
+          slot.segmentKey = lastSegmentKey;
+          slot.contentHash = contentHash;
         }
-        await fetchFeed(true);
+
+        try {
+          await fetchFeed(true);
+        } catch {
+          toast.success(t('stories.published'));
+          toast.error(t('stories.editor.publishFeedRefreshFailed'));
+          progressRef.current = null;
+          return lastSegmentKey;
+        }
+
         toast.success(t('stories.published'));
+        progressRef.current = null;
         return lastSegmentKey;
       } catch (err) {
+        const partial = progress.slots.some((s) => s.segmentKey != null);
         const key =
-          err instanceof StoryPhotoPublishError ? publishStepKey(err.step) : 'stories.publishFailed';
+          partial
+            ? 'stories.editor.publishPartialFailed'
+            : err instanceof StoryPhotoPublishError
+              ? publishStepKey(err.step)
+              : 'stories.publishFailed';
         toast.error(t(key));
         return null;
       } finally {
+        publishingRef.current = false;
         setIsPublishing(false);
       }
     },
-    [fetchFeed, isPublishing, t]
+    [fetchFeed, t]
   );
 
-  return { publishSession, isPublishing };
+  return {
+    publishSession,
+    isPublishing,
+    abandonPartialPublish,
+    hasPartialPublish,
+  };
 }

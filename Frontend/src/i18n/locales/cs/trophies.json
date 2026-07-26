@@ -31,7 +31,16 @@
       "count": "Získáno: {{count}}",
       "ownEmpty": "Stíhej pódia, série a milníky — zamčené trofeje ukazují další cíle.",
       "visitorEmpty": "Zatím žádné trofeje.",
-      "pinHint": "Klepni na trofej a připni ji do výlohy (max. 3)."
+      "pinHint": "Klepni na trofej a připni ji do výlohy (max. 3).",
+      "collapseStack": "Sbalit hromádku trofejí",
+      "collapse": "Sbalit",
+      "family": {
+        "games": "Zápasy",
+        "streak": "Série",
+        "wins": "Výhry",
+        "podium": "Pódium",
+        "generic": "Trofeje"
+      }
     },
     "detail": {
       "progress": "Postup {{current}} / {{target}}",

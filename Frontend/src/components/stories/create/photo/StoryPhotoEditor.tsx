@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { lightHaptic } from '@/utils/lightHaptic';
 import { viewportScaleFromFrameWidth } from '@/components/stories/create/utils/storyCompositionLayout';
@@ -8,6 +8,7 @@ import { PhotoStoryCaptionDrawer } from './editor/PhotoStoryCaptionDrawer';
 import { PhotoStoryCropGuide } from './editor/PhotoStoryCropGuide';
 import { PhotoStoryCropScreen } from './editor/PhotoStoryCropScreen';
 import { PhotoStoryKonvaCanvas } from './editor/PhotoStoryKonvaCanvas';
+import { PhotoStoryPublishBar } from './editor/PhotoStoryPublishBar';
 import { PhotoStoryStage } from './editor/PhotoStoryStage';
 import { PhotoStoryTextEditOverlay } from './editor/PhotoStoryTextEditOverlay';
 import { PhotoStoryToolPanel } from './editor/PhotoStoryToolPanel';
@@ -19,7 +20,7 @@ import { useStoryPhotoPublish } from './hooks/useStoryPhotoPublish';
 import type { StoryMediaFile, StoryPhotoTool, TextNode, Transform2D } from './types';
 import { isStickerNode, isTextNode } from './types';
 import { getMediaNode } from './utils/document';
-import { computeCoverScale } from './utils/transform';
+import { mediaScaleBoundsForMedia } from './utils/transform';
 
 type StoryPhotoEditorProps = {
   open: boolean;
@@ -55,7 +56,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     commitTransaction,
     setMediaTransform,
     resetMediaTransform,
-    setMediaAdjustWithHistory,
+    setMediaAdjust,
     replaceActiveMedia,
     goToSegment,
     addSticker,
@@ -72,7 +73,8 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     registerMediaDimensions,
   } = editor;
 
-  const { publishSession, isPublishing } = useStoryPhotoPublish();
+  const { publishSession, isPublishing, abandonPartialPublish, hasPartialPublish } =
+    useStoryPhotoPublish();
 
   const media = activeDoc ? getMediaNode(activeDoc) : null;
   const selectedText: TextNode | null =
@@ -93,24 +95,61 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
   }, [open]);
 
   useEffect(() => {
-    setEditingTextId(null);
     setActiveTool(null);
   }, [activeIndex]);
 
   const closeTool = useCallback(() => setActiveTool(null), []);
 
-  const beginTextEdit = useCallback((id: string, initial: string) => {
-    textEditSnapshotRef.current = initial;
-    setTextEditInitial(initial);
-    setTextDraft(initial);
-    setEditingTextId(id);
-  }, []);
+  const beginTextEdit = useCallback(
+    (id: string, initial: string) => {
+      beginTransaction();
+      textEditSnapshotRef.current = initial;
+      setTextEditInitial(initial);
+      setTextDraft(initial);
+      setEditingTextId(id);
+    },
+    [beginTransaction]
+  );
 
   const exitTextEdit = useCallback(() => {
+    commitTransaction();
     setEditingTextId(null);
     setTextEditInitial('');
     setTextDraft('');
-  }, []);
+  }, [commitTransaction]);
+
+  const flushOpenTextEdit = useCallback(() => {
+    if (!editingTextId) return;
+    const node = activeDoc?.nodes.find((n) => n.id === editingTextId && isTextNode(n));
+    const draft = textDraft.trim();
+    const fallback = node && isTextNode(node) ? node.text.trim() : '';
+    const text = draft || fallback;
+    if (!text) {
+      deleteNode(editingTextId);
+      setSelectedNodeId(null);
+      if (activeTool === 'text') setActiveTool(null);
+    } else if (draft) {
+      setTextNode(editingTextId, { text: draft });
+    }
+    exitTextEdit();
+  }, [
+    activeDoc?.nodes,
+    activeTool,
+    deleteNode,
+    editingTextId,
+    exitTextEdit,
+    setSelectedNodeId,
+    setTextNode,
+    textDraft,
+  ]);
+
+  const handleSelectSegment = useCallback(
+    (index: number) => {
+      flushOpenTextEdit();
+      goToSegment(index);
+    },
+    [flushOpenTextEdit, goToSegment]
+  );
 
   const handleDeselect = useCallback(() => {
     if (selectedNodeId) {
@@ -172,11 +211,9 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
       setActiveTool(null);
     } else {
       setTextNode(editingTextId, { text: trimmed });
-      commitTransaction();
     }
     exitTextEdit();
   }, [
-    commitTransaction,
     deleteNode,
     editingTextId,
     exitTextEdit,
@@ -200,9 +237,13 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
 
   const handleClose = useCallback(() => {
     if (isPublishing) return;
-    if (isDirty && !window.confirm(t('stories.editor.discardConfirm'))) return;
-    onClose();
-  }, [isDirty, isPublishing, onClose, t]);
+    const partial = hasPartialPublish();
+    if ((isDirty || partial) && !window.confirm(t('stories.editor.discardConfirm'))) return;
+    void (async () => {
+      if (partial) await abandonPartialPublish();
+      onClose();
+    })();
+  }, [abandonPartialPublish, hasPartialPublish, isDirty, isPublishing, onClose, t]);
 
   const canvasGesturesBlocked =
     activeTool === 'crop' ||
@@ -226,12 +267,17 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     }
     const w = media.source.naturalWidth;
     const h = media.source.naturalHeight;
-    const coverScale =
-      w != null && h != null && w > 0 && h > 0 ? computeCoverScale(w, h) : 1;
+    // Wait for real dims — fake 1080×1920 bounds caused wrong zooms + wipe on load.
+    if (w == null || h == null || w <= 0 || h <= 0) return { kind: 'off' as const };
+    const bounds = mediaScaleBoundsForMedia(w, h);
     return {
       kind: 'media' as const,
       transform: media.transform,
-      coverScale,
+      coverScale: bounds.coverScale,
+      minScale: bounds.min,
+      maxScale: bounds.max,
+      mediaWidth: w,
+      mediaHeight: h,
     };
   }, [gesturesEnabled, media, selectedLayer]);
 
@@ -246,7 +292,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     [selectedNodeId, updateNodeTransform]
   );
 
-  const { bind: stageGestureBind, isGestureActive } = usePhotoStoryGestures({
+  const { bind: stageGestureBind, isGestureActive, endGesture } = usePhotoStoryGestures({
     target: gestureTarget,
     stageScale,
     frameRect: stageRect,
@@ -257,6 +303,31 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     onGestureEnd: commitTransaction,
     handlesActive,
   });
+
+  const settleEditorInteraction = useCallback(() => {
+    endGesture();
+    commitTransaction();
+    setHandlesActive(false);
+  }, [commitTransaction, endGesture]);
+
+  const prevSegmentRef = useRef(activeIndex);
+  useEffect(() => {
+    if (prevSegmentRef.current === activeIndex) return;
+    prevSegmentRef.current = activeIndex;
+    settleEditorInteraction();
+  }, [activeIndex, settleEditorInteraction]);
+
+  // Tools/caption steal the canvas — end stage gesture + open history tx.
+  // Text edit keeps its own begin/commit transaction (do not settle here).
+  const hardBlockGestures =
+    activeTool === 'crop' ||
+    activeTool === 'adjust' ||
+    activeTool === 'sticker' ||
+    captionOpen;
+
+  useEffect(() => {
+    if (hardBlockGestures) settleEditorInteraction();
+  }, [hardBlockGestures, settleEditorInteraction]);
 
   const showCropGuide =
     gesturesEnabled && isGestureActive && gestureTarget.kind === 'media' && !handlesActive;
@@ -279,8 +350,14 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     !panelOpen && !captionOpen && activeTool !== 'crop' && editingTextId == null;
 
   return (
-    <FullScreenDialog open={open} onClose={handleClose} title="" closeOnInteractOutside={false}>
-      <div className="relative h-full min-h-[100dvh] w-full overflow-hidden bg-black text-white">
+    <FullScreenDialog
+      open={open}
+      onClose={handleClose}
+      title=""
+      closeOnInteractOutside={false}
+      bodyClassName="!overflow-hidden overscroll-none touch-none"
+    >
+      <div className="relative h-full min-h-[100dvh] w-full overflow-hidden overscroll-none bg-black text-white touch-none">
         <PhotoStoryStage
           className="pointer-events-auto"
           gesturesDisabled={!gesturesEnabled}
@@ -308,6 +385,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
                 stageHeight={stageSize.h}
                 selectedNodeId={selectedNodeId}
                 gesturesEnabled={gesturesEnabled}
+                previewInteractive={isGestureActive || handlesActive}
                 editingTextId={editingTextId}
                 onSelectNode={handleSelectNode}
                 onLayerTransformChange={(id, patch) => updateNodeTransform(id, patch)}
@@ -325,7 +403,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
           <PhotoStoryTopChrome
             segmentCount={segmentCount}
             activeIndex={activeIndex}
-            onSelectSegment={goToSegment}
+            onSelectSegment={handleSelectSegment}
             onClose={handleClose}
             onUndo={undo}
             onRedo={redo}
@@ -364,30 +442,25 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
           ) : null}
 
           {showPublish ? (
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center bg-gradient-to-t from-black/90 via-black/50 to-transparent pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-10">
-              <button
-                type="button"
-                disabled={isPublishing}
-                onClick={() => void handleShare()}
-                className="pointer-events-auto flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-sky-500/30 disabled:opacity-50"
-              >
-                {isPublishing ? (
-                  <Loader2 className="animate-spin" size={22} />
-                ) : (
-                  <>
-                    <Send size={20} />
-                    {t('stories.publish')}
-                  </>
-                )}
-              </button>
-            </div>
+            <PhotoStoryPublishBar
+              label={t('stories.publish')}
+              isPublishing={isPublishing}
+              onPublish={() => void handleShare()}
+            />
           ) : null}
 
           <PhotoStoryToolPanel
             tool={activeTool}
             onClose={closeTool}
             adjust={media.adjust}
-            onAdjustCommit={setMediaAdjustWithHistory}
+            onAdjustPreview={(a) => {
+              beginTransaction();
+              setMediaAdjust(a);
+            }}
+            onAdjustCommit={(a) => {
+              setMediaAdjust(a);
+              commitTransaction();
+            }}
             selectedText={selectedText}
             onTextStyleChange={(p) => selectedText && updateTextStyle(selectedText.id, p)}
             onStickerPick={(emoji) => {

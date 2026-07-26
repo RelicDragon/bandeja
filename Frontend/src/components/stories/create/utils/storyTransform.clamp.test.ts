@@ -4,6 +4,7 @@ import {
   clampMediaTransform,
   clampMediaPan,
   computeCoverScale,
+  mediaPanLimits,
   mediaScaleBounds,
 } from './storyTransform';
 import { STORY_CANVAS_HEIGHT, STORY_CANVAS_WIDTH } from '../types/storyEditor.types';
@@ -18,27 +19,47 @@ describe('clampLayerTransform', () => {
 });
 
 describe('clampMediaTransform', () => {
-  it('limits pan and scale relative to cover', () => {
-    const cover = computeCoverScale(2000, 1500);
-    const t = clampMediaTransform({ x: 2000, y: -2000, scale: 0.01, rotation: 2 }, cover);
-    expect(t.x).toBe(720);
-    expect(t.y).toBe(-720);
+  it('limits pan relative to scaled media AABB', () => {
+    const mediaW = 2000;
+    const mediaH = 1500;
+    const cover = computeCoverScale(mediaW, mediaH);
+    const t = clampMediaTransform(
+      { x: 99999, y: -99999, scale: cover * 2, rotation: 0 },
+      cover,
+      { mediaWidth: mediaW, mediaHeight: mediaH }
+    );
+    const { maxX, maxY } = mediaPanLimits({
+      mediaWidth: mediaW,
+      mediaHeight: mediaH,
+      scale: t.scale,
+      rotation: 0,
+    });
+    expect(t.x).toBe(maxX);
+    expect(t.y).toBe(-maxY);
     expect(t.scale).toBeGreaterThanOrEqual(mediaScaleBounds(cover).min);
   });
 });
 
 describe('clampMediaPan', () => {
-  it('clamps extreme pan values', () => {
-    expect(clampMediaPan(100, -100)).toEqual({ x: 100, y: -100 });
+  it('clamps with media context when zoomed in', () => {
+    const cover = computeCoverScale(2000, 1500);
+    const ctx = { mediaWidth: 2000, mediaHeight: 1500, scale: cover * 2, rotation: 0 };
+    const { maxX } = mediaPanLimits(ctx);
+    expect(maxX).toBeGreaterThan(0);
+    expect(clampMediaPan(10, -10, ctx)).toEqual({ x: 10, y: -10 });
+    expect(clampMediaPan(9000, 0, ctx).x).toBe(maxX);
+  });
+
+  it('falls back when context missing', () => {
     expect(clampMediaPan(900, 0).x).toBe(720);
   });
 });
 
 describe('mediaScaleBounds', () => {
-  it('anchors min scale near cover fit', () => {
+  it('allows zooming out well below cover fit', () => {
     const cover = computeCoverScale(STORY_CANVAS_WIDTH, STORY_CANVAS_HEIGHT);
     const { min, max } = mediaScaleBounds(cover);
-    expect(min).toBeCloseTo(cover * 0.85, 5);
-    expect(max).toBeGreaterThan(min);
+    expect(min).toBeLessThan(cover * 0.5);
+    expect(max).toBeGreaterThan(cover);
   });
 });

@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createId } from '@paralleldrive/cuid2';
 import type { StoryDocument, StoryMediaAdjust, StoryMediaFile, StorySession, TextNode, Transform2D } from '../types';
+import { DEFAULT_TRANSFORM } from '../types';
 import {
   createDocumentFromFile,
   getMediaNode,
   patchDocumentMedia,
-  revokeDocumentUrls,
 } from '../utils/document';
 import { downscaleStoryImageFile } from '../utils/downscaleStoryImageFile';
+import {
+  collectLivePreviewUrls,
+  collectPreviewUrls,
+  revokeUrlsNotIn,
+} from '../utils/previewUrlLifecycle';
 import { createStickerLayer } from '../utils/stickers';
 import { defaultMediaTransform, defaultTextTransform } from '../utils/transform';
 
@@ -17,6 +22,15 @@ type EditorSnapshot = { segments: StoryDocument[]; activeIndex: number };
 
 function cloneSegments(segments: StoryDocument[]): StoryDocument[] {
   return structuredClone(segments);
+}
+
+function isDefaultMediaTransform(t: Transform2D): boolean {
+  return (
+    t.x === DEFAULT_TRANSFORM.x &&
+    t.y === DEFAULT_TRANSFORM.y &&
+    t.scale === DEFAULT_TRANSFORM.scale &&
+    t.rotation === DEFAULT_TRANSFORM.rotation
+  );
 }
 
 function createTextNode(text = ''): TextNode {
@@ -49,17 +63,55 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
   const activeIndexRef = useRef(activeIndex);
   activeIndexRef.current = activeIndex;
 
-  useEffect(() => {
-    return () => segmentsRef.current.forEach(revokeDocumentUrls);
+  const revokeDroppedSnapshots = useCallback((dropped: EditorSnapshot[]) => {
+    if (dropped.length === 0) return;
+    const live = collectLivePreviewUrls(segmentsRef.current, [
+      ...undoStack.current,
+      ...redoStack.current,
+    ]);
+    const candidates = dropped.flatMap((snap) => collectPreviewUrls(snap.segments));
+    revokeUrlsNotIn(candidates, live);
   }, []);
 
-  const pushHistory = useCallback((current: StoryDocument[], index: number) => {
-    undoStack.current.push({ segments: cloneSegments(current), activeIndex: index });
-    if (undoStack.current.length > MAX_HISTORY) undoStack.current.shift();
-    redoStack.current = [];
-    setUndoCount(undoStack.current.length);
-    setRedoCount(0);
+  useEffect(() => {
+    const undo = undoStack;
+    const redo = redoStack;
+    const segs = segmentsRef;
+    return () => {
+      const liveDocs = [
+        ...segs.current,
+        ...undo.current.flatMap((s) => s.segments),
+        ...redo.current.flatMap((s) => s.segments),
+      ];
+      const seen = new Set<string>();
+      for (const doc of liveDocs) {
+        const media = getMediaNode(doc);
+        const url = media?.source.previewUrl;
+        if (!url || seen.has(url)) continue;
+        seen.add(url);
+        URL.revokeObjectURL(url);
+      }
+    };
   }, []);
+
+  const pushHistory = useCallback(
+    (current: StoryDocument[], index: number) => {
+      const evicted: EditorSnapshot[] = [];
+      if (undoStack.current.length >= MAX_HISTORY) {
+        const old = undoStack.current.shift();
+        if (old) evicted.push(old);
+      }
+      undoStack.current.push({ segments: cloneSegments(current), activeIndex: index });
+      if (redoStack.current.length > 0) {
+        evicted.push(...redoStack.current);
+        redoStack.current = [];
+      }
+      revokeDroppedSnapshots(evicted);
+      setUndoCount(undoStack.current.length);
+      setRedoCount(0);
+    },
+    [revokeDroppedSnapshots]
+  );
 
   const applySnapshot = useCallback((snap: EditorSnapshot) => {
     setSegments(snap.segments);
@@ -182,11 +234,10 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
 
   const replaceActiveMedia = useCallback(
     (file: File, previewUrl: string) => {
+      // Do not revoke previous URL here — undo history still references it.
       withHistory((prev) =>
         prev.map((doc, i) => {
           if (i !== activeIndex) return doc;
-          const media = getMediaNode(doc);
-          if (media) URL.revokeObjectURL(media.source.previewUrl);
           return patchDocumentMedia(doc, file, previewUrl);
         })
       );
@@ -206,14 +257,14 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
       const file = await downscaleStoryImageFile(entry.file);
       const doc = createDocumentFromFile({ file, mediaType: entry.mediaType });
       setSegments((prev) => {
-        pushHistory(prev, activeIndex);
+        pushHistory(prev, activeIndexRef.current);
         const next = [...prev, doc];
         setActiveIndex(next.length - 1);
         setIsDirty(true);
         return next;
       });
     },
-    [activeIndex, pushHistory]
+    [pushHistory]
   );
 
   const goToSegment = useCallback(
@@ -233,7 +284,8 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
       setDefaultTransforms((prev) => (prev[media.id] ? prev : { ...prev, [media.id]: fit }));
       patchActiveDoc((doc) => {
         const m = getMediaNode(doc);
-        if (!m) return doc;
+        if (!m || m.source.naturalWidth != null) return doc;
+        const keepUserTransform = !isDefaultMediaTransform(m.transform);
         return {
           ...doc,
           nodes: doc.nodes.map((n) =>
@@ -241,7 +293,7 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
               ? {
                   ...m,
                   source: { ...m.source, naturalWidth: naturalW, naturalHeight: naturalH },
-                  transform: fit,
+                  transform: keepUserTransform ? m.transform : fit,
                 }
               : n
           ),
@@ -252,6 +304,7 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
   );
 
   const undo = useCallback(() => {
+    inTransactionRef.current = false;
     const snap = undoStack.current.pop();
     if (!snap) return;
     redoStack.current.push({ segments: cloneSegments(segments), activeIndex });
@@ -262,6 +315,7 @@ export function usePhotoStoryState({ files }: UsePhotoStoryStateOptions) {
   }, [activeIndex, applySnapshot, segments]);
 
   const redo = useCallback(() => {
+    inTransactionRef.current = false;
     const snap = redoStack.current.pop();
     if (!snap) return;
     undoStack.current.push({ segments: cloneSegments(segments), activeIndex });

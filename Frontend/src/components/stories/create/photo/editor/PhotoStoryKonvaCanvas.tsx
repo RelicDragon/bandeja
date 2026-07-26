@@ -26,6 +26,7 @@ type PhotoStoryKonvaCanvasProps = {
   stageHeight: number;
   selectedNodeId: string | null;
   gesturesEnabled: boolean;
+  previewInteractive?: boolean;
   onSelectNode: (id: string | null, kind: 'media' | 'layer') => void;
   onLayerTransformChange: (nodeId: string, patch: Partial<Transform2D>) => void;
   onGestureStart: () => void;
@@ -41,6 +42,7 @@ function PhotoStoryKonvaCanvasInner({
   stageHeight,
   selectedNodeId,
   gesturesEnabled,
+  previewInteractive = false,
   onSelectNode,
   onLayerTransformChange,
   onGestureStart,
@@ -55,7 +57,10 @@ function PhotoStoryKonvaCanvasInner({
     canvasRef,
     ready: previewReady,
     sourceImage,
-  } = useCompositorPreview(doc, stageWidth, stageHeight);
+  } = useCompositorPreview(doc, stageWidth, stageHeight, {
+    hideNodeIds: editingTextId ? [editingTextId] : undefined,
+    interactive: previewInteractive,
+  });
   const media = getMediaNode(doc);
   const overlays = getOverlayNodes(doc);
   const previewUrl = media?.source.previewUrl ?? '';
@@ -105,6 +110,12 @@ function PhotoStoryKonvaCanvasInner({
   useEffect(() => {
     syncTransformer();
   }, [syncTransformer, sourceImage, overlays, selectedLayerTransform]);
+
+  useEffect(() => {
+    if (!selectedNodeId || selectedNodeId === editingTextId || !gesturesEnabled) {
+      onHandlesActiveChangeRef.current?.(false);
+    }
+  }, [editingTextId, gesturesEnabled, selectedNodeId]);
 
   const handleTransformEnd = useCallback(
     (target: Konva.Node, layerId: string) => {
@@ -301,6 +312,8 @@ function PhotoStoryKonvaCanvasInner({
             anchorSize={transformerMetrics.anchorSize}
             anchorCornerRadius={transformerMetrics.cornerRadius}
             rotateAnchorOffset={transformerMetrics.rotateOffset}
+            rotateAnchorLineStroke={TRANSFORMER_BORDER_COLOR}
+            rotateAnchorLineStrokeWidth={transformerMetrics.borderStrokeWidth}
             borderStroke={TRANSFORMER_BORDER_COLOR}
             borderStrokeWidth={transformerMetrics.borderStrokeWidth}
             anchorFill={TRANSFORMER_ANCHOR_FILL}

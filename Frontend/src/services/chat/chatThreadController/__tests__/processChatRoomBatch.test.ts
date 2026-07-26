@@ -7,6 +7,7 @@ const dispatchChatSyncStale = vi.fn();
 const persistReactionSocketPayload = vi.fn(async () => {});
 const markLocalMessageDeleted = vi.fn(async () => {});
 const onSocketSyncSeq = vi.fn(async () => {});
+const patchLocalReadReceipt = vi.fn(async () => {});
 const pullAndApplyChatSyncEventsDirect = vi.fn(async () => ({
   repairedStaleCursor: false,
   threadInvalidated: false,
@@ -27,7 +28,7 @@ vi.mock('@/services/chat/chatLocalApply', async (importOriginal) => {
     applyThreadL1Put: vi.fn(async () => 0),
     persistReactionSocketPayload: (...args: unknown[]) => persistReactionSocketPayload(...args),
     onSocketSyncSeq: (...args: unknown[]) => onSocketSyncSeq(...args),
-    patchLocalReadReceipt: vi.fn(async () => {}),
+    patchLocalReadReceipt: (...args: unknown[]) => patchLocalReadReceipt(...args),
     markLocalMessageDeleted: (...args: unknown[]) => markLocalMessageDeleted(...args),
     persistSocketTranscriptionAndSyncSeq: vi.fn(async () => {}),
     persistSocketPollVoteAndSyncSeq: vi.fn(async () => {}),
@@ -250,6 +251,12 @@ describe('processChatRoomBatch allRead read receipt', () => {
       tickRead: true,
       tickDelivered: false,
     });
+    expect(patchLocalReadReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'm1', userId: 'reader-b' })
+    );
+    expect(patchLocalReadReceipt).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'm2', userId: 'reader-b' })
+    );
     expect(pullAndApplyChatSyncEventsDirect).toHaveBeenCalledWith('USER', 'thread-1');
   });
 });

@@ -122,6 +122,8 @@ export function PhotoStoryTextEditOverlay({
     return () => clearTimeout(id);
   }, [atCenter, editing, focusEditor]);
 
+  const finishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const finish = useCallback(
     (commit: boolean) => {
       if (closingRef.current) return;
@@ -129,14 +131,26 @@ export function PhotoStoryTextEditOverlay({
       setEditing(false);
       setAtCenter(false);
       setBackdropOn(false);
-      window.setTimeout(() => {
-        if (closingRef.current === 'commit') onCommit();
-        else if (closingRef.current === 'cancel') onCancel();
+      if (finishTimerRef.current) clearTimeout(finishTimerRef.current);
+      finishTimerRef.current = setTimeout(() => {
+        finishTimerRef.current = null;
+        const mode = closingRef.current;
         closingRef.current = false;
+        if (mode === 'commit') onCommit();
+        else if (mode === 'cancel') onCancel();
       }, ANIM_MS);
     },
     [onCancel, onCommit]
   );
+
+  useEffect(() => {
+    return () => {
+      if (finishTimerRef.current) {
+        clearTimeout(finishTimerRef.current);
+        finishTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {

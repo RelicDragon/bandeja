@@ -10,6 +10,7 @@ import { scheduleChatMediaThumbPrefetchForMessage } from '@/services/chat/chatMe
 import { rowFromMessage } from '@/services/chat/chatSyncRowUtils';
 import { isChatLocalIndexingSuppressed } from './chatLocalApplyBulk';
 import { replaceMessageSearchTokensInTransaction } from './chatLocalMessageSearchTokens';
+import { mergeMessagePreservingReceipts } from './mergeMessagePreservingReceipts';
 
 export async function putChatLocalRowsWithSearchTokens(rows: ChatLocalRow[]): Promise<void> {
   if (rows.length === 0) return;
@@ -23,20 +24,30 @@ export async function putChatLocalRowsWithSearchTokens(rows: ChatLocalRow[]): Pr
 }
 
 export async function putLocalMessageDirect(m: ChatMessage): Promise<void> {
-  const r = rowFromMessage(m);
+  const existing = await chatLocalDb.messages.get(m.id);
+  const merged = mergeMessagePreservingReceipts(existing?.payload, m);
+  const r = rowFromMessage(merged);
   await putChatLocalRowsWithSearchTokens([r]);
   if (!isChatLocalIndexingSuppressed()) {
     void bumpMessageContextHead(r).catch(() => {});
-    void patchThreadIndexFromMessage(m).catch(() => {});
+    void patchThreadIndexFromMessage(merged).catch(() => {});
   }
-  if (m.thumbnailUrls?.some((u) => u && !u.startsWith('blob:') && !u.startsWith('data:'))) {
-    scheduleChatMediaThumbPrefetchForMessage(m);
+  if (merged.thumbnailUrls?.some((u) => u && !u.startsWith('blob:') && !u.startsWith('data:'))) {
+    scheduleChatMediaThumbPrefetchForMessage(merged);
   }
 }
 
 export async function persistChatMessagesFromApiDirect(messages: ChatMessage[]): Promise<void> {
   if (messages.length === 0) return;
-  const rows: ChatLocalRow[] = messages.map((m) => rowFromMessage(m));
+  const ids = messages.map((m) => m.id);
+  const existingRows = await chatLocalDb.messages.bulkGet(ids);
+  const byId = new Map<string, ChatMessage>();
+  for (const row of existingRows) {
+    if (row) byId.set(row.id, row.payload);
+  }
+  const rows: ChatLocalRow[] = messages.map((m) =>
+    rowFromMessage(mergeMessagePreservingReceipts(byId.get(m.id), m))
+  );
   await putChatLocalRowsWithSearchTokens(rows);
   for (const r of rows) {
     void bumpMessageContextHead(r).catch(() => {});

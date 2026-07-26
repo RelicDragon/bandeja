@@ -15,6 +15,9 @@ type PhotoStoryTopChromeProps = {
   disabled?: boolean;
 };
 
+const glassBtn =
+  'flex h-10 w-10 items-center justify-center rounded-full bg-black/35 text-white shadow-sm ring-1 ring-white/15 backdrop-blur-xl transition active:scale-95 disabled:opacity-35';
+
 export function PhotoStoryTopChrome({
   segmentCount,
   activeIndex,
@@ -31,16 +34,16 @@ export function PhotoStoryTopChrome({
   const { t } = useTranslation();
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-black/80 via-black/40 to-transparent pt-[max(0.5rem,env(safe-area-inset-top))] pb-8 px-3">
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-black/70 via-black/25 to-transparent pt-[max(0.5rem,env(safe-area-inset-top))] pb-10 px-3">
       <div className="pointer-events-auto flex items-center gap-2">
         <button
           type="button"
           onClick={onClose}
           disabled={disabled}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md disabled:opacity-40"
+          className={glassBtn}
           aria-label={t('common.back')}
         >
-          <ChevronLeft size={24} />
+          <ChevronLeft size={22} strokeWidth={2.2} />
         </button>
 
         {segmentCount > 1 ? (
@@ -51,8 +54,8 @@ export function PhotoStoryTopChrome({
                 type="button"
                 disabled={disabled}
                 onClick={() => onSelectSegment(i)}
-                className={`h-1 rounded-full transition-all ${
-                  i === activeIndex ? 'w-6 bg-white' : 'w-3 bg-white/35'
+                className={`h-1 rounded-full transition-all duration-200 ${
+                  i === activeIndex ? 'w-7 bg-white' : 'w-2.5 bg-white/40'
                 }`}
                 aria-label={`Slide ${i + 1}`}
               />
@@ -66,31 +69,29 @@ export function PhotoStoryTopChrome({
           type="button"
           onClick={onToggleCaption}
           disabled={disabled}
-          className={`flex h-10 w-10 items-center justify-center rounded-full backdrop-blur-md ${
-            captionOpen ? 'bg-white text-black' : 'bg-black/40 text-white'
-          }`}
+          className={`${glassBtn} ${captionOpen ? '!bg-white !text-black !ring-0' : ''}`}
           aria-label={t('stories.captionLabel')}
         >
-          <MessageSquare size={20} />
+          <MessageSquare size={18} strokeWidth={2.2} />
         </button>
 
         <button
           type="button"
           disabled={disabled || !canUndo}
           onClick={onUndo}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md disabled:opacity-30"
+          className={glassBtn}
           aria-label={t('stories.editor.undo')}
         >
-          <Undo2 size={18} />
+          <Undo2 size={18} strokeWidth={2.2} />
         </button>
         <button
           type="button"
           disabled={disabled || !canRedo}
           onClick={onRedo}
-          className="flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md disabled:opacity-30"
+          className={glassBtn}
           aria-label={t('stories.editor.redo')}
         >
-          <Redo2 size={18} />
+          <Redo2 size={18} strokeWidth={2.2} />
         </button>
       </div>
     </div>

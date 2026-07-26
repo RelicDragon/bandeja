@@ -9,6 +9,7 @@ type PhotoStoryToolPanelProps = {
   tool: StoryPhotoTool;
   onClose: () => void;
   adjust: StoryMediaAdjust;
+  onAdjustPreview: (a: StoryMediaAdjust) => void;
   onAdjustCommit: (a: StoryMediaAdjust) => void;
   selectedText: TextNode | null;
   onTextStyleChange: (patch: Partial<TextNode['style']>) => void;
@@ -20,6 +21,7 @@ export function PhotoStoryToolPanel({
   tool,
   onClose,
   adjust,
+  onAdjustPreview,
   onAdjustCommit,
   selectedText,
   onTextStyleChange,
@@ -65,7 +67,13 @@ export function PhotoStoryToolPanel({
         </button>
       </div>
       <div className="overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <PhotoStoryAdjustSheet adjust={adjust} onCommit={onAdjustCommit} disabled={disabled} embedded />
+        <PhotoStoryAdjustSheet
+          adjust={adjust}
+          onPreview={onAdjustPreview}
+          onCommit={onAdjustCommit}
+          disabled={disabled}
+          embedded
+        />
       </div>
     </div>
   );

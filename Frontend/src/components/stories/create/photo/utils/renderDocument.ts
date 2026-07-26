@@ -41,7 +41,8 @@ function drawSticker(ctx: CanvasRenderingContext2D, node: StickerNode): void {
 export function renderDocument(
   ctx: CanvasRenderingContext2D,
   doc: StoryDocument,
-  mediaImage: HTMLImageElement | ImageBitmap
+  mediaImage: HTMLImageElement | ImageBitmap,
+  options?: { hideNodeIds?: ReadonlySet<string> | readonly string[] }
 ): void {
   ctx.fillStyle = '#000000';
   ctx.fillRect(0, 0, STORY_CANVAS_WIDTH, STORY_CANVAS_HEIGHT);
@@ -49,7 +50,15 @@ export function renderDocument(
   const media = getMediaNode(doc);
   if (media) drawMedia(ctx, mediaImage, media);
 
+  const hidden =
+    options?.hideNodeIds == null
+      ? null
+      : options.hideNodeIds instanceof Set
+        ? options.hideNodeIds
+        : new Set(options.hideNodeIds);
+
   for (const node of getOverlayNodes(doc)) {
+    if (hidden?.has(node.id)) continue;
     if (node.type === 'text') drawTextNode(ctx, node);
     else if (node.type === 'sticker') drawSticker(ctx, node);
   }

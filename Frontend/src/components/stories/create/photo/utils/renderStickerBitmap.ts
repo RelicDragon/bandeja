@@ -9,7 +9,12 @@ export type StickerBitmap = {
   height: number;
 };
 
+const stickerBitmapCache = new Map<string, StickerBitmap>();
+
 export function renderStickerBitmap(emoji: string): StickerBitmap {
+  const cached = stickerBitmapCache.get(emoji);
+  if (cached) return cached;
+
   const pad = 10;
   const fontSize = PHOTO_STICKER_FONT_PX;
   const font = `${fontSize}px ${STICKER_EMOJI_FONT_FAMILY}`;
@@ -29,12 +34,18 @@ export function renderStickerBitmap(emoji: string): StickerBitmap {
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d');
-  if (!ctx) return { image: canvas, width, height };
+  if (!ctx) {
+    const empty = { image: canvas, width, height };
+    stickerBitmapCache.set(emoji, empty);
+    return empty;
+  }
 
   ctx.font = font;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(emoji, width / 2, height / 2);
 
-  return { image: canvas, width, height };
+  const bitmap = { image: canvas, width, height };
+  stickerBitmapCache.set(emoji, bitmap);
+  return bitmap;
 }

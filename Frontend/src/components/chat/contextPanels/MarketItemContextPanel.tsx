@@ -2,17 +2,20 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Edit2, Trash2, BookMarked, ShoppingCart, DollarSign } from 'lucide-react';
+import { Edit2, Trash2, BookMarked, ShoppingCart, DollarSign, Share2 } from 'lucide-react';
 import type { MarketItem, PriceCurrency } from '@/types';
 import { marketplaceApi } from '@/api/marketplace';
 import { currencyCacheService } from '@/services/currencyCache.service';
 import { formatConvertedPrice, formatPrice } from '@/utils/currency';
 import { useAuthStore } from '@/store/authStore';
 import { PlayerAvatar } from '@/components';
+import { ShareModal } from '@/components/ShareModal';
 import { ConfirmRemoveMarketItemModal } from '@/components/marketplace/ConfirmRemoveMarketItemModal';
 import { AuctionBidSection } from '@/components/marketplace/AuctionBidSection';
 import { useMarketItemReserve } from '@/components/marketplace/useMarketItemReserve';
 import { useMarketItemExpressInterest } from '@/components/marketplace/useMarketItemExpressInterest';
+import { shareMarketItem } from '@/utils/shareMarketItem';
+
 interface MarketItemContextPanelProps {
   marketItem: MarketItem;
   userCurrency: PriceCurrency;
@@ -39,6 +42,8 @@ export const MarketItemContextPanel = ({
   const currentUser = useAuthStore((state) => state.user);
   const [isRemoving, setIsRemoving] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
   const [priceDisplay, setPriceDisplay] = useState<{
     main: string;
     original: string;
@@ -134,6 +139,17 @@ export const MarketItemContextPanel = ({
     }
   };
 
+  const handleShare = async () => {
+    await shareMarketItem({
+      itemId: marketItem.id,
+      t,
+      onFallbackModal: (url) => {
+        setShareUrl(url);
+        setShowShareModal(true);
+      },
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -192,100 +208,117 @@ export const MarketItemContextPanel = ({
         )}
       </div>
 
-      {/* Trade Type Buttons (for buyers) */}
-      {!isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && (
-        <div className="flex flex-col gap-2">
-          {isFree && (
-            <button
-              onClick={() => { onCollapse?.(); expressInterest('FREE'); }}
-              disabled={expressingInterest !== null}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span>{t('marketplace.takeForFree', { defaultValue: 'Take for free' })}</span>
-            </button>
-          )}
-          {marketItem.tradeTypes?.includes('AUCTION') && !marketItem.winnerId && (
-            <AuctionBidSection
-              marketItem={marketItem}
-              userCurrency={userCurrency}
-              isOwner={false}
-              onItemUpdate={onItemUpdate}
-              onCollapse={onCollapse}
-            />
-          )}
-          {marketItem.tradeTypes?.includes('BUY_IT_NOW') && (
-            <>
-              {marketItem.negotiationAcceptable && (
-                <p className="text-xs text-gray-600 dark:text-gray-400">{t('marketplace.negotiationAcceptable', { defaultValue: 'Negotiation acceptable' })}</p>
-              )}
+      <div className="flex flex-col gap-2">
+        {/* Trade Type Buttons (for buyers) */}
+        {!isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && (
+          <>
+            {isFree && (
               <button
-                onClick={() => { onCollapse?.(); expressInterest('BUY_IT_NOW'); }}
+                onClick={() => { onCollapse?.(); expressInterest('FREE'); }}
                 disabled={expressingInterest !== null}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800/50 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <ShoppingCart size={16} />
-                <span>{t('marketplace.buyNow', { defaultValue: 'Buy now' })}</span>
+                <span>{t('marketplace.takeForFree', { defaultValue: 'Take for free' })}</span>
               </button>
-            </>
-          )}
-          {marketItem.tradeTypes?.includes('SUGGESTED_PRICE') && (
-            <button
-              onClick={() => { onCollapse?.(); expressInterest('SUGGESTED_PRICE'); }}
-              disabled={expressingInterest !== null}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <DollarSign size={16} />
-              <span>{t('marketplace.suggestYourPrice', { defaultValue: 'Suggest your price' })}</span>
-            </button>
-          )}
-        </div>
-      )}
+            )}
+            {marketItem.tradeTypes?.includes('AUCTION') && !marketItem.winnerId && (
+              <AuctionBidSection
+                marketItem={marketItem}
+                userCurrency={userCurrency}
+                isOwner={false}
+                onItemUpdate={onItemUpdate}
+                onCollapse={onCollapse}
+              />
+            )}
+            {marketItem.tradeTypes?.includes('BUY_IT_NOW') && (
+              <>
+                {marketItem.negotiationAcceptable && (
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{t('marketplace.negotiationAcceptable', { defaultValue: 'Negotiation acceptable' })}</p>
+                )}
+                <button
+                  onClick={() => { onCollapse?.(); expressInterest('BUY_IT_NOW'); }}
+                  disabled={expressingInterest !== null}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <ShoppingCart size={16} />
+                  <span>{t('marketplace.buyNow', { defaultValue: 'Buy now' })}</span>
+                </button>
+              </>
+            )}
+            {marketItem.tradeTypes?.includes('SUGGESTED_PRICE') && (
+              <button
+                onClick={() => { onCollapse?.(); expressInterest('SUGGESTED_PRICE'); }}
+                disabled={expressingInterest !== null}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <DollarSign size={16} />
+                <span>{t('marketplace.suggestYourPrice', { defaultValue: 'Suggest your price' })}</span>
+              </button>
+            )}
+          </>
+        )}
 
-      {/* Action Buttons (only for owner) */}
-      {isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && (
-        <div className="flex flex-col gap-2">
-          <div className="flex gap-2">
+        {/* Action Buttons (only for owner) */}
+        {isOwner && (marketItem.status === 'ACTIVE' || marketItem.status === 'RESERVED') && (
+          <>
+            <div className="flex gap-2">
+              <button
+                onClick={() => { onCollapse?.(); handleEdit(); }}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
+              >
+                <Edit2 size={16} />
+                <span>{t('common.edit', { defaultValue: 'Edit' })}</span>
+              </button>
+              <button
+                onClick={() => { onCollapse?.(); handleRemoveClick(); }}
+                disabled={isRemoving}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Trash2 size={16} />
+                <span>{t('marketplace.remove', { defaultValue: 'Remove' })}</span>
+              </button>
+            </div>
             <button
-              onClick={() => { onCollapse?.(); handleEdit(); }}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
+              onClick={() => { onCollapse?.(); handleReserveToggle(); }}
+              disabled={isReserving}
+              className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
+                isReserved
+                  ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50 hover:bg-amber-100 dark:hover:bg-amber-900/30'
+                  : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/30'
+              }`}
             >
-              <Edit2 size={16} />
-              <span>{t('common.edit', { defaultValue: 'Edit' })}</span>
+              <BookMarked size={16} />
+              <span>
+                {isReserved
+                  ? t('marketplace.unreserve', { defaultValue: 'Unreserve' })
+                  : t('marketplace.reserve', { defaultValue: 'Reserve' })}
+              </span>
             </button>
-            <button
-              onClick={() => { onCollapse?.(); handleRemoveClick(); }}
-              disabled={isRemoving}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Trash2 size={16} />
-              <span>{t('marketplace.remove', { defaultValue: 'Remove' })}</span>
-            </button>
-          </div>
-          <button
-            onClick={() => { onCollapse?.(); handleReserveToggle(); }}
-            disabled={isReserving}
-            className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 border rounded-lg transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed ${
-              isReserved
-                ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/50 hover:bg-amber-100 dark:hover:bg-amber-900/30'
-                : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800/50 hover:bg-blue-100 dark:hover:bg-blue-900/30'
-            }`}
-          >
-            <BookMarked size={16} />
-            <span>
-              {isReserved
-                ? t('marketplace.unreserve', { defaultValue: 'Unreserve' })
-                : t('marketplace.reserve', { defaultValue: 'Reserve' })}
-            </span>
-          </button>
-        </div>
-      )}
+          </>
+        )}
 
-      {/* Remove confirmation modal */}
+        <button
+          type="button"
+          onClick={handleShare}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors font-medium text-sm"
+        >
+          <Share2 size={16} />
+          <span>{t('marketplace.share', { defaultValue: 'Share' })}</span>
+        </button>
+      </div>
+
       <ConfirmRemoveMarketItemModal
         isOpen={showRemoveModal}
         onClose={() => setShowRemoveModal(false)}
         onConfirm={handleRemoveConfirm}
         isLoading={isRemoving}
+      />
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        shareUrl={shareUrl}
+        dialogTitle={t('marketplace.share', { defaultValue: 'Share' })}
+        modalId="market-item-share-modal"
       />
     </div>
   );

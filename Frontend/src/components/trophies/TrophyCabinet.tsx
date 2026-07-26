@@ -2,7 +2,10 @@ import { useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { getHorizontalScrollFadeMaskStyle } from '@/components/HorizontalScrollFadeEdges';
+import { groupCabinetRailItems } from '@/components/trophies/cabinetGrouping';
 import { TrophyCabinetCard } from '@/components/trophies/TrophyCabinetCard';
+import { TrophyCabinetStack } from '@/components/trophies/TrophyCabinetStack';
+import { useTrophyStackExpansion } from '@/components/trophies/useTrophyStackExpansion';
 import { useHorizontalScrollFade } from '@/hooks/useHorizontalScrollFade';
 import type { TrophiesPayload, TrophyCabinetEntryView } from '@/types/trophies';
 
@@ -11,20 +14,6 @@ type TrophyCabinetProps = {
   isOwn: boolean;
   ownerUserId?: string;
 };
-
-function sortCabinet(entries: TrophyCabinetEntryView[]): TrophyCabinetEntryView[] {
-  return [...entries].sort((a, b) => {
-    if (a.unlocked !== b.unlocked) return a.unlocked ? -1 : 1;
-    if (a.unlocked && b.unlocked) {
-      const aEarned = a.instances[0]?.earnedAt ? Date.parse(a.instances[0].earnedAt) : 0;
-      const bEarned = b.instances[0]?.earnedAt ? Date.parse(b.instances[0].earnedAt) : 0;
-      return bEarned - aEarned;
-    }
-    const aProg = a.progress && a.progress.target > 0 ? a.progress.current / a.progress.target : 0;
-    const bProg = b.progress && b.progress.target > 0 ? b.progress.current / b.progress.target : 0;
-    return bProg - aProg;
-  });
-}
 
 export function TrophyCabinet({ trophies, isOwn, ownerUserId }: TrophyCabinetProps) {
   const { t } = useTranslation();
@@ -82,9 +71,17 @@ function TrophyCabinetRail({
 }) {
   const { t } = useTranslation();
   const carouselRef = useRef<HTMLDivElement>(null);
-  const rows = useMemo(() => sortCabinet(cabinet), [cabinet]);
+  const rows = useMemo(() => groupCabinetRailItems(cabinet), [cabinet]);
+  const stackKeys = useMemo(() => {
+    const keys = new Set<string>();
+    for (const item of rows) {
+      if (item.kind === 'stack') keys.add(item.key);
+    }
+    return keys;
+  }, [rows]);
   const { showLeftFade, showRightFade } = useHorizontalScrollFade(carouselRef, rows.length);
   const maskStyle = getHorizontalScrollFadeMaskStyle(showLeftFade, showRightFade);
+  const { isExpanded, setExpanded } = useTrophyStackExpansion(stackKeys);
 
   return (
     <section className="space-y-2.5">
@@ -102,7 +99,7 @@ function TrophyCabinetRail({
       <motion.div
         ref={carouselRef}
         style={maskStyle}
-        className="-mx-1 flex gap-2.5 overflow-x-auto px-1 py-2 scrollbar-hide [touch-action:pan-x_pan-y] overscroll-x-contain snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
+        className="-mx-1 flex gap-2.5 overflow-x-auto px-1 py-3 scrollbar-hide [touch-action:pan-x_pan-y] overscroll-x-contain snap-x snap-mandatory [-webkit-overflow-scrolling:touch]"
         initial="hidden"
         animate="visible"
         variants={{
@@ -110,24 +107,46 @@ function TrophyCabinetRail({
           visible: { opacity: 1, transition: { staggerChildren: 0.04 } },
         }}
       >
-        {rows.map((entry) => (
-          <motion.div
-            key={entry.definition.id}
-            className="w-[6.75rem] shrink-0 snap-start"
-            variants={{
-              hidden: { opacity: 0, x: 14 },
-              visible: { opacity: 1, x: 0 },
-            }}
-          >
-            <TrophyCabinetCard
-              entry={entry}
-              isOwn={isOwn}
-              pinsEditable={pinsEditable}
-              pinnedInstanceIds={pinnedIds}
-              ownerUserId={ownerUserId}
-            />
-          </motion.div>
-        ))}
+        {rows.map((item) =>
+          item.kind === 'card' ? (
+            <motion.div
+              key={item.key}
+              className="w-[6.75rem] shrink-0 snap-start"
+              variants={{
+                hidden: { opacity: 0, x: 14 },
+                visible: { opacity: 1, x: 0 },
+              }}
+            >
+              <TrophyCabinetCard
+                entry={item.entry}
+                isOwn={isOwn}
+                pinsEditable={pinsEditable}
+                pinnedInstanceIds={pinnedIds}
+                ownerUserId={ownerUserId}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key={item.key}
+              className="shrink-0 snap-start"
+              variants={{
+                hidden: { opacity: 0, x: 14 },
+                visible: { opacity: 1, x: 0 },
+              }}
+            >
+              <TrophyCabinetStack
+                entries={item.entries}
+                unlocked={item.unlocked}
+                isOwn={isOwn}
+                pinsEditable={pinsEditable}
+                pinnedInstanceIds={pinnedIds}
+                ownerUserId={ownerUserId}
+                expanded={isExpanded(item.key)}
+                onExpandedChange={(next) => setExpanded(item.key, next)}
+              />
+            </motion.div>
+          ),
+        )}
       </motion.div>
     </section>
   );

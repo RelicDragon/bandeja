@@ -33,4 +33,9 @@ export function getGroupChannelShareUrl(groupChannel: { id: string; isChannel: b
   return `${getPublicWebBaseUrl()}${path}`;
 }
 
+export function getMarketItemShareUrl(itemId: string): string {
+  const path = buildUrl('marketplaceItem', { id: itemId });
+  return `${getPublicWebBaseUrl()}${path}`;
+}
+
 

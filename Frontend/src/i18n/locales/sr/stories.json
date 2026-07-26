@@ -92,7 +92,11 @@
       "publishExportFailed": "Slika nije pripremljena",
       "publishTranscodeFailed": "Obrada videa nije uspela",
       "publishUploadFailed": "Otpremanje nije uspelo — proverite vezu",
-      "publishCreateFailed": "Priča nije sačuvana"
+      "publishCreateFailed": "Priča nije sačuvana",
+      "publishPartialFailed": "Neki slajdovi su objavljeni. Ponovo dodirnite Objavi.",
+      "publishFeedRefreshFailed": "Priča je sačuvana, ali feed nije osvežen. Povucite za osvežavanje.",
+      "publishOrphanCleanupFailed": "Nije moguće ukloniti već objavljene slajdove. Obrišite ih iz priče.",
+      "cropFailed": "Nije moguće iseći fotografiju"
     },
     "viewer": {
       "likeCount": "{{count}} lajkova",

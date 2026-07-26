@@ -290,7 +290,10 @@ describe('reduceThreadLiveSnapshot', () => {
 
       const result = reduceThreadLiveSnapshot(prev, events, USER_CONFIG);
 
-      // Should emit syncPull effect
+      const persistReceipts = result.effects.filter(
+        (e) => e.type === 'persist' && e.event.type === 'readReceipt'
+      );
+      expect(persistReceipts).toHaveLength(2);
       expect(result.effects).toContainEqual({
         type: 'syncPull',
         reason: 'allRead',
@@ -453,6 +456,26 @@ describe('reduceThreadLiveSnapshot', () => {
 
       expect(result.next[0]?.linkPreviewDisabled).toBe(true);
       expect(result.next[0]?.translation?.translation).toBe('Hello');
+    });
+
+    it('preserves read receipts when full message update omits them', () => {
+      const original = createMessage({
+        id: 'msg-1',
+        senderId: 'viewer-1',
+        readReceipts: [
+          { id: 'r1', messageId: 'msg-1', userId: 'reader-user', readAt: '2026-01-01T01:00:00.000Z' },
+        ],
+      });
+      const updated = { ...original, content: 'edited', readReceipts: [] };
+      const result = reduceThreadLiveSnapshot(
+        [original],
+        [{ type: 'messageUpdated', messageId: original.id, message: updated }],
+        USER_CONFIG
+      );
+
+      expect(result.next[0]?.content).toBe('edited');
+      expect(result.next[0]?.readReceipts).toHaveLength(1);
+      expect(result.next[0]?.readReceipts[0]?.userId).toBe('reader-user');
     });
 
     it('applies reaction events', () => {

@@ -92,7 +92,11 @@
       "publishExportFailed": "Не удалось подготовить изображение",
       "publishTranscodeFailed": "Ошибка обработки видео",
       "publishUploadFailed": "Ошибка загрузки — проверьте соединение",
-      "publishCreateFailed": "Не удалось сохранить историю"
+      "publishCreateFailed": "Не удалось сохранить историю",
+      "publishPartialFailed": "Часть слайдов опубликована. Нажмите «Поделиться» ещё раз.",
+      "publishFeedRefreshFailed": "История сохранена, но лента не обновилась. Потяните для обновления.",
+      "publishOrphanCleanupFailed": "Не удалось удалить уже опубликованные слайды. Удалите их в своей истории.",
+      "cropFailed": "Не удалось обрезать фото"
     },
     "viewer": {
       "likeCount": "{{count}} лайков",

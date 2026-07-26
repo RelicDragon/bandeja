@@ -838,7 +838,11 @@ export const UnifiedMessageMenu: React.FC<UnifiedMessageMenuProps> = ({
               </div>
             ) : (
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {t('chat.contextMenu.notReadYet', { defaultValue: 'Not read yet' })}
+                {message.state === 'DELIVERED'
+                  ? t('chat.contextMenu.deliveredNotReadYet', {
+                      defaultValue: 'Delivered — not read yet',
+                    })
+                  : t('chat.contextMenu.notReadYet', { defaultValue: 'Not read yet' })}
               </div>
             )}
           </div>

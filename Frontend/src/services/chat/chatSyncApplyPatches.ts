@@ -40,10 +40,22 @@ export async function applyChatSyncPatchesInSlice(
 
   for (const p of patches) {
     switch (p.op) {
-      case 'putMessage':
-        writeRow(rowFromMessage(p.message));
-        putMessagesForMedia.push(p.message);
+      case 'putMessage': {
+        const existing = await ensureRow(p.message.id);
+        const merged = existing
+          ? {
+              ...existing.payload,
+              ...p.message,
+              readReceipts: mergeReadReceipts(
+                existing.payload.readReceipts ?? [],
+                p.message.readReceipts ?? []
+              ),
+            }
+          : p.message;
+        writeRow(rowFromMessage(merged));
+        putMessagesForMedia.push(merged);
         break;
+      }
       case 'patchMessage': {
         const r = await ensureRow(p.messageId);
         if (!r) {

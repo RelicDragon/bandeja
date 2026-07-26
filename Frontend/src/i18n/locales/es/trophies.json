@@ -31,7 +31,16 @@
       "count": "{{count}} conseguidos",
       "ownEmpty": "Persigue podios, rachas e hitos: los trofeos bloqueados muestran tus siguientes metas.",
       "visitorEmpty": "Aún no hay trofeos.",
-      "pinHint": "Toca un trofeo para fijarlo en el escaparate (máx. 3)."
+      "pinHint": "Toca un trofeo para fijarlo en el escaparate (máx. 3).",
+      "collapseStack": "Cerrar pila de trofeos",
+      "collapse": "Cerrar",
+      "family": {
+        "games": "Partidos",
+        "streak": "Racha",
+        "wins": "Victorias",
+        "podium": "Podio",
+        "generic": "Trofeos"
+      }
     },
     "detail": {
       "progress": "Progreso {{current}} / {{target}}",

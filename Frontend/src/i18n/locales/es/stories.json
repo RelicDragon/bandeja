@@ -92,7 +92,11 @@
       "publishExportFailed": "No se pudo preparar la imagen",
       "publishTranscodeFailed": "Error al procesar el video",
       "publishUploadFailed": "Error al subir — comprueba tu conexión",
-      "publishCreateFailed": "No se pudo guardar la historia"
+      "publishCreateFailed": "No se pudo guardar la historia",
+      "publishPartialFailed": "Algunas diapositivas se publicaron. Pulsa Compartir de nuevo.",
+      "publishFeedRefreshFailed": "Historia guardada, pero el feed no se actualizó. Desliza para actualizar.",
+      "publishOrphanCleanupFailed": "No se pudieron quitar diapositivas ya publicadas. Elimínalas de tu historia.",
+      "cropFailed": "No se pudo recortar la foto"
     },
     "viewer": {
       "likeCount": "{{count}} me gusta",

@@ -15,6 +15,17 @@ export function computeCoverScale(
   return Math.max(canvasWidth / mediaWidth, canvasHeight / mediaHeight);
 }
 
+/** Scale so the full media fits inside the canvas (letterbox / pillarbox). */
+export function computeContainScale(
+  mediaWidth: number,
+  mediaHeight: number,
+  canvasWidth = STORY_CANVAS_WIDTH,
+  canvasHeight = STORY_CANVAS_HEIGHT
+): number {
+  if (mediaWidth <= 0 || mediaHeight <= 0) return 1;
+  return Math.min(canvasWidth / mediaWidth, canvasHeight / mediaHeight);
+}
+
 export function defaultMediaTransform(
   mediaWidth: number,
   mediaHeight: number,
@@ -54,7 +65,6 @@ export function snapRotation(degrees: number, threshold = 3): number {
 const LAYER_POSITION_PAD = 48;
 const LAYER_SCALE_MIN = 0.35;
 const LAYER_SCALE_MAX = 4;
-const MEDIA_PAN_LIMIT = 720;
 
 export function clampLayerPosition(x: number, y: number): { x: number; y: number } {
   return {
@@ -87,35 +97,106 @@ export function commitLayerDrag(
   return next;
 }
 
-export function clampMediaPan(x: number, y: number): { x: number; y: number } {
+export type MediaPanContext = {
+  mediaWidth: number;
+  mediaHeight: number;
+  scale: number;
+  rotation?: number;
+  canvasWidth?: number;
+  canvasHeight?: number;
+};
+
+/** Axis-aligned pan limits from scaled media AABB vs canvas (cover + letterbox). */
+export function mediaPanLimits(ctx: MediaPanContext): { maxX: number; maxY: number } {
+  const canvasW = ctx.canvasWidth ?? STORY_CANVAS_WIDTH;
+  const canvasH = ctx.canvasHeight ?? STORY_CANVAS_HEIGHT;
+  const scaledW = Math.max(0, ctx.mediaWidth * ctx.scale);
+  const scaledH = Math.max(0, ctx.mediaHeight * ctx.scale);
+  const rad = ((ctx.rotation ?? 0) * Math.PI) / 180;
+  const c = Math.abs(Math.cos(rad));
+  const s = Math.abs(Math.sin(rad));
+  const boundW = scaledW * c + scaledH * s;
+  const boundH = scaledW * s + scaledH * c;
   return {
-    x: Math.max(-MEDIA_PAN_LIMIT, Math.min(MEDIA_PAN_LIMIT, x)),
-    y: Math.max(-MEDIA_PAN_LIMIT, Math.min(MEDIA_PAN_LIMIT, y)),
+    maxX: Math.max(0, Math.abs(boundW - canvasW) / 2),
+    maxY: Math.max(0, Math.abs(boundH - canvasH) / 2),
+  };
+}
+
+export function clampMediaPan(
+  x: number,
+  y: number,
+  ctx?: MediaPanContext
+): { x: number; y: number } {
+  if (!ctx || ctx.mediaWidth <= 0 || ctx.mediaHeight <= 0) {
+    const fallback = 720;
+    return {
+      x: Math.max(-fallback, Math.min(fallback, x)),
+      y: Math.max(-fallback, Math.min(fallback, y)),
+    };
+  }
+  const { maxX, maxY } = mediaPanLimits(ctx);
+  return {
+    x: Math.max(-maxX, Math.min(maxX, x)),
+    y: Math.max(-maxY, Math.min(maxY, y)),
   };
 }
 
 export function mediaScaleBounds(coverScale: number): { min: number; max: number } {
+  // Without media aspect we approximate contain ≈ 35% of cover (typical landscape/portrait).
+  // Prefer `mediaScaleBoundsForMedia` when width/height are known.
+  const safeCover = Math.max(coverScale, 1e-6);
   return {
-    min: Math.max(0.25, coverScale * 0.85),
-    max: Math.max(coverScale * 1.5, coverScale * 5),
+    min: Math.max(0.08, safeCover * 0.35),
+    max: Math.max(safeCover * 6, 4),
+  };
+}
+
+export function mediaScaleBoundsForMedia(
+  mediaWidth: number,
+  mediaHeight: number,
+  canvasWidth = STORY_CANVAS_WIDTH,
+  canvasHeight = STORY_CANVAS_HEIGHT
+): { min: number; max: number; coverScale: number; containScale: number } {
+  const coverScale = computeCoverScale(mediaWidth, mediaHeight, canvasWidth, canvasHeight);
+  const containScale = computeContainScale(mediaWidth, mediaHeight, canvasWidth, canvasHeight);
+  return {
+    coverScale,
+    containScale,
+    // Half-contain → full photo with margin; cover×6 → deep zoom in.
+    min: Math.max(0.08, containScale * 0.5),
+    max: Math.max(coverScale * 6, 4),
   };
 }
 
 export function clampMediaTransform(
   transform: Transform2D,
   coverScale: number,
-  options?: { snapRotation?: boolean }
+  options?: {
+    snapRotation?: boolean;
+    minScale?: number;
+    maxScale?: number;
+    mediaWidth?: number;
+    mediaHeight?: number;
+  }
 ): Transform2D {
-  const { x, y } = clampMediaPan(transform.x, transform.y);
-  const { min, max } = mediaScaleBounds(coverScale);
+  const defaults = mediaScaleBounds(coverScale);
+  const min = options?.minScale ?? defaults.min;
+  const max = options?.maxScale ?? defaults.max;
   const rotation =
     options?.snapRotation === false ? transform.rotation : snapRotation(transform.rotation);
-  return {
-    x,
-    y,
-    scale: Math.max(min, Math.min(max, transform.scale)),
-    rotation,
-  };
+  const scale = Math.max(min, Math.min(max, transform.scale));
+  const panCtx =
+    options?.mediaWidth != null && options?.mediaHeight != null
+      ? {
+          mediaWidth: options.mediaWidth,
+          mediaHeight: options.mediaHeight,
+          scale,
+          rotation,
+        }
+      : undefined;
+  const { x, y } = clampMediaPan(transform.x, transform.y, panCtx);
+  return { x, y, scale, rotation };
 }
 
 export function stageScaleFromWidth(stageWidth: number): number {

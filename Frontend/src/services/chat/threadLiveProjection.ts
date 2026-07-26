@@ -495,7 +495,21 @@ function reduceAllRead(
   if (result.changed) {
     state.messages = result.next;
     state.changed = true;
-    state.effects.push({ type: 'persist', event });
+    for (const messageId of result.messageIds) {
+      state.effects.push({
+        type: 'persist',
+        event: {
+          type: 'readReceipt',
+          messageId,
+          receipt: {
+            id: `allread-${messageId}-${event.readerUserId}`,
+            messageId,
+            userId: event.readerUserId,
+            readAt: event.readAt,
+          },
+        },
+      });
+    }
 
     // Trigger sync pull to ensure consistency
     state.effects.push({
@@ -525,6 +539,10 @@ function reduceMessageUpdated(
             event.message.content === message.content
               ? (event.message.translations ?? message.translations)
               : undefined,
+          readReceipts: mergeReadReceipts(
+            message.readReceipts ?? [],
+            event.message.readReceipts ?? []
+          ),
         }
       : {
           ...(event.content !== undefined ? { content: event.content } : {}),

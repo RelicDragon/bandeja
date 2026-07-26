@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import toast from 'react-hot-toast';
 import Cropper from 'react-easy-crop';
 import { Loader2 } from 'lucide-react';
 import getCroppedImg from '@/utils/cropUtils';
@@ -37,10 +38,12 @@ export function PhotoStoryCropScreen({ imageUrl, onConfirm, onCancel }: PhotoSto
       URL.revokeObjectURL(blobUrl);
       lightHaptic();
       onConfirm(new File([blob], `story-crop-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+    } catch {
+      toast.error(t('stories.editor.cropFailed'));
     } finally {
       setBusy(false);
     }
-  }, [area, busy, imageUrl, onConfirm]);
+  }, [area, busy, imageUrl, onConfirm, t]);
 
   return (
     <div

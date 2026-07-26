@@ -31,7 +31,16 @@
       "count": "{{count}} earned",
       "ownEmpty": "Chase podium finishes, streaks, and milestones — locked trophies show your next goals.",
       "visitorEmpty": "No trophies yet.",
-      "pinHint": "Tap a trophy to pin it to your showcase (up to 3)."
+      "pinHint": "Tap a trophy to pin it to your showcase (up to 3).",
+      "collapseStack": "Collapse trophy stack",
+      "collapse": "Collapse",
+      "family": {
+        "games": "Games",
+        "streak": "Streak",
+        "wins": "Wins",
+        "podium": "Podium",
+        "generic": "Trophies"
+      }
     },
     "detail": {
       "progress": "Progress {{current}} / {{target}}",

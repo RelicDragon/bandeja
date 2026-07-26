@@ -58,7 +58,18 @@ export function StoryCompositionViewport({
     const fitted = measureStoryCompositionFrame(stageBox.width, stageBox.height);
     if (fitted.frameWidth <= 0 || fitted.frameHeight <= 0) return;
 
-    setFrameStyle(storyCompositionFrameStyle(fitted));
+    setFrameStyle((prev) => {
+      const next = storyCompositionFrameStyle(fitted);
+      if (
+        prev.width === next.width &&
+        prev.height === next.height &&
+        prev.left === next.left &&
+        prev.top === next.top
+      ) {
+        return prev;
+      }
+      return next;
+    });
     setFrameScale(viewportScaleFromFrameWidth(fitted.frameWidth));
 
     const nextRect = new DOMRect(
@@ -67,8 +78,19 @@ export function StoryCompositionViewport({
       fitted.frameWidth,
       fitted.frameHeight
     );
-    setFrameRect(nextRect);
-    onMeasureRef.current?.({ w: fitted.frameWidth, h: fitted.frameHeight }, nextRect);
+    setFrameRect((prev) => {
+      if (
+        prev &&
+        prev.left === nextRect.left &&
+        prev.top === nextRect.top &&
+        prev.width === nextRect.width &&
+        prev.height === nextRect.height
+      ) {
+        return prev;
+      }
+      onMeasureRef.current?.({ w: fitted.frameWidth, h: fitted.frameHeight }, nextRect);
+      return nextRect;
+    });
   }, []);
 
   useLayoutEffect(() => {

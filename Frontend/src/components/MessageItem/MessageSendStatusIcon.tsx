@@ -151,7 +151,11 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
 
           {statusKey === 'read' && (
             <span
-              className={onMedia ? 'text-violet-300 inline-flex' : 'text-purple-200 inline-flex'}
+              className={
+                onMedia
+                  ? 'text-cyan-300 inline-flex drop-shadow-[0_0_1px_rgba(0,0,0,0.45)]'
+                  : 'text-cyan-200 inline-flex drop-shadow-[0_0_1px_rgba(0,0,0,0.35)]'
+              }
               title={
                 readByOthersCount > 0
                   ? `Read by ${readByOthersCount} ${readByOthersCount === 1 ? 'person' : 'people'}`
@@ -164,16 +168,16 @@ export const MessageSendStatusIcon: React.FC<MessageSendStatusIconProps> = ({
 
           {statusKey === 'delivered' && (
             <span
-              className={onMedia ? 'text-white/80 inline-flex' : 'text-blue-100/90 inline-flex'}
+              className={onMedia ? 'text-white/50 inline-flex' : 'text-white/50 inline-flex'}
               title={t('chat.tickDelivered', { defaultValue: 'Delivered' })}
             >
-              <DoubleTickIcon size={14} variant="double" className={onMedia ? 'opacity-90' : 'opacity-85'} />
+              <DoubleTickIcon size={14} variant="double" />
             </span>
           )}
 
           {statusKey === 'sent' && (
             <span
-              className={onMedia ? 'text-white/70 inline-flex' : 'text-blue-100 inline-flex'}
+              className={onMedia ? 'text-white/40 inline-flex' : 'text-white/40 inline-flex'}
               title={t('chat.tickSent', { defaultValue: 'Sent' })}
             >
               <DoubleTickIcon size={14} variant="single" />

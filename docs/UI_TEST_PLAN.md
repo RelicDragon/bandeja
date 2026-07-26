@@ -326,10 +326,16 @@ Frontend/e2e/
 | H-52 | Story text edit canvas preview | Type in text overlay (classic/neon/outline/gradient/blackBox) | Visible glyphs match canvas/export renderer, not CSS approximation |
 | H-53 | Story photo rotate snap live | Pinch-rotate photo near 0°/90° | Rotation snaps live in preview, not only on release |
 | H-56 | Story editor 9:16 frame parity | Open photo editor on tall phone viewport | Canvas is true 9:16 (letterboxed), not stretched full-height; published story matches editor framing |
-| H-57 | Story editor pinch/pan/wheel | Mobile: two-finger pinch+rotate+pan photo; Desktop: drag pan + wheel zoom under cursor | Media reframes live inside fixed crop window; rule-of-thirds guide while gesturing; no selection box on photo |
-| H-58 | Story layer handles (IG) | Add sticker/text → select → drag corner / rotate | Soft white circular handles + thin white border; photo has no selection box |
-| H-59 | Story photo double-tap reset | Pan/zoom photo → double-tap / double-click | Photo snaps back to cover fit |
+| H-57 | Story editor pinch/pan/wheel | Capacitor + mobile browser: two-finger pinch/rotate/pan + double-tap; Desktop: drag pan, mouse wheel zoom, trackpad pinch, Alt/Shift-drag rotate | No page scroll/zoom steal; no double zoom on trackpad; zoom in/out + rubberband; double-tap cover↔2× |
+| H-58 | Story layer handles (IG) | Add sticker/text → select → drag corner / rotate | Soft white circular handles + thin white border + rotate stem; photo has no selection box |
+| H-59 | Story photo double-tap zoom | At cover fit → double-tap; again when zoomed | First zooms ~2× under tap; second returns to cover fit |
 | H-60 | Story tap photo deselects layer | Select sticker → tap empty photo area | Layer deselects; further drag pans the photo |
+| H-61 | Story editor chrome (IG) | Open photo editor; pinch-pan photo; open tools | Glass top/rail chrome; white Share pill; crop guide fades in while reframing |
+| H-62 | Story multi-slide publish retry | Multi-photo → Share fails mid-batch → edit a slide → Share again | Changed slides re-publish (old item deleted); unchanged slides skipped; no duplicates |
+| H-63 | Story text edit no ghost | Add text → edit | Overlay only (no duplicate compositor glyph behind) |
+| H-67 | Story discard after partial publish | Multi-photo Share fails mid-batch → discard editor | Already-published slides removed (or cleanup error toast) |
+| H-68 | Story adjust live preview | Open Adjust → drag brightness | Canvas updates while dragging; release commits undo step |
+| H-69 | Story crop failure toast | Force crop error (invalid image) → Done | Toast shown; editor stays on crop screen |
 
 ### 6.5 Home subtabs & URL
 
@@ -1072,8 +1078,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | CH-37 | Offline send queue | `@offline` send | Queued state + retry on online |
 | CH-38 | Failed send retry | Force failure → resend | Message sends |
 | CH-39 | Read receipts | Open thread | Unread clears |
-| CH-70 | Own message read tick vs details | Group chat → send message → long-press → Details before anyone reads | Bubble shows single tick (or blue delivered, not purple read); Details shows “Not read yet” |
-| CH-71 | Own message read tick after peer reads | Two users in group; B reads A's message | A sees purple double tick; Details lists B with read time |
+| CH-70 | Own message read tick vs details | Group chat → send message → long-press → Details before anyone reads | Bubble shows single tick or muted white delivered double tick (not cyan read); Details shows “Delivered — not read yet” (or “Not read yet” if still SENT) |
+| CH-71 | Own message read tick after peer reads | Two users in group; B reads A's message | A sees cyan double tick (clearly distinct from muted delivered); Details lists B with read time |
+| CH-71a | Read vs delivered tick contrast | Own thread with one read message and one only-delivered message | Read ticks are bright cyan; delivered ticks are muted white; visually distinguishable at a glance |
 | CH-72 | Parent league admin read on child match chat | League owner (not match participant) opens child match public chat with unread @mention | Unread clears; sender sees read receipt / double tick on own message |
 | CH-73 | Message details shows reactor without read receipt | Peer reacts before read receipt syncs (or legacy data) | Long-press own message → Details lists reactor with emoji and “Reacted …”; not “Not read yet” when reactions exist |
 | CH-81 | Message details resolves unknown users | Group chat → long-press own message → Details with read receipts/reactions from users not in local cache | Read-by list shows immediately (may include “Unknown User” placeholders); names/avatars fill in after background fetch without leaving Details |
@@ -1191,6 +1198,7 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | M-33 | Holland auction live drop | `@two users` watch Holland auction | Price drops on interval |
 | M-34 | Mark sold / deactivate | Seller ends listing | Hidden from browse |
 | M-35 | Overlay open item | `buildUrl` with `?item=` on marketplace | Drawer without full navigation |
+| M-36 | Share listing | Open item drawer or market chat group info → Share | Native/web share sheet for `/marketplace/:id` (clipboard / modal fallback) |
 
 ---
 
@@ -1246,7 +1254,9 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-streak-5 | Past deadline | Open player card (`?player=`) after missing deadline | Streak chip hidden (alive-only); fullscreen/profile sport panel may still show best |
 | PR-trophy-1 | Own empty trophy showcase | Own player card / `/user-profile/:id` with no unlocks | Three empty showcase slots under avatar + short hint; no crash |
 | PR-trophy-2 | Own empty trophy cabinet | Profile → Statistics (or own card Statistics) with no unlocks | Cabinet title + count; horizontal snap carousel of locked tiles with progress bars; edge fades when scrollable; no body copy under the section title |
-| PR-trophy-2b | Trophy cabinet carousel | Player card / Profile Statistics with several trophies | Single-row horizontal carousel (unlocked first); partial next tile peeks; tap opens detail sheet |
+| PR-trophy-2b | Trophy cabinet carousel | Player card / Profile Statistics with several trophies | Single-row horizontal carousel (unlocked first); partial next tile peeks; single cards open detail; family stacks expand first |
+| PR-trophy-2c | Habit family stack | Own Statistics with ≥2 unlocked `habit_games_*` (or wins/streak) | Same-family unlocks show as one piled stack (rarest on top); locked same-family is a separate pile; single unlock stays a normal card |
+| PR-trophy-2d | Stack expand → detail | Tap a trophy stack in the cabinet | Stack animates apart into cards (family label + Collapse); tap a card opens detail sheet; Collapse re-stacks; expanding another stack collapses the previous |
 | PR-trophy-3 | Visitor empty trophies | Open another user’s card with zero trophies | Showcase hidden; cabinet calm empty (“No trophies yet”) — no locked graveyard |
 | PR-trophy-4 | Trophy detail sheet | Tap locked or unlocked trophy tile | Sheet with title, rarity, description; locked shows progress/hint |
 | PR-trophy-5 | Dark/light trophy UI | Toggle theme on Statistics with cabinet visible | Trophy frames/labels readable in both themes |

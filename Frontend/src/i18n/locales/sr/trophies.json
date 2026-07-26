@@ -31,7 +31,16 @@
       "count": "Osvojeno: {{count}}",
       "ownEmpty": "Juri podijume, serije i prekretnice — zaključani pehari pokazuju sledeće ciljeve.",
       "visitorEmpty": "Još nema pehara.",
-      "pinHint": "Dodirni pehar da ga zakačiš na izlog (do 3)."
+      "pinHint": "Dodirni pehar da ga zakačiš na izlog (do 3).",
+      "collapseStack": "Skupi stek pehara",
+      "collapse": "Skupi",
+      "family": {
+        "games": "Mečevi",
+        "streak": "Serija",
+        "wins": "Pobede",
+        "podium": "Podijum",
+        "generic": "Pehari"
+      }
     },
     "detail": {
       "progress": "Napredak {{current}} / {{target}}",
