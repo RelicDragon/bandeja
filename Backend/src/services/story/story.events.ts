@@ -1,4 +1,4 @@
-import { Sport } from '@prisma/client';
+import { Sport, StorySourceType } from '@prisma/client';
 import prisma from '../../config/database';
 import { USER_SELECT_FIELDS, USER_SPORT_PROFILE_SELECT } from '../../utils/constants';
 import type { BasicUser } from '../../types/user.types';
@@ -10,6 +10,13 @@ const STORY_USER_SELECT = {
   ...USER_SELECT_FIELDS,
   sportProfiles: { select: USER_SPORT_PROFILE_SELECT },
 } as const;
+
+const DISMISSIBLE_SOURCE_TYPES = new Set<StorySourceType>([
+  StorySourceType.GAME_PHOTO,
+  StorySourceType.GAME_CREATED,
+  StorySourceType.GAME_RESULT,
+  StorySourceType.BRACKET_CHAMPION,
+]);
 
 function getIo() {
   const socketService = (global as { socketService?: { io?: { to: (room: string) => { emit: (event: string, payload: unknown) => void } } } })
@@ -59,9 +66,34 @@ function toBasicUser(u: {
   };
 }
 
+function parseSegmentKey(key: string): { sourceType: StorySourceType; sourceId: string } | null {
+  const idx = key.indexOf(':');
+  if (idx <= 0) return null;
+  const sourceType = key.slice(0, idx) as StorySourceType;
+  const sourceId = key.slice(idx + 1);
+  if (!sourceId || !Object.values(StorySourceType).includes(sourceType)) return null;
+  return { sourceType, sourceId };
+}
+
 export async function emitStoryNew(ownerUserId: string, segment: StorySegment) {
   const io = getIo();
   if (!io) return;
+
+  const parsed = parseSegmentKey(segment.key);
+  if (parsed && DISMISSIBLE_SOURCE_TYPES.has(parsed.sourceType)) {
+    const dismissed = await prisma.storySegmentDismissal.findUnique({
+      where: {
+        userId_sourceType_sourceId: {
+          userId: ownerUserId,
+          sourceType: parsed.sourceType,
+          sourceId: parsed.sourceId,
+        },
+      },
+      select: { id: true },
+    });
+    if (dismissed) return;
+  }
+
   const [followerIds, ownerRow] = await Promise.all([
     getFollowerIds(ownerUserId),
     prisma.user.findUnique({ where: { id: ownerUserId }, select: STORY_USER_SELECT }),

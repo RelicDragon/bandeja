@@ -72,10 +72,17 @@ export class LeagueStandingsRecalculateService {
     if (season?.resultsStatus === ResultsStatus.FINAL) {
       const { isPodiumEligibleEntityType } = await import('@bandeja/shared/achievements');
       if (isPodiumEligibleEntityType(season.entityType, season.parentId)) {
-        const { grantPodiumAchievementsForFinalizedGame } = await import(
-          '../achievements/podiumGrant.service'
-        );
-        await grantPodiumAchievementsForFinalizedGame({ gameId: leagueSeasonId, tx });
+        const { grantPodiumAchievementsForFinalizedGame, writePodiumUnlocksToGameOutcomes } =
+          await import('../achievements/podiumGrant.service');
+        const batch = await grantPodiumAchievementsForFinalizedGame({
+          gameId: leagueSeasonId,
+          tx,
+        });
+        await writePodiumUnlocksToGameOutcomes({
+          db: tx,
+          gameId: leagueSeasonId,
+          batch,
+        });
       }
     }
 

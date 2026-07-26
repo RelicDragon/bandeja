@@ -317,7 +317,12 @@ function makePodiumFakeDb(seed: {
             o.gameId === args.where.gameId_userId.gameId &&
             o.userId === args.where.gameId_userId.userId,
         );
-        if (row) row.metadata = args.data.metadata;
+        if (row) {
+          row.metadata =
+            args.data.metadata != null && typeof args.data.metadata === 'object'
+              ? (args.data.metadata as Record<string, unknown>)
+              : null;
+        }
         return row;
       },
     },

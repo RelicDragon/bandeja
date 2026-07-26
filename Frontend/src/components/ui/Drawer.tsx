@@ -8,21 +8,33 @@ interface DrawerProps {
   children: React.ReactNode;
   direction?: 'top' | 'bottom' | 'left' | 'right';
   dismissible?: boolean;
+  /** Use Vaul NestedRoot when opening inside another drawer (e.g. player card). */
+  nested?: boolean;
 }
 
-const Drawer = ({ open, onOpenChange, children, direction = 'bottom', dismissible = true }: DrawerProps) => (
+const Drawer = ({
+  open,
+  onOpenChange,
+  children,
+  direction = 'bottom',
+  dismissible = true,
+  nested = false,
+}: DrawerProps) => {
   /* repositionInputs off: the app lifts surfaces itself via --keyboard-height
      (Capacitor Keyboard resize "none"); Vaul's built-in handling fights it. */
-  <VaulDrawer.Root
-    open={open}
-    onOpenChange={onOpenChange}
-    direction={direction}
-    dismissible={dismissible}
-    repositionInputs={false}
-  >
-    {children}
-  </VaulDrawer.Root>
-);
+  const Root = nested ? VaulDrawer.NestedRoot : VaulDrawer.Root;
+  return (
+    <Root
+      open={open}
+      onOpenChange={onOpenChange}
+      direction={direction}
+      dismissible={dismissible}
+      repositionInputs={false}
+    >
+      {children}
+    </Root>
+  );
+};
 
 const DrawerTrigger = VaulDrawer.Trigger;
 

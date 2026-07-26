@@ -49,6 +49,8 @@ export interface PlayerCardProfileBodyProps {
   onCompetitiveSportChange?: (sport: Sport) => void;
   /** URL/open hint — used only if the subject has this sport enabled. */
   sportHint?: Sport;
+  /** True when this body is inside a Vaul drawer (player card sheet). */
+  celebrationNested?: boolean;
 }
 
 const containerVariants = {
@@ -86,6 +88,7 @@ const PlayerCardProfileBodyComponent = ({
   playStreakAliveOnly = false,
   onCompetitiveSportChange,
   sportHint,
+  celebrationNested = false,
 }: PlayerCardProfileBodyProps) => {
   const { user } = stats;
   const authUser = useAuthStore((s) => s.user);
@@ -288,7 +291,11 @@ const PlayerCardProfileBodyComponent = ({
             <div className="mt-2">
               <TrophyShowcase trophies={user.trophies} isOwn={isOwnProfile} ownerUserId={user.id} />
             </div>
-            <TrophyPendingCelebrationHost trophies={user.trophies} isOwn={isOwnProfile} />
+            <TrophyPendingCelebrationHost
+              trophies={user.trophies}
+              isOwn={isOwnProfile}
+              nested={celebrationNested}
+            />
             <PlayerCardRatingStatus
               settling={sportScopedStatsReady ? Boolean(user.ratingSettling) : false}
               uncertainty={sportScopedStatsReady && isAdmin ? user.ratingUncertainty : null}

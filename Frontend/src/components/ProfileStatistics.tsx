@@ -5,6 +5,7 @@ import type { UserStats } from '@/api/users';
 import { Loading } from './Loading';
 import { LevelHistoryView } from './LevelHistoryView';
 import { ProfileWorkoutHealthSection } from './ProfileWorkoutHealthSection';
+import { TrophyPendingCelebrationHost } from '@/components/trophies/TrophyPendingCelebrationHost';
 import { useAuthStore } from '@/store/authStore';
 import { getUserPrimarySport, resolveActivePrimarySport } from '@/utils/profileSports';
 import { queryKeys } from '@/queries/queryKeys';
@@ -65,6 +66,7 @@ export const ProfileStatistics = () => {
       transition={{ delay: 0.1, duration: 0.3 }}
       className="space-y-6"
     >
+      <TrophyPendingCelebrationHost trophies={stats.user.trophies} isOwn />
       <LevelHistoryView stats={stats} padding="p-0" onStatsRefresh={setStats} />
       <ProfileWorkoutHealthSection />
     </motion.div>

@@ -47,6 +47,15 @@ export async function syncParticipantShowInStoriesSideEffects(params: {
     return;
   }
 
+  // Turning visibility back on clears a viewer-deleted result dismissal.
+  await prisma.storySegmentDismissal.deleteMany({
+    where: {
+      userId: params.userId,
+      sourceType: StorySourceType.GAME_RESULT,
+      sourceId: params.gameId,
+    },
+  });
+
   await emitGameResultStoryIfEligible(params.gameId, params.userId);
   if (params.entityType === EntityType.LEAGUE_SEASON) {
     await emitRecentBracketChampionStoriesForSeasonPlayer(params.gameId, params.userId);
@@ -120,6 +129,18 @@ async function emitGameResultStoryIfEligible(gameId: string, userId: string): Pr
   ) {
     return;
   }
+
+  const dismissed = await prisma.storySegmentDismissal.findUnique({
+    where: {
+      userId_sourceType_sourceId: {
+        userId,
+        sourceType: StorySourceType.GAME_RESULT,
+        sourceId: gameId,
+      },
+    },
+    select: { id: true },
+  });
+  if (dismissed) return;
 
   const gamesWithRounds = await loadStoryResultMatchesByGame([gameId]);
   const gameRounds = gamesWithRounds.get(gameId);

@@ -137,8 +137,11 @@
       "shareTitle": "Share profile",
       "moreActions": "More actions",
       "deleteMyStory": "Delete my story",
-      "deleteStoryConfirm": "Delete this story? Followers will no longer see it.",
-      "deleteStoryFailed": "Could not delete story"
+      "deleteStoryTitle": "Delete this story?",
+      "deleteStoryConfirm": "Followers will no longer see it.",
+      "deleteStoryAction": "Delete",
+      "deleteStoryFailed": "Could not delete story",
+      "cancel": "Cancel"
     }
   }
 }

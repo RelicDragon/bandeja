@@ -4,12 +4,15 @@ import type { TrophiesPayload } from '@/types/trophies';
 type TrophyPendingCelebrationHostProps = {
   trophies: TrophiesPayload | null | undefined;
   isOwn: boolean;
+  /** True when host mounts inside another Vaul drawer (player card). */
+  nested?: boolean;
 };
 
 /** Celebrate Rare/Legendary unlocks delivered via profile payload (e.g. league season FINAL). */
 export function TrophyPendingCelebrationHost({
   trophies,
   isOwn,
+  nested = false,
 }: TrophyPendingCelebrationHostProps) {
   if (!isOwn || !trophies?.pendingCelebrations?.length) return null;
 
@@ -23,5 +26,5 @@ export function TrophyPendingCelebrationHost({
     sport: row.sport,
   }));
 
-  return <TrophyCelebrationSheet pending={pending} />;
+  return <TrophyCelebrationSheet pending={pending} nested={nested} />;
 }

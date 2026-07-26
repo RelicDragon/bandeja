@@ -648,6 +648,7 @@ export class StoryFeedService {
       const gamesWithRounds = await loadStoryResultMatchesByGame(resultGameIds);
 
       for (const { ownerUserId, outcome } of visibleResults) {
+        if (isDismissed(ownerUserId, StorySourceType.GAME_RESULT, outcome.game.id)) continue;
         const createdAt = outcome.game.finishedDate ?? outcome.createdAt;
         const key = segmentKey(StorySourceType.GAME_RESULT, outcome.game.id);
         const preview = storyGameBackdropUrl(outcome.game, photoViewer);

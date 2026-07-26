@@ -472,6 +472,7 @@ export const PlayerCardBottomSheet = ({ playerId, onClose }: PlayerCardBottomShe
                         onCompetitiveSportChange={handleCompetitiveSportChange}
                         sportHint={openSportHint}
                         playStreakAliveOnly
+                        celebrationNested
                       />
                     </motion.div>
                   ) : null}

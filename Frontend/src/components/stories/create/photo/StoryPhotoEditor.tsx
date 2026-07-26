@@ -5,8 +5,9 @@ import { FullScreenDialog } from '@/components/ui/FullScreenDialog';
 import { lightHaptic } from '@/utils/lightHaptic';
 import { viewportScaleFromFrameWidth } from '@/components/stories/create/utils/storyCompositionLayout';
 import { PhotoStoryCaptionDrawer } from './editor/PhotoStoryCaptionDrawer';
+import { PhotoStoryCropGuide } from './editor/PhotoStoryCropGuide';
 import { PhotoStoryCropScreen } from './editor/PhotoStoryCropScreen';
-import { PHOTO_MEDIA_NODE_KEY, PhotoStoryKonvaCanvas } from './editor/PhotoStoryKonvaCanvas';
+import { PhotoStoryKonvaCanvas } from './editor/PhotoStoryKonvaCanvas';
 import { PhotoStoryStage } from './editor/PhotoStoryStage';
 import { PhotoStoryTextEditOverlay } from './editor/PhotoStoryTextEditOverlay';
 import { PhotoStoryToolPanel } from './editor/PhotoStoryToolPanel';
@@ -39,7 +40,7 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
   const [textDraft, setTextDraft] = useState('');
   const [caption, setCaption] = useState('');
   const [captionOpen, setCaptionOpen] = useState(false);
-  const [mediaSelected, setMediaSelected] = useState(false);
+  const [handlesActive, setHandlesActive] = useState(false);
 
   const editor = usePhotoStoryState({ files });
   const {
@@ -93,7 +94,6 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
 
   useEffect(() => {
     setEditingTextId(null);
-    setMediaSelected(false);
     setActiveTool(null);
   }, [activeIndex]);
 
@@ -118,36 +118,38 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
       if (node && isTextNode(node) && !node.text.trim()) deleteNode(selectedNodeId);
       else setSelectedNodeId(null);
     }
-    setMediaSelected(false);
     exitTextEdit();
     if (activeTool === 'text') setActiveTool(null);
   }, [activeDoc?.nodes, activeTool, deleteNode, exitTextEdit, selectedNodeId, setSelectedNodeId]);
 
   const handleSelectNode = useCallback(
     (id: string | null, kind: 'media' | 'layer') => {
-      if (id === null) {
+      if (id === null || kind === 'media') {
         handleDeselect();
         return;
       }
       lightHaptic();
-      if (kind === 'media' || id === PHOTO_MEDIA_NODE_KEY) {
-        setMediaSelected(true);
-        setSelectedNodeId(null);
-        exitTextEdit();
-        setActiveTool(null);
+      const node = activeDoc?.nodes.find((n) => n.id === id);
+      const wasSelected = selectedNodeId === id;
+      setSelectedNodeId(id);
+      if (node && isTextNode(node)) {
+        setActiveTool('text');
+        if (wasSelected) beginTextEdit(id, node.text);
+        else exitTextEdit();
       } else {
-        setMediaSelected(false);
-        const node = activeDoc?.nodes.find((n) => n.id === id);
-        const wasSelected = selectedNodeId === id;
-        setSelectedNodeId(id);
-        if (node && isTextNode(node)) {
-          setActiveTool('text');
-          if (wasSelected) beginTextEdit(id, node.text);
-          else exitTextEdit();
-        }
+        exitTextEdit();
+        if (activeTool === 'text') setActiveTool(null);
       }
     },
-    [activeDoc?.nodes, beginTextEdit, exitTextEdit, handleDeselect, selectedNodeId, setSelectedNodeId]
+    [
+      activeDoc?.nodes,
+      activeTool,
+      beginTextEdit,
+      exitTextEdit,
+      handleDeselect,
+      selectedNodeId,
+      setSelectedNodeId,
+    ]
   );
 
   const handleTextTool = useCallback(() => {
@@ -244,15 +246,20 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
     [selectedNodeId, updateNodeTransform]
   );
 
-  const { bind: stageGestureBind } = usePhotoStoryGestures({
+  const { bind: stageGestureBind, isGestureActive } = usePhotoStoryGestures({
     target: gestureTarget,
     stageScale,
+    frameRect: stageRect,
     onMediaTransformChange: setMediaTransform,
     onLayerTransformChange: handleLayerGestureTransform,
     onMediaReset: handleMediaReset,
     onGestureStart: beginTransaction,
     onGestureEnd: commitTransaction,
+    handlesActive,
   });
+
+  const showCropGuide =
+    gesturesEnabled && isGestureActive && gestureTarget.kind === 'media' && !handlesActive;
 
   const handleShare = useCallback(async () => {
     lightHaptic();
@@ -294,117 +301,115 @@ export function StoryPhotoEditor({ open, files, onClose, onPublished }: StoryPho
           }
         >
           {() => (
-            <PhotoStoryKonvaCanvas
-              doc={activeDoc}
-              stageWidth={stageSize.w}
-              stageHeight={stageSize.h}
-              selectedNodeId={selectedNodeId}
-              mediaSelected={mediaSelected}
-              gesturesEnabled={gesturesEnabled}
-              editingTextId={editingTextId}
-              onSelectNode={handleSelectNode}
-              onMediaTransformChange={(patch) => {
-                const m = getMediaNode(activeDoc);
-                if (m) setMediaTransform({ ...m.transform, ...patch });
-              }}
-              onLayerTransformChange={(id, patch) => updateNodeTransform(id, patch)}
-              onGestureStart={beginTransaction}
-              onGestureEnd={commitTransaction}
-              onLoadDimensions={registerMediaDimensions}
-            />
+            <>
+              <PhotoStoryKonvaCanvas
+                doc={activeDoc}
+                stageWidth={stageSize.w}
+                stageHeight={stageSize.h}
+                selectedNodeId={selectedNodeId}
+                gesturesEnabled={gesturesEnabled}
+                editingTextId={editingTextId}
+                onSelectNode={handleSelectNode}
+                onLayerTransformChange={(id, patch) => updateNodeTransform(id, patch)}
+                onGestureStart={beginTransaction}
+                onGestureEnd={commitTransaction}
+                onLoadDimensions={registerMediaDimensions}
+                onHandlesActiveChange={setHandlesActive}
+              />
+              <PhotoStoryCropGuide visible={showCropGuide} />
+            </>
           )}
         </PhotoStoryStage>
 
         <div className="pointer-events-none absolute inset-0 z-[30]">
-        <PhotoStoryTopChrome
-          segmentCount={segmentCount}
-          activeIndex={activeIndex}
-          onSelectSegment={goToSegment}
-          onClose={handleClose}
-          onUndo={undo}
-          onRedo={redo}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          captionOpen={captionOpen}
-          onToggleCaption={() => setCaptionOpen((o) => !o)}
-          disabled={isPublishing}
-        />
-
-        {activeTool !== 'crop' && editingTextId == null ? (
-          <PhotoStoryToolRail
-            activeTool={activeTool}
-            onToolChange={setActiveTool}
-            onText={handleTextTool}
+          <PhotoStoryTopChrome
+            segmentCount={segmentCount}
+            activeIndex={activeIndex}
+            onSelectSegment={goToSegment}
+            onClose={handleClose}
+            onUndo={undo}
+            onRedo={redo}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            captionOpen={captionOpen}
+            onToggleCaption={() => setCaptionOpen((o) => !o)}
             disabled={isPublishing}
           />
-        ) : null}
 
-        {editingTextId && editingText && stageRect ? (
-          <PhotoStoryTextEditOverlay
-            key={editingTextId}
-            node={editingText}
-            stageRect={stageRect}
-            stageScale={stageScale}
-            initialDraft={textEditInitial}
-            draft={textDraft}
-            onDraftChange={(text) => {
-              setTextDraft(text);
-              setTextNode(editingTextId, { text });
-            }}
-            onStyleChange={(p) => updateTextStyle(editingTextId, p)}
-            onCommit={handleTextEditCommit}
-            onCancel={handleTextEditCancel}
-          />
-        ) : null}
-
-        {showPublish ? (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center bg-gradient-to-t from-black/90 via-black/50 to-transparent pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-10">
-            <button
-              type="button"
+          {activeTool !== 'crop' && editingTextId == null ? (
+            <PhotoStoryToolRail
+              activeTool={activeTool}
+              onToolChange={setActiveTool}
+              onText={handleTextTool}
               disabled={isPublishing}
-              onClick={() => void handleShare()}
-              className="pointer-events-auto flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-sky-500/30 disabled:opacity-50"
-            >
-              {isPublishing ? (
-                <Loader2 className="animate-spin" size={22} />
-              ) : (
-                <>
-                  <Send size={20} />
-                  {t('stories.publish')}
-                </>
-              )}
-            </button>
-          </div>
-        ) : null}
+            />
+          ) : null}
 
-        <PhotoStoryToolPanel
-          tool={activeTool}
-          onClose={closeTool}
-          adjust={media.adjust}
-          onAdjustCommit={setMediaAdjustWithHistory}
-          selectedText={selectedText}
-          onTextStyleChange={(p) => selectedText && updateTextStyle(selectedText.id, p)}
-          onStickerPick={(emoji) => {
-            addSticker(emoji);
-            setMediaSelected(false);
-            closeTool();
-          }}
-          disabled={isPublishing}
-        />
+          {editingTextId && editingText && stageRect ? (
+            <PhotoStoryTextEditOverlay
+              key={editingTextId}
+              node={editingText}
+              stageRect={stageRect}
+              stageScale={stageScale}
+              initialDraft={textEditInitial}
+              draft={textDraft}
+              onDraftChange={(text) => {
+                setTextDraft(text);
+                setTextNode(editingTextId, { text });
+              }}
+              onStyleChange={(p) => updateTextStyle(editingTextId, p)}
+              onCommit={handleTextEditCommit}
+              onCancel={handleTextEditCancel}
+            />
+          ) : null}
 
-        <PhotoStoryCaptionDrawer
-          open={captionOpen}
-          value={caption}
-          onChange={setCaption}
-          onClose={() => setCaptionOpen(false)}
-          disabled={isPublishing}
-        />
+          {showPublish ? (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center bg-gradient-to-t from-black/90 via-black/50 to-transparent pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-10">
+              <button
+                type="button"
+                disabled={isPublishing}
+                onClick={() => void handleShare()}
+                className="pointer-events-auto flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-sky-500/30 disabled:opacity-50"
+              >
+                {isPublishing ? (
+                  <Loader2 className="animate-spin" size={22} />
+                ) : (
+                  <>
+                    <Send size={20} />
+                    {t('stories.publish')}
+                  </>
+                )}
+              </button>
+            </div>
+          ) : null}
 
-        {isPublishing ? (
-          <div className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/75">
-            <Loader2 className="animate-spin text-white" size={36} />
-          </div>
-        ) : null}
+          <PhotoStoryToolPanel
+            tool={activeTool}
+            onClose={closeTool}
+            adjust={media.adjust}
+            onAdjustCommit={setMediaAdjustWithHistory}
+            selectedText={selectedText}
+            onTextStyleChange={(p) => selectedText && updateTextStyle(selectedText.id, p)}
+            onStickerPick={(emoji) => {
+              addSticker(emoji);
+              closeTool();
+            }}
+            disabled={isPublishing}
+          />
+
+          <PhotoStoryCaptionDrawer
+            open={captionOpen}
+            value={caption}
+            onChange={setCaption}
+            onClose={() => setCaptionOpen(false)}
+            disabled={isPublishing}
+          />
+
+          {isPublishing ? (
+            <div className="pointer-events-auto absolute inset-0 z-50 flex items-center justify-center bg-black/75">
+              <Loader2 className="animate-spin text-white" size={36} />
+            </div>
+          ) : null}
         </div>
       </div>
     </FullScreenDialog>

@@ -134,8 +134,11 @@
       "shareTitle": "Compartir perfil",
       "moreActions": "Más acciones",
       "deleteMyStory": "Eliminar mi historia",
-      "deleteStoryConfirm": "¿Eliminar esta historia? Tus seguidores ya no la verán.",
-      "deleteStoryFailed": "No se pudo eliminar la historia"
+      "deleteStoryTitle": "¿Eliminar esta historia?",
+      "deleteStoryConfirm": "Tus seguidores ya no la verán.",
+      "deleteStoryAction": "Eliminar",
+      "deleteStoryFailed": "No se pudo eliminar la historia",
+      "cancel": "Cancelar"
     },
     "mixedMediaBlocked": "Share photos and videos separately",
     "oneVideoOnly": "Add one video at a time",

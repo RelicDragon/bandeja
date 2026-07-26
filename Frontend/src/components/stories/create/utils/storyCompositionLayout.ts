@@ -23,8 +23,12 @@ function layerTransformToPercentStyle(
   };
 }
 
+/**
+ * @deprecated Prefer `StoryCompositionViewport` (JS 9:16 fit). Kept for rare
+ * fill-parent slots that already sit inside a correctly sized frame.
+ */
 export const STORY_COMPOSITION_FRAME_CLASS =
-  'relative aspect-[9/16] h-full max-h-full w-auto max-w-full overflow-hidden bg-black';
+  'relative h-full w-full overflow-hidden bg-black';
 
 /** Editor stage width → canvas scale (same as stageScaleFromWidth). */
 export function viewportScaleFromFrameWidth(frameWidth: number): number {

@@ -28,7 +28,7 @@ export type StoryCanvasViewport = {
   offsetY: number;
 };
 
-/** Fit 1080×1920 canvas inside stage (same letterboxing as `STORY_COMPOSITION_FRAME_CLASS`). */
+/** Fit 1080×1920 canvas inside stage (letterbox / pillarbox). */
 export function fitStoryCanvasInStage(stageWidth: number, stageHeight: number): StoryCanvasViewport {
   if (stageWidth <= 0 || stageHeight <= 0) {
     return { frameWidth: 0, frameHeight: 0, offsetX: 0, offsetY: 0 };

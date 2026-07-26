@@ -41,13 +41,14 @@ export function StoriesViewer({
   const markViewed = useStoriesStore((s) => s.markViewed);
   const flushPendingViews = useStoriesStore((s) => s.flushPendingViews);
   const applyStoryDeleted = useStoriesStore((s) => s.applyStoryDeleted);
+  const fetchFeed = useStoriesStore((s) => s.fetchFeed);
   const [bubbleIndex, setBubbleIndex] = useState(initialBubbleIndex);
   const [segmentIndex, setSegmentIndex] = useState(initialSegmentIndex);
   const [videoEnded, setVideoEnded] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [videoDurationMs, setVideoDurationMs] = useState<number | null>(null);
-  const [deleting, setDeleting] = useState(false);
   const wasOpenRef = useRef(false);
+  const deleteInFlightRef = useRef(new Set<string>());
   const doubleTapLikeRef = useRef<(() => void) | null>(null);
   const [doubleTapBurst, setDoubleTapBurst] = useState<{ x: number; y: number } | null>(null);
   const segmentNavKey = `${bubbleIndex}:${segmentIndex}`;
@@ -210,24 +211,33 @@ export function StoriesViewer({
     [markCurrentSegmentViewed, flushPendingViews, onClose, navigate]
   );
 
-  const handleDeleteStory = useCallback(async () => {
+  const handleDeleteStory = useCallback(async (): Promise<boolean> => {
     const b = bubbleRef.current;
     const s = segmentRef.current;
-    if (!b?.isSelf || !s || deleting) return;
+    if (!b?.isSelf || !s) return false;
     const parsed = parseStorySegmentKey(s.key);
-    if (!parsed) return;
-    setDeleting(true);
+    if (!parsed) return false;
+    if (deleteInFlightRef.current.has(s.key)) return false;
+
+    const ownerUserId = b.user.id;
+    const segmentKey = s.key;
+    deleteInFlightRef.current.add(segmentKey);
+    applyStoryDeleted({ ownerUserId, segmentKey });
     lightHaptic();
+
     try {
       await storiesApi.deleteSegment(parsed.sourceType, parsed.sourceId);
-      applyStoryDeleted({ ownerUserId: b.user.id, segmentKey: s.key });
-    } catch {
+      return true;
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 404) return true;
       toast.error(t('stories.viewer.deleteStoryFailed'));
-      throw new Error('delete-failed');
+      await fetchFeed(true);
+      return false;
     } finally {
-      setDeleting(false);
+      deleteInFlightRef.current.delete(segmentKey);
     }
-  }, [deleting, t, applyStoryDeleted]);
+  }, [t, applyStoryDeleted, fetchFeed]);
 
   useEffect(() => {
     if (!open) return;
@@ -350,8 +360,7 @@ export function StoriesViewer({
             createdAt={segment?.createdAt}
             isOwner={bubble.isSelf}
             onClose={handleClose}
-            onDeleteStory={bubble.isSelf ? () => void handleDeleteStory() : undefined}
-            deleting={deleting}
+            onDeleteStory={bubble.isSelf ? handleDeleteStory : undefined}
           />
         </div>
         {segment ? (

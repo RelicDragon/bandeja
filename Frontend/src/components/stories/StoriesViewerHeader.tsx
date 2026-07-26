@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import type { BasicUser } from '@/types';
 import { formatRelativeTimeSafe } from '@/utils/dateFormat';
 import { StoryBubbleFace } from './StoryBubbleFace';
@@ -10,8 +11,7 @@ type StoriesViewerHeaderProps = {
   createdAt?: string;
   isOwner?: boolean;
   onClose: () => void;
-  onDeleteStory?: () => void;
-  deleting?: boolean;
+  onDeleteStory?: () => Promise<boolean>;
 };
 
 export function StoriesViewerHeader({
@@ -20,8 +20,8 @@ export function StoriesViewerHeader({
   isOwner = false,
   onClose,
   onDeleteStory,
-  deleting = false,
 }: StoriesViewerHeaderProps) {
+  const { t } = useTranslation();
   const timeLabel = createdAt ? formatRelativeTimeSafe(createdAt) : '';
 
   return (
@@ -36,12 +36,11 @@ export function StoriesViewerHeader({
         </div>
       </div>
       <div className="flex shrink-0 items-center gap-0.5">
-        {isOwner && onDeleteStory ? (
-          <StoryViewerOwnerMenu onDelete={onDeleteStory} deleting={deleting} />
-        ) : null}
+        {isOwner && onDeleteStory ? <StoryViewerOwnerMenu onDelete={onDeleteStory} /> : null}
         <button
           type="button"
           onClick={onClose}
+          aria-label={t('common.close')}
           className={`pointer-events-auto ${STORY_VIEWER_ICON_BTN}`}
         >
           <X size={28} className="text-white" strokeWidth={1.75} />

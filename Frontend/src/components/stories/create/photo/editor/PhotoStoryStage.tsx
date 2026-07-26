@@ -10,7 +10,7 @@ type PhotoStoryStageProps = {
   onMeasure?: (size: { w: number; h: number }, frameRect: DOMRect) => void;
 };
 
-/** Edge-to-edge 9:16 canvas — no legacy “card in the middle” chrome. */
+/** Full-bleed stage — 9:16 frame is letterboxed by StoryCompositionViewport. */
 export function PhotoStoryStage({
   children,
   className,
@@ -28,7 +28,7 @@ export function PhotoStoryStage({
       {...gestureProps}
     >
       {overlay}
-      <StoryCompositionViewport centerInStage onMeasure={onMeasure}>
+      <StoryCompositionViewport onMeasure={onMeasure}>
         {({ frameScale }) => children({ stageScale: frameScale })}
       </StoryCompositionViewport>
     </div>

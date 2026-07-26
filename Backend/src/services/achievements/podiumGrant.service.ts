@@ -21,6 +21,7 @@ import {
 } from '@bandeja/shared/achievements';
 import prisma from '../../config/database';
 import { findTeamParticipantByRoster } from '../league/leagueParticipantResolve';
+import { resolveLeagueGroupStandingsMode } from '../league/leagueGroupStandingsMode';
 import { clearPinsForAchievementIds } from './achievementPin.service';
 
 export const PODIUM_UNLOCKS_KEY = 'podiumUnlocks';
@@ -305,7 +306,9 @@ export async function syncParentSeasonPodiumIfFinal(params: {
   ) {
     return null;
   }
-  return grantPodiumAchievementsForFinalizedGame({ gameId: parent.id, tx: db });
+  const batch = await grantPodiumAchievementsForFinalizedGame({ gameId: parent.id, tx: db });
+  await writePodiumUnlocksToGameOutcomes({ db, gameId: parent.id, batch });
+  return batch;
 }
 
 async function createPodiumInstance(params: {
@@ -738,25 +741,92 @@ async function resolveStandingsPodiumParticipantIds(
   const season = await db.leagueSeason.findUnique({
     where: { id: seasonId },
     select: {
-      game: { select: { hasFixedTeams: true } },
+      game: { select: { hasFixedTeams: true, playersPerMatch: true } },
     },
   });
   const hasFixedTeams = season?.game?.hasFixedTeams ?? false;
-  // Event-wide top 3 by standings (not per-group concat).
+  const standingsMode = resolveLeagueGroupStandingsMode(season?.game ?? {});
 
   const participants = await db.leagueParticipant.findMany({
     where: {
       leagueSeasonId: seasonId,
       participantType: hasFixedTeams ? LeagueParticipantType.TEAM : LeagueParticipantType.USER,
     },
+    select: {
+      id: true,
+      wins: true,
+      points: true,
+      scoreDelta: true,
+      currentGroupId: true,
+      userId: true,
+      leagueTeamId: true,
+      leagueTeam: {
+        select: { players: { select: { userId: true } } },
+      },
+    },
     orderBy: [{ wins: 'desc' }, { points: 'desc' }, { scoreDelta: 'desc' }, { id: 'asc' }],
   });
 
+  let ordered = participants.map((p) => ({
+    ...p,
+    currentGroupId: p.currentGroupId ?? null,
+  }));
+
+  if (standingsMode && ordered.length > 1) {
+    const { applyGroupStandingsTiebreakers } = await import(
+      '../league/leagueGroupStandingsFixtures'
+    );
+    ordered = await applyGroupStandingsTiebreakers(
+      db as Prisma.TransactionClient,
+      seasonId,
+      ordered,
+      standingsMode,
+    );
+    // Wins → H2H already applied. Event-wide: order by wins only; keep H2H
+    // relative order among equal-wins (do not re-rank by points/Δ).
+    ordered = [...ordered].sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return 0;
+    });
+
+    const map = new Map<PodiumPlace, string[]>();
+    for (let idx = 0; idx < Math.min(3, ordered.length); idx += 1) {
+      const place = (idx + 1) as PodiumPlace;
+      if (!isPodiumPlace(place)) continue;
+      map.set(place, [ordered[idx].id]);
+    }
+    return map;
+  }
+
+  // Non-H2H modes (e.g. rotating pairs): points / scoreDelta matter.
+  ordered = [...ordered].sort((a, b) => {
+    if (b.wins !== a.wins) return b.wins - a.wins;
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.scoreDelta !== a.scoreDelta) return b.scoreDelta - a.scoreDelta;
+    return 0;
+  });
+
   const map = new Map<PodiumPlace, string[]>();
-  for (let i = 0; i < Math.min(3, participants.length); i += 1) {
-    const place = (i + 1) as PodiumPlace;
-    if (!isPodiumPlace(place)) continue;
-    map.set(place, [participants[i].id]);
+  let place = 1;
+  let i = 0;
+  while (i < ordered.length && place <= 3) {
+    const row = ordered[i];
+    const tiedIds: string[] = [row.id];
+    let j = i + 1;
+    while (
+      j < ordered.length &&
+      ordered[j].wins === row.wins &&
+      ordered[j].points === row.points &&
+      ordered[j].scoreDelta === row.scoreDelta
+    ) {
+      tiedIds.push(ordered[j].id);
+      j += 1;
+    }
+    if (isPodiumPlace(place)) {
+      map.set(place, tiedIds);
+    }
+    place += 1;
+    i = j;
   }
   return map;
 }
@@ -829,6 +899,47 @@ async function materializeDesiredAwards(params: {
     );
   }
   return collectBatch(created, params.replaced);
+}
+
+export async function writePodiumUnlocksToGameOutcomes(params: {
+  db: DbClient;
+  gameId: string;
+  batch: PodiumGrantBatch;
+}): Promise<void> {
+  if (params.batch.replaced) {
+    const outcomes = await params.db.gameOutcome.findMany({
+      where: { gameId: params.gameId },
+      select: { userId: true, metadata: true },
+    });
+    for (const row of outcomes) {
+      const unlocks = params.batch.byUserId.get(row.userId);
+      await params.db.gameOutcome.update({
+        where: { gameId_userId: { gameId: params.gameId, userId: row.userId } },
+        data: {
+          metadata: unlocks?.length
+            ? mergePodiumUnlocksMetadata(row.metadata, unlocks)
+            : stripPodiumUnlocksMetadata(row.metadata),
+        },
+      });
+    }
+    return;
+  }
+
+  if (params.batch.grants.length === 0) return;
+
+  for (const [userId, unlocks] of params.batch.byUserId) {
+    const gameOutcome = await params.db.gameOutcome.findUnique({
+      where: { gameId_userId: { gameId: params.gameId, userId } },
+      select: { metadata: true },
+    });
+    if (!gameOutcome) continue;
+    await params.db.gameOutcome.update({
+      where: { gameId_userId: { gameId: params.gameId, userId } },
+      data: {
+        metadata: mergePodiumUnlocksMetadata(gameOutcome.metadata, unlocks),
+      },
+    });
+  }
 }
 
 /**

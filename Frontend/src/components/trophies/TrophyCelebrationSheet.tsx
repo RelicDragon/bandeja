@@ -17,6 +17,14 @@ import {
   rarityAuraClass,
   rarityCelebrationShell,
 } from '@/components/trophies/trophyRarityStyles';
+import {
+  claimCelebration,
+  isCelebrationPersisted,
+  markCelebrationShown,
+  releaseCelebrationClaim,
+  TROPHY_CELEBRATION_RELEASED,
+  wasCelebrationShown,
+} from '@/components/trophies/trophyCelebrationGate';
 import { useAuthStore } from '@/store/authStore';
 import { usersApi } from '@/api/users';
 import { buildUrl } from '@/utils/urlSchema';
@@ -40,6 +48,8 @@ type TrophyCelebrationSheetProps = {
   outcomes?: GameOutcome[];
   /** Owner pending Rare/Legendary unlocks (season FINAL, missed results tab, etc.). */
   pending?: CelebrationUnlock[];
+  /** True when opened inside another Vaul drawer (player card). */
+  nested?: boolean;
 };
 
 const SPARKS = [
@@ -114,6 +124,7 @@ export function TrophyCelebrationSheet({
   gameId,
   outcomes,
   pending,
+  nested = false,
 }: TrophyCelebrationSheetProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -125,19 +136,29 @@ export function TrophyCelebrationSheet({
   const [pinned, setPinned] = useState(false);
   const [pinError, setPinError] = useState(false);
   const [pinFull, setPinFull] = useState(false);
-  const shownRef = useRef<string | null>(null);
+  const [queueTick, setQueueTick] = useState(0);
   const unlockRef = useRef<CelebrationUnlock | null>(null);
   const openRef = useRef(false);
+  const claimedIdRef = useRef<string | null>(null);
   unlockRef.current = unlock;
   openRef.current = open;
 
   useEffect(() => {
     if (!userId) return;
 
+    const abandonActiveClaim = () => {
+      const id = claimedIdRef.current ?? unlockRef.current?.achievementId;
+      if (id && !isCelebrationPersisted(id)) {
+        releaseCelebrationClaim(id);
+      }
+      claimedIdRef.current = null;
+      setOpen(false);
+      setUnlock(null);
+    };
+
     const alreadyShown = (u: CelebrationUnlock) => {
       if (!u.achievementId) return false;
-      const idKey = `trophyCelebration:id:${u.achievementId}`;
-      return shownRef.current === idKey || Boolean(localStorage.getItem(idKey));
+      return wasCelebrationShown(u.achievementId);
     };
 
     const matchesCurrent = (u: CelebrationUnlock, current: CelebrationUnlock) => {
@@ -148,27 +169,22 @@ export function TrophyCelebrationSheet({
     };
 
     let candidates: CelebrationUnlock[] = [];
-    let key = '';
 
     if (pending && pending.length > 0) {
       candidates = pending.filter((u) => Boolean(u.achievementId));
     } else if (gameId && outcomes?.length) {
-      key = `trophyCelebration:${gameId}:${userId}`;
       const own = outcomes.find((o) => o.userId === userId);
       if (!own) {
-        setOpen(false);
-        setUnlock(null);
+        abandonActiveClaim();
         return;
       }
       candidates = readUnlocksFromOutcome(own).filter((u) => Boolean(u.achievementId));
       if (candidates.length === 0) {
-        setOpen(false);
-        setUnlock(null);
+        abandonActiveClaim();
         return;
       }
     } else {
-      setOpen(false);
-      setUnlock(null);
+      abandonActiveClaim();
       return;
     }
 
@@ -176,35 +192,66 @@ export function TrophyCelebrationSheet({
     if (openRef.current && current) {
       const stillValid = candidates.some((u) => matchesCurrent(u, current));
       if (stillValid) return;
+      if (current.achievementId) {
+        releaseCelebrationClaim(current.achievementId);
+        if (claimedIdRef.current === current.achievementId) {
+          claimedIdRef.current = null;
+        }
+      }
     }
 
     const unseen = candidates.filter((u) => !alreadyShown(u));
     const primary = pickPrimaryCelebration(unseen);
-    if (!primary) {
+    if (!primary?.achievementId) {
+      abandonActiveClaim();
+      return;
+    }
+
+    if (!claimCelebration(primary.achievementId)) {
       setOpen(false);
       setUnlock(null);
       return;
     }
 
-    // Prefer achievement id so Results sheet + profile pending don't double-fire.
-    if (!primary.achievementId) {
-      setOpen(false);
-      setUnlock(null);
-      return;
-    }
-    const storageKey = `trophyCelebration:id:${primary.achievementId}`;
-    if (shownRef.current === storageKey || localStorage.getItem(storageKey)) return;
-    shownRef.current = storageKey;
-    localStorage.setItem(storageKey, '1');
-    if (key) {
-      localStorage.setItem(key, '1');
-    }
+    claimedIdRef.current = primary.achievementId;
     setUnlock(primary);
     setPinned(false);
     setPinError(false);
     setPinFull(false);
     setOpen(true);
-  }, [gameId, outcomes, pending, userId]);
+  }, [gameId, outcomes, pending, userId, queueTick]);
+
+  // Losing soft-claim host retries when the winning host releases without persisting.
+  useEffect(() => {
+    const onRelease = () => setQueueTick((n) => n + 1);
+    window.addEventListener(TROPHY_CELEBRATION_RELEASED, onRelease);
+    return () => window.removeEventListener(TROPHY_CELEBRATION_RELEASED, onRelease);
+  }, []);
+
+  const persistAndClose = (nextOpen: boolean) => {
+    const id = unlockRef.current?.achievementId ?? claimedIdRef.current;
+    if (!nextOpen && id) {
+      markCelebrationShown(id);
+      claimedIdRef.current = null;
+      setOpen(false);
+      setUnlock(null);
+      // Advance multi-unlock queue after dismiss.
+      setQueueTick((n) => n + 1);
+      return;
+    }
+    setOpen(nextOpen);
+  };
+
+  // Always release soft claim on unmount if not persisted (even if open never committed).
+  useEffect(() => {
+    return () => {
+      const id = claimedIdRef.current ?? unlockRef.current?.achievementId;
+      if (id && !isCelebrationPersisted(id)) {
+        releaseCelebrationClaim(id);
+      }
+      claimedIdRef.current = null;
+    };
+  }, []);
 
   const sportLabel = (() => {
     if (!unlock?.sport) return null;
@@ -237,7 +284,7 @@ export function TrophyCelebrationSheet({
   };
 
   const handleViewCabinet = () => {
-    setOpen(false);
+    persistAndClose(false);
     if (userId) {
       navigate(buildUrl('userProfile', { id: userId }));
     } else {
@@ -253,7 +300,7 @@ export function TrophyCelebrationSheet({
         : 'bg-emerald-400';
 
   return (
-    <Drawer open={open} onOpenChange={setOpen}>
+    <Drawer open={open} onOpenChange={persistAndClose} nested={nested}>
       <DrawerContent className="mx-auto max-w-lg overflow-hidden !border-0 !bg-transparent shadow-none">
         <AnimatePresence>
           {unlock && (
@@ -359,7 +406,7 @@ export function TrophyCelebrationSheet({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setOpen(false)}
+                  onClick={() => persistAndClose(false)}
                   className="rounded-xl px-4 py-2 text-sm font-medium text-gray-500 transition hover:text-gray-800 dark:text-gray-400 dark:hover:text-white"
                 >
                   {t('trophies.celebration.dismiss')}

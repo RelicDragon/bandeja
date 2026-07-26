@@ -14,6 +14,13 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
+function ensureCanvasSize(canvas: HTMLCanvasElement, w: number, h: number): boolean {
+  if (canvas.width === w && canvas.height === h) return false;
+  canvas.width = w;
+  canvas.height = h;
+  return true;
+}
+
 /** Renders `renderDocument` (export path) into a display canvas sized to the stage. */
 export function useCompositorPreview(
   doc: StoryDocument | null,
@@ -57,8 +64,7 @@ export function useCompositorPreview(
       offscreenRef.current = document.createElement('canvas');
     }
     const off = offscreenRef.current;
-    off.width = STORY_CANVAS_WIDTH;
-    off.height = STORY_CANVAS_HEIGHT;
+    ensureCanvasSize(off, STORY_CANVAS_WIDTH, STORY_CANVAS_HEIGHT);
     const ctx = off.getContext('2d');
     if (!ctx) return;
 
@@ -67,10 +73,7 @@ export function useCompositorPreview(
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const w = Math.max(1, Math.round(stageWidth * dpr));
     const h = Math.max(1, Math.round(stageHeight * dpr));
-    if (canvas.width !== w || canvas.height !== h) {
-      canvas.width = w;
-      canvas.height = h;
-    }
+    ensureCanvasSize(canvas, w, h);
     const display = canvas.getContext('2d');
     if (!display) return;
     display.setTransform(1, 0, 0, 1, 0, 0);
@@ -84,5 +87,9 @@ export function useCompositorPreview(
     return () => cancelAnimationFrame(rafRef.current);
   }, [paint]);
 
-  return { canvasRef, ready: sourceImage != null };
+  return {
+    canvasRef,
+    ready: sourceImage != null,
+    sourceImage,
+  };
 }

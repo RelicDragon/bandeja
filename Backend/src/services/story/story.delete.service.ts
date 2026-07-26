@@ -1,4 +1,4 @@
-import { ParticipantRole, StorySourceType } from '@prisma/client';
+import { EntityType, ParticipantRole, StorySourceType } from '@prisma/client';
 import prisma from '../../config/database';
 import { ApiError } from '../../utils/ApiError';
 import { ParticipantService } from '../game/participant.service';
@@ -37,11 +37,14 @@ export class StoryDeleteService {
         where: { id: trimmedId },
         include: { story: { select: { userId: true } } },
       });
-      if (!item || item.deletedAt) {
+      if (!item) {
         throw new ApiError(404, 'Story item not found');
       }
       if (item.story.userId !== userId) {
         throw new ApiError(403, 'You can only delete your own story items');
+      }
+      if (item.deletedAt) {
+        return { segmentKey: segmentKey(StorySourceType.USER_STORY_ITEM, item.id) };
       }
       const key = await softDeleteStoryItemRow(item);
       return { segmentKey: key };
@@ -52,10 +55,26 @@ export class StoryDeleteService {
     }
 
     await assertOwnsProjectedSegment(userId, normalizedType, trimmedId);
+    const key = segmentKey(normalizedType, trimmedId);
 
+    // Result stories on plain games: flip the results switch (no champion side effects).
+    // Season-linked results: dismiss only so bracket champion slides stay.
     if (normalizedType === StorySourceType.GAME_RESULT) {
-      await ParticipantService.setShowInStories(trimmedId, userId, false);
-      return { segmentKey: segmentKey(normalizedType, trimmedId) };
+      const game = await prisma.game.findUnique({
+        where: { id: trimmedId },
+        select: {
+          entityType: true,
+          parent: { select: { entityType: true } },
+        },
+      });
+      const seasonLinked =
+        game?.entityType === EntityType.LEAGUE_SEASON ||
+        game?.parent?.entityType === EntityType.LEAGUE_SEASON;
+
+      if (!seasonLinked) {
+        await ParticipantService.setShowInStories(trimmedId, userId, false);
+        return { segmentKey: key };
+      }
     }
 
     await prisma.storySegmentDismissal.upsert({
@@ -70,7 +89,6 @@ export class StoryDeleteService {
       update: {},
     });
 
-    const key = segmentKey(normalizedType, trimmedId);
     await emitStoryDeleted(userId, key);
     return { segmentKey: key };
   }
@@ -112,7 +130,6 @@ async function assertOwnsProjectedSegment(
       return;
     }
     case StorySourceType.BRACKET_CHAMPION: {
-      // Dismissal is scoped to caller userId; only hides their own champion slide.
       return;
     }
     default:

@@ -136,8 +136,11 @@
       "shareTitle": "Поделиться профилем",
       "moreActions": "Ещё",
       "deleteMyStory": "Удалить мою историю",
-      "deleteStoryConfirm": "Удалить эту историю? Подписчики больше её не увидят.",
-      "deleteStoryFailed": "Не удалось удалить историю"
+      "deleteStoryTitle": "Удалить эту историю?",
+      "deleteStoryConfirm": "Подписчики больше её не увидят.",
+      "deleteStoryAction": "Удалить",
+      "deleteStoryFailed": "Не удалось удалить историю",
+      "cancel": "Отмена"
     },
     "mixedMediaBlocked": "Share photos and videos separately",
     "oneVideoOnly": "Add one video at a time",

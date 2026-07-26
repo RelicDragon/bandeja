@@ -307,20 +307,29 @@ Frontend/e2e/
 | H-25 | Video story publish | Pick video → publish | Appears in rail |
 | H-26 | Story engagement | Like / comment (if enabled) | Count updates |
 | H-27 | Report story comment | Report flow | Modal submits |
-| H-54 | Owner story menu | Open own story (manual or game auto) | Top-right ⋮ visible |
-| H-55 | Delete own story | Own story → ⋮ → Delete my story → confirm | Segment removed; followers stop seeing it (incl. GAME_CREATED / GAME_RESULT) |
+| H-54 | Owner story menu | Open own story (manual or game auto) | Top-right ⋮ visible; tap opens dark action sheet with spring animation (playback paused) |
+| H-55 | Delete own story | Own story → ⋮ → Delete my story → Delete | Sheet closes; segment gone for followers; manual soft-delete; auto slides dismissed (season result dismiss keeps champion; plain-game result also flips results switch); dismissed slides cannot reappear via socket; fail → toast + feed refresh |
+
+
+
+
 | H-42 | Story DM reply lands in user chat | Open another user's story → type DM text → send → open user chat with owner | Message in DM thread shows story thumbnail card + "Replied to your story"/"You replied to their story" label above the bubble |
 | H-43 | Story quick-reaction emoji reply | Open another user's story → focus DM input → tap one of the six quick emojis | Emoji sent to DM with same story-reply card; flyout animation plays in viewer |
 | H-44 | Story reply card without media | Reply to GAME_CREATED/GAME_RESULT story without photo | DM shows story-reply label with placeholder thumbnail; tap does nothing harmful |
 | H-45 | Story editor live drag WYSIWYG | Photo editor → add text/sticker → drag it (mouse and touch) | Layer follows the pointer live on the visible preview, no jump on release |
-| H-46 | Story editor live resize/rotate WYSIWYG | Select layer or photo → drag transformer corner / rotate handle | Preview scales/rotates live; final state matches preview during gesture |
+| H-46 | Story editor live resize/rotate WYSIWYG | Select sticker/text → drag transformer corner / rotate handle | Preview scales/rotates live; final state matches preview during gesture |
 | H-47 | Story text edit wrap parity | Type long text (incl. one very long unbroken word) in text overlay → commit | Line breaks in edit overlay identical to committed canvas text; long word breaks instead of overflowing |
 | H-48 | Published story matches editor preview | Add text + sticker + adjust filter → move/scale them → publish → view own story | Viewer shows pixel-equivalent composition (positions, sizes, styles, filters) to the editor preview |
 | H-49 | Story layer drag clamp | Drag text/sticker hard toward screen edge | Layer stops at canvas padding; preview and hit target stay aligned |
 | H-50 | Story layer max scale clamp | Scale sticker/text past max via corner handle | Preview and handle stop at max scale without overshoot jump on release |
 | H-51 | Rotated story text edit | Add text → rotate → double-tap to edit | Edit overlay keeps rotation while typing; committed text unchanged |
 | H-52 | Story text edit canvas preview | Type in text overlay (classic/neon/outline/gradient/blackBox) | Visible glyphs match canvas/export renderer, not CSS approximation |
-| H-53 | Story photo rotate snap live | Select photo → rotate with handle near 0°/90° | Rotation snaps live in preview, not only on release |
+| H-53 | Story photo rotate snap live | Pinch-rotate photo near 0°/90° | Rotation snaps live in preview, not only on release |
+| H-56 | Story editor 9:16 frame parity | Open photo editor on tall phone viewport | Canvas is true 9:16 (letterboxed), not stretched full-height; published story matches editor framing |
+| H-57 | Story editor pinch/pan/wheel | Mobile: two-finger pinch+rotate+pan photo; Desktop: drag pan + wheel zoom under cursor | Media reframes live inside fixed crop window; rule-of-thirds guide while gesturing; no selection box on photo |
+| H-58 | Story layer handles (IG) | Add sticker/text → select → drag corner / rotate | Soft white circular handles + thin white border; photo has no selection box |
+| H-59 | Story photo double-tap reset | Pan/zoom photo → double-tap / double-click | Photo snaps back to cover fit |
+| H-60 | Story tap photo deselects layer | Select sticker → tap empty photo area | Layer deselects; further drag pans the photo |
 
 ### 6.5 Home subtabs & URL
 
@@ -1267,12 +1276,15 @@ Server source of truth: live session in `Match.metadata.liveScoring` (revision +
 | PR-trophy-21d | Restart/reset clears podium | After podium grant, Restart results (reset/delete → NONE) on tournament | Podium + pins cleared; no celebration for revoked ids |
 | PR-trophy-21e | Admin reset clears podium | Admin `/games/:id/reset-results` after podium grant | Same as 21d — podium + pins cleared |
 | PR-trophy-21f | Standings recalc syncs season podium | FINAL LEAGUE_SEASON; admin/organizer recalculate standings after place change | Cabinet matches new top 3; revoked pins cleared |
-| PR-trophy-22 | Season podium celebration | Mark LEAGUE_SEASON FINAL (≥8) while placed; open own profile/card | Rare/Legendary celebration sheet appears from pending unlocks (pin + view cabinet) |
+| PR-trophy-22 | Season podium celebration | Mark LEAGUE_SEASON FINAL (≥8); open own Profile → Statistics or player card (any tab) | Rare/Legendary sheet from pending unlocks (pin + view cabinet) |
 | PR-trophy-23 | Recalc keeps pins | Re-save identical FINAL tournament results after pinning a podium trophy | Pin remains; no duplicate instance |
-| PR-trophy-24 | No double celebration | Celebrate podium on Results, then open own profile | Sheet does not open again for same achievement id |
+| PR-trophy-24 | No double celebration | Celebrate on Results, then open own profile (or Results + own card same session) | At most one celebration sheet at a time; same id never reopens after dismiss |
 | PR-trophy-25 | Bracket final reopen | FINAL season with bracket; reopen grand-final fixture | Season podium cleared/absent until final is FINAL again; no RR standings fallback gold |
 | PR-trophy-26 | Walkover no bench trophy | Bracket walkover FINAL where a fixed-team roster has a non-PLAYING name | Only PLAYING players get outcomes/podium eligibility |
-| PR-trophy-27 | Multi-group PER_GROUP event podium | FINAL LEAGUE_SEASON with PER_GROUP brackets in 2+ groups | Event-wide top 3 (standings), not one Legendary gold per group champion |
+| PR-trophy-27 | Multi-group PER_GROUP event podium | FINAL LEAGUE_SEASON with PER_GROUP brackets in 2+ groups | Event-wide top 3 (standings+H2H), not one Legendary gold per group champion |
+| PR-trophy-28 | Missed Results celebration | Unlock on Results then leave tab before dismissing sheet | Soft claim released; profile/pending can show until dismiss persists |
+| PR-trophy-29 | Status-patch tournament celebration | Patch TOURNAMENT to FINAL (≥8) without outcome recalc | Podium granted; Results outcomes carry podiumUnlocks for sheet |
+| PR-trophy-30 | Nested card celebration | Own player-card sheet open when pending Rare/Legendary | Celebration nested drawer works; card does not steal dismiss |
 | PR-19 | Change city | City modal | City updated; no Cities/Clubs switch; browse country → cities |
 | PR-20 | Phone/password change | If exposed in UI | Auth updated |
 | PR-21 | Language selector | Pick language | i18n + profile saved |

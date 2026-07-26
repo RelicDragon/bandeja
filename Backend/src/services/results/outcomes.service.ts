@@ -65,9 +65,8 @@ import {
 } from '../achievements/habitGrant.service';
 import {
   grantPodiumAchievementsForFinalizedGame,
-  mergePodiumUnlocksMetadata,
-  stripPodiumUnlocksMetadata,
   syncParentSeasonPodiumIfFinal,
+  writePodiumUnlocksToGameOutcomes,
 } from '../achievements/podiumGrant.service';
 import { countsAsRatingActivity, countsForPlayStreak } from './ratingActivity';
 
@@ -820,38 +819,7 @@ export async function applyGameOutcomes(
 
     // Sync podium on FINAL (idempotent; revoke+re-award only when winner set changes).
     const podiumBatch = await grantPodiumAchievementsForFinalizedGame({ gameId, tx });
-    if (podiumBatch.replaced) {
-      // Clear stale podiumUnlocks from demoted users, then write current winners.
-      const outcomes = await tx.gameOutcome.findMany({
-        where: { gameId },
-        select: { userId: true, metadata: true },
-      });
-      for (const row of outcomes) {
-        const unlocks = podiumBatch.byUserId.get(row.userId);
-        await tx.gameOutcome.update({
-          where: { gameId_userId: { gameId, userId: row.userId } },
-          data: {
-            metadata: unlocks?.length
-              ? mergePodiumUnlocksMetadata(row.metadata, unlocks)
-              : stripPodiumUnlocksMetadata(row.metadata),
-          },
-        });
-      }
-    } else if (podiumBatch.grants.length > 0) {
-      for (const [userId, unlocks] of podiumBatch.byUserId) {
-        const gameOutcome = await tx.gameOutcome.findUnique({
-          where: { gameId_userId: { gameId, userId } },
-          select: { metadata: true },
-        });
-        if (!gameOutcome) continue;
-        await tx.gameOutcome.update({
-          where: { gameId_userId: { gameId, userId } },
-          data: {
-            metadata: mergePodiumUnlocksMetadata(gameOutcome.metadata, unlocks),
-          },
-        });
-      }
-    }
+    await writePodiumUnlocksToGameOutcomes({ db: tx, gameId, batch: podiumBatch });
 
     // Fixture under an already-FINAL season: re-sync season podium to corrected standings (X1).
     await syncParentSeasonPodiumIfFinal({ gameId, tx });
